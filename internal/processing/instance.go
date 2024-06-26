@@ -246,9 +246,13 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
 		// Process instance avatar image + description.
-		avatarInfo, err := p.account.UpdateAvatar(ctx, form.Avatar, form.AvatarDescription, instanceAcc.ID)
-		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, "error processing avatar")
+		avatarInfo, errWithCode := p.account.UpdateAvatar(ctx,
+			instanceAcc,
+			form.Avatar,
+			form.AvatarDescription,
+		)
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
 		instanceAcc.AvatarMediaAttachmentID = avatarInfo.ID
 		instanceAcc.AvatarMediaAttachment = avatarInfo
@@ -264,9 +268,13 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 
 	if form.Header != nil && form.Header.Size != 0 {
 		// process instance header image
-		headerInfo, err := p.account.UpdateHeader(ctx, form.Header, nil, instanceAcc.ID)
-		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, "error processing header")
+		headerInfo, errWithCode := p.account.UpdateHeader(ctx,
+			instanceAcc,
+			form.Header,
+			nil,
+		)
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
 		instanceAcc.HeaderMediaAttachmentID = headerInfo.ID
 		instanceAcc.HeaderMediaAttachment = headerInfo

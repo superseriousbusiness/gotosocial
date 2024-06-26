@@ -20,6 +20,7 @@ package admin_test
 import (
 	"context"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -370,10 +371,10 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyRemoteEmoji() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: emoji 01GD5KP5CQEE1R3X43Y1EHS2CW is not a local emoji, cannot update it via this endpoint"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: cannot modify remote emoji"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyNoParams() {
@@ -440,7 +441,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyLocalToLocal() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: emoji 01F8MH9H8E4VG3KDYJR9EGPXCQ is not a remote emoji, cannot copy it to local"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: target emoji is not remote; cannot copy to local"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyEmptyShortcode() {
@@ -541,7 +542,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyShortcodeAlreadyInUse() {
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Conflict: emoji with shortcode rainbow already exists on this instance"}`, string(b))
+	suite.Equal(`{"error":"Conflict: emoji with shortcode already exists"}`, string(b))
 }
 
 func TestEmojiUpdateTestSuite(t *testing.T) {

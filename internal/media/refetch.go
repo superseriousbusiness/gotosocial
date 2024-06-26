@@ -112,19 +112,19 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			return dereferenceMedia(ctx, emojiImageIRI)
 		}
 
-		processingEmoji, err := m.PreProcessEmoji(ctx, dataFunc, emoji.Shortcode, emoji.ID, emoji.URI, &AdditionalEmojiInfo{
+		processingEmoji, err := m.RefreshEmoji(ctx, emoji, dataFunc, AdditionalEmojiInfo{
 			Domain:               &emoji.Domain,
 			ImageRemoteURL:       &emoji.ImageRemoteURL,
 			ImageStaticRemoteURL: &emoji.ImageStaticRemoteURL,
 			Disabled:             emoji.Disabled,
 			VisibleInPicker:      emoji.VisibleInPicker,
-		}, true)
+		})
 		if err != nil {
 			log.Errorf(ctx, "emoji %s could not be refreshed because of an error during processing: %s", shortcodeDomain, err)
 			continue
 		}
 
-		if _, err := processingEmoji.LoadEmoji(ctx); err != nil {
+		if _, err := processingEmoji.Load(ctx); err != nil {
 			log.Errorf(ctx, "emoji %s could not be refreshed because of an error during loading: %s", shortcodeDomain, err)
 			continue
 		}

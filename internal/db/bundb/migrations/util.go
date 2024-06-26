@@ -15,27 +15,26 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package media
+package migrations
 
-// newHdrBuf returns a buffer of suitable size to
-// read bytes from a file header or magic number.
-//
-// File header is *USUALLY* 261 bytes at the start
-// of a file; magic number can be much less than
-// that (just a few bytes).
-//
-// To cover both cases, this function returns a buffer
-// suitable for whichever is smallest: the first 261
-// bytes of the file, or the whole file.
-//
-// See:
-//
-//   - https://en.wikipedia.org/wiki/File_format#File_header
-//   - https://github.com/h2non/filetype.
-func newHdrBuf(fileSize int) []byte {
-	bufSize := 261
-	if fileSize > 0 && fileSize < bufSize {
-		bufSize = fileSize
+import (
+	"context"
+
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/dialect"
+)
+
+// doesColumnExist safely checks whether given column exists on table, handling both SQLite and PostgreSQL appropriately.
+func doesColumnExist(ctx context.Context, tx bun.Tx, table, col string) (bool, error) {
+	var n int
+	var err error
+	switch tx.Dialect().Name() {
+	case dialect.SQLite:
+		err = tx.NewRaw("SELECT COUNT(*) FROM pragma_table_info(?) WHERE name=?", table, col).Scan(ctx, &n)
+	case dialect.PG:
+		err = tx.NewRaw("SELECT COUNT(*) FROM information_schema.columns WHERE table_name=? and column_name=?", table, col).Scan(ctx, &n)
+	default:
+		panic("unexpected dialect")
 	}
-	return make([]byte, bufSize)
+	return (n > 0), err
 }

@@ -1051,7 +1051,7 @@ func (c *Converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.Too
 	emoji.SetActivityStreamsIcon(iconProperty)
 
 	updatedProp := streams.NewActivityStreamsUpdatedProperty()
-	updatedProp.Set(e.ImageUpdatedAt)
+	updatedProp.Set(e.UpdatedAt)
 	emoji.SetActivityStreamsUpdated(updatedProp)
 
 	return emoji, nil

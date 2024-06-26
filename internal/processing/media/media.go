@@ -18,24 +18,39 @@
 package media
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type Processor struct {
+	// common processor logic
+	c *common.Processor
+
 	state               *state.State
 	converter           *typeutils.Converter
+	federator           *federation.Federator
 	mediaManager        *media.Manager
 	transportController transport.Controller
 }
 
 // New returns a new media processor.
-func New(state *state.State, converter *typeutils.Converter, mediaManager *media.Manager, transportController transport.Controller) Processor {
+func New(
+	common *common.Processor,
+	state *state.State,
+	converter *typeutils.Converter,
+	federator *federation.Federator,
+	mediaManager *media.Manager,
+	transportController transport.Controller,
+) Processor {
 	return Processor{
+		c:                   common,
 		state:               state,
 		converter:           converter,
+		federator:           federator,
 		mediaManager:        mediaManager,
 		transportController: transportController,
 	}

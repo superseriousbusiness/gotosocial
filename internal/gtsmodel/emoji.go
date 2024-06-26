@@ -30,19 +30,18 @@ type Emoji struct {
 	ImageStaticRemoteURL   string         `bun:",nullzero"`                                                   // Where can a static / non-animated version of this emoji be retrieved remotely? Null for local emojis.
 	ImageURL               string         `bun:",nullzero"`                                                   // Where can this emoji be retrieved from the local server? Null for remote emojis.
 	ImageStaticURL         string         `bun:",nullzero"`                                                   // Where can a static version of this emoji be retrieved from the local server? Null for remote emojis.
-	ImagePath              string         `bun:",nullzero,notnull"`                                           // Path of the emoji image in the server storage system.
-	ImageStaticPath        string         `bun:",nullzero,notnull"`                                           // Path of a static version of the emoji image in the server storage system
-	ImageContentType       string         `bun:",nullzero,notnull"`                                           // MIME content type of the emoji image
-	ImageStaticContentType string         `bun:",nullzero,notnull"`                                           // MIME content type of the static version of the emoji image.
-	ImageFileSize          int            `bun:",nullzero,notnull"`                                           // Size of the emoji image file in bytes, for serving purposes.
-	ImageStaticFileSize    int            `bun:",nullzero,notnull"`                                           // Size of the static version of the emoji image file in bytes, for serving purposes.
-	ImageUpdatedAt         time.Time      `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // When was the emoji image last updated?
+	ImagePath              string         `bun:",notnull"`                                                    // Path of the emoji image in the server storage system.
+	ImageStaticPath        string         `bun:",notnull"`                                                    // Path of a static version of the emoji image in the server storage system
+	ImageContentType       string         `bun:",notnull"`                                                    // MIME content type of the emoji image
+	ImageStaticContentType string         `bun:",notnull"`                                                    // MIME content type of the static version of the emoji image.
+	ImageFileSize          int            `bun:",notnull"`                                                    // Size of the emoji image file in bytes, for serving purposes.
+	ImageStaticFileSize    int            `bun:",notnull"`                                                    // Size of the static version of the emoji image file in bytes, for serving purposes.
 	Disabled               *bool          `bun:",nullzero,notnull,default:false"`                             // Has a moderation action disabled this emoji from being shown?
 	URI                    string         `bun:",nullzero,notnull,unique"`                                    // ActivityPub uri of this emoji. Something like 'https://example.org/emojis/1234'
 	VisibleInPicker        *bool          `bun:",nullzero,notnull,default:true"`                              // Is this emoji visible in the admin emoji picker?
 	Category               *EmojiCategory `bun:"rel:belongs-to"`                                              // In which emoji category is this emoji visible?
 	CategoryID             string         `bun:"type:CHAR(26),nullzero"`                                      // ID of the category this emoji belongs to.
-	Cached                 *bool          `bun:",nullzero,notnull,default:false"`
+	Cached                 *bool          `bun:",nullzero,notnull,default:false"`                             // whether emoji is cached in locally in gotosocial storage.
 }
 
 // IsLocal returns true if the emoji is

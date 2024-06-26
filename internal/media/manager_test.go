@@ -40,7 +40,7 @@ type ManagerTestSuite struct {
 	MediaStandardTestSuite
 }
 
-func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
+func (suite *ManagerTestSuite) TestEmojiProcess() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -52,19 +52,18 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
-	emojiID := "01GDQ9G782X42BAMFASKP64343"
-	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
-
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "rainbow_test", emojiID, emojiURI, nil, false)
+	processing, err := suite.manager.CreateEmoji(ctx,
+		"rainbow_test",
+		"",
+		data,
+		media.AdditionalEmojiInfo{},
+	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	emoji, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(emoji)
-
-	// make sure it's got the stuff set on it that we expect
-	suite.Equal(emojiID, emoji.ID)
 
 	// file meta should be correctly derived from the image
 	suite.Equal("image/png", emoji.ImageContentType)
@@ -72,7 +71,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	suite.Equal(36702, emoji.ImageFileSize)
 
 	// now make sure the emoji is in the database
-	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emoji.ID)
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
@@ -101,14 +100,15 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlocking() {
 	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
 }
 
-func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
+func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 	ctx := context.Background()
 
 	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the pixellated gts logo
 	originalEmoji := suite.testEmojis["yell"]
 
-	emojiToUpdate := &gtsmodel.Emoji{}
-	*emojiToUpdate = *originalEmoji
+	emojiToUpdate, err := suite.db.GetEmojiByID(ctx, originalEmoji.ID)
+	suite.NoError(err)
+
 	newImageRemoteURL := "http://fossbros-anonymous.io/some/image/path.png"
 
 	oldEmojiImagePath := emojiToUpdate.ImagePath
@@ -122,23 +122,24 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
-	emojiID := emojiToUpdate.ID
-	emojiURI := emojiToUpdate.URI
-
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "yell", emojiID, emojiURI, &media.AdditionalEmojiInfo{
-		CreatedAt:      &emojiToUpdate.CreatedAt,
-		Domain:         &emojiToUpdate.Domain,
-		ImageRemoteURL: &newImageRemoteURL,
-	}, true)
+	processing, err := suite.manager.RefreshEmoji(ctx,
+		emojiToUpdate,
+		data,
+		media.AdditionalEmojiInfo{
+			CreatedAt:      &emojiToUpdate.CreatedAt,
+			Domain:         &emojiToUpdate.Domain,
+			ImageRemoteURL: &newImageRemoteURL,
+		},
+	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	emoji, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(emoji)
 
 	// make sure it's got the stuff set on it that we expect
-	suite.Equal(emojiID, emoji.ID)
+	suite.Equal(originalEmoji.ID, emoji.ID)
 
 	// file meta should be correctly derived from the image
 	suite.Equal("image/png", emoji.ImageContentType)
@@ -146,7 +147,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	suite.Equal(10296, emoji.ImageFileSize)
 
 	// now make sure the emoji is in the database
-	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emoji.ID)
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
@@ -185,7 +186,6 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
 	suite.NotEqual(originalEmoji.ImageStaticPath, dbEmoji.ImageStaticPath)
 	suite.NotEqual(originalEmoji.UpdatedAt, dbEmoji.UpdatedAt)
-	suite.NotEqual(originalEmoji.ImageUpdatedAt, dbEmoji.ImageUpdatedAt)
 
 	// the old image files should no longer be in storage
 	_, err = suite.storage.Get(ctx, oldEmojiImagePath)
@@ -194,7 +194,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingRefresh() {
 	suite.True(storage.IsNotFound(err))
 }
 
-func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
+func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -206,19 +206,20 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLarge() {
 		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
-	emojiID := "01GDQ9G782X42BAMFASKP64343"
-	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
-
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "big_panda", emojiID, emojiURI, nil, false)
+	processing, err := suite.manager.CreateEmoji(ctx,
+		"big_panda",
+		"",
+		data,
+		media.AdditionalEmojiInfo{},
+	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	_, err = processing.Load(ctx)
 	suite.EqualError(err, "store: given emoji size 630kiB greater than max allowed 50.0kiB")
-	suite.Nil(emoji)
 }
 
-func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
+func (suite *ManagerTestSuite) TestEmojiProcessTooLargeNoSizeGiven() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -230,19 +231,20 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingTooLargeNoSizeGiven() {
 		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
 	}
 
-	emojiID := "01GDQ9G782X42BAMFASKP64343"
-	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
-
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "big_panda", emojiID, emojiURI, nil, false)
+	processing, err := suite.manager.CreateEmoji(ctx,
+		"big_panda",
+		"",
+		data,
+		media.AdditionalEmojiInfo{},
+	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processingEmoji.LoadEmoji(ctx)
-	suite.EqualError(err, "store: calculated emoji size 630kiB greater than max allowed 50.0kiB")
-	suite.Nil(emoji)
+	_, err = processing.Load(ctx)
+	suite.EqualError(err, "store: written emoji size 630kiB greater than max allowed 50.0kiB")
 }
 
-func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
+func (suite *ManagerTestSuite) TestEmojiProcessNoFileSizeGiven() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -254,20 +256,19 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
 	}
 
-	emojiID := "01GDQ9G782X42BAMFASKP64343"
-	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
-
 	// process the media with no additional info provided
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "rainbow_test", emojiID, emojiURI, nil, false)
+	processing, err := suite.manager.CreateEmoji(ctx,
+		"rainbow_test",
+		"",
+		data,
+		media.AdditionalEmojiInfo{},
+	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	emoji, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(emoji)
-
-	// make sure it's got the stuff set on it that we expect
-	suite.Equal(emojiID, emoji.ID)
 
 	// file meta should be correctly derived from the image
 	suite.Equal("image/png", emoji.ImageContentType)
@@ -275,7 +276,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessBlockingNoFileSizeGiven() {
 	suite.Equal(36702, emoji.ImageFileSize)
 
 	// now make sure the emoji is in the database
-	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emoji.ID)
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
@@ -316,19 +317,19 @@ func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
 	}
 
-	emojiID := "01GDQ9G782X42BAMFASKP64343"
-	emojiURI := "http://localhost:8080/emoji/01GDQ9G782X42BAMFASKP64343"
-
-	processingEmoji, err := suite.manager.ProcessEmoji(ctx, data, "nb-flag", emojiID, emojiURI, nil, false)
+	// process the media with no additional info provided
+	processing, err := suite.manager.CreateEmoji(ctx,
+		"nb-flag",
+		"",
+		data,
+		media.AdditionalEmojiInfo{},
+	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
-	emoji, err := processingEmoji.LoadEmoji(ctx)
+	emoji, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(emoji)
-
-	// make sure it's got the stuff set on it that we expect
-	suite.Equal(emojiID, emoji.ID)
 
 	// file meta should be correctly derived from the image
 	suite.Equal("image/webp", emoji.ImageContentType)
@@ -336,7 +337,7 @@ func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 	suite.Equal(294, emoji.ImageFileSize)
 
 	// now make sure the emoji is in the database
-	dbEmoji, err := suite.db.GetEmojiByID(ctx, emojiID)
+	dbEmoji, err := suite.db.GetEmojiByID(ctx, emoji.ID)
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
@@ -365,7 +366,7 @@ func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
 }
 
-func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
+func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -380,18 +381,22 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -407,7 +412,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlocking() {
 	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -456,13 +461,16 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 
 	// Since we're cutting off the byte stream
 	// halfway through, we should get an error here.
@@ -471,17 +479,16 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
 	suite.Zero(attachment.FileMeta)
 	suite.Equal("image/jpeg", attachment.File.ContentType)
-	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Empty(attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -518,19 +525,22 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -540,7 +550,7 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 	suite.Empty(attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -561,7 +571,7 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 	suite.False(stored)
 }
 
-func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
+func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -576,18 +586,22 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the video
@@ -607,7 +621,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -636,7 +650,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcessBlocking() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
+func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -651,18 +665,22 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the video
@@ -682,7 +700,7 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -711,7 +729,7 @@ func (suite *ManagerTestSuite) TestLongerMp4ProcessBlocking() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestBirdnestMp4ProcessBlocking() {
+func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -726,18 +744,22 @@ func (suite *ManagerTestSuite) TestBirdnestMp4ProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the video
@@ -757,7 +779,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4ProcessBlocking() {
 	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -786,7 +808,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4ProcessBlocking() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
+func (suite *ManagerTestSuite) TestNotAnMp4Process() {
 	// try to load an 'mp4' that's actually an mkv in disguise
 
 	ctx := context.Background()
@@ -803,10 +825,16 @@ func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// pre processing should go fine but...
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// we should get an error while loading
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.EqualError(err, "finish: error decoding video: error determining video metadata: [width height framerate]")
 
 	// partial attachment should be
@@ -815,7 +843,7 @@ func (suite *ManagerTestSuite) TestNotAnMp4ProcessBlocking() {
 	suite.Equal(gtsmodel.FileTypeUnknown, attachment.Type)
 }
 
-func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven() {
+func (suite *ManagerTestSuite) TestSimpleJpegProcessNoContentLengthGiven() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -831,18 +859,22 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -858,7 +890,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven
 	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -887,7 +919,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingNoContentLengthGiven
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
+func (suite *ManagerTestSuite) TestSimpleJpegProcessReadCloser() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -903,18 +935,22 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -930,7 +966,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
 	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -959,7 +995,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingReadCloser() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
+func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -974,18 +1010,22 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -1001,7 +1041,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -1030,7 +1070,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcessBlocking() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
+func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -1045,18 +1085,22 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -1072,7 +1116,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -1101,7 +1145,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcessBlocking() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
+func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -1116,18 +1160,22 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
-	processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -1143,7 +1191,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -1172,7 +1220,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithCallback() {
 	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
 }
 
-func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
+func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 	ctx := context.Background()
 
 	data := func(_ context.Context) (io.ReadCloser, int64, error) {
@@ -1209,18 +1257,22 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.manager = diskManager
 
 	// process the media with no additional info provided
-	processingMedia := diskManager.PreProcessMedia(data, accountID, nil)
-	// fetch the attachment id from the processing media
-	attachmentID := processingMedia.AttachmentID()
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processingMedia.LoadAttachment(ctx)
+	attachment, err := processing.Load(ctx)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 
 	// make sure it's got the stuff set on it that we expect
 	// the attachment ID and accountID we expect
-	suite.Equal(attachmentID, attachment.ID)
+	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
 	// file meta should be correctly derived from the image
@@ -1236,7 +1288,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessBlockingWithDiskStorage() {
 	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
@@ -1307,22 +1359,27 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 			accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 			// process the media with no additional info provided
-			processingMedia := suite.manager.PreProcessMedia(data, accountID, nil)
-			if _, err := processingMedia.LoadAttachment(ctx); err != nil {
-				suite.FailNow(err.Error())
-			}
+			processing, err := suite.manager.CreateMedia(ctx,
+				accountID,
+				data,
+				media.AdditionalMediaInfo{},
+			)
+			suite.NoError(err)
+			suite.NotNil(processing)
 
-			attachmentID := processingMedia.AttachmentID()
+			// Load the attachment (but ignore return).
+			_, err = processing.Load(ctx)
+			suite.NoError(err)
 
 			// fetch the attachment id from the processing media
-			attachment, err := suite.db.GetAttachmentByID(ctx, attachmentID)
+			attachment, err := suite.db.GetAttachmentByID(ctx, processing.ID())
 			if err != nil {
 				suite.FailNow(err.Error())
 			}
 
 			// make sure it's got the stuff set on it that we expect
 			// the attachment ID and accountID we expect
-			suite.Equal(attachmentID, attachment.ID)
+			suite.Equal(processing.ID(), attachment.ID)
 			suite.Equal(accountID, attachment.AccountID)
 
 			actual := attachment.File.ContentType
@@ -1350,13 +1407,21 @@ func (suite *ManagerTestSuite) TestMisreportedSmallMedia() {
 		return io.NopCloser(bytes.NewBuffer(b)), int64(2 * actualSize), nil
 	}
 
-	// Process the media with no additional info provided.
-	attachment, err := suite.manager.
-		PreProcessMedia(data, accountID, nil).
-		LoadAttachment(context.Background())
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	ctx := context.Background()
+
+	// process the media with no additional info provided
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processing.Load(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
 
 	suite.Equal(actualSize, attachment.File.FileSize)
 }
@@ -1378,13 +1443,21 @@ func (suite *ManagerTestSuite) TestNoReportedSizeSmallMedia() {
 		return io.NopCloser(bytes.NewBuffer(b)), 0, nil
 	}
 
-	// Process the media with no additional info provided.
-	attachment, err := suite.manager.
-		PreProcessMedia(data, accountID, nil).
-		LoadAttachment(context.Background())
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	ctx := context.Background()
+
+	// process the media with no additional info provided
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processing.Load(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
 
 	suite.Equal(actualSize, attachment.File.FileSize)
 }
