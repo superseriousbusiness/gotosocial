@@ -21,7 +21,6 @@ import (
 	"context"
 
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 )
 
 func init() {
@@ -66,18 +65,4 @@ func init() {
 	if err := Migrations.Register(up, down); err != nil {
 		panic(err)
 	}
-}
-
-func doesColumnExist(ctx context.Context, tx bun.Tx, table, col string) (bool, error) {
-	var n int
-	var err error
-	switch tx.Dialect().Name() {
-	case dialect.SQLite:
-		err = tx.NewRaw("SELECT COUNT(*) FROM pragma_table_info(?) WHERE name=?", table, col).Scan(ctx, &n)
-	case dialect.PG:
-		err = tx.NewRaw("SELECT COUNT(*) FROM information_schema.columns WHERE table_name=? and column_name=?", table, col).Scan(ctx, &n)
-	default:
-		panic("unexpected dialect")
-	}
-	return (n > 0), err
 }
