@@ -188,7 +188,10 @@ func (d *Driver) ProbeCSPUri(ctx context.Context) (string, error) {
 	// Check whether S3 custom URL is set.
 	// If it is, return it directly.
 	if d.CustomURL != "" {
-		return d.CustomURL, nil
+		// We've ensured that the custom URL ends without
+		// a trailing slash during conf validation, so we
+		// add it here to ensure the CSP URI is valid.
+		return d.CustomURL + "/", nil
 	}
 
 	const cspKey = "gotosocial-csp-probe"
