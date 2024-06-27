@@ -139,7 +139,7 @@ func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
 	if d.CustomURL != "" {
 		u, err = url.Parse(d.CustomURL + "/" + key)
 		if err != nil {
-			// If URL request fails, fallback is to fetch the file. So ignore the error here
+			// If URL parsing fails, fallback is to fetch the file. So ignore the error here
 			return nil
 		}
 	} else {
