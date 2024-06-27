@@ -557,6 +557,12 @@ storage-s3-endpoint: ""
 # Default: false
 storage-s3-proxy: false
 
+# String. Custom URL to use for S3 storage. This is useful if you are using a CDN in front of your S3 bucket.
+# Should start with "http(s)://" and end without a trailing slash.
+# Gets overridden by storage-s3-proxy.
+# Default: ""
+storage-s3-custom-url: ""
+
 # Bool. Use SSL for S3 connections.
 #
 # Only set this to 'false' when testing locally.
