@@ -168,6 +168,7 @@ EXPECT=$(cat << "EOF"
     "storage-s3-bucket": "gts",
     "storage-s3-endpoint": "localhost:9000",
     "storage-s3-proxy": true,
+    "storage-s3-custom-url": "",
     "storage-s3-secret-key": "miniostorage",
     "storage-s3-use-ssl": false,
     "syslog-address": "127.0.0.1:6969",
