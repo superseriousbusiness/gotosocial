@@ -35,6 +35,12 @@ storage-s3-endpoint: ""
 # Default: false
 storage-s3-proxy: false
 
+# String. Custom URL to use for S3 storage. This is useful if you are using a CDN in front of your S3 bucket.
+# Should start with "http(s)://" and end without a trailing slash.
+# Gets overridden by storage-s3-proxy.
+# Default: ""
+storage-s3-custom-url: ""
+
 # Bool. Use SSL for S3 connections.
 #
 # Only set this to 'false' when testing locally.
@@ -109,6 +115,12 @@ GoToSocial by default creates signed URL's which means we don't need to change a
     * `storage-s3-access-key` -> Access key ID you obtained for the user created above
     * `storage-s3-secret-key` -> Secret key you obtained for the user created above
     * `storage-s3-bucket` -> The `<bucketname>` that you created just now
+
+### Custom URL
+
+If you are using a CDN in front of your S3 bucket, you can set the `storage-s3-custom-url` to the CDN URL. This will be used to generate the URLs for the media files. It should start with `http(s)://` and end without a trailing slash, for example: `https://cdn.example.com` or `https://cdn.example.com/path`.
+
+Note that GoToSocial has no control over the headers, accessibility, cache lifecycle policies, or any other settings behind the custom URL. And the media url will not contain any presigned parameters. You have to ensure that the custom URL provider is configured correctly to serve the files.
 
 ## Storage migration
 
