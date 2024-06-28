@@ -723,7 +723,7 @@ func (c *Caches) initInstance() {
 		i2.DomainBlock = nil
 		i2.ContactAccount = nil
 
-		return i1
+		return i2
 	}
 
 	c.GTS.Instance.Init(structr.CacheConfig[*gtsmodel.Instance]{
