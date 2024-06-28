@@ -1,28 +1,30 @@
 # Authentication with the API
 
-Using the client API requires authentication. This page documents the general flow for retrieving an authentication token with examples for doing this on the CLI
+Using the client API requires authentication. This page documents the general flow for retrieving an authentication token with examples for doing this on the CLI using `curl`.
 
 ## Create a new application
 
-We need to register a new application, which we can then use to request an OAuth token. This is done by making a `POST` request to the `/api/v1/apps` endpoint. Replace `your_app_name` in the code below:
+We need to register a new application, which we can then use to request an OAuth token. This is done by making a `POST` request to the `/api/v1/apps` endpoint. Replace `your_app_name` in the command below with the name you want to use for your application:
 
 ```bash
-curl -X POST 'https://your.instance.url/api/v1/apps' \ 
+curl \
+  -X POST \
   -H 'Content-Type:application/json' \
   -d '{
-      "client_name": "your_app_name",
-      "redirect_uris": "urn:ietf:wg:oauth:2.0:oob",
-      "scopes": "read"
-    }'
+        "client_name": "your_app_name",
+        "redirect_uris": "urn:ietf:wg:oauth:2.0:oob",
+        "scopes": "read"
+      }' \
+  'https://example.org/api/v1/apps'
 ```
 
-The string "urn:ietf:wg:oauth:2.0:oob" is an indication of what is known as out-of-band authentication - a technique used in multi-factor authentication to reduce the number of ways that a bad actor can intrude on the authentication process. In this instance, it allows us to view and manually copy the tokens created to use further in this process.
+The string `urn:ietf:wg:oauth:2.0:oob` is an indication of what is known as out-of-band authentication - a technique used in multi-factor authentication to reduce the number of ways that a bad actor can intrude on the authentication process. In this instance, it allows us to view and manually copy the tokens created to use further in this process.
 
 Note that `scopes` can be any space-separated combination of:
 
-- read
-- write
-- admin
+- `read`
+- `write`
+- `admin`
 
 !!! warning
     GoToSocial does not currently support scoped authorization tokens, so any token you obtain in this process will be able to perform all actions on your behalf, including admin actions if your account has admin permissions. Nevertheless, it is always good practice to grant your application the lowest tier permissions it needs to do its job. e.g. If your application won't be making posts, use scope=read.
@@ -31,30 +33,38 @@ Note that `scopes` can be any space-separated combination of:
    
     You can read more about additional planned OAuth security features [right here](https://github.com/superseriousbusiness/gotosocial/issues/2232).
 
-A successful call returns a response with a `client_id` and `client_secret` that we are going need to use in the rest of the process. It looks something like this: 
+A successful call returns a response with a `client_id` and `client_secret`, which we are going need to use in the rest of the process. It looks something like this:
+
 ```json
 {
-  "id": "randomised_id",
+  "id": "01J1CYJ4QRNFZD6WHQMZV7248G",
   "name": "your_app_name",
   "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
-  "client_id": "your_new_client_id",
-  "client_secret": "your_new_client_secret"
+  "client_id": "YOUR_CLIENT_ID",
+  "client_secret": "YOUR_CLIENT_SECRET"
 }
 ```
 
 !!! tip
-    Ensure you save the `client_id` and `client_secret` somewhere so you can refer to it as we go.
+    Ensure you save the `client_id` and `client_secret` values somewhere so you can refer to them as we go.
 
-## Authorizing your application
+## Authorize your application to act on your behalf
 
-We've registered a new application with GoToSocial, but it isn't connected to your account just yet. Now we need to tell GoToSocial that that new application is actually going to act on your behalf. To do this, we need to authenticate with your instance via a browser to initiate the login and permission granting process.
+We've registered a new application with GoToSocial, but it isn't connected to your account just yet. Now we need to tell GoToSocial that that new application is actually going to act on your behalf. To do this, we need to authenticate with your instance via a browser to initiate the login and permission-granting process.
 
-Using the `client_id` from the previous step, create a URL with a query string like so:
+Create a URL with a query string like so, replacing `YOUR_CLIENT_ID` with the `client_id` you received in the previous step, and paste the URL into your browser:
+
+```text
+https://example.org/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=read
 ```
-https://your.instance.url/oauth/authorize?client_id=your_new_client_id-id&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code
-```
 
-You'll get a login form to your instance and be prompted to login if you aren't already logged in. Once logged in, you will get a screen that says something like this:
+!!! tip
+    If you used different scopes to register your application, then replace `scope=read` in the URL above with a plus-separated list of the scopes you registered with. For example, if you registered your application with a `scopes` value of `read write` then you should change `scope=read` in the above URL to `scope=read+write`. 
+
+After pasting the URL into your browser, you'll be directed to a login form for your instance which prompts you to enter your email address and password in order to connect the application to your account.
+
+Once you've submitted your credentials, you will arrive on a page that says something like this:
+
 ```
 Hi `your_username`!
 
@@ -62,56 +72,77 @@ Application `your_app_name` would like to perform actions on your behalf, with s
 The application will redirect to urn:ietf:wg:oauth:2.0:oob to continue.
 ```
 
-Once you click `Allow`, you will get a window that looks something like this:
+Click `Allow`, and you will get a page that looks something like this:
 
-```
+```text
 Here's your out-of-band token with scope "read", use it wisely:
-WBANQAXXHDN9KJQZXGWNQANA4V9EJWMUDHVCUUM3JHYAB3DP
+YOUR_AUTHORIZATION_TOKEN
 ```
 
+Copy the out-of-band authorization token somewhere, as you'll need it in the next step.
 
-## Getting your token
-The next step is to send a `POST` request to the oauth/token endpoint to get an access token that you will use to authenticate your future requests. 
+## Get an access token
+
+The next step is to exchange the out-of-band authorization token you just received with a reusable access token that can be sent along with all further API requests.
+
+You can do this with another `POST` request that looks like the following:
+
 ```bash
-curl -X POST 'https://your.instance.url/oauth/token' \
-  -H 'Content-Type:application/json' 
+curl \
+  -X POST \
+  -H 'Content-Type: application/json' \
   -d '{
-      "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
-      "client_id": "your_new_client_id",
-      "client_secret": "your_new_client_secret",
-      "grant_type": "authorization_code",
-      "code": "WBANQAXXHDN9KJQZXGWNQANA4V9EJWMUDHVCUUM3JHYAB3DP"
-    }' 
+        "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
+        "client_id": "YOUR_CLIENT_ID",
+        "client_secret": "YOUR_CLIENT_SECRET",
+        "grant_type": "authorization_code",
+        "code": "YOUR_AUTHORIZATION_TOKEN"
+      }' \
+  'https://example.org/oauth/token'
 ```
-!!! warning
-    Please note that the characters used above are just a random selection of characters and cannot be used.
-    Make sure you replace it with the code *you* get from your instance.
+
+Make sure to replace:
+
+- `YOUR_CLIENT_ID` with the client ID received in the first step.
+- `YOUR_CLIENT_SECRET` with the client secret received in the first step.
+- `YOUR_AUTHORIZATION_TOKEN` with the out-of-band authorization token received in the second step.
 
 You'll get a response that includes your access token and looks something like this:
+
 ```json
 {
-  "access_token": "your_brand_new_access_token",
-  "created_at": unixtimestamp,
+  "access_token": "YOUR_ACCESS_TOKEN",
+  "created_at": 1719577950,
   "scope": "read",
   "token_type": "Bearer"
 }
 ```
-## Verifying it all
-To make sure everything went through successfully, query the `/api/v1/verify_credentials` endpoint, adding your new access token to the Header as `Authorization: Bearer your_brand_new_token`.
+
+Copy and save your access token somewhere safe.
+
+## Verifying
+
+To make sure everything worked, try querying the `/api/v1/verify_credentials` endpoint, adding your access token to the request header as `Authorization: Bearer YOUR_ACCESS_TOKEN`.
 
 See this example:
+
 ```bash
-curl -X GET 'https://your.instance.url/api/v1/accounts/verify_credentials' \
-  -H 'Content-Type:application/json' 
-  -H 'Authorization:Bearer your_brand_new_token'
+curl \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  'https://example.org/api/v1/accounts/verify_credentials'
 ```
-If all goes well, you should get your user profile as a response response.
+If all goes well, you should get your user profile as a JSON response.
 
 ## Final notes
-Thereafter, whenever you make an api call, say to query your notifications, add a Header to your request `Authorization:Bearer your_brand_new_token` like this:
-```bash
-curl --request GET \
-  --url https://your.instance.url/api/v1/notifications \
-  --header 'Authorization: Bearer your_brand_new_token' \
-```
 
+Now that you have an access token, you can reuse that token in every API request for authorization. You do not need to do the entire token exchange dance every time!
+
+For example, you can issue another `GET` request to the API using the same access token to get your notifications, as follows:
+
+```bash
+curl \
+  -H 'Content-Type: application/json' \ 
+  -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
+  'https://example.org/api/v1/notifications'
+```
