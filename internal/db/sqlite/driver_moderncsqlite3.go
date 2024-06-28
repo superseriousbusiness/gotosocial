@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build wasmsqlite3
+//go:build moderncsqlite3
 
 package sqlite
 
@@ -23,48 +23,21 @@ import (
 	"context"
 	"database/sql/driver"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"modernc.org/sqlite"
 
-	"github.com/ncruces/go-sqlite3"
-	sqlite3driver "github.com/ncruces/go-sqlite3/driver"
-	_ "github.com/ncruces/go-sqlite3/embed"     // embed wasm binary
-	_ "github.com/ncruces/go-sqlite3/vfs/memdb" // include memdb vfs
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // Driver is our own wrapper around the
-// driver.SQLite{} type in order to wrap
+// sqlite.Driver{} type in order to wrap
 // further SQL types with our own
 // functionality, e.g. err processing.
-type Driver struct{ sqlite3driver.SQLite }
+type Driver struct{ sqlite.Driver }
 
 func (d *Driver) Open(name string) (driver.Conn, error) {
-	conn, err := d.SQLite.Open(name)
+	conn, err := d.Driver.Open(name)
 	if err != nil {
 		err = processSQLiteError(err)
-		return nil, err
-	}
-	return &sqliteConn{conn.(connIface)}, nil
-}
-
-func (d *Driver) OpenConnector(name string) (driver.Connector, error) {
-	cc, err := d.SQLite.OpenConnector(name)
-	if err != nil {
-		return nil, err
-	}
-	return &sqliteConnector{driver: d, Connector: cc}, nil
-}
-
-type sqliteConnector struct {
-	driver *Driver
-	driver.Connector
-}
-
-func (c *sqliteConnector) Driver() driver.Driver { return c.driver }
-
-func (c *sqliteConnector) Connect(ctx context.Context) (driver.Conn, error) {
-	conn, err := c.Connector.Connect(ctx)
-	err = processSQLiteError(err)
-	if err != nil {
 		return nil, err
 	}
 	return &sqliteConn{conn.(connIface)}, nil
@@ -108,16 +81,26 @@ func (c *sqliteConn) ExecContext(ctx context.Context, query string, args []drive
 	return
 }
 
-func (c *sqliteConn) Close() (err error) {
-	// Get acces the underlying raw sqlite3 conn.
-	raw := c.connIface.(sqlite3.DriverConn).Raw()
+func (c *sqliteConn) Query(query string, args []driver.Value) (driver.Rows, error) {
+	return c.QueryContext(context.Background(), query, db.ToNamedValues(args))
+}
 
+func (c *sqliteConn) QueryContext(ctx context.Context, query string, args []driver.NamedValue) (rows driver.Rows, err error) {
+	rows, err = c.connIface.QueryContext(ctx, query, args)
+	err = processSQLiteError(err)
+	if err != nil {
+		return nil, err
+	}
+	return &sqliteRows{rows.(rowsIface)}, nil
+}
+
+func (c *sqliteConn) Close() (err error) {
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
-	_ = raw.Exec(onClose)
+	_, _ = c.connIface.ExecContext(context.Background(), onClose, nil)
 
-	// Finally, close.
-	err = raw.Close()
+	// Finally, close the conn.
+	err = c.connIface.Close()
 	return
 }
 
@@ -181,7 +164,7 @@ func (r *sqliteRows) Close() (err error) {
 }
 
 // connIface is the driver.Conn interface
-// types (and the like) that go-sqlite3/driver.conn
+// types (and the like) that modernc.org/sqlite.conn
 // conforms to. Useful so you don't need
 // to repeatedly perform checks yourself.
 type connIface interface {
@@ -189,10 +172,11 @@ type connIface interface {
 	driver.ConnBeginTx
 	driver.ConnPrepareContext
 	driver.ExecerContext
+	driver.QueryerContext
 }
 
 // StmtIface is the driver.Stmt interface
-// types (and the like) that go-sqlite3/driver.stmt
+// types (and the like) that modernc.org/sqlite.stmt
 // conforms to. Useful so you don't need
 // to repeatedly perform checks yourself.
 type stmtIface interface {
@@ -202,10 +186,12 @@ type stmtIface interface {
 }
 
 // RowsIface is the driver.Rows interface
-// types (and the like) that go-sqlite3/driver.rows
+// types (and the like) that modernc.org/sqlite.rows
 // conforms to. Useful so you don't need
 // to repeatedly perform checks yourself.
 type rowsIface interface {
 	driver.Rows
 	driver.RowsColumnTypeDatabaseTypeName
+	driver.RowsColumnTypeLength
+	driver.RowsColumnTypeScanType
 }

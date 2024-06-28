@@ -30,7 +30,7 @@ builds:
       - >-
         {{ if and (index .Env "DEBUG") (.Env.DEBUG) }}debugenv{{ end }}
       - >-
-        {{ if and (index .Env "WASMSQLITE3") (.Env.WASMSQLITE3) }}wasmsqlite3{{ end }}
+        {{ if and (index .Env "MODERNCSQLITE3") (.Env.MODERNCSQLITE3) }}moderncsqlite3{{ end }}
     env:
       - CGO_ENABLED=0
     goos:
