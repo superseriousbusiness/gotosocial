@@ -11,7 +11,7 @@ EXPECT=$(cat << "EOF"
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
     "advanced-csp-extra-uris": [],
-    "advanced-header-filter-mode": "",
+    "advanced-header-filter-mode": "block",
     "advanced-rate-limit-exceptions": [
         "192.0.2.0/24",
         "127.0.0.1/32"
@@ -285,6 +285,7 @@ GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \
 GTS_ADVANCED_SENDER_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_RETRY_AFTER='10s' \
+GTS_ADVANCED_HEADER_FILTER_MODE='block' \
 GTS_REQUEST_ID_HEADER='X-Trace-Id' \
 go run ./cmd/gotosocial/... --config-path internal/config/testdata/test.yaml debug config)
 
