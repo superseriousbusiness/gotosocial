@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build wasmsqlite3
+//go:build moderncsqlite3
 
 package sqlite
 
@@ -23,7 +23,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 
-	"github.com/ncruces/go-sqlite3"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
+
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
@@ -31,30 +33,30 @@ import (
 // handle conversion to any of our common db types.
 func processSQLiteError(err error) error {
 	// Attempt to cast as sqlite error.
-	sqliteErr, ok := err.(*sqlite3.Error)
+	sqliteErr, ok := err.(*sqlite.Error)
 	if !ok {
 		return err
 	}
 
 	// Handle supplied error code:
-	switch sqliteErr.ExtendedCode() {
-	case sqlite3.CONSTRAINT_UNIQUE,
-		sqlite3.CONSTRAINT_PRIMARYKEY:
+	switch sqliteErr.Code() {
+	case sqlite3.SQLITE_CONSTRAINT_UNIQUE,
+		sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY:
 		return db.ErrAlreadyExists
 
-	// Busy should be very rare, but on
-	// busy tell the database to close the
-	// connection, re-open and re-attempt
-	// which should give necessary timeout.
-	case sqlite3.BUSY_RECOVERY,
-		sqlite3.BUSY_SNAPSHOT:
+	// Busy should be very rare, but
+	// on busy tell the database to close
+	// the connection, re-open and re-attempt
+	// which should give a necessary timeout.
+	case sqlite3.SQLITE_BUSY,
+		sqlite3.SQLITE_BUSY_RECOVERY,
+		sqlite3.SQLITE_BUSY_SNAPSHOT:
 		return driver.ErrBadConn
 	}
 
 	// Wrap the returned error with the code and
 	// extended code for easier debugging later.
-	return fmt.Errorf("%w (code=%d extended=%d)", err,
+	return fmt.Errorf("%w (code=%d)", err,
 		sqliteErr.Code(),
-		sqliteErr.ExtendedCode(),
 	)
 }
