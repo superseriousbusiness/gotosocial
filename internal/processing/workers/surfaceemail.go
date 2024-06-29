@@ -260,7 +260,7 @@ func (s *Surface) emailAdminNewSignup(ctx context.Context, newUser *gtsmodel.Use
 		SignupEmail:    newUser.UnconfirmedEmail,
 		SignupUsername: newUser.Account.Username,
 		SignupReason:   newUser.Reason,
-		SignupURL:      instance.URI + "/settings/admin/accounts/" + newUser.AccountID,
+		SignupURL:      instance.URI + "/settings/moderation/accounts/" + newUser.AccountID,
 	}
 
 	if err := s.EmailSender.SendNewSignupEmail(toAddresses, newSignupData); err != nil {
