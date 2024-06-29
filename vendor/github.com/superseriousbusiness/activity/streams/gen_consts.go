@@ -29,6 +29,15 @@ var ActivityStreamsAudioName string = "Audio"
 // ActivityStreamsBlockName is the string literal of the name for the Block type in the ActivityStreams vocabulary.
 var ActivityStreamsBlockName string = "Block"
 
+// GoToSocialCanAnnounceName is the string literal of the name for the CanAnnounce type in the GoToSocial vocabulary.
+var GoToSocialCanAnnounceName string = "CanAnnounce"
+
+// GoToSocialCanLikeName is the string literal of the name for the CanLike type in the GoToSocial vocabulary.
+var GoToSocialCanLikeName string = "CanLike"
+
+// GoToSocialCanReplyName is the string literal of the name for the CanReply type in the GoToSocial vocabulary.
+var GoToSocialCanReplyName string = "CanReply"
+
 // ActivityStreamsCollectionName is the string literal of the name for the Collection type in the ActivityStreams vocabulary.
 var ActivityStreamsCollectionName string = "Collection"
 
@@ -76,6 +85,9 @@ var ActivityStreamsIgnoreName string = "Ignore"
 
 // ActivityStreamsImageName is the string literal of the name for the Image type in the ActivityStreams vocabulary.
 var ActivityStreamsImageName string = "Image"
+
+// GoToSocialInteractionPolicyName is the string literal of the name for the InteractionPolicy type in the GoToSocial vocabulary.
+var GoToSocialInteractionPolicyName string = "InteractionPolicy"
 
 // ActivityStreamsIntransitiveActivityName is the string literal of the name for the IntransitiveActivity type in the ActivityStreams vocabulary.
 var ActivityStreamsIntransitiveActivityName string = "IntransitiveActivity"
@@ -194,8 +206,17 @@ var ActivityStreamsAlsoKnownAsPropertyName string = "alsoKnownAs"
 // ActivityStreamsAltitudePropertyName is the string literal of the name for the altitude property in the ActivityStreams vocabulary.
 var ActivityStreamsAltitudePropertyName string = "altitude"
 
+// GoToSocialAlwaysPropertyName is the string literal of the name for the always property in the GoToSocial vocabulary.
+var GoToSocialAlwaysPropertyName string = "always"
+
 // ActivityStreamsAnyOfPropertyName is the string literal of the name for the anyOf property in the ActivityStreams vocabulary.
 var ActivityStreamsAnyOfPropertyName string = "anyOf"
+
+// GoToSocialApprovalRequiredPropertyName is the string literal of the name for the approvalRequired property in the GoToSocial vocabulary.
+var GoToSocialApprovalRequiredPropertyName string = "approvalRequired"
+
+// GoToSocialApprovedByPropertyName is the string literal of the name for the approvedBy property in the GoToSocial vocabulary.
+var GoToSocialApprovedByPropertyName string = "approvedBy"
 
 // ActivityStreamsAttachmentPropertyName is the string literal of the name for the attachment property in the ActivityStreams vocabulary.
 var ActivityStreamsAttachmentPropertyName string = "attachment"
@@ -214,6 +235,15 @@ var TootBlurhashPropertyName string = "blurhash"
 
 // ActivityStreamsBtoPropertyName is the string literal of the name for the bto property in the ActivityStreams vocabulary.
 var ActivityStreamsBtoPropertyName string = "bto"
+
+// GoToSocialCanAnnouncePropertyName is the string literal of the name for the canAnnounce property in the GoToSocial vocabulary.
+var GoToSocialCanAnnouncePropertyName string = "canAnnounce"
+
+// GoToSocialCanLikePropertyName is the string literal of the name for the canLike property in the GoToSocial vocabulary.
+var GoToSocialCanLikePropertyName string = "canLike"
+
+// GoToSocialCanReplyPropertyName is the string literal of the name for the canReply property in the GoToSocial vocabulary.
+var GoToSocialCanReplyPropertyName string = "canReply"
 
 // ActivityStreamsCcPropertyName is the string literal of the name for the cc property in the ActivityStreams vocabulary.
 var ActivityStreamsCcPropertyName string = "cc"
@@ -292,6 +322,9 @@ var ActivityStreamsInboxPropertyName string = "inbox"
 
 // ActivityStreamsInstrumentPropertyName is the string literal of the name for the instrument property in the ActivityStreams vocabulary.
 var ActivityStreamsInstrumentPropertyName string = "instrument"
+
+// GoToSocialInteractionPolicyPropertyName is the string literal of the name for the interactionPolicy property in the GoToSocial vocabulary.
+var GoToSocialInteractionPolicyPropertyName string = "interactionPolicy"
 
 // ActivityStreamsItemsPropertyName is the string literal of the name for the items property in the ActivityStreams vocabulary.
 var ActivityStreamsItemsPropertyName string = "items"
