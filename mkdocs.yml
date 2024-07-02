@@ -1,5 +1,5 @@
 site_name: GoToSocial Documentation
-site_url: https://docs.gotosocial.org
+site_url: https://docs.gotosocial.org/en/latest/
 theme:
   name: material
   language: en
