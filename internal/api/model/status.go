@@ -102,6 +102,8 @@ type Status struct {
 	Text string `json:"text,omitempty"`
 	// A list of filters that matched this status and why they matched, if there are any such filters.
 	Filtered []FilterResult `json:"filtered,omitempty"`
+	// The interaction policy for this status, as set by the status author.
+	InteractionPolicy InteractionPolicy `json:"interaction_policy"`
 
 	// Additional fields not exposed via JSON
 	// (used only internally for templating etc).

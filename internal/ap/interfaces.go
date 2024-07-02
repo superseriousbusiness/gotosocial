@@ -188,6 +188,8 @@ type Statusable interface {
 	WithAttachment
 	WithTag
 	WithReplies
+	WithInteractionPolicy
+	WithApprovedBy
 }
 
 // Pollable represents the minimum activitypub interface for representing a 'poll' (it's a subset of a status).
@@ -656,4 +658,22 @@ type WithClosed interface {
 type WithVotersCount interface {
 	GetTootVotersCount() vocab.TootVotersCountProperty
 	SetTootVotersCount(vocab.TootVotersCountProperty)
+}
+
+// WithReplies represents an object with GoToSocialInteractionPolicy.
+type WithInteractionPolicy interface {
+	GetGoToSocialInteractionPolicy() vocab.GoToSocialInteractionPolicyProperty
+	SetGoToSocialInteractionPolicy(vocab.GoToSocialInteractionPolicyProperty)
+}
+
+// WithPolicyRules represents an activity with always and approvalRequired properties.
+type WithPolicyRules interface {
+	GetGoToSocialAlways() vocab.GoToSocialAlwaysProperty
+	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty
+}
+
+// WithApprovedBy represents a Statusable with the approvedBy property.
+type WithApprovedBy interface {
+	GetGoToSocialApprovedBy() vocab.GoToSocialApprovedByProperty
+	SetGoToSocialApprovedBy(vocab.GoToSocialApprovedByProperty)
 }

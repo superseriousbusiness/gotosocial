@@ -34,6 +34,7 @@ import (
 	filtersV2 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/interactionpolicies"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
@@ -58,32 +59,33 @@ type Client struct {
 	processor *processing.Processor
 	db        db.DB
 
-	accounts       *accounts.Module       // api/v1/accounts
-	admin          *admin.Module          // api/v1/admin
-	apps           *apps.Module           // api/v1/apps
-	blocks         *blocks.Module         // api/v1/blocks
-	bookmarks      *bookmarks.Module      // api/v1/bookmarks
-	conversations  *conversations.Module  // api/v1/conversations
-	customEmojis   *customemojis.Module   // api/v1/custom_emojis
-	favourites     *favourites.Module     // api/v1/favourites
-	featuredTags   *featuredtags.Module   // api/v1/featured_tags
-	filtersV1      *filtersV1.Module      // api/v1/filters
-	filtersV2      *filtersV2.Module      // api/v2/filters
-	followRequests *followrequests.Module // api/v1/follow_requests
-	instance       *instance.Module       // api/v1/instance
-	lists          *lists.Module          // api/v1/lists
-	markers        *markers.Module        // api/v1/markers
-	media          *media.Module          // api/v1/media, api/v2/media
-	mutes          *mutes.Module          // api/v1/mutes
-	notifications  *notifications.Module  // api/v1/notifications
-	polls          *polls.Module          // api/v1/polls
-	preferences    *preferences.Module    // api/v1/preferences
-	reports        *reports.Module        // api/v1/reports
-	search         *search.Module         // api/v1/search, api/v2/search
-	statuses       *statuses.Module       // api/v1/statuses
-	streaming      *streaming.Module      // api/v1/streaming
-	timelines      *timelines.Module      // api/v1/timelines
-	user           *user.Module           // api/v1/user
+	accounts            *accounts.Module            // api/v1/accounts
+	admin               *admin.Module               // api/v1/admin
+	apps                *apps.Module                // api/v1/apps
+	blocks              *blocks.Module              // api/v1/blocks
+	bookmarks           *bookmarks.Module           // api/v1/bookmarks
+	conversations       *conversations.Module       // api/v1/conversations
+	customEmojis        *customemojis.Module        // api/v1/custom_emojis
+	favourites          *favourites.Module          // api/v1/favourites
+	featuredTags        *featuredtags.Module        // api/v1/featured_tags
+	filtersV1           *filtersV1.Module           // api/v1/filters
+	filtersV2           *filtersV2.Module           // api/v2/filters
+	followRequests      *followrequests.Module      // api/v1/follow_requests
+	instance            *instance.Module            // api/v1/instance
+	interactionPolicies *interactionpolicies.Module // api/v1/interaction_policies
+	lists               *lists.Module               // api/v1/lists
+	markers             *markers.Module             // api/v1/markers
+	media               *media.Module               // api/v1/media, api/v2/media
+	mutes               *mutes.Module               // api/v1/mutes
+	notifications       *notifications.Module       // api/v1/notifications
+	polls               *polls.Module               // api/v1/polls
+	preferences         *preferences.Module         // api/v1/preferences
+	reports             *reports.Module             // api/v1/reports
+	search              *search.Module              // api/v1/search, api/v2/search
+	statuses            *statuses.Module            // api/v1/statuses
+	streaming           *streaming.Module           // api/v1/streaming
+	timelines           *timelines.Module           // api/v1/timelines
+	user                *user.Module                // api/v1/user
 }
 
 func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
@@ -116,6 +118,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.filtersV2.Route(h)
 	c.followRequests.Route(h)
 	c.instance.Route(h)
+	c.interactionPolicies.Route(h)
 	c.lists.Route(h)
 	c.markers.Route(h)
 	c.media.Route(h)
@@ -136,31 +139,32 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		processor: p,
 		db:        state.DB,
 
-		accounts:       accounts.New(p),
-		admin:          admin.New(state, p),
-		apps:           apps.New(p),
-		blocks:         blocks.New(p),
-		bookmarks:      bookmarks.New(p),
-		conversations:  conversations.New(p),
-		customEmojis:   customemojis.New(p),
-		favourites:     favourites.New(p),
-		featuredTags:   featuredtags.New(p),
-		filtersV1:      filtersV1.New(p),
-		filtersV2:      filtersV2.New(p),
-		followRequests: followrequests.New(p),
-		instance:       instance.New(p),
-		lists:          lists.New(p),
-		markers:        markers.New(p),
-		media:          media.New(p),
-		mutes:          mutes.New(p),
-		notifications:  notifications.New(p),
-		polls:          polls.New(p),
-		preferences:    preferences.New(p),
-		reports:        reports.New(p),
-		search:         search.New(p),
-		statuses:       statuses.New(p),
-		streaming:      streaming.New(p, time.Second*30, 4096),
-		timelines:      timelines.New(p),
-		user:           user.New(p),
+		accounts:            accounts.New(p),
+		admin:               admin.New(state, p),
+		apps:                apps.New(p),
+		blocks:              blocks.New(p),
+		bookmarks:           bookmarks.New(p),
+		conversations:       conversations.New(p),
+		customEmojis:        customemojis.New(p),
+		favourites:          favourites.New(p),
+		featuredTags:        featuredtags.New(p),
+		filtersV1:           filtersV1.New(p),
+		filtersV2:           filtersV2.New(p),
+		followRequests:      followrequests.New(p),
+		instance:            instance.New(p),
+		interactionPolicies: interactionpolicies.New(p),
+		lists:               lists.New(p),
+		markers:             markers.New(p),
+		media:               media.New(p),
+		mutes:               mutes.New(p),
+		notifications:       notifications.New(p),
+		polls:               polls.New(p),
+		preferences:         preferences.New(p),
+		reports:             reports.New(p),
+		search:              search.New(p),
+		statuses:            statuses.New(p),
+		streaming:           streaming.New(p, time.Second*30, 4096),
+		timelines:           timelines.New(p),
+		user:                user.New(p),
 	}
 }

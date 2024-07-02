@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -102,6 +103,66 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 	content.AppendRDFLangString(rdfLangString)
 
 	note.SetActivityStreamsContent(content)
+
+	policy := streams.NewGoToSocialInteractionPolicy()
+
+	// Set canLike.
+	canLike := streams.NewGoToSocialCanLike()
+
+	// Anyone can like.
+	canLikeAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	canLikeAlwaysProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	canLike.SetGoToSocialAlways(canLikeAlwaysProp)
+
+	// Empty approvalRequired.
+	canLikeApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	canLike.SetGoToSocialApprovalRequired(canLikeApprovalRequiredProp)
+
+	// Set canLike on the policy.
+	canLikeProp := streams.NewGoToSocialCanLikeProperty()
+	canLikeProp.AppendGoToSocialCanLike(canLike)
+	policy.SetGoToSocialCanLike(canLikeProp)
+
+	// Build canReply.
+	canReply := streams.NewGoToSocialCanReply()
+
+	// Anyone can reply.
+	canReplyAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	canReplyAlwaysProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	canReply.SetGoToSocialAlways(canReplyAlwaysProp)
+
+	// Set empty approvalRequired.
+	canReplyApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	canReply.SetGoToSocialApprovalRequired(canReplyApprovalRequiredProp)
+
+	// Set canReply on the policy.
+	canReplyProp := streams.NewGoToSocialCanReplyProperty()
+	canReplyProp.AppendGoToSocialCanReply(canReply)
+	policy.SetGoToSocialCanReply(canReplyProp)
+
+	// Build canAnnounce.
+	canAnnounce := streams.NewGoToSocialCanAnnounce()
+
+	// Only f0x and dumpsterqueer can announce.
+	canAnnounceAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	canAnnounceAlwaysProp.AppendIRI(testrig.URLMustParse("https://gts.superseriousbusiness.org/users/dumpsterqueer"))
+	canAnnounceAlwaysProp.AppendIRI(testrig.URLMustParse("https://gts.superseriousbusiness.org/users/f0x"))
+	canAnnounce.SetGoToSocialAlways(canAnnounceAlwaysProp)
+
+	// Public requires approval to announce.
+	canAnnounceApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	canAnnounceApprovalRequiredProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	canAnnounce.SetGoToSocialApprovalRequired(canAnnounceApprovalRequiredProp)
+
+	// Set canAnnounce on the policy.
+	canAnnounceProp := streams.NewGoToSocialCanAnnounceProperty()
+	canAnnounceProp.AppendGoToSocialCanAnnounce(canAnnounce)
+	policy.SetGoToSocialCanAnnounce(canAnnounceProp)
+
+	// Set the policy on the note.
+	policyProp := streams.NewGoToSocialInteractionPolicyProperty()
+	policyProp.AppendGoToSocialInteractionPolicy(policy)
+	note.SetGoToSocialInteractionPolicy(policyProp)
 
 	return note
 }
@@ -296,6 +357,7 @@ type APTestSuite struct {
 	addressable3      ap.Addressable
 	addressable4      vocab.ActivityStreamsAnnounce
 	addressable5      ap.Addressable
+	testAccounts      map[string]*gtsmodel.Account
 }
 
 func (suite *APTestSuite) jsonToType(rawJson string) (vocab.Type, map[string]interface{}) {
@@ -336,4 +398,5 @@ func (suite *APTestSuite) SetupTest() {
 	suite.addressable3 = addressable3()
 	suite.addressable4 = addressable4()
 	suite.addressable5 = addressable5()
+	suite.testAccounts = testrig.NewTestAccounts()
 }

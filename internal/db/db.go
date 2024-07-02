@@ -32,6 +32,7 @@ type DB interface {
 	Emoji
 	HeaderFilter
 	Instance
+	Interaction
 	Filter
 	List
 	Marker

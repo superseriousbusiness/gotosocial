@@ -35,6 +35,6 @@ type Surface struct {
 	State       *state.State
 	Converter   *typeutils.Converter
 	Stream      *stream.Processor
-	Filter      *visibility.Filter
+	VisFilter   *visibility.Filter
 	EmailSender email.Sender
 }

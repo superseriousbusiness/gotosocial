@@ -29,17 +29,26 @@ import (
 )
 
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) (*http.Response, error) {
-	// if the request is to us, we can shortcut for certain URIs rather than going through
-	// the normal request flow, thereby saving time and energy
+	// If the request is to us, we can shortcut for
+	// certain URIs rather than going through the normal
+	// request flow, thereby saving time and energy.
 	if iri.Host == config.GetHost() {
-		if uris.IsFollowersPath(iri) {
-			// the request is for followers of one of our accounts, which we can shortcut
-			return t.controller.dereferenceLocalFollowers(ctx, iri)
-		}
+		switch {
 
-		if uris.IsUserPath(iri) {
-			// the request is for one of our accounts, which we can shortcut
+		case uris.IsFollowersPath(iri):
+			// The request is for followers of one of
+			// our accounts, which we can shortcut.
+			return t.controller.dereferenceLocalFollowers(ctx, iri)
+
+		case uris.IsUserPath(iri):
+			// The request is for one of our
+			// accounts, which we can shortcut.
 			return t.controller.dereferenceLocalUser(ctx, iri)
+
+		case uris.IsAcceptsPath(iri):
+			// The request is for an Accept on
+			// our instance, which we can shortcut.
+			return t.controller.dereferenceLocalAccept(ctx, iri)
 		}
 	}
 

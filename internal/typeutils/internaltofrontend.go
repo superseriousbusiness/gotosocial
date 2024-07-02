@@ -798,7 +798,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 		for _, account := range otherAccounts {
 			// Is this account visible?
-			visible, err := c.filter.AccountVisible(ctx, requestingAccount, account)
+			visible, err := c.visFilter.AccountVisible(ctx, requestingAccount, account)
 			if err != nil {
 				return nil, err
 			}
@@ -1163,6 +1163,20 @@ func (c *Converter) baseStatusToFrontend(
 		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
+	// Take status's interaction policy, or
+	// fall back to default for its visibility.
+	var p *gtsmodel.InteractionPolicy
+	if s.InteractionPolicy != nil {
+		p = s.InteractionPolicy
+	} else {
+		p = gtsmodel.DefaultInteractionPolicyFor(s.Visibility)
+	}
+
+	apiInteractionPolicy, err := c.InteractionPolicyToAPIInteractionPolicy(ctx, p, s, requestingAccount)
+	if err != nil {
+		return nil, gtserror.Newf("error converting interaction policy: %w", err)
+	}
+
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
@@ -1187,6 +1201,7 @@ func (c *Converter) baseStatusToFrontend(
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
 		Text:               s.Text,
+		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
 	// Nullable fields.
@@ -2184,4 +2199,166 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 		}
 	}
 	return apiThemes
+}
+
+// Convert the given gtsmodel policy
+// into an apimodel interaction policy.
+//
+// Provided status can be nil to convert a
+// policy without a particular status in mind.
+//
+// RequestingAccount can also be nil for
+// unauthorized requests (web, public api etc).
+func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
+	ctx context.Context,
+	policy *gtsmodel.InteractionPolicy,
+	status *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+) (*apimodel.InteractionPolicy, error) {
+	convertURIs := func(policyURIs gtsmodel.PolicyURIs) (apiPolicyURIs []apimodel.PolicyURI) {
+		for _, policyURI := range policyURIs {
+			switch policyURI {
+
+			case gtsmodel.PolicyURISelf:
+				// Author can do this.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURIAuthor,
+				)
+
+			case gtsmodel.PolicyURIMentioned:
+				// Mentioned can do this.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURIMentioned,
+				)
+
+			case gtsmodel.PolicyURIMutuals:
+				// Mutuals can do this.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURIMutuals,
+				)
+
+			case gtsmodel.PolicyURIFollowing:
+				// Following can do this.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURIFollowing,
+				)
+
+			case gtsmodel.PolicyURIFollowers:
+				// Followers can do this.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURIFollowers,
+				)
+
+			case gtsmodel.PolicyURIPublic:
+				// Public can do this.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURIPublic,
+				)
+
+			default:
+				// Specific URI of ActivityPub Actor.
+				apiPolicyURIs = append(
+					apiPolicyURIs,
+					apimodel.PolicyURI(policyURI),
+				)
+			}
+		}
+
+		// Deduplicate the slice just in case
+		// someone added multiple copies of
+		// the same URI for whatever reason.
+		return util.Deduplicate(apiPolicyURIs)
+	}
+
+	apiPolicy := &apimodel.InteractionPolicy{
+		CanFavourite: apimodel.PolicyRules{
+			Always:       convertURIs(policy.CanLike.Always),
+			WithApproval: convertURIs(policy.CanLike.WithApproval),
+		},
+		CanReply: apimodel.PolicyRules{
+			Always:       convertURIs(policy.CanReply.Always),
+			WithApproval: convertURIs(policy.CanReply.WithApproval),
+		},
+		CanReblog: apimodel.PolicyRules{
+			Always:       convertURIs(policy.CanAnnounce.Always),
+			WithApproval: convertURIs(policy.CanAnnounce.WithApproval),
+		},
+	}
+
+	if status == nil || requestingAccount == nil {
+		// We're done here!
+		return apiPolicy, nil
+	}
+
+	// Status and requestingAccount are both defined,
+	// so we can add the "me" URN to the returned policy
+	// for each interaction type, if applicable.
+
+	likeable, err := c.intFilter.StatusLikeable(ctx, requestingAccount, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status likeable by requester: %w", err)
+		return nil, err
+	}
+
+	if likeable == gtsmodel.PolicyResultPermitted {
+		// We can do this!
+		apiPolicy.CanFavourite.Always = append(
+			apiPolicy.CanFavourite.Always,
+			apimodel.PolicyURIMe,
+		)
+	} else if likeable == gtsmodel.PolicyResultWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanFavourite.WithApproval = append(
+			apiPolicy.CanFavourite.WithApproval,
+			apimodel.PolicyURIMe,
+		)
+	}
+
+	replyable, err := c.intFilter.StatusReplyable(ctx, requestingAccount, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status replyable by requester: %w", err)
+		return nil, err
+	}
+
+	if replyable == gtsmodel.PolicyResultPermitted {
+		// We can do this!
+		apiPolicy.CanReply.Always = append(
+			apiPolicy.CanReply.Always,
+			apimodel.PolicyURIMe,
+		)
+	} else if replyable == gtsmodel.PolicyResultWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanReply.WithApproval = append(
+			apiPolicy.CanReply.WithApproval,
+			apimodel.PolicyURIMe,
+		)
+	}
+
+	boostable, err := c.intFilter.StatusBoostable(ctx, requestingAccount, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status boostable by requester: %w", err)
+		return nil, err
+	}
+
+	if boostable == gtsmodel.PolicyResultPermitted {
+		// We can do this!
+		apiPolicy.CanReblog.Always = append(
+			apiPolicy.CanReblog.Always,
+			apimodel.PolicyURIMe,
+		)
+	} else if boostable == gtsmodel.PolicyResultWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanReblog.WithApproval = append(
+			apiPolicy.CanReblog.WithApproval,
+			apimodel.PolicyURIMe,
+		)
+	}
+
+	return apiPolicy, nil
 }

@@ -38,7 +38,7 @@ type Processor struct {
 	state        *state.State
 	converter    *typeutils.Converter
 	mediaManager *media.Manager
-	filter       *visibility.Filter
+	visFilter    *visibility.Filter
 	formatter    *text.Formatter
 	federator    *federation.Federator
 	parseMention gtsmodel.ParseMentionFunc
@@ -52,7 +52,7 @@ func New(
 	converter *typeutils.Converter,
 	mediaManager *media.Manager,
 	federator *federation.Federator,
-	filter *visibility.Filter,
+	visFilter *visibility.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
 ) Processor {
 	return Processor{
@@ -60,7 +60,7 @@ func New(
 		state:        state,
 		converter:    converter,
 		mediaManager: mediaManager,
-		filter:       filter,
+		visFilter:    visFilter,
 		formatter:    text.NewFormatter(state.DB),
 		federator:    federator,
 		parseMention: parseMention,

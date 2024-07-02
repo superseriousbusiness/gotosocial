@@ -42,7 +42,7 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
 	}
 
-	visible, err := p.filter.AccountVisible(ctx, requestingAccount, targetAccount)
+	visible, err := p.visFilter.AccountVisible(ctx, requestingAccount, targetAccount)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
 	}

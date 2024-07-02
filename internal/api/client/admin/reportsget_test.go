@@ -528,7 +528,30 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "tags": [],
         "emojis": [],
         "card": null,
-        "poll": null
+        "poll": null,
+        "interaction_policy": {
+          "can_favourite": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          },
+          "can_reply": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          },
+          "can_reblog": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          }
+        }
       }
     ],
     "rules": [
@@ -750,7 +773,30 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "tags": [],
         "emojis": [],
         "card": null,
-        "poll": null
+        "poll": null,
+        "interaction_policy": {
+          "can_favourite": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          },
+          "can_reply": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          },
+          "can_reblog": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          }
+        }
       }
     ],
     "rules": [
@@ -972,7 +1018,30 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "tags": [],
         "emojis": [],
         "card": null,
-        "poll": null
+        "poll": null,
+        "interaction_policy": {
+          "can_favourite": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          },
+          "can_reply": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          },
+          "can_reblog": {
+            "always": [
+              "urn:mastodon:public",
+              "urn:mastodon:me"
+            ],
+            "with_approval": []
+          }
+        }
       }
     ],
     "rules": [

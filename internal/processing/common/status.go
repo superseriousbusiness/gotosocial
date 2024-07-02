@@ -63,7 +63,7 @@ func (p *Processor) GetTargetStatusBy(
 	}
 
 	// Check whether target status is visible to requesting account.
-	visible, err = p.filter.StatusVisible(ctx, requester, target)
+	visible, err = p.visFilter.StatusVisible(ctx, requester, target)
 	if err != nil {
 		return nil, false, gtserror.NewErrorInternalError(err)
 	}

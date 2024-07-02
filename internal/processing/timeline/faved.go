@@ -45,7 +45,7 @@ func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, ma
 
 	items := make([]interface{}, 0, count)
 	for _, s := range statuses {
-		visible, err := p.filter.StatusVisible(ctx, authed.Account, s)
+		visible, err := p.visFilter.StatusVisible(ctx, authed.Account, s)
 		if err != nil {
 			log.Errorf(ctx, "error checking status visibility: %v", err)
 			continue

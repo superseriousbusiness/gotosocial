@@ -72,11 +72,14 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	createI, err := ap.Serialize(create)
 	suite.NoError(err)
 
+	// Chop off @context since
+	// ordering is non-determinate.
+	delete(createI, "@context")
+
 	bytes, err := json.MarshalIndent(createI, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
-  "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",
@@ -89,6 +92,26 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
       "en": "hello everyone!"
     },
     "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "interactionPolicy": {
+      "canAnnounce": {
+        "always": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "approvalRequired": []
+      },
+      "canLike": {
+        "always": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "approvalRequired": []
+      },
+      "canReply": {
+        "always": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "approvalRequired": []
+      }
+    },
     "published": "2021-10-20T12:40:37+02:00",
     "replies": {
       "first": {

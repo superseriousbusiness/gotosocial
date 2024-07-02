@@ -39,7 +39,7 @@ func New(
 	state *state.State,
 	federator *federation.Federator,
 	converter *typeutils.Converter,
-	filter *visibility.Filter,
+	visFilter *visibility.Filter,
 	emailSender email.Sender,
 	account *account.Processor,
 	media *media.Processor,
@@ -59,7 +59,7 @@ func New(
 		State:       state,
 		Converter:   converter,
 		Stream:      stream,
-		Filter:      filter,
+		VisFilter:   visFilter,
 		EmailSender: emailSender,
 	}
 

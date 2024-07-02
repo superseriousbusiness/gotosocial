@@ -115,15 +115,6 @@ func (suite *AccountTestSuite) populateTestStatus(testAccountKey string, status 
 	if status.Federated == nil {
 		status.Federated = util.Ptr(true)
 	}
-	if status.Boostable == nil {
-		status.Boostable = util.Ptr(true)
-	}
-	if status.Likeable == nil {
-		status.Likeable = util.Ptr(true)
-	}
-	if status.Replyable == nil {
-		status.Replyable = util.Ptr(true)
-	}
 
 	if inReplyTo != nil {
 		status.InReplyToAccountID = inReplyTo.AccountID

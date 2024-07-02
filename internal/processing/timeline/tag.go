@@ -128,7 +128,7 @@ func (p *Processor) packageTagResponse(
 	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
 	for _, s := range statuses {
-		timelineable, err := p.filter.StatusTagTimelineable(ctx, requestingAcct, s)
+		timelineable, err := p.visFilter.StatusTagTimelineable(ctx, requestingAcct, s)
 		if err != nil {
 			log.Errorf(ctx, "error checking status visibility: %v", err)
 			continue

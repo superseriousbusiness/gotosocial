@@ -32,6 +32,73 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// notifyReply notifies the account replied-to
+// by the given status that they have a new reply.
+//
+// This creates a mention type notif, even if the
+// status account is not actually mentioned explicitly,
+// but just replied to. This handles cases where some
+// softwares send replies but don't bother putting a
+// mention tag on the Note.
+//
+// The function takes account of whether or not
+// the reply is pending approval.
+func (s *Surface) notifyReply(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) error {
+	// Beforehand, ensure the passed status is fully populated.
+	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error populating status %s: %w", status.ID, err)
+	}
+
+	if status.InReplyToAccount.IsRemote() {
+		// no need to notify
+		// remote accounts.
+		return nil
+	}
+
+	// Ensure thread not muted
+	// by replied-to account.
+	muted, err := s.State.DB.IsThreadMutedByAccount(
+		ctx,
+		status.ThreadID,
+		status.InReplyToAccountID,
+	)
+	if err != nil {
+		return gtserror.Newf("error checking status thread mute %s: %w", status.ThreadID, err)
+	}
+
+	if muted {
+		// The replied-to account
+		// has muted the thread.
+		// Don't pester them.
+		return nil
+	}
+
+	// Change notif type depending on if
+	// approval is required for the reply.
+	var notifType gtsmodel.NotificationType
+	if *status.PendingApproval {
+		notifType = gtsmodel.NotificationPendingReply
+	} else {
+		notifType = gtsmodel.NotificationMention
+	}
+
+	// notify mentioned
+	// by status author.
+	if err := s.Notify(ctx,
+		notifType,
+		status.InReplyToAccount,
+		status.Account,
+		status.ID,
+	); err != nil {
+		return gtserror.Newf("error notifying replied-to account %s: %w", status.InReplyToAccountID, err)
+	}
+
+	return nil
+}
+
 // notifyMentions iterates through mentions on the
 // given status, and notifies each mentioned account
 // that they have a new mention.
@@ -177,6 +244,9 @@ func (s *Surface) notifyFollow(
 
 // notifyFave notifies the target of the given
 // fave that their status has been liked/faved.
+//
+// The function takes account of whether or not
+// the fave is pending approval.
 func (s *Surface) notifyFave(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
@@ -214,10 +284,20 @@ func (s *Surface) notifyFave(
 		return nil
 	}
 
+	// Change notif type depending
+	// on if approval is required
+	// by the liked status account.
+	var notifType gtsmodel.NotificationType
+	if *fave.PendingApproval {
+		notifType = gtsmodel.NotificationPendingFave
+	} else {
+		notifType = gtsmodel.NotificationFave
+	}
+
 	// notify status author
 	// of fave by account.
 	if err := s.Notify(ctx,
-		gtsmodel.NotificationFave,
+		notifType,
 		fave.TargetAccount,
 		fave.Account,
 		fave.StatusID,
@@ -230,6 +310,9 @@ func (s *Surface) notifyFave(
 
 // notifyAnnounce notifies the status boost target
 // account that their status has been boosted.
+//
+// The function takes account of whether or not
+// the boost is pending approval.
 func (s *Surface) notifyAnnounce(
 	ctx context.Context,
 	status *gtsmodel.Status,
@@ -273,10 +356,20 @@ func (s *Surface) notifyAnnounce(
 		return nil
 	}
 
+	// Change notif type depending
+	// on if approval is required
+	// by the boosted status account.
+	var notifType gtsmodel.NotificationType
+	if *status.PendingApproval {
+		notifType = gtsmodel.NotificationPendingReblog
+	} else {
+		notifType = gtsmodel.NotificationReblog
+	}
+
 	// notify status author
 	// of boost by account.
 	if err := s.Notify(ctx,
-		gtsmodel.NotificationReblog,
+		notifType,
 		status.BoostOfAccount,
 		status.Account,
 		status.ID,

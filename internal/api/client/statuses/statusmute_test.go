@@ -145,7 +145,30 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "emojis": [],
   "card": null,
   "poll": null,
-  "text": "hello everyone!"
+  "text": "hello everyone!",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
 }`, muted)
 
 	// Unmute the status, ensure `muted` is `false`.
@@ -208,7 +231,30 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "emojis": [],
   "card": null,
   "poll": null,
-  "text": "hello everyone!"
+  "text": "hello everyone!",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
 }`, unmuted)
 }
 

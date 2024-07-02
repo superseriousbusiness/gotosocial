@@ -122,11 +122,23 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 
 	// ACCEPT SOMETHING
 	case ap.ActivityAccept:
-		switch fMsg.APObjectType { //nolint:gocritic
+		switch fMsg.APObjectType {
 
-		// ACCEPT FOLLOW
+		// ACCEPT (pending) FOLLOW
 		case ap.ActivityFollow:
 			return p.fediAPI.AcceptFollow(ctx, fMsg)
+
+		// ACCEPT (pending) LIKE
+		case ap.ActivityLike:
+			return p.fediAPI.AcceptLike(ctx, fMsg)
+
+		// ACCEPT (pending) REPLY
+		case ap.ObjectNote:
+			return p.fediAPI.AcceptReply(ctx, fMsg)
+
+		// ACCEPT (pending) ANNOUNCE
+		case ap.ActivityAnnounce:
+			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
 		}
 
 	// DELETE SOMETHING
@@ -213,6 +225,23 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// creating this status! Return
 		// here and let the other thread
 		// handle timelining + notifying.
+		return nil
+	}
+
+	if status.InReplyToID != "" {
+		// Notify the replied-to account.
+		if err := p.surface.notifyReply(ctx, status); err != nil {
+			log.Errorf(ctx, "error notifying reply: %v", err)
+		}
+	}
+
+	if *status.PendingApproval {
+		// If pending approval is set then status
+		// must reply to a local status with approval
+		// required for the interaction.
+		//
+		// Just return now after notifying the
+		// account that's being interacted with.
 		return nil
 	}
 
@@ -348,8 +377,19 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		return gtserror.Newf("error populating status fave: %w", err)
 	}
 
+	// Notify the fave account target.
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
+	}
+
+	if *fave.PendingApproval {
+		// If pending approval is set then fave
+		// must target a local status with approval
+		// required for the interaction.
+		//
+		// Just return now after notifying the
+		// account that's being interacted with.
+		return nil
 	}
 
 	// Interaction counts changed on the faved status;
@@ -365,8 +405,9 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
 	}
 
-	// Dereference status that this boosts, note
-	// that this will handle storing the boost in
+	// Dereference into a boost wrapper status.
+	//
+	// Note: this will handle storing the boost in
 	// the db, and dereferencing the target status
 	// ancestors / descendants where appropriate.
 	var err error
@@ -376,14 +417,31 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		fMsg.Receiving.Username,
 	)
 	if err != nil {
-		if gtserror.IsUnretrievable(err) {
-			// Boosted status domain blocked, nothing to do.
+		if gtserror.IsUnretrievable(err) ||
+			gtserror.NotPermitted(err) {
+			// Boosted status domain blocked, or
+			// otherwise not permitted, nothing to do.
 			log.Debugf(ctx, "skipping announce: %v", err)
 			return nil
 		}
 
 		// Actual error.
 		return gtserror.Newf("error dereferencing announce: %w", err)
+	}
+
+	// Notify the announce target account.
+	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
+		log.Errorf(ctx, "error notifying announce: %v", err)
+	}
+
+	if *boost.PendingApproval {
+		// If pending approval is set then boost
+		// must target a local status with approval
+		// required for the interaction.
+		//
+		// Just return now after notifying the
+		// account that's being interacted with.
+		return nil
 	}
 
 	// Update stats for the remote account.
@@ -394,10 +452,6 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 	// Timeline and notify the announce.
 	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
-	}
-
-	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
-		log.Errorf(ctx, "error notifying announce: %v", err)
 	}
 
 	// Interaction counts changed on the original status;
@@ -546,6 +600,23 @@ func (p *fediAPI) AcceptFollow(ctx context.Context, fMsg *messages.FromFediAPI) 
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
+	return nil
+}
+
+func (p *fediAPI) AcceptLike(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// TODO
+	return nil
+}
+
+func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// TODO
+	
+	return nil
+}
+
+func (p *fediAPI) AcceptAnnounce(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// TODO
+	
 	return nil
 }
 

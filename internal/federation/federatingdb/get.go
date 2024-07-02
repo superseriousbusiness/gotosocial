@@ -53,6 +53,12 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 		return f.Followers(ctx, id)
 	case uris.IsFollowingPath(id):
 		return f.Following(ctx, id)
+	case uris.IsAcceptsPath(id):
+		approval, err := f.state.DB.GetInteractionApprovalByID(ctx, id.String())
+		if err != nil {
+			return nil, err
+		}
+		return f.converter.InteractionApprovalToASAccept(ctx, approval)
 	default:
 		return nil, fmt.Errorf("federatingDB: could not Get %s", id.String())
 	}

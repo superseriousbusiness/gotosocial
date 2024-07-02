@@ -144,9 +144,9 @@ func (d *Dereferencer) DereferenceStatusAncestors(ctx context.Context, username 
 				return nil
 			}
 
-			// If the reply is public or unlisted then
+			// If the reply is public or unlocked then
 			// likely the replied-to status is/was public
-			// or unlisted and has indeed been deleted,
+			// or unlocked and has indeed been deleted,
 			// fall through to the Gone case to clean up.
 			fallthrough
 

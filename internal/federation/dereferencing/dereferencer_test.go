@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -79,8 +80,19 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.state.Storage = suite.storage
 
 	visFilter := visibility.NewFilter(&suite.state)
+	intFilter := interaction.NewFilter(&suite.state)
 	media := testrig.NewTestMediaManager(&suite.state)
-	suite.dereferencer = dereferencing.NewDereferencer(&suite.state, converter, testrig.NewTestTransportController(&suite.state, suite.client), visFilter, media)
+	suite.dereferencer = dereferencing.NewDereferencer(
+		&suite.state,
+		converter,
+		testrig.NewTestTransportController(
+			&suite.state,
+			suite.client,
+		),
+		visFilter,
+		intFilter,
+		media,
+	)
 	testrig.StandardDBSetup(suite.db, nil)
 }
 

@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -55,6 +56,8 @@ const (
 	StatusPath = BasePath + "/" + uris.StatusesPath + "/:" + StatusIDKey
 	// StatusRepliesPath is for serving the replies collection of a status.
 	StatusRepliesPath = StatusPath + "/replies"
+	// AcceptPath is for serving accepts of a status.
+	AcceptPath = BasePath + "/" + uris.AcceptsPath + "/:" + apiutil.IDKey
 )
 
 type Module struct {
@@ -76,4 +79,5 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, StatusPath, m.StatusGETHandler)
 	attachHandler(http.MethodGet, StatusRepliesPath, m.StatusRepliesGETHandler)
 	attachHandler(http.MethodGet, OutboxPath, m.OutboxGETHandler)
+	attachHandler(http.MethodGet, AcceptPath, m.AcceptGETHandler)
 }

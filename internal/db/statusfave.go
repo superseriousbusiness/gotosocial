@@ -27,8 +27,11 @@ type StatusFave interface {
 	// GetStatusFaveByAccountID gets one status fave created by the given accountID, targeting the given statusID.
 	GetStatusFave(ctx context.Context, accountID string, statusID string) (*gtsmodel.StatusFave, error)
 
-	// GetStatusFave returns one status fave with the given id.
+	// GetStatusFaveByID returns one status fave with the given id.
 	GetStatusFaveByID(ctx context.Context, id string) (*gtsmodel.StatusFave, error)
+
+	// GetStatusFaveByURI returns one status fave with the given uri.
+	GetStatusFaveByURI(ctx context.Context, uri string) (*gtsmodel.StatusFave, error)
 
 	// GetStatusFaves returns a slice of faves/likes of the status with given ID.
 	// This slice will be unfiltered, not taking account of blocks and whatnot, so filter it before serving it back to a user.
@@ -39,6 +42,9 @@ type StatusFave interface {
 
 	// PutStatusFave inserts the given statusFave into the database.
 	PutStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave) error
+
+	// UpdateStatusFave updates one statusFave in the database.
+	UpdateStatusFave(ctx context.Context, statusFave *gtsmodel.StatusFave, columns ...string) error
 
 	// DeleteStatusFave deletes one status fave with the given id.
 	DeleteStatusFaveByID(ctx context.Context, id string) error

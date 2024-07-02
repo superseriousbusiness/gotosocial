@@ -62,7 +62,7 @@ func HomeTimelineGrab(state *state.State) timeline.GrabFunction {
 }
 
 // HomeTimelineFilter returns a function that satisfies FilterFunction for home timelines.
-func HomeTimelineFilter(state *state.State, filter *visibility.Filter) timeline.FilterFunction {
+func HomeTimelineFilter(state *state.State, visFilter *visibility.Filter) timeline.FilterFunction {
 	return func(ctx context.Context, accountID string, item timeline.Timelineable) (shouldIndex bool, err error) {
 		status, ok := item.(*gtsmodel.Status)
 		if !ok {
@@ -76,7 +76,7 @@ func HomeTimelineFilter(state *state.State, filter *visibility.Filter) timeline.
 			return false, err
 		}
 
-		timelineable, err := filter.StatusHomeTimelineable(ctx, requestingAccount, status)
+		timelineable, err := visFilter.StatusHomeTimelineable(ctx, requestingAccount, status)
 		if err != nil {
 			err = gtserror.Newf("error checking hometimelineability of status %s for account %s: %w", status.ID, accountID, err)
 			return false, err

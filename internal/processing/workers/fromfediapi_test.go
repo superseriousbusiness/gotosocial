@@ -45,8 +45,12 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	testStructs := suite.SetupTestStructs()
 	defer suite.TearDownTestStructs(testStructs)
 
-	boostedStatus := suite.testStatuses["local_account_1_status_1"]
-	boostingAccount := suite.testAccounts["remote_account_1"]
+	boostedStatus := &gtsmodel.Status{}
+	*boostedStatus = *suite.testStatuses["local_account_1_status_1"]
+
+	boostingAccount := &gtsmodel.Account{}
+	*boostingAccount = *suite.testAccounts["remote_account_1"]
+
 	announceStatus := &gtsmodel.Status{}
 	announceStatus.URI = "https://example.org/some-announce-uri"
 	announceStatus.BoostOfURI = boostedStatus.URI
@@ -64,13 +68,25 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 		Receiving:      suite.testAccounts["local_account_1"],
 		Requesting:     boostingAccount,
 	})
-	suite.NoError(err)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	// side effects should be triggered
+	// Wait for side effects to trigger:
 	// 1. status should have an ID, and be in the database
-	suite.NotEmpty(announceStatus.ID)
-	_, err = testStructs.State.DB.GetStatusByID(context.Background(), announceStatus.ID)
-	suite.NoError(err)
+	if !testrig.WaitFor(func() bool {
+		if announceStatus.ID == "" {
+			return false
+		}
+
+		_, err = testStructs.State.DB.GetStatusByID(
+			context.Background(),
+			announceStatus.ID,
+		)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for announce to be in the database")
+	}
 
 	// 2. a notification should exist for the announce
 	where := []db.Where{
@@ -93,9 +109,14 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	testStructs := suite.SetupTestStructs()
 	defer suite.TearDownTestStructs(testStructs)
 
-	repliedAccount := suite.testAccounts["local_account_1"]
-	repliedStatus := suite.testStatuses["local_account_1_status_1"]
-	replyingAccount := suite.testAccounts["remote_account_1"]
+	repliedAccount := &gtsmodel.Account{}
+	*repliedAccount = *suite.testAccounts["local_account_1"]
+
+	repliedStatus := &gtsmodel.Status{}
+	*repliedStatus = *suite.testStatuses["local_account_1_status_1"]
+
+	replyingAccount := &gtsmodel.Account{}
+	*replyingAccount = *suite.testAccounts["remote_account_1"]
 
 	// Set the replyingAccount's last fetched_at
 	// date to something recent so no refresh is attempted,
@@ -128,12 +149,19 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 		Receiving:      repliedAccount,
 		Requesting:     replyingAccount,
 	})
-	suite.NoError(err)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	// side effects should be triggered
+	// Wait for side effects to trigger:
 	// 1. status should be in the database
-	replyingStatus, err := testStructs.State.DB.GetStatusByURI(context.Background(), replyingURI)
-	suite.NoError(err)
+	var replyingStatus *gtsmodel.Status
+	if !testrig.WaitFor(func() bool {
+		replyingStatus, err = testStructs.State.DB.GetStatusByURI(context.Background(), replyingURI)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for replying status to be in the database")
+	}
 
 	// 2. a notification should exist for the mention
 	var notif gtsmodel.Notification
@@ -304,8 +332,11 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 
 	ctx := context.Background()
 
-	deletedAccount := suite.testAccounts["remote_account_1"]
-	receivingAccount := suite.testAccounts["local_account_1"]
+	deletedAccount := &gtsmodel.Account{}
+	*deletedAccount = *suite.testAccounts["remote_account_1"]
+
+	receivingAccount := &gtsmodel.Account{}
+	*receivingAccount = *suite.testAccounts["local_account_1"]
 
 	// before doing the delete....
 	// make local_account_1 and remote_account_1 into mufos

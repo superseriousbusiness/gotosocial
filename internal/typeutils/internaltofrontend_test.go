@@ -536,7 +536,30 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   ],
   "card": null,
   "poll": null,
-  "text": "hello world! #welcome ! first post on the instance :rainbow: !"
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -691,7 +714,30 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
       ],
       "status_matches": []
     }
-  ]
+  ],
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -867,7 +913,30 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -1000,7 +1069,30 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -1115,7 +1207,122 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   ],
   "card": null,
   "poll": null,
-  "text": "hello world! #welcome ! first post on the instance :rainbow: !"
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:public",
+        "urn:mastodon:me"
+      ],
+      "with_approval": []
+    }
+  }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteractions() {
+	testStatus := &gtsmodel.Status{}
+	*testStatus = *suite.testStatuses["local_account_1_status_3"]
+	testStatus.Language = ""
+	requestingAccount := suite.testAccounts["admin_account"]
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01F8MHBBN8120SYH7D5S050MGK",
+  "created_at": "2021-10-20T10:40:37.000Z",
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": false,
+  "spoiler_text": "test: you shouldn't be able to interact with this post in any way",
+  "visibility": "private",
+  "language": null,
+  "uri": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHBBN8120SYH7D5S050MGK",
+  "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHBBN8120SYH7D5S050MGK",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": false,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": false,
+  "pinned": false,
+  "content": "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+  "reblog": null,
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "account": {
+    "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+    "username": "the_mighty_zork",
+    "acct": "the_mighty_zork",
+    "display_name": "original zork (he/they)",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-20T11:09:18.000Z",
+    "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+    "url": "http://localhost:8080/@the_mighty_zork",
+    "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+    "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+    "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+    "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+    "followers_count": 2,
+    "following_count": 2,
+    "statuses_count": 7,
+    "last_status_at": "2023-12-10T09:24:00.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "role": {
+      "name": "user"
+    }
+  },
+  "media_attachments": [],
+  "mentions": [],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
+  "text": "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "urn:mastodon:author"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "urn:mastodon:author"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "urn:mastodon:author"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -1966,7 +2173,30 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "tags": [],
       "emojis": [],
       "card": null,
-      "poll": null
+      "poll": null,
+      "interaction_policy": {
+        "can_favourite": {
+          "always": [
+            "urn:mastodon:public",
+            "urn:mastodon:me"
+          ],
+          "with_approval": []
+        },
+        "can_reply": {
+          "always": [
+            "urn:mastodon:public",
+            "urn:mastodon:me"
+          ],
+          "with_approval": []
+        },
+        "can_reblog": {
+          "always": [
+            "urn:mastodon:public",
+            "urn:mastodon:me"
+          ],
+          "with_approval": []
+        }
+      }
     }
   ],
   "rules": [

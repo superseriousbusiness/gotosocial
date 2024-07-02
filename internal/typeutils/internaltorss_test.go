@@ -98,9 +98,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem3() {
 		Visibility:          gtsmodel.VisibilityDefault,
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
-		Boostable:           util.Ptr(true),
-		Replyable:           util.Ptr(true),
-		Likeable:            util.Ptr(true),
+		InteractionPolicy:   gtsmodel.DefaultInteractionPolicyUnlocked(),
 	}
 	item, err := suite.typeconverter.StatusToRSSItem(context.Background(), s)
 	suite.NoError(err)

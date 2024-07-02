@@ -37,7 +37,7 @@ import (
 //   - OrderedCollection:       'orderedItems' property will always be made into an array.
 //   - OrderedCollectionPage:   'orderedItems' property will always be made into an array.
 //   - Any Accountable type:    'attachment' property will always be made into an array.
-//   - Any Statusable type:     'attachment' property will always be made into an array; 'content' and 'contentMap' will be normalized.
+//   - Any Statusable type:     'attachment' property will always be made into an array; 'content', 'contentMap', and 'interactionPolicy' will be normalized.
 //   - Any Activityable type:   any 'object's set on an activity will be custom serialized as above.
 func Serialize(t vocab.Type) (m map[string]interface{}, e error) {
 	switch tn := t.GetTypeName(); {
@@ -153,6 +153,7 @@ func serializeStatusable(t vocab.Type, includeContext bool) (map[string]interfac
 
 	NormalizeOutgoingAttachmentProp(statusable, data)
 	NormalizeOutgoingContentProp(statusable, data)
+	NormalizeOutgoingInteractionPolicyProp(statusable, data)
 
 	return data, nil
 }

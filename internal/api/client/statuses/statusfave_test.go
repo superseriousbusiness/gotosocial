@@ -90,18 +90,18 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 
 // try to fave a status that's not faveable
 func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
-	t := suite.testTokens["local_account_1"]
+	t := suite.testTokens["admin_account"]
 	oauthToken := oauth.DBTokenToToken(t)
 
-	targetStatus := suite.testStatuses["local_account_2_status_3"] // this one is unlikeable and unreplyable
+	targetStatus := suite.testStatuses["local_account_1_status_3"] // this one is unlikeable
 
 	// setup
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
 	ctx.Request.Header.Set("accept", "application/json")
 
@@ -123,7 +123,7 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"Forbidden: status is not faveable"}`, string(b))
+	assert.Equal(suite.T(), `{"error":"Forbidden: you do not have permission to fave this status"}`, string(b))
 }
 
 func TestStatusFaveTestSuite(t *testing.T) {

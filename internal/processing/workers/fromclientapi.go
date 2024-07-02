@@ -236,6 +236,23 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
+	if status.InReplyToID != "" {
+		// Notify the replied-to account.
+		if err := p.surface.notifyReply(ctx, status); err != nil {
+			log.Errorf(ctx, "error notifying reply: %v", err)
+		}
+	}
+
+	if *status.PendingApproval {
+		// If pending approval is set then status must
+		// reply to a status with approval required for
+		// the interaction.
+		//
+		// Just return now after notifying the account
+		// that's being interacted with, if applicable.
+		return nil
+	}
+
 	// Update stats for the actor account.
 	if err := p.utils.incrementStatusesCount(ctx, cMsg.Origin, status); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
@@ -362,8 +379,19 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("error populating status fave: %w", err)
 	}
 
+	// Notify the fave account target.
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
+	}
+
+	if *fave.PendingApproval {
+		// If pending approval is set then like must
+		// target a status with approval required for
+		// the interaction.
+		//
+		// Just return now after notifying the account
+		// that's being interacted with, if applicable.
+		return nil
 	}
 
 	// Interaction counts changed on the faved status;
@@ -383,6 +411,21 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
 	}
 
+	// Notify the announce target account.
+	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
+		log.Errorf(ctx, "error notifying announce: %v", err)
+	}
+
+	if *boost.PendingApproval {
+		// If pending approval is set then boost must
+		// target a status with approval required for
+		// the interaction.
+		//
+		// Just return now after notifying the account
+		// that's being interacted with, if applicable.
+		return nil
+	}
+
 	// Update stats for the actor account.
 	if err := p.utils.incrementStatusesCount(ctx, cMsg.Origin, boost); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
@@ -391,11 +434,6 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 	// Timeline and notify the boost wrapper status.
 	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
-	}
-
-	// Notify the boost target account.
-	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
-		log.Errorf(ctx, "error notifying boost: %v", err)
 	}
 
 	// Interaction counts changed on the boosted status;

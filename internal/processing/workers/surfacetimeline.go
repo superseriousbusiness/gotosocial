@@ -100,7 +100,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 		// If it's not timelineable, we can just stop early, since lists
 		// are prettymuch subsets of the home timeline, so if it shouldn't
 		// appear there, it shouldn't appear in lists either.
-		timelineable, err := s.Filter.StatusHomeTimelineable(
+		timelineable, err := s.VisFilter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
 		if err != nil {
@@ -473,7 +473,7 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 		// If it's not timelineable, we can just stop early, since lists
 		// are prettymuch subsets of the home timeline, so if it shouldn't
 		// appear there, it shouldn't appear in lists either.
-		timelineable, err := s.Filter.StatusHomeTimelineable(
+		timelineable, err := s.VisFilter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
 		if err != nil {

@@ -28,6 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -68,6 +69,7 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 		tc,
 		suite.typeconverter,
 		visibility.NewFilter(&suite.state),
+		interaction.NewFilter(&suite.state),
 		testrig.NewTestMediaManager(&suite.state),
 	)
 
@@ -122,6 +124,7 @@ func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
 		tc,
 		suite.typeconverter,
 		visibility.NewFilter(&suite.state),
+		interaction.NewFilter(&suite.state),
 		testrig.NewTestMediaManager(&suite.state),
 	)
 

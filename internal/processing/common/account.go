@@ -55,7 +55,7 @@ func (p *Processor) GetTargetAccountBy(
 	}
 
 	// Check whether target account is visible to requesting account.
-	visible, err = p.filter.AccountVisible(ctx, requester, target)
+	visible, err = p.visFilter.AccountVisible(ctx, requester, target)
 	if err != nil {
 		return nil, false, gtserror.NewErrorInternalError(err)
 	}
@@ -232,7 +232,7 @@ func (p *Processor) getVisibleAPIAccounts(
 		}
 
 		// Check whether this account is visible to requesting account.
-		visible, err := p.filter.AccountVisible(ctx, requester, account)
+		visible, err := p.visFilter.AccountVisible(ctx, requester, account)
 		if err != nil {
 			l.Errorf("error checking account visibility: %v", err)
 			continue

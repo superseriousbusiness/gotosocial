@@ -155,7 +155,7 @@ func (p *Processor) contextGet(
 
 	var ancestors []*apimodel.Status
 	for _, status := range parents {
-		if v, err := p.filter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
+		if v, err := p.visFilter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
 			apiStatus, err := convert(ctx, status, requestingAccount)
 			if err == nil {
 				ancestors = append(ancestors, apiStatus)
@@ -174,7 +174,7 @@ func (p *Processor) contextGet(
 
 	var descendants []*apimodel.Status
 	for _, status := range children {
-		if v, err := p.filter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
+		if v, err := p.visFilter.StatusVisible(ctx, requestingAccount, status); err == nil && v {
 			apiStatus, err := convert(ctx, status, requestingAccount)
 			if err == nil {
 				descendants = append(descendants, apiStatus)

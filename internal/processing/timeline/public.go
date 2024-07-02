@@ -98,7 +98,7 @@ outer:
 			// we end up filtering it out or not.
 			nextMaxIDValue = s.ID
 
-			timelineable, err := p.filter.StatusPublicTimelineable(ctx, requester, s)
+			timelineable, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
 			if err != nil {
 				log.Errorf(ctx, "error checking status visibility: %v", err)
 				continue inner

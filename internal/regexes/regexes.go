@@ -38,6 +38,7 @@ const (
 	follow    = "follow"
 	blocks    = "blocks"
 	reports   = "reports"
+	accepts   = "accepts"
 
 	schemes                  = `(http|https)://`                                         // Allowed URI protocols for parsing links in text.
 	alphaNumeric             = `\p{L}\p{M}*|\p{N}`                                       // A single number or script character in any language, including chars with accents.
@@ -71,6 +72,7 @@ const (
 	followPath        = userPathPrefix + `/` + follow + `/(` + ulid + `)$`
 	likePath          = userPathPrefix + `/` + liked + `/(` + ulid + `)$`
 	statusesPath      = userPathPrefix + `/` + statuses + `/(` + ulid + `)$`
+	acceptsPath       = userPathPrefix + `/` + accepts + `/(` + ulid + `)$`
 	blockPath         = userPathPrefix + `/` + blocks + `/(` + ulid + `)$`
 	reportPath        = `^/?` + reports + `/(` + ulid + `)$`
 	filePath          = `^/?(` + ulid + `)/([a-z]+)/([a-z]+)/(` + ulid + `)\.([a-z0-9]+)$`
@@ -157,6 +159,10 @@ var (
 	// ReportPath parses a path that validates and captures the ulid part
 	// from eg /reports/01GP3AWY4CRDVRNZKW0TEAMB5R
 	ReportPath = regexp.MustCompile(reportPath)
+
+	// ReportPath parses a path that validates and captures the username part and the ulid part
+	// from eg /users/example_username/accepts/01GP3AWY4CRDVRNZKW0TEAMB5R
+	AcceptsPath = regexp.MustCompile(acceptsPath)
 
 	// FilePath parses a file storage path of the form [ACCOUNT_ID]/[MEDIA_TYPE]/[MEDIA_SIZE]/[FILE_NAME]
 	// eg 01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpeg

@@ -48,6 +48,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 	state *state.State,
 	account *gtsmodel.Account,
 	visibility gtsmodel.Visibility,
+	policy *gtsmodel.InteractionPolicy,
 	replyToStatus *gtsmodel.Status,
 	boostOfStatus *gtsmodel.Status,
 ) *gtsmodel.Status {
@@ -69,9 +70,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 		Visibility:          visibility,
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
-		Boostable:           util.Ptr(true),
-		Replyable:           util.Ptr(true),
-		Likeable:            util.Ptr(true),
+		InteractionPolicy:   policy,
 	}
 
 	if replyToStatus != nil {
@@ -195,6 +194,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			nil,
 			nil,
 		)
@@ -304,6 +304,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
@@ -363,6 +364,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			suite.testStatuses["local_account_1_status_1"],
 			nil,
 		)
@@ -421,6 +423,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			nil,
 			suite.testStatuses["local_account_1_status_1"],
 		)
@@ -484,6 +487,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
@@ -557,6 +561,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
@@ -635,6 +640,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 		)
@@ -705,6 +711,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			nil,
 			suite.testStatuses["local_account_2_status_1"],
 		)
@@ -766,6 +773,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 			testStructs.State,
 			postingAccount,
 			gtsmodel.VisibilityPublic,
+			gtsmodel.DefaultInteractionPolicyPublic(),
 			nil,
 			suite.testStatuses["local_account_2_status_1"],
 		)

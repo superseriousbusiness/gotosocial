@@ -201,13 +201,13 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 	suite.statusModule.StatusBoostPOSTHandler(ctx)
 
 	// check response
-	suite.Equal(http.StatusNotFound, recorder.Code) // we 404 unboostable statuses
+	suite.Equal(http.StatusForbidden, recorder.Code)
 
 	result := recorder.Result()
 	defer result.Body.Close()
 	b, err := ioutil.ReadAll(result.Body)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Not Found"}`, string(b))
+	suite.Equal(`{"error":"Forbidden: you do not have permission to boost this status"}`, string(b))
 }
 
 // try to boost a status that's not visible to the user

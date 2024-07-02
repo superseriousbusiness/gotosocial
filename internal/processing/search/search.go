@@ -28,15 +28,15 @@ type Processor struct {
 	state     *state.State
 	federator *federation.Federator
 	converter *typeutils.Converter
-	filter    *visibility.Filter
+	visFilter *visibility.Filter
 }
 
 // New returns a new status processor.
-func New(state *state.State, federator *federation.Federator, converter *typeutils.Converter, filter *visibility.Filter) Processor {
+func New(state *state.State, federator *federation.Federator, converter *typeutils.Converter, visFilter *visibility.Filter) Processor {
 	return Processor{
 		state:     state,
 		federator: federator,
 		converter: converter,
-		filter:    filter,
+		visFilter: visFilter,
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -52,6 +53,7 @@ func NewFederator(
 	transportController transport.Controller,
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
+	intFilter *interaction.Filter,
 	mediaManager *media.Manager,
 ) *Federator {
 	clock := &Clock{}
@@ -62,7 +64,14 @@ func NewFederator(
 		converter:           converter,
 		transportController: transportController,
 		mediaManager:        mediaManager,
-		Dereferencer:        dereferencing.NewDereferencer(state, converter, transportController, visFilter, mediaManager),
+		Dereferencer: dereferencing.NewDereferencer(
+			state,
+			converter,
+			transportController,
+			visFilter,
+			intFilter,
+			mediaManager,
+		),
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor

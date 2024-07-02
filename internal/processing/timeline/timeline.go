@@ -26,13 +26,13 @@ import (
 type Processor struct {
 	state     *state.State
 	converter *typeutils.Converter
-	filter    *visibility.Filter
+	visFilter *visibility.Filter
 }
 
-func New(state *state.State, converter *typeutils.Converter, filter *visibility.Filter) Processor {
+func New(state *state.State, converter *typeutils.Converter, visFilter *visibility.Filter) Processor {
 	return Processor{
 		state:     state,
 		converter: converter,
-		filter:    filter,
+		visFilter: visFilter,
 	}
 }

@@ -18,6 +18,7 @@
 package status
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -121,6 +122,12 @@ func (p *Processor) Create(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Process policy AFTER visibility as it
+	// relies on status.Visibility being set.
+	if err := processInteractionPolicy(form, requester.Settings, status); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	if err := processLanguage(form, requester.Settings.Language, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -163,6 +170,8 @@ func (p *Processor) Create(
 
 func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status, inReplyToID string) gtserror.WithCode {
 	if inReplyToID == "" {
+		// Not a reply.
+		// Nothing to do.
 		return nil
 	}
 
@@ -185,10 +194,25 @@ func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Ac
 		return errWithCode
 	}
 
-	if !*inReplyTo.Replyable {
-		const text = "in-reply-to status marked as not replyable"
-		return gtserror.NewErrorForbidden(errors.New(text), text)
+	// Ensure valid reply target for requester.
+	policyResult, err := p.intFilter.StatusReplyable(ctx,
+		requester,
+		inReplyTo,
+	)
+	if err != nil {
+		err := gtserror.Newf("error seeing if status %s is replyable: %w", status.ID, err)
+		return gtserror.NewErrorInternalError(err)
 	}
+
+	if policyResult == gtsmodel.PolicyResultForbidden {
+		const errText = "you do not have permission to reply to this status"
+		err := gtserror.New(errText)
+		return gtserror.NewErrorForbidden(err, errText)
+	}
+
+	// Mark status as pending approval if necessary.
+	pendingApproval := policyResult == gtsmodel.PolicyResultWithApproval
+	status.PendingApproval = util.Ptr(pendingApproval)
 
 	// Set status fields from inReplyTo.
 	status.InReplyToID = inReplyTo.ID
@@ -286,15 +310,16 @@ func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.Advanced
 	return nil
 }
 
-func processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
-	// by default all flags are set to true
-	federated := true
-	boostable := true
-	replyable := true
-	likeable := true
-
-	// If visibility isn't set on the form, then just take the account default.
-	// If that's also not set, take the default for the whole instance.
+func processVisibility(
+	form *apimodel.AdvancedStatusCreateForm,
+	accountDefaultVis gtsmodel.Visibility,
+	status *gtsmodel.Status,
+) error {
+	// If visibility isn't set on the form,
+	// then just take the account default.
+	//
+	// If that's also not set, take the
+	// default for the whole instance.
 	var vis gtsmodel.Visibility
 	switch {
 	case form.Visibility != "":
@@ -305,57 +330,51 @@ func processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVi
 		vis = gtsmodel.VisibilityDefault
 	}
 
-	switch vis {
+	status.Visibility = vis
+	status.Federated = cmp.Or(form.Federated, util.Ptr(true))
+	return nil
+}
+
+func processInteractionPolicy(
+	_ *apimodel.AdvancedStatusCreateForm,
+	settings *gtsmodel.AccountSettings,
+	status *gtsmodel.Status,
+) error {
+	// TODO: parse policy for this
+	// status from form and prefer this.
+
+	// TODO: prevent scope widening by
+	// limiting interaction policy if
+	// inReplyTo status has a stricter
+	// interaction policy than this one.
+
+	switch status.Visibility {
+
 	case gtsmodel.VisibilityPublic:
-		// for public, there's no need to change any of the advanced flags from true regardless of what the user filled out
-		break
+		if p := settings.InteractionPolicyPublic; p != nil {
+			status.InteractionPolicy = p
+		}
+
 	case gtsmodel.VisibilityUnlocked:
-		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
-		if form.Federated != nil {
-			federated = *form.Federated
+		if p := settings.InteractionPolicyUnlocked; p != nil {
+			status.InteractionPolicy = p
 		}
 
-		if form.Boostable != nil {
-			boostable = *form.Boostable
-		}
-
-		if form.Replyable != nil {
-			replyable = *form.Replyable
-		}
-
-		if form.Likeable != nil {
-			likeable = *form.Likeable
-		}
-
-	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
-		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
-		boostable = false
-
-		if form.Federated != nil {
-			federated = *form.Federated
-		}
-
-		if form.Replyable != nil {
-			replyable = *form.Replyable
-		}
-
-		if form.Likeable != nil {
-			likeable = *form.Likeable
+	case gtsmodel.VisibilityFollowersOnly,
+		gtsmodel.VisibilityMutualsOnly:
+		if p := settings.InteractionPolicyFollowersOnly; p != nil {
+			status.InteractionPolicy = p
 		}
 
 	case gtsmodel.VisibilityDirect:
-		// direct is pretty easy: there's only one possible setting so return it
-		federated = true
-		boostable = false
-		replyable = true
-		likeable = true
+		if p := settings.InteractionPolicyDirect; p != nil {
+			status.InteractionPolicy = p
+		}
 	}
 
-	status.Visibility = vis
-	status.Federated = &federated
-	status.Boostable = &boostable
-	status.Replyable = &replyable
-	status.Likeable = &likeable
+	// If no policy set by now, status will
+	// just take the default policy for its
+	// visibility, so it's fine to leave it nil.
 	return nil
 }
 
