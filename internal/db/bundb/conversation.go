@@ -332,7 +332,7 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 	return c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Delete conversations matching the account ID.
 		deletedConversationIDs := []string{}
-		if err := c.db.NewDelete().
+		if err := tx.NewDelete().
 			Model((*gtsmodel.Conversation)(nil)).
 			Where("? = ?", bun.Ident("account_id"), accountID).
 			Returning("?", bun.Ident("id")).
@@ -342,7 +342,7 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 		}
 
 		// Delete any conversation-to-status links matching the deleted conversation IDs.
-		if _, err := c.db.NewDelete().
+		if _, err := tx.NewDelete().
 			Model((*gtsmodel.ConversationToStatus)(nil)).
 			Where("? IN (?)", bun.Ident("conversation_id"), bun.In(deletedConversationIDs)).
 			Exec(ctx); // nocollapse
@@ -382,9 +382,10 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// Create a temporary table with all statuses other than the deleted status
 		// in each conversation for which the deleted status is the last status
 		// (if there are such statuses).
+		conversationStatusesTempTable := bun.Ident("conversation_statuses_" + id.NewULID())
 		if _, err := tx.NewRaw(
 			`
-			CREATE TEMPORARY TABLE conversation_statuses AS
+			CREATE TEMPORARY TABLE ?0 AS
 			SELECT
 				conversations.id conversation_id,
 				conversation_to_statuses.status_id id,
@@ -392,11 +393,12 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			FROM conversations
 			LEFT JOIN conversation_to_statuses
 				ON conversations.id = conversation_to_statuses.conversation_id
-				AND conversation_to_statuses.status_id != ?0
+				AND conversation_to_statuses.status_id != ?1
 			LEFT JOIN statuses
 				ON conversation_to_statuses.status_id = statuses.id
-			WHERE conversations.last_status_id = ?0
+			WHERE conversations.last_status_id = ?1
 			`,
+			conversationStatusesTempTable,
 			statusID,
 		).Exec(ctx); // nocollapse
 		err != nil {
@@ -405,18 +407,21 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 
 		// Create a temporary table with the most recently created status in each conversation
 		// for which the deleted status is the last status (if there is such a status).
+		latestConversationStatusesTempTable := bun.Ident("latest_conversation_statuses_" + id.NewULID())
 		if _, err := tx.NewRaw(
 			`
-			CREATE TEMPORARY TABLE latest_conversation_statuses AS
+			CREATE TEMPORARY TABLE ?0 AS
 			SELECT
 				conversation_statuses.conversation_id,
 				conversation_statuses.id
-			FROM conversation_statuses
-			LEFT JOIN conversation_statuses later_statuses
+			FROM ?1 conversation_statuses
+			LEFT JOIN ?1 later_statuses
 				ON conversation_statuses.conversation_id = later_statuses.conversation_id
 				AND later_statuses.created_at > conversation_statuses.created_at
 			WHERE later_statuses.id IS NULL
 			`,
+			latestConversationStatusesTempTable,
+			conversationStatusesTempTable,
 		).Exec(ctx); // nocollapse
 		err != nil {
 			return err
@@ -431,12 +436,13 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			UPDATE conversations
 			SET
 				last_status_id = latest_conversation_statuses.id,
-				updated_at = ?
-			FROM latest_conversation_statuses
+				updated_at = ?1
+			FROM ?0 latest_conversation_statuses
 			WHERE conversations.id = latest_conversation_statuses.conversation_id
 			AND latest_conversation_statuses.id IS NOT NULL
 			RETURNING id
 			`,
+			latestConversationStatusesTempTable,
 			bun.Safe(nowSQL),
 		).Scan(ctx, &updatedConversationIDs); // nocollapse
 		err != nil {
@@ -450,13 +456,22 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			DELETE FROM conversations
 			WHERE id IN (
 				SELECT conversation_id
-				FROM latest_conversation_statuses
+				FROM ?0
 				WHERE id IS NULL
 			)
 			RETURNING id
 			`,
+			latestConversationStatusesTempTable,
 		).Scan(ctx, &deletedConversationIDs); // nocollapse
 		err != nil {
+			return err
+		}
+
+		// Clean up.
+		if _, err := tx.NewRaw(`DROP TABLE ?`, conversationStatusesTempTable).Exec(ctx); err != nil {
+			return err
+		}
+		if _, err := tx.NewRaw(`DROP TABLE ?`, latestConversationStatusesTempTable).Exec(ctx); err != nil {
 			return err
 		}
 

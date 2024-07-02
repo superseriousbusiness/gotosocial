@@ -49,8 +49,7 @@ type Conversation interface {
 	// DeleteConversationsByOwnerAccountID deletes all conversations owned by the given account.
 	DeleteConversationsByOwnerAccountID(ctx context.Context, accountID string) error
 
-	// DeleteStatusFromConversations handles when a status is deleted by nulling out the last status for
-	// any conversations in which it was the last status.
+	// DeleteStatusFromConversations handles when a status is deleted by updating or deleting conversations for which it was the last status.
 	DeleteStatusFromConversations(ctx context.Context, statusID string) error
 
 	MigrateConversations(ctx context.Context, migrateStatus func(ctx context.Context, status *gtsmodel.Status) error) error
