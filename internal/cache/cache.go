@@ -61,7 +61,7 @@ func (c *Caches) Init() {
 	c.initBoostOfIDs()
 	c.initClient()
 	c.initConversation()
-	c.initConversationIDs()
+	c.initConversationLastStatusIDs()
 	c.initDomainAllow()
 	c.initDomainBlock()
 	c.initEmoji()

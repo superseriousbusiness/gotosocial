@@ -40,7 +40,7 @@ func init() {
 				}
 			}
 
-			// Add indexes to the conversation table.
+			// Add indexes to the conversations table.
 			for index, columns := range map[string][]string{
 				"conversations_account_id_idx": {
 					"account_id",
@@ -58,6 +58,18 @@ func init() {
 					Exec(ctx); err != nil {
 					return err
 				}
+			}
+
+			// Add additional uniqueness constraints to the conversations table.
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.Conversation{}).
+				Index("conversations_account_id_last_status_id_uniq").
+				Column("account_id", "last_status_id").
+				Unique().
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
 			}
 
 			return nil

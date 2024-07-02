@@ -53,9 +53,9 @@ func (p *Processor) GetAll(
 		return util.EmptyPageableResponse(), nil
 	}
 
-	// Get the lowest and highest ID values, used for paging.
-	lo := conversations[count-1].ID
-	hi := conversations[0].ID
+	// Get the lowest and highest last status ID values, used for paging.
+	lo := conversations[count-1].LastStatusID
+	hi := conversations[0].LastStatusID
 
 	items := make([]interface{}, 0, count)
 

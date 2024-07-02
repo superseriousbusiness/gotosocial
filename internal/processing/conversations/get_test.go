@@ -31,3 +31,32 @@ func (suite *ConversationsTestSuite) TestGetAll() {
 		suite.True(apiConversation.Unread)
 	}
 }
+
+// Test that conversations with newer last status IDs are returned earlier.
+func (suite *ConversationsTestSuite) TestGetAllOrder() {
+	// Get our previously created conversation.
+	conversation1 := suite.testConversation
+
+	// Create a new conversation with a last status newer than conversation1's.
+	conversation2 := suite.newTestConversation(1)
+
+	// Add an even newer status than that to conversation1.
+	conversation1Status2 := suite.newTestStatus(conversation1.LastStatus.ThreadID, 2, conversation1.LastStatus)
+	conversation1, err := suite.db.AddStatusToConversation(context.Background(), conversation1, conversation1Status2)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	resp, err := suite.conversationsProcessor.GetAll(context.Background(), suite.testAccount, nil)
+	if suite.NoError(err) && suite.Len(resp.Items, 2) {
+		// conversation1 should be the first conversation returned.
+		apiConversation1 := resp.Items[0].(*apimodel.Conversation)
+		suite.Equal(conversation1.ID, apiConversation1.ID)
+		// It should have the newest status added to it.
+		suite.Equal(conversation1.LastStatusID, conversation1Status2.ID)
+
+		// conversation2 should be the second conversation returned.
+		apiConversation2 := resp.Items[1].(*apimodel.Conversation)
+		suite.Equal(conversation2.ID, apiConversation2.ID)
+	}
+}

@@ -31,7 +31,8 @@ type Conversation interface {
 	// GetConversationByThreadAndAccountIDs retrieves a conversation by thread ID and participant account IDs, if it exists.
 	GetConversationByThreadAndAccountIDs(ctx context.Context, threadID string, accountID string, otherAccountIDs []string) (*gtsmodel.Conversation, error)
 
-	// GetConversationsByOwnerAccountID gets all conversations owned by the given account, with optional paging.
+	// GetConversationsByOwnerAccountID gets all conversations owned by the given account,
+	// with optional paging based on last status ID.
 	GetConversationsByOwnerAccountID(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Conversation, error)
 
 	// UpdateConversation updates an existing conversation.

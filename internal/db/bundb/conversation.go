@@ -149,45 +149,52 @@ func (c *conversationDB) populateConversation(ctx context.Context, conversation 
 }
 
 func (c *conversationDB) GetConversationsByOwnerAccountID(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Conversation, error) {
-	conversationIDs, err := c.getAccountConversationIDs(ctx, accountID, page)
+	conversationLastStatusIDs, err := c.getAccountConversationLastStatusIDs(ctx, accountID, page)
 	if err != nil {
 		return nil, err
 	}
-	return c.getConversationsByIDs(ctx, conversationIDs)
+	return c.getConversationsByLastStatusIDs(ctx, accountID, conversationLastStatusIDs)
 }
 
-func (c *conversationDB) getAccountConversationIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	return loadPagedIDs(&c.state.Caches.GTS.ConversationIDs, accountID, page, func() ([]string, error) {
-		var conversationIDs []string
+func (c *conversationDB) getAccountConversationLastStatusIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+	return loadPagedIDs(&c.state.Caches.GTS.ConversationLastStatusIDs, accountID, page, func() ([]string, error) {
+		var conversationLastStatusIDs []string
 
-		// Conversation IDs not in cache. Perform DB query.
+		// Conversation last status IDs not in cache. Perform DB query.
 		if _, err := c.db.
 			NewSelect().
 			TableExpr("?", bun.Ident("conversations")).
-			ColumnExpr("?", bun.Ident("id")).
+			ColumnExpr("?", bun.Ident("last_status_id")).
 			Where("? = ?", bun.Ident("account_id"), accountID).
-			OrderExpr("? DESC", bun.Ident("id")).
-			Exec(ctx, &conversationIDs); // nocollapse
+			OrderExpr("? DESC", bun.Ident("last_status_id")).
+			Exec(ctx, &conversationLastStatusIDs); // nocollapse
 		err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
 		}
 
-		return conversationIDs, nil
+		return conversationLastStatusIDs, nil
 	})
 }
 
-func (c *conversationDB) getConversationsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Conversation, error) {
+func (c *conversationDB) getConversationsByLastStatusIDs(
+	ctx context.Context,
+	accountID string,
+	conversationLastStatusIDs []string,
+) ([]*gtsmodel.Conversation, error) {
 	// Load all conversation IDs via cache loader callbacks.
-	conversations, err := c.state.Caches.GTS.Conversation.LoadIDs("ID",
-		ids,
-		func(uncached []string) ([]*gtsmodel.Conversation, error) {
+	conversations, err := c.state.Caches.GTS.Conversation.LoadIDs2Part(
+		"AccountID,LastStatusID",
+		accountID,
+		conversationLastStatusIDs,
+		func(accountID string, uncached []string) ([]*gtsmodel.Conversation, error) {
 			// Preallocate expected length of uncached conversations.
 			conversations := make([]*gtsmodel.Conversation, 0, len(uncached))
 
 			// Perform database query scanning the remaining (uncached) IDs.
 			if err := c.db.NewSelect().
 				Model(&conversations).
-				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Where("? = ?", bun.Ident("last_status_id"), accountID).
+				Where("? IN (?)", bun.Ident("last_status_id"), bun.In(uncached)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
@@ -199,9 +206,9 @@ func (c *conversationDB) getConversationsByIDs(ctx context.Context, ids []string
 		return nil, err
 	}
 
-	// Reorder the conversations by their IDs to ensure correct order.
+	// Reorder the conversations by their last status IDs to ensure correct order.
 	getID := func(b *gtsmodel.Conversation) string { return b.ID }
-	util.OrderBy(conversations, ids, getID)
+	util.OrderBy(conversations, conversationLastStatusIDs, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -317,8 +324,9 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 		// so we don't need to load all conversations into the cache to run invalidation hooks,
 		// as with some other object types (blocks, for example).
 		c.state.Caches.GTS.Conversation.Invalidate("AccountID", accountID)
-		// In case there were no cached conversations, explicitly invalidate conversation ID cache.
-		c.state.Caches.GTS.ConversationIDs.Invalidate(accountID)
+		// In case there were no cached conversations,
+		// explicitly invalidate the user's conversation last status ID cache.
+		c.state.Caches.GTS.ConversationLastStatusIDs.Invalidate(accountID)
 	}()
 
 	return c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

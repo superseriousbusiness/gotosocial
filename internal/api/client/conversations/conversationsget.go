@@ -50,26 +50,26 @@ import (
 //		name: max_id
 //		type: string
 //		description: >-
-//			Return only conversations *OLDER* than the given max ID.
+//			Return only conversations with last statuses *OLDER* than the given max ID.
 //			The conversation with the specified ID will not be included in the response.
-//			NOTE: the ID is of the internal conversation, use the Link header for pagination.
+//			NOTE: The ID is a status ID. Use the Link header for pagination.
 //		in: query
 //		required: false
 //	-
 //		name: since_id
 //		type: string
 //		description: >-
-//			Return only conversations *NEWER* than the given since ID.
+//			Return only conversations with last statuses *NEWER* than the given since ID.
 //			The conversation with the specified ID will not be included in the response.
-//			NOTE: the ID is of the internal conversation, use the Link header for pagination.
+//			NOTE: The ID is a status ID. Use the Link header for pagination.
 //		in: query
 //	-
 //		name: min_id
 //		type: string
 //		description: >-
-//			Return only conversations *IMMEDIATELY NEWER* than the given min ID.
+//			Return only conversations with last statuses *IMMEDIATELY NEWER* than the given min ID.
 //			The conversation with the specified ID will not be included in the response.
-//			NOTE: the ID is of the internal conversation, use the Link header for pagination.
+//			NOTE: The ID is a status ID. Use the Link header for pagination.
 //		in: query
 //		required: false
 //	-

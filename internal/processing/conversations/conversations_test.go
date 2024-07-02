@@ -71,6 +71,7 @@ type ConversationsTestSuite struct {
 	// conversation created for test
 	testAccount      *gtsmodel.Account
 	testConversation *gtsmodel.Conversation
+	testNow          time.Time
 }
 
 func (suite *ConversationsTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
@@ -121,8 +122,9 @@ func (suite *ConversationsTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 
+	suite.testNow = time.Now()
 	suite.testAccount = suite.testAccounts["local_account_1"]
-	suite.testConversation = suite.newTestConversation()
+	suite.testConversation = suite.newTestConversation(0)
 }
 
 func (suite *ConversationsTestSuite) TearDownTest() {
@@ -141,10 +143,9 @@ func (suite *ConversationsTestSuite) TearDownTest() {
 	testrig.StopWorkers(&suite.state)
 }
 
-// newTestConversation creates a new status and adds it to a new unread conversation, returning the conversation.
-func (suite *ConversationsTestSuite) newTestConversation() *gtsmodel.Conversation {
+func (suite *ConversationsTestSuite) newTestStatus(threadID string, nowOffset time.Duration, inReplyToStatus *gtsmodel.Status) *gtsmodel.Status {
 	statusID := id.NewULID()
-	createdAt := time.Now()
+	createdAt := suite.testNow.Add(nowOffset)
 	status := &gtsmodel.Status{
 		ID:                  statusID,
 		CreatedAt:           createdAt,
@@ -153,7 +154,7 @@ func (suite *ConversationsTestSuite) newTestConversation() *gtsmodel.Conversatio
 		AccountID:           suite.testAccount.ID,
 		AccountURI:          suite.testAccount.URI,
 		Local:               util.Ptr(true),
-		ThreadID:            id.NewULID(),
+		ThreadID:            threadID,
 		Visibility:          gtsmodel.VisibilityDirect,
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
@@ -161,10 +162,20 @@ func (suite *ConversationsTestSuite) newTestConversation() *gtsmodel.Conversatio
 		Replyable:           util.Ptr(true),
 		Likeable:            util.Ptr(true),
 	}
+	if inReplyToStatus != nil {
+		status.InReplyToID = inReplyToStatus.ID
+		status.InReplyToURI = inReplyToStatus.URI
+		status.InReplyToAccountID = inReplyToStatus.AccountID
+	}
 	if err := suite.db.PutStatus(context.Background(), status); err != nil {
 		suite.FailNow(err.Error())
 	}
+	return status
+}
 
+// newTestConversation creates a new status and adds it to a new unread conversation, returning the conversation.
+func (suite *ConversationsTestSuite) newTestConversation(nowOffset time.Duration) *gtsmodel.Conversation {
+	status := suite.newTestStatus(id.NewULID(), nowOffset, nil)
 	conversation := &gtsmodel.Conversation{
 		ID:        id.NewULID(),
 		AccountID: suite.testAccount.ID,

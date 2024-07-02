@@ -59,8 +59,8 @@ type GTSCaches struct {
 	// Conversation provides access to the gtsmodel Conversation database cache.
 	Conversation StructCache[*gtsmodel.Conversation]
 
-	// ConversationIDs provides access to the conversation IDs database cache.
-	ConversationIDs SliceCache[string]
+	// ConversationLastStatusIDs provides access to the conversation last status IDs database cache.
+	ConversationLastStatusIDs SliceCache[string]
 
 	// DomainAllow provides access to the domain allow database cache.
 	DomainAllow *domain.Cache
@@ -455,6 +455,7 @@ func (c *Caches) initConversation() {
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
 			{Fields: "ThreadID,AccountID,OtherAccountsKey"},
+			{Fields: "AccountID,LastStatusID"},
 			{Fields: "AccountID", Multiple: true},
 		},
 		MaxSize:    cap,
@@ -464,14 +465,14 @@ func (c *Caches) initConversation() {
 	})
 }
 
-func (c *Caches) initConversationIDs() {
+func (c *Caches) initConversationLastStatusIDs() {
 	cap := calculateSliceCacheMax(
-		config.GetCacheConversationIDsMemRatio(),
+		config.GetCacheConversationLastStatusIDsMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.GTS.ConversationIDs.Init(0, cap)
+	c.GTS.ConversationLastStatusIDs.Init(0, cap)
 }
 
 func (c *Caches) initDomainAllow() {
