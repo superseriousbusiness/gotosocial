@@ -465,8 +465,8 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		return err
 	}
 
-	conversationIDs := append(updatedConversationIDs, deletedConversationIDs...)
-	c.state.Caches.GTS.Conversation.InvalidateIDs("ID", conversationIDs)
+	updatedConversationIDs = append(updatedConversationIDs, deletedConversationIDs...)
+	c.state.Caches.GTS.Conversation.InvalidateIDs("ID", updatedConversationIDs)
 
 	return nil
 }
