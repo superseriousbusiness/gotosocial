@@ -352,7 +352,7 @@ func resolveAPObject(data map[string]interface{}) (interface{}, error) {
 // we then need to wrangle back into the original type. So we also store the type name
 // and use this to determine the appropriate Go structure type to unmarshal into to.
 func resolveGTSModel(typ string, data []byte) (interface{}, error) {
-	if typ == "" && data == nil {
+	if typ == "" {
 		// No data given.
 		return nil, nil
 	}

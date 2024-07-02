@@ -55,7 +55,8 @@ type Workers struct {
 
 // StartScheduler starts the job scheduler.
 func (w *Workers) StartScheduler() {
-	_ = w.Scheduler.Start() // false = already running
+	_ = w.Scheduler.Start()
+	// false = already running
 	log.Info(nil, "started scheduler")
 }
 
@@ -82,9 +83,12 @@ func (w *Workers) Start() {
 	log.Infof(nil, "started %d dereference workers", n)
 }
 
-// Stop will stop all of the contained worker pools (and global scheduler).
+// Stop will stop all of the contained
+// worker pools (and global scheduler).
 func (w *Workers) Stop() {
-	_ = w.Scheduler.Stop() // false = not running
+	_ = w.Scheduler.Stop()
+	// false = not running
+	log.Info(nil, "stopped scheduler")
 
 	w.Delivery.Stop()
 	log.Info(nil, "stopped delivery workers")

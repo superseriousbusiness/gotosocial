@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
 	"github.com/superseriousbusiness/httpsig"
 )
 
@@ -49,6 +50,10 @@ type Transport interface {
 	// POST will perform given the http request using
 	// transport client, retrying on certain preset errors.
 	POST(*http.Request, []byte) (*http.Response, error)
+
+	// SignDelivery adds HTTP request signing client "middleware"
+	// to the request context within given delivery.Delivery{}.
+	SignDelivery(*delivery.Delivery) error
 
 	// Deliver sends an ActivityStreams object.
 	Deliver(ctx context.Context, obj map[string]interface{}, to *url.URL) error
