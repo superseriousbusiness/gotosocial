@@ -30,6 +30,9 @@ func ExtraHeaders() gin.HandlerFunc {
 		// Equivalent to CSP frame-ancestors for older browsers
 		c.Header("X-Frame-Options", "DENY")
 
+		// Don't do MIME type sniffing
+		c.Header("X-Content-Type-Options", "nosniff")
+
 		// Prevent google chrome cohort tracking. Originally this was referred
 		// to as FlocBlock. Floc was replaced by Topics in 2022 and the spec says
 		// that interest-cohort will also block Topics (as of 2022-Nov).
