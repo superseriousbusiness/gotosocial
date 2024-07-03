@@ -308,7 +308,7 @@ func (m *Manager) RefreshEmoji(
 	// paths before they get updated with new
 	// path ID. These are required for later
 	// deleting the old image files on refresh.
-	shortcodeDomain := util.ShortcodeDomain(emoji)
+	shortcodeDomain := emoji.ShortcodeDomain()
 	oldStaticPath := emoji.ImageStaticPath
 	oldPath := emoji.ImagePath
 
