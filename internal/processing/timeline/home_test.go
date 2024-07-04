@@ -23,87 +23,52 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-type PublicTestSuite struct {
+type HomeTestSuite struct {
 	TimelineStandardTestSuite
 }
 
-func (suite *PublicTestSuite) TestPublicTimelineGet() {
-	var (
-		ctx       = context.Background()
-		requester = suite.testAccounts["local_account_1"]
-		maxID     = ""
-		sinceID   = ""
-		minID     = ""
-		limit     = 10
-		local     = false
-	)
+func (suite *HomeTestSuite) SetupTest() {
+	suite.TimelineStandardTestSuite.SetupTest()
 
-	resp, errWithCode := suite.timeline.PublicTimelineGet(
-		ctx,
-		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
-		local,
+	suite.state.Timelines.Home = timeline.NewManager(
+		tlprocessor.HomeTimelineGrab(&suite.state),
+		tlprocessor.HomeTimelineFilter(&suite.state, visibility.NewFilter(&suite.state)),
+		tlprocessor.HomeTimelineStatusPrepare(&suite.state, typeutils.NewConverter(&suite.state)),
+		tlprocessor.SkipInsert(),
 	)
-
-	// We should have some statuses,
-	// and paging headers should be set.
-	suite.NoError(errWithCode)
-	suite.NotEmpty(resp.Items)
-	suite.NotEmpty(resp.LinkHeader)
-	suite.NotEmpty(resp.NextLink)
-	suite.NotEmpty(resp.PrevLink)
+	if err := suite.state.Timelines.Home.Start(); err != nil {
+		suite.FailNow(err.Error())
+	}
 }
 
-func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
-	var (
-		ctx       = context.Background()
-		requester = suite.testAccounts["local_account_1"]
-		// Select 1 *just above* a status we know should
-		// not be in the public timeline -- a public
-		// reply to one of admin's statuses.
-		maxID   = "01HE7XJ1CG84TBKH5V9XKBVGF6"
-		sinceID = ""
-		minID   = ""
-		limit   = 1
-		local   = false
-	)
+func (suite *HomeTestSuite) TearDownTest() {
+	if err := suite.state.Timelines.Home.Stop(); err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	resp, errWithCode := suite.timeline.PublicTimelineGet(
-		ctx,
-		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
-		local,
-	)
-
-	// We should have a status even though
-	// some other statuses were filtered out.
-	suite.NoError(errWithCode)
-	suite.Len(resp.Items, 1)
-	suite.Equal(`<http://localhost:8080/api/v1/timelines/public?limit=1&max_id=01F8MHCP5P2NWYQ416SBA0XSEV&local=false>; rel="next", <http://localhost:8080/api/v1/timelines/public?limit=1&min_id=01HE7XJ1CG84TBKH5V9XKBVGF5&local=false>; rel="prev"`, resp.LinkHeader)
-	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&max_id=01F8MHCP5P2NWYQ416SBA0XSEV&local=false`, resp.NextLink)
-	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&min_id=01HE7XJ1CG84TBKH5V9XKBVGF5&local=false`, resp.PrevLink)
+	suite.TimelineStandardTestSuite.TearDownTest()
 }
 
 // A timeline containing a status hidden due to filtering should return other statuses with no error.
-func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
+func (suite *HomeTestSuite) TestHomeTimelineGetHideFiltered() {
 	var (
 		ctx                 = context.Background()
 		requester           = suite.testAccounts["local_account_1"]
+		authed              = &oauth.Auth{Account: requester}
 		maxID               = ""
 		sinceID             = ""
 		minID               = "01F8MHAAY43M6RJ473VQFCVH36" // 1 before filteredStatus
-		limit               = 10
+		limit               = 40
 		local               = false
 		filteredStatus      = suite.testStatuses["admin_account_status_2"]
 		filteredStatusFound = false
@@ -121,18 +86,18 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 					StatusID:  filteredStatus.ID,
 				},
 			},
-			ContextHome:          util.Ptr(false),
+			ContextHome:          util.Ptr(true),
 			ContextNotifications: util.Ptr(false),
-			ContextPublic:        util.Ptr(true),
+			ContextPublic:        util.Ptr(false),
 			ContextThread:        util.Ptr(false),
 			ContextAccount:       util.Ptr(false),
 		}
 	)
 
 	// Fetch the timeline to make sure the status we're going to filter is in that section of it.
-	resp, errWithCode := suite.timeline.PublicTimelineGet(
+	resp, errWithCode := suite.timeline.HomeTimelineGet(
 		ctx,
-		requester,
+		authed,
 		maxID,
 		sinceID,
 		minID,
@@ -149,8 +114,10 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	if !filteredStatusFound {
 		suite.FailNow("precondition failed: status we would filter isn't present in unfiltered timeline")
 	}
-	// The public timeline has no prepared status cache and doesn't need to be pruned,
-	// as in the home timeline version of this test.
+	// Prune the timeline to drop cached prepared statuses, a side effect of this precondition check.
+	if _, err := suite.state.Timelines.Home.Prune(ctx, requester.ID, 0, 0); err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	// Create a filter to hide one status on the timeline.
 	if err := suite.db.PutFilter(ctx, filter); err != nil {
@@ -158,9 +125,9 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	}
 
 	// Fetch the timeline again with the filter in place.
-	resp, errWithCode = suite.timeline.PublicTimelineGet(
+	resp, errWithCode = suite.timeline.HomeTimelineGet(
 		ctx,
-		requester,
+		authed,
 		maxID,
 		sinceID,
 		minID,
@@ -182,6 +149,6 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	suite.False(filteredStatusFound)
 }
 
-func TestPublicTestSuite(t *testing.T) {
-	suite.Run(t, new(PublicTestSuite))
+func TestHomeTestSuite(t *testing.T) {
+	suite.Run(t, new(HomeTestSuite))
 }
