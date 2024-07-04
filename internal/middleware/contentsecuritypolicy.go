@@ -40,6 +40,7 @@ func BuildContentSecurityPolicy(extraURIs ...string) string {
 		objectSrc  = "object-src"
 		imgSrc     = "img-src"
 		mediaSrc   = "media-src"
+		frames     = "frame-ancestors"
 
 		self = "'self'"
 		none = "'none'"
@@ -101,6 +102,14 @@ func BuildContentSecurityPolicy(extraURIs ...string) string {
 		[]string{self},
 		extraURIs...,
 	)
+
+	/*
+		frame-ancestors
+		https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors
+	*/
+
+	// Don't allow embedding us in an iframe
+	values[frames] = []string{none}
 
 	/*
 		Assemble policy directives.

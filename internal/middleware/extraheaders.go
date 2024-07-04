@@ -27,6 +27,15 @@ func ExtraHeaders() gin.HandlerFunc {
 		// Inform all callers which server implementation this is.
 		c.Header("Server", "gotosocial")
 
+		// Equivalent to CSP frame-ancestors for older browsers
+		c.Header("X-Frame-Options", "DENY")
+
+		// Don't do MIME type sniffing
+		c.Header("X-Content-Type-Options", "nosniff")
+
+		// Only send Referer header for URLs matching our protocol, hostname and port
+		c.Header("Referrer-Policy", "same-origin")
+
 		// Prevent google chrome cohort tracking. Originally this was referred
 		// to as FlocBlock. Floc was replaced by Topics in 2022 and the spec says
 		// that interest-cohort will also block Topics (as of 2022-Nov).
