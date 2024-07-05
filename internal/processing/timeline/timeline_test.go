@@ -35,6 +35,7 @@ type TimelineStandardTestSuite struct {
 
 	// standard suite models
 	testAccounts map[string]*gtsmodel.Account
+	testStatuses map[string]*gtsmodel.Status
 
 	// module being tested
 	timeline timeline.Processor
@@ -42,6 +43,7 @@ type TimelineStandardTestSuite struct {
 
 func (suite *TimelineStandardTestSuite) SetupSuite() {
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testStatuses = testrig.NewTestStatuses()
 }
 
 func (suite *TimelineStandardTestSuite) SetupTest() {
