@@ -135,6 +135,17 @@ import (
 	typeupdate "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_update"
 	typevideo "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_video"
 	typeview "github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_view"
+	propertyalways "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_always"
+	propertyapprovalrequired "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired"
+	propertyapprovedby "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby"
+	propertycanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canannounce"
+	propertycanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike"
+	propertycanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply"
+	propertyinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy"
+	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
+	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
+	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
+	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
 	propertyid "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id"
 	propertytype "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type"
 	propertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/property_value"
@@ -252,6 +263,19 @@ func (this Manager) DeserializeAltitudePropertyActivityStreams() func(map[string
 	}
 }
 
+// DeserializeAlwaysPropertyGoToSocial returns the deserialization method for the
+// "GoToSocialAlwaysProperty" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeAlwaysPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAlwaysProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialAlwaysProperty, error) {
+		i, err := propertyalways.DeserializeAlwaysProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
 // DeserializeAnnounceActivityStreams returns the deserialization method for the
 // "ActivityStreamsAnnounce" non-functional property in the vocabulary
 // "ActivityStreams"
@@ -284,6 +308,32 @@ func (this Manager) DeserializeAnyOfPropertyActivityStreams() func(map[string]in
 func (this Manager) DeserializeApplicationActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsApplication, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsApplication, error) {
 		i, err := typeapplication.DeserializeApplication(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeApprovalRequiredPropertyGoToSocial returns the deserialization
+// method for the "GoToSocialApprovalRequiredProperty" non-functional property
+// in the vocabulary "GoToSocial"
+func (this Manager) DeserializeApprovalRequiredPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialApprovalRequiredProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialApprovalRequiredProperty, error) {
+		i, err := propertyapprovalrequired.DeserializeApprovalRequiredProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeApprovedByPropertyGoToSocial returns the deserialization method for
+// the "GoToSocialApprovedByProperty" non-functional property in the
+// vocabulary "GoToSocial"
+func (this Manager) DeserializeApprovedByPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialApprovedByProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialApprovedByProperty, error) {
+		i, err := propertyapprovedby.DeserializeApprovedByProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -413,6 +463,82 @@ func (this Manager) DeserializeBlurhashPropertyToot() func(map[string]interface{
 func (this Manager) DeserializeBtoPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsBtoProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsBtoProperty, error) {
 		i, err := propertybto.DeserializeBtoProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeCanAnnounceGoToSocial returns the deserialization method for the
+// "GoToSocialCanAnnounce" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeCanAnnounceGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanAnnounce, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialCanAnnounce, error) {
+		i, err := typecanannounce.DeserializeCanAnnounce(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeCanAnnouncePropertyGoToSocial returns the deserialization method for
+// the "GoToSocialCanAnnounceProperty" non-functional property in the
+// vocabulary "GoToSocial"
+func (this Manager) DeserializeCanAnnouncePropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanAnnounceProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialCanAnnounceProperty, error) {
+		i, err := propertycanannounce.DeserializeCanAnnounceProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeCanLikeGoToSocial returns the deserialization method for the
+// "GoToSocialCanLike" non-functional property in the vocabulary "GoToSocial"
+func (this Manager) DeserializeCanLikeGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanLike, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialCanLike, error) {
+		i, err := typecanlike.DeserializeCanLike(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeCanLikePropertyGoToSocial returns the deserialization method for the
+// "GoToSocialCanLikeProperty" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeCanLikePropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanLikeProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialCanLikeProperty, error) {
+		i, err := propertycanlike.DeserializeCanLikeProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeCanReplyGoToSocial returns the deserialization method for the
+// "GoToSocialCanReply" non-functional property in the vocabulary "GoToSocial"
+func (this Manager) DeserializeCanReplyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanReply, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialCanReply, error) {
+		i, err := typecanreply.DeserializeCanReply(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeCanReplyPropertyGoToSocial returns the deserialization method for
+// the "GoToSocialCanReplyProperty" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeCanReplyPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanReplyProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialCanReplyProperty, error) {
+		i, err := propertycanreply.DeserializeCanReplyProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -953,6 +1079,32 @@ func (this Manager) DeserializeInboxPropertyActivityStreams() func(map[string]in
 func (this Manager) DeserializeInstrumentPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsInstrumentProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsInstrumentProperty, error) {
 		i, err := propertyinstrument.DeserializeInstrumentProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeInteractionPolicyGoToSocial returns the deserialization method for
+// the "GoToSocialInteractionPolicy" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeInteractionPolicyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialInteractionPolicy, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialInteractionPolicy, error) {
+		i, err := typeinteractionpolicy.DeserializeInteractionPolicy(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeInteractionPolicyPropertyGoToSocial returns the deserialization
+// method for the "GoToSocialInteractionPolicyProperty" non-functional
+// property in the vocabulary "GoToSocial"
+func (this Manager) DeserializeInteractionPolicyPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialInteractionPolicyProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialInteractionPolicyProperty, error) {
+		i, err := propertyinteractionpolicy.DeserializeInteractionPolicyProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
