@@ -46,6 +46,12 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsBlock) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialCanAnnounce) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialCanLike) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialCanReply) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCollection) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsCollectionPage) error:
@@ -77,6 +83,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsIgnore) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsImage) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialInteractionPolicy) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsIntransitiveActivity) error:
 			// Do nothing, this callback has a correct signature.
@@ -244,6 +252,33 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "CanAnnounce" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialCanAnnounce) error); ok {
+				if v, ok := o.(vocab.GoToSocialCanAnnounce); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "CanLike" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialCanLike) error); ok {
+				if v, ok := o.(vocab.GoToSocialCanLike); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "CanReply" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialCanReply) error); ok {
+				if v, ok := o.(vocab.GoToSocialCanReply); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Collection" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsCollection) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsCollection); ok {
@@ -382,6 +417,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Image" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsImage) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsImage); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "InteractionPolicy" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialInteractionPolicy) error); ok {
+				if v, ok := o.(vocab.GoToSocialInteractionPolicy); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
