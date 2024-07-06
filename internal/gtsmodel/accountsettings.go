@@ -21,15 +21,20 @@ import "time"
 
 // AccountSettings models settings / preferences for a local, non-instance account.
 type AccountSettings struct {
-	AccountID         string     `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // AccountID that owns this settings.
-	CreatedAt         time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
-	UpdatedAt         time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item was last updated.
-	Privacy           Visibility `bun:",nullzero"`                                                   // Default post privacy for this account
-	Sensitive         *bool      `bun:",nullzero,notnull,default:false"`                             // Set posts from this account to sensitive by default?
-	Language          string     `bun:",nullzero,notnull,default:'en'"`                              // What language does this account post in?
-	StatusContentType string     `bun:",nullzero"`                                                   // What is the default format for statuses posted by this account (only for local accounts).
-	Theme             string     `bun:",nullzero"`                                                   // Preset CSS theme filename selected by this Account (empty string if nothing set).
-	CustomCSS         string     `bun:",nullzero"`                                                   // Custom CSS that should be displayed for this Account's profile and statuses.
-	EnableRSS         *bool      `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
-	HideCollections   *bool      `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
+	AccountID                      string             `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // AccountID that owns this settings.
+	CreatedAt                      time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
+	UpdatedAt                      time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item was last updated.
+	Privacy                        Visibility         `bun:",nullzero"`                                                   // Default post privacy for this account
+	Sensitive                      *bool              `bun:",nullzero,notnull,default:false"`                             // Set posts from this account to sensitive by default?
+	Language                       string             `bun:",nullzero,notnull,default:'en'"`                              // What language does this account post in?
+	StatusContentType              string             `bun:",nullzero"`                                                   // What is the default format for statuses posted by this account (only for local accounts).
+	Theme                          string             `bun:",nullzero"`                                                   // Preset CSS theme filename selected by this Account (empty string if nothing set).
+	CustomCSS                      string             `bun:",nullzero"`                                                   // Custom CSS that should be displayed for this Account's profile and statuses.
+	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
+	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
+	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.
+	InteractionPolicyMutualsOnly   *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new mutuals only visibility statuses. If null, assume default policy.
+	InteractionPolicyFollowersOnly *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new followers only visibility statuses. If null, assume default policy.
+	InteractionPolicyUnlocked      *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new unlocked visibility statuses. If null, assume default policy.
+	InteractionPolicyPublic        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new public visibility statuses. If null, assume default policy.
 }

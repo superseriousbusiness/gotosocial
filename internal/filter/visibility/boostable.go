@@ -53,10 +53,5 @@ func (f *Filter) StatusBoostable(ctx context.Context, requester *gtsmodel.Accoun
 		return false, nil
 	}
 
-	if !*status.Boostable {
-		log.Trace(ctx, "status marked not boostable")
-		return false, nil
-	}
-
 	return true, nil
 }

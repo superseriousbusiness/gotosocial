@@ -69,9 +69,6 @@ func (suite *FromClientAPITestSuite) newStatus(
 		Visibility:          visibility,
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
-		Boostable:           util.Ptr(true),
-		Replyable:           util.Ptr(true),
-		Likeable:            util.Ptr(true),
 	}
 
 	if replyToStatus != nil {

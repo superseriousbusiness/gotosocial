@@ -65,9 +65,7 @@ func getFutureStatus() *gtsmodel.Status {
 		Language:                 "en",
 		CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
+		InteractionPolicy:        gtsmodel.DefaultInteractionPolicyPublic(),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 }

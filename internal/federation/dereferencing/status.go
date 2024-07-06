@@ -633,9 +633,7 @@ func (d *Dereferencer) isPermittedStatus(
 		}
 	}
 
-	if permitted &&
-		*status.InReplyTo.Replyable {
-		// Status is reply-able to.
+	if permitted {
 		return true, nil
 	}
 
