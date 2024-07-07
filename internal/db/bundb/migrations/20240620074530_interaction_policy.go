@@ -156,18 +156,34 @@ func init() {
 				policy := gtsmodel.DefaultInteractionPolicyFor(v)
 
 				if !*oldStatus.Likeable {
-					// Nobody can Like.
-					policy.CanLike = gtsmodel.PolicyRules{}
+					// Only author can like.
+					policy.CanLike = gtsmodel.PolicyRules{
+						Always: gtsmodel.PolicyValues{
+							gtsmodel.PolicyValueAuthor,
+						},
+						WithApproval: make(gtsmodel.PolicyValues, 0),
+					}
 				}
 
 				if !*oldStatus.Replyable {
-					// Nobody can Reply.
-					policy.CanReply = gtsmodel.PolicyRules{}
+					// Only author + mentioned can Reply.
+					policy.CanReply = gtsmodel.PolicyRules{
+						Always: gtsmodel.PolicyValues{
+							gtsmodel.PolicyValueAuthor,
+							gtsmodel.PolicyValueMentioned,
+						},
+						WithApproval: make(gtsmodel.PolicyValues, 0),
+					}
 				}
 
 				if !*oldStatus.Boostable {
-					// Nobody can Announce.
-					policy.CanAnnounce = gtsmodel.PolicyRules{}
+					// Only author can Announce.
+					policy.CanAnnounce = gtsmodel.PolicyRules{
+						Always: gtsmodel.PolicyValues{
+							gtsmodel.PolicyValueAuthor,
+						},
+						WithApproval: make(gtsmodel.PolicyValues, 0),
+					}
 				}
 
 				// Update status with the new interaction policy.
