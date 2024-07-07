@@ -39,6 +39,7 @@ import { NoArg } from "../../../lib/types/query";
 import { Error } from "../../../components/error";
 import { useBaseUrl } from "../../../lib/navigation/util";
 import { PermType } from "../../../lib/types/perm";
+import isValidDomain from "is-valid-domain";
 
 export default function DomainPermDetail() {
 	const baseUrl = useBaseUrl();
@@ -139,7 +140,32 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 		};
 
 	const form = {
-		domain: useTextInput("domain", { source: perm, defaultValue: defaultDomain }),
+		domain: useTextInput("domain", {
+			source: perm,
+			defaultValue: defaultDomain,
+			validator: (v: string) => {
+				if (v.length === 0) {
+					return "";
+				}
+
+				if (v[v.length-1] === ".") {
+					return "invalid domain";
+				}
+
+				const valid = isValidDomain(v, {
+					subdomain: true,
+					wildcard: false,
+					allowUnicode: true,
+					topLevel: false,
+				});
+
+				if (valid) {
+					return "";
+				}
+
+				return "invalid domain";
+			}
+		}),
 		obfuscate: useBoolInput("obfuscate", { source: perm }),
 		commentPrivate: useTextInput("private_comment", { source: perm }),
 		commentPublic: useTextInput("public_comment", { source: perm })
@@ -208,6 +234,8 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 				field={form.domain}
 				label="Domain"
 				placeholder="example.com"
+				autoCapitalize="none"
+				spellCheck="false"
 				{...disabledForm}
 			/>
 
@@ -220,6 +248,7 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 			<TextArea
 				field={form.commentPrivate}
 				label="Private comment"
+				autoCapitalize="sentences"
 				rows={3}
 				{...disabledForm}
 			/>
@@ -227,6 +256,7 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 			<TextArea
 				field={form.commentPublic}
 				label="Public comment"
+				autoCapitalize="sentences"
 				rows={3}
 				{...disabledForm}
 			/>

@@ -66,9 +66,11 @@ export default function DomainPermissionsOverview() {
 	}
 	
 	return (
-		<>
-			<h1>Domain {permTypeUpper}s</h1>
-			{ permType == "block" ? <BlockHelperText/> : <AllowHelperText/> }
+		<div className={`domain-${permType}`}>
+			<div className="form-section-docs">
+				<h1>Domain {permTypeUpper}s</h1>
+				{ permType == "block" ? <BlockHelperText/> : <AllowHelperText/> }
+			</div>
 			<DomainPermsList
 				data={data}
 				permType={permType}
@@ -77,7 +79,7 @@ export default function DomainPermissionsOverview() {
 			<Link to={`~${baseUrl}/import-export`}>
 				Or use the bulk import/export interface
 			</Link>
-		</>
+		</div>
 	);
 }
 

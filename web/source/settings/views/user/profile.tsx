@@ -175,12 +175,15 @@ function UserProfileForm({ data: profile }) {
 			<TextInput
 				field={form.displayName}
 				label="Display name"
-				placeholder="A GoToSocial user"
+				placeholder="A GoToSocial User"
+				autoCapitalize="words"
+				spellCheck="false"
 			/>
 			<TextArea
 				field={form.note}
 				label="Bio"
 				placeholder="Just trying out GoToSocial, my pronouns are they/them and I like sloths."
+				autoCapitalize="sentences"
 				rows={8}
 			/>
 			<b>Profile fields</b>
@@ -233,6 +236,8 @@ function UserProfileForm({ data: profile }) {
 				className="monospace"
 				rows={8}
 				disabled={!instanceConfig.allowCustomCSS}
+				autoCapitalize="none"
+				spellCheck="false"
 			/>
 			<MutationButton
 				disabled={false}
@@ -270,10 +275,14 @@ function Field({ index, data }) {
 			<TextInput
 				field={form.name}
 				placeholder="Name"
+				autoCapitalize="none"
+				spellCheck="false"
 			/>
 			<TextInput
 				field={form.value}
 				placeholder="Value"
+				autoCapitalize="none"
+				spellCheck="false"
 			/>
 		</div>
 	);
