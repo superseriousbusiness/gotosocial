@@ -68,9 +68,8 @@
 	gap: 0.5rem;
 
 	.activitypub-logo {
-		background: $bg;
+		background: $fg;
 		box-shadow: $boxshadow;
-		border: $boxshadow-border;
 		border-radius: $br;	
 		max-width: 100%;
 	}
