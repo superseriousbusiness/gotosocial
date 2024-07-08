@@ -82,18 +82,37 @@
 		margin-top: calc(-1 * $overlap);
 		gap: 0 1rem;
 
-		.avatar {
+		.avatar-image-wrapper {
 			grid-area: avatar;
-			height: $avatar-size;
-			width: $avatar-size;
+			
 			border: 0.2rem solid $avatar-border;
 			border-radius: $br;
-			overflow: hidden; /* prevents image extending beyond rounded borders */
+			
+			/*
+				Wrapper always same
+				size + proportions no
+				matter image inside.
+			*/
+			height: $avatar-size;
+			width: $avatar-size;
 
-			img {
+			.avatar {
+				/*
+					Fit 100% of the wrapper.
+				*/
 				height: 100%;
 				width: 100%;
+
+				/*
+					Normalize non-square images.
+				*/
 				object-fit: cover;
+
+				/*
+					Prevent image extending
+					beyond rounded borders.
+				*/
+				border-radius: $br-inner;
 			}
 		}
 

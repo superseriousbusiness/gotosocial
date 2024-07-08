@@ -27,9 +27,11 @@ export default function FakeProfile({ avatar, header, display_name, username, ro
 					<img src={header} alt={header ? `header image for ${username}` : "None set"} />
 				</div>
 				<div className="basic-info" aria-hidden="true">
-					<a className="avatar" href={avatar}>
-						<img src={avatar} alt={avatar ? `avatar image for ${username}` : "None set"} />
-					</a>
+					<div className="avatar-image-wrapper">
+						<a href={avatar}>
+							<img className="avatar" src={avatar} alt={avatar ? `avatar image for ${username}` : "None set"} />
+						</a>
+					</div>
 					<dl className="namerole">
 						<dt className="sr-only">Display name</dt>
 						<dd className="displayname text-cutoff">{display_name.trim().length > 0 ? display_name : username}</dd>
