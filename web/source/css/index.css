@@ -61,6 +61,23 @@
 	}
 }
 
+.what-is-this .about-section-contents .activitypub-logo-wrapper {
+	display: flex;
+	flex-direction: column;
+	max-width: 100%;
+	gap: 0.5rem;
+
+	/* align-items: center; */
+
+	.activitypub-logo {
+		background: $bg;
+		box-shadow: $boxshadow;
+		border: $boxshadow-border;
+		border-radius: $br;	
+		max-width: 100%;
+	}
+}
+
 .apps {
 	align-self: start;
 
