@@ -41,7 +41,7 @@ require (
 	github.com/gorilla/websocket v1.5.2
 	github.com/h2non/filetype v1.1.3
 	github.com/jackc/pgx/v5 v5.6.0
-	github.com/microcosm-cc/bluemonday v1.0.26
+	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/miekg/dns v1.1.61
 	github.com/minio/minio-go/v7 v7.0.72
 	github.com/mitchellh/mapstructure v1.5.0
@@ -142,7 +142,7 @@ require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/golang/geo v0.0.0-20210211234256-740aa86cb551 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
-	github.com/gorilla/css v1.0.0 // indirect
+	github.com/gorilla/css v1.0.1 // indirect
 	github.com/gorilla/handlers v1.5.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect
