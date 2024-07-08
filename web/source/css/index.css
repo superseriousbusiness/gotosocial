@@ -67,8 +67,6 @@
 	max-width: 100%;
 	gap: 0.5rem;
 
-	/* align-items: center; */
-
 	.activitypub-logo {
 		background: $bg;
 		box-shadow: $boxshadow;
