@@ -238,6 +238,9 @@ github.com/go-errors/errors
 # github.com/go-fed/httpsig v1.1.0
 ## explicit; go 1.13
 github.com/go-fed/httpsig
+# github.com/go-ini/ini v1.67.0
+## explicit
+github.com/go-ini/ini
 # github.com/go-jose/go-jose/v4 v4.0.1
 ## explicit; go 1.21
 github.com/go-jose/go-jose/v4
@@ -322,8 +325,8 @@ github.com/go-swagger/go-swagger/generator
 # github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850
 ## explicit
 github.com/go-xmlfmt/xmlfmt
-# github.com/goccy/go-json v0.10.2
-## explicit; go 1.12
+# github.com/goccy/go-json v0.10.3
+## explicit; go 1.19
 github.com/goccy/go-json
 github.com/goccy/go-json/internal/decoder
 github.com/goccy/go-json/internal/encoder
@@ -450,11 +453,11 @@ github.com/josharian/intern
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
-# github.com/klauspost/compress v1.17.8
+# github.com/klauspost/compress v1.17.9
 ## explicit; go 1.20
 github.com/klauspost/compress/internal/race
 github.com/klauspost/compress/s2
-# github.com/klauspost/cpuid/v2 v2.2.7
+# github.com/klauspost/cpuid/v2 v2.2.8
 ## explicit; go 1.15
 github.com/klauspost/cpuid/v2
 # github.com/kr/pretty v0.3.1
@@ -488,7 +491,7 @@ github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.72
+# github.com/minio/minio-go/v7 v7.0.73
 ## explicit; go 1.21
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/pkg/credentials
