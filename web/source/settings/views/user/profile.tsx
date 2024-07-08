@@ -93,7 +93,9 @@ function UserProfileForm({ data: profile }) {
 
 	const form = {
 		avatar: useFileInput("avatar", { withPreview: true }),
+		avatarDescription: useTextInput("avatar_description", { source: profile }),
 		header: useFileInput("header", { withPreview: true }),
+		headerDescription: useTextInput("header_description", { source: profile }),
 		displayName: useTextInput("display_name", { source: profile }),
 		note: useTextInput("note", { source: profile, valueSelector: (p) => p.source?.note }),
 		bot: useBoolInput("bot", { source: profile }),
@@ -131,21 +133,33 @@ function UserProfileForm({ data: profile }) {
 					username={profile.username}
 					role={profile.role}
 				/>
-				<div className="files">
-					<div>
-						<FileInput
-							label="Header"
-							field={form.header}
-							accept="image/*"
-						/>
-					</div>
-					<div>
-						<FileInput
-							label="Avatar"
-							field={form.avatar}
-							accept="image/*"
-						/>
-					</div>
+
+				<div className="file-input-with-image-description">
+					<FileInput
+						label="Header"
+						field={form.header}
+						accept="image/png, image/jpeg, image/webp, image/gif"
+					/>
+					<TextInput
+						field={form.headerDescription}
+						label="Header image description"
+						placeholder="A green field with pink flowers."
+						autoCapitalize="sentences"
+					/>
+				</div>
+				
+				<div className="file-input-with-image-description">
+					<FileInput
+						label="Avatar (1:1 images look best)"
+						field={form.avatar}
+						accept="image/png, image/jpeg, image/webp, image/gif"
+					/>
+					<TextInput
+						field={form.avatarDescription}
+						label="Avatar image description"
+						placeholder="A cute drawing of a smiling sloth."
+						autoCapitalize="sentences"
+					/>
 				</div>
 
 				<div className="theme">

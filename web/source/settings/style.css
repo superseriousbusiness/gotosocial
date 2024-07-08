@@ -400,12 +400,13 @@ section.with-sidebar > form {
 			width: 24rem;
 		}
 	}
-	
-	.file-input-with-image-description {
-		display: flex;
-		flex-direction: column;
-		justify-content: space-around;
-	}
+}
+
+.file-input-with-image-description {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-around;
+	gap: 0.5rem;
 }
 
 /*
@@ -422,11 +423,13 @@ section.with-sidebar > form {
 }
 
 .user-profile {
+	.profile {
+		max-width: 42rem;
+	}
+	
 	.overview {
-		display: grid;
-		max-width: 60rem;
-		grid-template-columns: 70% 30%;
-		grid-template-rows: auto;
+		display: flex;
+		flex-direction: column;
 		gap: 1rem;
 
 		.files {

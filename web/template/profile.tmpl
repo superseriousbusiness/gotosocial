@@ -35,6 +35,78 @@
 {{- end }}
 {{- end -}}
 
+{{- define "defaultAvatarDimension" -}}
+{{- /* 136 is the default width/height for 8.5rem avatars, double it to get a good look when expanded. */ -}}
+272
+{{- end -}}
+
+{{- define "avatarWidth" -}}
+{{- with .account }}
+    {{- if isNil .AvatarAttachment -}}
+        {{- template "defaultAvatarDimension" . -}}
+    {{- else -}}
+        {{- /* Use the avatar's proper dimensions. */ -}}
+        {{- .AvatarAttachment.Meta.Original.Width -}}
+    {{- end -}}
+{{- end }}
+{{- end -}}
+
+{{- define "avatarHeight" -}}
+{{- with .account }}
+    {{- if isNil .AvatarAttachment -}}
+        {{- template "defaultAvatarDimension" . -}}
+    {{- else -}}
+        {{- /* Use the avatar's proper dimensions. */ -}}
+        {{- .AvatarAttachment.Meta.Original.Height -}}
+    {{- end -}}
+{{- end }}
+{{- end -}}
+
+{{- define "avatarAlt" -}}
+    Avatar for {{ .account.Username -}}
+    {{- if .account.AvatarDescription }}
+        {{- /* Add the avatar's image description. */ -}}
+        : {{ .account.AvatarDescription -}}
+    {{- end -}}
+{{- end -}}
+
+{{- define "headerAlt" -}}
+    Header for {{ .account.Username -}}
+    {{- if .account.HeaderDescription }}
+        {{- /* Add the header's image description. */ -}}
+        : {{ .account.HeaderDescription -}}
+    {{- end -}}
+{{- end -}}
+
+{{- define "avatar" -}}
+{{- with . }}
+<div
+    class="media photoswipe-gallery odd single avatar-image-wrapper"
+    role="group"
+>
+    <a
+        class="photoswipe-slide"
+        href="{{- .account.Avatar -}}"
+        target="_blank"
+        data-pswp-width="{{- template "avatarWidth" . -}}px"
+        data-pswp-height="{{- template "avatarHeight" . -}}px"
+        data-cropped="true"
+        alt="{{- template "avatarAlt" . -}}"
+        title="{{- template "avatarAlt" . -}}"
+    >
+        <img
+            class="avatar"
+            src="{{- .account.Avatar -}}"
+            alt="{{- template "avatarAlt" . -}}"
+            title="{{- template "avatarAlt" . -}}"
+            width="{{- template "avatarWidth" . -}}"
+            height="{{- template "avatarHeight" . -}}"
+        />
+    </a>
+</div>
+{{- end }}
+{{- end -}}
+
 {{- with . }}
 <main class="profile">
     <h2 class="sr-only">Profile for {{ .account.Username -}}</h2>
@@ -45,18 +117,14 @@
         <div class="header-image-wrapper">
             <img
                 src="{{- .account.Header -}}"
-                alt="Header for {{ .account.Username -}}"
-                title="Header for {{ .account.Username -}}"
+                alt="{{- template "headerAlt" . -}}"
+                title="{{- template "headerAlt" . -}}"
             />
         </div>
         <div class="basic-info">
-            <a class="avatar" href="{{- .account.Avatar -}}">
-                <img
-                    src="{{- .account.Avatar -}}"
-                    alt="Avatar for {{ .account.Username -}}"
-                    title="Avatar for {{ .account.Username -}}"
-                />
-            </a>
+            {{- with . }}
+            {{- include "avatar" . | indent 3 }}
+            {{- end }}
             <dl class="namerole">
                 <dt class="sr-only">Display name</dt>
                 <dd class="displayname text-cutoff">
