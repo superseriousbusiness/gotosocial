@@ -116,6 +116,8 @@ function EmojiList({ emoji }: EmojiListParams) {
 						field={filterField}
 						name="emoji-shortcode"
 						placeholder="Search"
+						autoCapitalize="none"
+						spellCheck="false"
 					/>
 				</div>
 				<div className="entries scrolling">

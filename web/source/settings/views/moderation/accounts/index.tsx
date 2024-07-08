@@ -23,12 +23,16 @@ import { AccountSearchForm } from "./search";
 export default function AccountsSearch({ }) {
 	return (
 		<div className="accounts-view">
-			<h1>Accounts Search</h1>
-			<span>
-				You can perform actions on an account by clicking
-				its name in a report, or by searching for the account
-				using the form below and clicking on its name.
-			</span>
+			<div className="form-section-docs">
+				<h1>Accounts Search</h1>
+				<p>
+					You can perform actions on an account by clicking
+					its name in a report, or by searching for the account
+					using the form below and clicking on its name.
+					<br/>
+					All fields in the below form are optional.
+				</p>
+			</div>
 			<AccountSearchForm />
 		</div>
 	);

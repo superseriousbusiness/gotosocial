@@ -80,9 +80,12 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 			<div className="import-export">
 				<TextArea
 					field={form.domains}
-					label="Domains"
+					label="Domains (newline-separated)"
 					placeholder={`google.com\nfacebook.com`}
 					rows={8}
+					autoCapitalize="none"
+					spellCheck="false"
+					className={"monospace"}
 				/>
 
 				<RadioGroup

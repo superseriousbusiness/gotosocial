@@ -79,7 +79,10 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 	const [submitForm, result] = useFormSubmit(form, useUpdateInstanceMutation());
 
 	return (
-		<form onSubmit={submitForm}>
+		<form
+			onSubmit={submitForm}
+			autoComplete="none"
+		>
 			<h1>Instance Settings</h1>
 
 			<div className="form-section-docs">
@@ -97,7 +100,8 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			<TextInput
 				field={form.title}
 				label={`Instance title (max ${titleLimit} characters)`}
-				placeholder="My GoToSocial instance"
+				autoCapitalize="words"
+				placeholder="My GoToSocial Instance"
 			/>
 
 			<div className="file-upload" aria-labelledby="avatar">
@@ -117,6 +121,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 							field={form.thumbnailDesc}
 							label="Avatar image description"
 							placeholder="A cute drawing of a smiling sloth."
+							autoCapitalize="sentences"
 						/>
 					</div>
 				</div>
@@ -139,6 +144,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 				field={form.shortDesc}
 				label={`Short description (markdown accepted, max ${shortDescLimit} characters)`}
 				placeholder="A small testing instance for the GoToSocial alpha software."
+				autoCapitalize="sentences"
 				rows={6}
 			/>
 
@@ -146,6 +152,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 				field={form.description}
 				label={`Full description (markdown accepted, max ${descLimit} characters)`}
 				placeholder="A small testing instance for the GoToSocial alpha software. Just trying it out, my main instance is https://example.com"
+				autoCapitalize="sentences"
 				rows={6}
 			/>
 
@@ -153,6 +160,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 				field={form.terms}
 				label={`Terms & Conditions (markdown accepted, max ${termsLimit} characters)`}
 				placeholder="Terms and conditions of using this instance, data policy, imprint, GDPR stuff, yadda yadda."
+				autoCapitalize="sentences"
 				rows={6}
 			/>
 
@@ -172,12 +180,15 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 				field={form.contactUser}
 				label="Contact user (local account username)"
 				placeholder="admin"
+				autoCapitalize="none"
+				spellCheck="false"
 			/>
 
 			<TextInput
 				field={form.contactEmail}
 				label="Contact email"
 				placeholder="admin@example.com"
+				type="email"
 			/>
 
 			<MutationButton label="Save" result={result} disabled={false} />
