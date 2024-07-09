@@ -99,6 +99,7 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 	if err := ffmpeg(ctx, dirpath,
 		"-loglevel", "error",
 		"-i", filepath,
+		"-codec:v", "png", // specifically NOT 'apng'
 		"-frames:v", "1", // in case animated, only take 1 frame
 		outpath,
 	); err != nil {
