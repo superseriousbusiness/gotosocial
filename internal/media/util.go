@@ -17,25 +17,104 @@
 
 package media
 
-// newHdrBuf returns a buffer of suitable size to
-// read bytes from a file header or magic number.
-//
-// File header is *USUALLY* 261 bytes at the start
-// of a file; magic number can be much less than
-// that (just a few bytes).
-//
-// To cover both cases, this function returns a buffer
-// suitable for whichever is smallest: the first 261
-// bytes of the file, or the whole file.
-//
-// See:
-//
-//   - https://en.wikipedia.org/wiki/File_format#File_header
-//   - https://github.com/h2non/filetype.
-func newHdrBuf(fileSize int) []byte {
-	bufSize := 261
-	if fileSize > 0 && fileSize < bufSize {
-		bufSize = fileSize
+import (
+	"cmp"
+	"errors"
+	"fmt"
+	"image"
+	"image/jpeg"
+	"io"
+	"os"
+
+	"codeberg.org/gruf/go-mimetypes"
+	"github.com/buckket/go-blurhash"
+	"github.com/disintegration/imaging"
+)
+
+// jpegDecode ...
+func jpegDecode(filepath string) (image.Image, error) {
+	// Open the file at given path.
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
 	}
-	return make([]byte, bufSize)
+
+	// Decode image from file.
+	img, err := jpeg.Decode(file)
+	if err != nil {
+		_ = file.Close()
+		return nil, err
+	}
+
+	// Close file now decoded into mem.
+	if err := file.Close(); err != nil {
+		return nil, err
+	}
+
+	return img, nil
+}
+
+// generateBlurhash ...
+func generateBlurhash(filepath string) (string, error) {
+	// Decode JPEG file at given path.
+	img, err := jpegDecode(filepath)
+	if err != nil {
+		return "", err
+	}
+
+	// for generating blurhashes, it's more cost effective to
+	// lose detail since it's blurry, so make a tiny version.
+	tiny := imaging.Resize(img, 64, 64, imaging.NearestNeighbor)
+
+	// Drop the larger image
+	// ref as soon as possible
+	// to allow GC to claim.
+	img = nil //nolint
+
+	// Generate blurhash for thumbnail.
+	return blurhash.Encode(4, 3, tiny)
+}
+
+// getMimeType returns a suitable mimetype for file extension.
+func getMimeType(ext string) string {
+	const defaultType = "application/octet-stream"
+	return cmp.Or(mimetypes.MimeTypes[ext], defaultType)
+}
+
+// drainToTmp drains data from given reader into a new temp file
+// and closes it, returning the path of the resulting temp file.
+func drainToTmp(r io.Reader) (string, error) {
+	// Create new temp output.
+	tmp, err := os.CreateTemp(
+		os.TempDir(),
+		"gotosocial-*",
+	)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract file path.
+	path := tmp.Name()
+
+	// Drain input reader into temporary file.
+	if _, err = tmp.ReadFrom(r); err != nil {
+		_ = tmp.Close()
+		return path, err
+	}
+
+	// Close file now finished.
+	return path, tmp.Close()
+}
+
+// remove only removes paths if not-empty.
+func remove(paths ...string) error {
+	var errs []error
+	for _, path := range paths {
+		if path != "" {
+			if err := os.Remove(path); err != nil {
+				errs = append(errs, fmt.Errorf("error removing %s: %w", path, err))
+			}
+		}
+	}
+	return errors.Join(errs...)
 }

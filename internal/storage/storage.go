@@ -24,6 +24,7 @@ import (
 	"io"
 	"mime"
 	"net/url"
+	"os"
 	"path"
 	"syscall"
 	"time"
@@ -93,6 +94,59 @@ func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error)
 // PutStream writes the bytes from supplied reader at key in the storage
 func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	return d.Storage.WriteStream(ctx, key, r)
+}
+
+// PutFile is a storage.Driver{} aware optimized form of PutStream, that in the case of disk.DiskStorage{} will simply
+// move filepath -> key. For other implementations filepath will be opened, written to storage and deleted after write.
+func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int64, error) {
+	if _, ok := d.Storage.(*disk.DiskStorage); ok {
+		// We're operating with disk storage here, we
+		// can actually just move 'file' to 'key' :D.
+
+		// Get filesize on disk before move.
+		stat, err := os.Stat(filepath)
+		if err != nil {
+			return 0, gtserror.Newf("error statting file %s: %w", filepath, err)
+		}
+
+		// Rename the filepath to expected storage key,
+		// (this handles removal of old if necessary).
+		if err := os.Rename(filepath, key); err != nil {
+			return 0, gtserror.Newf("error moving file %s->%s: %w", filepath, key, err)
+		}
+
+		return stat.Size(), nil
+	}
+
+	// Remove the existing file in store in case exists.
+	if err := d.Storage.Remove(ctx, key); err != nil &&
+		!errors.Is(err, storage.ErrNotFound) {
+		return 0, gtserror.Newf("error removing existing %s: %w", key, err)
+	}
+
+	// Open file at path for reading.
+	file, err := os.Open(filepath)
+	if err != nil {
+		return 0, gtserror.Newf("error opening file %s: %w", filepath, err)
+	}
+
+	// Write the file data to storage under key.
+	sz, err := d.Storage.WriteStream(ctx, key, file)
+	if err != nil {
+		err = gtserror.Newf("error writing file %s: %w", key, err)
+	}
+
+	// Close the file, we're done with it.
+	if err := file.Close(); err != nil {
+		log.Errorf(ctx, "error closing file %s: %v", filepath, err)
+	}
+
+	// Remove the file now it's in written.
+	if err := os.Remove(filepath); err != nil {
+		log.Errorf(ctx, "error removing file %s: %v", filepath, err)
+	}
+
+	return sz, err
 }
 
 // Delete attempts to remove the supplied key (and corresponding value) from storage.

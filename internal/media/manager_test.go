@@ -767,7 +767,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	suite.Equal(720, attachment.FileMeta.Original.Height)
 	suite.Equal(290880, attachment.FileMeta.Original.Size)
 	suite.EqualValues(float32(0.5611111), attachment.FileMeta.Original.Aspect)
-	suite.EqualValues(float32(9.822041), *attachment.FileMeta.Original.Duration)
+	suite.EqualValues(float32(9.823), *attachment.FileMeta.Original.Duration)
 	suite.EqualValues(float32(30), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0x117c79, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
