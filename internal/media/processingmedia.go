@@ -33,12 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-const (
-	// max thumb dimensions.
-	maxThumbWidth  = 512
-	maxThumbHeight = 512
-)
-
 // ProcessingMedia represents a piece of media
 // currently being processed. It exposes functions
 // for retrieving data from the process.
@@ -225,8 +219,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
 
 		// Determine thumbnail dimensions to use.
-		thumbWidth := min(width, maxThumbWidth)
-		thumbHeight := min(height, maxThumbHeight)
+		thumbWidth, thumbHeight := thumbSize(width, height)
 		p.media.FileMeta.Small.Width = thumbWidth
 		p.media.FileMeta.Small.Height = thumbHeight
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
@@ -270,8 +263,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Original.Bitrate = &bitrate
 
 		// Determine thumbnail dimensions to use.
-		thumbWidth := min(width, maxThumbWidth)
-		thumbHeight := min(height, maxThumbHeight)
+		thumbWidth, thumbHeight := thumbSize(width, height)
 		p.media.FileMeta.Small.Width = thumbWidth
 		p.media.FileMeta.Small.Height = thumbHeight
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
@@ -301,8 +293,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		if width > 0 && height > 0 {
 
 			// Determine thumbnail dimensions to use.
-			thumbWidth := min(width, maxThumbWidth)
-			thumbHeight := min(height, maxThumbHeight)
+			thumbWidth, thumbHeight := thumbSize(width, height)
 			p.media.FileMeta.Small.Width = thumbWidth
 			p.media.FileMeta.Small.Height = thumbHeight
 			p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)

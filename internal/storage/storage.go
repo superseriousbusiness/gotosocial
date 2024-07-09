@@ -112,7 +112,7 @@ func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int6
 		// Rename the filepath to expected storage key,
 		// (this handles removal of old if necessary).
 		if err := os.Rename(filepath, key); err != nil {
-			return 0, gtserror.Newf("error moving file %s->%s: %w", filepath, key, err)
+			return 0, gtserror.Newf("error moving file %s -> %s: %w", filepath, key, err)
 		}
 
 		return stat.Size(), nil
@@ -136,14 +136,14 @@ func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int6
 		err = gtserror.Newf("error writing file %s: %w", key, err)
 	}
 
-	// Close the file, we're done with it.
-	if err := file.Close(); err != nil {
-		log.Errorf(ctx, "error closing file %s: %v", filepath, err)
+	// Close the file: done with it.
+	if e := file.Close(); e != nil {
+		log.Errorf(ctx, "error closing file %s: %v", filepath, e)
 	}
 
 	// Remove the file now it's in written.
-	if err := os.Remove(filepath); err != nil {
-		log.Errorf(ctx, "error removing file %s: %v", filepath, err)
+	if e := os.Remove(filepath); e != nil {
+		log.Errorf(ctx, "error removing file %s: %v", filepath, e)
 	}
 
 	return sz, err

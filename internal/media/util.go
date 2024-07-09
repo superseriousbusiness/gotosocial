@@ -31,6 +31,36 @@ import (
 	"github.com/disintegration/imaging"
 )
 
+// thumbSize returns the dimensions to use for an input
+// image of given width / height, for its outgoing thumbnail.
+// This maintains the original image aspect ratio.
+func thumbSize(width, height int) (int, int) {
+	const (
+		maxThumbWidth  = 512
+		maxThumbHeight = 512
+	)
+	switch {
+	// Simplest case, within bounds!
+	case width < maxThumbWidth &&
+		height < maxThumbHeight:
+		return width, height
+
+	// Width is larger side.
+	case width > height:
+		p := float32(width) / float32(maxThumbWidth)
+		return maxThumbWidth, int(float32(height) / p)
+
+	// Height is larger side.
+	case height > width:
+		p := float32(height) / float32(maxThumbHeight)
+		return int(float32(width) / p), maxThumbHeight
+
+	// Square.
+	default:
+		return maxThumbWidth, maxThumbHeight
+	}
+}
+
 // jpegDecode ...
 func jpegDecode(filepath string) (image.Image, error) {
 	// Open the file at given path.
