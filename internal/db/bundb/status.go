@@ -202,7 +202,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 				gtscontext.SetBarebones(ctx),
 				status.InReplyToID,
 			)
-			if err != nil {
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
 				errs.Appendf("error populating status parent: %w", err)
 			}
 		}
@@ -562,6 +562,12 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 	for id := status.InReplyToID; id != ""; {
 		parent, err := s.GetStatusByID(ctx, id)
 		if err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
+				// This can be caused by a few cases: user has been blocked,
+				// status has been deleted, federation issues...
+				log.Debug(ctx, "status parent not found, returning up to this point")
+				break
+			}
 			return nil, err
 		}
 
