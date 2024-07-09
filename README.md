@@ -261,6 +261,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [gruf/go-debug](https://codeberg.org/gruf/go-debug); debug build tag. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-errors](https://codeberg.org/gruf/go-errors); context-like error w/ value wrapping  [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-fastcopy](https://codeberg.org/gruf/go-fastcopy); performant (buffer pooled) I/O copying [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-ffmpreg](https://codeberg.org/gruf/go-ffmpreg); embedded ffmpeg / ffprobe WASM binaries [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
   - [gruf/go-kv](https://codeberg.org/gruf/go-kv); log field formatting. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-list](https://codeberg.org/gruf/go-list); generic doubly linked list. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); safemutex & mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
