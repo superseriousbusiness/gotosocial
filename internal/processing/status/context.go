@@ -101,12 +101,6 @@ func isSelfReply(
 		return false
 	}
 
-	if status.InReplyToAccountID == "" {
-		// Doesn't reply
-		// to anything.
-		return false
-	}
-
 	return status.InReplyToAccountID == contextAcctID
 }
 

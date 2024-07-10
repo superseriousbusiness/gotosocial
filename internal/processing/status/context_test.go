@@ -68,48 +68,56 @@ func (suite *topoSortTestSuite) TestBranchedWithSelfReplyChain() {
 	b := &gtsmodel.Status{
 		ID:                 "B",
 		Account:            targetAccount,
+		AccountID:          targetAccount.ID,
 		InReplyToID:        f.ID,
 		InReplyToAccountID: f.Account.ID,
-	}
-	a := &gtsmodel.Status{
-		ID:                 "A",
-		Account:            otherAccount,
-		InReplyToID:        b.ID,
-		InReplyToAccountID: b.Account.ID,
 	}
 	d := &gtsmodel.Status{
 		ID:                 "D",
 		Account:            targetAccount,
+		AccountID:          targetAccount.ID,
 		InReplyToID:        b.ID,
 		InReplyToAccountID: b.Account.ID,
-	}
-	c := &gtsmodel.Status{
-		ID:                 "C",
-		Account:            otherAccount,
-		InReplyToID:        d.ID,
-		InReplyToAccountID: d.Account.ID,
 	}
 	e := &gtsmodel.Status{
 		ID:                 "E",
 		Account:            targetAccount,
+		AccountID:          targetAccount.ID,
 		InReplyToID:        d.ID,
 		InReplyToAccountID: d.Account.ID,
+	}
+	c := &gtsmodel.Status{
+		ID:                 "C",
+		Account:            otherAccount,
+		AccountID:          otherAccount.ID,
+		InReplyToID:        d.ID,
+		InReplyToAccountID: d.Account.ID,
+	}
+	a := &gtsmodel.Status{
+		ID:                 "A",
+		Account:            otherAccount,
+		AccountID:          otherAccount.ID,
+		InReplyToID:        b.ID,
+		InReplyToAccountID: b.Account.ID,
 	}
 	g := &gtsmodel.Status{
 		ID:                 "G",
 		Account:            otherAccount,
+		AccountID:          otherAccount.ID,
 		InReplyToID:        f.ID,
 		InReplyToAccountID: f.Account.ID,
 	}
 	i := &gtsmodel.Status{
 		ID:                 "I",
 		Account:            targetAccount,
+		AccountID:          targetAccount.ID,
 		InReplyToID:        g.ID,
 		InReplyToAccountID: g.Account.ID,
 	}
 	h := &gtsmodel.Status{
 		ID:                 "H",
 		Account:            otherAccount,
+		AccountID:          otherAccount.ID,
 		InReplyToID:        i.ID,
 		InReplyToAccountID: i.Account.ID,
 	}
