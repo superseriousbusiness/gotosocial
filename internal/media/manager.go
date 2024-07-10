@@ -314,21 +314,26 @@ func (m *Manager) RefreshEmoji(
 
 	// Since this is a refresh we will end up storing new images at new
 	// paths, so we should wrap closer to delete old paths at completion.
-	wrapped := func(ctx context.Context) (io.ReadCloser, int64, error) {
+	wrapped := func(ctx context.Context) (io.ReadCloser, error) {
 
-		// Call original data func.
-		rc, sz, err := data(ctx)
+		// Call original func.
+		rc, err := data(ctx)
 		if err != nil {
-			return nil, 0, err
+			return nil, err
 		}
 
-		// Wrap closer to cleanup old data.
-		c := iotools.CloserFunc(func() error {
+		// Cast as separated reader / closer types.
+		rct, ok := rc.(*iotools.ReadCloserType)
 
-			// First try close original.
-			if rc.Close(); err != nil {
-				return err
-			}
+		if !ok {
+			// Allocate new read closer type.
+			rct = new(iotools.ReadCloserType)
+			rct.Reader = rc
+			rct.Closer = rc
+		}
+
+		// Wrap underlying io.Closer type to cleanup old data.
+		rct.Closer = iotools.CloserCallback(rct.Closer, func() {
 
 			// Remove any *old* emoji image file path now stream is closed.
 			if err := m.state.Storage.Delete(ctx, oldPath); err != nil &&
@@ -341,12 +346,9 @@ func (m *Manager) RefreshEmoji(
 				!storage.IsNotFound(err) {
 				log.Errorf(ctx, "error deleting old static emoji %s from storage: %v", shortcodeDomain, err)
 			}
-
-			return nil
 		})
 
-		// Return newly wrapped readcloser and size.
-		return iotools.ReadCloser(rc, c), sz, nil
+		return rct, nil
 	}
 
 	// Use a new ID to create a new path

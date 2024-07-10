@@ -50,6 +50,7 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 		"-i", filepath,
 		"-map_metadata", "-1",
 		"-codec", "copy",
+		"-y",
 		outpath,
 	); err != nil {
 		return err
@@ -79,6 +80,7 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 		"-filter:v", "scale="+strconv.Itoa(width)+":"+strconv.Itoa(height),
 		"-qscale:v", "12", // ~ 70% quality
 		"-frames:v", "1",
+		"-y",
 		outpath,
 	); err != nil {
 		return "", err
@@ -101,6 +103,7 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 		"-i", filepath,
 		"-codec:v", "png", // specifically NOT 'apng'
 		"-frames:v", "1", // in case animated, only take 1 frame
+		"-y",
 		outpath,
 	); err != nil {
 		return "", gtserror.Newf("%w (filepath=%q outpath=%q)", err, filepath, outpath)

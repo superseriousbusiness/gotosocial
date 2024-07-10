@@ -20,7 +20,11 @@ package admin
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -34,9 +38,15 @@ func (p *Processor) MediaRefetch(ctx context.Context, requestingAccount *gtsmode
 		return gtserror.NewErrorInternalError(err)
 	}
 
+	// Get maximum supported remote emoji size.
+	maxsz := config.GetMediaEmojiRemoteMaxSize()
+
 	go func() {
+		ctx := gtscontext.WithValues(context.Background(), ctx)
 		log.Info(ctx, "starting emoji refetch")
-		refetched, err := p.media.RefetchEmojis(context.Background(), domain, transport.DereferenceMedia)
+		refetched, err := p.media.RefetchEmojis(ctx, domain, func(ctx context.Context, iri *url.URL) (io.ReadCloser, error) {
+			return transport.DereferenceMedia(ctx, iri, int64(maxsz))
+		})
 		if err != nil {
 			log.Errorf(ctx, "error refetching emojis: %s", err)
 		} else {

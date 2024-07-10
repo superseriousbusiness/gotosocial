@@ -99,9 +99,23 @@ func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64,
 // PutFile is a storage.Driver{} aware optimized form of PutStream, that in the case of disk.DiskStorage{} will simply
 // move filepath -> key. For other implementations filepath will be opened, written to storage and deleted after write.
 func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int64, error) {
-	if _, ok := d.Storage.(*disk.DiskStorage); ok {
+	if ds, ok := d.Storage.(*disk.DiskStorage); ok {
 		// We're operating with disk storage here, we
 		// can actually just move 'file' to 'key' :D.
+
+		// Get filepath from input key.
+		key, err := ds.Filepath(key)
+		if err != nil {
+			return 0, err
+		}
+
+		// Get directory path.
+		dir := path.Dir(key)
+
+		// Ensure directories leading up to store key exist.
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return 0, gtserror.Newf("error creating storage dirs %s: %w", dir, err)
+		}
 
 		// Get filesize on disk before move.
 		stat, err := os.Stat(filepath)

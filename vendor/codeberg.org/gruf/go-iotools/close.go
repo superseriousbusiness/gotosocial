@@ -2,6 +2,13 @@ package iotools
 
 import "io"
 
+// NopCloser is an empty
+// implementation of io.Closer,
+// that simply does nothing!
+type NopCloser struct{}
+
+func (NopCloser) Close() error { return nil }
+
 // CloserFunc is a function signature which allows
 // a function to implement the io.Closer type.
 type CloserFunc func() error

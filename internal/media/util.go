@@ -26,9 +26,12 @@ import (
 	"io"
 	"os"
 
+	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mimetypes"
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // thumbSize returns the dimensions to use for an input
@@ -61,7 +64,7 @@ func thumbSize(width, height int) (int, int) {
 	}
 }
 
-// jpegDecode ...
+// jpegDecode decodes the JPEG at filepath into parsed image.Image.
 func jpegDecode(filepath string) (image.Image, error) {
 	// Open the file at given path.
 	file, err := os.Open(filepath)
@@ -71,20 +74,14 @@ func jpegDecode(filepath string) (image.Image, error) {
 
 	// Decode image from file.
 	img, err := jpeg.Decode(file)
-	if err != nil {
-		_ = file.Close()
-		return nil, err
-	}
 
-	// Close file now decoded into mem.
-	if err := file.Close(); err != nil {
-		return nil, err
-	}
+	// Done with file.
+	_ = file.Close()
 
-	return img, nil
+	return img, err
 }
 
-// generateBlurhash ...
+// generateBlurhash generates a blurhash for JPEG at filepath.
 func generateBlurhash(filepath string) (string, error) {
 	// Decode JPEG file at given path.
 	img, err := jpegDecode(filepath)
@@ -113,27 +110,56 @@ func getMimeType(ext string) string {
 
 // drainToTmp drains data from given reader into a new temp file
 // and closes it, returning the path of the resulting temp file.
-func drainToTmp(r io.Reader) (string, error) {
-	// Create new temp output.
-	tmp, err := os.CreateTemp(
-		os.TempDir(),
-		"gotosocial-*",
-	)
+//
+// Note that this function specifically makes attempts to unwrap the
+// io.ReadCloser as much as it can to underlying type, to maximise
+// chance that Linux's sendfile syscall can be utilised for optimal
+// draining of data source to temporary file storage.
+func drainToTmp(rc io.ReadCloser) (string, error) {
+	tmp, err := os.CreateTemp(os.TempDir(), "gotosocial-*")
 	if err != nil {
 		return "", err
 	}
 
+	// Close readers
+	// on func return.
+	defer tmp.Close()
+	defer rc.Close()
+
 	// Extract file path.
 	path := tmp.Name()
 
-	// Drain input reader into temporary file.
-	if _, err = tmp.ReadFrom(r); err != nil {
-		_ = tmp.Close()
+	// Check for a
+	// reader limit.
+	var limit int64
+	limit = -1
+
+	// Reader type to use
+	// for draining to tmp.
+	rd := (io.Reader)(rc)
+
+	// Check if reader is actually wrapped,
+	// (as our http client wraps close func).
+	rct, ok := rc.(*iotools.ReadCloserType)
+	if ok {
+		rd = rct.Reader
+
+		// Extract limit if set on reader.
+		_, limit = iotools.GetReaderLimit(rd)
+	}
+
+	// Drain reader into tmp.
+	n, err := tmp.ReadFrom(rd)
+	if err != nil {
 		return path, err
 	}
 
-	// Close file now finished.
-	return path, tmp.Close()
+	// Check to see if limit was reached.
+	if n == limit && !iotools.AtEOF(rd) {
+		return path, gtserror.Newf("reached read limit %s", bytesize.Size(limit))
+	}
+
+	return path, nil
 }
 
 // remove only removes paths if not-empty.

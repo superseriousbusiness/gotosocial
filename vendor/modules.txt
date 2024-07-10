@@ -39,7 +39,7 @@ codeberg.org/gruf/go-ffmpreg/ffprobe
 codeberg.org/gruf/go-ffmpreg/internal
 codeberg.org/gruf/go-ffmpreg/util
 codeberg.org/gruf/go-ffmpreg/wasm
-# codeberg.org/gruf/go-iotools v0.0.0-20240708125855-e9d3aa24b560
+# codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 ## explicit; go 1.21
 codeberg.org/gruf/go-iotools
 # codeberg.org/gruf/go-kv v1.6.4

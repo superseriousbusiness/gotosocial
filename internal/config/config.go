@@ -92,13 +92,13 @@ type Configuration struct {
 	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
 	AccountsCustomCSSLength  int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
 
-	MediaImageMaxSize        bytesize.Size `name:"media-image-max-size" usage:"Max size of accepted images in bytes"`
-	MediaVideoMaxSize        bytesize.Size `name:"media-video-max-size" usage:"Max size of accepted videos in bytes"`
 	MediaDescriptionMinChars int           `name:"media-description-min-chars" usage:"Min required chars for an image description"`
 	MediaDescriptionMaxChars int           `name:"media-description-max-chars" usage:"Max permitted chars for an image description"`
 	MediaRemoteCacheDays     int           `name:"media-remote-cache-days" usage:"Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely."`
 	MediaEmojiLocalMaxSize   bytesize.Size `name:"media-emoji-local-max-size" usage:"Max size in bytes of emojis uploaded to this instance via the admin API."`
 	MediaEmojiRemoteMaxSize  bytesize.Size `name:"media-emoji-remote-max-size" usage:"Max size in bytes of emojis to download from other instances."`
+	MediaLocalMaxSize        bytesize.Size `name:"media-local-max-size" usage:"Max size in bytes of media uploaded to this instance via API"`
+	MediaRemoteMaxSize       bytesize.Size `name:"media-remote-max-size" usage:"Max size in bytes of media to download from other instances"`
 	MediaCleanupFrom         string        `name:"media-cleanup-from" usage:"Time of day from which to start running media cleanup/prune jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
 	MediaCleanupEvery        time.Duration `name:"media-cleanup-every" usage:"Period to elapse between cleanups, starting from media-cleanup-at."`
 

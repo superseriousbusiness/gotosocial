@@ -151,7 +151,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Load media from data func.
-	rc, _, err := p.dataFn(ctx)
+	rc, err := p.dataFn(ctx)
 	if err != nil {
 		return gtserror.Newf("error executing data function: %w", err)
 	}

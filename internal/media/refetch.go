@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
+type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, error)
 
 // RefetchEmojis iterates through remote emojis (for the given domain, or all if domain is empty string).
 //
@@ -107,7 +107,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			continue
 		}
 
-		dataFunc := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
+		dataFunc := func(ctx context.Context) (reader io.ReadCloser, err error) {
 			return dereferenceMedia(ctx, emojiImageIRI)
 		}
 
