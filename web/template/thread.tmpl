@@ -19,13 +19,11 @@
 
 {{- define "repliesSummary" -}}
     {{- if eq .meta.WebThreadRepliesShown 1 -}}
-        {{ .meta.WebThreadRepliesShown }} visible reply
+        {{ .meta.WebThreadRepliesShown }} reply
     {{- else if gt .meta.WebThreadRepliesShown 1 -}}
-        {{ .meta.WebThreadRepliesShown }} visible replies
+        {{ .meta.WebThreadRepliesShown }} replies
     {{- end -}}
-    {{- if .meta.WebThreadRepliesHidden -}}
-        , {{ .meta.WebThreadRepliesHidden }} hidden
-    {{- end -}}
+    {{- if .meta.WebThreadRepliesHidden }} ({{ .meta.WebThreadRepliesHidden }} hidden){{- end -}}
 {{- end -}}
 
 {{- define "threadSummary" -}}
@@ -33,16 +31,14 @@
         Single post
     {{- else if gt .meta.WebThreadLength 1 -}}
         Thread of {{ .meta.WebThreadLength }} posts
-        {{- if .meta.WebThreadHidden -}}
-            , of which {{ .meta.WebThreadHidden }} hidden
-        {{- end -}}
+        {{- if .meta.WebThreadHidden }} ({{ .meta.WebThreadHidden }} hidden){{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- define "repliesStart" -}}
 {{- with . }}
 </section>
-<section class="replies thread" aria-labelledby="replies-summary">
+<section class="thread thread-replies" aria-labelledby="replies-summary" open>
     <div class="col-header replies">
         <h2 id="replies-summary">{{- template "repliesSummary" . -}}</h2>
     </div>
@@ -50,8 +46,8 @@
 {{- end -}}
 
 {{- with . }}
-<main class="thread" data-nosnippet>
-    <section class="thread" aria-labelledby="thread-summary">
+<main class="thread-wrapper" data-nosnippet>
+    <section class="thread thread-main" aria-labelledby="thread-summary">
         <div class="col-header">
             <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
             <a href="#{{- .status.ID -}}">jump to expanded post</a>

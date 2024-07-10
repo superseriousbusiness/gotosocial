@@ -17,11 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-.thread {
+.thread,
+.thread-wrapper {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
+}
 
+.thread {
 	/*
 		This column header might contain
 		quite some info, so let it wrap.
