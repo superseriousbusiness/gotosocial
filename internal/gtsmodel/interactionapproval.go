@@ -35,14 +35,21 @@ type InteractionApproval struct {
 	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account that did the interaction that this Accept targets.
 	InteractingAccount   *Account        `bun:"-"`                                                           // account corresponding to targetAccountID
 	InteractionURI       string          `bun:",nullzero,notnull"`                                           // URI of the target like, reply, or announce
-	InteractionType      InteractionType `bun:",nullzero,notnull"`                                           // One of Like, Reply, or Announce.
+	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
 	URI                  string          `bun:",nullzero,notnull,unique"`                                    // ActivityPub URI of the Accept.
 }
 
-type InteractionType string
+// Like / Reply / Announce
+type InteractionType int
 
 const (
-	InteractionLike     InteractionType = "Like"
-	InteractionReply    InteractionType = "Reply"
-	InteractionAnnounce InteractionType = "Announce"
+	// WARNING: DO NOT CHANGE THE ORDER OF THESE,
+	// as this will cause breakage of approvals!
+	//
+	// If you need to add new interaction types,
+	// add them *to the end* of the list.
+
+	InteractionLike InteractionType = iota
+	InteractionReply
+	InteractionAnnounce
 )
