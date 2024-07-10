@@ -103,7 +103,7 @@ func (r *interactionDB) getInteractionApproval(
 func (r *interactionDB) PopulateInteractionApproval(ctx context.Context, approval *gtsmodel.InteractionApproval) error {
 	var (
 		err  error
-		errs = gtserror.NewMultiError(4)
+		errs = gtserror.NewMultiError(2)
 	)
 
 	if approval.Account == nil {
