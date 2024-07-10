@@ -106,7 +106,7 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 		"-y",
 		outpath,
 	); err != nil {
-		return "", gtserror.Newf("%w (filepath=%q outpath=%q)", err, filepath, outpath)
+		return "", err
 	}
 
 	return outpath, nil
