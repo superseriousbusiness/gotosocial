@@ -47,11 +47,10 @@ User-agent: FriendlyCrawler
 User-agent: Google-Extended
 User-agent: GoogleOther
 User-agent: GPTBot
+User-agent: ImagesiftBot
 User-agent: img2dataset
 User-agent: omgili
 User-agent: omgilibot
-User-agent: peer39_crawler
-User-agent: peer39_crawler/1.0
 User-agent: PerplexityBot
 User-agent: YouBot
 Disallow: /
@@ -60,9 +59,10 @@ Disallow: /
 User-agent: AwarioRssBot
 User-agent: AwarioSmartBot
 User-agent: DataForSeoBot
-User-agent: ImagesiftBot
 User-agent: magpie-crawler
 User-agent: Meltwater
+User-agent: peer39_crawler
+User-agent: peer39_crawler/1.0
 User-agent: PiplBot
 User-agent: scoop.it
 User-agent: Seekr
