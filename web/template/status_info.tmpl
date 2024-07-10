@@ -60,12 +60,12 @@
             {{- end }}
         </div>
     </div>
-    {{- if .LanguageTag.DisplayStr }}
-    <div class="stats-item language" title="{{ .LanguageTag.DisplayStr }}">
+    {{- if .WebLanguageTag.DisplayStr }}
+    <div class="stats-item language" title="{{ .WebLanguageTag.DisplayStr }}">
         <dt class="sr-only">Language</dt>
         <dd>
-            <span class="sr-only">{{ .LanguageTag.DisplayStr }}</span>
-            <span aria-hidden="true">{{- .LanguageTag.TagStr -}}</span>
+            <span class="sr-only">{{ .WebLanguageTag.DisplayStr }}</span>
+            <span aria-hidden="true">{{- .WebLanguageTag.TagStr -}}</span>
         </dd>
     </div>
     {{- else }}

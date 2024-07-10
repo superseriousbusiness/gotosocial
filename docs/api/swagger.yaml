@@ -2516,24 +2516,6 @@ definitions:
         type: object
         x-go-name: Status
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    statusContext:
-        properties:
-            ancestors:
-                description: Parents in the thread.
-                items:
-                    $ref: '#/definitions/status'
-                type: array
-                x-go-name: Ancestors
-            descendants:
-                description: Children in the thread.
-                items:
-                    $ref: '#/definitions/status'
-                type: array
-                x-go-name: Descendants
-        title: Context models the tree around a given status.
-        type: object
-        x-go-name: Context
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     statusEdit:
         description: |-
             StatusEdit represents one historical revision of a status, containing
@@ -2886,6 +2868,26 @@ definitions:
         title: Theme represents one user-selectable preset CSS theme.
         type: object
         x-go-name: Theme
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    threadContext:
+        description: |-
+            ThreadContext models the tree or
+            "thread" around a given status.
+        properties:
+            ancestors:
+                description: Parents in the thread.
+                items:
+                    $ref: '#/definitions/status'
+                type: array
+                x-go-name: Ancestors
+            descendants:
+                description: Children in the thread.
+                items:
+                    $ref: '#/definitions/status'
+                type: array
+                x-go-name: Descendants
+        type: object
+        x-go-name: ThreadContext
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     user:
         properties:
@@ -8164,7 +8166,7 @@ paths:
     /api/v1/statuses/{id}/context:
         get:
             description: The returned statuses will be ordered in a thread structure, so they are suitable to be displayed in the order in which they were returned.
-            operationId: statusContext
+            operationId: threadContext
             parameters:
                 - description: Target status ID.
                   in: path
@@ -8175,9 +8177,9 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: Status context object.
+                    description: Thread context object.
                     schema:
-                        $ref: '#/definitions/statusContext'
+                        $ref: '#/definitions/threadContext'
                 "400":
                     description: bad request
                 "401":

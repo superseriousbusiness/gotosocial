@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusContextGETHandler swagger:operation GET /api/v1/statuses/{id}/context statusContext
+// StatusContextGETHandler swagger:operation GET /api/v1/statuses/{id}/context threadContext
 //
 // Return ancestors and descendants of the given status.
 //
@@ -55,9 +55,9 @@ import (
 //	responses:
 //		'200':
 //			name: statuses
-//			description: Status context object.
+//			description: Thread context object.
 //			schema:
-//				"$ref": "#/definitions/statusContext"
+//				"$ref": "#/definitions/threadContext"
 //		'400':
 //			description: bad request
 //		'401':
@@ -89,11 +89,11 @@ func (m *Module) StatusContextGETHandler(c *gin.Context) {
 		return
 	}
 
-	statusContext, errWithCode := m.processor.Status().ContextGet(c.Request.Context(), authed.Account, targetStatusID)
+	threadContext, errWithCode := m.processor.Status().ContextGet(c.Request.Context(), authed.Account, targetStatusID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	c.JSON(http.StatusOK, statusContext)
+	c.JSON(http.StatusOK, threadContext)
 }

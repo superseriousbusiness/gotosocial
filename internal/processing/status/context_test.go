@@ -18,17 +18,18 @@
 package status_test
 
 import (
-	"github.com/stretchr/testify/suite"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"testing"
+
+	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 )
 
 type topoSortTestSuite struct {
 	suite.Suite
 }
 
-func statusIDs(apiStatuses []*apimodel.Status) []string {
+func statusIDs(apiStatuses []*gtsmodel.Status) []string {
 	ids := make([]string, 0, len(apiStatuses))
 	for _, apiStatus := range apiStatuses {
 		ids = append(ids, apiStatus.ID)
@@ -38,18 +39,18 @@ func statusIDs(apiStatuses []*apimodel.Status) []string {
 
 func (suite *topoSortTestSuite) TestBranched() {
 	// https://commons.wikimedia.org/wiki/File:Sorted_binary_tree_ALL_RGB.svg
-	f := &apimodel.Status{ID: "F"}
-	b := &apimodel.Status{ID: "B", InReplyToID: &f.ID}
-	a := &apimodel.Status{ID: "A", InReplyToID: &b.ID}
-	d := &apimodel.Status{ID: "D", InReplyToID: &b.ID}
-	c := &apimodel.Status{ID: "C", InReplyToID: &d.ID}
-	e := &apimodel.Status{ID: "E", InReplyToID: &d.ID}
-	g := &apimodel.Status{ID: "G", InReplyToID: &f.ID}
-	i := &apimodel.Status{ID: "I", InReplyToID: &g.ID}
-	h := &apimodel.Status{ID: "H", InReplyToID: &i.ID}
+	f := &gtsmodel.Status{ID: "F"}
+	b := &gtsmodel.Status{ID: "B", InReplyToID: f.ID}
+	a := &gtsmodel.Status{ID: "A", InReplyToID: b.ID}
+	d := &gtsmodel.Status{ID: "D", InReplyToID: b.ID}
+	c := &gtsmodel.Status{ID: "C", InReplyToID: d.ID}
+	e := &gtsmodel.Status{ID: "E", InReplyToID: d.ID}
+	g := &gtsmodel.Status{ID: "G", InReplyToID: f.ID}
+	i := &gtsmodel.Status{ID: "I", InReplyToID: g.ID}
+	h := &gtsmodel.Status{ID: "H", InReplyToID: i.ID}
 
-	expected := statusIDs([]*apimodel.Status{f, b, a, d, c, e, g, i, h})
-	list := []*apimodel.Status{a, b, c, d, e, f, g, h, i}
+	expected := statusIDs([]*gtsmodel.Status{f, b, a, d, c, e, g, i, h})
+	list := []*gtsmodel.Status{a, b, c, d, e, f, g, h, i}
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
@@ -57,64 +58,64 @@ func (suite *topoSortTestSuite) TestBranched() {
 }
 
 func (suite *topoSortTestSuite) TestBranchedWithSelfReplyChain() {
-	targetAccount := &apimodel.Account{ID: "1"}
-	otherAccount := &apimodel.Account{ID: "2"}
+	targetAccount := &gtsmodel.Account{ID: "1"}
+	otherAccount := &gtsmodel.Account{ID: "2"}
 
-	f := &apimodel.Status{
+	f := &gtsmodel.Status{
 		ID:      "F",
 		Account: targetAccount,
 	}
-	b := &apimodel.Status{
+	b := &gtsmodel.Status{
 		ID:                 "B",
 		Account:            targetAccount,
-		InReplyToID:        &f.ID,
-		InReplyToAccountID: &f.Account.ID,
+		InReplyToID:        f.ID,
+		InReplyToAccountID: f.Account.ID,
 	}
-	a := &apimodel.Status{
+	a := &gtsmodel.Status{
 		ID:                 "A",
 		Account:            otherAccount,
-		InReplyToID:        &b.ID,
-		InReplyToAccountID: &b.Account.ID,
+		InReplyToID:        b.ID,
+		InReplyToAccountID: b.Account.ID,
 	}
-	d := &apimodel.Status{
+	d := &gtsmodel.Status{
 		ID:                 "D",
 		Account:            targetAccount,
-		InReplyToID:        &b.ID,
-		InReplyToAccountID: &b.Account.ID,
+		InReplyToID:        b.ID,
+		InReplyToAccountID: b.Account.ID,
 	}
-	c := &apimodel.Status{
+	c := &gtsmodel.Status{
 		ID:                 "C",
 		Account:            otherAccount,
-		InReplyToID:        &d.ID,
-		InReplyToAccountID: &d.Account.ID,
+		InReplyToID:        d.ID,
+		InReplyToAccountID: d.Account.ID,
 	}
-	e := &apimodel.Status{
+	e := &gtsmodel.Status{
 		ID:                 "E",
 		Account:            targetAccount,
-		InReplyToID:        &d.ID,
-		InReplyToAccountID: &d.Account.ID,
+		InReplyToID:        d.ID,
+		InReplyToAccountID: d.Account.ID,
 	}
-	g := &apimodel.Status{
+	g := &gtsmodel.Status{
 		ID:                 "G",
 		Account:            otherAccount,
-		InReplyToID:        &f.ID,
-		InReplyToAccountID: &f.Account.ID,
+		InReplyToID:        f.ID,
+		InReplyToAccountID: f.Account.ID,
 	}
-	i := &apimodel.Status{
+	i := &gtsmodel.Status{
 		ID:                 "I",
 		Account:            targetAccount,
-		InReplyToID:        &g.ID,
-		InReplyToAccountID: &g.Account.ID,
+		InReplyToID:        g.ID,
+		InReplyToAccountID: g.Account.ID,
 	}
-	h := &apimodel.Status{
+	h := &gtsmodel.Status{
 		ID:                 "H",
 		Account:            otherAccount,
-		InReplyToID:        &i.ID,
-		InReplyToAccountID: &i.Account.ID,
+		InReplyToID:        i.ID,
+		InReplyToAccountID: i.Account.ID,
 	}
 
-	expected := statusIDs([]*apimodel.Status{f, b, d, e, c, a, g, i, h})
-	list := []*apimodel.Status{a, b, c, d, e, f, g, h, i}
+	expected := statusIDs([]*gtsmodel.Status{f, b, d, e, c, a, g, i, h})
+	list := []*gtsmodel.Status{a, b, c, d, e, f, g, h, i}
 	status.TopoSort(list, targetAccount.ID)
 	actual := statusIDs(list)
 
@@ -122,13 +123,13 @@ func (suite *topoSortTestSuite) TestBranchedWithSelfReplyChain() {
 }
 
 func (suite *topoSortTestSuite) TestDisconnected() {
-	f := &apimodel.Status{ID: "F"}
-	b := &apimodel.Status{ID: "B", InReplyToID: &f.ID}
+	f := &gtsmodel.Status{ID: "F"}
+	b := &gtsmodel.Status{ID: "B", InReplyToID: f.ID}
 	dID := "D"
-	e := &apimodel.Status{ID: "E", InReplyToID: &dID}
+	e := &gtsmodel.Status{ID: "E", InReplyToID: dID}
 
-	expected := statusIDs([]*apimodel.Status{e, f, b})
-	list := []*apimodel.Status{b, e, f}
+	expected := statusIDs([]*gtsmodel.Status{e, f, b})
+	list := []*gtsmodel.Status{b, e, f}
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
@@ -137,10 +138,10 @@ func (suite *topoSortTestSuite) TestDisconnected() {
 
 func (suite *topoSortTestSuite) TestTrivialCycle() {
 	xID := "X"
-	x := &apimodel.Status{ID: xID, InReplyToID: &xID}
+	x := &gtsmodel.Status{ID: xID, InReplyToID: xID}
 
-	expected := statusIDs([]*apimodel.Status{x})
-	list := []*apimodel.Status{x}
+	expected := statusIDs([]*gtsmodel.Status{x})
+	list := []*gtsmodel.Status{x}
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
@@ -149,11 +150,11 @@ func (suite *topoSortTestSuite) TestTrivialCycle() {
 
 func (suite *topoSortTestSuite) TestCycle() {
 	yID := "Y"
-	x := &apimodel.Status{ID: "X", InReplyToID: &yID}
-	y := &apimodel.Status{ID: yID, InReplyToID: &x.ID}
+	x := &gtsmodel.Status{ID: "X", InReplyToID: yID}
+	y := &gtsmodel.Status{ID: yID, InReplyToID: x.ID}
 
-	expected := statusIDs([]*apimodel.Status{x, y})
-	list := []*apimodel.Status{x, y}
+	expected := statusIDs([]*gtsmodel.Status{x, y})
+	list := []*gtsmodel.Status{x, y}
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
@@ -162,12 +163,12 @@ func (suite *topoSortTestSuite) TestCycle() {
 
 func (suite *topoSortTestSuite) TestMixedCycle() {
 	yID := "Y"
-	x := &apimodel.Status{ID: "X", InReplyToID: &yID}
-	y := &apimodel.Status{ID: yID, InReplyToID: &x.ID}
-	z := &apimodel.Status{ID: "Z"}
+	x := &gtsmodel.Status{ID: "X", InReplyToID: yID}
+	y := &gtsmodel.Status{ID: yID, InReplyToID: x.ID}
+	z := &gtsmodel.Status{ID: "Z"}
 
-	expected := statusIDs([]*apimodel.Status{x, y, z})
-	list := []*apimodel.Status{x, y, z}
+	expected := statusIDs([]*gtsmodel.Status{x, y, z})
+	list := []*gtsmodel.Status{x, y, z}
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
@@ -175,8 +176,8 @@ func (suite *topoSortTestSuite) TestMixedCycle() {
 }
 
 func (suite *topoSortTestSuite) TestEmpty() {
-	expected := statusIDs([]*apimodel.Status{})
-	list := []*apimodel.Status{}
+	expected := statusIDs([]*gtsmodel.Status{})
+	list := []*gtsmodel.Status{}
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 
@@ -185,7 +186,7 @@ func (suite *topoSortTestSuite) TestEmpty() {
 
 func (suite *topoSortTestSuite) TestNil() {
 	expected := statusIDs(nil)
-	var list []*apimodel.Status
+	var list []*gtsmodel.Status
 	status.TopoSort(list, "")
 	actual := statusIDs(list)
 

@@ -110,7 +110,7 @@ type Status struct {
 	// on *status.Language. Nil for non-web statuses.
 	//
 	// swagger:ignore
-	LanguageTag *language.Language `json:"-"`
+	WebLanguageTag *language.Language `json:"-"`
 
 	// Template-ready poll options with vote shares
 	// calculated as a percentage of total votes.
@@ -123,7 +123,22 @@ type Status struct {
 	// Always false for non-web statuses.
 	//
 	// swagger:ignore
-	Local bool `json:"-"`
+	WebLocal bool `json:"-"`
+
+	// Level of indentation at which to
+	// display this status in the web view.
+	// Always 0 for non-web statuses.
+	//
+	// swagger:ignore
+	WebIndent int `json:"-"`
+
+	// This status is the first status after
+	// the "main" thread, so it and everything
+	// below it can be considered "replies".
+	// Always false for non-web statuses.
+	//
+	// swagger:ignore
+	WebThreadFirstReply bool `json:"-"`
 }
 
 /*

@@ -984,19 +984,19 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 ) (*apimodel.Status, error) {
-	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	status, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	// Whack a newline before and after each "pre" to make it easier to outdent it.
-	webStatus.Content = strings.ReplaceAll(webStatus.Content, "<pre>", "\n<pre>")
-	webStatus.Content = strings.ReplaceAll(webStatus.Content, "</pre>", "</pre>\n")
+	status.Content = strings.ReplaceAll(status.Content, "<pre>", "\n<pre>")
+	status.Content = strings.ReplaceAll(status.Content, "</pre>", "</pre>\n")
 
 	// Add additional information for template.
 	// Assume empty langs, hope for not empty language.
-	webStatus.LanguageTag = new(language.Language)
-	if lang := webStatus.Language; lang != nil {
+	status.WebLanguageTag = new(language.Language)
+	if lang := status.Language; lang != nil {
 		langTag, err := language.Parse(*lang)
 		if err != nil {
 			log.Warnf(
@@ -1005,11 +1005,11 @@ func (c *Converter) StatusToWebStatus(
 				*lang, err,
 			)
 		} else {
-			webStatus.LanguageTag = langTag
+			status.WebLanguageTag = langTag
 		}
 	}
 
-	if poll := webStatus.Poll; poll != nil {
+	if poll := status.Poll; poll != nil {
 		// Calculate vote share of each poll option and
 		// format them for easier template consumption.
 		totalVotes := poll.VotesCount
@@ -1039,28 +1039,29 @@ func (c *Converter) StatusToWebStatus(
 			voteShareStr = strings.TrimSuffix(voteShareStr, ".00")
 
 			webPollOption := apimodel.WebPollOption{
-				PollOption:   option,
-				PollID:       poll.ID,
-				Emojis:       webStatus.Emojis,
-				LanguageTag:  webStatus.LanguageTag,
-				VoteShare:    voteShare,
-				VoteShareStr: voteShareStr,
+				PollOption:      option,
+				WebPollID:       poll.ID,
+				WebEmojis:       status.Emojis,
+				WebLanguageTag:  status.WebLanguageTag,
+				WebVoteShare:    voteShare,
+				WebVoteShareStr: voteShareStr,
 			}
 			webPollOptions[i] = webPollOption
 		}
 
-		webStatus.WebPollOptions = webPollOptions
+		status.WebPollOptions = webPollOptions
 	}
 
 	// Set additional templating
 	// variables on media attachments.
-	for _, a := range webStatus.MediaAttachments {
-		a.Sensitive = webStatus.Sensitive
+	for _, a := range status.MediaAttachments {
+		a.Sensitive = status.Sensitive
 	}
 
-	webStatus.Local = *s.Local
+	// Mark this as a local status.
+	status.WebLocal = *s.Local
 
-	return webStatus, nil
+	return status, nil
 }
 
 // StatusToAPIStatusSource returns the *apimodel.StatusSource of the given status.

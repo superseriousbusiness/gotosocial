@@ -17,45 +17,83 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "threadLength" -}}
-    {{- with $length := add (len $.context.Ancestors) (len $.context.Descendants) | increment -}}
-        {{- if eq $length 1 -}}
-            {{- $length }} post
-        {{- else -}}
-            {{- $length }} posts
+{{- define "repliesSummary" -}}
+    {{- if eq .meta.WebThreadRepliesShown 1 -}}
+        {{ .meta.WebThreadRepliesShown }} visible reply
+    {{- else if gt .meta.WebThreadRepliesShown 1 -}}
+        {{ .meta.WebThreadRepliesShown }} visible replies
+    {{- end -}}
+    {{- if .meta.WebThreadRepliesHidden -}}
+        , {{ .meta.WebThreadRepliesHidden }} hidden
+    {{- end -}}
+{{- end -}}
+
+{{- define "threadSummary" -}}
+    {{- if eq .meta.WebThreadLength 1 -}}
+        Single post
+    {{- else if gt .meta.WebThreadLength 1 -}}
+        Thread of {{ .meta.WebThreadLength }} posts
+        {{- if .meta.WebThreadHidden -}}
+            , of which {{ .meta.WebThreadHidden }} hidden
         {{- end -}}
     {{- end -}}
 {{- end -}}
 
+{{- define "repliesStart" -}}
 {{- with . }}
-<main data-nosnippet class="thread" aria-labelledby="thread-summary">
-    <div class="col-header">
-        <h2 id="thread-summary">Thread with {{ template "threadLength" . -}}</h2>
-        <a href="#{{- .status.ID -}}">jump to expanded post</a>
+</section>
+<section class="replies thread" aria-labelledby="replies-summary">
+    <div class="col-header replies">
+        <h2 id="replies-summary">{{- template "repliesSummary" . -}}</h2>
     </div>
-    {{- range .context.Ancestors }}
-    <article
-        class="status"
-        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2 }}
-    >
-        {{- include "status.tmpl" . | indent 2 }}
-    </article>
-    {{- end }}
-    {{- with .status }}
-    <article
-        class="status expanded"
-        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2  }}
-    >
-        {{- include "status.tmpl" . | indent 2 }}
-    </article>
-    {{- end }}
-    {{- range .context.Descendants }}
-    <article
-        class="status"
-        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2 }}
-    >
-        {{- include "status.tmpl" . | indent 2 }}
-    </article>
+{{- end }}
+{{- end -}}
+
+{{- with . }}
+<main class="thread" data-nosnippet>
+    <section class="thread" aria-labelledby="thread-summary">
+        <div class="col-header">
+            <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
+            <a href="#{{- .status.ID -}}">jump to expanded post</a>
+        </div>
+
+        {{- range $thisStatus := .context.Ancestors }}
+        {{- if $thisStatus.WebThreadFirstReply }}
+        {{- include "repliesStart" $ | indent 1 }}
+        {{- end }}
+        <article
+            class="status{{- if $thisStatus.WebIndent }} indent-{{ $thisStatus.WebIndent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
+        >
+            {{- include "status.tmpl" $thisStatus | indent 3 }}
+        </article>
+        {{- end }}
+
+        {{- with $thisStatus := .status }}
+        {{- if $thisStatus.WebThreadFirstReply }}
+        {{- include "repliesStart" $ | indent 1 }}
+        {{- end }}
+        <article
+            class="status expanded{{- if $thisStatus.WebIndent }} indent-{{ $thisStatus.WebIndent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3  }}
+        >
+            {{- include "status.tmpl" $thisStatus | indent 3 }}
+        </article>
+        {{- end }}
+
+        {{- range $thisStatus := .context.Descendants }}
+        {{- if $thisStatus.WebThreadFirstReply }}
+        {{- include "repliesStart" $ | indent 1 }}
+        {{- end }}
+        <article
+            class="status{{- if $thisStatus.WebIndent }} indent-{{ $thisStatus.WebIndent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
+        >
+            {{- include "status.tmpl" $thisStatus | indent 3 }}
+        </article>
+        {{- end }}
+    {{- if .meta.WebThreadReplies }}
+    </section>
     {{- end }}
 </main>
 {{- end }}

@@ -114,17 +114,17 @@ type WebPollOption struct {
 	PollOption
 
 	// ID of the parent poll.
-	PollID string
+	WebPollID string
 
 	// Emojis contained on parent poll.
-	Emojis []Emoji
+	WebEmojis []Emoji
 
 	// LanguageTag of parent status.
-	LanguageTag *language.Language
+	WebLanguageTag *language.Language
 
 	// Share of total votes as a percentage.
-	VoteShare float32
+	WebVoteShare float32
 
 	// String-formatted version of VoteShare.
-	VoteShareStr string
+	WebVoteShareStr string
 }
