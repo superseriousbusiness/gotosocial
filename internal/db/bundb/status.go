@@ -561,14 +561,13 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 
 	for id := status.InReplyToID; id != ""; {
 		parent, err := s.GetStatusByID(ctx, id)
-		if err != nil {
-			if errors.Is(err, db.ErrNoEntries) {
-				// This can be caused by a few cases: user has been blocked,
-				// status has been deleted, federation issues...
-				log.Debug(ctx, "status parent not found, returning up to this point")
-				break
-			}
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
+		}
+
+		if parent == nil {
+			// Parent status not found (e.g. deleted)
+			break
 		}
 
 		// Append parent status to slice
