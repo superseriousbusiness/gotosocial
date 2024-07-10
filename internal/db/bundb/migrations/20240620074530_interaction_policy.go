@@ -19,7 +19,6 @@ package migrations
 
 import (
 	"context"
-	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
@@ -32,103 +31,114 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		log.Info(ctx, "migrating statuses and account settings to interaction policy model, please wait...")
-
-		// Add interaction_policy
-		// column to statuses table.
-		_, err := db.ExecContext(ctx,
-			"ALTER TABLE ? ADD COLUMN ? JSONB",
-			bun.Ident("statuses"),
-			bun.Ident("interaction_policy"),
-		)
-		if err != nil {
-			e := err.Error()
-			if !(strings.Contains(e, "already exists") ||
-				strings.Contains(e, "duplicate column name") ||
-				strings.Contains(e, "SQLSTATE 42701")) {
-				return err
-			}
-		}
-
-		// Add pending_approval and approved_by_uri
-		// columns to statuses and faves tables.
-		type spec struct {
-			table      string
-			column     string
-			columnType string
-			defaultVal string
-		}
-		for _, spec := range []spec{
-			{
-				table:      "statuses",
-				column:     "pending_approval",
-				columnType: "BOOLEAN",
-				defaultVal: "DEFAULT false",
-			},
-			{
-				table:      "status_faves",
-				column:     "pending_approval",
-				columnType: "BOOLEAN",
-				defaultVal: "DEFAULT false",
-			},
-			{
-				table:      "statuses",
-				column:     "approved_by_uri",
-				columnType: "varchar",
-				defaultVal: "",
-			},
-			{
-				table:      "status_faves",
-				column:     "approved_by_uri",
-				columnType: "varchar",
-				defaultVal: "",
-			},
-		} {
-			_, err := db.ExecContext(ctx,
-				"ALTER TABLE ? ADD COLUMN ? ? ?",
-				bun.Ident(spec.table),
-				bun.Ident(spec.column),
-				bun.Safe(spec.columnType),
-				bun.Safe(spec.defaultVal),
-			)
-			if err != nil {
-				e := err.Error()
-				if !(strings.Contains(e, "already exists") ||
-					strings.Contains(e, "duplicate column name") ||
-					strings.Contains(e, "SQLSTATE 42701")) {
-					return err
-				}
-			}
-		}
-
-		// Columns that must be added to the
-		// `account_settings` table to populate
-		// default interaction policies for
-		// different status visibilities.
-		newSettingsColumns := []string{
-			"interaction_policy_direct",
-			"interaction_policy_mutuals_only",
-			"interaction_policy_followers_only",
-			"interaction_policy_unlocked",
-			"interaction_policy_public",
-		}
-
-		for _, column := range newSettingsColumns {
-			_, err := db.ExecContext(ctx,
-				"ALTER TABLE ? ADD COLUMN ? JSONB",
-				bun.Ident("account_settings"),
-				bun.Ident(column),
-			)
-			if err != nil {
-				e := err.Error()
-				if !(strings.Contains(e, "already exists") ||
-					strings.Contains(e, "duplicate column name") ||
-					strings.Contains(e, "SQLSTATE 42701")) {
-					return err
-				}
-			}
-		}
-
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+
+			// Add new columns for interaction
+			// policies + related fields.
+			type spec struct {
+				table      string
+				column     string
+				columnType string
+				defaultVal string
+			}
+			for _, spec := range []spec{
+				// Statuses.
+				{
+					table:      "statuses",
+					column:     "interaction_policy",
+					columnType: "JSONB",
+					defaultVal: "",
+				},
+				{
+					table:      "statuses",
+					column:     "pending_approval",
+					columnType: "BOOLEAN",
+					defaultVal: "DEFAULT false",
+				},
+				{
+					table:      "statuses",
+					column:     "approved_by_uri",
+					columnType: "varchar",
+					defaultVal: "",
+				},
+
+				// Status faves.
+				{
+					table:      "status_faves",
+					column:     "pending_approval",
+					columnType: "BOOLEAN",
+					defaultVal: "DEFAULT false",
+				},
+				{
+					table:      "status_faves",
+					column:     "approved_by_uri",
+					columnType: "varchar",
+					defaultVal: "",
+				},
+
+				// Columns that must be added to the
+				// `account_settings` table to populate
+				// default interaction policies for
+				// different status visibilities.
+				{
+					table:      "account_settings",
+					column:     "interaction_policy_direct",
+					columnType: "JSONB",
+					defaultVal: "",
+				},
+				{
+					table:      "account_settings",
+					column:     "interaction_policy_mutuals_only",
+					columnType: "JSONB",
+					defaultVal: "",
+				},
+				{
+					table:      "account_settings",
+					column:     "interaction_policy_followers_only",
+					columnType: "JSONB",
+					defaultVal: "",
+				},
+				{
+					table:      "account_settings",
+					column:     "interaction_policy_unlocked",
+					columnType: "JSONB",
+					defaultVal: "",
+				},
+				{
+					table:      "account_settings",
+					column:     "interaction_policy_public",
+					columnType: "JSONB",
+					defaultVal: "",
+				},
+			} {
+				exists, err := doesColumnExist(ctx, tx,
+					spec.table, spec.column,
+				)
+				if err != nil {
+					// Real error.
+					return err
+				} else if exists {
+					// Already created.
+					continue
+				}
+
+				args := []any{
+					bun.Ident(spec.table),
+					bun.Ident(spec.column),
+					bun.Safe(spec.columnType),
+				}
+
+				qStr := "ALTER TABLE ? ADD COLUMN ? ?"
+				if spec.defaultVal != "" {
+					qStr += " ?"
+					args = append(args, bun.Safe(spec.defaultVal))
+				}
+
+				if _, err := tx.ExecContext(ctx, qStr, args...); err != nil {
+					return err
+				}
+			}
+
 			// Select each locally-created status
 			// with non-default old flags set.
 			oldStatuses := []oldmodel.Status{}
@@ -222,6 +232,16 @@ func init() {
 				NewCreateIndex().
 				Table("statuses").
 				Index("statuses_pending_approval_idx").
+				Column("pending_approval").
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Table("status_faves").
+				Index("status_faves_pending_approval_idx").
 				Column("pending_approval").
 				IfNotExists().
 				Exec(ctx); err != nil {
