@@ -78,14 +78,21 @@ function ModerateAccount({ account }: { account: AdminAccount }) {
 		>
 			<h3 id="account-moderation-actions">Account Moderation Actions</h3>
 			<div>
-				Currently only the "suspend" action is implemented.<br/>
-				Suspending an account will delete it from your server, and remove all of its media, posts, relationships, etc.<br/>
-				If the suspended account is local, suspending will also send out a "delete" message to other servers, requesting them to remove its data from their instance as well.<br/>
+				Currently only the "suspend" action is implemented.
+				<br/>
+				Suspending an account will delete it from your server,
+				and remove all of its media, posts, relationships, etc.
+				<br/>
+				If the suspended account is local, suspending will also
+				send out a "delete" message to other servers, requesting
+				them to remove its data from their instance as well.
+				<br/>
 				<b>Account suspension cannot be reversed.</b>
 			</div>
 			<TextInput
 				field={form.reason}
 				placeholder="Reason for this action"
+				autoCapitalize="sentences"
 			/>
 			<div className="action-buttons">
 				<MutationButton

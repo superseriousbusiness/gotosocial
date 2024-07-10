@@ -62,6 +62,9 @@ type Account struct {
 	// Only relevant when the account's main avatar is a video or a gif.
 	// example: https://example.org/media/some_user/avatar/static/avatar.png
 	AvatarStatic string `json:"avatar_static"`
+	// Description of this account's avatar, for alt text.
+	// example: A cute drawing of a smiling sloth.
+	AvatarDescription string `json:"avatar_description,omitempty"`
 	// Web location of the account's header image.
 	// example: https://example.org/media/some_user/header/original/header.jpeg
 	Header string `json:"header"`
@@ -69,6 +72,9 @@ type Account struct {
 	// Only relevant when the account's main header is a video or a gif.
 	// example: https://example.org/media/some_user/header/static/header.png
 	HeaderStatic string `json:"header_static"`
+	// Description of this account's header, for alt text.
+	// example: A sunlit field with purple flowers.
+	HeaderDescription string `json:"header_description,omitempty"`
 	// Number of accounts following this account, according to our instance.
 	FollowersCount int `json:"followers_count"`
 	// Number of account's followed by this account, according to our instance.
@@ -104,6 +110,17 @@ type Account struct {
 	// If set, indicates that this account is currently inactive, and has migrated to the given account.
 	// Key/value omitted for accounts that haven't moved, and for suspended accounts.
 	Moved *Account `json:"moved,omitempty"`
+
+	// Additional fields not exposed via JSON
+	// (used only internally for templating etc).
+
+	// Proper attachment model for the avatar.
+	//
+	// Only set if this model was converted via
+	// AccountToWebAccount, AND this account had
+	// an avatar set (and not just the default
+	// "blank" avatar image.)
+	AvatarAttachment *Attachment `json:"-"`
 }
 
 // MutedAccount extends Account with a field used only by the muted user list.
@@ -168,8 +185,12 @@ type UpdateCredentialsRequest struct {
 	Note *string `form:"note" json:"note"`
 	// Avatar image encoded using multipart/form-data.
 	Avatar *multipart.FileHeader `form:"avatar" json:"-"`
+	// Description of the avatar image, for alt-text.
+	AvatarDescription *string `form:"avatar_description" json:"avatar_description"`
 	// Header image encoded using multipart/form-data
 	Header *multipart.FileHeader `form:"header" json:"-"`
+	// Description of the header image, for alt-text.
+	HeaderDescription *string `form:"header_description" json:"header_description"`
 	// Require manual approval of follow requests.
 	Locked *bool `form:"locked" json:"locked"`
 	// New Source values for this account.

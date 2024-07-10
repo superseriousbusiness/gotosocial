@@ -53,6 +53,9 @@ export default function ApURL() {
 				<TextInput
 					field={urlField}
 					label="URL"
+					type="url"
+					pattern="(http|https):\/\/.+"
+					placeholder="https://example.org/users/someone"
 				/>
 				<MutationButton
 					disabled={!urlField.value}

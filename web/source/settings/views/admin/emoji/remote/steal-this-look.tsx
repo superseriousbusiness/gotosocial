@@ -52,9 +52,10 @@ export default function StealThisLook({ emojiCodes }) {
 					</label>
 					<div className="row">
 						<input
-							type="text"
 							id="url"
 							name="url"
+							type="url"
+							pattern="(http|https):\/\/.+"
 							onChange={urlField.onChange}
 							value={urlField.value}
 						/>

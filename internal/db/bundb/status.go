@@ -202,7 +202,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 				gtscontext.SetBarebones(ctx),
 				status.InReplyToID,
 			)
-			if err != nil {
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
 				errs.Appendf("error populating status parent: %w", err)
 			}
 		}
@@ -561,8 +561,13 @@ func (s *statusDB) GetStatusParents(ctx context.Context, status *gtsmodel.Status
 
 	for id := status.InReplyToID; id != ""; {
 		parent, err := s.GetStatusByID(ctx, id)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
+		}
+
+		if parent == nil {
+			// Parent status not found (e.g. deleted)
+			break
 		}
 
 		// Append parent status to slice

@@ -164,7 +164,7 @@ function PermDeets({
 			<dl className="info-list">
 				<div className="info-list-entry">
 					<dt>ID</dt>
-					<dd>{perm.id}</dd>
+					<dd className="monospace">{perm.id}</dd>
 				</div>
 				<div className="info-list-entry">
 					<dt>Created</dt>
@@ -176,10 +176,10 @@ function PermDeets({
 				</div>
 				<div className="info-list-entry">
 					<dt>Header Name</dt>
-					<dd>{perm.header}</dd>
+					<dd className="monospace">{perm.header}</dd>
 				</div>
 				<div className="info-list-entry">
-					<dt>Header Value Regex</dt>
+					<dt>Value Regex</dt>
 					<dd className="monospace">{perm.regex}</dd>
 				</div>
 				<div className="info-list-entry">

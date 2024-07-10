@@ -29,7 +29,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 func (m *Module) threadGETHandler(c *gin.Context) {
@@ -88,16 +87,8 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 
 	// text/html has been requested. Proceed with getting the web view of the status.
 
-	// Don't require auth for web endpoints, but do take it if it was provided.
-	// authed.Account might end up nil here, but that's fine in case of public pages.
-	authed, err := oauth.Authed(c, false, false, false, false)
-	if err != nil {
-		apiutil.WebErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
 	// Fetch the target account so we can do some checks on it.
-	targetAccount, errWithCode := m.processor.Account().GetLocalByUsername(ctx, authed.Account, targetUsername)
+	targetAccount, errWithCode := m.processor.Account().GetWeb(ctx, targetUsername)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
 		return

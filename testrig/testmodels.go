@@ -969,7 +969,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 				},
 			},
 			AccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
-			Description:       "A very old-school screenshot of the original team fortress mod for quake ",
+			Description:       "A very old-school screenshot of the original team fortress mod for quake",
 			ScheduledStatusID: "",
 			Blurhash:          "L26j{^WCs+R-N}jsxWj@4;WWxDoK",
 			Processing:        2,
