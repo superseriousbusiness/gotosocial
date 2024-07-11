@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -556,6 +557,58 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	// ensure the files contain the expected data.
 	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/birdnest-processed.mp4")
 	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/birdnest-thumbnail.jpg")
+}
+
+func (suite *ManagerTestSuite) TestOpusProcess() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.ReadCloser, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/test-opus-original.opus")
+		if err != nil {
+			panic(err)
+		}
+		return io.NopCloser(bytes.NewBuffer(b)), nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	// process the media with no additional info provided
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processing.Load(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
+
+	// make sure it's got the stuff set on it that we expect
+	// the attachment ID and accountID we expect
+	suite.Equal(processing.ID(), attachment.ID)
+	suite.Equal(accountID, attachment.AccountID)
+
+	// file meta should be correctly derived from the image
+	suite.EqualValues(gtsmodel.Original{
+		Duration: util.Ptr(float32(122.10006)),
+		Bitrate:  util.Ptr(uint64(116426)),
+	}, attachment.FileMeta.Original)
+	suite.Equal("audio/ogg", attachment.File.ContentType)
+	suite.Equal(1776956, attachment.File.FileSize)
+	suite.Empty(attachment.Blurhash)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-opus-processed.opus")
+	suite.Zero(dbAttachment.Thumbnail.FileSize)
 }
 
 func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
