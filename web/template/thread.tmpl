@@ -23,7 +23,7 @@
     {{- else if gt .meta.WebThreadRepliesShown 1 -}}
         {{ .meta.WebThreadRepliesShown }} replies
     {{- end -}}
-    {{- if .meta.WebThreadRepliesHidden }} ({{ .meta.WebThreadRepliesHidden }} hidden){{- end -}}
+    {{- if .meta.WebThreadRepliesHidden }}, plus {{ .meta.WebThreadRepliesHidden }} hidden / not public{{- end -}}
 {{- end -}}
 
 {{- define "threadSummary" -}}
@@ -31,16 +31,17 @@
         Single post
     {{- else if gt .meta.WebThreadLength 1 -}}
         Thread of {{ .meta.WebThreadLength }} posts
-        {{- if .meta.WebThreadHidden }} ({{ .meta.WebThreadHidden }} hidden){{- end -}}
+        {{- if .meta.WebThreadHidden }}, plus {{ .meta.WebThreadHidden }} hidden / not public{{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- define "repliesStart" -}}
 {{- with . }}
 </section>
-<section class="thread thread-replies" aria-labelledby="replies-summary" open>
+<section class="thread thread-replies" aria-labelledby="replies" open>
     <div class="col-header replies">
-        <h2 id="replies-summary">{{- template "repliesSummary" . -}}</h2>
+        <h2 id="replies">{{- template "repliesSummary" . -}}</h2>
+        <a href="#thread-summary">back to top</a>
     </div>
 {{- end }}
 {{- end -}}
@@ -50,7 +51,9 @@
     <section class="thread thread-main" aria-labelledby="thread-summary">
         <div class="col-header">
             <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
-            <a href="#{{- .status.ID -}}">jump to expanded post</a>
+            {{- if .meta.WebThreadRepliesShown }}
+            <a href="#replies">jump to replies</a>
+            {{- end }}
         </div>
 
         {{- range $thisStatus := .context.Ancestors }}
