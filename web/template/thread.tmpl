@@ -18,7 +18,7 @@
 */ -}}
 
 {{- define "repliesSummary" -}}
-    {{- if .metha.WebThreadRepliesShown -}}
+    {{- if .meta.WebThreadRepliesShown -}}
         {{- if eq .meta.WebThreadReplies 1 -}}
             {{ .meta.WebThreadReplies }} reply
         {{- else if gt .meta.WebThreadReplies 1 -}}
