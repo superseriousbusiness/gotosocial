@@ -45,13 +45,13 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestEmojiProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/rainbow-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	processing, err := suite.manager.CreateEmoji(ctx,
@@ -96,12 +96,12 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 	oldEmojiImagePath := emojiToUpdate.ImagePath
 	oldEmojiImageStaticPath := emojiToUpdate.ImageStaticPath
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		b, err := os.ReadFile("./test/gts_pixellated-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	processing, err := suite.manager.RefreshEmoji(ctx,
@@ -159,13 +159,13 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/big-panda.gif")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	processing, err := suite.manager.CreateEmoji(ctx,
@@ -184,13 +184,13 @@ func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 func (suite *ManagerTestSuite) TestEmojiProcessTooLargeNoSizeGiven() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/big-panda.gif")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	processing, err := suite.manager.CreateEmoji(ctx,
@@ -209,13 +209,13 @@ func (suite *ManagerTestSuite) TestEmojiProcessTooLargeNoSizeGiven() {
 func (suite *ManagerTestSuite) TestEmojiProcessNoFileSizeGiven() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/rainbow-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	// process the media with no additional info provided
@@ -250,13 +250,13 @@ func (suite *ManagerTestSuite) TestEmojiProcessNoFileSizeGiven() {
 func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/nb-flag-original.webp")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	// process the media with no additional info provided
@@ -311,13 +311,13 @@ func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -367,7 +367,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
@@ -378,7 +378,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 		// off the second half, tee hee!
 		b = b[:len(b)/2]
 
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -435,14 +435,14 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
 func (suite *ManagerTestSuite) TestPDFProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from Frantz
 		b, err := os.ReadFile("./test/Frantz-Fanon-The-Wretched-of-the-Earth-1965.pdf")
 		if err != nil {
 			panic(err)
 		}
 
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -497,13 +497,13 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/test-mp4-original.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -556,13 +556,13 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/longer-mp4-original.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -615,13 +615,13 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/birdnest-original.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -676,13 +676,13 @@ func (suite *ManagerTestSuite) TestNotAnMp4Process() {
 
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/not-an.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -709,14 +709,14 @@ func (suite *ManagerTestSuite) TestNotAnMp4Process() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessNoContentLengthGiven() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
 		// give length as -1 to indicate unknown
-		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -765,14 +765,14 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessNoContentLengthGiven() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessReadCloser() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// open test image as a file
 		f, err := os.Open("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
 		// give length as -1 to indicate unknown
-		return f, -1, nil
+		return f, nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -821,13 +821,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessReadCloser() {
 func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-noalphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -876,13 +876,13 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-alphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -931,13 +931,13 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -986,13 +986,13 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -1091,12 +1091,12 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 			ctx, cncl := context.WithTimeout(context.Background(), time.Second*60)
 			defer cncl()
 
-			data := func(_ context.Context) (io.ReadCloser, int64, error) {
+			data := func(_ context.Context) (io.ReadCloser, error) {
 				// load bytes from a test image
 				b, err := os.ReadFile(test.path)
 				suite.NoError(err, "Test %d: failed during test setup", index+1)
 
-				return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+				return io.NopCloser(bytes.NewBuffer(b)), nil
 			}
 
 			accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -1131,78 +1131,6 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 			suite.Equal(expect, actual, "Test %d: %s", index+1, test.name)
 		})
 	}
-}
-
-func (suite *ManagerTestSuite) TestMisreportedSmallMedia() {
-	const accountID = "01FS1X72SK9ZPW0J1QQ68BD264"
-	var actualSize int
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// Load bytes from small png.
-		b, err := os.ReadFile("./test/test-png-alphachannel-1x1px.png")
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
-		actualSize = len(b)
-
-		// Report media as twice its actual size. This should be corrected.
-		return io.NopCloser(bytes.NewBuffer(b)), int64(2 * actualSize), nil
-	}
-
-	ctx := context.Background()
-
-	// process the media with no additional info provided
-	processing, err := suite.manager.CreateMedia(ctx,
-		accountID,
-		data,
-		media.AdditionalMediaInfo{},
-	)
-	suite.NoError(err)
-	suite.NotNil(processing)
-
-	// do a blocking call to fetch the attachment
-	attachment, err := processing.Load(ctx)
-	suite.NoError(err)
-	suite.NotNil(attachment)
-
-	suite.Equal(actualSize, attachment.File.FileSize)
-}
-
-func (suite *ManagerTestSuite) TestNoReportedSizeSmallMedia() {
-	const accountID = "01FS1X72SK9ZPW0J1QQ68BD264"
-	var actualSize int
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// Load bytes from small png.
-		b, err := os.ReadFile("./test/test-png-alphachannel-1x1px.png")
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
-		actualSize = len(b)
-
-		// Return zero for media size. This should be detected.
-		return io.NopCloser(bytes.NewBuffer(b)), 0, nil
-	}
-
-	ctx := context.Background()
-
-	// process the media with no additional info provided
-	processing, err := suite.manager.CreateMedia(ctx,
-		accountID,
-		data,
-		media.AdditionalMediaInfo{},
-	)
-	suite.NoError(err)
-	suite.NotNil(processing)
-
-	// do a blocking call to fetch the attachment
-	attachment, err := processing.Load(ctx)
-	suite.NoError(err)
-	suite.NotNil(attachment)
-
-	suite.Equal(actualSize, attachment.File.FileSize)
 }
 
 func TestManagerTestSuite(t *testing.T) {
