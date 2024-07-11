@@ -196,9 +196,9 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 		MediaSize: string(media.SizeSmall),
 		FileName:  fileName,
 	})
-
 	suite.NoError(errWithCode)
 	suite.NotNil(content)
+
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
 	suite.NoError(content.Content.Close())

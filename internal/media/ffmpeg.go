@@ -36,7 +36,7 @@ import (
 	"github.com/tetratelabs/wazero"
 )
 
-// ffmpegClearMetadata ...
+// ffmpegClearMetadata generates a copy (in-place) of input media with all metadata cleared.
 func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error {
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
@@ -64,7 +64,7 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 	return nil
 }
 
-// ffmpegGenerateThumb ...
+// ffmpegGenerateThumb generates a thumbnail jpeg from input media of any type, useful for any media.
 func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
@@ -89,7 +89,7 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 	return outpath, nil
 }
 
-// ffmpegGenerateStatic ...
+// ffmpegGenerateStatic generates a static png from input image of any type, useful for emoji.
 func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) {
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)

@@ -107,12 +107,12 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	suite.NotEmpty(dbEmoji.CategoryID)
 
 	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
+	entry, err := suite.storage.Storage.Stat(ctx, dbEmoji.ImagePath)
 	suite.NoError(err)
-	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
+	suite.Equal(entry.Size, dbEmoji.ImageFileSize)
+	entry, err = suite.storage.Storage.Stat(ctx, dbEmoji.ImageStaticPath)
 	suite.NoError(err)
-	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
+	suite.Equal(entry.Size, dbEmoji.ImageStaticFileSize)
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
@@ -184,12 +184,12 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
 	suite.NotEmpty(dbEmoji.CategoryID)
 
 	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
+	entry, err := suite.storage.Storage.Stat(ctx, dbEmoji.ImagePath)
 	suite.NoError(err)
-	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
+	suite.Equal(entry.Size, dbEmoji.ImageFileSize)
+	entry, err = suite.storage.Storage.Stat(ctx, dbEmoji.ImageStaticPath)
 	suite.NoError(err)
-	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
+	suite.Equal(entry.Size, dbEmoji.ImageStaticFileSize)
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
