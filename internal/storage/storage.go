@@ -96,55 +96,17 @@ func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64,
 	return d.Storage.WriteStream(ctx, key, r)
 }
 
-// PutFile is a storage.Driver{} aware optimized form of PutStream, that in the case of disk.DiskStorage{} will simply
-// move filepath -> key. For other implementations filepath will be opened, written to storage and deleted after write.
+// PutFile ...
 func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int64, error) {
-	if ds, ok := d.Storage.(*disk.DiskStorage); ok {
-		// We're operating with disk storage here, we
-		// can actually just move 'file' to 'key' :D.
-
-		// Get filepath from input key.
-		key, err := ds.Filepath(key)
-		if err != nil {
-			return 0, err
-		}
-
-		// Get directory path.
-		dir := path.Dir(key)
-
-		// Ensure directories leading up to store key exist.
-		if err := os.MkdirAll(dir, 0o755); err != nil {
-			return 0, gtserror.Newf("error creating storage dirs %s: %w", dir, err)
-		}
-
-		// Get filesize on disk before move.
-		stat, err := os.Stat(filepath)
-		if err != nil {
-			return 0, gtserror.Newf("error statting file %s: %w", filepath, err)
-		}
-
-		// Rename the filepath to expected storage key,
-		// (this handles removal of old if necessary).
-		if err := os.Rename(filepath, key); err != nil {
-			return 0, gtserror.Newf("error moving file %s -> %s: %w", filepath, key, err)
-		}
-
-		return stat.Size(), nil
-	}
-
-	// Remove the existing file in store in case exists.
-	if err := d.Storage.Remove(ctx, key); err != nil &&
-		!errors.Is(err, storage.ErrNotFound) {
-		return 0, gtserror.Newf("error removing existing %s: %w", key, err)
-	}
-
 	// Open file at path for reading.
 	file, err := os.Open(filepath)
 	if err != nil {
 		return 0, gtserror.Newf("error opening file %s: %w", filepath, err)
 	}
 
-	// Write the file data to storage under key.
+	// Write the file data to storage under key. Note
+	// that for disk.DiskStorage{} this should end up
+	// being a highly optimized Linux sendfile syscall.
 	sz, err := d.Storage.WriteStream(ctx, key, file)
 	if err != nil {
 		err = gtserror.Newf("error writing file %s: %w", key, err)
