@@ -18,12 +18,14 @@
 */ -}}
 
 {{- define "repliesSummary" -}}
-    {{- if eq .meta.WebThreadRepliesShown 1 -}}
-        {{ .meta.WebThreadRepliesShown }} reply
-    {{- else if gt .meta.WebThreadRepliesShown 1 -}}
-        {{ .meta.WebThreadRepliesShown }} replies
+    {{- if .metha.WebThreadRepliesShown -}}
+        {{- if eq .meta.WebThreadReplies 1 -}}
+            {{ .meta.WebThreadReplies }} reply
+        {{- else if gt .meta.WebThreadReplies 1 -}}
+            {{ .meta.WebThreadReplies }} replies
+        {{- end -}}
+        {{- if .meta.WebThreadRepliesHidden }}, of which {{ .meta.WebThreadRepliesHidden }} hidden / not public{{- end -}}
     {{- end -}}
-    {{- if .meta.WebThreadRepliesHidden }}, plus {{ .meta.WebThreadRepliesHidden }} hidden / not public{{- end -}}
 {{- end -}}
 
 {{- define "threadSummary" -}}
@@ -31,7 +33,7 @@
         Single post
     {{- else if gt .meta.WebThreadLength 1 -}}
         Thread of {{ .meta.WebThreadLength }} posts
-        {{- if .meta.WebThreadHidden }}, plus {{ .meta.WebThreadHidden }} hidden / not public{{- end -}}
+        {{- if .meta.WebThreadHidden }}, of which {{ .meta.WebThreadHidden }} hidden / not public{{- end -}}
     {{- end -}}
 {{- end -}}
 
