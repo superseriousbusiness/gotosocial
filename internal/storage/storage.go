@@ -117,11 +117,6 @@ func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int6
 		log.Errorf(ctx, "error closing file %s: %v", filepath, e)
 	}
 
-	// Remove the file now it's in written.
-	if e := os.Remove(filepath); e != nil {
-		log.Errorf(ctx, "error removing file %s: %v", filepath, e)
-	}
-
 	return sz, err
 }
 

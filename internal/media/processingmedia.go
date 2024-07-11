@@ -390,11 +390,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Finally set the attachment as finished processing.
 	p.media.Processing = gtsmodel.ProcessingStatusProcessed
 
-	// Unset paths now they
-	// don't need deleting.
-	temppath = ""
-	thumbpath = ""
-
 	return nil
 }
 

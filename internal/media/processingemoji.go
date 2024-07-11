@@ -254,11 +254,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// We can now consider this cached.
 	p.emoji.Cached = util.Ptr(true)
 
-	// Unset paths now they
-	// don't need deleting.
-	temppath = ""
-	staticpath = ""
-
 	return nil
 }
 
