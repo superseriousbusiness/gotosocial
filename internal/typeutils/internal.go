@@ -95,9 +95,6 @@ func (c *Converter) StatusToBoost(
 		BoostOfAccount:      target.Account,
 		Visibility:          target.Visibility,
 		Federated:           util.Ptr(*target.Federated),
-		Boostable:           util.Ptr(*target.Boostable),
-		Replyable:           util.Ptr(*target.Replyable),
-		Likeable:            util.Ptr(*target.Likeable),
 	}
 
 	return boost, nil

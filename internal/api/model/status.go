@@ -230,12 +230,6 @@ type AdvancedStatusCreateForm struct {
 type AdvancedVisibilityFlagsForm struct {
 	// This status will be federated beyond the local timeline(s).
 	Federated *bool `form:"federated" json:"federated" xml:"federated"`
-	// This status can be boosted/reblogged.
-	Boostable *bool `form:"boostable" json:"boostable" xml:"boostable"`
-	// This status can be replied to.
-	Replyable *bool `form:"replyable" json:"replyable" xml:"replyable"`
-	// This status can be liked/faved.
-	Likeable *bool `form:"likeable" json:"likeable" xml:"likeable"`
 }
 
 // StatusContentType is the content type with which to parse the submitted status.

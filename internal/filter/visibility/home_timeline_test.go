@@ -161,9 +161,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestThread() {
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, firstReplyStatus); err != nil {
@@ -214,9 +211,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly(
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, originalStatus); err != nil {
@@ -248,9 +242,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly(
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, firstReplyStatus); err != nil {
@@ -282,9 +273,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly(
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, secondReplyStatus); err != nil {
@@ -327,9 +315,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyPublicAndUnloc
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, originalStatus); err != nil {
@@ -361,9 +346,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyPublicAndUnloc
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, firstReplyStatus); err != nil {
@@ -395,9 +377,6 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyPublicAndUnloc
 		Language:                 "en",
 		CreatedWithApplicationID: "",
 		Federated:                util.Ptr(true),
-		Boostable:                util.Ptr(true),
-		Replyable:                util.Ptr(true),
-		Likeable:                 util.Ptr(true),
 		ActivityStreamsType:      ap.ObjectNote,
 	}
 	if err := suite.db.PutStatus(ctx, secondReplyStatus); err != nil {

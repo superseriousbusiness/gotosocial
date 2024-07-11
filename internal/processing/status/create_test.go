@@ -53,9 +53,6 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithQuotationMarks(
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 
@@ -87,9 +84,6 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithHTMLEscapedQuot
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 
@@ -125,9 +119,6 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 
@@ -159,9 +150,6 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 
@@ -197,9 +185,6 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 
@@ -229,9 +214,6 @@ func (suite *StatusCreateTestSuite) TestProcessLanguageWithScriptPart() {
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 
@@ -266,9 +248,6 @@ func (suite *StatusCreateTestSuite) TestProcessReplyToUnthreadedRemoteStatus() {
 		},
 		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
 			Federated: nil,
-			Boostable: nil,
-			Replyable: nil,
-			Likeable:  nil,
 		},
 	}
 

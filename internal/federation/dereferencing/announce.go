@@ -92,9 +92,6 @@ func (d *Dereferencer) EnrichAnnounce(
 	boost.BoostOfAccount = target.Account
 	boost.Visibility = target.Visibility
 	boost.Federated = target.Federated
-	boost.Boostable = target.Boostable
-	boost.Replyable = target.Replyable
-	boost.Likeable = target.Likeable
 
 	// Store the boost wrapper status in database.
 	switch err = d.state.DB.PutStatus(ctx, boost); {

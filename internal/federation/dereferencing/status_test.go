@@ -56,9 +56,6 @@ func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
-	suite.True(*dbStatus.Boostable)
-	suite.True(*dbStatus.Replyable)
-	suite.True(*dbStatus.Likeable)
 
 	// account should be in the database now too
 	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
@@ -96,9 +93,6 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
-	suite.True(*dbStatus.Boostable)
-	suite.True(*dbStatus.Replyable)
-	suite.True(*dbStatus.Likeable)
 
 	// account should be in the database now too
 	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
@@ -151,9 +145,6 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
-	suite.True(*dbStatus.Boostable)
-	suite.True(*dbStatus.Replyable)
-	suite.True(*dbStatus.Likeable)
 
 	// account should be in the database now too
 	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
@@ -197,9 +188,6 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
-	suite.True(*dbStatus.Boostable)
-	suite.True(*dbStatus.Replyable)
-	suite.True(*dbStatus.Likeable)
 
 	// account should be in the database now too
 	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)

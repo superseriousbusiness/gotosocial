@@ -60,6 +60,7 @@ type DBService struct {
 	db.Emoji
 	db.HeaderFilter
 	db.Instance
+	db.Interaction
 	db.Filter
 	db.List
 	db.Marker
@@ -200,6 +201,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Instance: &instanceDB{
+			db:    db,
+			state: state,
+		},
+		Interaction: &interactionDB{
 			db:    db,
 			state: state,
 		},

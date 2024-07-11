@@ -39,12 +39,15 @@ type NotificationType string
 
 // Notification Types
 const (
-	NotificationFollow        NotificationType = "follow"         // NotificationFollow -- someone followed you
-	NotificationFollowRequest NotificationType = "follow_request" // NotificationFollowRequest -- someone requested to follow you
-	NotificationMention       NotificationType = "mention"        // NotificationMention -- someone mentioned you in their status
-	NotificationReblog        NotificationType = "reblog"         // NotificationReblog -- someone boosted one of your statuses
-	NotificationFave          NotificationType = "favourite"      // NotificationFave -- someone faved/liked one of your statuses
-	NotificationPoll          NotificationType = "poll"           // NotificationPoll -- a poll you voted in or created has ended
-	NotificationStatus        NotificationType = "status"         // NotificationStatus -- someone you enabled notifications for has posted a status.
-	NotificationSignup        NotificationType = "admin.sign_up"  // NotificationSignup -- someone has submitted a new account sign-up to the instance.
+	NotificationFollow        NotificationType = "follow"            // NotificationFollow -- someone followed you
+	NotificationFollowRequest NotificationType = "follow_request"    // NotificationFollowRequest -- someone requested to follow you
+	NotificationMention       NotificationType = "mention"           // NotificationMention -- someone mentioned you in their status
+	NotificationReblog        NotificationType = "reblog"            // NotificationReblog -- someone boosted one of your statuses
+	NotificationFave          NotificationType = "favourite"         // NotificationFave -- someone faved/liked one of your statuses
+	NotificationPoll          NotificationType = "poll"              // NotificationPoll -- a poll you voted in or created has ended
+	NotificationStatus        NotificationType = "status"            // NotificationStatus -- someone you enabled notifications for has posted a status.
+	NotificationSignup        NotificationType = "admin.sign_up"     // NotificationSignup -- someone has submitted a new account sign-up to the instance.
+	NotificationPendingFave   NotificationType = "pending.favourite" // Someone has faved a status of yours, which requires approval by you.
+	NotificationPendingReply  NotificationType = "pending.reply"     // Someone has replied to a status of yours, which requires approval by you.
+	NotificationPendingReblog NotificationType = "pending.reblog"    // Someone has boosted a status of yours, which requires approval by you.
 )

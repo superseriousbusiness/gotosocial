@@ -67,9 +67,6 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
 		"spoiler_text": {"hello hello"},
 		"sensitive":    {"true"},
 		"visibility":   {string(apimodel.VisibilityMutualsOnly)},
-		"likeable":     {"false"},
-		"replyable":    {"false"},
-		"federated":    {"false"},
 	}
 	suite.statusModule.StatusCreatePOSTHandler(ctx)
 

@@ -66,9 +66,9 @@ type Status struct {
 	ActivityStreamsType      string             `bun:",nullzero,notnull"`                                           // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string             `bun:""`                                                            // Original text of the status without formatting
 	Federated                *bool              `bun:",notnull"`                                                    // This status will be federated beyond the local timeline(s)
-	Boostable                *bool              `bun:",notnull"`                                                    // This status can be boosted/reblogged
-	Replyable                *bool              `bun:",notnull"`                                                    // This status can be replied to
-	Likeable                 *bool              `bun:",notnull"`                                                    // This status can be liked/faved
+	InteractionPolicy        *InteractionPolicy `bun:""`                                                            // InteractionPolicy for this status. If null then the default InteractionPolicy should be assumed for this status's Visibility. Always null for boost wrappers.
+	PendingApproval          *bool              `bun:",nullzero,notnull,default:false"`                             // If true then status is a reply or boost wrapper that must be Approved by the reply-ee or boost-ee before being fully distributed.
+	ApprovedByURI            string             `bun:",nullzero"`                                                   // URI of an Accept Activity that approves the Announce or Create Activity that this status was/will be attached to.
 }
 
 // GetID implements timeline.Timelineable{}.

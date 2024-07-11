@@ -399,9 +399,6 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// needs to be created for this in go-fed/activity.
 	// Until this is implemented, assume all true.
 	status.Federated = util.Ptr(true)
-	status.Boostable = util.Ptr(true)
-	status.Replyable = util.Ptr(true)
-	status.Likeable = util.Ptr(true)
 
 	// status.Sensitive
 	sensitive := ap.ExtractSensitive(statusable)
