@@ -96,7 +96,7 @@ func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64,
 	return d.Storage.WriteStream(ctx, key, r)
 }
 
-// PutFile ...
+// PutFile moves the contents of file at path, to storage.Driver{} under given key.
 func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int64, error) {
 	// Open file at path for reading.
 	file, err := os.Open(filepath)

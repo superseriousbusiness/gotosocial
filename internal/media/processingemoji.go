@@ -145,9 +145,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	)
 
 	defer func() {
-		if err := rc.Close(); err != nil {
-			log.Errorf(ctx, "error closing data reader: %v", err)
-		}
 		if err := remove(temppath, staticpath); err != nil {
 			log.Errorf(ctx, "error(s) cleaning up files: %v", err)
 		}
@@ -165,6 +162,19 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	result, err := ffprobe(ctx, temppath)
 	if err != nil {
 		return gtserror.Newf("error ffprobing data: %w", err)
+	}
+
+	switch {
+	// No errors parsing data.
+	case result.Error == nil:
+
+	// Data type unhandleable by ffprobe.
+	case result.Error.Code == -1094995529:
+		log.Warn(ctx, "unsupported data type")
+		return nil
+
+	default:
+		return gtserror.Newf("ffprobe error: %w", err)
 	}
 
 	var ext string

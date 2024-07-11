@@ -31,7 +31,6 @@ import (
 	"codeberg.org/gruf/go-mimetypes"
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // thumbSize returns the dimensions to use for an input
@@ -129,10 +128,9 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 	// Extract file path.
 	path := tmp.Name()
 
-	// Check for a
-	// reader limit.
+	// Limited reader (if any).
+	var lr *io.LimitedReader
 	var limit int64
-	limit = -1
 
 	// Reader type to use
 	// for draining to tmp.
@@ -142,21 +140,24 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 	// (as our http client wraps close func).
 	rct, ok := rc.(*iotools.ReadCloserType)
 	if ok {
+
+		// Get unwrapped.
 		rd = rct.Reader
 
-		// Extract limit if set on reader.
-		_, limit = iotools.GetReaderLimit(rd)
+		// Extract limited reader if wrapped.
+		lr, limit = iotools.GetReaderLimit(rd)
 	}
 
 	// Drain reader into tmp.
-	n, err := tmp.ReadFrom(rd)
+	_, err = tmp.ReadFrom(rd)
 	if err != nil {
 		return path, err
 	}
 
-	// Check to see if limit was reached.
-	if n == limit && !iotools.AtEOF(rd) {
-		return path, gtserror.Newf("reached read limit %s", bytesize.Size(limit))
+	// Check to see if limit was reached,
+	// (produces more useful error messages).
+	if lr != nil && !iotools.AtEOF(lr.R) {
+		return path, fmt.Errorf("reached read limit %s", bytesize.Size(limit))
 	}
 
 	return path, nil

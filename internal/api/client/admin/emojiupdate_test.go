@@ -255,7 +255,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
 	suite.Equal("image/png", dbEmoji.ImageContentType)
 	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
 	suite.Equal(10889, dbEmoji.ImageFileSize)
-	suite.Equal(10672, dbEmoji.ImageStaticFileSize)
+	suite.Equal(8965, dbEmoji.ImageStaticFileSize)
 	suite.False(*dbEmoji.Disabled)
 	suite.NotEmpty(dbEmoji.URI)
 	suite.True(*dbEmoji.VisibleInPicker)

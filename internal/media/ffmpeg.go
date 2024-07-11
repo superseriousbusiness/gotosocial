@@ -141,7 +141,7 @@ func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
 	dirpath := path.Dir(filepath)
 
 	// Run ffprobe on our given file at path.
-	rc, err := ffprobelib.Run(ctx, wasm.Args{
+	_, err := ffprobelib.Run(ctx, wasm.Args{
 		Stdout: &stdout,
 
 		Args: []string{
@@ -162,8 +162,6 @@ func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
 	})
 	if err != nil {
 		return nil, gtserror.Newf("error running: %w", err)
-	} else if rc != 0 {
-		return nil, gtserror.Newf("non-zero return code %d", rc)
 	}
 
 	var result ffprobeResult
@@ -171,17 +169,6 @@ func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
 	// Unmarshal the ffprobe output as our result type.
 	if err := json.Unmarshal(stdout.B, &result); err != nil {
 		return nil, gtserror.Newf("error unmarshaling json: %w", err)
-	}
-
-	// Check for ffprobe result error.
-	if err := result.Error; err != nil {
-		return nil, err
-	}
-
-	// Ensure valid result data.
-	if len(result.Streams) == 0 ||
-		result.Format == nil {
-		return nil, gtserror.Newf("invalid result data: %s", stdout.B)
 	}
 
 	return &result, nil
