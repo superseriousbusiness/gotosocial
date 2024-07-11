@@ -18,6 +18,7 @@
 package testrig
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"time"
@@ -26,7 +27,22 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
+	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 )
+
+func init() {
+	ctx := context.Background()
+
+	// Ensure global ffmpeg WASM pool initialized.
+	if err := ffmpeg.InitFfmpeg(ctx, 1); err != nil {
+		panic(err)
+	}
+
+	// Ensure global ffmpeg WASM pool initialized.
+	if err := ffmpeg.InitFfprobe(ctx, 1); err != nil {
+		panic(err)
+	}
+}
 
 // InitTestConfig initializes viper
 // configuration with test defaults.

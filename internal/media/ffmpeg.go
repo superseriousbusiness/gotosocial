@@ -27,9 +27,9 @@ import (
 	"strings"
 
 	"codeberg.org/gruf/go-byteutil"
-	ffmpeglib "codeberg.org/gruf/go-ffmpreg/ffmpeg"
-	ffprobelib "codeberg.org/gruf/go-ffmpreg/ffprobe"
+
 	"codeberg.org/gruf/go-ffmpreg/wasm"
+	_ffmpeg "github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -115,7 +115,7 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 // ffmpeg calls `ffmpeg [args...]` (WASM) with directory path mounted in runtime.
 func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
 	var stderr byteutil.Buffer
-	rc, err := ffmpeglib.Run(ctx, wasm.Args{
+	rc, err := _ffmpeg.Ffmpeg(ctx, wasm.Args{
 		Stderr: &stderr,
 		Args:   args,
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
@@ -141,7 +141,7 @@ func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
 	dirpath := path.Dir(filepath)
 
 	// Run ffprobe on our given file at path.
-	_, err := ffprobelib.Run(ctx, wasm.Args{
+	_, err := _ffmpeg.Ffprobe(ctx, wasm.Args{
 		Stdout: &stdout,
 
 		Args: []string{

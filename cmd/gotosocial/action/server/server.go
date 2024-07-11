@@ -24,12 +24,11 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
-	"codeberg.org/gruf/go-ffmpreg/ffmpeg"
-	"codeberg.org/gruf/go-ffmpreg/ffprobe"
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/gin-gonic/gin"
 	"github.com/ncruces/go-sqlite3"
@@ -40,6 +39,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -447,13 +447,15 @@ func setLimits(ctx context.Context) {
 }
 
 func precompileWASM(ctx context.Context) error {
+	// TODO: make max number instances configurable
+	maxprocs := runtime.GOMAXPROCS(0)
 	if err := sqlite3.Initialize(); err != nil {
 		return gtserror.Newf("error compiling sqlite3: %w", err)
 	}
-	if err := ffmpeg.Precompile(ctx); err != nil {
+	if err := ffmpeg.InitFfmpeg(ctx, 4*maxprocs); err != nil {
 		return gtserror.Newf("error compiling ffmpeg: %w", err)
 	}
-	if err := ffprobe.Precompile(ctx); err != nil {
+	if err := ffmpeg.InitFfprobe(ctx, 4*maxprocs); err != nil {
 		return gtserror.Newf("error compiling ffprobe: %w", err)
 	}
 	return nil
