@@ -281,7 +281,7 @@ func (c *conversationDB) AddStatusToConversation(ctx context.Context, conversati
 				Column("last_status_id", "read", "updated_at").
 				Exec(ctx); // nocollapse
 			err != nil {
-				return gtserror.Newf("error upserting conversation %s and status %s: %w", conversation.ID, err)
+				return gtserror.Newf("error upserting conversation %s: %w", conversation.ID, err)
 			}
 
 			return nil
