@@ -78,4 +78,13 @@ type Status interface {
 
 	// GetStatusChildren gets the child statuses of a given status.
 	GetStatusChildren(ctx context.Context, statusID string) ([]*gtsmodel.Status, error)
+
+	// MaxDirectStatusID returns the newest ID across all DM statuses.
+	// Returns the empty string with no error if there are no DM statuses yet.
+	// It is used only by the conversation advanced migration.
+	MaxDirectStatusID(ctx context.Context) (string, error)
+
+	// GetDirectStatusIDsBatch returns up to count DM status IDs strictly greater than minID and less than maxID.
+	// It is used only by the conversation advanced migration.
+	GetDirectStatusIDsBatch(ctx context.Context, minID string, maxID string, count int) ([]string, error)
 }

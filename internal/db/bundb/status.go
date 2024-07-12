@@ -677,3 +677,35 @@ func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]st
 		return statusIDs, nil
 	})
 }
+
+func (s *statusDB) MaxDirectStatusID(ctx context.Context) (string, error) {
+	maxID := ""
+	if err := s.db.
+		NewSelect().
+		Model((*gtsmodel.Status)(nil)).
+		ColumnExpr("COALESCE(MAX(?), '')", bun.Ident("id")).
+		Where("? = ?", bun.Ident("visibility"), gtsmodel.VisibilityDirect).
+		Scan(ctx, &maxID); // nocollapse
+	err != nil {
+		return "", err
+	}
+	return maxID, nil
+}
+
+func (s *statusDB) GetDirectStatusIDsBatch(ctx context.Context, minID string, maxID string, count int) ([]string, error) {
+	var statusIDs []string
+	if err := s.db.
+		NewSelect().
+		Model((*gtsmodel.Status)(nil)).
+		Column("id").
+		Where("? = ?", bun.Ident("visibility"), gtsmodel.VisibilityDirect).
+		Where("? > ?", bun.Ident("id"), minID).
+		Where("? <= ?", bun.Ident("id"), maxID).
+		Order("id ASC").
+		Limit(count).
+		Scan(ctx, &statusIDs); // nocollapse
+	err != nil {
+		return nil, err
+	}
+	return statusIDs, nil
+}

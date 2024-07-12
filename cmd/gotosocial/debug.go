@@ -20,7 +20,6 @@ package main
 import (
 	"github.com/spf13/cobra"
 	configaction "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/config"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -42,19 +41,6 @@ func debugCommands() *cobra.Command {
 	}
 	config.AddServerFlags(debugConfigCmd)
 	debugCmd.AddCommand(debugConfigCmd)
-
-	debugMigrateConversationsCmd := &cobra.Command{
-		Use:   "migrate-conversations",
-		Short: "process EVERY DM to create conversations",
-		PreRunE: func(cmd *cobra.Command, args []string) error {
-			return preRun(preRunArgs{cmd: cmd})
-		},
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(cmd.Context(), conversations.Migrate)
-		},
-	}
-	config.AddServerFlags(debugMigrateConversationsCmd)
-	debugCmd.AddCommand(debugMigrateConversationsCmd)
 
 	return debugCmd
 }

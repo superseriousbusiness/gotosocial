@@ -15,12 +15,13 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package workers
+package conversations
 
 import (
 	"context"
 	"errors"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
@@ -31,22 +32,29 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// UpdateConversationsForStatus updates conversations that include this status,
-// and sends conversation stream events if requested.
-func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsmodel.Status, notify bool) error {
+// UpdateConversationsForStatus updates all conversations related to a status,
+// and returns a map from local account IDs to conversation notifications that should be sent to them.
+func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gtsmodel.Status) (map[string]*apimodel.Conversation, error) {
+	notifications := map[string]*apimodel.Conversation{}
+
+	// We need accounts to be populated for this.
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return nil, err
+	}
+
 	if status.Visibility != gtsmodel.VisibilityDirect {
 		// Only DMs are considered part of conversations.
-		return nil
+		return nil, nil
 	}
 	if status.BoostOfID != "" {
 		// Boosts can't be part of conversations.
 		// FUTURE: This may change if we ever implement quote posts.
-		return nil
+		return nil, nil
 	}
 	if status.ThreadID == "" {
 		// If the status doesn't have a thread ID, it didn't mention a local account,
 		// and thus can't be part of a conversation.
-		return nil
+		return nil, nil
 	}
 
 	// The account which authored the status plus all mentioned accounts.
@@ -64,7 +72,7 @@ func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsm
 		localAccount := participant
 
 		// If the status is not visible to this account, skip processing it for this account.
-		visible, err := s.Filter.StatusVisible(ctx, localAccount, status)
+		visible, err := p.filter.StatusVisible(ctx, localAccount, status)
 		if err != nil {
 			log.Errorf(
 				ctx,
@@ -80,19 +88,19 @@ func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsm
 
 		// TODO: (Vyr) find a prettier way to do this
 		// Is the status filtered or muted for this user?
-		filters, err := s.State.DB.GetFiltersForAccountID(ctx, localAccount.ID)
+		filters, err := p.state.DB.GetFiltersForAccountID(ctx, localAccount.ID)
 		if err != nil {
 			log.Errorf(ctx, "error retrieving filters for account %s: %v", localAccount.ID, err)
 			continue
 		}
-		mutes, err := s.State.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), localAccount.ID, nil)
+		mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), localAccount.ID, nil)
 		if err != nil {
 			log.Errorf(ctx, "error retrieving mutes for account %s: %v", localAccount.ID, err)
 			continue
 		}
 		compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 		// Converting the status to an API status runs the filter/mute checks.
-		_, err = s.Converter.StatusToAPIStatus(
+		_, err = p.converter.StatusToAPIStatus(
 			ctx,
 			status,
 			localAccount,
@@ -126,7 +134,7 @@ func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsm
 		}
 
 		// Check for a previously existing conversation, if there is one.
-		conversation, err := s.State.DB.GetConversationByThreadAndAccountIDs(
+		conversation, err := p.state.DB.GetConversationByThreadAndAccountIDs(
 			ctx,
 			status.ThreadID,
 			localAccount.ID,
@@ -157,7 +165,7 @@ func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsm
 		}
 
 		// Create or update the conversation.
-		conversation, err = s.State.DB.AddStatusToConversation(ctx, conversation, status)
+		conversation, err = p.state.DB.AddStatusToConversation(ctx, conversation, status)
 		if err != nil {
 			log.Errorf(
 				ctx,
@@ -171,7 +179,7 @@ func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsm
 		}
 
 		// Convert the conversation to API representation.
-		apiConversation, err := s.Converter.ConversationToAPIConversation(
+		apiConversation, err := p.converter.ConversationToAPIConversation(
 			ctx,
 			conversation,
 			localAccount,
@@ -193,11 +201,13 @@ func (s *Surface) UpdateConversationsForStatus(ctx context.Context, status *gtsm
 			continue
 		}
 
-		if notify {
-			// Send a conversation notification.
-			s.Stream.Conversation(ctx, localAccount, apiConversation)
+		// Generate a notification,
+		// unless the status was authored by the user who would be notified,
+		// in which case they already know.
+		if status.AccountID != localAccount.ID {
+			notifications[localAccount.ID] = apiConversation
 		}
 	}
 
-	return nil
+	return notifications, nil
 }

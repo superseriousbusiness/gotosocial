@@ -36,8 +36,8 @@ import (
 // and LIST timelines of accounts that follow the status author.
 //
 // It will also handle notifications for any mentions attached to
-// the account, and notifications for any local accounts that want
-// to know when this account posts.
+// the account, notifications for any local accounts that want
+// to know when this account posts, and conversations containing the status.
 func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Ensure status fully populated; including account, mentions, etc.
 	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
@@ -71,6 +71,15 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 	// Notify each local account that's mentioned by this status.
 	if err := s.notifyMentions(ctx, status); err != nil {
 		return gtserror.Newf("error notifying status mentions for status %s: %w", status.ID, err)
+	}
+
+	// Update any conversations containing this status, and send conversation notifications.
+	notifications, err := s.Conversations.UpdateConversationsForStatus(ctx, status)
+	if err != nil {
+		return gtserror.Newf("error updating conversations for status %s: %w", status.ID, err)
+	}
+	for localAccountID, apiConversation := range notifications {
+		s.Stream.Conversation(ctx, localAccountID, apiConversation)
 	}
 
 	return nil

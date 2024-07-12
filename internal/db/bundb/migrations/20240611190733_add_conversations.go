@@ -24,6 +24,8 @@ import (
 	"github.com/uptrace/bun"
 )
 
+// Note: this migration has an advanced migration followup.
+// See Conversations.MigrateDMs().
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -60,7 +62,7 @@ func init() {
 				}
 			}
 
-			// Add additional uniqueness constraints to the conversations table.
+			// Add an additional uniqueness constraint to the conversations table.
 			if _, err := tx.
 				NewCreateIndex().
 				Model(&gtsmodel.Conversation{}).

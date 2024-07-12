@@ -245,10 +245,6 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	if err := p.surface.UpdateConversationsForStatus(ctx, status, true); err != nil {
-		log.Errorf(ctx, "error adding status to conversations: %v", err)
-	}
-
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.

@@ -194,7 +194,9 @@ func NewProcessor(
 	// processors + pin them to this struct.
 	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
 	processor.admin = admin.New(&common, state, cleaner, federator, converter, mediaManager, federator.TransportController(), emailSender)
-	processor.conversations = conversations.New(state, converter)
+	// The conversations processor doesn't actually need a reference to conversation logic,
+	// since it only handles reading and deleting them.
+	processor.conversations = conversations.New(state, converter, filter)
 	processor.fedi = fedi.New(state, &common, converter, federator, filter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
 	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)
@@ -219,6 +221,7 @@ func NewProcessor(
 		&processor.account,
 		&processor.media,
 		&processor.stream,
+		&processor.conversations,
 	)
 
 	return processor

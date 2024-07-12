@@ -19,9 +19,11 @@ package conversations_test
 
 import (
 	"context"
+	"crypto/rand"
 	"testing"
 	"time"
 
+	"github.com/oklog/ulid"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -29,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -54,6 +55,7 @@ type ConversationsTestSuite struct {
 	federator           *federation.Federator
 	emailSender         email.Sender
 	sentEmails          map[string]string
+	filter              *visibility.Filter
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -69,9 +71,8 @@ type ConversationsTestSuite struct {
 	conversationsProcessor conversations.Processor
 
 	// conversation created for test
-	testAccount      *gtsmodel.Account
-	testConversation *gtsmodel.Conversation
-	testNow          time.Time
+	testAccount *gtsmodel.Account
+	testNow     time.Time
 }
 
 func (suite *ConversationsTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
@@ -102,10 +103,11 @@ func (suite *ConversationsTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
 	suite.tc = typeutils.NewConverter(&suite.state)
+	suite.filter = visibility.NewFilter(&suite.state)
 
 	testrig.StartTimelines(
 		&suite.state,
-		visibility.NewFilter(&suite.state),
+		suite.filter,
 		suite.tc,
 	)
 
@@ -118,13 +120,12 @@ func (suite *ConversationsTestSuite) SetupTest() {
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
 
-	suite.conversationsProcessor = conversations.New(&suite.state, suite.tc)
+	suite.conversationsProcessor = conversations.New(&suite.state, suite.tc, suite.filter)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 
 	suite.testNow = time.Now()
 	suite.testAccount = suite.testAccounts["local_account_1"]
-	suite.testConversation = suite.newTestConversation(0)
 }
 
 func (suite *ConversationsTestSuite) TearDownTest() {
@@ -143,8 +144,18 @@ func (suite *ConversationsTestSuite) TearDownTest() {
 	testrig.StopWorkers(&suite.state)
 }
 
+func (suite *ConversationsTestSuite) newULID(nowOffset time.Duration) string {
+	ulid, err := ulid.New(
+		ulid.Timestamp(suite.testNow.Add(nowOffset)), rand.Reader,
+	)
+	if err != nil {
+		panic(err)
+	}
+	return ulid.String()
+}
+
 func (suite *ConversationsTestSuite) newTestStatus(threadID string, nowOffset time.Duration, inReplyToStatus *gtsmodel.Status) *gtsmodel.Status {
-	statusID := id.NewULID()
+	statusID := suite.newULID(nowOffset)
 	createdAt := suite.testNow.Add(nowOffset)
 	status := &gtsmodel.Status{
 		ID:                  statusID,
@@ -175,9 +186,10 @@ func (suite *ConversationsTestSuite) newTestStatus(threadID string, nowOffset ti
 
 // newTestConversation creates a new status and adds it to a new unread conversation, returning the conversation.
 func (suite *ConversationsTestSuite) newTestConversation(nowOffset time.Duration) *gtsmodel.Conversation {
-	status := suite.newTestStatus(id.NewULID(), nowOffset, nil)
+	threadID := suite.newULID(nowOffset)
+	status := suite.newTestStatus(threadID, nowOffset, nil)
 	conversation := &gtsmodel.Conversation{
-		ID:        id.NewULID(),
+		ID:        suite.newULID(nowOffset),
 		AccountID: suite.testAccount.ID,
 		ThreadID:  status.ThreadID,
 		Read:      util.Ptr(false),

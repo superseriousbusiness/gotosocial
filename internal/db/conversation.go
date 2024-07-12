@@ -51,6 +51,4 @@ type Conversation interface {
 
 	// DeleteStatusFromConversations handles when a status is deleted by updating or deleting conversations for which it was the last status.
 	DeleteStatusFromConversations(ctx context.Context, statusID string) error
-
-	MigrateConversations(ctx context.Context, migrateStatus func(ctx context.Context, status *gtsmodel.Status) error) error
 }

@@ -23,19 +23,18 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 // Conversation streams the given conversation to any open, appropriate streams belonging to the given account.
-func (p *Processor) Conversation(ctx context.Context, account *gtsmodel.Account, conversation *apimodel.Conversation) {
+func (p *Processor) Conversation(ctx context.Context, accountID string, conversation *apimodel.Conversation) {
 	b, err := json.Marshal(conversation)
 	if err != nil {
 		log.Errorf(ctx, "error marshaling json: %v", err)
 		return
 	}
-	p.streams.Post(ctx, account.ID, stream.Message{
+	p.streams.Post(ctx, accountID, stream.Message{
 		Payload: byteutil.B2S(b),
 		Event:   stream.EventTypeConversation,
 		Stream: []string{

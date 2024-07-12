@@ -54,6 +54,7 @@ import (
 type DBService struct {
 	db.Account
 	db.Admin
+	db.AdvancedMigration
 	db.Application
 	db.Basic
 	db.Conversation
@@ -179,6 +180,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			state: state,
 		},
 		Admin: &adminDB{
+			db:    db,
+			state: state,
+		},
+		AdvancedMigration: &advancedMigrationDB{
 			db:    db,
 			state: state,
 		},

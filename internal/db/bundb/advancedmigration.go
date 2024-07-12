@@ -15,28 +15,38 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package workers
+package bundb
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/uptrace/bun"
 )
 
-// Surface wraps functions for 'surfacing' the result
-// of processing a message, eg:
-//   - timelining a status
-//   - removing a status from timelines
-//   - sending a notification to a user
-//   - sending an email
-type Surface struct {
-	State         *state.State
-	Converter     *typeutils.Converter
-	Stream        *stream.Processor
-	Filter        *visibility.Filter
-	EmailSender   email.Sender
-	Conversations *conversations.Processor
+type advancedMigrationDB struct {
+	db    *bun.DB
+	state *state.State
+}
+
+func (a *advancedMigrationDB) GetAdvancedMigration(ctx context.Context, id string) (*gtsmodel.AdvancedMigration, error) {
+	var advancedMigration gtsmodel.AdvancedMigration
+	err := a.db.NewSelect().
+		Model(&advancedMigration).
+		Where("? = ?", bun.Ident("id"), id).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &advancedMigration, nil
+}
+
+func (a *advancedMigrationDB) PutAdvancedMigration(ctx context.Context, advancedMigration *gtsmodel.AdvancedMigration) error {
+	_, err := NewUpsert(a.db).
+		Model(advancedMigration).
+		Constraint("id").
+		Exec(ctx)
+	return err
 }

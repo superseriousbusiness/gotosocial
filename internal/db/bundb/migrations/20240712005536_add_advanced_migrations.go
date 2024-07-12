@@ -15,44 +15,35 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package migrations
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	AdvancedMigration
-	Application
-	Basic
-	Conversation
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	Filter
-	List
-	Marker
-	Media
-	Mention
-	Move
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+// Create the advanced migrations table.
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			_, err := tx.
+				NewCreateTable().
+				Model((*gtsmodel.AdvancedMigration)(nil)).
+				IfNotExists().
+				Exec(ctx)
+			return err
+		})
+	}
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

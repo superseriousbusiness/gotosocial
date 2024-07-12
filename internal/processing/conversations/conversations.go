@@ -18,6 +18,7 @@
 package conversations
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -25,11 +26,17 @@ import (
 type Processor struct {
 	state     *state.State
 	converter *typeutils.Converter
+	filter    *visibility.Filter
 }
 
-func New(state *state.State, converter *typeutils.Converter) Processor {
+func New(
+	state *state.State,
+	converter *typeutils.Converter,
+	filter *visibility.Filter,
+) Processor {
 	return Processor{
 		state:     state,
 		converter: converter,
+		filter:    filter,
 	}
 }
