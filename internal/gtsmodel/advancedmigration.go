@@ -34,7 +34,7 @@ type AdvancedMigration struct {
 
 func AdvancedMigrationLoad[State any](a *AdvancedMigration) (State, error) {
 	var state State
-	err := json.Unmarshal([]byte(a.StateJSON), state)
+	err := json.Unmarshal([]byte(a.StateJSON), &state)
 	return state, err
 }
 

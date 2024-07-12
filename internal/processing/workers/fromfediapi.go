@@ -228,6 +228,10 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 	}
 
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
 	return nil
 }
 

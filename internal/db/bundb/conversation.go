@@ -272,7 +272,7 @@ func (c *conversationDB) AddStatusToConversation(ctx context.Context, conversati
 				Model(conversationToStatus).
 				Exec(ctx); // nocollapse
 			err != nil {
-				return err
+				return gtserror.Newf("error creating conversation-to-status link between conversation %s and status %s: %w", conversation.ID, status.ID, err)
 			}
 
 			if _, err := NewUpsert(tx).
@@ -281,7 +281,7 @@ func (c *conversationDB) AddStatusToConversation(ctx context.Context, conversati
 				Column("last_status_id", "read", "updated_at").
 				Exec(ctx); // nocollapse
 			err != nil {
-				return err
+				return gtserror.Newf("error upserting conversation %s and status %s: %w", conversation.ID, err)
 			}
 
 			return nil
@@ -338,7 +338,7 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 			Returning("?", bun.Ident("id")).
 			Scan(ctx, &deletedConversationIDs); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error deleting conversations for account %s: %w", accountID, err)
 		}
 
 		// Delete any conversation-to-status links matching the deleted conversation IDs.
@@ -347,7 +347,7 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 			Where("? IN (?)", bun.Ident("conversation_id"), bun.In(deletedConversationIDs)).
 			Exec(ctx); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error deleting conversation-to-status links for account %s: %w", accountID, err)
 		}
 
 		return nil
@@ -376,7 +376,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			Where("? = ?", bun.Ident("status_id"), statusID).
 			Exec(ctx); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error deleting conversation-to-status links while deleting status %s: %w", statusID, err)
 		}
 
 		// Create a temporary table with all statuses other than the deleted status
@@ -402,7 +402,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			statusID,
 		).Exec(ctx); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error creating conversationStatusesTempTable while deleting status %s: %w", statusID, err)
 		}
 
 		// Create a temporary table with the most recently created status in each conversation
@@ -424,7 +424,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			conversationStatusesTempTable,
 		).Exec(ctx); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error creating latestConversationStatusesTempTable while deleting status %s: %w", statusID, err)
 		}
 
 		// For every conversation where the given status was the last one,
@@ -440,13 +440,13 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			FROM ?0 latest_conversation_statuses
 			WHERE conversations.id = latest_conversation_statuses.conversation_id
 			AND latest_conversation_statuses.id IS NOT NULL
-			RETURNING id
+			RETURNING conversations.id
 			`,
 			latestConversationStatusesTempTable,
 			bun.Safe(nowSQL),
 		).Scan(ctx, &updatedConversationIDs); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error rolling back last status for conversation while deleting status %s: %w", statusID, err)
 		}
 
 		// If there is no such status, delete the conversation.
@@ -464,7 +464,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			latestConversationStatusesTempTable,
 		).Scan(ctx, &deletedConversationIDs); // nocollapse
 		err != nil {
-			return err
+			return gtserror.Newf("error deleting conversation while deleting status %s: %w", statusID, err)
 		}
 
 		// Clean up.

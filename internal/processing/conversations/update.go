@@ -165,12 +165,13 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		}
 
 		// Create or update the conversation.
+		conversationID := conversation.ID
 		conversation, err = p.state.DB.AddStatusToConversation(ctx, conversation, status)
 		if err != nil {
 			log.Errorf(
 				ctx,
 				"error creating or updating conversation %s for status %s and account %s: %v",
-				conversation.ID,
+				conversationID,
 				status.ID,
 				localAccount.ID,
 				err,
