@@ -943,6 +943,18 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "emojis": [],
     "fields": []
   },
+  "mentions": [
+    {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "url": "http://localhost:8080/@admin",
+      "acct": "admin"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
   "media_attachments": [
     {
       "id": "01HE7Y3C432WRSNS10EZM86SA5",
@@ -971,7 +983,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
         }
       },
       "description": "Photograph of a sloth, Public Domain.",
-      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof",
+      "Sensitive": true,
+      "MIMEType": "image/jpg"
     },
     {
       "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
@@ -983,7 +997,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "preview_remote_url": null,
       "meta": null,
       "description": "SVG line art of a sloth, public domain",
-      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of"
+      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
+      "Sensitive": true,
+      "MIMEType": "image/svg"
     },
     {
       "id": "01HE88YG74PVAB81PX2XA9F3FG",
@@ -995,21 +1011,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "preview_remote_url": null,
       "meta": null,
       "description": "Jolly salsa song, public domain.",
-      "blurhash": null
+      "blurhash": null,
+      "Sensitive": true,
+      "MIMEType": "audio/mpeg"
     }
   ],
-  "mentions": [
-    {
-      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
-      "username": "admin",
-      "url": "http://localhost:8080/@admin",
-      "acct": "admin"
-    }
-  ],
-  "tags": [],
-  "emojis": [],
-  "card": null,
-  "poll": null,
   "LanguageTag": "en",
   "PollOptions": null,
   "Local": false,

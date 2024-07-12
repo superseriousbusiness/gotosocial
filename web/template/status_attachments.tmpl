@@ -44,8 +44,34 @@
     width="{{- .Meta.Original.Width -}}"
     height="{{- .Meta.Original.Height -}}"
 >
-    <source type="video/mp4" src="{{- .URL -}}"/>
+    <source type="{{- .MIMEType -}}" src="{{- .URL -}}"/>
 </video>
+{{- end }}
+
+{{- define "audioPreview" }}
+{{- if and .PreviewURL .Meta.Small.Width }}
+<img
+    src="{{- .PreviewURL -}}"
+    loading="lazy"
+    {{- if .Description }}
+    alt="{{- .Description -}}"
+    title="{{- .Description -}}"
+    {{- end }}
+    width="{{- .Meta.Small.Width -}}"
+    height="{{- .Meta.Small.Height -}}"
+/>
+{{- else }}
+<img
+    src="/assets/logo.png"
+    loading="lazy"
+    {{- if .Description }}
+    alt="{{- .Description -}}"
+    title="{{- .Description -}}"
+    {{- end }}
+    width="518"
+    height="460"
+/>
+{{- end }}
 {{- end }}
 
 {{- /* Produces something like "1 attachment", "2 attachments", etc */ -}}
@@ -77,6 +103,8 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 {{- include "videoPreview" $media | indent 4 }}
                 {{- else if eq .Type "image" }}
                 {{- include "imagePreview" $media | indent 4 }}
+                {{- else if eq .Type "audio" }}
+                {{- include "audioPreview" $media | indent 4 }}
                 {{- end }}
             </summary>
             {{- if eq .Type "video" }}
@@ -91,7 +119,28 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 title="{{- $media.Description -}}"
                 {{- end }}
             >
-                <source type="video/mp4" src="{{- $media.URL -}}"/>
+                <source type="{{- $media.MIMEType -}}" src="{{- $media.URL -}}"/>
+            </video>
+            {{- else if eq .Type "audio" }}
+            <video
+                class="plyr-video photoswipe-slide"
+                controls
+                data-pswp-index="{{- $index -}}"
+                {{- if and $media.PreviewURL $media.Meta.Small.Width }}
+                poster="{{- .PreviewURL -}}"
+                data-pswp-width="{{- $media.Meta.Small.Width -}}px"
+                data-pswp-height="{{- $media.Meta.Small.Height -}}px"
+                {{- else }}
+                poster="/assets/logo.png"
+                width="518px"
+                height="460px"
+                {{- end }}
+                {{- if .Description }}
+                alt="{{- $media.Description -}}"
+                title="{{- $media.Description -}}"
+                {{- end }}
+            >
+                <source type="{{- $media.MIMEType -}}" src="{{- $media.URL -}}"/>
             </video>
             {{- else if eq .Type "image" }}
             <a

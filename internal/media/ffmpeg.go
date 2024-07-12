@@ -18,6 +18,7 @@
 package media
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -198,6 +199,30 @@ func (res *ffprobeResult) ImageMeta() (width int, height int, err error) {
 	return
 }
 
+// EmbeddedImageMeta extracts embedded image metadata contained within ffprobe'd media result
+// streams, should be used for pulling album image (can be animated image) from audio files.
+func (res *ffprobeResult) EmbeddedImageMeta() (width int, height int, framerate float32, err error) {
+	for _, stream := range res.Streams {
+		if stream.Width > width {
+			width = stream.Width
+		}
+		if stream.Height > height {
+			height = stream.Height
+		}
+		if fr := stream.GetFrameRate(); fr > 0 {
+			if framerate == 0 || fr < framerate {
+				framerate = fr
+			}
+		}
+	}
+	// Need width + height but
+	// no framerate is fine.
+	if width == 0 || height == 0 {
+		err = errors.New("invalid image stream(s)")
+	}
+	return
+}
+
 // VideoMeta extracts video metadata contained within ffprobe'd media result streams.
 func (res *ffprobeResult) VideoMeta() (width, height int, framerate float32, err error) {
 	for _, stream := range res.Streams {
@@ -222,6 +247,7 @@ func (res *ffprobeResult) VideoMeta() (width, height int, framerate float32, err
 type ffprobeStream struct {
 	CodecName    string `json:"codec_name"`
 	AvgFrameRate string `json:"avg_frame_rate"`
+	RFrameRate   string `json:"r_frame_rate"`
 	Width        int    `json:"width"`
 	Height       int    `json:"height"`
 	// + unused fields.
@@ -229,7 +255,7 @@ type ffprobeStream struct {
 
 // GetFrameRate calculates float32 framerate value from stream json string.
 func (str *ffprobeStream) GetFrameRate() float32 {
-	if str.AvgFrameRate != "" {
+	numDen := func(strFR string) (float32, float32) {
 		var (
 			// numerator
 			num float32
@@ -239,7 +265,7 @@ func (str *ffprobeStream) GetFrameRate() float32 {
 		)
 
 		// Check for a provided inequality, i.e. numerator / denominator.
-		if p := strings.SplitN(str.AvgFrameRate, "/", 2); len(p) == 2 {
+		if p := strings.SplitN(strFR, "/", 2); len(p) == 2 {
 			n, _ := strconv.ParseFloat(p[0], 32)
 			d, _ := strconv.ParseFloat(p[1], 32)
 			num, den = float32(n), float32(d)
@@ -248,8 +274,26 @@ func (str *ffprobeStream) GetFrameRate() float32 {
 			num = float32(n)
 		}
 
-		return num / den
+		return num, den
 	}
+
+	var num, den float32
+	if str.AvgFrameRate != "" {
+		// Check if we have avg_frame_rate.
+		num, den = numDen(str.AvgFrameRate)
+	}
+
+	if num == 0 && str.RFrameRate != "" {
+		// Check if we have r_frame_rate.
+		num, den = numDen(str.RFrameRate)
+	}
+
+	if num != 0 {
+		// Found it.
+		// Avoid divide by zero.
+		return num / cmp.Or(den, 1)
+	}
+
 	return 0
 }
 
