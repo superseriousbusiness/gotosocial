@@ -48,44 +48,19 @@ var bodies = []string{
 	"body with\r\nnewlines",
 }
 
-func TestHTTPClientSmallBody(t *testing.T) {
+func TestHTTPClientBody(t *testing.T) {
 	for _, body := range bodies {
-		_TestHTTPClientWithBody(t, []byte(body), int(^uint16(0)))
+		testHTTPClientWithBody(t, []byte(body))
 	}
 }
 
-func TestHTTPClientExactBody(t *testing.T) {
-	for _, body := range bodies {
-		_TestHTTPClientWithBody(t, []byte(body), len(body))
-	}
-}
-
-func TestHTTPClientLargeBody(t *testing.T) {
-	for _, body := range bodies {
-		_TestHTTPClientWithBody(t, []byte(body), len(body)-1)
-	}
-}
-
-func _TestHTTPClientWithBody(t *testing.T, body []byte, max int) {
+func testHTTPClientWithBody(t *testing.T, body []byte) {
 	var (
 		handler http.HandlerFunc
-
-		expect []byte
-
-		expectErr error
 	)
-
-	// If this is a larger body, reslice and
-	// set error so we know what to expect
-	expect = body
-	if max < len(body) {
-		expect = expect[:max]
-		expectErr = httpclient.ErrBodyTooLarge
-	}
 
 	// Create new HTTP client with maximum body size
 	client := httpclient.New(httpclient.Config{
-		MaxBodySize:        int64(max),
 		DisableCompression: true,
 		AllowRanges: []netip.Prefix{
 			// Loopback (used by server)
@@ -110,10 +85,8 @@ func _TestHTTPClientWithBody(t *testing.T, body []byte, max int) {
 
 	// Perform the test request
 	rsp, err := client.Do(req)
-	if !errors.Is(err, expectErr) {
+	if err != nil {
 		t.Fatalf("error performing client request: %v", err)
-	} else if err != nil {
-		return // expected error
 	}
 	defer rsp.Body.Close()
 
@@ -124,8 +97,8 @@ func _TestHTTPClientWithBody(t *testing.T, body []byte, max int) {
 	}
 
 	// Check actual response body matches expected
-	if !bytes.Equal(expect, check) {
-		t.Errorf("response body did not match expected: expect=%q actual=%q", string(expect), string(check))
+	if !bytes.Equal(body, check) {
+		t.Errorf("response body did not match expected: expect=%q actual=%q", string(body), string(check))
 	}
 }
 

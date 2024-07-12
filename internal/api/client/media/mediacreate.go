@@ -153,21 +153,8 @@ func validateCreateMedia(form *apimodel.AttachmentRequest) error {
 		return errors.New("no attachment given")
 	}
 
-	maxVideoSize := config.GetMediaVideoMaxSize()
-	maxImageSize := config.GetMediaImageMaxSize()
 	minDescriptionChars := config.GetMediaDescriptionMinChars()
 	maxDescriptionChars := config.GetMediaDescriptionMaxChars()
-
-	// a very superficial check to see if no size limits are exceeded
-	// we still don't actually know which media types we're dealing with but the other handlers will go into more detail there
-	maxSize := maxVideoSize
-	if maxImageSize > maxSize {
-		maxSize = maxImageSize
-	}
-
-	if form.File.Size > int64(maxSize) {
-		return fmt.Errorf("file size limit exceeded: limit is %d bytes but attachment was %d bytes", maxSize, form.File.Size)
-	}
 
 	if length := len([]rune(form.Description)); length > maxDescriptionChars {
 		return fmt.Errorf("image description length must be between %d and %d characters (inclusive), but provided image description was %d chars", minDescriptionChars, maxDescriptionChars, length)

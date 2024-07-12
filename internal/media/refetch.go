@@ -24,12 +24,13 @@ import (
 	"io"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-type DereferenceMedia func(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
+type DereferenceMedia func(ctx context.Context, iri *url.URL, maxsz int64) (io.ReadCloser, error)
 
 // RefetchEmojis iterates through remote emojis (for the given domain, or all if domain is empty string).
 //
@@ -47,6 +48,9 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		maxShortcodeDomain string
 		refetchIDs         []string
 	)
+
+	// Get max supported remote emoji media size.
+	maxsz := config.GetMediaEmojiRemoteMaxSize()
 
 	// page through emojis 20 at a time, looking for those with missing images
 	for {
@@ -107,8 +111,8 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			continue
 		}
 
-		dataFunc := func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error) {
-			return dereferenceMedia(ctx, emojiImageIRI)
+		dataFunc := func(ctx context.Context) (reader io.ReadCloser, err error) {
+			return dereferenceMedia(ctx, emojiImageIRI, int64(maxsz))
 		}
 
 		processingEmoji, err := m.RefreshEmoji(ctx, emoji, dataFunc, AdditionalEmojiInfo{

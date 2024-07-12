@@ -24,12 +24,14 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"syscall"
 	"time"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/gin-gonic/gin"
+	"github.com/ncruces/go-sqlite3"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -37,6 +39,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -66,14 +69,15 @@ import (
 
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
-	if _, err := maxprocs.Set(maxprocs.Logger(nil)); err != nil {
-		log.Warnf(ctx, "could not set CPU limits from cgroup: %s", err)
-	}
+	// Set GOMAXPROCS / GOMEMLIMIT
+	// to match container limits.
+	setLimits(ctx)
 
-	if _, err := memlimit.SetGoMemLimitWithOpts(); err != nil {
-		if !strings.Contains(err.Error(), "cgroup mountpoint does not exist") {
-			log.Warnf(ctx, "could not set Memory limits from cgroup: %s", err)
-		}
+	// Compile WASM modules ahead of first use
+	// to prevent unexpected initial slowdowns.
+	log.Info(ctx, "precompiling WebAssembly")
+	if err := precompileWASM(ctx); err != nil {
+		return err
 	}
 
 	var (
@@ -427,5 +431,32 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	sig := <-sigs // block until signal received
 	log.Infof(ctx, "received signal %s, shutting down", sig)
 
+	return nil
+}
+
+func setLimits(ctx context.Context) {
+	if _, err := maxprocs.Set(maxprocs.Logger(nil)); err != nil {
+		log.Warnf(ctx, "could not set CPU limits from cgroup: %s", err)
+	}
+
+	if _, err := memlimit.SetGoMemLimitWithOpts(); err != nil {
+		if !strings.Contains(err.Error(), "cgroup mountpoint does not exist") {
+			log.Warnf(ctx, "could not set Memory limits from cgroup: %s", err)
+		}
+	}
+}
+
+func precompileWASM(ctx context.Context) error {
+	// TODO: make max number instances configurable
+	maxprocs := runtime.GOMAXPROCS(0)
+	if err := sqlite3.Initialize(); err != nil {
+		return gtserror.Newf("error compiling sqlite3: %w", err)
+	}
+	if err := ffmpeg.InitFfmpeg(ctx, maxprocs); err != nil {
+		return gtserror.Newf("error compiling ffmpeg: %w", err)
+	}
+	if err := ffmpeg.InitFfprobe(ctx, maxprocs); err != nil {
+		return gtserror.Newf("error compiling ffprobe: %w", err)
+	}
 	return nil
 }

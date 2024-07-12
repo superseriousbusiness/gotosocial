@@ -67,8 +67,8 @@ type Transport interface {
 	// Dereference fetches the ActivityStreams object located at this IRI with a GET request.
 	Dereference(ctx context.Context, iri *url.URL) (*http.Response, error)
 
-	// DereferenceMedia fetches the given media attachment IRI, returning the reader and filesize.
-	DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error)
+	// DereferenceMedia fetches the given media attachment IRI, returning the reader limited to given max.
+	DereferenceMedia(ctx context.Context, iri *url.URL, maxsz int64) (io.ReadCloser, error)
 
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)

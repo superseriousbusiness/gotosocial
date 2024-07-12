@@ -31,7 +31,6 @@ import (
 	"strings"
 	"time"
 
-	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-cache/v3"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-iotools"
@@ -89,9 +88,6 @@ type Config struct {
 	// WriteBufferSize: see http.Transport{}.WriteBufferSize.
 	WriteBufferSize int
 
-	// MaxBodySize determines the maximum fetchable body size.
-	MaxBodySize int64
-
 	// Timeout: see http.Client{}.Timeout.
 	Timeout time.Duration
 
@@ -111,7 +107,6 @@ type Config struct {
 type Client struct {
 	client   http.Client
 	badHosts cache.TTLCache[string, struct{}]
-	bodyMax  int64
 	retries  uint
 }
 
@@ -137,11 +132,6 @@ func New(cfg Config) *Client {
 		cfg.MaxIdleConns = cfg.MaxOpenConnsPerHost * 10
 	}
 
-	if cfg.MaxBodySize <= 0 {
-		// By default set this to a reasonable 40MB.
-		cfg.MaxBodySize = int64(40 * bytesize.MiB)
-	}
-
 	// Protect the dialer
 	// with IP range sanitizer.
 	d.Control = (&Sanitizer{
@@ -151,7 +141,6 @@ func New(cfg Config) *Client {
 
 	// Prepare client fields.
 	c.client.Timeout = cfg.Timeout
-	c.bodyMax = cfg.MaxBodySize
 
 	// Prepare transport TLS config.
 	tlsClientConfig := &tls.Config{
@@ -377,31 +366,15 @@ func (c *Client) do(r *Request) (rsp *http.Response, retry bool, err error) {
 	rbody := (io.Reader)(rsp.Body)
 	cbody := (io.Closer)(rsp.Body)
 
-	var limit int64
-
-	if limit = rsp.ContentLength; limit < 0 {
-		// If unknown, use max as reader limit.
-		limit = c.bodyMax
-	}
-
-	// Don't trust them, limit body reads.
-	rbody = io.LimitReader(rbody, limit)
-
-	// Wrap closer to ensure entire body drained BEFORE close.
+	// Wrap closer to ensure body drained BEFORE close.
 	cbody = iotools.CloserAfterCallback(cbody, func() {
 		_, _ = discard.ReadFrom(rbody)
 	})
 
-	// Wrap body with limit.
-	rsp.Body = &struct {
-		io.Reader
-		io.Closer
-	}{rbody, cbody}
-
-	// Check response body not too large.
-	if rsp.ContentLength > c.bodyMax {
-		_ = rsp.Body.Close()
-		return nil, false, ErrBodyTooLarge
+	// Set the wrapped response body.
+	rsp.Body = &iotools.ReadCloserType{
+		Reader: rbody,
+		Closer: cbody,
 	}
 
 	return rsp, true, nil

@@ -1075,56 +1075,6 @@ func GetAccountsCustomCSSLength() int { return global.GetAccountsCustomCSSLength
 // SetAccountsCustomCSSLength safely sets the value for global configuration 'AccountsCustomCSSLength' field
 func SetAccountsCustomCSSLength(v int) { global.SetAccountsCustomCSSLength(v) }
 
-// GetMediaImageMaxSize safely fetches the Configuration value for state's 'MediaImageMaxSize' field
-func (st *ConfigState) GetMediaImageMaxSize() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaImageMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaImageMaxSize safely sets the Configuration value for state's 'MediaImageMaxSize' field
-func (st *ConfigState) SetMediaImageMaxSize(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaImageMaxSize = v
-	st.reloadToViper()
-}
-
-// MediaImageMaxSizeFlag returns the flag name for the 'MediaImageMaxSize' field
-func MediaImageMaxSizeFlag() string { return "media-image-max-size" }
-
-// GetMediaImageMaxSize safely fetches the value for global configuration 'MediaImageMaxSize' field
-func GetMediaImageMaxSize() bytesize.Size { return global.GetMediaImageMaxSize() }
-
-// SetMediaImageMaxSize safely sets the value for global configuration 'MediaImageMaxSize' field
-func SetMediaImageMaxSize(v bytesize.Size) { global.SetMediaImageMaxSize(v) }
-
-// GetMediaVideoMaxSize safely fetches the Configuration value for state's 'MediaVideoMaxSize' field
-func (st *ConfigState) GetMediaVideoMaxSize() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaVideoMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaVideoMaxSize safely sets the Configuration value for state's 'MediaVideoMaxSize' field
-func (st *ConfigState) SetMediaVideoMaxSize(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaVideoMaxSize = v
-	st.reloadToViper()
-}
-
-// MediaVideoMaxSizeFlag returns the flag name for the 'MediaVideoMaxSize' field
-func MediaVideoMaxSizeFlag() string { return "media-video-max-size" }
-
-// GetMediaVideoMaxSize safely fetches the value for global configuration 'MediaVideoMaxSize' field
-func GetMediaVideoMaxSize() bytesize.Size { return global.GetMediaVideoMaxSize() }
-
-// SetMediaVideoMaxSize safely sets the value for global configuration 'MediaVideoMaxSize' field
-func SetMediaVideoMaxSize(v bytesize.Size) { global.SetMediaVideoMaxSize(v) }
-
 // GetMediaDescriptionMinChars safely fetches the Configuration value for state's 'MediaDescriptionMinChars' field
 func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
 	st.mutex.RLock()
@@ -1249,6 +1199,56 @@ func GetMediaEmojiRemoteMaxSize() bytesize.Size { return global.GetMediaEmojiRem
 
 // SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'MediaEmojiRemoteMaxSize' field
 func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMaxSize(v) }
+
+// GetMediaLocalMaxSize safely fetches the Configuration value for state's 'MediaLocalMaxSize' field
+func (st *ConfigState) GetMediaLocalMaxSize() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.MediaLocalMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaLocalMaxSize safely sets the Configuration value for state's 'MediaLocalMaxSize' field
+func (st *ConfigState) SetMediaLocalMaxSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaLocalMaxSize = v
+	st.reloadToViper()
+}
+
+// MediaLocalMaxSizeFlag returns the flag name for the 'MediaLocalMaxSize' field
+func MediaLocalMaxSizeFlag() string { return "media-local-max-size" }
+
+// GetMediaLocalMaxSize safely fetches the value for global configuration 'MediaLocalMaxSize' field
+func GetMediaLocalMaxSize() bytesize.Size { return global.GetMediaLocalMaxSize() }
+
+// SetMediaLocalMaxSize safely sets the value for global configuration 'MediaLocalMaxSize' field
+func SetMediaLocalMaxSize(v bytesize.Size) { global.SetMediaLocalMaxSize(v) }
+
+// GetMediaRemoteMaxSize safely fetches the Configuration value for state's 'MediaRemoteMaxSize' field
+func (st *ConfigState) GetMediaRemoteMaxSize() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.MediaRemoteMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaRemoteMaxSize safely sets the Configuration value for state's 'MediaRemoteMaxSize' field
+func (st *ConfigState) SetMediaRemoteMaxSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaRemoteMaxSize = v
+	st.reloadToViper()
+}
+
+// MediaRemoteMaxSizeFlag returns the flag name for the 'MediaRemoteMaxSize' field
+func MediaRemoteMaxSizeFlag() string { return "media-remote-max-size" }
+
+// GetMediaRemoteMaxSize safely fetches the value for global configuration 'MediaRemoteMaxSize' field
+func GetMediaRemoteMaxSize() bytesize.Size { return global.GetMediaRemoteMaxSize() }
+
+// SetMediaRemoteMaxSize safely sets the value for global configuration 'MediaRemoteMaxSize' field
+func SetMediaRemoteMaxSize(v bytesize.Size) { global.SetMediaRemoteMaxSize(v) }
 
 // GetMediaCleanupFrom safely fetches the Configuration value for state's 'MediaCleanupFrom' field
 func (st *ConfigState) GetMediaCleanupFrom() (v string) {

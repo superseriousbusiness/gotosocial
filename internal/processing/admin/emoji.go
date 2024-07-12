@@ -25,7 +25,10 @@ import (
 	"mime/multipart"
 	"strings"
 
+	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-iotools"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -41,10 +44,26 @@ func (p *Processor) EmojiCreate(
 	form *apimodel.EmojiCreateRequest,
 ) (*apimodel.Emoji, gtserror.WithCode) {
 
-	// Simply read provided form data for emoji data source.
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		f, err := form.Image.Open()
-		return f, form.Image.Size, err
+	// Get maximum supported local emoji size.
+	maxsz := config.GetMediaEmojiLocalMaxSize()
+
+	// Ensure media within size bounds.
+	if form.Image.Size > int64(maxsz) {
+		text := fmt.Sprintf("emoji exceeds configured max size: %s", maxsz)
+		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	// Open multipart file reader.
+	mpfile, err := form.Image.Open()
+	if err != nil {
+		err := gtserror.Newf("error opening multipart file: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Wrap the multipart file reader to ensure is limited to max.
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+	data := func(context.Context) (io.ReadCloser, error) {
+		return rc, nil
 	}
 
 	// Attempt to create the new local emoji.
@@ -285,14 +304,23 @@ func (p *Processor) emojiUpdateCopy(
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
+	// Get maximum supported local emoji size.
+	maxsz := config.GetMediaEmojiLocalMaxSize()
+
+	// Ensure target emoji image within size bounds.
+	if bytesize.Size(target.ImageFileSize) > maxsz {
+		text := fmt.Sprintf("emoji exceeds configured max size: %s", maxsz)
+		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
 	// Data function for copying just streams media
 	// out of storage into an additional location.
 	//
 	// This means that data for the copy persists even
 	// if the remote copied emoji gets deleted at some point.
-	data := func(ctx context.Context) (io.ReadCloser, int64, error) {
+	data := func(ctx context.Context) (io.ReadCloser, error) {
 		rc, err := p.state.Storage.GetStream(ctx, target.ImagePath)
-		return rc, int64(target.ImageFileSize), err
+		return rc, err
 	}
 
 	// Attempt to create the new local emoji.
@@ -413,10 +441,26 @@ func (p *Processor) emojiUpdateModify(
 		// Updating image and maybe categoryID.
 		// We can do both at the same time :)
 
-		// Simply read provided form data for emoji data source.
-		data := func(_ context.Context) (io.ReadCloser, int64, error) {
-			f, err := image.Open()
-			return f, image.Size, err
+		// Get maximum supported local emoji size.
+		maxsz := config.GetMediaEmojiLocalMaxSize()
+
+		// Ensure media within size bounds.
+		if image.Size > int64(maxsz) {
+			text := fmt.Sprintf("emoji exceeds configured max size: %s", maxsz)
+			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+
+		// Open multipart file reader.
+		mpfile, err := image.Open()
+		if err != nil {
+			err := gtserror.Newf("error opening multipart file: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// Wrap the multipart file reader to ensure is limited to max.
+		rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+		data := func(context.Context) (io.ReadCloser, error) {
+			return rc, nil
 		}
 
 		// Prepare emoji model for recache from new data.

@@ -1,0 +1,38 @@
+package ffprobe
+
+import (
+	_ "embed"
+	"os"
+
+	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/experimental"
+)
+
+func init() {
+	// Check for WASM source file path.
+	path := os.Getenv("FFPROBE_WASM")
+	if path == "" {
+		return
+	}
+
+	var err error
+
+	// Read file into memory.
+	B, err = os.ReadFile(path)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// CoreFeatures is the WebAssembly Core specification
+// features this embedded binary was compiled with.
+const CoreFeatures = api.CoreFeatureSIMD |
+	api.CoreFeatureBulkMemoryOperations |
+	api.CoreFeatureNonTrappingFloatToIntConversion |
+	api.CoreFeatureMutableGlobal |
+	api.CoreFeatureReferenceTypes |
+	api.CoreFeatureSignExtensionOps |
+	experimental.CoreFeaturesThreads
+
+//go:embed ffprobe.wasm
+var B []byte

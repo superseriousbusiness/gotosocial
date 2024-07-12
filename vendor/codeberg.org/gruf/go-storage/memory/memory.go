@@ -7,7 +7,6 @@ import (
 	"strings"
 	"sync"
 
-	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-storage"
 
 	"codeberg.org/gruf/go-storage/internal"
@@ -93,7 +92,7 @@ func (st *MemoryStorage) ReadStream(ctx context.Context, key string) (io.ReadClo
 
 	// Wrap in readcloser.
 	r := bytes.NewReader(b)
-	return iotools.NopReadCloser(r), nil
+	return io.NopCloser(r), nil
 }
 
 // WriteBytes: implements Storage.WriteBytes().

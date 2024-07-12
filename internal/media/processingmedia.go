@@ -18,18 +18,12 @@
 package media
 
 import (
-	"bytes"
-	"cmp"
 	"context"
-	"image/jpeg"
-	"io"
 	"time"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
-	terminator "codeberg.org/superseriousbusiness/exif-terminator"
-	"github.com/disintegration/imaging"
-	"github.com/h2non/filetype"
+
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -145,19 +139,8 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 		// full-size media attachment details.
 		//
 		// This will update p.media as it goes.
-		if err = p.store(ctx); err != nil {
-			return err
-		}
-
-		// Finish processing by reloading media into
-		// memory to get dimension and generate a thumb.
-		//
-		// This will update p.media as it goes.
-		if err = p.finish(ctx); err != nil {
-			return err //nolint:revive
-		}
-
-		return nil
+		err = p.store(ctx)
+		return err
 	})
 	media = p.media
 	return
@@ -167,89 +150,224 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingMedia) store(ctx context.Context) error {
-	// Load media from provided data fun
-	rc, sz, err := p.dataFn(ctx)
+	// Load media from data func.
+	rc, err := p.dataFn(ctx)
 	if err != nil {
 		return gtserror.Newf("error executing data function: %w", err)
 	}
 
+	var (
+		// predfine temporary media
+		// file path variables so we
+		// can remove them on error.
+		temppath  string
+		thumbpath string
+	)
+
 	defer func() {
-		// Ensure data reader gets closed on return.
-		if err := rc.Close(); err != nil {
-			log.Errorf(ctx, "error closing data reader: %v", err)
+		if err := remove(temppath, thumbpath); err != nil {
+			log.Errorf(ctx, "error(s) cleaning up files: %v", err)
 		}
 	}()
 
-	// Assume we're given correct file
-	// size, we can overwrite this later
-	// once we know THE TRUTH.
-	fileSize := int(sz)
-	p.media.File.FileSize = fileSize
-
-	// Prepare to read bytes from
-	// file header or magic number.
-	hdrBuf := newHdrBuf(fileSize)
-
-	// Read into buffer as much as possible.
-	//
-	// UnexpectedEOF means we couldn't read up to the
-	// given size, but we may still have read something.
-	//
-	// EOF means we couldn't read anything at all.
-	//
-	// Any other error likely means the connection messed up.
-	//
-	// In other words, rather counterintuitively, we
-	// can only proceed on no error or unexpected error!
-	n, err := io.ReadFull(rc, hdrBuf)
+	// Drain reader to tmp file
+	// (this reader handles close).
+	temppath, err = drainToTmp(rc)
 	if err != nil {
-		if err != io.ErrUnexpectedEOF {
-			return gtserror.Newf("error reading first bytes of incoming media: %w", err)
+		return gtserror.Newf("error draining data to tmp: %w", err)
+	}
+
+	// Pass input file through ffprobe to
+	// parse further metadata information.
+	result, err := ffprobe(ctx, temppath)
+	if err != nil {
+		return gtserror.Newf("error ffprobing data: %w", err)
+	}
+
+	switch {
+	// No errors parsing data.
+	case result.Error == nil:
+
+	// Data type unhandleable by ffprobe.
+	case result.Error.Code == -1094995529:
+		log.Warn(ctx, "unsupported data type")
+		return nil
+
+	default:
+		return gtserror.Newf("ffprobe error: %w", err)
+	}
+
+	var ext string
+
+	// Set the media type from ffprobe format data.
+	p.media.Type, ext = result.Format.GetFileType()
+	if p.media.Type == gtsmodel.FileTypeUnknown {
+
+		// Return early (deleting file)
+		// for unhandled file types.
+		return nil
+	}
+
+	switch p.media.Type {
+	case gtsmodel.FileTypeImage:
+		// Pass file through ffmpeg clearing
+		// any excess metadata (e.g. EXIF).
+		if err := ffmpegClearMetadata(ctx,
+			temppath, ext,
+		); err != nil {
+			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
 
-		// Initial file size was misreported, so we didn't read
-		// fully into hdrBuf. Reslice it to the size we did read.
-		hdrBuf = hdrBuf[:n]
-		fileSize = n
-		p.media.File.FileSize = fileSize
-	}
+		// Extract image metadata from streams.
+		width, height, err := result.ImageMeta()
+		if err != nil {
+			return err
+		}
+		p.media.FileMeta.Original.Width = width
+		p.media.FileMeta.Original.Height = height
+		p.media.FileMeta.Original.Size = (width * height)
+		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
 
-	// Parse file type info from header buffer.
-	// This should only ever error if the buffer
-	// is empty (ie., the attachment is 0 bytes).
-	info, err := filetype.Match(hdrBuf)
-	if err != nil {
-		return gtserror.Newf("error parsing file type: %w", err)
-	}
+		// Determine thumbnail dimensions to use.
+		thumbWidth, thumbHeight := thumbSize(width, height)
+		p.media.FileMeta.Small.Width = thumbWidth
+		p.media.FileMeta.Small.Height = thumbHeight
+		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
+		p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
 
-	// Recombine header bytes with remaining stream
-	r := io.MultiReader(bytes.NewReader(hdrBuf), rc)
+		// Generate a thumbnail image from input image path.
+		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
+			thumbWidth,
+			thumbHeight,
+		)
+		if err != nil {
+			return gtserror.Newf("error generating image thumb: %w", err)
+		}
 
-	// Assume we'll put
-	// this file in storage.
-	store := true
+	case gtsmodel.FileTypeVideo:
+		// Pass file through ffmpeg clearing
+		// any excess metadata (e.g. EXIF).
+		if err := ffmpegClearMetadata(ctx,
+			temppath, ext,
+		); err != nil {
+			return gtserror.Newf("error cleaning metadata: %w", err)
+		}
 
-	switch info.Extension {
-	case "mp4":
-		// No problem.
+		// Extract video metadata we can from streams.
+		width, height, framerate, err := result.VideoMeta()
+		if err != nil {
+			return err
+		}
+		p.media.FileMeta.Original.Width = width
+		p.media.FileMeta.Original.Height = height
+		p.media.FileMeta.Original.Size = (width * height)
+		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
+		p.media.FileMeta.Original.Framerate = &framerate
 
-	case "gif":
-		// No problem
+		// Extract total duration from format.
+		duration := result.Format.GetDuration()
+		p.media.FileMeta.Original.Duration = &duration
 
-	case "jpg", "jpeg", "png", "webp":
-		if fileSize > 0 {
-			// A file size was provided so we can clean
-			// exif data from image as we're streaming it.
-			r, err = terminator.Terminate(r, fileSize, info.Extension)
+		// Extract total bitrate from format.
+		bitrate := result.Format.GetBitRate()
+		p.media.FileMeta.Original.Bitrate = &bitrate
+
+		// Determine thumbnail dimensions to use.
+		thumbWidth, thumbHeight := thumbSize(width, height)
+		p.media.FileMeta.Small.Width = thumbWidth
+		p.media.FileMeta.Small.Height = thumbHeight
+		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
+		p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
+
+		// Extract a thumbnail frame from input video path.
+		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
+			thumbWidth,
+			thumbHeight,
+		)
+		if err != nil {
+			return gtserror.Newf("error extracting video frame: %w", err)
+		}
+
+	case gtsmodel.FileTypeAudio:
+		// Extract total duration from format.
+		duration := result.Format.GetDuration()
+		p.media.FileMeta.Original.Duration = &duration
+
+		// Extract total bitrate from format.
+		bitrate := result.Format.GetBitRate()
+		p.media.FileMeta.Original.Bitrate = &bitrate
+
+		// Extract image metadata from streams (if any),
+		// this will only exist for embedded album art.
+		width, height, _ := result.ImageMeta()
+		if width > 0 && height > 0 {
+
+			// Determine thumbnail dimensions to use.
+			thumbWidth, thumbHeight := thumbSize(width, height)
+			p.media.FileMeta.Small.Width = thumbWidth
+			p.media.FileMeta.Small.Height = thumbHeight
+			p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
+			p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
+
+			// Generate a thumbnail image from input image path.
+			thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
+				thumbWidth,
+				thumbHeight,
+			)
 			if err != nil {
-				return gtserror.Newf("error cleaning exif data: %w", err)
+				return gtserror.Newf("error generating image thumb: %w", err)
 			}
 		}
 
 	default:
-		// The file is not a supported format that we can process, so we can't do much with it.
-		log.Warnf(ctx, "unsupported media extension '%s'; not caching locally", info.Extension)
-		store = false
+		log.Warnf(ctx, "unsupported type: %s (%s)", p.media.Type, result.Format.FormatName)
+		return nil
+	}
+
+	// Calculate final media attachment file path.
+	p.media.File.Path = uris.StoragePathForAttachment(
+		p.media.AccountID,
+		string(TypeAttachment),
+		string(SizeOriginal),
+		p.media.ID,
+		ext,
+	)
+
+	// Copy temporary file into storage at path.
+	filesz, err := p.mgr.state.Storage.PutFile(ctx,
+		p.media.File.Path,
+		temppath,
+	)
+	if err != nil {
+		return gtserror.Newf("error writing media to storage: %w", err)
+	}
+
+	// Set final determined file size.
+	p.media.File.FileSize = int(filesz)
+
+	if thumbpath != "" {
+		// Note that neither thumbnail storage
+		// nor a blurhash are needed for audio.
+
+		if p.media.Blurhash == "" {
+			// Generate blurhash (if not already) from thumbnail.
+			p.media.Blurhash, err = generateBlurhash(thumbpath)
+			if err != nil {
+				return gtserror.Newf("error generating thumb blurhash: %w", err)
+			}
+		}
+
+		// Copy thumbnail file into storage at path.
+		thumbsz, err := p.mgr.state.Storage.PutFile(ctx,
+			p.media.Thumbnail.Path,
+			thumbpath,
+		)
+		if err != nil {
+			return gtserror.Newf("error writing thumb to storage: %w", err)
+		}
+
+		// Set final determined thumbnail size.
+		p.media.Thumbnail.FileSize = int(thumbsz)
 	}
 
 	// Fill in correct attachment
@@ -259,194 +377,17 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		string(TypeAttachment),
 		string(SizeOriginal),
 		p.media.ID,
-		info.Extension,
+		ext,
 	)
 
-	// Prefer discovered MIME, fallback to generic data stream.
-	mime := cmp.Or(info.MIME.Value, "application/octet-stream")
-	p.media.File.ContentType = mime
-
-	// Calculate final media attachment file path.
-	p.media.File.Path = uris.StoragePathForAttachment(
-		p.media.AccountID,
-		string(TypeAttachment),
-		string(SizeOriginal),
-		p.media.ID,
-		info.Extension,
-	)
-
-	// We should only try to store the file if it's
-	// a format we can keep processing, otherwise be
-	// a bit cheeky: don't store it and let users
-	// click through to the remote server instead.
-	if !store {
-		return nil
-	}
-
-	// File shouldn't already exist in storage at this point,
-	// but we do a check as it's worth logging / cleaning up.
-	if have, _ := p.mgr.state.Storage.Has(ctx, p.media.File.Path); have {
-		log.Warnf(ctx, "media already exists at: %s", p.media.File.Path)
-
-		// Attempt to remove existing media at storage path (might be broken / out-of-date)
-		if err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path); err != nil {
-			return gtserror.Newf("error removing media %s from storage: %v", p.media.File.Path, err)
-		}
-	}
-
-	// Write the final reader stream to our storage driver.
-	sz, err = p.mgr.state.Storage.PutStream(ctx, p.media.File.Path, r)
-	if err != nil {
-		return gtserror.Newf("error writing media to storage: %w", err)
-	}
-
-	// Set actual written size
-	// as authoritative file size.
-	p.media.File.FileSize = int(sz)
+	// Get mimetype for the file container
+	// type, falling back to generic data.
+	p.media.File.ContentType = getMimeType(ext)
 
 	// We can now consider this cached.
 	p.media.Cached = util.Ptr(true)
 
-	return nil
-}
-
-func (p *ProcessingMedia) finish(ctx context.Context) error {
-	// Nothing else to do if
-	// media was not cached.
-	if !*p.media.Cached {
-		return nil
-	}
-
-	// Get a stream to the original file for further processing.
-	rc, err := p.mgr.state.Storage.GetStream(ctx, p.media.File.Path)
-	if err != nil {
-		return gtserror.Newf("error loading file from storage: %w", err)
-	}
-	defer rc.Close()
-
-	// fullImg is the processed version of
-	// the original (stripped + reoriented).
-	var fullImg *gtsImage
-
-	// Depending on the content type, we
-	// can do various types of decoding.
-	switch p.media.File.ContentType {
-
-	// .jpeg, .gif, .webp image type
-	case mimeImageJpeg, mimeImageGif, mimeImageWebp:
-		fullImg, err = decodeImage(rc,
-			imaging.AutoOrientation(true),
-		)
-		if err != nil {
-			return gtserror.Newf("error decoding image: %w", err)
-		}
-
-		// Mark as no longer unknown type now
-		// we know for sure we can decode it.
-		p.media.Type = gtsmodel.FileTypeImage
-
-	// .png image (requires ancillary chunk stripping)
-	case mimeImagePng:
-		fullImg, err = decodeImage(
-			&pngAncillaryChunkStripper{Reader: rc},
-			imaging.AutoOrientation(true),
-		)
-		if err != nil {
-			return gtserror.Newf("error decoding image: %w", err)
-		}
-
-		// Mark as no longer unknown type now
-		// we know for sure we can decode it.
-		p.media.Type = gtsmodel.FileTypeImage
-
-	// .mp4 video type
-	case mimeVideoMp4:
-		video, err := decodeVideoFrame(rc)
-		if err != nil {
-			return gtserror.Newf("error decoding video: %w", err)
-		}
-
-		// Set video frame as image.
-		fullImg = video.frame
-
-		// Set video metadata in attachment info.
-		p.media.FileMeta.Original.Duration = &video.duration
-		p.media.FileMeta.Original.Framerate = &video.framerate
-		p.media.FileMeta.Original.Bitrate = &video.bitrate
-
-		// Mark as no longer unknown type now
-		// we know for sure we can decode it.
-		p.media.Type = gtsmodel.FileTypeVideo
-	}
-
-	// fullImg should be in-memory by
-	// now so we're done with storage.
-	if err := rc.Close(); err != nil {
-		return gtserror.Newf("error closing file: %w", err)
-	}
-
-	// Set full-size dimensions in attachment info.
-	p.media.FileMeta.Original.Width = fullImg.Width()
-	p.media.FileMeta.Original.Height = fullImg.Height()
-	p.media.FileMeta.Original.Size = fullImg.Size()
-	p.media.FileMeta.Original.Aspect = fullImg.AspectRatio()
-
-	// Get smaller thumbnail image
-	thumbImg := fullImg.Thumbnail()
-
-	// Garbage collector, you may
-	// now take our large son.
-	fullImg = nil
-
-	// Only generate blurhash
-	// from thumb if necessary.
-	if p.media.Blurhash == "" {
-		hash, err := thumbImg.Blurhash()
-		if err != nil {
-			return gtserror.Newf("error generating blurhash: %w", err)
-		}
-
-		// Set the attachment blurhash.
-		p.media.Blurhash = hash
-	}
-
-	// Thumbnail shouldn't exist in storage at this point,
-	// but we do a check as it's worth logging / cleaning up.
-	if have, _ := p.mgr.state.Storage.Has(ctx, p.media.Thumbnail.Path); have {
-		log.Warnf(ctx, "thumbnail already exists at: %s", p.media.Thumbnail.Path)
-
-		// Attempt to remove existing thumbnail (might be broken / out-of-date).
-		if err := p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path); err != nil {
-			return gtserror.Newf("error removing thumbnail %s from storage: %v", p.media.Thumbnail.Path, err)
-		}
-	}
-
-	// Create a thumbnail JPEG encoder stream.
-	enc := thumbImg.ToJPEG(&jpeg.Options{
-
-		// Good enough for
-		// a thumbnail.
-		Quality: 70,
-	})
-
-	// Stream-encode the JPEG thumbnail image into our storage driver.
-	sz, err := p.mgr.state.Storage.PutStream(ctx, p.media.Thumbnail.Path, enc)
-	if err != nil {
-		return gtserror.Newf("error stream-encoding thumbnail to storage: %w", err)
-	}
-
-	// Set final written thumb size.
-	p.media.Thumbnail.FileSize = int(sz)
-
-	// Set thumbnail dimensions in attachment info.
-	p.media.FileMeta.Small = gtsmodel.Small{
-		Width:  thumbImg.Width(),
-		Height: thumbImg.Height(),
-		Size:   thumbImg.Size(),
-		Aspect: thumbImg.AspectRatio(),
-	}
-
-	// Finally set the attachment as processed.
+	// Finally set the attachment as finished processing.
 	p.media.Processing = gtsmodel.ProcessingStatusProcessed
 
 	return nil

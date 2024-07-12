@@ -182,13 +182,6 @@ func validateInstanceUpdate(form *apimodel.InstanceSettingsUpdateRequest) error 
 		return errors.New("empty form submitted")
 	}
 
-	if form.Avatar != nil {
-		maxImageSize := config.GetMediaImageMaxSize()
-		if size := form.Avatar.Size; size > int64(maxImageSize) {
-			return fmt.Errorf("file size limit exceeded: limit is %d bytes but desired instance avatar was %d bytes", maxImageSize, size)
-		}
-	}
-
 	if form.AvatarDescription != nil {
 		maxDescriptionChars := config.GetMediaDescriptionMaxChars()
 		if length := len([]rune(*form.AvatarDescription)); length > maxDescriptionChars {

@@ -23,6 +23,7 @@ import (
 	"io"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -90,9 +91,12 @@ func (d *Dereferencer) GetEmoji(
 		return nil, err
 	}
 
+	// Get maximum supported remote emoji size.
+	maxsz := config.GetMediaEmojiRemoteMaxSize()
+
 	// Prepare data function to dereference remote emoji media.
-	data := func(context.Context) (io.ReadCloser, int64, error) {
-		return tsport.DereferenceMedia(ctx, url)
+	data := func(context.Context) (io.ReadCloser, error) {
+		return tsport.DereferenceMedia(ctx, url, int64(maxsz))
 	}
 
 	// Pass along for safe processing.
@@ -171,9 +175,12 @@ func (d *Dereferencer) RefreshEmoji(
 		return nil, err
 	}
 
+	// Get maximum supported remote emoji size.
+	maxsz := config.GetMediaEmojiRemoteMaxSize()
+
 	// Prepare data function to dereference remote emoji media.
-	data := func(context.Context) (io.ReadCloser, int64, error) {
-		return tsport.DereferenceMedia(ctx, url)
+	data := func(context.Context) (io.ReadCloser, error) {
+		return tsport.DereferenceMedia(ctx, url, int64(maxsz))
 	}
 
 	// Pass along for safe processing.

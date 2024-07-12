@@ -109,7 +109,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -230,7 +230,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -351,7 +351,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -523,7 +523,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -666,7 +666,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -754,7 +754,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
   "thumbnail_type": "image/gif",
   "thumbnail_description": "A bouncing little green peglin.",
-  "blurhash": "LG9t;qRS4YtO.4WDRlt5IXoxtPj["
+  "blurhash": "LtJ[eKxu_4xt9Yj]M{WBt8WBM{WB"
 }`, string(instanceV2ThumbnailJson))
 
 	// double extra special bonus: now update the image description without changing the image
@@ -824,7 +824,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,

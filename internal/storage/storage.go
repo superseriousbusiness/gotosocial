@@ -24,6 +24,7 @@ import (
 	"io"
 	"mime"
 	"net/url"
+	"os"
 	"path"
 	"syscall"
 	"time"
@@ -93,6 +94,30 @@ func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error)
 // PutStream writes the bytes from supplied reader at key in the storage
 func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
 	return d.Storage.WriteStream(ctx, key, r)
+}
+
+// PutFile moves the contents of file at path, to storage.Driver{} under given key.
+func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int64, error) {
+	// Open file at path for reading.
+	file, err := os.Open(filepath)
+	if err != nil {
+		return 0, gtserror.Newf("error opening file %s: %w", filepath, err)
+	}
+
+	// Write the file data to storage under key. Note
+	// that for disk.DiskStorage{} this should end up
+	// being a highly optimized Linux sendfile syscall.
+	sz, err := d.Storage.WriteStream(ctx, key, file)
+	if err != nil {
+		err = gtserror.Newf("error writing file %s: %w", key, err)
+	}
+
+	// Close the file: done with it.
+	if e := file.Close(); e != nil {
+		log.Errorf(ctx, "error closing file %s: %v", filepath, e)
+	}
+
+	return sz, err
 }
 
 // Delete attempts to remove the supplied key (and corresponding value) from storage.

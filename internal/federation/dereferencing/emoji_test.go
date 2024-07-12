@@ -75,7 +75,7 @@ func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
 	suite.Equal("image/gif", emoji.ImageContentType)
 	suite.Equal("image/png", emoji.ImageStaticContentType)
 	suite.Equal(37796, emoji.ImageFileSize)
-	suite.Equal(7951, emoji.ImageStaticFileSize)
+	suite.Equal(9824, emoji.ImageStaticFileSize)
 	suite.WithinDuration(time.Now(), emoji.UpdatedAt, 10*time.Second)
 	suite.False(*emoji.Disabled)
 	suite.Equal(emojiURI, emoji.URI)

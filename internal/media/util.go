@@ -17,25 +17,161 @@
 
 package media
 
-// newHdrBuf returns a buffer of suitable size to
-// read bytes from a file header or magic number.
-//
-// File header is *USUALLY* 261 bytes at the start
-// of a file; magic number can be much less than
-// that (just a few bytes).
-//
-// To cover both cases, this function returns a buffer
-// suitable for whichever is smallest: the first 261
-// bytes of the file, or the whole file.
-//
-// See:
-//
-//   - https://en.wikipedia.org/wiki/File_format#File_header
-//   - https://github.com/h2non/filetype.
-func newHdrBuf(fileSize int) []byte {
-	bufSize := 261
-	if fileSize > 0 && fileSize < bufSize {
-		bufSize = fileSize
+import (
+	"cmp"
+	"errors"
+	"fmt"
+	"image"
+	"image/jpeg"
+	"io"
+	"os"
+
+	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-iotools"
+	"codeberg.org/gruf/go-mimetypes"
+	"github.com/buckket/go-blurhash"
+	"github.com/disintegration/imaging"
+)
+
+// thumbSize returns the dimensions to use for an input
+// image of given width / height, for its outgoing thumbnail.
+// This maintains the original image aspect ratio.
+func thumbSize(width, height int) (int, int) {
+	const (
+		maxThumbWidth  = 512
+		maxThumbHeight = 512
+	)
+	switch {
+	// Simplest case, within bounds!
+	case width < maxThumbWidth &&
+		height < maxThumbHeight:
+		return width, height
+
+	// Width is larger side.
+	case width > height:
+		p := float32(width) / float32(maxThumbWidth)
+		return maxThumbWidth, int(float32(height) / p)
+
+	// Height is larger side.
+	case height > width:
+		p := float32(height) / float32(maxThumbHeight)
+		return int(float32(width) / p), maxThumbHeight
+
+	// Square.
+	default:
+		return maxThumbWidth, maxThumbHeight
 	}
-	return make([]byte, bufSize)
+}
+
+// jpegDecode decodes the JPEG at filepath into parsed image.Image.
+func jpegDecode(filepath string) (image.Image, error) {
+	// Open the file at given path.
+	file, err := os.Open(filepath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Decode image from file.
+	img, err := jpeg.Decode(file)
+
+	// Done with file.
+	_ = file.Close()
+
+	return img, err
+}
+
+// generateBlurhash generates a blurhash for JPEG at filepath.
+func generateBlurhash(filepath string) (string, error) {
+	// Decode JPEG file at given path.
+	img, err := jpegDecode(filepath)
+	if err != nil {
+		return "", err
+	}
+
+	// for generating blurhashes, it's more cost effective to
+	// lose detail since it's blurry, so make a tiny version.
+	tiny := imaging.Resize(img, 64, 64, imaging.NearestNeighbor)
+
+	// Drop the larger image
+	// ref as soon as possible
+	// to allow GC to claim.
+	img = nil //nolint
+
+	// Generate blurhash for thumbnail.
+	return blurhash.Encode(4, 3, tiny)
+}
+
+// getMimeType returns a suitable mimetype for file extension.
+func getMimeType(ext string) string {
+	const defaultType = "application/octet-stream"
+	return cmp.Or(mimetypes.MimeTypes[ext], defaultType)
+}
+
+// drainToTmp drains data from given reader into a new temp file
+// and closes it, returning the path of the resulting temp file.
+//
+// Note that this function specifically makes attempts to unwrap the
+// io.ReadCloser as much as it can to underlying type, to maximise
+// chance that Linux's sendfile syscall can be utilised for optimal
+// draining of data source to temporary file storage.
+func drainToTmp(rc io.ReadCloser) (string, error) {
+	tmp, err := os.CreateTemp(os.TempDir(), "gotosocial-*")
+	if err != nil {
+		return "", err
+	}
+
+	// Close readers
+	// on func return.
+	defer tmp.Close()
+	defer rc.Close()
+
+	// Extract file path.
+	path := tmp.Name()
+
+	// Limited reader (if any).
+	var lr *io.LimitedReader
+	var limit int64
+
+	// Reader type to use
+	// for draining to tmp.
+	rd := (io.Reader)(rc)
+
+	// Check if reader is actually wrapped,
+	// (as our http client wraps close func).
+	rct, ok := rc.(*iotools.ReadCloserType)
+	if ok {
+
+		// Get unwrapped.
+		rd = rct.Reader
+
+		// Extract limited reader if wrapped.
+		lr, limit = iotools.GetReaderLimit(rd)
+	}
+
+	// Drain reader into tmp.
+	_, err = tmp.ReadFrom(rd)
+	if err != nil {
+		return path, err
+	}
+
+	// Check to see if limit was reached,
+	// (produces more useful error messages).
+	if lr != nil && !iotools.AtEOF(lr.R) {
+		return path, fmt.Errorf("reached read limit %s", bytesize.Size(limit))
+	}
+
+	return path, nil
+}
+
+// remove only removes paths if not-empty.
+func remove(paths ...string) error {
+	var errs []error
+	for _, path := range paths {
+		if path != "" {
+			if err := os.Remove(path); err != nil {
+				errs = append(errs, fmt.Errorf("error removing %s: %w", path, err))
+			}
+		}
+	}
+	return errors.Join(errs...)
 }

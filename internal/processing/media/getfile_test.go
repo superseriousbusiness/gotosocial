@@ -18,7 +18,6 @@
 package media_test
 
 import (
-	"bytes"
 	"context"
 	"io"
 	"path"
@@ -87,9 +86,9 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 		MediaSize: string(media.SizeOriginal),
 		FileName:  fileName,
 	})
-
 	suite.NoError(errWithCode)
 	suite.NotNil(content)
+
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
 	suite.NoError(content.Content.Close())
@@ -111,7 +110,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 	suite.True(*dbAttachment.Cached)
 
 	// the file should be back in storage at the same path as before
-	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)
+	refreshedBytes, err := suite.storage.Get(ctx, dbAttachment.File.Path)
 	suite.NoError(err)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
 }
@@ -139,32 +138,26 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 		MediaSize: string(media.SizeOriginal),
 		FileName:  fileName,
 	})
-
 	suite.NoError(errWithCode)
 	suite.NotNil(content)
 
-	// only read the first kilobyte and then stop
-	b := make([]byte, 0, 1024)
-	if !testrig.WaitFor(func() bool {
-		read, err := io.CopyN(bytes.NewBuffer(b), content.Content, 1024)
-		return err == nil && read == 1024
-	}) {
-		suite.FailNow("timed out trying to read first 1024 bytes")
-	}
+	_, err = io.CopyN(io.Discard, content.Content, 1024)
+	suite.NoError(err)
 
-	// close the reader
-	suite.NoError(content.Content.Close())
+	err = content.Content.Close()
+	suite.NoError(err)
 
 	// the attachment should still be updated in the database even though the caller hung up
+	var dbAttachment *gtsmodel.MediaAttachment
 	if !testrig.WaitFor(func() bool {
-		dbAttachment, _ := suite.db.GetAttachmentByID(ctx, testAttachment.ID)
+		dbAttachment, _ = suite.db.GetAttachmentByID(ctx, testAttachment.ID)
 		return *dbAttachment.Cached
 	}) {
 		suite.FailNow("timed out waiting for attachment to be updated")
 	}
 
 	// the file should be back in storage at the same path as before
-	refreshedBytes, err := suite.storage.Get(ctx, testAttachment.File.Path)
+	refreshedBytes, err := suite.storage.Get(ctx, dbAttachment.File.Path)
 	suite.NoError(err)
 	suite.Equal(suite.testRemoteAttachments[testAttachment.RemoteURL].Data, refreshedBytes)
 }
@@ -196,9 +189,9 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 		MediaSize: string(media.SizeSmall),
 		FileName:  fileName,
 	})
-
 	suite.NoError(errWithCode)
 	suite.NotNil(content)
+
 	b, err := io.ReadAll(content.Content)
 	suite.NoError(err)
 	suite.NoError(content.Content.Close())
