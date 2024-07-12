@@ -19,21 +19,40 @@
 
 {{- define "repliesSummary" -}}
     {{- if .context.ThreadRepliesShown -}}
-        {{- if eq .context.ThreadReplies 1 -}}
-            {{ .context.ThreadReplies }} reply
-        {{- else if gt .context.ThreadReplies 1 -}}
-            {{ .context.ThreadReplies }} replies
+        {{- if .context.ThreadRepliesHidden -}}
+            {{- if eq .context.ThreadReplies 1 -}}
+                {{- /* Some replies are hidden. */ -}}
+                {{ .context.ThreadRepliesShown }} visible reply
+            {{- else if gt .context.ThreadRepliesShown 1 -}}
+                {{ .context.ThreadRepliesShown }} visible replies
+            {{- end -}}
+                ; {{ .context.ThreadRepliesHidden }} more {{ if eq .context.ThreadRepliesHidden 1 }}reply{{ else }}replies{{ end }} hidden or not public
+        {{- else -}}
+            {{- /* No hidden replies. */ -}}
+            {{- if eq .context.ThreadReplies 1 -}}
+                {{ .context.ThreadReplies }} reply
+            {{- else if gt .context.ThreadReplies 1 -}}
+                {{ .context.ThreadReplies }} replies
+            {{- end -}}
         {{- end -}}
-        {{- if .context.ThreadRepliesHidden }}, of which {{ .context.ThreadRepliesHidden }} hidden / not public{{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- define "threadSummary" -}}
-    {{- if eq .context.ThreadLength 1 -}}
-        Single post
-    {{- else if gt .context.ThreadLength 1 -}}
-        Thread of {{ .context.ThreadLength }} posts
-        {{- if .context.ThreadHidden }}, of which {{ .context.ThreadHidden }} hidden / not public{{- end -}}
+    {{- if .context.ThreadHidden -}}
+        {{- if eq .context.ThreadLength 1 -}}
+            Single visible post
+        {{- else if gt .context.ThreadLength 1 -}}
+            Thread of {{ .context.ThreadLength }} visible posts
+        {{- end -}}
+            ; {{ .context.ThreadHidden }} more {{ if eq .context.ThreadHidden 1 }}post{{ else }}posts{{ end }} hidden or not public
+    {{- else -}}
+        {{- /* No hidden posts */ -}}
+        {{- if eq .context.ThreadLength 1 -}}
+            Single post
+        {{- else if gt .context.ThreadLength 1 -}}
+            Thread of {{ .context.ThreadLength }} posts
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 
