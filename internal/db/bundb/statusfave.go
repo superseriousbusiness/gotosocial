@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -74,6 +75,21 @@ func (s *statusFaveDB) GetStatusFaveByID(ctx context.Context, id string) (*gtsmo
 				Scan(ctx)
 		},
 		id,
+	)
+}
+
+func (s *statusFaveDB) GetStatusFaveByURI(ctx context.Context, uri string) (*gtsmodel.StatusFave, error) {
+	return s.getStatusFave(
+		ctx,
+		"URI",
+		func(fave *gtsmodel.StatusFave) error {
+			return s.db.
+				NewSelect().
+				Model(fave).
+				Where("? = ?", bun.Ident("uri"), uri).
+				Scan(ctx)
+		},
+		uri,
 	)
 }
 
@@ -237,6 +253,26 @@ func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusF
 		_, err := s.db.
 			NewInsert().
 			Model(fave).
+			Exec(ctx)
+		return err
+	})
+}
+
+func (s *statusFaveDB) UpdateStatusFave(ctx context.Context, fave *gtsmodel.StatusFave, columns ...string) error {
+	fave.UpdatedAt = time.Now()
+	if len(columns) > 0 {
+		// If we're updating by column,
+		// ensure "updated_at" is included.
+		columns = append(columns, "updated_at")
+	}
+
+	// Update the status fave model in the database.
+	return s.state.Caches.GTS.StatusFave.Store(fave, func() error {
+		_, err := s.db.
+			NewUpdate().
+			Model(fave).
+			Where("? = ?", bun.Ident("status_fave.id"), fave.ID).
+			Column(columns...).
 			Exec(ctx)
 		return err
 	})

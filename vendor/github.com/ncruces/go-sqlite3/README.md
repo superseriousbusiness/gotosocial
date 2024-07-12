@@ -45,12 +45,16 @@ Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ run
   reads data [line-by-line](https://github.com/asg017/sqlite-lines).
 - [`github.com/ncruces/go-sqlite3/ext/pivot`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/pivot)
   creates [pivot tables](https://github.com/jakethaw/pivot_vtab).
+- [`github.com/ncruces/go-sqlite3/ext/regexp`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/regexp)
+  provides regular expression functions.
 - [`github.com/ncruces/go-sqlite3/ext/statement`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/statement)
   creates [parameterized views](https://github.com/0x09/sqlite-statement-vtab).
 - [`github.com/ncruces/go-sqlite3/ext/stats`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/stats)
   provides [statistics](https://www.oreilly.com/library/view/sql-in-a/9780596155322/ch04s02.html) functions.
 - [`github.com/ncruces/go-sqlite3/ext/unicode`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/unicode)
   provides [Unicode aware](https://sqlite.org/src/dir/ext/icu) functions.
+- [`github.com/ncruces/go-sqlite3/ext/uuid`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/uuid)
+  generates [UUIDs](https://en.wikipedia.org/wiki/Universally_unique_identifier).
 - [`github.com/ncruces/go-sqlite3/ext/zorder`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/zorder)
   maps multidimensional data to one dimension.
 - [`github.com/ncruces/go-sqlite3/vfs/adiantum`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/vfs/adiantum)
@@ -91,7 +95,8 @@ It also benefits greatly from [SQLite's](https://sqlite.org/testing.html) and
 
 Every commit is [tested](.github/workflows/test.yml) on
 Linux (amd64/arm64/386/riscv64/s390x), macOS (amd64/arm64),
-Windows (amd64), FreeBSD (amd64), illumos (amd64), and Solaris (amd64).
+Windows (amd64), FreeBSD (amd64), OpenBSD (amd64), NetBSD (amd64),
+illumos (amd64), and Solaris (amd64).
 
 The Go VFS is tested by running SQLite's
 [mptest](https://github.com/sqlite/sqlite/blob/master/mptest/mptest.c).

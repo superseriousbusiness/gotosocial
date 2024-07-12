@@ -3,7 +3,7 @@
 In order to use NGINX as a reverse proxy for GoToSocial you'll need to have it installed on your server. If you intend for the NGINX instance to also handle TLS, you'll need to [provision TLS certificates](../../advanced/certificates.md) too.
 
 !!! tip
-    Enable HTTP/2 in nginx by including `http2` in the `listen` directives. This can speed up the experience for clients. Browsers do not support HTTP/2 over plain text, so this should only be added to `listen` directives for port `443` that also include the `ssl` directive.
+    Enable HTTP/2 in nginx by including `http2 on;` in the `server` block. This can speed up the experience for clients. See the [ngx_http_v2_module documentation](https://nginx.org/en/docs/http/ngx_http_v2_module.html#example).
 
 NGINX is [packaged for many distributions](https://repology.org/project/nginx/versions). It's very likely you can install it with your distribution's package manager. You can also run NGINX using a container runtime with the [official NGINX image](https://hub.docker.com/_/nginx) that's published to the Docker Hub.
 
@@ -162,8 +162,9 @@ server {
   }
   client_max_body_size 40M;
 
-  listen [::]:443 ssl ipv6only=on http2; # managed by Certbot
-  listen 443 ssl http2; # managed by Certbot
+  listen [::]:443 ssl; # managed by Certbot
+  listen 443 ssl; # managed by Certbot
+  http2 on; # managed by Certbot
   ssl_certificate /etc/letsencrypt/live/example.org/fullchain.pem; # managed by Certbot
   ssl_certificate_key /etc/letsencrypt/live/example.org/privkey.pem; # managed by Certbot
   include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot

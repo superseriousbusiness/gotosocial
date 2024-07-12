@@ -135,6 +135,8 @@ function AlsoKnownAsURI({ index, data }) {
 			label={`Alias #${index+1}`}
 			field={form.alsoKnownAsURI}
 			placeholder={`https://example.org/users/my_other_account_${index+1}`}
+			type="url"
+			pattern="(http|https):\/\/.+"
 		/>
 	);
 }
@@ -190,10 +192,13 @@ function MoveForm({ data: profile }) {
 				field={form.movedToURI}
 				label="Move target URI"
 				placeholder="https://example.org/users/my_new_account"
+				type="url"
+				pattern="(http|https):\/\/.+"
 			/>
 			<TextInput
 				disabled={false}
 				type="password"
+				autoComplete="current-password"
 				name="password"
 				field={form.password}
 				label="Current account password"

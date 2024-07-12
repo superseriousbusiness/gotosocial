@@ -27,6 +27,7 @@ import MutationButton from "../../../../components/form/mutation-button";
 import { useLocation, useSearch } from "wouter";
 import { AdminAccount } from "../../../../lib/types/account";
 import Username from "../../../../components/username";
+import isValidDomain from "is-valid-domain";
 
 export function AccountSearchForm() {
 	const [ location, setLocation ] = useLocation();
@@ -42,7 +43,31 @@ export function AccountSearchForm() {
 		permissions: useTextInput("permissions", { defaultValue: urlQueryParams.get("permissions") ?? ""}),
 		username: useTextInput("username", { defaultValue: urlQueryParams.get("username") ?? ""}),
 		display_name: useTextInput("display_name", { defaultValue: urlQueryParams.get("display_name") ?? ""}),
-		by_domain: useTextInput("by_domain", { defaultValue: urlQueryParams.get("by_domain") ?? ""}),
+		by_domain: useTextInput("by_domain", {
+			defaultValue: urlQueryParams.get("by_domain") ?? "",
+			validator: (v: string) => {
+				if (v.length === 0) {
+					return "";
+				}
+
+				if (v[v.length-1] === ".") {
+					return "invalid domain";
+				}
+
+				const valid = isValidDomain(v, {
+					subdomain: true,
+					wildcard: false,
+					allowUnicode: true,
+					topLevel: false,
+				});
+
+				if (valid) {
+					return "";
+				}
+
+				return "invalid domain";
+			}
+		}),
 		email: useTextInput("email", { defaultValue: urlQueryParams.get("email") ?? ""}),
 		ip: useTextInput("ip", { defaultValue: urlQueryParams.get("ip") ?? ""}),
 		limit: useTextInput("limit", { defaultValue: urlQueryParams.get("limit") ?? "50"})
@@ -109,13 +134,17 @@ export function AccountSearchForm() {
 			>
 				<TextInput
 					field={form.username}
-					label={"(Optional) username (without leading '@' symbol)"}
+					label={`Username (without "@" prefix) - case sensitive`}
 					placeholder="someone"
+					autoCapitalize="none"
+					spellCheck="false"
 				/>
 				<TextInput
 					field={form.by_domain}
-					label={"(Optional) domain"}
+					label={`Domain (without "https://" prefix)`}
 					placeholder="example.org"
+					autoCapitalize="none"
+					spellCheck="false"
 				/>
 				<Select
 					field={form.origin}
@@ -130,15 +159,18 @@ export function AccountSearchForm() {
 				></Select>
 				<TextInput
 					field={form.email}
-					label={"(Optional) email address (local accounts only)"}
+					label={"Email address (local accounts only)"}
 					placeholder={"someone@example.org"}
 					// Get email validation for free.
-					{...{type: "email"}}
+					type="email"
 				/>
 				<TextInput
 					field={form.ip}
-					label={"(Optional) IP address (local accounts only)"}
+					label={"IP address (local accounts only)"}
 					placeholder={"198.51.100.0"}
+					autoCapitalize="none"
+					spellCheck="false"
+					className="monospace"
 				/>
 				<Select
 					field={form.status}

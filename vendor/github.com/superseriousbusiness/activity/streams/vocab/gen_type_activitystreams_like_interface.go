@@ -127,6 +127,9 @@ type ActivityStreamsLike interface {
 	// GetActivityStreamsUrl returns the "url" property if it exists, and nil
 	// otherwise.
 	GetActivityStreamsUrl() ActivityStreamsUrlProperty
+	// GetGoToSocialApprovedBy returns the "approvedBy" property if it exists,
+	// and nil otherwise.
+	GetGoToSocialApprovedBy() GoToSocialApprovedByProperty
 	// GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 	GetJSONLDId() JSONLDIdProperty
 	// GetJSONLDType returns the "type" property if it exists, and nil
@@ -228,6 +231,8 @@ type ActivityStreamsLike interface {
 	SetActivityStreamsUpdated(i ActivityStreamsUpdatedProperty)
 	// SetActivityStreamsUrl sets the "url" property.
 	SetActivityStreamsUrl(i ActivityStreamsUrlProperty)
+	// SetGoToSocialApprovedBy sets the "approvedBy" property.
+	SetGoToSocialApprovedBy(i GoToSocialApprovedByProperty)
 	// SetJSONLDId sets the "id" property.
 	SetJSONLDId(i JSONLDIdProperty)
 	// SetJSONLDType sets the "type" property.

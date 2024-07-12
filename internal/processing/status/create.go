@@ -185,11 +185,6 @@ func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Ac
 		return errWithCode
 	}
 
-	if !*inReplyTo.Replyable {
-		const text = "in-reply-to status marked as not replyable"
-		return gtserror.NewErrorForbidden(errors.New(text), text)
-	}
-
 	// Set status fields from inReplyTo.
 	status.InReplyToID = inReplyTo.ID
 	status.InReplyTo = inReplyTo
@@ -289,9 +284,6 @@ func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.Advanced
 func processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
 	// by default all flags are set to true
 	federated := true
-	boostable := true
-	replyable := true
-	likeable := true
 
 	// If visibility isn't set on the form, then just take the account default.
 	// If that's also not set, take the default for the whole instance.
@@ -305,57 +297,10 @@ func processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVi
 		vis = gtsmodel.VisibilityDefault
 	}
 
-	switch vis {
-	case gtsmodel.VisibilityPublic:
-		// for public, there's no need to change any of the advanced flags from true regardless of what the user filled out
-		break
-	case gtsmodel.VisibilityUnlocked:
-		// for unlocked the user can set any combination of flags they like so look at them all to see if they're set and then apply them
-		if form.Federated != nil {
-			federated = *form.Federated
-		}
-
-		if form.Boostable != nil {
-			boostable = *form.Boostable
-		}
-
-		if form.Replyable != nil {
-			replyable = *form.Replyable
-		}
-
-		if form.Likeable != nil {
-			likeable = *form.Likeable
-		}
-
-	case gtsmodel.VisibilityFollowersOnly, gtsmodel.VisibilityMutualsOnly:
-		// for followers or mutuals only, boostable will *always* be false, but the other fields can be set so check and apply them
-		boostable = false
-
-		if form.Federated != nil {
-			federated = *form.Federated
-		}
-
-		if form.Replyable != nil {
-			replyable = *form.Replyable
-		}
-
-		if form.Likeable != nil {
-			likeable = *form.Likeable
-		}
-
-	case gtsmodel.VisibilityDirect:
-		// direct is pretty easy: there's only one possible setting so return it
-		federated = true
-		boostable = false
-		replyable = true
-		likeable = true
-	}
+	// Todo: sort out likeable/replyable/boostable in next PR.
 
 	status.Visibility = vis
 	status.Federated = &federated
-	status.Boostable = &boostable
-	status.Replyable = &replyable
-	status.Likeable = &likeable
 	return nil
 }
 

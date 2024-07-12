@@ -44,7 +44,23 @@ export default function AccountsPending() {
 
 	return (
 		<div className="accounts-view">
-			<h1>Pending Accounts</h1>
+			<div className="form-section-docs">
+				<h1>Pending Accounts</h1>
+				<p>
+					You can see a list of pending account sign-ups below.
+					<br/>
+					To approve or reject a sign-up, click on the account's name in the
+					list, and use the controls at the bottom of the account detail view.
+				</p>
+				<a
+					href="https://docs.gotosocial.org/en/latest/admin/signups/"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about account sign-ups (opens in a new tab)
+				</a>
+			</div>
 			<PageableList
 				isLoading={searchRes.isLoading}
 				isFetching={searchRes.isFetching}

@@ -193,6 +193,11 @@ definitions:
                 example: https://example.org/media/some_user/avatar/original/avatar.jpeg
                 type: string
                 x-go-name: Avatar
+            avatar_description:
+                description: Description of this account's avatar, for alt text.
+                example: A cute drawing of a smiling sloth.
+                type: string
+                x-go-name: AvatarDescription
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -259,6 +264,11 @@ definitions:
                 example: https://example.org/media/some_user/header/original/header.jpeg
                 type: string
                 x-go-name: Header
+            header_description:
+                description: Description of this account's header, for alt text.
+                example: A sunlit field with purple flowers.
+                type: string
+                x-go-name: HeaderDescription
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -1948,6 +1958,11 @@ definitions:
                 example: https://example.org/media/some_user/avatar/original/avatar.jpeg
                 type: string
                 x-go-name: Avatar
+            avatar_description:
+                description: Description of this account's avatar, for alt text.
+                example: A cute drawing of a smiling sloth.
+                type: string
+                x-go-name: AvatarDescription
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -2014,6 +2029,11 @@ definitions:
                 example: https://example.org/media/some_user/header/original/header.jpeg
                 type: string
                 x-go-name: Header
+            header_description:
+                description: Description of this account's header, for alt text.
+                example: A sunlit field with purple flowers.
+                type: string
+                x-go-name: HeaderDescription
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -4072,10 +4092,20 @@ paths:
                   in: formData
                   name: avatar
                   type: file
+                - allowEmptyValue: true
+                  description: Description of avatar image, for alt-text.
+                  in: formData
+                  name: avatar_description
+                  type: string
                 - description: Header of the user.
                   in: formData
                   name: header
                   type: file
+                - allowEmptyValue: true
+                  description: Description of header image, for alt-text.
+                  in: formData
+                  name: header_description
+                  type: string
                 - description: Require manual approval of follow requests.
                   in: formData
                   name: locked
@@ -8049,21 +8079,6 @@ paths:
                   name: federated
                   type: boolean
                   x-go-name: Federated
-                - description: This status can be boosted/reblogged.
-                  in: formData
-                  name: boostable
-                  type: boolean
-                  x-go-name: Boostable
-                - description: This status can be replied to.
-                  in: formData
-                  name: replyable
-                  type: boolean
-                  x-go-name: Replyable
-                - description: This status can be liked/faved.
-                  in: formData
-                  name: likeable
-                  type: boolean
-                  x-go-name: Likeable
             produces:
                 - application/json
             responses:

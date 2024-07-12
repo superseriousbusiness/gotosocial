@@ -100,7 +100,7 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 				field={form.header}
 				label={
 					<>
-						HTTP Header Name&nbsp;
+						Header Name&nbsp;
 						 <a
 							href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers"
 							target="_blank"
@@ -112,12 +112,15 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 					</>
 				}
 				placeholder={"User-Agent"}
+				autoCapitalize="none"
+				spellCheck="false"
+				{...{className: "monospace"}}
 			/>
 			<TextInput
 				field={form.regex}
 				label={
 					<>
-						HTTP Header Value RE2 Regex&nbsp;
+						Value Regex&nbsp;
 						<a
 							href="https://github.com/google/re2/wiki/Syntax"
 							target="_blank"
@@ -129,6 +132,8 @@ export default function HeaderPermCreateForm({ permType }: { permType: PermType 
 					</>
 				}
 				placeholder={"^.*Some-User-Agent.*$"}
+				autoCapitalize="none"
+				spellCheck="false"
 				{...{className: "monospace"}}
 			/>
 			<MutationButton

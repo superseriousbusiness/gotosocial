@@ -238,6 +238,9 @@ github.com/go-errors/errors
 # github.com/go-fed/httpsig v1.1.0
 ## explicit; go 1.13
 github.com/go-fed/httpsig
+# github.com/go-ini/ini v1.67.0
+## explicit
+github.com/go-ini/ini
 # github.com/go-jose/go-jose/v4 v4.0.1
 ## explicit; go 1.21
 github.com/go-jose/go-jose/v4
@@ -322,8 +325,8 @@ github.com/go-swagger/go-swagger/generator
 # github.com/go-xmlfmt/xmlfmt v0.0.0-20211206191508-7fd73a941850
 ## explicit
 github.com/go-xmlfmt/xmlfmt
-# github.com/goccy/go-json v0.10.2
-## explicit; go 1.12
+# github.com/goccy/go-json v0.10.3
+## explicit; go 1.19
 github.com/goccy/go-json
 github.com/goccy/go-json/internal/decoder
 github.com/goccy/go-json/internal/encoder
@@ -359,8 +362,8 @@ github.com/google/uuid
 # github.com/gorilla/context v1.1.2
 ## explicit; go 1.20
 github.com/gorilla/context
-# github.com/gorilla/css v1.0.0
-## explicit
+# github.com/gorilla/css v1.0.1
+## explicit; go 1.20
 github.com/gorilla/css/scanner
 # github.com/gorilla/feeds v1.2.0
 ## explicit; go 1.20
@@ -450,11 +453,11 @@ github.com/josharian/intern
 # github.com/json-iterator/go v1.1.12
 ## explicit; go 1.12
 github.com/json-iterator/go
-# github.com/klauspost/compress v1.17.8
+# github.com/klauspost/compress v1.17.9
 ## explicit; go 1.20
 github.com/klauspost/compress/internal/race
 github.com/klauspost/compress/s2
-# github.com/klauspost/cpuid/v2 v2.2.7
+# github.com/klauspost/cpuid/v2 v2.2.8
 ## explicit; go 1.15
 github.com/klauspost/cpuid/v2
 # github.com/kr/pretty v0.3.1
@@ -478,8 +481,8 @@ github.com/mailru/easyjson/jwriter
 # github.com/mattn/go-isatty v0.0.20
 ## explicit; go 1.15
 github.com/mattn/go-isatty
-# github.com/microcosm-cc/bluemonday v1.0.26
-## explicit; go 1.21
+# github.com/microcosm-cc/bluemonday v1.0.27
+## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
 # github.com/miekg/dns v1.1.61
@@ -488,7 +491,7 @@ github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.72
+# github.com/minio/minio-go/v7 v7.0.73
 ## explicit; go 1.21
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/pkg/credentials
@@ -516,7 +519,7 @@ github.com/modern-go/concurrent
 # github.com/modern-go/reflect2 v1.0.2
 ## explicit; go 1.12
 github.com/modern-go/reflect2
-# github.com/ncruces/go-sqlite3 v0.16.3
+# github.com/ncruces/go-sqlite3 v0.17.1
 ## explicit; go 1.21
 github.com/ncruces/go-sqlite3
 github.com/ncruces/go-sqlite3/driver
@@ -636,7 +639,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.6.0-gts.0.20240408131430-247f7f7110f0
+# github.com/superseriousbusiness/activity v1.7.0-gts
 ## explicit; go 1.18
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -772,6 +775,17 @@ github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_undo
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_update
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_video
 github.com/superseriousbusiness/activity/streams/impl/activitystreams/type_view
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_always
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canannounce
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type
 github.com/superseriousbusiness/activity/streams/impl/schema/property_value
@@ -1041,8 +1055,8 @@ go.uber.org/multierr
 # golang.org/x/arch v0.8.0
 ## explicit; go 1.18
 golang.org/x/arch/x86/x86asm
-# golang.org/x/crypto v0.24.0
-## explicit; go 1.18
+# golang.org/x/crypto v0.25.0
+## explicit; go 1.20
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/argon2
@@ -1052,7 +1066,6 @@ golang.org/x/crypto/blake2s
 golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
-golang.org/x/crypto/curve25519/internal/field
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
@@ -1084,7 +1097,7 @@ golang.org/x/image/webp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.26.0
+# golang.org/x/net v0.27.0
 ## explicit; go 1.18
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -1112,7 +1125,7 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.21.0
+# golang.org/x/sys v0.22.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/unix

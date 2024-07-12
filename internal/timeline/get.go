@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -246,6 +247,12 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 				// race condition? That's OK, we can do it now.
 				prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 				if err != nil {
+					if errors.Is(err, statusfilter.ErrHideStatus) {
+						// This item has been filtered out by the requesting user's filters.
+						// Remove it and skip past it.
+						removeElements = append(removeElements, e)
+						return true, nil
+					}
 					if errors.Is(err, db.ErrNoEntries) {
 						// ErrNoEntries means something has been deleted,
 						// so we'll likely not be able to ever prepare this.
@@ -340,6 +347,12 @@ func (t *timeline) getXBetweenIDs(ctx context.Context, amount int, behindID stri
 			// race condition? That's OK, we can do it now.
 			prepared, err := t.prepareFunction(ctx, t.timelineID, entry.itemID)
 			if err != nil {
+				if errors.Is(err, statusfilter.ErrHideStatus) {
+					// This item has been filtered out by the requesting user's filters.
+					// Remove it and skip past it.
+					removeElements = append(removeElements, e)
+					continue
+				}
 				if errors.Is(err, db.ErrNoEntries) {
 					// ErrNoEntries means something has been deleted,
 					// so we'll likely not be able to ever prepare this.

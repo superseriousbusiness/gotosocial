@@ -204,11 +204,16 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
+	if form.AvatarDescription != nil {
+		desc := text.SanitizeToPlaintext(*form.AvatarDescription)
+		form.AvatarDescription = util.Ptr(desc)
+	}
+
 	if form.Avatar != nil && form.Avatar.Size != 0 {
 		avatarInfo, errWithCode := p.UpdateAvatar(ctx,
 			account,
 			form.Avatar,
-			nil,
+			form.AvatarDescription,
 		)
 		if errWithCode != nil {
 			return nil, errWithCode
@@ -216,13 +221,29 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.AvatarMediaAttachmentID = avatarInfo.ID
 		account.AvatarMediaAttachment = avatarInfo
 		log.Tracef(ctx, "new avatar info for account %s is %+v", account.ID, avatarInfo)
+	} else if form.AvatarDescription != nil && account.AvatarMediaAttachment != nil {
+		// Update just existing description if possible.
+		account.AvatarMediaAttachment.Description = *form.AvatarDescription
+		if err := p.state.DB.UpdateAttachment(
+			ctx,
+			account.AvatarMediaAttachment,
+			"description",
+		); err != nil {
+			err := gtserror.Newf("db error updating account avatar description: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	if form.HeaderDescription != nil {
+		desc := text.SanitizeToPlaintext(*form.HeaderDescription)
+		form.HeaderDescription = util.Ptr(desc)
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
 		headerInfo, errWithCode := p.UpdateHeader(ctx,
 			account,
 			form.Header,
-			nil,
+			form.HeaderDescription,
 		)
 		if errWithCode != nil {
 			return nil, errWithCode
@@ -230,6 +251,17 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.HeaderMediaAttachmentID = headerInfo.ID
 		account.HeaderMediaAttachment = headerInfo
 		log.Tracef(ctx, "new header info for account %s is %+v", account.ID, headerInfo)
+	} else if form.HeaderDescription != nil && account.HeaderMediaAttachment != nil {
+		// Update just existing description if possible.
+		account.HeaderMediaAttachment.Description = *form.HeaderDescription
+		if err := p.state.DB.UpdateAttachment(
+			ctx,
+			account.HeaderMediaAttachment,
+			"description",
+		); err != nil {
+			err := gtserror.Newf("db error updating account avatar description: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	if form.Locked != nil {

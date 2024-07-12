@@ -117,6 +117,8 @@ export default function NewEmojiForm() {
 				<TextInput
 					field={form.shortcode}
 					label="Shortcode, must be unique among the instance's local emoji"
+					autoCapitalize="none"
+					spellCheck="false"
 					{...{pattern: "^\\w{2,30}$"}}
 				/>
 

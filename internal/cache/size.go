@@ -190,6 +190,7 @@ func totalOfRatios() float64 {
 		config.GetCacheFollowRequestMemRatio() +
 		config.GetCacheFollowRequestIDsMemRatio() +
 		config.GetCacheInstanceMemRatio() +
+		config.GetCacheInteractionApprovalMemRatio() +
 		config.GetCacheInReplyToIDsMemRatio() +
 		config.GetCacheListMemRatio() +
 		config.GetCacheListEntryMemRatio() +
@@ -440,6 +441,19 @@ func sizeofInstance() uintptr {
 	}))
 }
 
+func sizeofInteractionApproval() uintptr {
+	return uintptr(size.Of(&gtsmodel.InteractionApproval{
+		ID:                   exampleID,
+		CreatedAt:            exampleTime,
+		UpdatedAt:            exampleTime,
+		AccountID:            exampleID,
+		InteractingAccountID: exampleID,
+		InteractionURI:       exampleURI,
+		InteractionType:      gtsmodel.InteractionAnnounce,
+		URI:                  exampleURI,
+	}))
+}
+
 func sizeofList() uintptr {
 	return uintptr(size.Of(&gtsmodel.List{
 		ID:            exampleID,
@@ -606,9 +620,6 @@ func sizeofStatus() uintptr {
 		Language:                 "en",
 		CreatedWithApplicationID: exampleID,
 		Federated:                func() *bool { ok := true; return &ok }(),
-		Boostable:                func() *bool { ok := true; return &ok }(),
-		Replyable:                func() *bool { ok := true; return &ok }(),
-		Likeable:                 func() *bool { ok := true; return &ok }(),
 		ActivityStreamsType:      ap.ObjectNote,
 	}))
 }

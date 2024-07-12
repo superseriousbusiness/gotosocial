@@ -51,7 +51,7 @@ func (e *Emoji) IsLocal() bool {
 	return e.Domain == ""
 }
 
-// ShortcodeDomain returns the [shortcode]@[domain] for the emoji.
+// ShortcodeDomain returns the [shortcode]@[domain] for the given emoji.
 func (e *Emoji) ShortcodeDomain() string {
 	return e.Shortcode + "@" + e.Domain
 }

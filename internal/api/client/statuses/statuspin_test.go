@@ -183,9 +183,6 @@ func (suite *StatusPinTestSuite) TestPinStatusTooManyPins() {
 			AccountURI:          testAccount.URI,
 			Visibility:          gtsmodel.VisibilityPublic,
 			Federated:           util.Ptr(true),
-			Boostable:           util.Ptr(true),
-			Replyable:           util.Ptr(true),
-			Likeable:            util.Ptr(true),
 			ActivityStreamsType: ap.ObjectNote,
 		}
 		if err := suite.db.PutStatus(ctx, status); err != nil {

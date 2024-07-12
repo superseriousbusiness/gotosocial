@@ -162,6 +162,38 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	return account, nil
 }
 
+// AccountToWebAccount converts a gts model account into an
+// api representation suitable for serving into a web template.
+//
+// Should only be used when preparing to template an account,
+// callers looking to serialize an account into a model for
+// serving over the client API should always use one of the
+// AccountToAPIAccount functions instead.
+func (c *Converter) AccountToWebAccount(
+	ctx context.Context,
+	a *gtsmodel.Account,
+) (*apimodel.Account, error) {
+	webAccount, err := c.AccountToAPIAccountPublic(ctx, a)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set additional avatar information for
+	// serving the avatar in a nice photobox.
+	if a.AvatarMediaAttachment != nil {
+		avatarAttachment, err := c.AttachmentToAPIAttachment(ctx, a.AvatarMediaAttachment)
+		if err != nil {
+			// This is just extra data so just
+			// log but don't return any error.
+			log.Errorf(ctx, "error converting account avatar attachment: %v", err)
+		} else {
+			webAccount.AvatarAttachment = &avatarAttachment
+		}
+	}
+
+	return webAccount, nil
+}
+
 // accountToAPIAccountPublic provides all the logic for AccountToAPIAccount, MINUS fetching moved account, to prevent possible recursion.
 func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 
@@ -210,18 +242,22 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	var (
 		aviURL          string
 		aviURLStatic    string
+		aviDesc         string
 		headerURL       string
 		headerURLStatic string
+		headerDesc      string
 	)
 
 	if a.AvatarMediaAttachment != nil {
 		aviURL = a.AvatarMediaAttachment.URL
 		aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
+		aviDesc = a.AvatarMediaAttachment.Description
 	}
 
 	if a.HeaderMediaAttachment != nil {
 		headerURL = a.HeaderMediaAttachment.URL
 		headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
+		headerDesc = a.HeaderMediaAttachment.Description
 	}
 
 	// convert account gts model fields to front api model fields
@@ -294,32 +330,34 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// can be populated directly below.
 
 	accountFrontend := &apimodel.Account{
-		ID:              a.ID,
-		Username:        a.Username,
-		Acct:            acct,
-		DisplayName:     a.DisplayName,
-		Locked:          locked,
-		Discoverable:    discoverable,
-		Bot:             bot,
-		CreatedAt:       util.FormatISO8601(a.CreatedAt),
-		Note:            a.Note,
-		URL:             a.URL,
-		Avatar:          aviURL,
-		AvatarStatic:    aviURLStatic,
-		Header:          headerURL,
-		HeaderStatic:    headerURLStatic,
-		FollowersCount:  followersCount,
-		FollowingCount:  followingCount,
-		StatusesCount:   statusesCount,
-		LastStatusAt:    lastStatusAt,
-		Emojis:          apiEmojis,
-		Fields:          fields,
-		Suspended:       !a.SuspendedAt.IsZero(),
-		Theme:           theme,
-		CustomCSS:       customCSS,
-		EnableRSS:       enableRSS,
-		HideCollections: hideCollections,
-		Role:            role,
+		ID:                a.ID,
+		Username:          a.Username,
+		Acct:              acct,
+		DisplayName:       a.DisplayName,
+		Locked:            locked,
+		Discoverable:      discoverable,
+		Bot:               bot,
+		CreatedAt:         util.FormatISO8601(a.CreatedAt),
+		Note:              a.Note,
+		URL:               a.URL,
+		Avatar:            aviURL,
+		AvatarStatic:      aviURLStatic,
+		AvatarDescription: aviDesc,
+		Header:            headerURL,
+		HeaderStatic:      headerURLStatic,
+		HeaderDescription: headerDesc,
+		FollowersCount:    followersCount,
+		FollowingCount:    followingCount,
+		StatusesCount:     statusesCount,
+		LastStatusAt:      lastStatusAt,
+		Emojis:            apiEmojis,
+		Fields:            fields,
+		Suspended:         !a.SuspendedAt.IsZero(),
+		Theme:             theme,
+		CustomCSS:         customCSS,
+		EnableRSS:         enableRSS,
+		HideCollections:   hideCollections,
+		Role:              role,
 	}
 
 	// Bodge default avatar + header in,
