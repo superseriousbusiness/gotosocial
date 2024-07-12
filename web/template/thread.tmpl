@@ -40,10 +40,10 @@
 
 {{- define "threadSummary" -}}
     {{- if .context.ThreadHidden -}}
-        {{- if eq .context.ThreadLength 1 -}}
+        {{- if eq .context.ThreadShown 1 -}}
             Single visible post
-        {{- else if gt .context.ThreadLength 1 -}}
-            Thread of {{ .context.ThreadLength }} visible posts
+        {{- else if gt .context.ThreadShown 1 -}}
+            Thread of {{ .context.ThreadShown }} visible posts
         {{- end -}}
             ; {{ .context.ThreadHidden }} more {{ if eq .context.ThreadHidden 1 }}post{{ else }}posts{{ end }} hidden or not public
     {{- else -}}
