@@ -26,49 +26,39 @@ type ThreadContext struct {
 	Ancestors []Status `json:"ancestors"`
 	// Children in the thread.
 	Descendants []Status `json:"descendants"`
+}
 
-	/*
-		Fields used for web ONLY.
-	*/
+type WebThreadContext struct {
+	// Parents in the thread.
+	Ancestors []*WebStatus `json:"ancestors"`
+
+	// Children in the thread.
+	Descendants []*WebStatus `json:"descendants"`
 
 	// The status around which the ancestors
 	// + descendants context was constructed.
-	//
-	// Nil for non-web threads.
-	//
-	// swagger:ignore
-	WebTargetStatus *Status `json:"-"`
+	Status *WebStatus `json:"-"`
 
-	// Metadata to help the
-	// web frontend with threading.
-	//
-	// Nil for non-web threads.
-	//
-	// swagger:ignore
-	WebThreadMeta *WebThreadMeta `json:"-"`
-}
-
-type WebThreadMeta struct {
 	// Total length of
 	// the main thread.
-	WebThreadLength int
+	ThreadLength int
 
 	// Number of entries in
 	// the main thread shown.
-	WebThreadShown int
+	ThreadShown int
 
 	// Number of statuses hidden
 	// from the main thread (not
 	// visible to requester etc).
-	WebThreadHidden int
+	ThreadHidden int
 
 	// Total number of replies
 	// in the replies section.
-	WebThreadReplies int
+	ThreadReplies int
 
 	// Number of replies shown.
-	WebThreadRepliesShown int
+	ThreadRepliesShown int
 
 	// Number of replies hidden.
-	WebThreadRepliesHidden int
+	ThreadRepliesHidden int
 }

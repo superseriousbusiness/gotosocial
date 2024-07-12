@@ -108,7 +108,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Ensure status actually belongs to target account.
-	if context.WebTargetStatus.GetAccountID() != targetAccount.ID {
+	if context.Status.GetAccountID() != targetAccount.ID {
 		err := fmt.Errorf("target account %s does not own status %s", targetUsername, targetStatusID)
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
 		return
@@ -144,12 +144,10 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	page := apiutil.WebPage{
 		Template:    "thread.tmpl",
 		Instance:    instance,
-		OGMeta:      apiutil.OGBase(instance).WithStatus(context.WebTargetStatus),
+		OGMeta:      apiutil.OGBase(instance).WithStatus(context.Status),
 		Stylesheets: stylesheets,
 		Javascript:  []string{jsFrontend},
 		Extra: map[string]any{
-			"meta":    context.WebThreadMeta,
-			"status":  context.WebTargetStatus,
 			"context": context,
 		},
 	}

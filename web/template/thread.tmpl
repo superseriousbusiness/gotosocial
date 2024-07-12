@@ -18,22 +18,22 @@
 */ -}}
 
 {{- define "repliesSummary" -}}
-    {{- if .meta.WebThreadRepliesShown -}}
-        {{- if eq .meta.WebThreadReplies 1 -}}
-            {{ .meta.WebThreadReplies }} reply
-        {{- else if gt .meta.WebThreadReplies 1 -}}
-            {{ .meta.WebThreadReplies }} replies
+    {{- if .context.ThreadRepliesShown -}}
+        {{- if eq .context.ThreadReplies 1 -}}
+            {{ .context.ThreadReplies }} reply
+        {{- else if gt .context.ThreadReplies 1 -}}
+            {{ .context.ThreadReplies }} replies
         {{- end -}}
-        {{- if .meta.WebThreadRepliesHidden }}, of which {{ .meta.WebThreadRepliesHidden }} hidden / not public{{- end -}}
+        {{- if .context.ThreadRepliesHidden }}, of which {{ .context.ThreadRepliesHidden }} hidden / not public{{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- define "threadSummary" -}}
-    {{- if eq .meta.WebThreadLength 1 -}}
+    {{- if eq .context.ThreadLength 1 -}}
         Single post
-    {{- else if gt .meta.WebThreadLength 1 -}}
-        Thread of {{ .meta.WebThreadLength }} posts
-        {{- if .meta.WebThreadHidden }}, of which {{ .meta.WebThreadHidden }} hidden / not public{{- end -}}
+    {{- else if gt .context.ThreadLength 1 -}}
+        Thread of {{ .context.ThreadLength }} posts
+        {{- if .context.ThreadHidden }}, of which {{ .context.ThreadHidden }} hidden / not public{{- end -}}
     {{- end -}}
 {{- end -}}
 
@@ -53,29 +53,29 @@
     <section class="thread thread-main" aria-labelledby="thread-summary">
         <div class="col-header">
             <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
-            {{- if .meta.WebThreadRepliesShown }}
+            {{- if .context.ThreadRepliesShown }}
             <a href="#replies">jump to replies</a>
             {{- end }}
         </div>
 
         {{- range $thisStatus := .context.Ancestors }}
-        {{- if $thisStatus.WebThreadFirstReply }}
+        {{- if $thisStatus.ThreadFirstReply }}
         {{- include "repliesStart" $ | indent 1 }}
         {{- end }}
         <article
-            class="status{{- if $thisStatus.WebIndent }} indent-{{ $thisStatus.WebIndent }}{{- end -}}"
+            class="status{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
             {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
         >
             {{- include "status.tmpl" $thisStatus | indent 3 }}
         </article>
         {{- end }}
 
-        {{- with $thisStatus := .status }}
-        {{- if $thisStatus.WebThreadFirstReply }}
+        {{- with $thisStatus := .context.Status }}
+        {{- if $thisStatus.ThreadFirstReply }}
         {{- include "repliesStart" $ | indent 1 }}
         {{- end }}
         <article
-            class="status expanded{{- if $thisStatus.WebIndent }} indent-{{ $thisStatus.WebIndent }}{{- end -}}"
+            class="status expanded{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
             {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3  }}
         >
             {{- include "status.tmpl" $thisStatus | indent 3 }}
@@ -83,17 +83,17 @@
         {{- end }}
 
         {{- range $thisStatus := .context.Descendants }}
-        {{- if $thisStatus.WebThreadFirstReply }}
+        {{- if $thisStatus.ThreadFirstReply }}
         {{- include "repliesStart" $ | indent 1 }}
         {{- end }}
         <article
-            class="status{{- if $thisStatus.WebIndent }} indent-{{ $thisStatus.WebIndent }}{{- end -}}"
+            class="status{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
             {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
         >
             {{- include "status.tmpl" $thisStatus | indent 3 }}
         </article>
         {{- end }}
-    {{- if .meta.WebThreadReplies }}
+    {{- if .context.ThreadReplies }}
     </section>
     {{- end }}
 </main>

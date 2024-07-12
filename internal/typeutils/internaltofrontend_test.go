@@ -883,9 +883,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
 
 func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
-	requestingAccount := suite.testAccounts["admin_account"]
 
-	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus, requestingAccount)
+	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus)
 	suite.NoError(err)
 
 	// MediaAttachments should inherit
@@ -1010,7 +1009,12 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "LanguageTag": "en",
+  "PollOptions": null,
+  "Local": false,
+  "Indent": 0,
+  "ThreadFirstReply": false
 }`, string(b))
 }
 

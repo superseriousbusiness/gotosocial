@@ -179,7 +179,7 @@ func (p *Processor) WebStatusesGet(
 
 	for _, s := range statuses {
 		// Convert fetched statuses to web view statuses.
-		item, err := p.converter.StatusToWebStatus(ctx, s, nil)
+		item, err := p.converter.StatusToWebStatus(ctx, s)
 		if err != nil {
 			log.Errorf(ctx, "error convering to web status: %v", err)
 			continue
@@ -198,13 +198,13 @@ func (p *Processor) WebStatusesGet(
 func (p *Processor) WebStatusesGetPinned(
 	ctx context.Context,
 	targetAccountID string,
-) ([]*apimodel.Status, gtserror.WithCode) {
+) ([]*apimodel.WebStatus, gtserror.WithCode) {
 	statuses, err := p.state.DB.GetAccountPinnedStatuses(ctx, targetAccountID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	webStatuses := make([]*apimodel.Status, 0, len(statuses))
+	webStatuses := make([]*apimodel.WebStatus, 0, len(statuses))
 	for _, status := range statuses {
 		if status.Visibility != gtsmodel.VisibilityPublic {
 			// Skip non-public
@@ -212,7 +212,7 @@ func (p *Processor) WebStatusesGetPinned(
 			continue
 		}
 
-		webStatus, err := p.converter.StatusToWebStatus(ctx, status, nil)
+		webStatus, err := p.converter.StatusToWebStatus(ctx, status)
 		if err != nil {
 			log.Errorf(ctx, "error convering to web status: %v", err)
 			continue

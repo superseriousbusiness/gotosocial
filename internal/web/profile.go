@@ -111,7 +111,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	var (
 		maxStatusID    = apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), "")
 		paging         = maxStatusID != ""
-		pinnedStatuses []*apimodel.Status
+		pinnedStatuses []*apimodel.WebStatus
 	)
 
 	if !paging {

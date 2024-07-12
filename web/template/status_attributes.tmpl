@@ -19,8 +19,8 @@
 
 {{- define "ariaLabel" -}}
 @{{ .Account.Acct -}}, {{ timestamp .CreatedAt -}}
-{{- if .WebLanguageTag -}}
-    , language {{ .WebLanguageTag.DisplayStr -}}
+{{- if .LanguageTag -}}
+    , language {{ .LanguageTag.DisplayStr -}}
 {{- end -}}
 {{- if .MediaAttachments -}}
     , has media

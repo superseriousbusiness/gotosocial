@@ -982,21 +982,31 @@ func filterAppliesInContext(filter *gtsmodel.Filter, filterContext statusfilter.
 func (c *Converter) StatusToWebStatus(
 	ctx context.Context,
 	s *gtsmodel.Status,
-	requestingAccount *gtsmodel.Account,
-) (*apimodel.Status, error) {
-	status, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+) (*apimodel.WebStatus, error) {
+	apiStatus, err := c.statusToFrontend(
+		ctx,
+		s,
+		nil, // No authed requester.
+		statusfilter.FilterContextNone,
+		nil, // No filters.
+		nil, // No mutes.
+	)
 	if err != nil {
 		return nil, err
 	}
 
+	webStatus := &apimodel.WebStatus{
+		Status: apiStatus,
+	}
+
 	// Whack a newline before and after each "pre" to make it easier to outdent it.
-	status.Content = strings.ReplaceAll(status.Content, "<pre>", "\n<pre>")
-	status.Content = strings.ReplaceAll(status.Content, "</pre>", "</pre>\n")
+	webStatus.Content = strings.ReplaceAll(webStatus.Content, "<pre>", "\n<pre>")
+	webStatus.Content = strings.ReplaceAll(webStatus.Content, "</pre>", "</pre>\n")
 
 	// Add additional information for template.
 	// Assume empty langs, hope for not empty language.
-	status.WebLanguageTag = new(language.Language)
-	if lang := status.Language; lang != nil {
+	webStatus.LanguageTag = new(language.Language)
+	if lang := webStatus.Language; lang != nil {
 		langTag, err := language.Parse(*lang)
 		if err != nil {
 			log.Warnf(
@@ -1005,16 +1015,16 @@ func (c *Converter) StatusToWebStatus(
 				*lang, err,
 			)
 		} else {
-			status.WebLanguageTag = langTag
+			webStatus.LanguageTag = langTag
 		}
 	}
 
-	if poll := status.Poll; poll != nil {
+	if poll := webStatus.Poll; poll != nil {
 		// Calculate vote share of each poll option and
 		// format them for easier template consumption.
 		totalVotes := poll.VotesCount
 
-		webPollOptions := make([]apimodel.WebPollOption, len(poll.Options))
+		PollOptions := make([]apimodel.WebPollOption, len(poll.Options))
 		for i, option := range poll.Options {
 			var voteShare float32
 
@@ -1039,29 +1049,29 @@ func (c *Converter) StatusToWebStatus(
 			voteShareStr = strings.TrimSuffix(voteShareStr, ".00")
 
 			webPollOption := apimodel.WebPollOption{
-				PollOption:      option,
-				WebPollID:       poll.ID,
-				WebEmojis:       status.Emojis,
-				WebLanguageTag:  status.WebLanguageTag,
-				WebVoteShare:    voteShare,
-				WebVoteShareStr: voteShareStr,
+				PollOption:   option,
+				PollID:       poll.ID,
+				Emojis:       webStatus.Emojis,
+				LanguageTag:  webStatus.LanguageTag,
+				VoteShare:    voteShare,
+				VoteShareStr: voteShareStr,
 			}
-			webPollOptions[i] = webPollOption
+			PollOptions[i] = webPollOption
 		}
 
-		status.WebPollOptions = webPollOptions
+		webStatus.PollOptions = PollOptions
 	}
 
 	// Set additional templating
 	// variables on media attachments.
-	for _, a := range status.MediaAttachments {
-		a.Sensitive = status.Sensitive
+	for _, a := range webStatus.MediaAttachments {
+		a.Sensitive = webStatus.Sensitive
 	}
 
 	// Mark this as a local status.
-	status.WebLocal = *s.Local
+	webStatus.Local = *s.Local
 
-	return status, nil
+	return webStatus, nil
 }
 
 // StatusToAPIStatusSource returns the *apimodel.StatusSource of the given status.
