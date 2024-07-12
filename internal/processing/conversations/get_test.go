@@ -25,7 +25,7 @@ import (
 )
 
 func (suite *ConversationsTestSuite) TestGetAll() {
-	conversation := suite.newTestConversation(0)
+	conversation := suite.NewTestConversation(suite.testAccount, 0)
 
 	resp, err := suite.conversationsProcessor.GetAll(context.Background(), suite.testAccount, nil)
 	if suite.NoError(err) && suite.Len(resp.Items, 1) && suite.IsType((*apimodel.Conversation)(nil), resp.Items[0]) {
@@ -38,15 +38,15 @@ func (suite *ConversationsTestSuite) TestGetAll() {
 // Test that conversations with newer last status IDs are returned earlier.
 func (suite *ConversationsTestSuite) TestGetAllOrder() {
 	// Create a new conversation.
-	conversation1 := suite.newTestConversation(0)
+	conversation1 := suite.NewTestConversation(suite.testAccount, 0)
 
 	// Create another new conversation with a last status newer than conversation1's.
-	conversation2 := suite.newTestConversation(1 * time.Second)
+	conversation2 := suite.NewTestConversation(suite.testAccount, 1*time.Second)
 
 	// Add an even newer status than that to conversation1.
-	conversation1Status2 := suite.newTestStatus(conversation1.LastStatus.ThreadID, 2*time.Second, conversation1.LastStatus)
-	conversation1, err := suite.db.AddStatusToConversation(context.Background(), conversation1, conversation1Status2)
-	if err != nil {
+	conversation1Status2 := suite.NewTestStatus(suite.testAccount, conversation1.LastStatus.ThreadID, 2*time.Second, conversation1.LastStatus)
+	conversation1.LastStatusID = conversation1Status2.ID
+	if err := suite.db.PutConversation(context.Background(), conversation1, "last_status_id"); err != nil {
 		suite.FailNow(err.Error())
 	}
 

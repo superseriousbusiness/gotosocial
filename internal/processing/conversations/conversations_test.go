@@ -19,14 +19,12 @@ package conversations_test
 
 import (
 	"context"
-	"crypto/rand"
 	"testing"
 	"time"
 
-	"github.com/oklog/ulid"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	dbtest "github.com/superseriousbusiness/gotosocial/internal/db/test"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
@@ -39,7 +37,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -70,9 +67,11 @@ type ConversationsTestSuite struct {
 	// module being tested
 	conversationsProcessor conversations.Processor
 
-	// conversation created for test
+	// Owner of test conversations
 	testAccount *gtsmodel.Account
-	testNow     time.Time
+
+	// Mixin for conversation tests
+	dbtest.ConversationFactory
 }
 
 func (suite *ConversationsTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
@@ -91,6 +90,8 @@ func (suite *ConversationsTestSuite) SetupSuite() {
 	suite.testFollows = testrig.NewTestFollows()
 	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
+
+	suite.ConversationFactory.SetupSuite(suite)
 }
 
 func (suite *ConversationsTestSuite) SetupTest() {
@@ -124,7 +125,8 @@ func (suite *ConversationsTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 
-	suite.testNow = time.Now()
+	suite.ConversationFactory.SetupTest(suite.db)
+
 	suite.testAccount = suite.testAccounts["local_account_1"]
 }
 
@@ -142,61 +144,6 @@ func (suite *ConversationsTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
-}
-
-func (suite *ConversationsTestSuite) newULID(nowOffset time.Duration) string {
-	ulid, err := ulid.New(
-		ulid.Timestamp(suite.testNow.Add(nowOffset)), rand.Reader,
-	)
-	if err != nil {
-		panic(err)
-	}
-	return ulid.String()
-}
-
-func (suite *ConversationsTestSuite) newTestStatus(threadID string, nowOffset time.Duration, inReplyToStatus *gtsmodel.Status) *gtsmodel.Status {
-	statusID := suite.newULID(nowOffset)
-	createdAt := suite.testNow.Add(nowOffset)
-	status := &gtsmodel.Status{
-		ID:                  statusID,
-		CreatedAt:           createdAt,
-		UpdatedAt:           createdAt,
-		URI:                 "http://localhost:8080/users/" + suite.testAccount.Username + "/statuses/" + statusID,
-		AccountID:           suite.testAccount.ID,
-		AccountURI:          suite.testAccount.URI,
-		Local:               util.Ptr(true),
-		ThreadID:            threadID,
-		Visibility:          gtsmodel.VisibilityDirect,
-		ActivityStreamsType: ap.ObjectNote,
-		Federated:           util.Ptr(true),
-	}
-	if inReplyToStatus != nil {
-		status.InReplyToID = inReplyToStatus.ID
-		status.InReplyToURI = inReplyToStatus.URI
-		status.InReplyToAccountID = inReplyToStatus.AccountID
-	}
-	if err := suite.db.PutStatus(context.Background(), status); err != nil {
-		suite.FailNow(err.Error())
-	}
-	return status
-}
-
-// newTestConversation creates a new status and adds it to a new unread conversation, returning the conversation.
-func (suite *ConversationsTestSuite) newTestConversation(nowOffset time.Duration) *gtsmodel.Conversation {
-	threadID := suite.newULID(nowOffset)
-	status := suite.newTestStatus(threadID, nowOffset, nil)
-	conversation := &gtsmodel.Conversation{
-		ID:        suite.newULID(nowOffset),
-		AccountID: suite.testAccount.ID,
-		ThreadID:  status.ThreadID,
-		Read:      util.Ptr(false),
-	}
-	conversation, err := suite.db.AddStatusToConversation(context.Background(), conversation, status)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	return conversation
 }
 
 func TestConversationsTestSuite(t *testing.T) {

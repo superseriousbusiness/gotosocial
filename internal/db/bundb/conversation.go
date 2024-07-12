@@ -193,7 +193,7 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 			// Perform database query scanning the remaining (uncached) IDs.
 			if err := c.db.NewSelect().
 				Model(&conversations).
-				Where("? = ?", bun.Ident("last_status_id"), accountID).
+				Where("? = ?", bun.Ident("account_id"), accountID).
 				Where("? IN (?)", bun.Ident("last_status_id"), bun.In(uncached)).
 				Scan(ctx); err != nil {
 				return nil, err
@@ -227,70 +227,35 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 	return conversations, nil
 }
 
-func (c *conversationDB) UpdateConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error {
+func (c *conversationDB) PutConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error {
 	// If we're updating by column, ensure "updated_at" is included.
 	if len(columns) > 0 {
 		columns = append(columns, "updated_at")
 	}
 
 	return c.state.Caches.GTS.Conversation.Store(conversation, func() error {
-		_, err := c.db.NewUpdate().
+		_, err := NewUpsert(c.db).
 			Model(conversation).
+			Constraint("id").
 			Column(columns...).
-			Where("? = ?", bun.Ident("id"), conversation.ID).
 			Exec(ctx)
 		return err
 	})
 }
 
-func (c *conversationDB) AddStatusToConversation(ctx context.Context, conversation *gtsmodel.Conversation, status *gtsmodel.Status) (*gtsmodel.Conversation, error) {
-	// Assume that if the conversation owner posted the status, they've already read it.
-	statusAuthoredByConversationOwner := status.AccountID == conversation.AccountID
-
-	// Update the existing conversation.
-	// If there is no previous last status or this one is more recently created, set it as the last status.
-	if conversation.LastStatus == nil || conversation.LastStatus.CreatedAt.Before(status.CreatedAt) {
-		conversation.LastStatusID = status.ID
-		conversation.LastStatus = status
-	}
-	// If the conversation is unread, leave it marked as unread.
-	// If the conversation is read but this status might not have been, mark the conversation as unread.
-	if !statusAuthoredByConversationOwner {
-		conversation.Read = util.Ptr(false)
-	}
-
-	// Link the conversation to the status.
+func (c *conversationDB) LinkConversationToStatus(ctx context.Context, conversationID string, statusID string) error {
 	conversationToStatus := &gtsmodel.ConversationToStatus{
-		ConversationID: conversation.ID,
-		StatusID:       status.ID,
+		ConversationID: conversationID,
+		StatusID:       statusID,
 	}
 
-	// Upsert the conversation and insert the link, then cache the conversation.
-	if err := c.state.Caches.GTS.Conversation.Store(conversation, func() error {
-		return c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if _, err := tx.NewInsert().
-				Model(conversationToStatus).
-				Exec(ctx); // nocollapse
-			err != nil {
-				return gtserror.Newf("error creating conversation-to-status link between conversation %s and status %s: %w", conversation.ID, status.ID, err)
-			}
-
-			if _, err := NewUpsert(tx).
-				Model(conversation).
-				Constraint("id").
-				Column("last_status_id", "read", "updated_at").
-				Exec(ctx); // nocollapse
-			err != nil {
-				return gtserror.Newf("error upserting conversation %s: %w", conversation.ID, err)
-			}
-
-			return nil
-		})
-	}); err != nil {
-		return nil, err
+	if _, err := c.db.NewInsert().
+		Model(conversationToStatus).
+		Exec(ctx); // nocollapse
+	err != nil {
+		return err
 	}
-
-	return conversation, nil
+	return nil
 }
 
 func (c *conversationDB) DeleteConversationByID(ctx context.Context, id string) error {

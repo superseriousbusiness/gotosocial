@@ -1672,8 +1672,6 @@ func (c *Converter) ConversationToAPIConversation(
 	}
 	for _, account := range conversation.OtherAccounts {
 		var apiAccount *apimodel.Account
-		// TODO: (Vyr) good enough? is there something reusable for this? should we pull in a Filters dependency?
-		// TODO: (Vyr) duplicated in conversationsget.go
 		blocked, err := c.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, account.ID)
 		if err != nil {
 			return nil, err

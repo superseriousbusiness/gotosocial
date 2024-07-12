@@ -33,8 +33,8 @@ func (suite *ConversationsTestSuite) TestUpdateConversationsForStatus() {
 	suite.Empty(conversations)
 
 	// Create a status.
-	threadID := suite.newULID(0)
-	status := suite.newTestStatus(threadID, 0, nil)
+	threadID := suite.NewULID(0)
+	status := suite.NewTestStatus(suite.testAccount, threadID, 0, nil)
 
 	// Update conversations for it.
 	notifications, err := suite.conversationsProcessor.UpdateConversationsForStatus(ctx, status)

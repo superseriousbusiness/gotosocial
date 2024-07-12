@@ -164,16 +164,42 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 			}
 		}
 
+		// Assume that if the conversation owner posted the status, they've already read it.
+		statusAuthoredByConversationOwner := status.AccountID == conversation.AccountID
+
+		// Update the conversation.
+		// If there is no previous last status or this one is more recently created, set it as the last status.
+		if conversation.LastStatus == nil || conversation.LastStatus.CreatedAt.Before(status.CreatedAt) {
+			conversation.LastStatusID = status.ID
+			conversation.LastStatus = status
+		}
+		// If the conversation is unread, leave it marked as unread.
+		// If the conversation is read but this status might not have been, mark the conversation as unread.
+		if !statusAuthoredByConversationOwner {
+			conversation.Read = util.Ptr(false)
+		}
+
 		// Create or update the conversation.
-		conversationID := conversation.ID
-		conversation, err = p.state.DB.AddStatusToConversation(ctx, conversation, status)
+		err = p.state.DB.PutConversation(ctx, conversation)
 		if err != nil {
 			log.Errorf(
 				ctx,
 				"error creating or updating conversation %s for status %s and account %s: %v",
-				conversationID,
+				conversation.ID,
 				status.ID,
 				localAccount.ID,
+				err,
+			)
+			continue
+		}
+
+		// Link the conversation to the status.
+		if err := p.state.DB.LinkConversationToStatus(ctx, conversation.ID, status.ID); err != nil {
+			log.Errorf(
+				ctx,
+				"error linking conversation %s to status %s: %v",
+				conversation.ID,
+				status.ID,
 				err,
 			)
 			continue

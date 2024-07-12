@@ -41,6 +41,5 @@ func debugCommands() *cobra.Command {
 	}
 	config.AddServerFlags(debugConfigCmd)
 	debugCmd.AddCommand(debugConfigCmd)
-
 	return debugCmd
 }

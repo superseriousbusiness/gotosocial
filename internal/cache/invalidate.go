@@ -84,7 +84,7 @@ func (c *Caches) OnInvalidateClient(client *gtsmodel.Client) {
 }
 
 func (c *Caches) OnInvalidateConversation(conversation *gtsmodel.Conversation) {
-	// Invalidate source account's conversation list.
+	// Invalidate owning account's conversation list.
 	c.GTS.ConversationLastStatusIDs.Invalidate(conversation.AccountID)
 }
 

@@ -35,13 +35,11 @@ type Conversation interface {
 	// with optional paging based on last status ID.
 	GetConversationsByOwnerAccountID(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Conversation, error)
 
-	// UpdateConversation updates an existing conversation.
-	UpdateConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error
+	// PutConversation creates or updates a conversation.
+	PutConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error
 
-	// AddStatusToConversation takes a conversation (which may or may not exist in the DB yet) and a status.
-	// It will link the status to the conversation, and if the status is newer than the last status,
-	// it will become the last status. This happens in a transaction.
-	AddStatusToConversation(ctx context.Context, conversation *gtsmodel.Conversation, status *gtsmodel.Status) (*gtsmodel.Conversation, error)
+	// LinkConversationToStatus creates a conversation-to-status link.
+	LinkConversationToStatus(ctx context.Context, statusID string, conversationID string) error
 
 	// DeleteConversationByID deletes a conversation, removing it from the owning account's conversation list.
 	DeleteConversationByID(ctx context.Context, id string) error

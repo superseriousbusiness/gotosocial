@@ -23,20 +23,18 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/db/test"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type ConversationTestSuite struct {
 	BunDBStandardTestSuite
 
-	// account is the owner of statuses and conversations in these tests (must be local).
-	account *gtsmodel.Account
-	// now is the timestamp used as a base for creating new statuses in any given test.
-	now time.Time
+	cf test.ConversationFactory
+
+	// testAccount is the owner of statuses and conversations in these tests (must be local).
+	testAccount *gtsmodel.Account
 	// threadID is the thread used for statuses in any given test.
 	threadID string
 }
@@ -44,65 +42,17 @@ type ConversationTestSuite struct {
 func (suite *ConversationTestSuite) SetupSuite() {
 	suite.BunDBStandardTestSuite.SetupSuite()
 
-	suite.account = suite.testAccounts["local_account_1"]
+	suite.cf.SetupSuite(suite)
+
+	suite.testAccount = suite.testAccounts["local_account_1"]
 }
 
 func (suite *ConversationTestSuite) SetupTest() {
 	suite.BunDBStandardTestSuite.SetupTest()
 
-	suite.now = time.Now()
-	suite.threadID = id.NewULID()
-}
+	suite.cf.SetupTest(suite.db)
 
-// newStatus creates a new status in the DB that would be eligible for a conversation, optionally replying to a previous status.
-func (suite *ConversationTestSuite) newStatus(nowOffset time.Duration, inReplyTo *gtsmodel.Status) *gtsmodel.Status {
-	statusID := id.NewULID()
-	createdAt := suite.now.Add(nowOffset)
-	status := &gtsmodel.Status{
-		ID:                  statusID,
-		CreatedAt:           createdAt,
-		UpdatedAt:           createdAt,
-		URI:                 "http://localhost:8080/users/" + suite.account.Username + "/statuses/" + statusID,
-		AccountID:           suite.account.ID,
-		AccountURI:          suite.account.URI,
-		Local:               util.Ptr(true),
-		ThreadID:            suite.threadID,
-		Visibility:          gtsmodel.VisibilityDirect,
-		ActivityStreamsType: ap.ObjectNote,
-		Federated:           util.Ptr(true),
-	}
-	if inReplyTo != nil {
-		status.InReplyToID = inReplyTo.ID
-		status.InReplyToURI = inReplyTo.URI
-		status.InReplyToAccountID = inReplyTo.AccountID
-	}
-	if err := suite.db.PutStatus(context.Background(), status); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	return status
-}
-
-// newConversation creates a new conversation not yet in the DB.
-func (suite *ConversationTestSuite) newConversation() *gtsmodel.Conversation {
-	return &gtsmodel.Conversation{
-		ID:        id.NewULID(),
-		AccountID: suite.account.ID,
-		ThreadID:  suite.threadID,
-		Read:      util.Ptr(true),
-	}
-}
-
-// addStatus adds a status to a conversation and ends the test if that fails.
-func (suite *ConversationTestSuite) addStatus(
-	conversation *gtsmodel.Conversation,
-	status *gtsmodel.Status,
-) *gtsmodel.Conversation {
-	conversation, err := suite.db.AddStatusToConversation(context.Background(), conversation, status)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	return conversation
+	suite.threadID = suite.cf.NewULID(0)
 }
 
 // deleteStatus deletes a status from conversations and ends the test if that fails.
@@ -122,38 +72,13 @@ func (suite *ConversationTestSuite) getConversation(conversationID string) *gtsm
 	return conversation
 }
 
-// Adding a status to a new conversation should set the last status.
-func (suite *ConversationTestSuite) TestAddStatusToNewConversation() {
-	initial := suite.newStatus(0, nil)
-	conversation := suite.addStatus(suite.newConversation(), initial)
-	suite.Equal(initial.ID, conversation.LastStatusID)
-	if suite.NotNil(conversation.Read) {
-		// In this test suite, the author of the statuses is also the owner of the conversation,
-		// so the conversation should be marked as read.
-		suite.True(*conversation.Read)
-	}
-}
-
-// Adding a newer status to an existing conversation should update the last status.
-func (suite *ConversationTestSuite) TestAddStatusToExistingConversation() {
-	initial := suite.newStatus(0, nil)
-	conversation := suite.addStatus(suite.newConversation(), initial)
-
-	reply := suite.newStatus(1, initial)
-	conversation = suite.addStatus(conversation, reply)
-	suite.Equal(reply.ID, conversation.LastStatusID)
-	if suite.NotNil(conversation.Read) {
-		suite.True(*conversation.Read)
-	}
-}
-
 // If we delete a status that is in a conversation but not the last status,
 // the conversation's last status should not change.
 func (suite *ConversationTestSuite) TestDeleteNonLastStatus() {
-	initial := suite.newStatus(0, nil)
-	conversation := suite.addStatus(suite.newConversation(), initial)
-	reply := suite.newStatus(1, initial)
-	conversation = suite.addStatus(conversation, reply)
+	conversation := suite.cf.NewTestConversation(suite.testAccount, 0)
+	initial := conversation.LastStatus
+	reply := suite.cf.NewTestStatus(suite.testAccount, conversation.ThreadID, 1*time.Second, initial)
+	conversation = suite.cf.SetLastStatus(conversation, reply)
 
 	suite.deleteStatus(initial.ID)
 	conversation = suite.getConversation(conversation.ID)
@@ -163,10 +88,11 @@ func (suite *ConversationTestSuite) TestDeleteNonLastStatus() {
 // If we delete the last status in a conversation that has other statuses,
 // a previous status should become the new last status.
 func (suite *ConversationTestSuite) TestDeleteLastStatus() {
-	initial := suite.newStatus(0, nil)
-	conversation := suite.addStatus(suite.newConversation(), initial)
-	reply := suite.newStatus(1, initial)
-	conversation = suite.addStatus(conversation, reply)
+	conversation := suite.cf.NewTestConversation(suite.testAccount, 0)
+	initial := conversation.LastStatus
+	reply := suite.cf.NewTestStatus(suite.testAccount, conversation.ThreadID, 1*time.Second, initial)
+	conversation = suite.cf.SetLastStatus(conversation, reply)
+	conversation = suite.getConversation(conversation.ID)
 
 	suite.deleteStatus(reply.ID)
 	conversation = suite.getConversation(conversation.ID)
@@ -176,8 +102,8 @@ func (suite *ConversationTestSuite) TestDeleteLastStatus() {
 // If we delete the only status in a conversation,
 // the conversation should be deleted as well.
 func (suite *ConversationTestSuite) TestDeleteOnlyStatus() {
-	initial := suite.newStatus(0, nil)
-	conversation := suite.addStatus(suite.newConversation(), initial)
+	conversation := suite.cf.NewTestConversation(suite.testAccount, 0)
+	initial := conversation.LastStatus
 
 	suite.deleteStatus(initial.ID)
 	_, err := suite.db.GetConversationByID(context.Background(), conversation.ID)

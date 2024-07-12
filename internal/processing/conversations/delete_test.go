@@ -20,7 +20,7 @@ package conversations_test
 import "context"
 
 func (suite *ConversationsTestSuite) TestDelete() {
-	conversation := suite.newTestConversation(0)
+	conversation := suite.NewTestConversation(suite.testAccount, 0)
 
 	err := suite.conversationsProcessor.Delete(context.Background(), suite.testAccount, conversation.ID)
 	suite.NoError(err)
