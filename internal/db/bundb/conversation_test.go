@@ -70,9 +70,6 @@ func (suite *ConversationTestSuite) newStatus(nowOffset time.Duration, inReplyTo
 		Visibility:          gtsmodel.VisibilityDirect,
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
-		Boostable:           util.Ptr(true),
-		Replyable:           util.Ptr(true),
-		Likeable:            util.Ptr(true),
 	}
 	if inReplyTo != nil {
 		status.InReplyToID = inReplyTo.ID

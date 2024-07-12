@@ -169,9 +169,6 @@ func (suite *ConversationsTestSuite) newTestStatus(threadID string, nowOffset ti
 		Visibility:          gtsmodel.VisibilityDirect,
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
-		Boostable:           util.Ptr(true),
-		Replyable:           util.Ptr(true),
-		Likeable:            util.Ptr(true),
 	}
 	if inReplyToStatus != nil {
 		status.InReplyToID = inReplyToStatus.ID
