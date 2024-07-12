@@ -20,12 +20,14 @@ package media_test
 import (
 	"bytes"
 	"context"
+	"crypto/md5"
 	"fmt"
 	"io"
 	"os"
 	"testing"
 	"time"
 
+	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-storage/disk"
 	"github.com/stretchr/testify/suite"
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -33,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -43,13 +46,13 @@ type ManagerTestSuite struct {
 func (suite *ManagerTestSuite) TestEmojiProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/rainbow-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	processing, err := suite.manager.CreateEmoji(ctx,
@@ -66,7 +69,7 @@ func (suite *ManagerTestSuite) TestEmojiProcess() {
 	suite.NotNil(emoji)
 
 	// file meta should be correctly derived from the image
-	suite.Equal("image/png", emoji.ImageContentType)
+	suite.Equal("image/apng", emoji.ImageContentType)
 	suite.Equal("image/png", emoji.ImageStaticContentType)
 	suite.Equal(36702, emoji.ImageFileSize)
 
@@ -75,29 +78,9 @@ func (suite *ManagerTestSuite) TestEmojiProcess() {
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
-	// make sure the processed emoji file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/rainbow-original.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytes)
-
-	processedStaticBytesExpected, err := os.ReadFile("./test/rainbow-static.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytesExpected)
-
-	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbEmoji.ImagePath, "./test/rainbow-original.png")
+	equalFiles(suite.T(), suite.state.Storage, dbEmoji.ImageStaticPath, "./test/rainbow-static.png")
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
@@ -114,12 +97,12 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 	oldEmojiImagePath := emojiToUpdate.ImagePath
 	oldEmojiImageStaticPath := emojiToUpdate.ImageStaticPath
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		b, err := os.ReadFile("./test/gts_pixellated-original.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	processing, err := suite.manager.RefreshEmoji(ctx,
@@ -151,29 +134,9 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
-	// make sure the processed emoji file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/gts_pixellated-original.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytes)
-
-	processedStaticBytesExpected, err := os.ReadFile("./test/gts_pixellated-static.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytesExpected)
-
-	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbEmoji.ImagePath, "./test/gts_pixellated-original.png")
+	equalFiles(suite.T(), suite.state.Storage, dbEmoji.ImageStaticPath, "./test/gts_pixellated-static.png")
 
 	// most fields should be different on the emoji now from what they were before
 	suite.Equal(originalEmoji.ID, dbEmoji.ID)
@@ -197,124 +160,47 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// load bytes from a test image
-		b, err := os.ReadFile("./test/big-panda.gif")
-		if err != nil {
-			panic(err)
-		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+	// Open test image as file for reading.
+	file, err := os.Open("./test/big-panda.gif")
+	if err != nil {
+		panic(err)
 	}
+
+	// Get file size info.
+	stat, err := file.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	// Set max allowed size UNDER image size.
+	lr := io.LimitReader(file, stat.Size()-10)
+	rc := iotools.ReadCloser(lr, file)
 
 	processing, err := suite.manager.CreateEmoji(ctx,
 		"big_panda",
 		"",
-		data,
+		func(ctx context.Context) (reader io.ReadCloser, err error) {
+			return rc, nil
+		},
 		media.AdditionalEmojiInfo{},
 	)
 	suite.NoError(err)
 
 	// do a blocking call to fetch the emoji
 	_, err = processing.Load(ctx)
-	suite.EqualError(err, "store: given emoji size 630kiB greater than max allowed 50.0kiB")
-}
-
-func (suite *ManagerTestSuite) TestEmojiProcessTooLargeNoSizeGiven() {
-	ctx := context.Background()
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// load bytes from a test image
-		b, err := os.ReadFile("./test/big-panda.gif")
-		if err != nil {
-			panic(err)
-		}
-		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
-	}
-
-	processing, err := suite.manager.CreateEmoji(ctx,
-		"big_panda",
-		"",
-		data,
-		media.AdditionalEmojiInfo{},
-	)
-	suite.NoError(err)
-
-	// do a blocking call to fetch the emoji
-	_, err = processing.Load(ctx)
-	suite.EqualError(err, "store: written emoji size 630kiB greater than max allowed 50.0kiB")
-}
-
-func (suite *ManagerTestSuite) TestEmojiProcessNoFileSizeGiven() {
-	ctx := context.Background()
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// load bytes from a test image
-		b, err := os.ReadFile("./test/rainbow-original.png")
-		if err != nil {
-			panic(err)
-		}
-		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
-	}
-
-	// process the media with no additional info provided
-	processing, err := suite.manager.CreateEmoji(ctx,
-		"rainbow_test",
-		"",
-		data,
-		media.AdditionalEmojiInfo{},
-	)
-	suite.NoError(err)
-
-	// do a blocking call to fetch the emoji
-	emoji, err := processing.Load(ctx)
-	suite.NoError(err)
-	suite.NotNil(emoji)
-
-	// file meta should be correctly derived from the image
-	suite.Equal("image/png", emoji.ImageContentType)
-	suite.Equal("image/png", emoji.ImageStaticContentType)
-	suite.Equal(36702, emoji.ImageFileSize)
-
-	// now make sure the emoji is in the database
-	dbEmoji, err := suite.db.GetEmojiByID(ctx, emoji.ID)
-	suite.NoError(err)
-	suite.NotNil(dbEmoji)
-
-	// make sure the processed emoji file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/rainbow-original.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytes)
-
-	processedStaticBytesExpected, err := os.ReadFile("./test/rainbow-static.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytesExpected)
-
-	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+	suite.EqualError(err, "store: error draining data to tmp: reached read limit 630kiB")
 }
 
 func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/nb-flag-original.webp")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	// process the media with no additional info provided
@@ -341,41 +227,21 @@ func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 	suite.NoError(err)
 	suite.NotNil(dbEmoji)
 
-	// make sure the processed emoji file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, emoji.ImagePath)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/nb-flag-original.webp")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedStaticBytes, err := suite.storage.Get(ctx, emoji.ImageStaticPath)
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytes)
-
-	processedStaticBytesExpected, err := os.ReadFile("./test/nb-flag-static.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedStaticBytesExpected)
-
-	suite.Equal(processedStaticBytesExpected, processedStaticBytes)
+	// ensure files are equal
+	equalFiles(suite.T(), suite.state.Storage, dbEmoji.ImagePath, "./test/nb-flag-original.webp")
+	equalFiles(suite.T(), suite.state.Storage, dbEmoji.ImageStaticPath, "./test/nb-flag-static.png")
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -409,117 +275,66 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("LjCGfG#6RkRn_NvzRjWF?urqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-jpeg-processed.jpg")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-jpeg-thumbnail.jpg")
 }
 
-func (suite *ManagerTestSuite) TestSimpleJpegProcessPartial() {
+func (suite *ManagerTestSuite) TestSimpleJpegProcessTooLarge() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// load bytes from a test image
-		b, err := os.ReadFile("./test/test-jpeg.jpg")
-		if err != nil {
-			panic(err)
-		}
-
-		// Fuck up the bytes a bit by cutting
-		// off the second half, tee hee!
-		b = b[:len(b)/2]
-
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+	// Open test image as file for reading.
+	file, err := os.Open("./test/test-jpeg.jpg")
+	if err != nil {
+		panic(err)
 	}
+
+	// Get file size info.
+	stat, err := file.Stat()
+	if err != nil {
+		panic(err)
+	}
+
+	// Set max allowed size UNDER image size.
+	lr := io.LimitReader(file, stat.Size()-10)
+	rc := iotools.ReadCloser(lr, file)
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
 	// process the media with no additional info provided
 	processing, err := suite.manager.CreateMedia(ctx,
 		accountID,
-		data,
+		func(ctx context.Context) (reader io.ReadCloser, err error) {
+			return rc, nil
+		},
 		media.AdditionalMediaInfo{},
 	)
 	suite.NoError(err)
 	suite.NotNil(processing)
 
 	// do a blocking call to fetch the attachment
-	attachment, err := processing.Load(ctx)
-
-	// Since we're cutting off the byte stream
-	// halfway through, we should get an error here.
-	suite.EqualError(err, "store: error writing media to storage: scan-data is unbounded; EOI not encountered before EOF")
-	suite.NotNil(attachment)
-
-	// make sure it's got the stuff set on it that we expect
-	// the attachment ID and accountID we expect
-	suite.Equal(processing.ID(), attachment.ID)
-	suite.Equal(accountID, attachment.AccountID)
-
-	// file meta should be correctly derived from the image
-	suite.Zero(attachment.FileMeta)
-	suite.Equal("image/jpeg", attachment.File.ContentType)
-	suite.Empty(attachment.Blurhash)
-
-	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
-	suite.NoError(err)
-	suite.NotNil(dbAttachment)
-
-	// Attachment should have type unknown
-	suite.Equal(gtsmodel.FileTypeUnknown, dbAttachment.Type)
-
-	// Nothing should be in storage for this attachment.
-	stored, err := suite.storage.Has(ctx, attachment.File.Path)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.False(stored)
-
-	stored, err = suite.storage.Has(ctx, attachment.Thumbnail.Path)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-	suite.False(stored)
+	_, err = processing.Load(ctx)
+	suite.EqualError(err, "store: error draining data to tmp: reached read limit 263kiB")
 }
 
 func (suite *ManagerTestSuite) TestPDFProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from Frantz
 		b, err := os.ReadFile("./test/Frantz-Fanon-The-Wretched-of-the-Earth-1965.pdf")
 		if err != nil {
 			panic(err)
 		}
 
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -545,7 +360,7 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 
 	// file meta should be correctly derived from the image
 	suite.Zero(attachment.FileMeta)
-	suite.Equal("application/pdf", attachment.File.ContentType)
+	suite.Equal("application/octet-stream", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Empty(attachment.Blurhash)
 
@@ -559,28 +374,24 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 
 	// Nothing should be in storage for this attachment.
 	stored, err := suite.storage.Has(ctx, attachment.File.Path)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	suite.NoError(err)
 	suite.False(stored)
 
 	stored, err = suite.storage.Has(ctx, attachment.Thumbnail.Path)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	suite.NoError(err)
 	suite.False(stored)
 }
 
 func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/test-mp4-original.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -609,57 +420,37 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	suite.Equal(240, attachment.FileMeta.Original.Height)
 	suite.Equal(81120, attachment.FileMeta.Original.Size)
 	suite.EqualValues(float32(1.4083333), attachment.FileMeta.Original.Aspect)
-	suite.EqualValues(float32(6.640907), *attachment.FileMeta.Original.Duration)
-	suite.EqualValues(float32(29.000029), *attachment.FileMeta.Original.Framerate)
-	suite.EqualValues(0x59e74, *attachment.FileMeta.Original.Bitrate)
+	suite.EqualValues(float32(6.641), *attachment.FileMeta.Original.Duration)
+	suite.EqualValues(float32(29.00003), *attachment.FileMeta.Original.Framerate)
+	suite.EqualValues(0x5be18, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 338, Height: 240, Size: 81120, Aspect: 1.4083333333333334,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
-	suite.Equal(312413, attachment.File.FileSize)
-	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
+	suite.Equal(312453, attachment.File.FileSize)
+	suite.Equal("LrJuJat6NZkBt7ayW.j[_4WBsWoL", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-mp4-processed.mp4")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-mp4-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-mp4-processed.mp4")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-mp4-thumbnail.jpg")
 }
 
 func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/longer-mp4-original.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -690,55 +481,35 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	suite.EqualValues(float32(1.8181819), attachment.FileMeta.Original.Aspect)
 	suite.EqualValues(float32(16.6), *attachment.FileMeta.Original.Duration)
 	suite.EqualValues(float32(10), *attachment.FileMeta.Original.Framerate)
-	suite.EqualValues(0xc8fb, *attachment.FileMeta.Original.Bitrate)
+	suite.EqualValues(0xce3a, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 512, Height: 281, Size: 143872, Aspect: 1.822064,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
-	suite.Equal(109549, attachment.File.FileSize)
-	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
+	suite.Equal(109569, attachment.File.FileSize)
+	suite.Equal("LASY{q~qD%_3~qD%ofRjM{ofofRj", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/longer-mp4-processed.mp4")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/longer-mp4-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/longer-mp4-processed.mp4")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/longer-mp4-thumbnail.jpg")
 }
 
 func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
 		b, err := os.ReadFile("./test/birdnest-original.mp4")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -767,93 +538,37 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	suite.Equal(720, attachment.FileMeta.Original.Height)
 	suite.Equal(290880, attachment.FileMeta.Original.Size)
 	suite.EqualValues(float32(0.5611111), attachment.FileMeta.Original.Aspect)
-	suite.EqualValues(float32(9.822041), *attachment.FileMeta.Original.Duration)
+	suite.EqualValues(float32(9.823), *attachment.FileMeta.Original.Duration)
 	suite.EqualValues(float32(30), *attachment.FileMeta.Original.Framerate)
-	suite.EqualValues(0x117c79, *attachment.FileMeta.Original.Bitrate)
+	suite.EqualValues(0x11844c, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 287, Height: 512, Size: 146944, Aspect: 0.5605469,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
-	suite.Equal(1409577, attachment.File.FileSize)
-	suite.Equal("L00000fQfQfQfQfQfQfQfQfQfQfQ", attachment.Blurhash)
+	suite.Equal(1409625, attachment.File.FileSize)
+	suite.Equal("LOGb||RjRO.99DRORPaetkV?afMw", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/birdnest-processed.mp4")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/birdnest-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/birdnest-processed.mp4")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/birdnest-thumbnail.jpg")
 }
 
-func (suite *ManagerTestSuite) TestNotAnMp4Process() {
-	// try to load an 'mp4' that's actually an mkv in disguise
-
+func (suite *ManagerTestSuite) TestOpusProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// load bytes from a test video
-		b, err := os.ReadFile("./test/not-an.mp4")
-		if err != nil {
-			panic(err)
-		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
-	}
-
-	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
-
-	// pre processing should go fine but...
-	processing, err := suite.manager.CreateMedia(ctx,
-		accountID,
-		data,
-		media.AdditionalMediaInfo{},
-	)
-	suite.NoError(err)
-	suite.NotNil(processing)
-
-	// we should get an error while loading
-	attachment, err := processing.Load(ctx)
-	suite.EqualError(err, "finish: error decoding video: error determining video metadata: [width height framerate]")
-
-	// partial attachment should be
-	// returned, with 'unknown' type.
-	suite.NotNil(attachment)
-	suite.Equal(gtsmodel.FileTypeUnknown, attachment.Type)
-}
-
-func (suite *ManagerTestSuite) TestSimpleJpegProcessNoContentLengthGiven() {
-	ctx := context.Background()
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
-		b, err := os.ReadFile("./test/test-jpeg.jpg")
+		b, err := os.ReadFile("./test/test-opus-original.opus")
 		if err != nil {
 			panic(err)
 		}
-		// give length as -1 to indicate unknown
-		return io.NopCloser(bytes.NewBuffer(b)), -1, nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -879,132 +594,33 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessNoContentLengthGiven() {
 
 	// file meta should be correctly derived from the image
 	suite.EqualValues(gtsmodel.Original{
-		Width: 1920, Height: 1080, Size: 2073600, Aspect: 1.7777777777777777,
+		Duration: util.Ptr(float32(122.10006)),
+		Bitrate:  util.Ptr(uint64(116426)),
 	}, attachment.FileMeta.Original)
-	suite.EqualValues(gtsmodel.Small{
-		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
-	}, attachment.FileMeta.Small)
-	suite.Equal("image/jpeg", attachment.File.ContentType)
-	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
-	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("audio/ogg", attachment.File.ContentType)
+	suite.Equal(1776956, attachment.File.FileSize)
+	suite.Empty(attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
-}
-
-func (suite *ManagerTestSuite) TestSimpleJpegProcessReadCloser() {
-	ctx := context.Background()
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// open test image as a file
-		f, err := os.Open("./test/test-jpeg.jpg")
-		if err != nil {
-			panic(err)
-		}
-		// give length as -1 to indicate unknown
-		return f, -1, nil
-	}
-
-	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
-
-	// process the media with no additional info provided
-	processing, err := suite.manager.CreateMedia(ctx,
-		accountID,
-		data,
-		media.AdditionalMediaInfo{},
-	)
-	suite.NoError(err)
-	suite.NotNil(processing)
-
-	// do a blocking call to fetch the attachment
-	attachment, err := processing.Load(ctx)
-	suite.NoError(err)
-	suite.NotNil(attachment)
-
-	// make sure it's got the stuff set on it that we expect
-	// the attachment ID and accountID we expect
-	suite.Equal(processing.ID(), attachment.ID)
-	suite.Equal(accountID, attachment.AccountID)
-
-	// file meta should be correctly derived from the image
-	suite.EqualValues(gtsmodel.Original{
-		Width: 1920, Height: 1080, Size: 2073600, Aspect: 1.7777777777777777,
-	}, attachment.FileMeta.Original)
-	suite.EqualValues(gtsmodel.Small{
-		Width: 512, Height: 288, Size: 147456, Aspect: 1.7777777777777777,
-	}, attachment.FileMeta.Small)
-	suite.Equal("image/jpeg", attachment.File.ContentType)
-	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
-	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
-
-	// now make sure the attachment is in the database
-	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
-	suite.NoError(err)
-	suite.NotNil(dbAttachment)
-
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-opus-processed.opus")
+	suite.Zero(dbAttachment.Thumbnail.FileSize)
 }
 
 func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-noalphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -1038,48 +654,28 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(17471, attachment.File.FileSize)
-	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
+	suite.Equal("LDQJl?%i-?WG%go#RURP~of3~UxV", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-png-noalphachannel-processed.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-png-noalphachannel-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-png-noalphachannel-processed.png")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-png-noalphachannel-thumbnail.jpg")
 }
 
 func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-png-alphachannel.png")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -1113,48 +709,28 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(18904, attachment.File.FileSize)
-	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
+	suite.Equal("LDQJl?%i-?WG%go#RURP~of3~UxV", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-png-alphachannel-processed.png")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-png-alphachannel-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-png-alphachannel-processed.png")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-png-alphachannel-thumbnail.jpg")
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -1188,53 +764,33 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("LjCGfG#6RkRn_NvzRjWF?urqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := suite.storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := suite.storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-jpeg-processed.jpg")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-jpeg-thumbnail.jpg")
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 	ctx := context.Background()
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
+	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
 		b, err := os.ReadFile("./test/test-jpeg.jpg")
 		if err != nil {
 			panic(err)
 		}
-		return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
-	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
+	temp := fmt.Sprintf("./%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
 	disk, err := disk.Open(temp, nil)
@@ -1285,36 +841,16 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("LjCGfG#6RkRn_NvzRjWF?urqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
 	suite.NoError(err)
 	suite.NotNil(dbAttachment)
 
-	// make sure the processed file is in storage
-	processedFullBytes, err := storage.Get(ctx, attachment.File.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytes)
-
-	// load the processed bytes from our test folder, to compare
-	processedFullBytesExpected, err := os.ReadFile("./test/test-jpeg-processed.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedFullBytesExpected)
-
-	// the bytes in storage should be what we expected
-	suite.Equal(processedFullBytesExpected, processedFullBytes)
-
-	// now do the same for the thumbnail and make sure it's what we expected
-	processedThumbnailBytes, err := storage.Get(ctx, attachment.Thumbnail.Path)
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytes)
-
-	processedThumbnailBytesExpected, err := os.ReadFile("./test/test-jpeg-thumbnail.jpg")
-	suite.NoError(err)
-	suite.NotEmpty(processedThumbnailBytesExpected)
-
-	suite.Equal(processedThumbnailBytesExpected, processedThumbnailBytes)
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), storage, dbAttachment.File.Path, "./test/test-jpeg-processed.jpg")
+	equalFiles(suite.T(), storage, dbAttachment.Thumbnail.Path, "./test/test-jpeg-thumbnail.jpg")
 }
 
 func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
@@ -1348,12 +884,12 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 			ctx, cncl := context.WithTimeout(context.Background(), time.Second*60)
 			defer cncl()
 
-			data := func(_ context.Context) (io.ReadCloser, int64, error) {
+			data := func(_ context.Context) (io.ReadCloser, error) {
 				// load bytes from a test image
 				b, err := os.ReadFile(test.path)
 				suite.NoError(err, "Test %d: failed during test setup", index+1)
 
-				return io.NopCloser(bytes.NewBuffer(b)), int64(len(b)), nil
+				return io.NopCloser(bytes.NewBuffer(b)), nil
 			}
 
 			accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
@@ -1390,78 +926,23 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 	}
 }
 
-func (suite *ManagerTestSuite) TestMisreportedSmallMedia() {
-	const accountID = "01FS1X72SK9ZPW0J1QQ68BD264"
-	var actualSize int
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// Load bytes from small png.
-		b, err := os.ReadFile("./test/test-png-alphachannel-1x1px.png")
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
-		actualSize = len(b)
-
-		// Report media as twice its actual size. This should be corrected.
-		return io.NopCloser(bytes.NewBuffer(b)), int64(2 * actualSize), nil
-	}
-
-	ctx := context.Background()
-
-	// process the media with no additional info provided
-	processing, err := suite.manager.CreateMedia(ctx,
-		accountID,
-		data,
-		media.AdditionalMediaInfo{},
-	)
-	suite.NoError(err)
-	suite.NotNil(processing)
-
-	// do a blocking call to fetch the attachment
-	attachment, err := processing.Load(ctx)
-	suite.NoError(err)
-	suite.NotNil(attachment)
-
-	suite.Equal(actualSize, attachment.File.FileSize)
-}
-
-func (suite *ManagerTestSuite) TestNoReportedSizeSmallMedia() {
-	const accountID = "01FS1X72SK9ZPW0J1QQ68BD264"
-	var actualSize int
-
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		// Load bytes from small png.
-		b, err := os.ReadFile("./test/test-png-alphachannel-1x1px.png")
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
-		actualSize = len(b)
-
-		// Return zero for media size. This should be detected.
-		return io.NopCloser(bytes.NewBuffer(b)), 0, nil
-	}
-
-	ctx := context.Background()
-
-	// process the media with no additional info provided
-	processing, err := suite.manager.CreateMedia(ctx,
-		accountID,
-		data,
-		media.AdditionalMediaInfo{},
-	)
-	suite.NoError(err)
-	suite.NotNil(processing)
-
-	// do a blocking call to fetch the attachment
-	attachment, err := processing.Load(ctx)
-	suite.NoError(err)
-	suite.NotNil(attachment)
-
-	suite.Equal(actualSize, attachment.File.FileSize)
-}
-
 func TestManagerTestSuite(t *testing.T) {
 	suite.Run(t, &ManagerTestSuite{})
+}
+
+// equalFiles checks whether
+func equalFiles(t *testing.T, st *storage.Driver, storagePath, testPath string) {
+	b1, err := st.Get(context.Background(), storagePath)
+	if err != nil {
+		t.Fatalf("error reading file %s: %v", storagePath, err)
+	}
+
+	b2, err := os.ReadFile(testPath)
+	if err != nil {
+		t.Fatalf("error reading file %s: %v", testPath, err)
+	}
+
+	if md5.Sum(b1) != md5.Sum(b2) {
+		t.Errorf("%s != %s", storagePath, testPath)
+	}
 }

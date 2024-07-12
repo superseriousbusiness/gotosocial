@@ -17,45 +17,103 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "threadLength" -}}
-    {{- with $length := add (len $.context.Ancestors) (len $.context.Descendants) | increment -}}
-        {{- if eq $length 1 -}}
-            {{- $length }} post
+{{- define "repliesSummary" -}}
+    {{- if .context.ThreadRepliesShown -}}
+        {{- if .context.ThreadRepliesHidden -}}
+            {{- if eq .context.ThreadReplies 1 -}}
+                {{- /* Some replies are hidden. */ -}}
+                {{ .context.ThreadRepliesShown }} visible reply
+            {{- else if gt .context.ThreadRepliesShown 1 -}}
+                {{ .context.ThreadRepliesShown }} visible replies
+            {{- end -}}
+                ; {{ .context.ThreadRepliesHidden }} more {{ if eq .context.ThreadRepliesHidden 1 }}reply{{ else }}replies{{ end }} hidden or not public
         {{- else -}}
-            {{- $length }} posts
+            {{- /* No hidden replies. */ -}}
+            {{- if eq .context.ThreadReplies 1 -}}
+                {{ .context.ThreadReplies }} reply
+            {{- else if gt .context.ThreadReplies 1 -}}
+                {{ .context.ThreadReplies }} replies
+            {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
 
+{{- define "threadSummary" -}}
+    {{- if .context.ThreadHidden -}}
+        {{- if eq .context.ThreadShown 1 -}}
+            Single visible post
+        {{- else if gt .context.ThreadShown 1 -}}
+            Thread of {{ .context.ThreadShown }} visible posts
+        {{- end -}}
+            ; {{ .context.ThreadHidden }} more {{ if eq .context.ThreadHidden 1 }}post{{ else }}posts{{ end }} hidden or not public
+    {{- else -}}
+        {{- /* No hidden posts */ -}}
+        {{- if eq .context.ThreadLength 1 -}}
+            Single post
+        {{- else if gt .context.ThreadLength 1 -}}
+            Thread of {{ .context.ThreadLength }} posts
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- define "repliesStart" -}}
 {{- with . }}
-<main data-nosnippet class="thread" aria-labelledby="thread-summary">
-    <div class="col-header">
-        <h2 id="thread-summary">Thread with {{ template "threadLength" . -}}</h2>
-        <a href="#{{- .status.ID -}}">jump to expanded post</a>
+</section>
+<section class="thread thread-replies" aria-labelledby="replies" open>
+    <div class="col-header replies">
+        <h2 id="replies">{{- template "repliesSummary" . -}}</h2>
+        <a href="#thread-summary">back to top</a>
     </div>
-    {{- range .context.Ancestors }}
-    <article
-        class="status"
-        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2 }}
-    >
-        {{- include "status.tmpl" . | indent 2 }}
-    </article>
-    {{- end }}
-    {{- with .status }}
-    <article
-        class="status expanded"
-        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2  }}
-    >
-        {{- include "status.tmpl" . | indent 2 }}
-    </article>
-    {{- end }}
-    {{- range .context.Descendants }}
-    <article
-        class="status"
-        {{- includeAttr "status_attributes.tmpl" . | indentAttr 2 }}
-    >
-        {{- include "status.tmpl" . | indent 2 }}
-    </article>
+{{- end }}
+{{- end -}}
+
+{{- with . }}
+<main class="thread-wrapper" data-nosnippet>
+    <section class="thread thread-main" aria-labelledby="thread-summary">
+        <div class="col-header">
+            <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
+            {{- if .context.ThreadRepliesShown }}
+            <a href="#replies">jump to replies</a>
+            {{- end }}
+        </div>
+
+        {{- range $thisStatus := .context.Ancestors }}
+        {{- if $thisStatus.ThreadFirstReply }}
+        {{- include "repliesStart" $ | indent 1 }}
+        {{- end }}
+        <article
+            class="status{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
+        >
+            {{- include "status.tmpl" $thisStatus | indent 3 }}
+        </article>
+        {{- end }}
+
+        {{- with $thisStatus := .context.Status }}
+        {{- if $thisStatus.ThreadFirstReply }}
+        {{- include "repliesStart" $ | indent 1 }}
+        {{- end }}
+        <article
+            class="status expanded{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3  }}
+        >
+            {{- include "status.tmpl" $thisStatus | indent 3 }}
+        </article>
+        {{- end }}
+
+        {{- range $thisStatus := .context.Descendants }}
+        {{- if $thisStatus.ThreadFirstReply }}
+        {{- include "repliesStart" $ | indent 1 }}
+        {{- end }}
+        <article
+            class="status{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
+        >
+            {{- include "status.tmpl" $thisStatus | indent 3 }}
+        </article>
+        {{- end }}
+    {{- if .context.ThreadReplies }}
+    </section>
     {{- end }}
 </main>
 {{- end }}

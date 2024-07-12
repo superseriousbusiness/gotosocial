@@ -18,6 +18,7 @@
 package testrig
 
 import (
+	"context"
 	"os"
 	"strconv"
 	"time"
@@ -26,7 +27,22 @@ import (
 	"github.com/coreos/go-oidc/v3/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
+	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 )
+
+func init() {
+	ctx := context.Background()
+
+	// Ensure global ffmpeg WASM pool initialized.
+	if err := ffmpeg.InitFfmpeg(ctx, 1); err != nil {
+		panic(err)
+	}
+
+	// Ensure global ffmpeg WASM pool initialized.
+	if err := ffmpeg.InitFfprobe(ctx, 1); err != nil {
+		panic(err)
+	}
+}
 
 // InitTestConfig initializes viper
 // configuration with test defaults.
@@ -86,11 +102,11 @@ func testDefaults() config.Configuration {
 		AccountsAllowCustomCSS:   true,
 		AccountsCustomCSSLength:  10000,
 
-		MediaImageMaxSize:        10485760, // 10MiB
-		MediaVideoMaxSize:        41943040, // 40MiB
 		MediaDescriptionMinChars: 0,
 		MediaDescriptionMaxChars: 500,
 		MediaRemoteCacheDays:     7,
+		MediaLocalMaxSize:        40 * bytesize.MiB,
+		MediaRemoteMaxSize:       40 * bytesize.MiB,
 		MediaEmojiLocalMaxSize:   51200,          // 50KiB
 		MediaEmojiRemoteMaxSize:  102400,         // 100KiB
 		MediaCleanupFrom:         "00:00",        // midnight.

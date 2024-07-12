@@ -23,30 +23,42 @@ import (
 	"net/http"
 	"net/url"
 
+	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL) (io.ReadCloser, int64, error) {
+func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL, maxsz int64) (io.ReadCloser, error) {
 	// Build IRI just once
 	iriStr := iri.String()
 
 	// Prepare HTTP request to this media's IRI
 	req, err := http.NewRequestWithContext(ctx, "GET", iriStr, nil)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 	req.Header.Add("Accept", "*/*") // we don't know what kind of media we're going to get here
 
 	// Perform the HTTP request
 	rsp, err := t.GET(req)
 	if err != nil {
-		return nil, 0, err
+		return nil, err
 	}
 
 	// Check for an expected status code
 	if rsp.StatusCode != http.StatusOK {
-		return nil, 0, gtserror.NewFromResponse(rsp)
+		return nil, gtserror.NewFromResponse(rsp)
 	}
 
-	return rsp.Body, rsp.ContentLength, nil
+	// Check media within size limit.
+	if rsp.ContentLength > maxsz {
+		_ = rsp.Body.Close()       // close early.
+		sz := bytesize.Size(maxsz) // nicer log format
+		return nil, gtserror.Newf("media body exceeds max size %s", sz)
+	}
+
+	// Update response body with maximum supported media size.
+	rsp.Body, _, _ = iotools.UpdateReadCloserLimit(rsp.Body, maxsz)
+
+	return rsp.Body, nil
 }

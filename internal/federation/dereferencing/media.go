@@ -22,6 +22,7 @@ import (
 	"io"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -69,12 +70,15 @@ func (d *Dereferencer) GetMedia(
 		return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
 	}
 
+	// Get maximum supported remote media size.
+	maxsz := config.GetMediaRemoteMaxSize()
+
 	// Start processing remote attachment at URL.
 	processing, err := d.mediaManager.CreateMedia(
 		ctx,
 		accountID,
-		func(ctx context.Context) (io.ReadCloser, int64, error) {
-			return tsport.DereferenceMedia(ctx, url)
+		func(ctx context.Context) (io.ReadCloser, error) {
+			return tsport.DereferenceMedia(ctx, url, int64(maxsz))
 		},
 		info,
 	)
@@ -163,11 +167,14 @@ func (d *Dereferencer) RefreshMedia(
 		return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
 	}
 
+	// Get maximum supported remote media size.
+	maxsz := config.GetMediaRemoteMaxSize()
+
 	// Start processing remote attachment recache.
 	processing := d.mediaManager.RecacheMedia(
 		media,
-		func(ctx context.Context) (io.ReadCloser, int64, error) {
-			return tsport.DereferenceMedia(ctx, url)
+		func(ctx context.Context) (io.ReadCloser, error) {
+			return tsport.DereferenceMedia(ctx, url, int64(maxsz))
 		},
 	)
 

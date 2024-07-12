@@ -58,7 +58,7 @@
         </span>
     </figcaption>
     <ul class="poll-options nodot">
-    {{- range $index, $pollOption := .WebPollOptions }}
+    {{- range $index, $pollOption := .PollOptions }}
         <li class="poll-option">
             <span class="sr-only">Option {{ increment $index }},</span>
             <span lang="{{- .LanguageTag.TagStr -}}">{{ emojify .Emojis (noescape $pollOption.Title) }}</span>

@@ -883,9 +883,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
 
 func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
-	requestingAccount := suite.testAccounts["admin_account"]
 
-	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus, requestingAccount)
+	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus)
 	suite.NoError(err)
 
 	// MediaAttachments should inherit
@@ -1010,7 +1009,12 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "LanguageTag": "en",
+  "PollOptions": null,
+  "Local": false,
+  "Indent": 0,
+  "ThreadFirstReply": false
 }`, string(b))
 }
 
@@ -1217,7 +1221,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -1342,7 +1346,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
         "image/webp",
         "video/mp4"
       ],
-      "image_size_limit": 10485760,
+      "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 60,
@@ -1433,7 +1437,7 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin1() {
   "id": "01F8MH9H8E4VG3KDYJR9EGPXCQ",
   "disabled": false,
   "updated_at": "2021-09-20T10:40:37.000Z",
-  "total_file_size": 47115,
+  "total_file_size": 42794,
   "content_type": "image/png",
   "uri": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"
 }`, string(b))
@@ -1455,7 +1459,7 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin2() {
   "disabled": false,
   "domain": "fossbros-anonymous.io",
   "updated_at": "2020-03-18T12:12:00.000Z",
-  "total_file_size": 21697,
+  "total_file_size": 19854,
   "content_type": "image/png",
   "uri": "http://fossbros-anonymous.io/emoji/01GD5KP5CQEE1R3X43Y1EHS2CW"
 }`, string(b))

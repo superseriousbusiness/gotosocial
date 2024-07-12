@@ -18,16 +18,10 @@
 package media
 
 import (
-	"bytes"
 	"context"
-	"io"
-	"slices"
 
-	"codeberg.org/gruf/go-bytesize"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
-	"github.com/h2non/filetype"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -125,19 +119,8 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 		// full-size media attachment details.
 		//
 		// This will update p.emoji as it goes.
-		if err = p.store(ctx); err != nil {
-			return err
-		}
-
-		// Finish processing by reloading media into
-		// memory to get dimension and generate a thumb.
-		//
-		// This will update p.emoji as it goes.
-		if err = p.finish(ctx); err != nil {
-			return err //nolint:revive
-		}
-
-		return nil
+		err = p.store(ctx)
+		return err
 	})
 	emoji = p.emoji
 	return
@@ -147,80 +130,66 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 // and updates the underlying attachment fields as necessary. It will then stream
 // bytes from p's reader directly into storage so that it can be retrieved later.
 func (p *ProcessingEmoji) store(ctx context.Context) error {
-	// Load media from provided data fun
-	rc, sz, err := p.dataFn(ctx)
+	// Load media from data func.
+	rc, err := p.dataFn(ctx)
 	if err != nil {
 		return gtserror.Newf("error executing data function: %w", err)
 	}
 
+	var (
+		// predfine temporary media
+		// file path variables so we
+		// can remove them on error.
+		temppath   string
+		staticpath string
+	)
+
 	defer func() {
-		// Ensure data reader gets closed on return.
-		if err := rc.Close(); err != nil {
-			log.Errorf(ctx, "error closing data reader: %v", err)
+		if err := remove(temppath, staticpath); err != nil {
+			log.Errorf(ctx, "error(s) cleaning up files: %v", err)
 		}
 	}()
 
-	var maxSize bytesize.Size
-
-	if p.emoji.IsLocal() {
-		// this is a local emoji upload
-		maxSize = config.GetMediaEmojiLocalMaxSize()
-	} else {
-		// this is a remote incoming emoji
-		maxSize = config.GetMediaEmojiRemoteMaxSize()
-	}
-
-	// Check that provided size isn't beyond max. We check beforehand
-	// so that we don't attempt to stream the emoji into storage if not needed.
-	if sz > 0 && sz > int64(maxSize) {
-		sz := bytesize.Size(sz) // improves log readability
-		return gtserror.Newf("given emoji size %s greater than max allowed %s", sz, maxSize)
-	}
-
-	// Prepare to read bytes from
-	// file header or magic number.
-	fileSize := int(sz)
-	hdrBuf := newHdrBuf(fileSize)
-
-	// Read into buffer as much as possible.
-	//
-	// UnexpectedEOF means we couldn't read up to the
-	// given size, but we may still have read something.
-	//
-	// EOF means we couldn't read anything at all.
-	//
-	// Any other error likely means the connection messed up.
-	//
-	// In other words, rather counterintuitively, we
-	// can only proceed on no error or unexpected error!
-	n, err := io.ReadFull(rc, hdrBuf)
+	// Drain reader to tmp file
+	// (this reader handles close).
+	temppath, err = drainToTmp(rc)
 	if err != nil {
-		if err != io.ErrUnexpectedEOF {
-			return gtserror.Newf("error reading first bytes of incoming media: %w", err)
-		}
-
-		// Initial file size was misreported, so we didn't read
-		// fully into hdrBuf. Reslice it to the size we did read.
-		hdrBuf = hdrBuf[:n]
-		fileSize = n
-		p.emoji.ImageFileSize = fileSize
+		return gtserror.Newf("error draining data to tmp: %w", err)
 	}
 
-	// Parse file type info from header buffer.
-	// This should only ever error if the buffer
-	// is empty (ie., the attachment is 0 bytes).
-	info, err := filetype.Match(hdrBuf)
+	// Pass input file through ffprobe to
+	// parse further metadata information.
+	result, err := ffprobe(ctx, temppath)
 	if err != nil {
-		return gtserror.Newf("error parsing file type: %w", err)
+		return gtserror.Newf("error ffprobing data: %w", err)
 	}
 
-	// Ensure supported emoji img type.
-	if !slices.Contains(SupportedEmojiMIMETypes, info.MIME.Value) {
-		return gtserror.Newf("unsupported emoji filetype: %s", info.Extension)
+	switch {
+	// No errors parsing data.
+	case result.Error == nil:
+
+	// Data type unhandleable by ffprobe.
+	case result.Error.Code == -1094995529:
+		log.Warn(ctx, "unsupported data type")
+		return nil
+
+	default:
+		return gtserror.Newf("ffprobe error: %w", err)
 	}
 
-	// Recombine header bytes with remaining stream
-	r := io.MultiReader(bytes.NewReader(hdrBuf), rc)
+	var ext string
+
+	// Set media type from ffprobe format data.
+	fileType, ext := result.Format.GetFileType()
+	if fileType != gtsmodel.FileTypeImage {
+		return gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
+	}
+
+	// Generate a static image from input emoji path.
+	staticpath, err = ffmpegGenerateStatic(ctx, temppath)
+	if err != nil {
+		return gtserror.Newf("error generating emoji static: %w", err)
+	}
 
 	var pathID string
 	if p.newPathID != "" {
@@ -244,33 +213,30 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,
-		info.Extension,
+		ext,
 	)
 
-	// File shouldn't already exist in storage at this point,
-	// but we do a check as it's worth logging / cleaning up.
-	if have, _ := p.mgr.state.Storage.Has(ctx, p.emoji.ImagePath); have {
-		log.Warnf(ctx, "emoji already exists at: %s", p.emoji.ImagePath)
-
-		// Attempt to remove existing emoji at storage path (might be broken / out-of-date)
-		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath); err != nil {
-			return gtserror.Newf("error removing emoji %s from storage: %v", p.emoji.ImagePath, err)
-		}
-	}
-
-	// Write the final image reader stream to our storage.
-	sz, err = p.mgr.state.Storage.PutStream(ctx, p.emoji.ImagePath, r)
+	// Copy temporary file into storage at path.
+	filesz, err := p.mgr.state.Storage.PutFile(ctx,
+		p.emoji.ImagePath,
+		temppath,
+	)
 	if err != nil {
 		return gtserror.Newf("error writing emoji to storage: %w", err)
 	}
 
-	// Perform final size check in case none was
-	// given previously, or size was mis-reported.
-	// (error here will later perform p.cleanup()).
-	if sz > int64(maxSize) {
-		sz := bytesize.Size(sz) // improves log readability
-		return gtserror.Newf("written emoji size %s greater than max allowed %s", sz, maxSize)
+	// Copy static emoji file into storage at path.
+	staticsz, err := p.mgr.state.Storage.PutFile(ctx,
+		p.emoji.ImageStaticPath,
+		staticpath,
+	)
+	if err != nil {
+		return gtserror.Newf("error writing static to storage: %w", err)
 	}
+
+	// Set final determined file sizes.
+	p.emoji.ImageFileSize = int(filesz)
+	p.emoji.ImageStaticFileSize = int(staticsz)
 
 	// Fill in remaining emoji data now it's stored.
 	p.emoji.ImageURL = uris.URIForAttachment(
@@ -278,57 +244,15 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,
-		info.Extension,
+		ext,
 	)
-	p.emoji.ImageContentType = info.MIME.Value
-	p.emoji.ImageFileSize = int(sz)
+
+	// Get mimetype for the file container
+	// type, falling back to generic data.
+	p.emoji.ImageContentType = getMimeType(ext)
+
+	// We can now consider this cached.
 	p.emoji.Cached = util.Ptr(true)
-
-	return nil
-}
-
-func (p *ProcessingEmoji) finish(ctx context.Context) error {
-	// Get a stream to the original file for further processing.
-	rc, err := p.mgr.state.Storage.GetStream(ctx, p.emoji.ImagePath)
-	if err != nil {
-		return gtserror.Newf("error loading file from storage: %w", err)
-	}
-	defer rc.Close()
-
-	// Decode the image from storage.
-	staticImg, err := decodeImage(rc)
-	if err != nil {
-		return gtserror.Newf("error decoding image: %w", err)
-	}
-
-	// staticImg should be in-memory by
-	// now so we're done with storage.
-	if err := rc.Close(); err != nil {
-		return gtserror.Newf("error closing file: %w", err)
-	}
-
-	// Static img shouldn't exist in storage at this point,
-	// but we do a check as it's worth logging / cleaning up.
-	if have, _ := p.mgr.state.Storage.Has(ctx, p.emoji.ImageStaticPath); have {
-		log.Warnf(ctx, "static emoji already exists at: %s", p.emoji.ImageStaticPath)
-
-		// Attempt to remove existing thumbnail (might be broken / out-of-date).
-		if err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath); err != nil {
-			return gtserror.Newf("error removing static emoji %s from storage: %v", p.emoji.ImageStaticPath, err)
-		}
-	}
-
-	// Create emoji PNG encoder stream.
-	enc := staticImg.ToPNG()
-
-	// Stream-encode the PNG static emoji image into our storage driver.
-	sz, err := p.mgr.state.Storage.PutStream(ctx, p.emoji.ImageStaticPath, enc)
-	if err != nil {
-		return gtserror.Newf("error stream-encoding static emoji to storage: %w", err)
-	}
-
-	// Set final written thumb size.
-	p.emoji.ImageStaticFileSize = int(sz)
 
 	return nil
 }

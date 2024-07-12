@@ -102,28 +102,34 @@ type Status struct {
 	Text string `json:"text,omitempty"`
 	// A list of filters that matched this status and why they matched, if there are any such filters.
 	Filtered []FilterResult `json:"filtered,omitempty"`
+}
 
-	// Additional fields not exposed via JSON
-	// (used only internally for templating etc).
+// WebStatus is like *model.Status, but contains
+// additional fields used only for HTML templating.
+//
+// swagger:ignore
+type WebStatus struct {
+	*Status
 
-	// Template-ready language tag + string, based
-	// on *status.Language. Nil for non-web statuses.
-	//
-	// swagger:ignore
-	LanguageTag *language.Language `json:"-"`
+	// Template-ready language tag and
+	// string, based on *status.Language.
+	LanguageTag *language.Language
 
 	// Template-ready poll options with vote shares
 	// calculated as a percentage of total votes.
-	// Nil for non-web statuses.
-	//
-	// swagger:ignore
-	WebPollOptions []WebPollOption `json:"-"`
+	PollOptions []WebPollOption
 
 	// Status is from a local account.
-	// Always false for non-web statuses.
-	//
-	// swagger:ignore
-	Local bool `json:"-"`
+	Local bool
+
+	// Level of indentation at which to
+	// display this status in the web view.
+	Indent int
+
+	// This status is the first status after
+	// the "main" thread, so it and everything
+	// below it can be considered "replies".
+	ThreadFirstReply bool
 }
 
 /*

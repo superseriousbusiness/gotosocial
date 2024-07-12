@@ -62,7 +62,7 @@ func (suite *EmojiDeleteTestSuite) TestEmojiDelete1() {
   "id": "01F8MH9H8E4VG3KDYJR9EGPXCQ",
   "disabled": false,
   "updated_at": "2021-09-20T10:40:37.000Z",
-  "total_file_size": 47115,
+  "total_file_size": 42794,
   "content_type": "image/png",
   "uri": "http://localhost:8080/emoji/01F8MH9H8E4VG3KDYJR9EGPXCQ"
 }`, dst.String())

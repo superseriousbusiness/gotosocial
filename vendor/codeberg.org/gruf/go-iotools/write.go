@@ -28,7 +28,10 @@ func WriteCloser(w io.Writer, c io.Closer) io.WriteCloser {
 
 // NopWriteCloser wraps an io.Writer to implement io.WriteCloser with empty io.Closer implementation.
 func NopWriteCloser(w io.Writer) io.WriteCloser {
-	return WriteCloser(w, CloserFunc(func() error {
-		return nil
-	}))
+	return &nopWriteCloser{w}
 }
+
+// nopWriteCloser implements io.WriteCloser with a no-op Close().
+type nopWriteCloser struct{ io.Writer }
+
+func (wc *nopWriteCloser) Close() error { return nil }

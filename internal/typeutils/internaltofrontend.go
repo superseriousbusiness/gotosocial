@@ -982,11 +982,21 @@ func filterAppliesInContext(filter *gtsmodel.Filter, filterContext statusfilter.
 func (c *Converter) StatusToWebStatus(
 	ctx context.Context,
 	s *gtsmodel.Status,
-	requestingAccount *gtsmodel.Account,
-) (*apimodel.Status, error) {
-	webStatus, err := c.statusToFrontend(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+) (*apimodel.WebStatus, error) {
+	apiStatus, err := c.statusToFrontend(
+		ctx,
+		s,
+		nil, // No authed requester.
+		statusfilter.FilterContextNone,
+		nil, // No filters.
+		nil, // No mutes.
+	)
 	if err != nil {
 		return nil, err
+	}
+
+	webStatus := &apimodel.WebStatus{
+		Status: apiStatus,
 	}
 
 	// Whack a newline before and after each "pre" to make it easier to outdent it.
@@ -1014,7 +1024,7 @@ func (c *Converter) StatusToWebStatus(
 		// format them for easier template consumption.
 		totalVotes := poll.VotesCount
 
-		webPollOptions := make([]apimodel.WebPollOption, len(poll.Options))
+		PollOptions := make([]apimodel.WebPollOption, len(poll.Options))
 		for i, option := range poll.Options {
 			var voteShare float32
 
@@ -1046,10 +1056,10 @@ func (c *Converter) StatusToWebStatus(
 				VoteShare:    voteShare,
 				VoteShareStr: voteShareStr,
 			}
-			webPollOptions[i] = webPollOption
+			PollOptions[i] = webPollOption
 		}
 
-		webStatus.WebPollOptions = webPollOptions
+		webStatus.PollOptions = PollOptions
 	}
 
 	// Set additional templating
@@ -1058,6 +1068,7 @@ func (c *Converter) StatusToWebStatus(
 		a.Sensitive = webStatus.Sensitive
 	}
 
+	// Mark this as a local status.
 	webStatus.Local = *s.Local
 
 	return webStatus, nil
@@ -1385,9 +1396,9 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
-	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize())
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
-	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaVideoMaxSize())
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize())
 	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
 	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
@@ -1525,9 +1536,9 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
-	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaImageMaxSize())
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize())
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
-	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaVideoMaxSize())
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize())
 	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
 	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
