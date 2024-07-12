@@ -8019,21 +8019,6 @@ paths:
                   name: federated
                   type: boolean
                   x-go-name: Federated
-                - description: This status can be boosted/reblogged.
-                  in: formData
-                  name: boostable
-                  type: boolean
-                  x-go-name: Boostable
-                - description: This status can be replied to.
-                  in: formData
-                  name: replyable
-                  type: boolean
-                  x-go-name: Replyable
-                - description: This status can be liked/faved.
-                  in: formData
-                  name: likeable
-                  type: boolean
-                  x-go-name: Likeable
             produces:
                 - application/json
             responses:

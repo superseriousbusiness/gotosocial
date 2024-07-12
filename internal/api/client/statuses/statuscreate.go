@@ -168,24 +168,6 @@ import (
 //		description: This status will be federated beyond the local timeline(s).
 //		in: formData
 //		type: boolean
-//	-
-//		name: boostable
-//		x-go-name: Boostable
-//		description: This status can be boosted/reblogged.
-//		in: formData
-//		type: boolean
-//	-
-//		name: replyable
-//		x-go-name: Replyable
-//		description: This status can be replied to.
-//		in: formData
-//		type: boolean
-//	-
-//		name: likeable
-//		x-go-name: Likeable
-//		description: This status can be liked/faved.
-//		in: formData
-//		type: boolean
 //
 //	produces:
 //	- application/json
