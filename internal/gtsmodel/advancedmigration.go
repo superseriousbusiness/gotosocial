@@ -28,13 +28,13 @@ type AdvancedMigration struct {
 	ID        string    `bun:",pk,nullzero,notnull,unique"`                                 // id of this migration (preassigned, not a ULID)
 	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	StateJson string    `bun:",nullzero"`                                                   // JSON dump of the migration state
+	StateJSON string    `bun:",nullzero"`                                                   // JSON dump of the migration state
 	Finished  *bool     `bun:",nullzero,notnull,default:false"`                             // has this migration finished?
 }
 
 func AdvancedMigrationLoad[State any](a *AdvancedMigration) (State, error) {
 	var state State
-	err := json.Unmarshal([]byte(a.StateJson), state)
+	err := json.Unmarshal([]byte(a.StateJSON), state)
 	return state, err
 }
 
@@ -43,6 +43,6 @@ func AdvancedMigrationStore[State any](a *AdvancedMigration, state State) error 
 	if err != nil {
 		return err
 	}
-	a.StateJson = string(bytes)
+	a.StateJSON = string(bytes)
 	return nil
 }

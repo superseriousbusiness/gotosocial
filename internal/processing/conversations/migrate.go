@@ -53,6 +53,10 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 		}
 		// Otherwise, pick up where we left off.
 		state, err = gtsmodel.AdvancedMigrationLoad[AdvancedMigrationState](advancedMigration)
+		if err != nil {
+			// This should never happen.
+			return gtserror.Newf("couldn't deserialize advanced migration state from JSON: %w", err)
+		}
 	} else {
 		// Start at the beginning.
 		state.MinID = id.Lowest
