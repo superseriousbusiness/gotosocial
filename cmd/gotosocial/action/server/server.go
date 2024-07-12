@@ -452,10 +452,10 @@ func precompileWASM(ctx context.Context) error {
 	if err := sqlite3.Initialize(); err != nil {
 		return gtserror.Newf("error compiling sqlite3: %w", err)
 	}
-	if err := ffmpeg.InitFfmpeg(ctx, 2*maxprocs); err != nil {
+	if err := ffmpeg.InitFfmpeg(ctx, maxprocs); err != nil {
 		return gtserror.Newf("error compiling ffmpeg: %w", err)
 	}
-	if err := ffmpeg.InitFfprobe(ctx, 2*maxprocs); err != nil {
+	if err := ffmpeg.InitFfprobe(ctx, maxprocs); err != nil {
 		return gtserror.Newf("error compiling ffprobe: %w", err)
 	}
 	return nil
