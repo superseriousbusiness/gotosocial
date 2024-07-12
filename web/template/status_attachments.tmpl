@@ -109,7 +109,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
             </summary>
             {{- if eq .Type "video" }}
             <video
-                preload="metadata"
+                preload="none"
                 class="plyr-video photoswipe-slide"
                 controls
                 data-pswp-index="{{- $index -}}"
@@ -125,7 +125,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
             </video>
             {{- else if eq .Type "audio" }}
             <video
-                preload="metadata"
+                preload="none"
                 class="plyr-video photoswipe-slide"
                 controls
                 data-pswp-index="{{- $index -}}"
