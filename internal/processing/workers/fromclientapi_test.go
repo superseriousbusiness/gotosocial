@@ -885,6 +885,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 	)
 }
 
+// A DM to a local user should create a conversation and accompanying notification.
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversation() {
 	testStructs := suite.SetupTestStructs()
 	defer suite.TearDownTestStructs(testStructs)
@@ -966,6 +967,74 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversat
 		true,
 		conversationJSON,
 		stream.EventTypeConversation,
+	)
+}
+
+// A public message to a local user should not result in a conversation notification.
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichShouldNotCreateConversation() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["local_account_2"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream   = streams[stream.TimelineHome]
+		directStream = streams[stream.TimelineDirect]
+
+		// turtle posts a new top-level public message mentioning zork.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			[]*gtsmodel.Account{receivingAccount},
+			true,
+		)
+	)
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
+	// Check mention notification in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeNotification,
+	)
+
+	// Check for absence of conversation notification in direct stream.
+	suite.checkStreamed(
+		directStream,
+		false,
+		"",
+		"",
 	)
 }
 
