@@ -17,12 +17,48 @@
 
 package model
 
-// Context models the tree around a given status.
+// ThreadContext models the tree or
+// "thread" around a given status.
 //
-// swagger:model statusContext
-type Context struct {
+// swagger:model threadContext
+type ThreadContext struct {
 	// Parents in the thread.
 	Ancestors []Status `json:"ancestors"`
 	// Children in the thread.
 	Descendants []Status `json:"descendants"`
+}
+
+type WebThreadContext struct {
+	// Parents in the thread.
+	Ancestors []*WebStatus `json:"ancestors"`
+
+	// Children in the thread.
+	Descendants []*WebStatus `json:"descendants"`
+
+	// The status around which the ancestors
+	// + descendants context was constructed.
+	Status *WebStatus `json:"-"`
+
+	// Total length of
+	// the main thread.
+	ThreadLength int
+
+	// Number of entries in
+	// the main thread shown.
+	ThreadShown int
+
+	// Number of statuses hidden
+	// from the main thread (not
+	// visible to requester etc).
+	ThreadHidden int
+
+	// Total number of replies
+	// in the replies section.
+	ThreadReplies int
+
+	// Number of replies shown.
+	ThreadRepliesShown int
+
+	// Number of replies hidden.
+	ThreadRepliesHidden int
 }

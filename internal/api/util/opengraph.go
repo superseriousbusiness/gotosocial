@@ -105,7 +105,7 @@ func (og *OGMeta) WithAccount(account *apimodel.Account) *OGMeta {
 // WithStatus uses the given status to build an ogMeta
 // struct specific to that status. It's suitable for serving
 // at status pages.
-func (og *OGMeta) WithStatus(status *apimodel.Status) *OGMeta {
+func (og *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
 	og.Title = "Post by " + AccountTitle(status.Account, og.SiteName)
 	og.Type = "article"
 	if status.Language != nil {

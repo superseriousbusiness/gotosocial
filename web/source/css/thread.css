@@ -17,11 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-.thread {
+.thread,
+.thread-wrapper {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
+}
 
+.thread {
 	/*
 		This column header might contain
 		quite some info, so let it wrap.
@@ -42,8 +45,40 @@
 	}
 
 	.status {
-		border-radius: 0;
 
+
+		&.indent-1 {
+			margin-left: 0.5rem;
+		}
+
+		&.indent-2 {
+			margin-left: 1rem;
+		}
+
+		&.indent-3 {
+			margin-left: 1.5rem;
+		}
+
+		&.indent-4 {
+			margin-left: 2rem;
+		}
+
+		&.indent-5 {
+			margin-left: 2.5rem;
+		}
+
+		&.indent-1,
+		&.indent-2,
+		&.indent-3,
+		&.indent-4,
+		&.indent-5 {
+			.status-link {
+				margin-left: -0.5rem;
+				border-left: 0.1rem dashed $border-accent;
+			}
+		}
+
+		border-radius: 0;
 		&:last-child {
 			border-bottom-left-radius: $br;
 			border-bottom-right-radius: $br;
