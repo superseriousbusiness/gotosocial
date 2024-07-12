@@ -36,16 +36,16 @@
 {{- end }}
 
 {{- define "videoPreview" }}
-<video
+<img
+    src="{{- .PreviewURL -}}"
+    loading="lazy"
     {{- if .Description }}
     alt="{{- .Description -}}"
     title="{{- .Description -}}"
     {{- end }}
-    width="{{- .Meta.Original.Width -}}"
-    height="{{- .Meta.Original.Height -}}"
->
-    <source type="{{- .MIMEType -}}" src="{{- .URL -}}"/>
-</video>
+    width="{{- .Meta.Small.Width -}}"
+    height="{{- .Meta.Small.Height -}}"
+/>
 {{- end }}
 
 {{- define "audioPreview" }}
@@ -109,11 +109,13 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
             </summary>
             {{- if eq .Type "video" }}
             <video
+                preload="metadata"
                 class="plyr-video photoswipe-slide"
                 controls
                 data-pswp-index="{{- $index -}}"
-                data-pswp-width="{{- $media.Meta.Original.Width -}}px"
-                data-pswp-height="{{- $media.Meta.Original.Height -}}px"
+                poster="{{- .PreviewURL -}}"
+                data-pswp-width="{{- $media.Meta.Small.Width -}}px"
+                data-pswp-height="{{- $media.Meta.Small.Height -}}px"
                 {{- if .Description }}
                 alt="{{- $media.Description -}}"
                 title="{{- $media.Description -}}"
@@ -123,6 +125,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
             </video>
             {{- else if eq .Type "audio" }}
             <video
+                preload="metadata"
                 class="plyr-video photoswipe-slide"
                 controls
                 data-pswp-index="{{- $index -}}"
