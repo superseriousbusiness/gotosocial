@@ -24,7 +24,7 @@ import (
 	"io"
 	"mime/multipart"
 
-	"codeberg.org/gruf/go-bytesize"
+	"codeberg.org/gruf/go-iotools"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -365,21 +365,31 @@ func (p *Processor) UpdateAvatar(
 	*gtsmodel.MediaAttachment,
 	gtserror.WithCode,
 ) {
-	max := config.GetMediaImageMaxSize()
-	if sz := bytesize.Size(avatar.Size); sz > max {
-		text := fmt.Sprintf("size %s exceeds max media size %s", sz, max)
+	// Get maximum supported local media size.
+	maxsz := config.GetMediaLocalMaxSize()
+
+	// Ensure media within size bounds.
+	if avatar.Size > int64(maxsz) {
+		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		f, err := avatar.Open()
-		return f, avatar.Size, err
+	// Open multipart file reader.
+	mpfile, err := avatar.Open()
+	if err != nil {
+		err := gtserror.Newf("error opening multipart file: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Wrap the multipart file reader to ensure is limited to max.
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
 
 	// Write to instance storage.
 	return p.c.StoreLocalMedia(ctx,
 		account.ID,
-		data,
+		func(ctx context.Context) (reader io.ReadCloser, err error) {
+			return rc, nil
+		},
 		media.AdditionalMediaInfo{
 			Avatar:      util.Ptr(true),
 			Description: description,
@@ -400,21 +410,31 @@ func (p *Processor) UpdateHeader(
 	*gtsmodel.MediaAttachment,
 	gtserror.WithCode,
 ) {
-	max := config.GetMediaImageMaxSize()
-	if sz := bytesize.Size(header.Size); sz > max {
-		text := fmt.Sprintf("size %s exceeds max media size %s", sz, max)
+	// Get maximum supported local media size.
+	maxsz := config.GetMediaLocalMaxSize()
+
+	// Ensure media within size bounds.
+	if header.Size > int64(maxsz) {
+		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		f, err := header.Open()
-		return f, header.Size, err
+	// Open multipart file reader.
+	mpfile, err := header.Open()
+	if err != nil {
+		err := gtserror.Newf("error opening multipart file: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Wrap the multipart file reader to ensure is limited to max.
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
 
 	// Write to instance storage.
 	return p.c.StoreLocalMedia(ctx,
 		account.ID,
-		data,
+		func(ctx context.Context) (reader io.ReadCloser, err error) {
+			return rc, nil
+		},
 		media.AdditionalMediaInfo{
 			Header:      util.Ptr(true),
 			Description: description,

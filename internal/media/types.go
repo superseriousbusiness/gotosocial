@@ -144,4 +144,4 @@ type AdditionalEmojiInfo struct {
 }
 
 // DataFunc represents a function used to retrieve the raw bytes of a piece of media.
-type DataFunc func(ctx context.Context) (reader io.ReadCloser, fileSize int64, err error)
+type DataFunc func(ctx context.Context) (reader io.ReadCloser, err error)

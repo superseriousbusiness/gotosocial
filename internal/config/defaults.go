@@ -71,11 +71,11 @@ var Defaults = Configuration{
 	AccountsAllowCustomCSS:   false,
 	AccountsCustomCSSLength:  10000,
 
-	MediaImageMaxSize:        10 * bytesize.MiB,
-	MediaVideoMaxSize:        40 * bytesize.MiB,
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 1500,
 	MediaRemoteCacheDays:     7,
+	MediaLocalMaxSize:        40 * bytesize.MiB,
+	MediaRemoteMaxSize:       40 * bytesize.MiB,
 	MediaEmojiLocalMaxSize:   50 * bytesize.KiB,
 	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
 	MediaCleanupFrom:         "00:00",        // Midnight.

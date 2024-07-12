@@ -21,6 +21,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -35,8 +36,9 @@ func (p *Processor) MediaRefetch(ctx context.Context, requestingAccount *gtsmode
 	}
 
 	go func() {
+		ctx := gtscontext.WithValues(context.Background(), ctx)
 		log.Info(ctx, "starting emoji refetch")
-		refetched, err := p.media.RefetchEmojis(context.Background(), domain, transport.DereferenceMedia)
+		refetched, err := p.media.RefetchEmojis(ctx, domain, transport.DereferenceMedia)
 		if err != nil {
 			log.Errorf(ctx, "error refetching emojis: %s", err)
 		} else {

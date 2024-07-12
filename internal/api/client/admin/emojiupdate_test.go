@@ -100,19 +100,19 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	suite.Equal("image/png", dbEmoji.ImageContentType)
 	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
 	suite.Equal(36702, dbEmoji.ImageFileSize)
-	suite.Equal(10413, dbEmoji.ImageStaticFileSize)
+	suite.Equal(6092, dbEmoji.ImageStaticFileSize)
 	suite.False(*dbEmoji.Disabled)
 	suite.NotEmpty(dbEmoji.URI)
 	suite.True(*dbEmoji.VisibleInPicker)
 	suite.NotEmpty(dbEmoji.CategoryID)
 
 	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
+	entry, err := suite.storage.Storage.Stat(ctx, dbEmoji.ImagePath)
 	suite.NoError(err)
-	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
+	suite.Equal(int64(dbEmoji.ImageFileSize), entry.Size)
+	entry, err = suite.storage.Storage.Stat(ctx, dbEmoji.ImageStaticPath)
 	suite.NoError(err)
-	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
+	suite.Equal(int64(dbEmoji.ImageStaticFileSize), entry.Size)
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
@@ -177,19 +177,19 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
 	suite.Equal("image/png", dbEmoji.ImageContentType)
 	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
 	suite.Equal(36702, dbEmoji.ImageFileSize)
-	suite.Equal(10413, dbEmoji.ImageStaticFileSize)
+	suite.Equal(6092, dbEmoji.ImageStaticFileSize)
 	suite.False(*dbEmoji.Disabled)
 	suite.NotEmpty(dbEmoji.URI)
 	suite.True(*dbEmoji.VisibleInPicker)
 	suite.NotEmpty(dbEmoji.CategoryID)
 
 	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
+	entry, err := suite.storage.Storage.Stat(ctx, dbEmoji.ImagePath)
 	suite.NoError(err)
-	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
+	suite.Equal(int64(dbEmoji.ImageFileSize), entry.Size)
+	entry, err = suite.storage.Storage.Stat(ctx, dbEmoji.ImageStaticPath)
 	suite.NoError(err)
-	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
+	suite.Equal(int64(dbEmoji.ImageStaticFileSize), entry.Size)
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
@@ -255,19 +255,19 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
 	suite.Equal("image/png", dbEmoji.ImageContentType)
 	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
 	suite.Equal(10889, dbEmoji.ImageFileSize)
-	suite.Equal(10672, dbEmoji.ImageStaticFileSize)
+	suite.Equal(8965, dbEmoji.ImageStaticFileSize)
 	suite.False(*dbEmoji.Disabled)
 	suite.NotEmpty(dbEmoji.URI)
 	suite.True(*dbEmoji.VisibleInPicker)
 	suite.NotEmpty(dbEmoji.CategoryID)
 
 	// emoji should be in storage
-	emojiBytes, err := suite.storage.Get(ctx, dbEmoji.ImagePath)
+	entry, err := suite.storage.Storage.Stat(ctx, dbEmoji.ImagePath)
 	suite.NoError(err)
-	suite.Len(emojiBytes, dbEmoji.ImageFileSize)
-	emojiStaticBytes, err := suite.storage.Get(ctx, dbEmoji.ImageStaticPath)
+	suite.Equal(int64(dbEmoji.ImageFileSize), entry.Size)
+	entry, err = suite.storage.Storage.Stat(ctx, dbEmoji.ImageStaticPath)
 	suite.NoError(err)
-	suite.Len(emojiStaticBytes, dbEmoji.ImageStaticFileSize)
+	suite.Equal(int64(dbEmoji.ImageStaticFileSize), entry.Size)
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableEmoji() {

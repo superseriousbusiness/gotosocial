@@ -7,25 +7,24 @@
 ##### MEDIA CONFIG #####
 ########################
 
-# Config pertaining to media uploads (videos, image, image descriptions, emoji).
+# Config pertaining to media uploads (media, image descriptions, emoji).
 
-# Size. Maximum allowed image upload size in bytes.
-#
-# Raising this limit may cause other servers to not fetch media
-# attached to a post.
-#
-# Examples: [2097152, 10485760, 10MB, 10MiB]
-# Default: 10MiB (10485760 bytes)
-media-image-max-size: 10MiB
-
-# Size. Maximum allowed video upload size in bytes.
+# Size. Max size in bytes of media uploads via API.
 #
 # Raising this limit may cause other servers to not fetch media
 # attached to a post.
 #
 # Examples: [2097152, 10485760, 40MB, 40MiB]
 # Default: 40MiB (41943040 bytes)
-media-video-max-size: 40MiB
+media-local-max-size: 40MiB
+
+# Size. Max size in bytes of media to download from other instances.
+#
+# Lowering this limit may cause your instance not to fetch post media.
+#
+# Examples: [2097152, 10485760, 40MB, 40MiB]
+# Default: 40MiB (41943040 bytes)
+media-remote-max-size: 40MiB
 
 # Int. Minimum amount of characters required as an image or video description.
 # Examples: [500, 1000, 1500]

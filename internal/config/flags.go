@@ -97,11 +97,11 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Bool(AccountsAllowCustomCSSFlag(), cfg.AccountsAllowCustomCSS, fieldtag("AccountsAllowCustomCSS", "usage"))
 
 		// Media
-		cmd.Flags().Uint64(MediaImageMaxSizeFlag(), uint64(cfg.MediaImageMaxSize), fieldtag("MediaImageMaxSize", "usage"))
-		cmd.Flags().Uint64(MediaVideoMaxSizeFlag(), uint64(cfg.MediaVideoMaxSize), fieldtag("MediaVideoMaxSize", "usage"))
 		cmd.Flags().Int(MediaDescriptionMinCharsFlag(), cfg.MediaDescriptionMinChars, fieldtag("MediaDescriptionMinChars", "usage"))
 		cmd.Flags().Int(MediaDescriptionMaxCharsFlag(), cfg.MediaDescriptionMaxChars, fieldtag("MediaDescriptionMaxChars", "usage"))
 		cmd.Flags().Int(MediaRemoteCacheDaysFlag(), cfg.MediaRemoteCacheDays, fieldtag("MediaRemoteCacheDays", "usage"))
+		cmd.Flags().Uint64(MediaLocalMaxSizeFlag(), uint64(cfg.MediaLocalMaxSize), fieldtag("MediaLocalMaxSize", "usage"))
+		cmd.Flags().Uint64(MediaRemoteMaxSizeFlag(), uint64(cfg.MediaRemoteMaxSize), fieldtag("MediaRemoteMaxSize", "usage"))
 		cmd.Flags().Uint64(MediaEmojiLocalMaxSizeFlag(), uint64(cfg.MediaEmojiLocalMaxSize), fieldtag("MediaEmojiLocalMaxSize", "usage"))
 		cmd.Flags().Uint64(MediaEmojiRemoteMaxSizeFlag(), uint64(cfg.MediaEmojiRemoteMaxSize), fieldtag("MediaEmojiRemoteMaxSize", "usage"))
 		cmd.Flags().String(MediaCleanupFromFlag(), cfg.MediaCleanupFrom, fieldtag("MediaCleanupFrom", "usage"))

@@ -19,10 +19,13 @@ package media
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
+	"codeberg.org/gruf/go-iotools"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -30,21 +33,39 @@ import (
 
 // Create creates a new media attachment belonging to the given account, using the request form.
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
-	data := func(_ context.Context) (io.ReadCloser, int64, error) {
-		f, err := form.File.Open()
-		return f, form.File.Size, err
+
+	// Get maximum supported local media size.
+	maxsz := config.GetMediaLocalMaxSize()
+
+	// Ensure media within size bounds.
+	if form.File.Size > int64(maxsz) {
+		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
+		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
+	// Parse focus details from API form input.
 	focusX, focusY, err := parseFocus(form.Focus)
 	if err != nil {
-		err := fmt.Errorf("could not parse focus value %s: %s", form.Focus, err)
-		return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		text := fmt.Sprintf("could not parse focus value %s: %s", form.Focus, err)
+		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
+
+	// Open multipart file reader.
+	mpfile, err := form.File.Open()
+	if err != nil {
+		err := gtserror.Newf("error opening multipart file: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Wrap the multipart file reader to ensure is limited to max.
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
 
 	// Create local media and write to instance storage.
 	attachment, errWithCode := p.c.StoreLocalMedia(ctx,
 		account.ID,
-		data,
+		func(ctx context.Context) (reader io.ReadCloser, err error) {
+			return rc, nil
+		},
 		media.AdditionalMediaInfo{
 			Description: &form.Description,
 			FocusX:      &focusX,
