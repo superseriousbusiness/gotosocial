@@ -62,7 +62,7 @@
 {{- with . }}
 </section>
 <section class="thread thread-replies" aria-labelledby="replies" open>
-    <div class="col-header replies">
+    <div class="col-header replies{{- if not .context.ThreadRepliesShown }} hidden-only{{- end -}}">
         <h2 id="replies">{{- template "repliesSummary" . -}}</h2>
         <a href="#thread-summary">back to top</a>
     </div>
