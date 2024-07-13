@@ -36,7 +36,7 @@
             {{- end -}}
         {{- end -}}
     {{- else -}}
-        {{- if eq .context.ThreadRepliesHidden 1 -}}reply{{- else -}}replies{{- end }} hidden or not public
+        {{- .context.ThreadRepliesHidden }} {{ if eq .context.ThreadRepliesHidden 1 }}reply{{ else }}replies{{ end }} hidden or not public
     {{- end -}}
 {{- end -}}
 
