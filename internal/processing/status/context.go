@@ -400,8 +400,7 @@ func (p *Processor) WebContextGet(
 
 	// Start preparing web context.
 	wCtx := &apimodel.WebThreadContext{
-		Ancestors:   make([]*apimodel.WebStatus, 0, len(iCtx.ancestors)),
-		Descendants: make([]*apimodel.WebStatus, 0, len(iCtx.descendants)),
+		Statuses: make([]*apimodel.WebStatus, 0, len(wholeThread)),
 	}
 
 	var (
@@ -415,72 +414,70 @@ func (p *Processor) WebContextGet(
 		// ie., who created first post in the thread.
 		contextAcctID = wholeThread[0].AccountID
 
-		// Position of target status in wholeThread,
-		// we put it on top of ancestors.
-		targetStatusIdx = len(iCtx.ancestors)
-
-		// Position from which we should add
-		// to descendants and not to ancestors.
-		descendantsIdx = targetStatusIdx + 1
-
 		// Whether we've reached end of "main"
 		// thread and are now looking at replies.
 		inReplies bool
 
-		// Index in wholeThread where
-		// the "main" thread ends.
+		// Index in wholeThread
+		// where replies begin.
 		firstReplyIdx int
 
 		// We should mark the next **VISIBLE**
 		// reply as the first reply.
-		markNextVisibleAsReply bool
+		markNextVisibleAsFirstReply bool
 	)
 
 	for idx, status := range wholeThread {
 		if !inReplies {
-			// Haven't reached end
-			// of "main" thread yet.
-			//
-			// First post in wholeThread can't
-			// be a self reply, so ignore it.
-			//
-			// That aside, first non-self-reply
-			// in wholeThread means the "main"
-			// thread is now over.
-			if idx != 0 && !isSelfReply(status, contextAcctID) {
-				// Jot some stuff down.
-				firstReplyIdx = idx
+			// Check if we've reached replies
+			// by looking for the first status
+			// that's not a self-reply, ie.,
+			// not a post in the "main" thread.
+			switch {
+			case idx == 0:
+				// First post in wholeThread can't
+				// be a self reply anyway because
+				// it (very likely) doesn't reply
+				// to anything, so ignore it.
+
+			case !isSelfReply(status, contextAcctID):
+				// This is not a self-reply, which
+				// means it's a reply from another
+				// account. So, replies start here.
 				inReplies = true
-				markNextVisibleAsReply = true
+				firstReplyIdx = idx
+				markNextVisibleAsFirstReply = true
 			}
 		}
 
 		// Ensure status is actually
-		// visible to just anyone.
+		// visible to just anyone, and
+		// hide / don't include it if not.
 		v, err := p.filter.StatusVisible(ctx, nil, status)
 		if err != nil || !v {
-			// Skip this one.
 			if !inReplies {
+				// Main thread entry hidden.
 				wCtx.ThreadHidden++
 			} else {
+				// Reply hidden.
 				wCtx.ThreadRepliesHidden++
 			}
 			continue
 		}
 
-		// Prepare status to add to thread context.
-		apiStatus, err := p.converter.StatusToWebStatus(ctx, status)
+		// Prepare visible status to add to thread context.
+		webStatus, err := p.converter.StatusToWebStatus(ctx, status)
 		if err != nil {
 			continue
 		}
 
-		if markNextVisibleAsReply {
+		if markNextVisibleAsFirstReply {
 			// This is the first visible
 			// "reply / comment", so the
 			// little "x amount of replies"
 			// header should go above this.
-			apiStatus.ThreadFirstReply = true
-			markNextVisibleAsReply = false
+			webStatus.ThreadFirstReply = true
+			markNextVisibleAsFirstReply = false
 		}
 
 		// If this is a reply, work out the indent of
@@ -491,59 +488,47 @@ func (p *Processor) WebContextGet(
 			case !ok:
 				// No parent with
 				// indent, start at 0.
-				apiStatus.Indent = 0
+				webStatus.Indent = 0
 
 			case isSelfReply(status, status.AccountID):
 				// Self reply, so indent at same
 				// level as own replied-to status.
-				apiStatus.Indent = parentIndent
+				webStatus.Indent = parentIndent
 
 			case parentIndent == 5:
 				// Already indented as far as we
 				// can go to keep things readable
 				// on thin screens, so just keep
 				// parent's indent.
-				apiStatus.Indent = parentIndent
+				webStatus.Indent = parentIndent
 
 			default:
 				// Reply to someone else who's
 				// indented, but not to TO THE MAX.
 				// Indent by another one.
-				apiStatus.Indent = parentIndent + 1
+				webStatus.Indent = parentIndent + 1
 			}
 
 			// Store the indent for this status.
-			statusIndents[status.ID] = apiStatus.Indent
+			statusIndents[status.ID] = webStatus.Indent
 		}
 
-		switch {
-		case idx == targetStatusIdx:
-			// This is the target status itself.
-			wCtx.Status = apiStatus
-
-		case idx < descendantsIdx:
-			// Haven't reached descendants yet,
-			// so this must be an ancestor.
-			wCtx.Ancestors = append(
-				wCtx.Ancestors,
-				apiStatus,
-			)
-
-		default:
-			// We're in descendants town now.
-			wCtx.Descendants = append(
-				wCtx.Descendants,
-				apiStatus,
-			)
+		if webStatus.ID == targetStatusID {
+			// This is the og
+			// thread context status.
+			webStatus.ThreadContextStatus = true
+			wCtx.Status = webStatus
 		}
+
+		wCtx.Statuses = append(wCtx.Statuses, webStatus)
 	}
 
 	// Now we've gone through the whole
 	// thread, we can add some additional info.
 
 	// Length of the "main" thread. If there are
-	// replies then it's up to where the replies
-	// start, otherwise it's the whole thing.
+	// visible replies then it's up to where the
+	// replies start, else it's the whole thing.
 	if inReplies {
 		wCtx.ThreadLength = firstReplyIdx
 	} else {
@@ -552,6 +537,9 @@ func (p *Processor) WebContextGet(
 
 	// Jot down number of hidden posts so template doesn't have to do it.
 	wCtx.ThreadShown = wCtx.ThreadLength - wCtx.ThreadHidden
+
+	// Mark the last "main" visible status.
+	wCtx.Statuses[wCtx.ThreadShown-1].ThreadLastMain = true
 
 	// Number of replies is equal to number
 	// of statuses in the thread that aren't

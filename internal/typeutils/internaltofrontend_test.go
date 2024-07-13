@@ -1014,6 +1014,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
   "PollOptions": null,
   "Local": false,
   "Indent": 0,
+  "ThreadLastMain": false,
+  "ThreadContextStatus": false,
   "ThreadFirstReply": false
 }`, string(b))
 }
