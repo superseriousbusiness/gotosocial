@@ -20,7 +20,7 @@
 {{- define "repliesSummary" -}}
     {{- if .context.ThreadRepliesShown -}}
         {{- if .context.ThreadRepliesHidden -}}
-            {{- if eq .context.ThreadReplies 1 -}}
+            {{- if eq .context.ThreadRepliesShown 1 -}}
                 {{- /* Some replies are hidden. */ -}}
                 {{ .context.ThreadRepliesShown }} visible reply
             {{- else if gt .context.ThreadRepliesShown 1 -}}
@@ -35,6 +35,8 @@
                 {{ .context.ThreadReplies }} replies
             {{- end -}}
         {{- end -}}
+    {{- else -}}
+        {{- if eq .context.ThreadRepliesHidden 1 -}}reply{{- else -}}replies{{- end }} hidden or not public
     {{- end -}}
 {{- end -}}
 
@@ -77,41 +79,18 @@
             {{- end }}
         </div>
 
-        {{- range $thisStatus := .context.Ancestors }}
-        {{- if $thisStatus.ThreadFirstReply }}
+        {{- range $status := .context.Statuses }}
+        <article
+            class="status{{- if $status.ThreadContextStatus }} expanded{{- end -}}{{- if $status.Indent }} indent-{{ $status.Indent }}{{- end -}}"
+            {{- includeAttr "status_attributes.tmpl" $status | indentAttr 3 }}
+        >
+            {{- include "status.tmpl" $status | indent 3 }}
+        </article>
+        {{- if and $status.ThreadLastMain $.context.ThreadReplies }}
         {{- include "repliesStart" $ | indent 1 }}
         {{- end }}
-        <article
-            class="status{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
-            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
-        >
-            {{- include "status.tmpl" $thisStatus | indent 3 }}
-        </article>
         {{- end }}
 
-        {{- with $thisStatus := .context.Status }}
-        {{- if $thisStatus.ThreadFirstReply }}
-        {{- include "repliesStart" $ | indent 1 }}
-        {{- end }}
-        <article
-            class="status expanded{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
-            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3  }}
-        >
-            {{- include "status.tmpl" $thisStatus | indent 3 }}
-        </article>
-        {{- end }}
-
-        {{- range $thisStatus := .context.Descendants }}
-        {{- if $thisStatus.ThreadFirstReply }}
-        {{- include "repliesStart" $ | indent 1 }}
-        {{- end }}
-        <article
-            class="status{{- if $thisStatus.Indent }} indent-{{ $thisStatus.Indent }}{{- end -}}"
-            {{- includeAttr "status_attributes.tmpl" $thisStatus | indentAttr 3 }}
-        >
-            {{- include "status.tmpl" $thisStatus | indent 3 }}
-        </article>
-        {{- end }}
     {{- if .context.ThreadReplies }}
     </section>
     {{- end }}
