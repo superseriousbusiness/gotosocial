@@ -130,8 +130,17 @@ type WebStatus struct {
 	// display this status in the web view.
 	Indent int
 
-	// This status is the first status after
-	// the "main" thread, so it and everything
+	// This status is the last visible status
+	// in the main thread, so everything below
+	// can be considered "replies".
+	ThreadLastMain bool
+
+	// This status is the one around which
+	// the thread context was constructed.
+	ThreadContextStatus bool
+
+	// This status is the first visibile status
+	// after the "main" thread, so it and everything
 	// below it can be considered "replies".
 	ThreadFirstReply bool
 }

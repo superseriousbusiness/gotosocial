@@ -42,6 +42,15 @@
 		h2 {
 			margin-right: auto;
 		}
+
+		&.replies.hidden-only {
+			/*
+				No visible replies below this column
+				header, so round off the bottom.
+			*/
+			border-bottom-left-radius: $br;
+			border-bottom-right-radius: $br;
+		}
 	}
 
 	.status {
