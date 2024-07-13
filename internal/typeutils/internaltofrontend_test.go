@@ -63,8 +63,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "enable_rss": true,
@@ -116,8 +116,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -209,8 +209,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -259,8 +259,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -305,8 +305,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -1255,7 +1255,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",
