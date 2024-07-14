@@ -34,11 +34,11 @@ func (p *Processor) Delete(
 ) gtserror.WithCode {
 	// Get the conversation so that we can check its owning account ID.
 	conversation, err := p.state.DB.GetConversationByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return gtserror.NewErrorNotFound(err)
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.NewErrorInternalError(err)
+	}
+	if conversation == nil {
+		return gtserror.NewErrorNotFound(err)
 	}
 	if conversation.AccountID != requestingAccount.ID {
 		return gtserror.NewErrorNotFound(nil)

@@ -37,12 +37,11 @@ func (p *Processor) Read(
 ) (*apimodel.Conversation, gtserror.WithCode) {
 	// Get the conversation, including participating accounts and last status.
 	conversation, err := p.state.DB.GetConversationByID(ctx, id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		err = gtserror.Newf("db error getting conversation %s: %w", id, err)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+	if conversation == nil {
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 	if conversation.AccountID != requestingAccount.ID {
 		return nil, gtserror.NewErrorNotFound(nil)
