@@ -331,7 +331,7 @@ func sizeofConversation() uintptr {
 		OtherAccountsKey: strings.Join([]string{exampleID, exampleID, exampleID}, ","),
 		ThreadID:         exampleID,
 		LastStatusID:     exampleID,
-		Read:             func() *bool { ok := true; return &ok }(),
+		Read:             util.Ptr(true),
 	}))
 }
 
