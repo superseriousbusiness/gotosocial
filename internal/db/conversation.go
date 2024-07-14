@@ -35,8 +35,8 @@ type Conversation interface {
 	// with optional paging based on last status ID.
 	GetConversationsByOwnerAccountID(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Conversation, error)
 
-	// PutConversation creates or updates a conversation.
-	PutConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error
+	// UpsertConversation creates or updates a conversation.
+	UpsertConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error
 
 	// LinkConversationToStatus creates a conversation-to-status link.
 	LinkConversationToStatus(ctx context.Context, statusID string, conversationID string) error

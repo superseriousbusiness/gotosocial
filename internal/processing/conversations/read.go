@@ -49,7 +49,7 @@ func (p *Processor) Read(
 
 	// Mark the conversation as read.
 	conversation.Read = util.Ptr(true)
-	if err := p.state.DB.PutConversation(ctx, conversation, "read"); err != nil {
+	if err := p.state.DB.UpsertConversation(ctx, conversation, "read"); err != nil {
 		err = gtserror.Newf("db error updating conversation %s: %w", id, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}

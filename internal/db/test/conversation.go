@@ -112,7 +112,7 @@ func (f *ConversationFactory) NewTestConversation(localAccount *gtsmodel.Account
 func (f *ConversationFactory) SetLastStatus(conversation *gtsmodel.Conversation, status *gtsmodel.Status) *gtsmodel.Conversation {
 	conversation.LastStatusID = status.ID
 	conversation.LastStatus = status
-	if err := f.db.PutConversation(context.Background(), conversation, "last_status_id"); err != nil {
+	if err := f.db.UpsertConversation(context.Background(), conversation, "last_status_id"); err != nil {
 		f.suite.FailNow(err.Error())
 	}
 	if err := f.db.LinkConversationToStatus(context.Background(), conversation.ID, status.ID); err != nil {

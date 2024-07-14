@@ -227,7 +227,7 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 	return conversations, nil
 }
 
-func (c *conversationDB) PutConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error {
+func (c *conversationDB) UpsertConversation(ctx context.Context, conversation *gtsmodel.Conversation, columns ...string) error {
 	// If we're updating by column, ensure "updated_at" is included.
 	if len(columns) > 0 {
 		columns = append(columns, "updated_at")

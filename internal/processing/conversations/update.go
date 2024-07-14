@@ -180,7 +180,7 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		}
 
 		// Create or update the conversation.
-		err = p.state.DB.PutConversation(ctx, conversation)
+		err = p.state.DB.UpsertConversation(ctx, conversation)
 		if err != nil {
 			log.Errorf(
 				ctx,

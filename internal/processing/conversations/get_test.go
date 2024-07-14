@@ -46,7 +46,7 @@ func (suite *ConversationsTestSuite) TestGetAllOrder() {
 	// Add an even newer status than that to conversation1.
 	conversation1Status2 := suite.NewTestStatus(suite.testAccount, conversation1.LastStatus.ThreadID, 2*time.Second, conversation1.LastStatus)
 	conversation1.LastStatusID = conversation1Status2.ID
-	if err := suite.db.PutConversation(context.Background(), conversation1, "last_status_id"); err != nil {
+	if err := suite.db.UpsertConversation(context.Background(), conversation1, "last_status_id"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
