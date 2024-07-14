@@ -23,27 +23,6 @@ import (
 	"time"
 )
 
-// mime consts
-const (
-	mimeImage = "image"
-	mimeVideo = "video"
-
-	mimeJpeg      = "jpeg"
-	mimeImageJpeg = mimeImage + "/" + mimeJpeg
-
-	mimeGif      = "gif"
-	mimeImageGif = mimeImage + "/" + mimeGif
-
-	mimePng      = "png"
-	mimeImagePng = mimeImage + "/" + mimePng
-
-	mimeWebp      = "webp"
-	mimeImageWebp = mimeImage + "/" + mimeWebp
-
-	mimeMp4      = "mp4"
-	mimeVideoMp4 = mimeVideo + "/" + mimeMp4
-)
-
 type Size string
 
 const (

@@ -134,8 +134,8 @@ func (m *Manager) CreateMedia(
 		id,
 
 		// Always encode attachment
-		// thumbnails as jpg.
-		"jpg",
+		// thumbnails as jpeg.
+		"jpeg",
 	)
 
 	// Calculate attachment thumbnail URL.
@@ -146,8 +146,8 @@ func (m *Manager) CreateMedia(
 		id,
 
 		// Always encode attachment
-		// thumbnails as jpg.
-		"jpg",
+		// thumbnails as jpeg.
+		"jpeg",
 	)
 
 	// Populate initial fields on the new media,
@@ -166,7 +166,7 @@ func (m *Manager) CreateMedia(
 			Path:        path,
 		},
 		Thumbnail: gtsmodel.Thumbnail{
-			ContentType: mimeImageJpeg, // thumbs always jpg.
+			ContentType: "image/jpeg",
 			Path:        thumbPath,
 			URL:         thumbURL,
 		},
@@ -276,7 +276,7 @@ func (m *Manager) CreateEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Generate static image path for attachment.
@@ -288,7 +288,7 @@ func (m *Manager) CreateEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Populate initial fields on the new emoji,
@@ -300,7 +300,7 @@ func (m *Manager) CreateEmoji(
 		Domain:                 domain,
 		ImageStaticURL:         staticURL,
 		ImageStaticPath:        staticPath,
-		ImageStaticContentType: mimeImagePng,
+		ImageStaticContentType: "image/png",
 		Disabled:               util.Ptr(false),
 		VisibleInPicker:        util.Ptr(true),
 		CreatedAt:              now,
@@ -400,7 +400,7 @@ func (m *Manager) RefreshEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Generate new static image storage path for emoji.
@@ -412,7 +412,7 @@ func (m *Manager) RefreshEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Finally, create new emoji in database.

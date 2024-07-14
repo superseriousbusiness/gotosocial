@@ -407,15 +407,9 @@ func (res *ffprobeResult) Process() (*result, error) {
 // ffprobeResult contains parsed JSON data from
 // result of calling `ffprobe` on a media file.
 type ffprobeResult struct {
-
-	// ffprobe JSON data
 	Streams []ffprobeStream `json:"streams"`
 	Format  *ffprobeFormat  `json:"format"`
 	Error   *ffprobeError   `json:"error"`
-
-	// further processed details
-	Audio []*ffprobeStream `json:"-"`
-	Video []*ffprobeStream `json:"-"`
 }
 
 type ffprobeStream struct {
