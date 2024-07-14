@@ -163,8 +163,8 @@ func (c *conversationDB) getAccountConversationLastStatusIDs(ctx context.Context
 		// Conversation last status IDs not in cache. Perform DB query.
 		if _, err := c.db.
 			NewSelect().
-			TableExpr("?", bun.Ident("conversations")).
-			ColumnExpr("?", bun.Ident("last_status_id")).
+			Model((*gtsmodel.Conversation)(nil)).
+			Column("last_status_id").
 			Where("? = ?", bun.Ident("account_id"), accountID).
 			OrderExpr("? DESC", bun.Ident("last_status_id")).
 			Exec(ctx, &conversationLastStatusIDs); // nocollapse
