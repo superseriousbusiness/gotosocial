@@ -31,6 +31,7 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		log.Info(ctx, "migrating statuses and account settings to interaction policy model, please wait...")
+		log.Warn(ctx, "**WITH A LARGE DATABASE / LOWER SPEC MACHINE, THIS MIGRATION MAY TAKE A VERY LONG TIME (an hour or even longer); DO NOT INTERRUPT IT!**")
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
 			// Add new columns for interaction
@@ -134,6 +135,7 @@ func init() {
 					args = append(args, bun.Safe(spec.defaultVal))
 				}
 
+				log.Infof(ctx, "adding column '%s' to '%s'...", spec.column, spec.table)
 				if _, err := tx.ExecContext(ctx, qStr, args...); err != nil {
 					return err
 				}
@@ -143,6 +145,7 @@ func init() {
 			// with non-default old flags set.
 			oldStatuses := []oldmodel.Status{}
 
+			log.Info(ctx, "migrating existing statuses to new visibility model...")
 			if err := tx.
 				NewSelect().
 				Model(&oldStatuses).
@@ -218,6 +221,7 @@ func init() {
 				"boostable",
 			}
 			for _, column := range oldColumns {
+				log.Infof(ctx, "dropping now-unused status column '%s'; this may take a while if you have lots of statuses in your database...", column)
 				if _, err := tx.
 					NewDropColumn().
 					Table("statuses").
@@ -228,6 +232,7 @@ func init() {
 			}
 
 			// Add new indexes.
+			log.Info(ctx, "adding new index 'statuses_pending_approval_idx' to 'statuses'...")
 			if _, err := tx.
 				NewCreateIndex().
 				Table("statuses").
@@ -238,6 +243,7 @@ func init() {
 				return err
 			}
 
+			log.Info(ctx, "adding new index 'status_faves_pending_approval_idx' to 'status_faves'...")
 			if _, err := tx.
 				NewCreateIndex().
 				Table("status_faves").
@@ -248,6 +254,7 @@ func init() {
 				return err
 			}
 
+			log.Info(ctx, "committing transaction, almost done...")
 			return nil
 		})
 	}
