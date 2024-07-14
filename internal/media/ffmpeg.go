@@ -373,8 +373,8 @@ func (res *ffprobeResult) Process() (*result, error) {
 		case "video":
 			var framerate float32
 
-			// Parse stream framerate (if non-zero value is set).
-			if str := s.AvgFrameRate; str != "" && str != "0/0" {
+			// Parse stream framerate (if non-zero).
+			if str := s.AvgFrameRate; str != "" {
 				var num, den float32
 
 				// Check for inequality (numerator / denominator).
