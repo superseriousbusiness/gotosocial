@@ -205,15 +205,18 @@ type videoStream struct {
 	framerate float32
 }
 
-// GetFileType determines file type and extension to use for media data.
+// GetFileType determines file type and extension to use for media data. This
+// function helps to abstract away the horrible complexities that are possible
+// general media container types and and possible sub-types within that.
 func (res *result) GetFileType() (gtsmodel.FileType, string) {
 	switch res.format {
 	case "mpeg":
 		return gtsmodel.FileTypeVideo, "mpeg"
 	case "mov,mp4,m4a,3gp,3g2,mj2":
 		for _, stream := range res.video {
-			switch stream.codec { //nolint
-			case "h264":
+			// check for motion video
+			// (static is album art).
+			if stream.framerate > 0 {
 				return gtsmodel.FileTypeVideo, "mp4"
 			}
 		}
@@ -267,7 +270,17 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 			return gtsmodel.FileTypeAudio, "ogg"
 		}
 	case "matroska,webm":
-		return gtsmodel.FileTypeVideo, "mkv"
+		for _, stream := range res.video {
+			// check for motion video
+			// (static is album art).
+			if stream.framerate > 0 {
+				return gtsmodel.FileTypeVideo, "mkv"
+			}
+		}
+		switch { //nolint
+		case len(res.audio) > 0:
+			return gtsmodel.FileTypeAudio, "mka"
+		}
 	case "avi":
 		return gtsmodel.FileTypeVideo, "avi"
 	case "mpegts":

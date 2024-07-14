@@ -34,33 +34,49 @@ import (
 )
 
 var SupportedMIMETypes = []string{
-	"image/png",  // .png
-	"image/apng", // .apng
 	"image/jpeg", // .jpeg
 	"image/gif",  // .gif
 	"image/webp", // .webp
 
-	"audio/mp2",      // .mp2
-	"audio/mp3",      // .mp3
-	"audio/ogg",      // .ogg
-	"audio/x-ms-wma", // .wma
+	"audio/mp2", // .mp2
+	"audio/mp3", // .mp3
 
-	"video/mp4",        // .mp4
-	"video/x-msvideo",  // .avi
-	"video/ogg",        // .ogv
+	"video/x-msvideo", // .avi
+
+	// png types
+	"image/png",  // .png
+	"image/apng", // .apng
+
+	// mpeg transport stream
+	"model/vnd.mts", // .mts
+
+	// ogg types
+	"audio/ogg", // .ogg
+	"video/ogg", // .ogv
+
+	// mpeg4 types
+	"audio/x-m4a",     // .m4a
+	"video/mp4",       // .mp4
+	"video/quicktime", // .mov
+
+	// asf types
+	"audio/x-ms-wma", // .wma
+	"video/x-ms-wmv", // .wmv
+
+	// matroska types
 	"video/webm",       // .webm
-	"model/vnd.mts",    // .mts
-	"video/x-ms-wmv",   // .wmv
+	"audio/x-matroska", // .mka
 	"video/x-matroska", // .mkv
-	"video/quicktime",  // .mov
 }
 
 var SupportedEmojiMIMETypes = []string{
-	"image/png",  // .png
-	"image/apng", // .apng
 	"image/jpeg", // .jpeg
 	"image/gif",  // .gif
 	"image/webp", // .webp
+
+	// png types
+	"image/png",  // .png
+	"image/apng", // .apng
 }
 
 type Manager struct {
