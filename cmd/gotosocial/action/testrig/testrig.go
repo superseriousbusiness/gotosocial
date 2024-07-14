@@ -204,6 +204,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
+	// Run advanced migrations.
+	if err := processor.Conversations().MigrateDMsToConversations(ctx); err != nil {
+		return fmt.Errorf("error running conversations advanced migration: %w", err)
+	}
+
 	/*
 		HTTP router initialization
 	*/
