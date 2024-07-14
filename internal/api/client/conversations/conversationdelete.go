@@ -30,6 +30,9 @@ import (
 //
 // Delete a single conversation with the given ID.
 //
+// This doesn't delete the actual statuses in the conversation,
+// nor does it prevent a new conversation from being created later from the same thread and participants.
+//
 //	---
 //	tags:
 //	- conversations

@@ -6216,6 +6216,9 @@ paths:
                 - conversations
     /api/v1/conversations/{id}:
         delete:
+            description: |-
+                This doesn't delete the actual statuses in the conversation,
+                nor does it prevent a new conversation from being created later from the same thread and participants.
             operationId: conversationDelete
             parameters:
                 - description: ID of the conversation
