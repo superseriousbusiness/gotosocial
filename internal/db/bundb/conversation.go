@@ -396,20 +396,15 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// reset its last status to the most recently created in the conversation other than that one,
 		// if there is such a status.
 		// Return conversation IDs for invalidation.
-		if err := tx.NewRaw(
-			`
-			UPDATE conversations
-			SET
-				last_status_id = latest_conversation_statuses.id,
-				updated_at = ?1
-			FROM ?0 latest_conversation_statuses
-			WHERE conversations.id = latest_conversation_statuses.conversation_id
-			AND latest_conversation_statuses.id IS NOT NULL
-			RETURNING conversations.id
-			`,
-			bun.Ident(latestConversationStatusesTempTable),
-			bun.Safe(nowSQL),
-		).Scan(ctx, &updatedConversationIDs); // nocollapse
+		if err := tx.NewUpdate().
+			Model((*gtsmodel.Conversation)(nil)).
+			SetColumn("last_status_id", "?", bun.Ident("latest_conversation_statuses.id")).
+			SetColumn("updated_at", "?", bun.Safe(nowSQL)).
+			TableExpr("? AS ?", bun.Ident(latestConversationStatusesTempTable), bun.Ident("latest_conversation_statuses")).
+			Where("?TableAlias.? = ?", bun.Ident("id"), bun.Ident("latest_conversation_statuses.conversation_id")).
+			Where("? IS NOT NULL", bun.Ident("latest_conversation_statuses.id")).
+			Returning("?TableName.?", bun.Ident("id")).
+			Scan(ctx, &updatedConversationIDs); // nocollapse
 		err != nil {
 			return gtserror.Newf("error rolling back last status for conversation while deleting status %s: %w", statusID, err)
 		}
