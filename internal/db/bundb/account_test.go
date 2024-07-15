@@ -46,7 +46,7 @@ type AccountTestSuite struct {
 func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false)
 	suite.NoError(err)
-	suite.Len(statuses, 7)
+	suite.Len(statuses, 8)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
@@ -69,7 +69,7 @@ func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Len(statuses, 1)
+	suite.Len(statuses, 2)
 
 	// try to get the last page (should be empty)
 	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
@@ -187,7 +187,7 @@ func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesExcludesSelfR
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", true, false)
 	suite.NoError(err)
-	suite.Len(statuses, 1)
+	suite.Len(statuses, 2)
 }
 
 func (suite *AccountTestSuite) TestGetAccountBy() {

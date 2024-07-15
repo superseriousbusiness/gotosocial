@@ -624,7 +624,7 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.M
 			Y: a.FileMeta.Focus.Y,
 		}
 
-	case gtsmodel.FileTypeVideo:
+	case gtsmodel.FileTypeVideo, gtsmodel.FileTypeAudio:
 		if i := a.FileMeta.Original.Duration; i != nil {
 			apiAttachment.Meta.Original.Duration = *i
 		}
@@ -1062,14 +1062,36 @@ func (c *Converter) StatusToWebStatus(
 		webStatus.PollOptions = PollOptions
 	}
 
+	// Mark local.
+	webStatus.Local = *s.Local
+
 	// Set additional templating
 	// variables on media attachments.
-	for _, a := range webStatus.MediaAttachments {
-		a.Sensitive = webStatus.Sensitive
+
+	// Get gtsmodel attachments
+	// into a convenient map.
+	ogAttachments := make(
+		map[string]*gtsmodel.MediaAttachment,
+		len(s.Attachments),
+	)
+	for _, a := range s.Attachments {
+		ogAttachments[a.ID] = a
 	}
 
-	// Mark this as a local status.
-	webStatus.Local = *s.Local
+	// Convert each API attachment
+	// into a web attachment.
+	webStatus.MediaAttachments = make(
+		[]*apimodel.WebAttachment,
+		len(apiStatus.MediaAttachments),
+	)
+	for i, apiAttachment := range apiStatus.MediaAttachments {
+		ogAttachment := ogAttachments[apiAttachment.ID]
+		webStatus.MediaAttachments[i] = &apimodel.WebAttachment{
+			Attachment: apiAttachment,
+			Sensitive:  apiStatus.Sensitive,
+			MIMEType:   ogAttachment.File.ContentType,
+		}
+	}
 
 	return webStatus, nil
 }

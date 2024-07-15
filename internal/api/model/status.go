@@ -111,6 +111,10 @@ type Status struct {
 type WebStatus struct {
 	*Status
 
+	// Web version of media
+	// attached to this status.
+	MediaAttachments []*WebAttachment `json:"media_attachments"`
+
 	// Template-ready language tag and
 	// string, based on *status.Language.
 	LanguageTag *language.Language

@@ -63,8 +63,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "enable_rss": true,
@@ -116,8 +116,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -209,8 +209,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -259,8 +259,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -305,8 +305,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -943,6 +943,18 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "emojis": [],
     "fields": []
   },
+  "mentions": [
+    {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "url": "http://localhost:8080/@admin",
+      "acct": "admin"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
   "media_attachments": [
     {
       "id": "01HE7Y3C432WRSNS10EZM86SA5",
@@ -971,7 +983,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
         }
       },
       "description": "Photograph of a sloth, Public Domain.",
-      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof",
+      "Sensitive": true,
+      "MIMEType": "image/jpg"
     },
     {
       "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
@@ -983,7 +997,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "preview_remote_url": null,
       "meta": null,
       "description": "SVG line art of a sloth, public domain",
-      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of"
+      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
+      "Sensitive": true,
+      "MIMEType": "image/svg"
     },
     {
       "id": "01HE88YG74PVAB81PX2XA9F3FG",
@@ -995,21 +1011,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "preview_remote_url": null,
       "meta": null,
       "description": "Jolly salsa song, public domain.",
-      "blurhash": null
+      "blurhash": null,
+      "Sensitive": true,
+      "MIMEType": "audio/mpeg"
     }
   ],
-  "mentions": [
-    {
-      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
-      "username": "admin",
-      "url": "http://localhost:8080/@admin",
-      "acct": "admin"
-    }
-  ],
-  "tags": [],
-  "emojis": [],
-  "card": null,
-  "poll": null,
   "LanguageTag": "en",
   "PollOptions": null,
   "Local": false,
@@ -1249,7 +1255,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.png",

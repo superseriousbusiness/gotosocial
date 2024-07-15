@@ -299,8 +299,14 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 		// Extract image metadata from streams (if any),
 		// this will only exist for embedded album art.
-		width, height, _ := result.ImageMeta()
+		width, height, framerate, _ := result.EmbeddedImageMeta()
 		if width > 0 && height > 0 {
+			// Unlikely to need these but masto API includes them.
+			p.media.FileMeta.Original.Width = width
+			p.media.FileMeta.Original.Height = height
+			if framerate != 0 {
+				p.media.FileMeta.Original.Framerate = &framerate
+			}
 
 			// Determine thumbnail dimensions to use.
 			thumbWidth, thumbHeight := thumbSize(width, height)

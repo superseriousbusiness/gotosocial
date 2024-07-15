@@ -336,6 +336,10 @@ main {
 						grid-area: sensitive;
 						align-self: center;
 
+						text-overflow: ellipsis;
+						overflow: hidden;
+						white-space: nowrap;
+
 						.button {
 							cursor: pointer;
 							align-self: center;
@@ -401,8 +405,16 @@ main {
 			grid-column: span 2;
 		}
 
-		&.odd .media-wrapper:first-child, &.double .media-wrapper {
+		&.odd .media-wrapper:first-child,
+		&.double .media-wrapper {
 			grid-row: span 2;
+		}
+
+		@media screen and (max-width: 42rem) {
+			.media-wrapper {
+				grid-column: span 2;
+				grid-row: span 2;
+			}
 		}
 
 		img {

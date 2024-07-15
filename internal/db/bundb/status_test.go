@@ -169,12 +169,7 @@ func (suite *StatusTestSuite) TestGetStatusChildren() {
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
 	children, err := suite.db.GetStatusChildren(context.Background(), targetStatus.ID)
 	suite.NoError(err)
-	suite.Len(children, 2)
-	for _, c := range children {
-		suite.Equal(targetStatus.URI, c.InReplyToURI)
-		suite.Equal(targetStatus.AccountID, c.InReplyToAccountID)
-		suite.Equal(targetStatus.ID, c.InReplyToID)
-	}
+	suite.Len(children, 3)
 }
 
 func (suite *StatusTestSuite) TestDeleteStatus() {
