@@ -351,23 +351,45 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// (if there are such statuses).
 		conversationStatusesTempTable := "conversation_statuses_" + id.NewULID()
 		if _, err := tx.NewRaw(
-			`
-			CREATE TEMPORARY TABLE ?0 AS
-			SELECT
-				conversations.id conversation_id,
-				conversation_to_statuses.status_id id,
-				statuses.created_at
-			FROM conversations
-			LEFT JOIN conversation_to_statuses
-				ON conversations.id = conversation_to_statuses.conversation_id
-				AND conversation_to_statuses.status_id != ?1
-			LEFT JOIN statuses
-				ON conversation_to_statuses.status_id = statuses.id
-			WHERE conversations.last_status_id = ?1
-			`,
+			"CREATE TEMPORARY TABLE ? AS ?",
 			bun.Ident(conversationStatusesTempTable),
-			statusID,
-		).Exec(ctx); // nocollapse
+			tx.NewSelect().
+				ColumnExpr(
+					"? AS ?",
+					bun.Ident("conversations.id"),
+					bun.Ident("conversation_id"),
+				).
+				ColumnExpr(
+					"? AS ?",
+					bun.Ident("conversation_to_statuses.status_id"),
+					bun.Ident("id"),
+				).
+				Column("statuses.created_at").
+				Table("conversations").
+				Join("LEFT JOIN ?", bun.Ident("conversation_to_statuses")).
+				JoinOn(
+					"? = ?",
+					bun.Ident("conversations.id"),
+					bun.Ident("conversation_to_statuses.conversation_id"),
+				).
+				JoinOn(
+					"? != ?",
+					bun.Ident("conversation_to_statuses.status_id"),
+					statusID,
+				).
+				Join("LEFT JOIN ?", bun.Ident("statuses")).
+				JoinOn(
+					"? = ?",
+					bun.Ident("conversation_to_statuses.status_id"),
+					bun.Ident("statuses.id"),
+				).
+				Where(
+					"? = ?",
+					bun.Ident("conversations.last_status_id"),
+					statusID,
+				),
+		).
+			Exec(ctx); // nocollapse
 		err != nil {
 			return gtserror.Newf("error creating conversationStatusesTempTable while deleting status %s: %w", statusID, err)
 		}
