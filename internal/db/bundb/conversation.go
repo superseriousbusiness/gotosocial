@@ -416,18 +416,18 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 
 		// If there is no such status, delete the conversation.
 		// Return conversation IDs for invalidation.
-		if err := tx.NewRaw(
-			`
-			DELETE FROM conversations
-			WHERE id IN (
-				SELECT conversation_id
-				FROM ?0
-				WHERE id IS NULL
-			)
-			RETURNING id
-			`,
-			bun.Ident(latestConversationStatusesTempTable),
-		).Scan(ctx, &deletedConversationIDs); // nocollapse
+		if err := tx.NewDelete().
+			Model((*gtsmodel.Conversation)(nil)).
+			Where(
+				"? IN (?)",
+				bun.Ident("id"),
+				tx.NewSelect().
+					Table(latestConversationStatusesTempTable).
+					Column("conversation_id").
+					Where("? IS NULL", bun.Ident("id")),
+			).
+			Returning("?", bun.Ident("id")).
+			Scan(ctx, &deletedConversationIDs); // nocollapse
 		err != nil {
 			return gtserror.Newf("error deleting conversation while deleting status %s: %w", statusID, err)
 		}
