@@ -180,36 +180,33 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Pass input file through ffprobe to
 	// parse further metadata information.
 	result, err := ffprobe(ctx, temppath)
-	if err != nil {
-		return gtserror.Newf("error ffprobing data: %w", err)
-	}
-
-	switch {
-	// No errors parsing data.
-	case result.Error == nil:
-
-	// Data type unhandleable by ffprobe.
-	case result.Error.Code == -1094995529:
+	if err != nil && !isUnsupportedTypeErr(err) {
+		return gtserror.Newf("ffprobe error: %w", err)
+	} else if result == nil {
 		log.Warn(ctx, "unsupported data type")
 		return nil
-
-	default:
-		return gtserror.Newf("ffprobe error: %w", err)
 	}
 
 	var ext string
 
-	// Set the media type from ffprobe format data.
-	p.media.Type, ext = result.Format.GetFileType()
-	if p.media.Type == gtsmodel.FileTypeUnknown {
+	// Extract any video stream metadata from media.
+	// This will always be used regardless of type,
+	// as even audio files may contain embedded album art.
+	width, height, framerate := result.ImageMeta()
+	p.media.FileMeta.Original.Width = width
+	p.media.FileMeta.Original.Height = height
+	p.media.FileMeta.Original.Size = (width * height)
+	p.media.FileMeta.Original.Aspect = util.Div(float32(width), float32(height))
+	p.media.FileMeta.Original.Framerate = util.PtrIf(framerate)
+	p.media.FileMeta.Original.Duration = util.PtrIf(float32(result.duration))
+	p.media.FileMeta.Original.Bitrate = util.PtrIf(result.bitrate)
 
-		// Return early (deleting file)
-		// for unhandled file types.
-		return nil
-	}
-
+	// Set media type from ffprobe format data.
+	p.media.Type, ext = result.GetFileType()
 	switch p.media.Type {
-	case gtsmodel.FileTypeImage:
+
+	case gtsmodel.FileTypeImage,
+		gtsmodel.FileTypeVideo:
 		// Pass file through ffmpeg clearing
 		// any excess metadata (e.g. EXIF).
 		if err := ffmpegClearMetadata(ctx,
@@ -218,16 +215,16 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
 
-		// Extract image metadata from streams.
-		width, height, err := result.ImageMeta()
-		if err != nil {
-			return err
-		}
-		p.media.FileMeta.Original.Width = width
-		p.media.FileMeta.Original.Height = height
-		p.media.FileMeta.Original.Size = (width * height)
-		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
+	case gtsmodel.FileTypeAudio:
+		// NOTE: we do not clean audio file
+		// metadata, in order to keep tags.
 
+	default:
+		log.Warn(ctx, "unsupported data type: %s", result.format)
+		return nil
+	}
+
+	if width > 0 && height > 0 {
 		// Determine thumbnail dimensions to use.
 		thumbWidth, thumbHeight := thumbSize(width, height)
 		p.media.FileMeta.Small.Width = thumbWidth
@@ -244,90 +241,13 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			return gtserror.Newf("error generating image thumb: %w", err)
 		}
 
-	case gtsmodel.FileTypeVideo:
-		// Pass file through ffmpeg clearing
-		// any excess metadata (e.g. EXIF).
-		if err := ffmpegClearMetadata(ctx,
-			temppath, ext,
-		); err != nil {
-			return gtserror.Newf("error cleaning metadata: %w", err)
-		}
-
-		// Extract video metadata we can from streams.
-		width, height, framerate, err := result.VideoMeta()
-		if err != nil {
-			return err
-		}
-		p.media.FileMeta.Original.Width = width
-		p.media.FileMeta.Original.Height = height
-		p.media.FileMeta.Original.Size = (width * height)
-		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
-		p.media.FileMeta.Original.Framerate = &framerate
-
-		// Extract total duration from format.
-		duration := result.Format.GetDuration()
-		p.media.FileMeta.Original.Duration = &duration
-
-		// Extract total bitrate from format.
-		bitrate := result.Format.GetBitRate()
-		p.media.FileMeta.Original.Bitrate = &bitrate
-
-		// Determine thumbnail dimensions to use.
-		thumbWidth, thumbHeight := thumbSize(width, height)
-		p.media.FileMeta.Small.Width = thumbWidth
-		p.media.FileMeta.Small.Height = thumbHeight
-		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
-		p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
-
-		// Extract a thumbnail frame from input video path.
-		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
-			thumbWidth,
-			thumbHeight,
-		)
-		if err != nil {
-			return gtserror.Newf("error extracting video frame: %w", err)
-		}
-
-	case gtsmodel.FileTypeAudio:
-		// Extract total duration from format.
-		duration := result.Format.GetDuration()
-		p.media.FileMeta.Original.Duration = &duration
-
-		// Extract total bitrate from format.
-		bitrate := result.Format.GetBitRate()
-		p.media.FileMeta.Original.Bitrate = &bitrate
-
-		// Extract image metadata from streams (if any),
-		// this will only exist for embedded album art.
-		width, height, framerate, _ := result.EmbeddedImageMeta()
-		if width > 0 && height > 0 {
-			// Unlikely to need these but masto API includes them.
-			p.media.FileMeta.Original.Width = width
-			p.media.FileMeta.Original.Height = height
-			if framerate != 0 {
-				p.media.FileMeta.Original.Framerate = &framerate
-			}
-
-			// Determine thumbnail dimensions to use.
-			thumbWidth, thumbHeight := thumbSize(width, height)
-			p.media.FileMeta.Small.Width = thumbWidth
-			p.media.FileMeta.Small.Height = thumbHeight
-			p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
-			p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
-
-			// Generate a thumbnail image from input image path.
-			thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
-				thumbWidth,
-				thumbHeight,
-			)
+		if p.media.Blurhash == "" {
+			// Generate blurhash (if not already) from thumbnail.
+			p.media.Blurhash, err = generateBlurhash(thumbpath)
 			if err != nil {
-				return gtserror.Newf("error generating image thumb: %w", err)
+				return gtserror.Newf("error generating thumb blurhash: %w", err)
 			}
 		}
-
-	default:
-		log.Warnf(ctx, "unsupported type: %s (%s)", p.media.Type, result.Format.FormatName)
-		return nil
 	}
 
 	// Calculate final media attachment file path.
@@ -352,17 +272,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.media.File.FileSize = int(filesz)
 
 	if thumbpath != "" {
-		// Note that neither thumbnail storage
-		// nor a blurhash are needed for audio.
-
-		if p.media.Blurhash == "" {
-			// Generate blurhash (if not already) from thumbnail.
-			p.media.Blurhash, err = generateBlurhash(thumbpath)
-			if err != nil {
-				return gtserror.Newf("error generating thumb blurhash: %w", err)
-			}
-		}
-
 		// Copy thumbnail file into storage at path.
 		thumbsz, err := p.mgr.state.Storage.PutFile(ctx,
 			p.media.Thumbnail.Path,

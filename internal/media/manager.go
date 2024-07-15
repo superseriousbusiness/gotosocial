@@ -34,17 +34,46 @@ import (
 )
 
 var SupportedMIMETypes = []string{
-	mimeImageJpeg,
-	mimeImageGif,
-	mimeImagePng,
-	mimeImageWebp,
-	mimeVideoMp4,
+	"image/jpeg", // .jpeg
+	"image/gif",  // .gif
+	"image/webp", // .webp
+
+	"audio/mp2", // .mp2
+	"audio/mp3", // .mp3
+
+	"video/x-msvideo", // .avi
+
+	// png types
+	"image/png",  // .png
+	"image/apng", // .apng
+
+	// ogg types
+	"audio/ogg", // .ogg
+	"video/ogg", // .ogv
+
+	// mpeg4 types
+	"audio/x-m4a",     // .m4a
+	"video/mp4",       // .mp4
+	"video/quicktime", // .mov
+
+	// asf types
+	"audio/x-ms-wma", // .wma
+	"video/x-ms-wmv", // .wmv
+
+	// matroska types
+	"video/webm",       // .webm
+	"audio/x-matroska", // .mka
+	"video/x-matroska", // .mkv
 }
 
 var SupportedEmojiMIMETypes = []string{
-	mimeImageGif,
-	mimeImagePng,
-	mimeImageWebp,
+	"image/jpeg", // .jpeg
+	"image/gif",  // .gif
+	"image/webp", // .webp
+
+	// png types
+	"image/png",  // .png
+	"image/apng", // .apng
 }
 
 type Manager struct {
@@ -102,8 +131,8 @@ func (m *Manager) CreateMedia(
 		id,
 
 		// Always encode attachment
-		// thumbnails as jpg.
-		"jpg",
+		// thumbnails as jpeg.
+		"jpeg",
 	)
 
 	// Calculate attachment thumbnail URL.
@@ -114,8 +143,8 @@ func (m *Manager) CreateMedia(
 		id,
 
 		// Always encode attachment
-		// thumbnails as jpg.
-		"jpg",
+		// thumbnails as jpeg.
+		"jpeg",
 	)
 
 	// Populate initial fields on the new media,
@@ -134,7 +163,7 @@ func (m *Manager) CreateMedia(
 			Path:        path,
 		},
 		Thumbnail: gtsmodel.Thumbnail{
-			ContentType: mimeImageJpeg, // thumbs always jpg.
+			ContentType: "image/jpeg",
 			Path:        thumbPath,
 			URL:         thumbURL,
 		},
@@ -244,7 +273,7 @@ func (m *Manager) CreateEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Generate static image path for attachment.
@@ -256,7 +285,7 @@ func (m *Manager) CreateEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Populate initial fields on the new emoji,
@@ -268,7 +297,7 @@ func (m *Manager) CreateEmoji(
 		Domain:                 domain,
 		ImageStaticURL:         staticURL,
 		ImageStaticPath:        staticPath,
-		ImageStaticContentType: mimeImagePng,
+		ImageStaticContentType: "image/png",
 		Disabled:               util.Ptr(false),
 		VisibleInPicker:        util.Ptr(true),
 		CreatedAt:              now,
@@ -368,7 +397,7 @@ func (m *Manager) RefreshEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Generate new static image storage path for emoji.
@@ -380,7 +409,7 @@ func (m *Manager) RefreshEmoji(
 
 		// All static emojis
 		// are encoded as png.
-		mimePng,
+		"png",
 	)
 
 	// Finally, create new emoji in database.

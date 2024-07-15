@@ -160,27 +160,17 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Pass input file through ffprobe to
 	// parse further metadata information.
 	result, err := ffprobe(ctx, temppath)
-	if err != nil {
-		return gtserror.Newf("error ffprobing data: %w", err)
-	}
-
-	switch {
-	// No errors parsing data.
-	case result.Error == nil:
-
-	// Data type unhandleable by ffprobe.
-	case result.Error.Code == -1094995529:
+	if err != nil && !isUnsupportedTypeErr(err) {
+		return gtserror.Newf("ffprobe error: %w", err)
+	} else if result == nil {
 		log.Warn(ctx, "unsupported data type")
 		return nil
-
-	default:
-		return gtserror.Newf("ffprobe error: %w", err)
 	}
 
 	var ext string
 
-	// Set media type from ffprobe format data.
-	fileType, ext := result.Format.GetFileType()
+	// Get type from ffprobe format data.
+	fileType, ext := result.GetFileType()
 	if fileType != gtsmodel.FileTypeImage {
 		return gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
 	}

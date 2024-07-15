@@ -421,7 +421,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	suite.Equal(81120, attachment.FileMeta.Original.Size)
 	suite.EqualValues(float32(1.4083333), attachment.FileMeta.Original.Aspect)
 	suite.EqualValues(float32(6.641), *attachment.FileMeta.Original.Duration)
-	suite.EqualValues(float32(29.00003), *attachment.FileMeta.Original.Framerate)
+	suite.EqualValues(float32(29), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0x5be18, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
 		Width: 338, Height: 240, Size: 81120, Aspect: 1.4083333333333334,

@@ -18,7 +18,6 @@
 package media
 
 import (
-	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -135,7 +134,7 @@ func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
 }
 
 // ffprobe calls `ffprobe` (WASM) on filepath, returning parsed JSON output.
-func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
+func ffprobe(ctx context.Context, filepath string) (*result, error) {
 	var stdout byteutil.Buffer
 
 	// Get directory from filepath.
@@ -148,7 +147,7 @@ func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
 		Args: []string{
 			"-i", filepath,
 			"-loglevel", "quiet",
-			"-print_format", "json",
+			"-print_format", "json=compact=1",
 			"-show_streams",
 			"-show_format",
 			"-show_error",
@@ -172,7 +171,219 @@ func ffprobe(ctx context.Context, filepath string) (*ffprobeResult, error) {
 		return nil, gtserror.Newf("error unmarshaling json: %w", err)
 	}
 
-	return &result, nil
+	// Convert raw result data.
+	res, err := result.Process()
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+// result contains parsed ffprobe result
+// data in a more useful data format.
+type result struct {
+	format   string
+	audio    []audioStream
+	video    []videoStream
+	bitrate  uint64
+	duration float64
+}
+
+type stream struct {
+	codec string
+}
+
+type audioStream struct {
+	stream
+}
+
+type videoStream struct {
+	stream
+	width     int
+	height    int
+	framerate float32
+}
+
+// GetFileType determines file type and extension to use for media data. This
+// function helps to abstract away the horrible complexities that are possible
+// media container (i.e. the file) types and and possible sub-types within that.
+//
+// Note the checks for (len(res.video) > 0) may catch some audio files with embedded
+// album art as video, but i blame that on the hellscape that is media filetypes.
+//
+// TODO: we can update this code to also return a mimetype and avoid later parsing!
+func (res *result) GetFileType() (gtsmodel.FileType, string) {
+	switch res.format {
+	case "mpeg":
+		return gtsmodel.FileTypeVideo, "mpeg"
+	case "mjpeg":
+		return gtsmodel.FileTypeVideo, "mjpeg"
+	case "mov,mp4,m4a,3gp,3g2,mj2":
+		switch {
+		case len(res.video) > 0:
+			return gtsmodel.FileTypeVideo, "mp4"
+		case len(res.audio) > 0 &&
+			res.audio[0].codec == "aac":
+			// m4a only supports [aac] audio.
+			return gtsmodel.FileTypeAudio, "m4a"
+		}
+	case "apng":
+		return gtsmodel.FileTypeImage, "apng"
+	case "png_pipe":
+		return gtsmodel.FileTypeImage, "png"
+	case "image2", "image2pipe", "jpeg_pipe":
+		return gtsmodel.FileTypeImage, "jpeg"
+	case "webp", "webp_pipe":
+		return gtsmodel.FileTypeImage, "webp"
+	case "gif":
+		return gtsmodel.FileTypeImage, "gif"
+	case "mp3":
+		if len(res.audio) > 0 {
+			switch res.audio[0].codec {
+			case "mp2":
+				return gtsmodel.FileTypeAudio, "mp2"
+			case "mp3":
+				return gtsmodel.FileTypeAudio, "mp3"
+			}
+		}
+	case "asf":
+		switch {
+		case len(res.video) > 0:
+			return gtsmodel.FileTypeVideo, "wmv"
+		case len(res.audio) > 0:
+			return gtsmodel.FileTypeAudio, "wma"
+		}
+	case "ogg":
+		switch {
+		case len(res.video) > 0:
+			return gtsmodel.FileTypeVideo, "ogv"
+		case len(res.audio) > 0:
+			return gtsmodel.FileTypeAudio, "ogg"
+		}
+	case "matroska,webm":
+		switch {
+		case len(res.video) > 0:
+			switch res.video[0].codec {
+			case "vp8", "vp9", "av1":
+			default:
+				return gtsmodel.FileTypeVideo, "mkv"
+			}
+			if len(res.audio) > 0 {
+				switch res.audio[0].codec {
+				case "vorbis", "opus", "libopus":
+					// webm only supports [VP8/VP9/AV1]+[vorbis/opus]
+					return gtsmodel.FileTypeVideo, "webm"
+				}
+			}
+		case len(res.audio) > 0:
+			return gtsmodel.FileTypeAudio, "mka"
+		}
+	case "avi":
+		return gtsmodel.FileTypeVideo, "avi"
+	}
+	return gtsmodel.FileTypeUnknown, res.format
+}
+
+// ImageMeta extracts image metadata contained within ffprobe'd media result streams.
+func (res *result) ImageMeta() (width int, height int, framerate float32) {
+	for _, stream := range res.video {
+		if stream.width > width {
+			width = stream.width
+		}
+		if stream.height > height {
+			height = stream.height
+		}
+		if fr := float32(stream.framerate); fr > 0 {
+			if framerate == 0 || fr < framerate {
+				framerate = fr
+			}
+		}
+	}
+	return
+}
+
+// Process converts raw ffprobe result data into our more usable result{} type.
+func (res *ffprobeResult) Process() (*result, error) {
+	if res.Error != nil {
+		return nil, res.Error
+	}
+
+	if res.Format == nil {
+		return nil, errors.New("missing format data")
+	}
+
+	var r result
+	var err error
+
+	// Copy over container format.
+	r.format = res.Format.FormatName
+
+	// Parsed media bitrate (if it was set).
+	if str := res.Format.BitRate; str != "" {
+		r.bitrate, err = strconv.ParseUint(str, 10, 64)
+		if err != nil {
+			return nil, gtserror.Newf("invalid bitrate %s: %w", str, err)
+		}
+	}
+
+	// Parse media duration (if it was set).
+	if str := res.Format.Duration; str != "" {
+		r.duration, err = strconv.ParseFloat(str, 32)
+		if err != nil {
+			return nil, gtserror.Newf("invalid duration %s: %w", str, err)
+		}
+	}
+
+	// Preallocate streams to max possible lengths.
+	r.audio = make([]audioStream, 0, len(res.Streams))
+	r.video = make([]videoStream, 0, len(res.Streams))
+
+	// Convert streams to separate types.
+	for _, s := range res.Streams {
+		switch s.CodecType {
+		case "audio":
+			// Append audio stream data to result.
+			r.audio = append(r.audio, audioStream{
+				stream: stream{codec: s.CodecName},
+			})
+		case "video":
+			var framerate float32
+
+			// Parse stream framerate, bearing in
+			// mind that some static container formats
+			// (e.g. jpeg) still return a framerate, so
+			// we also check for a non-1 timebase (dts).
+			if str := s.RFrameRate; str != "" &&
+				s.DurationTS > 1 {
+				var num, den uint32
+				den = 1
+
+				// Check for inequality (numerator / denominator).
+				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
+					n, _ := strconv.ParseUint(p[0], 10, 32)
+					d, _ := strconv.ParseUint(p[1], 10, 32)
+					num, den = uint32(n), uint32(d)
+				} else {
+					n, _ := strconv.ParseUint(p[0], 10, 32)
+					num = uint32(n)
+				}
+
+				// Set final divised framerate.
+				framerate = float32(num / den)
+			}
+
+			// Append video stream data to result.
+			r.video = append(r.video, videoStream{
+				stream:    stream{codec: s.CodecName},
+				width:     s.Width,
+				height:    s.Height,
+				framerate: framerate,
+			})
+		}
+	}
+
+	return &r, nil
 }
 
 // ffprobeResult contains parsed JSON data from
@@ -183,173 +394,31 @@ type ffprobeResult struct {
 	Error   *ffprobeError   `json:"error"`
 }
 
-// ImageMeta extracts image metadata contained within ffprobe'd media result streams.
-func (res *ffprobeResult) ImageMeta() (width int, height int, err error) {
-	for _, stream := range res.Streams {
-		if stream.Width > width {
-			width = stream.Width
-		}
-		if stream.Height > height {
-			height = stream.Height
-		}
-	}
-	if width == 0 || height == 0 {
-		err = errors.New("invalid image stream(s)")
-	}
-	return
-}
-
-// EmbeddedImageMeta extracts embedded image metadata contained within ffprobe'd media result
-// streams, should be used for pulling album image (can be animated image) from audio files.
-func (res *ffprobeResult) EmbeddedImageMeta() (width int, height int, framerate float32, err error) {
-	for _, stream := range res.Streams {
-		if stream.Width > width {
-			width = stream.Width
-		}
-		if stream.Height > height {
-			height = stream.Height
-		}
-		if fr := stream.GetFrameRate(); fr > 0 {
-			if framerate == 0 || fr < framerate {
-				framerate = fr
-			}
-		}
-	}
-	// Need width + height but
-	// no framerate is fine.
-	if width == 0 || height == 0 {
-		err = errors.New("invalid image stream(s)")
-	}
-	return
-}
-
-// VideoMeta extracts video metadata contained within ffprobe'd media result streams.
-func (res *ffprobeResult) VideoMeta() (width, height int, framerate float32, err error) {
-	for _, stream := range res.Streams {
-		if stream.Width > width {
-			width = stream.Width
-		}
-		if stream.Height > height {
-			height = stream.Height
-		}
-		if fr := stream.GetFrameRate(); fr > 0 {
-			if framerate == 0 || fr < framerate {
-				framerate = fr
-			}
-		}
-	}
-	if width == 0 || height == 0 || framerate == 0 {
-		err = errors.New("invalid video stream(s)")
-	}
-	return
-}
-
 type ffprobeStream struct {
-	CodecName    string `json:"codec_name"`
-	AvgFrameRate string `json:"avg_frame_rate"`
-	RFrameRate   string `json:"r_frame_rate"`
-	Width        int    `json:"width"`
-	Height       int    `json:"height"`
+	CodecName  string `json:"codec_name"`
+	CodecType  string `json:"codec_type"`
+	RFrameRate string `json:"r_frame_rate"`
+	DurationTS uint   `json:"duration_ts"`
+	Width      int    `json:"width"`
+	Height     int    `json:"height"`
 	// + unused fields.
 }
 
-// GetFrameRate calculates float32 framerate value from stream json string.
-func (str *ffprobeStream) GetFrameRate() float32 {
-	numDen := func(strFR string) (float32, float32) {
-		var (
-			// numerator
-			num float32
-
-			// denominator
-			den float32
-		)
-
-		// Check for a provided inequality, i.e. numerator / denominator.
-		if p := strings.SplitN(strFR, "/", 2); len(p) == 2 {
-			n, _ := strconv.ParseFloat(p[0], 32)
-			d, _ := strconv.ParseFloat(p[1], 32)
-			num, den = float32(n), float32(d)
-		} else {
-			n, _ := strconv.ParseFloat(p[0], 32)
-			num = float32(n)
-		}
-
-		return num, den
-	}
-
-	var num, den float32
-	if str.AvgFrameRate != "" {
-		// Check if we have avg_frame_rate.
-		num, den = numDen(str.AvgFrameRate)
-	}
-
-	if num == 0 && str.RFrameRate != "" {
-		// Check if we have r_frame_rate.
-		num, den = numDen(str.RFrameRate)
-	}
-
-	if num != 0 {
-		// Found it.
-		// Avoid divide by zero.
-		return num / cmp.Or(den, 1)
-	}
-
-	return 0
-}
-
 type ffprobeFormat struct {
-	Filename   string `json:"filename"`
 	FormatName string `json:"format_name"`
 	Duration   string `json:"duration"`
 	BitRate    string `json:"bit_rate"`
 	// + unused fields
 }
 
-// GetFileType determines file type and extension to use for media data.
-func (fmt *ffprobeFormat) GetFileType() (gtsmodel.FileType, string) {
-	switch fmt.FormatName {
-	case "mov,mp4,m4a,3gp,3g2,mj2":
-		return gtsmodel.FileTypeVideo, "mp4"
-	case "apng":
-		return gtsmodel.FileTypeImage, "apng"
-	case "png_pipe":
-		return gtsmodel.FileTypeImage, "png"
-	case "image2", "jpeg_pipe":
-		return gtsmodel.FileTypeImage, "jpeg"
-	case "webp_pipe":
-		return gtsmodel.FileTypeImage, "webp"
-	case "gif":
-		return gtsmodel.FileTypeImage, "gif"
-	case "mp3":
-		return gtsmodel.FileTypeAudio, "mp3"
-	case "ogg":
-		return gtsmodel.FileTypeAudio, "ogg"
-	default:
-		return gtsmodel.FileTypeUnknown, fmt.FormatName
-	}
-}
-
-// GetDuration calculates float32 framerate value from format json string.
-func (fmt *ffprobeFormat) GetDuration() float32 {
-	if fmt.Duration != "" {
-		dur, _ := strconv.ParseFloat(fmt.Duration, 32)
-		return float32(dur)
-	}
-	return 0
-}
-
-// GetBitRate calculates uint64 bitrate value from format json string.
-func (fmt *ffprobeFormat) GetBitRate() uint64 {
-	if fmt.BitRate != "" {
-		r, _ := strconv.ParseUint(fmt.BitRate, 10, 64)
-		return r
-	}
-	return 0
-}
-
 type ffprobeError struct {
 	Code   int    `json:"code"`
 	String string `json:"string"`
+}
+
+func isUnsupportedTypeErr(err error) bool {
+	ffprobeErr, ok := err.(*ffprobeError)
+	return ok && ffprobeErr.Code == -1094995529
 }
 
 func (err *ffprobeError) Error() string {

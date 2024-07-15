@@ -17,36 +17,18 @@
 
 package util
 
-// EqualPtrs returns whether the values contained within two comparable ptr types are equal.
-func EqualPtrs[T comparable](t1, t2 *T) bool {
-	switch {
-	case t1 == nil:
-		return (t2 == nil)
-	case t2 == nil:
-		return false
-	default:
-		return (*t1 == *t2)
-	}
+type Number interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~uintptr | ~float32 | ~float64
 }
 
-// Ptr returns a pointer to the passed in type
-func Ptr[T any](t T) *T {
-	return &t
-}
-
-// PtrIf returns ptr value only if 't' non-zero.
-func PtrIf[T comparable](t T) *T {
-	var z T
-	if t == z {
-		return nil
+// Div performs a safe division of
+// n1 and n2, checking for zero n2. In the
+// case of zero n2, zero is returned.
+func Div[N Number](n1, n2 N) N {
+	if n2 == 0 {
+		return 0
 	}
-	return &t
-}
-
-// PtrValueOr returns either value of ptr, or default.
-func PtrValueOr[T any](t *T, _default T) T {
-	if t != nil {
-		return *t
-	}
-	return _default
+	return n1 / n2
 }

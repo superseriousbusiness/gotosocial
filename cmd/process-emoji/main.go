@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -41,6 +42,14 @@ func main() {
 
 	if len(os.Args) != 3 {
 		log.Panic(ctx, "Usage: go run ./cmd/process-emoji <input-file> <output-static>")
+	}
+
+	if err := ffmpeg.InitFfprobe(ctx, 1); err != nil {
+		log.Panic(ctx, err)
+	}
+
+	if err := ffmpeg.InitFfmpeg(ctx, 1); err != nil {
+		log.Panic(ctx, err)
 	}
 
 	var st storage.Driver
