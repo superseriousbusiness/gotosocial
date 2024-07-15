@@ -347,7 +347,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// Create a temporary table with all statuses other than the deleted status
 		// in each conversation for which the deleted status is the last status
 		// (if there are such statuses).
-		conversationStatusesTempTable := bun.Ident("conversation_statuses_" + id.NewULID())
+		conversationStatusesTempTable := "conversation_statuses_" + id.NewULID()
 		if _, err := tx.NewRaw(
 			`
 			CREATE TEMPORARY TABLE ?0 AS
@@ -363,7 +363,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 				ON conversation_to_statuses.status_id = statuses.id
 			WHERE conversations.last_status_id = ?1
 			`,
-			conversationStatusesTempTable,
+			bun.Ident(conversationStatusesTempTable),
 			statusID,
 		).Exec(ctx); // nocollapse
 		err != nil {
@@ -372,7 +372,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 
 		// Create a temporary table with the most recently created status in each conversation
 		// for which the deleted status is the last status (if there is such a status).
-		latestConversationStatusesTempTable := bun.Ident("latest_conversation_statuses_" + id.NewULID())
+		latestConversationStatusesTempTable := "latest_conversation_statuses_" + id.NewULID()
 		if _, err := tx.NewRaw(
 			`
 			CREATE TEMPORARY TABLE ?0 AS
@@ -385,8 +385,8 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 				AND later_statuses.created_at > conversation_statuses.created_at
 			WHERE later_statuses.id IS NULL
 			`,
-			latestConversationStatusesTempTable,
-			conversationStatusesTempTable,
+			bun.Ident(latestConversationStatusesTempTable),
+			bun.Ident(conversationStatusesTempTable),
 		).Exec(ctx); // nocollapse
 		err != nil {
 			return gtserror.Newf("error creating latestConversationStatusesTempTable while deleting status %s: %w", statusID, err)
@@ -407,7 +407,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			AND latest_conversation_statuses.id IS NOT NULL
 			RETURNING conversations.id
 			`,
-			latestConversationStatusesTempTable,
+			bun.Ident(latestConversationStatusesTempTable),
 			bun.Safe(nowSQL),
 		).Scan(ctx, &updatedConversationIDs); // nocollapse
 		err != nil {
@@ -426,18 +426,20 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			)
 			RETURNING id
 			`,
-			latestConversationStatusesTempTable,
+			bun.Ident(latestConversationStatusesTempTable),
 		).Scan(ctx, &deletedConversationIDs); // nocollapse
 		err != nil {
 			return gtserror.Newf("error deleting conversation while deleting status %s: %w", statusID, err)
 		}
 
 		// Clean up.
-		if _, err := tx.NewRaw(`DROP TABLE ?`, conversationStatusesTempTable).Exec(ctx); err != nil {
-			return err
-		}
-		if _, err := tx.NewRaw(`DROP TABLE ?`, latestConversationStatusesTempTable).Exec(ctx); err != nil {
-			return err
+		for _, tempTable := range []string{
+			conversationStatusesTempTable,
+			latestConversationStatusesTempTable,
+		} {
+			if _, err := tx.NewDropTable().Table(tempTable).Exec(ctx); err != nil {
+				return err
+			}
 		}
 
 		return nil
