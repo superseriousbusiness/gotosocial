@@ -189,35 +189,48 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	var ext string
 
+	// Extract any video stream metadata from media.
+	// This will always be used regardless of type,
+	// as even audio files may contain embedded album art.
+	width, height, framerate, err := result.ImageMeta()
+	if err != nil {
+		return gtserror.Newf("error extracting metadata: %w", err)
+	}
+	p.media.FileMeta.Original.Width = width
+	p.media.FileMeta.Original.Height = height
+	p.media.FileMeta.Original.Size = (width * height)
+	p.media.FileMeta.Original.Aspect = util.Div(float32(width), float32(height))
+	p.media.FileMeta.Original.Framerate = util.PtrIf(framerate)
+	p.media.FileMeta.Original.Duration = util.PtrIf(float32(result.duration))
+	p.media.FileMeta.Original.Bitrate = util.PtrIf(result.bitrate)
+
 	// Set media type from ffprobe format data.
 	p.media.Type, ext = result.GetFileType()
+	if p.media.Type == gtsmodel.FileTypeUnknown {
+		log.Warn(ctx, "unsupported data type: %s", result.format)
+		return nil
+	}
 
-	switch p.media.Type {
-	case gtsmodel.FileTypeImage:
+	if p.media.Type != gtsmodel.FileTypeAudio {
 		// Pass file through ffmpeg clearing
 		// any excess metadata (e.g. EXIF).
+		//
+		// NOTE: we do not clean audio file
+		// metadata, in order to keep tags.
 		if err := ffmpegClearMetadata(ctx,
 			temppath, ext,
 		); err != nil {
 			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
+	}
 
-		// Extract image metadata from streams.
-		width, height, err := result.ImageMeta()
-		if err != nil {
-			return err
-		}
-		p.media.FileMeta.Original.Width = width
-		p.media.FileMeta.Original.Height = height
-		p.media.FileMeta.Original.Size = (width * height)
-		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
-
+	if width > 0 && height > 0 {
 		// Determine thumbnail dimensions to use.
 		thumbWidth, thumbHeight := thumbSize(width, height)
 		p.media.FileMeta.Small.Width = thumbWidth
 		p.media.FileMeta.Small.Height = thumbHeight
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
-		p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
+		p.media.FileMeta.Small.Aspect = util.Div(float32(thumbWidth), float32(thumbHeight))
 
 		// Generate a thumbnail image from input image path.
 		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
@@ -228,82 +241,13 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			return gtserror.Newf("error generating image thumb: %w", err)
 		}
 
-	case gtsmodel.FileTypeVideo:
-		// Pass file through ffmpeg clearing
-		// any excess metadata (e.g. EXIF).
-		if err := ffmpegClearMetadata(ctx,
-			temppath, ext,
-		); err != nil {
-			return gtserror.Newf("error cleaning metadata: %w", err)
-		}
-
-		// Extract video metadata we can from streams.
-		width, height, framerate, err := result.VideoMeta()
-		if err != nil {
-			return err
-		}
-		p.media.FileMeta.Original.Width = width
-		p.media.FileMeta.Original.Height = height
-		p.media.FileMeta.Original.Size = (width * height)
-		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
-		p.media.FileMeta.Original.Framerate = &framerate
-
-		// Extract further format data from result.
-		p.media.FileMeta.Original.Duration = util.Ptr(float32(result.duration))
-		p.media.FileMeta.Original.Bitrate = util.Ptr(result.bitrate)
-
-		// Determine thumbnail dimensions to use.
-		thumbWidth, thumbHeight := thumbSize(width, height)
-		p.media.FileMeta.Small.Width = thumbWidth
-		p.media.FileMeta.Small.Height = thumbHeight
-		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
-		p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
-
-		// Extract a thumbnail frame from input video path.
-		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
-			thumbWidth,
-			thumbHeight,
-		)
-		if err != nil {
-			return gtserror.Newf("error extracting video frame: %w", err)
-		}
-
-	case gtsmodel.FileTypeAudio:
-		// Extract audio format data from result.
-		p.media.FileMeta.Original.Duration = util.Ptr(float32(result.duration))
-		p.media.FileMeta.Original.Bitrate = util.Ptr(result.bitrate)
-
-		// Extract image metadata from streams (if any),
-		// this will only exist for embedded album art.
-		width, height, framerate, _ := result.EmbeddedImageMeta()
-		if width > 0 && height > 0 {
-			// Unlikely to need these but masto API includes them.
-			p.media.FileMeta.Original.Width = width
-			p.media.FileMeta.Original.Height = height
-			if framerate != 0 {
-				p.media.FileMeta.Original.Framerate = &framerate
-			}
-
-			// Determine thumbnail dimensions to use.
-			thumbWidth, thumbHeight := thumbSize(width, height)
-			p.media.FileMeta.Small.Width = thumbWidth
-			p.media.FileMeta.Small.Height = thumbHeight
-			p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
-			p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
-
-			// Generate a thumbnail image from input image path.
-			thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
-				thumbWidth,
-				thumbHeight,
-			)
+		if p.media.Blurhash == "" {
+			// Generate blurhash (if not already) from thumbnail.
+			p.media.Blurhash, err = generateBlurhash(thumbpath)
 			if err != nil {
-				return gtserror.Newf("error generating image thumb: %w", err)
+				return gtserror.Newf("error generating thumb blurhash: %w", err)
 			}
 		}
-
-	default:
-		log.Warnf(ctx, "unsupported type: %s (%s)", p.media.Type, result.format)
-		return nil
 	}
 
 	// Calculate final media attachment file path.
@@ -328,17 +272,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.media.File.FileSize = int(filesz)
 
 	if thumbpath != "" {
-		// Note that neither thumbnail storage
-		// nor a blurhash are needed for audio.
-
-		if p.media.Blurhash == "" {
-			// Generate blurhash (if not already) from thumbnail.
-			p.media.Blurhash, err = generateBlurhash(thumbpath)
-			if err != nil {
-				return gtserror.Newf("error generating thumb blurhash: %w", err)
-			}
-		}
-
 		// Copy thumbnail file into storage at path.
 		thumbsz, err := p.mgr.state.Storage.PutFile(ctx,
 			p.media.Thumbnail.Path,

@@ -47,9 +47,6 @@ var SupportedMIMETypes = []string{
 	"image/png",  // .png
 	"image/apng", // .apng
 
-	// mpeg transport stream
-	"model/vnd.mts", // .mts
-
 	// ogg types
 	"audio/ogg", // .ogg
 	"video/ogg", // .ogv

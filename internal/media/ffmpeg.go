@@ -147,7 +147,7 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 		Args: []string{
 			"-i", filepath,
 			"-loglevel", "quiet",
-			"-print_format", "json",
+			"-print_format", "json=compact=1",
 			"-show_streams",
 			"-show_format",
 			"-show_error",
@@ -207,7 +207,7 @@ type videoStream struct {
 
 // GetFileType determines file type and extension to use for media data. This
 // function helps to abstract away the horrible complexities that are possible
-// general media container types and and possible sub-types within that.
+// media container (i.e. the file) types and and possible sub-types within that.
 func (res *result) GetFileType() (gtsmodel.FileType, string) {
 	switch res.format {
 	case "mpeg":
@@ -283,30 +283,15 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 		}
 	case "avi":
 		return gtsmodel.FileTypeVideo, "avi"
-	case "mpegts":
-		return gtsmodel.FileTypeVideo, "mts"
 	}
 	return gtsmodel.FileTypeUnknown, res.format
 }
 
 // ImageMeta extracts image metadata contained within ffprobe'd media result streams.
-func (res *result) ImageMeta() (width int, height int, err error) {
-	for _, stream := range res.video {
-		if stream.width > width {
-			width = stream.width
-		}
-		if stream.height > height {
-			height = stream.height
-		}
+func (res *result) ImageMeta() (width int, height int, framerate float32, err error) {
+	if len(res.video) == 0 {
+		return 0, 0, 0, nil
 	}
-	if width == 0 || height == 0 {
-		err = errors.New("invalid image stream(s)")
-	}
-	return
-}
-
-// VideoMeta extracts video metadata contained within ffprobe'd media result streams.
-func (res *result) VideoMeta() (width, height int, framerate float32, err error) {
 	for _, stream := range res.video {
 		if stream.width > width {
 			width = stream.width
@@ -320,8 +305,8 @@ func (res *result) VideoMeta() (width, height int, framerate float32, err error)
 			}
 		}
 	}
-	if width == 0 || height == 0 || framerate == 0 {
-		err = errors.New("invalid video stream(s)")
+	if width == 0 || height == 0 {
+		err = errors.New("invalid image stream(s)")
 	}
 	return
 }
@@ -374,7 +359,7 @@ func (res *ffprobeResult) Process() (*result, error) {
 			var framerate float32
 
 			// Parse stream framerate (if non-zero).
-			if str := s.AvgFrameRate; str != "" {
+			if str := s.RFrameRate; str != "" {
 				var num, den float32
 
 				// Check for inequality (numerator / denominator).
@@ -413,11 +398,11 @@ type ffprobeResult struct {
 }
 
 type ffprobeStream struct {
-	CodecName    string `json:"codec_name"`
-	CodecType    string `json:"codec_type"`
-	AvgFrameRate string `json:"avg_frame_rate"`
-	Width        int    `json:"width"`
-	Height       int    `json:"height"`
+	CodecName  string `json:"codec_name"`
+	CodecType  string `json:"codec_type"`
+	RFrameRate string `json:"r_frame_rate"`
+	Width      int    `json:"width"`
+	Height     int    `json:"height"`
 	// + unused fields.
 }
 
