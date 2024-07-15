@@ -84,7 +84,10 @@ type Status interface {
 	// It is used only by the conversation advanced migration.
 	MaxDirectStatusID(ctx context.Context) (string, error)
 
-	// GetDirectStatusIDsBatch returns up to count DM status IDs strictly greater than minID and less than maxID.
+	// GetDirectStatusIDsBatch returns up to count DM status IDs strictly greater than minID
+	// and less than or equal to maxIDInclusive. Note that this is different from most of our paging,
+	// which uses a maxID and returns IDs strictly less than that, because it's called with the result of
+	// MaxDirectStatusID, and expects to eventually return the status with that ID.
 	// It is used only by the conversation advanced migration.
-	GetDirectStatusIDsBatch(ctx context.Context, minID string, maxID string, count int) ([]string, error)
+	GetDirectStatusIDsBatch(ctx context.Context, minID string, maxIDInclusive string, count int) ([]string, error)
 }
