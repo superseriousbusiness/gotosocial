@@ -344,6 +344,8 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			return gtserror.Newf("error deleting conversation-to-status links while deleting status %s: %w", statusID, err)
 		}
 
+		// Note: Bun doesn't currently support CREATE TABLE … AS SELECT … so we need to use raw queries here.
+
 		// Create a temporary table with all statuses other than the deleted status
 		// in each conversation for which the deleted status is the last status
 		// (if there are such statuses).
@@ -374,20 +376,36 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// for which the deleted status is the last status (if there is such a status).
 		latestConversationStatusesTempTable := "latest_conversation_statuses_" + id.NewULID()
 		if _, err := tx.NewRaw(
-			`
-			CREATE TEMPORARY TABLE ?0 AS
-			SELECT
-				conversation_statuses.conversation_id,
-				conversation_statuses.id
-			FROM ?1 conversation_statuses
-			LEFT JOIN ?1 later_statuses
-				ON conversation_statuses.conversation_id = later_statuses.conversation_id
-				AND later_statuses.created_at > conversation_statuses.created_at
-			WHERE later_statuses.id IS NULL
-			`,
+			"CREATE TEMPORARY TABLE ? AS ?",
 			bun.Ident(latestConversationStatusesTempTable),
-			bun.Ident(conversationStatusesTempTable),
-		).Exec(ctx); // nocollapse
+			tx.NewSelect().
+				Column(
+					"conversation_statuses.conversation_id",
+					"conversation_statuses.id",
+				).
+				TableExpr(
+					"? AS ?",
+					bun.Ident(conversationStatusesTempTable),
+					bun.Ident("conversation_statuses"),
+				).
+				Join(
+					"LEFT JOIN ? AS ?",
+					bun.Ident(conversationStatusesTempTable),
+					bun.Ident("later_statuses"),
+				).
+				JoinOn(
+					"? = ?",
+					bun.Ident("conversation_statuses.conversation_id"),
+					bun.Ident("later_statuses.conversation_id"),
+				).
+				JoinOn(
+					"? > ?",
+					bun.Ident("later_statuses.created_at"),
+					bun.Ident("conversation_statuses.created_at"),
+				).
+				Where("? IS NULL", bun.Ident("later_statuses.id")),
+		).
+			Exec(ctx); // nocollapse
 		err != nil {
 			return gtserror.Newf("error creating latestConversationStatusesTempTable while deleting status %s: %w", statusID, err)
 		}
