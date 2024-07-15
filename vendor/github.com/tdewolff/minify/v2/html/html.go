@@ -75,6 +75,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 	if o.KeepConditionalComments {
 		fmt.Println("DEPRECATED: KeepConditionalComments is replaced by KeepSpecialComments")
 		o.KeepSpecialComments = true
+		o.KeepConditionalComments = false // omit next warning
 	}
 
 	omitSpace := true // if true the next leading space is omitted
