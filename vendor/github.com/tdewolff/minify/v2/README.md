@@ -4,6 +4,8 @@
 
 **[Binaries](https://github.com/tdewolff/minify/releases) of CLI for various platforms.** See [CLI](https://github.com/tdewolff/minify/tree/master/cmd/minify) for more installation instructions.
 
+**[Windows binary from scoop](https://scoop.sh/#/apps?q=minify)** install with `scoop install main/minify`
+
 **[Python bindings](https://pypi.org/project/tdewolff-minify/)** install with `pip install tdewolff-minify`
 
 **[JavaScript bindings](https://www.npmjs.com/package/@tdewolff/minify)** install with `npm i @tdewolff/minify`

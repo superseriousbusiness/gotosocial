@@ -53,7 +53,7 @@ require (
 	github.com/superseriousbusiness/activity v1.7.0-gts
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
-	github.com/tdewolff/minify/v2 v2.20.34
+	github.com/tdewolff/minify/v2 v2.20.37
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
