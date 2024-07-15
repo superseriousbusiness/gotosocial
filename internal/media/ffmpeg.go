@@ -208,37 +208,39 @@ type videoStream struct {
 // GetFileType determines file type and extension to use for media data. This
 // function helps to abstract away the horrible complexities that are possible
 // media container (i.e. the file) types and and possible sub-types within that.
+//
+// Note the checks for (len(res.video) > 0) may catch some audio files with embedded
+// album art as video, but i blame that on the hellscape that is media filetypes.
+//
+// TODO: we can update this code to also return a mimetype and avoid later parsing!
 func (res *result) GetFileType() (gtsmodel.FileType, string) {
 	switch res.format {
 	case "mpeg":
 		return gtsmodel.FileTypeVideo, "mpeg"
+	case "mjpeg":
+		return gtsmodel.FileTypeVideo, "mjpeg"
 	case "mov,mp4,m4a,3gp,3g2,mj2":
-		for _, stream := range res.video {
-			// check for motion video
-			// (static is album art).
-			if stream.framerate > 0 {
-				return gtsmodel.FileTypeVideo, "mp4"
-			}
-		}
-		for _, stream := range res.audio {
-			switch stream.codec { //nolint
-			case "aac":
-				return gtsmodel.FileTypeAudio, "m4a"
-			}
+		switch {
+		case len(res.video) > 0:
+			return gtsmodel.FileTypeVideo, "mp4"
+		case len(res.audio) > 0 &&
+			res.audio[0].codec == "aac":
+			// m4a only supports [aac] audio.
+			return gtsmodel.FileTypeAudio, "m4a"
 		}
 	case "apng":
 		return gtsmodel.FileTypeImage, "apng"
 	case "png_pipe":
 		return gtsmodel.FileTypeImage, "png"
-	case "image2", "jpeg_pipe":
+	case "image2", "image2pipe", "jpeg_pipe":
 		return gtsmodel.FileTypeImage, "jpeg"
-	case "webp_pipe":
+	case "webp", "webp_pipe":
 		return gtsmodel.FileTypeImage, "webp"
 	case "gif":
 		return gtsmodel.FileTypeImage, "gif"
 	case "mp3":
-		for _, stream := range res.audio {
-			switch stream.codec {
+		if len(res.audio) > 0 {
+			switch res.audio[0].codec {
 			case "mp2":
 				return gtsmodel.FileTypeAudio, "mp2"
 			case "mp3":
@@ -246,38 +248,34 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 			}
 		}
 	case "asf":
-		for _, stream := range res.video {
-			// check for motion video
-			// (static is album art).
-			if stream.framerate > 0 {
-				return gtsmodel.FileTypeVideo, "wmv"
-			}
-		}
-		switch { //nolint
+		switch {
+		case len(res.video) > 0:
+			return gtsmodel.FileTypeVideo, "wmv"
 		case len(res.audio) > 0:
 			return gtsmodel.FileTypeAudio, "wma"
 		}
 	case "ogg":
-		for _, stream := range res.video {
-			// check for motion video
-			// (static is album art).
-			if stream.framerate > 0 {
-				return gtsmodel.FileTypeVideo, "ogv"
-			}
-		}
-		switch { //nolint
+		switch {
+		case len(res.video) > 0:
+			return gtsmodel.FileTypeVideo, "ogv"
 		case len(res.audio) > 0:
 			return gtsmodel.FileTypeAudio, "ogg"
 		}
 	case "matroska,webm":
-		for _, stream := range res.video {
-			// check for motion video
-			// (static is album art).
-			if stream.framerate > 0 {
+		switch {
+		case len(res.video) > 0:
+			switch res.video[0].codec {
+			case "vp8", "vp9", "av1":
+			default:
 				return gtsmodel.FileTypeVideo, "mkv"
 			}
-		}
-		switch { //nolint
+			if len(res.audio) > 0 {
+				switch res.audio[0].codec {
+				case "vorbis", "opus", "libopus":
+					// webm only supports [VP8/VP9/AV1]+[vorbis/opus]
+					return gtsmodel.FileTypeVideo, "webm"
+				}
+			}
 		case len(res.audio) > 0:
 			return gtsmodel.FileTypeAudio, "mka"
 		}
@@ -288,10 +286,7 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 }
 
 // ImageMeta extracts image metadata contained within ffprobe'd media result streams.
-func (res *result) ImageMeta() (width int, height int, framerate float32, err error) {
-	if len(res.video) == 0 {
-		return 0, 0, 0, nil
-	}
+func (res *result) ImageMeta() (width int, height int, framerate float32) {
 	for _, stream := range res.video {
 		if stream.width > width {
 			width = stream.width
@@ -304,9 +299,6 @@ func (res *result) ImageMeta() (width int, height int, framerate float32, err er
 				framerate = fr
 			}
 		}
-	}
-	if width == 0 || height == 0 {
-		err = errors.New("invalid image stream(s)")
 	}
 	return
 }
@@ -358,22 +350,27 @@ func (res *ffprobeResult) Process() (*result, error) {
 		case "video":
 			var framerate float32
 
-			// Parse stream framerate (if non-zero).
-			if str := s.RFrameRate; str != "" {
-				var num, den float32
+			// Parse stream framerate, bearing in
+			// mind that some static container formats
+			// (e.g. jpeg) still return a framerate, so
+			// we also check for a non-1 timebase (dts).
+			if str := s.RFrameRate; str != "" &&
+				s.DurationTS > 1 {
+				var num, den uint32
+				den = 1
 
 				// Check for inequality (numerator / denominator).
 				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
-					n, _ := strconv.ParseFloat(p[0], 32)
-					d, _ := strconv.ParseFloat(p[1], 32)
-					num, den = float32(n), float32(d)
+					n, _ := strconv.ParseUint(p[0], 10, 32)
+					d, _ := strconv.ParseUint(p[1], 10, 32)
+					num, den = uint32(n), uint32(d)
 				} else {
-					n, _ := strconv.ParseFloat(p[0], 32)
-					num = float32(n)
+					n, _ := strconv.ParseUint(p[0], 10, 32)
+					num = uint32(n)
 				}
 
-				// Set final framerate.
-				framerate = (num / den)
+				// Set final divised framerate.
+				framerate = float32(num / den)
 			}
 
 			// Append video stream data to result.
@@ -401,6 +398,7 @@ type ffprobeStream struct {
 	CodecName  string `json:"codec_name"`
 	CodecType  string `json:"codec_type"`
 	RFrameRate string `json:"r_frame_rate"`
+	DurationTS uint   `json:"duration_ts"`
 	Width      int    `json:"width"`
 	Height     int    `json:"height"`
 	// + unused fields.

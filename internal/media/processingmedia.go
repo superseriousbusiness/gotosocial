@@ -192,10 +192,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Extract any video stream metadata from media.
 	// This will always be used regardless of type,
 	// as even audio files may contain embedded album art.
-	width, height, framerate, err := result.ImageMeta()
-	if err != nil {
-		return gtserror.Newf("error extracting metadata: %w", err)
-	}
+	width, height, framerate := result.ImageMeta()
 	p.media.FileMeta.Original.Width = width
 	p.media.FileMeta.Original.Height = height
 	p.media.FileMeta.Original.Size = (width * height)
@@ -206,22 +203,25 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// Set media type from ffprobe format data.
 	p.media.Type, ext = result.GetFileType()
-	if p.media.Type == gtsmodel.FileTypeUnknown {
-		log.Warn(ctx, "unsupported data type: %s", result.format)
-		return nil
-	}
+	switch p.media.Type {
 
-	if p.media.Type != gtsmodel.FileTypeAudio {
+	case gtsmodel.FileTypeImage,
+		gtsmodel.FileTypeVideo:
 		// Pass file through ffmpeg clearing
 		// any excess metadata (e.g. EXIF).
-		//
-		// NOTE: we do not clean audio file
-		// metadata, in order to keep tags.
 		if err := ffmpegClearMetadata(ctx,
 			temppath, ext,
 		); err != nil {
 			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
+
+	case gtsmodel.FileTypeAudio:
+		// NOTE: we do not clean audio file
+		// metadata, in order to keep tags.
+
+	default:
+		log.Warn(ctx, "unsupported data type: %s", result.format)
+		return nil
 	}
 
 	if width > 0 && height > 0 {
