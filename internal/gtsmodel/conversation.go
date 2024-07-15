@@ -27,18 +27,37 @@ import (
 
 // Conversation represents direct messages between the owner account and a set of other accounts.
 type Conversation struct {
-	ID               string     `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                                                         // id of this item in the database
-	CreatedAt        time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                      // when was item created
-	UpdatedAt        time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`                                      // when was item last updated
-	AccountID        string     `bun:"type:CHAR(26),nullzero,notnull,unique:conversations_thread_id_account_id_other_accounts_key_uniq"` // Account that owns the conversation
-	Account          *Account   `bun:"-"`                                                                                                //
-	OtherAccountIDs  []string   `bun:"other_account_ids,array"`                                                                          // Other accounts participating in the conversation (doesn't include the owner, may be empty in the case of a DM to yourself)
-	OtherAccounts    []*Account `bun:"-"`                                                                                                //
-	OtherAccountsKey string     `bun:",notnull,unique:conversations_thread_id_account_id_other_accounts_key_uniq"`                       // Denormalized lookup key derived from unique OtherAccountIDs, sorted and concatenated with commas, may be empty in the case of a DM to yourself
-	ThreadID         string     `bun:"type:CHAR(26),nullzero,notnull,unique:conversations_thread_id_account_id_other_accounts_key_uniq"` // Thread that the conversation is part of
-	LastStatusID     string     `bun:"type:CHAR(26),nullzero,notnull"`                                                                   // id of the last status in this conversation
-	LastStatus       *Status    `bun:"-"`                                                                                                //
-	Read             *bool      `bun:",default:false"`                                                                                   // Has the owner read all statuses in this conversation?
+	// ID of this item in the database.
+	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+
+	// When was this item created?
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+
+	// When was this item last updated?
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+
+	// Account that owns the conversation.
+	AccountID string   `bun:"type:CHAR(26),nullzero,notnull,unique:conversations_thread_id_account_id_other_accounts_key_uniq,unique:conversations_account_id_last_status_id_uniq"`
+	Account   *Account `bun:"-"`
+
+	// Other accounts participating in the conversation.
+	// Doesn't include the owner. May be empty in the case of a DM to yourself.
+	OtherAccountIDs []string   `bun:"other_account_ids,array"`
+	OtherAccounts   []*Account `bun:"-"`
+
+	// Denormalized lookup key derived from unique OtherAccountIDs, sorted and concatenated with commas.
+	// May be empty in the case of a DM to yourself.
+	OtherAccountsKey string `bun:",notnull,unique:conversations_thread_id_account_id_other_accounts_key_uniq"`
+
+	// Thread that the conversation is part of.
+	ThreadID string `bun:"type:CHAR(26),nullzero,notnull,unique:conversations_thread_id_account_id_other_accounts_key_uniq"`
+
+	// ID of the last status in this conversation.
+	LastStatusID string  `bun:"type:CHAR(26),nullzero,notnull,unique:conversations_account_id_last_status_id_uniq"`
+	LastStatus   *Status `bun:"-"`
+
+	// Has the owner read all statuses in this conversation?
+	Read *bool `bun:",default:false"`
 }
 
 // ConversationOtherAccountsKey creates an OtherAccountsKey from a list of OtherAccountIDs.

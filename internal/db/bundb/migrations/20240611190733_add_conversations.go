@@ -62,18 +62,6 @@ func init() {
 				}
 			}
 
-			// Add an additional uniqueness constraint to the conversations table.
-			if _, err := tx.
-				NewCreateIndex().
-				Model(&gtsmodel.Conversation{}).
-				Index("conversations_account_id_last_status_id_uniq").
-				Column("account_id", "last_status_id").
-				Unique().
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
 			return nil
 		})
 	}
