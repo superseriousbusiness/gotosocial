@@ -64,14 +64,14 @@ require (
 	github.com/uptrace/bun/extra/bunotel v1.2.1
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.7.4
-	go.opentelemetry.io/otel v1.26.0
+	go.opentelemetry.io/otel v1.28.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.26.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.24.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.46.0
-	go.opentelemetry.io/otel/metric v1.26.0
+	go.opentelemetry.io/otel/metric v1.28.0
 	go.opentelemetry.io/otel/sdk v1.26.0
 	go.opentelemetry.io/otel/sdk/metric v1.24.0
-	go.opentelemetry.io/otel/trace v1.26.0
+	go.opentelemetry.io/otel/trace v1.28.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/crypto v0.25.0
 	golang.org/x/net v0.27.0
@@ -114,7 +114,7 @@ require (
 	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
+	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.0 // indirect
