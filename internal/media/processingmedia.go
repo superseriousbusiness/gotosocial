@@ -180,33 +180,17 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// Pass input file through ffprobe to
 	// parse further metadata information.
 	result, err := ffprobe(ctx, temppath)
-	if err != nil {
-		return gtserror.Newf("error ffprobing data: %w", err)
-	}
-
-	switch {
-	// No errors parsing data.
-	case result.Error == nil:
-
-	// Data type unhandleable by ffprobe.
-	case result.Error.Code == -1094995529:
+	if err != nil && !isUnsupportedTypeErr(err) {
+		return gtserror.Newf("ffprobe error: %w", err)
+	} else if result == nil {
 		log.Warn(ctx, "unsupported data type")
 		return nil
-
-	default:
-		return gtserror.Newf("ffprobe error: %w", err)
 	}
 
 	var ext string
 
-	// Set the media type from ffprobe format data.
-	p.media.Type, ext = result.Format.GetFileType()
-	if p.media.Type == gtsmodel.FileTypeUnknown {
-
-		// Return early (deleting file)
-		// for unhandled file types.
-		return nil
-	}
+	// Set media type from ffprobe format data.
+	p.media.Type, ext = result.GetFileType()
 
 	switch p.media.Type {
 	case gtsmodel.FileTypeImage:
@@ -264,13 +248,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Original.Aspect = float32(width) / float32(height)
 		p.media.FileMeta.Original.Framerate = &framerate
 
-		// Extract total duration from format.
-		duration := result.Format.GetDuration()
-		p.media.FileMeta.Original.Duration = &duration
-
-		// Extract total bitrate from format.
-		bitrate := result.Format.GetBitRate()
-		p.media.FileMeta.Original.Bitrate = &bitrate
+		// Extract further format data from result.
+		p.media.FileMeta.Original.Duration = util.Ptr(float32(result.duration))
+		p.media.FileMeta.Original.Bitrate = util.Ptr(result.bitrate)
 
 		// Determine thumbnail dimensions to use.
 		thumbWidth, thumbHeight := thumbSize(width, height)
@@ -289,13 +269,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		}
 
 	case gtsmodel.FileTypeAudio:
-		// Extract total duration from format.
-		duration := result.Format.GetDuration()
-		p.media.FileMeta.Original.Duration = &duration
-
-		// Extract total bitrate from format.
-		bitrate := result.Format.GetBitRate()
-		p.media.FileMeta.Original.Bitrate = &bitrate
+		// Extract audio format data from result.
+		p.media.FileMeta.Original.Duration = util.Ptr(float32(result.duration))
+		p.media.FileMeta.Original.Bitrate = util.Ptr(result.bitrate)
 
 		// Extract image metadata from streams (if any),
 		// this will only exist for embedded album art.
@@ -326,7 +302,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		}
 
 	default:
-		log.Warnf(ctx, "unsupported type: %s (%s)", p.media.Type, result.Format.FormatName)
+		log.Warnf(ctx, "unsupported type: %s (%s)", p.media.Type, result.format)
 		return nil
 	}
 

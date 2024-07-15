@@ -34,17 +34,33 @@ import (
 )
 
 var SupportedMIMETypes = []string{
-	mimeImageJpeg,
-	mimeImageGif,
-	mimeImagePng,
-	mimeImageWebp,
-	mimeVideoMp4,
+	"image/png",  // .png
+	"image/apng", // .apng
+	"image/jpeg", // .jpeg
+	"image/gif",  // .gif
+	"image/webp", // .webp
+
+	"audio/mp2",      // .mp2
+	"audio/mp3",      // .mp3
+	"audio/ogg",      // .ogg
+	"audio/x-ms-wma", // .wma
+
+	"video/mp4",        // .mp4
+	"video/x-msvideo",  // .avi
+	"video/ogg",        // .ogv
+	"video/webm",       // .webm
+	"model/vnd.mts",    // .mts
+	"video/x-ms-wmv",   // .wmv
+	"video/x-matroska", // .mkv
+	"video/quicktime",  // .mov
 }
 
 var SupportedEmojiMIMETypes = []string{
-	mimeImageGif,
-	mimeImagePng,
-	mimeImageWebp,
+	"image/png",  // .png
+	"image/apng", // .apng
+	"image/jpeg", // .jpeg
+	"image/gif",  // .gif
+	"image/webp", // .webp
 }
 
 type Manager struct {
