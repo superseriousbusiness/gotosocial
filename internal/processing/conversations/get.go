@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -82,13 +83,13 @@ func (p *Processor) GetAll(
 			compiledMutes,
 		)
 		if err != nil {
-			err = gtserror.Newf(
-				"couldn't convert conversation %s to API representation for account %s: %w",
+			log.Errorf(
+				ctx,
+				"error converting conversation %s to API representation: %v",
 				conversation.ID,
-				requestingAccount.ID,
 				err,
 			)
-			return nil, gtserror.NewErrorInternalError(err)
+			continue
 		}
 
 		// Append conversation to return items.
