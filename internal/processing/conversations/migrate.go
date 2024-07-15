@@ -33,8 +33,8 @@ const advancedMigrationID = "20240611190733_add_conversations"
 const statusBatchSize = 100
 
 type AdvancedMigrationState struct {
-	MinID string
-	MaxID string
+	MinID          string
+	MaxIDInclusive string
 }
 
 func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
@@ -64,7 +64,7 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 		// Find the max ID of all existing statuses.
 		// This will be the last one we migrate;
 		// newer ones will be handled by the normal conversation flow.
-		state.MaxID, err = p.state.DB.MaxDirectStatusID(ctx)
+		state.MaxIDInclusive, err = p.state.DB.MaxDirectStatusID(ctx)
 		if err != nil {
 			return gtserror.Newf("couldn't get max DM status ID for migration: %w", err)
 		}
@@ -89,7 +89,7 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 	// and update conversations for each in order.
 	for {
 		// Get status IDs for this batch.
-		statusIDs, err := p.state.DB.GetDirectStatusIDsBatch(ctx, state.MinID, state.MaxID, statusBatchSize)
+		statusIDs, err := p.state.DB.GetDirectStatusIDsBatch(ctx, state.MinID, state.MaxIDInclusive, statusBatchSize)
 		if err != nil {
 			return gtserror.Newf("couldn't get DM status ID batch for migration: %w", err)
 		}
