@@ -95,8 +95,8 @@ func init() {
 		// non-locally stored emoji.
 		if _, err := db.NewUpdate().
 			Table("emojis").
-			WhereOr("? = ?", bun.Ident("image_url")).
-			WhereOr("? = ?", bun.Ident("image_path")).
+			WhereOr("? = ?", bun.Ident("image_url"), "").
+			WhereOr("? = ?", bun.Ident("image_path"), "").
 			Set("? = ?", bun.Ident("image_path"), "").
 			Set("? = ?", bun.Ident("image_url"), "").
 			Set("? = ?", bun.Ident("image_file_size"), 0).
