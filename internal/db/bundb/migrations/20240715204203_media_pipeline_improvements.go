@@ -36,8 +36,6 @@ func init() {
 				return err
 			}
 
-			tx.NewAddColumn().Table("").ColumnExpr("")
-
 			for old, new := range map[old_gtsmodel.FileType]new_gtsmodel.FileType{
 				old_gtsmodel.FileTypeAudio:   new_gtsmodel.FileTypeAudio,
 				old_gtsmodel.FileTypeImage:   new_gtsmodel.FileTypeImage,
