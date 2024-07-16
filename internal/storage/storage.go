@@ -26,7 +26,6 @@ import (
 	"net/url"
 	"os"
 	"path"
-	"syscall"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
@@ -245,13 +244,9 @@ func NewFileStorage() (*Driver, error) {
 	// Load runtime configuration
 	basePath := config.GetStorageLocalBasePath()
 
-	// Use default disk config but with
-	// increased write buffer size and
-	// 'exclusive' bit sets when creating
-	// files to ensure we don't overwrite
-	// existing files unless intending to.
+	// Use default disk config with
+	// increased write buffer size.
 	diskCfg := disk.DefaultConfig()
-	diskCfg.OpenWrite.Flags |= syscall.O_EXCL
 	diskCfg.WriteBufSize = int(16 * bytesize.KiB)
 
 	// Open the disk storage implementation
