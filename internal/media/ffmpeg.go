@@ -119,7 +119,8 @@ func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
 		Stderr: &stderr,
 		Args:   args,
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
-			fscfg := wazero.NewFSConfig()
+			fscfg := wazero.NewFSConfig() // needs /dev/urandom
+			fscfg = fscfg.WithReadOnlyDirMount("/dev", "/dev")
 			fscfg = fscfg.WithDirMount(dirpath, dirpath)
 			modcfg = modcfg.WithFSConfig(fscfg)
 			return modcfg
