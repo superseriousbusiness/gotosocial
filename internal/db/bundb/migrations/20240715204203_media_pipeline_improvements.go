@@ -31,10 +31,12 @@ func init() {
 		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			if _, err := tx.NewAddColumn().
 				Table("media_attachments").
-				ColumnExpr("? INTEGER NOT NULL", bun.Ident("type_new")).
+				ColumnExpr("? INTEGER NOT NULL DEFAULT ?", bun.Ident("type_new"), 0).
 				Exec(ctx); err != nil {
 				return err
 			}
+
+			tx.NewAddColumn().Table("").ColumnExpr("")
 
 			for old, new := range map[old_gtsmodel.FileType]new_gtsmodel.FileType{
 				old_gtsmodel.FileTypeAudio:   new_gtsmodel.FileTypeAudio,
