@@ -40,6 +40,8 @@ func main() {
 	ctx, cncl := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer cncl()
 
+	log.SetLevel(level.INFO)
+
 	if len(os.Args) != 3 {
 		log.Panic(ctx, "Usage: go run ./cmd/process-emoji <input-file> <output-static>")
 	}

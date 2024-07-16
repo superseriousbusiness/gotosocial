@@ -20,6 +20,7 @@ package typeutils
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/url"
 	"path"
 	"slices"
@@ -34,6 +35,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
+
+// toAPISize converts a set of media dimensions
+// to mastodon API compatible size string.
+func toAPISize(width, height int) string {
+	return strconv.Itoa(width) +
+		"x" +
+		strconv.Itoa(height)
+}
+
+// toAPIFrameRate converts a media framerate ptr
+// to mastodon API compatible framerate string.
+func toAPIFrameRate(framerate *float32) string {
+	if framerate == nil {
+		return ""
+	}
+	// The masto api expects this as a string in
+	// the format `integer/1`, so 30fps is `30/1`.
+	round := math.Round(float64(*framerate))
+	return strconv.Itoa(int(round))
+}
 
 type statusInteractions struct {
 	Favourited bool
@@ -92,7 +113,7 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 	return urls
 }
 
-// placeholdUnknownAttachments separates any attachments with type `unknown`
+// placeholderAttachments separates any attachments with missing local URL
 // out of the given slice, and returns a piece of text containing links to
 // those attachments, as well as the slice of remaining "known" attachments.
 // If there are no unknown-type attachments in the provided slice, an empty
@@ -104,62 +125,50 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 // Example:
 //
 //	<hr>
-//	<p><i lang="en">ℹ️ Note from your.instance.com: 2 attachments in this status could not be downloaded. Treat the following external links with care:</i></p>
+//	<p><i lang="en">ℹ️ Note from your.instance.com: 2 attachment(s) in this status were not downloaded. Treat the following external link(s) with care:</i></p>
 //	<ul>
 //	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
 //	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
 //	</ul>
-func placeholdUnknownAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Attachment) {
-	// Extract unknown-type attachments into a separate
-	// slice, deleting them from arr in the process.
-	var unknowns []*apimodel.Attachment
-	arr = slices.DeleteFunc(arr, func(elem *apimodel.Attachment) bool {
-		unknown := elem.Type == "unknown"
-		if unknown {
-			// Set aside unknown-type attachment.
-			unknowns = append(unknowns, elem)
-		}
+func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Attachment) {
 
-		return unknown
+	// Extract non-locally stored attachments into a
+	// separate slice, deleting them from input slice.
+	var nonLocal []*apimodel.Attachment
+	arr = slices.DeleteFunc(arr, func(elem *apimodel.Attachment) bool {
+		if elem.URL == nil {
+			nonLocal = append(nonLocal, elem)
+			return true
+		}
+		return false
 	})
 
-	unknownsLen := len(unknowns)
-	if unknownsLen == 0 {
-		// No unknown attachments,
-		// nothing to do.
+	if len(nonLocal) == 0 {
+		// No non-locally
+		// stored media.
 		return "", arr
-	}
-
-	// Plural / singular.
-	var (
-		attachments string
-		links       string
-	)
-
-	if unknownsLen == 1 {
-		attachments = "1 attachment"
-		links = "link"
-	} else {
-		attachments = strconv.Itoa(unknownsLen) + " attachments"
-		links = "links"
 	}
 
 	var note strings.Builder
 	note.WriteString(`<hr>`)
-	note.WriteString(`<p><i lang="en">`)
-	note.WriteString(`ℹ️ Note from ` + config.GetHost() + `: ` + attachments + ` in this status could not be downloaded. Treat the following external ` + links + ` with care:`)
-	note.WriteString(`</i></p>`)
-	note.WriteString(`<ul>`)
-	for _, a := range unknowns {
-		var (
-			remoteURL = *a.RemoteURL
-			base      = path.Base(remoteURL)
-			entry     = fmt.Sprintf(`<a href="%s">%s</a>`, remoteURL, base)
-		)
+	note.WriteString(`<hr><p><i lang="en">ℹ️ Note from `)
+	note.WriteString(config.GetHost())
+	note.WriteString(`: `)
+	note.WriteString(strconv.Itoa(len(nonLocal)))
+	note.WriteString(` attachment(s) in this status were not downloaded. Treat the following external link(s) with care:</i></p><ul>`)
+	for _, a := range nonLocal {
+		note.WriteString(`<li>`)
+		note.WriteString(`<a href="`)
+		note.WriteString(*a.RemoteURL)
+		note.WriteString(`">`)
+		note.WriteString(path.Base(*a.RemoteURL))
+		note.WriteString(`</a>`)
 		if d := a.Description; d != nil && *d != "" {
-			entry += ` [` + *d + `]`
+			note.WriteString(` [`)
+			note.WriteString(*d)
+			note.WriteString(`]`)
 		}
-		note.WriteString(`<li>` + entry + `</li>`)
+		note.WriteString(`</li>`)
 	}
 	note.WriteString(`</ul>`)
 

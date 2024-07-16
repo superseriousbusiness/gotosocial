@@ -248,6 +248,15 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 				return gtserror.Newf("error generating thumb blurhash: %w", err)
 			}
 		}
+
+		// Calculate final media attachment thumbnail path.
+		p.media.Thumbnail.Path = uris.StoragePathForAttachment(
+			p.media.AccountID,
+			string(TypeAttachment),
+			string(SizeSmall),
+			p.media.ID,
+			"jpeg",
+		)
 	}
 
 	// Calculate final media attachment file path.
@@ -285,8 +294,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.Thumbnail.FileSize = int(thumbsz)
 	}
 
-	// Fill in correct attachment
-	// data now we've parsed it.
+	// Generate a media attachment URL.
 	p.media.URL = uris.URIForAttachment(
 		p.media.AccountID,
 		string(TypeAttachment),
@@ -295,9 +303,21 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		ext,
 	)
 
+	// Generate a media attachment thumbnail URL.
+	p.media.Thumbnail.URL = uris.URIForAttachment(
+		p.media.AccountID,
+		string(TypeAttachment),
+		string(SizeSmall),
+		p.media.ID,
+		"jpeg",
+	)
+
 	// Get mimetype for the file container
 	// type, falling back to generic data.
 	p.media.File.ContentType = getMimeType(ext)
+
+	// Set the known thumbnail content type.
+	p.media.Thumbnail.ContentType = "image/jpeg"
 
 	// We can now consider this cached.
 	p.media.Cached = util.Ptr(true)
@@ -328,6 +348,18 @@ func (p *ProcessingMedia) cleanup(ctx context.Context) {
 			log.Errorf(ctx, "error deleting %s: %v", p.media.Thumbnail.Path, err)
 		}
 	}
+
+	// Unset all processor-calculated media fields.
+	p.media.FileMeta.Original = gtsmodel.Original{}
+	p.media.FileMeta.Small = gtsmodel.Small{}
+	p.media.File.ContentType = ""
+	p.media.File.FileSize = 0
+	p.media.File.Path = ""
+	p.media.Thumbnail.FileSize = 0
+	p.media.Thumbnail.ContentType = ""
+	p.media.Thumbnail.Path = ""
+	p.media.Thumbnail.URL = ""
+	p.media.URL = ""
 
 	// Also ensure marked as unknown and finished
 	// processing so gets inserted as placeholder URL.

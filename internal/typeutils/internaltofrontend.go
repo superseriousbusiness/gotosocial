@@ -21,8 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -565,84 +563,52 @@ func (c *Converter) AppToAPIAppPublic(ctx context.Context, a *gtsmodel.Applicati
 }
 
 // AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
-func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
-	apiAttachment := apimodel.Attachment{
-		ID:   a.ID,
-		Type: strings.ToLower(string(a.Type)),
-	}
+func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
+	var api apimodel.Attachment
+	api.Type = media.Type.String()
+	api.ID = media.ID
 
-	// Don't try to serialize meta for
-	// unknown attachments, there's no point.
-	if a.Type != gtsmodel.FileTypeUnknown {
-		apiAttachment.Meta = &apimodel.MediaMeta{
-			Original: apimodel.MediaDimensions{
-				Width:  a.FileMeta.Original.Width,
-				Height: a.FileMeta.Original.Height,
-			},
-			Small: apimodel.MediaDimensions{
-				Width:  a.FileMeta.Small.Width,
-				Height: a.FileMeta.Small.Height,
-				Size:   strconv.Itoa(a.FileMeta.Small.Width) + "x" + strconv.Itoa(a.FileMeta.Small.Height),
-				Aspect: float32(a.FileMeta.Small.Aspect),
-			},
+	// Only add file details if stored.
+	if media.File.Path != "" {
+		api.URL = util.Ptr(media.URL)
+		api.Meta = new(apimodel.MediaMeta)
+		api.Meta.Original = apimodel.MediaDimensions{
+			Width:     media.FileMeta.Original.Width,
+			Height:    media.FileMeta.Original.Height,
+			Aspect:    media.FileMeta.Original.Aspect,
+			Size:      toAPISize(media.FileMeta.Original.Width, media.FileMeta.Original.Height),
+			FrameRate: toAPIFrameRate(media.FileMeta.Original.Framerate),
+			Duration:  util.PtrOr(media.FileMeta.Original.Duration),
+			Bitrate:   int(util.PtrOr(media.FileMeta.Original.Bitrate)),
+		}
+
+		// Only add thumb details if stored.
+		if media.Thumbnail.Path != "" {
+			api.PreviewURL = util.Ptr(media.Thumbnail.URL)
+			api.Meta.Small = apimodel.MediaDimensions{
+				Width:  media.FileMeta.Small.Width,
+				Height: media.FileMeta.Small.Height,
+				Aspect: media.FileMeta.Small.Aspect,
+				Size:   toAPISize(media.FileMeta.Original.Width, media.FileMeta.Original.Height),
+			}
 		}
 	}
 
-	if i := a.Blurhash; i != "" {
-		apiAttachment.Blurhash = &i
+	// Only add focus details if set.
+	if media.FileMeta.Focus.X != 0 ||
+		media.FileMeta.Focus.Y != 0 {
+		api.Meta.Focus = new(apimodel.MediaFocus)
+		api.Meta.Focus.X = media.FileMeta.Focus.X
+		api.Meta.Focus.Y = media.FileMeta.Focus.Y
 	}
 
-	if i := a.URL; i != "" {
-		apiAttachment.URL = &i
-		apiAttachment.TextURL = &i
-	}
+	// Set remaining API attachment fields.
+	api.Blurhash = util.PtrIf(media.Blurhash)
+	api.RemoteURL = util.PtrIf(media.RemoteURL)
+	api.PreviewRemoteURL = util.PtrIf(media.Thumbnail.RemoteURL)
+	api.Description = util.PtrIf(media.Description)
 
-	if i := a.Thumbnail.URL; i != "" {
-		apiAttachment.PreviewURL = &i
-	}
-
-	if i := a.RemoteURL; i != "" {
-		apiAttachment.RemoteURL = &i
-	}
-
-	if i := a.Thumbnail.RemoteURL; i != "" {
-		apiAttachment.PreviewRemoteURL = &i
-	}
-
-	if i := a.Description; i != "" {
-		apiAttachment.Description = &i
-	}
-
-	// Type-specific fields.
-	switch a.Type {
-
-	case gtsmodel.FileTypeImage:
-		apiAttachment.Meta.Original.Size = strconv.Itoa(a.FileMeta.Original.Width) + "x" + strconv.Itoa(a.FileMeta.Original.Height)
-		apiAttachment.Meta.Original.Aspect = float32(a.FileMeta.Original.Aspect)
-		apiAttachment.Meta.Focus = &apimodel.MediaFocus{
-			X: a.FileMeta.Focus.X,
-			Y: a.FileMeta.Focus.Y,
-		}
-
-	case gtsmodel.FileTypeVideo, gtsmodel.FileTypeAudio:
-		if i := a.FileMeta.Original.Duration; i != nil {
-			apiAttachment.Meta.Original.Duration = *i
-		}
-
-		if i := a.FileMeta.Original.Framerate; i != nil {
-			// The masto api expects this as a string in
-			// the format `integer/1`, so 30fps is `30/1`.
-			round := math.Round(float64(*i))
-			fr := strconv.Itoa(int(round))
-			apiAttachment.Meta.Original.FrameRate = fr + "/1"
-		}
-
-		if i := a.FileMeta.Original.Bitrate; i != nil {
-			apiAttachment.Meta.Original.Bitrate = int(*i)
-		}
-	}
-
-	return apiAttachment, nil
+	return api, nil
 }
 
 // MentionToAPIMention converts a gts model mention into its api (frontend) representation for serialization on the API.
@@ -778,14 +744,15 @@ func (c *Converter) StatusToAPIStatus(
 		return nil, err
 	}
 
-	// Normalize status for the API by pruning
-	// out unknown attachment types and replacing
-	// them with a helpful message.
+	// Normalize status for API by pruning
+	// attachments that were not locally
+	// stored, replacing them with a helpful
+	// message + links to remote.
 	var aside string
-	aside, apiStatus.MediaAttachments = placeholdUnknownAttachments(apiStatus.MediaAttachments)
+	aside, apiStatus.MediaAttachments = placeholderAttachments(apiStatus.MediaAttachments)
 	apiStatus.Content += aside
 	if apiStatus.Reblog != nil {
-		aside, apiStatus.Reblog.MediaAttachments = placeholdUnknownAttachments(apiStatus.Reblog.MediaAttachments)
+		aside, apiStatus.Reblog.MediaAttachments = placeholderAttachments(apiStatus.Reblog.MediaAttachments)
 		apiStatus.Reblog.Content += aside
 	}
 

@@ -81,33 +81,17 @@ const (
 	ProcessingStatusError      ProcessingStatus = 666 // ProcessingStatusError indicates something went wrong processing the attachment and it won't be tried again--these can be deleted.
 )
 
-// FileType refers to the file
-// type of the media attaachment.
-type FileType int
+// FileType refers to the file type of the media attaachment.
+type FileType string
 
+// MediaAttachment file types.
 const (
-	// MediaAttachment file types.
-	FileTypeUnknown FileType = iota // FileTypeUnknown is for unknown file types (surprise surprise!)
-	FileTypeImage                   // FileTypeImage is for jpegs, pngs, and standard gifs
-	FileTypeAudio                   // FileTypeAudio is for audio-only files (no video)
-	FileTypeVideo                   // FileTypeVideo is for files with audio + visual
+	FileTypeImage   FileType = "Image"   // FileTypeImage is for jpegs, pngs, and standard gifs
+	FileTypeGifv    FileType = "Gifv"    // FileTypeGif is for soundless looping videos that behave like gifs
+	FileTypeAudio   FileType = "Audio"   // FileTypeAudio is for audio-only files (no video)
+	FileTypeVideo   FileType = "Video"   // FileTypeVideo is for files with audio + visual
+	FileTypeUnknown FileType = "Unknown" // FileTypeUnknown is for unknown file types (surprise surprise!)
 )
-
-// String returns a stringified, frontend API compatible form of FileType.
-func (t FileType) String() string {
-	switch t {
-	case FileTypeUnknown:
-		return "unknown"
-	case FileTypeImage:
-		return "image"
-	case FileTypeAudio:
-		return "audio"
-	case FileTypeVideo:
-		return "video"
-	default:
-		panic("invalid filetype")
-	}
-}
 
 // FileMeta describes metadata about the actual contents of the file.
 type FileMeta struct {
