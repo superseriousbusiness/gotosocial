@@ -53,7 +53,7 @@ func toAPIFrameRate(framerate *float32) string {
 	// The masto api expects this as a string in
 	// the format `integer/1`, so 30fps is `30/1`.
 	round := math.Round(float64(*framerate))
-	return strconv.Itoa(int(round))
+	return strconv.Itoa(int(round)) + "/1"
 }
 
 type statusInteractions struct {

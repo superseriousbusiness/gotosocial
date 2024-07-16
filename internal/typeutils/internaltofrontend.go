@@ -571,6 +571,7 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmod
 	// Only add file details if stored.
 	if media.File.Path != "" {
 		api.URL = util.Ptr(media.URL)
+		api.TextURL = util.Ptr(media.URL)
 		api.Meta = new(apimodel.MediaMeta)
 		api.Meta.Original = apimodel.MediaDimensions{
 			Width:     media.FileMeta.Original.Width,
@@ -589,7 +590,7 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmod
 				Width:  media.FileMeta.Small.Width,
 				Height: media.FileMeta.Small.Height,
 				Aspect: media.FileMeta.Small.Aspect,
-				Size:   toAPISize(media.FileMeta.Original.Width, media.FileMeta.Original.Height),
+				Size:   toAPISize(media.FileMeta.Small.Width, media.FileMeta.Small.Height),
 			}
 		}
 	}
@@ -647,6 +648,7 @@ func (c *Converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention
 // EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
 func (c *Converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (apimodel.Emoji, error) {
 	var category string
+
 	if e.CategoryID != "" {
 		if e.Category == nil {
 			var err error

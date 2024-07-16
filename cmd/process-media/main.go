@@ -46,12 +46,10 @@ func main() {
 		log.Panic(ctx, "Usage: go run ./cmd/process-media <input-file> <output-processed> <output-thumbnail>")
 	}
 
-	log.Info(ctx, "precompiling ffprobe")
 	if err := ffmpeg.InitFfprobe(ctx, 1); err != nil {
 		log.Panic(ctx, err)
 	}
 
-	log.Info(ctx, "precompiling ffmpeg")
 	if err := ffmpeg.InitFfmpeg(ctx, 1); err != nil {
 		log.Panic(ctx, err)
 	}
@@ -72,28 +70,23 @@ func main() {
 	config.SetDbType("sqlite")
 	config.SetDbAddress(":memory:")
 
-	log.Info(ctx, "opening in-memory database")
 	state.DB, err = bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		log.Panic(ctx, err)
 	}
 
-	log.Info(ctx, "creating instance account")
 	if err := state.DB.CreateInstanceAccount(ctx); err != nil {
 		log.Panicf(ctx, "error creating instance account: %s", err)
 	}
 
-	log.Info(ctx, "creating instance")
 	if err := state.DB.CreateInstanceInstance(ctx); err != nil {
 		log.Panicf(ctx, "error creating instance instance: %s", err)
 	}
 
-	log.Info(ctx, "creating instance application")
 	if err := state.DB.CreateInstanceApplication(ctx); err != nil {
 		log.Panicf(ctx, "error creating instance application: %s", err)
 	}
 
-	log.Info(ctx, "acquiring instance account")
 	account, err := state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
 		log.Panic(ctx, err)
@@ -101,7 +94,6 @@ func main() {
 
 	mgr := media.NewManager(&state)
 
-	log.Info(ctx, "creating media")
 	processing, err := mgr.CreateMedia(ctx,
 		account.ID,
 		func(ctx context.Context) (reader io.ReadCloser, err error) {
@@ -113,16 +105,12 @@ func main() {
 		log.Panic(ctx, err)
 	}
 
-	log.Info(ctx, "loading media")
 	media, err := processing.Load(ctx)
 	if err != nil {
 		log.Panic(ctx, err)
 	}
 
-	log.Info(ctx, "copying file")
 	copyFile(ctx, &st, media.File.Path, os.Args[2])
-
-	log.Info(ctx, "copying thumbnail")
 	copyFile(ctx, &st, media.Thumbnail.Path, os.Args[3])
 }
 

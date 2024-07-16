@@ -358,11 +358,10 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 	suite.Equal(processing.ID(), attachment.ID)
 	suite.Equal(accountID, attachment.AccountID)
 
-	// file meta should be correctly derived from the image
 	suite.Zero(attachment.FileMeta)
-	suite.Equal("application/octet-stream", attachment.File.ContentType)
-	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
-	suite.Empty(attachment.Blurhash)
+	suite.Zero(attachment.File.ContentType)
+	suite.Zero(attachment.Thumbnail.ContentType)
+	suite.Zero(attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -376,7 +375,6 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 	stored, err := suite.storage.Has(ctx, attachment.File.Path)
 	suite.NoError(err)
 	suite.False(stored)
-
 	stored, err = suite.storage.Has(ctx, attachment.Thumbnail.Path)
 	suite.NoError(err)
 	suite.False(stored)

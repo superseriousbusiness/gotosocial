@@ -34,14 +34,23 @@ type wasmInstancePool struct {
 }
 
 func (p *wasmInstancePool) Init(ctx context.Context, sz int) error {
+	// Initialize for first time
+	// to preload module into the
+	// wazero compilation cache.
+	inst, err := p.inst.New(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Done with instance.
+	_ = inst.Close(ctx)
+
+	// Fill the pool with closed instances.
 	p.pool = make(chan *wasm.Instance, sz)
 	for i := 0; i < sz; i++ {
-		inst, err := p.inst.New(ctx)
-		if err != nil {
-			return err
-		}
-		p.pool <- inst
+		p.pool <- new(wasm.Instance)
 	}
+
 	return nil
 }
 

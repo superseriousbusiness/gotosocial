@@ -87,10 +87,10 @@ type FileType int
 
 const (
 	// MediaAttachment file types.
-	FileTypeUnknown FileType = iota // FileTypeUnknown is for unknown file types (surprise surprise!)
-	FileTypeImage                   // FileTypeImage is for jpegs, pngs, and standard gifs
-	FileTypeAudio                   // FileTypeAudio is for audio-only files (no video)
-	FileTypeVideo                   // FileTypeVideo is for files with audio + visual
+	FileTypeUnknown FileType = 0 // FileTypeUnknown is for unknown file types (surprise surprise!)
+	FileTypeImage   FileType = 1 // FileTypeImage is for jpegs, pngs, and standard gifs
+	FileTypeAudio   FileType = 2 // FileTypeAudio is for audio-only files (no video)
+	FileTypeVideo   FileType = 3 // FileTypeVideo is for files with audio + visual
 )
 
 // String returns a stringified, frontend API compatible form of FileType.

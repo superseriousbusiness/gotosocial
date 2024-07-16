@@ -120,19 +120,35 @@ func (m *Manager) CreateMedia(
 	// Check if we were provided additional info
 	// to add to the attachment, and overwrite
 	// some of the attachment fields if so.
-	attachment.CreatedAt = util.PtrValueOr(info.CreatedAt, attachment.CreatedAt)
-	attachment.StatusID = util.PtrOr(info.StatusID)
-	attachment.RemoteURL = util.PtrOr(info.RemoteURL)
-	attachment.Description = util.PtrOr(info.Description)
-	attachment.ScheduledStatusID = util.PtrOr(info.ScheduledStatusID)
-	attachment.Blurhash = util.PtrOr(info.Blurhash)
-	attachment.FileMeta.Focus.X = util.PtrOr(info.FocusX)
-	attachment.FileMeta.Focus.Y = util.PtrOr(info.FocusY)
+	if info.CreatedAt != nil {
+		attachment.CreatedAt = *info.CreatedAt
+	}
+	if info.StatusID != nil {
+		attachment.StatusID = *info.StatusID
+	}
+	if info.RemoteURL != nil {
+		attachment.RemoteURL = *info.RemoteURL
+	}
+	if info.Description != nil {
+		attachment.Description = *info.Description
+	}
+	if info.ScheduledStatusID != nil {
+		attachment.ScheduledStatusID = *info.ScheduledStatusID
+	}
+	if info.Blurhash != nil {
+		attachment.Blurhash = *info.Blurhash
+	}
 	if info.Avatar != nil {
 		attachment.Avatar = info.Avatar
 	}
 	if info.Header != nil {
 		attachment.Header = info.Header
+	}
+	if info.FocusX != nil {
+		attachment.FileMeta.Focus.X = *info.FocusX
+	}
+	if info.FocusY != nil {
+		attachment.FileMeta.Focus.Y = *info.FocusY
 	}
 
 	// Store attachment in database in initial form.
@@ -191,14 +207,13 @@ func (m *Manager) CreateEmoji(
 	// leaving out fields with values we don't know
 	// yet. These will be overwritten as we go.
 	emoji := &gtsmodel.Emoji{
-		ID:                     id,
-		Shortcode:              shortcode,
-		Domain:                 domain,
-		ImageStaticContentType: "image/png",
-		Disabled:               util.Ptr(false),
-		VisibleInPicker:        util.Ptr(true),
-		CreatedAt:              now,
-		UpdatedAt:              now,
+		ID:              id,
+		Shortcode:       shortcode,
+		Domain:          domain,
+		Disabled:        util.Ptr(false),
+		VisibleInPicker: util.Ptr(true),
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
 	// Finally, create new emoji.
@@ -308,18 +323,30 @@ func (m *Manager) createEmoji(
 
 	// Check if we have additional info to add to the emoji,
 	// and overwrite some of the emoji fields if so.
+	if info.URI != nil {
+		emoji.URI = *info.URI
+	}
+	if info.CreatedAt != nil {
+		emoji.CreatedAt = *info.CreatedAt
+	}
+	if info.Domain != nil {
+		emoji.Domain = *info.Domain
+	}
+	if info.ImageRemoteURL != nil {
+		emoji.ImageRemoteURL = *info.ImageRemoteURL
+	}
+	if info.ImageStaticRemoteURL != nil {
+		emoji.ImageStaticRemoteURL = *info.ImageStaticRemoteURL
+	}
 	if info.Disabled != nil {
 		emoji.Disabled = info.Disabled
 	}
 	if info.VisibleInPicker != nil {
 		emoji.VisibleInPicker = info.VisibleInPicker
 	}
-	emoji.URI = util.PtrValueOr(info.URI, emoji.URI)
-	emoji.CreatedAt = util.PtrValueOr(info.CreatedAt, emoji.CreatedAt)
-	emoji.Domain = util.PtrOr(info.Domain)
-	emoji.ImageRemoteURL = util.PtrOr(info.ImageRemoteURL)
-	emoji.ImageStaticRemoteURL = util.PtrOr(info.ImageStaticRemoteURL)
-	emoji.CategoryID = util.PtrOr(info.CategoryID)
+	if info.CategoryID != nil {
+		emoji.CategoryID = *info.CategoryID
+	}
 
 	// Store emoji in database in initial form.
 	if err := putDB(ctx, emoji); err != nil {

@@ -24,6 +24,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"codeberg.org/gruf/go-logger/v2/level"
 	"codeberg.org/gruf/go-storage/memory"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
