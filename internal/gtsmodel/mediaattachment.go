@@ -30,7 +30,7 @@ type MediaAttachment struct {
 	StatusID          string           `bun:"type:CHAR(26),nullzero"`                                      // ID of the status to which this is attached
 	URL               string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on a remote server (empty for local media)
-	Type              FileType         `bun:",notnull"`                                                    // Type of file (image/gifv/audio/video/unknown)
+	Type              FileType         `bun:",notnull,default:0"`                                          // Type of file (image/gifv/audio/video/unknown)
 	FileMeta          FileMeta         `bun:",embed:,notnull"`                                             // Metadata about the file
 	AccountID         string           `bun:"type:CHAR(26),nullzero,notnull"`                              // To which account does this attachment belong
 	Description       string           `bun:""`                                                            // Description of the attachment (for screenreaders)
