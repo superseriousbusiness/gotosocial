@@ -23,11 +23,13 @@ import { Redirect, Route, Router, Switch } from "wouter";
 import { ErrorBoundary } from "../../lib/navigation/error";
 import UserProfile from "./profile";
 import UserMigration from "./migration";
-import UserSettings from "./settings";
+import PostSettings from "./posts";
+import EmailPassword from "./emailpassword";
 
 /**
  * - /settings/user/profile
- * - /settings/user/settings
+ * - /settings/user/posts
+ * - /settings/user/emailpassword
  * - /settings/user/migration
  */
 export default function UserRouter() {
@@ -41,7 +43,8 @@ export default function UserRouter() {
 				<ErrorBoundary>
 					<Switch>
 						<Route path="/profile" component={UserProfile} />
-						<Route path="/settings" component={UserSettings} />
+						<Route path="/posts" component={PostSettings} />
+						<Route path="/emailpassword" component={EmailPassword} />
 						<Route path="/migration" component={UserMigration} />
 						<Route><Redirect to="/profile" /></Route>
 					</Switch>

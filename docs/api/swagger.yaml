@@ -895,6 +895,20 @@ definitions:
         type: object
         x-go-name: DebugAPUrlResponse
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    defaultPolicies:
+        properties:
+            direct:
+                $ref: '#/definitions/interactionPolicy'
+            private:
+                $ref: '#/definitions/interactionPolicy'
+            public:
+                $ref: '#/definitions/interactionPolicy'
+            unlisted:
+                $ref: '#/definitions/interactionPolicy'
+        title: Default interaction policies to use for new statuses by requesting account.
+        type: object
+        x-go-name: DefaultPolicies
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     domain:
         description: Domain represents a remote domain
         properties:
@@ -1821,6 +1835,53 @@ definitions:
         type: object
         x-go-name: InstanceV2Users
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    interactionPolicy:
+        properties:
+            can_favourite:
+                $ref: '#/definitions/interactionPolicyRules'
+            can_reblog:
+                $ref: '#/definitions/interactionPolicyRules'
+            can_reply:
+                $ref: '#/definitions/interactionPolicyRules'
+        title: Interaction policy of a status.
+        type: object
+        x-go-name: InteractionPolicy
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    interactionPolicyRules:
+        properties:
+            always:
+                description: Policy entries for accounts that can always do this type of interaction.
+                items:
+                    $ref: '#/definitions/interactionPolicyValue'
+                type: array
+                x-go-name: Always
+            with_approval:
+                description: Policy entries for accounts that require approval to do this type of interaction.
+                items:
+                    $ref: '#/definitions/interactionPolicyValue'
+                type: array
+                x-go-name: WithApproval
+        title: Rules for one interaction type.
+        type: object
+        x-go-name: PolicyRules
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    interactionPolicyValue:
+        description: |-
+            It can be EITHER one of the internal keywords listed below, OR a full-fledged ActivityPub URI of an Actor, like "https://example.org/users/some_user".
+
+            Internal keywords:
+
+            public    - Public, aka anyone who can see the status according to its visibility level.
+            followers - Followers of the status author.
+            following - People followed by the status author.
+            mutuals   - Mutual follows of the status author (reserved, unused).
+            mentioned - Accounts mentioned in, or replied-to by, the status.
+            author    - The status author themself.
+            me        - If request was made with an authorized user, "me" represents the user who made the request and is now looking at this interaction policy.
+        title: One interaction policy entry for a status.
+        type: string
+        x-go-name: PolicyValue
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     list:
         properties:
             id:
@@ -2429,6 +2490,8 @@ definitions:
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
                 type: string
                 x-go-name: InReplyToID
+            interaction_policy:
+                $ref: '#/definitions/interactionPolicy'
             language:
                 description: |-
                     Primary language of this status (ISO 639 Part 1 two-letter language code).
@@ -2620,6 +2683,8 @@ definitions:
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
                 type: string
                 x-go-name: InReplyToID
+            interaction_policy:
+                $ref: '#/definitions/interactionPolicy'
             language:
                 description: |-
                     Primary language of this status (ISO 639 Part 1 two-letter language code).
@@ -6850,6 +6915,174 @@ paths:
             summary: View instance rules (public).
             tags:
                 - instance
+    /api/v1/interaction_policies/defaults:
+        get:
+            operationId: policiesDefaultsGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: A default policies object containing a policy for each status visibility.
+                    schema:
+                        $ref: '#/definitions/defaultPolicies'
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Get default interaction policies for new statuses created by you.
+            tags:
+                - interaction_policies
+        patch:
+            consumes:
+                - multipart/form-data
+                - application/x-www-form-urlencoded
+                - application/json
+            description: |-
+                If submitting using form data, use the following pattern:
+
+                `VISIBILITY[INTERACTION_TYPE][CONDITION][INDEX]=Value`
+
+                For example: `public[can_reply][always][0]=author`
+
+                Using `curl` this might look something like:
+
+                `curl -F 'public[can_reply][always][0]=author' -F 'public[can_reply][always][1]=followers'`
+
+                The JSON equivalent would be:
+
+                `curl -H 'Content-Type: application/json' -d '{"public":{"can_reply":{"always":["author","followers"]}}}'`
+
+                Any visibility level left unspecified in the request body will be returned to the default.
+
+                Ie., in the example above, "public" would be updated, but "unlisted", "private", and "direct" would be reset to defaults.
+
+                The server will perform some normalization on submitted policies so that you can't submit totally invalid policies.
+            operationId: policiesDefaultsUpdate
+            parameters:
+                - description: Nth entry for public.can_favourite.always.
+                  in: formData
+                  name: public[can_favourite][always][0]
+                  type: string
+                - description: Nth entry for public.can_favourite.with_approval.
+                  in: formData
+                  name: public[can_favourite][with_approval][0]
+                  type: string
+                - description: Nth entry for public.can_reply.always.
+                  in: formData
+                  name: public[can_reply][always][0]
+                  type: string
+                - description: Nth entry for public.can_reply.with_approval.
+                  in: formData
+                  name: public[can_reply][with_approval][0]
+                  type: string
+                - description: Nth entry for public.can_reblog.always.
+                  in: formData
+                  name: public[can_reblog][always][0]
+                  type: string
+                - description: Nth entry for public.can_reblog.with_approval.
+                  in: formData
+                  name: public[can_reblog][with_approval][0]
+                  type: string
+                - description: Nth entry for unlisted.can_favourite.always.
+                  in: formData
+                  name: unlisted[can_favourite][always][0]
+                  type: string
+                - description: Nth entry for unlisted.can_favourite.with_approval.
+                  in: formData
+                  name: unlisted[can_favourite][with_approval][0]
+                  type: string
+                - description: Nth entry for unlisted.can_reply.always.
+                  in: formData
+                  name: unlisted[can_reply][always][0]
+                  type: string
+                - description: Nth entry for unlisted.can_reply.with_approval.
+                  in: formData
+                  name: unlisted[can_reply][with_approval][0]
+                  type: string
+                - description: Nth entry for unlisted.can_reblog.always.
+                  in: formData
+                  name: unlisted[can_reblog][always][0]
+                  type: string
+                - description: Nth entry for unlisted.can_reblog.with_approval.
+                  in: formData
+                  name: unlisted[can_reblog][with_approval][0]
+                  type: string
+                - description: Nth entry for private.can_favourite.always.
+                  in: formData
+                  name: private[can_favourite][always][0]
+                  type: string
+                - description: Nth entry for private.can_favourite.with_approval.
+                  in: formData
+                  name: private[can_favourite][with_approval][0]
+                  type: string
+                - description: Nth entry for private.can_reply.always.
+                  in: formData
+                  name: private[can_reply][always][0]
+                  type: string
+                - description: Nth entry for private.can_reply.with_approval.
+                  in: formData
+                  name: private[can_reply][with_approval][0]
+                  type: string
+                - description: Nth entry for private.can_reblog.always.
+                  in: formData
+                  name: private[can_reblog][always][0]
+                  type: string
+                - description: Nth entry for private.can_reblog.with_approval.
+                  in: formData
+                  name: private[can_reblog][with_approval][0]
+                  type: string
+                - description: Nth entry for direct.can_favourite.always.
+                  in: formData
+                  name: direct[can_favourite][always][0]
+                  type: string
+                - description: Nth entry for direct.can_favourite.with_approval.
+                  in: formData
+                  name: direct[can_favourite][with_approval][0]
+                  type: string
+                - description: Nth entry for direct.can_reply.always.
+                  in: formData
+                  name: direct[can_reply][always][0]
+                  type: string
+                - description: Nth entry for direct.can_reply.with_approval.
+                  in: formData
+                  name: direct[can_reply][with_approval][0]
+                  type: string
+                - description: Nth entry for direct.can_reblog.always.
+                  in: formData
+                  name: direct[can_reblog][always][0]
+                  type: string
+                - description: Nth entry for direct.can_reblog.with_approval.
+                  in: formData
+                  name: direct[can_reblog][with_approval][0]
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Updated default policies object containing a policy for each status visibility.
+                    schema:
+                        $ref: '#/definitions/defaultPolicies'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "422":
+                    description: unprocessable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Update default interaction policies per visibility level for new statuses created by you.
+            tags:
+                - interaction_policies
     /api/v1/lists:
         get:
             operationId: lists

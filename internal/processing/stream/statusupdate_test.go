@@ -129,7 +129,27 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, dst.String())
 	suite.Equal(msg.Event, "status.update")
 }

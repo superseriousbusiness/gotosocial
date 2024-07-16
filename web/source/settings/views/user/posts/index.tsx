@@ -17,42 +17,35 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { MenuItem } from "../../lib/navigation/menu";
 import React from "react";
+import { useVerifyCredentialsQuery } from "../../../lib/query/oauth";
+import Loading from "../../../components/loading";
+import { Error } from "../../../components/error";
+import BasicSettings from "./basic-settings";
+import InteractionPolicySettings from "./interaction-policy-settings";
 
-/**
- * - /settings/user/profile
- * - /settings/user/posts
- * - /settings/user/emailpassword
- * - /settings/user/migration
- */
-export default function UserMenu() {	
+export default function PostSettings() {
+	const {
+		data: account,
+		isLoading,
+		isFetching,
+		isError,
+		error,
+	} = useVerifyCredentialsQuery();
+
+	if (isLoading || isFetching) {
+		return <Loading />;
+	}
+
+	if (isError) {
+		return <Error error={error} />;
+	}
+
 	return (
-		<MenuItem
-			name="User"
-			itemUrl="user"
-			defaultChild="profile"
-		>
-			<MenuItem
-				name="Profile"
-				itemUrl="profile"
-				icon="fa-user"
-			/>
-			<MenuItem
-				name="Posts"
-				itemUrl="posts"
-				icon="fa-paper-plane"
-			/>
-			<MenuItem
-				name="Email & Password"
-				itemUrl="emailpassword"
-				icon="fa-user-secret"
-			/>
-			<MenuItem
-				name="Migration"
-				itemUrl="migration"
-				icon="fa-exchange"
-			/>
-		</MenuItem>
+		<>
+			<h1>Post Settings</h1>
+			<BasicSettings account={account} />
+			<InteractionPolicySettings />
+		</>
 	);
 }

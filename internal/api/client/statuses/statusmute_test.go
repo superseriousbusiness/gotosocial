@@ -147,7 +147,27 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "emojis": [],
   "card": null,
   "poll": null,
-  "text": "hello everyone!"
+  "text": "hello everyone!",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, muted)
 
 	// Unmute the status, ensure `muted` is `false`.
@@ -212,7 +232,27 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "emojis": [],
   "card": null,
   "poll": null,
-  "text": "hello everyone!"
+  "text": "hello everyone!",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, unmuted)
 }
 

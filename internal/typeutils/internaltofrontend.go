@@ -1234,6 +1234,20 @@ func (c *Converter) baseStatusToFrontend(
 		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
+	// Take status's interaction policy, or
+	// fall back to default for its visibility.
+	var p *gtsmodel.InteractionPolicy
+	if s.InteractionPolicy != nil {
+		p = s.InteractionPolicy
+	} else {
+		p = gtsmodel.DefaultInteractionPolicyFor(s.Visibility)
+	}
+
+	apiInteractionPolicy, err := c.InteractionPolicyToAPIInteractionPolicy(ctx, p, s, requestingAccount)
+	if err != nil {
+		return nil, gtserror.Newf("error converting interaction policy: %w", err)
+	}
+
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
@@ -1258,6 +1272,7 @@ func (c *Converter) baseStatusToFrontend(
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
 		Text:               s.Text,
+		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
 	// Nullable fields.
@@ -2255,4 +2270,97 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 		}
 	}
 	return apiThemes
+}
+
+// Convert the given gtsmodel policy
+// into an apimodel interaction policy.
+//
+// Provided status can be nil to convert a
+// policy without a particular status in mind.
+//
+// RequestingAccount can also be nil for
+// unauthorized requests (web, public api etc).
+func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
+	ctx context.Context,
+	policy *gtsmodel.InteractionPolicy,
+	status *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+) (*apimodel.InteractionPolicy, error) {
+	convertURIs := func(policyURIs gtsmodel.PolicyValues) (apiPolicyValues []apimodel.PolicyValue) {
+		for _, policyURI := range policyURIs {
+			switch policyURI {
+
+			case gtsmodel.PolicyValueAuthor:
+				// Author can do this.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValueAuthor,
+				)
+
+			case gtsmodel.PolicyValueMentioned:
+				// Mentioned can do this.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValueMentioned,
+				)
+
+			case gtsmodel.PolicyValueMutuals:
+				// Mutuals can do this.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValueMutuals,
+				)
+
+			case gtsmodel.PolicyValueFollowing:
+				// Following can do this.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValueFollowing,
+				)
+
+			case gtsmodel.PolicyValueFollowers:
+				// Followers can do this.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValueFollowers,
+				)
+
+			case gtsmodel.PolicyValuePublic:
+				// Public can do this.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValuePublic,
+				)
+
+			default:
+				// Specific URI of ActivityPub Actor.
+				apiPolicyValues = append(
+					apiPolicyValues,
+					apimodel.PolicyValue(policyURI),
+				)
+			}
+		}
+
+		// Deduplicate the slice just in case
+		// someone added multiple copies of
+		// the same URI for whatever reason.
+		return util.Deduplicate(apiPolicyValues)
+	}
+
+	apiPolicy := &apimodel.InteractionPolicy{
+		CanFavourite: apimodel.PolicyRules{
+			Always:       convertURIs(policy.CanLike.Always),
+			WithApproval: convertURIs(policy.CanLike.WithApproval),
+		},
+		CanReply: apimodel.PolicyRules{
+			Always:       convertURIs(policy.CanReply.Always),
+			WithApproval: convertURIs(policy.CanReply.WithApproval),
+		},
+		CanReblog: apimodel.PolicyRules{
+			Always:       convertURIs(policy.CanAnnounce.Always),
+			WithApproval: convertURIs(policy.CanAnnounce.WithApproval),
+		},
+	}
+
+	return apiPolicy, nil
 }
