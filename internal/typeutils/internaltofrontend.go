@@ -2283,84 +2283,91 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 	ctx context.Context,
 	policy *gtsmodel.InteractionPolicy,
-	status *gtsmodel.Status,
-	requestingAccount *gtsmodel.Account,
+	_ *gtsmodel.Status, // Used in upcoming PR.
+	_ *gtsmodel.Account, // Used in upcoming PR.
 ) (*apimodel.InteractionPolicy, error) {
-	convertURIs := func(policyURIs gtsmodel.PolicyValues) (apiPolicyValues []apimodel.PolicyValue) {
-		for _, policyURI := range policyURIs {
-			switch policyURI {
-
-			case gtsmodel.PolicyValueAuthor:
-				// Author can do this.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValueAuthor,
-				)
-
-			case gtsmodel.PolicyValueMentioned:
-				// Mentioned can do this.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValueMentioned,
-				)
-
-			case gtsmodel.PolicyValueMutuals:
-				// Mutuals can do this.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValueMutuals,
-				)
-
-			case gtsmodel.PolicyValueFollowing:
-				// Following can do this.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValueFollowing,
-				)
-
-			case gtsmodel.PolicyValueFollowers:
-				// Followers can do this.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValueFollowers,
-				)
-
-			case gtsmodel.PolicyValuePublic:
-				// Public can do this.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValuePublic,
-				)
-
-			default:
-				// Specific URI of ActivityPub Actor.
-				apiPolicyValues = append(
-					apiPolicyValues,
-					apimodel.PolicyValue(policyURI),
-				)
-			}
-		}
-
-		// Deduplicate the slice just in case
-		// someone added multiple copies of
-		// the same URI for whatever reason.
-		return util.Deduplicate(apiPolicyValues)
-	}
-
 	apiPolicy := &apimodel.InteractionPolicy{
 		CanFavourite: apimodel.PolicyRules{
-			Always:       convertURIs(policy.CanLike.Always),
-			WithApproval: convertURIs(policy.CanLike.WithApproval),
+			Always:       policyValsToAPIPolicyVals(policy.CanLike.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanLike.WithApproval),
 		},
 		CanReply: apimodel.PolicyRules{
-			Always:       convertURIs(policy.CanReply.Always),
-			WithApproval: convertURIs(policy.CanReply.WithApproval),
+			Always:       policyValsToAPIPolicyVals(policy.CanReply.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanReply.WithApproval),
 		},
 		CanReblog: apimodel.PolicyRules{
-			Always:       convertURIs(policy.CanAnnounce.Always),
-			WithApproval: convertURIs(policy.CanAnnounce.WithApproval),
+			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.WithApproval),
 		},
 	}
 
 	return apiPolicy, nil
+}
+
+func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) (apiVals []apimodel.PolicyValue) {
+	// Use a map to deduplicate added vals as we go.
+	addedVals := make(map[apimodel.PolicyValue]struct{}, len(vals))
+
+	for _, policyVal := range vals {
+		switch policyVal {
+
+		case gtsmodel.PolicyValueAuthor:
+			// Author can do this.
+			newVal := apimodel.PolicyValueAuthor
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueMentioned:
+			// Mentioned can do this.
+			newVal := apimodel.PolicyValueMentioned
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueMutuals:
+			// Mutuals can do this.
+			newVal := apimodel.PolicyValueMutuals
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueFollowing:
+			// Following can do this.
+			newVal := apimodel.PolicyValueFollowing
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueFollowers:
+			// Followers can do this.
+			newVal := apimodel.PolicyValueFollowers
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValuePublic:
+			// Public can do this.
+			newVal := apimodel.PolicyValuePublic
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		default:
+			// Specific URI of ActivityPub Actor.
+			newVal := apimodel.PolicyValue(policyVal)
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+		}
+	}
+
+	return apiVals
 }
