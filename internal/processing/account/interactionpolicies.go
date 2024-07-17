@@ -29,26 +29,17 @@ import (
 
 func (p *Processor) DefaultInteractionPoliciesGet(
 	ctx context.Context,
-	requestingAccount *gtsmodel.Account,
+	requester *gtsmodel.Account,
 ) (*apimodel.DefaultPolicies, gtserror.WithCode) {
-	// Get settings for this account.
-	settings := requestingAccount.Settings
-	if settings == nil {
-		var err error
-		settings, err = p.state.DB.GetAccountSettings(ctx, requestingAccount.ID)
-		if err != nil {
-			err := gtserror.Newf(
-				"db error getting settings for account %s: %w",
-				requestingAccount.ID, err,
-			)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	// Ensure account settings populated.
+	if err := p.populateAccountSettings(ctx, requester); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Take set "direct" policy
 	// or global default.
 	direct := cmp.Or(
-		settings.InteractionPolicyDirect,
+		requester.Settings.InteractionPolicyDirect,
 		gtsmodel.DefaultInteractionPolicyDirect(),
 	)
 
@@ -61,7 +52,7 @@ func (p *Processor) DefaultInteractionPoliciesGet(
 	// Take set "private" policy
 	// or global default.
 	private := cmp.Or(
-		settings.InteractionPolicyFollowersOnly,
+		requester.Settings.InteractionPolicyFollowersOnly,
 		gtsmodel.DefaultInteractionPolicyFollowersOnly(),
 	)
 
@@ -74,7 +65,7 @@ func (p *Processor) DefaultInteractionPoliciesGet(
 	// Take set "unlisted" policy
 	// or global default.
 	unlisted := cmp.Or(
-		settings.InteractionPolicyUnlocked,
+		requester.Settings.InteractionPolicyUnlocked,
 		gtsmodel.DefaultInteractionPolicyUnlocked(),
 	)
 
@@ -87,7 +78,7 @@ func (p *Processor) DefaultInteractionPoliciesGet(
 	// Take set "public" policy
 	// or global default.
 	public := cmp.Or(
-		settings.InteractionPolicyPublic,
+		requester.Settings.InteractionPolicyPublic,
 		gtsmodel.DefaultInteractionPolicyPublic(),
 	)
 
@@ -107,29 +98,21 @@ func (p *Processor) DefaultInteractionPoliciesGet(
 
 func (p *Processor) DefaultInteractionPoliciesUpdate(
 	ctx context.Context,
-	requestingAccount *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	form *apimodel.UpdateInteractionPoliciesRequest,
 ) (*apimodel.DefaultPolicies, gtserror.WithCode) {
-	// Lock on this account as we're modifying its settings.
-	unlock := p.state.ProcessingLocks.Lock(requestingAccount.URI)
+	// Lock on this account as we're modifying its Settings.
+	unlock := p.state.ProcessingLocks.Lock(requester.URI)
 	defer unlock()
 
-	settings := requestingAccount.Settings
-	if settings == nil {
-		var err error
-		settings, err = p.state.DB.GetAccountSettings(ctx, requestingAccount.ID)
-		if err != nil {
-			err := gtserror.Newf(
-				"db error getting settings for account %s: %w",
-				requestingAccount.ID, err,
-			)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	// Ensure account settings populated.
+	if err := p.populateAccountSettings(ctx, requester); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if form.Direct == nil {
 		// Unset/return to global default.
-		settings.InteractionPolicyDirect = nil
+		requester.Settings.InteractionPolicyDirect = nil
 	} else {
 		policy, err := typeutils.APIInteractionPolicyToInteractionPolicy(
 			form.Direct,
@@ -140,12 +123,12 @@ func (p *Processor) DefaultInteractionPoliciesUpdate(
 		}
 
 		// Set new default policy.
-		settings.InteractionPolicyDirect = policy
+		requester.Settings.InteractionPolicyDirect = policy
 	}
 
 	if form.Private == nil {
 		// Unset/return to global default.
-		settings.InteractionPolicyFollowersOnly = nil
+		requester.Settings.InteractionPolicyFollowersOnly = nil
 	} else {
 		policy, err := typeutils.APIInteractionPolicyToInteractionPolicy(
 			form.Private,
@@ -156,12 +139,12 @@ func (p *Processor) DefaultInteractionPoliciesUpdate(
 		}
 
 		// Set new default policy.
-		settings.InteractionPolicyFollowersOnly = policy
+		requester.Settings.InteractionPolicyFollowersOnly = policy
 	}
 
 	if form.Unlisted == nil {
 		// Unset/return to global default.
-		settings.InteractionPolicyUnlocked = nil
+		requester.Settings.InteractionPolicyUnlocked = nil
 	} else {
 		policy, err := typeutils.APIInteractionPolicyToInteractionPolicy(
 			form.Unlisted,
@@ -172,12 +155,12 @@ func (p *Processor) DefaultInteractionPoliciesUpdate(
 		}
 
 		// Set new default policy.
-		settings.InteractionPolicyUnlocked = policy
+		requester.Settings.InteractionPolicyUnlocked = policy
 	}
 
 	if form.Public == nil {
 		// Unset/return to global default.
-		settings.InteractionPolicyPublic = nil
+		requester.Settings.InteractionPolicyPublic = nil
 	} else {
 		policy, err := typeutils.APIInteractionPolicyToInteractionPolicy(
 			form.Public,
@@ -188,14 +171,38 @@ func (p *Processor) DefaultInteractionPoliciesUpdate(
 		}
 
 		// Set new default policy.
-		settings.InteractionPolicyPublic = policy
+		requester.Settings.InteractionPolicyPublic = policy
 	}
 
-	if err := p.state.DB.UpdateAccountSettings(ctx, settings); err != nil {
+	if err := p.state.DB.UpdateAccountSettings(ctx, requester.Settings); err != nil {
 		err := gtserror.Newf("db error updating setttings: %w", err)
 		return nil, gtserror.NewErrorInternalError(err, err.Error())
 	}
 
-	requestingAccount.Settings = settings
-	return p.DefaultInteractionPoliciesGet(ctx, requestingAccount)
+	return p.DefaultInteractionPoliciesGet(ctx, requester)
+}
+
+// populateAccountSettings just ensures that
+// Settings is populated on the given account.
+func (p *Processor) populateAccountSettings(
+	ctx context.Context,
+	acct *gtsmodel.Account,
+) error {
+	if acct.Settings != nil {
+		// Already populated.
+		return nil
+	}
+
+	// Not populated,
+	// get from db.
+	var err error
+	acct.Settings, err = p.state.DB.GetAccountSettings(ctx, acct.ID)
+	if err != nil {
+		return gtserror.Newf(
+			"db error getting settings for account %s: %w",
+			acct.ID, err,
+		)
+	}
+
+	return nil
 }
