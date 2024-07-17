@@ -42,12 +42,22 @@ func (p *wasmInstancePool) Init(ctx context.Context, sz int) error {
 		return err
 	}
 
-	// Done with instance.
-	_ = inst.Close(ctx)
+	// Clamp to 1.
+	if sz <= 0 {
+		sz = 1
+	}
 
-	// Fill the pool with closed instances.
+	// Allocate new pool instance channel.
 	p.pool = make(chan *wasm.Instance, sz)
-	for i := 0; i < sz; i++ {
+
+	// Store only one
+	// open instance
+	// at init time.
+	p.pool <- inst
+
+	// Fill reminaing with closed
+	// instances for later opening.
+	for i := 0; i < sz-1; i++ {
 		p.pool <- new(wasm.Instance)
 	}
 
