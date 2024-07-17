@@ -191,9 +191,8 @@ func APIInteractionPolicyToInteractionPolicy(
 
 		// Need to add self/author to
 		// this slice of policy values.
-		newVals := slices.Grow(vals, 1)
-		newVals = append(newVals, gtsmodel.PolicyValueAuthor)
-		return newVals
+		vals = append(vals, gtsmodel.PolicyValueAuthor)
+		return vals
 	}
 
 	canLikeAlways = ensureIncludesSelf(canLikeAlways)
@@ -209,7 +208,6 @@ func APIInteractionPolicyToInteractionPolicy(
 				uri == gtsmodel.PolicyValueMentioned
 		},
 	) {
-		canReplyAlways = slices.Grow(canReplyAlways, 1)
 		canReplyAlways = append(
 			canReplyAlways,
 			gtsmodel.PolicyValueMentioned,
