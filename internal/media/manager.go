@@ -102,74 +102,19 @@ func (m *Manager) CreateMedia(
 ) {
 	now := time.Now()
 
-	// Generate new ID.
-	id := id.NewULID()
-
-	// Placeholder URL for attachment.
-	url := uris.URIForAttachment(
-		accountID,
-		string(TypeAttachment),
-		string(SizeOriginal),
-		id,
-		"unknown",
-	)
-
-	// Placeholder storage path for attachment.
-	path := uris.StoragePathForAttachment(
-		accountID,
-		string(TypeAttachment),
-		string(SizeOriginal),
-		id,
-		"unknown",
-	)
-
-	// Calculate attachment thumbnail file path
-	thumbPath := uris.StoragePathForAttachment(
-		accountID,
-		string(TypeAttachment),
-		string(SizeSmall),
-		id,
-
-		// Always encode attachment
-		// thumbnails as jpeg.
-		"jpeg",
-	)
-
-	// Calculate attachment thumbnail URL.
-	thumbURL := uris.URIForAttachment(
-		accountID,
-		string(TypeAttachment),
-		string(SizeSmall),
-		id,
-
-		// Always encode attachment
-		// thumbnails as jpeg.
-		"jpeg",
-	)
-
 	// Populate initial fields on the new media,
 	// leaving out fields with values we don't know
 	// yet. These will be overwritten as we go.
 	attachment := &gtsmodel.MediaAttachment{
-		ID:         id,
+		ID:         id.NewULID(),
+		AccountID:  accountID,
+		Type:       gtsmodel.FileTypeUnknown,
+		Processing: gtsmodel.ProcessingStatusReceived,
+		Avatar:     util.Ptr(false),
+		Header:     util.Ptr(false),
+		Cached:     util.Ptr(false),
 		CreatedAt:  now,
 		UpdatedAt:  now,
-		URL:        url,
-		Type:       gtsmodel.FileTypeUnknown,
-		AccountID:  accountID,
-		Processing: gtsmodel.ProcessingStatusReceived,
-		File: gtsmodel.File{
-			ContentType: "application/octet-stream",
-			Path:        path,
-		},
-		Thumbnail: gtsmodel.Thumbnail{
-			ContentType: "image/jpeg",
-			Path:        thumbPath,
-			URL:         thumbURL,
-		},
-		Avatar: util.Ptr(false),
-		Header: util.Ptr(false),
-		Cached: util.Ptr(false),
 	}
 
 	// Check if we were provided additional info
@@ -252,56 +197,23 @@ func (m *Manager) CreateEmoji(
 	// Generate new ID.
 	id := id.NewULID()
 
-	// Fetch the local instance account for emoji path generation.
-	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
-	if err != nil {
-		return nil, gtserror.Newf("error fetching instance account: %w", err)
-	}
-
 	if domain == "" && info.URI == nil {
 		// Generate URI for local emoji.
 		uri := uris.URIForEmoji(id)
 		info.URI = &uri
 	}
 
-	// Generate static URL for attachment.
-	staticURL := uris.URIForAttachment(
-		instanceAcc.ID,
-		string(TypeEmoji),
-		string(SizeStatic),
-		id,
-
-		// All static emojis
-		// are encoded as png.
-		"png",
-	)
-
-	// Generate static image path for attachment.
-	staticPath := uris.StoragePathForAttachment(
-		instanceAcc.ID,
-		string(TypeEmoji),
-		string(SizeStatic),
-		id,
-
-		// All static emojis
-		// are encoded as png.
-		"png",
-	)
-
 	// Populate initial fields on the new emoji,
 	// leaving out fields with values we don't know
 	// yet. These will be overwritten as we go.
 	emoji := &gtsmodel.Emoji{
-		ID:                     id,
-		Shortcode:              shortcode,
-		Domain:                 domain,
-		ImageStaticURL:         staticURL,
-		ImageStaticPath:        staticPath,
-		ImageStaticContentType: "image/png",
-		Disabled:               util.Ptr(false),
-		VisibleInPicker:        util.Ptr(true),
-		CreatedAt:              now,
-		UpdatedAt:              now,
+		ID:              id,
+		Shortcode:       shortcode,
+		Domain:          domain,
+		Disabled:        util.Ptr(false),
+		VisibleInPicker: util.Ptr(true),
+		CreatedAt:       now,
+		UpdatedAt:       now,
 	}
 
 	// Finally, create new emoji.
@@ -327,12 +239,6 @@ func (m *Manager) RefreshEmoji(
 	*ProcessingEmoji,
 	error,
 ) {
-	// Fetch the local instance account for emoji path generation.
-	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
-	if err != nil {
-		return nil, gtserror.Newf("error fetching instance account: %w", err)
-	}
-
 	// Create references to old emoji image
 	// paths before they get updated with new
 	// path ID. These are required for later
@@ -380,38 +286,6 @@ func (m *Manager) RefreshEmoji(
 		return rct, nil
 	}
 
-	// Use a new ID to create a new path
-	// for the new images, to get around
-	// needing to do cache invalidation.
-	newPathID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, gtserror.Newf("error generating newPathID for emoji refresh: %s", err)
-	}
-
-	// Generate new static URL for emoji.
-	emoji.ImageStaticURL = uris.URIForAttachment(
-		instanceAcc.ID,
-		string(TypeEmoji),
-		string(SizeStatic),
-		newPathID,
-
-		// All static emojis
-		// are encoded as png.
-		"png",
-	)
-
-	// Generate new static image storage path for emoji.
-	emoji.ImageStaticPath = uris.StoragePathForAttachment(
-		instanceAcc.ID,
-		string(TypeEmoji),
-		string(SizeStatic),
-		newPathID,
-
-		// All static emojis
-		// are encoded as png.
-		"png",
-	)
-
 	// Finally, create new emoji in database.
 	processingEmoji, err := m.createEmoji(ctx,
 		func(ctx context.Context, emoji *gtsmodel.Emoji) error {
@@ -425,8 +299,8 @@ func (m *Manager) RefreshEmoji(
 		return nil, err
 	}
 
-	// Set the refreshed path ID used.
-	processingEmoji.newPathID = newPathID
+	// Generate a new path ID to use instead.
+	processingEmoji.newPathID = id.NewULID()
 
 	return processingEmoji, nil
 }
@@ -441,6 +315,12 @@ func (m *Manager) createEmoji(
 	*ProcessingEmoji,
 	error,
 ) {
+	// Fetch the local instance account for emoji path generation.
+	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, gtserror.Newf("error fetching instance account: %w", err)
+	}
+
 	// Check if we have additional info to add to the emoji,
 	// and overwrite some of the emoji fields if so.
 	if info.URI != nil {
@@ -475,9 +355,10 @@ func (m *Manager) createEmoji(
 
 	// Return wrapped emoji for later processing.
 	processingEmoji := &ProcessingEmoji{
-		emoji:  emoji,
-		dataFn: data,
-		mgr:    m,
+		instAccID: instanceAcc.ID,
+		emoji:     emoji,
+		dataFn:    data,
+		mgr:       m,
 	}
 
 	return processingEmoji, nil

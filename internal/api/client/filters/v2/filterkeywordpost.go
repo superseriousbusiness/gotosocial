@@ -147,7 +147,7 @@ func validateNormalizeCreateUpdateFilterKeyword(form *apimodel.FilterKeywordCrea
 		return err
 	}
 
-	form.WholeWord = util.Ptr(util.PtrValueOr(form.WholeWord, false))
+	form.WholeWord = util.Ptr(util.PtrOrValue(form.WholeWord, false))
 
 	return nil
 }

@@ -43,10 +43,19 @@ func PtrIf[T comparable](t T) *T {
 	return &t
 }
 
-// PtrValueOr returns either value of ptr, or default.
-func PtrValueOr[T any](t *T, _default T) T {
+// PtrOrZero returns either value of ptr, or zero.
+func PtrOrZero[T any](t *T) T {
+	if t == nil {
+		var z T
+		return z
+	}
+	return *t
+}
+
+// PtrOrValue returns either contained value of ptr, or 'value'.
+func PtrOrValue[T any](t *T, value T) T {
 	if t != nil {
 		return *t
 	}
-	return _default
+	return value
 }
