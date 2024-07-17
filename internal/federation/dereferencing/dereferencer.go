@@ -22,6 +22,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -83,7 +84,8 @@ type Dereferencer struct {
 	converter           *typeutils.Converter
 	transportController transport.Controller
 	mediaManager        *media.Manager
-	visibility          *visibility.Filter
+	visFilter           *visibility.Filter
+	intFilter           *interaction.Filter
 
 	// in-progress dereferencing emoji. we already perform
 	// locks per-status and per-account so we don't need
@@ -105,12 +107,14 @@ type Dereferencer struct {
 	handshakesMu sync.Mutex
 }
 
-// NewDereferencer returns a Dereferencer initialized with the given parameters.
+// NewDereferencer returns a Dereferencer
+// initialized with the given parameters.
 func NewDereferencer(
 	state *state.State,
 	converter *typeutils.Converter,
 	transportController transport.Controller,
 	visFilter *visibility.Filter,
+	intFilter *interaction.Filter,
 	mediaManager *media.Manager,
 ) Dereferencer {
 	return Dereferencer{
@@ -118,7 +122,8 @@ func NewDereferencer(
 		converter:           converter,
 		transportController: transportController,
 		mediaManager:        mediaManager,
-		visibility:          visFilter,
+		visFilter:           visFilter,
+		intFilter:           intFilter,
 		derefEmojis:         make(map[string]*media.ProcessingEmoji),
 		handshakes:          make(map[string][]*url.URL),
 	}

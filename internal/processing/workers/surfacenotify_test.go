@@ -42,7 +42,7 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 		State:       testStructs.State,
 		Converter:   testStructs.TypeConverter,
 		Stream:      testStructs.Processor.Stream(),
-		Filter:      visibility.NewFilter(testStructs.State),
+		VisFilter:   visibility.NewFilter(testStructs.State),
 		EmailSender: testStructs.EmailSender,
 	}
 

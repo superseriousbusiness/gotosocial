@@ -550,19 +550,22 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   "interaction_policy": {
     "can_favourite": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reply": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reblog": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     }
@@ -725,19 +728,22 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
   "interaction_policy": {
     "can_favourite": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reply": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reblog": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     }
@@ -921,19 +927,22 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "interaction_policy": {
     "can_favourite": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reply": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reblog": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     }
@@ -1221,19 +1230,22 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   "interaction_policy": {
     "can_favourite": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reply": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reblog": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     }
@@ -2212,19 +2224,22 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "interaction_policy": {
         "can_favourite": {
           "always": [
-            "public"
+            "public",
+            "me"
           ],
           "with_approval": []
         },
         "can_reply": {
           "always": [
-            "public"
+            "public",
+            "me"
           ],
           "with_approval": []
         },
         "can_reblog": {
           "always": [
-            "public"
+            "public",
+            "me"
           ],
           "with_approval": []
         }

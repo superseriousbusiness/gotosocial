@@ -1453,6 +1453,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"admin_account_status_2": {
 			ID:                       "01F8MHAAY43M6RJ473VQFCVH37",
@@ -1476,6 +1477,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"admin_account_status_3": {
 			ID:                       "01FF25D5Q0DH7CHD57CTRS6WK0",
@@ -1500,6 +1502,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"admin_account_status_4": {
 			ID:                       "01G36SF3V6Y6V5BF9P4R7PQG7G",
@@ -1525,6 +1528,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_1": {
 			ID:                       "01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -1547,6 +1551,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_2": {
 			ID:                       "01F8MHAYFKS4KMXF8K5Y1C0KRN",
@@ -1569,6 +1574,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Federated:                util.Ptr(false),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_3": {
 			ID:                       "01F8MHBBN8120SYH7D5S050MGK",
@@ -1602,6 +1608,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
+			PendingApproval:     util.Ptr(false),
 		},
 		"local_account_1_status_4": {
 			ID:                       "01F8MH82FYRXD2RC6108DAJ5HB",
@@ -1625,6 +1632,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_5": {
 			ID:                       "01FCTA44PW9H1TB328S9AQXKDS",
@@ -1648,6 +1656,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_6": {
 			ID:                       "01HEN2RZ8BG29Y5Z9VJC73HZW7",
@@ -1672,6 +1681,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ActivityQuestion,
 			PollID:                   "01HEN2RKT1YTEZ80SA8HGP105F",
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_7": {
 			ID:                       "01HH9KYNQPA416TNJ53NSATP40",
@@ -1694,6 +1704,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_1_status_8": {
 			ID:                       "01J2M1HPFSS54S60Y0KYV23KJE",
@@ -1741,6 +1752,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_2_status_2": {
 			ID:                       "01F8MHC0H0A7XHTVH5F596ZKBM",
@@ -1774,6 +1786,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
+			PendingApproval:     util.Ptr(false),
 		},
 		"local_account_2_status_3": {
 			ID:                       "01F8MHC8VWDRBQR0N1BATDDEM5",
@@ -1808,6 +1821,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
+			PendingApproval:     util.Ptr(false),
 		},
 		"local_account_2_status_4": {
 			ID:                       "01F8MHCP5P2NWYQ416SBA0XSEV",
@@ -1841,6 +1855,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
+			PendingApproval:     util.Ptr(false),
 		},
 		"local_account_2_status_5": {
 			ID:                       "01FCQSQ667XHJ9AV9T27SJJSX5",
@@ -1866,6 +1881,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_2_status_6": {
 			ID:                       "01FN3VJGFH10KR7S2PB0GFJZYG",
@@ -1891,6 +1907,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_2_status_7": {
 			ID:                       "01G20ZM733MGN8J344T4ZDDFY1",
@@ -1915,6 +1932,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"local_account_2_status_8": {
 			ID:                       "01HEN2PRXT0TF4YDRA64FZZRN7",
@@ -1939,6 +1957,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ActivityQuestion,
 			PollID:                   "01HEN2QB5NR4NCEHGYC3HN84K6",
+			PendingApproval:          util.Ptr(false),
 		},
 		"remote_account_1_status_1": {
 			ID:                       "01FVW7JHQFSFK166WWKR8CBA6M",
@@ -1963,6 +1982,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 		"remote_account_1_status_2": {
 			ID:                       "01HEN2QRFA8H3C6QPN7RD4KSR6",
@@ -1987,6 +2007,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ActivityQuestion,
 			PollID:                   "01HEN2R65468ZG657C4ZPHJ4EX",
+			PendingApproval:          util.Ptr(false),
 		},
 		"remote_account_1_status_3": {
 			ID:                       "01HEWV37MHV8BAC8ANFGVRRM5D",
@@ -2011,6 +2032,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ActivityQuestion,
 			PollID:                   "01HEWV1GW2D49R919NPEDXPTZ5",
+			PendingApproval:          util.Ptr(false),
 		},
 		"remote_account_2_status_1": {
 			ID:                       "01HE7XJ1CG84TBKH5V9XKBVGF5",
@@ -2035,6 +2057,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "",
 			Federated:                util.Ptr(true),
 			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(false),
 		},
 	}
 }

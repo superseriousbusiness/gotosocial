@@ -151,19 +151,22 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "interaction_policy": {
     "can_favourite": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reply": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reblog": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     }
@@ -236,19 +239,22 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "interaction_policy": {
     "can_favourite": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reply": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     },
     "can_reblog": {
       "always": [
-        "public"
+        "public",
+        "me"
       ],
       "with_approval": []
     }

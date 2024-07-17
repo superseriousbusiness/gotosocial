@@ -173,43 +173,42 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 }
 
 // try to boost a status that's not boostable / visible to us
-// TODO: sort this out with new interaction policies
-// func (suite *StatusBoostTestSuite) TestPostUnboostable() {
-// 	t := suite.testTokens["local_account_1"]
-// 	oauthToken := oauth.DBTokenToToken(t)
+func (suite *StatusBoostTestSuite) TestPostUnboostable() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
 
-// 	targetStatus := suite.testStatuses["local_account_2_status_4"]
+	targetStatus := suite.testStatuses["local_account_2_status_4"]
 
-// 	// setup
-// 	recorder := httptest.NewRecorder()
-// 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-// 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-// 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-// 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-// 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-// 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-// 	ctx.Request.Header.Set("accept", "application/json")
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
-// 	// normally the router would populate these params from the path values,
-// 	// but because we're calling the function directly, we need to set them manually.
-// 	ctx.Params = gin.Params{
-// 		gin.Param{
-// 			Key:   statuses.IDKey,
-// 			Value: targetStatus.ID,
-// 		},
-// 	}
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   statuses.IDKey,
+			Value: targetStatus.ID,
+		},
+	}
 
-// 	suite.statusModule.StatusBoostPOSTHandler(ctx)
+	suite.statusModule.StatusBoostPOSTHandler(ctx)
 
-// 	// check response
-// 	suite.Equal(http.StatusNotFound, recorder.Code) // we 404 unboostable statuses
+	// check response
+	suite.Equal(http.StatusForbidden, recorder.Code)
 
-// 	result := recorder.Result()
-// 	defer result.Body.Close()
-// 	b, err := ioutil.ReadAll(result.Body)
-// 	suite.NoError(err)
-// 	suite.Equal(`{"error":"Not Found"}`, string(b))
-// }
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	suite.Equal(`{"error":"Forbidden: you do not have permission to boost this status"}`, string(b))
+}
 
 // try to boost a status that's not visible to the user
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {

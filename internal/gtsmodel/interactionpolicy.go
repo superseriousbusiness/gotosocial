@@ -111,25 +111,73 @@ func (p PolicyValue) FeasibleForVisibility(v Visibility) bool {
 
 type PolicyValues []PolicyValue
 
-// PolicyResult represents the result of
-// checking an Actor URI and interaction
-// type against the conditions of an
-// InteractionPolicy to determine if that
-// interaction is permitted.
-type PolicyResult int
+// PolicyPermission represents the permission
+// state for a certain Actor URI and interaction
+// type, in relation to a policy.
+type PolicyPermission int
 
 const (
 	// Interaction is forbidden for this
 	// PolicyValue + interaction combination.
-	PolicyResultForbidden PolicyResult = iota
+	PolicyPermissionForbidden PolicyPermission = iota
 	// Interaction is conditionally permitted
 	// for this PolicyValue + interaction combo,
 	// pending approval by the item owner.
-	PolicyResultWithApproval
+	PolicyPermissionWithApproval
 	// Interaction is permitted for this
 	// PolicyValue + interaction combination.
-	PolicyResultPermitted
+	PolicyPermissionPermitted
 )
+
+// PolicyCheckResult encapsulates the results
+// of checking a certain Actor URI + type
+// of interaction against an interaction policy.
+type PolicyCheckResult struct {
+	// Permission permitted /
+	// with approval / forbidden.
+	Permission PolicyPermission
+
+	// Value that this check matched on.
+	// Only set if Permission = permitted.
+	PermittedMatchedOn *PolicyValue
+}
+
+// MatchedOnCollection returns true if this policy check
+// result turned up Permitted, and matched based on the
+// requester's presence in a followers or following collection.
+func (pcr *PolicyCheckResult) MatchedOnCollection() bool {
+	if !pcr.Permitted() {
+		// Not permitted at all
+		// so definitely didn't
+		// match on collection.
+		return false
+	}
+
+	if pcr.PermittedMatchedOn == nil {
+		return false
+	}
+
+	return *pcr.PermittedMatchedOn == PolicyValueFollowers ||
+		*pcr.PermittedMatchedOn == PolicyValueFollowing
+}
+
+// Permitted returns true if this policy
+// check resulted in Permission = permitted.
+func (pcr *PolicyCheckResult) Permitted() bool {
+	return pcr.Permission == PolicyPermissionPermitted
+}
+
+// Permitted returns true if this policy
+// check resulted in Permission = with approval.
+func (pcr *PolicyCheckResult) WithApproval() bool {
+	return pcr.Permission == PolicyPermissionWithApproval
+}
+
+// Permitted returns true if this policy
+// check resulted in Permission = forbidden.
+func (pcr *PolicyCheckResult) Forbidden() bool {
+	return pcr.Permission == PolicyPermissionForbidden
+}
 
 // An InteractionPolicy determines which
 // interactions will be accepted for an

@@ -502,7 +502,8 @@ func (d *Dereferencer) enrichStatus(
 	latestStatus.Local = status.Local
 
 	// Check if this is a permitted status we should accept.
-	permit, err := d.isPermittedStatus(ctx, status, latestStatus)
+	// Function also sets "PendingApproval" bool as necessary.
+	permit, err := d.isPermittedStatus(ctx, requestUser, status, latestStatus)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error checking permissibility for status %s: %w", uri, err)
 	}
@@ -558,86 +559,6 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	return latestStatus, apubStatus, nil
-}
-
-// isPermittedStatus returns whether the given status
-// is permitted to be stored on this instance, checking
-// whether the author is suspended, and passes visibility
-// checks against status being replied-to (if any).
-func (d *Dereferencer) isPermittedStatus(
-	ctx context.Context,
-	existing *gtsmodel.Status,
-	status *gtsmodel.Status,
-) (
-	permitted bool, // is permitted?
-	err error,
-) {
-
-	// our failure condition handling
-	// at the end of this function for
-	// the case of permission = false.
-	onFail := func() (bool, error) {
-		if existing != nil {
-			log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
-
-			// Delete existing status from database as it's no longer permitted.
-			if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
-				log.Errorf(ctx, "error deleting %s after permissivity fail: %v", existing.URI, err)
-			}
-		}
-		return false, nil
-	}
-
-	if !status.Account.SuspendedAt.IsZero() {
-		// The status author is suspended,
-		// this shouldn't have reached here
-		// but it's a fast check anyways.
-		return onFail()
-	}
-
-	if status.InReplyToURI == "" {
-		// This status isn't in
-		// reply to anything!
-		return true, nil
-	}
-
-	if status.InReplyTo == nil {
-		// If no inReplyTo has been set,
-		// we return here for now as we
-		// can't perform further checks.
-		//
-		// Worst case we allow something
-		// through, and later on during
-		// refetch it will get deleted.
-		return true, nil
-	}
-
-	if status.InReplyTo.BoostOfID != "" {
-		// We do not permit replies to
-		// boost wrapper statuses. (this
-		// shouldn't be able to happen).
-		return onFail()
-	}
-
-	// Default to true
-	permitted = true
-
-	if *status.InReplyTo.Local {
-		// Check visibility of inReplyTo to status author.
-		permitted, err = d.visibility.StatusVisible(ctx,
-			status.Account,
-			status.InReplyTo,
-		)
-		if err != nil {
-			return false, gtserror.Newf("error checking in-reply-to visibility: %w", err)
-		}
-	}
-
-	if permitted {
-		return true, nil
-	}
-
-	return onFail()
 }
 
 func (d *Dereferencer) fetchStatusMentions(
