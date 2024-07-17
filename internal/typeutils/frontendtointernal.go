@@ -24,7 +24,6 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
@@ -170,24 +169,36 @@ func APIInteractionPolicyToInteractionPolicy(
 	// 1. Ensure canLikeAlways, canReplyAlways,
 	//    and canAnnounceAlways include self
 	//    (either explicitly or within public).
-	for _, uris := range []*gtsmodel.PolicyValues{
-		&canLikeAlways,
-		&canReplyAlways,
-		&canAnnounceAlways,
-	} {
-		if !slices.ContainsFunc(
-			*uris,
+
+	// ensureIncludesSelf adds the "author" PolicyValue
+	// to given slice of PolicyValues, if not already
+	// explicitly or implicitly included.
+	ensureIncludesSelf := func(vals gtsmodel.PolicyValues) gtsmodel.PolicyValues {
+		includesSelf := slices.ContainsFunc(
+			vals,
 			func(uri gtsmodel.PolicyValue) bool {
 				return uri == gtsmodel.PolicyValuePublic ||
 					uri == gtsmodel.PolicyValueAuthor
 			},
-		) {
-			*uris = *util.Ptr(append(
-				*uris,
-				gtsmodel.PolicyValueAuthor,
-			))
+		)
+
+		if includesSelf {
+			// This slice of policy values
+			// already includes self explicitly
+			// or implicitly, nothing to change.
+			return vals
 		}
+
+		// Need to add self/author to
+		// this slice of policy values.
+		newVals := slices.Grow(vals, 1)
+		newVals = append(newVals, gtsmodel.PolicyValueAuthor)
+		return newVals
 	}
+
+	canLikeAlways = ensureIncludesSelf(canLikeAlways)
+	canReplyAlways = ensureIncludesSelf(canReplyAlways)
+	canAnnounceAlways = ensureIncludesSelf(canAnnounceAlways)
 
 	// 2. Ensure canReplyAlways includes mentioned
 	//    accounts (either explicitly or within public).
@@ -198,6 +209,7 @@ func APIInteractionPolicyToInteractionPolicy(
 				uri == gtsmodel.PolicyValueMentioned
 		},
 	) {
+		canReplyAlways = slices.Grow(canReplyAlways, 1)
 		canReplyAlways = append(
 			canReplyAlways,
 			gtsmodel.PolicyValueMentioned,
