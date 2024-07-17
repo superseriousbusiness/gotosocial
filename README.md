@@ -341,16 +341,6 @@ Thanks to everyone who has used GtS, opened an issue, suggested something, given
 
 **Update regarding corporate sponsors: we are now open and accepting! (with some conditions below)**
 
-### Corporate Sponsorship
-
-GoToSocial is open to receiving donations from corporate sponsors, and in return we will display your logo, website and short tagline on the repository / documents to show our thanks for your support.
-
-GoToSocial project direction will always remain **100%** in the hands of the core team, and will never be dictated or influenced by corporate sponsorship. This is non-negotiable. Corporations are of course free of course to suggest / request features in the same manner as any other user, but they are not given special treatment.
-
-Corporate sponsorship is dependent on your company meeting our team's ethical guidelines. These are not a concrete set of rules but instead boil down to "is your company actively harming humanity?". For example, those in the defense industry need not apply as the simple answer to that question is, "yes!".
-
-If after reading this you are still interested in supporting us, that is wonderful! Please reach out to us at `admin@gotosocial.org` to further discuss :)
-
 ### Crowdfunding
 
 ![open collective Standard Sloth badge](https://opencollective.com/gotosocial/tiers/standard-sloth/badge.svg?label=Standard%20Sloth&color=brightgreen) ![open collective Stable Sloth badge](https://opencollective.com/gotosocial/tiers/stable-sloth/badge.svg?label=Stable%20Sloth&color=green) ![open collective Special Sloth badge](https://opencollective.com/gotosocial/tiers/special-sloth/badge.svg?label=Special%20Sloth&color=yellowgreen) ![open collective Sugar Sloth badge](https://opencollective.com/gotosocial/tiers/sugar-sloth/badge.svg?label=Sugar%20Sloth&color=blue)
@@ -364,6 +354,18 @@ If you prefer, we also have an account on LiberaPay! You can find that [right he
 Crowdfunded donations to our OpenCollective and Liberapay accounts go towards paying the core team, paying server costs, and paying for GtS art, design, and other bits and bobs.
 
 💕 🦥 💕 Thank you!
+
+
+### Corporate Sponsorship
+
+GoToSocial is open to receiving donations from corporate sponsors, and in return we will display your logo, website and short tagline on the repository / documents to show our thanks for your support.
+
+GoToSocial project direction will always remain **100%** in the hands of the core team, and will never be dictated or influenced by corporate sponsorship. This is non-negotiable. Corporations are of course free of course to suggest / request features in the same manner as any other user, but they are not given special treatment.
+
+Corporate sponsorship is dependent on your company meeting our team's ethical guidelines. These are not a concrete set of rules but instead boil down to "is your company actively harming humanity?". For example, those in the defense industry need not apply as the simple answer to that question is, "yes!".
+
+If after reading this you are still interested in supporting us, that is wonderful! Please reach out to us at `admin@gotosocial.org` to further discuss :)
+
 
 ### NLnet
 
