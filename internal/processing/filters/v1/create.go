@@ -71,7 +71,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		FilterID:  filter.ID,
 		Filter:    filter,
 		Keyword:   form.Phrase,
-		WholeWord: util.Ptr(util.PtrValueOr(form.WholeWord, false)),
+		WholeWord: util.Ptr(util.PtrOrValue(form.WholeWord, false)),
 	}
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 

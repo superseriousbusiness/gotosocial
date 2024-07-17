@@ -108,11 +108,11 @@ func (p *Processor) Update(
 		if expiresAt != filter.ExpiresAt {
 			forbiddenFields = append(forbiddenFields, "expires_in")
 		}
-		if contextHome != util.PtrValueOr(filter.ContextHome, false) ||
-			contextNotifications != util.PtrValueOr(filter.ContextNotifications, false) ||
-			contextPublic != util.PtrValueOr(filter.ContextPublic, false) ||
-			contextThread != util.PtrValueOr(filter.ContextThread, false) ||
-			contextAccount != util.PtrValueOr(filter.ContextAccount, false) {
+		if contextHome != util.PtrOrValue(filter.ContextHome, false) ||
+			contextNotifications != util.PtrOrValue(filter.ContextNotifications, false) ||
+			contextPublic != util.PtrOrValue(filter.ContextPublic, false) ||
+			contextThread != util.PtrOrValue(filter.ContextThread, false) ||
+			contextAccount != util.PtrOrValue(filter.ContextAccount, false) {
 			forbiddenFields = append(forbiddenFields, "context")
 		}
 		if len(forbiddenFields) > 0 {
@@ -132,7 +132,7 @@ func (p *Processor) Update(
 	filter.ContextThread = &contextThread
 	filter.ContextAccount = &contextAccount
 	filterKeyword.Keyword = form.Phrase
-	filterKeyword.WholeWord = util.Ptr(util.PtrValueOr(form.WholeWord, false))
+	filterKeyword.WholeWord = util.Ptr(util.PtrOrValue(form.WholeWord, false))
 
 	// We only want to update the relevant filter keyword.
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}

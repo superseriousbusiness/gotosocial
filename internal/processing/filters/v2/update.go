@@ -189,7 +189,7 @@ func applyKeywordChanges(filter *gtsmodel.Filter, formKeywords []apimodel.Filter
 			FilterID:  filter.ID,
 			Filter:    filter,
 			Keyword:   *formKeyword.Keyword,
-			WholeWord: util.Ptr(util.PtrValueOr(formKeyword.WholeWord, false)),
+			WholeWord: util.Ptr(util.PtrOrValue(formKeyword.WholeWord, false)),
 		}
 		filterKeywordsByID[filterKeyword.ID] = filterKeyword
 		// Don't need to set columns, as we're using all of them.

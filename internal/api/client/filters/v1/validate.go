@@ -40,8 +40,8 @@ func validateNormalizeCreateUpdateFilter(form *model.FilterCreateUpdateRequestV1
 	}
 
 	// Apply defaults for missing fields.
-	form.WholeWord = util.Ptr(util.PtrValueOr(form.WholeWord, false))
-	form.Irreversible = util.Ptr(util.PtrValueOr(form.Irreversible, false))
+	form.WholeWord = util.Ptr(util.PtrOrValue(form.WholeWord, false))
+	form.Irreversible = util.Ptr(util.PtrOrValue(form.Irreversible, false))
 
 	if *form.Irreversible {
 		return errors.New("irreversible aka server-side drop filters are not supported yet")

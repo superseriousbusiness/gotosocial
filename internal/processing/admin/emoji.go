@@ -325,8 +325,8 @@ func (p *Processor) emojiUpdateCopy(
 
 	// Attempt to create the new local emoji.
 	emoji, errWithCode := p.createEmoji(ctx,
-		util.PtrValueOr(shortcode, ""),
-		util.PtrValueOr(categoryName, ""),
+		util.PtrOrValue(shortcode, ""),
+		util.PtrOrValue(categoryName, ""),
 		data,
 	)
 	if errWithCode != nil {

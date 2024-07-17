@@ -138,7 +138,7 @@ func (m *Module) AccountMutePOSTHandler(c *gin.Context) {
 
 func normalizeCreateUpdateMute(form *apimodel.UserMuteCreateUpdateRequest) error {
 	// Apply defaults for missing fields.
-	form.Notifications = util.Ptr(util.PtrValueOr(form.Notifications, false))
+	form.Notifications = util.Ptr(util.PtrOrValue(form.Notifications, false))
 
 	// Normalize mute duration if necessary.
 	// If we parsed this as JSON, expires_in

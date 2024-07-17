@@ -319,9 +319,9 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	}
 
 	var (
-		locked       = util.PtrValueOr(a.Locked, true)
-		discoverable = util.PtrValueOr(a.Discoverable, false)
-		bot          = util.PtrValueOr(a.Bot, false)
+		locked       = util.PtrOrValue(a.Locked, true)
+		discoverable = util.PtrOrValue(a.Discoverable, false)
+		bot          = util.PtrOrValue(a.Bot, false)
 	)
 
 	// Remaining properties are simple and
@@ -579,8 +579,8 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmod
 			Aspect:    media.FileMeta.Original.Aspect,
 			Size:      toAPISize(media.FileMeta.Original.Width, media.FileMeta.Original.Height),
 			FrameRate: toAPIFrameRate(media.FileMeta.Original.Framerate),
-			Duration:  util.PtrOr(media.FileMeta.Original.Duration),
-			Bitrate:   int(util.PtrOr(media.FileMeta.Original.Bitrate)),
+			Duration:  util.PtrOrZero(media.FileMeta.Original.Duration),
+			Bitrate:   int(util.PtrOrZero(media.FileMeta.Original.Bitrate)),
 		}
 
 		// Only add thumb details if stored.
@@ -931,15 +931,15 @@ func filterableTextFields(s *gtsmodel.Status) []string {
 func filterAppliesInContext(filter *gtsmodel.Filter, filterContext statusfilter.FilterContext) bool {
 	switch filterContext {
 	case statusfilter.FilterContextHome:
-		return util.PtrValueOr(filter.ContextHome, false)
+		return util.PtrOrValue(filter.ContextHome, false)
 	case statusfilter.FilterContextNotifications:
-		return util.PtrValueOr(filter.ContextNotifications, false)
+		return util.PtrOrValue(filter.ContextNotifications, false)
 	case statusfilter.FilterContextPublic:
-		return util.PtrValueOr(filter.ContextPublic, false)
+		return util.PtrOrValue(filter.ContextPublic, false)
 	case statusfilter.FilterContextThread:
-		return util.PtrValueOr(filter.ContextThread, false)
+		return util.PtrOrValue(filter.ContextThread, false)
 	case statusfilter.FilterContextAccount:
-		return util.PtrValueOr(filter.ContextAccount, false)
+		return util.PtrOrValue(filter.ContextAccount, false)
 	}
 	return false
 }
@@ -2037,7 +2037,7 @@ func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeywor
 		ID:           filterKeyword.ID,
 		Phrase:       filterKeyword.Keyword,
 		Context:      filterToAPIFilterContexts(filter),
-		WholeWord:    util.PtrValueOr(filterKeyword.WholeWord, false),
+		WholeWord:    util.PtrOrValue(filterKeyword.WholeWord, false),
 		ExpiresAt:    filterExpiresAtToAPIFilterExpiresAt(filter.ExpiresAt),
 		Irreversible: filter.Action == gtsmodel.FilterActionHide,
 	}, nil
@@ -2075,19 +2075,19 @@ func filterExpiresAtToAPIFilterExpiresAt(expiresAt time.Time) *string {
 
 func filterToAPIFilterContexts(filter *gtsmodel.Filter) []apimodel.FilterContext {
 	apiContexts := make([]apimodel.FilterContext, 0, apimodel.FilterContextNumValues)
-	if util.PtrValueOr(filter.ContextHome, false) {
+	if util.PtrOrValue(filter.ContextHome, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextHome)
 	}
-	if util.PtrValueOr(filter.ContextNotifications, false) {
+	if util.PtrOrValue(filter.ContextNotifications, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextNotifications)
 	}
-	if util.PtrValueOr(filter.ContextPublic, false) {
+	if util.PtrOrValue(filter.ContextPublic, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextPublic)
 	}
-	if util.PtrValueOr(filter.ContextThread, false) {
+	if util.PtrOrValue(filter.ContextThread, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextThread)
 	}
-	if util.PtrValueOr(filter.ContextAccount, false) {
+	if util.PtrOrValue(filter.ContextAccount, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextAccount)
 	}
 	return apiContexts
@@ -2108,7 +2108,7 @@ func (c *Converter) FilterKeywordToAPIFilterKeyword(ctx context.Context, filterK
 	return &apimodel.FilterKeyword{
 		ID:        filterKeyword.ID,
 		Keyword:   filterKeyword.Keyword,
-		WholeWord: util.PtrValueOr(filterKeyword.WholeWord, false),
+		WholeWord: util.PtrOrValue(filterKeyword.WholeWord, false),
 	}
 }
 

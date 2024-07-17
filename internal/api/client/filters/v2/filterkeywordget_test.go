@@ -100,7 +100,7 @@ func (suite *FiltersTestSuite) TestGetFilterKeyword() {
 	suite.NotEmpty(filterKeyword)
 	suite.Equal(expectedFilterKeyword.ID, filterKeyword.ID)
 	suite.Equal(expectedFilterKeyword.Keyword, filterKeyword.Keyword)
-	suite.Equal(util.PtrValueOr(expectedFilterKeyword.WholeWord, false), filterKeyword.WholeWord)
+	suite.Equal(util.PtrOrValue(expectedFilterKeyword.WholeWord, false), filterKeyword.WholeWord)
 }
 
 func (suite *FiltersTestSuite) TestGetAnotherAccountsFilterKeyword() {
