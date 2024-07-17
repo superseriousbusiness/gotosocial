@@ -155,7 +155,18 @@ func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Att
 	note.WriteString(config.GetHost())
 	note.WriteString(`: `)
 	note.WriteString(strconv.Itoa(len(nonLocal)))
-	note.WriteString(` attachment(s) in this status were not downloaded. Treat the following external link(s) with care:</i></p><ul>`)
+
+	if len(nonLocal) > 1 {
+		// Use plural word form.
+		note.WriteString(` attachments in this status were not downloaded. ` +
+			`Treat the following external links with care:`)
+	} else {
+		// Use singular word form.
+		note.WriteString(` attachment in this status was not downloaded. ` +
+			`Treat the following external link with care:`)
+	}
+
+	note.WriteString(`</i></p><ul>`)
 	for _, a := range nonLocal {
 		note.WriteString(`<li>`)
 		note.WriteString(`<a href="`)
