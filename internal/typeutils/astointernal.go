@@ -393,12 +393,22 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	// Advanced visibility toggles for this status.
-	//
-	// TODO: a lot of work to be done here -- a new type
-	// needs to be created for this in go-fed/activity.
-	// Until this is implemented, assume all true.
+	// Status was sent to us or dereffed
+	// by us so it must be federated.
 	status.Federated = util.Ptr(true)
+
+	// Derive interaction policy for this status.
+	status.InteractionPolicy = ap.ExtractInteractionPolicy(
+		statusable,
+		status.Account,
+	)
+
+	// Set approvedByURI if present,
+	// for later dereferencing.
+	approvedByURI := ap.GetApprovedBy(statusable)
+	if approvedByURI != nil {
+		status.ApprovedByURI = approvedByURI.String()
+	}
 
 	// status.Sensitive
 	sensitive := ap.ExtractSensitive(statusable)

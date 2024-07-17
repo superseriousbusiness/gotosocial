@@ -37,22 +37,34 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 	l.Debug("entering Get")
 
 	switch {
+
 	case uris.IsUserPath(id):
 		acct, err := f.state.DB.GetAccountByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		return f.converter.AccountToAS(ctx, acct)
+
 	case uris.IsStatusesPath(id):
 		status, err := f.state.DB.GetStatusByURI(ctx, id.String())
 		if err != nil {
 			return nil, err
 		}
 		return f.converter.StatusToAS(ctx, status)
+
 	case uris.IsFollowersPath(id):
 		return f.Followers(ctx, id)
+
 	case uris.IsFollowingPath(id):
 		return f.Following(ctx, id)
+
+	case uris.IsAcceptsPath(id):
+		approval, err := f.state.DB.GetInteractionApprovalByID(ctx, id.String())
+		if err != nil {
+			return nil, err
+		}
+		return f.converter.InteractionApprovalToASAccept(ctx, approval)
+
 	default:
 		return nil, fmt.Errorf("federatingDB: could not Get %s", id.String())
 	}

@@ -45,8 +45,12 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	testStructs := suite.SetupTestStructs()
 	defer suite.TearDownTestStructs(testStructs)
 
-	boostedStatus := suite.testStatuses["local_account_1_status_1"]
-	boostingAccount := suite.testAccounts["remote_account_1"]
+	boostedStatus := &gtsmodel.Status{}
+	*boostedStatus = *suite.testStatuses["local_account_1_status_1"]
+
+	boostingAccount := &gtsmodel.Account{}
+	*boostingAccount = *suite.testAccounts["remote_account_1"]
+
 	announceStatus := &gtsmodel.Status{}
 	announceStatus.URI = "https://example.org/some-announce-uri"
 	announceStatus.BoostOfURI = boostedStatus.URI
@@ -64,13 +68,25 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 		Receiving:      suite.testAccounts["local_account_1"],
 		Requesting:     boostingAccount,
 	})
-	suite.NoError(err)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
-	// side effects should be triggered
+	// Wait for side effects to trigger:
 	// 1. status should have an ID, and be in the database
-	suite.NotEmpty(announceStatus.ID)
-	_, err = testStructs.State.DB.GetStatusByID(context.Background(), announceStatus.ID)
-	suite.NoError(err)
+	if !testrig.WaitFor(func() bool {
+		if announceStatus.ID == "" {
+			return false
+		}
+
+		_, err = testStructs.State.DB.GetStatusByID(
+			context.Background(),
+			announceStatus.ID,
+		)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for announce to be in the database")
+	}
 
 	// 2. a notification should exist for the announce
 	where := []db.Where{
@@ -89,78 +105,89 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	suite.False(*notif.Read)
 }
 
-// Todo: fix this test up in interaction policies PR.
-// func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
-// 	testStructs := suite.SetupTestStructs()
-// 	defer suite.TearDownTestStructs(testStructs)
+func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
 
-// 	repliedAccount := suite.testAccounts["local_account_1"]
-// 	repliedStatus := suite.testStatuses["local_account_1_status_1"]
-// 	replyingAccount := suite.testAccounts["remote_account_1"]
+	repliedAccount := &gtsmodel.Account{}
+	*repliedAccount = *suite.testAccounts["local_account_1"]
 
-// 	// Set the replyingAccount's last fetched_at
-// 	// date to something recent so no refresh is attempted,
-// 	// and ensure it isn't a suspended account.
-// 	replyingAccount.FetchedAt = time.Now()
-// 	replyingAccount.SuspendedAt = time.Time{}
-// 	replyingAccount.SuspensionOrigin = ""
-// 	err := testStructs.State.DB.UpdateAccount(context.Background(),
-// 		replyingAccount,
-// 		"fetched_at",
-// 		"suspended_at",
-// 		"suspension_origin",
-// 	)
-// 	suite.NoError(err)
+	repliedStatus := &gtsmodel.Status{}
+	*repliedStatus = *suite.testStatuses["local_account_1_status_1"]
 
-// 	// Get replying statusable to use from remote test statuses.
-// 	const replyingURI = "http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552"
-// 	replyingStatusable := testrig.NewTestFediStatuses()[replyingURI]
-// 	ap.AppendInReplyTo(replyingStatusable, testrig.URLMustParse(repliedStatus.URI))
+	replyingAccount := &gtsmodel.Account{}
+	*replyingAccount = *suite.testAccounts["remote_account_1"]
 
-// 	// Open a websocket stream to later test the streamed status reply.
-// 	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), repliedAccount, stream.TimelineHome)
-// 	suite.NoError(errWithCode)
+	// Set the replyingAccount's last fetched_at
+	// date to something recent so no refresh is attempted,
+	// and ensure it isn't a suspended account.
+	replyingAccount.FetchedAt = time.Now()
+	replyingAccount.SuspendedAt = time.Time{}
+	replyingAccount.SuspensionOrigin = ""
+	err := testStructs.State.DB.UpdateAccount(context.Background(),
+		replyingAccount,
+		"fetched_at",
+		"suspended_at",
+		"suspension_origin",
+	)
+	suite.NoError(err)
 
-// 	// Send the replied status off to the fedi worker to be further processed.
-// 	err = testStructs.Processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
-// 		APObjectType:   ap.ObjectNote,
-// 		APActivityType: ap.ActivityCreate,
-// 		APObject:       replyingStatusable,
-// 		Receiving:      repliedAccount,
-// 		Requesting:     replyingAccount,
-// 	})
-// 	suite.NoError(err)
+	// Get replying statusable to use from remote test statuses.
+	const replyingURI = "http://fossbros-anonymous.io/users/foss_satan/statuses/106221634728637552"
+	replyingStatusable := testrig.NewTestFediStatuses()[replyingURI]
+	ap.AppendInReplyTo(replyingStatusable, testrig.URLMustParse(repliedStatus.URI))
 
-// 	// side effects should be triggered
-// 	// 1. status should be in the database
-// 	replyingStatus, err := testStructs.State.DB.GetStatusByURI(context.Background(), replyingURI)
-// 	suite.NoError(err)
+	// Open a websocket stream to later test the streamed status reply.
+	wssStream, errWithCode := testStructs.Processor.Stream().Open(context.Background(), repliedAccount, stream.TimelineHome)
+	suite.NoError(errWithCode)
 
-// 	// 2. a notification should exist for the mention
-// 	var notif gtsmodel.Notification
-// 	err = testStructs.State.DB.GetWhere(context.Background(), []db.Where{
-// 		{Key: "status_id", Value: replyingStatus.ID},
-// 	}, &notif)
-// 	suite.NoError(err)
-// 	suite.Equal(gtsmodel.NotificationMention, notif.NotificationType)
-// 	suite.Equal(replyingStatus.InReplyToAccountID, notif.TargetAccountID)
-// 	suite.Equal(replyingStatus.AccountID, notif.OriginAccountID)
-// 	suite.Equal(replyingStatus.ID, notif.StatusID)
-// 	suite.False(*notif.Read)
+	// Send the replied status off to the fedi worker to be further processed.
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(context.Background(), &messages.FromFediAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityCreate,
+		APObject:       replyingStatusable,
+		Receiving:      repliedAccount,
+		Requesting:     replyingAccount,
+	})
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
-// 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
-// 	msg, ok := wssStream.Recv(ctx)
-// 	suite.True(ok)
+	// Wait for side effects to trigger:
+	// 1. status should be in the database
+	var replyingStatus *gtsmodel.Status
+	if !testrig.WaitFor(func() bool {
+		replyingStatus, err = testStructs.State.DB.GetStatusByURI(context.Background(), replyingURI)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for replying status to be in the database")
+	}
 
-// 	suite.Equal(stream.EventTypeNotification, msg.Event)
-// 	suite.NotEmpty(msg.Payload)
-// 	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
-// 	notifStreamed := &apimodel.Notification{}
-// 	err = json.Unmarshal([]byte(msg.Payload), notifStreamed)
-// 	suite.NoError(err)
-// 	suite.Equal("mention", notifStreamed.Type)
-// 	suite.Equal(replyingAccount.ID, notifStreamed.Account.ID)
-// }
+	// 2. a notification should exist for the mention
+	var notif gtsmodel.Notification
+	err = testStructs.State.DB.GetWhere(context.Background(), []db.Where{
+		{Key: "status_id", Value: replyingStatus.ID},
+	}, &notif)
+	suite.NoError(err)
+	suite.Equal(gtsmodel.NotificationMention, notif.NotificationType)
+	suite.Equal(replyingStatus.InReplyToAccountID, notif.TargetAccountID)
+	suite.Equal(replyingStatus.AccountID, notif.OriginAccountID)
+	suite.Equal(replyingStatus.ID, notif.StatusID)
+	suite.False(*notif.Read)
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
+	msg, ok := wssStream.Recv(ctx)
+	suite.True(ok)
+
+	suite.Equal(stream.EventTypeNotification, msg.Event)
+	suite.NotEmpty(msg.Payload)
+	suite.EqualValues([]string{stream.TimelineHome}, msg.Stream)
+	notifStreamed := &apimodel.Notification{}
+	err = json.Unmarshal([]byte(msg.Payload), notifStreamed)
+	suite.NoError(err)
+	suite.Equal("mention", notifStreamed.Type)
+	suite.Equal(replyingAccount.ID, notifStreamed.Account.ID)
+}
 
 func (suite *FromFediAPITestSuite) TestProcessFave() {
 	testStructs := suite.SetupTestStructs()
@@ -305,8 +332,11 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 
 	ctx := context.Background()
 
-	deletedAccount := suite.testAccounts["remote_account_1"]
-	receivingAccount := suite.testAccounts["local_account_1"]
+	deletedAccount := &gtsmodel.Account{}
+	*deletedAccount = *suite.testAccounts["remote_account_1"]
+
+	receivingAccount := &gtsmodel.Account{}
+	*receivingAccount = *suite.testAccounts["local_account_1"]
 
 	// before doing the delete....
 	// make local_account_1 and remote_account_1 into mufos

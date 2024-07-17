@@ -135,6 +135,18 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		// ACCEPT USER (ie., new user+account sign-up)
 		case ap.ObjectProfile:
 			return p.clientAPI.AcceptUser(ctx, cMsg)
+
+		// ACCEPT NOTE/STATUS (ie., accept a reply)
+		case ap.ObjectNote:
+			return p.clientAPI.AcceptReply(ctx, cMsg)
+
+		// ACCEPT LIKE
+		case ap.ActivityLike:
+			return p.clientAPI.AcceptLike(ctx, cMsg)
+
+		// ACCEPT BOOST
+		case ap.ActivityAnnounce:
+			return p.clientAPI.AcceptAnnounce(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -234,6 +246,51 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// If pending approval is set then status
+	// must reply to a status with approval
+	// required for the interaction.
+	pendingApproval := util.PtrValueOr(
+		status.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !status.PreApproved:
+		// If approval is required and status isn't
+		// preapproved, then send out the Create to
+		// only the replied-to account (if it's remote),
+		// and/or notify the account that's being
+		// interacted with (if it's local): they can
+		// approve or deny the interaction later.
+		if err := p.surface.notifyPendingReply(ctx, status); err != nil {
+			log.Errorf(ctx, "error notifying pending reply: %v", err)
+		}
+
+		if err := p.federate.CreateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating pending reply: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && status.PreApproved:
+		// If approval is required and this is
+		// preapproved, do the Accept immediately
+		// and then process everything else as normal.
+		approval, err := p.utils.approveReply(ctx, status)
+		if err != nil {
+			return gtserror.Newf("error pre-approving reply: %w", err)
+		}
+
+		// Send out the Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of reply: %w", err)
+		}
+
+		// Don't return, just
+		// continue as normal.
 	}
 
 	// Update stats for the actor account.
@@ -362,6 +419,51 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("error populating status fave: %w", err)
 	}
 
+	// If pending approval is set then fave
+	// must target a status with approval
+	// required for the interaction.
+	pendingApproval := util.PtrValueOr(
+		fave.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !fave.PreApproved:
+		// If approval is required and fave isn't
+		// preapproved, then send out the Like to
+		// only the target account (if it's remote),
+		// and/or notify the account that's being
+		// interacted with (if it's local): they can
+		// approve or deny the interaction later.
+		if err := p.surface.notifyPendingFave(ctx, fave); err != nil {
+			log.Errorf(ctx, "error notifying pending fave: %v", err)
+		}
+
+		if err := p.federate.Like(ctx, fave); err != nil {
+			log.Errorf(ctx, "error federating pending Like: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && fave.PreApproved:
+		// If approval is required and this is
+		// preapproved, do the Accept immediately
+		// and then process everything else as normal.
+		approval, err := p.utils.approveFave(ctx, fave)
+		if err != nil {
+			return gtserror.Newf("error pre-approving fave: %w", err)
+		}
+
+		// Send out the Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of fave: %w", err)
+		}
+
+		// Don't return, just
+		// continue as normal.
+	}
+
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
@@ -381,6 +483,51 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// If pending approval is set then boost
+	// must target a status with approval
+	// required for the interaction.
+	pendingApproval := util.PtrValueOr(
+		boost.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !boost.PreApproved:
+		// If approval is required and boost isn't
+		// preapproved, then send out the Announce to
+		// only the target account (if it's remote),
+		// and/or notify the account that's being
+		// interacted with (if it's local): they can
+		// approve or deny the interaction later.
+		if err := p.surface.notifyPendingAnnounce(ctx, boost); err != nil {
+			log.Errorf(ctx, "error notifying pending boost: %v", err)
+		}
+
+		if err := p.federate.Announce(ctx, boost); err != nil {
+			log.Errorf(ctx, "error federating pending Announce: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && boost.PreApproved:
+		// If approval is required and this is
+		// preapproved, do the Accept immediately
+		// and then process everything else as normal.
+		approval, err := p.utils.approveAnnounce(ctx, boost)
+		if err != nil {
+			return gtserror.Newf("error pre-approving boost: %w", err)
+		}
+
+		// Send out the Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of boost: %w", err)
+		}
+
+		// Don't return, just
+		// continue as normal.
 	}
 
 	// Update stats for the actor account.
@@ -872,5 +1019,20 @@ func (p *clientAPI) RejectUser(ctx context.Context, cMsg *messages.FromClientAPI
 		}
 	}
 
+	return nil
+}
+
+func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	// TODO
+	return nil
+}
+
+func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	// TODO
+	return nil
+}
+
+func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	// TODO
 	return nil
 }

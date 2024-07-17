@@ -21,8 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -46,14 +44,15 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// trim off everything up to 'discoverable';
-	// this is necessary because the order of multiple 'context' entries is not determinate
-	trimmed := strings.Split(string(bytes), "\"discoverable\"")[1]
-
-	suite.Equal(`: true,
+	suite.Equal(`{
+  "discoverable": true,
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
@@ -82,7 +81,7 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
   "tag": [],
   "type": "Person",
   "url": "http://localhost:8080/@the_mighty_zork"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
@@ -95,16 +94,15 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// trim off everything up to 'attachment';
-	// this is necessary because the order of multiple 'context' entries is not determinate
-	trimmed := strings.Split(string(bytes), "\"attachment\"")[1]
-
-	fmt.Printf("\n\n\n%s\n\n\n", string(bytes))
-
-	suite.Equal(`: [
+	suite.Equal(`{
+  "attachment": [
     {
       "name": "should you follow me?",
       "type": "PropertyValue",
@@ -135,7 +133,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
   "tag": [],
   "type": "Person",
   "url": "http://localhost:8080/@1happyturtle"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
@@ -161,14 +159,15 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// trim off everything up to 'alsoKnownAs';
-	// this is necessary because the order of multiple 'context' entries is not determinate
-	trimmed := strings.Split(string(bytes), "\"alsoKnownAs\"")[1]
-
-	suite.Equal(`: [
+	suite.Equal(`{
+  "alsoKnownAs": [
     "http://localhost:8080/users/1happyturtle"
   ],
   "discoverable": true,
@@ -201,7 +200,7 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
   "tag": [],
   "type": "Person",
   "url": "http://localhost:8080/@the_mighty_zork"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
@@ -215,15 +214,16 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// trim off everything up to 'attachment';
-	// this is necessary because the order of multiple 'context' entries is not determinate
-	trimmed := strings.Split(string(bytes), "\"attachment\"")[1]
-
 	// Despite only one field being set, attachments should still be a slice/array.
-	suite.Equal(`: [
+	suite.Equal(`{
+  "attachment": [
     {
       "name": "should you follow me?",
       "type": "PropertyValue",
@@ -249,7 +249,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
   "tag": [],
   "type": "Person",
   "url": "http://localhost:8080/@1happyturtle"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
@@ -263,14 +263,15 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// trim off everything up to 'discoverable';
-	// this is necessary because the order of multiple 'context' entries is not determinate
-	trimmed := strings.Split(string(bytes), "\"discoverable\"")[1]
-
-	suite.Equal(`: true,
+	suite.Equal(`{
+  "discoverable": true,
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
   "following": "http://localhost:8080/users/the_mighty_zork/following",
@@ -309,7 +310,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
   },
   "type": "Person",
   "url": "http://localhost:8080/@the_mighty_zork"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
@@ -324,14 +325,15 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// trim off everything up to 'discoverable';
-	// this is necessary because the order of multiple 'context' entries is not determinate
-	trimmed := strings.Split(string(bytes), "\"discoverable\"")[1]
-
-	suite.Equal(`: true,
+	suite.Equal(`{
+  "discoverable": true,
   "endpoints": {
     "sharedInbox": "http://localhost:8080/sharedInbox"
   },
@@ -363,7 +365,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
   "tag": [],
   "type": "Person",
   "url": "http://localhost:8080/@the_mighty_zork"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestStatusToAS() {
@@ -376,11 +378,14 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
-  "@context": "https://www.w3.org/ns/activitystreams",
   "attachment": [],
   "attributedTo": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
@@ -389,6 +394,26 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
     "en": "hello everyone!"
   },
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
   "published": "2021-10-20T12:40:37+02:00",
   "replies": {
     "first": {
@@ -420,14 +445,15 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// we can't be sure in what order the two context entries --
-	// http://joinmastodon.org/ns, https://www.w3.org/ns/activitystreams --
-	// will appear, so trim them out of the string for consistency
-	trimmed := strings.SplitAfter(string(bytes), `"attachment":`)[1]
-	suite.Equal(` [
+	suite.Equal(`{
+  "attachment": [
     {
       "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
       "mediaType": "image/jpeg",
@@ -443,6 +469,26 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
     "en": "hello world! #welcome ! first post on the instance :rainbow: !"
   },
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
   "published": "2021-10-20T11:36:45Z",
   "replies": {
     "first": {
@@ -477,7 +523,7 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
@@ -492,14 +538,15 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
-	// we can't be sure in what order the two context entries --
-	// http://joinmastodon.org/ns, https://www.w3.org/ns/activitystreams --
-	// will appear, so trim them out of the string for consistency
-	trimmed := strings.SplitAfter(string(bytes), `"attachment":`)[1]
-	suite.Equal(` [
+	suite.Equal(`{
+  "attachment": [
     {
       "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
       "mediaType": "image/jpeg",
@@ -515,6 +562,26 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
     "en": "hello world! #welcome ! first post on the instance :rainbow: !"
   },
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
   "published": "2021-10-20T11:36:45Z",
   "replies": {
     "first": {
@@ -549,7 +616,7 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"
-}`, trimmed)
+}`, string(bytes))
 }
 
 func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
@@ -565,11 +632,14 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
+	// Drop "@context" property as
+	// the ordering is non-determinate.
+	delete(ser, "@context")
+
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
-  "@context": "https://www.w3.org/ns/activitystreams",
   "attachment": [],
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": [
@@ -582,6 +652,26 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
   },
   "id": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
   "inReplyTo": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+  "interactionPolicy": {
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
   "published": "2021-11-20T13:32:16Z",
   "replies": {
     "first": {
@@ -965,6 +1055,51 @@ func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Create"
 }`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestInteractionApprovalToASAccept() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	interactionApproval := &gtsmodel.InteractionApproval{
+		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		UpdatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		AccountID:            acceptingAccount.ID,
+		Account:              acceptingAccount,
+		InteractingAccountID: interactingAccount.ID,
+		InteractingAccount:   interactingAccount,
+		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:      gtsmodel.InteractionAnnounce,
+		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+	}
+
+	accept, err := suite.typeconverter.InteractionApprovalToASAccept(
+		context.Background(),
+		interactionApproval,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Accept"
+}`, string(b))
 }
 
 func TestInternalToASTestSuite(t *testing.T) {

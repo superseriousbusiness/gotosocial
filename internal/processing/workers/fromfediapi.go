@@ -122,11 +122,23 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 
 	// ACCEPT SOMETHING
 	case ap.ActivityAccept:
-		switch fMsg.APObjectType { //nolint:gocritic
+		switch fMsg.APObjectType {
 
-		// ACCEPT FOLLOW
+		// ACCEPT (pending) FOLLOW
 		case ap.ActivityFollow:
 			return p.fediAPI.AcceptFollow(ctx, fMsg)
+
+		// ACCEPT (pending) LIKE
+		case ap.ActivityLike:
+			return p.fediAPI.AcceptLike(ctx, fMsg)
+
+		// ACCEPT (pending) REPLY
+		case ap.ObjectNote:
+			return p.fediAPI.AcceptReply(ctx, fMsg)
+
+		// ACCEPT (pending) ANNOUNCE
+		case ap.ActivityAnnounce:
+			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
 		}
 
 	// DELETE SOMETHING
@@ -214,6 +226,45 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// here and let the other thread
 		// handle timelining + notifying.
 		return nil
+	}
+
+	// If pending approval is set then status
+	// must be a reply to a local status with
+	// approval required for the interaction.
+	pendingApproval := util.PtrValueOr(
+		status.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !status.PreApproved:
+		// If approval is required and status isn't
+		// preapproved, then just notify the account
+		// that's being interacted with: they can
+		// approve or deny the interaction later.
+		if err := p.surface.notifyPendingReply(ctx, status); err != nil {
+			log.Errorf(ctx, "error notifying pending reply: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && status.PreApproved:
+		// If approval is required and this is
+		// preapproved, do the Accept immediately
+		// and then process everything else as normal.
+		approval, err := p.utils.approveReply(ctx, status)
+		if err != nil {
+			return gtserror.Newf("error pre-approving reply: %w", err)
+		}
+
+		// Send out the Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of reply: %w", err)
+		}
+
+		// Don't return, just
+		// continue as normal.
 	}
 
 	// Update stats for the remote account.
@@ -348,6 +399,45 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		return gtserror.Newf("error populating status fave: %w", err)
 	}
 
+	// If pending approval is set then fave
+	// must target a local status with
+	// approval required for the interaction.
+	pendingApproval := util.PtrValueOr(
+		fave.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !fave.PreApproved:
+		// If approval is required and fave isn't
+		// preapproved, then just notify the account
+		// that's being interacted with: they can
+		// approve or deny the interaction later.
+		if err := p.surface.notifyPendingFave(ctx, fave); err != nil {
+			log.Errorf(ctx, "error notifying pending fave: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && fave.PreApproved:
+		// If approval is required and this is
+		// preapproved, do the Accept immediately
+		// and then process everything else as normal.
+		approval, err := p.utils.approveFave(ctx, fave)
+		if err != nil {
+			return gtserror.Newf("error pre-approving fave: %w", err)
+		}
+
+		// Send out the Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of fave: %w", err)
+		}
+
+		// Don't return, just
+		// continue as normal.
+	}
+
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
@@ -365,8 +455,9 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
 	}
 
-	// Dereference status that this boosts, note
-	// that this will handle storing the boost in
+	// Dereference into a boost wrapper status.
+	//
+	// Note: this will handle storing the boost in
 	// the db, and dereferencing the target status
 	// ancestors / descendants where appropriate.
 	var err error
@@ -376,14 +467,55 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		fMsg.Receiving.Username,
 	)
 	if err != nil {
-		if gtserror.IsUnretrievable(err) {
-			// Boosted status domain blocked, nothing to do.
+		if gtserror.IsUnretrievable(err) ||
+			gtserror.NotPermitted(err) {
+			// Boosted status domain blocked, or
+			// otherwise not permitted, nothing to do.
 			log.Debugf(ctx, "skipping announce: %v", err)
 			return nil
 		}
 
 		// Actual error.
 		return gtserror.Newf("error dereferencing announce: %w", err)
+	}
+
+	// If pending approval is set then status
+	// must be a reply to a local status with
+	// approval required for the interaction.
+	pendingApproval := util.PtrValueOr(
+		boost.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !boost.PreApproved:
+		// If approval is required and boost isn't
+		// preapproved, then just notify the account
+		// that's being interacted with: they can
+		// approve or deny the interaction later.
+		if err := p.surface.notifyPendingAnnounce(ctx, boost); err != nil {
+			log.Errorf(ctx, "error notifying pending boost: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && boost.PreApproved:
+		// If approval is required and this is
+		// preapproved, do the Accept immediately
+		// and then process everything else as normal.
+		approval, err := p.utils.approveAnnounce(ctx, boost)
+		if err != nil {
+			return gtserror.Newf("error pre-approving boost: %w", err)
+		}
+
+		// Send out the Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of boost: %w", err)
+		}
+
+		// Don't return, just
+		// continue as normal.
 	}
 
 	// Update stats for the remote account.
@@ -544,6 +676,68 @@ func (p *fediAPI) AcceptFollow(ctx context.Context, fMsg *messages.FromFediAPI) 
 	// Update stats for the local account.
 	if err := p.utils.incrementFollowingCount(ctx, fMsg.Receiving); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) AcceptLike(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// TODO: Add something here if we ever implement sending out Likes to
+	// followers more broadly and not just the owner of the Liked status.
+	return nil
+}
+
+func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utils.incrementStatusesCount(ctx, status.Account, status); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Timeline and notify the status.
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Interaction counts changed on the replied-to status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+
+	// Send out the reply again, fully this time.
+	if err := p.federate.CreateStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error federating announce: %v", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) AcceptAnnounce(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	boost, ok := fMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
+	}
+
+	// Update stats for the actor account.
+	if err := p.utils.incrementStatusesCount(ctx, boost.Account, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Timeline and notify the boost wrapper status.
+	if err := p.surface.timelineAndNotifyStatus(ctx, boost); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+
+	// Send out the boost again, fully this time.
+	if err := p.federate.Announce(ctx, boost); err != nil {
+		log.Errorf(ctx, "error federating announce: %v", err)
 	}
 
 	return nil
