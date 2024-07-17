@@ -811,7 +811,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status could not be downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e",
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003chr\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status were not downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e",
   "reblog": null,
   "account": {
     "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -990,30 +990,30 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     {
       "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
       "type": "unknown",
-      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
-      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7ZFX9GKA5ZZVD4FACABSS9.jpg",
+      "url": null,
+      "text_url": null,
+      "preview_url": null,
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg",
       "preview_remote_url": null,
       "meta": null,
       "description": "SVG line art of a sloth, public domain",
       "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
       "Sensitive": true,
-      "MIMEType": "image/svg"
+      "MIMEType": ""
     },
     {
       "id": "01HE88YG74PVAB81PX2XA9F3FG",
       "type": "unknown",
-      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
-      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE88YG74PVAB81PX2XA9F3FG.jpg",
+      "url": null,
+      "text_url": null,
+      "preview_url": null,
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
       "preview_remote_url": null,
       "meta": null,
       "description": "Jolly salsa song, public domain.",
       "blurhash": null,
       "Sensitive": true,
-      "MIMEType": "audio/mpeg"
+      "MIMEType": ""
     }
   ],
   "LanguageTag": "en",
@@ -1163,13 +1163,19 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
       "height": 404,
       "frame_rate": "30/1",
       "duration": 15.033334,
-      "bitrate": 1206522
+      "bitrate": 1206522,
+      "size": "720x404",
+      "aspect": 1.7821782
     },
     "small": {
       "width": 720,
       "height": 404,
       "size": "720x404",
       "aspect": 1.7821782
+    },
+    "focus": {
+      "x": 0,
+      "y": 0
     }
   },
   "description": "A cow adorably licking another cow!",

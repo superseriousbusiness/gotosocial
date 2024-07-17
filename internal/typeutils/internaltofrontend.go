@@ -568,10 +568,9 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmod
 	api.Type = media.Type.String()
 	api.ID = media.ID
 
-	// Only add file details if stored.
+	// Only add file details if
+	// we have stored locally.
 	if media.File.Path != "" {
-		api.URL = util.Ptr(media.URL)
-		api.TextURL = util.Ptr(media.URL)
 		api.Meta = new(apimodel.MediaMeta)
 		api.Meta.Original = apimodel.MediaDimensions{
 			Width:     media.FileMeta.Original.Width,
@@ -583,24 +582,31 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmod
 			Bitrate:   int(util.PtrOrZero(media.FileMeta.Original.Bitrate)),
 		}
 
-		// Only add thumb details if stored.
+		// Copy over local file URL.
+		api.URL = util.Ptr(media.URL)
+		api.TextURL = util.Ptr(media.URL)
+
+		// Set file focus details.
+		// (this doesn't make much sense if media
+		// has no image, but the API doesn't yet
+		// distinguish between zero values vs. none).
+		api.Meta.Focus = new(apimodel.MediaFocus)
+		api.Meta.Focus.X = media.FileMeta.Focus.X
+		api.Meta.Focus.Y = media.FileMeta.Focus.Y
+
+		// Only add thumbnail details if
+		// we have thumbnail stored locally.
 		if media.Thumbnail.Path != "" {
-			api.PreviewURL = util.Ptr(media.Thumbnail.URL)
 			api.Meta.Small = apimodel.MediaDimensions{
 				Width:  media.FileMeta.Small.Width,
 				Height: media.FileMeta.Small.Height,
 				Aspect: media.FileMeta.Small.Aspect,
 				Size:   toAPISize(media.FileMeta.Small.Width, media.FileMeta.Small.Height),
 			}
-		}
-	}
 
-	// Only add focus details if set.
-	if media.FileMeta.Focus.X != 0 ||
-		media.FileMeta.Focus.Y != 0 {
-		api.Meta.Focus = new(apimodel.MediaFocus)
-		api.Meta.Focus.X = media.FileMeta.Focus.X
-		api.Meta.Focus.Y = media.FileMeta.Focus.Y
+			// Copy over local thumbnail file URL.
+			api.PreviewURL = util.Ptr(media.Thumbnail.URL)
+		}
 	}
 
 	// Set remaining API attachment fields.
