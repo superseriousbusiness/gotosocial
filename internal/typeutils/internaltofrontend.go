@@ -2304,9 +2304,17 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 	return apiPolicy, nil
 }
 
-func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) (apiVals []apimodel.PolicyValue) {
-	// Use a map to deduplicate added vals as we go.
-	addedVals := make(map[apimodel.PolicyValue]struct{}, len(vals))
+func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValue {
+
+	var (
+		valsLen = len(vals)
+
+		// Use a map to deduplicate added vals as we go.
+		addedVals = make(map[apimodel.PolicyValue]struct{}, valsLen)
+
+		// Vals we'll be returning.
+		apiVals = make([]apimodel.PolicyValue, 0, valsLen)
+	)
 
 	for _, policyVal := range vals {
 		switch policyVal {
