@@ -1,6 +1,8 @@
 <!--overview-start-->
 # GoToSocial <!-- omit in toc -->
 
+*In need of funding! Our previous primary source of funding will soon be [disappearing](https://www.ow2.org/view/Events/The_European_Union_must_keep_funding_free_software_open_letter). See [our funding section](#sponsorship--funding) below.*
+
 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
 With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles. All without being tracked or advertised to!
@@ -337,7 +339,17 @@ Thanks to everyone who has used GtS, opened an issue, suggested something, given
 
 ## Sponsorship + Funding
 
-**Please note: GoToSocial has NO CORPORATE SPONSORS and does not desire corporate sponsorship. In addition, we do not take donations from any of the following: adult websites, affiliate and review websites, casinos and gambling, insurance and financial products (credit), pharmacy products, SEO services and social media buying, VPN and proxy services, and essay writing services. Donations from such sources will be automatically rejected.**
+**Update regarding corporate sponsors: we are now open and accepting! (with some conditions below)**
+
+### Corporate Sponsorship
+
+GoToSocial is open to receiving donations from corporate sponsors, and in return we will display your logo, website and short tagline on the repository / documents to show our thanks for your support.
+
+GoToSocial project direction will always remain **100%** in the hands of the core team, and will never be dictated or influenced by corporate sponsorship. This is non-negotiable. Corporations are of course free of course to suggest / request features in the same manner as any other user, but they are not given special treatment.
+
+Corporate sponsorship is dependent on your company meeting our team's ethical guidelines. These are not a concrete set of rules but instead boil down to "is your company actively harming humanity?". For example, those in the defense industry need not apply as the simple answer to that question is, "yes!".
+
+If after reading this you are still interested in supporting us, that is wonderful! Please reach out to us at `admin@gotosocial.org` to further discuss :)
 
 ### Crowdfunding
 
