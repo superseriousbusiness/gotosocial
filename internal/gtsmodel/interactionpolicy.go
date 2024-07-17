@@ -180,135 +180,109 @@ func DefaultInteractionPolicyFor(v Visibility) *InteractionPolicy {
 	}
 }
 
+var defaultPolicyPublic = &InteractionPolicy{
+	CanLike: PolicyRules{
+		// Anyone can like.
+		Always: PolicyValues{
+			PolicyValuePublic,
+		},
+		WithApproval: make(PolicyValues, 0),
+	},
+	CanReply: PolicyRules{
+		// Anyone can reply.
+		Always: PolicyValues{
+			PolicyValuePublic,
+		},
+		WithApproval: make(PolicyValues, 0),
+	},
+	CanAnnounce: PolicyRules{
+		// Anyone can announce.
+		Always: PolicyValues{
+			PolicyValuePublic,
+		},
+		WithApproval: make(PolicyValues, 0),
+	},
+}
+
 // Returns the default interaction policy
 // for a post with visibility of public.
 func DefaultInteractionPolicyPublic() *InteractionPolicy {
-	// Anyone can like.
-	canLikeAlways := make(PolicyValues, 1)
-	canLikeAlways[0] = PolicyValuePublic
-
-	// Unused, set empty.
-	canLikeWithApproval := make(PolicyValues, 0)
-
-	// Anyone can reply.
-	canReplyAlways := make(PolicyValues, 1)
-	canReplyAlways[0] = PolicyValuePublic
-
-	// Unused, set empty.
-	canReplyWithApproval := make(PolicyValues, 0)
-
-	// Anyone can announce.
-	canAnnounceAlways := make(PolicyValues, 1)
-	canAnnounceAlways[0] = PolicyValuePublic
-
-	// Unused, set empty.
-	canAnnounceWithApproval := make(PolicyValues, 0)
-
-	return &InteractionPolicy{
-		CanLike: PolicyRules{
-			Always:       canLikeAlways,
-			WithApproval: canLikeWithApproval,
-		},
-		CanReply: PolicyRules{
-			Always:       canReplyAlways,
-			WithApproval: canReplyWithApproval,
-		},
-		CanAnnounce: PolicyRules{
-			Always:       canAnnounceAlways,
-			WithApproval: canAnnounceWithApproval,
-		},
-	}
+	return defaultPolicyPublic
 }
 
 // Returns the default interaction policy
 // for a post with visibility of unlocked.
 func DefaultInteractionPolicyUnlocked() *InteractionPolicy {
 	// Same as public (for now).
-	return DefaultInteractionPolicyPublic()
+	return defaultPolicyPublic
+}
+
+var defaultPolicyFollowersOnly = &InteractionPolicy{
+	CanLike: PolicyRules{
+		// Self, followers and
+		// mentioned can like.
+		Always: PolicyValues{
+			PolicyValueAuthor,
+			PolicyValueFollowers,
+			PolicyValueMentioned,
+		},
+		WithApproval: make(PolicyValues, 0),
+	},
+	CanReply: PolicyRules{
+		// Self, followers and
+		// mentioned can reply.
+		Always: PolicyValues{
+			PolicyValueAuthor,
+			PolicyValueFollowers,
+			PolicyValueMentioned,
+		},
+		WithApproval: make(PolicyValues, 0),
+	},
+	CanAnnounce: PolicyRules{
+		// Only self can announce.
+		Always: PolicyValues{
+			PolicyValueAuthor,
+		},
+		WithApproval: make(PolicyValues, 0),
+	},
 }
 
 // Returns the default interaction policy for
 // a post with visibility of followers only.
 func DefaultInteractionPolicyFollowersOnly() *InteractionPolicy {
-	// Self, followers and mentioned can like.
-	canLikeAlways := make(PolicyValues, 3)
-	canLikeAlways[0] = PolicyValueAuthor
-	canLikeAlways[1] = PolicyValueFollowers
-	canLikeAlways[2] = PolicyValueMentioned
+	return defaultPolicyFollowersOnly
+}
 
-	// Unused, set empty.
-	canLikeWithApproval := make(PolicyValues, 0)
-
-	// Self, followers and mentioned can reply.
-	canReplyAlways := make(PolicyValues, 3)
-	canReplyAlways[0] = PolicyValueAuthor
-	canReplyAlways[1] = PolicyValueFollowers
-	canReplyAlways[2] = PolicyValueMentioned
-
-	// Unused, set empty.
-	canReplyWithApproval := make(PolicyValues, 0)
-
-	// Only self can announce.
-	canAnnounceAlways := make(PolicyValues, 1)
-	canAnnounceAlways[0] = PolicyValueAuthor
-
-	// Unused, set empty.
-	canAnnounceWithApproval := make(PolicyValues, 0)
-
-	return &InteractionPolicy{
-		CanLike: PolicyRules{
-			Always:       canLikeAlways,
-			WithApproval: canLikeWithApproval,
+var defaultPolicyDirect = &InteractionPolicy{
+	CanLike: PolicyRules{
+		// Mentioned and self
+		// can always like.
+		Always: PolicyValues{
+			PolicyValueAuthor,
+			PolicyValueMentioned,
 		},
-		CanReply: PolicyRules{
-			Always:       canReplyAlways,
-			WithApproval: canReplyWithApproval,
+		WithApproval: make(PolicyValues, 0),
+	},
+	CanReply: PolicyRules{
+		// Mentioned and self
+		// can always reply.
+		Always: PolicyValues{
+			PolicyValueAuthor,
+			PolicyValueMentioned,
 		},
-		CanAnnounce: PolicyRules{
-			Always:       canAnnounceAlways,
-			WithApproval: canAnnounceWithApproval,
+		WithApproval: make(PolicyValues, 0),
+	},
+	CanAnnounce: PolicyRules{
+		// Only self can announce.
+		Always: PolicyValues{
+			PolicyValueAuthor,
 		},
-	}
+		WithApproval: make(PolicyValues, 0),
+	},
 }
 
 // Returns the default interaction policy
 // for a post with visibility of direct.
 func DefaultInteractionPolicyDirect() *InteractionPolicy {
-	// Mentioned and self can always like.
-	canLikeAlways := make(PolicyValues, 2)
-	canLikeAlways[0] = PolicyValueAuthor
-	canLikeAlways[1] = PolicyValueMentioned
-
-	// Unused, set empty.
-	canLikeWithApproval := make(PolicyValues, 0)
-
-	// Mentioned and self can always reply.
-	canReplyAlways := make(PolicyValues, 2)
-	canReplyAlways[0] = PolicyValueAuthor
-	canReplyAlways[1] = PolicyValueMentioned
-
-	// Unused, set empty.
-	canReplyWithApproval := make(PolicyValues, 0)
-
-	// Only self can announce.
-	canAnnounceAlways := make(PolicyValues, 1)
-	canAnnounceAlways[0] = PolicyValueAuthor
-
-	// Unused, set empty.
-	canAnnounceWithApproval := make(PolicyValues, 0)
-
-	return &InteractionPolicy{
-		CanLike: PolicyRules{
-			Always:       canLikeAlways,
-			WithApproval: canLikeWithApproval,
-		},
-		CanReply: PolicyRules{
-			Always:       canReplyAlways,
-			WithApproval: canReplyWithApproval,
-		},
-		CanAnnounce: PolicyRules{
-			Always:       canAnnounceAlways,
-			WithApproval: canAnnounceWithApproval,
-		},
-	}
+	return defaultPolicyDirect
 }

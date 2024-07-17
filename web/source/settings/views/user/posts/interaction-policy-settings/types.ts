@@ -17,42 +17,19 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import { MenuItem } from "../../lib/navigation/menu";
+import { TextFormInputHook } from "../../../../lib/form/types";
 import React from "react";
 
-/**
- * - /settings/user/profile
- * - /settings/user/posts
- * - /settings/user/emailpassword
- * - /settings/user/migration
- */
-export default function UserMenu() {	
-	return (
-		<MenuItem
-			name="User"
-			itemUrl="user"
-			defaultChild="profile"
-		>
-			<MenuItem
-				name="Profile"
-				itemUrl="profile"
-				icon="fa-user"
-			/>
-			<MenuItem
-				name="Posts"
-				itemUrl="posts"
-				icon="fa-paper-plane"
-			/>
-			<MenuItem
-				name="Email & Password"
-				itemUrl="emailpassword"
-				icon="fa-user-secret"
-			/>
-			<MenuItem
-				name="Migration"
-				itemUrl="migration"
-				icon="fa-exchange"
-			/>
-		</MenuItem>
-	);
+export interface PolicyFormSub {
+	field: TextFormInputHook;
+	label: string;
+	options: React.JSX.Element;
 }
+
+/* Form / select types */
+
+export type Visibility = "public" | "unlisted" | "private"; 
+export type Action = "favourite" | "reply" | "reblog";
+export type BasicValue = "anyone" | "anyone_with_approval" | "just_me" | "something_else";
+export type SomethingElseValue = "always" | "with_approval" | "no";
+export type Audience = "followers" | "following" | "mentioned_accounts" | "everyone_else";

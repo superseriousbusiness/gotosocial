@@ -1234,6 +1234,20 @@ func (c *Converter) baseStatusToFrontend(
 		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
+	// Take status's interaction policy, or
+	// fall back to default for its visibility.
+	var p *gtsmodel.InteractionPolicy
+	if s.InteractionPolicy != nil {
+		p = s.InteractionPolicy
+	} else {
+		p = gtsmodel.DefaultInteractionPolicyFor(s.Visibility)
+	}
+
+	apiInteractionPolicy, err := c.InteractionPolicyToAPIInteractionPolicy(ctx, p, s, requestingAccount)
+	if err != nil {
+		return nil, gtserror.Newf("error converting interaction policy: %w", err)
+	}
+
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
@@ -1258,6 +1272,7 @@ func (c *Converter) baseStatusToFrontend(
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
 		Text:               s.Text,
+		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
 	// Nullable fields.
@@ -2255,4 +2270,112 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 		}
 	}
 	return apiThemes
+}
+
+// Convert the given gtsmodel policy
+// into an apimodel interaction policy.
+//
+// Provided status can be nil to convert a
+// policy without a particular status in mind.
+//
+// RequestingAccount can also be nil for
+// unauthorized requests (web, public api etc).
+func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
+	ctx context.Context,
+	policy *gtsmodel.InteractionPolicy,
+	_ *gtsmodel.Status, // Used in upcoming PR.
+	_ *gtsmodel.Account, // Used in upcoming PR.
+) (*apimodel.InteractionPolicy, error) {
+	apiPolicy := &apimodel.InteractionPolicy{
+		CanFavourite: apimodel.PolicyRules{
+			Always:       policyValsToAPIPolicyVals(policy.CanLike.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanLike.WithApproval),
+		},
+		CanReply: apimodel.PolicyRules{
+			Always:       policyValsToAPIPolicyVals(policy.CanReply.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanReply.WithApproval),
+		},
+		CanReblog: apimodel.PolicyRules{
+			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.WithApproval),
+		},
+	}
+
+	return apiPolicy, nil
+}
+
+func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValue {
+
+	var (
+		valsLen = len(vals)
+
+		// Use a map to deduplicate added vals as we go.
+		addedVals = make(map[apimodel.PolicyValue]struct{}, valsLen)
+
+		// Vals we'll be returning.
+		apiVals = make([]apimodel.PolicyValue, 0, valsLen)
+	)
+
+	for _, policyVal := range vals {
+		switch policyVal {
+
+		case gtsmodel.PolicyValueAuthor:
+			// Author can do this.
+			newVal := apimodel.PolicyValueAuthor
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueMentioned:
+			// Mentioned can do this.
+			newVal := apimodel.PolicyValueMentioned
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueMutuals:
+			// Mutuals can do this.
+			newVal := apimodel.PolicyValueMutuals
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueFollowing:
+			// Following can do this.
+			newVal := apimodel.PolicyValueFollowing
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueFollowers:
+			// Followers can do this.
+			newVal := apimodel.PolicyValueFollowers
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValuePublic:
+			// Public can do this.
+			newVal := apimodel.PolicyValuePublic
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		default:
+			// Specific URI of ActivityPub Actor.
+			newVal := apimodel.PolicyValue(policyVal)
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+		}
+	}
+
+	return apiVals
 }

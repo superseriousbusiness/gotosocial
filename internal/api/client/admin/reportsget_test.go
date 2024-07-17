@@ -528,7 +528,27 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "tags": [],
         "emojis": [],
         "card": null,
-        "poll": null
+        "poll": null,
+        "interaction_policy": {
+          "can_favourite": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          },
+          "can_reply": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          },
+          "can_reblog": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          }
+        }
       }
     ],
     "rules": [
@@ -750,7 +770,27 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "tags": [],
         "emojis": [],
         "card": null,
-        "poll": null
+        "poll": null,
+        "interaction_policy": {
+          "can_favourite": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          },
+          "can_reply": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          },
+          "can_reblog": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          }
+        }
       }
     ],
     "rules": [
@@ -972,7 +1012,27 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "tags": [],
         "emojis": [],
         "card": null,
-        "poll": null
+        "poll": null,
+        "interaction_policy": {
+          "can_favourite": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          },
+          "can_reply": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          },
+          "can_reblog": {
+            "always": [
+              "public"
+            ],
+            "with_approval": []
+          }
+        }
       }
     ],
     "rules": [

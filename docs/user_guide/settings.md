@@ -133,11 +133,7 @@ See the [Custom CSS](./custom_css.md) page for some tips on writing custom CSS f
 !!! tip
     Any custom CSS you add in this box will be applied *after* your selected theme, so you can pick a preset theme that you like and then make your own tweaks!
 
-## Settings
-
-![Screenshot of the settings section](../assets/user-settings-settings.png)
-
-In the 'Settings' section, you can set various defaults for new posts, and change your password / email address.
+## Posts
 
 ### Post Settings
 
@@ -151,16 +147,39 @@ The plain (default) setting provides standard post formatting, similar to what m
 
 The markdown setting indicates that your posts should be parsed as Markdown, which is a markup language that gives you more options for customizing the layout and appearance of your posts. For more information on the differences between plain and markdown post formats, see the [posts page](posts.md).
 
-When you are finished updating your post settings, remember to click the `Save post settings` button at the bottom of the section to save your changes.
+When you are finished updating your post settings, remember to click the `Save settings` button at the bottom of the section to save your changes.
 
-### Password Change
+### Default Interaction Policies
 
-You can use the Password Change section of the panel to set a new password for your account. For security reasons, you must provide your current password to validate the change.
+Using this section, you can set your default interaction policies for new posts per visibility level. This allows you to fine-tune how others are allowed to interact with your posts.
 
-!!! info
-    If your instance is using OIDC as its authorization/identity provider, you will not be able to change your password via the GoToSocial settings panel, and you should contact your OIDC provider instead.
+This allows you to do things like:
 
-For more information on the way GoToSocial manages passwords, please see the [Password management document](./password_management.md).
+- Create posts that nobody can interact with except you.
+- Create posts that only your followers / people you follow can interact with.
+- Create posts that anyone can like or boost, but only certain people can reply to.
+- Etc.
+
+For example, the below image shows a policy for Public visibility posts that allows anyone to like or boost, but only allows followers, and people you follow, to reply.
+
+![Policy showing "Who can like" = "anyone", "Who can reply" = "followers" and "following", and "Who can boost" = "anyone".](../assets/user-settings-interaction-policy-1.png)
+
+Bear in mind that policies do not apply retroactively. Posts created after you've applied a default interaction policy will use that policy, but any post created before then will use whatever policy was the default when the post was created.
+
+No matter what policy you set on a post, visibility settings and blocks will still be taken into account *before* any policies apply. For example, if you set "anyone" for a type of interaction, that will still exclude accounts you have blocked, or accounts on domains that are blocked by your instance. "Anyone", in this case, essentially means "anyone who could normally see the post".
+
+Finally, note that no matter what policy you set on a post, any accounts you mention in a post will **always** be able to reply to that post.
+
+When you are finished updating your interaction policy settings, remember to click the `Save policies` button at the bottom of the section to save your changes.
+
+If you want to reset all your policies to the initial defaults, you can click on `Reset to defaults` button.
+
+!!! danger
+    While GoToSocial respects interaction policies, it is not guaranteed that other server softwares will, and it is possible that accounts on other servers will still send out replies and boosts of your post to their followers, even if your instance forbids these interactions.
+    
+    As more ActivityPub servers roll out support for interaction policies, this issue will hopefully diminish, but in the meantime GoToSocial can offer only a "best effort" attempt to restrict interactions with your posts according to the policies you have set.
+
+## Email & Password
 
 ### Email Change
 
@@ -170,6 +189,15 @@ Once a new email address has been entered, and you have clicked "Change email ad
 
 !!! info
     If your instance is using OIDC as its authorization/identity provider, you will be able to change your email address via the settings panel, but it will only affect the email address GoToSocial uses to contact you, it will not change the email address you need to use to log in to your account. To change that, you should contact your OIDC provider.
+
+### Password Change
+
+You can use the Password Change section of the panel to set a new password for your account. For security reasons, you must provide your current password to validate the change.
+
+!!! info
+    If your instance is using OIDC as its authorization/identity provider, you will not be able to change your password via the GoToSocial settings panel, and you should contact your OIDC provider instead.
+
+For more information on the way GoToSocial manages passwords, please see the [Password management document](./password_management.md).
 
 ## Migration
 

@@ -25,6 +25,7 @@ import type {
 } from "../../types/migration";
 import type { Theme } from "../../types/theme";
 import { User } from "../../types/user";
+import { DefaultInteractionPolicies, UpdateDefaultInteractionPolicies } from "../../types/interaction";
 
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -38,9 +39,11 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			...replaceCacheOnMutation("verifyCredentials")
 		}),
+		
 		user: build.query<User, void>({
 			query: () => ({url: `/api/v1/user`})
 		}),
+		
 		passwordChange: build.mutation({
 			query: (data) => ({
 				method: "POST",
@@ -48,6 +51,7 @@ const extended = gtsApi.injectEndpoints({
 				body: data
 			})
 		}),
+		
 		emailChange: build.mutation<User, { password: string, new_email: string }>({
 			query: (data) => ({
 				method: "POST",
@@ -56,6 +60,7 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			...replaceCacheOnMutation("user")
 		}),
+		
 		aliasAccount: build.mutation<any, UpdateAliasesFormData>({
 			async queryFn(formData, _api, _extraOpts, fetchWithBQ) {
 				// Pull entries out from the hooked form.
@@ -73,6 +78,7 @@ const extended = gtsApi.injectEndpoints({
 				});
 			}
 		}),
+		
 		moveAccount: build.mutation<any, MoveAccountFormData>({
 			query: (data) => ({
 				method: "POST",
@@ -80,11 +86,37 @@ const extended = gtsApi.injectEndpoints({
 				body: data
 			})
 		}),
+
 		accountThemes: build.query<Theme[], void>({
 			query: () => ({
 				url: `/api/v1/accounts/themes`
 			})
-		})
+		}),
+
+		defaultInteractionPolicies: build.query<DefaultInteractionPolicies, void>({
+			query: () => ({
+				url: `/api/v1/interaction_policies/defaults`
+			}),
+			providesTags: ["DefaultInteractionPolicies"]
+		}),
+
+		updateDefaultInteractionPolicies: build.mutation<DefaultInteractionPolicies, UpdateDefaultInteractionPolicies>({
+			query: (data) => ({
+				method: "PATCH",
+				url: `/api/v1/interaction_policies/defaults`,
+				body: data,
+			}),
+			...replaceCacheOnMutation("defaultInteractionPolicies")
+		}),
+
+		resetDefaultInteractionPolicies: build.mutation<DefaultInteractionPolicies, void>({
+			query: () => ({
+				method: "PATCH",
+				url: `/api/v1/interaction_policies/defaults`,
+				body: {},
+			}),
+			invalidatesTags: ["DefaultInteractionPolicies"]
+		}),
 	})
 });
 
@@ -96,4 +128,7 @@ export const {
 	useAliasAccountMutation,
 	useMoveAccountMutation,
 	useAccountThemesQuery,
+	useDefaultInteractionPoliciesQuery,
+	useUpdateDefaultInteractionPoliciesMutation,
+	useResetDefaultInteractionPoliciesMutation,
 } = extended;
