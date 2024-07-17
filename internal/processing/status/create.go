@@ -18,7 +18,6 @@
 package status
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -309,10 +308,8 @@ func processVisibility(
 
 	// Set federated flag to form value
 	// if provided, or default to true.
-	status.Federated = cmp.Or(
-		form.Federated,
-		util.Ptr(true),
-	)
+	federated := util.PtrValueOr(form.Federated, true)
+	status.Federated = &federated
 
 	return nil
 }
