@@ -265,6 +265,31 @@ func (intPolicyFormBinding) Bind(req *http.Request, obj any) error {
 	return decoder.Decode(obj, req.Form)
 }
 
+// customBind does custom form binding for
+// each visibility in the form data.
+func customBind(
+	c *gin.Context,
+	form *apimodel.UpdateInteractionPoliciesRequest,
+) error {
+	for _, vis := range []string{
+		"Direct",
+		"Private",
+		"Unlisted",
+		"Public",
+	} {
+		if err := c.ShouldBindWith(
+			form,
+			intPolicyFormBinding{
+				visibility: vis,
+			},
+		); err != nil {
+			return fmt.Errorf("custom form binding failed: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateInteractionPoliciesRequest, error) {
 	form := new(apimodel.UpdateInteractionPoliciesRequest)
 
@@ -275,24 +300,26 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateInteractionPolicies
 			return nil, err
 		}
 
-	case binding.MIMEPOSTForm,
-		binding.MIMEMultipartPOSTForm:
-		// Use custom form binding for
-		// each visibility in the form data.
-		for _, vis := range []string{
-			"Direct",
-			"Private",
-			"Unlisted",
-			"Public",
-		} {
-			if err := c.ShouldBindWith(
-				form,
-				intPolicyFormBinding{
-					visibility: vis,
-				},
-			); err != nil {
-				return nil, fmt.Errorf("custom form binding failed: %w", err)
-			}
+	case binding.MIMEPOSTForm:
+		// Bind with default form binding first.
+		if err := c.ShouldBindWith(form, binding.FormPost); err != nil {
+			return nil, err
+		}
+
+		// Now do custom binding.
+		if err := customBind(c, form); err != nil {
+			return nil, err
+		}
+
+	case binding.MIMEMultipartPOSTForm:
+		// Bind with default form binding first.
+		if err := c.ShouldBindWith(form, binding.FormMultipart); err != nil {
+			return nil, err
+		}
+
+		// Now do custom binding.
+		if err := customBind(c, form); err != nil {
+			return nil, err
 		}
 
 	default:
