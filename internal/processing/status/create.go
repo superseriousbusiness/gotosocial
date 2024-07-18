@@ -308,7 +308,7 @@ func processVisibility(
 
 	// Set federated flag to form value
 	// if provided, or default to true.
-	federated := util.PtrValueOr(form.Federated, true)
+	federated := util.PtrOrValue(form.Federated, true)
 	status.Federated = &federated
 
 	return nil
