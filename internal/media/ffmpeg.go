@@ -47,10 +47,21 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 	// Clear metadata with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
 		"-loglevel", "error",
+
+		// Input file.
 		"-i", filepath,
+
+		// Drop all metadata.
 		"-map_metadata", "-1",
+
+		// Copy input codecs,
+		// i.e. no transcode.
 		"-codec", "copy",
+
+		// Overwrite.
 		"-y",
+
+		// Output.
 		outpath,
 	); err != nil {
 		return err
@@ -64,23 +75,42 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 	return nil
 }
 
-// ffmpegGenerateThumb generates a thumbnail jpeg from input media of any type, useful for any media.
+// ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
 func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
 	// Generate output frame file path.
-	outpath := filepath + "_thumb.jpg"
+	outpath := filepath + "_thumb.webp"
+
+	// Thumbnail size scaling argument.
+	scale := strconv.Itoa(width) + ":" +
+		strconv.Itoa(height)
 
 	// Generate thumb with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
 		"-loglevel", "error",
+
+		// Input file.
 		"-i", filepath,
-		"-filter:v", "thumbnail=n=10",
-		"-filter:v", "scale="+strconv.Itoa(width)+":"+strconv.Itoa(height),
-		"-qscale:v", "12", // ~ 70% quality
+
+		// Only first frame.
 		"-frames:v", "1",
+
+		// Scale to given dimesions + YUV 4:2:0 colorspace
+		"-filter:v", "scale="+scale+",format=yuv420p",
+
+		// ~70% webp quality
+		"-qscale:v", "12",
+
+		// Encode using libwebp.
+		// (NOT as libwebp_anim).
+		"-codec:v", "libwebp",
+
+		// Overwrite.
 		"-y",
+
+		// Output.
 		outpath,
 	); err != nil {
 		return "", err
@@ -100,10 +130,21 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 	// Generate static with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
 		"-loglevel", "error",
+
+		// Input file.
 		"-i", filepath,
-		"-codec:v", "png", // specifically NOT 'apng'
-		"-frames:v", "1", // in case animated, only take 1 frame
+
+		// Only first frame.
+		"-frames:v", "1",
+
+		// Encode using png.
+		// (NOT as apng).
+		"-codec:v", "png",
+
+		// Overwrite.
 		"-y",
+
+		// Output.
 		outpath,
 	); err != nil {
 		return "", err

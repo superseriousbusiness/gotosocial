@@ -255,7 +255,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			string(TypeAttachment),
 			string(SizeSmall),
 			p.media.ID,
-			"jpeg",
+			"webp",
 		)
 	}
 
@@ -309,7 +309,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		string(TypeAttachment),
 		string(SizeSmall),
 		p.media.ID,
-		"jpeg",
+		"webp",
 	)
 
 	// Get mimetype for the file container
@@ -317,7 +317,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.media.File.ContentType = getMimeType(ext)
 
 	// Set the known thumbnail content type.
-	p.media.Thumbnail.ContentType = "image/jpeg"
+	p.media.Thumbnail.ContentType = "image/webp"
 
 	// We can now consider this cached.
 	p.media.Cached = util.Ptr(true)
