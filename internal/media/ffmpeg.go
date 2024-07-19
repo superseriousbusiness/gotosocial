@@ -102,7 +102,7 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 		"-filter:v", "thumbnail=n=10,"+
 
 			// scale to dimensions
-			"scale="+scale+
+			"scale="+scale+","+
 
 			// YUVA 4:2:0 colorspace
 			"format=yuva420p",
