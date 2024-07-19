@@ -94,15 +94,21 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 		// Input file.
 		"-i", filepath,
 
-		// Only first frame.
-		"-frames:v", "1",
-
 		// Encode using libwebp.
 		// (NOT as libwebp_anim).
 		"-codec:v", "libwebp",
 
-		// Scale to given dimesions + YUV 4:2:0 colorspace
-		"-filter:v", "scale="+scale+",format=yuv420p",
+		// Select thumb from first 10 frames
+		"-filter:v", "thumbnail=n=10,"+
+
+			// scale to dimensions
+			"scale="+scale+
+
+			// YUVA 4:2:0 colorspace
+			"format=yuva420p",
+
+		// Only one frame
+		"-frames:v", "1",
 
 		// ~40% webp quality
 		"-qscale:v", "40",
