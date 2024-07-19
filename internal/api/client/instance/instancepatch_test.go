@@ -819,7 +819,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
   "thumbnail_type": "image/gif",
   "thumbnail_description": "A bouncing little green peglin.",
-  "blurhash": "LtJ[eKxu_4xt9Yj]M{WBt8WBM{WB"
+  "blurhash": "LE9kG#M}4YtO%dRkWEt5Dmoxx?WC"
 }`, string(instanceV2ThumbnailJson))
 
 	// double extra special bonus: now update the image description without changing the image

@@ -122,11 +122,11 @@ func (suite *ServeFileTestSuite) TestServeSmallLocalFileOK() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpg",
+		targetAttachment.ID+".webp",
 	)
 
 	suite.Equal(http.StatusOK, code)
-	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal("image/webp", headers.Get("content-type"))
 	suite.Equal(fileInStorage, body)
 }
 
@@ -162,11 +162,11 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileOK() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpg",
+		targetAttachment.ID+".webp",
 	)
 
 	suite.Equal(http.StatusOK, code)
-	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal("image/webp", headers.Get("content-type"))
 	suite.Equal(fileInStorage, body)
 }
 
@@ -208,11 +208,11 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecache() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpg",
+		targetAttachment.ID+".webp",
 	)
 
 	suite.Equal(http.StatusOK, code)
-	suite.Equal("image/jpeg", headers.Get("content-type"))
+	suite.Equal("image/webp", headers.Get("content-type"))
 	suite.Equal(fileInStorage, body)
 }
 
@@ -252,7 +252,7 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecacheNotFound() {
 		targetAttachment.AccountID,
 		media.TypeAttachment,
 		media.SizeSmall,
-		targetAttachment.ID+".jpg",
+		targetAttachment.ID+".webp",
 	)
 
 	suite.Equal(http.StatusNotFound, code)

@@ -56,10 +56,10 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
@@ -109,10 +109,10 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
@@ -202,10 +202,10 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
@@ -252,10 +252,10 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
@@ -298,10 +298,10 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
@@ -503,7 +503,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
       "remote_url": null,
       "preview_remote_url": null,
       "meta": {
@@ -514,9 +514,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
           "aspect": 1.9047619
         },
         "small": {
-          "width": 256,
-          "height": 134,
-          "size": "256x134",
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
           "aspect": 1.9104477
         },
         "focus": {
@@ -525,7 +525,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
     }
   ],
   "mentions": [],
@@ -652,7 +652,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
       "remote_url": null,
       "preview_remote_url": null,
       "meta": {
@@ -663,9 +663,9 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
           "aspect": 1.9047619
         },
         "small": {
-          "width": 256,
-          "height": 134,
-          "size": "256x134",
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
           "aspect": 1.9104477
         },
         "focus": {
@@ -674,7 +674,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
     }
   ],
   "mentions": [],
@@ -881,7 +881,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
       "type": "image",
       "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
       "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.webp",
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
       "preview_remote_url": null,
       "meta": {
@@ -903,7 +903,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
         }
       },
       "description": "Photograph of a sloth, Public Domain.",
-      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+      "blurhash": "LKE3VIw}0KD%a2o{M|t7NFWps:t7"
     }
   ],
   "mentions": [
@@ -1041,7 +1041,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "type": "image",
       "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
       "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.webp",
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
       "preview_remote_url": null,
       "meta": {
@@ -1063,7 +1063,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
         }
       },
       "description": "Photograph of a sloth, Public Domain.",
-      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof",
+      "blurhash": "LKE3VIw}0KD%a2o{M|t7NFWps:t7",
       "Sensitive": true,
       "MIMEType": "image/jpg"
     },
@@ -1174,7 +1174,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
       "remote_url": null,
       "preview_remote_url": null,
       "meta": {
@@ -1185,9 +1185,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
           "aspect": 1.9047619
         },
         "small": {
-          "width": 256,
-          "height": 134,
-          "size": "256x134",
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
           "aspect": 1.9104477
         },
         "focus": {
@@ -1196,7 +1196,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
     }
   ],
   "mentions": [],
@@ -1289,10 +1289,10 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
     "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
     "url": "http://localhost:8080/@the_mighty_zork",
     "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-    "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+    "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
     "avatar_description": "a green goblin looking nasty",
     "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-    "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+    "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
     "header_description": "A very old-school screenshot of the original team fortress mod for quake",
     "followers_count": 2,
     "following_count": 2,
@@ -1348,7 +1348,7 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
   "type": "video",
   "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
   "text_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
-  "preview_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpg",
+  "preview_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.webp",
   "remote_url": null,
   "preview_remote_url": null,
   "meta": {
@@ -1356,16 +1356,16 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
       "width": 720,
       "height": 404,
       "frame_rate": "30/1",
-      "duration": 15.033334,
-      "bitrate": 1206522,
+      "duration": 15.034,
+      "bitrate": 1209808,
       "size": "720x404",
       "aspect": 1.7821782
     },
     "small": {
-      "width": 720,
-      "height": 404,
-      "size": "720x404",
-      "aspect": 1.7821782
+      "width": 512,
+      "height": 287,
+      "size": "512x287",
+      "aspect": 1.7839721
     },
     "focus": {
       "x": 0,
@@ -1373,7 +1373,7 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
     }
   },
   "description": "A cow adorably licking another cow!",
-  "blurhash": null
+  "blurhash": "L9B|BBY8yZtS~AxZV@t6,njEjZV@"
 }`, string(b))
 }
 
@@ -2185,9 +2185,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "type": "image",
           "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
           "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
-          "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+          "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
           "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
-          "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+          "preview_remote_url": null,
           "meta": {
             "original": {
               "width": 472,
@@ -2207,7 +2207,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
             }
           },
           "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
-          "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+          "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L"
         }
       ],
       "mentions": [],

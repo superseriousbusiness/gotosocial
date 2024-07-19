@@ -429,7 +429,7 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
 	trimmed := strings.SplitAfter(string(bytes), `"attachment":`)[1]
 	suite.Equal(` [
     {
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
       "mediaType": "image/jpeg",
       "name": "Black and white image of some 50's style text saying: Welcome On Board",
       "type": "Document",
@@ -501,7 +501,7 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
 	trimmed := strings.SplitAfter(string(bytes), `"attachment":`)[1]
 	suite.Equal(` [
     {
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
       "mediaType": "image/jpeg",
       "name": "Black and white image of some 50's style text saying: Welcome On Board",
       "type": "Document",

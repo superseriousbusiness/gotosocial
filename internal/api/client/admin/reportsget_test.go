@@ -499,9 +499,9 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "type": "image",
             "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
             "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
-            "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+            "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
             "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
-            "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+            "preview_remote_url": null,
             "meta": {
               "original": {
                 "width": 472,
@@ -521,7 +521,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
               }
             },
             "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
-            "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+            "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L"
           }
         ],
         "mentions": [],
@@ -741,9 +741,9 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
             "type": "image",
             "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
             "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
-            "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+            "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
             "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
-            "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+            "preview_remote_url": null,
             "meta": {
               "original": {
                 "width": 472,
@@ -763,7 +763,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
               }
             },
             "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
-            "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+            "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L"
           }
         ],
         "mentions": [],
@@ -983,9 +983,9 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
             "type": "image",
             "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
             "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
-            "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+            "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
             "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
-            "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+            "preview_remote_url": null,
             "meta": {
               "original": {
                 "width": 472,
@@ -1005,7 +1005,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
               }
             },
             "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
-            "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+            "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L"
           }
         ],
         "mentions": [],
