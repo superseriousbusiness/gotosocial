@@ -275,6 +275,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
+	suite.Equal(8536, attachment.Thumbnail.FileSize)
 	suite.Equal("LcBzLU#6RkRn~qvzRjWF?urqV@jc", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -427,6 +428,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(312453, attachment.File.FileSize)
+	suite.Equal(3746, attachment.Thumbnail.FileSize)
 	suite.Equal("LhIrNMt6Nsj[t7aybFj[_4WBspoe", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -486,6 +488,7 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(109569, attachment.File.FileSize)
+	suite.Equal(2128, attachment.Thumbnail.FileSize)
 	suite.Equal("L8Q0aP~qnM_3~qD%ozRjRiofWXRj", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -545,6 +548,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(1409625, attachment.File.FileSize)
+	suite.Equal(9446, attachment.Thumbnail.FileSize)
 	suite.Equal("LKF~w1RjRO.99DRORPaetkV?WCMw", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -652,6 +656,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(17471, attachment.File.FileSize)
+	suite.Equal(2630, attachment.Thumbnail.FileSize)
 	suite.Equal("LBOW$@%i-=aj%go#RSRP_1av~Tt2", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -707,6 +712,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(18904, attachment.File.FileSize)
+	suite.Equal(2630, attachment.Thumbnail.FileSize)
 	suite.Equal("LBOW$@%i-=aj%go#RSRP_1av~Tt2", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -762,6 +768,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
+	suite.Equal(8536, attachment.Thumbnail.FileSize)
 	suite.Equal("LcBzLU#6RkRn~qvzRjWF?urqV@jc", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -839,6 +846,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 	suite.Equal("image/jpeg", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
+	suite.Equal(8536, attachment.Thumbnail.FileSize)
 	suite.Equal("LcBzLU#6RkRn~qvzRjWF?urqV@jc", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
