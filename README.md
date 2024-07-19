@@ -339,7 +339,7 @@ Thanks to everyone who has used GtS, opened an issue, suggested something, given
 
 ## Sponsorship + Funding
 
-**Update regarding corporate sponsors: we are now open and accepting! (with some conditions below)**
+**Update regarding corporate sponsors: we are open to sponsorship arrangements with organizations that align with our values; see the conditions below**
 
 ### Crowdfunding
 
