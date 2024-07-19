@@ -77,6 +77,7 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 
 // ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
 func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
+
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
@@ -99,18 +100,23 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 		"-codec:v", "libwebp",
 
 		// Select thumb from first 10 frames
+		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
 		"-filter:v", "thumbnail=n=10,"+
 
 			// scale to dimensions
+			// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
 			"scale="+scale+","+
 
-			// YUVA 4:2:0 colorspace
-			"format=yuva420p",
+			// YUVA 4:2:0 pixel format
+			// (format filter: https://ffmpeg.org/ffmpeg-filters.html#format)
+			"format=pix_fmts=yuva420p",
 
 		// Only one frame
 		"-frames:v", "1",
 
 		// ~40% webp quality
+		// (codec options: https://ffmpeg.org/ffmpeg-codecs.html#toc-Codec-Options)
+		// (libwebp codec: https://ffmpeg.org/ffmpeg-codecs.html#Options-36)
 		"-qscale:v", "40",
 
 		// Overwrite.
