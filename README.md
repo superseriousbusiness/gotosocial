@@ -1,7 +1,7 @@
 <!--overview-start-->
 # GoToSocial <!-- omit in toc -->
 
-*In need of funding! Our previous primary source of funding will soon be [disappearing](https://www.ow2.org/view/Events/The_European_Union_must_keep_funding_free_software_open_letter). See [our funding section](#sponsorship--funding) below.*
+**Update regarding corporate sponsors: we are open to sponsorship arrangements with organizations that align with our values; see the conditions below**
 
 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
@@ -358,14 +358,13 @@ Crowdfunded donations to our OpenCollective and Liberapay accounts go towards pa
 
 ### Corporate Sponsorship
 
-GoToSocial is open to receiving donations from corporate sponsors, and in return we will display your logo, website and short tagline on the repository / documents to show our thanks for your support.
+GoToSocial is open to sponsorship arrangements with organizations that align with our values. To show our thanks for your support, we will display your logo, website, and a short tagline on the repository and documentation. The following caveats apply to sponsorships:
 
-GoToSocial project direction will always remain **100%** in the hands of the core team, and will never be dictated or influenced by corporate sponsorship. This is non-negotiable. Corporations are of course free of course to suggest / request features in the same manner as any other user, but they are not given special treatment.
+1. GoToSocial project direction will always remain 100% in the hands of the core team, and will never be dictated or influenced by corporate sponsorship. This is non-negotiable. Corporations are of course free of course to suggest / request features in the same manner as any other user, but they are not given special treatment.
 
-Corporate sponsorship is dependent on your company meeting our team's ethical guidelines. These are not a concrete set of rules but instead boil down to "is your company actively harming humanity?". For example, those in the defense industry need not apply as the simple answer to that question is, "yes!".
+2. Corporate sponsorship is dependent on your organization meeting our team's ethical guidelines. These are not a concrete set of rules but instead boil down to "is your company causing harm?". For example, those in the defense industry need not apply as the simple answer to that question is, "yes!".
 
-If after reading this you are still interested in supporting us, that is wonderful! Please reach out to us at `admin@gotosocial.org` to further discuss :)
-
+If after reading this you are still interested in supporting us, that is wonderful! Please reach out to us at admin@gotosocial.org to further discuss :)
 
 ### NLnet
 
