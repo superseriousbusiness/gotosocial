@@ -26,7 +26,7 @@ import (
 func (suite *ConversationsTestSuite) TestRead() {
 	conversation := suite.NewTestConversation(suite.testAccount, 0)
 
-	suite.False(util.PtrValueOr(conversation.Read, false))
+	suite.False(util.PtrOrValue(conversation.Read, false))
 	apiConversation, err := suite.conversationsProcessor.Read(context.Background(), suite.testAccount, conversation.ID)
 	if suite.NoError(err) {
 		suite.False(apiConversation.Unread)
