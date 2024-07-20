@@ -762,6 +762,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   },
   "thumbnail": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
   "thumbnail_type": "image/gif",
+  "thumbnail_static": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/small/`+instanceAccount.AvatarMediaAttachment.ID+`.webp",`+`
+  "thumbnail_static_type": "image/webp",
   "thumbnail_description": "A bouncing little green peglin.",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -818,6 +820,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 	suite.Equal(`{
   "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
   "thumbnail_type": "image/gif",
+  "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/small/`+instanceAccount.AvatarMediaAttachment.ID+`.webp",`+`
+  "thumbnail_static_type": "image/webp",
   "thumbnail_description": "A bouncing little green peglin.",
   "blurhash": "LE9kG#M}4YtO%dRkWEt5Dmoxx?WC"
 }`, string(instanceV2ThumbnailJson))

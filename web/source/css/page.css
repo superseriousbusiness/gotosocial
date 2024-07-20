@@ -48,7 +48,8 @@
 		gap: 1rem;
 		justify-content: center;
 
-		img {
+		img,
+		picture {
 			align-self: center;
 			
 			/*

@@ -1519,6 +1519,8 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 
 		instance.Thumbnail = iAccount.AvatarMediaAttachment.URL
 		instance.ThumbnailType = iAccount.AvatarMediaAttachment.File.ContentType
+		instance.ThumbnailStatic = iAccount.AvatarMediaAttachment.Thumbnail.URL
+		instance.ThumbnailStaticType = iAccount.AvatarMediaAttachment.Thumbnail.ContentType
 		instance.ThumbnailDescription = iAccount.AvatarMediaAttachment.Description
 	} else {
 		instance.Thumbnail = config.GetProtocol() + "://" + i.Domain + "/assets/logo.webp" // default thumb
@@ -1588,6 +1590,8 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 		thumbnail.URL = iAccount.AvatarMediaAttachment.URL
 		thumbnail.Type = iAccount.AvatarMediaAttachment.File.ContentType
+		thumbnail.StaticURL = iAccount.AvatarMediaAttachment.Thumbnail.URL
+		thumbnail.StaticType = iAccount.AvatarMediaAttachment.Thumbnail.ContentType
 		thumbnail.Description = iAccount.AvatarMediaAttachment.Description
 		thumbnail.Blurhash = iAccount.AvatarMediaAttachment.Blurhash
 	} else {

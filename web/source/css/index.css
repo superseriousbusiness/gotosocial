@@ -30,7 +30,8 @@
 			line-height: 2rem;
 		}
 
-		& > img {
+		img,
+		picture {
 			align-self: center;
 			max-height: 6rem;
 		}
