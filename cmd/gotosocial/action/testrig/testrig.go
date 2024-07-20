@@ -205,8 +205,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Run advanced migrations.
-	if err := processor.Conversations().MigrateDMsToConversations(ctx); err != nil {
-		return fmt.Errorf("error running conversations advanced migration: %w", err)
+	if err := processor.AdvancedMigrations().Migrate(ctx); err != nil {
+		return err
 	}
 
 	/*
