@@ -85,8 +85,8 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
     "url": "http://fossbros-anonymous.io/@foss_satan",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 3,
@@ -100,9 +100,9 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
       "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
-      "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+      "preview_remote_url": null,
       "meta": {
         "original": {
           "width": 472,
@@ -122,14 +122,34 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
         }
       },
       "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
-      "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+      "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L"
     }
   ],
   "mentions": [],
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, dst.String())
 	suite.Equal(msg.Event, "status.update")
 }

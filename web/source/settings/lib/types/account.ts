@@ -64,6 +64,17 @@ export interface Account {
 	enable_rss: boolean,
 	role: any,
 	suspended?: boolean,
+	source?: AccountSource;
+}
+
+export interface AccountSource {
+	fields: any[];
+	follow_requests_count: number;
+	language: string;
+	note: string;
+	privacy: string;
+	sensitive: boolean;
+	status_content_type: string;
 }
 
 export interface SearchAccountParams {

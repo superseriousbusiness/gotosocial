@@ -24,11 +24,13 @@ import (
 	"os/signal"
 	"syscall"
 
+	"codeberg.org/gruf/go-logger/v2/level"
 	"codeberg.org/gruf/go-storage/memory"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
@@ -38,8 +40,18 @@ func main() {
 	ctx, cncl := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer cncl()
 
+	log.SetLevel(level.INFO)
+
 	if len(os.Args) != 4 {
 		log.Panic(ctx, "Usage: go run ./cmd/process-media <input-file> <output-processed> <output-thumbnail>")
+	}
+
+	if err := ffmpeg.InitFfprobe(ctx, 1); err != nil {
+		log.Panic(ctx, err)
+	}
+
+	if err := ffmpeg.InitFfmpeg(ctx, 1); err != nil {
+		log.Panic(ctx, err)
 	}
 
 	var st storage.Driver
@@ -105,6 +117,9 @@ func main() {
 func copyFile(ctx context.Context, st *storage.Driver, key string, path string) {
 	rc, err := st.GetStream(ctx, key)
 	if err != nil {
+		if storage.IsNotFound(err) {
+			return
+		}
 		log.Panic(ctx, err)
 	}
 	defer rc.Close()

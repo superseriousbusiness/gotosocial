@@ -30,14 +30,10 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
-# codeberg.org/gruf/go-ffmpreg v0.2.2
+# codeberg.org/gruf/go-ffmpreg v0.2.3
 ## explicit; go 1.22.0
 codeberg.org/gruf/go-ffmpreg/embed/ffmpeg
 codeberg.org/gruf/go-ffmpreg/embed/ffprobe
-codeberg.org/gruf/go-ffmpreg/ffmpeg
-codeberg.org/gruf/go-ffmpreg/ffprobe
-codeberg.org/gruf/go-ffmpreg/internal
-codeberg.org/gruf/go-ffmpreg/util
 codeberg.org/gruf/go-ffmpreg/wasm
 # codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 ## explicit; go 1.21
@@ -168,7 +164,7 @@ github.com/containerd/cgroups/v3/cgroup1
 github.com/containerd/cgroups/v3/cgroup1/stats
 github.com/containerd/cgroups/v3/cgroup2
 github.com/containerd/cgroups/v3/cgroup2/stats
-# github.com/coreos/go-oidc/v3 v3.10.0
+# github.com/coreos/go-oidc/v3 v3.11.0
 ## explicit; go 1.21
 github.com/coreos/go-oidc/v3/oidc
 # github.com/coreos/go-systemd/v22 v22.3.2
@@ -224,7 +220,7 @@ github.com/go-fed/httpsig
 # github.com/go-ini/ini v1.67.0
 ## explicit
 github.com/go-ini/ini
-# github.com/go-jose/go-jose/v4 v4.0.1
+# github.com/go-jose/go-jose/v4 v4.0.2
 ## explicit; go 1.21
 github.com/go-jose/go-jose/v4
 github.com/go-jose/go-jose/v4/cipher
@@ -793,7 +789,7 @@ github.com/superseriousbusiness/oauth2/v4/generates
 github.com/superseriousbusiness/oauth2/v4/manage
 github.com/superseriousbusiness/oauth2/v4/models
 github.com/superseriousbusiness/oauth2/v4/server
-# github.com/tdewolff/minify/v2 v2.20.34
+# github.com/tdewolff/minify/v2 v2.20.37
 ## explicit; go 1.18
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
@@ -1049,8 +1045,12 @@ golang.org/x/exp/slog/internal/buffer
 ## explicit; go 1.18
 golang.org/x/image/bmp
 golang.org/x/image/ccitt
+golang.org/x/image/riff
 golang.org/x/image/tiff
 golang.org/x/image/tiff/lzw
+golang.org/x/image/vp8
+golang.org/x/image/vp8l
+golang.org/x/image/webp
 # golang.org/x/mod v0.18.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp

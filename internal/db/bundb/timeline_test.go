@@ -155,7 +155,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 19)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 20)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
@@ -187,7 +187,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 7)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
@@ -209,7 +209,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
 	}
 
 	suite.NotContains(s, futureStatus)
-	suite.checkStatuses(s, id.Highest, id.Lowest, 19)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 20)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
@@ -240,8 +240,8 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 	}
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
-	suite.Equal("01HH9KYNQPA416TNJ53NSATP40", s[0].ID)
-	suite.Equal("01G20ZM733MGN8J344T4ZDDFY1", s[len(s)-1].ID)
+	suite.Equal("01J2M1HPFSS54S60Y0KYV23KJE", s[0].ID)
+	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[len(s)-1].ID)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {

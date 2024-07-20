@@ -56,15 +56,15 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "enable_rss": true,
@@ -109,15 +109,15 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -149,8 +149,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
     "url": "http://localhost:8080/@1happyturtle",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 8,
@@ -202,15 +202,15 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -252,15 +252,15 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -298,15 +298,15 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "url": "http://localhost:8080/@the_mighty_zork",
   "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
-  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+  "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
   "avatar_description": "a green goblin looking nasty",
   "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
-  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+  "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
   "header_description": "A very old-school screenshot of the original team fortress mod for quake",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 7,
-  "last_status_at": "2023-12-10T09:24:00.000Z",
+  "statuses_count": 8,
+  "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
   "source": {
@@ -350,8 +350,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendPublicPunycode() 
   "url": "https://xn--xample-ova.org/users/@%C3%BCser",
   "avatar": "",
   "avatar_static": "",
-  "header": "http://localhost:8080/assets/default_header.png",
-  "header_static": "http://localhost:8080/assets/default_header.png",
+  "header": "http://localhost:8080/assets/default_header.webp",
+  "header_static": "http://localhost:8080/assets/default_header.webp",
   "followers_count": 0,
   "following_count": 0,
   "statuses_count": 0,
@@ -388,8 +388,8 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendPubl
   "url": "http://localhost:8080/@localhost:8080",
   "avatar": "",
   "avatar_static": "",
-  "header": "http://localhost:8080/assets/default_header.png",
-  "header_static": "http://localhost:8080/assets/default_header.png",
+  "header": "http://localhost:8080/assets/default_header.webp",
+  "header_static": "http://localhost:8080/assets/default_header.webp",
   "followers_count": 0,
   "following_count": 0,
   "statuses_count": 0,
@@ -426,8 +426,8 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
   "url": "http://localhost:8080/@localhost:8080",
   "avatar": "",
   "avatar_static": "",
-  "header": "http://localhost:8080/assets/default_header.png",
-  "header_static": "http://localhost:8080/assets/default_header.png",
+  "header": "http://localhost:8080/assets/default_header.webp",
+  "header_static": "http://localhost:8080/assets/default_header.webp",
   "followers_count": 0,
   "following_count": 0,
   "statuses_count": 0,
@@ -484,8 +484,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -503,7 +503,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
       "remote_url": null,
       "preview_remote_url": null,
       "meta": {
@@ -514,9 +514,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
           "aspect": 1.9047619
         },
         "small": {
-          "width": 256,
-          "height": 134,
-          "size": "256x134",
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
           "aspect": 1.9104477
         },
         "focus": {
@@ -525,7 +525,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
     }
   ],
   "mentions": [],
@@ -546,7 +546,27 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   ],
   "card": null,
   "poll": null,
-  "text": "hello world! #welcome ! first post on the instance :rainbow: !"
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -613,8 +633,8 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -632,7 +652,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
       "remote_url": null,
       "preview_remote_url": null,
       "meta": {
@@ -643,9 +663,9 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
           "aspect": 1.9047619
         },
         "small": {
-          "width": 256,
-          "height": 134,
-          "size": "256x134",
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
           "aspect": 1.9104477
         },
         "focus": {
@@ -654,7 +674,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
     }
   ],
   "mentions": [],
@@ -701,7 +721,27 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
       ],
       "status_matches": []
     }
-  ]
+  ],
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -811,7 +851,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status could not be downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e",
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003chr\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status were not downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e",
   "reblog": null,
   "account": {
     "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -826,8 +866,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
     "url": "http://example.org/@Some_User",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 1,
@@ -841,7 +881,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
       "type": "image",
       "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
       "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.webp",
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
       "preview_remote_url": null,
       "meta": {
@@ -863,7 +903,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
         }
       },
       "description": "Photograph of a sloth, Public Domain.",
-      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+      "blurhash": "LKE3VIw}0KD%a2o{M|t7NFWps:t7"
     }
   ],
   "mentions": [
@@ -877,7 +917,27 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "tags": [],
   "emojis": [],
   "card": null,
-  "poll": null
+  "poll": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -934,8 +994,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "url": "http://example.org/@Some_User",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 1,
@@ -943,13 +1003,45 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "emojis": [],
     "fields": []
   },
+  "mentions": [
+    {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "url": "http://localhost:8080/@admin",
+      "acct": "admin"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  },
   "media_attachments": [
     {
       "id": "01HE7Y3C432WRSNS10EZM86SA5",
       "type": "image",
       "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
       "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7Y3C432WRSNS10EZM86SA5.webp",
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
       "preview_remote_url": null,
       "meta": {
@@ -971,49 +1063,45 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
         }
       },
       "description": "Photograph of a sloth, Public Domain.",
-      "blurhash": "LNEC{|w}0K9GsEtPM|j[NFbHoeof"
+      "blurhash": "LKE3VIw}0KD%a2o{M|t7NFWps:t7",
+      "Sensitive": true,
+      "MIMEType": "image/jpg"
     },
     {
       "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
       "type": "unknown",
-      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
-      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE7ZFX9GKA5ZZVD4FACABSS9.jpg",
+      "url": null,
+      "text_url": null,
+      "preview_url": null,
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg",
       "preview_remote_url": null,
       "meta": null,
       "description": "SVG line art of a sloth, public domain",
-      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of"
+      "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
+      "Sensitive": true,
+      "MIMEType": ""
     },
     {
       "id": "01HE88YG74PVAB81PX2XA9F3FG",
       "type": "unknown",
-      "url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
-      "text_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
-      "preview_url": "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/small/01HE88YG74PVAB81PX2XA9F3FG.jpg",
+      "url": null,
+      "text_url": null,
+      "preview_url": null,
       "remote_url": "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
       "preview_remote_url": null,
       "meta": null,
       "description": "Jolly salsa song, public domain.",
-      "blurhash": null
+      "blurhash": null,
+      "Sensitive": true,
+      "MIMEType": ""
     }
   ],
-  "mentions": [
-    {
-      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
-      "username": "admin",
-      "url": "http://localhost:8080/@admin",
-      "acct": "admin"
-    }
-  ],
-  "tags": [],
-  "emojis": [],
-  "card": null,
-  "poll": null,
   "LanguageTag": "en",
   "PollOptions": null,
   "Local": false,
   "Indent": 0,
+  "ThreadLastMain": false,
+  "ThreadContextStatus": false,
   "ThreadFirstReply": false
 }`, string(b))
 }
@@ -1067,8 +1155,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -1086,7 +1174,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
       "type": "image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
       "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
-      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
       "remote_url": null,
       "preview_remote_url": null,
       "meta": {
@@ -1097,9 +1185,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
           "aspect": 1.9047619
         },
         "small": {
-          "width": 256,
-          "height": 134,
-          "size": "256x134",
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
           "aspect": 1.9104477
         },
         "focus": {
@@ -1108,7 +1196,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj"
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
     }
   ],
   "mentions": [],
@@ -1129,7 +1217,121 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   ],
   "card": null,
   "poll": null,
-  "text": "hello world! #welcome ! first post on the instance :rainbow: !"
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteractions() {
+	testStatus := &gtsmodel.Status{}
+	*testStatus = *suite.testStatuses["local_account_1_status_3"]
+	testStatus.Language = ""
+	requestingAccount := suite.testAccounts["admin_account"]
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01F8MHBBN8120SYH7D5S050MGK",
+  "created_at": "2021-10-20T10:40:37.000Z",
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": false,
+  "spoiler_text": "test: you shouldn't be able to interact with this post in any way",
+  "visibility": "private",
+  "language": null,
+  "uri": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHBBN8120SYH7D5S050MGK",
+  "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHBBN8120SYH7D5S050MGK",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": false,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": false,
+  "pinned": false,
+  "content": "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+  "reblog": null,
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "account": {
+    "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+    "username": "the_mighty_zork",
+    "acct": "the_mighty_zork",
+    "display_name": "original zork (he/they)",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-20T11:09:18.000Z",
+    "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+    "url": "http://localhost:8080/@the_mighty_zork",
+    "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+    "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
+    "avatar_description": "a green goblin looking nasty",
+    "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+    "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
+    "header_description": "A very old-school screenshot of the original team fortress mod for quake",
+    "followers_count": 2,
+    "following_count": 2,
+    "statuses_count": 8,
+    "last_status_at": "2024-01-10T09:24:00.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "role": {
+      "name": "user"
+    }
+  },
+  "media_attachments": [],
+  "mentions": [],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
+  "text": "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "author"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "author"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "author"
+      ],
+      "with_approval": []
+    }
+  }
 }`, string(b))
 }
 
@@ -1146,7 +1348,7 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
   "type": "video",
   "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
   "text_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
-  "preview_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.jpg",
+  "preview_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01CDR64G398ADCHXK08WWTHEZ5.webp",
   "remote_url": null,
   "preview_remote_url": null,
   "meta": {
@@ -1154,18 +1356,24 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
       "width": 720,
       "height": 404,
       "frame_rate": "30/1",
-      "duration": 15.033334,
-      "bitrate": 1206522
-    },
-    "small": {
-      "width": 720,
-      "height": 404,
+      "duration": 15.034,
+      "bitrate": 1209808,
       "size": "720x404",
       "aspect": 1.7821782
+    },
+    "small": {
+      "width": 512,
+      "height": 287,
+      "size": "512x287",
+      "aspect": 1.7839721
+    },
+    "focus": {
+      "x": 0,
+      "y": 0
     }
   },
   "description": "A cow adorably licking another cow!",
-  "blurhash": null
+  "blurhash": "L9B|BBY8yZtS~AxZV@t6,njEjZV@"
 }`, string(b))
 }
 
@@ -1217,9 +1425,22 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -1247,10 +1468,10 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
-  "thumbnail": "http://localhost:8080/assets/logo.png",
+  "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",
@@ -1264,8 +1485,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -1314,7 +1535,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
     }
   },
   "thumbnail": {
-    "url": "http://localhost:8080/assets/logo.png"
+    "url": "http://localhost:8080/assets/logo.webp"
   },
   "languages": [
     "nl",
@@ -1342,9 +1563,22 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -1385,8 +1619,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
       "url": "http://localhost:8080/@admin",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
@@ -1501,8 +1735,8 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
     "url": "http://fossbros-anonymous.io/@foss_satan",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 3,
@@ -1544,8 +1778,8 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "url": "http://localhost:8080/@1happyturtle",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 8,
@@ -1619,8 +1853,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "url": "http://fossbros-anonymous.io/@foss_satan",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
@@ -1660,8 +1894,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "url": "http://localhost:8080/@1happyturtle",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 8,
@@ -1717,8 +1951,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "url": "http://localhost:8080/@admin",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
@@ -1763,8 +1997,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "url": "http://localhost:8080/@admin",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
@@ -1832,8 +2066,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "url": "http://localhost:8080/@1happyturtle",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 8,
@@ -1889,8 +2123,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "url": "http://fossbros-anonymous.io/@foss_satan",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
@@ -1936,8 +2170,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
         "url": "http://fossbros-anonymous.io/@foss_satan",
         "avatar": "",
         "avatar_static": "",
-        "header": "http://localhost:8080/assets/default_header.png",
-        "header_static": "http://localhost:8080/assets/default_header.png",
+        "header": "http://localhost:8080/assets/default_header.webp",
+        "header_static": "http://localhost:8080/assets/default_header.webp",
         "followers_count": 0,
         "following_count": 0,
         "statuses_count": 3,
@@ -1951,9 +2185,9 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "type": "image",
           "url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
           "text_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
-          "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
+          "preview_url": "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
           "remote_url": "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
-          "preview_remote_url": "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
+          "preview_remote_url": null,
           "meta": {
             "original": {
               "width": 472,
@@ -1973,14 +2207,34 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
             }
           },
           "description": "tweet from thoughts of dog: i drank. all the water. in my bowl. earlier. but just now. i returned. to the same bowl. and it was. full again.. the bowl. is haunted",
-          "blurhash": "LARysgM_IU_3~pD%M_Rj_39FIAt6"
+          "blurhash": "L3Q9_@4n9E?axW4mD$Mx~q00Di%L"
         }
       ],
       "mentions": [],
       "tags": [],
       "emojis": [],
       "card": null,
-      "poll": null
+      "poll": null,
+      "interaction_policy": {
+        "can_favourite": {
+          "always": [
+            "public"
+          ],
+          "with_approval": []
+        },
+        "can_reply": {
+          "always": [
+            "public"
+          ],
+          "with_approval": []
+        },
+        "can_reblog": {
+          "always": [
+            "public"
+          ],
+          "with_approval": []
+        }
+      }
     }
   ],
   "rules": [
@@ -2067,8 +2321,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "url": "http://fossbros-anonymous.io/@foss_satan",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
@@ -2108,8 +2362,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "url": "http://localhost:8080/@1happyturtle",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 0,
@@ -2154,8 +2408,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "url": "http://localhost:8080/@admin",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
@@ -2200,8 +2454,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "url": "http://localhost:8080/@admin",
       "avatar": "",
       "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.png",
-      "header_static": "http://localhost:8080/assets/default_header.png",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,

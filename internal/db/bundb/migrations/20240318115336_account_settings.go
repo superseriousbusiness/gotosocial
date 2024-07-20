@@ -78,12 +78,12 @@ func init() {
 					CreatedAt:         account.CreatedAt,
 					Reason:            account.Reason,
 					Privacy:           newgtsmodel.Visibility(account.Privacy),
-					Sensitive:         util.Ptr(util.PtrValueOr(account.Sensitive, false)),
+					Sensitive:         util.Ptr(util.PtrOrValue(account.Sensitive, false)),
 					Language:          account.Language,
 					StatusContentType: account.StatusContentType,
 					CustomCSS:         account.CustomCSS,
-					EnableRSS:         util.Ptr(util.PtrValueOr(account.EnableRSS, false)),
-					HideCollections:   util.Ptr(util.PtrValueOr(account.HideCollections, false)),
+					EnableRSS:         util.Ptr(util.PtrOrValue(account.EnableRSS, false)),
+					HideCollections:   util.Ptr(util.PtrOrValue(account.HideCollections, false)),
 				}
 
 				// Insert the settings model.

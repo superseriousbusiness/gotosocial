@@ -105,9 +105,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -135,10 +148,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
-  "thumbnail": "http://localhost:8080/assets/logo.png",
+  "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",
@@ -152,8 +165,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -226,9 +239,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -256,10 +282,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
-  "thumbnail": "http://localhost:8080/assets/logo.png",
+  "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",
@@ -273,8 +299,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -347,9 +373,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -377,10 +416,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
-  "thumbnail": "http://localhost:8080/assets/logo.png",
+  "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",
@@ -394,8 +433,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -519,9 +558,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -549,10 +601,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
-  "thumbnail": "http://localhost:8080/assets/logo.png",
+  "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",
@@ -566,8 +618,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -662,9 +714,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -692,7 +757,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
@@ -711,8 +776,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
@@ -754,7 +819,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
   "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/attachment/original/`+instanceAccount.AvatarMediaAttachment.ID+`.gif",`+`
   "thumbnail_type": "image/gif",
   "thumbnail_description": "A bouncing little green peglin.",
-  "blurhash": "LtJ[eKxu_4xt9Yj]M{WBt8WBM{WB"
+  "blurhash": "LE9kG#M}4YtO%dRkWEt5Dmoxx?WC"
 }`, string(instanceV2ThumbnailJson))
 
 	// double extra special bonus: now update the image description without changing the image
@@ -820,9 +885,22 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
       "supported_mime_types": [
         "image/jpeg",
         "image/gif",
-        "image/png",
         "image/webp",
-        "video/mp4"
+        "audio/mp2",
+        "audio/mp3",
+        "video/x-msvideo",
+        "image/png",
+        "image/apng",
+        "audio/ogg",
+        "video/ogg",
+        "audio/x-m4a",
+        "video/mp4",
+        "video/quicktime",
+        "audio/x-ms-wma",
+        "video/x-ms-wmv",
+        "video/webm",
+        "audio/x-matroska",
+        "video/x-matroska"
       ],
       "image_size_limit": 41943040,
       "image_matrix_limit": 16777216,
@@ -850,10 +928,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 20,
     "user_count": 4
   },
-  "thumbnail": "http://localhost:8080/assets/logo.png",
+  "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",
     "username": "admin",
@@ -867,8 +945,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
     "url": "http://localhost:8080/@admin",
     "avatar": "",
     "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.png",
-    "header_static": "http://localhost:8080/assets/default_header.png",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,

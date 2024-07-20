@@ -117,8 +117,8 @@ func (p *Processor) FollowCreate(ctx context.Context, requestingAccount *gtsmode
 	if targetAccount.IsLocal() && !*targetAccount.Locked {
 		rel.Requested = false
 		rel.Following = true
-		rel.ShowingReblogs = util.PtrValueOr(fr.ShowReblogs, true)
-		rel.Notifying = util.PtrValueOr(fr.Notify, false)
+		rel.ShowingReblogs = util.PtrOrValue(fr.ShowReblogs, true)
+		rel.Notifying = util.PtrOrValue(fr.Notify, false)
 	}
 
 	// Handle side effects async.

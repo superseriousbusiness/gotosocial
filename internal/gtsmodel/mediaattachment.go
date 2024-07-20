@@ -30,7 +30,7 @@ type MediaAttachment struct {
 	StatusID          string           `bun:"type:CHAR(26),nullzero"`                                      // ID of the status to which this is attached
 	URL               string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on a remote server (empty for local media)
-	Type              FileType         `bun:",notnull"`                                                    // Type of file (image/gifv/audio/video/unknown)
+	Type              FileType         `bun:",notnull,default:0"`                                          // Type of file (image/gifv/audio/video/unknown)
 	FileMeta          FileMeta         `bun:",embed:,notnull"`                                             // Metadata about the file
 	AccountID         string           `bun:"type:CHAR(26),nullzero,notnull"`                              // To which account does this attachment belong
 	Description       string           `bun:""`                                                            // Description of the attachment (for screenreaders)
@@ -81,17 +81,33 @@ const (
 	ProcessingStatusError      ProcessingStatus = 666 // ProcessingStatusError indicates something went wrong processing the attachment and it won't be tried again--these can be deleted.
 )
 
-// FileType refers to the file type of the media attaachment.
-type FileType string
+// FileType refers to the file
+// type of the media attaachment.
+type FileType int
 
-// MediaAttachment file types.
 const (
-	FileTypeImage   FileType = "Image"   // FileTypeImage is for jpegs, pngs, and standard gifs
-	FileTypeGifv    FileType = "Gifv"    // FileTypeGif is for soundless looping videos that behave like gifs
-	FileTypeAudio   FileType = "Audio"   // FileTypeAudio is for audio-only files (no video)
-	FileTypeVideo   FileType = "Video"   // FileTypeVideo is for files with audio + visual
-	FileTypeUnknown FileType = "Unknown" // FileTypeUnknown is for unknown file types (surprise surprise!)
+	// MediaAttachment file types.
+	FileTypeUnknown FileType = 0 // FileTypeUnknown is for unknown file types (surprise surprise!)
+	FileTypeImage   FileType = 1 // FileTypeImage is for jpegs, pngs, and standard gifs
+	FileTypeAudio   FileType = 2 // FileTypeAudio is for audio-only files (no video)
+	FileTypeVideo   FileType = 3 // FileTypeVideo is for files with audio + visual
 )
+
+// String returns a stringified, frontend API compatible form of FileType.
+func (t FileType) String() string {
+	switch t {
+	case FileTypeUnknown:
+		return "unknown"
+	case FileTypeImage:
+		return "image"
+	case FileTypeAudio:
+		return "audio"
+	case FileTypeVideo:
+		return "video"
+	default:
+		panic("invalid filetype")
+	}
+}
 
 // FileMeta describes metadata about the actual contents of the file.
 type FileMeta struct {

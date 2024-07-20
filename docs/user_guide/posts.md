@@ -75,35 +75,6 @@ Public posts can be liked/faved, and they can be boosted.
 
 **Public posts are accessible via a web URL on your GoToSocial instance!**
 
-## Extra Flags
-
-GoToSocial offers four extra flags on posts, which can be used to tweak how your post can be interacted with by others. These are:
-
-* `federated`
-* `boostable`
-* `replyable`
-* `likeable`
-
-By default, all these flags are set to `true`.
-
-Please note that while GoToSocial strictly respects these settings, other fediverse server implementations might not be aware of them. A consequence of this is that users on non-GoToSocial servers might think they are replying/boosting/liking your post, and their instance might behave as though that behavior was allowed, but those interactions will be denied by your GoToSocial server and you won't see them.
-
-### Federated
-
-When set to `false`, this post will not be federated out to other fediverse servers, and will be viewable only to accounts on your GoToSocial instance. This is sometimes called 'local-only' posting.
-
-### Boostable
-
-When set to `false`, your post will not be boostable, even if it is unlisted or public. GoToSocial enforces this by refusing dereferencing requests from remote servers in the event that someone tries to boost the post.
-
-### Replyable
-
-When set to `false`, replies to your post will not be accepted by your GoToSocial server, and will not appear in your timeline or create notifications. GoToSocial enforces this by giving an error message to attempted replies to the post from federated servers.
-
-### Likeable
-
-When set to `false`, likes/faves of your post will not be accepted by your GoToSocial server, and will not create notifications. GoToSocial enforces this by giving an error message to attempted likes/faves on the post from federated servers.
-
 ## Input Types
 
 GoToSocial currently accepts two different types of input for posts (and user bio). The [user settings page](./settings.md) allows you to select between them. These are:

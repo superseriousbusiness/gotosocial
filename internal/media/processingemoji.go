@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -36,6 +35,7 @@ import (
 // various functions for retrieving data from the process.
 type ProcessingEmoji struct {
 	emoji     *gtsmodel.Emoji   // processing emoji details
+	instAccID string            // instance account ID
 	newPathID string            // new emoji path ID to use when being refreshed
 	dataFn    DataFunc          // load-data function, returns media stream
 	done      bool              // done is set when process finishes with non ctx canceled type error
@@ -160,27 +160,17 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	// Pass input file through ffprobe to
 	// parse further metadata information.
 	result, err := ffprobe(ctx, temppath)
-	if err != nil {
-		return gtserror.Newf("error ffprobing data: %w", err)
-	}
-
-	switch {
-	// No errors parsing data.
-	case result.Error == nil:
-
-	// Data type unhandleable by ffprobe.
-	case result.Error.Code == -1094995529:
+	if err != nil && !isUnsupportedTypeErr(err) {
+		return gtserror.Newf("ffprobe error: %w", err)
+	} else if result == nil {
 		log.Warn(ctx, "unsupported data type")
 		return nil
-
-	default:
-		return gtserror.Newf("ffprobe error: %w", err)
 	}
 
 	var ext string
 
-	// Set media type from ffprobe format data.
-	fileType, ext := result.Format.GetFileType()
+	// Get type from ffprobe format data.
+	fileType, ext := result.GetFileType()
 	if fileType != gtsmodel.FileTypeImage {
 		return gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
 	}
@@ -201,19 +191,22 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		pathID = p.emoji.ID
 	}
 
-	// Determine instance account ID from generated image static path.
-	instanceAccID, ok := getInstanceAccountID(p.emoji.ImageStaticPath)
-	if !ok {
-		return gtserror.Newf("invalid emoji static path; no instance account id: %s", p.emoji.ImageStaticPath)
-	}
-
-	// Calculate final media attachment file path.
+	// Calculate final emoji media file path.
 	p.emoji.ImagePath = uris.StoragePathForAttachment(
-		instanceAccID,
+		p.instAccID,
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,
 		ext,
+	)
+
+	// Calculate final emoji static media file path.
+	p.emoji.ImageStaticPath = uris.StoragePathForAttachment(
+		p.instAccID,
+		string(TypeEmoji),
+		string(SizeStatic),
+		pathID,
+		"png",
 	)
 
 	// Copy temporary file into storage at path.
@@ -238,18 +231,30 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	p.emoji.ImageFileSize = int(filesz)
 	p.emoji.ImageStaticFileSize = int(staticsz)
 
-	// Fill in remaining emoji data now it's stored.
+	// Generate an emoji media static URL.
 	p.emoji.ImageURL = uris.URIForAttachment(
-		instanceAccID,
+		p.instAccID,
 		string(TypeEmoji),
 		string(SizeOriginal),
 		pathID,
 		ext,
 	)
 
+	// Generate an emoji image static URL.
+	p.emoji.ImageStaticURL = uris.URIForAttachment(
+		p.instAccID,
+		string(TypeEmoji),
+		string(SizeStatic),
+		pathID,
+		"png",
+	)
+
 	// Get mimetype for the file container
 	// type, falling back to generic data.
 	p.emoji.ImageContentType = getMimeType(ext)
+
+	// Set the known emoji static content type.
+	p.emoji.ImageStaticContentType = "image/png"
 
 	// We can now consider this cached.
 	p.emoji.Cached = util.Ptr(true)
@@ -278,16 +283,16 @@ func (p *ProcessingEmoji) cleanup(ctx context.Context) {
 		}
 	}
 
+	// Unset processor-calculated fields.
+	p.emoji.ImageStaticContentType = ""
+	p.emoji.ImageStaticFileSize = 0
+	p.emoji.ImageStaticPath = ""
+	p.emoji.ImageStaticURL = ""
+	p.emoji.ImageContentType = ""
+	p.emoji.ImageFileSize = 0
+	p.emoji.ImagePath = ""
+	p.emoji.ImageURL = ""
+
 	// Ensure marked as not cached.
 	p.emoji.Cached = util.Ptr(false)
-}
-
-// getInstanceAccountID determines the instance account ID from
-// emoji static image storage path. returns false on failure.
-func getInstanceAccountID(staticPath string) (string, bool) {
-	matches := regexes.FilePath.FindStringSubmatch(staticPath)
-	if len(matches) < 2 {
-		return "", false
-	}
-	return matches[1], true
 }

@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/tetratelabs/wazero/api"
-	"github.com/tetratelabs/wazero/experimental"
 )
 
 func init() {
@@ -31,8 +30,7 @@ const CoreFeatures = api.CoreFeatureSIMD |
 	api.CoreFeatureNonTrappingFloatToIntConversion |
 	api.CoreFeatureMutableGlobal |
 	api.CoreFeatureReferenceTypes |
-	api.CoreFeatureSignExtensionOps |
-	experimental.CoreFeaturesThreads
+	api.CoreFeatureSignExtensionOps
 
 //go:embed ffmpeg.wasm
 var B []byte

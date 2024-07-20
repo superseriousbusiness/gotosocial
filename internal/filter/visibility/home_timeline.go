@@ -161,12 +161,13 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 		}
 
 		// Fetch next parent in conversation.
+		inReplyToID := next.InReplyToID
 		next, err = f.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
-			next.InReplyToID,
+			inReplyToID,
 		)
 		if err != nil {
-			return false, gtserror.Newf("error getting status parent %s: %w", next.InReplyToID, err)
+			return false, gtserror.Newf("error getting status parent %s: %w", inReplyToID, err)
 		}
 	}
 

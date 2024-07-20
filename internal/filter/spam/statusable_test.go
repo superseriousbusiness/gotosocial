@@ -292,7 +292,7 @@ const (
   "content": "<p><span class=\"h-card\" translate=\"no\"><a href=\"https://example.net/@nityosan\" class=\"u-url mention\">@<span>nityosan</span></a></span><br /><span class=\"h-card\" translate=\"no\"><a href=\"https://a.misskey.instance.com/@FIzxive\" class=\"u-url mention\">@<span>FIzxive</span></a></span><br /><span class=\"h-card\" translate=\"no\"><a href=\"https://another.misskey.instance.com/@mendako\" class=\"u-url mention\">@<span>mendako</span></a></span><br /><span class=\"h-card\" translate=\"no\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\">@<span>the_mighty_zork</span></a></span></p>",
   "attachment": [
     {
-      "blurhash": "LNJRdVM{00Rj%Mayt7j[4nWBofRj",
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
       "mediaType": "image/jpeg",
       "name": "",
       "type": "Document",

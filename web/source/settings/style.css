@@ -343,7 +343,7 @@ section.with-sidebar > form {
 	
 	.labelinput .border {
 		border-radius: 0.2rem;
-		border: 0.15rem solid $border_accent;
+		border: 0.15rem solid $border-accent;
 		padding: 0.3rem;
 		display: flex;
 		flex-direction: column;
@@ -867,6 +867,41 @@ button.with-padding {
 	padding: 0.5rem calc(0.5rem + $fa-fw);
 }
 
+.tab-buttons {
+	display: flex;
+	max-width: fit-content;
+	justify-content: space-between;
+	gap: 0.15rem;
+}
+
+button.tab-button {
+	border-top-left-radius: $br;
+	border-top-right-radius: $br;
+	border-bottom-left-radius: 0;
+	border-bottom-right-radius: 0;
+	box-shadow: none;
+	background: $blue1;
+
+	&:hover {
+		background: $button-hover-bg;
+	}
+
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+
+	font-size: 1rem;
+
+	@media screen and (max-width: 20rem) {
+		font-size: 0.75rem;
+	}
+
+	&.active {
+		background: $button-bg;
+		cursor: default;
+	}
+}
+
 .loading-icon {
 	align-self: flex-start;
 }
@@ -1366,6 +1401,53 @@ button.with-padding {
 		*/
 		pre, code {
 			white-space: pre-wrap;
+		}
+	}
+}
+
+.interaction-default-settings {	
+	.interaction-policy-section {
+		padding: 1rem;
+		display: none;
+		
+		&.active {
+			display: flex;
+		}
+		
+		flex-direction: column;
+		gap: 1rem;
+		border: 0.15rem solid $input-border;
+
+		fieldset {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+
+			margin: 0;
+			padding: 0.5rem 1rem 1rem 1rem;
+
+			border: $boxshadow-border;
+			border-radius: 0.1rem;
+			box-shadow: $boxshadow;
+
+			>legend {
+				display: flex;
+				gap: 0.5rem;
+				align-items: center;
+				font-weight: bold;
+				font-size: large;
+			}
+
+			hr {
+				width: 100%;
+			}
+
+			.something-else {
+				display: flex;
+				flex-direction: column;
+				gap: 0.5rem;
+				margin-top: -0.3rem;
+			}
 		}
 	}
 }

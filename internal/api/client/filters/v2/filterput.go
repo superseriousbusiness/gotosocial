@@ -289,7 +289,7 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 			}
 		}
 
-		destroy := util.PtrValueOr(formKeyword.Destroy, false)
+		destroy := util.PtrOrValue(formKeyword.Destroy, false)
 		form.Keywords[i].Destroy = &destroy
 
 		if destroy && formKeyword.ID == nil {
@@ -305,7 +305,7 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 			}
 		}
 
-		destroy := util.PtrValueOr(formStatus.Destroy, false)
+		destroy := util.PtrOrValue(formStatus.Destroy, false)
 		form.Statuses[i].Destroy = &destroy
 
 		switch {

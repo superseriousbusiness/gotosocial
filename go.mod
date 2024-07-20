@@ -12,7 +12,7 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.2
-	codeberg.org/gruf/go-ffmpreg v0.2.2
+	codeberg.org/gruf/go-ffmpreg v0.2.3
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
@@ -27,7 +27,7 @@ require (
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.6.1
 	github.com/buckket/go-blurhash v1.1.0
-	github.com/coreos/go-oidc/v3 v3.10.0
+	github.com/coreos/go-oidc/v3 v3.11.0
 	github.com/disintegration/imaging v1.6.2
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/gzip v1.0.1
@@ -53,7 +53,7 @@ require (
 	github.com/superseriousbusiness/activity v1.7.0-gts
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
-	github.com/tdewolff/minify/v2 v2.20.34
+	github.com/tdewolff/minify/v2 v2.20.37
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tetratelabs/wazero v1.7.3
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
@@ -74,6 +74,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.26.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/crypto v0.25.0
+	golang.org/x/image v0.18.0
 	golang.org/x/net v0.27.0
 	golang.org/x/oauth2 v0.21.0
 	golang.org/x/text v0.16.0
@@ -113,7 +114,7 @@ require (
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
-	github.com/go-jose/go-jose/v4 v4.0.1 // indirect
+	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
 	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
@@ -201,7 +202,6 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
 	golang.org/x/exp v0.0.0-20240222234643-814bf88cf225 // indirect
-	golang.org/x/image v0.18.0 // indirect
 	golang.org/x/mod v0.18.0 // indirect
 	golang.org/x/sync v0.7.0 // indirect
 	golang.org/x/sys v0.22.0 // indirect

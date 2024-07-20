@@ -61,8 +61,8 @@ nav:
   - "Home": "index.md"
   - "FAQ": "faq.md"
   - "User Guide":
-      - "user_guide/posts.md"
       - "user_guide/settings.md"
+      - "user_guide/posts.md"
       - "user_guide/search.md"
       - "user_guide/custom_css.md"
       - "user_guide/password_management.md"

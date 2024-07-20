@@ -192,7 +192,7 @@ func validateNormalizeCreateFilter(form *apimodel.FilterCreateRequestV2) error {
 	if err := validate.FilterTitle(form.Title); err != nil {
 		return err
 	}
-	action := util.PtrValueOr(form.FilterAction, apimodel.FilterActionWarn)
+	action := util.PtrOrValue(form.FilterAction, apimodel.FilterActionWarn)
 	if err := validate.FilterAction(action); err != nil {
 		return err
 	}
@@ -253,7 +253,7 @@ func validateNormalizeCreateFilter(form *apimodel.FilterCreateRequestV2) error {
 		if err := validate.FilterKeyword(formKeyword.Keyword); err != nil {
 			return err
 		}
-		form.Keywords[i].WholeWord = util.Ptr(util.PtrValueOr(formKeyword.WholeWord, false))
+		form.Keywords[i].WholeWord = util.Ptr(util.PtrOrValue(formKeyword.WholeWord, false))
 	}
 	for _, formStatus := range form.Statuses {
 		if err := validate.ULID(formStatus.StatusID, "status_id"); err != nil {

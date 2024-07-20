@@ -29,15 +29,16 @@ type ThreadContext struct {
 }
 
 type WebThreadContext struct {
-	// Parents in the thread.
-	Ancestors []*WebStatus `json:"ancestors"`
+	// Status around which this
+	// thread ctx was constructed.
+	Status *WebStatus
 
-	// Children in the thread.
-	Descendants []*WebStatus `json:"descendants"`
-
-	// The status around which the ancestors
-	// + descendants context was constructed.
-	Status *WebStatus `json:"-"`
+	// Ordered slice of statuses
+	// for rendering in template.
+	//
+	// Includes ancestors, target
+	// status, and descendants.
+	Statuses []*WebStatus
 
 	// Total length of
 	// the main thread.

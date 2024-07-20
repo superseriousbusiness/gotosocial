@@ -82,7 +82,7 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "first": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40",
   "id": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "totalItems": 7,
+  "totalItems": 8,
   "type": "OrderedCollection"
 }`, dst.String())
 
@@ -161,7 +161,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
   ],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
   "prev": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026min_id=01HH9KYNQPA416TNJ53NSATP40",
-  "totalItems": 7,
+  "totalItems": 8,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 
@@ -224,7 +224,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
   "id": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40&max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
   "orderedItems": [],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "totalItems": 7,
+  "totalItems": 8,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 

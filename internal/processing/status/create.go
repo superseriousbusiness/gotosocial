@@ -121,6 +121,12 @@ func (p *Processor) Create(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	// Process policy AFTER visibility as it
+	// relies on status.Visibility being set.
+	if err := processInteractionPolicy(form, requester.Settings, status); err != nil {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	if err := processLanguage(form, requester.Settings.Language, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -281,26 +287,79 @@ func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.Advanced
 	return nil
 }
 
-func processVisibility(form *apimodel.AdvancedStatusCreateForm, accountDefaultVis gtsmodel.Visibility, status *gtsmodel.Status) error {
-	// by default all flags are set to true
-	federated := true
-
-	// If visibility isn't set on the form, then just take the account default.
-	// If that's also not set, take the default for the whole instance.
-	var vis gtsmodel.Visibility
+func processVisibility(
+	form *apimodel.AdvancedStatusCreateForm,
+	accountDefaultVis gtsmodel.Visibility,
+	status *gtsmodel.Status,
+) error {
 	switch {
+	// Visibility set on form, use that.
 	case form.Visibility != "":
-		vis = typeutils.APIVisToVis(form.Visibility)
+		status.Visibility = typeutils.APIVisToVis(form.Visibility)
+
+	// Fall back to account default.
 	case accountDefaultVis != "":
-		vis = accountDefaultVis
+		status.Visibility = accountDefaultVis
+
+	// What? Fall back to global default.
 	default:
-		vis = gtsmodel.VisibilityDefault
+		status.Visibility = gtsmodel.VisibilityDefault
 	}
 
-	// Todo: sort out likeable/replyable/boostable in next PR.
-
-	status.Visibility = vis
+	// Set federated flag to form value
+	// if provided, or default to true.
+	federated := util.PtrOrValue(form.Federated, true)
 	status.Federated = &federated
+
+	return nil
+}
+
+func processInteractionPolicy(
+	_ *apimodel.AdvancedStatusCreateForm,
+	settings *gtsmodel.AccountSettings,
+	status *gtsmodel.Status,
+) error {
+	// TODO: parse policy for this
+	// status from form and prefer this.
+
+	// TODO: prevent scope widening by
+	// limiting interaction policy if
+	// inReplyTo status has a stricter
+	// interaction policy than this one.
+
+	switch status.Visibility {
+
+	case gtsmodel.VisibilityPublic:
+		// Take account's default "public" policy if set.
+		if p := settings.InteractionPolicyPublic; p != nil {
+			status.InteractionPolicy = p
+		}
+
+	case gtsmodel.VisibilityUnlocked:
+		// Take account's default "unlisted" policy if set.
+		if p := settings.InteractionPolicyUnlocked; p != nil {
+			status.InteractionPolicy = p
+		}
+
+	case gtsmodel.VisibilityFollowersOnly,
+		gtsmodel.VisibilityMutualsOnly:
+		// Take account's default followers-only policy if set.
+		// TODO: separate policy for mutuals-only vis.
+		if p := settings.InteractionPolicyFollowersOnly; p != nil {
+			status.InteractionPolicy = p
+		}
+
+	case gtsmodel.VisibilityDirect:
+		// Take account's default direct policy if set.
+		if p := settings.InteractionPolicyDirect; p != nil {
+			status.InteractionPolicy = p
+		}
+	}
+
+	// If no policy set by now, status interaction
+	// policy will be stored as nil, which just means
+	// "fall back to global default policy". We avoid
+	// setting it explicitly to save space.
 	return nil
 }
 

@@ -1,12 +1,14 @@
 <!--overview-start-->
 # GoToSocial <!-- omit in toc -->
 
+**Update regarding corporate sponsors: we are open to sponsorship arrangements with organizations that align with our values; see the conditions below**
+
 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
 
 With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles. All without being tracked or advertised to!
 
 <p align="middle">
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.png" width="300"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.webp" width="300"/>
 </p>
 
 **GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta around the beginning of 2024.
@@ -51,6 +53,7 @@ Here's a screenshot of the instance landing page!
   - [Special Thanks](#special-thanks)
 - [Sponsorship + Funding](#sponsorship--funding)
   - [Crowdfunding](#crowdfunding)
+  - [Corporate Sponsorship](#corporate-sponsorship)
   - [NLnet](#nlnet)
 - [License](#license)
 
@@ -309,6 +312,7 @@ Sloth logo by [Anna Abramek](https://abramek.art/).
 The Creative Commons Attribution-ShareAlike 4.0 International License license applies specifically to the following files and subdirectories of this repository:
 
 - [sloth logo png](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.png)
+- [sloth logo webp](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.webp)
 - [sloth logo svg](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.svg)
 - [all default avatars](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/default_avatars)
 
@@ -337,7 +341,7 @@ Thanks to everyone who has used GtS, opened an issue, suggested something, given
 
 ## Sponsorship + Funding
 
-**Please note: GoToSocial has NO CORPORATE SPONSORS and does not desire corporate sponsorship. In addition, we do not take donations from any of the following: adult websites, affiliate and review websites, casinos and gambling, insurance and financial products (credit), pharmacy products, SEO services and social media buying, VPN and proxy services, and essay writing services. Donations from such sources will be automatically rejected.**
+**Update regarding corporate sponsors: we are open to sponsorship arrangements with organizations that align with our values; see the conditions below**
 
 ### Crowdfunding
 
@@ -352,6 +356,17 @@ If you prefer, we also have an account on LiberaPay! You can find that [right he
 Crowdfunded donations to our OpenCollective and Liberapay accounts go towards paying the core team, paying server costs, and paying for GtS art, design, and other bits and bobs.
 
 💕 🦥 💕 Thank you!
+
+
+### Corporate Sponsorship
+
+GoToSocial is open to sponsorship arrangements with organizations that align with our values. To show our thanks for your support, we will display your logo, website, and a short tagline on the repository and documentation. The following caveats apply to sponsorships:
+
+1. GoToSocial project direction will always remain 100% in the hands of the core team, and will never be dictated or influenced by corporate sponsorship. This is non-negotiable. Corporations are of course free of course to suggest / request features in the same manner as any other user, but they are not given special treatment.
+
+2. Corporate sponsorship is dependent on your organization meeting our team's ethical guidelines. These are not a concrete set of rules but instead boil down to "is your company causing harm?". For example, those in the defense industry need not apply as the simple answer to that question is, "yes!".
+
+If after reading this you are still interested in supporting us, that is wonderful! Please reach out to us at admin@gotosocial.org to further discuss :)
 
 ### NLnet
 

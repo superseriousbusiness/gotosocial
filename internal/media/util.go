@@ -22,13 +22,15 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/jpeg"
 	"io"
 	"os"
+
+	"golang.org/x/image/webp"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mimetypes"
+
 	"github.com/buckket/go-blurhash"
 	"github.com/disintegration/imaging"
 )
@@ -63,8 +65,8 @@ func thumbSize(width, height int) (int, int) {
 	}
 }
 
-// jpegDecode decodes the JPEG at filepath into parsed image.Image.
-func jpegDecode(filepath string) (image.Image, error) {
+// webpDecode decodes the WebP at filepath into parsed image.Image.
+func webpDecode(filepath string) (image.Image, error) {
 	// Open the file at given path.
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -72,7 +74,7 @@ func jpegDecode(filepath string) (image.Image, error) {
 	}
 
 	// Decode image from file.
-	img, err := jpeg.Decode(file)
+	img, err := webp.Decode(file)
 
 	// Done with file.
 	_ = file.Close()
@@ -83,7 +85,7 @@ func jpegDecode(filepath string) (image.Image, error) {
 // generateBlurhash generates a blurhash for JPEG at filepath.
 func generateBlurhash(filepath string) (string, error) {
 	// Decode JPEG file at given path.
-	img, err := jpegDecode(filepath)
+	img, err := webpDecode(filepath)
 	if err != nil {
 		return "", err
 	}

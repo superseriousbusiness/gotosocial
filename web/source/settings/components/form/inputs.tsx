@@ -141,9 +141,28 @@ export interface SelectProps extends React.DetailedHTMLProps<
 	field: TextFormInputHook;
 	children?: ReactNode;
 	options: React.JSX.Element;
+
+	/**
+	 * Optional callback function that is
+	 * triggered along with the select's onChange.
+	 * 
+	 * _selectValue is the current value of
+	 * the select after onChange is triggered.
+	 * 
+	 * @param _selectValue 
+	 * @returns 
+	 */
+	onChangeCallback?: (_selectValue: string | undefined) => void;
 }
 
-export function Select({ label, field, children, options, ...props }: SelectProps) {
+export function Select({
+	label,
+	field,
+	children,
+	options,
+	onChangeCallback,
+	...props
+}: SelectProps) {
 	const { onChange, value, ref } = field;
 
 	return (
@@ -152,7 +171,12 @@ export function Select({ label, field, children, options, ...props }: SelectProp
 				{label}
 				{children}
 				<select
-					onChange={onChange}
+					onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+						onChange(e);
+						if (onChangeCallback !== undefined) {
+							onChangeCallback(e.target.value);
+						}
+					}}
 					value={value}
 					ref={ref as RefObject<HTMLSelectElement>}
 					{...props}

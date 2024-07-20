@@ -21,8 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -321,9 +319,9 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	}
 
 	var (
-		locked       = util.PtrValueOr(a.Locked, true)
-		discoverable = util.PtrValueOr(a.Discoverable, false)
-		bot          = util.PtrValueOr(a.Bot, false)
+		locked       = util.PtrOrValue(a.Locked, true)
+		discoverable = util.PtrOrValue(a.Discoverable, false)
+		bot          = util.PtrOrValue(a.Bot, false)
 	)
 
 	// Remaining properties are simple and
@@ -565,84 +563,59 @@ func (c *Converter) AppToAPIAppPublic(ctx context.Context, a *gtsmodel.Applicati
 }
 
 // AttachmentToAPIAttachment converts a gts model media attacahment into its api representation for serialization on the API.
-func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, a *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
-	apiAttachment := apimodel.Attachment{
-		ID:   a.ID,
-		Type: strings.ToLower(string(a.Type)),
-	}
+func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmodel.MediaAttachment) (apimodel.Attachment, error) {
+	var api apimodel.Attachment
+	api.Type = media.Type.String()
+	api.ID = media.ID
 
-	// Don't try to serialize meta for
-	// unknown attachments, there's no point.
-	if a.Type != gtsmodel.FileTypeUnknown {
-		apiAttachment.Meta = &apimodel.MediaMeta{
-			Original: apimodel.MediaDimensions{
-				Width:  a.FileMeta.Original.Width,
-				Height: a.FileMeta.Original.Height,
-			},
-			Small: apimodel.MediaDimensions{
-				Width:  a.FileMeta.Small.Width,
-				Height: a.FileMeta.Small.Height,
-				Size:   strconv.Itoa(a.FileMeta.Small.Width) + "x" + strconv.Itoa(a.FileMeta.Small.Height),
-				Aspect: float32(a.FileMeta.Small.Aspect),
-			},
+	// Only add file details if
+	// we have stored locally.
+	if media.File.Path != "" {
+		api.Meta = new(apimodel.MediaMeta)
+		api.Meta.Original = apimodel.MediaDimensions{
+			Width:     media.FileMeta.Original.Width,
+			Height:    media.FileMeta.Original.Height,
+			Aspect:    media.FileMeta.Original.Aspect,
+			Size:      toAPISize(media.FileMeta.Original.Width, media.FileMeta.Original.Height),
+			FrameRate: toAPIFrameRate(media.FileMeta.Original.Framerate),
+			Duration:  util.PtrOrZero(media.FileMeta.Original.Duration),
+			Bitrate:   int(util.PtrOrZero(media.FileMeta.Original.Bitrate)),
+		}
+
+		// Copy over local file URL.
+		api.URL = util.Ptr(media.URL)
+		api.TextURL = util.Ptr(media.URL)
+
+		// Set file focus details.
+		// (this doesn't make much sense if media
+		// has no image, but the API doesn't yet
+		// distinguish between zero values vs. none).
+		api.Meta.Focus = new(apimodel.MediaFocus)
+		api.Meta.Focus.X = media.FileMeta.Focus.X
+		api.Meta.Focus.Y = media.FileMeta.Focus.Y
+
+		// Only add thumbnail details if
+		// we have thumbnail stored locally.
+		if media.Thumbnail.Path != "" {
+			api.Meta.Small = apimodel.MediaDimensions{
+				Width:  media.FileMeta.Small.Width,
+				Height: media.FileMeta.Small.Height,
+				Aspect: media.FileMeta.Small.Aspect,
+				Size:   toAPISize(media.FileMeta.Small.Width, media.FileMeta.Small.Height),
+			}
+
+			// Copy over local thumbnail file URL.
+			api.PreviewURL = util.Ptr(media.Thumbnail.URL)
 		}
 	}
 
-	if i := a.Blurhash; i != "" {
-		apiAttachment.Blurhash = &i
-	}
+	// Set remaining API attachment fields.
+	api.Blurhash = util.PtrIf(media.Blurhash)
+	api.RemoteURL = util.PtrIf(media.RemoteURL)
+	api.PreviewRemoteURL = util.PtrIf(media.Thumbnail.RemoteURL)
+	api.Description = util.PtrIf(media.Description)
 
-	if i := a.URL; i != "" {
-		apiAttachment.URL = &i
-		apiAttachment.TextURL = &i
-	}
-
-	if i := a.Thumbnail.URL; i != "" {
-		apiAttachment.PreviewURL = &i
-	}
-
-	if i := a.RemoteURL; i != "" {
-		apiAttachment.RemoteURL = &i
-	}
-
-	if i := a.Thumbnail.RemoteURL; i != "" {
-		apiAttachment.PreviewRemoteURL = &i
-	}
-
-	if i := a.Description; i != "" {
-		apiAttachment.Description = &i
-	}
-
-	// Type-specific fields.
-	switch a.Type {
-
-	case gtsmodel.FileTypeImage:
-		apiAttachment.Meta.Original.Size = strconv.Itoa(a.FileMeta.Original.Width) + "x" + strconv.Itoa(a.FileMeta.Original.Height)
-		apiAttachment.Meta.Original.Aspect = float32(a.FileMeta.Original.Aspect)
-		apiAttachment.Meta.Focus = &apimodel.MediaFocus{
-			X: a.FileMeta.Focus.X,
-			Y: a.FileMeta.Focus.Y,
-		}
-
-	case gtsmodel.FileTypeVideo:
-		if i := a.FileMeta.Original.Duration; i != nil {
-			apiAttachment.Meta.Original.Duration = *i
-		}
-
-		if i := a.FileMeta.Original.Framerate; i != nil {
-			// The masto api expects this as a string in
-			// the format `integer/1`, so 30fps is `30/1`.
-			round := math.Round(float64(*i))
-			fr := strconv.Itoa(int(round))
-			apiAttachment.Meta.Original.FrameRate = fr + "/1"
-		}
-
-		if i := a.FileMeta.Original.Bitrate; i != nil {
-			apiAttachment.Meta.Original.Bitrate = int(*i)
-		}
-	}
-
-	return apiAttachment, nil
+	return api, nil
 }
 
 // MentionToAPIMention converts a gts model mention into its api (frontend) representation for serialization on the API.
@@ -681,6 +654,7 @@ func (c *Converter) MentionToAPIMention(ctx context.Context, m *gtsmodel.Mention
 // EmojiToAPIEmoji converts a gts model emoji into its api (frontend) representation for serialization on the API.
 func (c *Converter) EmojiToAPIEmoji(ctx context.Context, e *gtsmodel.Emoji) (apimodel.Emoji, error) {
 	var category string
+
 	if e.CategoryID != "" {
 		if e.Category == nil {
 			var err error
@@ -778,14 +752,15 @@ func (c *Converter) StatusToAPIStatus(
 		return nil, err
 	}
 
-	// Normalize status for the API by pruning
-	// out unknown attachment types and replacing
-	// them with a helpful message.
+	// Normalize status for API by pruning
+	// attachments that were not locally
+	// stored, replacing them with a helpful
+	// message + links to remote.
 	var aside string
-	aside, apiStatus.MediaAttachments = placeholdUnknownAttachments(apiStatus.MediaAttachments)
+	aside, apiStatus.MediaAttachments = placeholderAttachments(apiStatus.MediaAttachments)
 	apiStatus.Content += aside
 	if apiStatus.Reblog != nil {
-		aside, apiStatus.Reblog.MediaAttachments = placeholdUnknownAttachments(apiStatus.Reblog.MediaAttachments)
+		aside, apiStatus.Reblog.MediaAttachments = placeholderAttachments(apiStatus.Reblog.MediaAttachments)
 		apiStatus.Reblog.Content += aside
 	}
 
@@ -962,15 +937,15 @@ func filterableTextFields(s *gtsmodel.Status) []string {
 func filterAppliesInContext(filter *gtsmodel.Filter, filterContext statusfilter.FilterContext) bool {
 	switch filterContext {
 	case statusfilter.FilterContextHome:
-		return util.PtrValueOr(filter.ContextHome, false)
+		return util.PtrOrValue(filter.ContextHome, false)
 	case statusfilter.FilterContextNotifications:
-		return util.PtrValueOr(filter.ContextNotifications, false)
+		return util.PtrOrValue(filter.ContextNotifications, false)
 	case statusfilter.FilterContextPublic:
-		return util.PtrValueOr(filter.ContextPublic, false)
+		return util.PtrOrValue(filter.ContextPublic, false)
 	case statusfilter.FilterContextThread:
-		return util.PtrValueOr(filter.ContextThread, false)
+		return util.PtrOrValue(filter.ContextThread, false)
 	case statusfilter.FilterContextAccount:
-		return util.PtrValueOr(filter.ContextAccount, false)
+		return util.PtrOrValue(filter.ContextAccount, false)
 	}
 	return false
 }
@@ -1062,14 +1037,36 @@ func (c *Converter) StatusToWebStatus(
 		webStatus.PollOptions = PollOptions
 	}
 
+	// Mark local.
+	webStatus.Local = *s.Local
+
 	// Set additional templating
 	// variables on media attachments.
-	for _, a := range webStatus.MediaAttachments {
-		a.Sensitive = webStatus.Sensitive
+
+	// Get gtsmodel attachments
+	// into a convenient map.
+	ogAttachments := make(
+		map[string]*gtsmodel.MediaAttachment,
+		len(s.Attachments),
+	)
+	for _, a := range s.Attachments {
+		ogAttachments[a.ID] = a
 	}
 
-	// Mark this as a local status.
-	webStatus.Local = *s.Local
+	// Convert each API attachment
+	// into a web attachment.
+	webStatus.MediaAttachments = make(
+		[]*apimodel.WebAttachment,
+		len(apiStatus.MediaAttachments),
+	)
+	for i, apiAttachment := range apiStatus.MediaAttachments {
+		ogAttachment := ogAttachments[apiAttachment.ID]
+		webStatus.MediaAttachments[i] = &apimodel.WebAttachment{
+			Attachment: apiAttachment,
+			Sensitive:  apiStatus.Sensitive,
+			MIMEType:   ogAttachment.File.ContentType,
+		}
+	}
 
 	return webStatus, nil
 }
@@ -1212,6 +1209,20 @@ func (c *Converter) baseStatusToFrontend(
 		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
+	// Take status's interaction policy, or
+	// fall back to default for its visibility.
+	var p *gtsmodel.InteractionPolicy
+	if s.InteractionPolicy != nil {
+		p = s.InteractionPolicy
+	} else {
+		p = gtsmodel.DefaultInteractionPolicyFor(s.Visibility)
+	}
+
+	apiInteractionPolicy, err := c.InteractionPolicyToAPIInteractionPolicy(ctx, p, s, requestingAccount)
+	if err != nil {
+		return nil, gtserror.Newf("error converting interaction policy: %w", err)
+	}
+
 	apiStatus := &apimodel.Status{
 		ID:                 s.ID,
 		CreatedAt:          util.FormatISO8601(s.CreatedAt),
@@ -1236,6 +1247,7 @@ func (c *Converter) baseStatusToFrontend(
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
 		Text:               s.Text,
+		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
 	// Nullable fields.
@@ -1454,7 +1466,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		instance.ThumbnailType = iAccount.AvatarMediaAttachment.File.ContentType
 		instance.ThumbnailDescription = iAccount.AvatarMediaAttachment.Description
 	} else {
-		instance.Thumbnail = config.GetProtocol() + "://" + i.Domain + "/assets/logo.png" // default thumb
+		instance.Thumbnail = config.GetProtocol() + "://" + i.Domain + "/assets/logo.webp" // default thumb
 	}
 
 	// contact account
@@ -1524,7 +1536,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		thumbnail.Description = iAccount.AvatarMediaAttachment.Description
 		thumbnail.Blurhash = iAccount.AvatarMediaAttachment.Blurhash
 	} else {
-		thumbnail.URL = config.GetProtocol() + "://" + i.Domain + "/assets/logo.png" // default thumb
+		thumbnail.URL = config.GetProtocol() + "://" + i.Domain + "/assets/logo.webp" // default thumb
 	}
 
 	instance.Thumbnail = thumbnail
@@ -2094,7 +2106,7 @@ func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeywor
 		ID:           filterKeyword.ID,
 		Phrase:       filterKeyword.Keyword,
 		Context:      filterToAPIFilterContexts(filter),
-		WholeWord:    util.PtrValueOr(filterKeyword.WholeWord, false),
+		WholeWord:    util.PtrOrValue(filterKeyword.WholeWord, false),
 		ExpiresAt:    filterExpiresAtToAPIFilterExpiresAt(filter.ExpiresAt),
 		Irreversible: filter.Action == gtsmodel.FilterActionHide,
 	}, nil
@@ -2132,19 +2144,19 @@ func filterExpiresAtToAPIFilterExpiresAt(expiresAt time.Time) *string {
 
 func filterToAPIFilterContexts(filter *gtsmodel.Filter) []apimodel.FilterContext {
 	apiContexts := make([]apimodel.FilterContext, 0, apimodel.FilterContextNumValues)
-	if util.PtrValueOr(filter.ContextHome, false) {
+	if util.PtrOrValue(filter.ContextHome, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextHome)
 	}
-	if util.PtrValueOr(filter.ContextNotifications, false) {
+	if util.PtrOrValue(filter.ContextNotifications, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextNotifications)
 	}
-	if util.PtrValueOr(filter.ContextPublic, false) {
+	if util.PtrOrValue(filter.ContextPublic, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextPublic)
 	}
-	if util.PtrValueOr(filter.ContextThread, false) {
+	if util.PtrOrValue(filter.ContextThread, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextThread)
 	}
-	if util.PtrValueOr(filter.ContextAccount, false) {
+	if util.PtrOrValue(filter.ContextAccount, false) {
 		apiContexts = append(apiContexts, apimodel.FilterContextAccount)
 	}
 	return apiContexts
@@ -2165,7 +2177,7 @@ func (c *Converter) FilterKeywordToAPIFilterKeyword(ctx context.Context, filterK
 	return &apimodel.FilterKeyword{
 		ID:        filterKeyword.ID,
 		Keyword:   filterKeyword.Keyword,
-		WholeWord: util.PtrValueOr(filterKeyword.WholeWord, false),
+		WholeWord: util.PtrOrValue(filterKeyword.WholeWord, false),
 	}
 }
 
@@ -2281,4 +2293,112 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 		}
 	}
 	return apiThemes
+}
+
+// Convert the given gtsmodel policy
+// into an apimodel interaction policy.
+//
+// Provided status can be nil to convert a
+// policy without a particular status in mind.
+//
+// RequestingAccount can also be nil for
+// unauthorized requests (web, public api etc).
+func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
+	ctx context.Context,
+	policy *gtsmodel.InteractionPolicy,
+	_ *gtsmodel.Status, // Used in upcoming PR.
+	_ *gtsmodel.Account, // Used in upcoming PR.
+) (*apimodel.InteractionPolicy, error) {
+	apiPolicy := &apimodel.InteractionPolicy{
+		CanFavourite: apimodel.PolicyRules{
+			Always:       policyValsToAPIPolicyVals(policy.CanLike.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanLike.WithApproval),
+		},
+		CanReply: apimodel.PolicyRules{
+			Always:       policyValsToAPIPolicyVals(policy.CanReply.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanReply.WithApproval),
+		},
+		CanReblog: apimodel.PolicyRules{
+			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.Always),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.WithApproval),
+		},
+	}
+
+	return apiPolicy, nil
+}
+
+func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValue {
+
+	var (
+		valsLen = len(vals)
+
+		// Use a map to deduplicate added vals as we go.
+		addedVals = make(map[apimodel.PolicyValue]struct{}, valsLen)
+
+		// Vals we'll be returning.
+		apiVals = make([]apimodel.PolicyValue, 0, valsLen)
+	)
+
+	for _, policyVal := range vals {
+		switch policyVal {
+
+		case gtsmodel.PolicyValueAuthor:
+			// Author can do this.
+			newVal := apimodel.PolicyValueAuthor
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueMentioned:
+			// Mentioned can do this.
+			newVal := apimodel.PolicyValueMentioned
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueMutuals:
+			// Mutuals can do this.
+			newVal := apimodel.PolicyValueMutuals
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueFollowing:
+			// Following can do this.
+			newVal := apimodel.PolicyValueFollowing
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValueFollowers:
+			// Followers can do this.
+			newVal := apimodel.PolicyValueFollowers
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		case gtsmodel.PolicyValuePublic:
+			// Public can do this.
+			newVal := apimodel.PolicyValuePublic
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+
+		default:
+			// Specific URI of ActivityPub Actor.
+			newVal := apimodel.PolicyValue(policyVal)
+			if _, added := addedVals[newVal]; !added {
+				apiVals = append(apiVals, newVal)
+				addedVals[newVal] = struct{}{}
+			}
+		}
+	}
+
+	return apiVals
 }

@@ -102,6 +102,8 @@ type Status struct {
 	Text string `json:"text,omitempty"`
 	// A list of filters that matched this status and why they matched, if there are any such filters.
 	Filtered []FilterResult `json:"filtered,omitempty"`
+	// The interaction policy for this status, as set by the status author.
+	InteractionPolicy InteractionPolicy `json:"interaction_policy"`
 }
 
 // WebStatus is like *model.Status, but contains
@@ -110,6 +112,10 @@ type Status struct {
 // swagger:ignore
 type WebStatus struct {
 	*Status
+
+	// Web version of media
+	// attached to this status.
+	MediaAttachments []*WebAttachment `json:"media_attachments"`
 
 	// Template-ready language tag and
 	// string, based on *status.Language.
@@ -126,8 +132,17 @@ type WebStatus struct {
 	// display this status in the web view.
 	Indent int
 
-	// This status is the first status after
-	// the "main" thread, so it and everything
+	// This status is the last visible status
+	// in the main thread, so everything below
+	// can be considered "replies".
+	ThreadLastMain bool
+
+	// This status is the one around which
+	// the thread context was constructed.
+	ThreadContextStatus bool
+
+	// This status is the first visibile status
+	// after the "main" thread, so it and everything
 	// below it can be considered "replies".
 	ThreadFirstReply bool
 }
