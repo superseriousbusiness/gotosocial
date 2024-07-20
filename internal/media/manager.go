@@ -38,8 +38,9 @@ var SupportedMIMETypes = []string{
 	"image/gif",  // .gif
 	"image/webp", // .webp
 
-	"audio/mp2", // .mp2
-	"audio/mp3", // .mp3
+	"audio/mp2",    // .mp2
+	"audio/mp3",    // .mp3
+	"audio/x-flac", // .flac
 
 	"video/x-msvideo", // .avi
 
