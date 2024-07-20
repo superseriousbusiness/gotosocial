@@ -24,7 +24,7 @@ import sanitize from "sanitize-html";
 
 export function FakeStatus({ children }) {
 	const { data: account = {
-		avatar: "/assets/default_avatars/GoToSocial_icon1.png",
+		avatar: "/assets/default_avatars/GoToSocial_icon1.webp",
 		display_name: "",
 		username: ""
 	} } = useVerifyCredentialsQuery();

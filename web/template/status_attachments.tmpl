@@ -62,7 +62,7 @@
 />
 {{- else }}
 <img
-    src="/assets/logo.png"
+    src="/assets/logo.webp"
     loading="lazy"
     {{- if .Description }}
     alt="{{- .Description -}}"
@@ -134,7 +134,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 data-pswp-width="{{- $media.Meta.Small.Width -}}px"
                 data-pswp-height="{{- $media.Meta.Small.Height -}}px"
                 {{- else }}
-                poster="/assets/logo.png"
+                poster="/assets/logo.webp"
                 width="518px"
                 height="460px"
                 {{- end }}
