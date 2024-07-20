@@ -8,7 +8,7 @@ GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server
 With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles. All without being tracked or advertised to!
 
 <p align="middle">
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.png" width="300"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.webp" width="300"/>
 </p>
 
 **GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta around the beginning of 2024.
@@ -53,6 +53,7 @@ Here's a screenshot of the instance landing page!
   - [Special Thanks](#special-thanks)
 - [Sponsorship + Funding](#sponsorship--funding)
   - [Crowdfunding](#crowdfunding)
+  - [Corporate Sponsorship](#corporate-sponsorship)
   - [NLnet](#nlnet)
 - [License](#license)
 
@@ -311,6 +312,7 @@ Sloth logo by [Anna Abramek](https://abramek.art/).
 The Creative Commons Attribution-ShareAlike 4.0 International License license applies specifically to the following files and subdirectories of this repository:
 
 - [sloth logo png](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.png)
+- [sloth logo webp](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.webp)
 - [sloth logo svg](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.svg)
 - [all default avatars](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/default_avatars)
 

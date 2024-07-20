@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-const defaultHeaderPath = "/assets/default_header.png"
+const defaultHeaderPath = "/assets/default_header.webp"
 
 // populateDefaultAvatars returns a slice of standard avatars found
 // in the path [web-assets-base-dir]/default_avatars. The slice
@@ -73,7 +73,7 @@ func populateDefaultAvatars() (defaultAvatars []string) {
 		// take only files with simple extensions
 		// that we know will work OK as avatars
 		switch strings.ToLower(extension) {
-		case "jpeg", "jpg", "gif", "png":
+		case "jpeg", "jpg", "gif", "png", "webp":
 			avatarURL := config.GetProtocol() + "://" + config.GetHost() + "/assets/default_avatars/" + fileName
 			defaultAvatars = append(defaultAvatars, avatarURL)
 		default:
