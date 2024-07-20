@@ -52,8 +52,8 @@ codeberg.org/gruf/go-fastcopy v1.1.2 h1:YwmYXPsyOcRBxKEE2+w1bGAZfclHVaPijFsOVOcn
 codeberg.org/gruf/go-fastcopy v1.1.2/go.mod h1:GDDYR0Cnb3U/AIfGM3983V/L+GN+vuwVMvrmVABo21s=
 codeberg.org/gruf/go-fastpath/v2 v2.0.0 h1:iAS9GZahFhyWEH0KLhFEJR+txx1ZhMXxYzu2q5Qo9c0=
 codeberg.org/gruf/go-fastpath/v2 v2.0.0/go.mod h1:3pPqu5nZjpbRrOqvLyAK7puS1OfEtQvjd6342Cwz56Q=
-codeberg.org/gruf/go-ffmpreg v0.2.2 h1:K4I/7+BuzPLOVjL3hzTFdL8Z9wC0oRCK3xMKNVE86TE=
-codeberg.org/gruf/go-ffmpreg v0.2.2/go.mod h1:oPMfBkOK7xmR/teT/dKW6SeMFpRos9ceR/OuUrxBfcQ=
+codeberg.org/gruf/go-ffmpreg v0.2.3 h1:6nKpR4KzAhyWHe5E1YatqogZUZbmCmUjwv6qST/P1Ks=
+codeberg.org/gruf/go-ffmpreg v0.2.3/go.mod h1:oPMfBkOK7xmR/teT/dKW6SeMFpRos9ceR/OuUrxBfcQ=
 codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf h1:84s/ii8N6lYlskZjHH+DG6jyia8w2mXMZlRwFn8Gs3A=
 codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf/go.mod h1:zZAICsp5rY7+hxnws2V0ePrWxE0Z2Z/KXcN3p/RQCfk=
 codeberg.org/gruf/go-kv v1.6.4 h1:3NZiW8HVdBM3kpOiLb7XfRiihnzZWMAixdCznguhILk=
