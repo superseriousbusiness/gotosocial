@@ -119,7 +119,7 @@ func (suite *AccountProfileTestSuite) TestDeleteHeader() {
 		http.StatusOK,
 	)
 	if suite.NoError(err) {
-		suite.Equal("http://localhost:8080/assets/default_header.png", account.Header)
+		suite.Equal("http://localhost:8080/assets/default_header.webp", account.Header)
 	}
 }
 
@@ -132,7 +132,7 @@ func (suite *AccountProfileTestSuite) TestDeleteNonexistentHeader() {
 		http.StatusOK,
 	)
 	if suite.NoError(err) {
-		suite.Equal("http://localhost:8080/assets/default_header.png", account.Header)
+		suite.Equal("http://localhost:8080/assets/default_header.webp", account.Header)
 	}
 }
 
