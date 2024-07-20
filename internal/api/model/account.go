@@ -110,17 +110,27 @@ type Account struct {
 	// If set, indicates that this account is currently inactive, and has migrated to the given account.
 	// Key/value omitted for accounts that haven't moved, and for suspended accounts.
 	Moved *Account `json:"moved,omitempty"`
+}
 
-	// Additional fields not exposed via JSON
-	// (used only internally for templating etc).
+// WebAccount is like Account, but with
+// additional fields not exposed via JSON;
+// used only internally for templating etc.
+//
+// swagger:ignore
+type WebAccount struct {
+	*Account
 
 	// Proper attachment model for the avatar.
 	//
-	// Only set if this model was converted via
-	// AccountToWebAccount, AND this account had
-	// an avatar set (and not just the default
-	// "blank" avatar image.)
-	AvatarAttachment *Attachment `json:"-"`
+	// Only set if this account had an avatar set
+	// (and not just the default "blank" image.)
+	AvatarAttachment *WebAttachment `json:"-"`
+
+	// Proper attachment model for the header.
+	//
+	// Only set if this account had a header set
+	// (and not just the default "blank" image.)
+	HeaderAttachment *WebAttachment `json:"-"`
 }
 
 // MutedAccount extends Account with a field used only by the muted user list.

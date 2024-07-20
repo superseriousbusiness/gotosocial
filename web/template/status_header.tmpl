@@ -32,13 +32,23 @@
         title="Open remote profile (opens in a new window)"
     >
     {{- end }}
-        <img
+        <picture
             class="avatar"
             aria-hidden="true"
-            src="{{- .Avatar -}}"
-            alt="Avatar for {{ .Username -}}"
-            title="Avatar for {{ .Username -}}"
         >
+            {{- if .AvatarAttachment }}
+            <source
+                srcset="{{- .AvatarStatic -}}"
+                type="{{- .AvatarAttachment.PreviewMIMEType -}}"
+                media="(prefers-reduced-motion: reduce)"
+            />
+            {{- end }}
+            <img
+                src="{{- .Avatar -}}"
+                alt="Avatar for {{ .Username -}}"
+                title="Avatar for {{ .Username -}}"
+            >
+        </picture>
         <div class="author-strap">
             <span class="displayname text-cutoff">
                 {{- if .DisplayName -}}

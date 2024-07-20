@@ -170,22 +170,47 @@ func (c *Converter) AccountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 func (c *Converter) AccountToWebAccount(
 	ctx context.Context,
 	a *gtsmodel.Account,
-) (*apimodel.Account, error) {
-	webAccount, err := c.AccountToAPIAccountPublic(ctx, a)
+) (*apimodel.WebAccount, error) {
+	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
 		return nil, err
 	}
 
+	webAccount := &apimodel.WebAccount{
+		Account: apiAccount,
+	}
+
 	// Set additional avatar information for
-	// serving the avatar in a nice photobox.
-	if a.AvatarMediaAttachment != nil {
-		avatarAttachment, err := c.AttachmentToAPIAttachment(ctx, a.AvatarMediaAttachment)
+	// serving the avatar in a nice <picture>.
+	if ogAvi := a.AvatarMediaAttachment; ogAvi != nil {
+		avatarAttachment, err := c.AttachmentToAPIAttachment(ctx, ogAvi)
 		if err != nil {
 			// This is just extra data so just
 			// log but don't return any error.
 			log.Errorf(ctx, "error converting account avatar attachment: %v", err)
 		} else {
-			webAccount.AvatarAttachment = &avatarAttachment
+			webAccount.AvatarAttachment = &apimodel.WebAttachment{
+				Attachment:      &avatarAttachment,
+				MIMEType:        ogAvi.File.ContentType,
+				PreviewMIMEType: ogAvi.Thumbnail.ContentType,
+			}
+		}
+	}
+
+	// Set additional header information for
+	// serving the header in a nice <picture>.
+	if ogHeader := a.HeaderMediaAttachment; ogHeader != nil {
+		headerAttachment, err := c.AttachmentToAPIAttachment(ctx, ogHeader)
+		if err != nil {
+			// This is just extra data so just
+			// log but don't return any error.
+			log.Errorf(ctx, "error converting account header attachment: %v", err)
+		} else {
+			webAccount.HeaderAttachment = &apimodel.WebAttachment{
+				Attachment:      &headerAttachment,
+				MIMEType:        ogHeader.File.ContentType,
+				PreviewMIMEType: ogHeader.Thumbnail.ContentType,
+			}
 		}
 	}
 
@@ -747,7 +772,15 @@ func (c *Converter) StatusToAPIStatus(
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Status, error) {
-	apiStatus, err := c.statusToFrontend(ctx, s, requestingAccount, filterContext, filters, mutes)
+	apiStatus, err := c.statusToFrontend(
+		ctx,
+		s,
+		requestingAccount, // Can be nil.
+		filterContext,     // Can be empty.
+		filters,
+		mutes,
+		false, // This is not a web status.
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -958,20 +991,25 @@ func (c *Converter) StatusToWebStatus(
 	ctx context.Context,
 	s *gtsmodel.Status,
 ) (*apimodel.WebStatus, error) {
-	apiStatus, err := c.statusToFrontend(
-		ctx,
-		s,
-		nil, // No authed requester.
-		statusfilter.FilterContextNone,
-		nil, // No filters.
-		nil, // No mutes.
+	apiStatus, err := c.statusToFrontend(ctx, s,
+		nil,                            // No authed requester.
+		statusfilter.FilterContextNone, // No filters.
+		nil,                            // No filters.
+		nil,                            // No mutes.
+		true,                           // Web status.
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	webAccount, err := c.AccountToWebAccount(ctx, s.Account)
+	if err != nil {
+		return nil, err
+	}
+
 	webStatus := &apimodel.WebStatus{
-		Status: apiStatus,
+		Status:  apiStatus,
+		Account: webAccount,
 	}
 
 	// Whack a newline before and after each "pre" to make it easier to outdent it.
@@ -1062,9 +1100,10 @@ func (c *Converter) StatusToWebStatus(
 	for i, apiAttachment := range apiStatus.MediaAttachments {
 		ogAttachment := ogAttachments[apiAttachment.ID]
 		webStatus.MediaAttachments[i] = &apimodel.WebAttachment{
-			Attachment: apiAttachment,
-			Sensitive:  apiStatus.Sensitive,
-			MIMEType:   ogAttachment.File.ContentType,
+			Attachment:      apiAttachment,
+			Sensitive:       apiStatus.Sensitive,
+			MIMEType:        ogAttachment.File.ContentType,
+			PreviewMIMEType: ogAttachment.Thumbnail.ContentType,
 		}
 	}
 
@@ -1097,6 +1136,7 @@ func (c *Converter) statusToFrontend(
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
+	web bool,
 ) (
 	*apimodel.Status,
 	error,
@@ -1107,6 +1147,7 @@ func (c *Converter) statusToFrontend(
 		filterContext,
 		filters,
 		mutes,
+		web,
 	)
 	if err != nil {
 		return nil, err
@@ -1119,6 +1160,7 @@ func (c *Converter) statusToFrontend(
 			filterContext,
 			filters,
 			mutes,
+			web,
 		)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
@@ -1149,6 +1191,7 @@ func (c *Converter) baseStatusToFrontend(
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
+	web bool,
 ) (
 	*apimodel.Status,
 	error,
@@ -1169,9 +1212,21 @@ func (c *Converter) baseStatusToFrontend(
 		}
 	}
 
-	apiAuthorAccount, err := c.AccountToAPIAccountPublic(ctx, s.Account)
+	var (
+		apiAuthorAccount *apimodel.Account
+		err              error
+	)
+
+	// Only bother converting the author account if
+	// this is an API status and not a web status.
+	//
+	// If it's a web status, the web function will
+	// convert the account into a web account instead.
+	if !web {
+		apiAuthorAccount, err = c.AccountToAPIAccountPublic(ctx, s.Account)
 	if err != nil {
 		return nil, gtserror.Newf("error converting status author: %w", err)
+		}
 	}
 
 	repliesCount, err := c.state.DB.CountStatusReplies(ctx, s.ID)

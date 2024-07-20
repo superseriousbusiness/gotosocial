@@ -98,7 +98,7 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 }
 
 // GetWeb returns the web model of a local account by username.
-func (p *Processor) GetWeb(ctx context.Context, username string) (*apimodel.Account, gtserror.WithCode) {
+func (p *Processor) GetWeb(ctx context.Context, username string) (*apimodel.WebAccount, gtserror.WithCode) {
 	targetAccount, err := p.state.DB.GetAccountByUsernameDomain(ctx, username, "")
 	if err != nil {
 		if errors.Is(err, db.ErrNoEntries) {

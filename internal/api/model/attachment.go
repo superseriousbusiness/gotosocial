@@ -107,6 +107,10 @@ type WebAttachment struct {
 	// MIME type of
 	// the attachment.
 	MIMEType string
+
+	// MIME type of
+	// the thumbnail.
+	PreviewMIMEType string
 }
 
 // MediaMeta models media metadata.

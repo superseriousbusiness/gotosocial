@@ -108,7 +108,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Ensure status actually belongs to target account.
-	if context.Status.GetAccountID() != targetAccount.ID {
+	if context.Status.Account.ID != targetAccount.ID {
 		err := fmt.Errorf("target account %s does not own status %s", targetUsername, targetStatusID)
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
 		return
