@@ -1224,8 +1224,8 @@ func (c *Converter) baseStatusToFrontend(
 	// convert the account into a web account instead.
 	if !web {
 		apiAuthorAccount, err = c.AccountToAPIAccountPublic(ctx, s.Account)
-	if err != nil {
-		return nil, gtserror.Newf("error converting status author: %w", err)
+		if err != nil {
+			return nil, gtserror.Newf("error converting status author: %w", err)
 		}
 	}
 
