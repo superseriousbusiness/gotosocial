@@ -21,11 +21,9 @@ import (
 	"context"
 
 	ffprobelib "codeberg.org/gruf/go-ffmpreg/embed/ffprobe"
-	"codeberg.org/gruf/go-ffmpreg/util"
 	"codeberg.org/gruf/go-ffmpreg/wasm"
 
 	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
@@ -60,13 +58,6 @@ var ffprobePool = wasmInstancePool{
 
 			// Prepare default "env" host module.
 			env := rt.NewHostModuleBuilder("env")
-			env = env.NewFunctionBuilder().
-				WithGoModuleFunction(
-					api.GoModuleFunc(util.Wasm_Tempnam),
-					[]api.ValueType{api.ValueTypeI32, api.ValueTypeI32},
-					[]api.ValueType{api.ValueTypeI32},
-				).
-				Export("tempnam")
 
 			// Instantiate "env" module in our runtime.
 			_, err := env.Instantiate(context.Background())
