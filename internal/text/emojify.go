@@ -43,6 +43,9 @@ func EmojifyWeb(emojis []apimodel.Emoji, html template.HTML) template.HTML {
 				buf.WriteString(`class="emoji" `)
 				buf.WriteString(`srcset="` + staticURL + `" `)
 				buf.WriteString(`type="image/png" `)
+				// Show this version when user
+				// doesn't want an animated emoji.
+				buf.WriteString(`media="(prefers-reduced-motion: reduce)" `)
 				// Limit size to avoid showing
 				// huge emojis when unstyled.
 				buf.WriteString(`width="25" height="25" `)
