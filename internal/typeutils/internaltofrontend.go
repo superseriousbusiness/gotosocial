@@ -794,7 +794,7 @@ func (c *Converter) StatusToAPIStatus(
 	// Convert author of boosted
 	// status (if set) to API model.
 	if apiStatus.Reblog != nil {
-		boostAcct, err := c.AccountToAPIAccountPublic(ctx, s.Account)
+		boostAcct, err := c.AccountToAPIAccountPublic(ctx, s.BoostOfAccount)
 		if err != nil {
 			return nil, gtserror.Newf("error converting boost acct: %w", err)
 		}
