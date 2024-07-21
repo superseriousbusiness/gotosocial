@@ -779,10 +779,26 @@ func (c *Converter) StatusToAPIStatus(
 		filterContext,     // Can be empty.
 		filters,
 		mutes,
-		false, // This is not a web status.
 	)
 	if err != nil {
 		return nil, err
+	}
+
+	// Convert author to API model.
+	acct, err := c.AccountToAPIAccountPublic(ctx, s.Account)
+	if err != nil {
+		return nil, gtserror.Newf("error converting status acct: %w", err)
+	}
+	apiStatus.Account = acct
+
+	// Convert author of boosted
+	// status (if set) to API model.
+	if apiStatus.Reblog != nil {
+		boostAcct, err := c.AccountToAPIAccountPublic(ctx, s.Account)
+		if err != nil {
+			return nil, gtserror.Newf("error converting boost acct: %w", err)
+		}
+		apiStatus.Reblog.Account = boostAcct
 	}
 
 	// Normalize status for API by pruning
@@ -996,20 +1012,20 @@ func (c *Converter) StatusToWebStatus(
 		statusfilter.FilterContextNone, // No filters.
 		nil,                            // No filters.
 		nil,                            // No mutes.
-		true,                           // Web status.
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	webAccount, err := c.AccountToWebAccount(ctx, s.Account)
+	// Convert status author to web model.
+	acct, err := c.AccountToWebAccount(ctx, s.Account)
 	if err != nil {
 		return nil, err
 	}
 
 	webStatus := &apimodel.WebStatus{
 		Status:  apiStatus,
-		Account: webAccount,
+		Account: acct,
 	}
 
 	// Whack a newline before and after each "pre" to make it easier to outdent it.
@@ -1129,6 +1145,9 @@ func (c *Converter) StatusToAPIStatusSource(ctx context.Context, s *gtsmodel.Sta
 // parsing a status into its initial frontend representation.
 //
 // Requesting account can be nil.
+//
+// This function also doesn't handle converting the
+// account to api/web model -- the caller must do that.
 func (c *Converter) statusToFrontend(
 	ctx context.Context,
 	status *gtsmodel.Status,
@@ -1136,7 +1155,6 @@ func (c *Converter) statusToFrontend(
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-	web bool,
 ) (
 	*apimodel.Status,
 	error,
@@ -1147,7 +1165,6 @@ func (c *Converter) statusToFrontend(
 		filterContext,
 		filters,
 		mutes,
-		web,
 	)
 	if err != nil {
 		return nil, err
@@ -1160,7 +1177,6 @@ func (c *Converter) statusToFrontend(
 			filterContext,
 			filters,
 			mutes,
-			web,
 		)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
@@ -1184,6 +1200,9 @@ func (c *Converter) statusToFrontend(
 // baseStatusToFrontend performs the main logic
 // of statusToFrontend() without handling of boost
 // logic, to prevent *possible* recursion issues.
+//
+// This function also doesn't handle converting the
+// account to api/web model -- the caller must do that.
 func (c *Converter) baseStatusToFrontend(
 	ctx context.Context,
 	s *gtsmodel.Status,
@@ -1191,7 +1210,6 @@ func (c *Converter) baseStatusToFrontend(
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-	web bool,
 ) (
 	*apimodel.Status,
 	error,
@@ -1209,23 +1227,6 @@ func (c *Converter) baseStatusToFrontend(
 
 		default:
 			log.Errorf(ctx, "error(s) populating status, will continue: %v", err)
-		}
-	}
-
-	var (
-		apiAuthorAccount *apimodel.Account
-		err              error
-	)
-
-	// Only bother converting the author account if
-	// this is an API status and not a web status.
-	//
-	// If it's a web status, the web function will
-	// convert the account into a web account instead.
-	if !web {
-		apiAuthorAccount, err = c.AccountToAPIAccountPublic(ctx, s.Account)
-		if err != nil {
-			return nil, gtserror.Newf("error converting status author: %w", err)
 		}
 	}
 
@@ -1295,7 +1296,7 @@ func (c *Converter) baseStatusToFrontend(
 		Content:            s.Content,
 		Reblog:             nil, // Set below.
 		Application:        nil, // Set below.
-		Account:            apiAuthorAccount,
+		Account:            nil, // Caller must do this.
 		MediaAttachments:   apiAttachments,
 		Mentions:           apiMentions,
 		Tags:               apiTags,
