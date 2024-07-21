@@ -187,18 +187,20 @@ input, select, textarea, .input {
 	margin: -0.2em 0.02em 0;
 	object-fit: contain;
 	vertical-align: middle;
-	transition: 0.1s;
-
-	/*
-		Enlarge emojis on hover to give
-		viewer a good look at them.
-	*/
-	&:hover, &:active {
-		transform: scale(2);
-		background-color: $bg;
-		box-shadow: $boxshadow;
-		border: $boxshadow-border;
-		border-radius: $br-inner;
+	
+	@media (prefers-reduced-motion: no-preference) {
+		/*
+			Enlarge emojis on hover to give
+			viewer a good look at them.
+		*/
+		transition: 0.1s;
+		&:hover, &:active {
+			transform: scale(2);
+			background-color: $bg;
+			box-shadow: $boxshadow;
+			border: $boxshadow-border;
+			border-radius: $br-inner;
+		}
 	}
 }
 

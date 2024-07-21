@@ -981,28 +981,6 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
   "pinned": false,
   "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e",
   "reblog": null,
-  "account": {
-    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
-    "username": "Some_User",
-    "acct": "Some_User@example.org",
-    "display_name": "some user",
-    "locked": true,
-    "discoverable": true,
-    "bot": false,
-    "created_at": "2020-08-10T12:13:28.000Z",
-    "note": "i'm a real son of a gun",
-    "url": "http://example.org/@Some_User",
-    "avatar": "",
-    "avatar_static": "",
-    "header": "http://localhost:8080/assets/default_header.webp",
-    "header_static": "http://localhost:8080/assets/default_header.webp",
-    "followers_count": 0,
-    "following_count": 0,
-    "statuses_count": 1,
-    "last_status_at": "2023-11-02T10:44:25.000Z",
-    "emojis": [],
-    "fields": []
-  },
   "mentions": [
     {
       "id": "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -1035,6 +1013,28 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "with_approval": []
     }
   },
+  "account": {
+    "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
+    "username": "Some_User",
+    "acct": "Some_User@example.org",
+    "display_name": "some user",
+    "locked": true,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2020-08-10T12:13:28.000Z",
+    "note": "i'm a real son of a gun",
+    "url": "http://example.org/@Some_User",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
+    "followers_count": 0,
+    "following_count": 0,
+    "statuses_count": 1,
+    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "emojis": [],
+    "fields": []
+  },
   "media_attachments": [
     {
       "id": "01HE7Y3C432WRSNS10EZM86SA5",
@@ -1065,7 +1065,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "description": "Photograph of a sloth, Public Domain.",
       "blurhash": "LKE3VIw}0KD%a2o{M|t7NFWps:t7",
       "Sensitive": true,
-      "MIMEType": "image/jpg"
+      "MIMEType": "image/jpg",
+      "PreviewMIMEType": "image/webp"
     },
     {
       "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
@@ -1079,7 +1080,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "description": "SVG line art of a sloth, public domain",
       "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
       "Sensitive": true,
-      "MIMEType": ""
+      "MIMEType": "",
+      "PreviewMIMEType": ""
     },
     {
       "id": "01HE88YG74PVAB81PX2XA9F3FG",
@@ -1093,7 +1095,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "description": "Jolly salsa song, public domain.",
       "blurhash": null,
       "Sensitive": true,
-      "MIMEType": ""
+      "MIMEType": "",
+      "PreviewMIMEType": ""
     }
   ],
   "LanguageTag": "en",

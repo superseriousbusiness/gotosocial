@@ -51,13 +51,15 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 		Languages:     []string{"en"},
 	})
 
-	accountMeta := baseMeta.WithAccount(&apimodel.Account{
+	acct := &apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
 		Note:        "<p>This is my profile, read it and weep! Weep then!</p>",
 		Username:    "example_account",
-	})
+	}
+
+	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
 		Title:                "example person!!, @example_account@example.org",
@@ -84,13 +86,15 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 		Languages:     []string{"en"},
 	})
 
-	accountMeta := baseMeta.WithAccount(&apimodel.Account{
+	acct := &apimodel.Account{
 		Acct:        "example_account",
 		DisplayName: "example person!!",
 		URL:         "https://example.org/@example_account",
 		Note:        "", // <- empty
 		Username:    "example_account",
-	})
+	}
+
+	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
 		Title:                "example person!!, @example_account@example.org",

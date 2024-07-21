@@ -32,20 +32,44 @@ func EmojifyWeb(emojis []apimodel.Emoji, html template.HTML) template.HTML {
 	out := emojify(
 		emojis,
 		string(html),
-		func(url, code string, buf *bytes.Buffer) {
-			buf.WriteString(`<img src="`)
-			buf.WriteString(url)
-			buf.WriteString(`" title=":`)
-			buf.WriteString(code)
-			buf.WriteString(`:" alt=":`)
-			buf.WriteString(code)
-			buf.WriteString(`:" class="emoji" `)
-			// Lazy load emojis when
-			// they scroll into view.
-			buf.WriteString(`loading="lazy" `)
-			// Limit size to avoid showing
-			// huge emojis when unstyled.
-			buf.WriteString(`width="25" height="25"/>`)
+		func(url, staticURL, code string, buf *bytes.Buffer) {
+			// Open a picture tag so we
+			// can present multiple options.
+			buf.WriteString(`<picture>`)
+
+			// Static version.
+			buf.WriteString(`<source `)
+			{
+				buf.WriteString(`class="emoji" `)
+				buf.WriteString(`srcset="` + staticURL + `" `)
+				buf.WriteString(`type="image/png" `)
+				// Show this version when user
+				// doesn't want an animated emoji.
+				buf.WriteString(`media="(prefers-reduced-motion: reduce)" `)
+				// Limit size to avoid showing
+				// huge emojis when unstyled.
+				buf.WriteString(`width="25" height="25" `)
+			}
+			buf.WriteString(`/>`)
+
+			// Original image source.
+			buf.WriteString(`<img `)
+			{
+				buf.WriteString(`class="emoji" `)
+				buf.WriteString(`src="` + url + `" `)
+				buf.WriteString(`title=":` + code + `:" `)
+				buf.WriteString(`alt=":` + code + `:" `)
+				// Lazy load emojis when
+				// they scroll into view.
+				buf.WriteString(`loading="lazy" `)
+				// Limit size to avoid showing
+				// huge emojis when unstyled.
+				buf.WriteString(`width="25" height="25" `)
+			}
+			buf.WriteString(`/>`)
+
+			// Close the picture tag.
+			buf.WriteString(`</picture>`)
 		},
 	)
 
@@ -60,17 +84,18 @@ func EmojifyRSS(emojis []apimodel.Emoji, text string) string {
 	return emojify(
 		emojis,
 		text,
-		func(url, code string, buf *bytes.Buffer) {
-			buf.WriteString(`<img src="`)
-			buf.WriteString(url)
-			buf.WriteString(`" title=":`)
-			buf.WriteString(code)
-			buf.WriteString(`:" alt=":`)
-			buf.WriteString(code)
-			buf.WriteString(`:" `)
-			// Limit size to avoid showing
-			// huge emojis in RSS readers.
-			buf.WriteString(`width="25" height="25"/>`)
+		func(url, staticURL, code string, buf *bytes.Buffer) {
+			// Original image source.
+			buf.WriteString(`<img `)
+			{
+				buf.WriteString(`src="` + url + `" `)
+				buf.WriteString(`title=":` + code + `:" `)
+				buf.WriteString(`alt=":` + code + `:" `)
+				// Limit size to avoid showing
+				// huge emojis in RSS readers.
+				buf.WriteString(`width="25" height="25" `)
+			}
+			buf.WriteString(`/>`)
 		},
 	)
 }
@@ -85,7 +110,7 @@ func Demojify(text string) string {
 func emojify(
 	emojis []apimodel.Emoji,
 	input string,
-	write func(url, code string, buf *bytes.Buffer),
+	write func(url, staticURL, code string, buf *bytes.Buffer),
 ) string {
 	// Build map of shortcodes. Normalize each
 	// shortcode by readding closing colons.
@@ -107,10 +132,11 @@ func emojify(
 
 			// Escape raw emoji content.
 			url := html.EscapeString(emoji.URL)
+			staticURL := html.EscapeString(emoji.StaticURL)
 			code := html.EscapeString(emoji.Shortcode)
 
 			// Write emoji repr to buffer.
-			write(url, code, buf)
+			write(url, staticURL, code, buf)
 			return buf.String()
 		},
 	)

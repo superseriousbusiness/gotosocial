@@ -113,6 +113,9 @@ type Status struct {
 type WebStatus struct {
 	*Status
 
+	// Override API account with web account.
+	Account *WebAccount `json:"account"`
+
 	// Web version of media
 	// attached to this status.
 	MediaAttachments []*WebAttachment `json:"media_attachments"`

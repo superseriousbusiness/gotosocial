@@ -102,6 +102,13 @@ type InstanceV2Thumbnail struct {
 	// Key/value not set if thumbnail image type unknown.
 	// example: image/png
 	Type string `json:"thumbnail_type,omitempty"`
+	// StaticURL version of the thumbnail image.
+	// example: https://example.org/fileserver/01BPSX2MKCRVMD4YN4D71G9CP5/attachment/static/01H88X0KQ2DFYYDSWYP93VDJZA.webp
+	StaticURL string `json:"static_url,omitempty"`
+	// MIME type of the instance thumbnail.
+	// Key/value not set if thumbnail image type unknown.
+	// example: image/png
+	StaticType string `json:"thumbnail_static_type,omitempty"`
 	// Description of the instance thumbnail.
 	// Key/value not set if no description available.
 	// example: picture of a cute lil' friendly sloth

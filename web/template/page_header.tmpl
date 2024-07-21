@@ -57,11 +57,20 @@ Instance Logo
 
 {{- with . }}
 <a aria-label="{{- .instance.Title -}}. Go to instance homepage" href="/" class="nounderline">
-    <img
-        src="{{- .instance.Thumbnail -}}"
-        alt="{{- template "thumbnailDescription" . -}}"
-        title="{{- template "thumbnailDescription" . -}}"
-    />
+    <picture>
+        {{- if .instance.ThumbnailStatic }}
+        <source
+            srcset="{{- .instance.ThumbnailStatic -}}"
+            type="{{- .instance.ThumbnailStaticType -}}"
+            media="(prefers-reduced-motion: reduce)"
+        />
+        {{- end }}
+        <img
+            src="{{- .instance.Thumbnail -}}"
+            alt="{{- template "thumbnailDescription" . -}}"
+            title="{{- template "thumbnailDescription" . -}}"
+        />
+    </picture>
     <h1>{{- .instance.Title -}}</h1>
 </a>
 {{- if .showStrap }}

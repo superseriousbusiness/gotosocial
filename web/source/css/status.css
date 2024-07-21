@@ -193,14 +193,6 @@ main {
 				font-size: 1rem;
 				line-height: initial;
 			}
-
-			img {
-				max-width: 100%;
-				margin: 5px auto;
-			}
-			img[alt~="!center"] {
-				display: block;
-			}
 		}
 
 		.poll {
