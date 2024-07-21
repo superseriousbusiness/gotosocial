@@ -335,6 +335,8 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 		}
 	case "avi":
 		return gtsmodel.FileTypeVideo, "avi"
+	case "flac":
+		return gtsmodel.FileTypeAudio, "flac"
 	}
 	return gtsmodel.FileTypeUnknown, res.format
 }

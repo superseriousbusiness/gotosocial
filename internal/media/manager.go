@@ -43,6 +43,9 @@ var SupportedMIMETypes = []string{
 
 	"video/x-msvideo", // .avi
 
+	"audio/flac",   // .flac
+	"audio/x-flac", // .flac
+
 	// png types
 	"image/png",  // .png
 	"image/apng", // .apng
