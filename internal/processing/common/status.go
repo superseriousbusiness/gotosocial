@@ -69,33 +69,22 @@ func (p *Processor) GetTargetStatusBy(
 	}
 
 	if requester != nil && visible {
-		// We only bother refreshing if this status
-		// is visible to requester, AND there *is*
-		// a requester (i.e. request is authorized)
-		// to prevent a possible DOS vector.
-
-		if window != nil {
-			// Window is explicitly set, so likely
-			// tighter than the default window.
-			// Do refresh synchronously.
-			_, _, err := p.federator.RefreshStatus(ctx,
-				requester.Username,
-				target,
-				nil,
-				window,
-			)
-			if err != nil {
-				log.Errorf(ctx, "error refreshing status: %v", err)
-			}
-		} else {
-			// Only refresh async *if* out-of-date.
-			p.federator.RefreshStatusAsync(ctx,
-				requester.Username,
-				target,
-				nil,
-				nil,
-			)
+		// Only refresh status if visible to requester,
+		// and there is *authorized* requester to prevent
+		// a possible DOS vector for unauthorized clients.
+		latest, _, err := p.federator.RefreshStatus(ctx,
+			requester.Username,
+			target,
+			nil,
+			window,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error refreshing target %s: %v", target.URI, err)
+			return target, visible, nil
 		}
+
+		// Set latest.
+		target = latest
 	}
 
 	return target, visible, nil
