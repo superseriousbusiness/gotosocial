@@ -151,7 +151,7 @@ func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Att
 
 	var note strings.Builder
 	note.WriteString(`<hr>`)
-	note.WriteString(`<hr><p><i lang="en">ℹ️ Note from `)
+	note.WriteString(`<p><i lang="en">ℹ️ Note from `)
 	note.WriteString(config.GetHost())
 	note.WriteString(`: `)
 	note.WriteString(strconv.Itoa(len(nonLocal)))
