@@ -61,13 +61,22 @@ func (p *Processor) GetTargetAccountBy(
 	}
 
 	if requester != nil && visible {
-		// Ensure the account is up-to-date.
-		p.federator.RefreshAccountAsync(ctx,
+		// Only refresh account if visible to requester,
+		// and there is *authorized* requester to prevent
+		// a possible DOS vector for unauthorized clients.
+		latest, _, err := p.federator.RefreshAccount(ctx,
 			requester.Username,
 			target,
 			nil,
 			nil,
 		)
+		if err != nil {
+			log.Errorf(ctx, "error refreshing target %s: %v", target.URI, err)
+			return target, visible, nil
+		}
+
+		// Set latest.
+		target = latest
 	}
 
 	return target, visible, nil
