@@ -72,7 +72,7 @@ func (p *Processor) GetFile(
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if !acct.IsSuspended() {
+	if acct.IsSuspended() {
 		err := gtserror.Newf("account %s is suspended", acctID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
