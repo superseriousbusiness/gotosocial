@@ -59,12 +59,19 @@ func (c *Cleaner) Media() *Media {
 
 // haveFiles returns whether all of the provided files exist within current storage.
 func (c *Cleaner) haveFiles(ctx context.Context, files ...string) (bool, error) {
-	for _, file := range files {
+	for _, path := range files {
+		if path == "" {
+			// File not stored.
+			return false, nil
+		}
+
 		// Check whether each file exists in storage.
-		have, err := c.state.Storage.Has(ctx, file)
+		have, err := c.state.Storage.Has(ctx, path)
 		if err != nil {
-			return false, gtserror.Newf("error checking storage for %s: %w", file, err)
-		} else if !have {
+			return false, gtserror.Newf("error checking storage for %s: %w", path, err)
+		}
+
+		if !have {
 			// Missing file(s).
 			return false, nil
 		}
@@ -80,29 +87,34 @@ func (c *Cleaner) removeFiles(ctx context.Context, files ...string) (int, error)
 	}
 
 	var (
-		errs     gtserror.MultiError
-		errCount int
+		errs  gtserror.MultiError
+		count int
 	)
 
 	for _, path := range files {
+		if path == "" {
+			// not stored.
+			continue
+		}
+
 		// Remove each provided storage path.
 		log.Debugf(ctx, "removing file: %s", path)
 		err := c.state.Storage.Delete(ctx, path)
 		if err != nil && !storage.IsNotFound(err) {
 			errs.Appendf("error removing %s: %w", path, err)
-			errCount++
+			continue
 		}
-	}
 
-	// Calculate no. files removed.
-	diff := len(files) - errCount
+		// Incr.
+		count++
+	}
 
 	// Wrap the combined error slice.
 	if err := errs.Combine(); err != nil {
-		return diff, gtserror.Newf("error(s) removing files: %w", err)
+		return count, gtserror.Newf("error(s) removing files: %w", err)
 	}
 
-	return diff, nil
+	return count, nil
 }
 
 // ScheduleJobs schedules cleaning
