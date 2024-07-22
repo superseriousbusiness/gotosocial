@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // GetMedia fetches the media at given remote URL by
@@ -56,46 +57,39 @@ func (d *Dereferencer) GetMedia(
 	*gtsmodel.MediaAttachment,
 	error,
 ) {
-	// Parse str as valid URL object.
+	// Ensure we have a valid remote URL.
 	url, err := url.Parse(remoteURL)
 	if err != nil {
-		return nil, gtserror.Newf("invalid remote media url %q: %v", remoteURL, err)
-	}
-
-	// Fetch transport for the provided request user from controller.
-	tsport, err := d.transportController.NewTransportForUsername(ctx,
-		requestUser,
-	)
-	if err != nil {
-		return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
-	}
-
-	// Get maximum supported remote media size.
-	maxsz := config.GetMediaRemoteMaxSize()
-
-	// Start processing remote attachment at URL.
-	processing, err := d.mediaManager.CreateMedia(
-		ctx,
-		accountID,
-		func(ctx context.Context) (io.ReadCloser, error) {
-			return tsport.DereferenceMedia(ctx, url, int64(maxsz))
-		},
-		info,
-	)
-	if err != nil {
+		err := gtserror.Newf("invalid media remote url %s: %w", remoteURL, err)
 		return nil, err
 	}
 
-	// Perform media load operation.
-	media, err := processing.Load(ctx)
-	if err != nil {
-		err = gtserror.Newf("error loading media %s: %w", media.RemoteURL, err)
+	return d.processMediaSafeley(ctx,
+		remoteURL,
+		func() (*media.ProcessingMedia, error) {
 
-		// TODO: in time we should return checkable flags by gtserror.Is___()
-		// which can determine if loading error should allow remaining placeholder.
-	}
+			// Fetch transport for the provided request user from controller.
+			tsport, err := d.transportController.NewTransportForUsername(ctx,
+				requestUser,
+			)
+			if err != nil {
+				return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
+			}
 
-	return media, err
+			// Get maximum supported remote media size.
+			maxsz := config.GetMediaRemoteMaxSize()
+
+			// Create media with prepared info.
+			return d.mediaManager.CreateMedia(
+				ctx,
+				accountID,
+				func(ctx context.Context) (io.ReadCloser, error) {
+					return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				},
+				info,
+			)
+		},
+	)
 }
 
 // RefreshMedia ensures that given media is up-to-date,
@@ -119,7 +113,7 @@ func (d *Dereferencer) GetMedia(
 func (d *Dereferencer) RefreshMedia(
 	ctx context.Context,
 	requestUser string,
-	media *gtsmodel.MediaAttachment,
+	attach *gtsmodel.MediaAttachment,
 	info media.AdditionalMediaInfo,
 	force bool,
 ) (
@@ -127,67 +121,65 @@ func (d *Dereferencer) RefreshMedia(
 	error,
 ) {
 	// Can't refresh local.
-	if media.IsLocal() {
-		return media, nil
+	if attach.IsLocal() {
+		return attach, nil
 	}
 
 	// Check emoji is up-to-date
 	// with provided extra info.
 	switch {
 	case info.Blurhash != nil &&
-		*info.Blurhash != media.Blurhash:
+		*info.Blurhash != attach.Blurhash:
+		attach.Blurhash = *info.Blurhash
 		force = true
 	case info.Description != nil &&
-		*info.Description != media.Description:
+		*info.Description != attach.Description:
+		attach.Description = *info.Description
 		force = true
 	case info.RemoteURL != nil &&
-		*info.RemoteURL != media.RemoteURL:
+		*info.RemoteURL != attach.RemoteURL:
+		attach.RemoteURL = *info.RemoteURL
 		force = true
 	}
 
 	// Check if needs updating.
-	if !force && *media.Cached {
-		return media, nil
+	if *attach.Cached && !force {
+		return attach, nil
 	}
 
-	// TODO: more finegrained freshness checks.
-
 	// Ensure we have a valid remote URL.
-	url, err := url.Parse(media.RemoteURL)
+	url, err := url.Parse(attach.RemoteURL)
 	if err != nil {
-		err := gtserror.Newf("invalid media remote url %s: %w", media.RemoteURL, err)
+		err := gtserror.Newf("invalid media remote url %s: %w", attach.RemoteURL, err)
 		return nil, err
 	}
 
-	// Fetch transport for the provided request user from controller.
-	tsport, err := d.transportController.NewTransportForUsername(ctx,
-		requestUser,
-	)
-	if err != nil {
-		return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
-	}
+	// Pass along for safe processing.
+	return d.processMediaSafeley(ctx,
+		attach.RemoteURL,
+		func() (*media.ProcessingMedia, error) {
 
-	// Get maximum supported remote media size.
-	maxsz := config.GetMediaRemoteMaxSize()
+			// Fetch transport for the provided request user from controller.
+			tsport, err := d.transportController.NewTransportForUsername(ctx,
+				requestUser,
+			)
+			if err != nil {
+				return nil, gtserror.Newf("failed getting transport for %s: %w", requestUser, err)
+			}
 
-	// Start processing remote attachment recache.
-	processing := d.mediaManager.RecacheMedia(
-		media,
-		func(ctx context.Context) (io.ReadCloser, error) {
-			return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+			// Get maximum supported remote media size.
+			maxsz := config.GetMediaRemoteMaxSize()
+
+			// Recache media with prepared info,
+			// this will also update media in db.
+			return d.mediaManager.RecacheMedia(
+				attach,
+				func(ctx context.Context) (io.ReadCloser, error) {
+					return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				},
+			), nil
 		},
 	)
-
-	// Perform media load operation.
-	media, err = processing.Load(ctx)
-	if err != nil {
-		err = gtserror.Newf("error loading media %s: %w", media.RemoteURL, err)
-
-		// TODO: in time we should return checkable flags by gtserror.Is___()
-		// which can determine if loading error should allow remaining placeholder.
-	}
-
-	return media, err
 }
 
 // updateAttachment handles the case of an existing media attachment
@@ -219,4 +211,58 @@ func (d *Dereferencer) updateAttachment(
 		info,
 		false,
 	)
+}
+
+// processingEmojiSafely provides concurrency-safe processing of
+// an emoji with given shortcode+domain. if a copy of the emoji is
+// not already being processed, the given 'process' callback will
+// be used to generate new *media.ProcessingEmoji{} instance.
+func (d *Dereferencer) processMediaSafeley(
+	ctx context.Context,
+	remoteURL string,
+	process func() (*media.ProcessingMedia, error),
+) (
+	media *gtsmodel.MediaAttachment,
+	err error,
+) {
+
+	// Acquire map lock.
+	d.derefMediaMu.Lock()
+
+	// Ensure unlock only done once.
+	unlock := d.derefMediaMu.Unlock
+	unlock = util.DoOnce(unlock)
+	defer unlock()
+
+	// Look for an existing deref in progress.
+	processing, ok := d.derefMedia[remoteURL]
+
+	if !ok {
+		// Start new processing emoji.
+		processing, err = process()
+		if err != nil {
+			return nil, err
+		}
+
+		defer func() {
+			// Remove on finish.
+			d.derefMediaMu.Lock()
+			delete(d.derefMedia, remoteURL)
+			d.derefMediaMu.Unlock()
+		}()
+	}
+
+	// Unlock map.
+	unlock()
+
+	// Perform media load operation.
+	media, err = processing.Load(ctx)
+	if err != nil {
+		err = gtserror.Newf("error loading media %s: %w", remoteURL, err)
+
+		// TODO: in time we should return checkable flags by gtserror.Is___()
+		// which can determine if loading error should allow remaining placeholder.
+	}
+
+	return
 }

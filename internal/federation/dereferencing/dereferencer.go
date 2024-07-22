@@ -85,12 +85,9 @@ type Dereferencer struct {
 	mediaManager        *media.Manager
 	visibility          *visibility.Filter
 
-	// in-progress dereferencing emoji. we already perform
-	// locks per-status and per-account so we don't need
-	// processing maps for other media which won't often
-	// end up being repeated. worst case we run into an
-	// db.ErrAlreadyExists error which then gets handled
-	// appropriately by enrich{Account,Status}Safely().
+	// in-progress dereferencing media / emoji
+	derefMedia    map[string]*media.ProcessingMedia
+	derefMediaMu  sync.Mutex
 	derefEmojis   map[string]*media.ProcessingEmoji
 	derefEmojisMu sync.Mutex
 
@@ -119,6 +116,7 @@ func NewDereferencer(
 		transportController: transportController,
 		mediaManager:        mediaManager,
 		visibility:          visFilter,
+		derefMedia:          make(map[string]*media.ProcessingMedia),
 		derefEmojis:         make(map[string]*media.ProcessingEmoji),
 		handshakes:          make(map[string][]*url.URL),
 	}

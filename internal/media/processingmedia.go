@@ -19,12 +19,10 @@ package media
 
 import (
 	"context"
-	"time"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -63,6 +61,7 @@ func (p *ProcessingMedia) Load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 	media, done, err := p.load(ctx)
 	if !done {
 		// On a context-canceled error (marked as !done), requeue for loading.
+		log.Warnf(ctx, "reprocessing media %s after canceled ctx", p.media.ID)
 		p.mgr.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if _, _, err := p.load(ctx); err != nil {
 				log.Errorf(ctx, "error loading media: %v", err)
@@ -86,54 +85,34 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done = (err == nil || !errorsv2.IsV2(err,
+			if done = (err == nil || !errorsv2.IsV2(err,
 				context.Canceled,
 				context.DeadlineExceeded,
-			))
+			)); done {
+				// Processing finished,
+				// whether error or not!
 
-			if !done {
-				return
+				// Anything from here, we
+				// need to ensure happens
+				// (i.e. no ctx canceled).
+				ctx = context.WithoutCancel(ctx)
+
+				// On error or unknown media types, perform error cleanup.
+				if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
+					p.cleanup(ctx)
+				}
+
+				// Update with latest details, whatever happened.
+				e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
+				if e != nil {
+					log.Errorf(ctx, "error updating media in db: %v", e)
+				}
+
+				// Store values.
+				p.done = true
+				p.err = err
 			}
-
-			// Anything from here, we
-			// need to ensure happens
-			// (i.e. no ctx canceled).
-			ctx = gtscontext.WithValues(
-				context.Background(),
-				ctx, // values
-			)
-
-			// On error or unknown media types, perform error cleanup.
-			if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
-				p.cleanup(ctx)
-			}
-
-			// Update with latest details, whatever happened.
-			e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
-			if e != nil {
-				log.Errorf(ctx, "error updating media in db: %v", e)
-			}
-
-			// Store final values.
-			p.done = true
-			p.err = err
 		}()
-
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !p.media.UpdatedAt.Equal(p.media.CreatedAt) && // i.e. not new
-			p.media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return nil
-		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.
@@ -142,7 +121,10 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 		err = p.store(ctx)
 		return err
 	})
-	media = p.media
+
+	// Return a copy of media attachment.
+	media = new(gtsmodel.MediaAttachment)
+	*media = *p.media
 	return
 }
 
@@ -331,11 +313,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 // cleanup will remove any traces of processing media from storage.
 // and perform any other necessary cleanup steps after failure.
 func (p *ProcessingMedia) cleanup(ctx context.Context) {
-	var err error
-
 	if p.media.File.Path != "" {
 		// Ensure media file at path is deleted from storage.
-		err = p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
+		err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
 		if err != nil && !storage.IsNotFound(err) {
 			log.Errorf(ctx, "error deleting %s: %v", p.media.File.Path, err)
 		}
@@ -343,7 +323,7 @@ func (p *ProcessingMedia) cleanup(ctx context.Context) {
 
 	if p.media.Thumbnail.Path != "" {
 		// Ensure media thumbnail at path is deleted from storage.
-		err = p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path)
+		err := p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path)
 		if err != nil && !storage.IsNotFound(err) {
 			log.Errorf(ctx, "error deleting %s: %v", p.media.Thumbnail.Path, err)
 		}
