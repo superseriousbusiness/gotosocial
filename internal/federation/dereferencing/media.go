@@ -245,6 +245,13 @@ func (d *Dereferencer) processMediaSafeley(
 		if err != nil {
 			return nil, err
 		}
+
+		defer func() {
+			// Remove on finish.
+			d.derefMediaMu.Lock()
+			delete(d.derefMedia, remoteURL)
+			d.derefMediaMu.Unlock()
+		}()
 	}
 
 	// Unlock map.

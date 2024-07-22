@@ -233,6 +233,13 @@ func (d *Dereferencer) processEmojiSafely(
 		if err != nil {
 			return nil, err
 		}
+
+		defer func() {
+			// Remove on finish.
+			d.derefEmojisMu.Lock()
+			delete(d.derefEmojis, shortcodeDomain)
+			d.derefEmojisMu.Unlock()
+		}()
 	}
 
 	// Unlock map.
