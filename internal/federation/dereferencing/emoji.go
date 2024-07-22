@@ -163,8 +163,8 @@ func (d *Dereferencer) RefreshEmoji(
 
 	// TODO: more finegrained freshness checks.
 
-	// Generate shortcode domain for locks + logging.
-	shortcodeDomain := emoji.Shortcode + "@" + emoji.Domain
+	// Get shortcode domain for locks + logging.
+	shortcodeDomain := emoji.ShortcodeDomain()
 
 	// Pass along for safe processing.
 	return d.processEmojiSafely(ctx,
