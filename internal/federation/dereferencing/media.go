@@ -143,11 +143,9 @@ func (d *Dereferencer) RefreshMedia(
 	}
 
 	// Check if needs updating.
-	if !*attach.Cached || force {
+	if *attach.Cached || !force {
 		return attach, nil
 	}
-
-	// TODO: more finegrained freshness checks.
 
 	// Pass along for safe processing.
 	return d.processMediaSafeley(ctx,
