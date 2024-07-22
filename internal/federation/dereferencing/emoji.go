@@ -77,32 +77,34 @@ func (d *Dereferencer) GetEmoji(
 	// Generate shortcode domain for locks + logging.
 	shortcodeDomain := shortcode + "@" + domain
 
-	// Ensure we have a valid remote URL.
-	url, err := url.Parse(remoteURL)
-	if err != nil {
-		err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", remoteURL, shortcodeDomain, err)
-		return nil, err
-	}
-
-	// Acquire new instance account transport for emoji dereferencing.
-	tsport, err := d.transportController.NewTransportForUsername(ctx, "")
-	if err != nil {
-		err := gtserror.Newf("error getting instance transport: %w", err)
-		return nil, err
-	}
-
-	// Get maximum supported remote emoji size.
-	maxsz := config.GetMediaEmojiRemoteMaxSize()
-
-	// Prepare data function to dereference remote emoji media.
-	data := func(context.Context) (io.ReadCloser, error) {
-		return tsport.DereferenceMedia(ctx, url, int64(maxsz))
-	}
-
 	// Pass along for safe processing.
 	return d.processEmojiSafely(ctx,
 		shortcodeDomain,
 		func() (*media.ProcessingEmoji, error) {
+
+			// Ensure we have a valid remote URL.
+			url, err := url.Parse(remoteURL)
+			if err != nil {
+				err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", remoteURL, shortcodeDomain, err)
+				return nil, err
+			}
+
+			// Acquire new instance account transport for emoji dereferencing.
+			tsport, err := d.transportController.NewTransportForUsername(ctx, "")
+			if err != nil {
+				err := gtserror.Newf("error getting instance transport: %w", err)
+				return nil, err
+			}
+
+			// Get maximum supported remote emoji size.
+			maxsz := config.GetMediaEmojiRemoteMaxSize()
+
+			// Prepare data function to dereference remote emoji media.
+			data := func(context.Context) (io.ReadCloser, error) {
+				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+			}
+
+			// Create new emoji with prepared info.
 			return d.mediaManager.CreateEmoji(ctx,
 				shortcode,
 				domain,
@@ -152,7 +154,7 @@ func (d *Dereferencer) RefreshEmoji(
 	}
 
 	// Check if needs updating.
-	if !force && *emoji.Cached {
+	if !*emoji.Cached || force {
 		return emoji, nil
 	}
 
@@ -161,32 +163,34 @@ func (d *Dereferencer) RefreshEmoji(
 	// Generate shortcode domain for locks + logging.
 	shortcodeDomain := emoji.Shortcode + "@" + emoji.Domain
 
-	// Ensure we have a valid image remote URL.
-	url, err := url.Parse(emoji.ImageRemoteURL)
-	if err != nil {
-		err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", emoji.ImageRemoteURL, shortcodeDomain, err)
-		return nil, err
-	}
-
-	// Acquire new instance account transport for emoji dereferencing.
-	tsport, err := d.transportController.NewTransportForUsername(ctx, "")
-	if err != nil {
-		err := gtserror.Newf("error getting instance transport: %w", err)
-		return nil, err
-	}
-
-	// Get maximum supported remote emoji size.
-	maxsz := config.GetMediaEmojiRemoteMaxSize()
-
-	// Prepare data function to dereference remote emoji media.
-	data := func(context.Context) (io.ReadCloser, error) {
-		return tsport.DereferenceMedia(ctx, url, int64(maxsz))
-	}
-
 	// Pass along for safe processing.
 	return d.processEmojiSafely(ctx,
 		shortcodeDomain,
 		func() (*media.ProcessingEmoji, error) {
+
+			// Ensure we have a valid image remote URL.
+			url, err := url.Parse(emoji.ImageRemoteURL)
+			if err != nil {
+				err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", emoji.ImageRemoteURL, shortcodeDomain, err)
+				return nil, err
+			}
+
+			// Acquire new instance account transport for emoji dereferencing.
+			tsport, err := d.transportController.NewTransportForUsername(ctx, "")
+			if err != nil {
+				err := gtserror.Newf("error getting instance transport: %w", err)
+				return nil, err
+			}
+
+			// Get maximum supported remote emoji size.
+			maxsz := config.GetMediaEmojiRemoteMaxSize()
+
+			// Prepare data function to dereference remote emoji media.
+			data := func(context.Context) (io.ReadCloser, error) {
+				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+			}
+
+			// Refresh emoji with prepared info.
 			return d.mediaManager.RefreshEmoji(ctx,
 				emoji,
 				data,
@@ -240,10 +244,7 @@ func (d *Dereferencer) processEmojiSafely(
 		// which can determine if loading error should allow remaining placeholder.
 	}
 
-	// Return a COPY of emoji.
-	emoji2 := new(gtsmodel.Emoji)
-	*emoji2 = *emoji
-	return emoji2, err
+	return
 }
 
 func (d *Dereferencer) fetchEmojis(
