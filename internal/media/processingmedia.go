@@ -108,7 +108,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 					log.Errorf(ctx, "error updating media in db: %v", e)
 				}
 
-				// Store final values.
+				// Store values.
 				p.done = true
 				p.err = err
 			}

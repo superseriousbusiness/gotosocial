@@ -100,7 +100,7 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 					log.Errorf(ctx, "error updating emoji in db: %v", e)
 				}
 
-				// Store final values.
+				// Store values.
 				p.done = true
 				p.err = err
 			}
