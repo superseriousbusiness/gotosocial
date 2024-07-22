@@ -116,6 +116,7 @@ func NewDereferencer(
 		transportController: transportController,
 		mediaManager:        mediaManager,
 		visibility:          visFilter,
+		derefMedia:          make(map[string]*media.ProcessingMedia),
 		derefEmojis:         make(map[string]*media.ProcessingEmoji),
 		handshakes:          make(map[string][]*url.URL),
 	}

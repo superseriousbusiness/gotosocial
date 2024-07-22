@@ -144,12 +144,15 @@ func (d *Dereferencer) RefreshEmoji(
 	switch {
 	case info.URI != nil &&
 		*info.URI != emoji.URI:
+		emoji.URI = *info.URI
 		force = true
 	case info.ImageRemoteURL != nil &&
 		*info.ImageRemoteURL != emoji.ImageRemoteURL:
+		emoji.ImageRemoteURL = *info.ImageRemoteURL
 		force = true
 	case info.ImageStaticRemoteURL != nil &&
 		*info.ImageStaticRemoteURL != emoji.ImageStaticRemoteURL:
+		emoji.ImageStaticRemoteURL = *info.ImageStaticRemoteURL
 		force = true
 	}
 

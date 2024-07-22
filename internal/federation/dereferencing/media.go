@@ -130,12 +130,15 @@ func (d *Dereferencer) RefreshMedia(
 	switch {
 	case info.Blurhash != nil &&
 		*info.Blurhash != attach.Blurhash:
+		attach.Blurhash = *info.Blurhash
 		force = true
 	case info.Description != nil &&
 		*info.Description != attach.Description:
+		attach.Description = *info.Description
 		force = true
 	case info.RemoteURL != nil &&
 		*info.RemoteURL != attach.RemoteURL:
+		attach.RemoteURL = *info.RemoteURL
 		force = true
 	}
 
@@ -169,7 +172,8 @@ func (d *Dereferencer) RefreshMedia(
 			// Get maximum supported remote media size.
 			maxsz := config.GetMediaRemoteMaxSize()
 
-			// Recache media with prepared info.
+			// Recache media with prepared info,
+			// this will also update media in db.
 			return d.mediaManager.RecacheMedia(
 				attach,
 				func(ctx context.Context) (io.ReadCloser, error) {
