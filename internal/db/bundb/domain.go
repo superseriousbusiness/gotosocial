@@ -51,7 +51,7 @@ func (d *domainDB) CreateDomainAllow(ctx context.Context, allow *gtsmodel.Domain
 	}
 
 	// Clear the domain allow cache (for later reload)
-	d.state.Caches.GTS.DomainAllow.Clear()
+	d.state.Caches.DB.DomainAllow.Clear()
 
 	return nil
 }
@@ -126,7 +126,7 @@ func (d *domainDB) DeleteDomainAllow(ctx context.Context, domain string) error {
 	}
 
 	// Clear the domain allow cache (for later reload)
-	d.state.Caches.GTS.DomainAllow.Clear()
+	d.state.Caches.DB.DomainAllow.Clear()
 
 	return nil
 }
@@ -147,7 +147,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 	}
 
 	// Clear the domain block cache (for later reload)
-	d.state.Caches.GTS.DomainBlock.Clear()
+	d.state.Caches.DB.DomainBlock.Clear()
 
 	return nil
 }
@@ -222,7 +222,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) error {
 	}
 
 	// Clear the domain block cache (for later reload)
-	d.state.Caches.GTS.DomainBlock.Clear()
+	d.state.Caches.DB.DomainBlock.Clear()
 
 	return nil
 }
@@ -241,7 +241,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, er
 	}
 
 	// Check the cache for an explicit domain allow (hydrating the cache with callback if necessary).
-	explicitAllow, err := d.state.Caches.GTS.DomainAllow.Matches(domain, func() ([]string, error) {
+	explicitAllow, err := d.state.Caches.DB.DomainAllow.Matches(domain, func() ([]string, error) {
 		var domains []string
 
 		// Scan list of all explicitly allowed domains from DB
@@ -259,7 +259,7 @@ func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, er
 	}
 
 	// Check the cache for a domain block (hydrating the cache with callback if necessary)
-	explicitBlock, err := d.state.Caches.GTS.DomainBlock.Matches(domain, func() ([]string, error) {
+	explicitBlock, err := d.state.Caches.DB.DomainBlock.Matches(domain, func() ([]string, error) {
 		var domains []string
 
 		// Scan list of all blocked domains from DB

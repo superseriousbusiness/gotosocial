@@ -39,7 +39,7 @@ type markerDB struct {
 */
 
 func (m *markerDB) GetMarker(ctx context.Context, accountID string, name gtsmodel.MarkerName) (*gtsmodel.Marker, error) {
-	marker, err := m.state.Caches.GTS.Marker.LoadOne(
+	marker, err := m.state.Caches.DB.Marker.LoadOne(
 		"AccountID,Name",
 		func() (*gtsmodel.Marker, error) {
 			var marker gtsmodel.Marker
@@ -72,7 +72,7 @@ func (m *markerDB) UpdateMarker(ctx context.Context, marker *gtsmodel.Marker) er
 		marker.Version = prevMarker.Version + 1
 	}
 
-	return m.state.Caches.GTS.Marker.Store(marker, func() error {
+	return m.state.Caches.DB.Marker.Store(marker, func() error {
 		if prevMarker == nil {
 			if _, err := m.db.NewInsert().
 				Model(marker).

@@ -32,7 +32,7 @@ type tombstoneDB struct {
 }
 
 func (t *tombstoneDB) GetTombstoneByURI(ctx context.Context, uri string) (*gtsmodel.Tombstone, error) {
-	return t.state.Caches.GTS.Tombstone.LoadOne("URI", func() (*gtsmodel.Tombstone, error) {
+	return t.state.Caches.DB.Tombstone.LoadOne("URI", func() (*gtsmodel.Tombstone, error) {
 		var tomb gtsmodel.Tombstone
 
 		q := t.db.
@@ -57,7 +57,7 @@ func (t *tombstoneDB) TombstoneExistsWithURI(ctx context.Context, uri string) (b
 }
 
 func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tombstone) error {
-	return t.state.Caches.GTS.Tombstone.Store(tombstone, func() error {
+	return t.state.Caches.DB.Tombstone.Store(tombstone, func() error {
 		_, err := t.db.
 			NewInsert().
 			Model(tombstone).
@@ -67,7 +67,7 @@ func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tomb
 }
 
 func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) error {
-	defer t.state.Caches.GTS.Tombstone.Invalidate("ID", id)
+	defer t.state.Caches.DB.Tombstone.Invalidate("ID", id)
 
 	// Delete tombstone from DB.
 	_, err := t.db.NewDelete().

@@ -58,7 +58,7 @@ func (l *listDB) GetListByID(ctx context.Context, id string) (*gtsmodel.List, er
 }
 
 func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmodel.List) error, keyParts ...any) (*gtsmodel.List, error) {
-	list, err := l.state.Caches.GTS.List.LoadOne(lookup, func() (*gtsmodel.List, error) {
+	list, err := l.state.Caches.DB.List.LoadOne(lookup, func() (*gtsmodel.List, error) {
 		var list gtsmodel.List
 
 		// Not cached! Perform database query.
@@ -139,7 +139,7 @@ func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 }
 
 func (l *listDB) PutList(ctx context.Context, list *gtsmodel.List) error {
-	return l.state.Caches.GTS.List.Store(list, func() error {
+	return l.state.Caches.DB.List.Store(list, func() error {
 		_, err := l.db.NewInsert().Model(list).Exec(ctx)
 		return err
 	})
@@ -154,7 +154,7 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 
 	defer func() {
 		// Invalidate all entries for this list ID.
-		l.state.Caches.GTS.ListEntry.Invalidate("ListID", list.ID)
+		l.state.Caches.DB.ListEntry.Invalidate("ListID", list.ID)
 
 		// Invalidate this entire list's timeline.
 		if err := l.state.Timelines.List.RemoveTimeline(ctx, list.ID); err != nil {
@@ -162,7 +162,7 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 		}
 	}()
 
-	return l.state.Caches.GTS.List.Store(list, func() error {
+	return l.state.Caches.DB.List.Store(list, func() error {
 		_, err := l.db.NewUpdate().
 			Model(list).
 			Where("? = ?", bun.Ident("list.id"), list.ID).
@@ -190,7 +190,7 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 
 	defer func() {
 		// Invalidate this list from cache.
-		l.state.Caches.GTS.List.Invalidate("ID", id)
+		l.state.Caches.DB.List.Invalidate("ID", id)
 
 		// Invalidate this entire list's timeline.
 		if err := l.state.Timelines.List.RemoveTimeline(ctx, id); err != nil {
@@ -235,7 +235,7 @@ func (l *listDB) GetListEntryByID(ctx context.Context, id string) (*gtsmodel.Lis
 }
 
 func (l *listDB) getListEntry(ctx context.Context, lookup string, dbQuery func(*gtsmodel.ListEntry) error, keyParts ...any) (*gtsmodel.ListEntry, error) {
-	listEntry, err := l.state.Caches.GTS.ListEntry.LoadOne(lookup, func() (*gtsmodel.ListEntry, error) {
+	listEntry, err := l.state.Caches.DB.ListEntry.LoadOne(lookup, func() (*gtsmodel.ListEntry, error) {
 		var listEntry gtsmodel.ListEntry
 
 		// Not cached! Perform database query.
@@ -342,7 +342,7 @@ func (l *listDB) GetListEntries(ctx context.Context,
 
 func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.List, error) {
 	// Load all list IDs via cache loader callbacks.
-	lists, err := l.state.Caches.GTS.List.LoadIDs("ID",
+	lists, err := l.state.Caches.DB.List.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.List, error) {
 			// Preallocate expected length of uncached lists.
@@ -389,7 +389,7 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 
 func (l *listDB) GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.ListEntry, error) {
 	// Load all entry IDs via cache loader callbacks.
-	entries, err := l.state.Caches.GTS.ListEntry.LoadIDs("ID",
+	entries, err := l.state.Caches.DB.ListEntry.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.ListEntry, error) {
 			// Preallocate expected length of uncached entries.
@@ -492,7 +492,7 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 	return l.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		for _, entry := range entries {
 			entry := entry // rescope
-			if err := l.state.Caches.GTS.ListEntry.Store(entry, func() error {
+			if err := l.state.Caches.DB.ListEntry.Store(entry, func() error {
 				_, err := tx.
 					NewInsert().
 					Model(entry).
@@ -525,7 +525,7 @@ func (l *listDB) DeleteListEntry(ctx context.Context, id string) error {
 
 	defer func() {
 		// Invalidate this list entry upon delete.
-		l.state.Caches.GTS.ListEntry.Invalidate("ID", id)
+		l.state.Caches.DB.ListEntry.Invalidate("ID", id)
 
 		// Invalidate the timeline for the list this entry belongs to.
 		if err := l.state.Timelines.List.RemoveTimeline(ctx, entry.ListID); err != nil {

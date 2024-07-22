@@ -44,7 +44,7 @@ func (r *relationshipDB) GetNote(ctx context.Context, sourceAccountID string, ta
 
 func (r *relationshipDB) getNote(ctx context.Context, lookup string, dbQuery func(*gtsmodel.AccountNote) error, keyParts ...any) (*gtsmodel.AccountNote, error) {
 	// Fetch note from cache with loader callback
-	note, err := r.state.Caches.GTS.AccountNote.LoadOne(lookup, func() (*gtsmodel.AccountNote, error) {
+	note, err := r.state.Caches.DB.AccountNote.LoadOne(lookup, func() (*gtsmodel.AccountNote, error) {
 		var note gtsmodel.AccountNote
 
 		// Not cached! Perform database query
@@ -105,7 +105,7 @@ func (r *relationshipDB) PopulateNote(ctx context.Context, note *gtsmodel.Accoun
 
 func (r *relationshipDB) PutNote(ctx context.Context, note *gtsmodel.AccountNote) error {
 	note.UpdatedAt = time.Now()
-	return r.state.Caches.GTS.AccountNote.Store(note, func() error {
+	return r.state.Caches.DB.AccountNote.Store(note, func() error {
 		_, err := r.db.
 			NewInsert().
 			Model(note).

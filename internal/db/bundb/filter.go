@@ -37,7 +37,7 @@ type filterDB struct {
 }
 
 func (f *filterDB) GetFilterByID(ctx context.Context, id string) (*gtsmodel.Filter, error) {
-	filter, err := f.state.Caches.GTS.Filter.LoadOne(
+	filter, err := f.state.Caches.DB.Filter.LoadOne(
 		"ID",
 		func() (*gtsmodel.Filter, error) {
 			var filter gtsmodel.Filter
@@ -80,7 +80,7 @@ func (f *filterDB) GetFiltersForAccountID(ctx context.Context, accountID string)
 	}
 
 	// Get each filter by ID from the cache or DB.
-	filters, err := f.state.Caches.GTS.Filter.LoadIDs("ID",
+	filters, err := f.state.Caches.DB.Filter.LoadIDs("ID",
 		filterIDs,
 		func(uncachedFilterIDs []string) ([]*gtsmodel.Filter, error) {
 			uncachedFilters := make([]*gtsmodel.Filter, 0, len(uncachedFilterIDs))
@@ -194,9 +194,9 @@ func (f *filterDB) PutFilter(ctx context.Context, filter *gtsmodel.Filter) error
 	}
 
 	// Update cache.
-	f.state.Caches.GTS.Filter.Put(filter)
-	f.state.Caches.GTS.FilterKeyword.Put(filter.Keywords...)
-	f.state.Caches.GTS.FilterStatus.Put(filter.Statuses...)
+	f.state.Caches.DB.Filter.Put(filter)
+	f.state.Caches.DB.FilterKeyword.Put(filter.Keywords...)
+	f.state.Caches.DB.FilterStatus.Put(filter.Statuses...)
 
 	return nil
 }
@@ -296,15 +296,15 @@ func (f *filterDB) UpdateFilter(
 	}
 
 	// Update cache.
-	f.state.Caches.GTS.Filter.Put(filter)
-	f.state.Caches.GTS.FilterKeyword.Put(filter.Keywords...)
-	f.state.Caches.GTS.FilterStatus.Put(filter.Statuses...)
+	f.state.Caches.DB.Filter.Put(filter)
+	f.state.Caches.DB.FilterKeyword.Put(filter.Keywords...)
+	f.state.Caches.DB.FilterStatus.Put(filter.Statuses...)
 	// TODO: (Vyr) replace with cache multi-invalidate call
 	for _, id := range deleteFilterKeywordIDs {
-		f.state.Caches.GTS.FilterKeyword.Invalidate("ID", id)
+		f.state.Caches.DB.FilterKeyword.Invalidate("ID", id)
 	}
 	for _, id := range deleteFilterStatusIDs {
-		f.state.Caches.GTS.FilterStatus.Invalidate("ID", id)
+		f.state.Caches.DB.FilterStatus.Invalidate("ID", id)
 	}
 
 	return nil
@@ -342,11 +342,11 @@ func (f *filterDB) DeleteFilterByID(ctx context.Context, id string) error {
 	}
 
 	// Invalidate this filter.
-	f.state.Caches.GTS.Filter.Invalidate("ID", id)
+	f.state.Caches.DB.Filter.Invalidate("ID", id)
 
 	// Invalidate all keywords and statuses for this filter.
-	f.state.Caches.GTS.FilterKeyword.Invalidate("FilterID", id)
-	f.state.Caches.GTS.FilterStatus.Invalidate("FilterID", id)
+	f.state.Caches.DB.FilterKeyword.Invalidate("FilterID", id)
+	f.state.Caches.DB.FilterStatus.Invalidate("FilterID", id)
 
 	return nil
 }

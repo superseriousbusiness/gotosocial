@@ -70,7 +70,7 @@ func (s *statusBookmarkDB) GetStatusBookmark(ctx context.Context, accountID stri
 
 func (s *statusBookmarkDB) GetStatusBookmarksByIDs(ctx context.Context, ids []string) ([]*gtsmodel.StatusBookmark, error) {
 	// Load all input bookmark IDs via cache loader callback.
-	bookmarks, err := s.state.Caches.GTS.StatusBookmark.LoadIDs("ID",
+	bookmarks, err := s.state.Caches.DB.StatusBookmark.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.StatusBookmark, error) {
 			// Preallocate expected length of uncached bookmarks.
@@ -125,7 +125,7 @@ func (s *statusBookmarkDB) IsStatusBookmarkedBy(ctx context.Context, accountID s
 
 func (s *statusBookmarkDB) getStatusBookmark(ctx context.Context, lookup string, dbQuery func(*gtsmodel.StatusBookmark) error, keyParts ...any) (*gtsmodel.StatusBookmark, error) {
 	// Fetch bookmark from database cache with loader callback.
-	bookmark, err := s.state.Caches.GTS.StatusBookmark.LoadOne(lookup, func() (*gtsmodel.StatusBookmark, error) {
+	bookmark, err := s.state.Caches.DB.StatusBookmark.LoadOne(lookup, func() (*gtsmodel.StatusBookmark, error) {
 		var bookmark gtsmodel.StatusBookmark
 
 		// Not cached! Perform database query.
@@ -231,7 +231,7 @@ func (s *statusBookmarkDB) GetStatusBookmarks(ctx context.Context, accountID str
 }
 
 func (s *statusBookmarkDB) getStatusBookmarkIDs(ctx context.Context, statusID string) ([]string, error) {
-	return s.state.Caches.GTS.StatusBookmarkIDs.Load(statusID, func() ([]string, error) {
+	return s.state.Caches.DB.StatusBookmarkIDs.Load(statusID, func() ([]string, error) {
 		var bookmarkIDs []string
 
 		// Bookmark IDs not cached,
@@ -250,7 +250,7 @@ func (s *statusBookmarkDB) getStatusBookmarkIDs(ctx context.Context, statusID st
 }
 
 func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, bookmark *gtsmodel.StatusBookmark) error {
-	return s.state.Caches.GTS.StatusBookmark.Store(bookmark, func() error {
+	return s.state.Caches.DB.StatusBookmark.Store(bookmark, func() error {
 		_, err := s.db.NewInsert().Model(bookmark).Exec(ctx)
 		return err
 	})
@@ -265,7 +265,7 @@ func (s *statusBookmarkDB) DeleteStatusBookmarkByID(ctx context.Context, id stri
 	if err != nil {
 		return err
 	}
-	s.state.Caches.GTS.StatusBookmark.Invalidate("ID", id)
+	s.state.Caches.DB.StatusBookmark.Invalidate("ID", id)
 	return nil
 }
 
@@ -280,12 +280,12 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 
 	if targetAccountID != "" {
 		q = q.Where("? = ?", bun.Ident("status_bookmark.target_account_id"), targetAccountID)
-		defer s.state.Caches.GTS.StatusBookmark.Invalidate("TargetAccountID", targetAccountID)
+		defer s.state.Caches.DB.StatusBookmark.Invalidate("TargetAccountID", targetAccountID)
 	}
 
 	if originAccountID != "" {
 		q = q.Where("? = ?", bun.Ident("status_bookmark.account_id"), originAccountID)
-		defer s.state.Caches.GTS.StatusBookmark.Invalidate("AccountID", originAccountID)
+		defer s.state.Caches.DB.StatusBookmark.Invalidate("AccountID", originAccountID)
 	}
 
 	if _, err := q.Exec(ctx); err != nil {
@@ -293,11 +293,11 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 	}
 
 	if targetAccountID != "" {
-		s.state.Caches.GTS.StatusBookmark.Invalidate("TargetAccountID", targetAccountID)
+		s.state.Caches.DB.StatusBookmark.Invalidate("TargetAccountID", targetAccountID)
 	}
 
 	if originAccountID != "" {
-		s.state.Caches.GTS.StatusBookmark.Invalidate("AccountID", originAccountID)
+		s.state.Caches.DB.StatusBookmark.Invalidate("AccountID", originAccountID)
 	}
 
 	return nil
@@ -311,6 +311,6 @@ func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, s
 	if _, err := q.Exec(ctx); err != nil {
 		return err
 	}
-	s.state.Caches.GTS.StatusBookmark.Invalidate("StatusID", statusID)
+	s.state.Caches.DB.StatusBookmark.Invalidate("StatusID", statusID)
 	return nil
 }
