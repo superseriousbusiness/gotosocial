@@ -161,22 +161,20 @@ func (d *Dereferencer) RefreshEmoji(
 		return emoji, nil
 	}
 
-	// TODO: more finegrained freshness checks.
-
 	// Get shortcode domain for locks + logging.
 	shortcodeDomain := emoji.ShortcodeDomain()
+
+	// Ensure we have a valid image remote URL.
+	url, err := url.Parse(emoji.ImageRemoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", emoji.ImageRemoteURL, shortcodeDomain, err)
+		return nil, err
+	}
 
 	// Pass along for safe processing.
 	return d.processEmojiSafely(ctx,
 		shortcodeDomain,
 		func() (*media.ProcessingEmoji, error) {
-
-			// Ensure we have a valid image remote URL.
-			url, err := url.Parse(emoji.ImageRemoteURL)
-			if err != nil {
-				err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", emoji.ImageRemoteURL, shortcodeDomain, err)
-				return nil, err
-			}
 
 			// Acquire new instance account transport for emoji dereferencing.
 			tsport, err := d.transportController.NewTransportForUsername(ctx, "")
