@@ -259,11 +259,11 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 // cleanup will remove any traces of processing emoji from storage,
 // and perform any other necessary cleanup steps after failure.
 func (p *ProcessingEmoji) cleanup(ctx context.Context) {
-	var err error
+	log.Debugf(ctx, "running cleanup of emoji %s", p.emoji.ID)
 
 	if p.emoji.ImagePath != "" {
 		// Ensure emoji file at path is deleted from storage.
-		err = p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath)
+		err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImagePath)
 		if err != nil && !storage.IsNotFound(err) {
 			log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImagePath, err)
 		}
@@ -271,7 +271,7 @@ func (p *ProcessingEmoji) cleanup(ctx context.Context) {
 
 	if p.emoji.ImageStaticPath != "" {
 		// Ensure emoji static file at path is deleted from storage.
-		err = p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath)
+		err := p.mgr.state.Storage.Delete(ctx, p.emoji.ImageStaticPath)
 		if err != nil && !storage.IsNotFound(err) {
 			log.Errorf(ctx, "error deleting %s: %v", p.emoji.ImageStaticPath, err)
 		}

@@ -107,6 +107,8 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
 				if e != nil {
 					log.Errorf(ctx, "error updating media in db: %v", e)
+				} else {
+					log.Debugf(ctx, "updated attachment for media %s", p.media.ID)
 				}
 
 				// Store values.
@@ -164,6 +166,12 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	)
 
 	defer func() {
+		log.Debugf(
+			ctx,
+			"cleaning up temp files of media %s: %s, %s",
+			p.media.ID, temppath, thumbpath,
+		)
+
 		if err := remove(temppath, thumbpath); err != nil {
 			log.Errorf(ctx, "error(s) cleaning up files: %v", err)
 		}
@@ -276,6 +284,12 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return gtserror.Newf("error writing media to storage: %w", err)
 	}
 
+	log.Debugf(
+		ctx,
+		"copied full-size version of media %s to %s",
+		p.media.ID, p.media.File.Path,
+	)
+
 	// Set final determined file size.
 	p.media.File.FileSize = int(filesz)
 
@@ -288,6 +302,12 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		if err != nil {
 			return gtserror.Newf("error writing thumb to storage: %w", err)
 		}
+
+		log.Debugf(
+			ctx,
+			"copied thumbnail version of media %s to %s",
+			p.media.ID, p.media.Thumbnail.Path,
+		)
 
 		// Set final determined thumbnail size.
 		p.media.Thumbnail.FileSize = int(thumbsz)
@@ -330,11 +350,11 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 // cleanup will remove any traces of processing media from storage.
 // and perform any other necessary cleanup steps after failure.
 func (p *ProcessingMedia) cleanup(ctx context.Context) {
-	var err error
+	log.Debugf(ctx, "running cleanup of attachment %s", p.media.ID)
 
 	if p.media.File.Path != "" {
 		// Ensure media file at path is deleted from storage.
-		err = p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
+		err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
 		if err != nil && !storage.IsNotFound(err) {
 			log.Errorf(ctx, "error deleting %s: %v", p.media.File.Path, err)
 		}
@@ -342,7 +362,7 @@ func (p *ProcessingMedia) cleanup(ctx context.Context) {
 
 	if p.media.Thumbnail.Path != "" {
 		// Ensure media thumbnail at path is deleted from storage.
-		err = p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path)
+		err := p.mgr.state.Storage.Delete(ctx, p.media.Thumbnail.Path)
 		if err != nil && !storage.IsNotFound(err) {
 			log.Errorf(ctx, "error deleting %s: %v", p.media.Thumbnail.Path, err)
 		}
