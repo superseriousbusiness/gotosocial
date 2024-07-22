@@ -19,7 +19,6 @@ package media
 
 import (
 	"context"
-	"time"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
@@ -107,8 +106,6 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
 				if e != nil {
 					log.Errorf(ctx, "error updating media in db: %v", e)
-				} else {
-					log.Debugf(ctx, "updated attachment for media %s", p.media.ID)
 				}
 
 				// Store values.
@@ -116,22 +113,6 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 				p.err = err
 			}
 		}()
-
-		// TODO: in time update this
-		// to perhaps follow a similar
-		// freshness window to statuses
-		// / accounts? But that's a big
-		// maybe, media don't change in
-		// the same way so this is largely
-		// just to slow down fail retries.
-		const maxfreq = 6 * time.Hour
-
-		// Check whether media is uncached but repeatedly failing,
-		// specifically limit the frequency at which we allow this.
-		if !p.media.UpdatedAt.Equal(p.media.CreatedAt) && // i.e. not new
-			p.media.UpdatedAt.Add(maxfreq).Before(time.Now()) {
-			return nil
-		}
 
 		// Attempt to store media and calculate
 		// full-size media attachment details.
@@ -166,12 +147,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	)
 
 	defer func() {
-		log.Debugf(
-			ctx,
-			"cleaning up temp files of media %s: %s, %s",
-			p.media.ID, temppath, thumbpath,
-		)
-
 		if err := remove(temppath, thumbpath); err != nil {
 			log.Errorf(ctx, "error(s) cleaning up files: %v", err)
 		}
@@ -284,12 +259,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		return gtserror.Newf("error writing media to storage: %w", err)
 	}
 
-	log.Debugf(
-		ctx,
-		"copied full-size version of media %s to %s",
-		p.media.ID, p.media.File.Path,
-	)
-
 	// Set final determined file size.
 	p.media.File.FileSize = int(filesz)
 
@@ -302,12 +271,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		if err != nil {
 			return gtserror.Newf("error writing thumb to storage: %w", err)
 		}
-
-		log.Debugf(
-			ctx,
-			"copied thumbnail version of media %s to %s",
-			p.media.ID, p.media.Thumbnail.Path,
-		)
 
 		// Set final determined thumbnail size.
 		p.media.Thumbnail.FileSize = int(thumbsz)
@@ -350,8 +313,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 // cleanup will remove any traces of processing media from storage.
 // and perform any other necessary cleanup steps after failure.
 func (p *ProcessingMedia) cleanup(ctx context.Context) {
-	log.Debugf(ctx, "running cleanup of attachment %s", p.media.ID)
-
 	if p.media.File.Path != "" {
 		// Ensure media file at path is deleted from storage.
 		err := p.mgr.state.Storage.Delete(ctx, p.media.File.Path)
