@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
@@ -41,79 +42,97 @@ func (p *Processor) GetFile(
 	requester *gtsmodel.Account,
 	form *apimodel.GetContentRequestForm,
 ) (*apimodel.Content, gtserror.WithCode) {
-	// parse the form fields
+	// Parse media size (small, static, original).
 	mediaSize, err := parseSize(form.MediaSize)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media size %s not valid", form.MediaSize))
+		err := gtserror.Newf("media size %s not valid", form.MediaSize)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
+	// Parse media type (emoji, header, avatar, attachment).
 	mediaType, err := parseType(form.MediaType)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not valid", form.MediaType))
+		err := gtserror.Newf("media type %s not valid", form.MediaType)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	spl := strings.Split(form.FileName, ".")
-	if len(spl) != 2 || spl[0] == "" || spl[1] == "" {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("file name %s not parseable", form.FileName))
-	}
-	wantedMediaID := spl[0]
-	owningAccountID := form.AccountID
-
-	// get the account that owns the media and make sure it's not suspended
-	owningAccount, err := p.state.DB.GetAccountByID(ctx, owningAccountID)
+	// Parse media ID from file name.
+	mediaID, _, err := parseFileName(form.FileName)
 	if err != nil {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s could not be selected from the db: %s", owningAccountID, err))
-	}
-	if !owningAccount.SuspendedAt.IsZero() {
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("account with id %s is suspended", owningAccountID))
+		err := gtserror.Newf("media file name %s not valid", form.FileName)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	// make sure the requesting account and the media account don't block each other
+	// Get the account that owns the media
+	// and make sure it's not suspended.
+	acctID := form.AccountID
+	acct, err := p.state.DB.GetAccountByID(ctx, acctID)
+	if err != nil {
+		err := gtserror.Newf("db error getting account %s: %w", acctID, err)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	if !acct.IsSuspended() {
+		err := gtserror.Newf("account %s is suspended", acctID)
+		return nil, gtserror.NewErrorNotFound(err)
+	}
+
+	// If requester was authenticated, ensure media
+	// owner and requester don't block each other.
 	if requester != nil {
-		blocked, err := p.state.DB.IsEitherBlocked(ctx, requester.ID, owningAccountID)
+		blocked, err := p.state.DB.IsEitherBlocked(ctx, requester.ID, acctID)
 		if err != nil {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block status could not be established between accounts %s and %s: %s", owningAccountID, requester.ID, err))
+			err := gtserror.Newf("db error checking block between %s and %s: %w", acctID, requester.ID, err)
+			return nil, gtserror.NewErrorNotFound(err)
 		}
+
 		if blocked {
-			return nil, gtserror.NewErrorNotFound(fmt.Errorf("block exists between accounts %s and %s", owningAccountID, requester.ID))
+			err := gtserror.Newf("block exists between %s and %s", acctID, requester.ID)
+			return nil, gtserror.NewErrorNotFound(err)
 		}
 	}
 
-	// the way we store emojis is a little different from the way we store other attachments,
-	// so we need to take different steps depending on the media type being requested
+	// The way we store emojis is a bit different
+	// from the way we store other attachments,
+	// so we need to take different steps depending
+	// on the media type being requested.
 	switch mediaType {
+
 	case media.TypeEmoji:
 		return p.getEmojiContent(ctx,
-			owningAccountID,
-			wantedMediaID,
+			acctID,
 			mediaSize,
+			mediaID,
 		)
+
 	case media.TypeAttachment, media.TypeHeader, media.TypeAvatar:
 		return p.getAttachmentContent(ctx,
 			requester,
-			owningAccountID,
-			wantedMediaID,
+			acctID,
 			mediaSize,
+			mediaID,
 		)
+
 	default:
-		return nil, gtserror.NewErrorNotFound(fmt.Errorf("media type %s not recognized", mediaType))
+		err := gtserror.Newf("media type %s not recognized", mediaType)
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 }
 
 func (p *Processor) getAttachmentContent(
 	ctx context.Context,
 	requester *gtsmodel.Account,
-	ownerID string,
-	mediaID string,
+	acctID string,
 	sizeStr media.Size,
+	mediaID string,
 ) (
 	*apimodel.Content,
 	gtserror.WithCode,
 ) {
-	// Search for media with given ID in the database.
+	// Get attachment with given ID from the database.
 	attach, err := p.state.DB.GetAttachmentByID(ctx, mediaID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("error fetching media from database: %w", err)
+		err := gtserror.Newf("db error getting attachment %s: %w", mediaID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -122,51 +141,24 @@ func (p *Processor) getAttachmentContent(
 		return nil, gtserror.NewErrorNotFound(errors.New(text), text)
 	}
 
-	// Ensure the 'owner' owns media.
-	if attach.AccountID != ownerID {
+	// Ensure the account
+	// actually owns the media.
+	if attach.AccountID != acctID {
 		const text = "media was not owned by passed account id"
 		return nil, gtserror.NewErrorNotFound(errors.New(text) /* no help text! */)
 	}
 
-	var remoteURL *url.URL
-	if attach.RemoteURL != "" {
-
-		// Parse media remote URL to valid URL object.
-		remoteURL, err = url.Parse(attach.RemoteURL)
-		if err != nil {
-			err := gtserror.Newf("invalid media remote url %s: %w", attach.RemoteURL, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-	}
-
-	// Uknown file types indicate no *locally*
+	// Unknown file types indicate no *locally*
 	// stored data we can serve. Handle separately.
 	if attach.Type == gtsmodel.FileTypeUnknown {
-		if remoteURL == nil {
-			err := gtserror.Newf("missing remote url for unknown type media %s: %w", attach.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-
-		// If this is an "Unknown" file type, ie., one we
-		// tried to process and couldn't, or one we refused
-		// to process because it wasn't supported, then we
-		// can skip a lot of steps here by simply forwarding
-		// the request to the remote URL.
-		url := &storage.PresignedURL{
-			URL: remoteURL,
-
-			// We might manage to cache the media
-			// at some point, so set a low-ish expiry.
-			Expiry: time.Now().Add(2 * time.Hour),
-		}
-
-		return &apimodel.Content{URL: url}, nil
+		return handleUnknown(attach)
 	}
 
+	// If requester was provided, use their username
+	// to create a transport to potentially re-fetch
+	// the media. Else falls back to instance account.
 	var requestUser string
-
 	if requester != nil {
-		// Set requesting acc username.
 		requestUser = requester.Username
 	}
 
@@ -217,10 +209,9 @@ func (p *Processor) getAttachmentContent(
 
 func (p *Processor) getEmojiContent(
 	ctx context.Context,
-
-	ownerID string,
-	emojiID string,
+	acctID string,
 	sizeStr media.Size,
+	emojiID string,
 ) (
 	*apimodel.Content,
 	gtserror.WithCode,
@@ -229,7 +220,7 @@ func (p *Processor) getEmojiContent(
 	// As refreshed emojis use a newly generated path ID to
 	// differentiate them (cache-wise) from the original.
 	staticURL := uris.URIForAttachment(
-		ownerID,
+		acctID,
 		string(media.TypeEmoji),
 		string(media.SizeStatic),
 		emojiID,
@@ -323,13 +314,49 @@ func (p *Processor) getContent(
 
 	// Ensure found.
 	if rc == nil {
+		err := gtserror.Newf("file not found at %s", path)
 		const text = "file not found"
-		return nil, gtserror.NewErrorNotFound(errors.New(text), text)
+		return nil, gtserror.NewErrorNotFound(err, text)
 	}
 
 	// Return with stream.
 	content.Content = rc
 	return content, nil
+}
+
+// handles serving Content for "unknown" file
+// type, ie., a file we couldn't cache (this time).
+func handleUnknown(
+	attach *gtsmodel.MediaAttachment,
+) (*apimodel.Content, gtserror.WithCode) {
+	if attach.RemoteURL == "" {
+		err := gtserror.Newf("empty remote url for %s", attach.ID)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Parse media remote URL to valid URL object.
+	remoteURL, err := url.Parse(attach.RemoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid remote url for %s: %w", attach.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if remoteURL == nil {
+		err := gtserror.Newf("nil remote url for %s", attach.ID)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Just forward the request to the remote URL,
+	// since this is a type we couldn't process.
+	url := &storage.PresignedURL{
+		URL: remoteURL,
+
+		// We might manage to cache the media
+		// at some point, so set a low-ish expiry.
+		Expiry: time.Now().Add(2 * time.Hour),
+	}
+
+	return &apimodel.Content{URL: url}, nil
 }
 
 func parseType(s string) (media.Type, error) {
@@ -356,4 +383,24 @@ func parseSize(s string) (media.Size, error) {
 		return media.SizeStatic, nil
 	}
 	return "", fmt.Errorf("%s not a recognized media.Size", s)
+}
+
+// Extract the mediaID and file extension from
+// a string like "01J3CTH8CZ6ATDNMG6CPRC36XE.gif"
+func parseFileName(s string) (string, string, error) {
+	spl := strings.Split(s, ".")
+	if len(spl) != 2 || spl[0] == "" || spl[1] == "" {
+		return "", "", errors.New("file name not splittable on '.'")
+	}
+
+	var (
+		mediaID  = spl[0]
+		mediaExt = spl[1]
+	)
+
+	if !regexes.ULID.MatchString(mediaID) {
+		return "", "", fmt.Errorf("%s not a valid ULID", mediaID)
+	}
+
+	return mediaID, mediaExt, nil
 }

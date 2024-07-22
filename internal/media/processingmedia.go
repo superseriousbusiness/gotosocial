@@ -24,7 +24,6 @@ import (
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -63,6 +62,7 @@ func (p *ProcessingMedia) Load(ctx context.Context) (*gtsmodel.MediaAttachment, 
 	media, done, err := p.load(ctx)
 	if !done {
 		// On a context-canceled error (marked as !done), requeue for loading.
+		log.Warnf(ctx, "reprocessing media %s after canceled ctx", p.media.ID)
 		p.mgr.state.Workers.Dereference.Queue.Push(func(ctx context.Context) {
 			if _, _, err := p.load(ctx); err != nil {
 				log.Errorf(ctx, "error loading media: %v", err)
@@ -98,10 +98,7 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 			// Anything from here, we
 			// need to ensure happens
 			// (i.e. no ctx canceled).
-			ctx = gtscontext.WithValues(
-				context.Background(),
-				ctx, // values
-			)
+			ctx = context.WithoutCancel(ctx)
 
 			// On error or unknown media types, perform error cleanup.
 			if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
