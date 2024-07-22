@@ -157,7 +157,7 @@ func (d *Dereferencer) RefreshEmoji(
 	}
 
 	// Check if needs updating.
-	if *emoji.Cached || !force {
+	if *emoji.Cached && !force {
 		return emoji, nil
 	}
 

@@ -57,16 +57,16 @@ func (d *Dereferencer) GetMedia(
 	*gtsmodel.MediaAttachment,
 	error,
 ) {
+	// Ensure we have a valid remote URL.
+	url, err := url.Parse(remoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid media remote url %s: %w", remoteURL, err)
+		return nil, err
+	}
+
 	return d.processMediaSafeley(ctx,
 		remoteURL,
 		func() (*media.ProcessingMedia, error) {
-
-			// Ensure we have a valid remote URL.
-			url, err := url.Parse(remoteURL)
-			if err != nil {
-				err := gtserror.Newf("invalid media remote url %s: %w", remoteURL, err)
-				return nil, err
-			}
 
 			// Fetch transport for the provided request user from controller.
 			tsport, err := d.transportController.NewTransportForUsername(ctx,
@@ -143,21 +143,21 @@ func (d *Dereferencer) RefreshMedia(
 	}
 
 	// Check if needs updating.
-	if *attach.Cached || !force {
+	if *attach.Cached && !force {
 		return attach, nil
+	}
+
+	// Ensure we have a valid remote URL.
+	url, err := url.Parse(attach.RemoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid media remote url %s: %w", attach.RemoteURL, err)
+		return nil, err
 	}
 
 	// Pass along for safe processing.
 	return d.processMediaSafeley(ctx,
 		attach.RemoteURL,
 		func() (*media.ProcessingMedia, error) {
-
-			// Ensure we have a valid remote URL.
-			url, err := url.Parse(attach.RemoteURL)
-			if err != nil {
-				err := gtserror.Newf("invalid media remote url %s: %w", attach.RemoteURL, err)
-				return nil, err
-			}
 
 			// Fetch transport for the provided request user from controller.
 			tsport, err := d.transportController.NewTransportForUsername(ctx,
