@@ -22,7 +22,6 @@ import (
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -77,42 +76,34 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done = (err == nil || !errorsv2.IsV2(err,
+			if done = (err == nil || !errorsv2.IsV2(err,
 				context.Canceled,
 				context.DeadlineExceeded,
-			))
+			)); done {
+				// Processing finished,
+				// whether error or not!
 
-			if !done {
-				return
+				// Anything from here, we
+				// need to ensure happens
+				// (i.e. no ctx canceled).
+				ctx = context.WithoutCancel(ctx)
+
+				// On error, clean
+				// downloaded files.
+				if err != nil {
+					p.cleanup(ctx)
+				}
+
+				// Update with latest details, whatever happened.
+				e := p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
+				if e != nil {
+					log.Errorf(ctx, "error updating emoji in db: %v", e)
+				}
+
+				// Store values.
+				p.done = true
+				p.err = err
 			}
-
-			// Anything from here, we
-			// need to ensure happens
-			// (i.e. no ctx canceled).
-			ctx = gtscontext.WithValues(
-				context.Background(),
-				ctx, // values
-			)
-
-			// On error, clean
-			// downloaded files.
-			if err != nil {
-				p.cleanup(ctx)
-			}
-
-			if !done {
-				return
-			}
-
-			// Update with latest details, whatever happened.
-			e := p.mgr.state.DB.UpdateEmoji(ctx, p.emoji)
-			if e != nil {
-				log.Errorf(ctx, "error updating emoji in db: %v", e)
-			}
-
-			// Store final values.
-			p.done = true
-			p.err = err
 		}()
 
 		// Attempt to store media and calculate
@@ -122,7 +113,10 @@ func (p *ProcessingEmoji) load(ctx context.Context) (
 		err = p.store(ctx)
 		return err
 	})
-	emoji = p.emoji
+
+	// Return a copy of emoji.
+	emoji = new(gtsmodel.Emoji)
+	*emoji = *p.emoji
 	return
 }
 

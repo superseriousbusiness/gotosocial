@@ -86,34 +86,33 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 
 		defer func() {
 			// This is only done when ctx NOT cancelled.
-			done = (err == nil || !errorsv2.IsV2(err,
+			if done = (err == nil || !errorsv2.IsV2(err,
 				context.Canceled,
 				context.DeadlineExceeded,
-			))
+			)); done {
+				// Processing finished,
+				// whether error or not!
 
-			if !done {
-				return
+				// Anything from here, we
+				// need to ensure happens
+				// (i.e. no ctx canceled).
+				ctx = context.WithoutCancel(ctx)
+
+				// On error or unknown media types, perform error cleanup.
+				if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
+					p.cleanup(ctx)
+				}
+
+				// Update with latest details, whatever happened.
+				e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
+				if e != nil {
+					log.Errorf(ctx, "error updating media in db: %v", e)
+				}
+
+				// Store values.
+				p.done = true
+				p.err = err
 			}
-
-			// Anything from here, we
-			// need to ensure happens
-			// (i.e. no ctx canceled).
-			ctx = context.WithoutCancel(ctx)
-
-			// On error or unknown media types, perform error cleanup.
-			if err != nil || p.media.Type == gtsmodel.FileTypeUnknown {
-				p.cleanup(ctx)
-			}
-
-			// Update with latest details, whatever happened.
-			e := p.mgr.state.DB.UpdateAttachment(ctx, p.media)
-			if e != nil {
-				log.Errorf(ctx, "error updating media in db: %v", e)
-			}
-
-			// Store final values.
-			p.done = true
-			p.err = err
 		}()
 
 		// TODO: in time update this
@@ -139,7 +138,10 @@ func (p *ProcessingMedia) load(ctx context.Context) (
 		err = p.store(ctx)
 		return err
 	})
-	media = p.media
+
+	// Return a copy of media attachment.
+	media = new(gtsmodel.MediaAttachment)
+	*media = *p.media
 	return
 }
 
