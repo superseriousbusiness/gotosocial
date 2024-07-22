@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
@@ -570,19 +571,35 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 }`, string(b))
 }
 
-// Test that a status which is filtered with a warn filter by the requesting user has `filtered` set correctly.
-func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
+// Modify a fixture status into a status that should be filtered,
+// and then filter it, returning the API status or any error from converting it.
+func (suite *InternalToFrontendTestSuite) filteredStatusToFrontend(action gtsmodel.FilterAction, boost bool) (*apimodel.Status, error) {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	testStatus.Content += " fnord"
 	testStatus.Text += " fnord"
+
+	if boost {
+		// Modify a fixture boost into a boost of the above status.
+		boostStatus := suite.testStatuses["admin_account_status_4"]
+		boostStatus.BoostOf = testStatus
+		boostStatus.BoostOfID = testStatus.ID
+		testStatus = boostStatus
+	}
+
 	requestingAccount := suite.testAccounts["local_account_1"]
+
 	expectedMatchingFilter := suite.testFilters["local_account_1_filter_1"]
+	expectedMatchingFilter.Action = action
+
 	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
 	suite.NoError(expectedMatchingFilterKeyword.Compile())
 	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
+
 	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
+
 	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
+
+	return suite.typeconverter.StatusToAPIStatus(
 		context.Background(),
 		testStatus,
 		requestingAccount,
@@ -590,6 +607,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
 		requestingAccountFilters,
 		nil,
 	)
+}
+
+// Test that a status which is filtered with a warn filter by the requesting user has `filtered` set correctly.
+func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
+	apiStatus, err := suite.filteredStatusToFrontend(gtsmodel.FilterActionWarn, false)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -745,28 +767,343 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
 }`, string(b))
 }
 
+// Test that a status which is filtered with a warn filter by the requesting user has `filtered` set correctly when boosted.
+func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
+	apiStatus, err := suite.filteredStatusToFrontend(gtsmodel.FilterActionWarn, true)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01G36SF3V6Y6V5BF9P4R7PQG7G",
+  "created_at": "2021-10-20T10:41:37.000Z",
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": true,
+  "spoiler_text": "introduction post",
+  "visibility": "public",
+  "language": "en",
+  "uri": "http://localhost:8080/users/admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
+  "url": "http://localhost:8080/@admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": true,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": true,
+  "pinned": false,
+  "content": "hello everyone!",
+  "reblog": {
+    "id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+    "created_at": "2021-10-20T11:36:45.000Z",
+    "in_reply_to_id": null,
+    "in_reply_to_account_id": null,
+    "sensitive": false,
+    "spoiler_text": "",
+    "visibility": "public",
+    "language": "en",
+    "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+    "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+    "replies_count": 1,
+    "reblogs_count": 0,
+    "favourites_count": 1,
+    "favourited": true,
+    "reblogged": false,
+    "muted": false,
+    "bookmarked": true,
+    "pinned": false,
+    "content": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+    "reblog": null,
+    "application": {
+      "name": "superseriousbusiness",
+      "website": "https://superserious.business"
+    },
+    "account": {
+      "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+      "username": "the_mighty_zork",
+      "acct": "the_mighty_zork",
+      "display_name": "original zork (he/they)",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-20T11:09:18.000Z",
+      "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+      "url": "http://localhost:8080/@the_mighty_zork",
+      "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+      "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
+      "avatar_description": "a green goblin looking nasty",
+      "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+      "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
+      "header_description": "A very old-school screenshot of the original team fortress mod for quake",
+      "followers_count": 2,
+      "following_count": 2,
+      "statuses_count": 8,
+      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "role": {
+        "name": "user"
+      }
+    },
+    "media_attachments": [
+      {
+        "id": "01F8MH6NEM8D7527KZAECTCR76",
+        "type": "image",
+        "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+        "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+        "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
+        "remote_url": null,
+        "preview_remote_url": null,
+        "meta": {
+          "original": {
+            "width": 1200,
+            "height": 630,
+            "size": "1200x630",
+            "aspect": 1.9047619
+          },
+          "small": {
+            "width": 512,
+            "height": 268,
+            "size": "512x268",
+            "aspect": 1.9104477
+          },
+          "focus": {
+            "x": 0,
+            "y": 0
+          }
+        },
+        "description": "Black and white image of some 50's style text saying: Welcome On Board",
+        "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
+      }
+    ],
+    "mentions": [],
+    "tags": [
+      {
+        "name": "welcome",
+        "url": "http://localhost:8080/tags/welcome"
+      }
+    ],
+    "emojis": [
+      {
+        "shortcode": "rainbow",
+        "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+        "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+        "visible_in_picker": true,
+        "category": "reactions"
+      }
+    ],
+    "card": null,
+    "poll": null,
+    "text": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+    "filtered": [
+      {
+        "filter": {
+          "id": "01HN26VM6KZTW1ANNRVSBMA461",
+          "title": "fnord",
+          "context": [
+            "home",
+            "public"
+          ],
+          "expires_at": null,
+          "filter_action": "warn",
+          "keywords": [
+            {
+              "id": "01HN272TAVWAXX72ZX4M8JZ0PS",
+              "keyword": "fnord",
+              "whole_word": true
+            }
+          ],
+          "statuses": []
+        },
+        "keyword_matches": [
+          "fnord"
+        ],
+        "status_matches": []
+      }
+    ],
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "public"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "public"
+        ],
+        "with_approval": []
+      }
+    }
+  },
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "role": {
+      "name": "admin"
+    }
+  },
+  "media_attachments": [],
+  "mentions": [],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
+  "text": "hello everyone!",
+  "filtered": [
+    {
+      "filter": {
+        "id": "01HN26VM6KZTW1ANNRVSBMA461",
+        "title": "fnord",
+        "context": [
+          "home",
+          "public"
+        ],
+        "expires_at": null,
+        "filter_action": "warn",
+        "keywords": [
+          {
+            "id": "01HN272TAVWAXX72ZX4M8JZ0PS",
+            "keyword": "fnord",
+            "whole_word": true
+          }
+        ],
+        "statuses": []
+      },
+      "keyword_matches": [
+        "fnord"
+      ],
+      "status_matches": []
+    }
+  ],
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public"
+      ],
+      "with_approval": []
+    }
+  }
+}`, string(b))
+}
+
 // Test that a status which is filtered with a hide filter by the requesting user results in the ErrHideStatus error.
 func (suite *InternalToFrontendTestSuite) TestHideFilteredStatusToFrontend() {
+	_, err := suite.filteredStatusToFrontend(gtsmodel.FilterActionHide, false)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
+// Test that a status which is filtered with a hide filter by the requesting user results in the ErrHideStatus error for a boost of that status.
+func (suite *InternalToFrontendTestSuite) TestHideFilteredBoostToFrontend() {
+	_, err := suite.filteredStatusToFrontend(gtsmodel.FilterActionHide, true)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
+// Test that a hashtag filter for a hashtag in Mastodon HTML content works the way most users would expect.
+func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wholeWord bool, boost bool) {
 	testStatus := suite.testStatuses["admin_account_status_1"]
-	testStatus.Content += " fnord"
-	testStatus.Text += " fnord"
+	testStatus.Content = `<p>doggo doggin' it</p><p><a href="https://example.test/tags/dogsofmastodon" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>dogsofmastodon</span></a></p>`
+
+	if boost {
+		// Modify a fixture boost into a boost of the above status.
+		boostStatus := suite.testStatuses["admin_account_status_4"]
+		boostStatus.BoostOf = testStatus
+		boostStatus.BoostOfID = testStatus.ID
+		testStatus = boostStatus
+	}
+
 	requestingAccount := suite.testAccounts["local_account_1"]
-	expectedMatchingFilter := suite.testFilters["local_account_1_filter_1"]
-	expectedMatchingFilter.Action = gtsmodel.FilterActionHide
-	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
-	suite.NoError(expectedMatchingFilterKeyword.Compile())
-	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
-	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
-	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
-	_, err := suite.typeconverter.StatusToAPIStatus(
+
+	filterKeyword := &gtsmodel.FilterKeyword{
+		Keyword:   "#dogsofmastodon",
+		WholeWord: &wholeWord,
+		Regexp:    nil,
+	}
+	if err := filterKeyword.Compile(); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	filter := &gtsmodel.Filter{
+		Action:               gtsmodel.FilterActionWarn,
+		Keywords:             []*gtsmodel.FilterKeyword{filterKeyword},
+		ContextHome:          util.Ptr(true),
+		ContextNotifications: util.Ptr(false),
+		ContextPublic:        util.Ptr(false),
+		ContextThread:        util.Ptr(false),
+		ContextAccount:       util.Ptr(false),
+	}
+
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
 		context.Background(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextHome,
-		requestingAccountFilters,
+		[]*gtsmodel.Filter{filter},
 		nil,
 	)
-	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+	if suite.NoError(err) {
+		suite.NotEmpty(apiStatus.Filtered)
+	}
+}
+
+func (suite *InternalToFrontendTestSuite) TestHashtagWholeWordFilteredStatusToFrontend() {
+	suite.testHashtagFilteredStatusToFrontend(true, false)
+}
+
+func (suite *InternalToFrontendTestSuite) TestHashtagWholeWordFilteredBoostToFrontend() {
+	suite.testHashtagFilteredStatusToFrontend(true, true)
+}
+
+func (suite *InternalToFrontendTestSuite) TestHashtagAnywhereFilteredStatusToFrontend() {
+	suite.testHashtagFilteredStatusToFrontend(false, false)
+}
+
+func (suite *InternalToFrontendTestSuite) TestHashtagAnywhereFilteredBoostToFrontend() {
+	suite.testHashtagFilteredStatusToFrontend(false, true)
 }
 
 // Test that a status from a user muted by the requesting user results in the ErrHideStatus error.

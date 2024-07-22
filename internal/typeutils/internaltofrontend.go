@@ -841,6 +841,7 @@ func (c *Converter) statusToAPIFilterResults(
 	if mutes.Matches(s.AccountID, filterContext, now) {
 		return nil, statusfilter.ErrHideStatus
 	}
+
 	// If this status is part of a multi-account discussion,
 	// and all of the accounts replied to or mentioned are invisible to the requesting account
 	// (due to blocks, domain blocks, moderation, etc.),
@@ -1185,13 +1186,14 @@ func (c *Converter) statusToFrontend(
 			return nil, gtserror.Newf("error converting boosted status: %w", err)
 		}
 
-		// Set boosted status and set interactions from original.
+		// Set boosted status and set interactions and filter results from original.
 		apiStatus.Reblog = &apimodel.StatusReblogged{reblog}
 		apiStatus.Favourited = apiStatus.Reblog.Favourited
 		apiStatus.Bookmarked = apiStatus.Reblog.Bookmarked
 		apiStatus.Muted = apiStatus.Reblog.Muted
 		apiStatus.Reblogged = apiStatus.Reblog.Reblogged
 		apiStatus.Pinned = apiStatus.Reblog.Pinned
+		apiStatus.Filtered = apiStatus.Reblog.Filtered
 	}
 
 	return apiStatus, nil
