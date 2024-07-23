@@ -80,8 +80,8 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 	suite.False(statusReply.Sensitive)
 	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
 
-	suite.Equal(targetStatus.ContentWarning, statusReply.SpoilerText)
-	suite.Equal(targetStatus.Content, statusReply.Content)
+	suite.Empty(statusReply.SpoilerText)
+	suite.Empty(statusReply.Content)
 	suite.Equal("the_mighty_zork", statusReply.Account.Username)
 	suite.Len(statusReply.MediaAttachments, 0)
 	suite.Len(statusReply.Mentions, 0)
@@ -146,8 +146,8 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 	suite.False(responseStatus.Sensitive)
 	suite.Equal(suite.tc.VisToAPIVis(context.Background(), testStatus.Visibility), responseStatus.Visibility)
 
-	suite.Equal(testStatus.ContentWarning, responseStatus.SpoilerText)
-	suite.Equal(testStatus.Content, responseStatus.Content)
+	suite.Empty(responseStatus.SpoilerText)
+	suite.Empty(responseStatus.Content)
 	suite.Equal("the_mighty_zork", responseStatus.Account.Username)
 	suite.Len(responseStatus.MediaAttachments, 0)
 	suite.Len(responseStatus.Mentions, 0)

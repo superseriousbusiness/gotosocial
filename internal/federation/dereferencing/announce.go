@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // EnrichAnnounce enriches the given boost wrapper status
@@ -78,14 +79,12 @@ func (d *Dereferencer) EnrichAnnounce(
 	// original URI was an indirect link.
 	boost.BoostOfURI = target.URI
 
+	// Boosts are not considered sensitive even if their target is.
+	boost.Sensitive = util.Ptr(false)
+
 	// Populate remaining fields on
 	// the boost wrapper using target.
-	boost.Content = target.Content
-	boost.ContentWarning = target.ContentWarning
 	boost.ActivityStreamsType = target.ActivityStreamsType
-	boost.Sensitive = target.Sensitive
-	boost.Language = target.Language
-	boost.Text = target.Text
 	boost.BoostOfID = target.ID
 	boost.BoostOf = target
 	boost.BoostOfAccountID = target.AccountID
