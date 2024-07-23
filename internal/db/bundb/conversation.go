@@ -473,7 +473,12 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 			latestConversationStatusesTempTable,
 		} {
 			if _, err := tx.NewDropTable().Table(tempTable).Exec(ctx); err != nil {
-				return err
+				return gtserror.Newf(
+					"error dropping temporary table %s after deleting status %s: %w",
+					tempTable,
+					statusID,
+					err,
+				)
 			}
 		}
 
