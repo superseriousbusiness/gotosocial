@@ -19,6 +19,7 @@ package conversations
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -52,8 +53,7 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 			return nil
 		}
 		// Otherwise, pick up where we left off.
-		state, err = gtsmodel.AdvancedMigrationLoad[AdvancedMigrationState](advancedMigration)
-		if err != nil {
+		if err := json.Unmarshal(advancedMigration.StateJSON, &state); err != nil {
 			// This should never happen.
 			return gtserror.Newf("couldn't deserialize advanced migration state from JSON: %w", err)
 		}
@@ -74,7 +74,7 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 			ID:       advancedMigrationID,
 			Finished: util.Ptr(false),
 		}
-		if err := gtsmodel.AdvancedMigrationStore(advancedMigration, state); err != nil {
+		if advancedMigration.StateJSON, err = json.Marshal(state); err != nil {
 			// This should never happen.
 			return gtserror.Newf("couldn't serialize advanced migration state to JSON: %w", err)
 		}
@@ -115,7 +115,7 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 
 		// Save the migration state with the new min ID.
 		state.MinID = statusIDs[len(statusIDs)-1]
-		if err := gtsmodel.AdvancedMigrationStore(advancedMigration, state); err != nil {
+		if advancedMigration.StateJSON, err = json.Marshal(state); err != nil {
 			// This should never happen.
 			return gtserror.Newf("couldn't serialize advanced migration state to JSON: %w", err)
 		}
