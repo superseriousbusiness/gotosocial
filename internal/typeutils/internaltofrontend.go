@@ -1697,7 +1697,12 @@ func (c *Converter) ConversationToAPIConversation(
 		var apiAccount *apimodel.Account
 		blocked, err := c.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, account.ID)
 		if err != nil {
-			return nil, err
+			return nil, gtserror.Newf(
+				"DB error checking blocks between accounts %s and %s: %w",
+				requestingAccount.ID,
+				account.ID,
+				err,
+			)
 		}
 		if blocked || account.IsSuspended() {
 			apiAccount, err = c.AccountToAPIAccountBlocked(ctx, account)
@@ -1705,7 +1710,11 @@ func (c *Converter) ConversationToAPIConversation(
 			apiAccount, err = c.AccountToAPIAccountPublic(ctx, account)
 		}
 		if err != nil {
-			return nil, err
+			return nil, gtserror.Newf(
+				"error converting account %s to API representation: %w",
+				account.ID,
+				err,
+			)
 		}
 		apiConversation.Accounts = append(apiConversation.Accounts, *apiAccount)
 	}
@@ -1720,7 +1729,11 @@ func (c *Converter) ConversationToAPIConversation(
 			mutes,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-			return nil, err
+			return nil, gtserror.Newf(
+				"error converting status %s to API representation: %w",
+				conversation.LastStatus.ID,
+				err,
+			)
 		}
 	}
 

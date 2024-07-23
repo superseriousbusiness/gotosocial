@@ -24,8 +24,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -43,11 +42,6 @@ type ConversationNotification struct {
 // UpdateConversationsForStatus updates all conversations related to a status,
 // and returns a map from local account IDs to conversation notifications that should be sent to them.
 func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gtsmodel.Status) ([]ConversationNotification, error) {
-	// We need accounts to be populated for this.
-	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
-		return nil, err
-	}
-
 	if status.Visibility != gtsmodel.VisibilityDirect {
 		// Only DMs are considered part of conversations.
 		return nil, nil
@@ -61,6 +55,11 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		// If the status doesn't have a thread ID, it didn't mention a local account,
 		// and thus can't be part of a conversation.
 		return nil, nil
+	}
+
+	// We need accounts to be populated for this.
+	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
+		return nil, gtserror.Newf("DB error populating status %s: %w", status.ID, err)
 	}
 
 	// The account which authored the status plus all mentioned accounts.
@@ -93,27 +92,20 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 			continue
 		}
 
-		// TODO: (Vyr) find a prettier way to do this
 		// Is the status filtered or muted for this user?
-		filters, err := p.state.DB.GetFiltersForAccountID(ctx, localAccount.ID)
-		if err != nil {
-			log.Errorf(ctx, "error retrieving filters for account %s: %v", localAccount.ID, err)
-			continue
-		}
-		mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), localAccount.ID, nil)
-		if err != nil {
-			log.Errorf(ctx, "error retrieving mutes for account %s: %v", localAccount.ID, err)
-			continue
-		}
-		compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 		// Converting the status to an API status runs the filter/mute checks.
+		filters, mutes, errWithCode := p.getFiltersAndMutes(ctx, localAccount)
+		if errWithCode != nil {
+			log.Error(ctx, errWithCode)
+			continue
+		}
 		_, err = p.converter.StatusToAPIStatus(
 			ctx,
 			status,
 			localAccount,
 			statusfilter.FilterContextNotifications,
 			filters,
-			compiledMutes,
+			mutes,
 		)
 		if err != nil {
 			// If the status matched a hide filter, skip processing it for this account.
@@ -218,7 +210,7 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 			conversation,
 			localAccount,
 			filters,
-			compiledMutes,
+			mutes,
 		)
 		if err != nil {
 			// If the conversation's last status matched a hide filter, skip it.

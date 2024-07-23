@@ -23,8 +23,6 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -45,7 +43,13 @@ func (p *Processor) GetAll(
 		page,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(
+			gtserror.Newf(
+				"DB error getting conversations for account %s: %w",
+				requestingAccount.ID,
+				err,
+			),
+		)
 	}
 
 	// Check for empty response.
@@ -60,18 +64,10 @@ func (p *Processor) GetAll(
 
 	items := make([]interface{}, 0, count)
 
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
+	filters, mutes, errWithCode := p.getFiltersAndMutes(ctx, requestingAccount)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
-
-	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAccount.ID, nil)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAccount.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
 	for _, conversation := range conversations {
 		// Convert conversation to frontend API model.
@@ -80,7 +76,7 @@ func (p *Processor) GetAll(
 			conversation,
 			requestingAccount,
 			filters,
-			compiledMutes,
+			mutes,
 		)
 		if err != nil {
 			log.Errorf(

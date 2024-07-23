@@ -19,9 +19,7 @@ package conversations
 
 import (
 	"context"
-	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -33,19 +31,13 @@ func (p *Processor) Delete(
 	id string,
 ) gtserror.WithCode {
 	// Get the conversation so that we can check its owning account ID.
-	conversation, err := p.state.DB.GetConversationByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return gtserror.NewErrorInternalError(err)
-	}
-	if conversation == nil {
-		return gtserror.NewErrorNotFound(err)
-	}
-	if conversation.AccountID != requestingAccount.ID {
-		return gtserror.NewErrorNotFound(nil)
+	conversation, errWithCode := p.getConversationOwnedBy(gtscontext.SetBarebones(ctx), id, requestingAccount)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
 	// Delete the conversation.
-	if err := p.state.DB.DeleteConversationByID(ctx, id); err != nil {
+	if err := p.state.DB.DeleteConversationByID(ctx, conversation.ID); err != nil {
 		return gtserror.NewErrorInternalError(err)
 	}
 

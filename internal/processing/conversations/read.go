@@ -19,12 +19,8 @@ package conversations
 
 import (
 	"context"
-	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -36,46 +32,32 @@ func (p *Processor) Read(
 	id string,
 ) (*apimodel.Conversation, gtserror.WithCode) {
 	// Get the conversation, including participating accounts and last status.
-	conversation, err := p.state.DB.GetConversationByID(ctx, id)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if conversation == nil {
-		return nil, gtserror.NewErrorNotFound(err)
-	}
-	if conversation.AccountID != requestingAccount.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+	conversation, errWithCode := p.getConversationOwnedBy(ctx, id, requestingAccount)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	// Mark the conversation as read.
 	conversation.Read = util.Ptr(true)
 	if err := p.state.DB.UpsertConversation(ctx, conversation, "read"); err != nil {
-		err = gtserror.Newf("db error updating conversation %s: %w", id, err)
+		err = gtserror.Newf("DB error updating conversation %s: %w", id, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
+	filters, mutes, errWithCode := p.getFiltersAndMutes(ctx, requestingAccount)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
-
-	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAccount.ID, nil)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAccount.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
 	apiConversation, err := p.converter.ConversationToAPIConversation(
 		ctx,
 		conversation,
 		requestingAccount,
 		filters,
-		compiledMutes,
+		mutes,
 	)
 	if err != nil {
-		err = gtserror.Newf("db error converting conversation %s to API representation: %w", id, err)
+		err = gtserror.Newf("error converting conversation %s to API representation: %w", id, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
