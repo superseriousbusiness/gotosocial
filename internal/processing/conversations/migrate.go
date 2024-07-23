@@ -40,10 +40,8 @@ type AdvancedMigrationState struct {
 
 func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 	advancedMigration, err := p.state.DB.GetAdvancedMigration(ctx, advancedMigrationID)
-	if err != nil {
-		if !errors.Is(err, db.ErrNoEntries) {
-			return gtserror.Newf("couldn't get advanced migration with ID %s: %w", advancedMigrationID, err)
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("couldn't get advanced migration with ID %s: %w", advancedMigrationID, err)
 	}
 	state := AdvancedMigrationState{}
 	if advancedMigration != nil {
