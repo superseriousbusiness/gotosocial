@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package dereferencing_test
+package util_test
 
 import (
 	"net/url"
@@ -23,15 +23,15 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type UtilTestSuite struct {
+type PunyTestSuite struct {
 	suite.Suite
 }
 
-func (suite *UtilTestSuite) TestMatches() {
+func (suite *PunyTestSuite) TestMatches() {
 	for i, testCase := range []struct {
 		expect *url.URL
 		actual []*url.URL
@@ -78,7 +78,7 @@ func (suite *UtilTestSuite) TestMatches() {
 			match: false,
 		},
 	} {
-		matches, err := dereferencing.URIMatches(
+		matches, err := util.URIMatches(
 			testCase.expect,
 			testCase.actual...,
 		)
@@ -96,6 +96,6 @@ func (suite *UtilTestSuite) TestMatches() {
 	}
 }
 
-func TestUtilTestSuite(t *testing.T) {
-	suite.Run(t, new(UtilTestSuite))
+func TestPunyTestSuite(t *testing.T) {
+	suite.Run(t, new(PunyTestSuite))
 }

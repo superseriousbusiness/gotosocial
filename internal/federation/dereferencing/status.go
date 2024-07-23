@@ -469,7 +469,7 @@ func (d *Dereferencer) enrichStatus(
 
 	// Ensure the final parsed status URI or URL matches
 	// the input URI we fetched (or received) it as.
-	matches, err := URIMatches(
+	matches, err := util.URIMatches(
 		uri,
 		append(
 			ap.GetURL(apubStatus),      // status URL(s)

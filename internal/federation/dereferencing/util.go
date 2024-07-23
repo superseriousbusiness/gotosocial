@@ -18,11 +18,9 @@
 package dereferencing
 
 import (
-	"net/url"
 	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // getEmojiByShortcodeDomain searches input slice
@@ -71,43 +69,4 @@ func pollUpdated(existing, latest *gtsmodel.Poll) bool {
 // pollJustClosed returns whether a poll has *just* closed.
 func pollJustClosed(existing, latest *gtsmodel.Poll) bool {
 	return existing.ClosedAt.IsZero() && latest.Closed()
-}
-
-// URIMatches returns true if the expected URI matches
-// any of the given URIs, taking account of punycode.
-func URIMatches(expect *url.URL, uris ...*url.URL) (bool, error) {
-	// Normalize expect to punycode.
-	expectPuny, err := punyURI(expect)
-	if err != nil {
-		return false, err
-	}
-	expectStr := expectPuny.String()
-
-	for _, uri := range uris {
-		uriPuny, err := punyURI(uri)
-		if err != nil {
-			return false, err
-		}
-
-		if uriPuny.String() == expectStr {
-			// Looks good.
-			return true, nil
-		}
-	}
-
-	// Didn't match.
-	return false, nil
-}
-
-// punyURI returns a copy of the given URI
-// with the 'host' part converted to punycode.
-func punyURI(in *url.URL) (*url.URL, error) {
-	// Take a copy of in.
-	out := new(url.URL)
-	*out = *in
-
-	// Normalize host to punycode.
-	var err error
-	out.Host, err = util.Punify(in.Host)
-	return out, err
 }
