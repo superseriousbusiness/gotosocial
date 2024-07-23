@@ -780,10 +780,10 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
   "created_at": "2021-10-20T10:41:37.000Z",
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
-  "sensitive": true,
-  "spoiler_text": "introduction post",
+  "sensitive": false,
+  "spoiler_text": "",
   "visibility": "public",
-  "language": "en",
+  "language": null,
   "uri": "http://localhost:8080/users/admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
   "url": "http://localhost:8080/@admin/statuses/01G36SF3V6Y6V5BF9P4R7PQG7G",
   "replies_count": 0,
@@ -794,7 +794,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
   "muted": false,
   "bookmarked": true,
   "pinned": false,
-  "content": "hello everyone!",
+  "content": "",
   "reblog": {
     "id": "01F8MH75CBF9JFX4ZAD54N0W0R",
     "created_at": "2021-10-20T11:36:45.000Z",
@@ -981,7 +981,6 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
   "emojis": [],
   "card": null,
   "poll": null,
-  "text": "hello everyone!",
   "filtered": [
     {
       "filter": {
