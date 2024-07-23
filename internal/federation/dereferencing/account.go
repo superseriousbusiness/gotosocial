@@ -706,13 +706,26 @@ func (d *Dereferencer) enrichAccount(
 		return nil, nil, gtserror.Newf("empty domain for %s", uri)
 	}
 
-	// Ensure the final parsed account URI / URL matches
+	// Ensure the final parsed account URI or URL matches
 	// the input URI we fetched (or received) it as.
-	if expect := uri.String(); latestAcc.URI != expect &&
-		latestAcc.URL != expect {
+	matches, err := URIMatches(
+		uri,
+		append(
+			ap.GetURL(apubAcc),      // account URL(s)
+			ap.GetJSONLDId(apubAcc), // account URI
+		)...,
+	)
+	if err != nil {
+		return nil, nil, gtserror.Newf(
+			"error checking dereferenced account uri %s: %w",
+			latestAcc.URI, err,
+		)
+	}
+
+	if !matches {
 		return nil, nil, gtserror.Newf(
 			"dereferenced account uri %s does not match %s",
-			latestAcc.URI, expect,
+			latestAcc.URI, uri.String(),
 		)
 	}
 

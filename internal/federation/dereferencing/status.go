@@ -467,13 +467,26 @@ func (d *Dereferencer) enrichStatus(
 		)
 	}
 
-	// Ensure the final parsed status URI / URL matches
+	// Ensure the final parsed status URI or URL matches
 	// the input URI we fetched (or received) it as.
-	if expect := uri.String(); latestStatus.URI != expect &&
-		latestStatus.URL != expect {
+	matches, err := URIMatches(
+		uri,
+		append(
+			ap.GetURL(apubStatus),      // status URL(s)
+			ap.GetJSONLDId(apubStatus), // status URI
+		)...,
+	)
+	if err != nil {
+		return nil, nil, gtserror.Newf(
+			"error checking dereferenced status uri %s: %w",
+			latestStatus.URI, err,
+		)
+	}
+
+	if !matches {
 		return nil, nil, gtserror.Newf(
 			"dereferenced status uri %s does not match %s",
-			latestStatus.URI, expect,
+			latestStatus.URI, uri.String(),
 		)
 	}
 
