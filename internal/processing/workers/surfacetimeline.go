@@ -78,8 +78,8 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 	if err != nil {
 		return gtserror.Newf("error updating conversations for status %s: %w", status.ID, err)
 	}
-	for localAccountID, apiConversation := range notifications {
-		s.Stream.Conversation(ctx, localAccountID, apiConversation)
+	for _, notification := range notifications {
+		s.Stream.Conversation(ctx, notification.AccountID, notification.Conversation)
 	}
 
 	return nil

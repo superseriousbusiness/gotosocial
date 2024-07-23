@@ -32,11 +32,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// ConversationNotification carries the arguments to processing/stream.Processor.Conversation.
+type ConversationNotification struct {
+	// AccountID of a local account to deliver the notification to.
+	AccountID string
+	// Conversation as the notification payload.
+	Conversation *apimodel.Conversation
+}
+
 // UpdateConversationsForStatus updates all conversations related to a status,
 // and returns a map from local account IDs to conversation notifications that should be sent to them.
-func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gtsmodel.Status) (map[string]*apimodel.Conversation, error) {
-	notifications := map[string]*apimodel.Conversation{}
-
+func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gtsmodel.Status) ([]ConversationNotification, error) {
 	// We need accounts to be populated for this.
 	if err := p.state.DB.PopulateStatus(ctx, status); err != nil {
 		return nil, err
@@ -65,6 +71,7 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 	}
 
 	// Create or update conversations for and send notifications to each local participant.
+	notifications := make([]ConversationNotification, 0, len(allParticipantsSet))
 	for _, participant := range allParticipantsSet {
 		if participant.IsRemote() {
 			continue
@@ -232,7 +239,10 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		// unless the status was authored by the user who would be notified,
 		// in which case they already know.
 		if status.AccountID != localAccount.ID {
-			notifications[localAccount.ID] = apiConversation
+			notifications = append(notifications, ConversationNotification{
+				AccountID:    localAccount.ID,
+				Conversation: apiConversation,
+			})
 		}
 	}
 
