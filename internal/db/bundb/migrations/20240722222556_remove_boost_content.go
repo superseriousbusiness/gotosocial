@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -29,6 +30,11 @@ import (
 // Admins may want to vacuum after running this migration.
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
+		log.Info(
+			ctx,
+			"dropping duplicated status boost data, please wait; "+
+				"this may take a long time if your database has lots of statuses, don't interrupt it!",
+		)
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			_, err := tx.NewUpdate().
 				Model((*gtsmodel.Status)(nil)).
