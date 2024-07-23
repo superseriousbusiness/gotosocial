@@ -107,9 +107,7 @@ func (p *Processor) MigrateDMsToConversations(ctx context.Context) error {
 		// Update conversations for each status. Don't generate notifications.
 		for _, status := range statuses {
 			if _, err := p.UpdateConversationsForStatus(ctx, status); err != nil {
-				if err != nil {
-					return gtserror.Newf("couldn't update conversations for status %s during migration: %w", status.ID, err)
-				}
+				return gtserror.Newf("couldn't update conversations for status %s during migration: %w", status.ID, err)
 			}
 		}
 
