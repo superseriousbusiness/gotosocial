@@ -85,7 +85,7 @@ func (c *Caches) OnInvalidateClient(client *gtsmodel.Client) {
 
 func (c *Caches) OnInvalidateConversation(conversation *gtsmodel.Conversation) {
 	// Invalidate owning account's conversation list.
-	c.GTS.ConversationLastStatusIDs.Invalidate(conversation.AccountID)
+	c.DB.ConversationLastStatusIDs.Invalidate(conversation.AccountID)
 }
 
 func (c *Caches) OnInvalidateEmojiCategory(category *gtsmodel.EmojiCategory) {

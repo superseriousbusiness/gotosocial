@@ -82,7 +82,7 @@ func (c *conversationDB) getConversation(
 	keyParts ...any,
 ) (*gtsmodel.Conversation, error) {
 	// Fetch conversation from cache with loader callback
-	conversation, err := c.state.Caches.GTS.Conversation.LoadOne(lookup, func() (*gtsmodel.Conversation, error) {
+	conversation, err := c.state.Caches.DB.Conversation.LoadOne(lookup, func() (*gtsmodel.Conversation, error) {
 		var conversation gtsmodel.Conversation
 
 		// Not cached! Perform database query
@@ -157,7 +157,7 @@ func (c *conversationDB) GetConversationsByOwnerAccountID(ctx context.Context, a
 }
 
 func (c *conversationDB) getAccountConversationLastStatusIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	return loadPagedIDs(&c.state.Caches.GTS.ConversationLastStatusIDs, accountID, page, func() ([]string, error) {
+	return loadPagedIDs(&c.state.Caches.DB.ConversationLastStatusIDs, accountID, page, func() ([]string, error) {
 		var conversationLastStatusIDs []string
 
 		// Conversation last status IDs not in cache. Perform DB query.
@@ -182,7 +182,7 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 	conversationLastStatusIDs []string,
 ) ([]*gtsmodel.Conversation, error) {
 	// Load all conversation IDs via cache loader callbacks.
-	conversations, err := c.state.Caches.GTS.Conversation.LoadIDs2Part(
+	conversations, err := c.state.Caches.DB.Conversation.LoadIDs2Part(
 		"AccountID,LastStatusID",
 		accountID,
 		conversationLastStatusIDs,
@@ -233,7 +233,7 @@ func (c *conversationDB) UpsertConversation(ctx context.Context, conversation *g
 		columns = append(columns, "updated_at")
 	}
 
-	return c.state.Caches.GTS.Conversation.Store(conversation, func() error {
+	return c.state.Caches.DB.Conversation.Store(conversation, func() error {
 		_, err := NewUpsert(c.db).
 			Model(conversation).
 			Constraint("id").
@@ -272,7 +272,7 @@ func (c *conversationDB) DeleteConversationByID(ctx context.Context, id string) 
 	}
 
 	// Drop this now-cached conversation on return after delete.
-	defer c.state.Caches.GTS.Conversation.Invalidate("ID", id)
+	defer c.state.Caches.DB.Conversation.Invalidate("ID", id)
 
 	// Finally delete conversation from DB.
 	_, err = c.db.NewDelete().
@@ -288,10 +288,10 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 		// Conversation invalidate hooks only invalidate the conversation ID cache,
 		// so we don't need to load all conversations into the cache to run invalidation hooks,
 		// as with some other object types (blocks, for example).
-		c.state.Caches.GTS.Conversation.Invalidate("AccountID", accountID)
+		c.state.Caches.DB.Conversation.Invalidate("AccountID", accountID)
 		// In case there were no cached conversations,
 		// explicitly invalidate the user's conversation last status ID cache.
-		c.state.Caches.GTS.ConversationLastStatusIDs.Invalidate(accountID)
+		c.state.Caches.DB.ConversationLastStatusIDs.Invalidate(accountID)
 	}()
 
 	return c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -488,7 +488,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 	}
 
 	updatedConversationIDs = append(updatedConversationIDs, deletedConversationIDs...)
-	c.state.Caches.GTS.Conversation.InvalidateIDs("ID", updatedConversationIDs)
+	c.state.Caches.DB.Conversation.InvalidateIDs("ID", updatedConversationIDs)
 
 	return nil
 }

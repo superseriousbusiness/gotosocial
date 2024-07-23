@@ -447,7 +447,7 @@ func (c *Caches) initConversation() {
 		return c2
 	}
 
-	c.GTS.Conversation.Init(structr.CacheConfig[*gtsmodel.Conversation]{
+	c.DB.Conversation.Init(structr.CacheConfig[*gtsmodel.Conversation]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
 			{Fields: "ThreadID,AccountID,OtherAccountsKey"},
@@ -468,7 +468,7 @@ func (c *Caches) initConversationLastStatusIDs() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.GTS.ConversationLastStatusIDs.Init(0, cap)
+	c.DB.ConversationLastStatusIDs.Init(0, cap)
 }
 
 func (c *Caches) initDomainAllow() {
