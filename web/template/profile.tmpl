@@ -155,8 +155,24 @@
                     {{- .account.Username -}}
                     {{- end -}}
                 </dd>
-                <dt class="sr-only">Username</dt>
-                <dd class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
+                <div class="bot-username-wrapper">
+                    {{- if .account.Bot }}
+                    <dt class="sr-only">Bot account</dt>
+                    <dd>
+                        <span class="sr-only">true</span>
+                        <div
+                            class="bot-legend-wrapper"
+                            aria-hidden="true"
+                            title="This is a bot account."
+                        >
+                            <i class="bot-icon fa fa-microchip"></i>
+                            <span class="bot-legend">bot</span>
+                        </div>
+                    </dd>
+                    {{- end }}
+                    <dt class="sr-only">Username</dt>
+                    <dd class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
+                </div>
                 {{- if and (.account.Role) (ne .account.Role.Name "user") }}
                 <dt class="sr-only">Role</dt>
                 <dd class="role {{ .account.Role.Name -}}">{{- .account.Role.Name -}}</dd>
