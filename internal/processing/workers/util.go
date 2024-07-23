@@ -137,6 +137,11 @@ func (u *utils) wipeStatus(
 		errs.Appendf("error deleting status from timelines: %w", err)
 	}
 
+	// delete this status from any conversations that it's part of
+	if err := u.state.DB.DeleteStatusFromConversations(ctx, statusToDelete.ID); err != nil {
+		errs.Appendf("error deleting status from conversations: %w", err)
+	}
+
 	// finally, delete the status itself
 	if err := u.state.DB.DeleteStatusByID(ctx, statusToDelete.ID); err != nil {
 		errs.Appendf("error deleting status: %w", err)

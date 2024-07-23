@@ -17,43 +17,13 @@
 
 package db
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	AdvancedMigration
-	Application
-	Basic
-	Conversation
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	Interaction
-	Filter
-	List
-	Marker
-	Media
-	Mention
-	Move
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+type AdvancedMigration interface {
+	GetAdvancedMigration(ctx context.Context, id string) (*gtsmodel.AdvancedMigration, error)
+	PutAdvancedMigration(ctx context.Context, advancedMigration *gtsmodel.AdvancedMigration) error
 }

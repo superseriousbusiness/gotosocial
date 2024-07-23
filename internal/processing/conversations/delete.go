@@ -15,45 +15,31 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package conversations
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	AdvancedMigration
-	Application
-	Basic
-	Conversation
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	Interaction
-	Filter
-	List
-	Marker
-	Media
-	Mention
-	Move
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	Status
-	StatusBookmark
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
+func (p *Processor) Delete(
+	ctx context.Context,
+	requestingAccount *gtsmodel.Account,
+	id string,
+) gtserror.WithCode {
+	// Get the conversation so that we can check its owning account ID.
+	conversation, errWithCode := p.getConversationOwnedBy(gtscontext.SetBarebones(ctx), id, requestingAccount)
+	if errWithCode != nil {
+		return errWithCode
+	}
+
+	// Delete the conversation.
+	if err := p.state.DB.DeleteConversationByID(ctx, conversation.ID); err != nil {
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	return nil
 }

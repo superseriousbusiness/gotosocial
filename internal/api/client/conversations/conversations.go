@@ -21,13 +21,17 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (
-	// BasePath is the base URI path for serving
-	// conversations, minus the api prefix.
+	// BasePath is the base path for serving the conversations API, minus the 'api' prefix.
 	BasePath = "/v1/conversations"
+	// BasePathWithID is the base path with the ID key in it, for operations on an existing conversation.
+	BasePathWithID = BasePath + "/:" + apiutil.IDKey
+	// ReadPathWithID is the path for marking an existing conversation as read.
+	ReadPathWithID = BasePathWithID + "/read"
 )
 
 type Module struct {
@@ -42,4 +46,6 @@ func New(processor *processing.Processor) *Module {
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, BasePath, m.ConversationsGETHandler)
+	attachHandler(http.MethodDelete, BasePathWithID, m.ConversationDELETEHandler)
+	attachHandler(http.MethodPost, ReadPathWithID, m.ConversationReadPOSTHandler)
 }

@@ -290,6 +290,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
+	// Run advanced migrations.
+	if err := processor.AdvancedMigrations().Migrate(ctx); err != nil {
+		return err
+	}
+
 	/*
 		HTTP router initialization
 	*/

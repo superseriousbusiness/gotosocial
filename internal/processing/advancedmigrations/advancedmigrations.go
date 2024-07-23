@@ -15,28 +15,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package workers
+package advancedmigrations
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"context"
+	"fmt"
+
 	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// Surface wraps functions for 'surfacing' the result
-// of processing a message, eg:
-//   - timelining a status
-//   - removing a status from timelines
-//   - sending a notification to a user
-//   - sending an email
-type Surface struct {
-	State         *state.State
-	Converter     *typeutils.Converter
-	Stream        *stream.Processor
-	Filter        *visibility.Filter
-	EmailSender   email.Sender
-	Conversations *conversations.Processor
+// Processor holds references to any other processor that has migrations to run.
+type Processor struct {
+	conversations *conversations.Processor
+}
+
+func New(
+	conversations *conversations.Processor,
+) Processor {
+	return Processor{
+		conversations: conversations,
+	}
+}
+
+// Migrate runs all advanced migrations.
+// Errors should be in the same format thrown by other server or testrig startup failures.
+func (p *Processor) Migrate(ctx context.Context) error {
+	if err := p.conversations.MigrateDMsToConversations(ctx); err != nil {
+		return fmt.Errorf("error running conversations advanced migration: %w", err)
+	}
+
+	return nil
 }

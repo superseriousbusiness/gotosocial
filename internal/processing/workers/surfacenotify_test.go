@@ -39,11 +39,12 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 	defer suite.TearDownTestStructs(testStructs)
 
 	surface := &workers.Surface{
-		State:       testStructs.State,
-		Converter:   testStructs.TypeConverter,
-		Stream:      testStructs.Processor.Stream(),
-		Filter:      visibility.NewFilter(testStructs.State),
-		EmailSender: testStructs.EmailSender,
+		State:         testStructs.State,
+		Converter:     testStructs.TypeConverter,
+		Stream:        testStructs.Processor.Stream(),
+		Filter:        visibility.NewFilter(testStructs.State),
+		EmailSender:   testStructs.EmailSender,
+		Conversations: testStructs.Processor.Conversations(),
 	}
 
 	var (
