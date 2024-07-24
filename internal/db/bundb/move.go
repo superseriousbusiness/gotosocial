@@ -158,7 +158,7 @@ func (m *moveDB) getMove(
 	dbQuery func(*gtsmodel.Move) error,
 	keyParts ...any,
 ) (*gtsmodel.Move, error) {
-	move, err := m.state.Caches.GTS.Move.LoadOne(lookup, func() (*gtsmodel.Move, error) {
+	move, err := m.state.Caches.DB.Move.LoadOne(lookup, func() (*gtsmodel.Move, error) {
 		var move gtsmodel.Move
 
 		// Not cached! Perform database query.
@@ -205,7 +205,7 @@ func (m *moveDB) PopulateMove(ctx context.Context, move *gtsmodel.Move) error {
 }
 
 func (m *moveDB) PutMove(ctx context.Context, move *gtsmodel.Move) error {
-	return m.state.Caches.GTS.Move.Store(move, func() error {
+	return m.state.Caches.DB.Move.Store(move, func() error {
 		_, err := m.db.
 			NewInsert().
 			Model(move).
@@ -222,7 +222,7 @@ func (m *moveDB) UpdateMove(ctx context.Context, move *gtsmodel.Move, columns ..
 		columns = append(columns, "updated_at")
 	}
 
-	return m.state.Caches.GTS.Move.Store(move, func() error {
+	return m.state.Caches.DB.Move.Store(move, func() error {
 		_, err := m.db.
 			NewUpdate().
 			Model(move).
@@ -234,7 +234,7 @@ func (m *moveDB) UpdateMove(ctx context.Context, move *gtsmodel.Move, columns ..
 }
 
 func (m *moveDB) DeleteMoveByID(ctx context.Context, id string) error {
-	defer m.state.Caches.GTS.Move.Invalidate("ID", id)
+	defer m.state.Caches.DB.Move.Invalidate("ID", id)
 
 	_, err := m.db.
 		NewDelete().

@@ -38,7 +38,7 @@ type mentionDB struct {
 }
 
 func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mention, error) {
-	mention, err := m.state.Caches.GTS.Mention.LoadOne("ID", func() (*gtsmodel.Mention, error) {
+	mention, err := m.state.Caches.DB.Mention.LoadOne("ID", func() (*gtsmodel.Mention, error) {
 		var mention gtsmodel.Mention
 
 		q := m.db.
@@ -66,7 +66,7 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error) {
 	// Load all mention IDs via cache loader callbacks.
-	mentions, err := m.state.Caches.GTS.Mention.LoadIDs("ID",
+	mentions, err := m.state.Caches.DB.Mention.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Mention, error) {
 			// Preallocate expected length of uncached mentions.
@@ -152,14 +152,14 @@ func (m *mentionDB) PopulateMention(ctx context.Context, mention *gtsmodel.Menti
 }
 
 func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) error {
-	return m.state.Caches.GTS.Mention.Store(mention, func() error {
+	return m.state.Caches.DB.Mention.Store(mention, func() error {
 		_, err := m.db.NewInsert().Model(mention).Exec(ctx)
 		return err
 	})
 }
 
 func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
-	defer m.state.Caches.GTS.Mention.Invalidate("ID", id)
+	defer m.state.Caches.DB.Mention.Invalidate("ID", id)
 
 	// Load mention into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate

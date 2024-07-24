@@ -20,15 +20,17 @@ package cache
 import (
 	"time"
 
+	"codeberg.org/gruf/go-cache/v3/ttl"
 	"github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type Caches struct {
 
-	// GTS provides access to the collection of
+	// DB provides access to the collection of
 	// gtsmodel object caches. (used by the database).
-	GTS GTSCaches
+	DB DBCaches
 
 	// AllowHeaderFilters provides access to
 	// the allow []headerfilter.Filter cache.
@@ -41,6 +43,9 @@ type Caches struct {
 	// Visibility provides access to the item visibility
 	// cache. (used by the visibility filter).
 	Visibility VisibilityCache
+
+	// Webfinger provides access to the webfinger URL cache.
+	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
 
 	// prevent pass-by-value.
 	_ nocopy
@@ -109,7 +114,7 @@ func (c *Caches) Start() {
 	log.Infof(nil, "start: %p", c)
 
 	tryUntil("starting webfinger cache", 5, func() bool {
-		return c.GTS.Webfinger.Start(5 * time.Minute)
+		return c.Webfinger.Start(5 * time.Minute)
 	})
 }
 
@@ -118,7 +123,7 @@ func (c *Caches) Start() {
 func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
-	tryUntil("stopping webfinger cache", 5, c.GTS.Webfinger.Stop)
+	tryUntil("stopping webfinger cache", 5, c.Webfinger.Stop)
 }
 
 // Sweep will sweep all the available caches to ensure none
@@ -128,49 +133,66 @@ func (c *Caches) Stop() {
 // require an eviction on every single write, which adds
 // significant overhead to all cache writes.
 func (c *Caches) Sweep(threshold float64) {
-	c.GTS.Account.Trim(threshold)
-	c.GTS.AccountNote.Trim(threshold)
-	c.GTS.AccountSettings.Trim(threshold)
-	c.GTS.AccountStats.Trim(threshold)
-	c.GTS.Application.Trim(threshold)
-	c.GTS.Block.Trim(threshold)
-	c.GTS.BlockIDs.Trim(threshold)
-	c.GTS.BoostOfIDs.Trim(threshold)
-	c.GTS.Client.Trim(threshold)
-	c.GTS.Emoji.Trim(threshold)
-	c.GTS.EmojiCategory.Trim(threshold)
-	c.GTS.Filter.Trim(threshold)
-	c.GTS.FilterKeyword.Trim(threshold)
-	c.GTS.FilterStatus.Trim(threshold)
-	c.GTS.Follow.Trim(threshold)
-	c.GTS.FollowIDs.Trim(threshold)
-	c.GTS.FollowRequest.Trim(threshold)
-	c.GTS.FollowRequestIDs.Trim(threshold)
-	c.GTS.InReplyToIDs.Trim(threshold)
-	c.GTS.Instance.Trim(threshold)
-	c.GTS.InteractionApproval.Trim(threshold)
-	c.GTS.List.Trim(threshold)
-	c.GTS.ListEntry.Trim(threshold)
-	c.GTS.Marker.Trim(threshold)
-	c.GTS.Media.Trim(threshold)
-	c.GTS.Mention.Trim(threshold)
-	c.GTS.Move.Trim(threshold)
-	c.GTS.Notification.Trim(threshold)
-	c.GTS.Poll.Trim(threshold)
-	c.GTS.PollVote.Trim(threshold)
-	c.GTS.PollVoteIDs.Trim(threshold)
-	c.GTS.Report.Trim(threshold)
-	c.GTS.Status.Trim(threshold)
-	c.GTS.StatusBookmark.Trim(threshold)
-	c.GTS.StatusBookmarkIDs.Trim(threshold)
-	c.GTS.StatusFave.Trim(threshold)
-	c.GTS.StatusFaveIDs.Trim(threshold)
-	c.GTS.Tag.Trim(threshold)
-	c.GTS.ThreadMute.Trim(threshold)
-	c.GTS.Token.Trim(threshold)
-	c.GTS.Tombstone.Trim(threshold)
-	c.GTS.User.Trim(threshold)
-	c.GTS.UserMute.Trim(threshold)
-	c.GTS.UserMuteIDs.Trim(threshold)
+	c.DB.Account.Trim(threshold)
+	c.DB.AccountNote.Trim(threshold)
+	c.DB.AccountSettings.Trim(threshold)
+	c.DB.AccountStats.Trim(threshold)
+	c.DB.Application.Trim(threshold)
+	c.DB.Block.Trim(threshold)
+	c.DB.BlockIDs.Trim(threshold)
+	c.DB.BoostOfIDs.Trim(threshold)
+	c.DB.Client.Trim(threshold)
+	c.DB.Emoji.Trim(threshold)
+	c.DB.EmojiCategory.Trim(threshold)
+	c.DB.Filter.Trim(threshold)
+	c.DB.FilterKeyword.Trim(threshold)
+	c.DB.FilterStatus.Trim(threshold)
+	c.DB.Follow.Trim(threshold)
+	c.DB.FollowIDs.Trim(threshold)
+	c.DB.FollowRequest.Trim(threshold)
+	c.DB.FollowRequestIDs.Trim(threshold)
+	c.DB.InReplyToIDs.Trim(threshold)
+	c.DB.Instance.Trim(threshold)
+	c.DB.InteractionApproval.Trim(threshold)
+	c.DB.List.Trim(threshold)
+	c.DB.ListEntry.Trim(threshold)
+	c.DB.Marker.Trim(threshold)
+	c.DB.Media.Trim(threshold)
+	c.DB.Mention.Trim(threshold)
+	c.DB.Move.Trim(threshold)
+	c.DB.Notification.Trim(threshold)
+	c.DB.Poll.Trim(threshold)
+	c.DB.PollVote.Trim(threshold)
+	c.DB.PollVoteIDs.Trim(threshold)
+	c.DB.Report.Trim(threshold)
+	c.DB.Status.Trim(threshold)
+	c.DB.StatusBookmark.Trim(threshold)
+	c.DB.StatusBookmarkIDs.Trim(threshold)
+	c.DB.StatusFave.Trim(threshold)
+	c.DB.StatusFaveIDs.Trim(threshold)
+	c.DB.Tag.Trim(threshold)
+	c.DB.ThreadMute.Trim(threshold)
+	c.DB.Token.Trim(threshold)
+	c.DB.Tombstone.Trim(threshold)
+	c.DB.User.Trim(threshold)
+	c.DB.UserMute.Trim(threshold)
+	c.DB.UserMuteIDs.Trim(threshold)
 	c.Visibility.Trim(threshold)
+}
+
+func (c *Caches) initWebfinger() {
+	// Calculate maximum cache size.
+	cap := calculateCacheMax(
+		sizeofURIStr, sizeofURIStr,
+		config.GetCacheWebfingerMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.Webfinger = new(ttl.Cache[string, string])
+	c.Webfinger.Init(
+		0,
+		cap,
+		24*time.Hour,
+	)
 }

@@ -143,7 +143,7 @@ func (i *instanceDB) GetInstanceByID(ctx context.Context, id string) (*gtsmodel.
 
 func (i *instanceDB) getInstance(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Instance) error, keyParts ...any) (*gtsmodel.Instance, error) {
 	// Fetch instance from database cache with loader callback
-	instance, err := i.state.Caches.GTS.Instance.LoadOne(lookup, func() (*gtsmodel.Instance, error) {
+	instance, err := i.state.Caches.DB.Instance.LoadOne(lookup, func() (*gtsmodel.Instance, error) {
 		var instance gtsmodel.Instance
 
 		// Not cached! Perform database query.
@@ -219,7 +219,7 @@ func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instanc
 		return gtserror.Newf("error punifying domain %s: %w", instance.Domain, err)
 	}
 
-	return i.state.Caches.GTS.Instance.Store(instance, func() error {
+	return i.state.Caches.DB.Instance.Store(instance, func() error {
 		_, err := i.db.NewInsert().Model(instance).Exec(ctx)
 		return err
 	})
@@ -239,7 +239,7 @@ func (i *instanceDB) UpdateInstance(ctx context.Context, instance *gtsmodel.Inst
 		columns = append(columns, "updated_at")
 	}
 
-	return i.state.Caches.GTS.Instance.Store(instance, func() error {
+	return i.state.Caches.DB.Instance.Store(instance, func() error {
 		_, err := i.db.
 			NewUpdate().
 			Model(instance).

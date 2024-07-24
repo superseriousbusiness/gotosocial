@@ -631,7 +631,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.False(*dbAcct.Discoverable)
 
 	// Clear caches.
-	suite.state.Caches.GTS = cache.GTSCaches{}
+	suite.state.Caches.DB = cache.DBCaches{}
 	suite.state.Caches.Init()
 
 	dbAcct, err = suite.db.GetAccountByID(ctx, acct.ID)

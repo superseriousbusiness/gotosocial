@@ -51,7 +51,7 @@ func (s *statusDB) GetStatusByID(ctx context.Context, id string) (*gtsmodel.Stat
 
 func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Status, error) {
 	// Load all input status IDs via cache loader callback.
-	statuses, err := s.state.Caches.GTS.Status.LoadIDs("ID",
+	statuses, err := s.state.Caches.DB.Status.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Status, error) {
 			// Preallocate expected length of uncached statuses.
@@ -151,7 +151,7 @@ func (s *statusDB) GetStatusBoost(ctx context.Context, boostOfID string, byAccou
 
 func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Status) error, keyParts ...any) (*gtsmodel.Status, error) {
 	// Fetch status from database cache with loader callback
-	status, err := s.state.Caches.GTS.Status.LoadOne(lookup, func() (*gtsmodel.Status, error) {
+	status, err := s.state.Caches.DB.Status.LoadOne(lookup, func() (*gtsmodel.Status, error) {
 		var status gtsmodel.Status
 
 		// Not cached! Perform database query.
@@ -313,7 +313,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error {
-	return s.state.Caches.GTS.Status.Store(status, func() error {
+	return s.state.Caches.DB.Status.Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -397,7 +397,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 		columns = append(columns, "updated_at")
 	}
 
-	return s.state.Caches.GTS.Status.Store(status, func() error {
+	return s.state.Caches.DB.Status.Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -494,7 +494,7 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 	}
 
 	// On return ensure status invalidated from cache.
-	defer s.state.Caches.GTS.Status.Invalidate("ID", id)
+	defer s.state.Caches.DB.Status.Invalidate("ID", id)
 
 	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// delete links between this status and any emojis it uses
@@ -621,7 +621,7 @@ func (s *statusDB) CountStatusReplies(ctx context.Context, statusID string) (int
 }
 
 func (s *statusDB) getStatusReplyIDs(ctx context.Context, statusID string) ([]string, error) {
-	return s.state.Caches.GTS.InReplyToIDs.Load(statusID, func() ([]string, error) {
+	return s.state.Caches.DB.InReplyToIDs.Load(statusID, func() ([]string, error) {
 		var statusIDs []string
 
 		// Status reply IDs not in cache, perform DB query!
@@ -665,7 +665,7 @@ func (s *statusDB) CountStatusBoosts(ctx context.Context, statusID string) (int,
 }
 
 func (s *statusDB) getStatusBoostIDs(ctx context.Context, statusID string) ([]string, error) {
-	return s.state.Caches.GTS.BoostOfIDs.Load(statusID, func() ([]string, error) {
+	return s.state.Caches.DB.BoostOfIDs.Load(statusID, func() ([]string, error) {
 		var statusIDs []string
 
 		// Status boost IDs not in cache, perform DB query!
