@@ -1752,8 +1752,9 @@ func (c *Converter) ConversationToAPIConversation(
 	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Conversation, error) {
 	apiConversation := &apimodel.Conversation{
-		ID:     conversation.ID,
-		Unread: !*conversation.Read,
+		ID:       conversation.ID,
+		Unread:   !*conversation.Read,
+		Accounts: []apimodel.Account{},
 	}
 	for _, account := range conversation.OtherAccounts {
 		var apiAccount *apimodel.Account
