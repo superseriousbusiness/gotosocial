@@ -884,6 +884,7 @@ func (c *Converter) statusToAPIFilterResults(
 	if mutes.Matches(s.AccountID, filterContext, now) {
 		return nil, statusfilter.ErrHideStatus
 	}
+
 	// If this status is part of a multi-account discussion,
 	// and all of the accounts replied to or mentioned are invisible to the requesting account
 	// (due to blocks, domain blocks, moderation, etc.),
@@ -903,7 +904,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 		for _, account := range otherAccounts {
 			// Is this account visible?
-			visible, err := c.filter.AccountVisible(ctx, requestingAccount, account)
+			visible, err := c.visFilter.AccountVisible(ctx, requestingAccount, account)
 			if err != nil {
 				return nil, err
 			}
@@ -1228,13 +1229,14 @@ func (c *Converter) statusToFrontend(
 			return nil, gtserror.Newf("error converting boosted status: %w", err)
 		}
 
-		// Set boosted status and set interactions from original.
+		// Set boosted status and set interactions and filter results from original.
 		apiStatus.Reblog = &apimodel.StatusReblogged{reblog}
 		apiStatus.Favourited = apiStatus.Reblog.Favourited
 		apiStatus.Bookmarked = apiStatus.Reblog.Bookmarked
 		apiStatus.Muted = apiStatus.Reblog.Muted
 		apiStatus.Reblogged = apiStatus.Reblog.Reblogged
 		apiStatus.Pinned = apiStatus.Reblog.Pinned
+		apiStatus.Filtered = apiStatus.Reblog.Filtered
 	}
 
 	return apiStatus, nil
@@ -1780,6 +1782,68 @@ func (c *Converter) NotificationToAPINotification(
 		Account:   apiAccount,
 		Status:    apiStatus,
 	}, nil
+}
+
+// ConversationToAPIConversation converts a conversation into its API representation.
+// The conversation status will be filtered using the notification filter context,
+// and may be nil if the status was hidden.
+func (c *Converter) ConversationToAPIConversation(
+	ctx context.Context,
+	conversation *gtsmodel.Conversation,
+	requestingAccount *gtsmodel.Account,
+	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
+) (*apimodel.Conversation, error) {
+	apiConversation := &apimodel.Conversation{
+		ID:       conversation.ID,
+		Unread:   !*conversation.Read,
+		Accounts: []apimodel.Account{},
+	}
+	for _, account := range conversation.OtherAccounts {
+		var apiAccount *apimodel.Account
+		blocked, err := c.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, account.ID)
+		if err != nil {
+			return nil, gtserror.Newf(
+				"DB error checking blocks between accounts %s and %s: %w",
+				requestingAccount.ID,
+				account.ID,
+				err,
+			)
+		}
+		if blocked || account.IsSuspended() {
+			apiAccount, err = c.AccountToAPIAccountBlocked(ctx, account)
+		} else {
+			apiAccount, err = c.AccountToAPIAccountPublic(ctx, account)
+		}
+		if err != nil {
+			return nil, gtserror.Newf(
+				"error converting account %s to API representation: %w",
+				account.ID,
+				err,
+			)
+		}
+		apiConversation.Accounts = append(apiConversation.Accounts, *apiAccount)
+	}
+	if conversation.LastStatus != nil {
+		var err error
+		apiConversation.LastStatus, err = c.StatusToAPIStatus(
+			ctx,
+			conversation.LastStatus,
+			requestingAccount,
+			statusfilter.FilterContextNotifications,
+			filters,
+			mutes,
+		)
+		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+			return nil, gtserror.Newf(
+				"error converting status %s to API representation: %w",
+				conversation.LastStatus.ID,
+				err,
+			)
+		}
+	}
+
+	return apiConversation, nil
 }
 
 // DomainPermToAPIDomainPerm converts a gts model domin block or allow into an api domain permission.
@@ -2361,8 +2425,8 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 	ctx context.Context,
 	policy *gtsmodel.InteractionPolicy,
-	_ *gtsmodel.Status, // Used in upcoming PR.
-	_ *gtsmodel.Account, // Used in upcoming PR.
+	status *gtsmodel.Status,
+	requester *gtsmodel.Account,
 ) (*apimodel.InteractionPolicy, error) {
 	apiPolicy := &apimodel.InteractionPolicy{
 		CanFavourite: apimodel.PolicyRules{
@@ -2377,6 +2441,75 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.Always),
 			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.WithApproval),
 		},
+	}
+
+	if status == nil || requester == nil {
+		// We're done here!
+		return apiPolicy, nil
+	}
+
+	// Status and requester are both defined,
+	// so we can add the "me" Value to the policy
+	// for each interaction type, if applicable.
+
+	likeable, err := c.intFilter.StatusLikeable(ctx, requester, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status likeable by requester: %w", err)
+		return nil, err
+	}
+
+	if likeable.Permission == gtsmodel.PolicyPermissionPermitted {
+		// We can do this!
+		apiPolicy.CanFavourite.Always = append(
+			apiPolicy.CanFavourite.Always,
+			apimodel.PolicyValueMe,
+		)
+	} else if likeable.Permission == gtsmodel.PolicyPermissionWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanFavourite.WithApproval = append(
+			apiPolicy.CanFavourite.WithApproval,
+			apimodel.PolicyValueMe,
+		)
+	}
+
+	replyable, err := c.intFilter.StatusReplyable(ctx, requester, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status replyable by requester: %w", err)
+		return nil, err
+	}
+
+	if replyable.Permission == gtsmodel.PolicyPermissionPermitted {
+		// We can do this!
+		apiPolicy.CanReply.Always = append(
+			apiPolicy.CanReply.Always,
+			apimodel.PolicyValueMe,
+		)
+	} else if replyable.Permission == gtsmodel.PolicyPermissionWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanReply.WithApproval = append(
+			apiPolicy.CanReply.WithApproval,
+			apimodel.PolicyValueMe,
+		)
+	}
+
+	boostable, err := c.intFilter.StatusBoostable(ctx, requester, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status boostable by requester: %w", err)
+		return nil, err
+	}
+
+	if boostable.Permission == gtsmodel.PolicyPermissionPermitted {
+		// We can do this!
+		apiPolicy.CanReblog.Always = append(
+			apiPolicy.CanReblog.Always,
+			apimodel.PolicyValueMe,
+		)
+	} else if boostable.Permission == gtsmodel.PolicyPermissionWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanReblog.WithApproval = append(
+			apiPolicy.CanReblog.WithApproval,
+			apimodel.PolicyValueMe,
+		)
 	}
 
 	return apiPolicy, nil

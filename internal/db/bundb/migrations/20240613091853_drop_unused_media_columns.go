@@ -20,11 +20,17 @@ package migrations
 import (
 	"context"
 
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
+		log.Info(
+			ctx,
+			"dropping unused media attachments columns, please wait; "+
+				"this may take a long time if your database has lots of media attachments, don't interrupt it!",
+		)
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
 			for _, dropcase := range []struct {

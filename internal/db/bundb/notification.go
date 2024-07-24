@@ -76,7 +76,7 @@ func (n *notificationDB) GetNotification(
 
 func (n *notificationDB) getNotification(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Notification) error, keyParts ...any) (*gtsmodel.Notification, error) {
 	// Fetch notification from cache with loader callback
-	notif, err := n.state.Caches.GTS.Notification.LoadOne(lookup, func() (*gtsmodel.Notification, error) {
+	notif, err := n.state.Caches.DB.Notification.LoadOne(lookup, func() (*gtsmodel.Notification, error) {
 		var notif gtsmodel.Notification
 
 		// Not cached! Perform database query
@@ -104,7 +104,7 @@ func (n *notificationDB) getNotification(ctx context.Context, lookup string, dbQ
 
 func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Notification, error) {
 	// Load all notif IDs via cache loader callbacks.
-	notifs, err := n.state.Caches.GTS.Notification.LoadIDs("ID",
+	notifs, err := n.state.Caches.DB.Notification.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Notification, error) {
 			// Skip query if everything was cached.
@@ -285,7 +285,7 @@ func (n *notificationDB) GetAccountNotifications(
 }
 
 func (n *notificationDB) PutNotification(ctx context.Context, notif *gtsmodel.Notification) error {
-	return n.state.Caches.GTS.Notification.Store(notif, func() error {
+	return n.state.Caches.DB.Notification.Store(notif, func() error {
 		_, err := n.db.NewInsert().Model(notif).Exec(ctx)
 		return err
 	})
@@ -302,7 +302,7 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 	}
 
 	// Invalidate deleted notification by ID.
-	n.state.Caches.GTS.Notification.Invalidate("ID", id)
+	n.state.Caches.DB.Notification.Invalidate("ID", id)
 	return nil
 }
 
@@ -337,7 +337,7 @@ func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string
 	}
 
 	// Invalidate all deleted notifications by IDs.
-	n.state.Caches.GTS.Notification.InvalidateIDs("ID", notifIDs)
+	n.state.Caches.DB.Notification.InvalidateIDs("ID", notifIDs)
 	return nil
 }
 
@@ -354,6 +354,6 @@ func (n *notificationDB) DeleteNotificationsForStatus(ctx context.Context, statu
 	}
 
 	// Invalidate all deleted notifications by IDs.
-	n.state.Caches.GTS.Notification.InvalidateIDs("ID", notifIDs)
+	n.state.Caches.DB.Notification.InvalidateIDs("ID", notifIDs)
 	return nil
 }

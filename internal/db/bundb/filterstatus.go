@@ -30,7 +30,7 @@ import (
 )
 
 func (f *filterDB) GetFilterStatusByID(ctx context.Context, id string) (*gtsmodel.FilterStatus, error) {
-	filterStatus, err := f.state.Caches.GTS.FilterStatus.LoadOne(
+	filterStatus, err := f.state.Caches.DB.FilterStatus.LoadOne(
 		"ID",
 		func() (*gtsmodel.FilterStatus, error) {
 			var filterStatus gtsmodel.FilterStatus
@@ -97,7 +97,7 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 	}
 
 	// Get each filter status by ID from the cache or DB.
-	filterStatuses, err := f.state.Caches.GTS.FilterStatus.LoadIDs("ID",
+	filterStatuses, err := f.state.Caches.DB.FilterStatus.LoadIDs("ID",
 		filterStatusIDs,
 		func(uncachedFilterStatusIDs []string) ([]*gtsmodel.FilterStatus, error) {
 			uncachedFilterStatuses := make([]*gtsmodel.FilterStatus, 0, len(uncachedFilterStatusIDs))
@@ -142,7 +142,7 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 }
 
 func (f *filterDB) PutFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) error {
-	return f.state.Caches.GTS.FilterStatus.Store(filterStatus, func() error {
+	return f.state.Caches.DB.FilterStatus.Store(filterStatus, func() error {
 		_, err := f.db.
 			NewInsert().
 			Model(filterStatus).
@@ -157,7 +157,7 @@ func (f *filterDB) UpdateFilterStatus(ctx context.Context, filterStatus *gtsmode
 		columns = append(columns, "updated_at")
 	}
 
-	return f.state.Caches.GTS.FilterStatus.Store(filterStatus, func() error {
+	return f.state.Caches.DB.FilterStatus.Store(filterStatus, func() error {
 		_, err := f.db.
 			NewUpdate().
 			Model(filterStatus).
@@ -177,7 +177,7 @@ func (f *filterDB) DeleteFilterStatusByID(ctx context.Context, id string) error 
 		return err
 	}
 
-	f.state.Caches.GTS.FilterStatus.Invalidate("ID", id)
+	f.state.Caches.DB.FilterStatus.Invalidate("ID", id)
 
 	return nil
 }

@@ -42,7 +42,7 @@ func (t *threadDB) PutThread(ctx context.Context, thread *gtsmodel.Thread) error
 }
 
 func (t *threadDB) GetThreadMute(ctx context.Context, id string) (*gtsmodel.ThreadMute, error) {
-	return t.state.Caches.GTS.ThreadMute.LoadOne("ID", func() (*gtsmodel.ThreadMute, error) {
+	return t.state.Caches.DB.ThreadMute.LoadOne("ID", func() (*gtsmodel.ThreadMute, error) {
 		var threadMute gtsmodel.ThreadMute
 
 		q := t.db.
@@ -63,7 +63,7 @@ func (t *threadDB) GetThreadMutedByAccount(
 	threadID string,
 	accountID string,
 ) (*gtsmodel.ThreadMute, error) {
-	return t.state.Caches.GTS.ThreadMute.LoadOne("ThreadID,AccountID", func() (*gtsmodel.ThreadMute, error) {
+	return t.state.Caches.DB.ThreadMute.LoadOne("ThreadID,AccountID", func() (*gtsmodel.ThreadMute, error) {
 		var threadMute gtsmodel.ThreadMute
 
 		q := t.db.
@@ -98,7 +98,7 @@ func (t *threadDB) IsThreadMutedByAccount(
 }
 
 func (t *threadDB) PutThreadMute(ctx context.Context, threadMute *gtsmodel.ThreadMute) error {
-	return t.state.Caches.GTS.ThreadMute.Store(threadMute, func() error {
+	return t.state.Caches.DB.ThreadMute.Store(threadMute, func() error {
 		_, err := t.db.NewInsert().Model(threadMute).Exec(ctx)
 		return err
 	})
@@ -112,6 +112,6 @@ func (t *threadDB) DeleteThreadMute(ctx context.Context, id string) error {
 		return err
 	}
 
-	t.state.Caches.GTS.ThreadMute.Invalidate("ID", id)
+	t.state.Caches.DB.ThreadMute.Invalidate("ID", id)
 	return nil
 }

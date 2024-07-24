@@ -61,7 +61,7 @@ func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Ac
 
 func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error) {
 	// Load all input account IDs via cache loader callback.
-	accounts, err := a.state.Caches.GTS.Account.LoadIDs("ID",
+	accounts, err := a.state.Caches.DB.Account.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Account, error) {
 			// Preallocate expected length of uncached accounts.
@@ -587,7 +587,7 @@ func (a *accountDB) GetAccounts(
 
 func (a *accountDB) getAccount(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Account) error, keyParts ...any) (*gtsmodel.Account, error) {
 	// Fetch account from database cache with loader callback
-	account, err := a.state.Caches.GTS.Account.LoadOne(lookup, func() (*gtsmodel.Account, error) {
+	account, err := a.state.Caches.DB.Account.LoadOne(lookup, func() (*gtsmodel.Account, error) {
 		var account gtsmodel.Account
 
 		// Not cached! Perform database query
@@ -723,7 +723,7 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 }
 
 func (a *accountDB) PutAccount(ctx context.Context, account *gtsmodel.Account) error {
-	return a.state.Caches.GTS.Account.Store(account, func() error {
+	return a.state.Caches.DB.Account.Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -752,7 +752,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 		columns = append(columns, "updated_at")
 	}
 
-	return a.state.Caches.GTS.Account.Store(account, func() error {
+	return a.state.Caches.DB.Account.Store(account, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
 		//
@@ -791,7 +791,7 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 }
 
 func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
-	defer a.state.Caches.GTS.Account.Invalidate("ID", id)
+	defer a.state.Caches.DB.Account.Invalidate("ID", id)
 
 	// Load account into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate
@@ -1099,7 +1099,7 @@ func (a *accountDB) GetAccountSettings(
 	accountID string,
 ) (*gtsmodel.AccountSettings, error) {
 	// Fetch settings from db cache with loader callback.
-	return a.state.Caches.GTS.AccountSettings.LoadOne(
+	return a.state.Caches.DB.AccountSettings.LoadOne(
 		"AccountID",
 		func() (*gtsmodel.AccountSettings, error) {
 			// Not cached! Perform database query.
@@ -1121,7 +1121,7 @@ func (a *accountDB) PutAccountSettings(
 	ctx context.Context,
 	settings *gtsmodel.AccountSettings,
 ) error {
-	return a.state.Caches.GTS.AccountSettings.Store(settings, func() error {
+	return a.state.Caches.DB.AccountSettings.Store(settings, func() error {
 		if _, err := a.db.
 			NewInsert().
 			Model(settings).
@@ -1138,7 +1138,7 @@ func (a *accountDB) UpdateAccountSettings(
 	settings *gtsmodel.AccountSettings,
 	columns ...string,
 ) error {
-	return a.state.Caches.GTS.AccountSettings.Store(settings, func() error {
+	return a.state.Caches.DB.AccountSettings.Store(settings, func() error {
 		settings.UpdatedAt = time.Now()
 		if len(columns) > 0 {
 			// If we're updating by column,
@@ -1161,7 +1161,7 @@ func (a *accountDB) UpdateAccountSettings(
 
 func (a *accountDB) PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
 	// Fetch stats from db cache with loader callback.
-	stats, err := a.state.Caches.GTS.AccountStats.LoadOne(
+	stats, err := a.state.Caches.DB.AccountStats.LoadOne(
 		"AccountID",
 		func() (*gtsmodel.AccountStats, error) {
 			// Not cached! Perform database query.
@@ -1230,7 +1230,7 @@ func (a *accountDB) StubAccountStats(ctx context.Context, account *gtsmodel.Acco
 
 	// Upsert this stats in case a race
 	// meant someone else inserted it first.
-	if err := a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+	if err := a.state.Caches.DB.AccountStats.Store(stats, func() error {
 		if _, err := NewUpsert(a.db).
 			Model(stats).
 			Constraint("account_id").
@@ -1325,7 +1325,7 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, account *gtsmode
 
 	// Upsert this stats in case a race
 	// meant someone else inserted it first.
-	if err := a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+	if err := a.state.Caches.DB.AccountStats.Store(stats, func() error {
 		if _, err := NewUpsert(a.db).
 			Model(stats).
 			Constraint("account_id").
@@ -1342,7 +1342,7 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, account *gtsmode
 }
 
 func (a *accountDB) UpdateAccountStats(ctx context.Context, stats *gtsmodel.AccountStats, columns ...string) error {
-	return a.state.Caches.GTS.AccountStats.Store(stats, func() error {
+	return a.state.Caches.DB.AccountStats.Store(stats, func() error {
 		if _, err := a.db.
 			NewUpdate().
 			Model(stats).
@@ -1357,7 +1357,7 @@ func (a *accountDB) UpdateAccountStats(ctx context.Context, stats *gtsmodel.Acco
 }
 
 func (a *accountDB) DeleteAccountStats(ctx context.Context, accountID string) error {
-	defer a.state.Caches.GTS.AccountStats.Invalidate("AccountID", accountID)
+	defer a.state.Caches.DB.AccountStats.Invalidate("AccountID", accountID)
 
 	if _, err := a.db.
 		NewDelete().

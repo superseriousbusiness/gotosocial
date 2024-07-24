@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -39,11 +40,12 @@ func New(
 	state *state.State,
 	federator *federation.Federator,
 	converter *typeutils.Converter,
-	filter *visibility.Filter,
+	visFilter *visibility.Filter,
 	emailSender email.Sender,
 	account *account.Processor,
 	media *media.Processor,
 	stream *stream.Processor,
+	conversations *conversations.Processor,
 ) Processor {
 	// Init federate logic
 	// wrapper struct.
@@ -56,11 +58,12 @@ func New(
 	// Init surface logic
 	// wrapper struct.
 	surface := &Surface{
-		State:       state,
-		Converter:   converter,
-		Stream:      stream,
-		Filter:      filter,
-		EmailSender: emailSender,
+		State:         state,
+		Converter:     converter,
+		Stream:        stream,
+		VisFilter:     visFilter,
+		EmailSender:   emailSender,
+		Conversations: conversations,
 	}
 
 	// Init shared util funcs.

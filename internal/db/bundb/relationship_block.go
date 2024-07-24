@@ -102,7 +102,7 @@ func (r *relationshipDB) GetBlock(ctx context.Context, sourceAccountID string, t
 
 func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Block, error) {
 	// Load all blocks IDs via cache loader callbacks.
-	blocks, err := r.state.Caches.GTS.Block.LoadIDs("ID",
+	blocks, err := r.state.Caches.DB.Block.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Block, error) {
 			// Preallocate expected length of uncached blocks.
@@ -149,7 +149,7 @@ func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*g
 
 func (r *relationshipDB) getBlock(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Block) error, keyParts ...any) (*gtsmodel.Block, error) {
 	// Fetch block from cache with loader callback
-	block, err := r.state.Caches.GTS.Block.LoadOne(lookup, func() (*gtsmodel.Block, error) {
+	block, err := r.state.Caches.DB.Block.LoadOne(lookup, func() (*gtsmodel.Block, error) {
 		var block gtsmodel.Block
 
 		// Not cached! Perform database query
@@ -208,7 +208,7 @@ func (r *relationshipDB) PopulateBlock(ctx context.Context, block *gtsmodel.Bloc
 }
 
 func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) error {
-	return r.state.Caches.GTS.Block.Store(block, func() error {
+	return r.state.Caches.DB.Block.Store(block, func() error {
 		_, err := r.db.NewInsert().Model(block).Exec(ctx)
 		return err
 	})
@@ -228,7 +228,7 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 	}
 
 	// Drop this now-cached block on return after delete.
-	defer r.state.Caches.GTS.Block.Invalidate("ID", id)
+	defer r.state.Caches.DB.Block.Invalidate("ID", id)
 
 	// Finally delete block from DB.
 	_, err = r.db.NewDelete().
@@ -252,7 +252,7 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 	}
 
 	// Drop this now-cached block on return after delete.
-	defer r.state.Caches.GTS.Block.Invalidate("URI", uri)
+	defer r.state.Caches.DB.Block.Invalidate("URI", uri)
 
 	// Finally delete block from DB.
 	_, err = r.db.NewDelete().
@@ -281,8 +281,8 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 
 	defer func() {
 		// Invalidate all account's incoming / outoing blocks on return.
-		r.state.Caches.GTS.Block.Invalidate("AccountID", accountID)
-		r.state.Caches.GTS.Block.Invalidate("TargetAccountID", accountID)
+		r.state.Caches.DB.Block.Invalidate("AccountID", accountID)
+		r.state.Caches.DB.Block.Invalidate("TargetAccountID", accountID)
 	}()
 
 	// Load all blocks into cache, this *really* isn't great

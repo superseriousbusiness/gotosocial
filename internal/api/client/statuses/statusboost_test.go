@@ -80,8 +80,8 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
 	suite.False(statusReply.Sensitive)
 	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
 
-	suite.Equal(targetStatus.ContentWarning, statusReply.SpoilerText)
-	suite.Equal(targetStatus.Content, statusReply.Content)
+	suite.Empty(statusReply.SpoilerText)
+	suite.Empty(statusReply.Content)
 	suite.Equal("the_mighty_zork", statusReply.Account.Username)
 	suite.Len(statusReply.MediaAttachments, 0)
 	suite.Len(statusReply.Mentions, 0)
@@ -146,8 +146,8 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 	suite.False(responseStatus.Sensitive)
 	suite.Equal(suite.tc.VisToAPIVis(context.Background(), testStatus.Visibility), responseStatus.Visibility)
 
-	suite.Equal(testStatus.ContentWarning, responseStatus.SpoilerText)
-	suite.Equal(testStatus.Content, responseStatus.Content)
+	suite.Empty(responseStatus.SpoilerText)
+	suite.Empty(responseStatus.Content)
 	suite.Equal("the_mighty_zork", responseStatus.Account.Username)
 	suite.Len(responseStatus.MediaAttachments, 0)
 	suite.Len(responseStatus.Mentions, 0)
@@ -173,43 +173,42 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
 }
 
 // try to boost a status that's not boostable / visible to us
-// TODO: sort this out with new interaction policies
-// func (suite *StatusBoostTestSuite) TestPostUnboostable() {
-// 	t := suite.testTokens["local_account_1"]
-// 	oauthToken := oauth.DBTokenToToken(t)
+func (suite *StatusBoostTestSuite) TestPostUnboostable() {
+	t := suite.testTokens["local_account_1"]
+	oauthToken := oauth.DBTokenToToken(t)
 
-// 	targetStatus := suite.testStatuses["local_account_2_status_4"]
+	targetStatus := suite.testStatuses["local_account_2_status_4"]
 
-// 	// setup
-// 	recorder := httptest.NewRecorder()
-// 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-// 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-// 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-// 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-// 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-// 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-// 	ctx.Request.Header.Set("accept", "application/json")
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
-// 	// normally the router would populate these params from the path values,
-// 	// but because we're calling the function directly, we need to set them manually.
-// 	ctx.Params = gin.Params{
-// 		gin.Param{
-// 			Key:   statuses.IDKey,
-// 			Value: targetStatus.ID,
-// 		},
-// 	}
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   statuses.IDKey,
+			Value: targetStatus.ID,
+		},
+	}
 
-// 	suite.statusModule.StatusBoostPOSTHandler(ctx)
+	suite.statusModule.StatusBoostPOSTHandler(ctx)
 
-// 	// check response
-// 	suite.Equal(http.StatusNotFound, recorder.Code) // we 404 unboostable statuses
+	// check response
+	suite.Equal(http.StatusForbidden, recorder.Code)
 
-// 	result := recorder.Result()
-// 	defer result.Body.Close()
-// 	b, err := ioutil.ReadAll(result.Body)
-// 	suite.NoError(err)
-// 	suite.Equal(`{"error":"Not Found"}`, string(b))
-// }
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	suite.NoError(err)
+	suite.Equal(`{"error":"Forbidden: you do not have permission to boost this status"}`, string(b))
+}
 
 // try to boost a status that's not visible to the user
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {

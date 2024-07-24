@@ -158,6 +158,34 @@ func (c *StructCache[T]) LoadIDs(index string, ids []string, load func([]string)
 	})
 }
 
+// LoadIDs2Part works as LoadIDs, except using a two-part key,
+// where the first part is an ID shared by all the objects,
+// and the second part is a list of per-object IDs.
+func (c *StructCache[T]) LoadIDs2Part(index string, id1 string, id2s []string, load func(string, []string) ([]T, error)) ([]T, error) {
+	i := c.index[index]
+	if i == nil {
+		// we only perform this check here as
+		// we're going to use the index before
+		// passing it to cache in main .Load().
+		panic("missing index for cache type")
+	}
+
+	// Generate cache keys for two-part IDs.
+	keys := make([]structr.Key, len(id2s))
+	for x, id2 := range id2s {
+		keys[x] = i.Key(id1, id2)
+	}
+
+	// Pass loader callback with wrapper onto main cache load function.
+	return c.cache.Load(i, keys, func(uncached []structr.Key) ([]T, error) {
+		uncachedIDs := make([]string, len(uncached))
+		for i := range uncached {
+			uncachedIDs[i] = uncached[i].Values()[1].(string)
+		}
+		return load(id1, uncachedIDs)
+	})
+}
+
 // Store: see structr.Cache{}.Store().
 func (c *StructCache[T]) Store(value T, store func() error) error {
 	return c.cache.Store(value, store)

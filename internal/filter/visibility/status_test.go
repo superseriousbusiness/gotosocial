@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type StatusVisibleTestSuite struct {
@@ -154,6 +155,49 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowingCached() 
 	visible, err = suite.filter.StatusVisible(ctx, testAccount, testStatus)
 	suite.NoError(err)
 	suite.False(visible)
+}
+
+func (suite *StatusVisibleTestSuite) TestVisiblePending() {
+	ctx := context.Background()
+
+	// Copy the test status and mark
+	// the copy as pending approval.
+	//
+	// This is a status from admin
+	// that replies to zork.
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["admin_account_status_3"]
+	testStatus.PendingApproval = util.Ptr(true)
+
+	for _, testCase := range []struct {
+		acct    *gtsmodel.Account
+		visible bool
+	}{
+		{
+			acct:    suite.testAccounts["admin_account"],
+			visible: true, // Own status, always visible.
+		},
+		{
+			acct:    suite.testAccounts["local_account_1"],
+			visible: true, // Reply to zork, always visible.
+		},
+		{
+			acct:    suite.testAccounts["local_account_2"],
+			visible: false, // None of their business.
+		},
+		{
+			acct:    suite.testAccounts["remote_account_1"],
+			visible: false, // None of their business.
+		},
+		{
+			acct:    nil,   // Unauthed request.
+			visible: false, // None of their business.
+		},
+	} {
+		visible, err := suite.filter.StatusVisible(ctx, testCase.acct, testStatus)
+		suite.NoError(err)
+		suite.Equal(testCase.visible, visible)
+	}
 }
 
 func TestStatusVisibleTestSuite(t *testing.T) {

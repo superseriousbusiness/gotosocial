@@ -55,8 +55,9 @@ html, body {
   color: var(--eggshell);
 }
 
-/* Role badge background */
-.profile .profile-header .basic-info .namerole .role {
+/* Role and bot badge backgrounds */
+.profile .profile-header .basic-info .namerole .role,
+.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
   background: var(--eggshell);
 }
 

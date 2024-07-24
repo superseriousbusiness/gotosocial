@@ -33,7 +33,7 @@ type tagDB struct {
 }
 
 func (t *tagDB) GetTag(ctx context.Context, id string) (*gtsmodel.Tag, error) {
-	return t.state.Caches.GTS.Tag.LoadOne("ID", func() (*gtsmodel.Tag, error) {
+	return t.state.Caches.DB.Tag.LoadOne("ID", func() (*gtsmodel.Tag, error) {
 		var tag gtsmodel.Tag
 
 		q := t.db.
@@ -54,7 +54,7 @@ func (t *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, e
 	name = strings.TrimSpace(name)
 	name = strings.ToLower(name)
 
-	return t.state.Caches.GTS.Tag.LoadOne("Name", func() (*gtsmodel.Tag, error) {
+	return t.state.Caches.DB.Tag.LoadOne("Name", func() (*gtsmodel.Tag, error) {
 		var tag gtsmodel.Tag
 
 		q := t.db.
@@ -72,7 +72,7 @@ func (t *tagDB) GetTagByName(ctx context.Context, name string) (*gtsmodel.Tag, e
 
 func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error) {
 	// Load all tag IDs via cache loader callbacks.
-	tags, err := t.state.Caches.GTS.Tag.LoadIDs("ID",
+	tags, err := t.state.Caches.DB.Tag.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Tag, error) {
 			// Preallocate expected length of uncached tags.
@@ -115,7 +115,7 @@ func (t *tagDB) PutTag(ctx context.Context, tag *gtsmodel.Tag) error {
 	t2.Name = strings.ToLower(t2.Name)
 
 	// Insert the copy.
-	if err := t.state.Caches.GTS.Tag.Store(t2, func() error {
+	if err := t.state.Caches.DB.Tag.Store(t2, func() error {
 		_, err := t.db.NewInsert().Model(t2).Exec(ctx)
 		return err
 	}); err != nil {

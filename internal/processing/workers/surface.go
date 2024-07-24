@@ -20,6 +20,7 @@ package workers
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -32,9 +33,10 @@ import (
 //   - sending a notification to a user
 //   - sending an email
 type Surface struct {
-	State       *state.State
-	Converter   *typeutils.Converter
-	Stream      *stream.Processor
-	Filter      *visibility.Filter
-	EmailSender email.Sender
+	State         *state.State
+	Converter     *typeutils.Converter
+	Stream        *stream.Processor
+	VisFilter     *visibility.Filter
+	EmailSender   email.Sender
+	Conversations *conversations.Processor
 }

@@ -558,19 +558,22 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "interaction_policy": {
           "can_favourite": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           },
           "can_reply": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           },
           "can_reblog": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           }
@@ -805,19 +808,22 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "interaction_policy": {
           "can_favourite": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           },
           "can_reply": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           },
           "can_reblog": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           }
@@ -1052,19 +1058,22 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "interaction_policy": {
           "can_favourite": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           },
           "can_reply": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           },
           "can_reblog": {
             "always": [
-              "public"
+              "public",
+              "me"
             ],
             "with_approval": []
           }

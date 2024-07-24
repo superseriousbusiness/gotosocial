@@ -22,12 +22,18 @@ import (
 
 	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240715204203_media_pipeline_improvements"
 	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
+		log.Info(
+			ctx,
+			"doing media pipeline improvements; "+
+				"this may take a while if your database has lots of media attachments, don't interrupt it!",
+		)
 		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			if _, err := tx.NewAddColumn().
 				Table("media_attachments").

@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -108,6 +109,7 @@ func (suite *WorkersTestSuite) openStreams(ctx context.Context, processor *proce
 		stream.TimelineHome,
 		stream.TimelinePublic,
 		stream.TimelineNotifications,
+		stream.TimelineDirect,
 	} {
 		stream, err := processor.Stream().Open(ctx, account, streamType)
 		if err != nil {
@@ -159,7 +161,18 @@ func (suite *WorkersTestSuite) SetupTestStructs() *TestStructs {
 	oauthServer := testrig.NewTestOauthServer(db)
 	emailSender := testrig.NewEmailSender("../../../web/template/", nil)
 
-	processor := processing.NewProcessor(cleaner.New(&state), typeconverter, federator, oauthServer, mediaManager, &state, emailSender)
+	processor := processing.NewProcessor(
+		cleaner.New(&state),
+		typeconverter,
+		federator,
+		oauthServer,
+		mediaManager,
+		&state,
+		emailSender,
+		visibility.NewFilter(&state),
+		interaction.NewFilter(&state),
+	)
+
 	testrig.StartWorkers(&state, processor.Workers())
 
 	testrig.StandardDBSetup(db, suite.testAccounts)

@@ -54,8 +54,10 @@ import (
 type DBService struct {
 	db.Account
 	db.Admin
+	db.AdvancedMigration
 	db.Application
 	db.Basic
+	db.Conversation
 	db.Domain
 	db.Emoji
 	db.HeaderFilter
@@ -158,6 +160,7 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	// https://bun.uptrace.dev/orm/many-to-many-relation/
 	for _, t := range []interface{}{
 		&gtsmodel.AccountToEmoji{},
+		&gtsmodel.ConversationToStatus{},
 		&gtsmodel.StatusToEmoji{},
 		&gtsmodel.StatusToTag{},
 		&gtsmodel.ThreadToStatus{},
@@ -181,12 +184,20 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			db:    db,
 			state: state,
 		},
+		AdvancedMigration: &advancedMigrationDB{
+			db:    db,
+			state: state,
+		},
 		Application: &applicationDB{
 			db:    db,
 			state: state,
 		},
 		Basic: &basicDB{
 			db: db,
+		},
+		Conversation: &conversationDB{
+			db:    db,
+			state: state,
 		},
 		Domain: &domainDB{
 			db:    db,

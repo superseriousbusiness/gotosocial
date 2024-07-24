@@ -26,8 +26,10 @@ const (
 type DB interface {
 	Account
 	Admin
+	AdvancedMigration
 	Application
 	Basic
+	Conversation
 	Domain
 	Emoji
 	HeaderFilter

@@ -130,6 +130,7 @@ function UserProfileForm({ data: profile }) {
 					avatar={form.avatar.previewValue ?? profile.avatar}
 					header={form.header.previewValue ?? profile.header}
 					display_name={form.displayName.value ?? profile.username}
+					bot={profile.bot}
 					username={profile.username}
 					role={profile.role}
 				/>
@@ -186,6 +187,10 @@ function UserProfileForm({ data: profile }) {
 					Learn more about these settings (opens in a new tab)
 				</a>
 			</div>
+			<Checkbox
+				field={form.bot}
+				label="Mark as bot account; this indicates to other users that this is an automated account"
+			/>
 			<TextInput
 				field={form.displayName}
 				label="Display name"
@@ -200,10 +205,12 @@ function UserProfileForm({ data: profile }) {
 				autoCapitalize="sentences"
 				rows={8}
 			/>
-			<b>Profile fields</b>
-			<ProfileFields
-				field={form.fields}
-			/>
+			<fieldset>
+				<legend>Profile fields</legend>
+				<ProfileFields
+					field={form.fields}
+				/>
+			</fieldset>
 
 			<div className="form-section-docs">
 				<h3>Visibility and privacy</h3>

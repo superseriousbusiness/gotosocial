@@ -6272,11 +6272,43 @@ paths:
                     - read:bookmarks
             tags:
                 - bookmarks
+    /api/v1/conversation/{id}/read:
+        post:
+            operationId: conversationRead
+            parameters:
+                - description: ID of the conversation.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Updated conversation.
+                    schema:
+                        $ref: '#/definitions/conversation'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "422":
+                    description: unprocessable content
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:conversations
+            summary: Mark a conversation with the given ID as read.
+            tags:
+                - conversations
     /api/v1/conversations:
         get:
             description: |-
-                NOT IMPLEMENTED YET: Will currently always return an array of length 0.
-
                 The next and previous queries can be parsed from the returned Link header.
                 Example:
 
@@ -6285,15 +6317,15 @@ paths:
                 ````
             operationId: conversationsGet
             parameters:
-                - description: 'Return only conversations *OLDER* than the given max ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                - description: 'Return only conversations with last statuses *OLDER* than the given max ID. The conversation with the specified ID will not be included in the response. NOTE: The ID is a status ID. Use the Link header for pagination.'
                   in: query
                   name: max_id
                   type: string
-                - description: 'Return only conversations *NEWER* than the given since ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                - description: 'Return only conversations with last statuses *NEWER* than the given since ID. The conversation with the specified ID will not be included in the response. NOTE: The ID is a status ID. Use the Link header for pagination.'
                   in: query
                   name: since_id
                   type: string
-                - description: 'Return only conversations *IMMEDIATELY NEWER* than the given min ID. The conversation with the specified ID will not be included in the response. NOTE: the ID is of the internal conversation, use the Link header for pagination.'
+                - description: 'Return only conversations with last statuses *IMMEDIATELY NEWER* than the given min ID. The conversation with the specified ID will not be included in the response. NOTE: The ID is a status ID. Use the Link header for pagination.'
                   in: query
                   name: min_id
                   type: string
@@ -6331,6 +6363,39 @@ paths:
                 - OAuth2 Bearer:
                     - read:statuses
             summary: Get an array of (direct message) conversations that requesting account is involved in.
+            tags:
+                - conversations
+    /api/v1/conversations/{id}:
+        delete:
+            description: |-
+                This doesn't delete the actual statuses in the conversation,
+                nor does it prevent a new conversation from being created later from the same thread and participants.
+            operationId: conversationDelete
+            parameters:
+                - description: ID of the conversation
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: conversation deleted
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:conversations
+            summary: Delete a single conversation with the given ID.
             tags:
                 - conversations
     /api/v1/custom_emojis:

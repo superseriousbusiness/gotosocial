@@ -51,7 +51,9 @@ html, body {
   border: var(--boxshadow-border);
 }
 
-.profile .profile-header .basic-info .namerole .role {
+/* Role and bot badge borders */
+.profile .profile-header .basic-info .namerole .role,
+.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
   border: var(--boxshadow-border);
 }
 
