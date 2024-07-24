@@ -33,7 +33,7 @@ type Processor struct {
 	media     *media.Manager
 	converter *typeutils.Converter
 	federator *federation.Federator
-	filter    *visibility.Filter
+	visFilter *visibility.Filter
 }
 
 // New returns a new Processor instance.
@@ -42,13 +42,13 @@ func New(
 	media *media.Manager,
 	converter *typeutils.Converter,
 	federator *federation.Federator,
-	filter *visibility.Filter,
+	visFilter *visibility.Filter,
 ) Processor {
 	return Processor{
 		state:     state,
 		media:     media,
 		converter: converter,
 		federator: federator,
-		filter:    filter,
+		visFilter: visFilter,
 	}
 }

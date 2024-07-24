@@ -19,6 +19,7 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -28,5 +29,13 @@ import (
 
 // NewTestFederator returns a federator with the given database and (mock!!) transport controller.
 func NewTestFederator(state *state.State, tc transport.Controller, mediaManager *media.Manager) *federation.Federator {
-	return federation.NewFederator(state, NewTestFederatingDB(state), tc, typeutils.NewConverter(state), visibility.NewFilter(state), mediaManager)
+	return federation.NewFederator(
+		state,
+		NewTestFederatingDB(state),
+		tc,
+		typeutils.NewConverter(state),
+		visibility.NewFilter(state),
+		interaction.NewFilter(state),
+		mediaManager,
+	)
 }

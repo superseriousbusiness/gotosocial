@@ -190,7 +190,7 @@ func (p *Processor) notifVisible(
 			return true, nil
 		}
 
-		visible, err := p.filter.AccountVisible(ctx, acct, n.OriginAccount)
+		visible, err := p.visFilter.AccountVisible(ctx, acct, n.OriginAccount)
 		if err != nil {
 			return false, err
 		}
@@ -203,7 +203,7 @@ func (p *Processor) notifVisible(
 	// If status is set, ensure it's
 	// visible to notif target.
 	if n.Status != nil {
-		visible, err := p.filter.StatusVisible(ctx, acct, n.Status)
+		visible, err := p.visFilter.StatusVisible(ctx, acct, n.Status)
 		if err != nil {
 			return false, err
 		}

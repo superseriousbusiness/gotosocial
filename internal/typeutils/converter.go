@@ -20,6 +20,7 @@ package typeutils
 import (
 	"sync"
 
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
@@ -28,13 +29,15 @@ type Converter struct {
 	state          *state.State
 	defaultAvatars []string
 	randAvatars    sync.Map
-	filter         *visibility.Filter
+	visFilter      *visibility.Filter
+	intFilter      *interaction.Filter
 }
 
 func NewConverter(state *state.State) *Converter {
 	return &Converter{
 		state:          state,
 		defaultAvatars: populateDefaultAvatars(),
-		filter:         visibility.NewFilter(state),
+		visFilter:      visibility.NewFilter(state),
+		intFilter:      interaction.NewFilter(state),
 	}
 }

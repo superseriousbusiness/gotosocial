@@ -89,43 +89,42 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
 }
 
 // try to fave a status that's not faveable
-// TODO: replace this when interaction policies enforced.
-// func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
-// 	t := suite.testTokens["local_account_1"]
-// 	oauthToken := oauth.DBTokenToToken(t)
+func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
+	t := suite.testTokens["admin_account"]
+	oauthToken := oauth.DBTokenToToken(t)
 
-// 	targetStatus := suite.testStatuses["local_account_2_status_3"] // this one is unlikeable and unreplyable
+	targetStatus := suite.testStatuses["local_account_1_status_3"] // this one is unlikeable
 
-// 	// setup
-// 	recorder := httptest.NewRecorder()
-// 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-// 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-// 	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-// 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-// 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-// 	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-// 	ctx.Request.Header.Set("accept", "application/json")
+	// setup
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
+	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/json")
 
-// 	// normally the router would populate these params from the path values,
-// 	// but because we're calling the function directly, we need to set them manually.
-// 	ctx.Params = gin.Params{
-// 		gin.Param{
-// 			Key:   statuses.IDKey,
-// 			Value: targetStatus.ID,
-// 		},
-// 	}
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   statuses.IDKey,
+			Value: targetStatus.ID,
+		},
+	}
 
-// 	suite.statusModule.StatusFavePOSTHandler(ctx)
+	suite.statusModule.StatusFavePOSTHandler(ctx)
 
-// 	// check response
-// 	suite.EqualValues(http.StatusForbidden, recorder.Code)
+	// check response
+	suite.EqualValues(http.StatusForbidden, recorder.Code)
 
-// 	result := recorder.Result()
-// 	defer result.Body.Close()
-// 	b, err := ioutil.ReadAll(result.Body)
-// 	assert.NoError(suite.T(), err)
-// 	assert.Equal(suite.T(), `{"error":"Forbidden: status is not faveable"}`, string(b))
-// }
+	result := recorder.Result()
+	defer result.Body.Close()
+	b, err := ioutil.ReadAll(result.Body)
+	assert.NoError(suite.T(), err)
+	assert.Equal(suite.T(), `{"error":"Forbidden: you do not have permission to fave this status"}`, string(b))
+}
 
 func TestStatusFaveTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusFaveTestSuite))
