@@ -26,10 +26,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // util provides util functions used by both
@@ -497,4 +500,130 @@ func (u *utils) decrementFollowRequestsCount(
 	}
 
 	return nil
+}
+
+// approveFave stores + returns an
+// interactionApproval for a fave.
+func (u *utils) approveFave(
+	ctx context.Context,
+	fave *gtsmodel.StatusFave,
+) (*gtsmodel.InteractionApproval, error) {
+	id := id.NewULID()
+
+	approval := &gtsmodel.InteractionApproval{
+		ID:                   id,
+		AccountID:            fave.TargetAccountID,
+		Account:              fave.TargetAccount,
+		InteractingAccountID: fave.AccountID,
+		InteractingAccount:   fave.Account,
+		InteractionURI:       fave.URI,
+		InteractionType:      gtsmodel.InteractionLike,
+		URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+	}
+
+	if err := u.state.DB.PutInteractionApproval(ctx, approval); err != nil {
+		err := gtserror.Newf("db error inserting interaction approval: %w", err)
+		return nil, err
+	}
+
+	// Mark the fave itself as now approved.
+	fave.PendingApproval = util.Ptr(false)
+	fave.PreApproved = false
+	fave.ApprovedByURI = approval.URI
+
+	if err := u.state.DB.UpdateStatusFave(
+		ctx,
+		fave,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating status fave: %w", err)
+		return nil, err
+	}
+
+	return approval, nil
+}
+
+// approveReply stores + returns an
+// interactionApproval for a reply.
+func (u *utils) approveReply(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) (*gtsmodel.InteractionApproval, error) {
+	id := id.NewULID()
+
+	approval := &gtsmodel.InteractionApproval{
+		ID:                   id,
+		AccountID:            status.InReplyToAccountID,
+		Account:              status.InReplyToAccount,
+		InteractingAccountID: status.AccountID,
+		InteractingAccount:   status.Account,
+		InteractionURI:       status.URI,
+		InteractionType:      gtsmodel.InteractionReply,
+		URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+	}
+
+	if err := u.state.DB.PutInteractionApproval(ctx, approval); err != nil {
+		err := gtserror.Newf("db error inserting interaction approval: %w", err)
+		return nil, err
+	}
+
+	// Mark the status itself as now approved.
+	status.PendingApproval = util.Ptr(false)
+	status.PreApproved = false
+	status.ApprovedByURI = approval.URI
+
+	if err := u.state.DB.UpdateStatus(
+		ctx,
+		status,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating status: %w", err)
+		return nil, err
+	}
+
+	return approval, nil
+}
+
+// approveAnnounce stores + returns an
+// interactionApproval for an announce.
+func (u *utils) approveAnnounce(
+	ctx context.Context,
+	boost *gtsmodel.Status,
+) (*gtsmodel.InteractionApproval, error) {
+	id := id.NewULID()
+
+	approval := &gtsmodel.InteractionApproval{
+		ID:                   id,
+		AccountID:            boost.BoostOfAccountID,
+		Account:              boost.BoostOfAccount,
+		InteractingAccountID: boost.AccountID,
+		InteractingAccount:   boost.Account,
+		InteractionURI:       boost.URI,
+		InteractionType:      gtsmodel.InteractionReply,
+		URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+	}
+
+	if err := u.state.DB.PutInteractionApproval(ctx, approval); err != nil {
+		err := gtserror.Newf("db error inserting interaction approval: %w", err)
+		return nil, err
+	}
+
+	// Mark the status itself as now approved.
+	boost.PendingApproval = util.Ptr(false)
+	boost.PreApproved = false
+	boost.ApprovedByURI = approval.URI
+
+	if err := u.state.DB.UpdateStatus(
+		ctx,
+		boost,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating boost wrapper status: %w", err)
+		return nil, err
+	}
+
+	return approval, nil
 }

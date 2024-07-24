@@ -81,6 +81,17 @@ func SetJSONLDIdStr(with WithJSONLDId, id string) error {
 	return nil
 }
 
+// AppendIRIStr appends the given iri
+// string to the back of the given property.
+func AppendIRIStr[T WithIRI](prop Property[T], iri string) error {
+	u, err := url.Parse(iri)
+	if err != nil {
+		return fmt.Errorf("error parsing iri: %w", err)
+	}
+	prop.AppendIRI(u)
+	return nil
+}
+
 // GetTo returns the IRIs contained in the To property of 'with'. Panics on entries with missing ID.
 func GetTo(with WithTo) []*url.URL {
 	toProp := with.GetActivityStreamsTo()
@@ -518,6 +529,27 @@ func SetManuallyApprovesFollowers(with WithManuallyApprovesFollowers, manuallyAp
 		with.SetActivityStreamsManuallyApprovesFollowers(mafProp)
 	}
 	mafProp.Set(manuallyApprovesFollowers)
+}
+
+// GetApprovedBy returns the URL contained in
+// the ApprovedBy property of 'with', if set.
+func GetApprovedBy(with WithApprovedBy) *url.URL {
+	mafProp := with.GetGoToSocialApprovedBy()
+	if mafProp == nil || !mafProp.IsIRI() {
+		return nil
+	}
+	return mafProp.Get()
+}
+
+// SetApprovedBy sets the given url
+// on the ApprovedBy property of 'with'.
+func SetApprovedBy(with WithApprovedBy, approvedBy *url.URL) {
+	abProp := with.GetGoToSocialApprovedBy()
+	if abProp == nil {
+		abProp = streams.NewGoToSocialApprovedByProperty()
+		with.SetGoToSocialApprovedBy(abProp)
+	}
+	abProp.Set(approvedBy)
 }
 
 // extractIRIs extracts just the AP IRIs from an iterable

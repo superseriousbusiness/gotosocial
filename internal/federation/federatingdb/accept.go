@@ -20,14 +20,17 @@ package federatingdb
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
@@ -55,100 +58,356 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		return nil
 	}
 
-	// Iterate all provided objects in the activity.
+	activityID := ap.GetJSONLDId(accept)
+	if activityID == nil {
+		// We need an ID.
+		const text = "Accept had no id property"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	// Iterate all provided objects in the activity,
+	// handling the ones we know how to handle.
 	for _, object := range ap.ExtractObjects(accept) {
+		if asType := object.GetType(); asType != nil {
+			// Check and handle any
+			// vocab.Type objects.
+			// nolint:gocritic
+			switch asType.GetTypeName() {
 
-		// Check and handle any vocab.Type objects.
-		if objType := object.GetType(); objType != nil {
-			switch objType.GetTypeName() { //nolint:gocritic
-
+			// ACCEPT FOLLOW
 			case ap.ActivityFollow:
-				// Cast the vocab.Type object to known AS type.
-				asFollow := objType.(vocab.ActivityStreamsFollow)
-
-				// convert the follow to something we can understand
-				gtsFollow, err := f.converter.ASFollowToFollow(ctx, asFollow)
-				if err != nil {
-					return fmt.Errorf("ACCEPT: error converting asfollow to gtsfollow: %s", err)
+				if err := f.acceptFollowType(
+					ctx,
+					asType,
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
 				}
+			}
 
-				// Make sure the creator of the original follow
-				// is the same as whatever inbox this landed in.
-				if gtsFollow.AccountID != receivingAcct.ID {
-					return errors.New("ACCEPT: follow account and inbox account were not the same")
-				}
+		} else if object.IsIRI() {
+			// Check and handle any
+			// IRI type objects.
+			switch objIRI := object.GetIRI(); {
 
-				// Make sure the target of the original follow
-				// is the same as the account making the request.
-				if gtsFollow.TargetAccountID != requestingAcct.ID {
-					return errors.New("ACCEPT: follow target account and requesting account were not the same")
-				}
-
-				follow, err := f.state.DB.AcceptFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
-				if err != nil {
+			// ACCEPT FOLLOW
+			case uris.IsFollowPath(objIRI):
+				if err := f.acceptFollowIRI(
+					ctx,
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
 					return err
 				}
 
-				f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-					APObjectType:   ap.ActivityFollow,
-					APActivityType: ap.ActivityAccept,
-					GTSModel:       follow,
-					Receiving:      receivingAcct,
-					Requesting:     requestingAcct,
-				})
-			}
+			// ACCEPT STATUS (reply/boost)
+			case uris.IsStatusesPath(objIRI):
+				if err := f.acceptStatusIRI(
+					ctx,
+					activityID.String(),
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
 
-			continue
+			// ACCEPT LIKE
+			case uris.IsLikePath(objIRI):
+				if err := f.acceptLikeIRI(
+					ctx,
+					activityID.String(),
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
+			}
 		}
-
-		// Check and handle any
-		// IRI type objects.
-		if object.IsIRI() {
-
-			// Extract IRI from object.
-			iri := object.GetIRI()
-			if !uris.IsFollowPath(iri) {
-				continue
-			}
-
-			// Serialize IRI.
-			iriStr := iri.String()
-
-			// ACCEPT FOLLOW
-			followReq, err := f.state.DB.GetFollowRequestByURI(ctx, iriStr)
-			if err != nil {
-				return fmt.Errorf("ACCEPT: couldn't get follow request with id %s from the database: %s", iriStr, err)
-			}
-
-			// Make sure the creator of the original follow
-			// is the same as whatever inbox this landed in.
-			if followReq.AccountID != receivingAcct.ID {
-				return errors.New("ACCEPT: follow account and inbox account were not the same")
-			}
-
-			// Make sure the target of the original follow
-			// is the same as the account making the request.
-			if followReq.TargetAccountID != requestingAcct.ID {
-				return errors.New("ACCEPT: follow target account and requesting account were not the same")
-			}
-
-			follow, err := f.state.DB.AcceptFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
-			if err != nil {
-				return err
-			}
-
-			f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-				APObjectType:   ap.ActivityFollow,
-				APActivityType: ap.ActivityAccept,
-				GTSModel:       follow,
-				Receiving:      receivingAcct,
-				Requesting:     requestingAcct,
-			})
-
-			continue
-		}
-
 	}
+
+	return nil
+}
+
+func (f *federatingDB) acceptFollowType(
+	ctx context.Context,
+	asType vocab.Type,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Cast the vocab.Type object to known AS type.
+	asFollow := asType.(vocab.ActivityStreamsFollow)
+
+	// Reconstruct the follow.
+	follow, err := f.converter.ASFollowToFollow(ctx, asFollow)
+	if err != nil {
+		err := gtserror.Newf("error converting Follow to *gtsmodel.Follow: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Make sure the creator of the original follow
+	// is the same as whatever inbox this landed in.
+	if follow.AccountID != receivingAcct.ID {
+		const text = "Follow account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the original follow
+	// is the same as the account making the request.
+	if follow.TargetAccountID != requestingAcct.ID {
+		const text = "Follow target account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Accept and get the populated follow back.
+	follow, err = f.state.DB.AcceptFollowRequest(
+		ctx,
+		follow.AccountID,
+		follow.TargetAccountID,
+	)
+	if err != nil {
+		err := gtserror.Newf("db error accepting follow request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityAccept,
+		GTSModel:       follow,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
+	return nil
+}
+
+func (f *federatingDB) acceptFollowIRI(
+	ctx context.Context,
+	objectIRI string,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Get the follow req from the db.
+	followReq, err := f.state.DB.GetFollowRequestByURI(ctx, objectIRI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting follow request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if followReq == nil {
+		// We didn't have a follow request
+		// with this URI, so nothing to do.
+		// Just return.
+		return nil
+	}
+
+	// Make sure the creator of the original follow
+	// is the same as whatever inbox this landed in.
+	if followReq.AccountID != receivingAcct.ID {
+		const text = "Follow account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the original follow
+	// is the same as the account making the request.
+	if followReq.TargetAccountID != requestingAcct.ID {
+		const text = "Follow target account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Accept and get the populated follow back.
+	follow, err := f.state.DB.AcceptFollowRequest(
+		ctx,
+		followReq.AccountID,
+		followReq.TargetAccountID,
+	)
+	if err != nil {
+		err := gtserror.Newf("db error accepting follow request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityAccept,
+		GTSModel:       follow,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
+	return nil
+}
+
+func (f *federatingDB) acceptStatusIRI(
+	ctx context.Context,
+	activityID string,
+	objectIRI string,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Lock on this potential status
+	// URI as we may be updating it.
+	unlock := f.state.FedLocks.Lock("federatingDB " + objectIRI)
+	defer unlock()
+
+	// Get the status from the db.
+	status, err := f.state.DB.GetStatusByURI(ctx, objectIRI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting status: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if status == nil {
+		// We didn't have a status with
+		// this URI, so nothing to do.
+		// Just return.
+		return nil
+	}
+
+	if !status.IsLocal() {
+		// We don't process Accepts of statuses
+		// that weren't created on our instance.
+		// Just return.
+		return nil
+	}
+
+	if util.PtrOrValue(status.PendingApproval, false) {
+		// Status doesn't need approval or it's
+		// already been approved by an Accept.
+		// Just return.
+		return nil
+	}
+
+	// Make sure the creator of the original status
+	// is the same as the inbox processing the Accept;
+	// this also ensures the status is local.
+	if status.AccountID != receivingAcct.ID {
+		const text = "status author account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the interaction (reply/boost)
+	// is the same as the account doing the Accept.
+	if status.BoostOfAccountID != requestingAcct.ID &&
+		status.InReplyToAccountID != requestingAcct.ID {
+		const text = "status reply to or boost of account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Mark the status as approved by this Accept URI.
+	status.PendingApproval = util.Ptr(false)
+	status.ApprovedByURI = activityID
+	if err := f.state.DB.UpdateStatus(
+		ctx,
+		status,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error accepting status: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	var apObjectType string
+	if status.InReplyToID != "" {
+		// Accepting a Reply.
+		apObjectType = ap.ObjectNote
+	} else {
+		// Accepting an Announce.
+		apObjectType = ap.ActivityAnnounce
+	}
+
+	// Send the now-approved status through to the
+	// fedi worker again to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   apObjectType,
+		APActivityType: ap.ActivityAccept,
+		GTSModel:       status,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
+	return nil
+}
+
+func (f *federatingDB) acceptLikeIRI(
+	ctx context.Context,
+	activityID string,
+	objectIRI string,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Lock on this potential Like
+	// URI as we may be updating it.
+	unlock := f.state.FedLocks.Lock("federatingDB " + objectIRI)
+	defer unlock()
+
+	// Get the fave from the db.
+	fave, err := f.state.DB.GetStatusFaveByURI(ctx, objectIRI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting fave: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if fave == nil {
+		// We didn't have a fave with
+		// this URI, so nothing to do.
+		// Just return.
+		return nil
+	}
+
+	if !fave.Account.IsLocal() {
+		// We don't process Accepts of Likes
+		// that weren't created on our instance.
+		// Just return.
+		return nil
+	}
+
+	if !util.PtrOrValue(fave.PendingApproval, false) {
+		// Like doesn't need approval or it's
+		// already been approved by an Accept.
+		// Just return.
+		return nil
+	}
+
+	// Make sure the creator of the original Like
+	// is the same as the inbox processing the Accept;
+	// this also ensures the Like is local.
+	if fave.AccountID != receivingAcct.ID {
+		const text = "fave creator account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the Like is the
+	// same as the account doing the Accept.
+	if fave.TargetAccountID != requestingAcct.ID {
+		const text = "status fave target account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Mark the fave as approved by this Accept URI.
+	fave.PendingApproval = util.Ptr(false)
+	fave.ApprovedByURI = activityID
+	if err := f.state.DB.UpdateStatusFave(
+		ctx,
+		fave,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error accepting status: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Send the now-approved fave through to the
+	// fedi worker again to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityLike,
+		APActivityType: ap.ActivityAccept,
+		GTSModel:       fave,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
 
 	return nil
 }

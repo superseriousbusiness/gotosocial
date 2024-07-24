@@ -177,8 +177,7 @@ func NewProcessor(
 	visFilter *visibility.Filter,
 	intFilter *interaction.Filter,
 ) *Processor {
-	var parseMentionFunc = GetParseMentionFunc(state, federator)
-
+	parseMentionFunc := GetParseMentionFunc(state, federator)
 	processor := &Processor{
 		converter:        converter,
 		oauthServer:      oauthServer,

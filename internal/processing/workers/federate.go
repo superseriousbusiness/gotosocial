@@ -23,12 +23,14 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // federate wraps functions for federating
@@ -135,6 +137,12 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 	return nil
 }
 
+// CreateStatus sends the given status out to relevant
+// recipients with the Outbox of the status creator.
+//
+// If the status is pending approval, then it will be
+// sent **ONLY** to the inbox of the account it replies to,
+// ignoring shared inboxes.
 func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	// Do nothing if the status
 	// shouldn't be federated.
@@ -153,16 +161,30 @@ func (f *federate) CreateStatus(ctx context.Context, status *gtsmodel.Status) er
 		return gtserror.Newf("error populating status: %w", err)
 	}
 
-	// Parse the outbox URI of the status author.
-	outboxIRI, err := parseURI(status.Account.OutboxURI)
-	if err != nil {
-		return err
-	}
-
 	// Convert status to AS Statusable implementing type.
 	statusable, err := f.converter.StatusToAS(ctx, status)
 	if err != nil {
 		return gtserror.Newf("error converting status to Statusable: %w", err)
+	}
+
+	// If status is pending approval,
+	// it must be a reply. Deliver it
+	// **ONLY** to the account it replies
+	// to, on behalf of the replier.
+	if util.PtrOrValue(status.PendingApproval, false) {
+		return f.deliverToInboxOnly(
+			ctx,
+			status.Account,
+			status.InReplyToAccount,
+			// Status has to be wrapped in Create activity.
+			typeutils.WrapStatusableInCreate(statusable, false),
+		)
+	}
+
+	// Parse the outbox URI of the status author.
+	outboxIRI, err := parseURI(status.Account.OutboxURI)
+	if err != nil {
+		return err
 	}
 
 	// Send a Create activity with Statusable via the Actor's outbox.
@@ -672,6 +694,12 @@ func (f *federate) RejectFollow(ctx context.Context, follow *gtsmodel.Follow) er
 	return nil
 }
 
+// Like sends the given fave out to relevant
+// recipients with the Outbox of the status creator.
+//
+// If the fave is pending approval, then it will be
+// sent **ONLY** to the inbox of the account it faves,
+// ignoring shared inboxes.
 func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	// Populate model.
 	if err := f.state.DB.PopulateStatusFave(ctx, fave); err != nil {
@@ -684,16 +712,28 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 		return nil
 	}
 
-	// Parse relevant URI(s).
-	outboxIRI, err := parseURI(fave.Account.OutboxURI)
-	if err != nil {
-		return err
-	}
-
 	// Create the ActivityStreams Like.
 	like, err := f.converter.FaveToAS(ctx, fave)
 	if err != nil {
 		return gtserror.Newf("error converting fave to AS Like: %w", err)
+	}
+
+	// If fave is pending approval,
+	// deliver it **ONLY** to the account
+	// it faves, on behalf of the faver.
+	if util.PtrOrValue(fave.PendingApproval, false) {
+		return f.deliverToInboxOnly(
+			ctx,
+			fave.Account,
+			fave.TargetAccount,
+			like,
+		)
+	}
+
+	// Parse relevant URI(s).
+	outboxIRI, err := parseURI(fave.Account.OutboxURI)
+	if err != nil {
+		return err
 	}
 
 	// Send the Like via the Actor's outbox.
@@ -709,6 +749,12 @@ func (f *federate) Like(ctx context.Context, fave *gtsmodel.StatusFave) error {
 	return nil
 }
 
+// Announce sends the given boost out to relevant
+// recipients with the Outbox of the status creator.
+//
+// If the boost is pending approval, then it will be
+// sent **ONLY** to the inbox of the account it boosts,
+// ignoring shared inboxes.
 func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	// Populate model.
 	if err := f.state.DB.PopulateStatus(ctx, boost); err != nil {
@@ -719,12 +765,6 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 	// account isn't ours.
 	if !boost.Account.IsLocal() {
 		return nil
-	}
-
-	// Parse relevant URI(s).
-	outboxIRI, err := parseURI(boost.Account.OutboxURI)
-	if err != nil {
-		return err
 	}
 
 	// Create the ActivityStreams Announce.
@@ -738,6 +778,24 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 		return gtserror.Newf("error converting boost to AS: %w", err)
 	}
 
+	// If announce is pending approval,
+	// deliver it **ONLY** to the account
+	// it boosts, on behalf of the booster.
+	if util.PtrOrValue(boost.PendingApproval, false) {
+		return f.deliverToInboxOnly(
+			ctx,
+			boost.Account,
+			boost.BoostOfAccount,
+			announce,
+		)
+	}
+
+	// Parse relevant URI(s).
+	outboxIRI, err := parseURI(boost.Account.OutboxURI)
+	if err != nil {
+		return err
+	}
+
 	// Send the Announce via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(
 		ctx, outboxIRI, announce,
@@ -745,6 +803,57 @@ func (f *federate) Announce(ctx context.Context, boost *gtsmodel.Status) error {
 		return gtserror.Newf(
 			"error sending activity %T via outbox %s: %w",
 			announce, outboxIRI, err,
+		)
+	}
+
+	return nil
+}
+
+// deliverToInboxOnly delivers the given Activity
+// *only* to the inbox of targetAcct, on behalf of
+// sendingAcct, regardless of the `to` and `cc` values
+// set on the activity. This should be used specifically
+// for sending "pending approval" activities.
+func (f *federate) deliverToInboxOnly(
+	ctx context.Context,
+	sendingAcct *gtsmodel.Account,
+	targetAcct *gtsmodel.Account,
+	t vocab.Type,
+) error {
+	if targetAcct.IsLocal() {
+		// If this is a local target,
+		// they've already received it.
+		return nil
+	}
+
+	toInbox, err := url.Parse(targetAcct.InboxURI)
+	if err != nil {
+		return gtserror.Newf(
+			"error parsing target inbox uri: %w",
+			err,
+		)
+	}
+
+	tsport, err := f.TransportController().NewTransportForUsername(
+		ctx,
+		sendingAcct.Username,
+	)
+	if err != nil {
+		return gtserror.Newf(
+			"error getting transport to deliver activity %T to target inbox %s: %w",
+			t, targetAcct.InboxURI, err,
+		)
+	}
+
+	m, err := ap.Serialize(t)
+	if err != nil {
+		return err
+	}
+
+	if err := tsport.Deliver(ctx, m, toInbox); err != nil {
+		return gtserror.Newf(
+			"error delivering activity %T to target inbox %s: %w",
+			t, targetAcct.InboxURI, err,
 		)
 	}
 
@@ -1010,6 +1119,78 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 		return gtserror.Newf(
 			"error sending activity %T via outbox %s: %w",
 			move, outboxIRI, err,
+		)
+	}
+
+	return nil
+}
+
+func (f *federate) AcceptInteraction(
+	ctx context.Context,
+	approval *gtsmodel.InteractionApproval,
+) error {
+	// Populate model.
+	if err := f.state.DB.PopulateInteractionApproval(ctx, approval); err != nil {
+		return gtserror.Newf("error populating approval: %w", err)
+	}
+
+	// Bail if interacting account is ours:
+	// we've already accepted internally and
+	// shouldn't send an Accept to ourselves.
+	if approval.InteractingAccount.IsLocal() {
+		return nil
+	}
+
+	// Bail if account isn't ours:
+	// we can't Accept on another
+	// instance's behalf. (This
+	// should never happen but...)
+	if approval.Account.IsRemote() {
+		return nil
+	}
+
+	// Parse relevant URI(s).
+	outboxIRI, err := parseURI(approval.Account.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	acceptingAcctIRI, err := parseURI(approval.Account.URI)
+	if err != nil {
+		return err
+	}
+
+	interactingAcctURI, err := parseURI(approval.InteractingAccount.URI)
+	if err != nil {
+		return err
+	}
+
+	interactionURI, err := parseURI(approval.InteractionURI)
+	if err != nil {
+		return err
+	}
+
+	// Create a new Accept.
+	accept := streams.NewActivityStreamsAccept()
+
+	// Set interacted-with account
+	// as Actor of the Accept.
+	ap.AppendActorIRIs(accept, acceptingAcctIRI)
+
+	// Set the interacted-with object
+	// as Object of the Accept.
+	ap.AppendObjectIRIs(accept, interactionURI)
+
+	// Address the Accept To the interacting acct.
+	ap.AppendTo(accept, interactingAcctURI)
+
+	// Send the Accept via the Actor's outbox.
+	if _, err := f.FederatingActor().Send(
+		ctx, outboxIRI, accept,
+	); err != nil {
+		return gtserror.Newf(
+			"error sending activity %T for %v via outbox %s: %w",
+			accept, approval.InteractionType, outboxIRI, err,
 		)
 	}
 

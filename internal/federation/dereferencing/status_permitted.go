@@ -19,10 +19,13 @@ package dereferencing
 
 import (
 	"context"
+	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // isPermittedStatus returns whether the given status
@@ -147,12 +150,67 @@ func (d *Dereferencer) isPermittedReply(
 		return onFalse()
 	}
 
-	// TODO in next PR: check conditional /
-	// with approval and deref Accept.
-	if !replyable.Permitted() {
+	if replyable.Permitted() &&
+		!replyable.MatchedOnCollection() {
+		// Replier is permitted to do this
+		// interaction, and didn't match on
+		// a collection so we don't need to
+		// do further checking.
+		return true, nil
+	}
+
+	// Replier is permitted to do this
+	// interaction pending approval, or
+	// permitted but matched on a collection.
+	//
+	// Check if we can dereference
+	// an Accept that grants approval.
+
+	if status.ApprovedByURI == "" {
+		// Status doesn't claim to be approved.
+		//
+		// For replies to local statuses that's
+		// fine, we can put it in the DB pending
+		// approval, and continue processing it.
+		//
+		// If permission was granted based on a match
+		// with a followers or following collection,
+		// we can mark it as PreApproved so the processor
+		// sends an accept out for it immediately.
+		//
+		// For replies to remote statuses, though
+		// we should be polite and just drop it.
+		if inReplyTo.IsLocal() {
+			status.PendingApproval = util.Ptr(true)
+			status.PreApproved = replyable.MatchedOnCollection()
+			return true, nil
+		}
+
 		return onFalse()
 	}
 
+	// Status claims to be approved, check
+	// this by dereferencing the Accept and
+	// inspecting the return value.
+	if err := d.validateApprovedBy(
+		ctx,
+		requestUser,
+		status.ApprovedByURI,
+		status.URI,
+		inReplyTo.AccountURI,
+	); err != nil {
+		// Error dereferencing means we couldn't
+		// get the Accept right now or it wasn't
+		// valid, so we shouldn't store this status.
+		//
+		// Do log the error though as it may be
+		// interesting for admins to see.
+		log.Info(ctx, "rejecting reply with undereferenceable ApprovedByURI: %v", err)
+		return onFalse()
+	}
+
+	// Status has been approved.
+	status.PendingApproval = util.Ptr(false)
 	return true, nil
 }
 
@@ -206,11 +264,203 @@ func (d *Dereferencer) isPermittedBoost(
 		return onFalse()
 	}
 
-	// TODO in next PR: check conditional /
-	// with approval and deref Accept.
-	if !boostable.Permitted() {
+	if boostable.Permitted() &&
+		!boostable.MatchedOnCollection() {
+		// Booster is permitted to do this
+		// interaction, and didn't match on
+		// a collection so we don't need to
+		// do further checking.
+		return true, nil
+	}
+
+	// Booster is permitted to do this
+	// interaction pending approval, or
+	// permitted but matched on a collection.
+	//
+	// Check if we can dereference
+	// an Accept that grants approval.
+
+	if status.ApprovedByURI == "" {
+		// Status doesn't claim to be approved.
+		//
+		// For boosts of local statuses that's
+		// fine, we can put it in the DB pending
+		// approval, and continue processing it.
+		//
+		// If permission was granted based on a match
+		// with a followers or following collection,
+		// we can mark it as PreApproved so the processor
+		// sends an accept out for it immediately.
+		//
+		// For boosts of remote statuses, though
+		// we should be polite and just drop it.
+		if boostOf.IsLocal() {
+			status.PendingApproval = util.Ptr(true)
+			status.PreApproved = boostable.MatchedOnCollection()
+			return true, nil
+		}
+
 		return onFalse()
 	}
 
+	// Boost claims to be approved, check
+	// this by dereferencing the Accept and
+	// inspecting the return value.
+	if err := d.validateApprovedBy(
+		ctx,
+		requestUser,
+		status.ApprovedByURI,
+		status.URI,
+		boostOf.AccountURI,
+	); err != nil {
+		// Error dereferencing means we couldn't
+		// get the Accept right now or it wasn't
+		// valid, so we shouldn't store this status.
+		//
+		// Do log the error though as it may be
+		// interesting for admins to see.
+		log.Info(ctx, "rejecting boost with undereferenceable ApprovedByURI: %v", err)
+		return onFalse()
+	}
+
+	// Status has been approved.
+	status.PendingApproval = util.Ptr(false)
 	return true, nil
+}
+
+// validateApprovedBy dereferences the activitystreams Accept at
+// the specified IRI, and checks the Accept for validity against
+// the provided expectedObject and expectedActor.
+//
+// Will return either nil if everything looked OK, or an error if
+// something went wrong during deref, or if the dereffed Accept
+// did not meet expectations.
+func (d *Dereferencer) validateApprovedBy(
+	ctx context.Context,
+	requestUser string,
+	approvedByURIStr string, // Eg., "https://example.org/users/someone/accepts/01J2736AWWJ3411CPR833F6D03"
+	expectedObject string, // Eg., "https://some.instance.example.org/users/someone_else/statuses/01J27414TWV9F7DC39FN8ABB5R"
+	expectedActor string, // Eg., "https://example.org/users/someone"
+) error {
+	approvedByURI, err := url.Parse(approvedByURIStr)
+	if err != nil {
+		err := gtserror.Newf("error parsing approvedByURI: %w", err)
+		return err
+	}
+
+	// Don't make calls to the remote if it's blocked.
+	if blocked, err := d.state.DB.IsDomainBlocked(ctx, approvedByURI.Host); blocked || err != nil {
+		err := gtserror.Newf("domain %s is blocked", approvedByURI.Host)
+		return err
+	}
+
+	transport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
+	if err != nil {
+		err := gtserror.Newf("error creating transport: %w", err)
+		return err
+	}
+
+	// Make the call to resolve the Accept.
+	rsp, err := transport.Dereference(ctx, approvedByURI)
+	if err != nil {
+		err := gtserror.Newf("error dereferencing %s: %w", approvedByURIStr, err)
+		return err
+	}
+
+	accept, err := ap.ResolveAccept(ctx, rsp.Body)
+
+	// Tidy up rsp body.
+	_ = rsp.Body.Close()
+
+	if err != nil {
+		err := gtserror.Newf("error resolving Accept %s: %w", approvedByURIStr, err)
+		return err
+	}
+
+	// Extract the URI/ID of the Accept.
+	acceptURI := ap.GetJSONLDId(accept)
+	acceptURIStr := acceptURI.String()
+
+	// Check whether input URI and final returned URI
+	// have changed (i.e. we followed some redirects).
+	rspURL := rsp.Request.URL
+	rspURLStr := rspURL.String()
+	if rspURLStr != approvedByURIStr {
+		// Final URI was different from approvedByURIStr.
+		//
+		// Make sure it's at least on the same host as
+		// what we expected (ie., we weren't redirected
+		// across domains), and make sure it's the same
+		// as the ID of the Accept we were returned.
+		if rspURL.Host != approvedByURI.Host {
+			err := gtserror.Newf(
+				"final dereference host %s did not match approvedByURI host %s",
+				rspURL.Host, approvedByURI.Host,
+			)
+			return err
+		}
+
+		if acceptURIStr != rspURLStr {
+			err := gtserror.Newf(
+				"final dereference uri %s did not match returned Accept ID/URI %s",
+				rspURLStr, acceptURIStr,
+			)
+			return err
+		}
+	}
+
+	// Ensure the Accept URI has the same host
+	// as the Accept Actor, so we know we're
+	// not dealing with someone on a different
+	// domain just pretending to be the Actor.
+	actorIRIs := ap.GetActorIRIs(accept)
+	if len(actorIRIs) != 1 {
+		err := gtserror.New("resolved Accept actor(s) length was not 1")
+		return gtserror.SetMalformed(err)
+	}
+
+	actorIRI := actorIRIs[0]
+	actorStr := actorIRI.String()
+
+	if actorIRI.Host != acceptURI.Host {
+		err := gtserror.Newf(
+			"Accept Actor %s was not the same host as Accept %s",
+			actorStr, acceptURIStr,
+		)
+		return err
+	}
+
+	// Ensure the Accept Actor is who we expect
+	// it to be, and not someone else trying to
+	// do an Accept for an interaction with a
+	// statusable they don't own.
+	if actorStr != expectedActor {
+		err := gtserror.Newf(
+			"Accept Actor %s was not the same as expected actor %s",
+			actorStr, expectedActor,
+		)
+		return err
+	}
+
+	// Ensure the Accept Object is what we expect
+	// it to be, ie., it's Accepting the interaction
+	// we need it to Accept, and not something else.
+	objectIRIs := ap.GetObjectIRIs(accept)
+	if len(objectIRIs) != 1 {
+		err := gtserror.New("resolved Accept object(s) length was not 1")
+		return err
+	}
+
+	objectIRI := objectIRIs[0]
+	objectStr := objectIRI.String()
+
+	if objectStr != expectedObject {
+		err := gtserror.Newf(
+			"resolved Accept Object uri %s was not the same as expected object %s",
+			objectStr, expectedObject,
+		)
+		return err
+	}
+
+	return nil
 }

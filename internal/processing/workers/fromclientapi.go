@@ -135,6 +135,18 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 		// ACCEPT USER (ie., new user+account sign-up)
 		case ap.ObjectProfile:
 			return p.clientAPI.AcceptUser(ctx, cMsg)
+
+		// ACCEPT NOTE/STATUS (ie., accept a reply)
+		case ap.ObjectNote:
+			return p.clientAPI.AcceptReply(ctx, cMsg)
+
+		// ACCEPT LIKE
+		case ap.ActivityLike:
+			return p.clientAPI.AcceptLike(ctx, cMsg)
+
+		// ACCEPT BOOST
+		case ap.ActivityAnnounce:
+			return p.clientAPI.AcceptAnnounce(ctx, cMsg)
 		}
 
 	// REJECT SOMETHING
@@ -234,6 +246,61 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// If pending approval is true then status must
+	// reply to a status (either one of ours or a
+	// remote) that requires approval for the reply.
+	pendingApproval := util.PtrOrValue(
+		status.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !status.PreApproved:
+		// If approval is required and status isn't
+		// preapproved, then send out the Create to
+		// only the replied-to account (if it's remote),
+		// and/or notify the account that's being
+		// interacted with (if it's local): they can
+		// approve or deny the interaction later.
+
+		// Notify *local* account of pending reply.
+		if err := p.surface.notifyPendingReply(ctx, status); err != nil {
+			log.Errorf(ctx, "error notifying pending reply: %v", err)
+		}
+
+		// Send Create to *remote* account inbox ONLY.
+		if err := p.federate.CreateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating pending reply: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && status.PreApproved:
+		// If approval is required and status is
+		// preapproved, that means this is a reply
+		// to one of our statuses with permission
+		// that matched on a following/followers
+		// collection. Do the Accept immediately and
+		// then process everything else as normal,
+		// sending out the Create with the approval
+		// URI attached.
+
+		// Put approval in the database and
+		// update the status with approvedBy URI.
+		approval, err := p.utils.approveReply(ctx, status)
+		if err != nil {
+			return gtserror.Newf("error pre-approving reply: %w", err)
+		}
+
+		// Send out the approval as Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of reply: %w", err)
+		}
+
+		// Don't return, just continue as normal.
 	}
 
 	// Update stats for the actor account.
@@ -362,6 +429,61 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("error populating status fave: %w", err)
 	}
 
+	// If pending approval is true then fave must
+	// target a status (either one of ours or a
+	// remote) that requires approval for the fave.
+	pendingApproval := util.PtrOrValue(
+		fave.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !fave.PreApproved:
+		// If approval is required and fave isn't
+		// preapproved, then send out the Like to
+		// only the faved account (if it's remote),
+		// and/or notify the account that's being
+		// interacted with (if it's local): they can
+		// approve or deny the interaction later.
+
+		// Notify *local* account of pending reply.
+		if err := p.surface.notifyPendingFave(ctx, fave); err != nil {
+			log.Errorf(ctx, "error notifying pending fave: %v", err)
+		}
+
+		// Send Like to *remote* account inbox ONLY.
+		if err := p.federate.Like(ctx, fave); err != nil {
+			log.Errorf(ctx, "error federating pending Like: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && fave.PreApproved:
+		// If approval is required and fave is
+		// preapproved, that means this is a fave
+		// of one of our statuses with permission
+		// that matched on a following/followers
+		// collection. Do the Accept immediately and
+		// then process everything else as normal,
+		// sending out the Like with the approval
+		// URI attached.
+
+		// Put approval in the database and
+		// update the fave with approvedBy URI.
+		approval, err := p.utils.approveFave(ctx, fave)
+		if err != nil {
+			return gtserror.Newf("error pre-approving fave: %w", err)
+		}
+
+		// Send out the approval as Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of fave: %w", err)
+		}
+
+		// Don't return, just continue as normal.
+	}
+
 	if err := p.surface.notifyFave(ctx, fave); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
@@ -381,6 +503,61 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 	boost, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	}
+
+	// If pending approval is true then status must
+	// boost a status (either one of ours or a
+	// remote) that requires approval for the boost.
+	pendingApproval := util.PtrOrValue(
+		boost.PendingApproval,
+		false,
+	)
+
+	switch {
+	case pendingApproval && !boost.PreApproved:
+		// If approval is required and boost isn't
+		// preapproved, then send out the Announce to
+		// only the boosted account (if it's remote),
+		// and/or notify the account that's being
+		// interacted with (if it's local): they can
+		// approve or deny the interaction later.
+
+		// Notify *local* account of pending announce.
+		if err := p.surface.notifyPendingAnnounce(ctx, boost); err != nil {
+			log.Errorf(ctx, "error notifying pending boost: %v", err)
+		}
+
+		// Send Announce to *remote* account inbox ONLY.
+		if err := p.federate.Announce(ctx, boost); err != nil {
+			log.Errorf(ctx, "error federating pending Announce: %v", err)
+		}
+
+		// Return early.
+		return nil
+
+	case pendingApproval && boost.PreApproved:
+		// If approval is required and boost is
+		// preapproved, that means this is a boost
+		// of one of our statuses with permission
+		// that matched on a following/followers
+		// collection. Do the Accept immediately and
+		// then process everything else as normal,
+		// sending out the Create with the approval
+		// URI attached.
+
+		// Put approval in the database and
+		// update the boost with approvedBy URI.
+		approval, err := p.utils.approveAnnounce(ctx, boost)
+		if err != nil {
+			return gtserror.Newf("error pre-approving boost: %w", err)
+		}
+
+		// Send out the approval as Accept.
+		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+			return gtserror.Newf("error federating pre-approval of boost: %w", err)
+		}
+
+		// Don't return, just continue as normal.
 	}
 
 	// Update stats for the actor account.
@@ -872,5 +1049,20 @@ func (p *clientAPI) RejectUser(ctx context.Context, cMsg *messages.FromClientAPI
 		}
 	}
 
+	return nil
+}
+
+func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	// TODO
+	return nil
+}
+
+func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	// TODO
+	return nil
+}
+
+func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClientAPI) error {
+	// TODO
 	return nil
 }
