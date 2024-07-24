@@ -157,7 +157,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "locale": "",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": false,
       "approved": false,
@@ -198,7 +202,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "locale": "en",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": true,
       "approved": true,
@@ -237,10 +245,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "verified_at": null
           }
         ],
-        "hide_collections": true,
-        "role": {
-          "name": "user"
-        }
+        "hide_collections": true
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -255,7 +260,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "locale": "en",
       "invite_request": null,
       "role": {
-        "name": "admin"
+        "id": "admin",
+        "name": "admin",
+        "color": "",
+        "permissions": "545905",
+        "highlighted": true
       },
       "confirmed": true,
       "approved": true,
@@ -284,9 +293,13 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "emojis": [],
         "fields": [],
         "enable_rss": true,
-        "role": {
-          "name": "admin"
-        }
+        "roles": [
+          {
+            "id": "admin",
+            "name": "admin",
+            "color": ""
+          }
+        ]
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -301,7 +314,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "locale": "en",
       "invite_request": null,
       "role": {
-        "name": "admin"
+        "id": "admin",
+        "name": "admin",
+        "color": "",
+        "permissions": "545905",
+        "highlighted": true
       },
       "confirmed": true,
       "approved": true,
@@ -330,9 +347,13 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "emojis": [],
         "fields": [],
         "enable_rss": true,
-        "role": {
-          "name": "admin"
-        }
+        "roles": [
+          {
+            "id": "admin",
+            "name": "admin",
+            "color": ""
+          }
+        ]
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -360,7 +381,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "locale": "en",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": true,
       "approved": true,
@@ -399,10 +424,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "verified_at": null
           }
         ],
-        "hide_collections": true,
-        "role": {
-          "name": "user"
-        }
+        "hide_collections": true
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -417,7 +439,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
       "locale": "",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": false,
       "approved": false,
@@ -602,7 +628,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
       "locale": "en",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": true,
       "approved": true,
@@ -641,10 +671,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
             "verified_at": null
           }
         ],
-        "hide_collections": true,
-        "role": {
-          "name": "user"
-        }
+        "hide_collections": true
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -659,7 +686,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
       "locale": "",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": false,
       "approved": false,
@@ -844,7 +875,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
       "locale": "en",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": true,
       "approved": true,
@@ -883,10 +918,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
             "verified_at": null
           }
         ],
-        "hide_collections": true,
-        "role": {
-          "name": "user"
-        }
+        "hide_collections": true
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -901,7 +933,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
       "locale": "",
       "invite_request": null,
       "role": {
-        "name": "user"
+        "id": "user",
+        "name": "user",
+        "color": "",
+        "permissions": "0",
+        "highlighted": false
       },
       "confirmed": false,
       "approved": false,

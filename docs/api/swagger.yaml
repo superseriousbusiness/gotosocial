@@ -304,6 +304,15 @@ definitions:
                 x-go-name: Note
             role:
                 $ref: '#/definitions/accountRole'
+            roles:
+                description: |-
+                    Roles lists the public roles of the account on this instance.
+                    Unlike Role, this is always available, but never includes permissions details.
+                    Key/value omitted for remote accounts.
+                items:
+                    $ref: '#/definitions/accountDisplayRole'
+                type: array
+                x-go-name: Roles
             source:
                 $ref: '#/definitions/Source'
             statuses_count:
@@ -332,6 +341,29 @@ definitions:
         title: Account models a fediverse account.
         type: object
         x-go-name: Account
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    accountDisplayRole:
+        description: This is a subset of AccountRole.
+        properties:
+            color:
+                description: |-
+                    Color is a 6-digit CSS-style hex color code with leading `#`, or an empty string if this role has no color.
+                    Since GotoSocial doesn't use role colors, we leave this empty.
+                type: string
+                x-go-name: Color
+            id:
+                description: |-
+                    ID of the role.
+                    Not used by GotoSocial, but we set it to the role name, just in case a client expects a unique ID.
+                type: string
+                x-go-name: ID
+            name:
+                description: Name of the role.
+                type: string
+                x-go-name: Name
+        title: AccountDisplayRole models a public, displayable role of an account.
+        type: object
+        x-go-name: AccountDisplayRole
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     accountRelationship:
         properties:
@@ -398,9 +430,32 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     accountRole:
         properties:
+            color:
+                description: |-
+                    Color is a 6-digit CSS-style hex color code with leading `#`, or an empty string if this role has no color.
+                    Since GotoSocial doesn't use role colors, we leave this empty.
+                type: string
+                x-go-name: Color
+            highlighted:
+                description: |-
+                    Highlighted indicates whether the role is publicly visible on the user profile.
+                    This is always true for GotoSocial's built-in admin and moderator roles, and false otherwise.
+                type: boolean
+                x-go-name: Highlighted
+            id:
+                description: |-
+                    ID of the role.
+                    Not used by GotoSocial, but we set it to the role name, just in case a client expects a unique ID.
+                type: string
+                x-go-name: ID
             name:
+                description: Name of the role.
                 type: string
                 x-go-name: Name
+            permissions:
+                description: Permissions is a bitmap serialized as a numeric string, indicating which admin/moderation actions a user can perform.
+                type: string
+                x-go-name: Permissions
         title: AccountRole models the role of an account.
         type: object
         x-go-name: AccountRole
@@ -2159,6 +2214,15 @@ definitions:
                 x-go-name: Note
             role:
                 $ref: '#/definitions/accountRole'
+            roles:
+                description: |-
+                    Roles lists the public roles of the account on this instance.
+                    Unlike Role, this is always available, but never includes permissions details.
+                    Key/value omitted for remote accounts.
+                items:
+                    $ref: '#/definitions/accountDisplayRole'
+                type: array
+                x-go-name: Roles
             source:
                 $ref: '#/definitions/Source'
             statuses_count:

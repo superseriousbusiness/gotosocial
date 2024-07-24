@@ -67,10 +67,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "last_status_at": "2024-01-10T09:24:00.000Z",
   "emojis": [],
   "fields": [],
-  "enable_rss": true,
-  "role": {
-    "name": "user"
-  }
+  "enable_rss": true
 }`, string(b))
 }
 
@@ -133,9 +130,6 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
     ]
   },
   "enable_rss": true,
-  "role": {
-    "name": "user"
-  },
   "moved": {
     "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
     "username": "1happyturtle",
@@ -168,10 +162,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
         "verified_at": null
       }
     ],
-    "hide_collections": true,
-    "role": {
-      "name": "user"
-    }
+    "hide_collections": true
   }
 }`, string(b))
 }
@@ -221,10 +212,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
     }
   ],
   "fields": [],
-  "enable_rss": true,
-  "role": {
-    "name": "user"
-  }
+  "enable_rss": true
 }`, string(b))
 }
 
@@ -271,10 +259,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
     }
   ],
   "fields": [],
-  "enable_rss": true,
-  "role": {
-    "name": "user"
-  }
+  "enable_rss": true
 }`, string(b))
 }
 
@@ -318,10 +303,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "fields": [],
     "follow_requests_count": 0
   },
-  "enable_rss": true,
-  "role": {
-    "name": "user"
-  }
+  "enable_rss": true
 }`, string(b))
 }
 
@@ -493,9 +475,13 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": {
-      "name": "admin"
-    }
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
   },
   "media_attachments": [
     {
@@ -642,9 +628,13 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": {
-      "name": "admin"
-    }
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
   },
   "media_attachments": [
     {
@@ -1167,9 +1157,13 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": {
-      "name": "admin"
-    }
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
   },
   "media_attachments": [
     {
@@ -1303,10 +1297,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
     "last_status_at": "2024-01-10T09:24:00.000Z",
     "emojis": [],
     "fields": [],
-    "enable_rss": true,
-    "role": {
-      "name": "user"
-    }
+    "enable_rss": true
   },
   "media_attachments": [],
   "mentions": [],
@@ -1499,9 +1490,13 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": {
-      "name": "admin"
-    }
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
   },
   "max_toot_chars": 5000,
   "rules": [],
@@ -1635,9 +1630,13 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": {
-        "name": "admin"
-      }
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
     }
   },
   "rules": [],
@@ -1804,10 +1803,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
         "verified_at": null
       }
     ],
-    "hide_collections": true,
-    "role": {
-      "name": "user"
-    }
+    "hide_collections": true
   }
 }`, string(b))
 }
@@ -1840,7 +1836,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -1881,7 +1881,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": true,
     "approved": true,
@@ -1920,10 +1924,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
           "verified_at": null
         }
       ],
-      "hide_collections": true,
-      "role": {
-        "name": "user"
-      }
+      "hide_collections": true
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -1938,7 +1939,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "admin"
+      "id": "admin",
+      "name": "admin",
+      "color": "",
+      "permissions": "545905",
+      "highlighted": true
     },
     "confirmed": true,
     "approved": true,
@@ -1967,9 +1972,13 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": {
-        "name": "admin"
-      }
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -1984,7 +1993,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "admin"
+      "id": "admin",
+      "name": "admin",
+      "color": "",
+      "permissions": "545905",
+      "highlighted": true
     },
     "confirmed": true,
     "approved": true,
@@ -2013,9 +2026,13 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": {
-        "name": "admin"
-      }
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -2053,7 +2070,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": true,
     "approved": true,
@@ -2092,10 +2113,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "verified_at": null
         }
       ],
-      "hide_collections": true,
-      "role": {
-        "name": "user"
-      }
+      "hide_collections": true
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -2110,7 +2128,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -2308,7 +2330,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -2349,7 +2375,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": true,
     "approved": true,
@@ -2378,10 +2408,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "emojis": [],
       "fields": [],
       "suspended": true,
-      "hide_collections": true,
-      "role": {
-        "name": "user"
-      }
+      "hide_collections": true
     }
   },
   "assigned_account": {
@@ -2395,7 +2422,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "admin"
+      "id": "admin",
+      "name": "admin",
+      "color": "",
+      "permissions": "545905",
+      "highlighted": true
     },
     "confirmed": true,
     "approved": true,
@@ -2424,9 +2455,13 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": {
-        "name": "admin"
-      }
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -2441,7 +2476,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "admin"
+      "id": "admin",
+      "name": "admin",
+      "color": "",
+      "permissions": "545905",
+      "highlighted": true
     },
     "confirmed": true,
     "approved": true,
@@ -2470,9 +2509,13 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": {
-        "name": "admin"
-      }
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
