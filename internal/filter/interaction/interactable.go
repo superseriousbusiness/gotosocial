@@ -18,7 +18,6 @@
 package interaction
 
 import (
-	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -28,6 +27,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+)
+
+type matchType int
+
+const (
+	none     matchType = 0
+	implicit matchType = 1
+	explicit matchType = 2
 )
 
 // startedThread returns true if requester started
@@ -327,124 +334,32 @@ func (f *Filter) checkPolicy(
 	status *gtsmodel.Status,
 	rules gtsmodel.PolicyRules,
 ) (*gtsmodel.PolicyCheckResult, error) {
-	var (
-		inFollowers    bool
-		inFollowersErr error
-		inFollowing    bool
-		inFollowingErr error
-	)
 
-	// Save DB calls by wrapping inFollowers
-	// check in DoOnce so we only call it once.
-	inFollowersF := util.DoOnce(func() {
-		b, err := f.state.DB.IsFollowing(ctx, requester.ID, status.AccountID)
-		if err != nil {
-			inFollowersErr = gtserror.Newf(
-				"db error checking if %s follows %s: %w",
-				requester.ID, status.AccountID, inFollowersErr,
-			)
-		}
-		inFollowers = b
-	})
-
-	// Save DB calls by wrapping inFollowing
-	// check in DoOnce so we only call it once.
-	inFollowingF := util.DoOnce(func() {
-		b, err := f.state.DB.IsFollowing(ctx, status.AccountID, requester.ID)
-		if err != nil {
-			inFollowingErr = gtserror.Newf(
-				"db error checking if %s follows %s: %w",
-				status.AccountID, requester.ID, inFollowingErr,
-			)
-		}
-		inFollowing = b
-	})
-
-	const (
-		no       = ""
-		implicit = "implicit"
-		explicit = "explicit"
-	)
-
-	matches := func(PolicyValues []gtsmodel.PolicyValue) (string, gtsmodel.PolicyValue) {
-		var (
-			match = no
-			value gtsmodel.PolicyValue
-		)
-
-		for _, p := range PolicyValues {
-			switch p {
-
-			// Check if anyone
-			// can do this.
-			case gtsmodel.PolicyValuePublic:
-				match = implicit
-				value = gtsmodel.PolicyValuePublic
-
-			// Check if follower
-			// of status owner.
-			case gtsmodel.PolicyValueFollowers:
-				inFollowersF()
-				if inFollowers {
-					match = implicit
-					value = gtsmodel.PolicyValueFollowers
-				}
-
-			// Check if followed
-			// by status owner.
-			case gtsmodel.PolicyValueFollowing:
-				inFollowingF()
-				if inFollowing {
-					match = implicit
-					value = gtsmodel.PolicyValueFollowing
-				}
-
-			// Check if replied-to by or
-			// mentioned in the status.
-			case gtsmodel.PolicyValueMentioned:
-				if (status.InReplyToAccountID == requester.ID) ||
-					status.MentionsAccount(requester.ID) {
-					// Return early as we've
-					// found an explicit match.
-					match = explicit
-					value = gtsmodel.PolicyValueMentioned
-					return match, value
-				}
-
-			// Check if PolicyValue specifies
-			// requester explicitly.
-			default:
-				if string(p) == requester.URI {
-					// Return early as we've
-					// found an explicit match.
-					match = explicit
-					value = gtsmodel.PolicyValue(requester.URI)
-					return match, value
-				}
-			}
-		}
-
-		// Return either "" or "implicit",
-		// and the policy value matched
-		// against (if set).
-		return match, value
-	}
+	// Wrap context to be able to
+	// cache some database calls.
+	fctx := new(filterctx)
+	fctx.Context = ctx
 
 	// Check if requester matches a PolicyValue
 	// to be always allowed to do this.
-	matchAlways, matchAlwaysValue := matches(rules.Always)
+	matchAlways, matchAlwaysValue, err := f.matchPolicy(fctx,
+		requester,
+		status,
+		rules.Always,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("error checking policy match: %w", err)
+	}
 
 	// Check if requester matches a PolicyValue
 	// to be allowed to do this pending approval.
-	matchWithApproval, _ := matches(rules.WithApproval)
-
-	// Return early if we
-	// encountered an error.
-	if err := cmp.Or(
-		inFollowersErr,
-		inFollowingErr,
-	); err != nil {
-		return nil, err
+	matchWithApproval, _, err := f.matchPolicy(fctx,
+		requester,
+		status,
+		rules.WithApproval,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("error checking policy approval match: %w", err)
 	}
 
 	switch {
@@ -480,4 +395,167 @@ func (f *Filter) checkPolicy(
 	return &gtsmodel.PolicyCheckResult{
 		Permission: gtsmodel.PolicyPermissionForbidden,
 	}, nil
+}
+
+// matchPolicy returns whether requesting account
+// matches any of the policy values for given status,
+// returning the policy it matches on and match type.
+// uses a *filterctx to cache certain db results.
+func (f *Filter) matchPolicy(
+	ctx *filterctx,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+	policyValues []gtsmodel.PolicyValue,
+) (
+	matchType,
+	gtsmodel.PolicyValue,
+	error,
+) {
+	var (
+		match = none
+		value gtsmodel.PolicyValue
+	)
+
+	for _, p := range policyValues {
+		switch p {
+
+		// Check if anyone
+		// can do this.
+		case gtsmodel.PolicyValuePublic:
+			match = implicit
+			value = gtsmodel.PolicyValuePublic
+
+		// Check if follower
+		// of status owner.
+		case gtsmodel.PolicyValueFollowers:
+			inFollowers, err := f.inFollowers(ctx,
+				requester,
+				status,
+			)
+			if err != nil {
+				return 0, "", err
+			}
+			if inFollowers {
+				match = implicit
+				value = gtsmodel.PolicyValueFollowers
+			}
+
+		// Check if followed
+		// by status owner.
+		case gtsmodel.PolicyValueFollowing:
+			inFollowing, err := f.inFollowers(ctx,
+				requester,
+				status,
+			)
+			if err != nil {
+				return 0, "", err
+			}
+			if inFollowing {
+				match = implicit
+				value = gtsmodel.PolicyValueFollowing
+			}
+
+		// Check if replied-to by or
+		// mentioned in the status.
+		case gtsmodel.PolicyValueMentioned:
+			if (status.InReplyToAccountID == requester.ID) ||
+				status.MentionsAccount(requester.ID) {
+				// Return early as we've
+				// found an explicit match.
+				match = explicit
+				value = gtsmodel.PolicyValueMentioned
+				return match, value, nil
+			}
+
+		// Check if PolicyValue specifies
+		// requester explicitly.
+		default:
+			if string(p) == requester.URI {
+				// Return early as we've
+				// found an explicit match.
+				match = explicit
+				value = gtsmodel.PolicyValue(requester.URI)
+				return match, value, nil
+			}
+		}
+	}
+
+	// Return either "" or "implicit",
+	// and the policy value matched
+	// against (if set).
+	return match, value, nil
+}
+
+// inFollowers returns whether requesting account is following
+// status author, uses *filterctx type for db result caching.
+func (f *Filter) inFollowers(
+	ctx *filterctx,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (
+	bool,
+	error,
+) {
+	if ctx.inFollowersOnce == 0 {
+		var err error
+
+		// Load the 'inFollowers' result from database.
+		ctx.inFollowers, err = f.state.DB.IsFollowing(ctx,
+			requester.ID,
+			status.AccountID,
+		)
+		if err != nil {
+			return false, gtserror.Newf("error checking follow status: %w", err)
+		}
+
+		// Mark value as stored.
+		ctx.inFollowersOnce = 1
+	}
+
+	// Return stored value.
+	return ctx.inFollowers, nil
+}
+
+// inFollowing returns whether status author is following
+// requesting account, uses *filterctx for db result caching.
+func (f *Filter) inFollowing(
+	ctx *filterctx,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (
+	bool,
+	error,
+) {
+	if ctx.inFollowingOnce == 0 {
+		var err error
+
+		// Load the 'inFollowers' result from database.
+		ctx.inFollowing, err = f.state.DB.IsFollowing(ctx,
+			status.AccountID,
+			requester.ID,
+		)
+		if err != nil {
+			return false, gtserror.Newf("error checking follow status: %w", err)
+		}
+
+		// Mark value as stored.
+		ctx.inFollowingOnce = 1
+	}
+
+	// Return stored value.
+	return ctx.inFollowing, nil
+}
+
+// filterctx wraps a context.Context to also
+// store loadable data relevant to a fillter
+// operation from the database, such that it
+// only needs to be loaded once IF required.
+type filterctx struct {
+	context.Context
+
+	inFollowers     bool
+	inFollowersOnce int32
+
+	inFollowing     bool
+	inFollowingOnce int32
 }
