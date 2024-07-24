@@ -445,21 +445,33 @@ section.with-sidebar > form {
 		}
 	}
 
-	.fields {
-		display: flex;
-		flex-direction: column;
-		gap: 0.5rem;
-		
-		.entry {
-			display: flex;
-			gap: 0.5rem;
-		}
-	}
-
 	.theme, .form-field.radio {
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
+	}
+
+	fieldset {
+		margin: 0;
+		padding: 0.5rem 1rem 1rem 1rem;
+		max-width: fit-content;
+		border: 0.1rem solid var(--gray1);
+		border-radius: 0.1rem;
+
+		>legend {
+			font-weight: bold;
+		}
+
+		.fields {
+			display: flex;
+			flex-direction: column;
+			gap: 0.5rem;
+			
+			.entry {
+				display: flex;
+				gap: 0.5rem;
+			}
+		}
 	}
 }
 

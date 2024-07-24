@@ -19,7 +19,7 @@
 
 import React from "react";
 
-export default function FakeProfile({ avatar, header, display_name, username, role }) {
+export default function FakeProfile({ avatar, header, display_name, bot, username, role }) {
 	return ( // Keep in sync with web/template/profile.tmpl
 		<div className="profile">
 			<div className="profile-header">
@@ -35,8 +35,24 @@ export default function FakeProfile({ avatar, header, display_name, username, ro
 					<dl className="namerole">
 						<dt className="sr-only">Display name</dt>
 						<dd className="displayname text-cutoff">{display_name.trim().length > 0 ? display_name : username}</dd>
-						<dt className="sr-only">Username</dt>
-						<dd className="username text-cutoff">@{username}</dd>
+						<div className="bot-username-wrapper">
+							{ bot && <>
+								<dt className="sr-only">Bot account</dt>
+								<dd>
+									<span className="sr-only">true</span>
+									<div
+										className="bot-legend-wrapper"
+										aria-hidden="true"
+										title="This is a bot account."
+									>
+										<i className="bot-icon fa fa-microchip"></i>
+										<span className="bot-legend">bot</span>
+									</div>
+								</dd>
+							</>}
+							<dt className="sr-only">Username</dt>
+							<dd className="username text-cutoff">@{username}</dd>
+						</div>
 						<dt className="sr-only">Role</dt>
 						{
 							(role && role.name != "user") ?
