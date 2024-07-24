@@ -443,7 +443,7 @@ func (f *Filter) matchPolicy(
 		// Check if followed
 		// by status owner.
 		case gtsmodel.PolicyValueFollowing:
-			inFollowing, err := f.inFollowers(ctx,
+			inFollowing, err := f.inFollowing(ctx,
 				requester,
 				status,
 			)
