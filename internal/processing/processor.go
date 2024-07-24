@@ -174,12 +174,10 @@ func NewProcessor(
 	mediaManager *mm.Manager,
 	state *state.State,
 	emailSender email.Sender,
+	visFilter *visibility.Filter,
+	intFilter *interaction.Filter,
 ) *Processor {
-	var (
-		parseMentionFunc = GetParseMentionFunc(state, federator)
-		visFilter        = visibility.NewFilter(state)
-		intFilter        = interaction.NewFilter(state)
-	)
+	var parseMentionFunc = GetParseMentionFunc(state, federator)
 
 	processor := &Processor{
 		converter:        converter,

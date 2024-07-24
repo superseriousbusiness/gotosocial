@@ -278,6 +278,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		mediaManager,
 		state,
 		emailSender,
+		visFilter,
+		intFilter,
 	)
 
 	// Initialize the specialized workers pools.
