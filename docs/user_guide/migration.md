@@ -14,7 +14,7 @@ Moving is software agnostic, so you can migrate your account to or from any soft
     
     If either one of the accounts involved in a new move attempt have moved in the last seven days, GoToSocial will refuse to trigger a move to or from either account until seven days have passed since the previous move.
 
-## Move your GoToSocial account to another instance
+## Move your GoToSocial account to another account (move *from* GoToSocial)
 
 Using the move account settings, you can trigger the migration of your GoToSocial account to the given target account URI.
 
@@ -45,7 +45,7 @@ If necessary, you can retry an account move using the same target account URI. T
     
     Additionally, you will not be able to view any timelines (home, tag, public, list), or use the search functionality.
 
-## Move an account on another instance to your GoToSocial account
+## Move an account to your GoToSocial account (move *to* GoToSocial)
 
 To successfully trigger the migration of another account to your GoToSocial account, you must first create an **alias** linking your GoToSocial account back to the account you want to move from, to indicate to the account you're moving from that you also own the GoToSocial account you want to move to.
 
