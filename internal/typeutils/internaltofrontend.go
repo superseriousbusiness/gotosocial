@@ -125,6 +125,8 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	// Populate the account's role permissions bitmap and highlightedness from its public role.
 	if len(apiAccount.Roles) > 0 {
 		apiAccount.Role = c.APIAccountDisplayRoleToAPIAccountRoleSensitive(&apiAccount.Roles[0])
+	} else {
+		apiAccount.Role = c.APIAccountDisplayRoleToAPIAccountRoleSensitive(nil)
 	}
 
 	statusContentType := string(apimodel.StatusContentTypeDefault)
