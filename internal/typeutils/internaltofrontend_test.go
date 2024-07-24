@@ -131,6 +131,13 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
     ]
   },
   "enable_rss": true,
+  "role": {
+    "id": "user",
+    "name": "user",
+    "color": "",
+    "permissions": "0",
+    "highlighted": false
+  },
   "moved": {
     "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
     "username": "1happyturtle",
@@ -304,7 +311,14 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "fields": [],
     "follow_requests_count": 0
   },
-  "enable_rss": true
+  "enable_rss": true,
+  "role": {
+    "id": "user",
+    "name": "user",
+    "color": "",
+    "permissions": "0",
+    "highlighted": false
+  }
 }`, string(b))
 }
 
@@ -839,10 +853,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
       "last_status_at": "2024-01-10T09:24:00.000Z",
       "emojis": [],
       "fields": [],
-      "enable_rss": true,
-      "role": {
-        "name": "user"
-      }
+      "enable_rss": true
     },
     "media_attachments": [
       {
@@ -970,9 +981,13 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
     "emojis": [],
     "fields": [],
     "enable_rss": true,
-    "role": {
-      "name": "admin"
-    }
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
   },
   "media_attachments": [],
   "mentions": [],

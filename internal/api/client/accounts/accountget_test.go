@@ -71,9 +71,25 @@ func (suite *AccountGetTestSuite) getAccount(id string) *apimodel.Account {
 	return apimodelAccount
 }
 
+// Fetching the currently logged-in account shows extra info,
+// so we should see permissions, but this account is a regular user and should have no display role.
+func (suite *AccountGetTestSuite) TestGetDisplayRoleForSelf() {
+	apimodelAccount := suite.getAccount(suite.testAccounts["local_account_1"].ID)
+
+	// Role should be set, but permissions should be empty.
+	if suite.NotNil(apimodelAccount.Role) {
+		role := apimodelAccount.Role
+		suite.Equal("user", string(role.Name))
+		suite.Zero(role.Permissions)
+	}
+
+	// Roles should not have anything in it.
+	suite.Empty(apimodelAccount.Roles)
+}
+
 // We should not see a display role for an ordinary local account.
 func (suite *AccountGetTestSuite) TestGetDisplayRoleForUserAccount() {
-	apimodelAccount := suite.getAccount(suite.testAccounts["local_account_1"].ID)
+	apimodelAccount := suite.getAccount(suite.testAccounts["local_account_2"].ID)
 
 	// Role should not be set.
 	suite.Nil(apimodelAccount.Role)
