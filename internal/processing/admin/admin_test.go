@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -114,6 +115,8 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 		suite.mediaManager,
 		&suite.state,
 		suite.emailSender,
+		visibility.NewFilter(&suite.state),
+		interaction.NewFilter(&suite.state),
 	)
 
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())

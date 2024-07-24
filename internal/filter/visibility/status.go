@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // StatusesVisible calls StatusVisible for each status in the statuses slice, and returns a slice of only statuses which are visible to the requester.
@@ -41,8 +42,15 @@ func (f *Filter) StatusesVisible(ctx context.Context, requester *gtsmodel.Accoun
 	return filtered, errs.Combine()
 }
 
-// StatusVisible will check if given status is visible to requester, accounting for requester with no auth (i.e is nil), suspensions, disabled local users, account blocks and status privacy.
-func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+// StatusVisible will check if status is visible to requester,
+// accounting for requester with no auth (i.e is nil), suspensions,
+// disabled local users, pending approvals, account blocks,
+// and status visibility settings.
+func (f *Filter) StatusVisible(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (bool, error) {
 	const vtype = cache.VisibilityTypeStatus
 
 	// By default we assume no auth.
@@ -75,8 +83,14 @@ func (f *Filter) StatusVisible(ctx context.Context, requester *gtsmodel.Account,
 	return visibility.Value, nil
 }
 
-// isStatusVisible will check if status is visible to requester. It is the "meat" of the logic to Filter{}.StatusVisible() which is called within cache loader callback.
-func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
+// isStatusVisible will check if status is visible to requester.
+// It is the "meat" of the logic to Filter{}.StatusVisible()
+// which is called within cache loader callback.
+func (f *Filter) isStatusVisible(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (bool, error) {
 	// Ensure that status is fully populated for further processing.
 	if err := f.state.DB.PopulateStatus(ctx, status); err != nil {
 		return false, gtserror.Newf("error populating status %s: %w", status.ID, err)
@@ -88,6 +102,14 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 		return false, gtserror.Newf("error checking status %s account visibility: %w", status.ID, err)
 	} else if !visible {
 		return false, nil
+	}
+
+	if util.PtrOrValue(status.PendingApproval, false) {
+		// Use a different visibility heuristic
+		// for pending approval statuses.
+		return f.isPendingStatusVisible(ctx,
+			requester, status,
+		)
 	}
 
 	if status.Visibility == gtsmodel.VisibilityPublic {
@@ -174,6 +196,41 @@ func (f *Filter) isStatusVisible(ctx context.Context, requester *gtsmodel.Accoun
 		log.Warnf(ctx, "unexpected status visibility %s for %s", status.Visibility, status.URI)
 		return false, nil
 	}
+}
+
+func (f *Filter) isPendingStatusVisible(
+	_ context.Context,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+) (bool, error) {
+	if requester == nil {
+		// Any old tom, dick, and harry can't
+		// see pending-approval statuses,
+		// no matter what their visibility.
+		return false, nil
+	}
+
+	if status.AccountID == requester.ID {
+		// This is requester's status,
+		// so they can always see it.
+		return true, nil
+	}
+
+	if status.InReplyToAccountID == requester.ID {
+		// This status replies to requester,
+		// so they can always see it (else
+		// they can't approve it).
+		return true, nil
+	}
+
+	if status.BoostOfAccountID == requester.ID {
+		// This status boosts requester,
+		// so they can always see it.
+		return true, nil
+	}
+
+	// Nobody else can see this.
+	return false, nil
 }
 
 // areStatusAccountsVisible calls Filter{}.AccountVisible() on status author and the status boost-of (if set) author, returning visibility of status (and boost-of) to requester.

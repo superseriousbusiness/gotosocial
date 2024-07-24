@@ -69,12 +69,6 @@ func (d *Dereferencer) EnrichAnnounce(
 		return nil, err
 	}
 
-	// Generate an ID for the boost wrapper status.
-	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
-	if err != nil {
-		return nil, gtserror.Newf("error generating id: %w", err)
-	}
-
 	// Set boost_of_uri again in case the
 	// original URI was an indirect link.
 	boost.BoostOfURI = target.URI
@@ -91,6 +85,24 @@ func (d *Dereferencer) EnrichAnnounce(
 	boost.BoostOfAccount = target.Account
 	boost.Visibility = target.Visibility
 	boost.Federated = target.Federated
+
+	// Ensure this Announce is permitted by the Announcee.
+	permit, err := d.isPermittedStatus(ctx, requestUser, nil, boost)
+	if err != nil {
+		return nil, gtserror.Newf("error checking permitted status %s: %w", boost.URI, err)
+	}
+
+	if !permit {
+		// Return a checkable error type that can be ignored.
+		err := gtserror.Newf("dropping unpermitted status: %s", boost.URI)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
+	// Generate an ID for the boost wrapper status.
+	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
+	if err != nil {
+		return nil, gtserror.Newf("error generating id: %w", err)
+	}
 
 	// Store the boost wrapper status in database.
 	switch err = d.state.DB.PutStatus(ctx, boost); {

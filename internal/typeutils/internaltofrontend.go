@@ -861,7 +861,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 		for _, account := range otherAccounts {
 			// Is this account visible?
-			visible, err := c.filter.AccountVisible(ctx, requestingAccount, account)
+			visible, err := c.visFilter.AccountVisible(ctx, requestingAccount, account)
 			if err != nil {
 				return nil, err
 			}
@@ -2382,8 +2382,8 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 	ctx context.Context,
 	policy *gtsmodel.InteractionPolicy,
-	_ *gtsmodel.Status, // Used in upcoming PR.
-	_ *gtsmodel.Account, // Used in upcoming PR.
+	status *gtsmodel.Status,
+	requester *gtsmodel.Account,
 ) (*apimodel.InteractionPolicy, error) {
 	apiPolicy := &apimodel.InteractionPolicy{
 		CanFavourite: apimodel.PolicyRules{
@@ -2398,6 +2398,75 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.Always),
 			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.WithApproval),
 		},
+	}
+
+	if status == nil || requester == nil {
+		// We're done here!
+		return apiPolicy, nil
+	}
+
+	// Status and requester are both defined,
+	// so we can add the "me" Value to the policy
+	// for each interaction type, if applicable.
+
+	likeable, err := c.intFilter.StatusLikeable(ctx, requester, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status likeable by requester: %w", err)
+		return nil, err
+	}
+
+	if likeable.Permission == gtsmodel.PolicyPermissionPermitted {
+		// We can do this!
+		apiPolicy.CanFavourite.Always = append(
+			apiPolicy.CanFavourite.Always,
+			apimodel.PolicyValueMe,
+		)
+	} else if likeable.Permission == gtsmodel.PolicyPermissionWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanFavourite.WithApproval = append(
+			apiPolicy.CanFavourite.WithApproval,
+			apimodel.PolicyValueMe,
+		)
+	}
+
+	replyable, err := c.intFilter.StatusReplyable(ctx, requester, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status replyable by requester: %w", err)
+		return nil, err
+	}
+
+	if replyable.Permission == gtsmodel.PolicyPermissionPermitted {
+		// We can do this!
+		apiPolicy.CanReply.Always = append(
+			apiPolicy.CanReply.Always,
+			apimodel.PolicyValueMe,
+		)
+	} else if replyable.Permission == gtsmodel.PolicyPermissionWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanReply.WithApproval = append(
+			apiPolicy.CanReply.WithApproval,
+			apimodel.PolicyValueMe,
+		)
+	}
+
+	boostable, err := c.intFilter.StatusBoostable(ctx, requester, status)
+	if err != nil {
+		err := gtserror.Newf("error checking status boostable by requester: %w", err)
+		return nil, err
+	}
+
+	if boostable.Permission == gtsmodel.PolicyPermissionPermitted {
+		// We can do this!
+		apiPolicy.CanReblog.Always = append(
+			apiPolicy.CanReblog.Always,
+			apimodel.PolicyValueMe,
+		)
+	} else if boostable.Permission == gtsmodel.PolicyPermissionWithApproval {
+		// We can do this with approval.
+		apiPolicy.CanReblog.WithApproval = append(
+			apiPolicy.CanReblog.WithApproval,
+			apimodel.PolicyValueMe,
+		)
 	}
 
 	return apiPolicy, nil

@@ -92,7 +92,7 @@ func (p *Processor) StatusesGet(
 
 	// Filtering + serialization process is the same for
 	// both pinned status queries and 'normal' ones.
-	filtered, err := p.filter.StatusesVisible(ctx, requestingAccount, statuses)
+	filtered, err := p.visFilter.StatusesVisible(ctx, requestingAccount, statuses)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

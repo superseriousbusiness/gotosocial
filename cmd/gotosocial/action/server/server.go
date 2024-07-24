@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -190,10 +191,19 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	oauthServer := oauth.New(ctx, dbService)
 	typeConverter := typeutils.NewConverter(state)
 	visFilter := visibility.NewFilter(state)
+	intFilter := interaction.NewFilter(state)
 	spamFilter := spam.NewFilter(state)
 	federatingDB := federatingdb.New(state, typeConverter, visFilter, spamFilter)
 	transportController := transport.NewController(state, federatingDB, &federation.Clock{}, client)
-	federator := federation.NewFederator(state, federatingDB, transportController, typeConverter, visFilter, mediaManager)
+	federator := federation.NewFederator(
+		state,
+		federatingDB,
+		transportController,
+		typeConverter,
+		visFilter,
+		intFilter,
+		mediaManager,
+	)
 
 	// Decide whether to create a noop email
 	// sender (won't send emails) or a real one.
@@ -268,6 +278,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		mediaManager,
 		state,
 		emailSender,
+		visFilter,
+		intFilter,
 	)
 
 	// Initialize the specialized workers pools.
