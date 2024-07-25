@@ -28,4 +28,5 @@ type Tag struct {
 	Useable   *bool     `bun:",nullzero,notnull,default:true"`                              // Tag is useable on this instance.
 	Listable  *bool     `bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
 	Href      string    `bun:"-"`                                                           // Href of the hashtag. Will only be set on freshly-extracted hashtags from remote AP messages. Not stored in the database.
+	Following *bool     `bun:"-"`                                                           // Whether the current user is following this tag, if there is a current user. Stored per-user, not in this table.
 }

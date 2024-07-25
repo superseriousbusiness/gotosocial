@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/uptrace/bun"
@@ -129,5 +130,28 @@ func (t *tagDB) PutTag(ctx context.Context, tag *gtsmodel.Tag) error {
 	tag.Useable = t2.Useable
 	tag.Listable = t2.Listable
 
+	return nil
+}
+
+func (t *tagDB) GetFollowedTags(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Tag, error) {
+	// TODO: (Vyr) GetFollowedTags
+	if accountID == "01F8MH5NBDF2MV7CTC4Q5128HF" {
+		return []*gtsmodel.Tag{
+			{
+				Name:      "welcome",
+				Following: util.Ptr(true),
+			},
+		}, nil
+	}
+	return nil, nil
+}
+
+func (t *tagDB) PutFollowedTag(ctx context.Context, accountID string, tagID string) error {
+	// TODO: (Vyr) PutFollowedTag
+	return nil
+}
+
+func (t *tagDB) DeleteFollowedTag(ctx context.Context, accountID string, tagID string) error {
+	// TODO: (Vyr) DeleteFollowedTag
 	return nil
 }

@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags"
 	filtersV1 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v1"
 	filtersV2 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v2"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/interactionpolicies"
@@ -71,6 +72,7 @@ type Client struct {
 	filtersV1           *filtersV1.Module           // api/v1/filters
 	filtersV2           *filtersV2.Module           // api/v2/filters
 	followRequests      *followrequests.Module      // api/v1/follow_requests
+	followedTags        *followedtags.Module        // api/v1/followed_tags
 	instance            *instance.Module            // api/v1/instance
 	interactionPolicies *interactionpolicies.Module // api/v1/interaction_policies
 	lists               *lists.Module               // api/v1/lists
@@ -117,6 +119,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.filtersV1.Route(h)
 	c.filtersV2.Route(h)
 	c.followRequests.Route(h)
+	c.followedTags.Route(h)
 	c.instance.Route(h)
 	c.interactionPolicies.Route(h)
 	c.lists.Route(h)
@@ -151,6 +154,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		filtersV1:           filtersV1.New(p),
 		filtersV2:           filtersV2.New(p),
 		followRequests:      followrequests.New(p),
+		followedTags:        followedtags.New(p),
 		instance:            instance.New(p),
 		interactionPolicies: interactionpolicies.New(p),
 		lists:               lists.New(p),

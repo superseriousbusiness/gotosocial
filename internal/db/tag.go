@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Tag contains functions for getting/creating tags in the database.
@@ -36,4 +37,15 @@ type Tag interface {
 
 	// GetTags gets multiple tags.
 	GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, error)
+
+	// GetFollowedTags gets the user's followed tags.
+	GetFollowedTags(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Tag, error)
+
+	// PutFollowedTag creates a new followed tag for a the given user.
+	// If it already exists, it returns without an error.
+	PutFollowedTag(ctx context.Context, accountID string, tagID string) error
+
+	// DeleteFollowedTag deletes a followed tag for a the given user.
+	// If no such followed tag exists, it returns without an error.
+	DeleteFollowedTag(ctx context.Context, accountID string, tagID string) error
 }

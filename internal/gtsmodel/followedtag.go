@@ -15,23 +15,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package gtsmodel
 
-// Tag represents a hashtag used within the content of a status.
-//
-// swagger:model tag
-type Tag struct {
-	// The value of the hashtag after the # sign.
-	// example: helloworld
-	Name string `json:"name"`
-	// Web link to the hashtag.
-	// example: https://example.org/tags/helloworld
-	URL string `json:"url"`
-	// History of this hashtag's usage.
-	// Currently just a stub, if provided will always be an empty array.
-	// example: []
-	History *[]any `json:"history,omitempty"`
-	// Following is true if the user is following this tag, false if they're not,
-	// and not present if there is no currently authenticated user.
-	Following *bool `json:"following,omitempty"`
+import "time"
+
+// FollowedTag represents a user following a tag.
+type FollowedTag struct {
+	// ID of this item.
+	ID string `bun:"type:CHAR(26),pk,nullzero"`
+
+	// ID of the account that follows the tag.
+	AccountID string `bun:"type:CHAR(26),nullzero,notnull,unique:followed_tags_account_id_tag_id_uniq"`
+
+	// ID of the tag.
+	TagID string `bun:"type:CHAR(26),nullzero,notnull,unique:followed_tags_account_id_tag_id_uniq"`
+
+	// When the account followed the tag.
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
 }

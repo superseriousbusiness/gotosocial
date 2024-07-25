@@ -752,6 +752,7 @@ func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 			h := make([]any, 0)
 			return &h
 		}(),
+		Following: t.Following,
 	}, nil
 }
 
