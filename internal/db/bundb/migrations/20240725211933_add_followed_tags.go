@@ -15,21 +15,37 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package gtsmodel
+package migrations
 
-import "time"
+import (
+	"context"
 
-// FollowedTag represents a user following a tag.
-type FollowedTag struct {
-	// ID of this item.
-	ID string `bun:"type:CHAR(26),pk,nullzero"`
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
+)
 
-	// When the account followed the tag.
-	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			if _, err := tx.
+				NewCreateTable().
+				Model(&gtsmodel.FollowedTag{}).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
 
-	// ID of the account that follows the tag.
-	AccountID string `bun:"type:CHAR(26),nullzero,notnull,unique:followed_tags_account_id_tag_id_uniq"`
+			return nil
+		})
+	}
 
-	// ID of the tag.
-	TagID string `bun:"type:CHAR(26),nullzero,notnull,unique:followed_tags_account_id_tag_id_uniq"`
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }
