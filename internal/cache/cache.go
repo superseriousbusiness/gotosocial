@@ -142,6 +142,8 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.BlockIDs.Trim(threshold)
 	c.DB.BoostOfIDs.Trim(threshold)
 	c.DB.Client.Trim(threshold)
+	c.DB.Conversation.Trim(threshold)
+	c.DB.ConversationLastStatusIDs.Trim(threshold)
 	c.DB.Emoji.Trim(threshold)
 	c.DB.EmojiCategory.Trim(threshold)
 	c.DB.Filter.Trim(threshold)
