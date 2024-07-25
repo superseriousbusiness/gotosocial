@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// UnfollowTagPOSTHandler swagger:operation POST /api/v1/tags/:tag_name/unfollow unfollowTag
+// UnfollowTagPOSTHandler swagger:operation POST /api/v1/tags/{tag_name}/unfollow unfollowTag
 //
 // Unfollow a hashtag.
 //

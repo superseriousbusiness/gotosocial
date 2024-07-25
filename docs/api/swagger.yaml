@@ -9130,7 +9130,7 @@ paths:
             summary: Initiate a websocket connection for live streaming of statuses and notifications.
             tags:
                 - streaming
-    /api/v1/tags/:tag_name/follow:
+    /api/v1/tags/{tag_name}/follow:
         post:
             description: 'Idempotent: if you are already following the tag, this call will still succeed.'
             operationId: followTag
@@ -9161,7 +9161,7 @@ paths:
             summary: Follow a hashtag.
             tags:
                 - followed_tags
-    /api/v1/tags/:tag_name/unfollow:
+    /api/v1/tags/{tag_name}/unfollow:
         post:
             description: 'Idempotent: if you are not following the tag, this call will still succeed.'
             operationId: unfollowTag

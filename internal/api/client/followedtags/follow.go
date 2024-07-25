@@ -26,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// FollowTagPOSTHandler swagger:operation POST /api/v1/tags/:tag_name/follow followTag
+// FollowTagPOSTHandler swagger:operation POST /api/v1/tags/{tag_name}/follow followTag
 //
 // Follow a hashtag.
 //
