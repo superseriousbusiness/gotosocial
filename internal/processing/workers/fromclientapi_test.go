@@ -52,6 +52,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 	boostOfStatus *gtsmodel.Status,
 	mentionedAccounts []*gtsmodel.Account,
 	createThread bool,
+	tagIDs []string,
 ) *gtsmodel.Status {
 	var (
 		protocol = config.GetProtocol()
@@ -65,6 +66,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 		URI:                 protocol + "://" + host + "/users/" + account.Username + "/statuses/" + statusID,
 		URL:                 protocol + "://" + host + "/@" + account.Username + "/statuses/" + statusID,
 		Content:             "pee pee poo poo",
+		TagIDs:              tagIDs,
 		Local:               util.Ptr(true),
 		AccountURI:          account.URI,
 		AccountID:           account.ID,
@@ -256,6 +258,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 			nil,
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -367,6 +370,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 			nil,
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -428,6 +432,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 			nil,
 			nil,
 			false,
+			nil,
 		)
 		threadMute = &gtsmodel.ThreadMute{
 			ID:        "01HD3KRMBB1M85QRWHD912QWRE",
@@ -488,6 +493,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 			suite.testStatuses["local_account_1_status_1"],
 			nil,
 			false,
+			nil,
 		)
 		threadMute = &gtsmodel.ThreadMute{
 			ID:        "01HD3KRMBB1M85QRWHD912QWRE",
@@ -553,6 +559,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			nil,
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -628,6 +635,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 			nil,
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -708,6 +716,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 			nil,
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -780,6 +789,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -843,6 +853,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 			suite.testStatuses["local_account_2_status_1"],
 			nil,
 			false,
+			nil,
 		)
 	)
 
@@ -912,6 +923,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversat
 			nil,
 			[]*gtsmodel.Account{receivingAccount},
 			true,
+			nil,
 		)
 	)
 
@@ -997,6 +1009,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichShouldNotCreate
 			nil,
 			[]*gtsmodel.Account{receivingAccount},
 			true,
+			nil,
 		)
 	)
 
@@ -1035,6 +1048,138 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichShouldNotCreate
 		false,
 		"",
 		"",
+	)
+}
+
+// A public status with a hashtag followed by a local user who does not otherwise follow the author
+// should end up in the tag-following user's home timeline.
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_2"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream = streams[stream.TimelineHome]
+		testTag    = suite.testTags["welcome"]
+
+		// admin posts a new public message not mentioning anyone but using testTag.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			true,
+			[]string{testTag.ID},
+		)
+	)
+
+	// Check precondition: receivingAccount does not follow postingAccount.
+	following, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Setup: receivingAccount follows testTag.
+	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+}
+
+// Updating a public status with a hashtag followed by a local user who does not otherwise follow the author
+// should stream a status update to the tag-following user's home timeline.
+func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_2"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream = streams[stream.TimelineHome]
+		testTag    = suite.testTags["welcome"]
+
+		// admin posts a new public message not mentioning anyone but using testTag.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			true,
+			[]string{testTag.ID},
+		)
+	)
+
+	// Check precondition: receivingAccount does not follow postingAccount.
+	following, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Setup: receivingAccount follows testTag.
+	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Update the status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityUpdate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeStatusUpdate,
 	)
 }
 

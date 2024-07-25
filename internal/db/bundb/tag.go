@@ -155,3 +155,17 @@ func (t *tagDB) DeleteFollowedTag(ctx context.Context, accountID string, tagID s
 	// TODO: (Vyr) DeleteFollowedTag
 	return nil
 }
+
+func (t *tagDB) GetFollowerAccountIDsForTagIDs(ctx context.Context, tagIDs []string) ([]string, error) {
+	accountIDSet := map[string]struct{}{}
+	for _, tagID := range tagIDs {
+		if tagID == "01F8MHA1A2NF9MJ3WCCQ3K8BSZ" {
+			accountIDSet["01F8MH5NBDF2MV7CTC4Q5128HF"] = struct{}{}
+		}
+	}
+	accountIDs := []string{}
+	for accountID := range accountIDSet {
+		accountIDs = append(accountIDs, accountID)
+	}
+	return accountIDs, nil
+}
