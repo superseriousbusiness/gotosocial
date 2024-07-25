@@ -19,8 +19,11 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"strings"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -134,38 +137,142 @@ func (t *tagDB) PutTag(ctx context.Context, tag *gtsmodel.Tag) error {
 }
 
 func (t *tagDB) GetFollowedTags(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Tag, error) {
-	// TODO: (Vyr) GetFollowedTags
-	if accountID == "01F8MH5NBDF2MV7CTC4Q5128HF" {
-		return []*gtsmodel.Tag{
-			{
-				Name:      "welcome",
-				Following: util.Ptr(true),
-			},
-		}, nil
+	tagIDs, err := t.getTagIDsFollowedByAccount(ctx, accountID, page)
+	if err != nil {
+		return nil, err
 	}
-	return nil, nil
+
+	tags, err := t.GetTags(ctx, tagIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, tag := range tags {
+		tag.Following = util.Ptr(true)
+	}
+
+	return tags, nil
+}
+
+func (t *tagDB) getTagIDsFollowedByAccount(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
+	return loadPagedIDs(&t.state.Caches.DB.TagIDsFollowedByAccount, accountID, page, func() ([]string, error) {
+		var tagIDs []string
+
+		// Tag IDs not in cache. Perform DB query.
+		if _, err := t.db.
+			NewSelect().
+			Model((*gtsmodel.FollowedTag)(nil)).
+			Column("tag_id").
+			Where("? = ?", bun.Ident("account_id"), accountID).
+			OrderExpr("? DESC", bun.Ident("tag_id")).
+			Exec(ctx, &tagIDs); // nocollapse
+		err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.Newf("error getting tag IDs followed by account %s: %w", accountID, err)
+		}
+
+		return tagIDs, nil
+	})
+}
+
+func (t *tagDB) getAccountIDsFollowingTag(ctx context.Context, tagID string) ([]string, error) {
+	return loadPagedIDs(&t.state.Caches.DB.AccountIDsFollowingTag, tagID, nil, func() ([]string, error) {
+		var accountIDs []string
+
+		// Account IDs not in cache. Perform DB query.
+		if _, err := t.db.
+			NewSelect().
+			Model((*gtsmodel.FollowedTag)(nil)).
+			Column("account_id").
+			Where("? = ?", bun.Ident("tag_id"), tagID).
+			OrderExpr("? DESC", bun.Ident("account_id")).
+			Exec(ctx, &accountIDs); // nocollapse
+		err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.Newf("error getting account IDs following tag %s: %w", tagID, err)
+		}
+
+		return accountIDs, nil
+	})
 }
 
 func (t *tagDB) PutFollowedTag(ctx context.Context, accountID string, tagID string) error {
-	// TODO: (Vyr) PutFollowedTag
+	// Insert the followed tag.
+	result, err := t.db.NewInsert().
+		Model(&gtsmodel.FollowedTag{
+			AccountID: accountID,
+			TagID:     tagID,
+		}).
+		On("CONFLICT (?, ?) DO NOTHING", bun.Ident("account_id"), bun.Ident("tag_id")).
+		Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error inserting followed tag: %w", err)
+	}
+
+	// If it fails because that account already follows that tag, that's fine, and we're done.
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return gtserror.Newf("error getting inserted row count: %w", err)
+	}
+	if rows == 0 {
+		return nil
+	}
+
+	// Otherwise, this is a new followed tag, so we invalidate caches related to it.
+	t.state.Caches.DB.AccountIDsFollowingTag.Invalidate(tagID)
+	t.state.Caches.DB.TagIDsFollowedByAccount.Invalidate(accountID)
+
 	return nil
 }
 
 func (t *tagDB) DeleteFollowedTag(ctx context.Context, accountID string, tagID string) error {
-	// TODO: (Vyr) DeleteFollowedTag
+	result, err := t.db.NewDelete().
+		Model((*gtsmodel.FollowedTag)(nil)).
+		Where("? = ?", bun.Ident("account_id"), accountID).
+		Where("? = ?", bun.Ident("tag_id"), tagID).
+		Exec(ctx)
+
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return gtserror.Newf("error getting inserted row count: %w", err)
+	}
+	if rows == 0 {
+		return nil
+	}
+
+	// If we deleted anything, invalidate caches related to it.
+	t.state.Caches.DB.AccountIDsFollowingTag.Invalidate(tagID)
+	t.state.Caches.DB.TagIDsFollowedByAccount.Invalidate(accountID)
+
+	return err
+}
+
+func (t *tagDB) DeleteFollowedTagsByAccountID(ctx context.Context, accountID string) error {
+	// Delete followed tags from the database, returning the list of tag IDs affected.
+	tagIDs := []string{}
+	if err := t.db.NewDelete().
+		Model((*gtsmodel.FollowedTag)(nil)).
+		Where("? = ?", bun.Ident("account_id"), accountID).
+		Returning("?", bun.Ident("tag_id")).
+		Scan(ctx, &tagIDs); // nocollapse
+	err != nil {
+		return gtserror.Newf("error deleting followed tags for account %s: %w", accountID, err)
+	}
+
+	// Invalidate account ID caches for the account and those tags.
+	t.state.Caches.DB.TagIDsFollowedByAccount.Invalidate(accountID)
+	t.state.Caches.DB.AccountIDsFollowingTag.Invalidate(tagIDs...)
+
 	return nil
 }
 
 func (t *tagDB) GetFollowerAccountIDsForTagIDs(ctx context.Context, tagIDs []string) ([]string, error) {
-	accountIDSet := map[string]struct{}{}
-	for _, tagID := range tagIDs {
-		if tagID == "01F8MHA1A2NF9MJ3WCCQ3K8BSZ" {
-			accountIDSet["01F8MH5NBDF2MV7CTC4Q5128HF"] = struct{}{}
-		}
-	}
+	// Accounts might be following multiple tags in this list, but we only want to return each account once.
 	accountIDs := []string{}
-	for accountID := range accountIDSet {
-		accountIDs = append(accountIDs, accountID)
+	for _, tagID := range tagIDs {
+		tagAccountIDs, err := t.getAccountIDsFollowingTag(ctx, tagID)
+		if err != nil {
+			return nil, err
+		}
+		accountIDs = append(accountIDs, tagAccountIDs...)
 	}
-	return accountIDs, nil
+	return util.UniqueStrings(accountIDs), nil
 }

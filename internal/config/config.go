@@ -193,6 +193,7 @@ type HTTPClientConfiguration struct {
 type CacheConfiguration struct {
 	MemoryTarget                      bytesize.Size `name:"memory-target"`
 	AccountMemRatio                   float64       `name:"account-mem-ratio"`
+	AccountIDsFollowingTagMemRatio    float64       `name:"account-ids-following-tag-mem-ratio"`
 	AccountNoteMemRatio               float64       `name:"account-note-mem-ratio"`
 	AccountSettingsMemRatio           float64       `name:"account-settings-mem-ratio"`
 	AccountStatsMemRatio              float64       `name:"account-stats-mem-ratio"`
@@ -232,6 +233,7 @@ type CacheConfiguration struct {
 	StatusFaveMemRatio                float64       `name:"status-fave-mem-ratio"`
 	StatusFaveIDsMemRatio             float64       `name:"status-fave-ids-mem-ratio"`
 	TagMemRatio                       float64       `name:"tag-mem-ratio"`
+	TagIDsFollowedByAccountMemRatio   float64       `name:"tag-ids-followed-by-account-mem-ratio"`
 	ThreadMuteMemRatio                float64       `name:"thread-mute-mem-ratio"`
 	TokenMemRatio                     float64       `name:"token-mem-ratio"`
 	TombstoneMemRatio                 float64       `name:"tombstone-mem-ratio"`

@@ -57,6 +57,7 @@ func (c *Caches) Init() {
 	log.Infof(nil, "init: %p", c)
 
 	c.initAccount()
+	c.initAccountIDsFollowingTag()
 	c.initAccountNote()
 	c.initAccountSettings()
 	c.initAccountStats()
@@ -98,6 +99,7 @@ func (c *Caches) Init() {
 	c.initStatusFave()
 	c.initStatusFaveIDs()
 	c.initTag()
+	c.initTagIDsFollowedByAccount()
 	c.initThreadMute()
 	c.initToken()
 	c.initTombstone()
@@ -134,6 +136,7 @@ func (c *Caches) Stop() {
 // significant overhead to all cache writes.
 func (c *Caches) Sweep(threshold float64) {
 	c.DB.Account.Trim(threshold)
+	c.DB.AccountIDsFollowingTag.Trim(threshold)
 	c.DB.AccountNote.Trim(threshold)
 	c.DB.AccountSettings.Trim(threshold)
 	c.DB.AccountStats.Trim(threshold)
@@ -173,6 +176,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.StatusFave.Trim(threshold)
 	c.DB.StatusFaveIDs.Trim(threshold)
 	c.DB.Tag.Trim(threshold)
+	c.DB.TagIDsFollowedByAccount.Trim(threshold)
 	c.DB.ThreadMute.Trim(threshold)
 	c.DB.Token.Trim(threshold)
 	c.DB.Tombstone.Trim(threshold)

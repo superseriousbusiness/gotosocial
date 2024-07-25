@@ -49,6 +49,9 @@ type Tag interface {
 	// If no such followed tag exists, it returns without an error.
 	DeleteFollowedTag(ctx context.Context, accountID string, tagID string) error
 
+	// DeleteFollowedTagsByAccountID deletes all of an account's followed tags.
+	DeleteFollowedTagsByAccountID(ctx context.Context, accountID string) error
+
 	// GetFollowerAccountIDsForTagIDs returns the account IDs of any followers of the given tag IDs.
 	GetFollowerAccountIDsForTagIDs(ctx context.Context, tagIDs []string) ([]string, error)
 }
