@@ -18,16 +18,25 @@
 package followedtags_test
 
 import (
+	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -97,6 +106,72 @@ func (suite *FollowedTagsTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
+}
+
+// tagAction follows or unfollows a tag.
+func (suite *FollowedTagsTestSuite) tagAction(
+	accountFixtureName string,
+	tagName string,
+	path string,
+	handler func(c *gin.Context),
+	expectedHTTPStatus int,
+	expectedBody string,
+) (*apimodel.Tag, error) {
+	// instantiate recorder + test context
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts[accountFixtureName])
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens[accountFixtureName]))
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers[accountFixtureName])
+
+	// create the request
+	url := config.GetProtocol() + "://" + config.GetHost() + "/api/" + path
+	ctx.Request = httptest.NewRequest(
+		http.MethodPost,
+		strings.Replace(url, ":tag_name", tagName, 1),
+		nil,
+	)
+	ctx.Request.Header.Set("accept", "application/json")
+
+	ctx.AddParam("tag_name", tagName)
+
+	// trigger the handler
+	handler(ctx)
+
+	// read the response
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	errs := gtserror.NewMultiError(2)
+
+	// check code + body
+	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
+		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
+		if expectedBody == "" {
+			return nil, errs.Combine()
+		}
+	}
+
+	// if we got an expected body, return early
+	if expectedBody != "" {
+		if string(b) != expectedBody {
+			errs.Appendf("expected %s got %s", expectedBody, string(b))
+		}
+		return nil, errs.Combine()
+	}
+
+	resp := &apimodel.Tag{}
+	if err := json.Unmarshal(b, resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
 }
 
 func TestFollowedTagsTestSuite(t *testing.T) {
