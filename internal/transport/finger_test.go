@@ -43,7 +43,7 @@ func (suite *FingerTestSuite) TestFinger() {
 }
 
 func (suite *FingerTestSuite) TestFingerPunycode() {
-	wc := suite.state.Caches.GTS.Webfinger
+	wc := suite.state.Caches.Webfinger
 	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty")
 
 	_, err := suite.transport.Finger(context.TODO(), "brand_new_person", "pünycöde.example.org")
