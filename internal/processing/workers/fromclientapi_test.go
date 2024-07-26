@@ -1069,7 +1069,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 		homeStream = streams[stream.TimelineHome]
 		testTag    = suite.testTags["welcome"]
 
-		// admin posts a new public message not mentioning anyone but using testTag.
+		// postingAccount posts a new public status not mentioning anyone but using testTag.
 		status = suite.newStatus(
 			ctx,
 			testStructs.State,
@@ -1078,7 +1078,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 			nil,
 			nil,
 			nil,
-			true,
+			false,
 			[]string{testTag.ID},
 		)
 	)
@@ -1117,6 +1117,94 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 	)
 }
 
+// A boost of a public status with a hashtag followed by a local user
+// who does not otherwise follow the author or booster
+// should end up in the tag-following user's home timeline as the original status.
+func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["remote_account_1"]
+		boostingAccount  = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_2"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream = streams[stream.TimelineHome]
+		testTag    = suite.testTags["welcome"]
+
+		// postingAccount posts a new public status not mentioning anyone but using testTag.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			[]string{testTag.ID},
+		)
+
+		// boostingAccount boosts that status.
+		boost = suite.newStatus(
+			ctx,
+			testStructs.State,
+			boostingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			status,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Check precondition: receivingAccount does not follow postingAccount.
+	following, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Check precondition: receivingAccount does not follow boostingAccount.
+	following, err = testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, boostingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Setup: receivingAccount follows testTag.
+	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the boost.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       boost,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+}
+
 // Updating a public status with a hashtag followed by a local user who does not otherwise follow the author
 // should stream a status update to the tag-following user's home timeline.
 func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag() {
@@ -1135,7 +1223,7 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag(
 		homeStream = streams[stream.TimelineHome]
 		testTag    = suite.testTags["welcome"]
 
-		// admin posts a new public message not mentioning anyone but using testTag.
+		// postingAccount posts a new public status not mentioning anyone but using testTag.
 		status = suite.newStatus(
 			ctx,
 			testStructs.State,
@@ -1144,7 +1232,7 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag(
 			nil,
 			nil,
 			nil,
-			true,
+			false,
 			[]string{testTag.ID},
 		)
 	)

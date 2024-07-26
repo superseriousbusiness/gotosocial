@@ -422,6 +422,11 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 	status *gtsmodel.Status,
 	alreadyHomeTimelinedAccountIDs []string,
 ) error {
+	if status.BoostOf != nil {
+		// Unwrap boost and work with the original status.
+		status = status.BoostOf
+	}
+
 	tagFollowerAccounts, err := s.tagFollowersForStatus(ctx, status, alreadyHomeTimelinedAccountIDs)
 	if err != nil {
 		return err
@@ -755,6 +760,11 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 	status *gtsmodel.Status,
 	alreadyHomeTimelinedAccountIDs []string,
 ) error {
+	if status.BoostOf != nil {
+		// Unwrap boost and work with the original status.
+		status = status.BoostOf
+	}
+
 	tagFollowerAccounts, err := s.tagFollowersForStatus(ctx, status, alreadyHomeTimelinedAccountIDs)
 	if err != nil {
 		return err
