@@ -33,7 +33,7 @@ import (
 //
 //	---
 //	tags:
-//	- followed_tags
+//	- tags
 //
 //	produces:
 //	- application/json
@@ -121,7 +121,7 @@ func (m *Module) FollowedTagsGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.FollowedTags().Get(
+	resp, errWithCode := m.processor.Tags().Followed(
 		c.Request.Context(),
 		authed.Account.ID,
 		page,

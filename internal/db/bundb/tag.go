@@ -194,6 +194,21 @@ func (t *tagDB) getAccountIDsFollowingTag(ctx context.Context, tagID string) ([]
 	})
 }
 
+func (t *tagDB) DoesAccountFollowTag(ctx context.Context, accountID string, tagID string) (bool, error) {
+	accountTagIDs, err := t.getTagIDsFollowedByAccount(ctx, accountID, nil)
+	if err != nil {
+		return false, err
+	}
+
+	for _, accountTagID := range accountTagIDs {
+		if accountTagID == tagID {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
 func (t *tagDB) PutFollowedTag(ctx context.Context, accountID string, tagID string) error {
 	// Insert the followed tag.
 	result, err := t.db.NewInsert().

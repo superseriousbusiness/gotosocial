@@ -34,7 +34,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
 	filtersv1 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1"
 	filtersv2 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/followedtags"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/list"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
@@ -43,6 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/search"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/tags"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
@@ -81,7 +81,6 @@ type Processor struct {
 	fedi               fedi.Processor
 	filtersv1          filtersv1.Processor
 	filtersv2          filtersv2.Processor
-	followedtags       followedtags.Processor
 	list               list.Processor
 	markers            markers.Processor
 	media              media.Processor
@@ -90,6 +89,7 @@ type Processor struct {
 	search             search.Processor
 	status             status.Processor
 	stream             stream.Processor
+	tags               tags.Processor
 	timeline           timeline.Processor
 	user               user.Processor
 	workers            workers.Processor
@@ -123,10 +123,6 @@ func (p *Processor) FiltersV2() *filtersv2.Processor {
 	return &p.filtersv2
 }
 
-func (p *Processor) FollowedTags() *followedtags.Processor {
-	return &p.followedtags
-}
-
 func (p *Processor) List() *list.Processor {
 	return &p.list
 }
@@ -157,6 +153,10 @@ func (p *Processor) Status() *status.Processor {
 
 func (p *Processor) Stream() *stream.Processor {
 	return &p.stream
+}
+
+func (p *Processor) Tags() *tags.Processor {
+	return &p.tags
 }
 
 func (p *Processor) Timeline() *timeline.Processor {
@@ -210,11 +210,11 @@ func NewProcessor(
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
 	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)
-	processor.followedtags = followedtags.New(state, converter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)
 	processor.polls = polls.New(&common, state, converter)
 	processor.report = report.New(state, converter)
+	processor.tags = tags.New(state, converter)
 	processor.timeline = timeline.New(state, converter, visFilter)
 	processor.search = search.New(state, federator, converter, visFilter)
 	processor.status = status.New(state, &common, &processor.polls, federator, converter, visFilter, intFilter, parseMentionFunc)

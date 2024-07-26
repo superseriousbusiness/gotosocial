@@ -15,39 +15,46 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags
+package tags
 
 import (
 	"context"
+	"errors"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-type Processor struct {
-	state     *state.State
-	converter *typeutils.Converter
-}
-
-func New(state *state.State, converter *typeutils.Converter) Processor {
-	return Processor{
-		state:     state,
-		converter: converter,
-	}
-}
-
-// apiTag is a shortcut to return the API version of the given tag,
-// or return an appropriate error if conversion fails.
-func (p *Processor) apiTag(ctx context.Context, tag *gtsmodel.Tag) (*apimodel.Tag, gtserror.WithCode) {
-	apiTag, err := p.converter.TagToAPITag(ctx, tag, true)
-	if err != nil {
+// Unfollow unfollows the tag with the given name as the given account.
+// If there is no tag with that name, it creates a tag.
+func (p *Processor) Unfollow(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	name string,
+) (*apimodel.Tag, gtserror.WithCode) {
+	// Try to get an existing tag with that name.
+	tag, err := p.state.DB.GetTagByName(ctx, name)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(
-			gtserror.Newf("error converting tag %s to API representation: %w", tag.Name, err),
+			gtserror.Newf("DB error getting tag with name %s: %w", name, err),
 		)
 	}
 
-	return &apiTag, nil
+	if tag == nil {
+		// There is no need to create a tag just to unfollow it.
+		tag = &gtsmodel.Tag{Name: name}
+	} else {
+		// Unfollow the tag.
+		if err := p.state.DB.DeleteFollowedTag(ctx, account.ID, tag.ID); err != nil {
+			return nil, gtserror.NewErrorInternalError(
+				gtserror.Newf("DB error unfollowing tag %s: %w", tag.ID, err),
+			)
+		}
+	}
+
+	tag.Following = util.Ptr(false)
+	return p.apiTag(ctx, tag)
 }

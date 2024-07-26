@@ -6445,7 +6445,7 @@ paths:
                     - read:accounts
             summary: Get an array of all hashtags that you currently have featured on your profile.
             tags:
-                - featured_tags
+                - tags
     /api/v1/filters:
         get:
             operationId: filtersV1Get
@@ -6891,7 +6891,7 @@ paths:
                     - read:follows
             summary: Get an array of all hashtags that you currently follow.
             tags:
-                - followed_tags
+                - tags
     /api/v1/instance:
         get:
             operationId: instanceGetV1
@@ -9130,6 +9130,39 @@ paths:
             summary: Initiate a websocket connection for live streaming of statuses and notifications.
             tags:
                 - streaming
+    /api/v1/tags/{tag_name}:
+        get:
+            description: If the tag does not exist, this method will not create it in the database.
+            operationId: getTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Get details for a hashtag, including whether you currently follow it.
+            tags:
+                - tags
     /api/v1/tags/{tag_name}/follow:
         post:
             description: 'Idempotent: if you are already following the tag, this call will still succeed.'
@@ -9160,7 +9193,7 @@ paths:
                     - write:follows
             summary: Follow a hashtag.
             tags:
-                - followed_tags
+                - tags
     /api/v1/tags/{tag_name}/unfollow:
         post:
             description: 'Idempotent: if you are not following the tag, this call will still succeed.'
@@ -9191,7 +9224,7 @@ paths:
                     - write:follows
             summary: Unfollow a hashtag.
             tags:
-                - followed_tags
+                - tags
     /api/v1/timelines/home:
         get:
             description: |-

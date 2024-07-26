@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags
+package tags
 
 import (
 	"context"
@@ -28,33 +28,33 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// Unfollow unfollows the tag with the given name as the given account.
-// If there is no tag with that name, it creates a tag.
-func (p *Processor) Unfollow(
+// Get gets the tag with the given name, including whether it's followed by the given account.
+func (p *Processor) Get(
 	ctx context.Context,
 	account *gtsmodel.Account,
 	name string,
 ) (*apimodel.Tag, gtserror.WithCode) {
 	// Try to get an existing tag with that name.
 	tag, err := p.state.DB.GetTagByName(ctx, name)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.NewErrorNotFound(
+				gtserror.Newf("couldn't find tag with name %s: %w", name, err),
+			)
+		}
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf("DB error getting tag with name %s: %w", name, err),
 		)
 	}
 
-	if tag == nil {
-		// There is no need to create a tag just to unfollow it.
-		tag = &gtsmodel.Tag{Name: name}
-	} else {
-		// Unfollow the tag.
-		if err := p.state.DB.DeleteFollowedTag(ctx, account.ID, tag.ID); err != nil {
-			return nil, gtserror.NewErrorInternalError(
-				gtserror.Newf("DB error unfollowing tag %s: %w", tag.ID, err),
-			)
-		}
+	following, err := p.state.DB.DoesAccountFollowTag(ctx, account.ID, tag.ID)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(
+			gtserror.Newf("DB error checking whether account %s follows tag %s: %w", account.ID, tag.ID, err),
+		)
 	}
 
-	tag.Following = util.Ptr(false)
+	tag.Following = util.Ptr(following)
+
 	return p.apiTag(ctx, tag)
 }

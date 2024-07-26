@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags
+package tags
 
 import (
 	"net/http"
@@ -34,7 +34,7 @@ import (
 //
 //	---
 //	tags:
-//	- followed_tags
+//	- tags
 //
 //	produces:
 //	- application/json
@@ -82,7 +82,7 @@ func (m *Module) FollowTagPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiTag, errWithCode := m.processor.FollowedTags().Follow(c.Request.Context(), authed.Account, name)
+	apiTag, errWithCode := m.processor.Tags().Follow(c.Request.Context(), authed.Account, name)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

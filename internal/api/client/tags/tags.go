@@ -15,17 +15,21 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags
+package tags
 
 import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (
-	BasePath = "/v1/followed_tags"
+	BasePath     = "/v1/tags"
+	TagPath      = BasePath + "/:" + apiutil.TagNameKey
+	FollowPath   = TagPath + "/follow"
+	UnfollowPath = TagPath + "/unfollow"
 )
 
 type Module struct {
@@ -39,5 +43,7 @@ func New(processor *processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, BasePath, m.FollowedTagsGETHandler)
+	attachHandler(http.MethodGet, TagPath, m.TagGETHandler)
+	attachHandler(http.MethodPost, FollowPath, m.FollowTagPOSTHandler)
+	attachHandler(http.MethodPost, UnfollowPath, m.UnfollowTagPOSTHandler)
 }

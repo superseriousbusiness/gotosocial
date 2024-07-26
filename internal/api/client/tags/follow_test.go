@@ -15,17 +15,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags_test
+package tags_test
 
 import (
 	"context"
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/tags"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
-func (suite *FollowedTagsTestSuite) unfollow(
+func (suite *TagsTestSuite) follow(
 	accountFixtureName string,
 	tagName string,
 	expectedHTTPStatus int,
@@ -34,15 +34,32 @@ func (suite *FollowedTagsTestSuite) unfollow(
 	return suite.tagAction(
 		accountFixtureName,
 		tagName,
-		followedtags.UnfollowPath,
-		suite.followedTagsModule.UnfollowTagPOSTHandler,
+		http.MethodPost,
+		tags.FollowPath,
+		suite.tagsModule.FollowTagPOSTHandler,
 		expectedHTTPStatus,
 		expectedBody,
 	)
 }
 
-// Unfollow a tag that we follow.
-func (suite *FollowedTagsTestSuite) TestUnfollow() {
+// Follow a tag we don't already follow.
+func (suite *TagsTestSuite) TestFollow() {
+	accountFixtureName := "local_account_2"
+	testTag := suite.testTags["welcome"]
+
+	apiTag, err := suite.follow(accountFixtureName, testTag.Name, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(testTag.Name, apiTag.Name)
+	if suite.NotNil(apiTag.Following) {
+		suite.True(*apiTag.Following)
+	}
+}
+
+// When we follow a tag already followed by the account, it should succeed.
+func (suite *TagsTestSuite) TestFollowIdempotent() {
 	accountFixtureName := "local_account_2"
 	testAccount := suite.testAccounts[accountFixtureName]
 	testTag := suite.testTags["welcome"]
@@ -52,30 +69,14 @@ func (suite *FollowedTagsTestSuite) TestUnfollow() {
 		suite.FailNow(err.Error())
 	}
 
-	// Unfollow it through the API.
-	followedTag, err := suite.unfollow(accountFixtureName, testTag.Name, http.StatusOK, "")
+	// Follow it again through the API.
+	apiTag, err := suite.follow(accountFixtureName, testTag.Name, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal(testTag.Name, followedTag.Name)
-	if suite.NotNil(followedTag.Following) {
-		suite.False(*followedTag.Following)
-	}
-}
-
-// When we unfollow a tag not followed by the account, it should succeed.
-func (suite *FollowedTagsTestSuite) TestUnfollowIdempotent() {
-	accountFixtureName := "local_account_2"
-	testTag := suite.testTags["Hashtag"]
-
-	followedTag, err := suite.unfollow(accountFixtureName, testTag.Name, http.StatusOK, "")
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.Equal(testTag.Name, followedTag.Name)
-	if suite.NotNil(followedTag.Following) {
-		suite.False(*followedTag.Following)
+	suite.Equal(testTag.Name, apiTag.Name)
+	if suite.NotNil(apiTag.Following) {
+		suite.True(*apiTag.Following)
 	}
 }

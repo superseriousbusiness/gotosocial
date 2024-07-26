@@ -41,6 +41,9 @@ type Tag interface {
 	// GetFollowedTags gets the user's followed tags.
 	GetFollowedTags(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Tag, error)
 
+	// DoesAccountFollowTag returns whether the account follows the given tag.
+	DoesAccountFollowTag(ctx context.Context, accountID string, tagID string) (bool, error)
+
 	// PutFollowedTag creates a new followed tag for a the given user.
 	// If it already exists, it returns without an error.
 	PutFollowedTag(ctx context.Context, accountID string, tagID string) error

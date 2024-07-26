@@ -15,26 +15,34 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags_test
+package tags_test
 
 import (
+	"encoding/json"
+	"io"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/tags"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type FollowedTagsTestSuite struct {
+type TagsTestSuite struct {
 	suite.Suite
 	db           db.DB
 	storage      *storage.Driver
@@ -54,10 +62,10 @@ type FollowedTagsTestSuite struct {
 	testTags         map[string]*gtsmodel.Tag
 
 	// module being tested
-	followedTagsModule *followedtags.Module
+	tagsModule *tags.Module
 }
 
-func (suite *FollowedTagsTestSuite) SetupSuite() {
+func (suite *TagsTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
@@ -66,7 +74,7 @@ func (suite *FollowedTagsTestSuite) SetupSuite() {
 	suite.testTags = testrig.NewTestTags()
 }
 
-func (suite *FollowedTagsTestSuite) SetupTest() {
+func (suite *TagsTestSuite) SetupTest() {
 	suite.state.Caches.Init()
 	testrig.StartNoopWorkers(&suite.state)
 
@@ -87,18 +95,85 @@ func (suite *FollowedTagsTestSuite) SetupTest() {
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
 	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
-	suite.followedTagsModule = followedtags.New(suite.processor)
+	suite.tagsModule = tags.New(suite.processor)
 
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")
 }
 
-func (suite *FollowedTagsTestSuite) TearDownTest() {
+func (suite *TagsTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 	testrig.StandardStorageTeardown(suite.storage)
 	testrig.StopWorkers(&suite.state)
 }
 
-func TestFollowedTagsTestSuite(t *testing.T) {
-	suite.Run(t, new(FollowedTagsTestSuite))
+// tagAction gets, follows, or unfollows a tag, returning the tag.
+func (suite *TagsTestSuite) tagAction(
+	accountFixtureName string,
+	tagName string,
+	method string,
+	path string,
+	handler func(c *gin.Context),
+	expectedHTTPStatus int,
+	expectedBody string,
+) (*apimodel.Tag, error) {
+	// instantiate recorder + test context
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts[accountFixtureName])
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens[accountFixtureName]))
+	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers[accountFixtureName])
+
+	// create the request
+	url := config.GetProtocol() + "://" + config.GetHost() + "/api/" + path
+	ctx.Request = httptest.NewRequest(
+		method,
+		strings.Replace(url, ":tag_name", tagName, 1),
+		nil,
+	)
+	ctx.Request.Header.Set("accept", "application/json")
+
+	ctx.AddParam("tag_name", tagName)
+
+	// trigger the handler
+	handler(ctx)
+
+	// read the response
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	errs := gtserror.NewMultiError(2)
+
+	// check code + body
+	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
+		errs.Appendf("expected %d got %d", expectedHTTPStatus, resultCode)
+		if expectedBody == "" {
+			return nil, errs.Combine()
+		}
+	}
+
+	// if we got an expected body, return early
+	if expectedBody != "" {
+		if string(b) != expectedBody {
+			errs.Appendf("expected %s got %s", expectedBody, string(b))
+		}
+		return nil, errs.Combine()
+	}
+
+	resp := &apimodel.Tag{}
+	if err := json.Unmarshal(b, resp); err != nil {
+		return nil, err
+	}
+
+	return resp, nil
+}
+
+func TestTagsTestSuite(t *testing.T) {
+	suite.Run(t, new(TagsTestSuite))
 }

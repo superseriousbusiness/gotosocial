@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package followedtags
+package tags
 
 import (
 	"net/http"
@@ -26,22 +26,22 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// UnfollowTagPOSTHandler swagger:operation POST /api/v1/tags/{tag_name}/unfollow unfollowTag
+// TagGETHandler swagger:operation GET /api/v1/tags/{tag_name} getTag
 //
-// Unfollow a hashtag.
+// Get details for a hashtag, including whether you currently follow it.
 //
-// Idempotent: if you are not following the tag, this call will still succeed.
+// If the tag does not exist, this method will not create it in the database.
 //
 //	---
 //	tags:
-//	- followed_tags
+//	- tags
 //
 //	produces:
 //	- application/json
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- write:follows
+//		- read:follows
 //
 //	parameters:
 //	-
@@ -60,19 +60,16 @@ import (
 //			description: bad request
 //		'401':
 //			description: unauthorized
-//		'403':
-//			description: forbidden
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) UnfollowTagPOSTHandler(c *gin.Context) {
+func (m *Module) TagGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if authed.Account.IsMoving() {
-		apiutil.ForbiddenAfterMove(c)
 		return
 	}
 
@@ -82,7 +79,7 @@ func (m *Module) UnfollowTagPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiTag, errWithCode := m.processor.FollowedTags().Unfollow(c.Request.Context(), authed.Account, name)
+	apiTag, errWithCode := m.processor.Tags().Get(c.Request.Context(), authed.Account, name)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
