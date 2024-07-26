@@ -229,6 +229,9 @@ func (t *tagDB) DeleteFollowedTag(ctx context.Context, accountID string, tagID s
 		Where("? = ?", bun.Ident("account_id"), accountID).
 		Where("? = ?", bun.Ident("tag_id"), tagID).
 		Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error deleting followed tag %s for account %s: %w", tagID, accountID, err)
+	}
 
 	rows, err := result.RowsAffected()
 	if err != nil {
