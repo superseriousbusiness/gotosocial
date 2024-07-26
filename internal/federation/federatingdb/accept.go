@@ -160,6 +160,11 @@ func (f *federatingDB) acceptFollowType(
 		return gtserror.NewErrorInternalError(err)
 	}
 
+	// Lock on the Follow URI
+	// as we may be updating it.
+	unlock := f.state.FedLocks.Lock(follow.URI)
+	defer unlock()
+
 	// Make sure the creator of the original follow
 	// is the same as whatever inbox this landed in.
 	if follow.AccountID != receivingAcct.ID {
@@ -180,11 +185,19 @@ func (f *federatingDB) acceptFollowType(
 		follow.AccountID,
 		follow.TargetAccountID,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("db error accepting follow request: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
+	if follow == nil {
+		// There was no follow request
+		// to accept, just return 202.
+		return nil
+	}
+
+	// Send the accepted follow through
+	// the processor to do side effects.
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityAccept,
@@ -202,6 +215,11 @@ func (f *federatingDB) acceptFollowIRI(
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
 ) error {
+	// Lock on this potential Follow
+	// URI as we may be updating it.
+	unlock := f.state.FedLocks.Lock(objectIRI)
+	defer unlock()
+
 	// Get the follow req from the db.
 	followReq, err := f.state.DB.GetFollowRequestByURI(ctx, objectIRI)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -236,11 +254,19 @@ func (f *federatingDB) acceptFollowIRI(
 		followReq.AccountID,
 		followReq.TargetAccountID,
 	)
-	if err != nil {
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("db error accepting follow request: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
+	if follow == nil {
+		// There was no follow request
+		// to accept, just return 202.
+		return nil
+	}
+
+	// Send the accepted follow through
+	// the processor to do side effects.
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APObjectType:   ap.ActivityFollow,
 		APActivityType: ap.ActivityAccept,
@@ -261,7 +287,7 @@ func (f *federatingDB) acceptStatusIRI(
 ) error {
 	// Lock on this potential status
 	// URI as we may be updating it.
-	unlock := f.state.FedLocks.Lock("federatingDB " + objectIRI)
+	unlock := f.state.FedLocks.Lock(objectIRI)
 	defer unlock()
 
 	// Get the status from the db.
@@ -352,7 +378,7 @@ func (f *federatingDB) acceptLikeIRI(
 ) error {
 	// Lock on this potential Like
 	// URI as we may be updating it.
-	unlock := f.state.FedLocks.Lock("federatingDB " + objectIRI)
+	unlock := f.state.FedLocks.Lock(objectIRI)
 	defer unlock()
 
 	// Get the fave from the db.
