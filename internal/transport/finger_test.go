@@ -42,6 +42,18 @@ func (suite *FingerTestSuite) TestFinger() {
 	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty for normal webfinger request")
 }
 
+func (suite *FingerTestSuite) TestFingerPunycode() {
+	wc := suite.state.Caches.Webfinger
+	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty")
+
+	_, err := suite.transport.Finger(context.TODO(), "brand_new_person", "pünycöde.example.org")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty for normal webfinger request")
+}
+
 func (suite *FingerTestSuite) TestFingerWithHostMeta() {
 	wc := suite.state.Caches.Webfinger
 	suite.Equal(0, wc.Len(), "expect webfinger cache to be empty")
