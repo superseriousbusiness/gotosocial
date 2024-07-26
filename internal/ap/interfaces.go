@@ -124,6 +124,24 @@ func ToPollOptionable(t vocab.Type) (PollOptionable, bool) {
 	return note, true
 }
 
+// IsAccept returns whether AS vocab type name
+// is something that can be cast to Accept.
+func IsAcceptable(typeName string) bool {
+	return typeName == ActivityAccept
+}
+
+// ToAcceptable safely tries to cast vocab.Type as vocab.ActivityStreamsAccept.
+//
+// TODO: Add additional "Accept" types here, eg., "ApproveReply" from
+// https://codeberg.org/fediverse/fep/src/branch/main/fep/5624/fep-5624.md
+func ToAcceptable(t vocab.Type) (vocab.ActivityStreamsAccept, bool) {
+	acceptable, ok := t.(vocab.ActivityStreamsAccept)
+	if !ok || !IsAcceptable(t.GetTypeName()) {
+		return nil, false
+	}
+	return acceptable, true
+}
+
 // Activityable represents the minimum activitypub interface for representing an 'activity'.
 // (see: IsActivityable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Activityable types).
@@ -217,6 +235,12 @@ type PollOptionable interface {
 	WithInReplyTo
 	WithReplies
 	WithAttributedTo
+}
+
+// Acceptable represents the minimum activitypub
+// interface for representing an Accept.
+type Acceptable interface {
+	Activityable
 }
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'. (see: IsAttachmentable).

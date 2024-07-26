@@ -360,14 +360,14 @@ func (d *Dereferencer) validateApprovedBy(
 		return err
 	}
 
-	// Make the call to resolve the Accept.
+	// Make the call to resolve into an Acceptable.
 	rsp, err := transport.Dereference(ctx, approvedByURI)
 	if err != nil {
 		err := gtserror.Newf("error dereferencing %s: %w", approvedByURIStr, err)
 		return err
 	}
 
-	accept, err := ap.ResolveAccept(ctx, rsp.Body)
+	acceptable, err := ap.ResolveAcceptable(ctx, rsp.Body)
 
 	// Tidy up rsp body.
 	_ = rsp.Body.Close()
@@ -378,7 +378,7 @@ func (d *Dereferencer) validateApprovedBy(
 	}
 
 	// Extract the URI/ID of the Accept.
-	acceptURI := ap.GetJSONLDId(accept)
+	acceptURI := ap.GetJSONLDId(acceptable)
 	acceptURIStr := acceptURI.String()
 
 	// Check whether input URI and final returned URI
@@ -413,7 +413,7 @@ func (d *Dereferencer) validateApprovedBy(
 	// as the Accept Actor, so we know we're
 	// not dealing with someone on a different
 	// domain just pretending to be the Actor.
-	actorIRIs := ap.GetActorIRIs(accept)
+	actorIRIs := ap.GetActorIRIs(acceptable)
 	if len(actorIRIs) != 1 {
 		err := gtserror.New("resolved Accept actor(s) length was not 1")
 		return gtserror.SetMalformed(err)
@@ -445,7 +445,7 @@ func (d *Dereferencer) validateApprovedBy(
 	// Ensure the Accept Object is what we expect
 	// it to be, ie., it's Accepting the interaction
 	// we need it to Accept, and not something else.
-	objectIRIs := ap.GetObjectIRIs(accept)
+	objectIRIs := ap.GetObjectIRIs(acceptable)
 	if len(objectIRIs) != 1 {
 		err := gtserror.New("resolved Accept object(s) length was not 1")
 		return err

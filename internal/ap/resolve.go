@@ -198,12 +198,12 @@ func ResolveCollectionPage(ctx context.Context, body io.ReadCloser) (CollectionP
 	return ToCollectionPageIterator(t)
 }
 
-// ResolveAccept tries to resolve the given reader
-// into an ActivityStreams Accept representation.
-func ResolveAccept(
+// ResolveAcceptable tries to resolve the given reader
+// into an ActivityStreams Acceptable representation.
+func ResolveAcceptable(
 	ctx context.Context,
 	body io.ReadCloser,
-) (vocab.ActivityStreamsAccept, error) {
+) (Acceptable, error) {
 	// Get "raw" map
 	// destination.
 	raw := getMap()
@@ -218,18 +218,14 @@ func ResolveAccept(
 		return nil, gtserror.SetWrongType(err)
 	}
 
-	if t.GetTypeName() != ActivityAccept {
-		err := gtserror.Newf("cannot resolve vocab type %T as Accept", t)
-		return nil, gtserror.SetWrongType(err)
-	}
-
-	accept, ok := t.(vocab.ActivityStreamsAccept)
+	// Attempt to cast as acceptable.
+	acceptable, ok := ToAcceptable(t)
 	if !ok {
-		err := gtserror.Newf("cannot coerce vocab type to Accept")
+		err := gtserror.Newf("cannot resolve vocab type %T as acceptable", t)
 		return nil, gtserror.SetWrongType(err)
 	}
 
-	return accept, nil
+	return acceptable, nil
 }
 
 // emptydest is an empty JSON decode
