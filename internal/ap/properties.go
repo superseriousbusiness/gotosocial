@@ -81,17 +81,6 @@ func SetJSONLDIdStr(with WithJSONLDId, id string) error {
 	return nil
 }
 
-// AppendIRIStr appends the given iri
-// string to the back of the given property.
-func AppendIRIStr[T WithIRI](prop Property[T], iri string) error {
-	u, err := url.Parse(iri)
-	if err != nil {
-		return fmt.Errorf("error parsing iri: %w", err)
-	}
-	prop.AppendIRI(u)
-	return nil
-}
-
 // GetTo returns the IRIs contained in the To property of 'with'. Panics on entries with missing ID.
 func GetTo(with WithTo) []*url.URL {
 	toProp := with.GetActivityStreamsTo()

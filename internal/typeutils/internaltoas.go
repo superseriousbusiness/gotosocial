@@ -1823,9 +1823,12 @@ func populateValuesForProp[T ap.WithIRI](
 
 	// Append them to the property.
 	for _, iriStr := range iriStrs {
-		if err := ap.AppendIRIStr(prop, iriStr); err != nil {
+		iri, err := url.Parse(iriStr)
+		if err != nil {
 			return err
 		}
+
+		prop.AppendIRI(iri)
 	}
 
 	return nil
