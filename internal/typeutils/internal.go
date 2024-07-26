@@ -81,14 +81,12 @@ func (c *Converter) StatusToBoost(
 		MentionIDs:    []string{},
 		EmojiIDs:      []string{},
 
+		// Boosts are not considered sensitive even if their target is.
+		Sensitive: util.Ptr(false),
+
 		// Remaining fields all
 		// taken from boosted status.
-		Content:             target.Content,
-		ContentWarning:      target.ContentWarning,
 		ActivityStreamsType: target.ActivityStreamsType,
-		Sensitive:           util.Ptr(*target.Sensitive),
-		Language:            target.Language,
-		Text:                target.Text,
 		BoostOfID:           target.ID,
 		BoostOf:             target,
 		BoostOfAccountID:    target.AccountID,

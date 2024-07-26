@@ -2975,6 +2975,62 @@ func GetCacheClientMemRatio() float64 { return global.GetCacheClientMemRatio() }
 // SetCacheClientMemRatio safely sets the value for global configuration 'Cache.ClientMemRatio' field
 func SetCacheClientMemRatio(v float64) { global.SetCacheClientMemRatio(v) }
 
+// GetCacheConversationMemRatio safely fetches the Configuration value for state's 'Cache.ConversationMemRatio' field
+func (st *ConfigState) GetCacheConversationMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.ConversationMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheConversationMemRatio safely sets the Configuration value for state's 'Cache.ConversationMemRatio' field
+func (st *ConfigState) SetCacheConversationMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.ConversationMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheConversationMemRatioFlag returns the flag name for the 'Cache.ConversationMemRatio' field
+func CacheConversationMemRatioFlag() string { return "cache-conversation-mem-ratio" }
+
+// GetCacheConversationMemRatio safely fetches the value for global configuration 'Cache.ConversationMemRatio' field
+func GetCacheConversationMemRatio() float64 { return global.GetCacheConversationMemRatio() }
+
+// SetCacheConversationMemRatio safely sets the value for global configuration 'Cache.ConversationMemRatio' field
+func SetCacheConversationMemRatio(v float64) { global.SetCacheConversationMemRatio(v) }
+
+// GetCacheConversationLastStatusIDsMemRatio safely fetches the Configuration value for state's 'Cache.ConversationLastStatusIDsMemRatio' field
+func (st *ConfigState) GetCacheConversationLastStatusIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.ConversationLastStatusIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheConversationLastStatusIDsMemRatio safely sets the Configuration value for state's 'Cache.ConversationLastStatusIDsMemRatio' field
+func (st *ConfigState) SetCacheConversationLastStatusIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.ConversationLastStatusIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheConversationLastStatusIDsMemRatioFlag returns the flag name for the 'Cache.ConversationLastStatusIDsMemRatio' field
+func CacheConversationLastStatusIDsMemRatioFlag() string {
+	return "cache-conversation-last-status-ids-mem-ratio"
+}
+
+// GetCacheConversationLastStatusIDsMemRatio safely fetches the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
+func GetCacheConversationLastStatusIDsMemRatio() float64 {
+	return global.GetCacheConversationLastStatusIDsMemRatio()
+}
+
+// SetCacheConversationLastStatusIDsMemRatio safely sets the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
+func SetCacheConversationLastStatusIDsMemRatio(v float64) {
+	global.SetCacheConversationLastStatusIDsMemRatio(v)
+}
+
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
 func (st *ConfigState) GetCacheEmojiMemRatio() (v float64) {
 	st.mutex.RLock()

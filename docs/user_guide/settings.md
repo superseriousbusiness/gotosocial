@@ -201,47 +201,6 @@ For more information on the way GoToSocial manages passwords, please see the [Pa
 
 ## Migration
 
-In the migration section you can manage settings related to aliasing and/or migrating your account to another account.
+In the migration section you can manage settings related to aliasing and/or migrating your account to or from another account.
 
-!!! tip
-    Depending on the software that a target account is hosted on, target account URIs for both aliasing and moves should look something like `https://mastodon.example.org/users/account_you_are_moving_to`. If you are unsure what format to use, check with the admin of the instance you are moving or aliasing to.
-
-### Alias Account
-
-You can use this section to create an alias from your GoToSocial account to other accounts elsewhere, indicating that you are also known as those accounts.
-
-**Not implemented yet**: Alias information for accounts you enter here will be shown on the web view of your profile, but only if the target accounts are also aliased back to your account first. This is to prevent accounts from claiming to be aliased to other accounts that they don't actually control.
-
-### Move Account
-
-Using the move account settings, you can trigger the migration of your current account to the given target account URI.
-
-In order for the move to be successful, the target account (the account you are moving to) must be aliased back to your current account (the account you are moving from). The target account must also be reachable from your current account, ie., not blocked by you, not suspended by your current instance, and not on a domain that is blocked by your current instance. The target account does not have to be on a GoToSocial instance.
-
-GoToSocial uses an account move cooldown of 7 days. If either your current account or the target account have recently been involved in a move, you will not be able to trigger a move to the target account until seven days have passed.
-
-Moving your account will send a message out from your current account, to your current followers, indicating that they should follow the target account instead. Depending on the server software used by your followers, they may then automatically send a follow (request) to the target account, and unfollow your current account.
-
-Currently, **only your followers will be carried over to the new account**. Other things like your following list, statuses, media, bookmarks, faves, blocks, etc, will not be carried over.
-
-Once your account has moved, the web view of your current (now old) account will show a notice that you have moved, and to where.
-
-Your old statuses and media will still be visible on the web view of the account you've moved from, unless you delete them manually. If you prefer, you can ask the admin of the instance you've moved from to suspend/delete your account after the move has gone through.
-
-If necessary, you can retry an account move using the same target account URI. This will send the move message out again.
-
-!!! danger "Moving your account is an irreversible, permanent action!"
-    
-    From the moment you trigger an account move, you will have only basic read- and delete-level permissions on the account you've moved from.
-    
-    You will still be able to log in to your old account and see your own posts, faves, bookmarks, blocks, and lists.
-    
-    You will also be able to edit your profile, delete and/or unpin your own posts, and unboost, unfave, and unbookmark posts.
-    
-    However, you will not be able to take any action that involves creating something, such as writing, boosting, bookmarking, or faving a post, following someone, uploading media, creating a list, etc.
-    
-    Additionally, you will not be able to view any timelines (home, tag, public, list), or use the search functionality.
-
-## Admins
-
-If your account has been promoted to admin, this interface will also show sections related to admin actions, see [Admin Settings](../admin/settings.md).
+Please see the [migration document](./migration.md) for more information on moving your account.

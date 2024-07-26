@@ -460,6 +460,14 @@ func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmod
 
 	// TODO: add status mutes here when they're implemented.
 
+	// Delete all conversations owned by given account.
+	// Conversations in which it has only participated will be retained;
+	// they can always be deleted by their owners.
+	if err := p.state.DB.DeleteConversationsByOwnerAccountID(ctx, account.ID); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("error deleting conversations owned by account: %w", err)
+	}
+
 	// Delete all poll votes owned by given account.
 	if err := p.state.DB.DeletePollVotesByAccountID(ctx, account.ID); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {

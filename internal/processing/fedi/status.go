@@ -68,7 +68,7 @@ func (p *Processor) StatusGet(ctx context.Context, requestedUser string, statusI
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	visible, err := p.filter.StatusVisible(ctx, requestingAcct, status)
+	visible, err := p.visFilter.StatusVisible(ctx, requestingAcct, status)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -163,7 +163,7 @@ func (p *Processor) StatusRepliesGet(
 	}
 
 	// Reslice replies dropping all those invisible to requester.
-	replies, err = p.filter.StatusesVisible(ctx, requestingAcct, replies)
+	replies, err = p.visFilter.StatusesVisible(ctx, requestingAcct, replies)
 	if err != nil {
 		err := gtserror.Newf("error filtering status replies: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

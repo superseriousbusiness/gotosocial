@@ -169,6 +169,8 @@ func (p *Processor) Create(
 
 func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status, inReplyToID string) gtserror.WithCode {
 	if inReplyToID == "" {
+		// Not a reply.
+		// Nothing to do.
 		return nil
 	}
 
@@ -190,6 +192,54 @@ func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Ac
 	if errWithCode != nil {
 		return errWithCode
 	}
+
+	// Ensure valid reply target for requester.
+	policyResult, err := p.intFilter.StatusReplyable(ctx,
+		requester,
+		inReplyTo,
+	)
+	if err != nil {
+		err := gtserror.Newf("error seeing if status %s is replyable: %w", status.ID, err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if policyResult.Forbidden() {
+		const errText = "you do not have permission to reply to this status"
+		err := gtserror.New(errText)
+		return gtserror.NewErrorForbidden(err, errText)
+	}
+
+	// Derive pendingApproval status.
+	var pendingApproval bool
+	switch {
+	case policyResult.WithApproval():
+		// We're allowed to do
+		// this pending approval.
+		pendingApproval = true
+
+	case policyResult.MatchedOnCollection():
+		// We're permitted to do this, but since
+		// we matched due to presence in a followers
+		// or following collection, we should mark
+		// as pending approval and wait until we can
+		// prove it's been Accepted by the target.
+		pendingApproval = true
+
+		if *inReplyTo.Local {
+			// If the target is local we don't need
+			// to wait for an Accept from remote,
+			// we can just preapprove it and have
+			// the processor create the Accept.
+			status.PreApproved = true
+		}
+
+	case policyResult.Permitted():
+		// We're permitted to do this
+		// based on another kind of match.
+		pendingApproval = false
+	}
+
+	status.PendingApproval = &pendingApproval
 
 	// Set status fields from inReplyTo.
 	status.InReplyToID = inReplyTo.ID

@@ -95,7 +95,7 @@ func (s *statusFaveDB) GetStatusFaveByURI(ctx context.Context, uri string) (*gts
 
 func (s *statusFaveDB) getStatusFave(ctx context.Context, lookup string, dbQuery func(*gtsmodel.StatusFave) error, keyParts ...any) (*gtsmodel.StatusFave, error) {
 	// Fetch status fave from database cache with loader callback
-	fave, err := s.state.Caches.GTS.StatusFave.LoadOne(lookup, func() (*gtsmodel.StatusFave, error) {
+	fave, err := s.state.Caches.DB.StatusFave.LoadOne(lookup, func() (*gtsmodel.StatusFave, error) {
 		var fave gtsmodel.StatusFave
 
 		// Not cached! Perform database query.
@@ -130,7 +130,7 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 	}
 
 	// Load all fave IDs via cache loader callbacks.
-	faves, err := s.state.Caches.GTS.StatusFave.LoadIDs("ID",
+	faves, err := s.state.Caches.DB.StatusFave.LoadIDs("ID",
 		faveIDs,
 		func(uncached []string) ([]*gtsmodel.StatusFave, error) {
 			// Preallocate expected length of uncached faves.
@@ -189,7 +189,7 @@ func (s *statusFaveDB) CountStatusFaves(ctx context.Context, statusID string) (i
 }
 
 func (s *statusFaveDB) getStatusFaveIDs(ctx context.Context, statusID string) ([]string, error) {
-	return s.state.Caches.GTS.StatusFaveIDs.Load(statusID, func() ([]string, error) {
+	return s.state.Caches.DB.StatusFaveIDs.Load(statusID, func() ([]string, error) {
 		var faveIDs []string
 
 		// Status fave IDs not in cache, perform DB query!
@@ -249,7 +249,7 @@ func (s *statusFaveDB) PopulateStatusFave(ctx context.Context, statusFave *gtsmo
 }
 
 func (s *statusFaveDB) PutStatusFave(ctx context.Context, fave *gtsmodel.StatusFave) error {
-	return s.state.Caches.GTS.StatusFave.Store(fave, func() error {
+	return s.state.Caches.DB.StatusFave.Store(fave, func() error {
 		_, err := s.db.
 			NewInsert().
 			Model(fave).
@@ -267,7 +267,7 @@ func (s *statusFaveDB) UpdateStatusFave(ctx context.Context, fave *gtsmodel.Stat
 	}
 
 	// Update the status fave model in the database.
-	return s.state.Caches.GTS.StatusFave.Store(fave, func() error {
+	return s.state.Caches.DB.StatusFave.Store(fave, func() error {
 		_, err := s.db.
 			NewUpdate().
 			Model(fave).
@@ -298,10 +298,10 @@ func (s *statusFaveDB) DeleteStatusFaveByID(ctx context.Context, id string) erro
 
 	if statusID != "" {
 		// Invalidate any cached status faves for this status.
-		s.state.Caches.GTS.StatusFave.Invalidate("ID", id)
+		s.state.Caches.DB.StatusFave.Invalidate("ID", id)
 
 		// Invalidate any cached status fave IDs for this status.
-		s.state.Caches.GTS.StatusFaveIDs.Invalidate(statusID)
+		s.state.Caches.DB.StatusFaveIDs.Invalidate(statusID)
 	}
 
 	return nil
@@ -342,10 +342,10 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	statusIDs = util.Deduplicate(statusIDs)
 
 	// Invalidate any cached status faves for this status ID.
-	s.state.Caches.GTS.StatusFave.InvalidateIDs("ID", statusIDs)
+	s.state.Caches.DB.StatusFave.InvalidateIDs("ID", statusIDs)
 
 	// Invalidate any cached status fave IDs for this status ID.
-	s.state.Caches.GTS.StatusFaveIDs.Invalidate(statusIDs...)
+	s.state.Caches.DB.StatusFaveIDs.Invalidate(statusIDs...)
 
 	return nil
 }
@@ -360,10 +360,10 @@ func (s *statusFaveDB) DeleteStatusFavesForStatus(ctx context.Context, statusID 
 	}
 
 	// Invalidate any cached status faves for this status.
-	s.state.Caches.GTS.StatusFave.Invalidate("ID", statusID)
+	s.state.Caches.DB.StatusFave.Invalidate("ID", statusID)
 
 	// Invalidate any cached status fave IDs for this status.
-	s.state.Caches.GTS.StatusFaveIDs.Invalidate(statusID)
+	s.state.Caches.DB.StatusFaveIDs.Invalidate(statusID)
 
 	return nil
 }

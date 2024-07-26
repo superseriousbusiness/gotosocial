@@ -134,16 +134,47 @@
 				font-size: 1.5rem;
 				font-weight: bold;
 			}
-	
-			.username {
-				min-width: 0;
+
+			.bot-username-wrapper {
+				display: flex;
+				gap: 0.5rem;
 				grid-area: username;
-				line-height: $username-size;
-	
-				font-size: 1rem;
-				font-weight: bold;
-				color: $fg-accent;
-				user-select: all;
+				align-items: center;
+				
+				.bot-legend-wrapper {
+					display: flex;
+					gap: 0.25rem;
+					align-items: center;
+					
+					background: $bg;
+					color: $fg;
+		
+					border-radius: $br;
+					padding: 0.1rem 0.4rem 0.2rem 0.4rem;
+					
+					font-variant: small-caps;
+					font-weight: bold;
+
+					cursor: default;
+
+					.bot-icon {
+						/*
+							FA icon is weirdly
+							aligned so tweak it
+						*/
+						margin-top: 0.25rem;
+					}
+				}
+
+				.username {
+					min-width: 0;
+					line-height: $username-size;
+		
+					font-size: 1rem;
+					font-weight: bold;
+					color: $fg-accent;
+					user-select: all;
+				}
 			}
 	
 			.role {

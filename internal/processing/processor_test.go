@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -122,7 +123,17 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.typeconverter, suite.federator, suite.oauthServer, suite.mediaManager, &suite.state, suite.emailSender)
+	suite.processor = processing.NewProcessor(
+		cleaner.New(&suite.state),
+		suite.typeconverter,
+		suite.federator,
+		suite.oauthServer,
+		suite.mediaManager,
+		&suite.state,
+		suite.emailSender,
+		visibility.NewFilter(&suite.state),
+		interaction.NewFilter(&suite.state),
+	)
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

@@ -103,7 +103,7 @@ func (p *Processor) packageStatuses(
 
 	for _, status := range statuses {
 		// Ensure requester can see result status.
-		visible, err := p.filter.StatusVisible(ctx, requestingAccount, status)
+		visible, err := p.visFilter.StatusVisible(ctx, requestingAccount, status)
 		if err != nil {
 			err = gtserror.Newf("error checking visibility of status %s for account %s: %w", status.ID, requestingAccount.ID, err)
 			return nil, gtserror.NewErrorInternalError(err)

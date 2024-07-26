@@ -32,6 +32,62 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// notifyPendingReply notifies the account replied-to
+// by the given status that they have a new reply,
+// and that approval is pending.
+func (s *Surface) notifyPendingReply(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) error {
+	// Beforehand, ensure the passed status is fully populated.
+	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error populating status %s: %w", status.ID, err)
+	}
+
+	if status.InReplyToAccount.IsRemote() {
+		// Don't notify
+		// remote accounts.
+		return nil
+	}
+
+	if status.AccountID == status.InReplyToAccountID {
+		// Don't notify
+		// self-replies.
+		return nil
+	}
+
+	// Ensure thread not muted
+	// by replied-to account.
+	muted, err := s.State.DB.IsThreadMutedByAccount(
+		ctx,
+		status.ThreadID,
+		status.InReplyToAccountID,
+	)
+	if err != nil {
+		return gtserror.Newf("error checking status thread mute %s: %w", status.ThreadID, err)
+	}
+
+	if muted {
+		// The replied-to account
+		// has muted the thread.
+		// Don't pester them.
+		return nil
+	}
+
+	// notify mentioned
+	// by status author.
+	if err := s.Notify(ctx,
+		gtsmodel.NotificationPendingReply,
+		status.InReplyToAccount,
+		status.Account,
+		status.ID,
+	); err != nil {
+		return gtserror.Newf("error notifying replied-to account %s: %w", status.InReplyToAccountID, err)
+	}
+
+	return nil
+}
+
 // notifyMentions iterates through mentions on the
 // given status, and notifies each mentioned account
 // that they have a new mention.
@@ -181,36 +237,13 @@ func (s *Surface) notifyFave(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
 ) error {
-	if fave.TargetAccountID == fave.AccountID {
-		// Self-fave, nothing to do.
-		return nil
-	}
-
-	// Beforehand, ensure the passed status fave is fully populated.
-	if err := s.State.DB.PopulateStatusFave(ctx, fave); err != nil {
-		return gtserror.Newf("error populating fave %s: %w", fave.ID, err)
-	}
-
-	if fave.TargetAccount.IsRemote() {
-		// no need to notify
-		// remote accounts.
-		return nil
-	}
-
-	// Ensure favee hasn't
-	// muted the thread.
-	muted, err := s.State.DB.IsThreadMutedByAccount(
-		ctx,
-		fave.Status.ThreadID,
-		fave.TargetAccountID,
-	)
+	notifyable, err := s.notifyableFave(ctx, fave)
 	if err != nil {
-		return gtserror.Newf("error checking status thread mute %s: %w", fave.StatusID, err)
+		return err
 	}
 
-	if muted {
-		// Favee doesn't want
-		// notifs for this thread.
+	if !notifyable {
+		// Nothing to do.
 		return nil
 	}
 
@@ -228,31 +261,167 @@ func (s *Surface) notifyFave(
 	return nil
 }
 
+// notifyPendingFave notifies the target of the
+// given fave that their status has been faved
+// and that approval is required.
+func (s *Surface) notifyPendingFave(
+	ctx context.Context,
+	fave *gtsmodel.StatusFave,
+) error {
+	notifyable, err := s.notifyableFave(ctx, fave)
+	if err != nil {
+		return err
+	}
+
+	if !notifyable {
+		// Nothing to do.
+		return nil
+	}
+
+	// notify status author
+	// of fave by account.
+	if err := s.Notify(ctx,
+		gtsmodel.NotificationPendingFave,
+		fave.TargetAccount,
+		fave.Account,
+		fave.StatusID,
+	); err != nil {
+		return gtserror.Newf("error notifying status author %s: %w", fave.TargetAccountID, err)
+	}
+
+	return nil
+}
+
+// notifyableFave checks that the given
+// fave should be notified, taking account
+// of localness of receiving account, and mutes.
+func (s *Surface) notifyableFave(
+	ctx context.Context,
+	fave *gtsmodel.StatusFave,
+) (bool, error) {
+	if fave.TargetAccountID == fave.AccountID {
+		// Self-fave, nothing to do.
+		return false, nil
+	}
+
+	// Beforehand, ensure the passed status fave is fully populated.
+	if err := s.State.DB.PopulateStatusFave(ctx, fave); err != nil {
+		return false, gtserror.Newf("error populating fave %s: %w", fave.ID, err)
+	}
+
+	if fave.TargetAccount.IsRemote() {
+		// no need to notify
+		// remote accounts.
+		return false, nil
+	}
+
+	// Ensure favee hasn't
+	// muted the thread.
+	muted, err := s.State.DB.IsThreadMutedByAccount(
+		ctx,
+		fave.Status.ThreadID,
+		fave.TargetAccountID,
+	)
+	if err != nil {
+		return false, gtserror.Newf("error checking status thread mute %s: %w", fave.StatusID, err)
+	}
+
+	if muted {
+		// Favee doesn't want
+		// notifs for this thread.
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // notifyAnnounce notifies the status boost target
 // account that their status has been boosted.
 func (s *Surface) notifyAnnounce(
 	ctx context.Context,
-	status *gtsmodel.Status,
+	boost *gtsmodel.Status,
 ) error {
+	notifyable, err := s.notifyableAnnounce(ctx, boost)
+	if err != nil {
+		return err
+	}
+
+	if !notifyable {
+		// Nothing to do.
+		return nil
+	}
+
+	// notify status author
+	// of boost by account.
+	if err := s.Notify(ctx,
+		gtsmodel.NotificationReblog,
+		boost.BoostOfAccount,
+		boost.Account,
+		boost.ID,
+	); err != nil {
+		return gtserror.Newf("error notifying boost target %s: %w", boost.BoostOfAccountID, err)
+	}
+
+	return nil
+}
+
+// notifyPendingAnnounce notifies the status boost
+// target account that their status has been boosted,
+// and that the boost requires approval.
+func (s *Surface) notifyPendingAnnounce(
+	ctx context.Context,
+	boost *gtsmodel.Status,
+) error {
+	notifyable, err := s.notifyableAnnounce(ctx, boost)
+	if err != nil {
+		return err
+	}
+
+	if !notifyable {
+		// Nothing to do.
+		return nil
+	}
+
+	// notify status author
+	// of boost by account.
+	if err := s.Notify(ctx,
+		gtsmodel.NotificationPendingReblog,
+		boost.BoostOfAccount,
+		boost.Account,
+		boost.ID,
+	); err != nil {
+		return gtserror.Newf("error notifying boost target %s: %w", boost.BoostOfAccountID, err)
+	}
+
+	return nil
+}
+
+// notifyableAnnounce checks that the given
+// announce should be notified, taking account
+// of localness of receiving account, and mutes.
+func (s *Surface) notifyableAnnounce(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) (bool, error) {
 	if status.BoostOfID == "" {
 		// Not a boost, nothing to do.
-		return nil
+		return false, nil
 	}
 
 	if status.BoostOfAccountID == status.AccountID {
 		// Self-boost, nothing to do.
-		return nil
+		return false, nil
 	}
 
 	// Beforehand, ensure the passed status is fully populated.
 	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
-		return gtserror.Newf("error populating status %s: %w", status.ID, err)
+		return false, gtserror.Newf("error populating status %s: %w", status.ID, err)
 	}
 
 	if status.BoostOfAccount.IsRemote() {
 		// no need to notify
 		// remote accounts.
-		return nil
+		return false, nil
 	}
 
 	// Ensure boostee hasn't
@@ -264,27 +433,16 @@ func (s *Surface) notifyAnnounce(
 	)
 
 	if err != nil {
-		return gtserror.Newf("error checking status thread mute %s: %w", status.BoostOfID, err)
+		return false, gtserror.Newf("error checking status thread mute %s: %w", status.BoostOfID, err)
 	}
 
 	if muted {
 		// Boostee doesn't want
 		// notifs for this thread.
-		return nil
+		return false, nil
 	}
 
-	// notify status author
-	// of boost by account.
-	if err := s.Notify(ctx,
-		gtsmodel.NotificationReblog,
-		status.BoostOfAccount,
-		status.Account,
-		status.ID,
-	); err != nil {
-		return gtserror.Newf("error notifying status author %s: %w", status.BoostOfAccountID, err)
-	}
-
-	return nil
+	return true, nil
 }
 
 func (s *Surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) error {

@@ -54,7 +54,7 @@ func (a *applicationDB) GetApplicationByClientID(ctx context.Context, clientID s
 }
 
 func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Application) error, keyParts ...any) (*gtsmodel.Application, error) {
-	return a.state.Caches.GTS.Application.LoadOne(lookup, func() (*gtsmodel.Application, error) {
+	return a.state.Caches.DB.Application.LoadOne(lookup, func() (*gtsmodel.Application, error) {
 		var app gtsmodel.Application
 
 		// Not cached! Perform database query.
@@ -67,7 +67,7 @@ func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQue
 }
 
 func (a *applicationDB) PutApplication(ctx context.Context, app *gtsmodel.Application) error {
-	return a.state.Caches.GTS.Application.Store(app, func() error {
+	return a.state.Caches.DB.Application.Store(app, func() error {
 		_, err := a.db.NewInsert().Model(app).Exec(ctx)
 		return err
 	})
@@ -92,13 +92,13 @@ func (a *applicationDB) DeleteApplicationByClientID(ctx context.Context, clientI
 	//
 
 	// Clear application from the cache.
-	a.state.Caches.GTS.Application.Invalidate("ClientID", clientID)
+	a.state.Caches.DB.Application.Invalidate("ClientID", clientID)
 
 	return nil
 }
 
 func (a *applicationDB) GetClientByID(ctx context.Context, id string) (*gtsmodel.Client, error) {
-	return a.state.Caches.GTS.Client.LoadOne("ID", func() (*gtsmodel.Client, error) {
+	return a.state.Caches.DB.Client.LoadOne("ID", func() (*gtsmodel.Client, error) {
 		var client gtsmodel.Client
 
 		if err := a.db.NewSelect().
@@ -113,7 +113,7 @@ func (a *applicationDB) GetClientByID(ctx context.Context, id string) (*gtsmodel
 }
 
 func (a *applicationDB) PutClient(ctx context.Context, client *gtsmodel.Client) error {
-	return a.state.Caches.GTS.Client.Store(client, func() error {
+	return a.state.Caches.DB.Client.Store(client, func() error {
 		_, err := a.db.NewInsert().Model(client).Exec(ctx)
 		return err
 	})
@@ -128,7 +128,7 @@ func (a *applicationDB) DeleteClientByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	a.state.Caches.GTS.Client.Invalidate("ID", id)
+	a.state.Caches.DB.Client.Invalidate("ID", id)
 	return nil
 }
 
@@ -144,7 +144,7 @@ func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, er
 	}
 
 	// Load all input token IDs via cache loader callback.
-	tokens, err := a.state.Caches.GTS.Token.LoadIDs("ID",
+	tokens, err := a.state.Caches.DB.Token.LoadIDs("ID",
 		tokenIDs,
 		func(uncached []string) ([]*gtsmodel.Token, error) {
 			// Preallocate expected length of uncached tokens.
@@ -205,7 +205,7 @@ func (a *applicationDB) GetTokenByRefresh(ctx context.Context, refresh string) (
 }
 
 func (a *applicationDB) getTokenBy(lookup string, dbQuery func(*gtsmodel.Token) error, keyParts ...any) (*gtsmodel.Token, error) {
-	return a.state.Caches.GTS.Token.LoadOne(lookup, func() (*gtsmodel.Token, error) {
+	return a.state.Caches.DB.Token.LoadOne(lookup, func() (*gtsmodel.Token, error) {
 		var token gtsmodel.Token
 
 		if err := dbQuery(&token); err != nil {
@@ -217,7 +217,7 @@ func (a *applicationDB) getTokenBy(lookup string, dbQuery func(*gtsmodel.Token) 
 }
 
 func (a *applicationDB) PutToken(ctx context.Context, token *gtsmodel.Token) error {
-	return a.state.Caches.GTS.Token.Store(token, func() error {
+	return a.state.Caches.DB.Token.Store(token, func() error {
 		_, err := a.db.NewInsert().Model(token).Exec(ctx)
 		return err
 	})
@@ -232,7 +232,7 @@ func (a *applicationDB) DeleteTokenByID(ctx context.Context, id string) error {
 		return err
 	}
 
-	a.state.Caches.GTS.Token.Invalidate("ID", id)
+	a.state.Caches.DB.Token.Invalidate("ID", id)
 	return nil
 }
 
@@ -245,7 +245,7 @@ func (a *applicationDB) DeleteTokenByCode(ctx context.Context, code string) erro
 		return err
 	}
 
-	a.state.Caches.GTS.Token.Invalidate("Code", code)
+	a.state.Caches.DB.Token.Invalidate("Code", code)
 	return nil
 }
 
@@ -258,7 +258,7 @@ func (a *applicationDB) DeleteTokenByAccess(ctx context.Context, access string) 
 		return err
 	}
 
-	a.state.Caches.GTS.Token.Invalidate("Access", access)
+	a.state.Caches.DB.Token.Invalidate("Access", access)
 	return nil
 }
 
@@ -271,6 +271,6 @@ func (a *applicationDB) DeleteTokenByRefresh(ctx context.Context, refresh string
 		return err
 	}
 
-	a.state.Caches.GTS.Token.Invalidate("Refresh", refresh)
+	a.state.Caches.DB.Token.Invalidate("Refresh", refresh)
 	return nil
 }

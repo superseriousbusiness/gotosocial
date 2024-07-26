@@ -79,7 +79,7 @@ func (r *relationshipDB) GetFollow(ctx context.Context, sourceAccountID string, 
 
 func (r *relationshipDB) GetFollowsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Follow, error) {
 	// Load all follow IDs via cache loader callbacks.
-	follows, err := r.state.Caches.GTS.Follow.LoadIDs("ID",
+	follows, err := r.state.Caches.DB.Follow.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Follow, error) {
 			// Preallocate expected length of uncached follows.
@@ -160,7 +160,7 @@ func (r *relationshipDB) IsMutualFollowing(ctx context.Context, accountID1 strin
 
 func (r *relationshipDB) getFollow(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Follow) error, keyParts ...any) (*gtsmodel.Follow, error) {
 	// Fetch follow from database cache with loader callback
-	follow, err := r.state.Caches.GTS.Follow.LoadOne(lookup, func() (*gtsmodel.Follow, error) {
+	follow, err := r.state.Caches.DB.Follow.LoadOne(lookup, func() (*gtsmodel.Follow, error) {
 		var follow gtsmodel.Follow
 
 		// Not cached! Perform database query
@@ -219,7 +219,7 @@ func (r *relationshipDB) PopulateFollow(ctx context.Context, follow *gtsmodel.Fo
 }
 
 func (r *relationshipDB) PutFollow(ctx context.Context, follow *gtsmodel.Follow) error {
-	return r.state.Caches.GTS.Follow.Store(follow, func() error {
+	return r.state.Caches.DB.Follow.Store(follow, func() error {
 		_, err := r.db.NewInsert().Model(follow).Exec(ctx)
 		return err
 	})
@@ -232,7 +232,7 @@ func (r *relationshipDB) UpdateFollow(ctx context.Context, follow *gtsmodel.Foll
 		columns = append(columns, "updated_at")
 	}
 
-	return r.state.Caches.GTS.Follow.Store(follow, func() error {
+	return r.state.Caches.DB.Follow.Store(follow, func() error {
 		if _, err := r.db.NewUpdate().
 			Model(follow).
 			Where("? = ?", bun.Ident("follow.id"), follow.ID).
@@ -280,7 +280,7 @@ func (r *relationshipDB) DeleteFollow(ctx context.Context, sourceAccountID strin
 	}
 
 	// Drop this now-cached follow on return after delete.
-	defer r.state.Caches.GTS.Follow.Invalidate("AccountID,TargetAccountID", sourceAccountID, targetAccountID)
+	defer r.state.Caches.DB.Follow.Invalidate("AccountID,TargetAccountID", sourceAccountID, targetAccountID)
 
 	// Finally delete follow from DB.
 	return r.deleteFollow(ctx, follow.ID)
@@ -300,7 +300,7 @@ func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error 
 	}
 
 	// Drop this now-cached follow on return after delete.
-	defer r.state.Caches.GTS.Follow.Invalidate("ID", id)
+	defer r.state.Caches.DB.Follow.Invalidate("ID", id)
 
 	// Finally delete follow from DB.
 	return r.deleteFollow(ctx, follow.ID)
@@ -320,7 +320,7 @@ func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) erro
 	}
 
 	// Drop this now-cached follow on return after delete.
-	defer r.state.Caches.GTS.Follow.Invalidate("URI", uri)
+	defer r.state.Caches.DB.Follow.Invalidate("URI", uri)
 
 	// Finally delete follow from DB.
 	return r.deleteFollow(ctx, follow.ID)
@@ -346,8 +346,8 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 
 	defer func() {
 		// Invalidate all account's incoming / outoing follows on return.
-		r.state.Caches.GTS.Follow.Invalidate("AccountID", accountID)
-		r.state.Caches.GTS.Follow.Invalidate("TargetAccountID", accountID)
+		r.state.Caches.DB.Follow.Invalidate("AccountID", accountID)
+		r.state.Caches.DB.Follow.Invalidate("TargetAccountID", accountID)
 	}()
 
 	// Load all follows into cache, this *really* isn't great

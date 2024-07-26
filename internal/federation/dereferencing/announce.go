@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // EnrichAnnounce enriches the given boost wrapper status
@@ -68,30 +69,40 @@ func (d *Dereferencer) EnrichAnnounce(
 		return nil, err
 	}
 
-	// Generate an ID for the boost wrapper status.
-	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
-	if err != nil {
-		return nil, gtserror.Newf("error generating id: %w", err)
-	}
-
 	// Set boost_of_uri again in case the
 	// original URI was an indirect link.
 	boost.BoostOfURI = target.URI
 
+	// Boosts are not considered sensitive even if their target is.
+	boost.Sensitive = util.Ptr(false)
+
 	// Populate remaining fields on
 	// the boost wrapper using target.
-	boost.Content = target.Content
-	boost.ContentWarning = target.ContentWarning
 	boost.ActivityStreamsType = target.ActivityStreamsType
-	boost.Sensitive = target.Sensitive
-	boost.Language = target.Language
-	boost.Text = target.Text
 	boost.BoostOfID = target.ID
 	boost.BoostOf = target
 	boost.BoostOfAccountID = target.AccountID
 	boost.BoostOfAccount = target.Account
 	boost.Visibility = target.Visibility
 	boost.Federated = target.Federated
+
+	// Ensure this Announce is permitted by the Announcee.
+	permit, err := d.isPermittedStatus(ctx, requestUser, nil, boost)
+	if err != nil {
+		return nil, gtserror.Newf("error checking permitted status %s: %w", boost.URI, err)
+	}
+
+	if !permit {
+		// Return a checkable error type that can be ignored.
+		err := gtserror.Newf("dropping unpermitted status: %s", boost.URI)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
+	// Generate an ID for the boost wrapper status.
+	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
+	if err != nil {
+		return nil, gtserror.Newf("error generating id: %w", err)
+	}
 
 	// Store the boost wrapper status in database.
 	switch err = d.state.DB.PutStatus(ctx, boost); {

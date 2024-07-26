@@ -116,7 +116,7 @@ func (u *userDB) GetUserByConfirmationToken(ctx context.Context, token string) (
 
 func (u *userDB) getUser(ctx context.Context, lookup string, dbQuery func(*gtsmodel.User) error, keyParts ...any) (*gtsmodel.User, error) {
 	// Fetch user from database cache with loader callback.
-	user, err := u.state.Caches.GTS.User.LoadOne(lookup, func() (*gtsmodel.User, error) {
+	user, err := u.state.Caches.DB.User.LoadOne(lookup, func() (*gtsmodel.User, error) {
 		var user gtsmodel.User
 
 		// Not cached! perform database query.
@@ -179,7 +179,7 @@ func (u *userDB) GetAllUsers(ctx context.Context) ([]*gtsmodel.User, error) {
 }
 
 func (u *userDB) PutUser(ctx context.Context, user *gtsmodel.User) error {
-	return u.state.Caches.GTS.User.Store(user, func() error {
+	return u.state.Caches.DB.User.Store(user, func() error {
 		_, err := u.db.
 			NewInsert().
 			Model(user).
@@ -197,7 +197,7 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 		columns = append(columns, "updated_at")
 	}
 
-	return u.state.Caches.GTS.User.Store(user, func() error {
+	return u.state.Caches.DB.User.Store(user, func() error {
 		_, err := u.db.
 			NewUpdate().
 			Model(user).
@@ -209,7 +209,7 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 }
 
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) error {
-	defer u.state.Caches.GTS.User.Invalidate("ID", userID)
+	defer u.state.Caches.DB.User.Invalidate("ID", userID)
 
 	// Load user into cache before attempting a delete,
 	// as we need it cached in order to trigger the invalidate

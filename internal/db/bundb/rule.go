@@ -125,7 +125,7 @@ func (r *ruleDB) PutRule(ctx context.Context, rule *gtsmodel.Rule) error {
 	}
 
 	// invalidate cached local instance response, so it gets updated with the new rules
-	r.state.Caches.GTS.Instance.Invalidate("Domain", config.GetHost())
+	r.state.Caches.DB.Instance.Invalidate("Domain", config.GetHost())
 
 	return nil
 }
@@ -143,7 +143,7 @@ func (r *ruleDB) UpdateRule(ctx context.Context, rule *gtsmodel.Rule) (*gtsmodel
 	}
 
 	// invalidate cached local instance response, so it gets updated with the new rules
-	r.state.Caches.GTS.Instance.Invalidate("Domain", config.GetHost())
+	r.state.Caches.DB.Instance.Invalidate("Domain", config.GetHost())
 
 	return rule, nil
 }

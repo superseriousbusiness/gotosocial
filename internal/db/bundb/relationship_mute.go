@@ -79,7 +79,7 @@ func (r *relationshipDB) GetMute(
 
 func (r *relationshipDB) getMutesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.UserMute, error) {
 	// Load all mutes IDs via cache loader callbacks.
-	mutes, err := r.state.Caches.GTS.UserMute.LoadIDs("ID",
+	mutes, err := r.state.Caches.DB.UserMute.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.UserMute, error) {
 			// Preallocate expected length of uncached mutes.
@@ -131,7 +131,7 @@ func (r *relationshipDB) getMute(
 	keyParts ...any,
 ) (*gtsmodel.UserMute, error) {
 	// Fetch mute from cache with loader callback
-	mute, err := r.state.Caches.GTS.UserMute.LoadOne(lookup, func() (*gtsmodel.UserMute, error) {
+	mute, err := r.state.Caches.DB.UserMute.LoadOne(lookup, func() (*gtsmodel.UserMute, error) {
 		var mute gtsmodel.UserMute
 
 		// Not cached! Perform database query
@@ -190,7 +190,7 @@ func (r *relationshipDB) populateMute(ctx context.Context, mute *gtsmodel.UserMu
 }
 
 func (r *relationshipDB) PutMute(ctx context.Context, mute *gtsmodel.UserMute) error {
-	return r.state.Caches.GTS.UserMute.Store(mute, func() error {
+	return r.state.Caches.DB.UserMute.Store(mute, func() error {
 		_, err := NewUpsert(r.db).Model(mute).Constraint("id").Exec(ctx)
 		return err
 	})
@@ -210,7 +210,7 @@ func (r *relationshipDB) DeleteMuteByID(ctx context.Context, id string) error {
 	}
 
 	// Drop this now-cached mute on return after delete.
-	defer r.state.Caches.GTS.UserMute.Invalidate("ID", id)
+	defer r.state.Caches.DB.UserMute.Invalidate("ID", id)
 
 	// Finally delete mute from DB.
 	_, err = r.db.NewDelete().
@@ -239,8 +239,8 @@ func (r *relationshipDB) DeleteAccountMutes(ctx context.Context, accountID strin
 
 	defer func() {
 		// Invalidate all account's incoming / outoing mutes on return.
-		r.state.Caches.GTS.UserMute.Invalidate("AccountID", accountID)
-		r.state.Caches.GTS.UserMute.Invalidate("TargetAccountID", accountID)
+		r.state.Caches.DB.UserMute.Invalidate("AccountID", accountID)
+		r.state.Caches.DB.UserMute.Invalidate("TargetAccountID", accountID)
 	}()
 
 	// Load all mutes into cache, this *really* isn't great
@@ -272,7 +272,7 @@ func (r *relationshipDB) GetAccountMutes(
 }
 
 func (r *relationshipDB) getAccountMuteIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	return loadPagedIDs(&r.state.Caches.GTS.UserMuteIDs, accountID, page, func() ([]string, error) {
+	return loadPagedIDs(&r.state.Caches.DB.UserMuteIDs, accountID, page, func() ([]string, error) {
 		var muteIDs []string
 
 		// Mute IDs not in cache. Perform DB query.

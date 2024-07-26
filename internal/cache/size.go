@@ -19,6 +19,7 @@ package cache
 
 import (
 	"crypto/rsa"
+	"strings"
 	"time"
 	"unsafe"
 
@@ -317,6 +318,20 @@ func sizeofClient() uintptr {
 		Secret:    exampleID,
 		Domain:    exampleURI,
 		UserID:    exampleID,
+	}))
+}
+
+func sizeofConversation() uintptr {
+	return uintptr(size.Of(&gtsmodel.Conversation{
+		ID:               exampleID,
+		CreatedAt:        exampleTime,
+		UpdatedAt:        exampleTime,
+		AccountID:        exampleID,
+		OtherAccountIDs:  []string{exampleID, exampleID, exampleID},
+		OtherAccountsKey: strings.Join([]string{exampleID, exampleID, exampleID}, ","),
+		ThreadID:         exampleID,
+		LastStatusID:     exampleID,
+		Read:             util.Ptr(true),
 	}))
 }
 

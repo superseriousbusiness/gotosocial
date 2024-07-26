@@ -21,6 +21,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -31,5 +33,15 @@ import (
 // The passed in state will have its worker functions set appropriately,
 // but the state will not be initialized.
 func NewTestProcessor(state *state.State, federator *federation.Federator, emailSender email.Sender, mediaManager *media.Manager) *processing.Processor {
-	return processing.NewProcessor(cleaner.New(state), typeutils.NewConverter(state), federator, NewTestOauthServer(state.DB), mediaManager, state, emailSender)
+	return processing.NewProcessor(
+		cleaner.New(state),
+		typeutils.NewConverter(state),
+		federator,
+		NewTestOauthServer(state.DB),
+		mediaManager,
+		state,
+		emailSender,
+		visibility.NewFilter(state),
+		interaction.NewFilter(state),
+	)
 }

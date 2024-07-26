@@ -73,7 +73,7 @@ func (r *interactionDB) getInteractionApproval(
 	keyParts ...any,
 ) (*gtsmodel.InteractionApproval, error) {
 	// Fetch approval from database cache with loader callback
-	approval, err := r.state.Caches.GTS.InteractionApproval.LoadOne(lookup, func() (*gtsmodel.InteractionApproval, error) {
+	approval, err := r.state.Caches.DB.InteractionApproval.LoadOne(lookup, func() (*gtsmodel.InteractionApproval, error) {
 		var approval gtsmodel.InteractionApproval
 
 		// Not cached! Perform database query
@@ -132,14 +132,14 @@ func (r *interactionDB) PopulateInteractionApproval(ctx context.Context, approva
 }
 
 func (r *interactionDB) PutInteractionApproval(ctx context.Context, approval *gtsmodel.InteractionApproval) error {
-	return r.state.Caches.GTS.InteractionApproval.Store(approval, func() error {
+	return r.state.Caches.DB.InteractionApproval.Store(approval, func() error {
 		_, err := r.db.NewInsert().Model(approval).Exec(ctx)
 		return err
 	})
 }
 
 func (r *interactionDB) DeleteInteractionApprovalByID(ctx context.Context, id string) error {
-	defer r.state.Caches.GTS.InteractionApproval.Invalidate("ID", id)
+	defer r.state.Caches.DB.InteractionApproval.Invalidate("ID", id)
 
 	_, err := r.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("interaction_approvals"), bun.Ident("interaction_approval")).

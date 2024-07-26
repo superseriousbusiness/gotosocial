@@ -37,6 +37,8 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	// Get "raw" map
 	// destination.
 	raw := getMap()
+	// Release.
+	defer putMap(raw)
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
@@ -79,9 +81,6 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	// (see: https://github.com/superseriousbusiness/gotosocial/issues/1661)
 	NormalizeIncomingActivity(activity, raw)
 
-	// Release.
-	putMap(raw)
-
 	return activity, true, nil
 }
 
@@ -93,6 +92,8 @@ func ResolveStatusable(ctx context.Context, body io.ReadCloser) (Statusable, err
 	// Get "raw" map
 	// destination.
 	raw := getMap()
+	// Release.
+	defer putMap(raw)
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
@@ -121,9 +122,6 @@ func ResolveStatusable(ctx context.Context, body io.ReadCloser) (Statusable, err
 	NormalizeIncomingSummary(statusable, raw)
 	NormalizeIncomingName(statusable, raw)
 
-	// Release.
-	putMap(raw)
-
 	return statusable, nil
 }
 
@@ -135,6 +133,8 @@ func ResolveAccountable(ctx context.Context, body io.ReadCloser) (Accountable, e
 	// Get "raw" map
 	// destination.
 	raw := getMap()
+	// Release.
+	defer putMap(raw)
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
@@ -153,9 +153,6 @@ func ResolveAccountable(ctx context.Context, body io.ReadCloser) (Accountable, e
 
 	NormalizeIncomingSummary(accountable, raw)
 
-	// Release.
-	putMap(raw)
-
 	return accountable, nil
 }
 
@@ -165,6 +162,8 @@ func ResolveCollection(ctx context.Context, body io.ReadCloser) (CollectionItera
 	// Get "raw" map
 	// destination.
 	raw := getMap()
+	// Release.
+	defer putMap(raw)
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
@@ -173,9 +172,6 @@ func ResolveCollection(ctx context.Context, body io.ReadCloser) (CollectionItera
 	if err != nil {
 		return nil, gtserror.SetWrongType(err)
 	}
-
-	// Release.
-	putMap(raw)
 
 	// Cast as as Collection-like.
 	return ToCollectionIterator(t)
@@ -187,6 +183,8 @@ func ResolveCollectionPage(ctx context.Context, body io.ReadCloser) (CollectionP
 	// Get "raw" map
 	// destination.
 	raw := getMap()
+	// Release.
+	defer putMap(raw)
 
 	// Decode data as JSON into 'raw' map
 	// and get the resolved AS vocab.Type.
@@ -196,11 +194,38 @@ func ResolveCollectionPage(ctx context.Context, body io.ReadCloser) (CollectionP
 		return nil, gtserror.SetWrongType(err)
 	}
 
-	// Release.
-	putMap(raw)
-
 	// Cast as as CollectionPage-like.
 	return ToCollectionPageIterator(t)
+}
+
+// ResolveAcceptable tries to resolve the given reader
+// into an ActivityStreams Acceptable representation.
+func ResolveAcceptable(
+	ctx context.Context,
+	body io.ReadCloser,
+) (Acceptable, error) {
+	// Get "raw" map
+	// destination.
+	raw := getMap()
+	// Release.
+	defer putMap(raw)
+
+	// Decode data as JSON into 'raw' map
+	// and get the resolved AS vocab.Type.
+	// (this handles close of given body).
+	t, err := decodeType(ctx, body, raw)
+	if err != nil {
+		return nil, gtserror.SetWrongType(err)
+	}
+
+	// Attempt to cast as acceptable.
+	acceptable, ok := ToAcceptable(t)
+	if !ok {
+		err := gtserror.Newf("cannot resolve vocab type %T as acceptable", t)
+		return nil, gtserror.SetWrongType(err)
+	}
+
+	return acceptable, nil
 }
 
 // emptydest is an empty JSON decode

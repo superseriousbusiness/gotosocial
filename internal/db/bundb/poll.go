@@ -54,7 +54,7 @@ func (p *pollDB) GetPollByID(ctx context.Context, id string) (*gtsmodel.Poll, er
 
 func (p *pollDB) getPoll(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Poll) error, keyParts ...any) (*gtsmodel.Poll, error) {
 	// Fetch poll from database cache with loader callback
-	poll, err := p.state.Caches.GTS.Poll.LoadOne(lookup, func() (*gtsmodel.Poll, error) {
+	poll, err := p.state.Caches.DB.Poll.LoadOne(lookup, func() (*gtsmodel.Poll, error) {
 		var poll gtsmodel.Poll
 
 		// Not cached! Perform database query.
@@ -142,7 +142,7 @@ func (p *pollDB) PutPoll(ctx context.Context, poll *gtsmodel.Poll) error {
 	// is non nil and set.
 	poll.CheckVotes()
 
-	return p.state.Caches.GTS.Poll.Store(poll, func() error {
+	return p.state.Caches.DB.Poll.Store(poll, func() error {
 		_, err := p.db.NewInsert().Model(poll).Exec(ctx)
 		return err
 	})
@@ -153,7 +153,7 @@ func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...st
 	// is non nil and set.
 	poll.CheckVotes()
 
-	return p.state.Caches.GTS.Poll.Store(poll, func() error {
+	return p.state.Caches.DB.Poll.Store(poll, func() error {
 		return p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// Update the status' "updated_at" field.
 			if _, err := tx.NewUpdate().
@@ -186,8 +186,8 @@ func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
 	}
 
 	// Invalidate poll by ID from cache.
-	p.state.Caches.GTS.Poll.Invalidate("ID", id)
-	p.state.Caches.GTS.PollVoteIDs.Invalidate(id)
+	p.state.Caches.DB.Poll.Invalidate("ID", id)
+	p.state.Caches.DB.PollVoteIDs.Invalidate(id)
 
 	return nil
 }
@@ -224,7 +224,7 @@ func (p *pollDB) GetPollVoteBy(ctx context.Context, pollID string, accountID str
 
 func (p *pollDB) getPollVote(ctx context.Context, lookup string, dbQuery func(*gtsmodel.PollVote) error, keyParts ...any) (*gtsmodel.PollVote, error) {
 	// Fetch vote from database cache with loader callback
-	vote, err := p.state.Caches.GTS.PollVote.LoadOne(lookup, func() (*gtsmodel.PollVote, error) {
+	vote, err := p.state.Caches.DB.PollVote.LoadOne(lookup, func() (*gtsmodel.PollVote, error) {
 		var vote gtsmodel.PollVote
 
 		// Not cached! Perform database query.
@@ -254,7 +254,7 @@ func (p *pollDB) getPollVote(ctx context.Context, lookup string, dbQuery func(*g
 func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.PollVote, error) {
 
 	// Load vote IDs known for given poll ID using loader callback.
-	voteIDs, err := p.state.Caches.GTS.PollVoteIDs.Load(pollID, func() ([]string, error) {
+	voteIDs, err := p.state.Caches.DB.PollVoteIDs.Load(pollID, func() ([]string, error) {
 		var voteIDs []string
 
 		// Vote IDs not in cache, perform DB query!
@@ -271,7 +271,7 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 	}
 
 	// Load all votes from IDs via cache loader callbacks.
-	votes, err := p.state.Caches.GTS.PollVote.LoadIDs("ID",
+	votes, err := p.state.Caches.DB.PollVote.LoadIDs("ID",
 		voteIDs,
 		func(uncached []string) ([]*gtsmodel.PollVote, error) {
 			// Preallocate expected length of uncached votes.
@@ -348,7 +348,7 @@ func (p *pollDB) PopulatePollVote(ctx context.Context, vote *gtsmodel.PollVote) 
 }
 
 func (p *pollDB) PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error {
-	return p.state.Caches.GTS.PollVote.Store(vote, func() error {
+	return p.state.Caches.DB.PollVote.Store(vote, func() error {
 		return p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			// Try insert vote into database.
 			if _, err := tx.NewInsert().
@@ -448,9 +448,9 @@ func (p *pollDB) DeletePollVotes(ctx context.Context, pollID string) error {
 	}
 
 	// Invalidate poll vote and poll entry from caches.
-	p.state.Caches.GTS.Poll.Invalidate("ID", pollID)
-	p.state.Caches.GTS.PollVote.Invalidate("PollID", pollID)
-	p.state.Caches.GTS.PollVoteIDs.Invalidate(pollID)
+	p.state.Caches.DB.Poll.Invalidate("ID", pollID)
+	p.state.Caches.DB.PollVote.Invalidate("PollID", pollID)
+	p.state.Caches.DB.PollVoteIDs.Invalidate(pollID)
 
 	return nil
 }
@@ -523,9 +523,9 @@ func (p *pollDB) DeletePollVoteBy(ctx context.Context, pollID string, accountID 
 	}
 
 	// Invalidate poll vote and poll entry from caches.
-	p.state.Caches.GTS.Poll.Invalidate("ID", pollID)
-	p.state.Caches.GTS.PollVote.Invalidate("PollID,AccountID", pollID, accountID)
-	p.state.Caches.GTS.PollVoteIDs.Invalidate(pollID)
+	p.state.Caches.DB.Poll.Invalidate("ID", pollID)
+	p.state.Caches.DB.PollVote.Invalidate("PollID,AccountID", pollID, accountID)
+	p.state.Caches.DB.PollVoteIDs.Invalidate(pollID)
 
 	return nil
 }

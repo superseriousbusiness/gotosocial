@@ -21,13 +21,16 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	mm "github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/advancedmigrations"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
 	filtersv1 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1"
 	filtersv2 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2"
@@ -70,22 +73,24 @@ type Processor struct {
 		SUB-PROCESSORS
 	*/
 
-	account   account.Processor
-	admin     admin.Processor
-	fedi      fedi.Processor
-	filtersv1 filtersv1.Processor
-	filtersv2 filtersv2.Processor
-	list      list.Processor
-	markers   markers.Processor
-	media     media.Processor
-	polls     polls.Processor
-	report    report.Processor
-	search    search.Processor
-	status    status.Processor
-	stream    stream.Processor
-	timeline  timeline.Processor
-	user      user.Processor
-	workers   workers.Processor
+	account            account.Processor
+	admin              admin.Processor
+	advancedmigrations advancedmigrations.Processor
+	conversations      conversations.Processor
+	fedi               fedi.Processor
+	filtersv1          filtersv1.Processor
+	filtersv2          filtersv2.Processor
+	list               list.Processor
+	markers            markers.Processor
+	media              media.Processor
+	polls              polls.Processor
+	report             report.Processor
+	search             search.Processor
+	status             status.Processor
+	stream             stream.Processor
+	timeline           timeline.Processor
+	user               user.Processor
+	workers            workers.Processor
 }
 
 func (p *Processor) Account() *account.Processor {
@@ -94,6 +99,14 @@ func (p *Processor) Account() *account.Processor {
 
 func (p *Processor) Admin() *admin.Processor {
 	return &p.admin
+}
+
+func (p *Processor) AdvancedMigrations() *advancedmigrations.Processor {
+	return &p.advancedmigrations
+}
+
+func (p *Processor) Conversations() *conversations.Processor {
+	return &p.conversations
 }
 
 func (p *Processor) Fedi() *fedi.Processor {
@@ -161,12 +174,10 @@ func NewProcessor(
 	mediaManager *mm.Manager,
 	state *state.State,
 	emailSender email.Sender,
+	visFilter *visibility.Filter,
+	intFilter *interaction.Filter,
 ) *Processor {
-	var (
-		parseMentionFunc = GetParseMentionFunc(state, federator)
-		filter           = visibility.NewFilter(state)
-	)
-
+	parseMentionFunc := GetParseMentionFunc(state, federator)
 	processor := &Processor{
 		converter:        converter,
 		oauthServer:      oauthServer,
@@ -179,26 +190,30 @@ func NewProcessor(
 	//
 	// Start with sub processors that will
 	// be required by the workers processor.
-	common := common.New(state, mediaManager, converter, federator, filter)
-	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
+	common := common.New(state, mediaManager, converter, federator, visFilter)
+	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.media = media.New(&common, state, converter, federator, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
-	processor.account = account.New(&common, state, converter, mediaManager, federator, filter, parseMentionFunc)
+	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.admin = admin.New(&common, state, cleaner, federator, converter, mediaManager, federator.TransportController(), emailSender)
-	processor.fedi = fedi.New(state, &common, converter, federator, filter)
+	processor.conversations = conversations.New(state, converter, visFilter)
+	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
 	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)
 	processor.polls = polls.New(&common, state, converter)
 	processor.report = report.New(state, converter)
-	processor.timeline = timeline.New(state, converter, filter)
-	processor.search = search.New(state, federator, converter, filter)
-	processor.status = status.New(state, &common, &processor.polls, federator, converter, filter, parseMentionFunc)
+	processor.timeline = timeline.New(state, converter, visFilter)
+	processor.search = search.New(state, federator, converter, visFilter)
+	processor.status = status.New(state, &common, &processor.polls, federator, converter, visFilter, intFilter, parseMentionFunc)
 	processor.user = user.New(state, converter, oauthServer, emailSender)
+
+	// The advanced migrations processor sequences advanced migrations from all other processors.
+	processor.advancedmigrations = advancedmigrations.New(&processor.conversations)
 
 	// Workers processor handles asynchronous
 	// worker jobs; instantiate it separately
@@ -207,11 +222,12 @@ func NewProcessor(
 		state,
 		federator,
 		converter,
-		filter,
+		visFilter,
 		emailSender,
 		&processor.account,
 		&processor.media,
 		&processor.stream,
+		&processor.conversations,
 	)
 
 	return processor

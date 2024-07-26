@@ -341,7 +341,7 @@ func (p *Processor) ContextGet(
 	// Convert ancestors + filter
 	// out ones that aren't visible.
 	for _, status := range threadContext.ancestors {
-		if v, err := p.filter.StatusVisible(ctx, requester, status); err == nil && v {
+		if v, err := p.visFilter.StatusVisible(ctx, requester, status); err == nil && v {
 			status, err := convert(ctx, status, requester)
 			if err == nil {
 				apiContext.Ancestors = append(apiContext.Ancestors, *status)
@@ -352,7 +352,7 @@ func (p *Processor) ContextGet(
 	// Convert descendants + filter
 	// out ones that aren't visible.
 	for _, status := range threadContext.descendants {
-		if v, err := p.filter.StatusVisible(ctx, requester, status); err == nil && v {
+		if v, err := p.visFilter.StatusVisible(ctx, requester, status); err == nil && v {
 			status, err := convert(ctx, status, requester)
 			if err == nil {
 				apiContext.Descendants = append(apiContext.Descendants, *status)
@@ -453,7 +453,7 @@ func (p *Processor) WebContextGet(
 		// Ensure status is actually
 		// visible to just anyone, and
 		// hide / don't include it if not.
-		v, err := p.filter.StatusVisible(ctx, nil, status)
+		v, err := p.visFilter.StatusVisible(ctx, nil, status)
 		if err != nil || !v {
 			if !inReplies {
 				// Main thread entry hidden.

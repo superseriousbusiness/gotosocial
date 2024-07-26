@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AccountToAS converts a gts model account into an activity streams person, suitable for federation
@@ -672,6 +673,38 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	sensitiveProp.AppendXMLSchemaBoolean(*s.Sensitive)
 	status.SetActivityStreamsSensitive(sensitiveProp)
 
+	// interactionPolicy
+	var p *gtsmodel.InteractionPolicy
+	if s.InteractionPolicy != nil {
+		// Use InteractionPolicy
+		// set on the status.
+		p = s.InteractionPolicy
+	} else {
+		// Fall back to default policy
+		// for the status's visibility.
+		p = gtsmodel.DefaultInteractionPolicyFor(s.Visibility)
+	}
+	policy, err := c.InteractionPolicyToASInteractionPolicy(ctx, p, s)
+	if err != nil {
+		return nil, fmt.Errorf("error creating interactionPolicy: %w", err)
+	}
+
+	policyProp := streams.NewGoToSocialInteractionPolicyProperty()
+	policyProp.AppendGoToSocialInteractionPolicy(policy)
+	status.SetGoToSocialInteractionPolicy(policyProp)
+
+	// Parse + set approvedBy.
+	if s.ApprovedByURI != "" {
+		approvedBy, err := url.Parse(s.ApprovedByURI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
+		}
+
+		approvedByProp := streams.NewGoToSocialApprovedByProperty()
+		approvedByProp.Set(approvedBy)
+		status.SetGoToSocialApprovedBy(approvedByProp)
+	}
+
 	return status, nil
 }
 
@@ -1169,6 +1202,18 @@ func (c *Converter) FaveToAS(ctx context.Context, f *gtsmodel.StatusFave) (vocab
 	toProp.AppendIRI(toIRI)
 	like.SetActivityStreamsTo(toProp)
 
+	// Parse + set approvedBy.
+	if f.ApprovedByURI != "" {
+		approvedBy, err := url.Parse(f.ApprovedByURI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
+		}
+
+		approvedByProp := streams.NewGoToSocialApprovedByProperty()
+		approvedByProp.Set(approvedBy)
+		like.SetGoToSocialApprovedBy(approvedByProp)
+	}
+
 	return like, nil
 }
 
@@ -1246,6 +1291,18 @@ func (c *Converter) BoostToAS(ctx context.Context, boostWrapperStatus *gtsmodel.
 	}
 
 	announce.SetActivityStreamsCc(ccProp)
+
+	// Parse + set approvedBy.
+	if boostWrapperStatus.ApprovedByURI != "" {
+		approvedBy, err := url.Parse(boostWrapperStatus.ApprovedByURI)
+		if err != nil {
+			return nil, fmt.Errorf("error parsing approvedBy: %w", err)
+		}
+
+		approvedByProp := streams.NewGoToSocialApprovedByProperty()
+		approvedByProp.Set(approvedBy)
+		announce.SetGoToSocialApprovedBy(approvedByProp)
+	}
 
 	return announce, nil
 }
@@ -1723,4 +1780,228 @@ func (c *Converter) PollVoteToASCreate(
 	}
 
 	return create, nil
+}
+
+// populateValuesForProp appends the given PolicyValues
+// to the given property, for the given status.
+func populateValuesForProp[T ap.WithIRI](
+	prop ap.Property[T],
+	status *gtsmodel.Status,
+	urns gtsmodel.PolicyValues,
+) error {
+	iriStrs := make([]string, 0)
+
+	for _, urn := range urns {
+		switch urn {
+
+		case gtsmodel.PolicyValueAuthor:
+			iriStrs = append(iriStrs, status.Account.URI)
+
+		case gtsmodel.PolicyValueMentioned:
+			for _, m := range status.Mentions {
+				iriStrs = append(iriStrs, m.TargetAccount.URI)
+			}
+
+		case gtsmodel.PolicyValueFollowing:
+			iriStrs = append(iriStrs, status.Account.FollowingURI)
+
+		case gtsmodel.PolicyValueFollowers:
+			iriStrs = append(iriStrs, status.Account.FollowersURI)
+
+		case gtsmodel.PolicyValuePublic:
+			iriStrs = append(iriStrs, pub.PublicActivityPubIRI)
+
+		default:
+			iriStrs = append(iriStrs, string(urn))
+		}
+	}
+
+	// Deduplicate the iri strings to
+	// make sure we're not parsing + adding
+	// the same string multiple times.
+	iriStrs = util.Deduplicate(iriStrs)
+
+	// Append them to the property.
+	for _, iriStr := range iriStrs {
+		iri, err := url.Parse(iriStr)
+		if err != nil {
+			return err
+		}
+
+		prop.AppendIRI(iri)
+	}
+
+	return nil
+}
+
+// InteractionPolicyToASInteractionPolicy returns a
+// GoToSocial interaction policy suitable for federation.
+func (c *Converter) InteractionPolicyToASInteractionPolicy(
+	ctx context.Context,
+	interactionPolicy *gtsmodel.InteractionPolicy,
+	status *gtsmodel.Status,
+) (vocab.GoToSocialInteractionPolicy, error) {
+	policy := streams.NewGoToSocialInteractionPolicy()
+
+	/*
+		CAN LIKE
+	*/
+
+	// Build canLike
+	canLike := streams.NewGoToSocialCanLike()
+
+	// Build canLike.always
+	canLikeAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	if err := populateValuesForProp(
+		canLikeAlwaysProp,
+		status,
+		interactionPolicy.CanLike.Always,
+	); err != nil {
+		return nil, gtserror.Newf("error setting canLike.always: %w", err)
+	}
+
+	// Set canLike.always
+	canLike.SetGoToSocialAlways(canLikeAlwaysProp)
+
+	// Build canLike.approvalRequired
+	canLikeApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	if err := populateValuesForProp(
+		canLikeApprovalRequiredProp,
+		status,
+		interactionPolicy.CanLike.WithApproval,
+	); err != nil {
+		return nil, gtserror.Newf("error setting canLike.approvalRequired: %w", err)
+	}
+
+	// Set canLike.approvalRequired.
+	canLike.SetGoToSocialApprovalRequired(canLikeApprovalRequiredProp)
+
+	// Set canLike on the policy.
+	canLikeProp := streams.NewGoToSocialCanLikeProperty()
+	canLikeProp.AppendGoToSocialCanLike(canLike)
+	policy.SetGoToSocialCanLike(canLikeProp)
+
+	/*
+		CAN REPLY
+	*/
+
+	// Build canReply
+	canReply := streams.NewGoToSocialCanReply()
+
+	// Build canReply.always
+	canReplyAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	if err := populateValuesForProp(
+		canReplyAlwaysProp,
+		status,
+		interactionPolicy.CanReply.Always,
+	); err != nil {
+		return nil, gtserror.Newf("error setting canReply.always: %w", err)
+	}
+
+	// Set canReply.always
+	canReply.SetGoToSocialAlways(canReplyAlwaysProp)
+
+	// Build canReply.approvalRequired
+	canReplyApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	if err := populateValuesForProp(
+		canReplyApprovalRequiredProp,
+		status,
+		interactionPolicy.CanReply.WithApproval,
+	); err != nil {
+		return nil, gtserror.Newf("error setting canReply.approvalRequired: %w", err)
+	}
+
+	// Set canReply.approvalRequired.
+	canReply.SetGoToSocialApprovalRequired(canReplyApprovalRequiredProp)
+
+	// Set canReply on the policy.
+	canReplyProp := streams.NewGoToSocialCanReplyProperty()
+	canReplyProp.AppendGoToSocialCanReply(canReply)
+	policy.SetGoToSocialCanReply(canReplyProp)
+
+	/*
+		CAN ANNOUNCE
+	*/
+
+	// Build canAnnounce
+	canAnnounce := streams.NewGoToSocialCanAnnounce()
+
+	// Build canAnnounce.always
+	canAnnounceAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	if err := populateValuesForProp(
+		canAnnounceAlwaysProp,
+		status,
+		interactionPolicy.CanAnnounce.Always,
+	); err != nil {
+		return nil, gtserror.Newf("error setting canAnnounce.always: %w", err)
+	}
+
+	// Set canAnnounce.always
+	canAnnounce.SetGoToSocialAlways(canAnnounceAlwaysProp)
+
+	// Build canAnnounce.approvalRequired
+	canAnnounceApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	if err := populateValuesForProp(
+		canAnnounceApprovalRequiredProp,
+		status,
+		interactionPolicy.CanAnnounce.WithApproval,
+	); err != nil {
+		return nil, gtserror.Newf("error setting canAnnounce.approvalRequired: %w", err)
+	}
+
+	// Set canAnnounce.approvalRequired.
+	canAnnounce.SetGoToSocialApprovalRequired(canAnnounceApprovalRequiredProp)
+
+	// Set canAnnounce on the policy.
+	canAnnounceProp := streams.NewGoToSocialCanAnnounceProperty()
+	canAnnounceProp.AppendGoToSocialCanAnnounce(canAnnounce)
+	policy.SetGoToSocialCanAnnounce(canAnnounceProp)
+
+	return policy, nil
+}
+
+// InteractionApprovalToASAccept converts a *gtsmodel.InteractionApproval
+// to an ActivityStreams Accept, addressed to the interacting account.
+func (c *Converter) InteractionApprovalToASAccept(
+	ctx context.Context,
+	approval *gtsmodel.InteractionApproval,
+) (vocab.ActivityStreamsAccept, error) {
+	accept := streams.NewActivityStreamsAccept()
+
+	acceptID, err := url.Parse(approval.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid accept uri: %w", err)
+	}
+
+	actorIRI, err := url.Parse(approval.Account.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid account uri: %w", err)
+	}
+
+	objectIRI, err := url.Parse(approval.InteractionURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid target uri: %w", err)
+	}
+
+	toIRI, err := url.Parse(approval.InteractingAccount.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
+	}
+
+	// Set id to the URI of
+	// interactionApproval.
+	ap.SetJSONLDId(accept, acceptID)
+
+	// Actor is the account that
+	// owns the approval / accept.
+	ap.AppendActorIRIs(accept, actorIRI)
+
+	// Object is the interaction URI.
+	ap.AppendObjectIRIs(accept, objectIRI)
+
+	// Address to the owner
+	// of interaction URI.
+	ap.AppendTo(accept, toIRI)
+
+	return accept, nil
 }

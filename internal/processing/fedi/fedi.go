@@ -32,7 +32,7 @@ type Processor struct {
 	state     *state.State
 	federator *federation.Federator
 	converter *typeutils.Converter
-	filter    *visibility.Filter
+	visFilter *visibility.Filter
 }
 
 // New returns a
@@ -42,13 +42,13 @@ func New(
 	common *common.Processor,
 	converter *typeutils.Converter,
 	federator *federation.Federator,
-	filter *visibility.Filter,
+	visFilter *visibility.Filter,
 ) Processor {
 	return Processor{
 		c:         common,
 		state:     state,
 		federator: federator,
 		converter: converter,
-		filter:    filter,
+		visFilter: visFilter,
 	}
 }

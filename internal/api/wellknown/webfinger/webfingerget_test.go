@@ -35,6 +35,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -85,7 +87,19 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 	config.SetAccountDomain(accountDomain)
 	testrig.StopWorkers(&suite.state)
 	testrig.StartNoopWorkers(&suite.state)
-	suite.processor = processing.NewProcessor(cleaner.New(&suite.state), suite.tc, suite.federator, testrig.NewTestOauthServer(suite.db), testrig.NewTestMediaManager(&suite.state), &suite.state, suite.emailSender)
+
+	suite.processor = processing.NewProcessor(
+		cleaner.New(&suite.state),
+		suite.tc,
+		suite.federator,
+		testrig.NewTestOauthServer(suite.db),
+		testrig.NewTestMediaManager(&suite.state),
+		&suite.state,
+		suite.emailSender,
+		visibility.NewFilter(&suite.state),
+		interaction.NewFilter(&suite.state),
+	)
+
 	suite.webfingerModule = webfinger.New(suite.processor)
 	testrig.StartNoopWorkers(&suite.state)
 

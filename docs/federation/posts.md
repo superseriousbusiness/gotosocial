@@ -163,6 +163,524 @@ If `contentMap` has multiple entries, we have no way of determining the intended
 !!! Note
     In all of the above cases, if the inferred language cannot be parsed as a valid BCP47 language tag, language will fall back to unknown.
 
+## Interaction Policy
+
+GoToSocial uses the property `interactionPolicy` on posts in order to indicate to remote instances what sort of interactions will be (conditionally) permitted for any given post.
+
+!!! danger
+    
+    Interaction policy is an attempt to limit the harmful effects of unwanted replies and other interactions on a user's posts (eg., "reply guys").
+    
+    However, it is far from being sufficient for this purpose, as there are still many "out-of-band" ways that posts can be distributed or replied to beyond a user's initial wishes or intentions.
+    
+    For example, a user might create a post with a very strict interaction policy attached to it, only to find that other server softwares do not respect that policy, and users on other instances are having discussions and replying to the post *from their instance's perspective*. The original poster's instance will automatically drop these unwanted interactions from their view, but remote instances may still show them.
+    
+    Another example: someone might see a post that specifies nobody can reply to it, but screenshot the post, post the screenshot in their own new post, and tag the original post author in as a mention. Alternatively, they might just link to the URL of the post and tag the author in as a mention. In this case, they effectively "reply" to the post by creating a new thread.
+    
+    For better or worse, GoToSocial can offer only a best-effort, partial, technological solution to what is more or less an issue of social behavior and boundaries.
+
+### Overview
+
+`interactionPolicy` is a property attached to the status-like `Object`s `Note`, `Article`, `Question`, etc, with the following format:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+    },
+    "canReply": {
+      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+    },
+    "canAnnounce": {
+      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+    }
+  },
+  [...]
+}
+```
+
+In this object:
+
+- `canLike` indicates who can create a `Like` with the post URI as the `Object` of the `Like`.
+- `canReply` indicates who can create a post with `inReplyTo` set to the URI of the post.
+- `canAnnounce` indicates who can create an `Announce` with the post URI as the `Object` of the `Announce`. 
+
+And:
+
+- `always` is an array of ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who do not require an `Accept` in order to distribute an interaction to their followers (more on this below).
+- `approvalRequired` is an array of ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who can interact, but should wait for an `Accept` before distributing an interaction to their followers.
+
+Valid URI entries in `always` and `approvalRequired` include the magic ActivityStreams Public URI `https://www.w3.org/ns/activitystreams#Public`, the URIs of the post creator's `Following` and/or `Followers` collections, and individual Actor URIs. For example:
+
+```json
+[
+    "https://www.w3.org/ns/activitystreams#Public",
+    "https://example.org/users/someone/followers",
+    "https://example.org/users/someone/following",
+    "https://example.org/users/someone_else",
+    "https://somewhere.else.example.org/users/someone_on_a_different_instance"
+]
+```
+
+### Specifying Nobody
+
+!!! note
+    GoToSocial makes implicit assumptions about who can/can't interact, even if a policy specifies nobody. See [implicit assumptions](#implicit-assumptions).
+
+An empty array, or a missing or null key, indicates that nobody can do the interaction.
+
+For example, the following `canLike` value indicates that nobody can `Like` the post:
+
+```json
+"canLike": {
+  "always": [],
+  "approvalRequired": []
+},
+```
+
+Likewise, a `canLike` value of `null` also indicates that nobody can `Like` the post:
+
+```json
+"canLike": null
+```
+
+or
+
+```json
+"canLike": {
+  "always": null,
+  "approvalRequired": null
+}
+```
+
+And a missing `canLike` value does the same thing:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canReply": {
+      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+    },
+    "canAnnounce": {
+      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+    }
+  },
+  [...]
+}
+```
+
+### Conflicting / Duplicate Values
+
+In cases where a user is present in a Collection URI, and is *also* targeted explicitly by URI, the **more specific value** takes precedence.
+
+For example:
+
+```json
+[...],
+"canReply": {
+  "always": [
+    "https://example.org/users/someone"
+  ],
+  "approvalRequired": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ]
+},
+[...]
+```
+
+Here, `@someone@example.org` is present in the `always` array, and is also implicitly present in the magic ActivityStreams Public collection in the `approvalRequired` array. In this case, they can always reply, as the `always` value is more explicit.
+
+Another example:
+
+```json
+[...],
+"canReply": {
+  "always": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "approvalRequired": [
+    "https://example.org/users/someone"
+  ]
+},
+[...]
+```
+
+Here, `@someone@example.org` is present in the `approvalRequired` array, but is also implicitly present in the magic ActivityStreams Public collection in the `always` array. In this case everyone can reply without approval, **except** for `@someone@example.org`, who requires approval.
+
+In case the **exact same** URI is present in both `always` and `approvalRequired`, the **highest level of permission** takes precedence (ie., a URI in `always` takes precedence over the same URI in `approvalRequired`).
+
+### Implicit Assumptions
+
+GoToSocial makes several implicit assumptions about `interactionPolicy`s.
+
+**Firstly**, users [mentioned](#mentions) in, or replied to by, a post should **ALWAYS** be able to reply to that post without requiring approval, regardless of the post visiblity and the `interactionPolicy`, **UNLESS** the post that mentioned or replied to them is itself currently pending approval.
+
+This is to prevent a would-be harasser from mentioning someone in an abusive post, and leaving no recourse to the mentioned user to reply.
+
+As such, when sending out interaction policies, GoToSocial will **ALWAYS** add the URIs of mentioned users to the `canReply.always` array, unless they are already covered by the ActivityStreams magic public URI.
+
+Likewise, when enforcing received interaction policies, GoToSocial will **ALWAYS** behave as though the URIs of mentioned users were present in the `canReply.always` array, even if they weren't.
+
+**Secondly**, a user should **ALWAYS** be able to reply to their own post, like their own post, and boost their own post without requiring approval, **UNLESS** that post is itself currently pending approval.
+
+As such, when sending out interaction policies, GoToSocial will **ALWAYS** add the URI of the post author to the `canLike.always`, `canReply.always`, and `canAnnounce.always` arrays, unless they are already covered by the ActivityStreams magic public URI.
+
+Likewise, when enforcing received interaction policies, GoToSocial will **ALWAYS** behave as though the URI of the post author is present in these `always` arrays, even if it wasn't.
+
+### Defaults
+
+When the `interactionPolicy` property is not present at all on a post, GoToSocial assumes a default `interactionPolicy` for that post appropriate to the visibility level of the post, and the post author.
+
+For a **public** or **unlocked** post by `@someone@example.org`, the default `interactionPolicy` is:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
+  [...]
+}
+```
+
+For a **followers-only** post by `@someone@example.org`, the assumed `interactionPolicy` is:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [
+        "https://example.org/users/someone",
+        "https://example.org/users/someone/followers",
+        [...URIs of any mentioned users...]
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://example.org/users/someone",
+        "https://example.org/users/someone/followers",
+        [...URIs of any mentioned users...]
+      ],
+      "approvalRequired": []
+    },
+    "canAnnounce": {
+      "always": [
+        "https://example.org/users/someone"
+      ],
+      "approvalRequired": []
+    }
+  },
+  [...]
+}
+```
+
+For a **direct** post by `@someone@example.org`, the assumed `interactionPolicy` is:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [
+        "https://example.org/users/someone",
+        [...URIs of any mentioned users...]
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://example.org/users/someone",
+        [...URIs of any mentioned users...]
+      ],
+      "approvalRequired": []
+    },
+    "canAnnounce": {
+      "always": [
+        "https://example.org/users/someone"
+      ],
+      "approvalRequired": []
+    }
+  },
+  [...]
+}
+```
+
+### Example 1 - Limiting scope of a conversation
+
+In this example, the user `@the_mighty_zork` wants to begin a conversation with the users `@booblover6969` and `@hodor`.
+
+To avoid the discussion being derailed by others, they want replies to their post by users other than the three participants to be permitted only if they're approved by `@the_mighty_zork`.
+
+Furthermore, they want to limit the boosting / `Announce`ing of their post to only their own followers, and to the three conversation participants.
+
+However, anyone should be able to `Like` the post by `@the_mighty_zork`.
+
+This can be achieved with the following `interactionPolicy`, which is attached to a post with visibility level public:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://example.org/users/the_mighty_zork",
+        "https://example.org/users/booblover6969",
+        "https://example.org/users/hodor"
+      ],
+      "approvalRequired": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ]
+    },
+    "canAnnounce": {
+      "always": [
+        "https://example.org/users/the_mighty_zork",
+        "https://example.org/users/the_mighty_zork/followers",
+        "https://example.org/users/booblover6969",
+        "https://example.org/users/hodor"
+      ],
+      "approvalRequired": []
+    }
+  },
+  [...]
+}
+```
+
+### Example 2 - Long solo thread
+
+In this example, the user `@the_mighty_zork` wants to write a long solo thread.
+
+They don't mind if people boost and like posts in the thread, but they don't want to get any replies because they don't have the energy to moderate the discussion; they just want to vent by throwing their thoughts out there.
+
+This can be achieved by setting the following `interactionPolicy` on every post in the thread:
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://example.org/users/the_mighty_zork"
+      ],
+      "approvalRequired": []
+    },
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
+  [...]
+}
+```
+
+Here, anyone is allowed to like or boost, but nobody is permitted to reply (except `@the_mighty_zork` themself).
+
+### Example 3 - Completely open
+
+In this example, `@the_mighty_zork` wants to write a completely open post that can be replied to, boosted, or liked by anyone who can see it (ie., the default behavior for unlocked and public posts):
+
+```json
+{
+  [...],
+  "interactionPolicy": {
+    "canLike": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canReply": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canAnnounce": {
+      "always": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    }
+  },
+  [...]
+}
+```
+
+### Requesting, Obtaining, and Validating Approval
+
+When a user's URI is in the `approvalRequired` array for a type of interaction, and that user wishes to obtain approval to distribute an interaction, they should do the following:
+
+1. Compose the interaction `Activity` (ie., `Like`, `Create` (reply), or `Announce`), as normal.
+2. Address the `Activity` `to` and `cc` the expected recipients for that `Activity`, as normal.
+3. `POST` the `Activity` only to the `Inbox` (or `sharedInbox`) of the author of the post being interacted with.
+4. **DO NOT DISTRIBUTE THE ACTIVITY FURTHER THAN THIS AT THIS POINT**.
+
+At this point, the interaction can be considered as pending approval, and should not be shown in the replies or likes collections, etc., of the post interacted with.
+
+It may be shown to the user who sent the interaction as a sort of "interaction pending" modal, but ideally it should not be shown to other users who share an instance with that user.
+
+From here, one of three things may happen:
+
+#### Rejection
+
+In this scenario, the author of the post being interacted with sends back a `Reject` `Activity` with the URI/ID of the interaction `Activity` as the `Object` property.
+
+For example, the following json object `Reject`s the attempt of `@someone@somewhere.else.example.org` to reply to a post by `@post_author@example.org`:
+
+```json
+{
+  "actor": "https://example.org/users/post_author",
+  "to": "https://somewhere.else.example.org/users/someone",
+  "id": "https://example.org/users/post_author/activities/reject/01J0K2YXP9QCT5BE1JWQSAM3B6",
+  "object": "https://somewhere.else.example.org/users/someone/statuses/01J17XY2VXGMNNPH1XR7BG2524",
+  "type": "Reject"
+}
+```
+
+If this happens, `@someone@somewhere.else.example.org` (and their instance) should consider the interaction as having been rejected. The instance should delete the activity from its internal storage (ie., database), or otherwise indicate that it's been rejected, and it should not distribute the `Activity` further, or retry the interaction.
+
+#### Nothing
+
+In this scenario, the author of the post being interacted with never sends back a `Reject` or an `Accept` `Activity`. In such a case, the interaction is considered "pending" in perpetuity. Instances may wish to implement some kind of cleanup feature, where sent and pending interactions that reach a certain age should be considered expired, and `Rejected` and then removed in the manner gestured towards above.
+
+#### Acceptance
+
+In this scenario, the author of the post being interacted with sends back an `Accept` `Activity` with the URI/ID of the interaction `Activity` as the `Object` property.
+
+For example, the following json object `Accept`s the attempt of `@someone@somewhere.else.example.org` to reply to a post by `@post_author@example.org`:
+
+```json
+{
+  "actor": "https://example.org/users/post_author",
+  "to": "https://somewhere.else.example.org/users/someone",
+  "id": "https://example.org/users/post_author/activities/reject/01J0K2YXP9QCT5BE1JWQSAM3B6",
+  "object": "https://somewhere.else.example.org/users/someone/statuses/01J17XY2VXGMNNPH1XR7BG2524",
+  "type": "Accept"
+}
+```
+
+If this happens, `@someone@somewhere.else.example.org` (and their instance) should consider the interaction as having been approved / accepted. The instance can then feel free to distribute the interaction `Activity` to all of the recipients targed by `to`, `cc`, etc, with the additional property `approvedBy` ([see below](#approvedby)).
+
+### Validating presence in a Followers / Following collection
+
+If an `Actor` interacting with an `Object` (via `Like`, `inReplyTo`, or `Announce`) is permitted to do that interaction based on their presence in a `Followers` or `Following` collection in the `always` field of an interaction policy, then their server should *still* wait for an `Accept` to be received from the server of the target account, before distributing the interaction more widely with the `approvedBy` property set to the URI of the `Accept`.
+
+This is to prevent scenarios where third servers have to somehow verify the presence of the interacting `Actor` in the `Followers` or `Following` collection of the `Actor` being interacted with. It is simpler to allow the target server to do that verification, and to trust that their `Accept` implicitly agrees that the interacting `Actor` is present in the relevant collection.
+
+Likewise, when receiving an interaction from an `Actor` whose permission to interact matches with one of the `Following` or `Followers` collections in the `always` property, the server of the interacted-with `Actor` should ensure that they *always* send out an `Accept` as soon as possible, so that the interacting `Actor` server can send out the `Activity` with the proper proof of acceptance.
+
+This process should bypass the normal "pending approval" stage whereby the server of the `Actor` being interacted with notifies them of the pending interaction, and waits for them to accept or reject, since there is no point notifying an `Actor` of a pending approval that they have already explicitly agreed to. In the GoToSocial codebase in particular, this is called "preapproval".
+
+### `approvedBy`
+
+`approvedBy` is an additional property added to the `Like`, and `Announce` activities, and any `Object`s considered to be "posts" (`Note`, `Article`, etc).
+
+The presence of `approvedBy` signals that the author of the post targeted by the `Activity` or replied-to by the `Object` has approved/accepted the interaction, and it can now be distributed to its intended audience.
+
+The value of `approvedBy` should be the URI of the `Accept` `Activity` created by the author of the post being interacted with.
+
+For example, the following `Announce` `Activity` indicates, by the presence of `approvedBy`, that it has been `Accept`ed by `@post_author@example.org`:
+
+```json
+{
+  "actor": "https://somewhere.else.example.org/users/someone",
+  "to": [
+    "https://somewhere.else.example.org/users/someone/followers"
+  ],
+  "cc": [
+    "https://example.org/users/post_author"
+  ],
+  "id": "https://somewhere.else.example.org/users/someone/activities/announce/01J0K2YXP9QCT5BE1JWQSAM3B6",
+  "object": "https://example.org/users/post_author/statuses/01J17ZZFK6W82K9MJ9SYQ33Y3D",
+  "approvedBy": "https://example.org/users/post_author/activities/accept/01J18043HGECBDZQPT09CP6F2X",
+  "type": "Announce"
+}
+```
+
+When receiving an `Activity` with an `approvedBy` value attached to it, remote instances should dereference the URI value of the field to get the `Accept` `Activity`.
+
+They should then validate that the `Accept` `Activity` has an `object` value equal to the `id` of the interaction `Activity` or `Object`, and an `actor` value equal to the author of the post being interacted with.
+
+Moreover, they should ensure that the URL host/domain of the dereferenced `Accept` is equal to the URL host/domain of the author of the post being interacted with.
+
+If the `Accept` cannot be dereferenced, or does not pass validity checks, the interaction should be considered invalid and dropped.
+
+As a consequence of this validadtion mechanism, instances should make sure that they serve a valid ActivityPub Object in response to dereferences of `Accept` URIs that pertain to an `interactionPolicy`. If they do not, they inadvertently risk restricting the ability of remote instances to distribute their posts.
+
+### Subsequent Replies / Scope Widening
+
+Each subsequent reply in a conversation will have its own interaction policy, chosen by the user who created the reply. In other words, the entire *conversation* or *thread* is not controlled by one `interactionPolicy`, but the policy can differ for each subsequent post in a thread, as set by the post author.
+
+Unfortunately, this means that even with `interactionPolicy` in place, the scope of a thread can inadvertently widen beyond the intention of the author of the first post in the thread.
+
+For instance, in [example 1](#example-1---limiting-scope-of-a-conversation) above, `@the_mighty_zork` specifies in the first post a `canReply.always` value of
+
+```json
+[
+  "https://example.org/users/the_mighty_zork",
+  "https://example.org/users/booblover6969",
+  "https://example.org/users/hodor"
+]
+```
+
+In a subsequent reply, either accidentally or on purpose `@booblover6969` sets the `canReply.always` value to:
+
+```json
+[
+  "https://www.w3.org/ns/activitystreams#Public"
+]
+```
+
+This widens the scope of the conversation, as now anyone can reply to `@booblover6969`'s post, and possibly also tag `@the_mighty_zork` in that reply.
+
+To avoid this issue, it is recommended that remote instances prevent users from being able to widen scope (exact mechanism of doing this TBD).
+
+It is also a good idea for instances to consider any interaction with a post- or status-like `Object` that is itself currently pending approval, as also pending approval. 
+
+In other words, instances should mark all children interactions below a pending-approval parent as also pending approval, no matter what the interaction policy on the parent would ordinarily allow.
+
+This avoids situations where someone could reply to a post, then, even if their reply is pending approval, they could reply *to their own reply* and have that marked as permitted (since as author, they would normally have [implicit permission to reply](#implicit-assumptions)).
+
 ## Polls
 
 To federate polls in and out, GoToSocial uses the widely-adopted [ActivityStreams `Question` type](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-question). This however, as first introduced and popularised by Mastodon, does slightly vary from the ActivityStreams specification. In the specification the Question type is marked as an extension of "IntransitiveActivity", an "Activity" extension that should be passed without an "Object" and all further details contained implicitly. But in implementation it is passed as an "Object", as part of "Create" or "Update" activities.

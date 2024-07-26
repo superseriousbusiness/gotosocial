@@ -575,6 +575,107 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 	}
 }
 
+// NormalizeOutgoingInteractionPolicyProp replaces single-entry interactionPolicy values
+// with single-entry arrays, for better compatibility with other AP implementations.
+//
+// Ie:
+//
+//	"interactionPolicy": {
+//		"canAnnounce": {
+//			"always": "https://www.w3.org/ns/activitystreams#Public",
+//			"approvalRequired": []
+//		},
+//		"canLike": {
+//			"always": "https://www.w3.org/ns/activitystreams#Public",
+//			"approvalRequired": []
+//		},
+//		"canReply": {
+//			"always": "https://www.w3.org/ns/activitystreams#Public",
+//			"approvalRequired": []
+//		}
+//	}
+//
+// becomes:
+//
+//	"interactionPolicy": {
+//		"canAnnounce": {
+//			"always": [
+//				"https://www.w3.org/ns/activitystreams#Public"
+//			],
+//			"approvalRequired": []
+//		},
+//		"canLike": {
+//			"always": [
+//				"https://www.w3.org/ns/activitystreams#Public"
+//			],
+//			"approvalRequired": []
+//		},
+//		"canReply": {
+//			"always": [
+//				"https://www.w3.org/ns/activitystreams#Public"
+//			],
+//			"approvalRequired": []
+//		}
+//	}
+//
+// Noop for items with no attachments, or with attachments that are already a slice.
+func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON map[string]interface{}) {
+	policy, ok := rawJSON["interactionPolicy"]
+	if !ok {
+		// No 'interactionPolicy',
+		// nothing to change.
+		return
+	}
+
+	policyMap, ok := policy.(map[string]interface{})
+	if !ok {
+		// Malformed 'interactionPolicy',
+		// nothing to change.
+		return
+	}
+
+	for _, rulesKey := range []string{
+		"canLike",
+		"canReply",
+		"canAnnounce",
+	} {
+		// Either "canAnnounce",
+		// "canLike", or "canApprove"
+		rulesVal, ok := policyMap[rulesKey]
+		if !ok {
+			// Not set.
+			return
+		}
+
+		rulesValMap, ok := rulesVal.(map[string]interface{})
+		if !ok {
+			// Malformed or not
+			// present skip.
+			return
+		}
+
+		for _, PolicyValuesKey := range []string{
+			"always",
+			"approvalRequired",
+		} {
+			PolicyValuesVal, ok := rulesValMap[PolicyValuesKey]
+			if !ok {
+				// Not set.
+				continue
+			}
+
+			if _, ok := PolicyValuesVal.([]interface{}); ok {
+				// Already slice,
+				// nothing to change.
+				continue
+			}
+
+			// Coerce single-object to slice.
+			rulesValMap[PolicyValuesKey] = []interface{}{PolicyValuesVal}
+		}
+	}
+}
+
 // NormalizeOutgoingObjectProp normalizes each Object entry in the rawJSON of the given
 // item by calling custom serialization / normalization functions on them in turn.
 //
