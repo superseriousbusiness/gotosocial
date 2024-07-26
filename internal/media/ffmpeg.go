@@ -41,15 +41,23 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
-	// Generate output file path with ext.
+	// Update filepath to add extension.
+	filepathExt := filepath + "." + ext
+
+	// First we need to rename filepath to have extension.
+	if err := os.Rename(filepath, filepathExt); err != nil {
+		return gtserror.Newf("error renaming to %s - >%s: %w", filepath, filepathExt, err)
+	}
+
+	// Generate cleaned output path with ext.
 	outpath := filepath + "_cleaned." + ext
 
 	// Clear metadata with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
 		"-loglevel", "error",
 
-		// Input file.
-		"-i", filepath,
+		// Input file path.
+		"-i", filepathExt,
 
 		// Drop all metadata.
 		"-map_metadata", "-1",
@@ -69,7 +77,7 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 
 	// Move the new output file path to original location.
 	if err := os.Rename(outpath, filepath); err != nil {
-		return gtserror.Newf("error renaming %s: %w", outpath, err)
+		return gtserror.Newf("error renaming %s -> %s: %w", outpath, filepath, err)
 	}
 
 	return nil
