@@ -209,18 +209,18 @@ func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) (*h
 //
 // It is passed to new transports, and should only be invoked when the iri.Host == this host.
 func (c *controller) dereferenceLocalAccept(ctx context.Context, iri *url.URL) (*http.Response, error) {
-	approval, err := c.fedDB.Get(ctx, iri)
+	accept, err := c.fedDB.GetAccept(ctx, iri)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, err
 	}
 
-	if approval == nil {
+	if accept == nil {
 		// Return a generic 404 not found response.
 		rsp := craftResponse(iri, http.StatusNotFound)
 		return rsp, nil
 	}
 
-	i, err := ap.Serialize(approval)
+	i, err := ap.Serialize(accept)
 	if err != nil {
 		return nil, err
 	}

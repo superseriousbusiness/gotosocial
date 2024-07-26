@@ -20,6 +20,7 @@ package federatingdb
 import (
 	"context"
 	"errors"
+	"net/url"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -32,6 +33,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
+
+func (f *federatingDB) GetAccept(
+	ctx context.Context,
+	acceptIRI *url.URL,
+) (vocab.ActivityStreamsAccept, error) {
+	approval, err := f.state.DB.GetInteractionApprovalByURI(ctx, acceptIRI.String())
+	if err != nil {
+		return nil, err
+	}
+	return f.converter.InteractionApprovalToASAccept(ctx, approval)
+}
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
 	if log.Level() >= level.DEBUG {
