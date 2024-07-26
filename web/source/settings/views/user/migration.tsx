@@ -84,12 +84,12 @@ function AliasForm({ data: profile }) {
 			<div className="form-section-docs">
 				<h3>Alias Account</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#alias-account"
+					href="https://docs.gotosocial.org/en/latest/user_guide/migration"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
 				>
-					Learn more about account aliasing (opens in a new tab)
+					Learn more about account migration (opens in a new tab)
 				</a>
 			</div>
 			<AlsoKnownAsURIs
@@ -179,12 +179,12 @@ function MoveForm({ data: profile }) {
 				</dl>
 				<br/>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#move-account"
+					href="https://docs.gotosocial.org/en/latest/user_guide/migration"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
 				>
-						Learn more about moving your account (opens in a new tab)
+					Learn more about account migration (opens in a new tab)
 				</a>
 			</div>
 			<TextInput
