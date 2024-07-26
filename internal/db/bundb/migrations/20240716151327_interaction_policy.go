@@ -49,7 +49,7 @@ func init() {
 				NewCreateIndex().
 				Table("interaction_approvals").
 				Index("interaction_approvals_interacting_account_id_idx").
-				Column("account_id").
+				Column("interacting_account_id").
 				IfNotExists().
 				Exec(ctx); err != nil {
 				return err
