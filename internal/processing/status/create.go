@@ -221,8 +221,17 @@ func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Ac
 		// We're permitted to do this, but since
 		// we matched due to presence in a followers
 		// or following collection, we should mark
-		// as pending approval and wait for an accept.
+		// as pending approval and wait until we can
+		// prove it's been Accepted by the target.
 		pendingApproval = true
+
+		if *inReplyTo.Local {
+			// If the target is local we don't need
+			// to wait for an Accept from remote,
+			// we can just preapprove it and have
+			// the processor create the Accept.
+			status.PreApproved = true
+		}
 
 	case policyResult.Permitted():
 		// We're permitted to do this

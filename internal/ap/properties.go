@@ -520,6 +520,27 @@ func SetManuallyApprovesFollowers(with WithManuallyApprovesFollowers, manuallyAp
 	mafProp.Set(manuallyApprovesFollowers)
 }
 
+// GetApprovedBy returns the URL contained in
+// the ApprovedBy property of 'with', if set.
+func GetApprovedBy(with WithApprovedBy) *url.URL {
+	mafProp := with.GetGoToSocialApprovedBy()
+	if mafProp == nil || !mafProp.IsIRI() {
+		return nil
+	}
+	return mafProp.Get()
+}
+
+// SetApprovedBy sets the given url
+// on the ApprovedBy property of 'with'.
+func SetApprovedBy(with WithApprovedBy, approvedBy *url.URL) {
+	abProp := with.GetGoToSocialApprovedBy()
+	if abProp == nil {
+		abProp = streams.NewGoToSocialApprovedByProperty()
+		with.SetGoToSocialApprovedBy(abProp)
+	}
+	abProp.Set(approvedBy)
+}
+
 // extractIRIs extracts just the AP IRIs from an iterable
 // property that may contain types (with IRIs) or just IRIs.
 //

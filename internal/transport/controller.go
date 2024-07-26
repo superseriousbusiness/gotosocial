@@ -204,6 +204,38 @@ func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) (*h
 	return rsp, nil
 }
 
+// dereferenceLocalAccept is a shortcut to dereference an accept created
+// by an account on this instance, without making any external api/http calls.
+//
+// It is passed to new transports, and should only be invoked when the iri.Host == this host.
+func (c *controller) dereferenceLocalAccept(ctx context.Context, iri *url.URL) (*http.Response, error) {
+	accept, err := c.fedDB.GetAccept(ctx, iri)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, err
+	}
+
+	if accept == nil {
+		// Return a generic 404 not found response.
+		rsp := craftResponse(iri, http.StatusNotFound)
+		return rsp, nil
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err := json.Marshal(i)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return a response with AS data as body.
+	rsp := craftResponse(iri, http.StatusOK)
+	rsp.Body = io.NopCloser(bytes.NewReader(b))
+	return rsp, nil
+}
+
 func craftResponse(url *url.URL, code int) *http.Response {
 	rsp := new(http.Response)
 	rsp.Request = new(http.Request)
