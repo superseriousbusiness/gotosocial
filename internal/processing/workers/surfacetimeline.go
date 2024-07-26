@@ -422,14 +422,14 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 	status *gtsmodel.Status,
 	alreadyHomeTimelinedAccountIDs []string,
 ) error {
-	if status.BoostOf != nil {
-		// Unwrap boost and work with the original status.
-		status = status.BoostOf
-	}
-
 	tagFollowerAccounts, err := s.tagFollowersForStatus(ctx, status, alreadyHomeTimelinedAccountIDs)
 	if err != nil {
 		return err
+	}
+
+	if status.BoostOf != nil {
+		// Unwrap boost and work with the original status.
+		status = status.BoostOf
 	}
 
 	// Insert the status into the home timeline of each tag follower.
@@ -458,20 +458,26 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 }
 
 // tagFollowersForStatus gets local accounts which follow any useable tags from the status,
-// skipping any with IDs in the provided list.
+// skipping any with IDs in the provided list, and any that shouldn't be able to see it due to blocks.
 func (s *Surface) tagFollowersForStatus(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	skipAccountIDs []string,
 ) ([]*gtsmodel.Account, error) {
-	if status.Visibility != gtsmodel.VisibilityPublic || len(status.Tags) == 0 {
+	// If the status is a boost, look at the tags from the boosted status.
+	taggedStatus := status
+	if status.BoostOf != nil {
+		taggedStatus = status.BoostOf
+	}
+
+	if taggedStatus.Visibility != gtsmodel.VisibilityPublic || len(taggedStatus.Tags) == 0 {
 		// Only public statuses with tags are eligible for tag processing.
 		return nil, nil
 	}
 
 	// Build list of useable tag IDs.
-	useableTagIDs := make([]string, 0, len(status.Tags))
-	for _, tag := range status.Tags {
+	useableTagIDs := make([]string, 0, len(taggedStatus.Tags))
+	for _, tag := range taggedStatus.Tags {
 		if *tag.Useable {
 			useableTagIDs = append(useableTagIDs, tag.ID)
 		}
@@ -483,7 +489,7 @@ func (s *Surface) tagFollowersForStatus(
 	// Get IDs for all accounts who follow one or more of the useable tags from this status.
 	allTagFollowerAccountIDs, err := s.State.DB.GetFollowerAccountIDsForTagIDs(ctx, useableTagIDs)
 	if err != nil {
-		return nil, gtserror.Newf("DB error getting followers for tags of status %s: %w", status.ID, err)
+		return nil, gtserror.Newf("DB error getting followers for tags of status %s: %w", taggedStatus.ID, err)
 	}
 	if len(allTagFollowerAccountIDs) == 0 {
 		return nil, nil
@@ -511,10 +517,28 @@ func (s *Surface) tagFollowersForStatus(
 	// Retrieve accounts for remaining tag followers.
 	tagFollowerAccounts, err := s.State.DB.GetAccountsByIDs(ctx, tagFollowerAccountIDs)
 	if err != nil {
-		return nil, gtserror.Newf("DB error getting accounts for followers of tags of status %s: %w", status.ID, err)
+		return nil, gtserror.Newf("DB error getting accounts for followers of tags of status %s: %w", taggedStatus.ID, err)
 	}
 
-	return tagFollowerAccounts, nil
+	// Check the visibility of the *input* status for each account.
+	// This accounts for the visibility of the boost as well as the original, if the input status is a boost.
+	errs := gtserror.MultiError{}
+	visibleTagFollowerAccounts := make([]*gtsmodel.Account, 0, len(tagFollowerAccounts))
+	for _, account := range tagFollowerAccounts {
+		visible, err := s.VisFilter.StatusVisible(ctx, account, status)
+		if err != nil {
+			errs.Append(gtserror.Newf(
+				"error checking visibility of status %s to account %s",
+				status.ID,
+				account.ID,
+			))
+		}
+		if visible {
+			visibleTagFollowerAccounts = append(visibleTagFollowerAccounts, account)
+		}
+	}
+
+	return visibleTagFollowerAccounts, errs.Combine()
 }
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.
@@ -760,14 +784,14 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 	status *gtsmodel.Status,
 	alreadyHomeTimelinedAccountIDs []string,
 ) error {
-	if status.BoostOf != nil {
-		// Unwrap boost and work with the original status.
-		status = status.BoostOf
-	}
-
 	tagFollowerAccounts, err := s.tagFollowersForStatus(ctx, status, alreadyHomeTimelinedAccountIDs)
 	if err != nil {
 		return err
+	}
+
+	if status.BoostOf != nil {
+		// Unwrap boost and work with the original status.
+		status = status.BoostOf
 	}
 
 	// Stream the update to the home timeline of each tag follower.

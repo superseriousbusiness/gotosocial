@@ -1090,6 +1090,13 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 	}
 	suite.False(following)
 
+	// Check precondition: receivingAccount does not block postingAccount or vice versa.
+	blocking, err := testStructs.State.DB.IsEitherBlocked(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
 	// Setup: receivingAccount follows testTag.
 	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
 		suite.FailNow(err.Error())
@@ -1117,10 +1124,194 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 	)
 }
 
+// A public status with a hashtag followed by a local user who does not otherwise follow the author
+// should not end up in the tag-following user's home timeline
+// if the user has the author blocked.
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtagAndBlock() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["remote_account_1"]
+		receivingAccount = suite.testAccounts["local_account_2"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream = streams[stream.TimelineHome]
+		testTag    = suite.testTags["welcome"]
+
+		// postingAccount posts a new public status not mentioning anyone but using testTag.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			[]string{testTag.ID},
+		)
+	)
+
+	// Check precondition: receivingAccount does not follow postingAccount.
+	following, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Check precondition: postingAccount does not block receivingAccount.
+	blocking, err := testStructs.State.DB.IsBlocked(ctx, postingAccount.ID, receivingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
+	// Check precondition: receivingAccount blocks postingAccount.
+	blocking, err = testStructs.State.DB.IsBlocked(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(blocking)
+
+	// Setup: receivingAccount follows testTag.
+	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
+	)
+}
+
 // A boost of a public status with a hashtag followed by a local user
 // who does not otherwise follow the author or booster
 // should end up in the tag-following user's home timeline as the original status.
 func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["remote_account_2"]
+		boostingAccount  = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_2"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream = streams[stream.TimelineHome]
+		testTag    = suite.testTags["welcome"]
+
+		// postingAccount posts a new public status not mentioning anyone but using testTag.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			[]string{testTag.ID},
+		)
+
+		// boostingAccount boosts that status.
+		boost = suite.newStatus(
+			ctx,
+			testStructs.State,
+			boostingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			status,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Check precondition: receivingAccount does not follow postingAccount.
+	following, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Check precondition: receivingAccount does not block postingAccount or vice versa.
+	blocking, err := testStructs.State.DB.IsEitherBlocked(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
+	// Check precondition: receivingAccount does not follow boostingAccount.
+	following, err = testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, boostingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Check precondition: receivingAccount does not block boostingAccount or vice versa.
+	blocking, err = testStructs.State.DB.IsEitherBlocked(ctx, receivingAccount.ID, boostingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
+	// Setup: receivingAccount follows testTag.
+	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the boost.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       boost,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+}
+
+// A boost of a public status with a hashtag followed by a local user
+// who does not otherwise follow the author or booster
+// should not end up in the tag-following user's home timeline
+// if the user has the author blocked.
+func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAndBlock() {
 	testStructs := suite.SetupTestStructs()
 	defer suite.TearDownTestStructs(testStructs)
 
@@ -1171,12 +1362,33 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag()
 	}
 	suite.False(following)
 
+	// Check precondition: postingAccount does not block receivingAccount.
+	blocking, err := testStructs.State.DB.IsBlocked(ctx, postingAccount.ID, receivingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
+	// Check precondition: receivingAccount blocks postingAccount.
+	blocking, err = testStructs.State.DB.IsBlocked(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(blocking)
+
 	// Check precondition: receivingAccount does not follow boostingAccount.
 	following, err = testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, boostingAccount.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.False(following)
+
+	// Check precondition: receivingAccount does not block boostingAccount or vice versa.
+	blocking, err = testStructs.State.DB.IsEitherBlocked(ctx, receivingAccount.ID, boostingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
 
 	// Setup: receivingAccount follows testTag.
 	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
@@ -1199,9 +1411,119 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag()
 	// Check status in home stream.
 	suite.checkStreamed(
 		homeStream,
-		true,
+		false,
 		"",
-		stream.EventTypeUpdate,
+		"",
+	)
+}
+
+// A boost of a public status with a hashtag followed by a local user
+// who does not otherwise follow the author or booster
+// should not end up in the tag-following user's home timeline
+// if the user has the booster blocked.
+func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAndBlockedBoost() {
+	testStructs := suite.SetupTestStructs()
+	defer suite.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		boostingAccount  = suite.testAccounts["remote_account_1"]
+		receivingAccount = suite.testAccounts["local_account_2"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		homeStream = streams[stream.TimelineHome]
+		testTag    = suite.testTags["welcome"]
+
+		// postingAccount posts a new public status not mentioning anyone but using testTag.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			[]string{testTag.ID},
+		)
+
+		// boostingAccount boosts that status.
+		boost = suite.newStatus(
+			ctx,
+			testStructs.State,
+			boostingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			status,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Check precondition: receivingAccount does not follow postingAccount.
+	following, err := testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Check precondition: receivingAccount does not block postingAccount or vice versa.
+	blocking, err := testStructs.State.DB.IsEitherBlocked(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
+	// Check precondition: receivingAccount does not follow boostingAccount.
+	following, err = testStructs.State.DB.IsFollowing(ctx, receivingAccount.ID, boostingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(following)
+
+	// Check precondition: boostingAccount does not block receivingAccount.
+	blocking, err = testStructs.State.DB.IsBlocked(ctx, boostingAccount.ID, receivingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
+
+	// Check precondition: receivingAccount blocks boostingAccount.
+	blocking, err = testStructs.State.DB.IsBlocked(ctx, receivingAccount.ID, boostingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(blocking)
+
+	// Setup: receivingAccount follows testTag.
+	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the boost.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       boost,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
 	)
 }
 
@@ -1243,6 +1565,13 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag(
 		suite.FailNow(err.Error())
 	}
 	suite.False(following)
+
+	// Check precondition: receivingAccount does not block postingAccount or vice versa.
+	blocking, err := testStructs.State.DB.IsEitherBlocked(ctx, receivingAccount.ID, postingAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocking)
 
 	// Setup: receivingAccount follows testTag.
 	if err := testStructs.State.DB.PutFollowedTag(ctx, receivingAccount.ID, testTag.ID); err != nil {
