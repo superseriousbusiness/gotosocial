@@ -49,70 +49,67 @@ func (d *Dereferencer) isPermittedStatus(
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) (
-	bool, // is permitted?
-	error,
+	permitted bool, // is permitted?
+	err error,
 ) {
-	// our failure condition handling
-	// at the end of this function for
-	// the case of permission = false.
-	onFalse := func() (bool, error) {
-		if existing != nil {
-			log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
+	switch {
+	case status.Account.IsSuspended():
+		// we shouldn't reach this point, log to poke devs to investigate.
+		log.Warnf(ctx, "status author suspended: %s", status.AccountURI)
+		permitted = false
 
-			// Delete existing status from database as it's no longer permitted.
-			if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
-				log.Errorf(ctx, "error deleting %s after permissivity fail: %v", existing.URI, err)
-			}
+	case status.InReplyTo != nil:
+		// Status is a reply, check permissivity.
+		permitted, err = d.isPermittedReply(ctx,
+			requestUser,
+			status,
+		)
+		if err != nil {
+			return false, gtserror.Newf("error checking reply permissivity: %w", err)
 		}
-		return false, nil
-	}
 
-	if status.Account.IsSuspended() {
-		// The status author is suspended,
-		// this shouldn't have reached here
-		// but it's a fast check anyways.
-		log.Debugf(ctx,
-			"status author %s is suspended",
-			status.AccountURI,
-		)
-		return onFalse()
-	}
-
-	if inReplyTo := status.InReplyTo; inReplyTo != nil {
-		return d.isPermittedReply(
-			ctx,
+	case status.BoostOf != nil:
+		// Status is a boost, check permissivity.
+		permitted, err = d.isPermittedBoost(ctx,
 			requestUser,
 			status,
-			inReplyTo,
-			onFalse,
 		)
-	} else if boostOf := status.BoostOf; boostOf != nil {
-		return d.isPermittedBoost(
-			ctx,
-			requestUser,
-			status,
-			boostOf,
-			onFalse,
-		)
+		if err != nil {
+			return false, gtserror.Newf("error checking boost permissivity: %w", err)
+		}
+
+	default:
+		// In all other cases
+		// permit this status.
+		permitted = true
 	}
 
-	// Nothing else stopping this.
-	return true, nil
+	if !permitted && existing != nil {
+		log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
+
+		// Delete existing status from database as it's no longer permitted.
+		if err := d.state.DB.DeleteStatusByID(ctx, existing.ID); err != nil {
+			log.Errorf(ctx, "error deleting %s after permissivity fail: %v", existing.URI, err)
+		}
+	}
+
+	return
 }
 
 func (d *Dereferencer) isPermittedReply(
 	ctx context.Context,
 	requestUser string,
 	status *gtsmodel.Status,
-	inReplyTo *gtsmodel.Status,
-	onFalse func() (bool, error),
 ) (bool, error) {
+	// Extract reply from status.
+	inReplyTo := status.InReplyTo
+
 	if inReplyTo.BoostOfID != "" {
 		// We do not permit replies to
 		// boost wrapper statuses. (this
 		// shouldn't be able to happen).
 		log.Info(ctx, "rejecting reply to boost wrapper status")
-		return onFalse()
+		return false, nil
 	}
 
 	// Check visibility of local
@@ -130,7 +127,7 @@ func (d *Dereferencer) isPermittedReply(
 		// Our status is not visible to the
 		// account trying to do the reply.
 		if !visible {
-			return onFalse()
+			return false, nil
 		}
 	}
 
@@ -147,7 +144,7 @@ func (d *Dereferencer) isPermittedReply(
 	if replyable.Forbidden() {
 		// Replier is not permitted
 		// to do this interaction.
-		return onFalse()
+		return false, nil
 	}
 
 	if replyable.Permitted() &&
@@ -186,7 +183,7 @@ func (d *Dereferencer) isPermittedReply(
 			return true, nil
 		}
 
-		return onFalse()
+		return false, nil
 	}
 
 	// Status claims to be approved, check
@@ -199,14 +196,12 @@ func (d *Dereferencer) isPermittedReply(
 		status.URI,
 		inReplyTo.AccountURI,
 	); err != nil {
+
 		// Error dereferencing means we couldn't
 		// get the Accept right now or it wasn't
 		// valid, so we shouldn't store this status.
-		//
-		// Do log the error though as it may be
-		// interesting for admins to see.
-		log.Info(ctx, "rejecting reply with undereferenceable ApprovedByURI: %v", err)
-		return onFalse()
+		log.Errorf(ctx, "undereferencable ApprovedByURI: %v", err)
+		return false, nil
 	}
 
 	// Status has been approved.
@@ -218,15 +213,16 @@ func (d *Dereferencer) isPermittedBoost(
 	ctx context.Context,
 	requestUser string,
 	status *gtsmodel.Status,
-	boostOf *gtsmodel.Status,
-	onFalse func() (bool, error),
 ) (bool, error) {
+
+	// Extract boost from status.
+	boostOf := status.BoostOf
 	if boostOf.BoostOfID != "" {
+
 		// We do not permit boosts of
 		// boost wrapper statuses. (this
 		// shouldn't be able to happen).
-		log.Info(ctx, "rejecting boost of boost wrapper status")
-		return onFalse()
+		return false, nil
 	}
 
 	// Check visibility of local
@@ -244,7 +240,7 @@ func (d *Dereferencer) isPermittedBoost(
 		// Our status is not visible to the
 		// account trying to do the boost.
 		if !visible {
-			return onFalse()
+			return false, nil
 		}
 	}
 
@@ -261,7 +257,7 @@ func (d *Dereferencer) isPermittedBoost(
 	if boostable.Forbidden() {
 		// Booster is not permitted
 		// to do this interaction.
-		return onFalse()
+		return false, nil
 	}
 
 	if boostable.Permitted() &&
@@ -300,7 +296,7 @@ func (d *Dereferencer) isPermittedBoost(
 			return true, nil
 		}
 
-		return onFalse()
+		return false, nil
 	}
 
 	// Boost claims to be approved, check
@@ -313,14 +309,12 @@ func (d *Dereferencer) isPermittedBoost(
 		status.URI,
 		boostOf.AccountURI,
 	); err != nil {
+
 		// Error dereferencing means we couldn't
 		// get the Accept right now or it wasn't
 		// valid, so we shouldn't store this status.
-		//
-		// Do log the error though as it may be
-		// interesting for admins to see.
-		log.Info(ctx, "rejecting boost with undereferenceable ApprovedByURI: %v", err)
-		return onFalse()
+		log.Errorf(ctx, "undereferencable ApprovedByURI: %v", err)
+		return false, nil
 	}
 
 	// Status has been approved.
@@ -339,8 +333,8 @@ func (d *Dereferencer) validateApprovedBy(
 	ctx context.Context,
 	requestUser string,
 	approvedByURIStr string, // Eg., "https://example.org/users/someone/accepts/01J2736AWWJ3411CPR833F6D03"
-	expectedObject string, // Eg., "https://some.instance.example.org/users/someone_else/statuses/01J27414TWV9F7DC39FN8ABB5R"
-	expectedActor string, // Eg., "https://example.org/users/someone"
+	expectObjectURIStr string, // Eg., "https://some.instance.example.org/users/someone_else/statuses/01J27414TWV9F7DC39FN8ABB5R"
+	expectActorURIStr string, // Eg., "https://example.org/users/someone"
 ) error {
 	approvedByURI, err := url.Parse(approvedByURIStr)
 	if err != nil {
@@ -354,14 +348,14 @@ func (d *Dereferencer) validateApprovedBy(
 		return err
 	}
 
-	transport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
+	tsport, err := d.transportController.NewTransportForUsername(ctx, requestUser)
 	if err != nil {
 		err := gtserror.Newf("error creating transport: %w", err)
 		return err
 	}
 
 	// Make the call to resolve into an Acceptable.
-	rsp, err := transport.Dereference(ctx, approvedByURI)
+	rsp, err := tsport.Dereference(ctx, approvedByURI)
 	if err != nil {
 		err := gtserror.Newf("error dereferencing %s: %w", approvedByURIStr, err)
 		return err
@@ -385,82 +379,83 @@ func (d *Dereferencer) validateApprovedBy(
 	// have changed (i.e. we followed some redirects).
 	rspURL := rsp.Request.URL
 	rspURLStr := rspURL.String()
-	if rspURLStr != approvedByURIStr {
-		// Final URI was different from approvedByURIStr.
-		//
-		// Make sure it's at least on the same host as
-		// what we expected (ie., we weren't redirected
-		// across domains), and make sure it's the same
-		// as the ID of the Accept we were returned.
-		if rspURL.Host != approvedByURI.Host {
-			err := gtserror.Newf(
-				"final dereference host %s did not match approvedByURI host %s",
-				rspURL.Host, approvedByURI.Host,
-			)
-			return err
-		}
+	switch {
+	case rspURLStr == approvedByURIStr:
 
-		if acceptURIStr != rspURLStr {
-			err := gtserror.Newf(
-				"final dereference uri %s did not match returned Accept ID/URI %s",
-				rspURLStr, acceptURIStr,
-			)
-			return err
-		}
-	}
-
-	// Ensure the Accept URI has the same host
-	// as the Accept Actor, so we know we're
-	// not dealing with someone on a different
-	// domain just pretending to be the Actor.
-	actorIRIs := ap.GetActorIRIs(acceptable)
-	if len(actorIRIs) != 1 {
-		err := gtserror.New("resolved Accept actor(s) length was not 1")
-		return gtserror.SetMalformed(err)
-	}
-
-	actorIRI := actorIRIs[0]
-	actorStr := actorIRI.String()
-
-	if actorIRI.Host != acceptURI.Host {
-		err := gtserror.Newf(
-			"Accept Actor %s was not the same host as Accept %s",
-			actorStr, acceptURIStr,
+	// i.e. from here, rspURLStr != approvedByURIStr.
+	//
+	// Make sure it's at least on the same host as
+	// what we expected (ie., we weren't redirected
+	// across domains), and make sure it's the same
+	// as the ID of the Accept we were returned.
+	case rspURL.Host != approvedByURI.Host:
+		return gtserror.Newf(
+			"final dereference host %s did not match approvedByURI host %s",
+			rspURL.Host, approvedByURI.Host,
 		)
-		return err
+	case acceptURIStr != rspURLStr:
+		return gtserror.Newf(
+			"final dereference uri %s did not match returned Accept ID/URI %s",
+			rspURLStr, acceptURIStr,
+		)
 	}
+
+	// Extract the actor IRI and string from Accept.
+	actorIRIs := ap.GetActorIRIs(acceptable)
+	actorIRI, actorIRIStr := extractIRI(actorIRIs)
+	switch {
+	case actorIRIStr == "":
+		err := gtserror.New("missing Accept actor IRI")
+		return gtserror.SetMalformed(err)
 
 	// Ensure the Accept Actor is who we expect
 	// it to be, and not someone else trying to
 	// do an Accept for an interaction with a
 	// statusable they don't own.
-	if actorStr != expectedActor {
-		err := gtserror.Newf(
-			"Accept Actor %s was not the same as expected actor %s",
-			actorStr, expectedActor,
+	case actorIRI.Host != acceptURI.Host:
+		return gtserror.Newf(
+			"Accept Actor %s was not the same host as Accept %s",
+			actorIRIStr, acceptURIStr,
 		)
-		return err
+
+	// Ensure the Accept Actor is who we expect
+	// it to be, and not someone else trying to
+	// do an Accept for an interaction with a
+	// statusable they don't own.
+	case actorIRIStr != expectActorURIStr:
+		return gtserror.Newf(
+			"Accept Actor %s was not the same as expected actor %s",
+			actorIRIStr, expectActorURIStr,
+		)
 	}
+
+	// Extract the object IRI string from Accept.
+	objectIRIs := ap.GetObjectIRIs(acceptable)
+	_, objectIRIStr := extractIRI(objectIRIs)
+	switch {
+	case objectIRIStr == "":
+		err := gtserror.New("missing Accept object IRI")
+		return gtserror.SetMalformed(err)
 
 	// Ensure the Accept Object is what we expect
 	// it to be, ie., it's Accepting the interaction
 	// we need it to Accept, and not something else.
-	objectIRIs := ap.GetObjectIRIs(acceptable)
-	if len(objectIRIs) != 1 {
-		err := gtserror.New("resolved Accept object(s) length was not 1")
-		return err
-	}
-
-	objectIRI := objectIRIs[0]
-	objectStr := objectIRI.String()
-
-	if objectStr != expectedObject {
-		err := gtserror.Newf(
+	case objectIRIStr != expectObjectURIStr:
+		return gtserror.Newf(
 			"resolved Accept Object uri %s was not the same as expected object %s",
-			objectStr, expectedObject,
+			objectIRIStr, expectObjectURIStr,
 		)
-		return err
 	}
 
 	return nil
+}
+
+// extractIRI is shorthand to extract the first IRI
+// url.URL{} object and serialized form from slice.
+func extractIRI(iris []*url.URL) (*url.URL, string) {
+	if len(iris) == 0 {
+		return nil, ""
+	}
+	u := iris[0]
+	return u, u.String()
 }
