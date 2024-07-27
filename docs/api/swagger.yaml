@@ -333,6 +333,56 @@ definitions:
         type: object
         x-go-name: Account
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    accountExportStats:
+        description: |-
+            AccountExportStats models an account's stats
+            specifically for the purpose of informing about
+            export sizes at the /api/v1/exports/stats endpoint.
+        properties:
+            blocks_count:
+                description: Number of accounts blocked by this account.
+                example: 15
+                format: int64
+                type: integer
+                x-go-name: BlocksCount
+            followers_count:
+                description: Number of accounts following this account.
+                example: 50
+                format: int64
+                type: integer
+                x-go-name: FollowersCount
+            following_count:
+                description: Number of accounts followed by this account.
+                example: 50
+                format: int64
+                type: integer
+                x-go-name: FollowingCount
+            lists_count:
+                description: Number of lists created by this account.
+                example: 10
+                format: int64
+                type: integer
+                x-go-name: ListsCount
+            media_storage:
+                description: 'TODO: String representation of media storage size attributed to this account.'
+                example: 500MB
+                type: string
+                x-go-name: MediaStorage
+            mutes_count:
+                description: Number of accounts muted by this account.
+                example: 11
+                format: int64
+                type: integer
+                x-go-name: MutesCount
+            statuses_count:
+                description: Number of statuses created by this account.
+                example: 81986
+                format: int64
+                type: integer
+                x-go-name: StatusesCount
+        type: object
+        x-go-name: AccountExportStats
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     accountRelationship:
         properties:
             blocked_by:
@@ -6358,6 +6408,128 @@ paths:
             summary: Get an array of custom emojis available on the instance.
             tags:
                 - custom_emojis
+    /api/v1/exports/blocks.csv:
+        get:
+            operationId: exportBlocks
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that you block.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:blocks
+            summary: Export a CSV file of accounts that you block.
+            tags:
+                - import-export
+    /api/v1/exports/followers.csv:
+        get:
+            operationId: exportFollowers
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that follow you.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Export a CSV file of accounts that follow you.
+            tags:
+                - import-export
+    /api/v1/exports/following.csv:
+        get:
+            operationId: exportFollowing
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that you follow.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Export a CSV file of accounts that you follow.
+            tags:
+                - import-export
+    /api/v1/exports/lists.csv:
+        get:
+            operationId: exportLists
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of lists.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Export a CSV file of lists created by you.
+            tags:
+                - import-export
+    /api/v1/exports/mutes.csv:
+        get:
+            operationId: exportMutes
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that you mute.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:mutes
+            summary: Export a CSV file of accounts that you mute.
+            tags:
+                - import-export
+    /api/v1/exports/stats:
+        get:
+            operationId: exportStats
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Export stats for the requesting account.
+                    schema:
+                        $ref: '#/definitions/accountExportStats'
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:account
+            summary: Returns informational stats on the number of items that can be exported for requesting account.
+            tags:
+                - import-export
     /api/v1/favourites:
         get:
             description: |-

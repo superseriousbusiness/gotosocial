@@ -48,6 +48,11 @@ export interface GTSFetchArgs extends FetchArgs {
 	 * as FormData before submission. 
 	 */
 	asForm?: boolean;
+	/**
+	 * If set, then Accept header will
+	 * be set to the provided contentType.
+	 */
+	acceptContentType?: string;
 }
 
 /**
@@ -77,6 +82,10 @@ const gtsBaseQuery: BaseQueryFn<
 	// Derive baseUrl dynamically.
 	let baseUrl: string | undefined;
 
+	// Assume Accept value of
+	// "application/json" by default.
+	let accept = "application/json";
+
 	// Check if simple string baseUrl provided
 	// as args, or if more complex args provided.
 	if (typeof args === "string") {
@@ -101,11 +110,16 @@ const gtsBaseQuery: BaseQueryFn<
 			});
 		}
 
+		if (args.acceptContentType !== undefined) {
+			accept = args.acceptContentType;
+		}
+
 		// Delete any of our extended arguments
 		// to avoid confusing fetchBaseQuery.
 		delete args.baseUrl;
 		delete args.discardEmpty;
 		delete args.asForm;
+		delete args.acceptContentType;
 	}
 
 	if (!baseUrl) {
@@ -124,8 +138,20 @@ const gtsBaseQuery: BaseQueryFn<
 			if (token != undefined) {
 				headers.set('Authorization', token);
 			}
-			headers.set("Accept", "application/json");
+			
+			headers.set("Accept", accept);
 			return headers;
+		},
+		responseHandler: (response) => {
+			// Return just text if caller has
+			// set a custom accept content-type.
+			if (accept !== "application/json") {
+				return response.text();
+			}
+
+			// Else return good old
+			// fashioned JSON baby!
+			return response.json();
 		},
 	})(args, api, extraOptions);
 };

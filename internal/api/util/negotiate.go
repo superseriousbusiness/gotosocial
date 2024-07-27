@@ -88,6 +88,12 @@ var HostMetaHeaders = []string{
 	AppXML,
 }
 
+// CSVHeaders just contains the text/csv
+// MIME type, used for import/export.
+var CSVHeaders = []string{
+	TextCSV,
+}
+
 // NegotiateAccept takes the *gin.Context from an incoming request, and a
 // slice of Offers, and performs content negotiation for the given request
 // with the given content-type offers. It will return a string representation

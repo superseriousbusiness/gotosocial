@@ -1464,6 +1464,39 @@ button.tab-button {
 	}
 }
 
+.export-data {
+	.export-buttons-wrapper {
+		display: grid;
+		max-width: fit-content;
+		gap: 0.5rem;
+
+		.stats-and-button {
+			display: grid;
+			grid-template-columns: 13rem 1fr;
+			align-items: center;
+			gap: 0.25rem;
+	
+			.mutation-button {
+				width: 100%;
+				overflow-x: hidden;
+	
+				button {
+					font-size: 1rem;
+					width: 100%;
+				}
+			}
+		}
+	
+		@media screen and (max-width: 35rem) {
+			gap: 1rem;
+			
+			.stats-and-button {
+				grid-template-columns: auto;
+			}
+		}
+	}
+}
+
 @media screen and (orientation: portrait) {
 	.reports .report .byline {
 		grid-template-columns: 1fr;

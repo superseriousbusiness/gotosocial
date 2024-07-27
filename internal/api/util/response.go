@@ -18,6 +18,7 @@
 package util
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"encoding/xml"
 	"io"
@@ -197,6 +198,47 @@ func EncodeXMLResponse(
 		)
 	} else {
 		// This will always be an XML error, we
+		// can't really add any more useful context.
+		log.Error(r.Context(), err)
+
+		// Any error returned here is unrecoverable,
+		// set Internal Server Error JSON response.
+		WriteResponseBytes(rw, r,
+			http.StatusInternalServerError,
+			AppJSON,
+			StatusInternalServerErrorJSON,
+		)
+	}
+
+	// Release.
+	putBuf(buf)
+}
+
+// EncodeCSVResponse encodes 'records' as CSV HTTP response
+// to ResponseWriter with given status code, using CSV content-type.
+func EncodeCSVResponse(
+	rw http.ResponseWriter,
+	r *http.Request,
+	statusCode int,
+	records [][]string,
+) {
+	// Acquire buffer.
+	buf := getBuf()
+
+	// Wrap buffer in CSV writer.
+	csvWriter := csv.NewWriter(buf)
+
+	// Write all the records to the buffer.
+	if err := csvWriter.WriteAll(records); err == nil {
+		// Respond with the now-known
+		// size byte slice within buf.
+		WriteResponseBytes(rw, r,
+			statusCode,
+			TextCSV,
+			buf.B,
+		)
+	} else {
+		// This will always be an csv error, we
 		// can't really add any more useful context.
 		log.Error(r.Context(), err)
 

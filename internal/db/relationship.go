@@ -179,6 +179,9 @@ type Relationship interface {
 	// GetAccountBlockIDs is like GetAccountBlocks, but returns just IDs.
 	GetAccountBlockIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
 
+	// CountAccountBlocks counts the number of blocks owned by the given account.
+	CountAccountBlocks(ctx context.Context, accountID string) (int, error)
+
 	// GetNote gets a private note from a source account on a target account, if it exists.
 	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)
 
@@ -196,6 +199,9 @@ type Relationship interface {
 
 	// GetMute returns the mute from account1 targeting account2, if it exists, or an error if it doesn't.
 	GetMute(ctx context.Context, account1 string, account2 string) (*gtsmodel.UserMute, error)
+
+	// CountAccountMutes counts the number of mutes owned by the given account.
+	CountAccountMutes(ctx context.Context, accountID string) (int, error)
 
 	// PutMute attempts to insert or update the given account mute in the database.
 	PutMute(ctx context.Context, mute *gtsmodel.UserMute) error
