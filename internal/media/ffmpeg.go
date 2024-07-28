@@ -52,6 +52,8 @@ func ffmpegClearMetadata(ctx context.Context, filepath string) error {
 
 	// Clear metadata with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
+
+		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file path.
@@ -101,6 +103,8 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 
 	// Generate thumb with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
+
+		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file.
@@ -158,6 +162,8 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 
 	// Generate static with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
+
+		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file.
@@ -216,12 +222,29 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 		Stdout: &stdout,
 
 		Args: []string{
-			"-i", filepath,
+			// Don't show any excess logging
+			// information, all goes in JSON.
 			"-loglevel", "quiet",
+
+			// Print in compact JSON format.
 			"-print_format", "json=compact=1",
-			"-show_streams",
-			"-show_format",
+
+			// Show error in our
+			// chosen format type.
 			"-show_error",
+
+			// Show specifically container format, total duration and bitrate.
+			"-show_entries", "format=format_name,duration,bit_rate" + ":" +
+
+				// Show specifically stream codec names, types, frame rate, duration and dimens.
+				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height" + ":" +
+
+				// Show all
+				// side data.
+				"side_data",
+
+			// Input file.
+			"-i", filepath,
 		},
 
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
@@ -257,8 +280,9 @@ type result struct {
 	format   string
 	audio    []audioStream
 	video    []videoStream
-	bitrate  uint64
 	duration float64
+	bitrate  uint64
+	rotation int
 }
 
 type stream struct {
@@ -456,15 +480,62 @@ func (res *ffprobeResult) Process() (*result, error) {
 		}
 	}
 
+	// Check extra packet / frame information
+	// for provided orientation (not always set).
+	for _, pf := range res.PacketsAndFrames {
+		for _, d := range pf.SideDataList {
+
+			// Ensure frame side
+			// data IS rotation data.
+			if d.Rotation == 0 {
+				continue
+			}
+
+			// Ensure rotation not
+			// already been specified.
+			if r.rotation != 0 {
+				return nil, errors.New("multiple sets of rotation data")
+			}
+
+			// Drop any decimal
+			// rotation value.
+			rot := int(d.Rotation)
+
+			// Round rotation to multiple of 90.
+			// More granularity is not needed.
+			if q := rot % 90; q > 45 {
+				rot += (90 - q)
+			} else {
+				rot -= q
+			}
+
+			// Drop any value above 360
+			// or below -360, these are
+			// just repeat full turns.
+			r.rotation = (rot % 360)
+		}
+	}
+
 	return &r, nil
 }
 
 // ffprobeResult contains parsed JSON data from
 // result of calling `ffprobe` on a media file.
 type ffprobeResult struct {
-	Streams []ffprobeStream `json:"streams"`
-	Format  *ffprobeFormat  `json:"format"`
-	Error   *ffprobeError   `json:"error"`
+	PacketsAndFrames []ffprobePacketOrFrame `json:"packets_and_frames"`
+	Streams          []ffprobeStream        `json:"streams"`
+	Format           *ffprobeFormat         `json:"format"`
+	Error            *ffprobeError          `json:"error"`
+}
+
+type ffprobePacketOrFrame struct {
+	Type         string            `json:"type"`
+	SideDataList []ffprobeSideData `json:"side_data_list"`
+}
+
+type ffprobeSideData struct {
+	Rotation float64 `json:"rotation"`
+	// + unused fields.
 }
 
 type ffprobeStream struct {
@@ -474,14 +545,12 @@ type ffprobeStream struct {
 	DurationTS uint   `json:"duration_ts"`
 	Width      int    `json:"width"`
 	Height     int    `json:"height"`
-	// + unused fields.
 }
 
 type ffprobeFormat struct {
 	FormatName string `json:"format_name"`
 	Duration   string `json:"duration"`
 	BitRate    string `json:"bit_rate"`
-	// + unused fields
 }
 
 type ffprobeError struct {

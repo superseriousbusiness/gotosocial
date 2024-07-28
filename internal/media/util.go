@@ -37,12 +37,23 @@ import (
 
 // thumbSize returns the dimensions to use for an input
 // image of given width / height, for its outgoing thumbnail.
-// This maintains the original image aspect ratio.
-func thumbSize(width, height int) (int, int) {
+// This attempts to maintains the original image aspect ratio.
+func thumbSize(width, height int, aspect float32, rotation int) (int, int) {
 	const (
 		maxThumbWidth  = 512
 		maxThumbHeight = 512
 	)
+
+	// If image is rotated by
+	// any odd multiples of 90,
+	// flip width / height to
+	// get the correct scale.
+	switch rotation {
+	case -90, 90, -270, 270:
+		width, height = height, width
+		aspect = 1 / aspect
+	}
+
 	switch {
 	// Simplest case, within bounds!
 	case width < maxThumbWidth &&
@@ -51,13 +62,15 @@ func thumbSize(width, height int) (int, int) {
 
 	// Width is larger side.
 	case width > height:
-		p := float32(width) / float32(maxThumbWidth)
-		return maxThumbWidth, int(float32(height) / p)
+		// i.e. height = widthDiff * (height / width)
+		height = int(float32(maxThumbWidth) / aspect)
+		return maxThumbWidth, height
 
 	// Height is larger side.
 	case height > width:
-		p := float32(height) / float32(maxThumbHeight)
-		return int(float32(width) / p), maxThumbHeight
+		// i.e. width = heightDiff * (width / height)
+		width = int(float32(maxThumbHeight) * aspect)
+		return width, maxThumbHeight
 
 	// Square.
 	default:
