@@ -176,10 +176,11 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	// This will always be used regardless of type,
 	// as even audio files may contain embedded album art.
 	width, height, framerate := result.ImageMeta()
+	aspect := util.Div(float32(width), float32(height))
 	p.media.FileMeta.Original.Width = width
 	p.media.FileMeta.Original.Height = height
 	p.media.FileMeta.Original.Size = (width * height)
-	p.media.FileMeta.Original.Aspect = util.Div(float32(width), float32(height))
+	p.media.FileMeta.Original.Aspect = aspect
 	p.media.FileMeta.Original.Framerate = util.PtrIf(framerate)
 	p.media.FileMeta.Original.Duration = util.PtrIf(float32(result.duration))
 	p.media.FileMeta.Original.Bitrate = util.PtrIf(result.bitrate)
@@ -218,11 +219,11 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	if width > 0 && height > 0 {
 		// Determine thumbnail dimensions to use.
-		thumbWidth, thumbHeight := thumbSize(width, height)
+		thumbWidth, thumbHeight := thumbSize(width, height, aspect, result.rotation)
 		p.media.FileMeta.Small.Width = thumbWidth
 		p.media.FileMeta.Small.Height = thumbHeight
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
-		p.media.FileMeta.Small.Aspect = float32(thumbWidth) / float32(thumbHeight)
+		p.media.FileMeta.Small.Aspect = aspect
 
 		// Generate a thumbnail image from input image path.
 		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
