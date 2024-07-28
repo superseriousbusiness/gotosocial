@@ -535,7 +535,6 @@ type ffprobePacketOrFrame struct {
 
 type ffprobeSideData struct {
 	Rotation float64 `json:"rotation"`
-	// + unused fields.
 }
 
 type ffprobeStream struct {
