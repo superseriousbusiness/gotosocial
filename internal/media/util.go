@@ -62,13 +62,13 @@ func thumbSize(width, height int, aspect float32, rotation int) (int, int) {
 
 	// Width is larger side.
 	case width > height:
-		// i.e. height = widthDiff * (height / width)
+		// i.e. height = newWidth * (height / width)
 		height = int(float32(maxThumbWidth) / aspect)
 		return maxThumbWidth, height
 
 	// Height is larger side.
 	case height > width:
-		// i.e. width = heightDiff * (width / height)
+		// i.e. width = newHeight * (width / height)
 		width = int(float32(maxThumbHeight) * aspect)
 		return width, maxThumbHeight
 
