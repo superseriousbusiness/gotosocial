@@ -37,27 +37,25 @@ import (
 )
 
 // ffmpegClearMetadata generates a copy (in-place) of input media with all metadata cleared.
-func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error {
+func ffmpegClearMetadata(ctx context.Context, filepath string) error {
+	var outpath string
+
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
-	// Update filepath to add extension.
-	filepathExt := filepath + "." + ext
-
-	// First we need to rename filepath to have extension.
-	if err := os.Rename(filepath, filepathExt); err != nil {
-		return gtserror.Newf("error renaming to %s - >%s: %w", filepath, filepathExt, err)
+	// Generate cleaned output path MAINTAINING extension.
+	if i := strings.IndexByte(filepath, '.'); i != -1 {
+		outpath = filepath[:i] + "_cleaned" + filepath[i:]
+	} else {
+		return gtserror.New("input file missing extension")
 	}
-
-	// Generate cleaned output path with ext.
-	outpath := filepath + "_cleaned." + ext
 
 	// Clear metadata with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
 		"-loglevel", "error",
 
 		// Input file path.
-		"-i", filepathExt,
+		"-i", filepath,
 
 		// Drop all metadata.
 		"-map_metadata", "-1",
@@ -85,12 +83,17 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 
 // ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
 func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
+	var outpath string
+
+	// Generate thumb output path REPLACING extension.
+	if i := strings.IndexByte(filepath, '.'); i != -1 {
+		outpath = filepath[:i] + "_thumb.webp"
+	} else {
+		return "", gtserror.New("input file missing extension")
+	}
 
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
-
-	// Generate output frame file path.
-	outpath := filepath + "_thumb.webp"
 
 	// Thumbnail size scaling argument.
 	scale := strconv.Itoa(width) + ":" +
@@ -141,11 +144,17 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 
 // ffmpegGenerateStatic generates a static png from input image of any type, useful for emoji.
 func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) {
+	var outpath string
+
+	// Generate thumb output path REPLACING extension.
+	if i := strings.IndexByte(filepath, '.'); i != -1 {
+		outpath = filepath[:i] + "_static.png"
+	} else {
+		return "", gtserror.New("input file missing extension")
+	}
+
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
-
-	// Generate output static file path.
-	outpath := filepath + "_static.png"
 
 	// Generate static with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,

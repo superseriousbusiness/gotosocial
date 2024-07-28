@@ -19,6 +19,7 @@ package media
 
 import (
 	"context"
+	"os"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
@@ -168,6 +169,18 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	if fileType != gtsmodel.FileTypeImage {
 		return gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
 	}
+
+	// Add file extension to path.
+	newpath := temppath + "." + ext
+
+	// Before ffmpeg processing, rename to set file ext.
+	if err := os.Rename(temppath, newpath); err != nil {
+		return gtserror.Newf("error renaming to %s - >%s: %w", temppath, newpath, err)
+	}
+
+	// Update path var
+	// AFTER successful.
+	temppath = newpath
 
 	// Generate a static image from input emoji path.
 	staticpath, err = ffmpegGenerateStatic(ctx, temppath)

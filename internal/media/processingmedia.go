@@ -19,6 +19,7 @@ package media
 
 import (
 	"context"
+	"os"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
@@ -185,15 +186,24 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// Set media type from ffprobe format data.
 	p.media.Type, ext = result.GetFileType()
-	switch p.media.Type {
 
+	// Add file extension to path.
+	newpath := temppath + "." + ext
+
+	// Before ffmpeg processing, rename to set file ext.
+	if err := os.Rename(temppath, newpath); err != nil {
+		return gtserror.Newf("error renaming to %s - >%s: %w", temppath, newpath, err)
+	}
+
+	// Update path var
+	// AFTER successful.
+	temppath = newpath
+
+	switch p.media.Type {
 	case gtsmodel.FileTypeImage,
 		gtsmodel.FileTypeVideo:
-		// Pass file through ffmpeg clearing
-		// any excess metadata (e.g. EXIF).
-		if err := ffmpegClearMetadata(ctx,
-			temppath, ext,
-		); err != nil {
+		// Pass file through ffmpeg clearing metadata (e.g. EXIF).
+		if err := ffmpegClearMetadata(ctx, temppath); err != nil {
 			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
 
