@@ -224,8 +224,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Small.Height = thumbHeight
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
 		p.media.FileMeta.Small.Aspect = aspect
-		log.Infof(ctx, "%dx%d", width, height)
-		log.Infof(ctx, "%dx%d", thumbWidth, thumbHeight)
 
 		// Generate a thumbnail image from input image path.
 		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
