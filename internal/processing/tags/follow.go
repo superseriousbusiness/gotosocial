@@ -26,7 +26,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Follow follows the tag with the given name as the given account.
@@ -64,6 +63,5 @@ func (p *Processor) Follow(
 		)
 	}
 
-	tag.Following = util.Ptr(true)
-	return p.apiTag(ctx, tag)
+	return p.apiTag(ctx, tag, true)
 }

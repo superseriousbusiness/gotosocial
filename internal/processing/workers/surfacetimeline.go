@@ -451,7 +451,12 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 			filters,
 			mutes,
 		); err != nil {
-			errs.Append(err)
+			errs.Appendf(
+				"error inserting status %s into home timeline for account %s: %w",
+				status.ID,
+				tagFollowerAccount.ID,
+				err,
+			)
 		}
 	}
 	return errs.Combine()
@@ -487,7 +492,7 @@ func (s *Surface) tagFollowersForStatus(
 	}
 
 	// Get IDs for all accounts who follow one or more of the useable tags from this status.
-	allTagFollowerAccountIDs, err := s.State.DB.GetFollowerAccountIDsForTagIDs(ctx, useableTagIDs)
+	allTagFollowerAccountIDs, err := s.State.DB.GetAccountIDsFollowingTagIDs(ctx, useableTagIDs)
 	if err != nil {
 		return nil, gtserror.Newf("DB error getting followers for tags of status %s: %w", taggedStatus.ID, err)
 	}
@@ -527,11 +532,11 @@ func (s *Surface) tagFollowersForStatus(
 	for _, account := range tagFollowerAccounts {
 		visible, err := s.VisFilter.StatusVisible(ctx, account, status)
 		if err != nil {
-			errs.Append(gtserror.Newf(
+			errs.Appendf(
 				"error checking visibility of status %s to account %s",
 				status.ID,
 				account.ID,
-			))
+			)
 		}
 		if visible {
 			visibleTagFollowerAccounts = append(visibleTagFollowerAccounts, account)
@@ -811,7 +816,12 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 			filters,
 			mutes,
 		); err != nil {
-			errs.Append(err)
+			errs.Appendf(
+				"error updating status %s on home timeline for account %s: %w",
+				status.ID,
+				tagFollowerAccount.ID,
+				err,
+			)
 		}
 	}
 	return errs.Combine()

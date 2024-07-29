@@ -54,8 +54,9 @@ func (p *Processor) Followed(
 	hi := tags[0].ID
 
 	items := make([]interface{}, 0, count)
+	following := util.Ptr(true)
 	for _, tag := range tags {
-		apiTag, err := p.converter.TagToAPITag(ctx, tag, true)
+		apiTag, err := p.converter.TagToAPITag(ctx, tag, true, following)
 		if err != nil {
 			log.Errorf(ctx, "error converting tag %s to API representation: %v", tag.ID, err)
 			continue

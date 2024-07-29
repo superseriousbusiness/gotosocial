@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Unfollow unfollows the tag with the given name as the given account.
@@ -42,19 +41,18 @@ func (p *Processor) Unfollow(
 			gtserror.Newf("DB error getting tag with name %s: %w", name, err),
 		)
 	}
-
 	if tag == nil {
-		// There is no need to create a tag just to unfollow it.
-		tag = &gtsmodel.Tag{Name: name}
-	} else {
-		// Unfollow the tag.
-		if err := p.state.DB.DeleteFollowedTag(ctx, account.ID, tag.ID); err != nil {
-			return nil, gtserror.NewErrorInternalError(
-				gtserror.Newf("DB error unfollowing tag %s: %w", tag.ID, err),
-			)
-		}
+		return nil, gtserror.NewErrorNotFound(
+			gtserror.Newf("couldn't find tag with name %s: %w", name, err),
+		)
 	}
 
-	tag.Following = util.Ptr(false)
-	return p.apiTag(ctx, tag)
+	// Unfollow the tag.
+	if err := p.state.DB.DeleteFollowedTag(ctx, account.ID, tag.ID); err != nil {
+		return nil, gtserror.NewErrorInternalError(
+			gtserror.Newf("DB error unfollowing tag %s: %w", tag.ID, err),
+		)
+	}
+
+	return p.apiTag(ctx, tag, false)
 }

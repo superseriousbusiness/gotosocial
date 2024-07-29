@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Get gets the tag with the given name, including whether it's followed by the given account.
@@ -36,25 +35,23 @@ func (p *Processor) Get(
 ) (*apimodel.Tag, gtserror.WithCode) {
 	// Try to get an existing tag with that name.
 	tag, err := p.state.DB.GetTagByName(ctx, name)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(
-				gtserror.Newf("couldn't find tag with name %s: %w", name, err),
-			)
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf("DB error getting tag with name %s: %w", name, err),
 		)
 	}
+	if tag == nil {
+		return nil, gtserror.NewErrorNotFound(
+			gtserror.Newf("couldn't find tag with name %s: %w", name, err),
+		)
+	}
 
-	following, err := p.state.DB.DoesAccountFollowTag(ctx, account.ID, tag.ID)
+	following, err := p.state.DB.IsAccountFollowingTag(ctx, account.ID, tag.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf("DB error checking whether account %s follows tag %s: %w", account.ID, tag.ID, err),
 		)
 	}
 
-	tag.Following = util.Ptr(following)
-
-	return p.apiTag(ctx, tag)
+	return p.apiTag(ctx, tag, following)
 }

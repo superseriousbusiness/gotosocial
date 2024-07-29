@@ -147,10 +147,6 @@ func (t *tagDB) GetFollowedTags(ctx context.Context, accountID string, page *pag
 		return nil, err
 	}
 
-	for _, tag := range tags {
-		tag.Following = util.Ptr(true)
-	}
-
 	return tags, nil
 }
 
@@ -194,7 +190,7 @@ func (t *tagDB) getAccountIDsFollowingTag(ctx context.Context, tagID string) ([]
 	})
 }
 
-func (t *tagDB) DoesAccountFollowTag(ctx context.Context, accountID string, tagID string) (bool, error) {
+func (t *tagDB) IsAccountFollowingTag(ctx context.Context, accountID string, tagID string) (bool, error) {
 	accountTagIDs, err := t.getTagIDsFollowedByAccount(ctx, accountID, nil)
 	if err != nil {
 		return false, err
@@ -282,7 +278,7 @@ func (t *tagDB) DeleteFollowedTagsByAccountID(ctx context.Context, accountID str
 	return nil
 }
 
-func (t *tagDB) GetFollowerAccountIDsForTagIDs(ctx context.Context, tagIDs []string) ([]string, error) {
+func (t *tagDB) GetAccountIDsFollowingTagIDs(ctx context.Context, tagIDs []string) ([]string, error) {
 	// Accounts might be following multiple tags in this list, but we only want to return each account once.
 	accountIDs := []string{}
 	for _, tagID := range tagIDs {

@@ -41,8 +41,8 @@ func New(state *state.State, converter *typeutils.Converter) Processor {
 
 // apiTag is a shortcut to return the API version of the given tag,
 // or return an appropriate error if conversion fails.
-func (p *Processor) apiTag(ctx context.Context, tag *gtsmodel.Tag) (*apimodel.Tag, gtserror.WithCode) {
-	apiTag, err := p.converter.TagToAPITag(ctx, tag, true)
+func (p *Processor) apiTag(ctx context.Context, tag *gtsmodel.Tag, following bool) (*apimodel.Tag, gtserror.WithCode) {
+	apiTag, err := p.converter.TagToAPITag(ctx, tag, true, &following)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf("error converting tag %s to API representation: %w", tag.Name, err),

@@ -62,6 +62,8 @@ import (
 //			description: unauthorized
 //		'403':
 //			description: forbidden
+//		'404':
+//			description: unauthorized
 //		'500':
 //			description: internal server error
 func (m *Module) UnfollowTagPOSTHandler(c *gin.Context) {
