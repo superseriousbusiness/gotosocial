@@ -740,7 +740,8 @@ func (c *Converter) EmojiCategoryToAPIEmojiCategory(ctx context.Context, categor
 
 // TagToAPITag converts a gts model tag into its api (frontend) representation for serialization on the API.
 // If stubHistory is set to 'true', then the 'history' field of the tag will be populated with a pointer to an empty slice, for API compatibility reasons.
-func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool) (apimodel.Tag, error) {
+// following is an optional flag marking whether the currently authenticated user (if there is one) is following the tag.
+func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistory bool, following *bool) (apimodel.Tag, error) {
 	return apimodel.Tag{
 		Name: strings.ToLower(t.Name),
 		URL:  uris.URIForTag(t.Name),
@@ -752,6 +753,7 @@ func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 			h := make([]any, 0)
 			return &h
 		}(),
+		Following: following,
 	}, nil
 }
 
@@ -2347,7 +2349,7 @@ func (c *Converter) convertTagsToAPITags(ctx context.Context, tags []*gtsmodel.T
 
 	// Convert GTS models to frontend models
 	for _, tag := range tags {
-		apiTag, err := c.TagToAPITag(ctx, tag, false)
+		apiTag, err := c.TagToAPITag(ctx, tag, false, nil)
 		if err != nil {
 			errs.Appendf("error converting tag %s to api tag: %w", tag.ID, err)
 			continue

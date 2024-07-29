@@ -29,3 +29,12 @@ type Tag struct {
 	Listable  *bool     `bun:",nullzero,notnull,default:true"`                              // Tagged statuses can be listed on this instance.
 	Href      string    `bun:"-"`                                                           // Href of the hashtag. Will only be set on freshly-extracted hashtags from remote AP messages. Not stored in the database.
 }
+
+// FollowedTag represents a user following a tag.
+type FollowedTag struct {
+	// ID of the account that follows the tag.
+	AccountID string `bun:"type:CHAR(26),pk,nullzero"`
+
+	// ID of the tag.
+	TagID string `bun:"type:CHAR(26),pk,nullzero"`
+}

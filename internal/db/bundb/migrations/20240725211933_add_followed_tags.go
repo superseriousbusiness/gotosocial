@@ -15,23 +15,37 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package migrations
 
-// Tag represents a hashtag used within the content of a status.
-//
-// swagger:model tag
-type Tag struct {
-	// The value of the hashtag after the # sign.
-	// example: helloworld
-	Name string `json:"name"`
-	// Web link to the hashtag.
-	// example: https://example.org/tags/helloworld
-	URL string `json:"url"`
-	// History of this hashtag's usage.
-	// Currently just a stub, if provided will always be an empty array.
-	// example: []
-	History *[]any `json:"history,omitempty"`
-	// Following is true if the user is following this tag, false if they're not,
-	// and not present if there is no currently authenticated user.
-	Following *bool `json:"following,omitempty"`
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
+)
+
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			if _, err := tx.
+				NewCreateTable().
+				Model(&gtsmodel.FollowedTag{}).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			return nil
+		})
+	}
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

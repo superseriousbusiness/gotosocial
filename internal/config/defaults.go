@@ -157,6 +157,7 @@ var Defaults = Configuration{
 		// file have been addressed, these should
 		// be able to make some more sense :D
 		AccountMemRatio:                   5,
+		AccountIDsFollowingTagMemRatio:    1,
 		AccountNoteMemRatio:               1,
 		AccountSettingsMemRatio:           0.1,
 		AccountStatsMemRatio:              2,
@@ -196,6 +197,7 @@ var Defaults = Configuration{
 		StatusFaveMemRatio:                2,
 		StatusFaveIDsMemRatio:             3,
 		TagMemRatio:                       2,
+		TagIDsFollowedByAccountMemRatio:   1,
 		ThreadMuteMemRatio:                0.2,
 		TokenMemRatio:                     0.75,
 		TombstoneMemRatio:                 0.5,

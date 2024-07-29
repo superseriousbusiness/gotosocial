@@ -2916,6 +2916,12 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
+            following:
+                description: |-
+                    Following is true if the user is following this tag, false if they're not,
+                    and not present if there is no currently authenticated user.
+                type: boolean
+                x-go-name: Following
             history:
                 description: |-
                     History of this hashtag's usage.
@@ -6439,7 +6445,7 @@ paths:
                     - read:accounts
             summary: Get an array of all hashtags that you currently have featured on your profile.
             tags:
-                - featured_tags
+                - tags
     /api/v1/filters:
         get:
             operationId: filtersV1Get
@@ -6834,6 +6840,58 @@ paths:
             summary: Reject/deny follow request from the given account ID.
             tags:
                 - follow_requests
+    /api/v1/followed_tags:
+        get:
+            operationId: getFollowedTags
+            parameters:
+                - description: 'Return only followed tags *OLDER* than the given max ID. The followed tag with the specified ID will not be included in the response. NOTE: the ID is of the internal followed tag, NOT a tag name.'
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 'Return only followed tags *NEWER* than the given since ID. The followed tag with the specified ID will not be included in the response. NOTE: the ID is of the internal followed tag, NOT a tag name.'
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 'Return only followed tags *IMMEDIATELY NEWER* than the given min ID. The followed tag with the specified ID will not be included in the response. NOTE: the ID is of the internal followed tag, NOT a tag name.'
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 100
+                  description: Number of followed tags to return.
+                  in: query
+                  maximum: 200
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/tag'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Get an array of all hashtags that you currently follow.
+            tags:
+                - tags
     /api/v1/instance:
         get:
             operationId: instanceGetV1
@@ -9072,6 +9130,103 @@ paths:
             summary: Initiate a websocket connection for live streaming of statuses and notifications.
             tags:
                 - streaming
+    /api/v1/tags/{tag_name}:
+        get:
+            description: If the tag does not exist, this method will not create it in the database.
+            operationId: getTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Get details for a hashtag, including whether you currently follow it.
+            tags:
+                - tags
+    /api/v1/tags/{tag_name}/follow:
+        post:
+            description: 'Idempotent: if you are already following the tag, this call will still succeed.'
+            operationId: followTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:follows
+            summary: Follow a hashtag.
+            tags:
+                - tags
+    /api/v1/tags/{tag_name}/unfollow:
+        post:
+            description: 'Idempotent: if you are not following the tag, this call will still succeed.'
+            operationId: unfollowTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: unauthorized
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:follows
+            summary: Unfollow a hashtag.
+            tags:
+                - tags
     /api/v1/timelines/home:
         get:
             description: |-

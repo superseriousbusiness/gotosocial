@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package featuredtags
+package tags
 
 import (
 	"net/http"
@@ -26,11 +26,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// FeaturedTagsGETHandler swagger:operation GET /api/v1/featured_tags getFeaturedTags
+// TagGETHandler swagger:operation GET /api/v1/tags/{tag_name} getTag
 //
-// Get an array of all hashtags that you currently have featured on your profile.
+// Get details for a hashtag, including whether you currently follow it.
 //
-// THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.
+// If the tag does not exist, this method will not create it in the database.
 //
 //	---
 //	tags:
@@ -41,14 +41,21 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:accounts
+//		- read:follows
+//
+//	parameters:
+//	-
+//		name: tag_name
+//		type: string
+//		description: Name of the tag (no leading `#`)
+//		in: path
+//		required: true
 //
 //	responses:
 //		'200':
+//			description: "Info about the tag."
 //			schema:
-//				type: array
-//				items:
-//					type: object
+//				"$ref": "#/definitions/tag"
 //		'400':
 //			description: bad request
 //		'401':
@@ -59,17 +66,24 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) FeaturedTagsGETHandler(c *gin.Context) {
-	_, err := oauth.Authed(c, true, true, true, true)
+func (m *Module) TagGETHandler(c *gin.Context) {
+	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+	name, errWithCode := apiutil.ParseTagName(c.Param(apiutil.TagNameKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, apiutil.EmptyJSONArray)
+	apiTag, errWithCode := m.processor.Tags().Get(c.Request.Context(), authed.Account, name)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	apiutil.JSON(c, http.StatusOK, apiTag)
 }

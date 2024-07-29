@@ -23,6 +23,7 @@ EXPECT=$(cat << "EOF"
     "application-name": "gts",
     "bind-address": "127.0.0.1",
     "cache": {
+        "account-ids-following-tag-mem-ratio": 1,
         "account-mem-ratio": 5,
         "account-note-mem-ratio": 1,
         "account-settings-mem-ratio": 0.1,
@@ -63,6 +64,7 @@ EXPECT=$(cat << "EOF"
         "status-fave-ids-mem-ratio": 3,
         "status-fave-mem-ratio": 2,
         "status-mem-ratio": 5,
+        "tag-ids-followed-by-account-mem-ratio": 1,
         "tag-mem-ratio": 2,
         "thread-mute-mem-ratio": 0.2,
         "token-mem-ratio": 0.75,
