@@ -316,7 +316,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Run advanced migrations.
-	if err := processor.AdvancedMigrations().Migrate(ctx); err != nil {
+	if err := process.AdvancedMigrations().Migrate(ctx); err != nil {
 		return err
 	}
 

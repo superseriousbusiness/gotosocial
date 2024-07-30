@@ -123,8 +123,8 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		if msg.Receiving != nil {
 			// Quick hack to bypass database errors for non-existing
 			// accounts, instead we just insert this into cache ;).
-			suite.state.Caches.GTS.Account.Put(msg.Receiving)
-			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+			suite.state.Caches.DB.Account.Put(msg.Receiving)
+			suite.state.Caches.DB.AccountSettings.Put(&gtsmodel.AccountSettings{
 				AccountID: msg.Receiving.ID,
 			})
 		}
@@ -132,8 +132,8 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		if msg.Requesting != nil {
 			// Quick hack to bypass database errors for non-existing
 			// accounts, instead we just insert this into cache ;).
-			suite.state.Caches.GTS.Account.Put(msg.Requesting)
-			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+			suite.state.Caches.DB.Account.Put(msg.Requesting)
+			suite.state.Caches.DB.AccountSettings.Put(&gtsmodel.AccountSettings{
 				AccountID: msg.Requesting.ID,
 			})
 		}
@@ -155,8 +155,8 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		if msg.Origin != nil {
 			// Quick hack to bypass database errors for non-existing
 			// accounts, instead we just insert this into cache ;).
-			suite.state.Caches.GTS.Account.Put(msg.Origin)
-			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+			suite.state.Caches.DB.Account.Put(msg.Origin)
+			suite.state.Caches.DB.AccountSettings.Put(&gtsmodel.AccountSettings{
 				AccountID: msg.Origin.ID,
 			})
 		}
@@ -164,8 +164,8 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 		if msg.Target != nil {
 			// Quick hack to bypass database errors for non-existing
 			// accounts, instead we just insert this into cache ;).
-			suite.state.Caches.GTS.Account.Put(msg.Target)
-			suite.state.Caches.GTS.AccountSettings.Put(&gtsmodel.AccountSettings{
+			suite.state.Caches.DB.Account.Put(msg.Target)
+			suite.state.Caches.DB.AccountSettings.Put(&gtsmodel.AccountSettings{
 				AccountID: msg.Target.ID,
 			})
 		}
