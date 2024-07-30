@@ -162,7 +162,9 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 
 	// OtherIRIs will likely contain some
 	// duplicate entries now, so remove them.
-	otherIRIs = util.UniqueURIs(otherIRIs)
+	otherIRIs = util.DeduplicateFunc(otherIRIs,
+		(*url.URL).String, // serialized URL is 'key()'
+	)
 
 	// Finished, set other IRIs on the context
 	// so they can be checked for blocks later.

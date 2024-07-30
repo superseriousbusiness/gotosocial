@@ -34,7 +34,7 @@ import (
 //
 //	---
 //	tags:
-//	- featured_tags
+//	- tags
 //
 //	produces:
 //	- application/json

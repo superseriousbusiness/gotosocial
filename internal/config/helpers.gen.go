@@ -2775,6 +2775,37 @@ func GetCacheAccountMemRatio() float64 { return global.GetCacheAccountMemRatio()
 // SetCacheAccountMemRatio safely sets the value for global configuration 'Cache.AccountMemRatio' field
 func SetCacheAccountMemRatio(v float64) { global.SetCacheAccountMemRatio(v) }
 
+// GetCacheAccountIDsFollowingTagMemRatio safely fetches the Configuration value for state's 'Cache.AccountIDsFollowingTagMemRatio' field
+func (st *ConfigState) GetCacheAccountIDsFollowingTagMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.AccountIDsFollowingTagMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheAccountIDsFollowingTagMemRatio safely sets the Configuration value for state's 'Cache.AccountIDsFollowingTagMemRatio' field
+func (st *ConfigState) SetCacheAccountIDsFollowingTagMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.AccountIDsFollowingTagMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheAccountIDsFollowingTagMemRatioFlag returns the flag name for the 'Cache.AccountIDsFollowingTagMemRatio' field
+func CacheAccountIDsFollowingTagMemRatioFlag() string {
+	return "cache-account-ids-following-tag-mem-ratio"
+}
+
+// GetCacheAccountIDsFollowingTagMemRatio safely fetches the value for global configuration 'Cache.AccountIDsFollowingTagMemRatio' field
+func GetCacheAccountIDsFollowingTagMemRatio() float64 {
+	return global.GetCacheAccountIDsFollowingTagMemRatio()
+}
+
+// SetCacheAccountIDsFollowingTagMemRatio safely sets the value for global configuration 'Cache.AccountIDsFollowingTagMemRatio' field
+func SetCacheAccountIDsFollowingTagMemRatio(v float64) {
+	global.SetCacheAccountIDsFollowingTagMemRatio(v)
+}
+
 // GetCacheAccountNoteMemRatio safely fetches the Configuration value for state's 'Cache.AccountNoteMemRatio' field
 func (st *ConfigState) GetCacheAccountNoteMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -3757,6 +3788,37 @@ func GetCacheTagMemRatio() float64 { return global.GetCacheTagMemRatio() }
 
 // SetCacheTagMemRatio safely sets the value for global configuration 'Cache.TagMemRatio' field
 func SetCacheTagMemRatio(v float64) { global.SetCacheTagMemRatio(v) }
+
+// GetCacheTagIDsFollowedByAccountMemRatio safely fetches the Configuration value for state's 'Cache.TagIDsFollowedByAccountMemRatio' field
+func (st *ConfigState) GetCacheTagIDsFollowedByAccountMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.TagIDsFollowedByAccountMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheTagIDsFollowedByAccountMemRatio safely sets the Configuration value for state's 'Cache.TagIDsFollowedByAccountMemRatio' field
+func (st *ConfigState) SetCacheTagIDsFollowedByAccountMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.TagIDsFollowedByAccountMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheTagIDsFollowedByAccountMemRatioFlag returns the flag name for the 'Cache.TagIDsFollowedByAccountMemRatio' field
+func CacheTagIDsFollowedByAccountMemRatioFlag() string {
+	return "cache-tag-ids-followed-by-account-mem-ratio"
+}
+
+// GetCacheTagIDsFollowedByAccountMemRatio safely fetches the value for global configuration 'Cache.TagIDsFollowedByAccountMemRatio' field
+func GetCacheTagIDsFollowedByAccountMemRatio() float64 {
+	return global.GetCacheTagIDsFollowedByAccountMemRatio()
+}
+
+// SetCacheTagIDsFollowedByAccountMemRatio safely sets the value for global configuration 'Cache.TagIDsFollowedByAccountMemRatio' field
+func SetCacheTagIDsFollowedByAccountMemRatio(v float64) {
+	global.SetCacheTagIDsFollowedByAccountMemRatio(v)
+}
 
 // GetCacheThreadMuteMemRatio safely fetches the Configuration value for state's 'Cache.ThreadMuteMemRatio' field
 func (st *ConfigState) GetCacheThreadMuteMemRatio() (v float64) {

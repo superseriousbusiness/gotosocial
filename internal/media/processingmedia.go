@@ -218,8 +218,13 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	}
 
 	if width > 0 && height > 0 {
-		// Determine thumbnail dimensions to use.
-		thumbWidth, thumbHeight := thumbSize(width, height, aspect, result.rotation)
+		// Determine thumbnail dimens to use.
+		thumbWidth, thumbHeight := thumbSize(
+			width,
+			height,
+			aspect,
+			result.rotation,
+		)
 		p.media.FileMeta.Small.Width = thumbWidth
 		p.media.FileMeta.Small.Height = thumbHeight
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)

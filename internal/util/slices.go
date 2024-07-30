@@ -17,7 +17,9 @@
 
 package util
 
-import "slices"
+import (
+	"slices"
+)
 
 // Deduplicate deduplicates entries in the given slice.
 func Deduplicate[T comparable](in []T) []T {
@@ -68,9 +70,69 @@ func DeduplicateFunc[T any, C comparable](in []T, key func(v T) C) []T {
 	return deduped
 }
 
+// Gather will collect the values of type V from input type []T,
+// passing each item to 'get' and appending V to the return slice.
+func Gather[T, V any](out []V, in []T, get func(T) V) []V {
+	if get == nil {
+		panic("nil func")
+	}
+
+	// Starting write index
+	// in the resliced / re
+	// alloc'd output slice.
+	start := len(out)
+
+	// Total required slice len.
+	total := start + len(in)
+
+	if total > cap(out) {
+		// Reallocate output with
+		// capacity for total len.
+		out2 := make([]V, len(out), total)
+		copy(out2, out)
+		out = out2
+	}
+
+	// Reslice with capacity
+	// up to total required.
+	out = out[:total]
+
+	// Gather vs from 'in'.
+	for i, v := range in {
+		j := start + i
+		out[j] = get(v)
+	}
+
+	return out
+}
+
+// GatherIf is functionally similar to Gather(), but only when return bool is true.
+// If you don't need to check the boolean, Gather() will be very slightly faster.
+func GatherIf[T, V any](out []V, in []T, get func(T) (V, bool)) []V {
+	if get == nil {
+		panic("nil func")
+	}
+
+	if cap(out)-len(out) < len(in) {
+		// Reallocate output with capacity for 'in'.
+		out2 := make([]V, len(out), cap(out)+len(in))
+		copy(out2, out)
+		out = out2
+	}
+
+	// Gather vs from 'in'.
+	for _, v := range in {
+		if v, ok := get(v); ok {
+			out = append(out, v)
+		}
+	}
+
+	return out
+}
+
 // Collate will collect the values of type K from input type []T,
 // passing each item to 'get' and deduplicating the end result.
-// Compared to Deduplicate() this returns []K, NOT input type []T.
+// This is equivalent to calling Gather() followed by Deduplicate().
 func Collate[T any, K comparable](in []T, get func(T) K) []K {
 	if get == nil {
 		panic("nil func")
