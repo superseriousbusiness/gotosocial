@@ -243,6 +243,11 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 				// side data stored.
 				"side_data=rotation",
 
+			// Limit to reading the first
+			// 1s of data looking for "rotation"
+			// side_data tags (expensive part).
+			"-read_intervals", "%+1",
+
 			// Input file.
 			"-i", filepath,
 		},
