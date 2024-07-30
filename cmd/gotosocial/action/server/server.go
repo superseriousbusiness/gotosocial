@@ -126,10 +126,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		}
 
 		if process != nil {
-			// Use a background context to ensure
+			const timeout = time.Minute
+
+			// Use a new timeout context to ensure
 			// persisting queued tasks does not fail!
 			// The main ctx is very likely canceled.
-			ctx := context.Background()
+			ctx := context.WithoutCancel(ctx)
+			ctx, cncl := context.WithTimeout(ctx, timeout)
+			defer cncl()
 
 			// Now that all the "moving" components have been stopped,
 			// persist any remaining queued worker tasks to the database.
