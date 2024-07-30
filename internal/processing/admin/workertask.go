@@ -48,24 +48,13 @@ func (p *Processor) FillWorkerQueues(ctx context.Context) error {
 	log.Info(ctx, "rehydrate!")
 
 	// Get all persisted worker tasks from db.
+	//
+	// (database returns these as ASCENDING, i.e.
+	// returned in the order they were inserted).
 	tasks, err := p.state.DB.GetWorkerTasks(ctx)
 	if err != nil {
 		return gtserror.Newf("error fetching worker tasks from db: %w", err)
 	}
-
-	// Ensure fetched tasks are ordered by creation time ASCENDING.
-	// i.e. we want to push tasks in the order they should happen.
-	slices.SortFunc(tasks, func(a, b *gtsmodel.WorkerTask) int {
-		const k = +1
-		switch {
-		case a.CreatedAt.Before(b.CreatedAt):
-			return +k
-		case b.CreatedAt.Before(a.CreatedAt):
-			return -k
-		default:
-			return 0
-		}
-	})
 
 	var (
 		// Counts of each task type

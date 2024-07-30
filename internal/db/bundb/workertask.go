@@ -31,6 +31,7 @@ func (w *workerTaskDB) GetWorkerTasks(ctx context.Context) ([]*gtsmodel.WorkerTa
 	var tasks []*gtsmodel.WorkerTask
 	if err := w.db.NewSelect().
 		Model(&tasks).
+		OrderExpr("? ASC", bun.Ident("created_at")).
 		Scan(ctx); err != nil {
 		return nil, err
 	}
