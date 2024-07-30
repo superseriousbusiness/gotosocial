@@ -15,27 +15,37 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package gtsmodel
+package migrations
 
-import "time"
+import (
+	"context"
 
-type WorkerType uint8
-
-const (
-	DeliveryWorker  WorkerType = 1
-	FederatorWorker WorkerType = 2
-	ClientWorker    WorkerType = 3
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/uptrace/bun"
 )
 
-// WorkerTask represents a queued worker task
-// that was persisted to the database on shutdown.
-// This is only ever used on startup to pickup
-// where we left off, and on shutdown to prevent
-// queued tasks from being lost. It is simply a
-// means to store a blob of serialized task data.
-type WorkerTask struct {
-	ID         uint       `bun:",pk,autoincrement"`
-	WorkerType WorkerType `bun:",notnull"`
-	TaskData   []byte     `bun:",nullzero,notnull"`
-	CreatedAt  time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			// WorkerTask table.
+			if _, err := tx.
+				NewCreateTable().
+				Model(&gtsmodel.WorkerTask{}).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
 }

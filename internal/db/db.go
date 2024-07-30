@@ -56,4 +56,5 @@ type DB interface {
 	Timeline
 	User
 	Tombstone
+	WorkerTask
 }
