@@ -856,6 +856,7 @@ func (c *Converter) statusToAPIFilterResults(
 	for _, mention := range s.Mentions {
 		otherAccounts = append(otherAccounts, mention.TargetAccount)
 	}
+
 	// If there are no other accounts, skip this check.
 	if len(otherAccounts) > 0 {
 		// Start by assuming that they're all invisible or muted.

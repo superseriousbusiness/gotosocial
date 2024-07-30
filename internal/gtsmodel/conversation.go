@@ -62,7 +62,7 @@ type Conversation struct {
 
 // ConversationOtherAccountsKey creates an OtherAccountsKey from a list of OtherAccountIDs.
 func ConversationOtherAccountsKey(otherAccountIDs []string) string {
-	otherAccountIDs = util.UniqueStrings(otherAccountIDs)
+	otherAccountIDs = util.Deduplicate(otherAccountIDs)
 	slices.Sort(otherAccountIDs)
 	return strings.Join(otherAccountIDs, ",")
 }
