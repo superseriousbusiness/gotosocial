@@ -114,8 +114,7 @@ loop:
 			log.Errorf(ctx, "error pushing task %d: %v", task.ID, err)
 
 			// Drop error'd task from slice.
-			copy(tasks[i:], tasks[i+1:])
-			tasks = tasks[:len(tasks)-1]
+			tasks = slices.Delete(tasks, i, i+1)
 
 			// Incr errors.
 			errors++
