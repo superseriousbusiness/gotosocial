@@ -288,5 +288,5 @@ func (t *tagDB) GetAccountIDsFollowingTagIDs(ctx context.Context, tagIDs []strin
 		}
 		accountIDs = append(accountIDs, tagAccountIDs...)
 	}
-	return util.UniqueStrings(accountIDs), nil
+	return util.Deduplicate(accountIDs), nil
 }
