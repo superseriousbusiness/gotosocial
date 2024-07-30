@@ -45,7 +45,7 @@ import (
 // FillWorkerQueues recovers all serialized worker tasks from the database
 // (if any!), and pushes them to each of their relevant worker queues.
 func (p *Processor) FillWorkerQueues(ctx context.Context) error {
-	log.Info(ctx, "REHYDRATE!!")
+	log.Info(ctx, "rehydrate!")
 
 	// Get all persisted worker tasks from db.
 	tasks, err := p.state.DB.GetWorkerTasks(ctx)
@@ -151,7 +151,7 @@ loop:
 // PersistWorkerQueues pops all queued worker tasks (that are themselves persistable, i.e. not
 // dereference tasks which are just function ptrs), serializes and persists them to the database.
 func (p *Processor) PersistWorkerQueues(ctx context.Context) error {
-	log.Info(ctx, "DEHYDRATE!!!")
+	log.Info(ctx, "dehydrate!")
 
 	var (
 		// Counts of each task type
