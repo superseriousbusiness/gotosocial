@@ -83,7 +83,7 @@ func (l *list) GetAllEmojisPaths(ctx context.Context, filter func(*gtsmodel.Emoj
 	for {
 		// Get the next page of emoji media up to max ID.
 		attachments, err := l.dbService.GetEmojis(ctx, &l.page)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, fmt.Errorf("failed to retrieve media metadata from database: %w", err)
 		}
 
