@@ -121,15 +121,15 @@ func Validate() error {
 	}
 
 	// `storage-s3-redirect-url`
-	if s3CustomURL := GetStorageS3RedirectURL(); s3CustomURL != "" {
-		if strings.HasSuffix(s3CustomURL, "/") {
+	if s3RedirectURL := GetStorageS3RedirectURL(); s3RedirectURL != "" {
+		if strings.HasSuffix(s3RedirectURL, "/") {
 			errf(
 				"%s must not end with a trailing slash",
 				StorageS3RedirectURLFlag(),
 			)
 		}
 
-		if url, err := url.Parse(s3CustomURL); err != nil {
+		if url, err := url.Parse(s3RedirectURL); err != nil {
 			errf(
 				"%s invalid: %w",
 				StorageS3RedirectURLFlag(), err,

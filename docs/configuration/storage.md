@@ -54,7 +54,7 @@ storage-s3-proxy: false
 # want to serve media from the CDN rather than serving from your S3 bucket directly.
 #
 # For example, if you have your storage-s3-endpoint value set to "s3.my-storage.example.org",
-# and you have a CDN set up to proxy your bucket, serving from "dn.some-fancy-host.org",
+# and you have a CDN set up to proxy your bucket, serving from "cdn.some-fancy-host.org",
 # then you should set storage-s3-redirect-url to "https://cdn.some-fancy-host.org".
 #
 # This will allow your GoToSocial instance to *upload* data to "s3.my-storage.example.org",
@@ -145,7 +145,7 @@ GoToSocial by default creates signed URL's which means we don't need to change a
 
 If you are using a CDN in front of your S3 bucket, and you want to serve media from the CDN rather than serving from your S3 bucket directly, you should set the `storage-s3-redirect-url` to the CDN URL.
 
-For example, if you have your `storage-s3-endpoint` value set to "s3.my-storage.example.org", and you have a CDN set up to proxy your bucket, serving from "dn.some-fancy-host.org", then you should set `storage-s3-redirect-url` to "https://cdn.some-fancy-host.org".
+For example, if you have your `storage-s3-endpoint` value set to "s3.my-storage.example.org", and you have a CDN set up to proxy your bucket, serving from "cdn.some-fancy-host.org", then you should set `storage-s3-redirect-url` to "https://cdn.some-fancy-host.org".
 
 This will allow your GoToSocial instance to *upload* data to "s3.my-storage.example.org", but direct callers to *download* that data from "https://cdn.some-fancy-host.org".
 
