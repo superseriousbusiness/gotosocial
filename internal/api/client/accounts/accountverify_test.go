@@ -19,29 +19,34 @@ package accounts_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 type AccountVerifyTestSuite struct {
 	AccountStandardTestSuite
 }
 
-func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
-	testAccount := suite.testAccounts["local_account_1"]
-
+// accountVerifyGet calls the verify_credentials API method for a given account fixture name.
+// Assumes token and user fixture names are the same as the account fixture name.
+func (suite *AccountVerifyTestSuite) accountVerifyGet(fixtureName string) *apimodel.Account {
 	// set up the request
 	recorder := httptest.NewRecorder()
 	ctx := suite.newContext(recorder, http.MethodGet, nil, accounts.VerifyPath, "")
+
+	// override the account that we're authenticated as
+	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts[fixtureName])
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens[fixtureName]))
+	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers[fixtureName])
 
 	// call the handler
 	suite.accountsModule.AccountVerifyGETHandler(ctx)
@@ -54,13 +59,27 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
+	b, err := io.ReadAll(result.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	// unmarshal the returned account
 	apimodelAccount := &apimodel.Account{}
 	err = json.Unmarshal(b, apimodelAccount)
-	suite.NoError(err)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return apimodelAccount
+}
+
+// We should see public account information and profile source for a normal user.
+func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
+	fixtureName := "local_account_1"
+	testAccount := suite.testAccounts[fixtureName]
+
+	apimodelAccount := suite.accountVerifyGet(fixtureName)
 
 	createdAt, err := time.Parse(time.RFC3339, apimodelAccount.CreatedAt)
 	suite.NoError(err)
@@ -83,6 +102,43 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.EqualValues(gtsmodel.VisibilityPublic, apimodelAccount.Source.Privacy)
 	suite.Equal(testAccount.Settings.Language, apimodelAccount.Source.Language)
 	suite.Equal(testAccount.NoteRaw, apimodelAccount.Source.Note)
+}
+
+// testAccountVerifyGetRole calls the verify_credentials API method for a given account fixture name,
+// and checks the response for permissions appropriate to the role.
+func (suite *AccountVerifyTestSuite) testAccountVerifyGetRole(fixtureName string) {
+	testUser := suite.testUsers[fixtureName]
+
+	apimodelAccount := suite.accountVerifyGet(fixtureName)
+
+	if suite.NotNil(apimodelAccount.Role) {
+		switch {
+		case *testUser.Admin:
+			suite.Equal("admin", string(apimodelAccount.Role.Name))
+			suite.NotZero(apimodelAccount.Role.Permissions)
+			suite.True(apimodelAccount.Role.Highlighted)
+
+		case *testUser.Moderator:
+			suite.Equal("moderator", string(apimodelAccount.Role.Name))
+			suite.Zero(apimodelAccount.Role.Permissions)
+			suite.True(apimodelAccount.Role.Highlighted)
+
+		default:
+			suite.Equal("user", string(apimodelAccount.Role.Name))
+			suite.Zero(apimodelAccount.Role.Permissions)
+			suite.False(apimodelAccount.Role.Highlighted)
+		}
+	}
+}
+
+// We should see a role for a normal user, and that role should not have any permissions.
+func (suite *AccountVerifyTestSuite) TestAccountVerifyGetRoleUser() {
+	suite.testAccountVerifyGetRole("local_account_1")
+}
+
+// We should see a role for an admin user, and that role should have some permissions.
+func (suite *AccountVerifyTestSuite) TestAccountVerifyGetRoleAdmin() {
+	suite.testAccountVerifyGetRole("admin_account")
 }
 
 func TestAccountVerifyTestSuite(t *testing.T) {

@@ -173,9 +173,11 @@
                     <dt class="sr-only">Username</dt>
                     <dd class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
                 </div>
-                {{- if and (.account.Role) (ne .account.Role.Name "user") }}
+                {{- if .account.Roles }}
                 <dt class="sr-only">Role</dt>
-                <dd class="role {{ .account.Role.Name -}}">{{- .account.Role.Name -}}</dd>
+                {{- range .account.Roles }}
+                <dd class="role {{ .Name -}}">{{- .Name -}}</dd>
+                {{- end }}
                 {{- end }}
             </dl>
         </div>

@@ -100,13 +100,13 @@ func (c *Converter) UserToAPIUser(ctx context.Context, u *gtsmodel.User) *apimod
 	return user
 }
 
-// AppToAPIAppSensitive takes a db model application as a param, and returns a populated apitype application, or an error
+// AccountToAPIAccountSensitive takes a db model application as a param, and returns a populated apitype application, or an error
 // if something goes wrong. The returned application should be ready to serialize on an API level, and may have sensitive fields
 // (such as client id and client secret), so serve it only to an authorized user who should have permission to see it.
 func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	// We can build this sensitive account model
 	// by first getting the public account, and
-	// then adding the Source object to it.
+	// then adding the Source object and role permissions bitmap to it.
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, a)
 	if err != nil {
 		return nil, err
@@ -120,6 +120,13 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 				a.ID, err,
 			)
 		}
+	}
+
+	// Populate the account's role permissions bitmap and highlightedness from its public role.
+	if len(apiAccount.Roles) > 0 {
+		apiAccount.Role = c.APIAccountDisplayRoleToAPIAccountRoleSensitive(&apiAccount.Roles[0])
+	} else {
+		apiAccount.Role = c.APIAccountDisplayRoleToAPIAccountRoleSensitive(nil)
 	}
 
 	statusContentType := string(apimodel.StatusContentTypeDefault)
@@ -299,7 +306,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 
 	var (
 		acct            string
-		role            *apimodel.AccountRole
+		roles           []apimodel.AccountDisplayRole
 		enableRSS       bool
 		theme           string
 		customCSS       string
@@ -324,14 +331,8 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			if err != nil {
 				return nil, gtserror.Newf("error getting user from database for account id %s: %w", a.ID, err)
 			}
-
-			switch {
-			case *user.Admin:
-				role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
-			case *user.Moderator:
-				role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
-			default:
-				role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
+			if role := c.UserToAPIAccountDisplayRole(user); role != nil {
+				roles = append(roles, *role)
 			}
 
 			enableRSS = *a.Settings.EnableRSS
@@ -380,7 +381,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		CustomCSS:         customCSS,
 		EnableRSS:         enableRSS,
 		HideCollections:   hideCollections,
-		Role:              role,
+		Roles:             roles,
 	}
 
 	// Bodge default avatar + header in,
@@ -389,6 +390,56 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	c.ensureHeader(accountFrontend)
 
 	return accountFrontend, nil
+}
+
+// UserToAPIAccountDisplayRole returns the API representation of a user's display role.
+// This will accept a nil user but does not always return a value:
+// the default "user" role is considered uninteresting and not returned.
+func (c *Converter) UserToAPIAccountDisplayRole(user *gtsmodel.User) *apimodel.AccountDisplayRole {
+	switch {
+	case user == nil:
+		return nil
+	case *user.Admin:
+		return &apimodel.AccountDisplayRole{
+			ID:   string(apimodel.AccountRoleAdmin),
+			Name: apimodel.AccountRoleAdmin,
+		}
+	case *user.Moderator:
+		return &apimodel.AccountDisplayRole{
+			ID:   string(apimodel.AccountRoleModerator),
+			Name: apimodel.AccountRoleModerator,
+		}
+	default:
+		return nil
+	}
+}
+
+// APIAccountDisplayRoleToAPIAccountRoleSensitive returns the API representation of a user's role,
+// with permission bitmap. This will accept a nil display role and always returns a value.
+func (c *Converter) APIAccountDisplayRoleToAPIAccountRoleSensitive(display *apimodel.AccountDisplayRole) *apimodel.AccountRole {
+	// Default to user role.
+	role := &apimodel.AccountRole{
+		AccountDisplayRole: apimodel.AccountDisplayRole{
+			ID:   string(apimodel.AccountRoleUser),
+			Name: apimodel.AccountRoleUser,
+		},
+		Permissions: apimodel.AccountRolePermissionsNone,
+		Highlighted: false,
+	}
+
+	// If there's a display role, use that instead.
+	if display != nil {
+		role.AccountDisplayRole = *display
+		role.Highlighted = true
+		switch display.Name {
+		case apimodel.AccountRoleAdmin:
+			role.Permissions = apimodel.AccountRolePermissionsForAdminRole
+		case apimodel.AccountRoleModerator:
+			role.Permissions = apimodel.AccountRolePermissionsForModeratorRole
+		}
+	}
+
+	return role
 }
 
 func (c *Converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
@@ -416,8 +467,8 @@ func (c *Converter) fieldsToAPIFields(f []*gtsmodel.Field) []apimodel.Field {
 // when someone wants to view an account they've blocked.
 func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
 	var (
-		acct string
-		role *apimodel.AccountRole
+		acct  string
+		roles []apimodel.AccountDisplayRole
 	)
 
 	if a.IsRemote() {
@@ -438,14 +489,8 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 			if err != nil {
 				return nil, gtserror.Newf("error getting user from database for account id %s: %w", a.ID, err)
 			}
-
-			switch {
-			case *user.Admin:
-				role = &apimodel.AccountRole{Name: apimodel.AccountRoleAdmin}
-			case *user.Moderator:
-				role = &apimodel.AccountRole{Name: apimodel.AccountRoleModerator}
-			default:
-				role = &apimodel.AccountRole{Name: apimodel.AccountRoleUser}
+			if role := c.UserToAPIAccountDisplayRole(user); role != nil {
+				roles = append(roles, *role)
 			}
 		}
 
@@ -464,7 +509,7 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		// Empty array (not nillable).
 		Fields:    make([]apimodel.Field, 0),
 		Suspended: !a.SuspendedAt.IsZero(),
-		Role:      role,
+		Roles:     roles,
 	}
 
 	// Don't show the account's actual
@@ -487,7 +532,7 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 		inviteRequest          *string
 		approved               bool
 		disabled               bool
-		role                   = apimodel.AccountRole{Name: apimodel.AccountRoleUser} // assume user by default
+		role                   = *c.APIAccountDisplayRoleToAPIAccountRoleSensitive(nil)
 		createdByApplicationID string
 	)
 
@@ -527,11 +572,9 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 			inviteRequest = &user.Reason
 		}
 
-		if *user.Admin {
-			role.Name = apimodel.AccountRoleAdmin
-		} else if *user.Moderator {
-			role.Name = apimodel.AccountRoleModerator
-		}
+		role = *c.APIAccountDisplayRoleToAPIAccountRoleSensitive(
+			c.UserToAPIAccountDisplayRole(user),
+		)
 
 		confirmed = !user.ConfirmedAt.IsZero()
 		approved = *user.Approved

@@ -70,7 +70,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": true,
     "approved": true,
@@ -109,10 +113,7 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
           "verified_at": null
         }
       ],
-      "hide_collections": true,
-      "role": {
-        "name": "user"
-      }
+      "hide_collections": true
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -127,7 +128,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "en",
     "invite_request": null,
     "role": {
-      "name": "admin"
+      "id": "admin",
+      "name": "admin",
+      "color": "",
+      "permissions": "546033",
+      "highlighted": true
     },
     "confirmed": true,
     "approved": true,
@@ -156,9 +161,13 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "emojis": [],
       "fields": [],
       "enable_rss": true,
-      "role": {
-        "name": "admin"
-      }
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -173,7 +182,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -214,7 +227,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "en",
     "invite_request": "I wanna be on this damned webbed site so bad! Please! Wow",
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": true,
     "approved": true,
@@ -244,10 +261,7 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "last_status_at": "2024-01-10T09:24:00.000Z",
       "emojis": [],
       "fields": [],
-      "enable_rss": true,
-      "role": {
-        "name": "user"
-      }
+      "enable_rss": true
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -262,7 +276,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "en",
     "invite_request": "hi, please let me in! I'm looking for somewhere neato bombeato to hang out.",
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -289,10 +307,7 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 0,
       "last_status_at": null,
       "emojis": [],
-      "fields": [],
-      "role": {
-        "name": "user"
-      }
+      "fields": []
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -307,7 +322,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -348,7 +367,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -389,7 +412,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -431,7 +458,11 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,
@@ -511,7 +542,11 @@ func (suite *AccountsGetTestSuite) TestAccountsMinID() {
     "locale": "",
     "invite_request": null,
     "role": {
-      "name": "user"
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
     },
     "confirmed": false,
     "approved": false,

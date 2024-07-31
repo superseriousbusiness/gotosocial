@@ -136,10 +136,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
     "last_status_at": "2024-01-10T09:24:00.000Z",
     "emojis": [],
     "fields": [],
-    "enable_rss": true,
-    "role": {
-      "name": "user"
-    }
+    "enable_rss": true
   },
   "media_attachments": [],
   "mentions": [],
@@ -224,10 +221,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
     "last_status_at": "2024-01-10T09:24:00.000Z",
     "emojis": [],
     "fields": [],
-    "enable_rss": true,
-    "role": {
-      "name": "user"
-    }
+    "enable_rss": true
   },
   "media_attachments": [],
   "mentions": [],
