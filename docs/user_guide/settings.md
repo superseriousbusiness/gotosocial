@@ -204,3 +204,11 @@ For more information on the way GoToSocial manages passwords, please see the [Pa
 In the migration section you can manage settings related to aliasing and/or migrating your account to or from another account.
 
 Please see the [migration document](./migration.md) for more information on moving your account.
+
+## Export & Import
+
+In the export & import section, you can export data from your GoToSocial account, or import data into it (TODO).
+
+### Export
+
+To export your following, followers, lists, account blocks, or account mutes, you can use the button on this page. All exports will be served in Mastodon-compatible CSV format, so you can import them later into Mastodon or another GoToSocial instance, if you like.

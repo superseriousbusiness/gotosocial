@@ -102,7 +102,7 @@ func (e *exporter) exportDomainBlocks(ctx context.Context, file *os.File) ([]*tr
 	return domainBlocks, nil
 }
 
-func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Account, file *os.File) ([]*transmodel.Follow, error) {
+func (e *exporter) exportFollowing(ctx context.Context, accounts []*transmodel.Account, file *os.File) ([]*transmodel.Follow, error) {
 	followsUnique := make(map[string]*transmodel.Follow)
 
 	// for each account we want to export both where it's following and where it's followed
@@ -111,12 +111,12 @@ func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Acc
 		whereFollowing := []db.Where{{Key: "account_id", Value: a.ID}}
 		following := []*transmodel.Follow{}
 		if err := e.db.GetWhere(ctx, whereFollowing, &following); err != nil {
-			return nil, fmt.Errorf("exportFollows: error selecting follows owned by account %s: %s", a.ID, err)
+			return nil, fmt.Errorf("exportFollowing: error selecting follows owned by account %s: %s", a.ID, err)
 		}
 		for _, follow := range following {
 			follow.Type = transmodel.TransFollow
 			if err := e.simpleEncode(ctx, file, follow, follow.ID); err != nil {
-				return nil, fmt.Errorf("exportFollows: error encoding follow owned by account %s: %s", a.ID, err)
+				return nil, fmt.Errorf("exportFollowing: error encoding follow owned by account %s: %s", a.ID, err)
 			}
 			followsUnique[follow.ID] = follow
 		}
@@ -125,12 +125,12 @@ func (e *exporter) exportFollows(ctx context.Context, accounts []*transmodel.Acc
 		whereFollowed := []db.Where{{Key: "target_account_id", Value: a.ID}}
 		followed := []*transmodel.Follow{}
 		if err := e.db.GetWhere(ctx, whereFollowed, &followed); err != nil {
-			return nil, fmt.Errorf("exportFollows: error selecting follows targeting account %s: %s", a.ID, err)
+			return nil, fmt.Errorf("exportFollowing: error selecting follows targeting account %s: %s", a.ID, err)
 		}
 		for _, follow := range followed {
 			follow.Type = transmodel.TransFollow
 			if err := e.simpleEncode(ctx, file, follow, follow.ID); err != nil {
-				return nil, fmt.Errorf("exportFollows: error encoding follow targeting account %s: %s", a.ID, err)
+				return nil, fmt.Errorf("exportFollowing: error encoding follow targeting account %s: %s", a.ID, err)
 			}
 			followsUnique[follow.ID] = follow
 		}

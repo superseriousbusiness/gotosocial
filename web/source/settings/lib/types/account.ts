@@ -110,3 +110,13 @@ export interface ActionAccountParams {
 	action: "suspend";
 	reason: string;
 }
+
+export interface AccountExportStats {
+	media_storage: string;
+	followers_count: number;
+	following_count: number;
+	statuses_count: number;
+	lists_count: number;
+	blocks_count: number;
+	mutes_count: number;
+}

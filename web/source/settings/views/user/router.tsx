@@ -25,12 +25,14 @@ import UserProfile from "./profile";
 import UserMigration from "./migration";
 import PostSettings from "./posts";
 import EmailPassword from "./emailpassword";
+import ExportImport from "./export-import";
 
 /**
  * - /settings/user/profile
  * - /settings/user/posts
  * - /settings/user/emailpassword
  * - /settings/user/migration
+ * - /settings/user/export-import
  */
 export default function UserRouter() {
 	const baseUrl = useBaseUrl();
@@ -46,6 +48,7 @@ export default function UserRouter() {
 						<Route path="/posts" component={PostSettings} />
 						<Route path="/emailpassword" component={EmailPassword} />
 						<Route path="/migration" component={UserMigration} />
+						<Route path="/export-import" component={ExportImport} />
 						<Route><Redirect to="/profile" /></Route>
 					</Switch>
 				</ErrorBoundary>

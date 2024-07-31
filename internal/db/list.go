@@ -33,6 +33,9 @@ type List interface {
 	// GetListsForAccountID gets all lists owned by the given accountID.
 	GetListsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error)
 
+	// CountListsForAccountID counts the number of lists owned by the given accountID.
+	CountListsForAccountID(ctx context.Context, accountID string) (int, error)
+
 	// PopulateList ensures that the list's struct fields are populated.
 	PopulateList(ctx context.Context, list *gtsmodel.List) error
 

@@ -53,6 +53,11 @@ export default function UserMenu() {
 				itemUrl="migration"
 				icon="fa-exchange"
 			/>
+			<MenuItem
+				name="Export & Import"
+				itemUrl="export-import"
+				icon="fa-floppy-o"
+			/>
 		</MenuItem>
 	);
 }
