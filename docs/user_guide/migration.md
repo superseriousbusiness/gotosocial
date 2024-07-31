@@ -74,5 +74,5 @@ Once you have triggered the move from your other account to your GoToSocial acco
 !!! tip
     To save yourself some trouble, consider setting your GoToSocial account to not require approval for new follow requests, just before triggering the migration. Once the migration is complete, turn approval of follow requests back on. Otherwise, you will have to manually approve every migrated follower from your old account.
 
-!!! warning
-    While the move will indicate to your followers that they should follow you at your GoToSocial account, GoToSocial does not yet support importing a list of accounts you follow. Until we implement this, you will have to manually follow accounts again from your GoToSocial account. Please see [this issue](https://github.com/superseriousbusiness/gotosocial/issues/1048) for more details.
+!!! tip
+    After moving your account, you may wish to import your list of followed accounts from your previous account into your GoToSocial account. [See here](./settings.md#import) for details on how to do this via the settings panel.

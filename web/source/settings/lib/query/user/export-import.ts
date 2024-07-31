@@ -125,6 +125,16 @@ const extended = gtsApi.injectEndpoints({
 				return { data: null };
 			}
 		}),
+
+		importData: build.mutation({
+			query: (formData) => ({
+				method: "POST",
+				url: `/api/v1/import`,
+				asForm: true,
+				body: formData,
+				discardEmpty: true
+			}),
+		}),
 	})
 });
 
@@ -135,4 +145,5 @@ export const {
 	useExportListsMutation,
 	useExportBlocksMutation,
 	useExportMutesMutation,
+	useImportDataMutation,
 } = extended;

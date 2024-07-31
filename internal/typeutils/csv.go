@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (c *Converter) AccountToExportStats(
@@ -382,4 +383,138 @@ func (c *Converter) MutesToCSV(
 	}
 
 	return records, nil
+}
+
+// CSVToFollowing converts a slice of CSV records
+// to a slice of barebones *gtsmodel.Follow's,
+// ready for further processing.
+//
+// Only TargetAccount.Username, TargetAccount.Domain,
+// and ShowReblogs will be set on each Follow.
+func (c *Converter) CSVToFollowing(
+	ctx context.Context,
+	records [][]string,
+) ([]*gtsmodel.Follow, error) {
+	// We need to know our own domain for this.
+	// Try account domain, fall back to host.
+	var (
+		thisHost          = config.GetHost()
+		thisAccountDomain = config.GetAccountDomain()
+		follows           = make([]*gtsmodel.Follow, 0, len(records))
+	)
+
+	for _, record := range records {
+		if len(record) != 2 {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		namestring := record[0]
+		if namestring == "" {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		// Prepend with "@"
+		// if not included.
+		if namestring[0] != '@' {
+			namestring = "@" + namestring
+		}
+
+		username, domain, err := util.ExtractNamestringParts(namestring)
+		if err != nil {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		if domain == thisHost || domain == thisAccountDomain {
+			// Clear the domain,
+			// since it's ours.
+			domain = ""
+		}
+
+		showReblogs, err := strconv.ParseBool(record[1])
+		if err != nil {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		// Looks good, whack it in the slice.
+		follows = append(follows, &gtsmodel.Follow{
+			TargetAccount: &gtsmodel.Account{
+				Username: username,
+				Domain:   domain,
+			},
+			ShowReblogs: &showReblogs,
+		})
+	}
+
+	return follows, nil
+}
+
+// CSVToBlocks converts a slice of CSV records
+// to a slice of barebones *gtsmodel.Block's,
+// ready for further processing.
+//
+// Only TargetAccount.Username and TargetAccount.Domain
+// will be set on each Block.
+func (c *Converter) CSVToBlocks(
+	ctx context.Context,
+	records [][]string,
+) ([]*gtsmodel.Block, error) {
+	// We need to know our own domain for this.
+	// Try account domain, fall back to host.
+	var (
+		thisHost          = config.GetHost()
+		thisAccountDomain = config.GetAccountDomain()
+		blocks            = make([]*gtsmodel.Block, 0, len(records))
+	)
+
+	for _, record := range records {
+		if len(record) != 1 {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		namestring := record[0]
+		if namestring == "" {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		// Prepend with "@"
+		// if not included.
+		if namestring[0] != '@' {
+			namestring = "@" + namestring
+		}
+
+		username, domain, err := util.ExtractNamestringParts(namestring)
+		if err != nil {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		if domain == thisHost || domain == thisAccountDomain {
+			// Clear the domain,
+			// since it's ours.
+			domain = ""
+		}
+
+		// Looks good, whack it in the slice.
+		blocks = append(blocks, &gtsmodel.Block{
+			TargetAccount: &gtsmodel.Account{
+				Username: username,
+				Domain:   domain,
+			},
+		})
+	}
+
+	return blocks, nil
 }
