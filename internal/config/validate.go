@@ -19,6 +19,8 @@ package config
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -116,6 +118,28 @@ func Validate() error {
 	webAssetsBaseDir := GetWebAssetBaseDir()
 	if webAssetsBaseDir == "" {
 		errf("%s must be set", WebAssetBaseDirFlag())
+	}
+
+	// `storage-s3-redirect-url`
+	if s3RedirectURL := GetStorageS3RedirectURL(); s3RedirectURL != "" {
+		if strings.HasSuffix(s3RedirectURL, "/") {
+			errf(
+				"%s must not end with a trailing slash",
+				StorageS3RedirectURLFlag(),
+			)
+		}
+
+		if url, err := url.Parse(s3RedirectURL); err != nil {
+			errf(
+				"%s invalid: %w",
+				StorageS3RedirectURLFlag(), err,
+			)
+		} else if url.Scheme != "https" && url.Scheme != "http" {
+			errf(
+				"%s scheme must be https or http",
+				StorageS3RedirectURLFlag(),
+			)
+		}
 	}
 
 	// Custom / LE TLS settings.

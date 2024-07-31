@@ -30,10 +30,41 @@ storage-local-base-path: "/gotosocial/storage"
 # Default: ""
 storage-s3-endpoint: ""
 
-# Bool. If data stored in S3 should be proxied through GoToSocial instead of redirecting to a presigned URL.
+# Bool. Set this to true if data stored in S3 should be proxied through
+# GoToSocial instead of forwarding the request to a presigned URL.
+#
+# In most cases you won't need to touch this setting, but it might be useful
+# if it's not possible for your bucket provider to generate presigned URLs,
+# or if your bucket is not able to exposed to the wider internet.
 #
 # Default: false
 storage-s3-proxy: false
+
+# String. URL to use a base for redirecting incoming media requests to.
+#
+# Must start with "http://" or "https://" and end without a trailing slash.
+#
+# DON'T SET THIS VALUE UNLESS YOU HAVE GOOD REASON TO! It's not necessary for
+# "normal" s3 usage, and most admins can happily just ignore this setting.
+#
+# If set, then media fileserver requests to your instance will be redirected
+# to this URL instead of your bucket URL, preserving relevant path parts.
+#
+# This is useful if you are using a CDN proxy in front of your S3 bucket, and you
+# want to serve media from the CDN rather than serving from your S3 bucket directly.
+#
+# For example, if you have your storage-s3-endpoint value set to "s3.my-storage.example.org",
+# and you have a CDN set up to proxy your bucket, serving from "cdn.some-fancy-host.org",
+# then you should set storage-s3-redirect-url to "https://cdn.some-fancy-host.org".
+#
+# This will allow your GoToSocial instance to *upload* data to "s3.my-storage.example.org",
+# but direct callers to *download* that data from "https://cdn.some-fancy-host.org".
+#
+# This value is ignored if storage-backend is not s3, or if storage-s3-proxy is true.
+#
+# Examples: ["https://cdn.some-fancy-host.org"]
+# Default: ""
+storage-s3-redirect-url: ""
 
 # Bool. Use SSL for S3 connections.
 #
@@ -76,7 +107,7 @@ storage-s3-bucket: ""
 GoToSocial by default creates signed URL's which means we don't need to change anything major on the policies of the bucket.
 
 1. Login to AWS -> select S3 as service.
-2. click Create Bucket
+2. Click Create Bucket
 3. Provide a unique name and avoid adding "." in the name
 4. Do not change the public access settings (Let them be on "block public access" mode)
 
@@ -109,6 +140,14 @@ GoToSocial by default creates signed URL's which means we don't need to change a
     * `storage-s3-access-key` -> Access key ID you obtained for the user created above
     * `storage-s3-secret-key` -> Secret key you obtained for the user created above
     * `storage-s3-bucket` -> The `<bucketname>` that you created just now
+
+### `storage-s3-redirect-url`
+
+If you are using a CDN in front of your S3 bucket, and you want to serve media from the CDN rather than serving from your S3 bucket directly, you should set the `storage-s3-redirect-url` to the CDN URL.
+
+For example, if you have your `storage-s3-endpoint` value set to "s3.my-storage.example.org", and you have a CDN set up to proxy your bucket, serving from "cdn.some-fancy-host.org", then you should set `storage-s3-redirect-url` to "https://cdn.some-fancy-host.org".
+
+This will allow your GoToSocial instance to *upload* data to "s3.my-storage.example.org", but direct callers to *download* that data from "https://cdn.some-fancy-host.org".
 
 ## Storage migration
 
