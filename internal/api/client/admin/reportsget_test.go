@@ -263,7 +263,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "id": "admin",
         "name": "admin",
         "color": "",
-        "permissions": "545905",
+        "permissions": "546033",
         "highlighted": true
       },
       "confirmed": true,
@@ -317,7 +317,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "id": "admin",
         "name": "admin",
         "color": "",
-        "permissions": "545905",
+        "permissions": "546033",
         "highlighted": true
       },
       "confirmed": true,

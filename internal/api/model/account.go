@@ -423,6 +423,7 @@ const (
 		AccountRolePermissionsManageReports |
 		AccountRolePermissionsManageFederation |
 		AccountRolePermissionsManageSettings |
+		AccountRolePermissionsManageBlocks |
 		AccountRolePermissionsManageUsers |
 		AccountRolePermissionsManageRules |
 		AccountRolePermissionsManageCustomEmojis |

@@ -2311,7 +2311,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "id": "admin",
       "name": "admin",
       "color": "",
-      "permissions": "545905",
+      "permissions": "546033",
       "highlighted": true
     },
     "confirmed": true,
@@ -2365,7 +2365,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "id": "admin",
       "name": "admin",
       "color": "",
-      "permissions": "545905",
+      "permissions": "546033",
       "highlighted": true
     },
     "confirmed": true,
@@ -2797,7 +2797,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "id": "admin",
       "name": "admin",
       "color": "",
-      "permissions": "545905",
+      "permissions": "546033",
       "highlighted": true
     },
     "confirmed": true,
@@ -2851,7 +2851,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "id": "admin",
       "name": "admin",
       "color": "",
-      "permissions": "545905",
+      "permissions": "546033",
       "highlighted": true
     },
     "confirmed": true,

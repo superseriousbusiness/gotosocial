@@ -131,7 +131,7 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "id": "admin",
       "name": "admin",
       "color": "",
-      "permissions": "545905",
+      "permissions": "546033",
       "highlighted": true
     },
     "confirmed": true,
