@@ -437,54 +437,6 @@ func (res *ffprobeResult) Process() (*result, error) {
 		}
 	}
 
-	// Preallocate streams to max possible lengths.
-	r.audio = make([]audioStream, 0, len(res.Streams))
-	r.video = make([]videoStream, 0, len(res.Streams))
-
-	// Convert streams to separate types.
-	for _, s := range res.Streams {
-		switch s.CodecType {
-		case "audio":
-			// Append audio stream data to result.
-			r.audio = append(r.audio, audioStream{
-				stream: stream{codec: s.CodecName},
-			})
-		case "video":
-			var framerate float32
-
-			// Parse stream framerate, bearing in
-			// mind that some static container formats
-			// (e.g. jpeg) still return a framerate, so
-			// we also check for a non-1 timebase (dts).
-			if str := s.RFrameRate; str != "" &&
-				s.DurationTS > 1 {
-				var num, den uint32
-				den = 1
-
-				// Check for inequality (numerator / denominator).
-				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
-					n, _ := strconv.ParseUint(p[0], 10, 32)
-					d, _ := strconv.ParseUint(p[1], 10, 32)
-					num, den = uint32(n), uint32(d)
-				} else {
-					n, _ := strconv.ParseUint(p[0], 10, 32)
-					num = uint32(n)
-				}
-
-				// Set final divised framerate.
-				framerate = float32(num / den)
-			}
-
-			// Append video stream data to result.
-			r.video = append(r.video, videoStream{
-				stream:    stream{codec: s.CodecName},
-				width:     s.Width,
-				height:    s.Height,
-				framerate: framerate,
-			})
-		}
-	}
-
 	// Check extra packet / frame information
 	// for provided orientation (not always set).
 	for _, pf := range res.PacketsAndFrames {
@@ -518,6 +470,61 @@ func (res *ffprobeResult) Process() (*result, error) {
 			// or below -360, these are
 			// just repeat full turns.
 			r.rotation = (rot % 360)
+		}
+	}
+
+	// Preallocate streams to max possible lengths.
+	r.audio = make([]audioStream, 0, len(res.Streams))
+	r.video = make([]videoStream, 0, len(res.Streams))
+
+	// Convert streams to separate types.
+	for _, s := range res.Streams {
+		switch s.CodecType {
+		case "audio":
+			// Append audio stream data to result.
+			r.audio = append(r.audio, audioStream{
+				stream: stream{codec: s.CodecName},
+			})
+		case "video":
+			// Determine proper display dimensions,
+			// taking account of rotation data.
+			width, height := displayDimensions(
+				s.Width,
+				s.Height,
+				r.rotation,
+			)
+
+			// Parse stream framerate, bearing in
+			// mind that some static container formats
+			// (e.g. jpeg) still return a framerate, so
+			// we also check for a non-1 timebase (dts).
+			var framerate float32
+			if str := s.RFrameRate; str != "" &&
+				s.DurationTS > 1 {
+				var num, den uint32
+				den = 1
+
+				// Check for inequality (numerator / denominator).
+				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
+					n, _ := strconv.ParseUint(p[0], 10, 32)
+					d, _ := strconv.ParseUint(p[1], 10, 32)
+					num, den = uint32(n), uint32(d)
+				} else {
+					n, _ := strconv.ParseUint(p[0], 10, 32)
+					num = uint32(n)
+				}
+
+				// Set final divised framerate.
+				framerate = float32(num / den)
+			}
+
+			// Append video stream data to result.
+			r.video = append(r.video, videoStream{
+				stream:    stream{codec: s.CodecName},
+				width:     width,
+				height:    height,
+				framerate: framerate,
+			})
 		}
 	}
 
