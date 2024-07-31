@@ -1500,6 +1500,31 @@ func GetStorageS3Proxy() bool { return global.GetStorageS3Proxy() }
 // SetStorageS3Proxy safely sets the value for global configuration 'StorageS3Proxy' field
 func SetStorageS3Proxy(v bool) { global.SetStorageS3Proxy(v) }
 
+// GetStorageS3RedirectURL safely fetches the Configuration value for state's 'StorageS3RedirectURL' field
+func (st *ConfigState) GetStorageS3RedirectURL() (v string) {
+	st.mutex.RLock()
+	v = st.config.StorageS3RedirectURL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetStorageS3RedirectURL safely sets the Configuration value for state's 'StorageS3RedirectURL' field
+func (st *ConfigState) SetStorageS3RedirectURL(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3RedirectURL = v
+	st.reloadToViper()
+}
+
+// StorageS3RedirectURLFlag returns the flag name for the 'StorageS3RedirectURL' field
+func StorageS3RedirectURLFlag() string { return "storage-s3-redirect-url" }
+
+// GetStorageS3RedirectURL safely fetches the value for global configuration 'StorageS3RedirectURL' field
+func GetStorageS3RedirectURL() string { return global.GetStorageS3RedirectURL() }
+
+// SetStorageS3RedirectURL safely sets the value for global configuration 'StorageS3RedirectURL' field
+func SetStorageS3RedirectURL(v string) { global.SetStorageS3RedirectURL(v) }
+
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
 	st.mutex.RLock()

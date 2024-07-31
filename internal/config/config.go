@@ -110,6 +110,7 @@ type Configuration struct {
 	StorageS3UseSSL      bool   `name:"storage-s3-use-ssl" usage:"Use SSL for S3 connections. Only set this to 'false' when testing locally"`
 	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
 	StorageS3Proxy       bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
+	StorageS3RedirectURL string `name:"storage-s3-redirect-url" usage:"Custom URL to use for redirecting S3 media links. If set, this will be used instead of the S3 bucket URL."`
 
 	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses, including content warning"`
 	StatusesPollMaxOptions     int `name:"statuses-poll-max-options" usage:"Max amount of options permitted on a poll"`
