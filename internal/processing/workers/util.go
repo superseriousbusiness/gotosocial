@@ -257,10 +257,8 @@ func (u *utils) incrementStatusesCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by incrementing status
@@ -288,10 +286,8 @@ func (u *utils) decrementStatusesCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by decrementing
@@ -322,10 +318,8 @@ func (u *utils) incrementFollowersCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by incrementing followers
@@ -351,10 +345,8 @@ func (u *utils) decrementFollowersCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by decrementing
@@ -385,10 +377,8 @@ func (u *utils) incrementFollowingCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by incrementing
@@ -414,10 +404,8 @@ func (u *utils) decrementFollowingCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by decrementing
@@ -448,10 +436,8 @@ func (u *utils) incrementFollowRequestsCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by incrementing
@@ -477,10 +463,8 @@ func (u *utils) decrementFollowRequestsCount(
 	defer unlock()
 
 	// Populate stats.
-	if account.Stats == nil {
-		if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// Update stats by decrementing

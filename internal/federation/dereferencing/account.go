@@ -984,10 +984,8 @@ func (d *Dereferencer) dereferenceAccountStats(
 	account *gtsmodel.Account,
 ) error {
 	// Ensure we have a stats model for this account.
-	if account.Stats == nil {
-		if err := d.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			return gtserror.Newf("db error getting account stats: %w", err)
-		}
+	if err := d.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
 	// We want to update stats by getting remote

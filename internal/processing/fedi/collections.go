@@ -70,11 +70,9 @@ func (p *Processor) OutboxGet(
 	}
 
 	// Ensure we have stats for this account.
-	if receivingAcct.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
-			err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
+		err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	var obj vocab.Type
@@ -200,11 +198,9 @@ func (p *Processor) FollowersGet(
 	}
 
 	// Ensure we have stats for this account.
-	if receivingAcct.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
-			err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
+		err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	var obj vocab.Type
@@ -314,11 +310,9 @@ func (p *Processor) FollowingGet(ctx context.Context, requestedUser string, page
 	}
 
 	// Ensure we have stats for this account.
-	if receivingAcct.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
-			err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	if err := p.state.DB.PopulateAccountStats(ctx, receivingAcct); err != nil {
+		err := gtserror.Newf("error getting stats for account %s: %w", receivingAcct.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	var obj vocab.Type
