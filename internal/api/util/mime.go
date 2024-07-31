@@ -35,6 +35,7 @@ const (
 	TextXML           = `text/xml`
 	TextHTML          = `text/html`
 	TextCSS           = `text/css`
+	TextCSV           = `text/csv`
 )
 
 // JSONContentType returns whether is application/json(;charset=utf-8)? content-type.

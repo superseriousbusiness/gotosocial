@@ -106,6 +106,14 @@ func (l *listDB) GetListsForAccountID(ctx context.Context, accountID string) ([]
 	return l.GetListsByIDs(ctx, listIDs)
 }
 
+func (l *listDB) CountListsForAccountID(ctx context.Context, accountID string) (int, error) {
+	return l.db.
+		NewSelect().
+		Table("lists").
+		Where("? = ?", bun.Ident("account_id"), accountID).
+		Count(ctx)
+}
+
 func (l *listDB) PopulateList(ctx context.Context, list *gtsmodel.List) error {
 	var (
 		err  error

@@ -29,6 +29,9 @@ type DBCaches struct {
 	// Account provides access to the gtsmodel Account database cache.
 	Account StructCache[*gtsmodel.Account]
 
+	// AccountIDsFollowingTag caches account IDs following a given tag ID.
+	AccountIDsFollowingTag SliceCache[string]
+
 	// AccountNote provides access to the gtsmodel Note database cache.
 	AccountNote StructCache[*gtsmodel.AccountNote]
 
@@ -160,6 +163,9 @@ type DBCaches struct {
 	// Tag provides access to the gtsmodel Tag database cache.
 	Tag StructCache[*gtsmodel.Tag]
 
+	// TagIDsFollowedByAccount caches tag IDs followed by a given account ID.
+	TagIDsFollowedByAccount SliceCache[string]
+
 	// ThreadMute provides access to the gtsmodel ThreadMute database cache.
 	ThreadMute StructCache[*gtsmodel.ThreadMute]
 
@@ -232,6 +238,17 @@ func (c *Caches) initAccount() {
 		Copy:       copyF,
 		Invalidate: c.OnInvalidateAccount,
 	})
+}
+
+func (c *Caches) initAccountIDsFollowingTag() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheAccountIDsFollowingTagMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.AccountIDsFollowingTag.Init(0, cap)
 }
 
 func (c *Caches) initAccountNote() {
@@ -1315,6 +1332,17 @@ func (c *Caches) initTag() {
 		IgnoreErr: ignoreErrors,
 		Copy:      copyF,
 	})
+}
+
+func (c *Caches) initTagIDsFollowedByAccount() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheTagIDsFollowedByAccountMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.TagIDsFollowedByAccount.Init(0, cap)
 }
 
 func (c *Caches) initThreadMute() {

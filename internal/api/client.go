@@ -28,10 +28,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/exports"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags"
 	filtersV1 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v1"
 	filtersV2 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v2"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/interactionpolicies"
@@ -46,6 +48,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/tags"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/timelines"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -59,18 +62,20 @@ type Client struct {
 	processor *processing.Processor
 	db        db.DB
 
-	accounts            *accounts.Module            // api/v1/accounts
+	accounts            *accounts.Module            // api/v1/accounts, api/v1/profile
 	admin               *admin.Module               // api/v1/admin
 	apps                *apps.Module                // api/v1/apps
 	blocks              *blocks.Module              // api/v1/blocks
 	bookmarks           *bookmarks.Module           // api/v1/bookmarks
 	conversations       *conversations.Module       // api/v1/conversations
 	customEmojis        *customemojis.Module        // api/v1/custom_emojis
+	exports             *exports.Module             // api/v1/exports
 	favourites          *favourites.Module          // api/v1/favourites
 	featuredTags        *featuredtags.Module        // api/v1/featured_tags
 	filtersV1           *filtersV1.Module           // api/v1/filters
 	filtersV2           *filtersV2.Module           // api/v2/filters
 	followRequests      *followrequests.Module      // api/v1/follow_requests
+	followedTags        *followedtags.Module        // api/v1/followed_tags
 	instance            *instance.Module            // api/v1/instance
 	interactionPolicies *interactionpolicies.Module // api/v1/interaction_policies
 	lists               *lists.Module               // api/v1/lists
@@ -84,6 +89,7 @@ type Client struct {
 	search              *search.Module              // api/v1/search, api/v2/search
 	statuses            *statuses.Module            // api/v1/statuses
 	streaming           *streaming.Module           // api/v1/streaming
+	tags                *tags.Module                // api/v1/tags
 	timelines           *timelines.Module           // api/v1/timelines
 	user                *user.Module                // api/v1/user
 }
@@ -112,11 +118,13 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.bookmarks.Route(h)
 	c.conversations.Route(h)
 	c.customEmojis.Route(h)
+	c.exports.Route(h)
 	c.favourites.Route(h)
 	c.featuredTags.Route(h)
 	c.filtersV1.Route(h)
 	c.filtersV2.Route(h)
 	c.followRequests.Route(h)
+	c.followedTags.Route(h)
 	c.instance.Route(h)
 	c.interactionPolicies.Route(h)
 	c.lists.Route(h)
@@ -130,6 +138,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.search.Route(h)
 	c.statuses.Route(h)
 	c.streaming.Route(h)
+	c.tags.Route(h)
 	c.timelines.Route(h)
 	c.user.Route(h)
 }
@@ -146,11 +155,13 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		bookmarks:           bookmarks.New(p),
 		conversations:       conversations.New(p),
 		customEmojis:        customemojis.New(p),
+		exports:             exports.New(p),
 		favourites:          favourites.New(p),
 		featuredTags:        featuredtags.New(p),
 		filtersV1:           filtersV1.New(p),
 		filtersV2:           filtersV2.New(p),
 		followRequests:      followrequests.New(p),
+		followedTags:        followedtags.New(p),
 		instance:            instance.New(p),
 		interactionPolicies: interactionpolicies.New(p),
 		lists:               lists.New(p),
@@ -164,6 +175,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		search:              search.New(p),
 		statuses:            statuses.New(p),
 		streaming:           streaming.New(p, time.Second*30, 4096),
+		tags:                tags.New(p),
 		timelines:           timelines.New(p),
 		user:                user.New(p),
 	}

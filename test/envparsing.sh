@@ -23,6 +23,7 @@ EXPECT=$(cat << "EOF"
     "application-name": "gts",
     "bind-address": "127.0.0.1",
     "cache": {
+        "account-ids-following-tag-mem-ratio": 1,
         "account-mem-ratio": 5,
         "account-note-mem-ratio": 1,
         "account-settings-mem-ratio": 0.1,
@@ -63,6 +64,7 @@ EXPECT=$(cat << "EOF"
         "status-fave-ids-mem-ratio": 3,
         "status-fave-mem-ratio": 2,
         "status-mem-ratio": 5,
+        "tag-ids-followed-by-account-mem-ratio": 1,
         "tag-mem-ratio": 2,
         "thread-mute-mem-ratio": 0.2,
         "token-mem-ratio": 0.75,
@@ -171,6 +173,7 @@ EXPECT=$(cat << "EOF"
     "storage-s3-bucket": "gts",
     "storage-s3-endpoint": "localhost:9000",
     "storage-s3-proxy": true,
+    "storage-s3-redirect-url": "",
     "storage-s3-secret-key": "miniostorage",
     "storage-s3-use-ssl": false,
     "syslog-address": "127.0.0.1:6969",
@@ -251,6 +254,7 @@ GTS_STORAGE_S3_SECRET_KEY='miniostorage' \
 GTS_STORAGE_S3_ENDPOINT='localhost:9000' \
 GTS_STORAGE_S3_USE_SSL='false' \
 GTS_STORAGE_S3_PROXY='true' \
+GTS_STORAGE_S3_REDIRECT_URL='' \
 GTS_STORAGE_S3_BUCKET='gts' \
 GTS_STATUSES_MAX_CHARS=69 \
 GTS_STATUSES_CW_MAX_CHARS=420 \

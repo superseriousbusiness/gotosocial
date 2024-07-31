@@ -37,18 +37,26 @@ import (
 )
 
 // ffmpegClearMetadata generates a copy (in-place) of input media with all metadata cleared.
-func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error {
+func ffmpegClearMetadata(ctx context.Context, filepath string) error {
+	var outpath string
+
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
-	// Generate output file path with ext.
-	outpath := filepath + "_cleaned." + ext
+	// Generate cleaned output path MAINTAINING extension.
+	if i := strings.IndexByte(filepath, '.'); i != -1 {
+		outpath = filepath[:i] + "_cleaned" + filepath[i:]
+	} else {
+		return gtserror.New("input file missing extension")
+	}
 
 	// Clear metadata with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
+
+		// Only log errors.
 		"-loglevel", "error",
 
-		// Input file.
+		// Input file path.
 		"-i", filepath,
 
 		// Drop all metadata.
@@ -69,7 +77,7 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 
 	// Move the new output file path to original location.
 	if err := os.Rename(outpath, filepath); err != nil {
-		return gtserror.Newf("error renaming %s: %w", outpath, err)
+		return gtserror.Newf("error renaming %s -> %s: %w", outpath, filepath, err)
 	}
 
 	return nil
@@ -77,12 +85,17 @@ func ffmpegClearMetadata(ctx context.Context, filepath string, ext string) error
 
 // ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
 func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
+	var outpath string
+
+	// Generate thumb output path REPLACING extension.
+	if i := strings.IndexByte(filepath, '.'); i != -1 {
+		outpath = filepath[:i] + "_thumb.webp"
+	} else {
+		return "", gtserror.New("input file missing extension")
+	}
 
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
-
-	// Generate output frame file path.
-	outpath := filepath + "_thumb.webp"
 
 	// Thumbnail size scaling argument.
 	scale := strconv.Itoa(width) + ":" +
@@ -90,6 +103,8 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 
 	// Generate thumb with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
+
+		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file.
@@ -133,14 +148,22 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 
 // ffmpegGenerateStatic generates a static png from input image of any type, useful for emoji.
 func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) {
+	var outpath string
+
+	// Generate thumb output path REPLACING extension.
+	if i := strings.IndexByte(filepath, '.'); i != -1 {
+		outpath = filepath[:i] + "_static.png"
+	} else {
+		return "", gtserror.New("input file missing extension")
+	}
+
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
-	// Generate output static file path.
-	outpath := filepath + "_static.png"
-
 	// Generate static with ffmpeg.
 	if err := ffmpeg(ctx, dirpath,
+
+		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file.
@@ -199,12 +222,34 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 		Stdout: &stdout,
 
 		Args: []string{
-			"-i", filepath,
+			// Don't show any excess logging
+			// information, all goes in JSON.
 			"-loglevel", "quiet",
+
+			// Print in compact JSON format.
 			"-print_format", "json=compact=1",
-			"-show_streams",
-			"-show_format",
+
+			// Show error in our
+			// chosen format type.
 			"-show_error",
+
+			// Show specifically container format, total duration and bitrate.
+			"-show_entries", "format=format_name,duration,bit_rate" + ":" +
+
+				// Show specifically stream codec names, types, frame rate, duration and dimens.
+				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height" + ":" +
+
+				// Show any rotation
+				// side data stored.
+				"side_data=rotation",
+
+			// Limit to reading the first
+			// 1s of data looking for "rotation"
+			// side_data tags (expensive part).
+			"-read_intervals", "%+1",
+
+			// Input file.
+			"-i", filepath,
 		},
 
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
@@ -240,8 +285,9 @@ type result struct {
 	format   string
 	audio    []audioStream
 	video    []videoStream
-	bitrate  uint64
 	duration float64
+	bitrate  uint64
+	rotation int
 }
 
 type stream struct {
@@ -439,15 +485,61 @@ func (res *ffprobeResult) Process() (*result, error) {
 		}
 	}
 
+	// Check extra packet / frame information
+	// for provided orientation (not always set).
+	for _, pf := range res.PacketsAndFrames {
+		for _, d := range pf.SideDataList {
+
+			// Ensure frame side
+			// data IS rotation data.
+			if d.Rotation == 0 {
+				continue
+			}
+
+			// Ensure rotation not
+			// already been specified.
+			if r.rotation != 0 {
+				return nil, errors.New("multiple sets of rotation data")
+			}
+
+			// Drop any decimal
+			// rotation value.
+			rot := int(d.Rotation)
+
+			// Round rotation to multiple of 90.
+			// More granularity is not needed.
+			if q := rot % 90; q > 45 {
+				rot += (90 - q)
+			} else {
+				rot -= q
+			}
+
+			// Drop any value above 360
+			// or below -360, these are
+			// just repeat full turns.
+			r.rotation = (rot % 360)
+		}
+	}
+
 	return &r, nil
 }
 
 // ffprobeResult contains parsed JSON data from
 // result of calling `ffprobe` on a media file.
 type ffprobeResult struct {
-	Streams []ffprobeStream `json:"streams"`
-	Format  *ffprobeFormat  `json:"format"`
-	Error   *ffprobeError   `json:"error"`
+	PacketsAndFrames []ffprobePacketOrFrame `json:"packets_and_frames"`
+	Streams          []ffprobeStream        `json:"streams"`
+	Format           *ffprobeFormat         `json:"format"`
+	Error            *ffprobeError          `json:"error"`
+}
+
+type ffprobePacketOrFrame struct {
+	Type         string            `json:"type"`
+	SideDataList []ffprobeSideData `json:"side_data_list"`
+}
+
+type ffprobeSideData struct {
+	Rotation float64 `json:"rotation"`
 }
 
 type ffprobeStream struct {
@@ -457,14 +549,12 @@ type ffprobeStream struct {
 	DurationTS uint   `json:"duration_ts"`
 	Width      int    `json:"width"`
 	Height     int    `json:"height"`
-	// + unused fields.
 }
 
 type ffprobeFormat struct {
 	FormatName string `json:"format_name"`
 	Duration   string `json:"duration"`
 	BitRate    string `json:"bit_rate"`
-	// + unused fields
 }
 
 type ffprobeError struct {

@@ -483,7 +483,7 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	suite.EqualValues(float32(10), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0xce3a, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
-		Width: 512, Height: 281, Size: 143872, Aspect: 1.822064,
+		Width: 512, Height: 281, Size: 143872, Aspect: 1.8181819,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
@@ -543,7 +543,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	suite.EqualValues(float32(30), *attachment.FileMeta.Original.Framerate)
 	suite.EqualValues(0x11844c, *attachment.FileMeta.Original.Bitrate)
 	suite.EqualValues(gtsmodel.Small{
-		Width: 287, Height: 512, Size: 146944, Aspect: 0.5605469,
+		Width: 287, Height: 512, Size: 146944, Aspect: 0.5611111,
 	}, attachment.FileMeta.Small)
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)

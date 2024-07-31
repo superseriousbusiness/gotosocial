@@ -197,7 +197,7 @@ func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 		// If the fast-fail flag was set, just
 		// attempt a single iteration instead of
 		// following the below retry-backoff loop.
-		rsp, _, err = c.DoOnce(&req)
+		rsp, _, err = c.DoOnce(req)
 		if err != nil {
 			return nil, fmt.Errorf("%w (fast fail)", err)
 		}
@@ -208,7 +208,7 @@ func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 		var retry bool
 
 		// Perform the http request.
-		rsp, retry, err = c.DoOnce(&req)
+		rsp, retry, err = c.DoOnce(req)
 		if err == nil {
 			return rsp, nil
 		}

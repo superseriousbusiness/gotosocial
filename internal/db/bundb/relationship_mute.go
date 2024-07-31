@@ -77,6 +77,11 @@ func (r *relationshipDB) GetMute(
 	)
 }
 
+func (r *relationshipDB) CountAccountMutes(ctx context.Context, accountID string) (int, error) {
+	muteIDs, err := r.getAccountMuteIDs(ctx, accountID, nil)
+	return len(muteIDs), err
+}
+
 func (r *relationshipDB) getMutesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.UserMute, error) {
 	// Load all mutes IDs via cache loader callbacks.
 	mutes, err := r.state.Caches.DB.UserMute.LoadIDs("ID",

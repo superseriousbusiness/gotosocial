@@ -474,6 +474,12 @@ func (p *Processor) deleteAccountPeripheral(ctx context.Context, account *gtsmod
 		return gtserror.Newf("error deleting poll votes by account: %w", err)
 	}
 
+	// Delete all followed tags owned by given account.
+	if err := p.state.DB.DeleteFollowedTagsByAccountID(ctx, account.ID); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("error deleting followed tags by account: %w", err)
+	}
+
 	// Delete account stats model.
 	if err := p.state.DB.DeleteAccountStats(ctx, account.ID); err != nil {
 		return gtserror.Newf("error deleting stats for account: %w", err)

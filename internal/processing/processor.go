@@ -42,6 +42,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/search"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/tags"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
@@ -88,6 +89,7 @@ type Processor struct {
 	search             search.Processor
 	status             status.Processor
 	stream             stream.Processor
+	tags               tags.Processor
 	timeline           timeline.Processor
 	user               user.Processor
 	workers            workers.Processor
@@ -153,6 +155,10 @@ func (p *Processor) Stream() *stream.Processor {
 	return &p.stream
 }
 
+func (p *Processor) Tags() *tags.Processor {
+	return &p.tags
+}
+
 func (p *Processor) Timeline() *timeline.Processor {
 	return &p.timeline
 }
@@ -177,8 +183,7 @@ func NewProcessor(
 	visFilter *visibility.Filter,
 	intFilter *interaction.Filter,
 ) *Processor {
-	var parseMentionFunc = GetParseMentionFunc(state, federator)
-
+	parseMentionFunc := GetParseMentionFunc(state, federator)
 	processor := &Processor{
 		converter:        converter,
 		oauthServer:      oauthServer,
@@ -208,6 +213,7 @@ func NewProcessor(
 	processor.markers = markers.New(state, converter)
 	processor.polls = polls.New(&common, state, converter)
 	processor.report = report.New(state, converter)
+	processor.tags = tags.New(state, converter)
 	processor.timeline = timeline.New(state, converter, visFilter)
 	processor.search = search.New(state, federator, converter, visFilter)
 	processor.status = status.New(state, &common, &processor.polls, federator, converter, visFilter, intFilter, parseMentionFunc)

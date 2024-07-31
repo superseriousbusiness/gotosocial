@@ -178,6 +178,11 @@ func (r *relationshipDB) GetAccountBlocks(ctx context.Context, accountID string,
 	return r.GetBlocksByIDs(ctx, blockIDs)
 }
 
+func (r *relationshipDB) CountAccountBlocks(ctx context.Context, accountID string) (int, error) {
+	blockIDs, err := r.GetAccountBlockIDs(ctx, accountID, nil)
+	return len(blockIDs), err
+}
+
 func (r *relationshipDB) GetAccountFollowIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
 	return loadPagedIDs(&r.state.Caches.DB.FollowIDs, ">"+accountID, page, func() ([]string, error) {
 		var followIDs []string

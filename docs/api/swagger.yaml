@@ -365,6 +365,56 @@ definitions:
         type: object
         x-go-name: AccountDisplayRole
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    accountExportStats:
+        description: |-
+            AccountExportStats models an account's stats
+            specifically for the purpose of informing about
+            export sizes at the /api/v1/exports/stats endpoint.
+        properties:
+            blocks_count:
+                description: Number of accounts blocked by this account.
+                example: 15
+                format: int64
+                type: integer
+                x-go-name: BlocksCount
+            followers_count:
+                description: Number of accounts following this account.
+                example: 50
+                format: int64
+                type: integer
+                x-go-name: FollowersCount
+            following_count:
+                description: Number of accounts followed by this account.
+                example: 50
+                format: int64
+                type: integer
+                x-go-name: FollowingCount
+            lists_count:
+                description: Number of lists created by this account.
+                example: 10
+                format: int64
+                type: integer
+                x-go-name: ListsCount
+            media_storage:
+                description: 'TODO: String representation of media storage size attributed to this account.'
+                example: 500MB
+                type: string
+                x-go-name: MediaStorage
+            mutes_count:
+                description: Number of accounts muted by this account.
+                example: 11
+                format: int64
+                type: integer
+                x-go-name: MutesCount
+            statuses_count:
+                description: Number of statuses created by this account.
+                example: 81986
+                format: int64
+                type: integer
+                x-go-name: StatusesCount
+        type: object
+        x-go-name: AccountExportStats
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     accountRelationship:
         properties:
             blocked_by:
@@ -2980,6 +3030,12 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
+            following:
+                description: |-
+                    Following is true if the user is following this tag, false if they're not,
+                    and not present if there is no currently authenticated user.
+                type: boolean
+                x-go-name: Following
             history:
                 description: |-
                     History of this hashtag's usage.
@@ -6422,6 +6478,128 @@ paths:
             summary: Get an array of custom emojis available on the instance.
             tags:
                 - custom_emojis
+    /api/v1/exports/blocks.csv:
+        get:
+            operationId: exportBlocks
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that you block.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:blocks
+            summary: Export a CSV file of accounts that you block.
+            tags:
+                - import-export
+    /api/v1/exports/followers.csv:
+        get:
+            operationId: exportFollowers
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that follow you.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Export a CSV file of accounts that follow you.
+            tags:
+                - import-export
+    /api/v1/exports/following.csv:
+        get:
+            operationId: exportFollowing
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that you follow.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Export a CSV file of accounts that you follow.
+            tags:
+                - import-export
+    /api/v1/exports/lists.csv:
+        get:
+            operationId: exportLists
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of lists.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:lists
+            summary: Export a CSV file of lists created by you.
+            tags:
+                - import-export
+    /api/v1/exports/mutes.csv:
+        get:
+            operationId: exportMutes
+            produces:
+                - text/csv
+            responses:
+                "200":
+                    description: CSV file of accounts that you mute.
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:mutes
+            summary: Export a CSV file of accounts that you mute.
+            tags:
+                - import-export
+    /api/v1/exports/stats:
+        get:
+            operationId: exportStats
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Export stats for the requesting account.
+                    schema:
+                        $ref: '#/definitions/accountExportStats'
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:account
+            summary: Returns informational stats on the number of items that can be exported for requesting account.
+            tags:
+                - import-export
     /api/v1/favourites:
         get:
             description: |-
@@ -6503,7 +6681,7 @@ paths:
                     - read:accounts
             summary: Get an array of all hashtags that you currently have featured on your profile.
             tags:
-                - featured_tags
+                - tags
     /api/v1/filters:
         get:
             operationId: filtersV1Get
@@ -6898,6 +7076,58 @@ paths:
             summary: Reject/deny follow request from the given account ID.
             tags:
                 - follow_requests
+    /api/v1/followed_tags:
+        get:
+            operationId: getFollowedTags
+            parameters:
+                - description: 'Return only followed tags *OLDER* than the given max ID. The followed tag with the specified ID will not be included in the response. NOTE: the ID is of the internal followed tag, NOT a tag name.'
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 'Return only followed tags *NEWER* than the given since ID. The followed tag with the specified ID will not be included in the response. NOTE: the ID is of the internal followed tag, NOT a tag name.'
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 'Return only followed tags *IMMEDIATELY NEWER* than the given min ID. The followed tag with the specified ID will not be included in the response. NOTE: the ID is of the internal followed tag, NOT a tag name.'
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 100
+                  description: Number of followed tags to return.
+                  in: query
+                  maximum: 200
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/tag'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Get an array of all hashtags that you currently follow.
+            tags:
+                - tags
     /api/v1/instance:
         get:
             operationId: instanceGetV1
@@ -9136,6 +9366,103 @@ paths:
             summary: Initiate a websocket connection for live streaming of statuses and notifications.
             tags:
                 - streaming
+    /api/v1/tags/{tag_name}:
+        get:
+            description: If the tag does not exist, this method will not create it in the database.
+            operationId: getTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Get details for a hashtag, including whether you currently follow it.
+            tags:
+                - tags
+    /api/v1/tags/{tag_name}/follow:
+        post:
+            description: 'Idempotent: if you are already following the tag, this call will still succeed.'
+            operationId: followTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:follows
+            summary: Follow a hashtag.
+            tags:
+                - tags
+    /api/v1/tags/{tag_name}/unfollow:
+        post:
+            description: 'Idempotent: if you are not following the tag, this call will still succeed.'
+            operationId: unfollowTag
+            parameters:
+                - description: Name of the tag (no leading `#`)
+                  in: path
+                  name: tag_name
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the tag.
+                    schema:
+                        $ref: '#/definitions/tag'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: unauthorized
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:follows
+            summary: Unfollow a hashtag.
+            tags:
+                - tags
     /api/v1/timelines/home:
         get:
             description: |-

@@ -103,8 +103,13 @@ func (p *Processor) FaveCreate(
 		return nil, gtserror.NewErrorForbidden(err, errText)
 	}
 
-	// Derive pendingApproval status.
-	var pendingApproval bool
+	// Derive pendingApproval
+	// and preapproved status.
+	var (
+		pendingApproval bool
+		preApproved     bool
+	)
+
 	switch {
 	case policyResult.WithApproval():
 		// We're allowed to do
@@ -115,8 +120,17 @@ func (p *Processor) FaveCreate(
 		// We're permitted to do this, but since
 		// we matched due to presence in a followers
 		// or following collection, we should mark
-		// as pending approval and wait for an accept.
+		// as pending approval and wait until we can
+		// prove it's been Accepted by the target.
 		pendingApproval = true
+
+		if *status.Local {
+			// If the target is local we don't need
+			// to wait for an Accept from remote,
+			// we can just preapprove it and have
+			// the processor create the Accept.
+			preApproved = true
+		}
 
 	case policyResult.Permitted():
 		// We're permitted to do this
@@ -138,6 +152,7 @@ func (p *Processor) FaveCreate(
 		StatusID:        status.ID,
 		Status:          status,
 		URI:             uris.GenerateURIForLike(requester.Username, faveID),
+		PreApproved:     preApproved,
 		PendingApproval: &pendingApproval,
 	}
 

@@ -334,6 +334,17 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 				},
 			},
 		}
+	case "https://xn--pnycde-zxa8b.example.org/.well-known/webfinger?resource=acct%3Abrand_new_person%40xn--pnycde-zxa8b.example.org":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:brand_new_person@unknown-instance.com",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://unknown-instance.com/users/brand_new_person",
+				},
+			},
+		}
 	case "https://turnip.farm/.well-known/webfinger?resource=acct%3Aturniplover6969%40turnip.farm":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:turniplover6969@turnip.farm",

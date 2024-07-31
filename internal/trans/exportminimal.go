@@ -69,7 +69,7 @@ func (e *exporter) ExportMinimal(ctx context.Context, path string) error {
 	}
 
 	// export all follows that relate to local accounts
-	follows, err := e.exportFollows(ctx, localAccounts, file)
+	follows, err := e.exportFollowing(ctx, localAccounts, file)
 	if err != nil {
 		return fmt.Errorf("ExportMinimal: error exporting follows: %s", err)
 	}

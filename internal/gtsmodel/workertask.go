@@ -34,8 +34,8 @@ const (
 // queued tasks from being lost. It is simply a
 // means to store a blob of serialized task data.
 type WorkerTask struct {
-	ID         uint      `bun:""`
-	WorkerType uint8     `bun:""`
-	TaskData   []byte    `bun:""`
-	CreatedAt  time.Time `bun:""`
+	ID         uint       `bun:",pk,autoincrement"`
+	WorkerType WorkerType `bun:",notnull"`
+	TaskData   []byte     `bun:",nullzero,notnull"`
+	CreatedAt  time.Time  `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
 }

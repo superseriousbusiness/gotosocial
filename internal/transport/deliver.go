@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -167,6 +168,38 @@ func (t *transport) prepare(
 		TargetID: targetID,
 		Request:  httpclient.WrapRequest(r),
 	}, nil
+}
+
+func (t *transport) SignDelivery(dlv *delivery.Delivery) error {
+	if dlv.Request.GetBody == nil {
+		return gtserror.New("delivery request body not rewindable")
+	}
+
+	// Get a new copy of the request body.
+	body, err := dlv.Request.GetBody()
+	if err != nil {
+		return gtserror.Newf("error getting request body: %w", err)
+	}
+
+	// Read body data into memory.
+	data, err := io.ReadAll(body)
+	if err != nil {
+		return gtserror.Newf("error reading request body: %w", err)
+	}
+
+	// Get signing function for POST data.
+	// (note that delivery is ALWAYS POST).
+	sign := t.signPOST(data)
+
+	// Extract delivery context.
+	ctx := dlv.Request.Context()
+
+	// Update delivery request context with signing details.
+	ctx = gtscontext.SetOutgoingPublicKeyID(ctx, t.pubKeyID)
+	ctx = gtscontext.SetHTTPClientSignFunc(ctx, sign)
+	dlv.Request.Request = dlv.Request.Request.WithContext(ctx)
+
+	return nil
 }
 
 // getObjectID extracts an object ID from 'serialized' ActivityPub object map.

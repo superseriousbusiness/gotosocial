@@ -1500,6 +1500,31 @@ func GetStorageS3Proxy() bool { return global.GetStorageS3Proxy() }
 // SetStorageS3Proxy safely sets the value for global configuration 'StorageS3Proxy' field
 func SetStorageS3Proxy(v bool) { global.SetStorageS3Proxy(v) }
 
+// GetStorageS3RedirectURL safely fetches the Configuration value for state's 'StorageS3RedirectURL' field
+func (st *ConfigState) GetStorageS3RedirectURL() (v string) {
+	st.mutex.RLock()
+	v = st.config.StorageS3RedirectURL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetStorageS3RedirectURL safely sets the Configuration value for state's 'StorageS3RedirectURL' field
+func (st *ConfigState) SetStorageS3RedirectURL(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3RedirectURL = v
+	st.reloadToViper()
+}
+
+// StorageS3RedirectURLFlag returns the flag name for the 'StorageS3RedirectURL' field
+func StorageS3RedirectURLFlag() string { return "storage-s3-redirect-url" }
+
+// GetStorageS3RedirectURL safely fetches the value for global configuration 'StorageS3RedirectURL' field
+func GetStorageS3RedirectURL() string { return global.GetStorageS3RedirectURL() }
+
+// SetStorageS3RedirectURL safely sets the value for global configuration 'StorageS3RedirectURL' field
+func SetStorageS3RedirectURL(v string) { global.SetStorageS3RedirectURL(v) }
+
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
 	st.mutex.RLock()
@@ -2775,6 +2800,37 @@ func GetCacheAccountMemRatio() float64 { return global.GetCacheAccountMemRatio()
 // SetCacheAccountMemRatio safely sets the value for global configuration 'Cache.AccountMemRatio' field
 func SetCacheAccountMemRatio(v float64) { global.SetCacheAccountMemRatio(v) }
 
+// GetCacheAccountIDsFollowingTagMemRatio safely fetches the Configuration value for state's 'Cache.AccountIDsFollowingTagMemRatio' field
+func (st *ConfigState) GetCacheAccountIDsFollowingTagMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.AccountIDsFollowingTagMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheAccountIDsFollowingTagMemRatio safely sets the Configuration value for state's 'Cache.AccountIDsFollowingTagMemRatio' field
+func (st *ConfigState) SetCacheAccountIDsFollowingTagMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.AccountIDsFollowingTagMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheAccountIDsFollowingTagMemRatioFlag returns the flag name for the 'Cache.AccountIDsFollowingTagMemRatio' field
+func CacheAccountIDsFollowingTagMemRatioFlag() string {
+	return "cache-account-ids-following-tag-mem-ratio"
+}
+
+// GetCacheAccountIDsFollowingTagMemRatio safely fetches the value for global configuration 'Cache.AccountIDsFollowingTagMemRatio' field
+func GetCacheAccountIDsFollowingTagMemRatio() float64 {
+	return global.GetCacheAccountIDsFollowingTagMemRatio()
+}
+
+// SetCacheAccountIDsFollowingTagMemRatio safely sets the value for global configuration 'Cache.AccountIDsFollowingTagMemRatio' field
+func SetCacheAccountIDsFollowingTagMemRatio(v float64) {
+	global.SetCacheAccountIDsFollowingTagMemRatio(v)
+}
+
 // GetCacheAccountNoteMemRatio safely fetches the Configuration value for state's 'Cache.AccountNoteMemRatio' field
 func (st *ConfigState) GetCacheAccountNoteMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -3757,6 +3813,37 @@ func GetCacheTagMemRatio() float64 { return global.GetCacheTagMemRatio() }
 
 // SetCacheTagMemRatio safely sets the value for global configuration 'Cache.TagMemRatio' field
 func SetCacheTagMemRatio(v float64) { global.SetCacheTagMemRatio(v) }
+
+// GetCacheTagIDsFollowedByAccountMemRatio safely fetches the Configuration value for state's 'Cache.TagIDsFollowedByAccountMemRatio' field
+func (st *ConfigState) GetCacheTagIDsFollowedByAccountMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.TagIDsFollowedByAccountMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheTagIDsFollowedByAccountMemRatio safely sets the Configuration value for state's 'Cache.TagIDsFollowedByAccountMemRatio' field
+func (st *ConfigState) SetCacheTagIDsFollowedByAccountMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.TagIDsFollowedByAccountMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheTagIDsFollowedByAccountMemRatioFlag returns the flag name for the 'Cache.TagIDsFollowedByAccountMemRatio' field
+func CacheTagIDsFollowedByAccountMemRatioFlag() string {
+	return "cache-tag-ids-followed-by-account-mem-ratio"
+}
+
+// GetCacheTagIDsFollowedByAccountMemRatio safely fetches the value for global configuration 'Cache.TagIDsFollowedByAccountMemRatio' field
+func GetCacheTagIDsFollowedByAccountMemRatio() float64 {
+	return global.GetCacheTagIDsFollowedByAccountMemRatio()
+}
+
+// SetCacheTagIDsFollowedByAccountMemRatio safely sets the value for global configuration 'Cache.TagIDsFollowedByAccountMemRatio' field
+func SetCacheTagIDsFollowedByAccountMemRatio(v float64) {
+	global.SetCacheTagIDsFollowedByAccountMemRatio(v)
+}
 
 // GetCacheThreadMuteMemRatio safely fetches the Configuration value for state's 'Cache.ThreadMuteMemRatio' field
 func (st *ConfigState) GetCacheThreadMuteMemRatio() (v float64) {

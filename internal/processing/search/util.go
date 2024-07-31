@@ -146,7 +146,7 @@ func (p *Processor) packageHashtags(
 	} else {
 		// If API not version 1, provide slice of full tags.
 		rangeF = func(tag *gtsmodel.Tag) {
-			apiTag, err := p.converter.TagToAPITag(ctx, tag, true)
+			apiTag, err := p.converter.TagToAPITag(ctx, tag, true, nil)
 			if err != nil {
 				log.Debugf(
 					ctx,

@@ -84,6 +84,7 @@ type DBService struct {
 	db.Timeline
 	db.User
 	db.Tombstone
+	db.WorkerTask
 	db *bun.DB
 }
 
@@ -301,6 +302,9 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		Tombstone: &tombstoneDB{
 			db:    db,
 			state: state,
+		},
+		WorkerTask: &workerTaskDB{
+			db: db,
 		},
 		db: db,
 	}

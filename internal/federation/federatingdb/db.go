@@ -19,6 +19,7 @@ package federatingdb
 
 import (
 	"context"
+	"net/url"
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -43,6 +44,12 @@ type DB interface {
 	Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error
 	Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error
 	Move(ctx context.Context, move vocab.ActivityStreamsMove) error
+
+	/*
+		Extra/convenience functionality.
+	*/
+
+	GetAccept(ctx context.Context, acceptIRI *url.URL) (vocab.ActivityStreamsAccept, error)
 }
 
 // FederatingDB uses the given state interface
