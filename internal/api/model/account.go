@@ -18,13 +18,11 @@
 package model
 
 import (
-	"bytes"
 	"encoding/json"
+	"errors"
 	"mime/multipart"
 	"net"
 	"strconv"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // Account models a fediverse account.
@@ -352,7 +350,7 @@ func (a *AccountRolePermissions) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON deserializes an AccountRolePermissions from a number or numeric string.
 func (a *AccountRolePermissions) UnmarshalJSON(b []byte) error {
-	if bytes.Equal(b, []byte("null")) {
+	if string(b) == "null" {
 		return nil
 	}
 
@@ -360,12 +358,12 @@ func (a *AccountRolePermissions) UnmarshalJSON(b []byte) error {
 	if err := json.Unmarshal(b, &i); err != nil {
 		s := ""
 		if err := json.Unmarshal(b, &s); err != nil {
-			return gtserror.Newf("not a number or string")
+			return errors.New("not a number or string")
 		}
 
 		i, err = strconv.Atoi(s)
 		if err != nil {
-			return gtserror.Newf("not a numeric string")
+			return errors.New("not a numeric string")
 		}
 	}
 
