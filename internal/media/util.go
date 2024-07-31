@@ -35,12 +35,6 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-type dimensions struct {
-	width  int
-	height int
-	aspect float32
-}
-
 // displayDimensions takes account of the
 // given rotation data to return width and
 // height values as the image will be displayed.
