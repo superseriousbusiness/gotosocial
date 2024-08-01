@@ -149,7 +149,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 	}
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string][]string{
+	buf, w, err := testrig.CreateMultipartFormData(testrig.FileToDataF("file", "../../../../testrig/media/test-jpeg.jpg"), map[string][]string{
 		"description": {"this is a test image -- a cool background from somewhere"},
 		"focus":       {"-0.5,0.5"},
 	})
@@ -234,7 +234,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	}
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string][]string{
+	buf, w, err := testrig.CreateMultipartFormData(testrig.FileToDataF("file", "../../../../testrig/media/test-jpeg.jpg"), map[string][]string{
 		"description": {"this is a test image -- a cool background from somewhere"},
 		"focus":       {"-0.5,0.5"},
 	})
@@ -317,7 +317,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateLongDescription() {
 	description := base64.RawStdEncoding.EncodeToString(descriptionBytes)
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string][]string{
+	buf, w, err := testrig.CreateMultipartFormData(testrig.FileToDataF("file", "../../../../testrig/media/test-jpeg.jpg"), map[string][]string{
 		"description": {description},
 		"focus":       {"-0.5,0.5"},
 	})
@@ -358,7 +358,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateTooShortDescription() {
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
 
 	// create the request
-	buf, w, err := testrig.CreateMultipartFormData("file", "../../../../testrig/media/test-jpeg.jpg", map[string][]string{
+	buf, w, err := testrig.CreateMultipartFormData(testrig.FileToDataF("file", "../../../../testrig/media/test-jpeg.jpg"), map[string][]string{
 		"description": {""}, // provide an empty description
 		"focus":       {"-0.5,0.5"},
 	})

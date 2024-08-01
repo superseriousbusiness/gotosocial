@@ -35,7 +35,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeletePOSTHandler() {
 	// set up the request
 	// we're deleting zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"password": {"password"},
 		})
@@ -57,7 +57,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeletePOSTHandlerWrongPassword()
 	// set up the request
 	// we're deleting zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"password": {"aaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
 		})
@@ -79,7 +79,7 @@ func (suite *AccountDeleteTestSuite) TestAccountDeletePOSTHandlerNoPassword() {
 	// set up the request
 	// we're deleting zork
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{})
 	if err != nil {
 		panic(err)

@@ -37,7 +37,12 @@ type InstancePatchTestSuite struct {
 }
 
 func (suite *InstancePatchTestSuite) instancePatch(fieldName string, fileName string, extraFields map[string][]string) (code int, body []byte) {
-	requestBody, w, err := testrig.CreateMultipartFormData(fieldName, fileName, extraFields)
+	var dataF testrig.DataF
+	if fieldName != "" && fileName != "" {
+		dataF = testrig.FileToDataF(fieldName, fileName)
+	}
+
+	requestBody, w, err := testrig.CreateMultipartFormData(dataF, extraFields)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -499,7 +504,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch4() {
 
 func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"short_description": {"<p>This is some html, which is <em>allowed</em> in short descriptions.</p>"},
 		})

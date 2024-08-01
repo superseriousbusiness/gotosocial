@@ -51,7 +51,7 @@ func (suite *AccountUpdateTestSuite) updateAccountFromForm(data map[string][]str
 }
 
 func (suite *AccountUpdateTestSuite) updateAccountFromFormData(data map[string][]string, expectedHTTPStatus int, expectedBody string) (*apimodel.Account, error) {
-	requestBody, w, err := testrig.CreateMultipartFormData("", "", data)
+	requestBody, w, err := testrig.CreateMultipartFormData(nil, data)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -59,8 +59,8 @@ func (suite *AccountUpdateTestSuite) updateAccountFromFormData(data map[string][
 	return suite.updateAccount(requestBody.Bytes(), w.FormDataContentType(), expectedHTTPStatus, expectedBody)
 }
 
-func (suite *AccountUpdateTestSuite) updateAccountFromFormDataWithFile(fieldName string, fileName string, data map[string][]string, expectedHTTPStatus int, expectedBody string) (*apimodel.Account, error) {
-	requestBody, w, err := testrig.CreateMultipartFormData(fieldName, fileName, data)
+func (suite *AccountUpdateTestSuite) updateAccountFromFormDataWithFile(fieldName string, filePath string, data map[string][]string, expectedHTTPStatus int, expectedBody string) (*apimodel.Account, error) {
+	requestBody, w, err := testrig.CreateMultipartFormData(testrig.FileToDataF(fieldName, filePath), data)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

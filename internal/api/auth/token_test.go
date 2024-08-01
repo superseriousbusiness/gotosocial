@@ -57,7 +57,7 @@ func (suite *TokenTestSuite) TestRetrieveClientCredentialsOK() {
 	testClient := suite.testClients["local_account_1"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"grant_type":    {"client_credentials"},
 			"client_id":     {testClient.ID},
@@ -103,7 +103,7 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeOK() {
 	testUserAuthorizationToken := suite.testTokens["local_account_1_user_authorization_token"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"grant_type":    {"authorization_code"},
 			"client_id":     {testClient.ID},
@@ -148,7 +148,7 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeNoCode() {
 	testClient := suite.testClients["local_account_1"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"grant_type":    {"authorization_code"},
 			"client_id":     {testClient.ID},
@@ -180,7 +180,7 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeWrongGrantType() {
 	testClient := suite.testClients["local_account_1"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
-		"", "",
+		nil,
 		map[string][]string{
 			"grant_type":    {"client_credentials"},
 			"client_id":     {testClient.ID},
