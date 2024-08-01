@@ -203,8 +203,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	switch p.media.Type {
 	case gtsmodel.FileTypeImage,
 		gtsmodel.FileTypeVideo:
-		// Pass file through ffmpeg clearing metadata (e.g. EXIF).
-		if err := ffmpegClearMetadata(ctx, temppath); err != nil {
+		// Attempt to clean as metadata from file as possible.
+		if err := clearMetadata(ctx, temppath); err != nil {
 			return gtserror.Newf("error cleaning metadata: %w", err)
 		}
 
