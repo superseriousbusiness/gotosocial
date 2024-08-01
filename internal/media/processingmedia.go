@@ -223,7 +223,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			width,
 			height,
 			aspect,
-			result.rotation,
 		)
 		p.media.FileMeta.Small.Width = thumbWidth
 		p.media.FileMeta.Small.Height = thumbHeight

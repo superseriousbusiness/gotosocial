@@ -35,15 +35,13 @@ import (
 	"github.com/disintegration/imaging"
 )
 
-// thumbSize returns the dimensions to use for an input
-// image of given width / height, for its outgoing thumbnail.
-// This attempts to maintains the original image aspect ratio.
-func thumbSize(width, height int, aspect float32, rotation int) (int, int) {
-	const (
-		maxThumbWidth  = 512
-		maxThumbHeight = 512
-	)
-
+// displayDimensions takes account of the
+// given rotation data to return width and
+// height values as the image will be displayed.
+func displayDimensions(
+	width, height int,
+	rotation int,
+) (int, int) {
 	// If image is rotated by
 	// any odd multiples of 90,
 	// flip width / height to
@@ -51,8 +49,19 @@ func thumbSize(width, height int, aspect float32, rotation int) (int, int) {
 	switch rotation {
 	case -90, 90, -270, 270:
 		width, height = height, width
-		aspect = 1 / aspect
 	}
+
+	return width, height
+}
+
+// thumbSize returns the dimensions to use for an input
+// image of given width / height, for its outgoing thumbnail.
+// This attempts to maintains the original image aspect ratio.
+func thumbSize(width, height int, aspect float32) (int, int) {
+	const (
+		maxThumbWidth  = 512
+		maxThumbHeight = 512
+	)
 
 	switch {
 	// Simplest case, within bounds!
