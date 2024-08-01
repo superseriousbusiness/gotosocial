@@ -46,7 +46,7 @@ func clearMetadata(ctx context.Context, filepath string) error {
 		// For these few file types, we actually support
 		// cleaning exif data using a native Go library.
 		log.Debug(ctx, "cleaning with exif-terminator")
-		err := terminateExif(filepath, outpath, ext)
+		err := terminateExif(outpath, filepath, ext)
 		if err != nil {
 			return err
 		}
@@ -77,7 +77,7 @@ func terminateExif(outpath, inpath string, ext string) error {
 	}
 
 	// Open output file at given path.
-	outFile, err := os.Open(outpath)
+	outFile, err := os.Create(outpath)
 	if err != nil {
 		return gtserror.Newf("error opening output file %s: %w", outpath, err)
 	}
