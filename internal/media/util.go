@@ -120,15 +120,17 @@ func getMimeType(ext string) string {
 // chance that Linux's sendfile syscall can be utilised for optimal
 // draining of data source to temporary file storage.
 func drainToTmp(rc io.ReadCloser) (string, error) {
-	tmp, err := os.CreateTemp(os.TempDir(), "gotosocial-*")
+	defer rc.Close()
+
+	// Open new temporary file.
+	tmp, err := os.CreateTemp(
+		os.TempDir(),
+		"gotosocial-*",
+	)
 	if err != nil {
 		return "", err
 	}
-
-	// Close readers
-	// on func return.
 	defer tmp.Close()
-	defer rc.Close()
 
 	// Extract file path.
 	path := tmp.Name()
