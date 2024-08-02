@@ -7128,6 +7128,55 @@ paths:
             summary: Get an array of all hashtags that you currently follow.
             tags:
                 - tags
+    /api/v1/import:
+        post:
+            consumes:
+                - multipart/form-data
+            description: |-
+                This can be used to migrate data from a Mastodon-compatible CSV file to a GoToSocial account.
+
+                Uploaded data will be processed asynchronously, and not all entries may be processed depending
+                on domain blocks, user-level blocks, network availability of referenced accounts and statuses, etc.
+            operationId: importData
+            parameters:
+                - description: The CSV data file to upload.
+                  in: formData
+                  name: data
+                  required: true
+                  type: file
+                - description: |-
+                    Type of entries contained in the data file:
+                    - `following` - accounts to follow. - `blocks` - accounts to block.
+                  in: formData
+                  name: type
+                  required: true
+                  type: string
+                - default: merge
+                  description: |-
+                    Mode to use when creating entries from the data file:
+                    - `merge` to merge entries in file with existing entries. - `overwrite` to replace existing entries with entries in file.
+                  in: formData
+                  name: mode
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "202":
+                    description: Upload accepted.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Upload some CSV-formatted data to your account.
+            tags:
+                - import-export
     /api/v1/instance:
         get:
             operationId: instanceGetV1

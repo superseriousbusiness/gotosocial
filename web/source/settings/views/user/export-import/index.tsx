@@ -22,6 +22,7 @@ import Export from "./export";
 import Loading from "../../../components/loading";
 import { Error } from "../../../components/error";
 import { useExportStatsQuery } from "../../../lib/query/user/export-import";
+import Import from "./import";
 
 export default function ExportImport() {
 	const {
@@ -52,6 +53,7 @@ export default function ExportImport() {
 				your GoToSocial account. All exports and imports use Mastodon-compatible CSV files.
 			</p>
 			<Export exportStats={exportStats} />
+			<Import />
 		</>
 	);
 }

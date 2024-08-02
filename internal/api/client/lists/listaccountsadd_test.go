@@ -60,7 +60,7 @@ func (suite *ListAccountsAddTestSuite) postListAccounts(
 	requestPath := config.GetProtocol() + "://" + config.GetHost() + "/api/" + lists.BasePath + "/" + listID + "/accounts"
 
 	// Prepare test body.
-	buf, w, err := testrig.CreateMultipartFormData("", "", map[string][]string{
+	buf, w, err := testrig.CreateMultipartFormData(nil, map[string][]string{
 		"account_ids[]": accountIDs,
 	})
 

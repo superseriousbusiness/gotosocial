@@ -25,6 +25,7 @@ import (
 	"mime/multipart"
 	"net/url"
 	"os"
+	"path"
 	"time"
 
 	"codeberg.org/gruf/go-byteutil"
@@ -82,6 +83,7 @@ func StartWorkers(state *state.State, processor *workers.Processor) {
 	state.Workers.Client.Start(1)
 	state.Workers.Federator.Start(1)
 	state.Workers.Dereference.Start(1)
+	state.Workers.Processing.Start(1)
 }
 
 func StopWorkers(state *state.State) {
@@ -89,6 +91,7 @@ func StopWorkers(state *state.State) {
 	state.Workers.Client.Stop()
 	state.Workers.Federator.Stop()
 	state.Workers.Dereference.Stop()
+	state.Workers.Processing.Stop()
 }
 
 func StartTimelines(state *state.State, visFilter *visibility.Filter, converter *typeutils.Converter) {
@@ -171,8 +174,22 @@ func EqualRequestURIs(u1, u2 any) bool {
 	return uri1 == uri2
 }
 
-// CreateMultipartFormData is a handy function for taking a fieldname and a filename, and creating a multipart form bytes buffer
-// with the file contents set in the given fieldname. The extraFields param can be used to add extra FormFields to the request, as necessary.
+type DataF func() (
+	fieldName string,
+	fileName string,
+	rc io.ReadCloser,
+	err error,
+)
+
+// CreateMultipartFormData is a handy function for creating a multipart form bytes buffer with data.
+//
+// If data function is not nil, it should return the fieldName for the data in the form (eg., "data"),
+// the fileName (eg., "data.csv"), a readcloser for getting the data, or an error if something goes wrong.
+//
+// The extraFields param can be used to add extra FormFields to the request, as necessary.
+//
+// Data function can be nil if only FormFields and string values are required.
+//
 // The returned bytes.Buffer b can be used like so:
 //
 //	httptest.NewRequest(http.MethodPost, "https://example.org/whateverpath", bytes.NewReader(b.Bytes()))
@@ -180,21 +197,28 @@ func EqualRequestURIs(u1, u2 any) bool {
 // The returned *multipart.Writer w can be used to set the content type of the request, like so:
 //
 //	req.Header.Set("Content-Type", w.FormDataContentType())
-func CreateMultipartFormData(fieldName string, fileName string, extraFields map[string][]string) (bytes.Buffer, *multipart.Writer, error) {
-	var b bytes.Buffer
+func CreateMultipartFormData(
+	dataF DataF,
+	extraFields map[string][]string,
+) (bytes.Buffer, *multipart.Writer, error) {
+	var (
+		b bytes.Buffer
+		w = multipart.NewWriter(&b)
+	)
 
-	w := multipart.NewWriter(&b)
-	var fw io.Writer
-
-	if fileName != "" {
-		file, err := os.Open(fileName)
+	if dataF != nil {
+		fieldName, fileName, rc, err := dataF()
 		if err != nil {
 			return b, nil, err
 		}
-		if fw, err = w.CreateFormFile(fieldName, file.Name()); err != nil {
+		defer rc.Close()
+
+		fw, err := w.CreateFormFile(fieldName, fileName)
+		if err != nil {
 			return b, nil, err
 		}
-		if _, err = io.Copy(fw, file); err != nil {
+
+		if _, err = io.Copy(fw, rc); err != nil {
 			return b, nil, err
 		}
 	}
@@ -210,7 +234,31 @@ func CreateMultipartFormData(fieldName string, fileName string, extraFields map[
 	if err := w.Close(); err != nil {
 		return b, nil, err
 	}
+
 	return b, w, nil
+}
+
+// FileToDataF is a convenience function for opening a
+// file at the given filePath, and packaging it into a
+// DataF for use in CreateMultipartFormData.
+func FileToDataF(fieldName string, filePath string) DataF {
+	return func() (string, string, io.ReadCloser, error) {
+		file, err := os.Open(filePath)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		return fieldName, path.Base(filePath), file, nil
+	}
+}
+
+// StringToDataF is a convenience function for wrapping the
+// given data into a DataF for use in CreateMultipartFormData.
+func StringToDataF(fieldName string, fileName string, data string) DataF {
+	return func() (string, string, io.ReadCloser, error) {
+		rc := io.NopCloser(bytes.NewBufferString(data))
+		return fieldName, fileName, rc, nil
+	}
 }
 
 // URLMustParse tries to parse the given URL and panics if it can't.

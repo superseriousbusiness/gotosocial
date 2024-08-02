@@ -17,6 +17,8 @@
 
 package model
 
+import "mime/multipart"
+
 // AccountExportStats models an account's stats
 // specifically for the purpose of informing about
 // export sizes at the /api/v1/exports/stats endpoint.
@@ -57,4 +59,24 @@ type AccountExportStats struct {
 	//
 	// example: 11
 	MutesCount int `json:"mutes_count"`
+}
+
+// AttachmentRequest models media attachment creation parameters.
+//
+// swagger: ignore
+type ImportRequest struct {
+	// The CSV data to upload.
+	Data *multipart.FileHeader `form:"data" binding:"required"`
+	// Type of entries contained in the data file.
+	//
+	//	- `following` - accounts to follow.
+	//	- `lists` - lists of accounts.
+	//	- `blocks` - accounts to block.
+	//	- `mutes` - accounts to mute.
+	//	- `bookmarks` - statuses to bookmark.
+	Type string `form:"type" binding:"required"`
+	// Mode to use when creating entries from the data file:
+	//	- `merge` to merge entries in file with existing entries.
+	//	- `overwrite` to replace existing entries with entries in file.
+	Mode string `form:"mode"`
 }

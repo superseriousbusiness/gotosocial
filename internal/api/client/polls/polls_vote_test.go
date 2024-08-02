@@ -107,7 +107,7 @@ func (suite *PollCreateTestSuite) formVoteInPoll(
 		choicesStrs = append(choicesStrs, strconv.Itoa(choice))
 	}
 
-	body, w, err := testrig.CreateMultipartFormData("", "", map[string][]string{
+	body, w, err := testrig.CreateMultipartFormData(nil, map[string][]string{
 		"choices[]": choicesStrs,
 	})
 
