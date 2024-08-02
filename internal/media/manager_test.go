@@ -711,7 +711,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	}, attachment.FileMeta.Small)
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
-	suite.Equal(18904, attachment.File.FileSize)
+	suite.Equal(18832, attachment.File.FileSize)
 	suite.Equal(2630, attachment.Thumbnail.FileSize)
 	suite.Equal("LBOW$@%i-=aj%go#RSRP_1av~Tt2", attachment.Blurhash)
 
