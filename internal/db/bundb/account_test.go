@@ -743,6 +743,10 @@ func (suite *AccountTestSuite) TestAccountStatsAll() {
 			suite.FailNow(err.Error())
 		}
 
+		// Nil out account stats to allow
+		// db to refetch + regenerate them.
+		account.Stats = nil
+
 		// Get stats for a third time, they
 		// should get regenerated now, but
 		// only for local accounts.

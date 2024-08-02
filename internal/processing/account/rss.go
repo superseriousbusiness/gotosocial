@@ -70,11 +70,9 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 	}
 
 	// Ensure account stats populated.
-	if account.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			err = gtserror.Newf("db error getting account stats %s: %w", username, err)
-			return nil, never, gtserror.NewErrorInternalError(err)
-		}
+	if err := p.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		err = gtserror.Newf("db error getting account stats %s: %w", username, err)
+		return nil, never, gtserror.NewErrorInternalError(err)
 	}
 
 	// LastModified time is needed by callers to check freshness for cacheing.

@@ -712,11 +712,9 @@ func (a *accountDB) PopulateAccount(ctx context.Context, account *gtsmodel.Accou
 		}
 	}
 
-	if account.Stats == nil {
-		// Get / Create stats for this account.
-		if err := a.state.DB.PopulateAccountStats(ctx, account); err != nil {
-			errs.Appendf("error populating account stats: %w", err)
-		}
+	// Get / Create stats for this account (handles case of already set).
+	if err := a.state.DB.PopulateAccountStats(ctx, account); err != nil {
+		errs.Appendf("error populating account stats: %w", err)
 	}
 
 	return errs.Combine()
@@ -1160,6 +1158,11 @@ func (a *accountDB) UpdateAccountSettings(
 }
 
 func (a *accountDB) PopulateAccountStats(ctx context.Context, account *gtsmodel.Account) error {
+	if account.Stats != nil {
+		// Already populated!
+		return nil
+	}
+
 	// Fetch stats from db cache with loader callback.
 	stats, err := a.state.Caches.DB.AccountStats.LoadOne(
 		"AccountID",

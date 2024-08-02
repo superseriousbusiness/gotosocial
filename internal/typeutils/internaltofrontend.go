@@ -113,13 +113,11 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	}
 
 	// Ensure account stats populated.
-	if a.Stats == nil {
-		if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
-			return nil, gtserror.Newf(
-				"error getting stats for account %s: %w",
-				a.ID, err,
-			)
-		}
+	if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
+		return nil, gtserror.Newf(
+			"error getting stats for account %s: %w",
+			a.ID, err,
+		)
 	}
 
 	// Populate the account's role permissions bitmap and highlightedness from its public role.

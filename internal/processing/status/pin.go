@@ -92,11 +92,9 @@ func (p *Processor) PinCreate(ctx context.Context, requestingAccount *gtsmodel.A
 	}
 
 	// Ensure account stats populated.
-	if requestingAccount.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
-			err = gtserror.Newf("db error getting account stats: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
+		err = gtserror.Newf("db error getting account stats: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	pinnedCount := *requestingAccount.Stats.StatusesPinnedCount
@@ -157,11 +155,9 @@ func (p *Processor) PinRemove(ctx context.Context, requestingAccount *gtsmodel.A
 	}
 
 	// Ensure account stats populated.
-	if requestingAccount.Stats == nil {
-		if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
-			err = gtserror.Newf("db error getting account stats: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	if err := p.state.DB.PopulateAccountStats(ctx, requestingAccount); err != nil {
+		err = gtserror.Newf("db error getting account stats: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	targetStatus.PinnedAt = time.Time{}
