@@ -126,6 +126,7 @@ EXPECT=$(cat << "EOF"
     "media-description-min-chars": 69,
     "media-emoji-local-max-size": 420,
     "media-emoji-remote-max-size": 420,
+    "media-ffmpeg-pool-size": 8,
     "media-local-max-size": 420,
     "media-remote-cache-days": 30,
     "media-remote-max-size": 420,
@@ -245,6 +246,7 @@ GTS_MEDIA_REMOTE_MAX_SIZE=420 \
 GTS_MEDIA_REMOTE_CACHE_DAYS=30 \
 GTS_MEDIA_EMOJI_LOCAL_MAX_SIZE=420 \
 GTS_MEDIA_EMOJI_REMOTE_MAX_SIZE=420 \
+GTS_MEDIA_FFMPEG_POOL_SIZE=8 \
 GTS_METRICS_AUTH_ENABLED=false \
 GTS_METRICS_ENABLED=false \
 GTS_STORAGE_BACKEND='local' \

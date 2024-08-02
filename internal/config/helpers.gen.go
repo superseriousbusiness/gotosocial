@@ -1300,6 +1300,31 @@ func GetMediaCleanupEvery() time.Duration { return global.GetMediaCleanupEvery()
 // SetMediaCleanupEvery safely sets the value for global configuration 'MediaCleanupEvery' field
 func SetMediaCleanupEvery(v time.Duration) { global.SetMediaCleanupEvery(v) }
 
+// GetMediaFfmpegPoolSize safely fetches the Configuration value for state's 'MediaFfmpegPoolSize' field
+func (st *ConfigState) GetMediaFfmpegPoolSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.MediaFfmpegPoolSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaFfmpegPoolSize safely sets the Configuration value for state's 'MediaFfmpegPoolSize' field
+func (st *ConfigState) SetMediaFfmpegPoolSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaFfmpegPoolSize = v
+	st.reloadToViper()
+}
+
+// MediaFfmpegPoolSizeFlag returns the flag name for the 'MediaFfmpegPoolSize' field
+func MediaFfmpegPoolSizeFlag() string { return "media-ffmpeg-pool-size" }
+
+// GetMediaFfmpegPoolSize safely fetches the value for global configuration 'MediaFfmpegPoolSize' field
+func GetMediaFfmpegPoolSize() int { return global.GetMediaFfmpegPoolSize() }
+
+// SetMediaFfmpegPoolSize safely sets the value for global configuration 'MediaFfmpegPoolSize' field
+func SetMediaFfmpegPoolSize(v int) { global.SetMediaFfmpegPoolSize(v) }
+
 // GetStorageBackend safely fetches the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) GetStorageBackend() (v string) {
 	st.mutex.RLock()
