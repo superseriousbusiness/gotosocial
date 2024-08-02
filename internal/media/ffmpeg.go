@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -36,28 +35,21 @@ import (
 	"github.com/tetratelabs/wazero"
 )
 
-// ffmpegClearMetadata generates a copy (in-place) of input media with all metadata cleared.
-func ffmpegClearMetadata(ctx context.Context, filepath string) error {
-	var outpath string
-
+// ffmpegClearMetadata generates a copy of input media with all metadata cleared.
+// NOTE: given that we are not performing an encode, this only clears global level metadata,
+// any metadata encoded into the media stream itself will not be cleared. This is the best we
+// can do without absolutely tanking performance by requiring transcodes :(
+func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 	// Get directory from filepath.
-	dirpath := path.Dir(filepath)
+	dirpath := path.Dir(inpath)
 
-	// Generate cleaned output path MAINTAINING extension.
-	if i := strings.IndexByte(filepath, '.'); i != -1 {
-		outpath = filepath[:i] + "_cleaned" + filepath[i:]
-	} else {
-		return gtserror.New("input file missing extension")
-	}
-
-	// Clear metadata with ffmpeg.
-	if err := ffmpeg(ctx, dirpath,
+	return ffmpeg(ctx, dirpath,
 
 		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file path.
-		"-i", filepath,
+		"-i", inpath,
 
 		// Drop all metadata.
 		"-map_metadata", "-1",
@@ -71,16 +63,7 @@ func ffmpegClearMetadata(ctx context.Context, filepath string) error {
 
 		// Output.
 		outpath,
-	); err != nil {
-		return err
-	}
-
-	// Move the new output file path to original location.
-	if err := os.Rename(outpath, filepath); err != nil {
-		return gtserror.Newf("error renaming %s -> %s: %w", outpath, filepath, err)
-	}
-
-	return nil
+	)
 }
 
 // ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
@@ -390,18 +373,33 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 // ImageMeta extracts image metadata contained within ffprobe'd media result streams.
 func (res *result) ImageMeta() (width int, height int, framerate float32) {
 	for _, stream := range res.video {
+		// Use widest found width.
 		if stream.width > width {
 			width = stream.width
 		}
+
+		// Use tallest found height.
 		if stream.height > height {
 			height = stream.height
 		}
+
+		// Use lowest non-zero (valid) framerate.
 		if fr := float32(stream.framerate); fr > 0 {
 			if framerate == 0 || fr < framerate {
 				framerate = fr
 			}
 		}
 	}
+
+	// If image is rotated by
+	// any odd multiples of 90,
+	// flip width / height to
+	// get the correct scale.
+	switch res.rotation {
+	case -90, 90, -270, 270:
+		width, height = height, width
+	}
+
 	return
 }
 
@@ -486,14 +484,6 @@ func (res *ffprobeResult) Process() (*result, error) {
 				stream: stream{codec: s.CodecName},
 			})
 		case "video":
-			// Determine proper display dimensions,
-			// taking account of rotation data.
-			width, height := displayDimensions(
-				s.Width,
-				s.Height,
-				r.rotation,
-			)
-
 			// Parse stream framerate, bearing in
 			// mind that some static container formats
 			// (e.g. jpeg) still return a framerate, so
@@ -521,8 +511,8 @@ func (res *ffprobeResult) Process() (*result, error) {
 			// Append video stream data to result.
 			r.video = append(r.video, videoStream{
 				stream:    stream{codec: s.CodecName},
-				width:     width,
-				height:    height,
+				width:     s.Width,
+				height:    s.Height,
 				framerate: framerate,
 			})
 		}
