@@ -84,13 +84,15 @@ func terminateExif(outpath, inpath string, ext string) error {
 
 	// Terminate EXIF data from 'inFile' -> 'outFile'.
 	err = terminator.TerminateInto(outFile, inFile, ext)
-	if err != nil {
-		return gtserror.Newf("error terminating exif data: %w", err)
-	}
 
 	// Done with files.
 	_ = inFile.Close()
 	_ = outFile.Close()
+
+	// Check error.
+	if err != nil {
+		return gtserror.Newf("error terminating exif data: %w", err)
+	}
 
 	return nil
 }
