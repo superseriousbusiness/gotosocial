@@ -399,15 +399,14 @@ func (p *Processor) emojiUpdateModify(
 	// Check if we need to
 	// set a new category ID.
 	var newCategoryID *string
-
 	switch {
-
 	case categoryName == nil:
 		// No changes.
 
 	case *categoryName == "":
 		// Emoji category was unset.
 		newCategoryID = util.Ptr("")
+		emoji.CategoryID = ""
 		emoji.Category = nil
 
 	case *categoryName != "":
@@ -421,6 +420,7 @@ func (p *Processor) emojiUpdateModify(
 		// it's different from before.
 		if category.ID != emoji.CategoryID {
 			newCategoryID = &category.ID
+			emoji.CategoryID = category.ID
 			emoji.Category = category
 		}
 	}
