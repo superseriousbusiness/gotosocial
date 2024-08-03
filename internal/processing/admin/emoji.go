@@ -463,8 +463,12 @@ func (p *Processor) emojiUpdateModify(
 			return rc, nil
 		}
 
-		// Prepare emoji model for recache from new data.
-		processing := p.media.RecacheEmoji(emoji, data)
+		// Prepare emoji model for update+recache from new data.
+		processing, err := p.media.RecacheEmoji(ctx, emoji, data)
+		if err != nil {
+			err := gtserror.Newf("error preparing recache: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 
 		// Load to trigger update + write.
 		emoji, err = processing.Load(ctx)

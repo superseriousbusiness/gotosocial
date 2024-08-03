@@ -372,12 +372,23 @@ func (m *Manager) createEmoji(
 // to perform a blocking dereference / decode operation
 // from the data stream returned.
 func (m *Manager) RecacheEmoji(
+	ctx context.Context,
 	emoji *gtsmodel.Emoji,
 	data DataFunc,
-) *ProcessingEmoji {
-	return &ProcessingEmoji{
-		emoji:  emoji,
-		dataFn: data,
-		mgr:    m,
+) (
+	*ProcessingEmoji,
+	error,
+) {
+	// Fetch the local instance account for emoji path generation.
+	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, gtserror.Newf("error fetching instance account: %w", err)
 	}
+
+	return &ProcessingEmoji{
+		instAccID: instanceAcc.ID,
+		emoji:     emoji,
+		dataFn:    data,
+		mgr:       m,
+	}, nil
 }
