@@ -20,6 +20,7 @@ package media
 import (
 	"context"
 	"io"
+	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-iotools"
@@ -328,7 +329,17 @@ func (m *Manager) CacheEmoji(
 		return nil, gtserror.Newf("error fetching instance account: %w", err)
 	}
 
+	var pathID string
+
+	// Look for an emoji path ID that differs from its actual ID, this indicates
+	// a previous 'refresh'. We need to be sure to set this on the ProcessingEmoji{}
+	// so it knows to store the emoji under this path, and not default to emoji.ID.
+	if id := extractEmojiPathID(emoji.ImagePath); id != emoji.ID {
+		pathID = id
+	}
+
 	return &ProcessingEmoji{
+		newPathID: pathID,
 		instAccID: instanceAcc.ID,
 		emoji:     emoji,
 		dataFn:    data,
@@ -397,4 +408,28 @@ func (m *Manager) createOrUpdateEmoji(
 	}
 
 	return processingEmoji, nil
+}
+
+// extractEmojiPathID pulls the ID used in the final path segment of an emoji path (can be URL).
+func extractEmojiPathID(path string) string {
+	// Look for '.' indicating file ext.
+	i := strings.LastIndexByte(path, '.')
+	if i == -1 {
+		return ""
+	}
+
+	// Strip ext.
+	path = path[:i]
+
+	// Look for '/' of final path sep.
+	i = strings.LastIndexByte(path, '/')
+	if i == -1 {
+		return ""
+	}
+
+	// Strip up to
+	// final segment.
+	path = path[i+1:]
+
+	return path
 }

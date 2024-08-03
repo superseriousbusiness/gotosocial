@@ -291,8 +291,7 @@ func (p *Processor) emojiUpdateCopy(
 	}
 
 	// Ensure target emoji is locally cached.
-	target, err := p.federator.RecacheEmoji(
-		ctx,
+	target, err := p.federator.RecacheEmoji(ctx,
 		target,
 	)
 	if err != nil {
@@ -321,8 +320,8 @@ func (p *Processor) emojiUpdateCopy(
 
 	// Attempt to create the new local emoji.
 	emoji, errWithCode := p.createEmoji(ctx,
-		util.PtrOrValue(shortcode, ""),
-		util.PtrOrValue(categoryName, ""),
+		util.PtrOrZero(shortcode),
+		util.PtrOrZero(categoryName),
 		data,
 	)
 	if errWithCode != nil {
