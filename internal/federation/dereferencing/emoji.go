@@ -210,6 +210,8 @@ func (d *Dereferencer) RefreshEmoji(
 	)
 }
 
+// recacheEmoji handles the simplest case which is that
+// of an existing emoji that only needs to be recached.
 func (d *Dereferencer) recacheEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
