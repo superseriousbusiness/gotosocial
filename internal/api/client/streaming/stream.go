@@ -19,6 +19,7 @@ package streaming
 
 import (
 	"context"
+	"net/http"
 	"slices"
 	"time"
 
@@ -230,7 +231,12 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	//
 	// If the upgrade fails, then Upgrade replies to the client
 	// with an HTTP error response.
-	wsConn, err := m.wsUpgrade.Upgrade(c.Writer, c.Request, nil)
+	h := http.Header{}
+	if c.GetHeader(AccessTokenHeader) != "" {
+		// Send it back, else Chrome fails to connect
+		h.Set(AccessTokenHeader, token)
+	}
+	wsConn, err := m.wsUpgrade.Upgrade(c.Writer, c.Request, h)
 	if err != nil {
 		l.Errorf("error upgrading websocket connection: %v", err)
 		stream.Close()
