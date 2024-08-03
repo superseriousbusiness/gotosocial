@@ -161,14 +161,14 @@ func (m *Manager) CreateMedia(
 	}
 
 	// Pass prepared media as ready to be cached.
-	return m.RecacheMedia(attachment, data), nil
+	return m.CacheMedia(attachment, data), nil
 }
 
-// RecacheMedia wraps a media model (assumed already
+// CacheMedia wraps a media model (assumed already
 // inserted in the database!) with given data function
 // to perform a blocking dereference / decode operation
 // from the data stream returned.
-func (m *Manager) RecacheMedia(
+func (m *Manager) CacheMedia(
 	media *gtsmodel.MediaAttachment,
 	data DataFunc,
 ) *ProcessingMedia {
@@ -310,6 +310,36 @@ func (m *Manager) UpdateEmoji(
 	return processingEmoji, nil
 }
 
+// CacheEmoji wraps an emoji model (assumed already
+// inserted in the database!) with given data function
+// to perform a blocking dereference / decode operation
+// from the data stream returned.
+func (m *Manager) CacheEmoji(
+	ctx context.Context,
+	emoji *gtsmodel.Emoji,
+	data DataFunc,
+) (
+	*ProcessingEmoji,
+	error,
+) {
+	// Fetch the local instance account for emoji path generation.
+	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, gtserror.Newf("error fetching instance account: %w", err)
+	}
+
+	return &ProcessingEmoji{
+		instAccID: instanceAcc.ID,
+		emoji:     emoji,
+		dataFn:    data,
+		mgr:       m,
+	}, nil
+}
+
+// putEmoji updates the emoji model according to
+// provided additional data, and performs the actual
+// database write, finally returning an emoji ready
+// for processing (i.e. caching to local storage).
 func (m *Manager) createOrUpdateEmoji(
 	ctx context.Context,
 	storeDB func(context.Context, *gtsmodel.Emoji) error,
@@ -367,32 +397,4 @@ func (m *Manager) createOrUpdateEmoji(
 	}
 
 	return processingEmoji, nil
-}
-
-// RecacheEmoji wraps an emoji model (assumed already
-// inserted in the database!) with given data function
-// to perform a blocking dereference / decode operation
-// from the data stream returned.
-//
-// The provided emoji MUST be already stored in the database.
-func (m *Manager) RecacheEmoji(
-	ctx context.Context,
-	emoji *gtsmodel.Emoji,
-	data DataFunc,
-) (
-	*ProcessingEmoji,
-	error,
-) {
-	// Fetch the local instance account for emoji path generation.
-	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
-	if err != nil {
-		return nil, gtserror.Newf("error fetching instance account: %w", err)
-	}
-
-	return &ProcessingEmoji{
-		instAccID: instanceAcc.ID,
-		emoji:     emoji,
-		dataFn:    data,
-		mgr:       m,
-	}, nil
 }

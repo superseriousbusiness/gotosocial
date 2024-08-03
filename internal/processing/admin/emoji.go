@@ -291,13 +291,9 @@ func (p *Processor) emojiUpdateCopy(
 	}
 
 	// Ensure target emoji is locally cached.
-	target, err := p.federator.RefreshEmoji(
+	target, err := p.federator.RecacheEmoji(
 		ctx,
 		target,
-
-		// no changes we want to make.
-		media.AdditionalEmojiInfo{},
-		false,
 	)
 	if err != nil {
 		err := gtserror.Newf("error recaching emoji %s: %w", target.ImageRemoteURL, err)

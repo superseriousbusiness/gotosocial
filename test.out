@@ -1,0 +1,244 @@
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+--- FAIL: TestEmojiUpdateTestSuite (8.98s)
+    --- FAIL: TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal (0.81s)
+        emojiupdate_test.go:219: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:219
+            	Error:      	Not equal: 
+            	            	expected: 200
+            	            	actual  : 404
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal
+        emojiupdate_test.go:236: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:236
+            	Error:      	Not equal: 
+            	            	expected: "yell"
+            	            	actual  : ""
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-yell
+            	            	+
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal
+        emojiupdate_test.go:237: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:237
+            	Error:      	Should NOT be empty, but was 
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal
+        emojiupdate_test.go:238: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:238
+            	Error:      	Should NOT be empty, but was 
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal
+        emojiupdate_test.go:239: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:239
+            	Error:      	Should be true
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal
+        emojiupdate_test.go:243: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:243
+            	Error:      	Received unexpected error:
+            	            	sql: no rows in result set
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyRemoteToLocal
+        panic.go:261: test panicked: runtime error: invalid memory address or nil pointer dereference
+            goroutine 1715 [running]:
+            runtime/debug.Stack()
+            	/usr/lib/go/src/runtime/debug/stack.go:24 +0x5e
+            github.com/stretchr/testify/suite.failOnPanic(0xc00fecbd40, {0x239d1e0, 0x5b97fd0})
+            	/home/kim/Projects/main/gts.4/vendor/github.com/stretchr/testify/suite/suite.go:89 +0x37
+            github.com/stretchr/testify/suite.Run.func1.1()
+            	/home/kim/Projects/main/gts.4/vendor/github.com/stretchr/testify/suite/suite.go:188 +0x299
+            panic({0x239d1e0?, 0x5b97fd0?})
+            	/usr/lib/go/src/runtime/panic.go:770 +0x132
+            github.com/superseriousbusiness/gotosocial/internal/api/client/admin_test.(*EmojiUpdateTestSuite).TestEmojiUpdateCopyRemoteToLocal(0xc002f46008)
+            	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:246 +0x842
+            reflect.Value.call({0xc006627700?, 0xc000540a20?, 0xc007dbd820?}, {0x26abbea, 0x4}, {0xc002e0ff28, 0x1, 0x23ba420?})
+            	/usr/lib/go/src/reflect/value.go:596 +0xca6
+            reflect.Value.Call({0xc006627700?, 0xc000540a20?, 0x3b4f5f8?}, {0xc002e0ff28?, 0xf?, 0x0?})
+            	/usr/lib/go/src/reflect/value.go:380 +0xb9
+            github.com/stretchr/testify/suite.Run.func1(0xc00fecbd40)
+            	/home/kim/Projects/main/gts.4/vendor/github.com/stretchr/testify/suite/suite.go:202 +0x4a5
+            testing.tRunner(0xc00fecbd40, 0xc011d12cf0)
+            	/usr/lib/go/src/testing/testing.go:1689 +0xfb
+            created by testing.(*T).Run in goroutine 875
+            	/usr/lib/go/src/testing/testing.go:1742 +0x390
+    --- FAIL: TestEmojiUpdateTestSuite/TestEmojiUpdateCopyShortcodeAlreadyInUse (0.78s)
+        emojiupdate_test.go:620: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:620
+            	Error:      	Not equal: 
+            	            	expected: 409
+            	            	actual  : 404
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyShortcodeAlreadyInUse
+        emojiupdate_test.go:630: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/admin/emojiupdate_test.go:630
+            	Error:      	Not equal: 
+            	            	expected: "{\"error\":\"Conflict: emoji with shortcode already exists\"}"
+            	            	actual  : "{\"error\":\"Not Found\"}"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-{"error":"Conflict: emoji with shortcode already exists"}
+            	            	+{"error":"Not Found"}
+            	Test:       	TestEmojiUpdateTestSuite/TestEmojiUpdateCopyShortcodeAlreadyInUse
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+TIME:  2021-09-20 12:40:37 +0200 +0200
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/api/client/admin	33.666s
+FAIL

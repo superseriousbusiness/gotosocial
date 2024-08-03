@@ -246,11 +246,9 @@ func (p *Processor) getEmojiContent(
 
 	// Ensure that stored emoji is cached.
 	// (this handles local emoji / recaches).
-	emoji, err = p.federator.RefreshEmoji(
+	emoji, err = p.federator.RecacheEmoji(
 		ctx,
 		emoji,
-		media.AdditionalEmojiInfo{},
-		false,
 	)
 	if err != nil {
 		err := gtserror.Newf("error recaching emoji: %w", err)

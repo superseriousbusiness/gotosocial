@@ -134,11 +134,6 @@ func (d *Dereferencer) RefreshEmoji(
 	*gtsmodel.Emoji,
 	error,
 ) {
-	// Can't refresh local.
-	if emoji.IsLocal() {
-		return emoji, nil
-	}
-
 	// Check emoji is up-to-date
 	// with provided extra info.
 	switch {
@@ -160,13 +155,14 @@ func (d *Dereferencer) RefreshEmoji(
 	// force refresh.
 	if !force {
 
-		if !*emoji.Cached {
-			// We still want to make sure
-			// the emoji is cached. Simply
-			// perform a recache operation.
-			return d.recacheEmoji(ctx, emoji)
-		}
+		// We still want to make sure
+		// the emoji is cached. Simply
+		// check whether emoji is cached.
+		return d.RecacheEmoji(ctx, emoji)
+	}
 
+	// Can't refresh local.
+	if emoji.IsLocal() {
 		return emoji, nil
 	}
 
@@ -210,15 +206,32 @@ func (d *Dereferencer) RefreshEmoji(
 	)
 }
 
-// recacheEmoji handles the simplest case which is that
+// RecacheEmoji handles the simplest case which is that
 // of an existing emoji that only needs to be recached.
-func (d *Dereferencer) recacheEmoji(
+// It handles the case of both local emojis, and those
+// already cached as no-ops.
+//
+// Please note that even if an error is returned,
+// an emoji model may still be returned if the error
+// was only encountered during actual dereferencing.
+// In this case, it will act as a placeholder.
+func (d *Dereferencer) RecacheEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
 ) (
 	*gtsmodel.Emoji,
 	error,
 ) {
+	// Can't recache local.
+	if emoji.IsLocal() {
+		return emoji, nil
+	}
+
+	if *emoji.Cached {
+		// Already cached.
+		return emoji, nil
+	}
+
 	// Get shortcode domain for locks + logging.
 	shortcodeDomain := emoji.ShortcodeDomain()
 
@@ -250,7 +263,7 @@ func (d *Dereferencer) recacheEmoji(
 			}
 
 			// Recache emoji with prepared info.
-			return d.mediaManager.RecacheEmoji(ctx,
+			return d.mediaManager.CacheEmoji(ctx,
 				emoji,
 				data,
 			)
