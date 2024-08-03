@@ -80,6 +80,7 @@ var Defaults = Configuration{
 	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
 	MediaCleanupFrom:         "00:00",        // Midnight.
 	MediaCleanupEvery:        24 * time.Hour, // 1/day.
+	MediaFfmpegPoolSize:      1,
 
 	StorageBackend:       "local",
 	StorageLocalBasePath: "/gotosocial/storage",

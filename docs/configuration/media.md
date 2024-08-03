@@ -56,6 +56,24 @@ media-emoji-local-max-size: 50KiB
 # Default: 100KiB (102400 bytes)
 media-emoji-remote-max-size: 100KiB
 
+# Int. Number of instances of ffmpeg+ffprobe to add to the media processing pool.
+#
+# Increasing this number will lead to faster concurrent media processing,
+# but at the cost of up to about 250MB of (spiking) memory usage per increment.
+#
+# You'll want to increase this number if you have RAM to spare, and/or if you're
+# hosting an instance for more than 50 or so people who post/view lots of media,
+# but you should leave it at 1 for single-user instances or when running GoToSocial
+# in a constrained (low-memory) environment.
+#
+# If you set this number to 0 or less, then instead of a fixed number of instances,
+# it will scale with GOMAXPROCS x 1, yielding (usually) one ffmpeg instance and one
+# ffprobe instance per CPU core on the host machine.
+#
+# Examples: [1, 2, -1, 8]
+# Default: 1
+media-ffmpeg-pool-size: 1
+
 # The below media cleanup settings allow admins to customize when and
 # how often media cleanup + prune jobs run, while being set to a fairly
 # sensible default (every night @ midnight). For more information on exactly

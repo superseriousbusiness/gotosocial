@@ -487,16 +487,24 @@ func setLimits(ctx context.Context) {
 }
 
 func precompileWASM(ctx context.Context) error {
-	// TODO: make max number instances configurable
-	maxprocs := runtime.GOMAXPROCS(0)
 	if err := sqlite3.Initialize(); err != nil {
 		return gtserror.Newf("error compiling sqlite3: %w", err)
 	}
-	if err := ffmpeg.InitFfmpeg(ctx, maxprocs); err != nil {
+
+	// Use admin-set ffmpeg pool size, and fall
+	// back to GOMAXPROCS if number 0 or less.
+	ffPoolSize := config.GetMediaFfmpegPoolSize()
+	if ffPoolSize <= 0 {
+		ffPoolSize = runtime.GOMAXPROCS(0)
+	}
+
+	if err := ffmpeg.InitFfmpeg(ctx, ffPoolSize); err != nil {
 		return gtserror.Newf("error compiling ffmpeg: %w", err)
 	}
-	if err := ffmpeg.InitFfprobe(ctx, maxprocs); err != nil {
+
+	if err := ffmpeg.InitFfprobe(ctx, ffPoolSize); err != nil {
 		return gtserror.Newf("error compiling ffprobe: %w", err)
 	}
+
 	return nil
 }
