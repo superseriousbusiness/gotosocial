@@ -134,11 +134,6 @@ func (d *Dereferencer) RefreshEmoji(
 	*gtsmodel.Emoji,
 	error,
 ) {
-	// Can't refresh local.
-	if emoji.IsLocal() {
-		return emoji, nil
-	}
-
 	// Check emoji is up-to-date
 	// with provided extra info.
 	switch {
@@ -156,8 +151,18 @@ func (d *Dereferencer) RefreshEmoji(
 		force = true
 	}
 
-	// Check if needs updating.
-	if *emoji.Cached && !force {
+	// Check if needs
+	// force refresh.
+	if !force {
+
+		// We still want to make sure
+		// the emoji is cached. Simply
+		// check whether emoji is cached.
+		return d.RecacheEmoji(ctx, emoji)
+	}
+
+	// Can't refresh local.
+	if emoji.IsLocal() {
 		return emoji, nil
 	}
 
@@ -191,14 +196,80 @@ func (d *Dereferencer) RefreshEmoji(
 				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
 			}
 
-			// Refresh emoji with prepared info.
-			return d.mediaManager.RefreshEmoji(ctx,
+			// Update emoji with prepared info.
+			return d.mediaManager.UpdateEmoji(ctx,
 				emoji,
 				data,
 				info,
 			)
 		},
 	)
+}
+
+// RecacheEmoji handles the simplest case which is that
+// of an existing emoji that only needs to be recached.
+// It handles the case of both local emojis, and those
+// already cached as no-ops.
+//
+// Please note that even if an error is returned,
+// an emoji model may still be returned if the error
+// was only encountered during actual dereferencing.
+// In this case, it will act as a placeholder.
+func (d *Dereferencer) RecacheEmoji(
+	ctx context.Context,
+	emoji *gtsmodel.Emoji,
+) (
+	*gtsmodel.Emoji,
+	error,
+) {
+	// Can't recache local.
+	if emoji.IsLocal() {
+		return emoji, nil
+	}
+
+	if *emoji.Cached {
+		// Already cached.
+		return emoji, nil
+	}
+
+	// Get shortcode domain for locks + logging.
+	shortcodeDomain := emoji.ShortcodeDomain()
+
+	// Ensure we have a valid image remote URL.
+	url, err := url.Parse(emoji.ImageRemoteURL)
+	if err != nil {
+		err := gtserror.Newf("invalid image remote url %s for emoji %s: %w", emoji.ImageRemoteURL, shortcodeDomain, err)
+		return nil, err
+	}
+
+	// Pass along for safe processing.
+	return d.processEmojiSafely(ctx,
+		shortcodeDomain,
+		func() (*media.ProcessingEmoji, error) {
+
+			// Acquire new instance account transport for emoji dereferencing.
+			tsport, err := d.transportController.NewTransportForUsername(ctx, "")
+			if err != nil {
+				err := gtserror.Newf("error getting instance transport: %w", err)
+				return nil, err
+			}
+
+			// Get maximum supported remote emoji size.
+			maxsz := config.GetMediaEmojiRemoteMaxSize()
+
+			// Prepare data function to dereference remote emoji media.
+			data := func(context.Context) (io.ReadCloser, error) {
+				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+			}
+
+			// Recache emoji with prepared info.
+			return d.mediaManager.CacheEmoji(ctx,
+				emoji,
+				data,
+			)
+		},
+	)
+
 }
 
 // processingEmojiSafely provides concurrency-safe processing of

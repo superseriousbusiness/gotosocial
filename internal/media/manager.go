@@ -20,6 +20,7 @@ package media
 import (
 	"context"
 	"io"
+	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-iotools"
@@ -161,14 +162,14 @@ func (m *Manager) CreateMedia(
 	}
 
 	// Pass prepared media as ready to be cached.
-	return m.RecacheMedia(attachment, data), nil
+	return m.CacheMedia(attachment, data), nil
 }
 
-// RecacheMedia wraps a media model (assumed already
+// CacheMedia wraps a media model (assumed already
 // inserted in the database!) with given data function
 // to perform a blocking dereference / decode operation
 // from the data stream returned.
-func (m *Manager) RecacheMedia(
+func (m *Manager) CacheMedia(
 	media *gtsmodel.MediaAttachment,
 	data DataFunc,
 ) *ProcessingMedia {
@@ -220,7 +221,7 @@ func (m *Manager) CreateEmoji(
 	}
 
 	// Finally, create new emoji.
-	return m.createEmoji(ctx,
+	return m.createOrUpdateEmoji(ctx,
 		m.state.DB.PutEmoji,
 		data,
 		emoji,
@@ -228,12 +229,14 @@ func (m *Manager) CreateEmoji(
 	)
 }
 
-// RefreshEmoji will prepare a recache operation
-// for the given emoji, updating it with extra
-// information, and in particular using new storage
-// paths for the dereferenced media files to skirt
-// around browser caching of the old files.
-func (m *Manager) RefreshEmoji(
+// UpdateEmoji prepares an update operation for the given emoji,
+// which is assumed to already exist in the database.
+//
+// Calling load on the returned *ProcessingEmoji will update the
+// db entry with provided extra information, ensure emoji images
+// are cached, and use new storage paths for the dereferenced media
+// files to skirt around browser caching of the old files.
+func (m *Manager) UpdateEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
 	data DataFunc,
@@ -289,8 +292,8 @@ func (m *Manager) RefreshEmoji(
 		return rct, nil
 	}
 
-	// Finally, create new emoji in database.
-	processingEmoji, err := m.createEmoji(ctx,
+	// Update existing emoji in database.
+	processingEmoji, err := m.createOrUpdateEmoji(ctx,
 		func(ctx context.Context, emoji *gtsmodel.Emoji) error {
 			return m.state.DB.UpdateEmoji(ctx, emoji)
 		},
@@ -308,9 +311,49 @@ func (m *Manager) RefreshEmoji(
 	return processingEmoji, nil
 }
 
-func (m *Manager) createEmoji(
+// CacheEmoji wraps an emoji model (assumed already
+// inserted in the database!) with given data function
+// to perform a blocking dereference / decode operation
+// from the data stream returned.
+func (m *Manager) CacheEmoji(
 	ctx context.Context,
-	putDB func(context.Context, *gtsmodel.Emoji) error,
+	emoji *gtsmodel.Emoji,
+	data DataFunc,
+) (
+	*ProcessingEmoji,
+	error,
+) {
+	// Fetch the local instance account for emoji path generation.
+	instanceAcc, err := m.state.DB.GetInstanceAccount(ctx, "")
+	if err != nil {
+		return nil, gtserror.Newf("error fetching instance account: %w", err)
+	}
+
+	var pathID string
+
+	// Look for an emoji path ID that differs from its actual ID, this indicates
+	// a previous 'refresh'. We need to be sure to set this on the ProcessingEmoji{}
+	// so it knows to store the emoji under this path, and not default to emoji.ID.
+	if id := extractEmojiPathID(emoji.ImagePath); id != emoji.ID {
+		pathID = id
+	}
+
+	return &ProcessingEmoji{
+		newPathID: pathID,
+		instAccID: instanceAcc.ID,
+		emoji:     emoji,
+		dataFn:    data,
+		mgr:       m,
+	}, nil
+}
+
+// createOrUpdateEmoji updates the emoji according to
+// provided additional data, and performs the actual
+// database write, finally returning an emoji ready
+// for processing (i.e. caching to local storage).
+func (m *Manager) createOrUpdateEmoji(
+	ctx context.Context,
+	storeDB func(context.Context, *gtsmodel.Emoji) error,
 	data DataFunc,
 	emoji *gtsmodel.Emoji,
 	info AdditionalEmojiInfo,
@@ -351,8 +394,8 @@ func (m *Manager) createEmoji(
 		emoji.CategoryID = *info.CategoryID
 	}
 
-	// Store emoji in database in initial form.
-	if err := putDB(ctx, emoji); err != nil {
+	// Put or update emoji in database.
+	if err := storeDB(ctx, emoji); err != nil {
 		return nil, err
 	}
 
@@ -367,17 +410,26 @@ func (m *Manager) createEmoji(
 	return processingEmoji, nil
 }
 
-// RecacheEmoji wraps an emoji model (assumed already
-// inserted in the database!) with given data function
-// to perform a blocking dereference / decode operation
-// from the data stream returned.
-func (m *Manager) RecacheEmoji(
-	emoji *gtsmodel.Emoji,
-	data DataFunc,
-) *ProcessingEmoji {
-	return &ProcessingEmoji{
-		emoji:  emoji,
-		dataFn: data,
-		mgr:    m,
+// extractEmojiPathID pulls the ID used in the final path segment of an emoji path (can be URL).
+func extractEmojiPathID(path string) string {
+	// Look for '.' indicating file ext.
+	i := strings.LastIndexByte(path, '.')
+	if i == -1 {
+		return ""
 	}
+
+	// Strip ext.
+	path = path[:i]
+
+	// Look for '/' of final path sep.
+	i = strings.LastIndexByte(path, '/')
+	if i == -1 {
+		return ""
+	}
+
+	// Strip up to
+	// final segment.
+	path = path[i+1:]
+
+	return path
 }

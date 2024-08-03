@@ -291,13 +291,8 @@ func (p *Processor) emojiUpdateCopy(
 	}
 
 	// Ensure target emoji is locally cached.
-	target, err := p.federator.RefreshEmoji(
-		ctx,
+	target, err := p.federator.RecacheEmoji(ctx,
 		target,
-
-		// no changes we want to make.
-		media.AdditionalEmojiInfo{},
-		false,
 	)
 	if err != nil {
 		err := gtserror.Newf("error recaching emoji %s: %w", target.ImageRemoteURL, err)
@@ -325,8 +320,8 @@ func (p *Processor) emojiUpdateCopy(
 
 	// Attempt to create the new local emoji.
 	emoji, errWithCode := p.createEmoji(ctx,
-		util.PtrOrValue(shortcode, ""),
-		util.PtrOrValue(categoryName, ""),
+		util.PtrOrZero(shortcode),
+		util.PtrOrZero(categoryName),
 		data,
 	)
 	if errWithCode != nil {
@@ -401,35 +396,39 @@ func (p *Processor) emojiUpdateModify(
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	if categoryName != nil {
-		if *categoryName != "" {
-			// A category was provided, get / create relevant emoji category.
-			category, errWithCode := p.mustGetEmojiCategory(ctx, *categoryName)
-			if errWithCode != nil {
-				return nil, errWithCode
-			}
+	// Check if we need to
+	// set a new category ID.
+	var newCategoryID *string
+	switch {
+	case categoryName == nil:
+		// No changes.
 
-			if category.ID == emoji.CategoryID {
-				// There was no change,
-				// indicate this by unsetting
-				// the category name pointer.
-				categoryName = nil
-			} else {
-				// Update emoji category.
-				emoji.CategoryID = category.ID
-				emoji.Category = category
-			}
-		} else {
-			// Emoji category was unset.
-			emoji.CategoryID = ""
-			emoji.Category = nil
+	case *categoryName == "":
+		// Emoji category was unset.
+		newCategoryID = util.Ptr("")
+		emoji.CategoryID = ""
+		emoji.Category = nil
+
+	case *categoryName != "":
+		// A category was provided, get or create relevant emoji category.
+		category, errWithCode := p.mustGetEmojiCategory(ctx, *categoryName)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
+
+		// Update emoji category if
+		// it's different from before.
+		if category.ID != emoji.CategoryID {
+			newCategoryID = &category.ID
+			emoji.CategoryID = category.ID
+			emoji.Category = category
 		}
 	}
 
 	// Check whether any image changes were requested.
 	imageUpdated := (image != nil && image.Size > 0)
 
-	if !imageUpdated && categoryName != nil {
+	if !imageUpdated && newCategoryID != nil {
 		// Only updating category; only a single database update required.
 		if err := p.state.DB.UpdateEmoji(ctx, emoji, "category_id"); err != nil {
 			err := gtserror.Newf("error updating emoji in db: %w", err)
@@ -463,8 +462,17 @@ func (p *Processor) emojiUpdateModify(
 			return rc, nil
 		}
 
-		// Prepare emoji model for recache from new data.
-		processing := p.media.RecacheEmoji(emoji, data)
+		// Include category ID
+		// update if necessary.
+		ai := media.AdditionalEmojiInfo{}
+		ai.CategoryID = newCategoryID
+
+		// Prepare emoji model for update+recache from new data.
+		processing, err := p.media.UpdateEmoji(ctx, emoji, data, ai)
+		if err != nil {
+			err := gtserror.Newf("error preparing recache: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 
 		// Load to trigger update + write.
 		emoji, err = processing.Load(ctx)
