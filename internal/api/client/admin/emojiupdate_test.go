@@ -20,10 +20,11 @@ package admin_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -68,7 +69,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateNewCategory() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 	suite.NotEmpty(b)
 
@@ -145,7 +146,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateSwitchCategory() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 	suite.NotEmpty(b)
 
@@ -223,7 +224,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyRemoteToLocal() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 	suite.NotEmpty(b)
 
@@ -299,7 +300,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableEmoji() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 	suite.NotEmpty(b)
 
@@ -338,10 +339,97 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateDisableLocalEmoji() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"Bad Request: emoji 01F8MH9H8E4VG3KDYJR9EGPXCQ is not a remote emoji, cannot disable it via this endpoint"}`, string(b))
+}
+
+func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModify() {
+	testEmoji := &gtsmodel.Emoji{}
+	*testEmoji = *suite.testEmojis["rainbow"]
+
+	// set up the request
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		testrig.FileToDataF("image", "../../../../testrig/media/kip-original.gif"),
+		map[string][]string{
+			"type": {"modify"},
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+	recorder := httptest.NewRecorder()
+	ctx := suite.newContext(recorder, http.MethodPost, bodyBytes, admin.EmojiPathWithID, w.FormDataContentType())
+	ctx.AddParam(apiutil.IDKey, testEmoji.ID)
+
+	// call the handler
+	suite.adminModule.EmojiPATCHHandler(ctx)
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// 2. we should have no error message in the result body
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	// check the response
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+	suite.NotEmpty(b)
+
+	fmt.Println(string(b))
+
+	// response should be an admin model emoji
+	adminEmoji := &apimodel.AdminEmoji{}
+	err = json.Unmarshal(b, adminEmoji)
+	suite.NoError(err)
+
+	// appropriate fields should be set
+	suite.Equal("rainbow", adminEmoji.Shortcode)
+	suite.NotEmpty(adminEmoji.URL)
+	suite.NotEmpty(adminEmoji.StaticURL)
+	suite.True(adminEmoji.VisibleInPicker)
+
+	// emoji should be in the db
+	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(context.Background(), adminEmoji.Shortcode, "")
+	suite.NoError(err)
+
+	// check fields on the emoji
+	suite.NotEmpty(dbEmoji.ID)
+	suite.Equal("rainbow", dbEmoji.Shortcode)
+	suite.Empty(dbEmoji.Domain)
+	suite.Empty(dbEmoji.ImageRemoteURL)
+	suite.Empty(dbEmoji.ImageStaticRemoteURL)
+	suite.Equal(adminEmoji.URL, dbEmoji.ImageURL)
+	suite.Equal(adminEmoji.StaticURL, dbEmoji.ImageStaticURL)
+
+	// Ensure image path as expected.
+	suite.NotEmpty(dbEmoji.ImagePath)
+	if !strings.HasPrefix(suite.testAccounts["instance_account"].ID+"/emoji/original", dbEmoji.ImagePath) {
+		suite.FailNow("", "image path %s not valid", dbEmoji.ImagePath)
+	}
+
+	// Ensure static image path as expected.
+	suite.NotEmpty(dbEmoji.ImageStaticPath)
+	if !strings.HasPrefix(suite.testAccounts["instance_account"].ID+"/emoji/static", dbEmoji.ImageStaticPath) {
+		suite.FailNow("", "image path %s not valid", dbEmoji.ImageStaticPath)
+	}
+
+	suite.Equal("image/gif", dbEmoji.ImageContentType)
+	suite.Equal("image/png", dbEmoji.ImageStaticContentType)
+	suite.Equal(1428, dbEmoji.ImageFileSize)
+	suite.Equal(1056, dbEmoji.ImageStaticFileSize)
+	suite.False(*dbEmoji.Disabled)
+	suite.NotEmpty(dbEmoji.URI)
+	suite.True(*dbEmoji.VisibleInPicker)
+	suite.NotEmpty(dbEmoji.CategoryID)
+
+	// emoji should be in storage
+	entry, err := suite.storage.Storage.Stat(ctx, dbEmoji.ImagePath)
+	suite.NoError(err)
+	suite.Equal(int64(dbEmoji.ImageFileSize), entry.Size)
+	entry, err = suite.storage.Storage.Stat(ctx, dbEmoji.ImageStaticPath)
+	suite.NoError(err)
+	suite.Equal(int64(dbEmoji.ImageStaticFileSize), entry.Size)
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyRemoteEmoji() {
@@ -404,7 +492,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModifyNoParams() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"Bad Request: emoji action type was 'modify' but no image or category name was provided"}`, string(b))
@@ -438,7 +526,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyLocalToLocal() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"Bad Request: target emoji is not remote; cannot copy to local"}`, string(b))
@@ -472,7 +560,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyEmptyShortcode() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"Bad Request: shortcode  did not pass validation, must be between 2 and 30 characters, letters, numbers, and underscores only"}`, string(b))
@@ -505,7 +593,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyNoShortcode() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"Bad Request: emoji action type was 'copy' but no shortcode was provided"}`, string(b))
@@ -539,7 +627,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyShortcodeAlreadyInUse() {
 	defer result.Body.Close()
 
 	// check the response
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"Conflict: emoji with shortcode already exists"}`, string(b))
