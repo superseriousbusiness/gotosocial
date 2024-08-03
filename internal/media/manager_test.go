@@ -105,7 +105,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 		return io.NopCloser(bytes.NewBuffer(b)), nil
 	}
 
-	processing, err := suite.manager.RefreshEmoji(ctx,
+	processing, err := suite.manager.UpdateEmoji(ctx,
 		emojiToUpdate,
 		data,
 		media.AdditionalEmojiInfo{

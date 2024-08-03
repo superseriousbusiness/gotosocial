@@ -220,7 +220,7 @@ func (m *Manager) CreateEmoji(
 	}
 
 	// Finally, create new emoji.
-	return m.createEmoji(ctx,
+	return m.createOrUpdateEmoji(ctx,
 		m.state.DB.PutEmoji,
 		data,
 		emoji,
@@ -228,12 +228,14 @@ func (m *Manager) CreateEmoji(
 	)
 }
 
-// RefreshEmoji will prepare a recache operation
-// for the given emoji, updating it with extra
-// information, and in particular using new storage
-// paths for the dereferenced media files to skirt
-// around browser caching of the old files.
-func (m *Manager) RefreshEmoji(
+// UpdateEmoji prepares an update operation for the given emoji,
+// which is assumed to already exist in the database.
+//
+// Calling load on the returned *ProcessingEmoji will update the
+// db entry with provided extra information, ensure emoji images
+// are cached, and use new storage paths for the dereferenced media
+// files to skirt around browser caching of the old files.
+func (m *Manager) UpdateEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,
 	data DataFunc,
@@ -289,8 +291,8 @@ func (m *Manager) RefreshEmoji(
 		return rct, nil
 	}
 
-	// Finally, create new emoji in database.
-	processingEmoji, err := m.createEmoji(ctx,
+	// Update existing emoji in database.
+	processingEmoji, err := m.createOrUpdateEmoji(ctx,
 		func(ctx context.Context, emoji *gtsmodel.Emoji) error {
 			return m.state.DB.UpdateEmoji(ctx, emoji)
 		},
@@ -308,9 +310,9 @@ func (m *Manager) RefreshEmoji(
 	return processingEmoji, nil
 }
 
-func (m *Manager) createEmoji(
+func (m *Manager) createOrUpdateEmoji(
 	ctx context.Context,
-	putDB func(context.Context, *gtsmodel.Emoji) error,
+	storeDB func(context.Context, *gtsmodel.Emoji) error,
 	data DataFunc,
 	emoji *gtsmodel.Emoji,
 	info AdditionalEmojiInfo,
@@ -351,8 +353,8 @@ func (m *Manager) createEmoji(
 		emoji.CategoryID = *info.CategoryID
 	}
 
-	// Store emoji in database in initial form.
-	if err := putDB(ctx, emoji); err != nil {
+	// Put or update emoji in database.
+	if err := storeDB(ctx, emoji); err != nil {
 		return nil, err
 	}
 
@@ -371,6 +373,8 @@ func (m *Manager) createEmoji(
 // inserted in the database!) with given data function
 // to perform a blocking dereference / decode operation
 // from the data stream returned.
+//
+// The provided emoji MUST be already stored in the database.
 func (m *Manager) RecacheEmoji(
 	ctx context.Context,
 	emoji *gtsmodel.Emoji,

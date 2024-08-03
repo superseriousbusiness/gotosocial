@@ -376,8 +376,6 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModify() {
 	suite.NoError(err)
 	suite.NotEmpty(b)
 
-	fmt.Println(string(b))
-
 	// response should be an admin model emoji
 	adminEmoji := &apimodel.AdminEmoji{}
 	err = json.Unmarshal(b, adminEmoji)
@@ -404,13 +402,13 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateModify() {
 
 	// Ensure image path as expected.
 	suite.NotEmpty(dbEmoji.ImagePath)
-	if !strings.HasPrefix(suite.testAccounts["instance_account"].ID+"/emoji/original", dbEmoji.ImagePath) {
+	if !strings.HasPrefix(dbEmoji.ImagePath, suite.testAccounts["instance_account"].ID+"/emoji/original") {
 		suite.FailNow("", "image path %s not valid", dbEmoji.ImagePath)
 	}
 
 	// Ensure static image path as expected.
 	suite.NotEmpty(dbEmoji.ImageStaticPath)
-	if !strings.HasPrefix(suite.testAccounts["instance_account"].ID+"/emoji/static", dbEmoji.ImageStaticPath) {
+	if !strings.HasPrefix(dbEmoji.ImageStaticPath, suite.testAccounts["instance_account"].ID+"/emoji/static") {
 		suite.FailNow("", "image path %s not valid", dbEmoji.ImageStaticPath)
 	}
 

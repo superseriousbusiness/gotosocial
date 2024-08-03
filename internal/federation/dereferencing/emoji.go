@@ -200,8 +200,8 @@ func (d *Dereferencer) RefreshEmoji(
 				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
 			}
 
-			// Refresh emoji with prepared info.
-			return d.mediaManager.RefreshEmoji(ctx,
+			// Update emoji with prepared info.
+			return d.mediaManager.UpdateEmoji(ctx,
 				emoji,
 				data,
 				info,

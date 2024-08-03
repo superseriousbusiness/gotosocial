@@ -401,35 +401,39 @@ func (p *Processor) emojiUpdateModify(
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	if categoryName != nil {
-		if *categoryName != "" {
-			// A category was provided, get / create relevant emoji category.
-			category, errWithCode := p.mustGetEmojiCategory(ctx, *categoryName)
-			if errWithCode != nil {
-				return nil, errWithCode
-			}
+	// Check if we need to
+	// set a new category ID.
+	var newCategoryID *string
 
-			if category.ID == emoji.CategoryID {
-				// There was no change,
-				// indicate this by unsetting
-				// the category name pointer.
-				categoryName = nil
-			} else {
-				// Update emoji category.
-				emoji.CategoryID = category.ID
-				emoji.Category = category
-			}
-		} else {
-			// Emoji category was unset.
-			emoji.CategoryID = ""
-			emoji.Category = nil
+	switch {
+
+	case categoryName == nil:
+		// No changes.
+
+	case *categoryName == "":
+		// Emoji category was unset.
+		newCategoryID = util.Ptr("")
+		emoji.Category = nil
+
+	case *categoryName != "":
+		// A category was provided, get or create relevant emoji category.
+		category, errWithCode := p.mustGetEmojiCategory(ctx, *categoryName)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
+
+		// Update emoji category if
+		// it's different from before.
+		if category.ID != emoji.CategoryID {
+			newCategoryID = &category.ID
+			emoji.Category = category
 		}
 	}
 
 	// Check whether any image changes were requested.
 	imageUpdated := (image != nil && image.Size > 0)
 
-	if !imageUpdated && categoryName != nil {
+	if !imageUpdated && newCategoryID != nil {
 		// Only updating category; only a single database update required.
 		if err := p.state.DB.UpdateEmoji(ctx, emoji, "category_id"); err != nil {
 			err := gtserror.Newf("error updating emoji in db: %w", err)
@@ -463,8 +467,15 @@ func (p *Processor) emojiUpdateModify(
 			return rc, nil
 		}
 
+		// Include category ID
+		// update if necessary.
+		ai := media.AdditionalEmojiInfo{}
+		if newCategoryID != nil {
+			ai.CategoryID = newCategoryID
+		}
+
 		// Prepare emoji model for update+recache from new data.
-		processing, err := p.media.RecacheEmoji(ctx, emoji, data)
+		processing, err := p.media.UpdateEmoji(ctx, emoji, data, ai)
 		if err != nil {
 			err := gtserror.Newf("error preparing recache: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
