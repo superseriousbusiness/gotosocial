@@ -122,7 +122,7 @@
 			display: grid;
 			gap: 0 1rem;
 			box-sizing: border-box;
-			grid-template-columns: auto 1fr;
+			grid-template-columns: 1fr auto;
 			grid-template-rows: $name-size auto;
 			grid-template-areas:
 				"displayname displayname"
@@ -207,6 +207,9 @@
 	}
 }
 
+/*
+	Tablet-ish-kinda size.
+*/
 @media screen and (max-width: 750px) {
 	.profile .profile-header {
 		.basic-info {
@@ -217,17 +220,52 @@
 				"namerole namerole"
 				"namerole namerole";
 			
+			/*
+				Make display name a bit smaller
+				so there's more chance of being
+				able to read everything.
+			*/
 			.namerole {
-				grid-template-columns: 1fr;
-				grid-template-rows: $name-size auto;
-				grid-template-areas:
-					"displayname displayname"
-					"username role";
-				
 				.displayname {
-					font-size: 1.4rem;
+					font-size: 1.2rem;
+					line-height: 2rem;
+					margin-top: 0.5rem;
 				}
 			}
+		}
+	}
+}
+
+/*
+	Phone-ish-kinda size.
+*/
+@media screen and (max-width: 500px) {
+	.profile
+	.profile-header
+	.basic-info
+	.namerole {
+		/*
+			Line up in smallest possible
+			horizontal space to avoid overflow.
+		*/
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+
+		/*
+			Don't hug the right anymore
+			(good life advice in general).
+		*/
+		.role {
+			align-self: flex-start;
+		}
+
+		/*
+			Allow this to wrap in case
+			of a really skinny screen.
+		*/
+		.bot-username-wrapper {
+			flex-wrap: wrap;
 		}
 	}
 }
