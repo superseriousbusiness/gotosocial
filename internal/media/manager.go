@@ -336,7 +336,7 @@ func (m *Manager) CacheEmoji(
 	}, nil
 }
 
-// putEmoji updates the emoji model according to
+// createOrUpdateEmoji updates the emoji according to
 // provided additional data, and performs the actual
 // database write, finally returning an emoji ready
 // for processing (i.e. caching to local storage).
