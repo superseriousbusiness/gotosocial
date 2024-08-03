@@ -466,9 +466,7 @@ func (p *Processor) emojiUpdateModify(
 		// Include category ID
 		// update if necessary.
 		ai := media.AdditionalEmojiInfo{}
-		if newCategoryID != nil {
-			ai.CategoryID = newCategoryID
-		}
+		ai.CategoryID = newCategoryID
 
 		// Prepare emoji model for update+recache from new data.
 		processing, err := p.media.UpdateEmoji(ctx, emoji, data, ai)
