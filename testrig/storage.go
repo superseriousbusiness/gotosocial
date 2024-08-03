@@ -29,7 +29,7 @@ import (
 
 // NewInMemoryStorage returns a new in memory storage with the default test config
 func NewInMemoryStorage() *gtsstorage.Driver {
-	storage := memory.Open(200, false)
+	storage := memory.Open(200, true)
 	return &gtsstorage.Driver{
 		Storage: storage,
 	}
