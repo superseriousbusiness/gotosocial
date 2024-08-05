@@ -66,8 +66,14 @@ func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 	)
 }
 
-// ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
-func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
+// ffmpegGenerateThumb generates a thumbnail webp
+// from input media of any type, useful for any media.
+func ffmpegGenerateThumb(
+	ctx context.Context,
+	filepath string,
+	width, height int,
+	pixFmt string,
+) (string, error) {
 	var outpath string
 
 	// Generate thumb output path REPLACING extension.
@@ -97,17 +103,17 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 		// (NOT as libwebp_anim).
 		"-codec:v", "libwebp",
 
+		// Use provided pixel format, or best match for this encoder.
+		// https://ffmpeg.org/ffmpeg.html#Advanced-Video-options
+		"-pix_fmt", pixFmt,
+
 		// Select thumb from first 10 frames
 		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
 		"-filter:v", "thumbnail=n=10,"+
 
 			// scale to dimensions
 			// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
-			"scale="+scale+","+
-
-			// YUVA 4:2:0 pixel format
-			// (format filter: https://ffmpeg.org/ffmpeg-filters.html#format)
-			"format=pix_fmts=yuva420p",
+			"scale="+scale,
 
 		// Only one frame
 		"-frames:v", "1",
@@ -219,8 +225,8 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 			// Show specifically container format, total duration and bitrate.
 			"-show_entries", "format=format_name,duration,bit_rate" + ":" +
 
-				// Show specifically stream codec names, types, frame rate, duration and dimens.
-				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height" + ":" +
+				// Show specifically stream codec names, types, pixel format, frame rate, duration and dimens.
+				"stream=codec_name,codec_type,pix_fmt,r_frame_rate,duration_ts,width,height" + ":" +
 
 				// Show any rotation
 				// side data stored.
@@ -266,6 +272,7 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 // data in a more useful data format.
 type result struct {
 	format   string
+	pixFmt   string
 	audio    []audioStream
 	video    []videoStream
 	duration float64
@@ -274,7 +281,8 @@ type result struct {
 }
 
 type stream struct {
-	codec string
+	codec  string
+	pixFmt string
 }
 
 type audioStream struct {
@@ -510,12 +518,21 @@ func (res *ffprobeResult) Process() (*result, error) {
 
 			// Append video stream data to result.
 			r.video = append(r.video, videoStream{
-				stream:    stream{codec: s.CodecName},
+				stream: stream{
+					codec:  s.CodecName,
+					pixFmt: s.PixFmt,
+				},
 				width:     s.Width,
 				height:    s.Height,
 				framerate: framerate,
 			})
 		}
+	}
+
+	// Set pixel format from
+	// first video stream.
+	if len(r.video) != 0 {
+		r.pixFmt = r.video[0].pixFmt
 	}
 
 	return &r, nil
@@ -542,6 +559,7 @@ type ffprobeSideData struct {
 type ffprobeStream struct {
 	CodecName  string `json:"codec_name"`
 	CodecType  string `json:"codec_type"`
+	PixFmt     string `json:"pix_fmt"`
 	RFrameRate string `json:"r_frame_rate"`
 	DurationTS uint   `json:"duration_ts"`
 	Width      int    `json:"width"`

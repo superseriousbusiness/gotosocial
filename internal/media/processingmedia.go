@@ -229,10 +229,23 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
 		p.media.FileMeta.Small.Aspect = aspect
 
-		// Generate a thumbnail image from input image path.
+		// Generate a thumbnail image from input image path,
+		// reusing existing pixel format for types that likely
+		// don't have transparency, or using yuva420p for types
+		// that can (to preserve alpha layer).
+		var pixFmt string
+		if ext == "jpeg" ||
+			p.media.Type == gtsmodel.FileTypeVideo ||
+			p.media.Type == gtsmodel.FileTypeAudio {
+			pixFmt = result.pixFmt
+		} else {
+			pixFmt = "yuva420p"
+		}
+
 		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
 			thumbWidth,
 			thumbHeight,
+			pixFmt,
 		)
 		if err != nil {
 			return gtserror.Newf("error generating image thumb: %w", err)

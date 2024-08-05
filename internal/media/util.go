@@ -87,7 +87,7 @@ func webpDecode(filepath string) (image.Image, error) {
 
 // generateBlurhash generates a blurhash for JPEG at filepath.
 func generateBlurhash(filepath string) (string, error) {
-	// Decode JPEG file at given path.
+	// Decode webp file at given path.
 	img, err := webpDecode(filepath)
 	if err != nil {
 		return "", err
