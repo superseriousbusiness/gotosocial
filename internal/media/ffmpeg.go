@@ -22,6 +22,7 @@ import (
 	"encoding/json"
 	"errors"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -272,7 +273,6 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 // data in a more useful data format.
 type result struct {
 	format   string
-	pixFmt   string
 	audio    []audioStream
 	video    []videoStream
 	duration float64
@@ -281,8 +281,7 @@ type result struct {
 }
 
 type stream struct {
-	codec  string
-	pixFmt string
+	codec string
 }
 
 type audioStream struct {
@@ -291,6 +290,7 @@ type audioStream struct {
 
 type videoStream struct {
 	stream
+	pixFmt    string
 	width     int
 	height    int
 	framerate float32
@@ -411,6 +411,84 @@ func (res *result) ImageMeta() (width int, height int, framerate float32) {
 	return
 }
 
+// PixelFormat returns the pix_fmt value of the
+// first video stream of res, or an empty string.
+func (res *result) PixelFormat() string {
+	if len(res.video) == 0 {
+		return ""
+	}
+
+	// Return pixel format
+	// of first video stream.
+	return res.video[0].pixFmt
+}
+
+// List of pixel formats that have an alpha layer.
+// Derived from the following very messy command:
+//
+//	for res in $(ffprobe -show_entries pixel_format=name:flags=alpha | grep -B1 alpha=1 | grep name); do echo $res | sed 's/name=//g' | sed 's/^/"/g' | sed 's/$/",/g'; done
+var alphaPixelFormats = []string{
+	"pal8",
+	"argb",
+	"rgba",
+	"abgr",
+	"bgra",
+	"yuva420p",
+	"ya8",
+	"yuva422p",
+	"yuva444p",
+	"yuva420p9be",
+	"yuva420p9le",
+	"yuva422p9be",
+	"yuva422p9le",
+	"yuva444p9be",
+	"yuva444p9le",
+	"yuva420p10be",
+	"yuva420p10le",
+	"yuva422p10be",
+	"yuva422p10le",
+	"yuva444p10be",
+	"yuva444p10le",
+	"yuva420p16be",
+	"yuva420p16le",
+	"yuva422p16be",
+	"yuva422p16le",
+	"yuva444p16be",
+	"yuva444p16le",
+	"rgba64be",
+	"rgba64le",
+	"bgra64be",
+	"bgra64le",
+	"ya16be",
+	"ya16le",
+	"gbrap",
+	"gbrap16be",
+	"gbrap16le",
+	"ayuv64le",
+	"ayuv64be",
+	"gbrap12be",
+	"gbrap12le",
+	"gbrap10be",
+	"gbrap10le",
+	"gbrapf32be",
+	"gbrapf32le",
+	"yuva422p12be",
+	"yuva422p12le",
+	"yuva444p12be",
+	"yuva444p12le",
+}
+
+// HasAlphaLayer returns true if the result pixel
+// format is one that can contain an alpha layer.
+func (res *result) HasAlphaLayer() bool {
+	pixFmt := res.PixelFormat()
+	if pixFmt == "" {
+		return false
+	}
+
+	return slices.Contains(alphaPixelFormats, pixFmt)
+}
+
 // Process converts raw ffprobe result data into our more usable result{} type.
 func (res *ffprobeResult) Process() (*result, error) {
 	if res.Error != nil {
@@ -518,21 +596,13 @@ func (res *ffprobeResult) Process() (*result, error) {
 
 			// Append video stream data to result.
 			r.video = append(r.video, videoStream{
-				stream: stream{
-					codec:  s.CodecName,
-					pixFmt: s.PixFmt,
-				},
+				stream:    stream{codec: s.CodecName},
+				pixFmt:    s.PixFmt,
 				width:     s.Width,
 				height:    s.Height,
 				framerate: framerate,
 			})
 		}
-	}
-
-	// Set pixel format from
-	// first video stream.
-	if len(r.video) != 0 {
-		r.pixFmt = r.video[0].pixFmt
 	}
 
 	return &r, nil

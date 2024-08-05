@@ -656,8 +656,8 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	suite.Equal("image/png", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(17471, attachment.File.FileSize)
-	suite.Equal(2630, attachment.Thumbnail.FileSize)
-	suite.Equal("LBOW$@%i-=aj%go#RSRP_1av~Tt2", attachment.Blurhash)
+	suite.Equal(2628, attachment.Thumbnail.FileSize)
+	suite.Equal("LBOW$@%i-=aj%go#RTRP_1av~Tt2", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)

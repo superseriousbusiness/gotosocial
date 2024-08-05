@@ -230,16 +230,14 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Small.Aspect = aspect
 
 		// Generate a thumbnail image from input image path,
-		// reusing existing pixel format for types that likely
-		// don't have transparency, or using yuva420p for types
-		// that can (to preserve alpha layer).
+		// using yuva420p to replace source pixel formats
+		// that can have an alpha layer, and reusing source
+		// pixel format (fallback to yuv240p) otherwise.
 		var pixFmt string
-		if ext == "jpeg" ||
-			p.media.Type == gtsmodel.FileTypeVideo ||
-			p.media.Type == gtsmodel.FileTypeAudio {
-			pixFmt = result.pixFmt
-		} else {
+		if result.HasAlphaLayer() {
 			pixFmt = "yuva420p"
+		} else {
+			pixFmt = result.PixelFormat()
 		}
 
 		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
