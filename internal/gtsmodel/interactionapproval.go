@@ -53,3 +53,18 @@ const (
 	InteractionReply
 	InteractionAnnounce
 )
+
+// Stringifies this InteractionType in a
+// manner suitable for serving via the API.
+func (i InteractionType) String() string {
+	switch i {
+	case InteractionLike:
+		return "favourite"
+	case InteractionReply:
+		return "reply"
+	case InteractionAnnounce:
+		return "reblog"
+	default:
+		panic("undefined InteractionType")
+	}
+}

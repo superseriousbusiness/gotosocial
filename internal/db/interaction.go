@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type Interaction interface {
@@ -38,4 +39,18 @@ type Interaction interface {
 
 	// DeleteInteractionApprovalByID deletes one approval with the given ID.
 	DeleteInteractionApprovalByID(ctx context.Context, id string) error
+
+	// GetPendingInteractionsForAcct returns pending interactions targeting
+	// the given (optional) account ID and the given (optional) status ID.
+	//
+	// At least one of `likes`, `replies`, or `boosts` must be true.
+	GetPendingInteractionsForAcct(
+		ctx context.Context,
+		acctID string,
+		statusID string,
+		likes bool,
+		replies bool,
+		boosts bool,
+		page *paging.Page,
+	) ([]*gtsmodel.PendingInteraction, error)
 }
