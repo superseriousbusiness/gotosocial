@@ -152,15 +152,21 @@ import (
 //			description: bad request
 func (m *Module) StreamGETHandler(c *gin.Context) {
 	var (
-		account     *gtsmodel.Account
-		errWithCode gtserror.WithCode
+		token         string
+		tokenInHeader bool
+		account       *gtsmodel.Account
+		errWithCode   gtserror.WithCode
 	)
 
-	// Try query param access token.
-	token := c.Query(AccessTokenQueryKey)
-	if token == "" {
-		// Try fallback HTTP header provided token.
-		token = c.GetHeader(AccessTokenHeader)
+	if t := c.Query(AccessTokenQueryKey); t != "" {
+		// Token was provided as
+		// query param, no problem.
+		token = t
+	} else if t := c.GetHeader(AccessTokenHeader); t != "" {
+		// Token was provided as
+		// header, no problem.
+		token = t
+		tokenInHeader = true
 	}
 
 	if token != "" {
@@ -231,12 +237,14 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	//
 	// If the upgrade fails, then Upgrade replies to the client
 	// with an HTTP error response.
-	h := http.Header{}
-	if c.GetHeader(AccessTokenHeader) != "" {
-		// Send it back, else Chrome fails to connect
-		h.Set(AccessTokenHeader, token)
+	var responseHeader http.Header
+	if tokenInHeader {
+		// Return the token in the response,
+		// else Chrome fails to connect.
+		responseHeader = http.Header{AccessTokenHeader: {token}}
 	}
-	wsConn, err := m.wsUpgrade.Upgrade(c.Writer, c.Request, h)
+
+	wsConn, err := m.wsUpgrade.Upgrade(c.Writer, c.Request, responseHeader)
 	if err != nil {
 		l.Errorf("error upgrading websocket connection: %v", err)
 		stream.Close()
