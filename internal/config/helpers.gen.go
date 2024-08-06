@@ -2,7 +2,7 @@
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//
+// 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -374,6 +374,31 @@ func GetSoftwareVersion() string { return global.GetSoftwareVersion() }
 
 // SetSoftwareVersion safely sets the value for global configuration 'SoftwareVersion' field
 func SetSoftwareVersion(v string) { global.SetSoftwareVersion(v) }
+
+// GetDbURL safely fetches the Configuration value for state's 'DbURL' field
+func (st *ConfigState) GetDbURL() (v string) {
+	st.mutex.RLock()
+	v = st.config.DbURL
+	st.mutex.RUnlock()
+	return
+}
+
+// SetDbURL safely sets the Configuration value for state's 'DbURL' field
+func (st *ConfigState) SetDbURL(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbURL = v
+	st.reloadToViper()
+}
+
+// DbURLFlag returns the flag name for the 'DbURL' field
+func DbURLFlag() string { return "db-url" }
+
+// GetDbURL safely fetches the value for global configuration 'DbURL' field
+func GetDbURL() string { return global.GetDbURL() }
+
+// SetDbURL safely sets the value for global configuration 'DbURL' field
+func SetDbURL(v string) { global.SetDbURL(v) }
 
 // GetDbType safely fetches the Configuration value for state's 'DbType' field
 func (st *ConfigState) GetDbType() (v string) {
@@ -2842,19 +2867,13 @@ func (st *ConfigState) SetCacheAccountIDsFollowingTagMemRatio(v float64) {
 }
 
 // CacheAccountIDsFollowingTagMemRatioFlag returns the flag name for the 'Cache.AccountIDsFollowingTagMemRatio' field
-func CacheAccountIDsFollowingTagMemRatioFlag() string {
-	return "cache-account-ids-following-tag-mem-ratio"
-}
+func CacheAccountIDsFollowingTagMemRatioFlag() string { return "cache-account-ids-following-tag-mem-ratio" }
 
 // GetCacheAccountIDsFollowingTagMemRatio safely fetches the value for global configuration 'Cache.AccountIDsFollowingTagMemRatio' field
-func GetCacheAccountIDsFollowingTagMemRatio() float64 {
-	return global.GetCacheAccountIDsFollowingTagMemRatio()
-}
+func GetCacheAccountIDsFollowingTagMemRatio() float64 { return global.GetCacheAccountIDsFollowingTagMemRatio() }
 
 // SetCacheAccountIDsFollowingTagMemRatio safely sets the value for global configuration 'Cache.AccountIDsFollowingTagMemRatio' field
-func SetCacheAccountIDsFollowingTagMemRatio(v float64) {
-	global.SetCacheAccountIDsFollowingTagMemRatio(v)
-}
+func SetCacheAccountIDsFollowingTagMemRatio(v float64) { global.SetCacheAccountIDsFollowingTagMemRatio(v) }
 
 // GetCacheAccountNoteMemRatio safely fetches the Configuration value for state's 'Cache.AccountNoteMemRatio' field
 func (st *ConfigState) GetCacheAccountNoteMemRatio() (v float64) {
@@ -3098,19 +3117,13 @@ func (st *ConfigState) SetCacheConversationLastStatusIDsMemRatio(v float64) {
 }
 
 // CacheConversationLastStatusIDsMemRatioFlag returns the flag name for the 'Cache.ConversationLastStatusIDsMemRatio' field
-func CacheConversationLastStatusIDsMemRatioFlag() string {
-	return "cache-conversation-last-status-ids-mem-ratio"
-}
+func CacheConversationLastStatusIDsMemRatioFlag() string { return "cache-conversation-last-status-ids-mem-ratio" }
 
 // GetCacheConversationLastStatusIDsMemRatio safely fetches the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
-func GetCacheConversationLastStatusIDsMemRatio() float64 {
-	return global.GetCacheConversationLastStatusIDsMemRatio()
-}
+func GetCacheConversationLastStatusIDsMemRatio() float64 { return global.GetCacheConversationLastStatusIDsMemRatio() }
 
 // SetCacheConversationLastStatusIDsMemRatio safely sets the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
-func SetCacheConversationLastStatusIDsMemRatio(v float64) {
-	global.SetCacheConversationLastStatusIDsMemRatio(v)
-}
+func SetCacheConversationLastStatusIDsMemRatio(v float64) { global.SetCacheConversationLastStatusIDsMemRatio(v) }
 
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
 func (st *ConfigState) GetCacheEmojiMemRatio() (v float64) {
@@ -3407,9 +3420,7 @@ func (st *ConfigState) SetCacheInteractionApprovalMemRatio(v float64) {
 func CacheInteractionApprovalMemRatioFlag() string { return "cache-interaction-approval-mem-ratio" }
 
 // GetCacheInteractionApprovalMemRatio safely fetches the value for global configuration 'Cache.InteractionApprovalMemRatio' field
-func GetCacheInteractionApprovalMemRatio() float64 {
-	return global.GetCacheInteractionApprovalMemRatio()
-}
+func GetCacheInteractionApprovalMemRatio() float64 { return global.GetCacheInteractionApprovalMemRatio() }
 
 // SetCacheInteractionApprovalMemRatio safely sets the value for global configuration 'Cache.InteractionApprovalMemRatio' field
 func SetCacheInteractionApprovalMemRatio(v float64) { global.SetCacheInteractionApprovalMemRatio(v) }
@@ -3856,19 +3867,13 @@ func (st *ConfigState) SetCacheTagIDsFollowedByAccountMemRatio(v float64) {
 }
 
 // CacheTagIDsFollowedByAccountMemRatioFlag returns the flag name for the 'Cache.TagIDsFollowedByAccountMemRatio' field
-func CacheTagIDsFollowedByAccountMemRatioFlag() string {
-	return "cache-tag-ids-followed-by-account-mem-ratio"
-}
+func CacheTagIDsFollowedByAccountMemRatioFlag() string { return "cache-tag-ids-followed-by-account-mem-ratio" }
 
 // GetCacheTagIDsFollowedByAccountMemRatio safely fetches the value for global configuration 'Cache.TagIDsFollowedByAccountMemRatio' field
-func GetCacheTagIDsFollowedByAccountMemRatio() float64 {
-	return global.GetCacheTagIDsFollowedByAccountMemRatio()
-}
+func GetCacheTagIDsFollowedByAccountMemRatio() float64 { return global.GetCacheTagIDsFollowedByAccountMemRatio() }
 
 // SetCacheTagIDsFollowedByAccountMemRatio safely sets the value for global configuration 'Cache.TagIDsFollowedByAccountMemRatio' field
-func SetCacheTagIDsFollowedByAccountMemRatio(v float64) {
-	global.SetCacheTagIDsFollowedByAccountMemRatio(v)
-}
+func SetCacheTagIDsFollowedByAccountMemRatio(v float64) { global.SetCacheTagIDsFollowedByAccountMemRatio(v) }
 
 // GetCacheThreadMuteMemRatio safely fetches the Configuration value for state's 'Cache.ThreadMuteMemRatio' field
 func (st *ConfigState) GetCacheThreadMuteMemRatio() (v float64) {
@@ -4269,3 +4274,4 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
+

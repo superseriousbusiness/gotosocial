@@ -396,6 +396,13 @@ func maxOpenConns() int {
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
+	url := config.GetDbURL()
+
+	// if database URL is defined, ignore other DB related configuration fields
+	if url != "" {
+		cfg, _ := pgx.ParseConfig(url)
+		return cfg, nil
+	}
 	// these are all optional, the db adapter figures out defaults
 	address := config.GetDbAddress()
 

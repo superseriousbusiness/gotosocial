@@ -60,6 +60,7 @@ type Configuration struct {
 	TrustedProxies     []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
 	SoftwareVersion    string   `name:"software-version" usage:""`
 
+	DbURL                    string        `name:"db-url" usage:"Full Database URL for connection to database"`
 	DbType                   string        `name:"db-type" usage:"Database type: eg., postgres"`
 	DbAddress                string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
 	DbPort                   int           `name:"db-port" usage:"Database port"`
