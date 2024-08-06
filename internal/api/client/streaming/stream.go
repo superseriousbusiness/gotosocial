@@ -163,8 +163,11 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		// query param, no problem.
 		token = t
 	} else if t := c.GetHeader(AccessTokenHeader); t != "" {
-		// Token was provided as
-		// header, no problem.
+		// Token was provided in "Sec-Websocket-Protocol" header.
+		//
+		// This is hacky and not technically correct but some
+		// clients do it since Mastodon allows it, so we must
+		// also allow it to avoid breaking expectations.
 		token = t
 		tokenInHeader = true
 	}
@@ -241,6 +244,8 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	if tokenInHeader {
 		// Return the token in the response,
 		// else Chrome fails to connect.
+		//
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism#sec-websocket-protocol
 		responseHeader = http.Header{AccessTokenHeader: {token}}
 	}
 
