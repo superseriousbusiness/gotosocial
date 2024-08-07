@@ -400,8 +400,8 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 
 	// if database URL is defined, ignore other DB related configuration fields
 	if url != "" {
-		cfg, _ := pgx.ParseConfig(url)
-		return cfg, nil
+		cfg, err := pgx.ParseConfig(url)
+		return cfg, err
 	}
 	// these are all optional, the db adapter figures out defaults
 	address := config.GetDbAddress()
