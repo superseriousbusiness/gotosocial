@@ -187,13 +187,8 @@ func generateNativeThumb(
 		return "", gtserror.Newf("error decoding file %s: %w", inpath, err)
 	}
 
-	// Resize image to dimens.
-	img = imaging.Resize(img,
-		width, height,
-		imaging.NearestNeighbor,
-	)
-
-	// Apply rotation.
+	// Apply rotation
+	// BEFORE resizing.
 	switch rotation {
 	case 90, -270:
 		img = imaging.Rotate90(img)
@@ -202,6 +197,12 @@ func generateNativeThumb(
 	case -90, 270:
 		img = imaging.Rotate270(img)
 	}
+
+	// Resize image to dimens.
+	img = imaging.Resize(img,
+		width, height,
+		imaging.NearestNeighbor,
+	)
 
 	// Open output file at given path.
 	outfile, err := os.Create(outpath)
