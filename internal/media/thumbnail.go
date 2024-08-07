@@ -38,7 +38,11 @@ func generateThumb(
 		return "", "", gtserror.New("input file missing extension")
 	}
 
+	// Check for the few media types we
+	// have native Go decoding that allow
+	// us to generate thumbs natively.
 	switch {
+
 	case ext == "jpeg":
 		// Replace the "webp" with "jpeg", as we'll
 		// use our native Go thumbnailing generation.
@@ -114,6 +118,8 @@ func generateThumb(
 		return outpath, blurhash, err
 	}
 
+	// The fallback for thumbnail generation, which
+	// encompasses most media types is with ffmpeg.
 	log.Debug(ctx, "generating thumb with ffmpeg")
 	if err := ffmpegGenerateWebpThumb(ctx,
 		filepath,
