@@ -17,6 +17,14 @@ import (
 	"golang.org/x/image/webp"
 )
 
+// generateThumb generates a thumbnail for the
+// input file at path, resizing it to the given
+// dimensions and generating a blurhash if needed.
+// This wraps much of the complex thumbnailing
+// logic in which where possible we use native
+// Go libraries for generating thumbnails, else
+// always falling back to slower but much more
+// widely supportive ffmpeg.
 func generateThumb(
 	ctx context.Context,
 	filepath string,
