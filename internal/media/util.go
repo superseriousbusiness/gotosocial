@@ -29,6 +29,7 @@ import (
 	"codeberg.org/gruf/go-mimetypes"
 )
 
+// getExtension splits file extension from path.
 func getExtension(path string) string {
 	for i := len(path) - 1; i >= 0 && path[i] != '/'; i-- {
 		if path[i] == '.' {

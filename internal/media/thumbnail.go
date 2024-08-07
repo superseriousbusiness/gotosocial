@@ -29,6 +29,7 @@ func generateThumb(
 	ctx context.Context,
 	filepath string,
 	width, height int,
+	rotation int,
 	pixfmt string,
 	needBlurhash bool,
 ) (
@@ -62,6 +63,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
+			rotation,
 			jpeg.Decode,
 			needBlurhash,
 		)
@@ -78,6 +80,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
+			rotation,
 			gif.Decode,
 			needBlurhash,
 		)
@@ -99,6 +102,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
+			rotation,
 			png.Decode,
 			needBlurhash,
 		)
@@ -120,6 +124,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
+			rotation,
 			webp.Decode,
 			needBlurhash,
 		)
@@ -159,6 +164,7 @@ func generateThumb(
 func generateNativeThumb(
 	inpath, outpath string,
 	width, height int,
+	rotation int,
 	decode func(io.Reader) (image.Image, error),
 	needBlurhash bool,
 ) (
@@ -186,6 +192,16 @@ func generateNativeThumb(
 		width, height,
 		imaging.NearestNeighbor,
 	)
+
+	// Apply rotation.
+	switch rotation {
+	case 90, -270:
+		img = imaging.Rotate90(img)
+	case 180, -180:
+		img = imaging.Rotate180(img)
+	case -90, 270:
+		img = imaging.Rotate270(img)
+	}
 
 	// Open output file at given path.
 	outfile, err := os.Create(outpath)
