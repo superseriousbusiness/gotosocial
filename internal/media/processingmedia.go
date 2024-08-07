@@ -230,6 +230,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
 		p.media.FileMeta.Small.Aspect = aspect
 
+		// Determine if blurhash needs generating.
+		needBlurhash := (p.media.Blurhash == "")
 		var newBlurhash string
 
 		// Generate thumbnail, and new blurhash if need from media.
@@ -237,13 +239,13 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			thumbWidth,
 			thumbHeight,
 			result.PixFmt(),
-			(p.media.Blurhash == ""),
+			needBlurhash,
 		)
 		if err != nil {
 			return gtserror.Newf("error generating image thumb: %w", err)
 		}
 
-		if newBlurhash != "" {
+		if needBlurhash {
 			// Set newly determined blurhash.
 			p.media.Blurhash = newBlurhash
 		}
