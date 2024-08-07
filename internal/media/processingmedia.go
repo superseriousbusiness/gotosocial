@@ -230,31 +230,23 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.FileMeta.Small.Size = (thumbWidth * thumbHeight)
 		p.media.FileMeta.Small.Aspect = aspect
 
-		// Generate a thumbnail image from input image path.
-		thumbpath, err = ffmpegGenerateThumb(ctx, temppath,
+		var newBlurhash string
+
+		// Generate thumbnail, and new blurhash if need from media.
+		thumbpath, newBlurhash, err = generateThumb(ctx, temppath,
 			thumbWidth,
 			thumbHeight,
+			result.PixFmt(),
+			(p.media.Blurhash == ""),
 		)
 		if err != nil {
 			return gtserror.Newf("error generating image thumb: %w", err)
 		}
 
-		if p.media.Blurhash == "" {
-			// Generate blurhash (if not already) from thumbnail.
-			p.media.Blurhash, err = generateBlurhash(thumbpath)
-			if err != nil {
-				return gtserror.Newf("error generating thumb blurhash: %w", err)
-			}
+		if newBlurhash != "" {
+			// Set newly determined blurhash.
+			p.media.Blurhash = newBlurhash
 		}
-
-		// Calculate final media attachment thumbnail path.
-		p.media.Thumbnail.Path = uris.StoragePathForAttachment(
-			p.media.AccountID,
-			string(TypeAttachment),
-			string(SizeSmall),
-			p.media.ID,
-			"webp",
-		)
 	}
 
 	// Calculate final media attachment file path.
@@ -279,6 +271,18 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.media.File.FileSize = int(filesz)
 
 	if thumbpath != "" {
+		// Determine final thumbnail ext.
+		thumbExt := getExtension(thumbpath)
+
+		// Calculate final media attachment thumbnail path.
+		p.media.Thumbnail.Path = uris.StoragePathForAttachment(
+			p.media.AccountID,
+			string(TypeAttachment),
+			string(SizeSmall),
+			p.media.ID,
+			thumbExt,
+		)
+
 		// Copy thumbnail file into storage at path.
 		thumbsz, err := p.mgr.state.Storage.PutFile(ctx,
 			p.media.Thumbnail.Path,
@@ -290,6 +294,18 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 		// Set final determined thumbnail size.
 		p.media.Thumbnail.FileSize = int(thumbsz)
+
+		// Determine thumbnail content-type for thumb.
+		p.media.Thumbnail.ContentType = getMimeType(ext)
+
+		// Generate a media attachment thumbnail URL.
+		p.media.Thumbnail.URL = uris.URIForAttachment(
+			p.media.AccountID,
+			string(TypeAttachment),
+			string(SizeSmall),
+			p.media.ID,
+			thumbExt,
+		)
 	}
 
 	// Generate a media attachment URL.
@@ -301,21 +317,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		ext,
 	)
 
-	// Generate a media attachment thumbnail URL.
-	p.media.Thumbnail.URL = uris.URIForAttachment(
-		p.media.AccountID,
-		string(TypeAttachment),
-		string(SizeSmall),
-		p.media.ID,
-		"webp",
-	)
-
 	// Get mimetype for the file container
 	// type, falling back to generic data.
 	p.media.File.ContentType = getMimeType(ext)
-
-	// Set the known thumbnail content type.
-	p.media.Thumbnail.ContentType = "image/webp"
 
 	// We can now consider this cached.
 	p.media.Cached = util.Ptr(true)

@@ -66,26 +66,13 @@ func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 	)
 }
 
-// ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
-func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
-	var outpath string
-
-	// Generate thumb output path REPLACING extension.
-	if i := strings.IndexByte(filepath, '.'); i != -1 {
-		outpath = filepath[:i] + "_thumb.webp"
-	} else {
-		return "", gtserror.New("input file missing extension")
-	}
-
+// ffmpegGenerateWebpThumb generates a thumbnail webp from input media of any type, useful for any media.
+func ffmpegGenerateWebpThumb(ctx context.Context, filepath, outpath string, width, height int, pixfmt string) error {
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
-	// Thumbnail size scaling argument.
-	scale := strconv.Itoa(width) + ":" +
-		strconv.Itoa(height)
-
 	// Generate thumb with ffmpeg.
-	if err := ffmpeg(ctx, dirpath,
+	return ffmpeg(ctx, dirpath,
 
 		// Only log errors.
 		"-loglevel", "error",
@@ -99,15 +86,16 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 
 		// Select thumb from first 10 frames
 		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
-		"-filter:v", "thumbnail=n=10,"+
+		"-filter:v", "thumbnail=n=7,"+
 
 			// scale to dimensions
 			// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
-			"scale="+scale+","+
+			"scale="+strconv.Itoa(width)+
+			":"+strconv.Itoa(height)+","+
 
 			// YUVA 4:2:0 pixel format
 			// (format filter: https://ffmpeg.org/ffmpeg-filters.html#format)
-			"format=pix_fmts=yuva420p",
+			"format=pix_fmts="+pixfmt,
 
 		// Only one frame
 		"-frames:v", "1",
@@ -122,11 +110,7 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 
 		// Output.
 		outpath,
-	); err != nil {
-		return "", err
-	}
-
-	return outpath, nil
+	)
 }
 
 // ffmpegGenerateStatic generates a static png from input image of any type, useful for emoji.
@@ -283,6 +267,7 @@ type audioStream struct {
 
 type videoStream struct {
 	stream
+	pixfmt    string
 	width     int
 	height    int
 	framerate float32
@@ -411,6 +396,17 @@ func (res *result) ImageMeta() (width int, height int, framerate float32) {
 	return
 }
 
+// PixFmt returns the first valid pixel format
+// contained among the result vidoe streams.
+func (res *result) PixFmt() string {
+	for _, str := range res.video {
+		if str.pixfmt != "" {
+			return str.pixfmt
+		}
+	}
+	return ""
+}
+
 // Process converts raw ffprobe result data into our more usable result{} type.
 func (res *ffprobeResult) Process() (*result, error) {
 	if res.Error != nil {
@@ -519,6 +515,7 @@ func (res *ffprobeResult) Process() (*result, error) {
 			// Append video stream data to result.
 			r.video = append(r.video, videoStream{
 				stream:    stream{codec: s.CodecName},
+				pixfmt:    s.PixFmt,
 				width:     s.Width,
 				height:    s.Height,
 				framerate: framerate,
@@ -550,6 +547,7 @@ type ffprobeSideData struct {
 type ffprobeStream struct {
 	CodecName  string `json:"codec_name"`
 	CodecType  string `json:"codec_type"`
+	PixFmt     string `json:"pix_fmt"`
 	RFrameRate string `json:"r_frame_rate"`
 	DurationTS uint   `json:"duration_ts"`
 	Width      int    `json:"width"`
