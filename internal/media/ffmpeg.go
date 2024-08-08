@@ -84,7 +84,8 @@ func ffmpegGenerateWebpThumb(ctx context.Context, filepath, outpath string, widt
 		// (NOT as libwebp_anim).
 		"-codec:v", "libwebp",
 
-		// Select thumb from first 7 frames
+		// Select thumb from first 7 frames.
+		// (in particular <= 7 reduced memory usage, marginally)
 		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
 		"-filter:v", "thumbnail=n=7,"+
 
