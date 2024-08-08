@@ -81,6 +81,7 @@ EXPECT=$(cat << "EOF"
     "db-max-open-conns-multiplier": 3,
     "db-password": "hunter2",
     "db-port": 6969,
+    "db-postgres-connection-string": "",
     "db-sqlite-busy-timeout": 1000000000,
     "db-sqlite-cache-size": 0,
     "db-sqlite-journal-mode": "DELETE",
@@ -88,7 +89,6 @@ EXPECT=$(cat << "EOF"
     "db-tls-ca-cert": "",
     "db-tls-mode": "disable",
     "db-type": "sqlite",
-    "db-url": "",
     "db-user": "sex-haver",
     "dry-run": true,
     "email": "",
@@ -213,7 +213,7 @@ GTS_BIND_ADDRESS='127.0.0.1' \
 GTS_PORT=6969 \
 GTS_TRUSTED_PROXIES='127.0.0.1/32,docker.host.local' \
 GTS_DB_TYPE='sqlite' \
-GTS_DB_URL='' \
+GTS_DB_POSTGRES_CONNECTION_STRING='' \
 GTS_DB_ADDRESS=':memory:' \
 GTS_DB_PORT=6969 \
 GTS_DB_USER='sex-haver' \

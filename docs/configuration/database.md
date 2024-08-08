@@ -44,10 +44,10 @@ grant all privileges on database gotosocial to gotosocial;
 
 GoToSocial makes use of ULIDs (Universally Unique Lexicographically Sortable Identifiers) which will not work in non-English collate environments. For this reason it is important to create the database with `C.UTF-8` locale. To do that on systems which were already initialized with non-C locale, `template0` pristine database template must be used.
 
-If you want to use specific options when connecting to Postgres, you can use `db-url` to define the connection string. If `db-url` is defined, all other database related configuration fields will be ignored. For example, we can use `db-url` to connect to `mySchema`, where the user name is `myUser` and password is `myPass` at `localhost` with the database name of `db`:
+If you want to use specific options when connecting to Postgres, you can use `db-postgres-connection-string` to define the connection string. If `db-postgres-connection-string` is defined, all other database related configuration fields will be ignored. For example, we can use `db-postgres-connection-string` to connect to `mySchema`, where the user name is `myUser` and password is `myPass` at `localhost` with the database name of `db`:
 
 ```yaml
-db-url: 'postgres://myUser:myPass@localhost/db?search_path=mySchema'
+db-postgres-connection-string: 'postgres://myUser:myPass@localhost/db?search_path=mySchema'
 ```
 
 ## Settings
@@ -66,14 +66,6 @@ db-url: 'postgres://myUser:myPass@localhost/db?search_path=mySchema'
 # Options: ["postgres","sqlite"]
 # Default: "postgres"
 db-type: "postgres"
-
-# String. Full Database connection string
-#
-# This connection string is only applicable for Postgres. When this field is defined, all other database related configuration field will be ignored. This field allow you to fine tune connection with Postgres
-# 
-# Examples: ["postgres://user:pass@localhost/db?search_path=gotosocial", "postgres://user:pass@localhost:9999/db"]
-# Default: ""
-db-url: ""
 
 # String. Database address or parameters.
 #
@@ -190,6 +182,14 @@ db-sqlite-cache-size: "8MiB"
 # Examples: ["0s", "1s", "30s", "1m", "5m"]
 # Default: "30m"
 db-sqlite-busy-timeout: "30m"
+
+# String. Full Database connection string
+#
+# This connection string is only applicable for Postgres. When this field is defined, all other database related configuration field will be ignored. This field allow you to fine tune connection with Postgres
+# 
+# Examples: ["postgres://user:pass@localhost/db?search_path=gotosocial", "postgres://user:pass@localhost:9999/db"]
+# Default: ""
+db-postgres-connection-string: ""
 
 cache:
   # cache.memory-target sets a target limit that

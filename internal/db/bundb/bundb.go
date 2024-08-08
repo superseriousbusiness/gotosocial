@@ -396,7 +396,7 @@ func maxOpenConns() int {
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
-	url := config.GetDbURL()
+	url := config.GetDbPostgresConnectionString()
 
 	// if database URL is defined, ignore other DB related configuration fields
 	if url != "" {

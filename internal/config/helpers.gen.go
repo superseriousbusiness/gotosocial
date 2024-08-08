@@ -375,31 +375,6 @@ func GetSoftwareVersion() string { return global.GetSoftwareVersion() }
 // SetSoftwareVersion safely sets the value for global configuration 'SoftwareVersion' field
 func SetSoftwareVersion(v string) { global.SetSoftwareVersion(v) }
 
-// GetDbURL safely fetches the Configuration value for state's 'DbURL' field
-func (st *ConfigState) GetDbURL() (v string) {
-	st.mutex.RLock()
-	v = st.config.DbURL
-	st.mutex.RUnlock()
-	return
-}
-
-// SetDbURL safely sets the Configuration value for state's 'DbURL' field
-func (st *ConfigState) SetDbURL(v string) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.DbURL = v
-	st.reloadToViper()
-}
-
-// DbURLFlag returns the flag name for the 'DbURL' field
-func DbURLFlag() string { return "db-url" }
-
-// GetDbURL safely fetches the value for global configuration 'DbURL' field
-func GetDbURL() string { return global.GetDbURL() }
-
-// SetDbURL safely sets the value for global configuration 'DbURL' field
-func SetDbURL(v string) { global.SetDbURL(v) }
-
 // GetDbType safely fetches the Configuration value for state's 'DbType' field
 func (st *ConfigState) GetDbType() (v string) {
 	st.mutex.RLock()
@@ -724,6 +699,31 @@ func GetDbSqliteBusyTimeout() time.Duration { return global.GetDbSqliteBusyTimeo
 
 // SetDbSqliteBusyTimeout safely sets the value for global configuration 'DbSqliteBusyTimeout' field
 func SetDbSqliteBusyTimeout(v time.Duration) { global.SetDbSqliteBusyTimeout(v) }
+
+// GetDbPostgresConnectionString safely fetches the Configuration value for state's 'DbPostgresConnectionString' field
+func (st *ConfigState) GetDbPostgresConnectionString() (v string) {
+	st.mutex.RLock()
+	v = st.config.DbPostgresConnectionString
+	st.mutex.RUnlock()
+	return
+}
+
+// SetDbPostgresConnectionString safely sets the Configuration value for state's 'DbPostgresConnectionString' field
+func (st *ConfigState) SetDbPostgresConnectionString(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbPostgresConnectionString = v
+	st.reloadToViper()
+}
+
+// DbPostgresConnectionStringFlag returns the flag name for the 'DbPostgresConnectionString' field
+func DbPostgresConnectionStringFlag() string { return "db-postgres-connection-string" }
+
+// GetDbPostgresConnectionString safely fetches the value for global configuration 'DbPostgresConnectionString' field
+func GetDbPostgresConnectionString() string { return global.GetDbPostgresConnectionString() }
+
+// SetDbPostgresConnectionString safely sets the value for global configuration 'DbPostgresConnectionString' field
+func SetDbPostgresConnectionString(v string) { global.SetDbPostgresConnectionString(v) }
 
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
