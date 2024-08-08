@@ -700,6 +700,31 @@ func GetDbSqliteBusyTimeout() time.Duration { return global.GetDbSqliteBusyTimeo
 // SetDbSqliteBusyTimeout safely sets the value for global configuration 'DbSqliteBusyTimeout' field
 func SetDbSqliteBusyTimeout(v time.Duration) { global.SetDbSqliteBusyTimeout(v) }
 
+// GetDbPostgresConnectionString safely fetches the Configuration value for state's 'DbPostgresConnectionString' field
+func (st *ConfigState) GetDbPostgresConnectionString() (v string) {
+	st.mutex.RLock()
+	v = st.config.DbPostgresConnectionString
+	st.mutex.RUnlock()
+	return
+}
+
+// SetDbPostgresConnectionString safely sets the Configuration value for state's 'DbPostgresConnectionString' field
+func (st *ConfigState) SetDbPostgresConnectionString(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.DbPostgresConnectionString = v
+	st.reloadToViper()
+}
+
+// DbPostgresConnectionStringFlag returns the flag name for the 'DbPostgresConnectionString' field
+func DbPostgresConnectionStringFlag() string { return "db-postgres-connection-string" }
+
+// GetDbPostgresConnectionString safely fetches the value for global configuration 'DbPostgresConnectionString' field
+func GetDbPostgresConnectionString() string { return global.GetDbPostgresConnectionString() }
+
+// SetDbPostgresConnectionString safely sets the value for global configuration 'DbPostgresConnectionString' field
+func SetDbPostgresConnectionString(v string) { global.SetDbPostgresConnectionString(v) }
+
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
 	st.mutex.RLock()
