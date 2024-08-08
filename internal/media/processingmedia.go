@@ -238,7 +238,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		thumbpath, newBlurhash, err = generateThumb(ctx, temppath,
 			thumbWidth,
 			thumbHeight,
-			result.rotation,
+			result.orientation,
 			result.PixFmt(),
 			needBlurhash,
 		)

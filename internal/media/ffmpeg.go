@@ -100,10 +100,12 @@ func ffmpegGenerateWebpThumb(ctx context.Context, filepath, outpath string, widt
 		// Only one frame
 		"-frames:v", "1",
 
-		// ~40% webp quality
+		// Quality not specified,
+		// i.e. use default which
+		// should be 75% webp quality.
 		// (codec options: https://ffmpeg.org/ffmpeg-codecs.html#toc-Codec-Options)
 		// (libwebp codec: https://ffmpeg.org/ffmpeg-codecs.html#Options-36)
-		"-qscale:v", "40",
+		// "-qscale:v", "75",
 
 		// Overwrite.
 		"-y",
@@ -206,9 +208,8 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 				// Show specifically stream codec names, types, frame rate, duration, dimens, and pixel format.
 				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height,pix_fmt" + ":" +
 
-				// Show any rotation
-				// side data stored.
-				"side_data=rotation",
+				// Show orientation.
+				"tags=orientation",
 
 			// Limit to reading the first
 			// 1s of data looking for "rotation"
@@ -246,15 +247,35 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 	return res, nil
 }
 
+const (
+	// possible orientation values
+	// specified in "orientation"
+	// tag of images.
+	//
+	// FlipH      = flips horizontally
+	// FlipV      = flips vertically
+	// Transpose  = flips horizontally and rotates 90 counter-clockwise.
+	// Transverse = flips vertically and rotates 90 counter-clockwise.
+	orientationUnspecified = 0
+	orientationNormal      = 1
+	orientationFlipH       = 2
+	orientationRotate180   = 3
+	orientationFlipV       = 4
+	orientationTranspose   = 5
+	orientationRotate270   = 6
+	orientationTransverse  = 7
+	orientationRotate90    = 8
+)
+
 // result contains parsed ffprobe result
 // data in a more useful data format.
 type result struct {
-	format   string
-	audio    []audioStream
-	video    []videoStream
-	duration float64
-	bitrate  uint64
-	rotation int
+	format      string
+	audio       []audioStream
+	video       []videoStream
+	duration    float64
+	bitrate     uint64
+	orientation int
 }
 
 type stream struct {
@@ -388,8 +409,11 @@ func (res *result) ImageMeta() (width int, height int, framerate float32) {
 	// any odd multiples of 90,
 	// flip width / height to
 	// get the correct scale.
-	switch res.rotation {
-	case -90, 90, -270, 270:
+	switch res.orientation {
+	case orientationRotate90,
+		orientationRotate270,
+		orientationTransverse,
+		orientationTranspose:
 		width, height = height, width
 	}
 
@@ -442,37 +466,29 @@ func (res *ffprobeResult) Process() (*result, error) {
 	// Check extra packet / frame information
 	// for provided orientation (not always set).
 	for _, pf := range res.PacketsAndFrames {
-		for _, d := range pf.SideDataList {
 
-			// Ensure frame side
-			// data IS rotation data.
-			if d.Rotation == 0 {
-				continue
-			}
-
-			// Ensure rotation not
-			// already been specified.
-			if r.rotation != 0 {
-				return nil, errors.New("multiple sets of rotation data")
-			}
-
-			// Drop any decimal
-			// rotation value.
-			rot := int(d.Rotation)
-
-			// Round rotation to multiple of 90.
-			// More granularity is not needed.
-			if q := rot % 90; q > 45 {
-				rot += (90 - q)
-			} else {
-				rot -= q
-			}
-
-			// Drop any value above 360
-			// or below -360, these are
-			// just repeat full turns.
-			r.rotation = (rot % 360)
+		// Ensure frame contains tags.
+		if pf.Tags.Orientation == "" {
+			continue
 		}
+
+		// Ensure orientation not
+		// already been specified.
+		if r.orientation != 0 {
+			return nil, errors.New("multiple sets of orientation data")
+		}
+
+		// Trim any space from orientation value.
+		str := strings.TrimSpace(pf.Tags.Orientation)
+
+		// Parse as integer value.
+		i, _ := strconv.Atoi(str)
+		if i <= 0 || i >= 9 {
+			return nil, errors.New("invalid orientation data")
+		}
+
+		// Set orientation.
+		r.orientation = i
 	}
 
 	// Preallocate streams to max possible lengths.
@@ -536,12 +552,12 @@ type ffprobeResult struct {
 }
 
 type ffprobePacketOrFrame struct {
-	Type         string            `json:"type"`
-	SideDataList []ffprobeSideData `json:"side_data_list"`
+	Type string      `json:"type"`
+	Tags ffprobeTags `json:"tags"`
 }
 
-type ffprobeSideData struct {
-	Rotation float64 `json:"rotation"`
+type ffprobeTags struct {
+	Orientation string `json:"orientation"`
 }
 
 type ffprobeStream struct {

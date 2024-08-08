@@ -29,7 +29,7 @@ func generateThumb(
 	ctx context.Context,
 	filepath string,
 	width, height int,
-	rotation int,
+	orientation int,
 	pixfmt string,
 	needBlurhash bool,
 ) (
@@ -63,7 +63,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
-			rotation,
+			orientation,
 			jpeg.Decode,
 			needBlurhash,
 		)
@@ -85,7 +85,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
-			rotation,
+			orientation,
 			gif.Decode,
 			needBlurhash,
 		)
@@ -107,7 +107,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
-			rotation,
+			orientation,
 			png.Decode,
 			needBlurhash,
 		)
@@ -129,7 +129,7 @@ func generateThumb(
 			outpath,
 			width,
 			height,
-			rotation,
+			orientation,
 			webp.Decode,
 			needBlurhash,
 		)
@@ -169,7 +169,7 @@ func generateThumb(
 func generateNativeThumb(
 	inpath, outpath string,
 	width, height int,
-	rotation int,
+	orientation int,
 	decode func(io.Reader) (image.Image, error),
 	needBlurhash bool,
 ) (
@@ -192,15 +192,23 @@ func generateNativeThumb(
 		return "", gtserror.Newf("error decoding file %s: %w", inpath, err)
 	}
 
-	// Apply rotation
-	// BEFORE resizing.
-	switch rotation {
-	case 90, -270:
+	// Apply orientation
+	// BEFORE any resize.
+	switch orientation {
+	case orientationFlipH:
+		img = imaging.FlipH(img)
+	case orientationFlipV:
+		img = imaging.FlipV(img)
+	case orientationRotate90:
 		img = imaging.Rotate90(img)
-	case 180, -180:
+	case orientationRotate180:
 		img = imaging.Rotate180(img)
-	case -90, 270:
+	case orientationRotate270:
 		img = imaging.Rotate270(img)
+	case orientationTranspose:
+		img = imaging.Transpose(img)
+	case orientationTransverse:
+		img = imaging.Transverse(img)
 	}
 
 	// Resize image to dimens.
@@ -216,9 +224,8 @@ func generateNativeThumb(
 	}
 
 	// Encode in-memory image to output file.
-	err = jpeg.Encode(outfile, img, &jpeg.Options{
-		Quality: 70, // good enough for thumb
-	})
+	// (nil uses defaults, i.e. quality=75).
+	err = jpeg.Encode(outfile, img, nil)
 
 	// Done with file.
 	_ = outfile.Close()
