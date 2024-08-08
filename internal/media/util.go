@@ -21,19 +21,23 @@ import (
 	"cmp"
 	"errors"
 	"fmt"
-	"image"
 	"io"
 	"os"
-
-	"golang.org/x/image/webp"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mimetypes"
-
-	"github.com/buckket/go-blurhash"
-	"github.com/disintegration/imaging"
 )
+
+// getExtension splits file extension from path.
+func getExtension(path string) string {
+	for i := len(path) - 1; i >= 0 && path[i] != '/'; i-- {
+		if path[i] == '.' {
+			return path[i+1:]
+		}
+	}
+	return ""
+}
 
 // thumbSize returns the dimensions to use for an input
 // image of given width / height, for its outgoing thumbnail.
@@ -66,44 +70,6 @@ func thumbSize(width, height int, aspect float32) (int, int) {
 	default:
 		return maxThumbWidth, maxThumbHeight
 	}
-}
-
-// webpDecode decodes the WebP at filepath into parsed image.Image.
-func webpDecode(filepath string) (image.Image, error) {
-	// Open the file at given path.
-	file, err := os.Open(filepath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Decode image from file.
-	img, err := webp.Decode(file)
-
-	// Done with file.
-	_ = file.Close()
-
-	return img, err
-}
-
-// generateBlurhash generates a blurhash for JPEG at filepath.
-func generateBlurhash(filepath string) (string, error) {
-	// Decode JPEG file at given path.
-	img, err := webpDecode(filepath)
-	if err != nil {
-		return "", err
-	}
-
-	// for generating blurhashes, it's more cost effective to
-	// lose detail since it's blurry, so make a tiny version.
-	tiny := imaging.Resize(img, 64, 64, imaging.NearestNeighbor)
-
-	// Drop the larger image
-	// ref as soon as possible
-	// to allow GC to claim.
-	img = nil //nolint
-
-	// Generate blurhash for thumbnail.
-	return blurhash.Encode(4, 3, tiny)
 }
 
 // getMimeType returns a suitable mimetype for file extension.

@@ -47,9 +47,14 @@ func clearMetadata(ctx context.Context, filepath string) error {
 		// cleaning exif data using a native Go library.
 		log.Debug(ctx, "cleaning with exif-terminator")
 		err := terminateExif(outpath, filepath, ext)
-		if err != nil {
-			return err
+		if err == nil {
+			// No problem.
+			break
 		}
+
+		log.Warnf(ctx, "error cleaning with exif-terminator, falling back to ffmpeg: %v", err)
+		fallthrough
+
 	default:
 		// For all other types, best-effort clean with ffmpeg.
 		log.Debug(ctx, "cleaning with ffmpeg -map_metadata -1")

@@ -66,26 +66,13 @@ func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 	)
 }
 
-// ffmpegGenerateThumb generates a thumbnail webp from input media of any type, useful for any media.
-func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int) (string, error) {
-	var outpath string
-
-	// Generate thumb output path REPLACING extension.
-	if i := strings.IndexByte(filepath, '.'); i != -1 {
-		outpath = filepath[:i] + "_thumb.webp"
-	} else {
-		return "", gtserror.New("input file missing extension")
-	}
-
+// ffmpegGenerateWebpThumb generates a thumbnail webp from input media of any type, useful for any media.
+func ffmpegGenerateWebpThumb(ctx context.Context, filepath, outpath string, width, height int, pixfmt string) error {
 	// Get directory from filepath.
 	dirpath := path.Dir(filepath)
 
-	// Thumbnail size scaling argument.
-	scale := strconv.Itoa(width) + ":" +
-		strconv.Itoa(height)
-
 	// Generate thumb with ffmpeg.
-	if err := ffmpeg(ctx, dirpath,
+	return ffmpeg(ctx, dirpath,
 
 		// Only log errors.
 		"-loglevel", "error",
@@ -97,36 +84,36 @@ func ffmpegGenerateThumb(ctx context.Context, filepath string, width, height int
 		// (NOT as libwebp_anim).
 		"-codec:v", "libwebp",
 
-		// Select thumb from first 10 frames
+		// Select thumb from first 7 frames.
+		// (in particular <= 7 reduced memory usage, marginally)
 		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
-		"-filter:v", "thumbnail=n=10,"+
+		"-filter:v", "thumbnail=n=7,"+
 
-			// scale to dimensions
+			// Scale to dimensions
 			// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
-			"scale="+scale+","+
+			"scale="+strconv.Itoa(width)+
+			":"+strconv.Itoa(height)+","+
 
-			// YUVA 4:2:0 pixel format
+			// Attempt to use original pixel format
 			// (format filter: https://ffmpeg.org/ffmpeg-filters.html#format)
-			"format=pix_fmts=yuva420p",
+			"format=pix_fmts="+pixfmt,
 
 		// Only one frame
 		"-frames:v", "1",
 
-		// ~40% webp quality
+		// Quality not specified,
+		// i.e. use default which
+		// should be 75% webp quality.
 		// (codec options: https://ffmpeg.org/ffmpeg-codecs.html#toc-Codec-Options)
 		// (libwebp codec: https://ffmpeg.org/ffmpeg-codecs.html#Options-36)
-		"-qscale:v", "40",
+		// "-qscale:v", "75",
 
 		// Overwrite.
 		"-y",
 
 		// Output.
 		outpath,
-	); err != nil {
-		return "", err
-	}
-
-	return outpath, nil
+	)
 }
 
 // ffmpegGenerateStatic generates a static png from input image of any type, useful for emoji.
@@ -219,12 +206,11 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 			// Show specifically container format, total duration and bitrate.
 			"-show_entries", "format=format_name,duration,bit_rate" + ":" +
 
-				// Show specifically stream codec names, types, frame rate, duration and dimens.
-				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height" + ":" +
+				// Show specifically stream codec names, types, frame rate, duration, dimens, and pixel format.
+				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height,pix_fmt" + ":" +
 
-				// Show any rotation
-				// side data stored.
-				"side_data=rotation",
+				// Show orientation.
+				"tags=orientation",
 
 			// Limit to reading the first
 			// 1s of data looking for "rotation"
@@ -262,15 +248,35 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 	return res, nil
 }
 
+const (
+	// possible orientation values
+	// specified in "orientation"
+	// tag of images.
+	//
+	// FlipH      = flips horizontally
+	// FlipV      = flips vertically
+	// Transpose  = flips horizontally and rotates 90 counter-clockwise.
+	// Transverse = flips vertically and rotates 90 counter-clockwise.
+	orientationUnspecified = 0
+	orientationNormal      = 1
+	orientationFlipH       = 2
+	orientationRotate180   = 3
+	orientationFlipV       = 4
+	orientationTranspose   = 5
+	orientationRotate270   = 6
+	orientationTransverse  = 7
+	orientationRotate90    = 8
+)
+
 // result contains parsed ffprobe result
 // data in a more useful data format.
 type result struct {
-	format   string
-	audio    []audioStream
-	video    []videoStream
-	duration float64
-	bitrate  uint64
-	rotation int
+	format      string
+	audio       []audioStream
+	video       []videoStream
+	duration    float64
+	bitrate     uint64
+	orientation int
 }
 
 type stream struct {
@@ -283,6 +289,7 @@ type audioStream struct {
 
 type videoStream struct {
 	stream
+	pixfmt    string
 	width     int
 	height    int
 	framerate float32
@@ -403,12 +410,26 @@ func (res *result) ImageMeta() (width int, height int, framerate float32) {
 	// any odd multiples of 90,
 	// flip width / height to
 	// get the correct scale.
-	switch res.rotation {
-	case -90, 90, -270, 270:
+	switch res.orientation {
+	case orientationRotate90,
+		orientationRotate270,
+		orientationTransverse,
+		orientationTranspose:
 		width, height = height, width
 	}
 
 	return
+}
+
+// PixFmt returns the first valid pixel format
+// contained among the result vidoe streams.
+func (res *result) PixFmt() string {
+	for _, str := range res.video {
+		if str.pixfmt != "" {
+			return str.pixfmt
+		}
+	}
+	return ""
 }
 
 // Process converts raw ffprobe result data into our more usable result{} type.
@@ -446,37 +467,29 @@ func (res *ffprobeResult) Process() (*result, error) {
 	// Check extra packet / frame information
 	// for provided orientation (not always set).
 	for _, pf := range res.PacketsAndFrames {
-		for _, d := range pf.SideDataList {
 
-			// Ensure frame side
-			// data IS rotation data.
-			if d.Rotation == 0 {
-				continue
-			}
-
-			// Ensure rotation not
-			// already been specified.
-			if r.rotation != 0 {
-				return nil, errors.New("multiple sets of rotation data")
-			}
-
-			// Drop any decimal
-			// rotation value.
-			rot := int(d.Rotation)
-
-			// Round rotation to multiple of 90.
-			// More granularity is not needed.
-			if q := rot % 90; q > 45 {
-				rot += (90 - q)
-			} else {
-				rot -= q
-			}
-
-			// Drop any value above 360
-			// or below -360, these are
-			// just repeat full turns.
-			r.rotation = (rot % 360)
+		// Ensure frame contains tags.
+		if pf.Tags.Orientation == "" {
+			continue
 		}
+
+		// Ensure orientation not
+		// already been specified.
+		if r.orientation != 0 {
+			return nil, errors.New("multiple sets of orientation data")
+		}
+
+		// Trim any space from orientation value.
+		str := strings.TrimSpace(pf.Tags.Orientation)
+
+		// Parse as integer value.
+		i, _ := strconv.Atoi(str)
+		if i <= 0 || i >= 9 {
+			return nil, errors.New("invalid orientation data")
+		}
+
+		// Set orientation.
+		r.orientation = i
 	}
 
 	// Preallocate streams to max possible lengths.
@@ -519,6 +532,7 @@ func (res *ffprobeResult) Process() (*result, error) {
 			// Append video stream data to result.
 			r.video = append(r.video, videoStream{
 				stream:    stream{codec: s.CodecName},
+				pixfmt:    s.PixFmt,
 				width:     s.Width,
 				height:    s.Height,
 				framerate: framerate,
@@ -539,17 +553,18 @@ type ffprobeResult struct {
 }
 
 type ffprobePacketOrFrame struct {
-	Type         string            `json:"type"`
-	SideDataList []ffprobeSideData `json:"side_data_list"`
+	Type string      `json:"type"`
+	Tags ffprobeTags `json:"tags"`
 }
 
-type ffprobeSideData struct {
-	Rotation float64 `json:"rotation"`
+type ffprobeTags struct {
+	Orientation string `json:"orientation"`
 }
 
 type ffprobeStream struct {
 	CodecName  string `json:"codec_name"`
 	CodecType  string `json:"codec_type"`
+	PixFmt     string `json:"pix_fmt"`
 	RFrameRate string `json:"r_frame_rate"`
 	DurationTS uint   `json:"duration_ts"`
 	Width      int    `json:"width"`
