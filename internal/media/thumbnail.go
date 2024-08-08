@@ -209,8 +209,9 @@ func generateNativeThumb(
 		return "", gtserror.Newf("error decoding file %s: %w", inpath, err)
 	}
 
-	// Apply orientation
-	// BEFORE any resize.
+	// Apply orientation BEFORE any resize,
+	// as our image dimensions are calculated
+	// taking orientation into account.
 	switch orientation {
 	case orientationFlipH:
 		img = imaging.FlipH(img)
