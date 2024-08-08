@@ -166,7 +166,7 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileOK() {
 	)
 
 	suite.Equal(http.StatusOK, code)
-	suite.Equal("image/webp", headers.Get("content-type"))
+	suite.Equal("image/jpeg", headers.Get("content-type"))
 	suite.Equal(fileInStorage, body)
 }
 
@@ -212,7 +212,7 @@ func (suite *ServeFileTestSuite) TestServeSmallRemoteFileRecache() {
 	)
 
 	suite.Equal(http.StatusOK, code)
-	suite.Equal("image/webp", headers.Get("content-type"))
+	suite.Equal("image/jpeg", headers.Get("content-type"))
 	suite.Equal(fileInStorage, body)
 }
 
