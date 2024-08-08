@@ -69,7 +69,12 @@ func generateThumb(
 		)
 		return outpath, blurhash, err
 
-	case ext == "gif":
+	// We specifically only allow generating native
+	// thumbnails from gif IF it doesn't contain an
+	// alpha channel. We'll ultimately be encoding to
+	// jpeg which doesn't support transparency layers.
+	case ext == "gif" && !containsAlpha(pixfmt):
+
 		// Replace the "webp" with "jpeg", as we'll
 		// use our native Go thumbnailing generation.
 		outpath = outpath[:len(outpath)-4] + "jpeg"

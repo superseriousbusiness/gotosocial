@@ -203,8 +203,8 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 			// Show specifically container format, total duration and bitrate.
 			"-show_entries", "format=format_name,duration,bit_rate" + ":" +
 
-				// Show specifically stream codec names, types, frame rate, duration and dimens.
-				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height" + ":" +
+				// Show specifically stream codec names, types, frame rate, duration, dimens, and pixel format.
+				"stream=codec_name,codec_type,r_frame_rate,duration_ts,width,height,pix_fmt" + ":" +
 
 				// Show any rotation
 				// side data stored.
