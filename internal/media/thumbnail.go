@@ -206,7 +206,7 @@ func generateNativeThumb(
 	// Resize image to dimens.
 	img = imaging.Resize(img,
 		width, height,
-		imaging.NearestNeighbor,
+		imaging.Linear,
 	)
 
 	// Open output file at given path.
