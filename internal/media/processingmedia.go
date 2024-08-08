@@ -298,8 +298,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		// Set final determined thumbnail size.
 		p.media.Thumbnail.FileSize = int(thumbsz)
 
-		// Determine thumbnail content-type for thumb.
-		p.media.Thumbnail.ContentType = getMimeType(ext)
+		// Determine thumbnail content-type from thumb ext.
+		p.media.Thumbnail.ContentType = getMimeType(thumbExt)
 
 		// Generate a media attachment thumbnail URL.
 		p.media.Thumbnail.URL = uris.URIForAttachment(
