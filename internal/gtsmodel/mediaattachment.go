@@ -91,6 +91,7 @@ const (
 	FileTypeImage   FileType = 1 // FileTypeImage is for jpegs, pngs, and standard gifs
 	FileTypeAudio   FileType = 2 // FileTypeAudio is for audio-only files (no video)
 	FileTypeVideo   FileType = 3 // FileTypeVideo is for files with audio + visual
+	FileTypeGifv    FileType = 4 // FileTypeGifv is for short video-only files (20s or less, mp4, no audio).
 )
 
 // String returns a stringified, frontend API compatible form of FileType.
@@ -104,6 +105,8 @@ func (t FileType) String() string {
 		return "audio"
 	case FileTypeVideo:
 		return "video"
+	case FileTypeGifv:
+		return "gifv"
 	default:
 		panic("invalid filetype")
 	}

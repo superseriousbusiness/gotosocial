@@ -99,7 +99,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                     <i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
                     <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
                 </span>
-                {{- if eq .Type "video" }}
+                {{- if or (eq .Type "video") (eq .Type "gifv") }}
                 {{- include "videoPreview" $media | indent 4 }}
                 {{- else if eq .Type "image" }}
                 {{- include "imagePreview" $media | indent 4 }}
@@ -107,11 +107,17 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 {{- include "audioPreview" $media | indent 4 }}
                 {{- end }}
             </summary>
-            {{- if eq .Type "video" }}
+            {{- if or (eq .Type "video") (eq .Type "gifv") }}
             <video
+                {{- if eq .Type "video" }}
                 preload="none"
-                class="plyr-video photoswipe-slide"
+                {{- else }}
+                preload="auto"
+                muted
+                {{- end }}
+                class="plyr-video photoswipe-slide{{- if eq .Type "gifv" }} gifv{{ end }}"
                 controls
+                playsinline
                 data-pswp-index="{{- $index -}}"
                 poster="{{- .PreviewURL -}}"
                 data-pswp-width="{{- $media.Meta.Small.Width -}}px"
@@ -128,6 +134,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
                 preload="none"
                 class="plyr-video photoswipe-slide"
                 controls
+                playsinline
                 data-pswp-index="{{- $index -}}"
                 {{- if and $media.PreviewURL $media.Meta.Small.Width }}
                 poster="{{- .PreviewURL -}}"
