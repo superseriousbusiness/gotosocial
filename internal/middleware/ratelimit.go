@@ -52,7 +52,7 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 	if limit <= 0 {
 		// Rate limiting is disabled.
 		// Return noop middleware.
-		return func(ctx *gin.Context) {}
+		return func(c *gin.Context) {}
 	}
 
 	limiter := limiter.New(
