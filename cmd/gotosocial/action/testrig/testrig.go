@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+//go:build debug || debugenv
+
 package testrig
 
 import (
@@ -52,7 +54,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-// Start creates and starts a gotosocial testrig server
+// Start creates and starts a gotosocial testrig server.
+// This is only enabled in debug builds, else is nil.
 var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.InitTestConfig()
 	testrig.InitTestLog()

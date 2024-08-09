@@ -15,30 +15,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package main
+//go:build !debug && !debugenv
 
-import (
-	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/testrig"
-)
+package testrig
 
-func testrigCommands() *cobra.Command {
-	if testrig.Start != nil {
-		testrigCmd := &cobra.Command{
-			Use:   "testrig",
-			Short: "gotosocial testrig-related tasks",
-		}
+import "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 
-		testrigStartCmd := &cobra.Command{
-			Use:   "start",
-			Short: "start the gotosocial testrig server",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				return run(cmd.Context(), testrig.Start)
-			},
-		}
-
-		testrigCmd.AddCommand(testrigStartCmd)
-		return testrigCmd
-	}
-	return nil
-}
+// Start creates and starts a gotosocial testrig server.
+// This is only enabled in debug builds, else is nil.
+var Start action.GTSAction
