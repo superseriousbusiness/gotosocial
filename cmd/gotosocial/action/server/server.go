@@ -441,17 +441,20 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	gzip := middleware.Gzip() // applied to all except fileserver
 
+	// Idempotency applied only to client / AP.
+	idempotency := middleware.Idempotency()
+
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
 	authModule.Route(route, clLimit, clThrottle, gzip)
-	clientModule.Route(route, clLimit, clThrottle, gzip)
+	clientModule.Route(route, clLimit, clThrottle, idempotency, gzip)
 	metricsModule.Route(route, clLimit, clThrottle, gzip)
 	healthModule.Route(route, clLimit, clThrottle)
 	fileserverModule.Route(route, fsMainLimit, fsThrottle)
 	fileserverModule.RouteEmojis(route, instanceAccount.ID, fsEmojiLimit, fsThrottle)
 	wellKnownModule.Route(route, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(route, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.Route(route, s2sLimit, s2sThrottle, gzip)
+	activityPubModule.Route(route, s2sLimit, s2sThrottle, idempotency, gzip)
 	activityPubModule.RoutePublicKey(route, s2sLimit, pkThrottle, gzip)
 	webModule.Route(route, fsMainLimit, fsThrottle, gzip)
 
