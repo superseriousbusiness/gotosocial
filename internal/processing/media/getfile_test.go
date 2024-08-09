@@ -197,7 +197,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
 	suite.NoError(content.Content.Close())
 
 	suite.Equal(thumbnailBytes, b)
-	suite.Equal("image/webp", content.ContentType)
+	suite.Equal("image/jpeg", content.ContentType)
 	suite.EqualValues(testAttachment.Thumbnail.FileSize, content.ContentLength)
 }
 

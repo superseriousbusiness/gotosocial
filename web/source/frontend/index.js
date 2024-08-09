@@ -26,6 +26,8 @@ const Prism = require("./prism.js");
 Prism.manual = true;
 Prism.highlightAll();
 
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
 let [_, _user, type, id] = window.location.pathname.split("/");
 if (type == "statuses") {
 	let firstStatus = document.getElementsByClassName("thread")[0].children[0];
@@ -49,9 +51,12 @@ new PhotoswipeCaptionPlugin(lightbox, {
 
 lightbox.addFilter('itemData', (item) => {
 	const el = item.element;
-	if (el && el.classList.contains("plyr-video")) {
+	if (
+		el &&
+		el.classList.contains("plyr-video") &&
+		el._plyrContainer !== undefined
+	) {
 		const parentNode = el._plyrContainer.parentNode;
-
 		return {
 			alt: el.getAttribute("alt"),
 			_video: {
@@ -118,13 +123,14 @@ dynamicSpoiler("text-spoiler", (spoiler) => {
 dynamicSpoiler("media-spoiler", (spoiler) => {
 	const eye = spoiler.querySelector(".eye.button");
 	const video = spoiler.querySelector(".plyr-video");
+	const loopingAuto = !reduceMotion.matches && video != null && video.classList.contains("gifv");
 
 	return () => {
 		if (spoiler.open) {
 			eye.setAttribute("aria-label", "Hide media");
 		} else {
 			eye.setAttribute("aria-label", "Show media");
-			if (video) {
+			if (video && !loopingAuto) {
 				video.pause();
 			}
 		}
@@ -132,6 +138,22 @@ dynamicSpoiler("media-spoiler", (spoiler) => {
 });
 
 Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
+	const loopingAuto = !reduceMotion.matches && video.classList.contains("gifv");
+	
+	if (loopingAuto) {
+		// If we're able to play this as a
+		// looping gifv, then do so, else fall
+		// back to user-controllable video player.
+		video.draggable = false;
+		video.autoplay = true;
+		video.loop = true;
+		video.classList.remove("photoswipe-slide");
+		video.classList.remove("plry-video");
+		video.load();
+		video.play();
+		return;
+	}
+	
 	let player = new Plyr(video, {
 		title: video.title,
 		settings: ["loop"],

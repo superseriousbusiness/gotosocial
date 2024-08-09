@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"io"
-	"sync"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/sys"
@@ -66,53 +65,6 @@ func (inst *Instantiator) New(ctx context.Context) (*Instance, error) {
 	}, nil
 }
 
-type InstancePool struct {
-	Instantiator
-
-	pool []*Instance
-	lock sync.Mutex
-}
-
-func (p *InstancePool) Get(ctx context.Context) (*Instance, error) {
-	for {
-		// Check for cached.
-		inst := p.Cached()
-		if inst == nil {
-			break
-		}
-
-		// Check if closed.
-		if inst.IsClosed() {
-			continue
-		}
-
-		return inst, nil
-	}
-
-	// Must create new instance.
-	return p.Instantiator.New(ctx)
-}
-
-func (p *InstancePool) Put(inst *Instance) {
-	if inst.inst != &p.Instantiator {
-		panic("instance and pool instantiators do not match")
-	}
-	p.lock.Lock()
-	p.pool = append(p.pool, inst)
-	p.lock.Unlock()
-}
-
-func (p *InstancePool) Cached() *Instance {
-	var inst *Instance
-	p.lock.Lock()
-	if len(p.pool) > 0 {
-		inst = p.pool[len(p.pool)-1]
-		p.pool = p.pool[:len(p.pool)-1]
-	}
-	p.lock.Unlock()
-	return inst
-}
-
 // Instance ...
 //
 // NOTE: Instance is NOT concurrency
@@ -153,18 +105,14 @@ func (inst *Instance) Run(ctx context.Context, args Args) (uint32, error) {
 
 	// Instantiate the module from precompiled wasm module data.
 	mod, err := inst.wzrt.InstantiateModule(ctx, inst.cmod, modcfg)
-
-	if mod != nil {
-		// Close module.
-		mod.Close(ctx)
-	}
-
-	// Check for a returned exit code error.
-	if err, ok := err.(*sys.ExitError); ok {
+	switch err := err.(type) {
+	case nil:
+		return 0, mod.Close(ctx)
+	case *sys.ExitError:
 		return err.ExitCode(), nil
+	default:
+		return 0, err
 	}
-
-	return 0, err
 }
 
 func (inst *Instance) IsClosed() bool {
