@@ -80,6 +80,9 @@ func Idempotency() gin.HandlerFunc {
 		// request fingerprint along with idempotency
 		// key to ensure uniqueness across logged-in
 		// device sessions regardless of IP.
+		//
+		// NOTE: using the auth header is only an option
+		// because we ONLY support bearer oauth tokens.
 		key = c.Request.Header.Get("Authorization") +
 			c.Request.UserAgent() + key
 
