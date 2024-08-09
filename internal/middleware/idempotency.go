@@ -84,7 +84,10 @@ func Idempotency() gin.HandlerFunc {
 		// NOTE: using the auth header is only an option
 		// because we ONLY support bearer oauth tokens.
 		key = c.Request.Header.Get("Authorization") +
-			c.Request.UserAgent() + key
+			c.Request.UserAgent() +
+			c.Request.Method +
+			c.Request.URL.RequestURI() +
+			key
 
 		// Look for stored response.
 		code, _ := responses.Get(key)
