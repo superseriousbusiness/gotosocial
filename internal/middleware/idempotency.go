@@ -32,6 +32,14 @@ import (
 // https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/
 func Idempotency() gin.HandlerFunc {
 
+	// Prepare response given when request already handled.
+	alreadyHandled, err := json.Marshal(map[string]string{
+		"status": "request already handled",
+	})
+	if err != nil {
+		panic(err)
+	}
+
 	// Prepare expected error response JSON ahead of time.
 	errorConflict, err := json.Marshal(map[string]string{
 		"error": "request already under way",
@@ -96,7 +104,11 @@ func Idempotency() gin.HandlerFunc {
 		// Already handled
 		// this request.
 		default:
-			c.Status(code)
+			apiutil.Data(c,
+				code,
+				apiutil.AppJSON,
+				alreadyHandled,
+			)
 			return
 		}
 
