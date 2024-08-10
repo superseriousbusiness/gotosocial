@@ -26,11 +26,10 @@ type Number interface {
 // Decr performs a safe decrement of
 // n, clamping minimum value at zero.
 func Decr[N Number](n N) N {
-	n--
-	if n < 0 {
-		n = 0
+	if n <= 0 {
+		return 0
 	}
-	return n
+	return n - 1
 }
 
 // Div performs a safe division of
