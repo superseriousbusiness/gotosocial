@@ -319,7 +319,7 @@ func (u *utils) incrementFollowersCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
@@ -346,7 +346,7 @@ func (u *utils) decrementFollowersCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
@@ -378,7 +378,7 @@ func (u *utils) incrementFollowingCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
@@ -405,7 +405,7 @@ func (u *utils) decrementFollowingCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
@@ -437,7 +437,7 @@ func (u *utils) incrementFollowRequestsCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
@@ -464,7 +464,7 @@ func (u *utils) decrementFollowRequestsCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
