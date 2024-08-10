@@ -23,6 +23,16 @@ type Number interface {
 		~uintptr | ~float32 | ~float64
 }
 
+// Decr performs a safe decrement of
+// n, clamping minimum value at zero.
+func Decr[N Number](n N) N {
+	n--
+	if n < 0 {
+		n = 0
+	}
+	return n
+}
+
 // Div performs a safe division of
 // n1 and n2, checking for zero n2. In the
 // case of zero n2, zero is returned.

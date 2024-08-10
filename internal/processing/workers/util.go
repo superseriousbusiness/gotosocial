@@ -256,19 +256,25 @@ func (u *utils) incrementStatusesCount(
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
-	// Update stats by incrementing status
-	// count by one and setting last posted.
+	// Update status meta for account.
 	*account.Stats.StatusesCount++
 	account.Stats.LastStatusAt = status.CreatedAt
-	if err := u.state.DB.UpdateAccountStats(
-		ctx,
+
+	if !status.PinnedAt.IsZero() {
+		// Update status pinned count for account.
+		*account.Stats.StatusesPinnedCount++
+	}
+
+	// Update details in the database for stats.
+	if err := u.state.DB.UpdateAccountStats(ctx,
 		account.Stats,
 		"statuses_count",
+		"statuses_pinned_count",
 		"last_status_at",
 	); err != nil {
 		return gtserror.Newf("db error updating account stats: %w", err)
@@ -280,28 +286,30 @@ func (u *utils) incrementStatusesCount(
 func (u *utils) decrementStatusesCount(
 	ctx context.Context,
 	account *gtsmodel.Account,
+	status *gtsmodel.Status,
 ) error {
 	// Lock on this account since we're changing stats.
 	unlock := u.state.ProcessingLocks.Lock(account.URI)
 	defer unlock()
 
-	// Populate stats.
+	// Ensure account stats are populated.
 	if err := u.state.DB.PopulateAccountStats(ctx, account); err != nil {
 		return gtserror.Newf("db error getting account stats: %w", err)
 	}
 
-	// Update stats by decrementing
-	// status count by one.
-	//
-	// Clamp to 0 to avoid funny business.
-	*account.Stats.StatusesCount--
-	if *account.Stats.StatusesCount < 0 {
-		*account.Stats.StatusesCount = 0
+	// Update status meta for account (safely checking for zero value).
+	*account.Stats.StatusesCount = util.Decr(*account.Stats.StatusesCount)
+
+	if !status.PinnedAt.IsZero() {
+		// Update status pinned count for account (safely checking for zero value).
+		*account.Stats.StatusesPinnedCount = util.Decr(*account.Stats.StatusesPinnedCount)
 	}
-	if err := u.state.DB.UpdateAccountStats(
-		ctx,
+
+	// Update details in the database for stats.
+	if err := u.state.DB.UpdateAccountStats(ctx,
 		account.Stats,
 		"statuses_count",
+		"statuses_pinned_count",
 	); err != nil {
 		return gtserror.Newf("db error updating account stats: %w", err)
 	}

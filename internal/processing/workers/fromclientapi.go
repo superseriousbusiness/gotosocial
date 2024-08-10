@@ -251,10 +251,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 	// If pending approval is true then status must
 	// reply to a status (either one of ours or a
 	// remote) that requires approval for the reply.
-	pendingApproval := util.PtrOrValue(
-		status.PendingApproval,
-		false,
-	)
+	pendingApproval := util.PtrOrZero(status.PendingApproval)
 
 	switch {
 	case pendingApproval && !status.PreApproved:
@@ -816,7 +813,7 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 	}
 
 	// Update stats for the origin account.
-	if err := p.utils.decrementStatusesCount(ctx, cMsg.Origin); err != nil {
+	if err := p.utils.decrementStatusesCount(ctx, cMsg.Origin, status); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
@@ -873,7 +870,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	}
 
 	// Update stats for the origin account.
-	if err := p.utils.decrementStatusesCount(ctx, cMsg.Origin); err != nil {
+	if err := p.utils.decrementStatusesCount(ctx, cMsg.Origin, status); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
