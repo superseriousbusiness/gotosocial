@@ -65,7 +65,7 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 func (suite *ASToInternalTestSuite) TestParsePerson() {
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "", "")
 	suite.NoError(err)
 
 	suite.Equal("https://unknown-instance.com/users/brand_new_person", acct.URI)
@@ -87,7 +87,7 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 func (suite *ASToInternalTestSuite) TestParsePersonWithSharedInbox() {
 	testPerson := suite.testPeople["https://turnip.farm/users/turniplover6969"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "", "")
 	suite.NoError(err)
 
 	suite.Equal("https://turnip.farm/users/turniplover6969", acct.URI)
@@ -145,7 +145,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 		suite.FailNow("type not coercible")
 	}
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", "")
 	suite.NoError(err)
 	suite.Equal("https://mastodon.social/inbox", *acct.SharedInboxURI)
 	suite.Equal([]string{"https://tooting.ai/users/Gargron"}, acct.AlsoKnownAsURIs)
@@ -196,7 +196,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 		suite.FailNow("type not coercible")
 	}
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", "")
 	suite.NoError(err)
 
 	suite.Equal("rgh", acct.Username)
@@ -547,7 +547,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 		suite.FailNow("type not coercible")
 	}
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", "")
 	suite.NoError(err)
 	suite.Equal("https://honk.example.org/u/honk_user/followers", acct.FollowersURI)
 	suite.Equal("https://honk.example.org/u/honk_user/following", acct.FollowingURI)

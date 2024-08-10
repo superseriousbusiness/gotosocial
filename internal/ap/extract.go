@@ -195,17 +195,12 @@ func ExtractPollOptionables(arr []TypeOrIRI) ([]PollOptionable, []TypeOrIRI) {
 // ExtractPreferredUsername returns a string representation of
 // an interface's preferredUsername property. Will return an
 // error if preferredUsername is nil, not a string, or empty.
-func ExtractPreferredUsername(i WithPreferredUsername) (string, error) {
+func ExtractPreferredUsername(i WithPreferredUsername) string {
 	u := i.GetActivityStreamsPreferredUsername()
 	if u == nil || !u.IsXMLSchemaString() {
-		return "", gtserror.New("preferredUsername nil or not a string")
+		return ""
 	}
-
-	if u.GetXMLSchemaString() == "" {
-		return "", gtserror.New("preferredUsername was empty")
-	}
-
-	return u.GetXMLSchemaString(), nil
+	return u.GetXMLSchemaString()
 }
 
 // ExtractName returns the first string representation it
