@@ -265,16 +265,10 @@ func (u *utils) incrementStatusesCount(
 	*account.Stats.StatusesCount++
 	account.Stats.LastStatusAt = status.CreatedAt
 
-	if !status.PinnedAt.IsZero() {
-		// Update status pinned count for account.
-		*account.Stats.StatusesPinnedCount++
-	}
-
 	// Update details in the database for stats.
 	if err := u.state.DB.UpdateAccountStats(ctx,
 		account.Stats,
 		"statuses_count",
-		"statuses_pinned_count",
 		"last_status_at",
 	); err != nil {
 		return gtserror.Newf("db error updating account stats: %w", err)
