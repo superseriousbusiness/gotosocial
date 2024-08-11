@@ -845,7 +845,7 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	}
 
 	// Update stats for the remote account.
-	if err := p.utils.decrementStatusesCount(ctx, fMsg.Requesting); err != nil {
+	if err := p.utils.decrementStatusesCount(ctx, fMsg.Requesting, status); err != nil {
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
