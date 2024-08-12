@@ -230,7 +230,7 @@ func (msg *FromFediAPI) Serialize() ([]byte, error) {
 
 	// Set serialized AP object data if set.
 	if t, ok := msg.APObject.(vocab.Type); ok {
-		obj, err := t.Serialize()
+		obj, err := streams.Serialize(t)
 		if err != nil {
 			return nil, err
 		}
