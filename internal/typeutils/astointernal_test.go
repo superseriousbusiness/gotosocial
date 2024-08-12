@@ -651,6 +651,62 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.False(*dbAcct.Discoverable)
 }
 
+func (suite *ASToInternalTestSuite) TestParseAccountableWithoutPreferredUsername() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
+	// preferredUsername := "newish_person_actually"
+	username := "brand_new_person"
+
+	// Specifically unset the preferred_username field.
+	testPerson.SetActivityStreamsPreferredUsername(nil)
+
+	// Attempt to parse account model from ActivityStreams.
+	// This should fall back to the passed username argument as no preferred_username is set.
+	acc, err := suite.typeconverter.ASRepresentationToAccount(ctx, testPerson, "", username)
+	suite.NoError(err)
+	suite.Equal(acc.Username, username)
+}
+
+func (suite *ASToInternalTestSuite) TestParseAccountableWithoutAnyUsername() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
+	// preferredUsername := "newish_person_actually"
+	// username := "brand_new_person"
+
+	// Specifically unset the preferred_username field.
+	testPerson.SetActivityStreamsPreferredUsername(nil)
+
+	// Attempt to parse account model from ActivityStreams.
+	// This should return error as we provide no username and no preferred_username is set.
+	acc, err := suite.typeconverter.ASRepresentationToAccount(ctx, testPerson, "", "")
+	suite.Equal(err.Error(), "ASRepresentationToAccount: missing username for https://unknown-instance.com/users/brand_new_person")
+	suite.Nil(acc)
+}
+
+func (suite *ASToInternalTestSuite) TestParseAccountableWithPreferredUsername() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
+	preferredUsername := "newish_person_actually"
+	username := "brand_new_person"
+
+	// Specifically set a known preferred_username field.
+	prop := streams.NewActivityStreamsPreferredUsernameProperty()
+	prop.SetXMLSchemaString(preferredUsername)
+	testPerson.SetActivityStreamsPreferredUsername(prop)
+
+	// Attempt to parse account model from ActivityStreams.
+	// This should use the ActivityStreams preferred_username, instead of the passed argument.
+	acc, err := suite.typeconverter.ASRepresentationToAccount(ctx, testPerson, "", username)
+	suite.NoError(err)
+	suite.Equal(acc.Username, preferredUsername)
+}
+
 func TestASToInternalTestSuite(t *testing.T) {
 	suite.Run(t, new(ASToInternalTestSuite))
 }
