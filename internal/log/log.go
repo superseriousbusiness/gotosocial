@@ -20,6 +20,7 @@ package log
 import (
 	"context"
 	"fmt"
+	"github.com/go-logr/logr"
 	"log/syslog"
 	"os"
 	"strings"
@@ -312,4 +313,99 @@ func args(count int) string {
 	}
 
 	return buf.String()
+}
+
+func toFields(keysAndValues ...any) []kv.Field {
+	fields := make([]kv.Field, 0, (len(keysAndValues)+1)/2) // Preallocate slice to half of the input length plus one for odd cases.
+	for i := 0; i < len(keysAndValues); i += 2 {
+		if i+1 < len(keysAndValues) {
+			fields = append(fields, kv.Field{
+				K: fmt.Sprint(keysAndValues[i]),
+				V: keysAndValues[i+1],
+			})
+		} else {
+			fields = append(fields, kv.Field{
+				K: fmt.Sprint(keysAndValues[i]),
+				V: nil,
+			})
+		}
+	}
+	return fields
+}
+
+// int log level mapping from https://pkg.go.dev/go.opentelemetry.io/otel/internal/global#SetLogger
+// "To see Warn messages use a logger with `l.V(1).Enabled() == true`
+// To see Info messages use a logger with `l.V(4).Enabled() == true`
+// To see Debug messages use a logger with `l.V(8).Enabled() == true`."
+func otelLogLevelToGoLoggerLevel(lvl int) level.LEVEL {
+	switch lvl {
+	case 0:
+		return level.ERROR
+	case 1:
+		return level.WARN
+	case 4:
+		return level.INFO
+	case 8:
+		return level.DEBUG
+	default:
+		return level.INFO
+	}
+}
+
+type LogrSink struct {
+	ctx    context.Context
+	fields []kv.Field
+	name   string
+}
+
+// Ensure Logger implements logr.LogSink
+var _ logr.LogSink = &LogrSink{}
+
+func (l LogrSink) Init(_ logr.RuntimeInfo) {
+	return
+}
+
+func (l LogrSink) Enabled(level int) bool {
+	return otelLogLevelToGoLoggerLevel(level) <= loglvl
+}
+
+func (l LogrSink) Info(level int, msg string, keysAndValues ...any) {
+	fields := toFields(keysAndValues...)
+	logf(l.ctx, 5, otelLogLevelToGoLoggerLevel(level), fields, msg)
+}
+
+func (l LogrSink) Error(_ error, msg string, keysAndValues ...any) {
+	fields := toFields(keysAndValues...)
+	logf(l.ctx, 5, level.ERROR, fields, msg)
+}
+
+func (l LogrSink) WithValues(keysAndValues ...any) logr.LogSink {
+	fields := l.fields
+	fields = append(fields, toFields(keysAndValues...)...)
+	return &LogrSink{
+		ctx:    l.ctx,
+		fields: fields,
+		name:   l.name,
+	}
+}
+
+func (l LogrSink) WithName(name string) logr.LogSink {
+	newName := l.name
+	if newName != "" {
+		newName += "/"
+	}
+	newName += name
+	return &LogrSink{
+		ctx:    l.ctx,
+		fields: l.fields,
+		name:   newName,
+	}
+}
+
+func NewLogrSink() logr.LogSink {
+	return &LogrSink{}
+}
+
+func NewLogrLogger() logr.Logger {
+	return logr.New(NewLogrSink())
 }

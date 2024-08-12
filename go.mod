@@ -34,6 +34,7 @@ require (
 	github.com/gin-contrib/gzip v1.0.1
 	github.com/gin-contrib/sessions v1.0.1
 	github.com/gin-gonic/gin v1.10.0
+	github.com/go-logr/logr v1.4.1
 	github.com/go-playground/form/v4 v4.2.1
 	github.com/go-swagger/go-swagger v0.31.0
 	github.com/google/go-cmp v0.6.0
@@ -122,7 +123,6 @@ require (
 	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.2 // indirect
-	github.com/go-logr/logr v1.4.1 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/analysis v0.23.0 // indirect
 	github.com/go-openapi/errors v0.22.0 // indirect

@@ -55,6 +55,9 @@ func Initialize() error {
 
 	insecure := config.GetTracingInsecureTransport()
 
+	// Log internal OTEL logs
+	otel.SetLogger(log.NewLogrLogger())
+
 	var tpo trace.TracerProviderOption
 	switch config.GetTracingTransport() {
 	case "grpc":
