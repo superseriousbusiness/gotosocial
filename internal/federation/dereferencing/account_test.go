@@ -226,7 +226,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithNonMatchingURI() 
 		fetchingAccount.Username,
 		testrig.URLMustParse(remoteAltURI),
 	)
-	suite.Equal(err.Error(), fmt.Sprintf("enrichAccount: dereferenced account uri %s does not match %s", remoteURI, remoteAltURI))
+	suite.Equal(err.Error(), fmt.Sprintf("enrichAccount: account uri %s does not match %s", remoteURI, remoteAltURI))
 	suite.Nil(fetchedAccount)
 }
 
