@@ -674,8 +674,13 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 		fMsg.Receiving.Username,
 		account,
 		apubAcc,
-		// Force refresh within 5min window.
-		dereferencing.Fresh,
+
+		// Force refresh within 10s window.
+		//
+		// Missing account updates could be
+		// detrimental to federation if they
+		// include public key changes.
+		dereferencing.Freshest,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error refreshing account: %v", err)
