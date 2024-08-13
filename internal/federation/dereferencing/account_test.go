@@ -19,11 +19,17 @@ package dereferencing_test
 
 import (
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"net/url"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -226,10 +232,172 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithNonMatchingURI() 
 		fetchingAccount.Username,
 		testrig.URLMustParse(remoteAltURI),
 	)
-	suite.Equal(err.Error(), fmt.Sprintf("enrichAccount: dereferenced account uri %s does not match %s", remoteURI, remoteAltURI))
+	suite.Equal(err.Error(), fmt.Sprintf("enrichAccount: account uri %s does not match %s", remoteURI, remoteAltURI))
 	suite.Nil(fetchedAccount)
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithUnexpectedKeyChange() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	fetchingAcc := suite.testAccounts["local_account_1"]
+	remoteURI := "https://turnip.farm/users/turniplover6969"
+
+	// Fetch the remote account to load into the database.
+	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
+		fetchingAcc.Username,
+		testrig.URLMustParse(remoteURI),
+	)
+	suite.NoError(err)
+	suite.NotNil(remoteAcc)
+
+	// Mark account as requiring a refetch.
+	remoteAcc.FetchedAt = time.Time{}
+	err = suite.state.DB.UpdateAccount(ctx, remoteAcc, "fetched_at")
+	suite.NoError(err)
+
+	// Update remote to have an unexpected different key.
+	remotePerson := suite.client.TestRemotePeople[remoteURI]
+	setPublicKey(remotePerson,
+		remoteURI,
+		fetchingAcc.PublicKeyURI+".unique",
+		fetchingAcc.PublicKey,
+	)
+
+	// Force refresh account expecting key change error.
+	_, _, err = suite.dereferencer.RefreshAccount(ctx,
+		fetchingAcc.Username,
+		remoteAcc,
+		nil,
+		nil,
+	)
+	suite.Equal(err.Error(), fmt.Sprintf("RefreshAccount: enrichAccount: account %s pubkey has changed (key rotation required?)", remoteURI))
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithExpectedKeyChange() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	fetchingAcc := suite.testAccounts["local_account_1"]
+	remoteURI := "https://turnip.farm/users/turniplover6969"
+
+	// Fetch the remote account to load into the database.
+	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
+		fetchingAcc.Username,
+		testrig.URLMustParse(remoteURI),
+	)
+	suite.NoError(err)
+	suite.NotNil(remoteAcc)
+
+	// Expire the remote account's public key.
+	remoteAcc.PublicKeyExpiresAt = time.Now()
+	remoteAcc.FetchedAt = time.Time{} // force fetch
+	err = suite.state.DB.UpdateAccount(ctx, remoteAcc, "fetched_at", "public_key_expires_at")
+	suite.NoError(err)
+
+	// Update remote to have a different stored public key.
+	remotePerson := suite.client.TestRemotePeople[remoteURI]
+	setPublicKey(remotePerson,
+		remoteURI,
+		fetchingAcc.PublicKeyURI+".unique",
+		fetchingAcc.PublicKey,
+	)
+
+	// Refresh account expecting a succesful refresh with changed keys!
+	updatedAcc, apAcc, err := suite.dereferencer.RefreshAccount(ctx,
+		fetchingAcc.Username,
+		remoteAcc,
+		nil,
+		nil,
+	)
+	suite.NoError(err)
+	suite.NotNil(apAcc)
+	suite.True(updatedAcc.PublicKey.Equal(fetchingAcc.PublicKey))
+}
+
+func (suite *AccountTestSuite) TestRefreshFederatedRemoteAccountWithKeyChange() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	fetchingAcc := suite.testAccounts["local_account_1"]
+	remoteURI := "https://turnip.farm/users/turniplover6969"
+
+	// Fetch the remote account to load into the database.
+	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
+		fetchingAcc.Username,
+		testrig.URLMustParse(remoteURI),
+	)
+	suite.NoError(err)
+	suite.NotNil(remoteAcc)
+
+	// Update remote to have a different stored public key.
+	remotePerson := suite.client.TestRemotePeople[remoteURI]
+	setPublicKey(remotePerson,
+		remoteURI,
+		fetchingAcc.PublicKeyURI+".unique",
+		fetchingAcc.PublicKey,
+	)
+
+	// Refresh account expecting a succesful refresh with changed keys!
+	// By passing in the remote person model this indicates that the data
+	// was received via the federator, which should trust any key change.
+	updatedAcc, apAcc, err := suite.dereferencer.RefreshAccount(ctx,
+		fetchingAcc.Username,
+		remoteAcc,
+		remotePerson,
+		nil,
+	)
+	suite.NoError(err)
+	suite.NotNil(apAcc)
+	suite.True(updatedAcc.PublicKey.Equal(fetchingAcc.PublicKey))
 }
 
 func TestAccountTestSuite(t *testing.T) {
 	suite.Run(t, new(AccountTestSuite))
+}
+
+func setPublicKey(person vocab.ActivityStreamsPerson, ownerURI, keyURI string, key *rsa.PublicKey) {
+	profileIDURI, err := url.Parse(ownerURI)
+	if err != nil {
+		panic(err)
+	}
+
+	publicKeyURI, err := url.Parse(keyURI)
+	if err != nil {
+		panic(err)
+	}
+
+	publicKeyProp := streams.NewW3IDSecurityV1PublicKeyProperty()
+
+	// create the public key
+	publicKey := streams.NewW3IDSecurityV1PublicKey()
+
+	// set ID for the public key
+	publicKeyIDProp := streams.NewJSONLDIdProperty()
+	publicKeyIDProp.SetIRI(publicKeyURI)
+	publicKey.SetJSONLDId(publicKeyIDProp)
+
+	// set owner for the public key
+	publicKeyOwnerProp := streams.NewW3IDSecurityV1OwnerProperty()
+	publicKeyOwnerProp.SetIRI(profileIDURI)
+	publicKey.SetW3IDSecurityV1Owner(publicKeyOwnerProp)
+
+	// set the pem key itself
+	encodedPublicKey, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		panic(err)
+	}
+	publicKeyBytes := pem.EncodeToMemory(&pem.Block{
+		Type:  "PUBLIC KEY",
+		Bytes: encodedPublicKey,
+	})
+	publicKeyPEMProp := streams.NewW3IDSecurityV1PublicKeyPemProperty()
+	publicKeyPEMProp.Set(string(publicKeyBytes))
+	publicKey.SetW3IDSecurityV1PublicKeyPem(publicKeyPEMProp)
+
+	// append the public key to the public key property
+	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
+
+	// set the public key property on the Person
+	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
 }

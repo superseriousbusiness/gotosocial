@@ -341,7 +341,7 @@ func (d *Dereferencer) RefreshAccount(
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
-		return nil, nil, gtserror.Newf("error enriching remote account: %w", err)
+		return nil, nil, gtserror.Newf("%w", err)
 	}
 
 	if accountable != nil {
@@ -600,7 +600,9 @@ func (d *Dereferencer) enrichAccount(
 	d.startHandshake(requestUser, uri)
 	defer d.stopHandshake(requestUser, uri)
 
-	if apubAcc == nil {
+	var resolve bool
+
+	if resolve = (apubAcc == nil); resolve {
 		// We were not given any (partial) ActivityPub
 		// version of this account as a parameter.
 		// Dereference latest version of the account.
@@ -732,14 +734,23 @@ func (d *Dereferencer) enrichAccount(
 		)...,
 	); err != nil {
 		return nil, nil, gtserror.Newf(
-			"error checking dereferenced account uri %s: %w",
+			"error checking account uri %s: %w",
 			latestAcc.URI, err,
 		)
 	} else if !matches {
 		return nil, nil, gtserror.Newf(
-			"dereferenced account uri %s does not match %s",
+			"account uri %s does not match %s",
 			latestAcc.URI, uri.String(),
 		)
+	}
+
+	// Get current time.
+	now := time.Now()
+
+	// Before expending any further serious compute, we need
+	// to ensure account keys haven't unexpectedly been changed.
+	if !verifyAccountKeysOnUpdate(account, latestAcc, now, !resolve) {
+		return nil, nil, gtserror.Newf("account %s pubkey has changed (key rotation required?)", uri)
 	}
 
 	/*
@@ -753,7 +764,8 @@ func (d *Dereferencer) enrichAccount(
 	// Ensure internal db ID is
 	// set and update fetch time.
 	latestAcc.ID = account.ID
-	latestAcc.FetchedAt = time.Now()
+	latestAcc.FetchedAt = now
+	latestAcc.UpdatedAt = now
 
 	// Ensure the account's avatar media is populated, passing in existing to check for chages.
 	if err := d.fetchAccountAvatar(ctx, requestUser, account, latestAcc); err != nil {
@@ -772,13 +784,10 @@ func (d *Dereferencer) enrichAccount(
 
 	if account.IsNew() {
 		// Prefer published/created time from
-		// apubAcc, fall back to FetchedAt value.
+		// apubAcc, fall back to current time.
 		if latestAcc.CreatedAt.IsZero() {
-			latestAcc.CreatedAt = latestAcc.FetchedAt
+			latestAcc.CreatedAt = now
 		}
-
-		// Set time of update from the last-fetched date.
-		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is new, put it in the database.
 		err := d.state.DB.PutAccount(ctx, latestAcc)
@@ -791,9 +800,6 @@ func (d *Dereferencer) enrichAccount(
 		if latestAcc.CreatedAt.IsZero() {
 			latestAcc.CreatedAt = account.CreatedAt
 		}
-
-		// Set time of update from the last-fetched date.
-		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is an existing account, update the model in the database.
 		if err := d.state.DB.UpdateAccount(ctx, latestAcc); err != nil {
