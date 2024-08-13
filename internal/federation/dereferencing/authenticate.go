@@ -34,7 +34,8 @@ func verifyAccountKeysOnUpdate(existing, latest *gtsmodel.Account, now time.Time
 	}
 
 	// Ensure that public keys have not changed.
-	if existing.PublicKey.Equal(latest.PublicKey) {
+	if existing.PublicKey.Equal(latest.PublicKey) &&
+		existing.PublicKeyURI == latest.PublicKeyURI {
 		return true
 	}
 

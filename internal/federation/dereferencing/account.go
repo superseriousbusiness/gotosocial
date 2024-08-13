@@ -341,7 +341,7 @@ func (d *Dereferencer) RefreshAccount(
 	)
 	if err != nil {
 		log.Errorf(ctx, "error enriching remote account: %v", err)
-		return nil, nil, gtserror.Newf("error enriching remote account: %w", err)
+		return nil, nil, gtserror.Newf("%w", err)
 	}
 
 	if accountable != nil {
@@ -747,7 +747,7 @@ func (d *Dereferencer) enrichAccount(
 
 	// Before expending any further serious compute, we need
 	// to ensure account keys haven't unexpectedly been changed.
-	if verifyAccountKeysOnUpdate(account, latestAcc, now) {
+	if !verifyAccountKeysOnUpdate(account, latestAcc, now) {
 		return nil, nil, gtserror.Newf("account %s pubkey has changed (key rotation required?)", uri)
 	}
 
