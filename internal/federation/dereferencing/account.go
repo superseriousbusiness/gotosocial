@@ -742,11 +742,12 @@ func (d *Dereferencer) enrichAccount(
 		)
 	}
 
-	// Before we expend any further serious compute on
-	// enriching this account model, we need to check
-	// that the account signing key has remained the same.
-	if account.PublicKey != nil &&
-		!account.PublicKey.Equal(latestAcc.PublicKey) {
+	// Get current time.
+	now := time.Now()
+
+	// Before expending any further serious compute, we need
+	// to ensure account keys haven't unexpectedly been changed.
+	if verifyAccountKeysOnUpdate(account, latestAcc, now) {
 		return nil, nil, gtserror.Newf("account %s pubkey has changed (key rotation required?)", uri)
 	}
 
@@ -761,7 +762,8 @@ func (d *Dereferencer) enrichAccount(
 	// Ensure internal db ID is
 	// set and update fetch time.
 	latestAcc.ID = account.ID
-	latestAcc.FetchedAt = time.Now()
+	latestAcc.FetchedAt = now
+	latestAcc.UpdatedAt = now
 
 	// Ensure the account's avatar media is populated, passing in existing to check for chages.
 	if err := d.fetchAccountAvatar(ctx, requestUser, account, latestAcc); err != nil {
@@ -780,13 +782,10 @@ func (d *Dereferencer) enrichAccount(
 
 	if account.IsNew() {
 		// Prefer published/created time from
-		// apubAcc, fall back to FetchedAt value.
+		// apubAcc, fall back to current time.
 		if latestAcc.CreatedAt.IsZero() {
-			latestAcc.CreatedAt = latestAcc.FetchedAt
+			latestAcc.CreatedAt = now
 		}
-
-		// Set time of update from the last-fetched date.
-		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is new, put it in the database.
 		err := d.state.DB.PutAccount(ctx, latestAcc)
@@ -799,9 +798,6 @@ func (d *Dereferencer) enrichAccount(
 		if latestAcc.CreatedAt.IsZero() {
 			latestAcc.CreatedAt = account.CreatedAt
 		}
-
-		// Set time of update from the last-fetched date.
-		latestAcc.UpdatedAt = latestAcc.FetchedAt
 
 		// This is an existing account, update the model in the database.
 		if err := d.state.DB.UpdateAccount(ctx, latestAcc); err != nil {
