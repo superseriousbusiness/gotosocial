@@ -48,19 +48,18 @@ func DePunify(domain string) (string, error) {
 // any of the given URIs, taking account of punycode.
 func URIMatches(expect *url.URL, uris ...*url.URL) (bool, error) {
 	// Normalize expect to punycode.
-	expectPuny, err := PunifyURI(expect)
+	expectStr, err := PunifyURIToStr(expect)
 	if err != nil {
 		return false, err
 	}
-	expectStr := expectPuny.String()
 
 	for _, uri := range uris {
-		uriPuny, err := PunifyURI(uri)
+		uriStr, err := PunifyURIToStr(uri)
 		if err != nil {
 			return false, err
 		}
 
-		if uriPuny.String() == expectStr {
+		if uriStr == expectStr {
 			// Looks good.
 			return true, nil
 		}
@@ -73,40 +72,26 @@ func URIMatches(expect *url.URL, uris ...*url.URL) (bool, error) {
 // PunifyURI returns a copy of the given URI
 // with the 'host' part converted to punycode.
 func PunifyURI(in *url.URL) (*url.URL, error) {
-	// Take a copy of in.
+	punyHost, err := Punify(in.Host)
+	if err != nil {
+		return nil, err
+	}
 	out := new(url.URL)
 	*out = *in
-
-	// Normalize host to punycode.
-	var err error
-	out.Host, err = Punify(in.Host)
-	return out, err
+	out.Host = punyHost
+	return out, nil
 }
 
-// PunifyURIStr returns a copy of the given URI
-// string with the 'host' part converted to punycode.
-func PunifyURIStr(in string) (string, error) {
-	inURI, err := url.Parse(in)
+// PunifyURIToStr returns given URI serialized
+// with the 'host' part converted to punycode.
+func PunifyURIToStr(in *url.URL) (string, error) {
+	punyHost, err := Punify(in.Host)
 	if err != nil {
 		return "", err
 	}
-
-	outURIPuny, err := Punify(inURI.Host)
-	if err != nil {
-		return "", err
-	}
-
-	if outURIPuny == in {
-		// Punify did nothing, so in was
-		// already punified, return as-is.
-		return in, nil
-	}
-
-	// Take a copy of in.
-	outURI := new(url.URL)
-	*outURI = *inURI
-
-	// Normalize host to punycode.
-	outURI.Host = outURIPuny
-	return outURI.String(), err
+	oldHost := in.Host
+	in.Host = punyHost
+	str := in.String()
+	in.Host = oldHost
+	return str, nil
 }

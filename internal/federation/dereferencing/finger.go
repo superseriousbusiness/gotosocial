@@ -45,6 +45,7 @@ func (d *Dereferencer) fingerRemoteAccount(
 	username string,
 	host string,
 ) (
+	string, // discovered username
 	string, // discovered account domain
 	*url.URL, // discovered account URI
 	error,
@@ -55,31 +56,30 @@ func (d *Dereferencer) fingerRemoteAccount(
 	b, err := transport.Finger(ctx, username, host)
 	if err != nil {
 		err = gtserror.Newf("error webfingering %s: %w", target, err)
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	var resp apimodel.WellKnownResponse
 	if err := json.Unmarshal(b, &resp); err != nil {
 		err = gtserror.Newf("error parsing response as JSON for %s: %w", target, err)
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	if len(resp.Links) == 0 {
 		err = gtserror.Newf("no links found in response for %s", target)
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	if resp.Subject == "" {
 		err = gtserror.Newf("no subject found in response for %s", target)
-		return "", nil, err
+		return "", "", nil, err
 	}
 
 	accUsername, accDomain, err := util.ExtractWebfingerParts(resp.Subject)
 	if err != nil {
-		err = gtserror.Newf("error extracting subject parts for %s: %w", target, err)
-		return "", nil, err
+		return "", "", nil, gtserror.Newf("error extracting subject parts for %s: %w", target, err)
 	} else if accUsername != username {
-		return "", nil, gtserror.Newf("response username does not match input for %s: %w", target, err)
+		return "", "", nil, gtserror.Newf("response username does not match input for %s: %w", target, err)
 	}
 
 	// Look through links for the first
@@ -122,8 +122,8 @@ func (d *Dereferencer) fingerRemoteAccount(
 		}
 
 		// All looks good, return happily!
-		return accDomain, uri, nil
+		return accUsername, accDomain, uri, nil
 	}
 
-	return "", nil, gtserror.Newf("no suitable self, AP-type link found in webfinger response for %s", target)
+	return "", "", nil, gtserror.Newf("no suitable self, AP-type link found in webfinger response for %s", target)
 }

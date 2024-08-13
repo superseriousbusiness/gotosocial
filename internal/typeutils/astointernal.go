@@ -18,6 +18,7 @@
 package typeutils
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"net/url"
@@ -33,10 +34,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// ASRepresentationToAccount converts a remote account/person/application representation into a gts model account.
+// ASRepresentationToAccount converts a remote account / person
+// / application representation into a gts model account.
 //
-// If accountDomain is provided then this value will be used as the account's Domain, else the AP ID host.
-func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable ap.Accountable, accountDomain string) (*gtsmodel.Account, error) {
+// If accountDomain is provided then this value will be
+// used as the account's Domain, else the AP ID host.
+//
+// If accountUsername is provided then this is used as
+// a fallback when no preferredUsername is provided. Else
+// a lack of username will result in error return.
+func (c *Converter) ASRepresentationToAccount(
+	ctx context.Context,
+	accountable ap.Accountable,
+	accountDomain string,
+	accountUsername string,
+) (
+	*gtsmodel.Account,
+	error,
+) {
 	var err error
 
 	// Extract URI from accountable
@@ -70,10 +85,17 @@ func (c *Converter) ASRepresentationToAccount(ctx context.Context, accountable a
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	// Extract preferredUsername, this is a *requirement*.
-	acct.Username, err = ap.ExtractPreferredUsername(accountable)
-	if err != nil {
-		err := gtserror.Newf("unusable username for %s", uri)
+	// Set account username.
+	acct.Username = cmp.Or(
+
+		// Prefer the AP model provided username.
+		ap.ExtractPreferredUsername(accountable),
+
+		// Fallback username.
+		accountUsername,
+	)
+	if acct.Username == "" {
+		err := gtserror.Newf("missing username for %s", uri)
 		return nil, gtserror.SetMalformed(err)
 	}
 

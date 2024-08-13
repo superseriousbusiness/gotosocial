@@ -86,7 +86,7 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	suite.True(ok)
 
 	// convert person to account
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "")
+	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
 }
@@ -154,7 +154,7 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	suite.True(ok)
 
 	// convert person to account
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "")
+	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
 }
