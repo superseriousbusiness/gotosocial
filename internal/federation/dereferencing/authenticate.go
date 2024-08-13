@@ -25,7 +25,15 @@ import (
 
 // verifyAccountKeysOnUpdate verifies that account's public key hasn't changed on update from
 // our existing stored representation, UNLESS the key has been explicitly expired (i.e. key rotation).
-func verifyAccountKeysOnUpdate(existing, latest *gtsmodel.Account, now time.Time) bool {
+func verifyAccountKeysOnUpdate(existing, latest *gtsmodel.Account, now time.Time, federated bool) bool {
+	if federated {
+		// If this data was federated
+		// to us then we implicitly trust
+		// it on the grounds that it
+		// passed any signature checks.
+		return true
+	}
+
 	if existing.PublicKey == nil {
 		// New account which has been
 		// passed as a placeholder.

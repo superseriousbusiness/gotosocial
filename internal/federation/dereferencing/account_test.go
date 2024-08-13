@@ -315,7 +315,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithExpectedKeyChange
 	suite.True(updatedAcc.PublicKey.Equal(fetchingAcc.PublicKey))
 }
 
-func (suite *AccountTestSuite) TestRefreshRemoteAccountWithExpectedKeyChange() {
+func (suite *AccountTestSuite) TestRefreshFederatedRemoteAccountWithKeyChange() {
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
@@ -330,12 +330,6 @@ func (suite *AccountTestSuite) TestRefreshRemoteAccountWithExpectedKeyChange() {
 	suite.NoError(err)
 	suite.NotNil(remoteAcc)
 
-	// Expire the remote account's public key.
-	remoteAcc.PublicKeyExpiresAt = time.Now()
-	remoteAcc.FetchedAt = time.Time{} // force fetch
-	err = suite.state.DB.UpdateAccount(ctx, remoteAcc, "fetched_at", "public_key_expires_at")
-	suite.NoError(err)
-
 	// Update remote to have a different stored public key.
 	remotePerson := suite.client.TestRemotePeople[remoteURI]
 	setPublicKey(remotePerson,
@@ -345,10 +339,12 @@ func (suite *AccountTestSuite) TestRefreshRemoteAccountWithExpectedKeyChange() {
 	)
 
 	// Refresh account expecting a succesful refresh with changed keys!
+	// By passing in the remote person model this indicates that the data
+	// was received via the federator, which should trust any key change.
 	updatedAcc, apAcc, err := suite.dereferencer.RefreshAccount(ctx,
 		fetchingAcc.Username,
 		remoteAcc,
-		remotePerson, // pass in the model so no dereference occurs
+		remotePerson,
 		nil,
 	)
 	suite.NoError(err)

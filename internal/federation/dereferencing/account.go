@@ -600,7 +600,9 @@ func (d *Dereferencer) enrichAccount(
 	d.startHandshake(requestUser, uri)
 	defer d.stopHandshake(requestUser, uri)
 
-	if apubAcc == nil {
+	var resolve bool
+
+	if resolve = (apubAcc == nil); resolve {
 		// We were not given any (partial) ActivityPub
 		// version of this account as a parameter.
 		// Dereference latest version of the account.
@@ -747,7 +749,7 @@ func (d *Dereferencer) enrichAccount(
 
 	// Before expending any further serious compute, we need
 	// to ensure account keys haven't unexpectedly been changed.
-	if !verifyAccountKeysOnUpdate(account, latestAcc, now) {
+	if !verifyAccountKeysOnUpdate(account, latestAcc, now, !resolve) {
 		return nil, nil, gtserror.Newf("account %s pubkey has changed (key rotation required?)", uri)
 	}
 
