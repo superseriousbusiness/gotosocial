@@ -732,14 +732,22 @@ func (d *Dereferencer) enrichAccount(
 		)...,
 	); err != nil {
 		return nil, nil, gtserror.Newf(
-			"error checking dereferenced account uri %s: %w",
+			"error checking account uri %s: %w",
 			latestAcc.URI, err,
 		)
 	} else if !matches {
 		return nil, nil, gtserror.Newf(
-			"dereferenced account uri %s does not match %s",
+			"account uri %s does not match %s",
 			latestAcc.URI, uri.String(),
 		)
+	}
+
+	// Before we expend any further serious compute on
+	// enriching this account model, we need to check
+	// that the account signing key has remained the same.
+	if account.PublicKey != nil &&
+		!account.PublicKey.Equal(latestAcc.PublicKey) {
+		return nil, nil, gtserror.Newf("account %s pubkey has changed (key rotation required?)", uri)
 	}
 
 	/*
