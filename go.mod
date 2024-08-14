@@ -11,7 +11,7 @@ require (
 	codeberg.org/gruf/go-cache/v3 v3.5.7
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.3.2
-	codeberg.org/gruf/go-fastcopy v1.1.2
+	codeberg.org/gruf/go-fastcopy v1.1.3
 	codeberg.org/gruf/go-ffmpreg v0.2.4
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv v1.6.4

@@ -1,6 +1,7 @@
 package fastcopy
 
 import (
+	"errors"
 	"io"
 	"sync"
 	_ "unsafe" // link to io.errInvalidWrite.
@@ -10,8 +11,8 @@ var (
 	// global pool instance.
 	pool = CopyPool{size: 4096}
 
-	//go:linkname errInvalidWrite io.errInvalidWrite
-	errInvalidWrite error
+	// errInvalidWrite means that a write returned an impossible count.
+	errInvalidWrite = errors.New("invalid write result")
 )
 
 // CopyPool provides a memory pool of byte
