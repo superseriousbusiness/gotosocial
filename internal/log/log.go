@@ -361,9 +361,7 @@ type LogrSink struct {
 // Ensure Logger implements logr.LogSink
 var _ logr.LogSink = &LogrSink{}
 
-func (l LogrSink) Init(_ logr.RuntimeInfo) {
-	return
-}
+func (l LogrSink) Init(_ logr.RuntimeInfo) {}
 
 func (l LogrSink) Enabled(level int) bool {
 	return otelLogLevelToGoLoggerLevel(level) <= loglvl
