@@ -13,6 +13,7 @@ import (
 	"github.com/ncruces/go-sqlite3/vfs"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+	"github.com/tetratelabs/wazero/experimental"
 )
 
 // Configure SQLite Wasm.
@@ -44,12 +45,14 @@ var instance struct {
 }
 
 func compileSQLite() {
-	if RuntimeConfig == nil {
-		RuntimeConfig = wazero.NewRuntimeConfig()
+	ctx := context.Background()
+	cfg := RuntimeConfig
+	if cfg == nil {
+		cfg = wazero.NewRuntimeConfig()
 	}
 
-	ctx := context.Background()
-	instance.runtime = wazero.NewRuntimeWithConfig(ctx, RuntimeConfig)
+	instance.runtime = wazero.NewRuntimeWithConfig(ctx,
+		cfg.WithCoreFeatures(api.CoreFeaturesV2|experimental.CoreFeaturesThreads))
 
 	env := instance.runtime.NewHostModuleBuilder("env")
 	env = vfs.ExportHostFunctions(env)
@@ -82,7 +85,7 @@ type sqlite struct {
 		id   [32]*byte
 		mask uint32
 	}
-	stack [8]uint64
+	stack [9]uint64
 	freer uint32
 }
 
@@ -303,6 +306,7 @@ func exportCallbacks(env wazero.HostModuleBuilder) wazero.HostModuleBuilder {
 	util.ExportFuncVI(env, "go_rollback_hook", rollbackCallback)
 	util.ExportFuncVIIIIJ(env, "go_update_hook", updateCallback)
 	util.ExportFuncIIIII(env, "go_wal_hook", walCallback)
+	util.ExportFuncIIIII(env, "go_trace", traceCallback)
 	util.ExportFuncIIIIII(env, "go_autovacuum_pages", autoVacuumCallback)
 	util.ExportFuncIIIIIII(env, "go_authorizer", authorizerCallback)
 	util.ExportFuncVIII(env, "go_log", logCallback)

@@ -22,14 +22,16 @@ type Conn struct {
 
 	interrupt  context.Context
 	pending    *Stmt
+	stmts      []*Stmt
 	busy       func(int) bool
 	log        func(xErrorCode, string)
 	collation  func(*Conn, string)
+	wal        func(*Conn, string, int) error
+	trace      func(TraceEvent, any, any) error
 	authorizer func(AuthorizerActionCode, string, string, string, string) AuthorizerReturnCode
 	update     func(AuthorizerActionCode, string, string, int64)
 	commit     func() bool
 	rollback   func()
-	wal        func(*Conn, string, int) error
 	arena      arena
 
 	handle uint32
@@ -202,6 +204,7 @@ func (c *Conn) PrepareFlags(sql string, flags PrepareFlag) (stmt *Stmt, tail str
 	if stmt.handle == 0 {
 		return nil, "", nil
 	}
+	c.stmts = append(c.stmts, stmt)
 	return stmt, tail, nil
 }
 
@@ -227,9 +230,8 @@ func (c *Conn) Filename(schema string) *vfs.Filename {
 		defer c.arena.mark()()
 		ptr = c.arena.string(schema)
 	}
-
 	r := c.call("sqlite3_db_filename", uint64(c.handle), uint64(ptr))
-	return vfs.OpenFilename(c.ctx, c.mod, uint32(r), vfs.OPEN_MAIN_DB)
+	return vfs.GetFilename(c.ctx, c.mod, uint32(r), vfs.OPEN_MAIN_DB)
 }
 
 // ReadOnly determines if a database is read-only.
@@ -327,7 +329,12 @@ func (c *Conn) SetInterrupt(ctx context.Context) (old context.Context) {
 	// A busy SQL statement prevents SQLite from ignoring an interrupt
 	// that comes before any other statements are started.
 	if c.pending == nil {
-		c.pending, _, _ = c.Prepare(`WITH RECURSIVE c(x) AS (VALUES(0) UNION ALL SELECT x FROM c) SELECT x FROM c`)
+		defer c.arena.mark()()
+		stmtPtr := c.arena.new(ptrlen)
+		loopPtr := c.arena.string(`WITH RECURSIVE c(x) AS (VALUES(0) UNION ALL SELECT x FROM c) SELECT x FROM c`)
+		c.call("sqlite3_prepare_v3", uint64(c.handle), uint64(loopPtr), math.MaxUint64, 0, uint64(stmtPtr), 0)
+		c.pending = &Stmt{c: c}
+		c.pending.handle = util.ReadUint32(c.mod, stmtPtr)
 	}
 
 	old = c.interrupt
@@ -415,8 +422,72 @@ func busyCallback(ctx context.Context, mod api.Module, pDB uint32, count int32) 
 	return retry
 }
 
+// Status retrieves runtime status information about a database connection.
+//
+// https://sqlite.org/c3ref/db_status.html
+func (c *Conn) Status(op DBStatus, reset bool) (current, highwater int, err error) {
+	defer c.arena.mark()()
+	hiPtr := c.arena.new(4)
+	curPtr := c.arena.new(4)
+
+	var i uint64
+	if reset {
+		i = 1
+	}
+
+	r := c.call("sqlite3_db_status", uint64(c.handle),
+		uint64(op), uint64(curPtr), uint64(hiPtr), i)
+	if err = c.error(r); err == nil {
+		current = int(util.ReadUint32(c.mod, curPtr))
+		highwater = int(util.ReadUint32(c.mod, hiPtr))
+	}
+	return
+}
+
+// TableColumnMetadata extracts metadata about a column of a table.
+//
+// https://sqlite.org/c3ref/table_column_metadata.html
+func (c *Conn) TableColumnMetadata(schema, table, column string) (declType, collSeq string, notNull, primaryKey, autoInc bool, err error) {
+	defer c.arena.mark()()
+
+	var schemaPtr, columnPtr uint32
+	declTypePtr := c.arena.new(ptrlen)
+	collSeqPtr := c.arena.new(ptrlen)
+	notNullPtr := c.arena.new(ptrlen)
+	primaryKeyPtr := c.arena.new(ptrlen)
+	autoIncPtr := c.arena.new(ptrlen)
+	if schema != "" {
+		schemaPtr = c.arena.string(schema)
+	}
+	tablePtr := c.arena.string(table)
+	if column != "" {
+		columnPtr = c.arena.string(column)
+	}
+
+	r := c.call("sqlite3_table_column_metadata", uint64(c.handle),
+		uint64(schemaPtr), uint64(tablePtr), uint64(columnPtr),
+		uint64(declTypePtr), uint64(collSeqPtr),
+		uint64(notNullPtr), uint64(primaryKeyPtr), uint64(autoIncPtr))
+	if err = c.error(r); err == nil && column != "" {
+		declType = util.ReadString(c.mod, util.ReadUint32(c.mod, declTypePtr), _MAX_NAME)
+		collSeq = util.ReadString(c.mod, util.ReadUint32(c.mod, collSeqPtr), _MAX_NAME)
+		notNull = util.ReadUint32(c.mod, notNullPtr) != 0
+		autoInc = util.ReadUint32(c.mod, autoIncPtr) != 0
+		primaryKey = util.ReadUint32(c.mod, primaryKeyPtr) != 0
+	}
+	return
+}
+
 func (c *Conn) error(rc uint64, sql ...string) error {
 	return c.sqlite.error(rc, c.handle, sql...)
+}
+
+func (c *Conn) stmtsIter(yield func(*Stmt) bool) {
+	for _, s := range c.stmts {
+		if !yield(s) {
+			break
+		}
+	}
 }
 
 // DriverConn is implemented by the SQLite [database/sql] driver connection.

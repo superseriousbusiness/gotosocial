@@ -30,6 +30,7 @@ func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, err
 		vfs.OPEN_TEMP_DB |
 		vfs.OPEN_TEMP_JOURNAL
 	if flags&types == 0 {
+		// notest // OPEN_MEMORY
 		return nil, flags, sqlite3.CANTOPEN
 	}
 
@@ -82,7 +83,7 @@ type memDB struct {
 	size int64
 
 	// +checklocks:lockMtx
-	shared int
+	shared int32
 	// +checklocks:lockMtx
 	reserved bool
 	// +checklocks:lockMtx
@@ -136,7 +137,7 @@ func (m *memFile) ReadAt(b []byte, off int64) (n int, err error) {
 	}
 	n = copy(b, (*m.data[base])[rest:have])
 	if n < len(b) {
-		// Assume reads are page aligned.
+		// notest // assume reads are page aligned
 		return 0, io.ErrNoProgress
 	}
 	return n, nil
@@ -153,7 +154,7 @@ func (m *memFile) WriteAt(b []byte, off int64) (n int, err error) {
 	}
 	n = copy((*m.data[base])[rest:], b)
 	if n < len(b) {
-		// Assume writes are page aligned.
+		// notest // assume writes are page aligned
 		return n, io.ErrShortWrite
 	}
 	if size := off + int64(len(b)); size > m.size {
@@ -226,9 +227,6 @@ func (m *memFile) Lock(lock vfs.LockLevel) error {
 
 	case vfs.LOCK_EXCLUSIVE:
 		if m.lock < vfs.LOCK_PENDING {
-			if m.pending {
-				return sqlite3.BUSY
-			}
 			m.lock = vfs.LOCK_PENDING
 			m.pending = true
 		}
@@ -269,6 +267,7 @@ func (m *memFile) Unlock(lock vfs.LockLevel) error {
 }
 
 func (m *memFile) CheckReservedLock() (bool, error) {
+	// notest // OPEN_MEMORY
 	if m.lock >= vfs.LOCK_RESERVED {
 		return true, nil
 	}
@@ -278,6 +277,7 @@ func (m *memFile) CheckReservedLock() (bool, error) {
 }
 
 func (m *memFile) SectorSize() int {
+	// notest // IOCAP_POWERSAFE_OVERWRITE
 	return sectorSize
 }
 

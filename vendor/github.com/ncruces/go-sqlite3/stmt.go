@@ -15,6 +15,7 @@ import (
 type Stmt struct {
 	c      *Conn
 	err    error
+	sql    string
 	handle uint32
 }
 
@@ -29,6 +30,15 @@ func (s *Stmt) Close() error {
 	}
 
 	r := s.c.call("sqlite3_finalize", uint64(s.handle))
+	for i := range s.c.stmts {
+		if s == s.c.stmts[i] {
+			l := len(s.c.stmts) - 1
+			s.c.stmts[i] = s.c.stmts[l]
+			s.c.stmts[l] = nil
+			s.c.stmts = s.c.stmts[:l]
+			break
+		}
+	}
 
 	s.handle = 0
 	return s.c.error(r)
@@ -39,6 +49,24 @@ func (s *Stmt) Close() error {
 // https://sqlite.org/c3ref/db_handle.html
 func (s *Stmt) Conn() *Conn {
 	return s.c
+}
+
+// SQL returns the SQL text used to create the prepared statement.
+//
+// https://sqlite.org/c3ref/expanded_sql.html
+func (s *Stmt) SQL() string {
+	return s.sql
+}
+
+// ExpandedSQL returns the SQL text of the prepared statement
+// with bound parameters expanded.
+//
+// https://sqlite.org/c3ref/expanded_sql.html
+func (s *Stmt) ExpandedSQL() string {
+	r := s.c.call("sqlite3_expanded_sql", uint64(s.handle))
+	sql := util.ReadString(s.c.mod, uint32(r), _MAX_SQL_LENGTH)
+	s.c.free(uint32(r))
+	return sql
 }
 
 // ReadOnly returns true if and only if the statement
@@ -283,7 +311,8 @@ func (s *Stmt) BindNull(param int) error {
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindTime(param int, value time.Time, format TimeFormat) error {
-	if format == TimeFormatDefault {
+	switch format {
+	case TimeFormatDefault, TimeFormatAuto, time.RFC3339Nano:
 		return s.bindRFC3339Nano(param, value)
 	}
 	switch v := format.Encode(value).(type) {

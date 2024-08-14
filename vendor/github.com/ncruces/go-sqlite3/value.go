@@ -201,6 +201,14 @@ func (v Value) NoChange() bool {
 	return r != 0
 }
 
+// FromBind returns true if value originated from a bound parameter.
+//
+// https://sqlite.org/c3ref/value_blob.html
+func (v Value) FromBind() bool {
+	r := v.c.call("sqlite3_value_frombind", v.protected())
+	return r != 0
+}
+
 // InFirst returns the first element
 // on the right-hand side of an IN constraint.
 //

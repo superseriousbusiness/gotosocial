@@ -46,52 +46,50 @@ func (rs RegSet) Range(f func(allocatedRealReg RealReg)) {
 	}
 }
 
-type regInUseSet [64]VReg
+type regInUseSet[I Instr, B Block[I], F Function[I, B]] [64]*vrState[I, B, F]
 
-func newRegInUseSet() regInUseSet {
-	var ret regInUseSet
+func newRegInUseSet[I Instr, B Block[I], F Function[I, B]]() regInUseSet[I, B, F] {
+	var ret regInUseSet[I, B, F]
 	ret.reset()
 	return ret
 }
 
-func (rs *regInUseSet) reset() {
-	for i := range rs {
-		rs[i] = VRegInvalid
-	}
+func (rs *regInUseSet[I, B, F]) reset() {
+	clear(rs[:])
 }
 
-func (rs *regInUseSet) format(info *RegisterInfo) string { //nolint:unused
+func (rs *regInUseSet[I, B, F]) format(info *RegisterInfo) string { //nolint:unused
 	var ret []string
 	for i, vr := range rs {
-		if vr != VRegInvalid {
-			ret = append(ret, fmt.Sprintf("(%s->v%d)", info.RealRegName(RealReg(i)), vr.ID()))
+		if vr != nil {
+			ret = append(ret, fmt.Sprintf("(%s->v%d)", info.RealRegName(RealReg(i)), vr.v.ID()))
 		}
 	}
 	return strings.Join(ret, ", ")
 }
 
-func (rs *regInUseSet) has(r RealReg) bool {
-	return r < 64 && rs[r] != VRegInvalid
+func (rs *regInUseSet[I, B, F]) has(r RealReg) bool {
+	return r < 64 && rs[r] != nil
 }
 
-func (rs *regInUseSet) get(r RealReg) VReg {
+func (rs *regInUseSet[I, B, F]) get(r RealReg) *vrState[I, B, F] {
 	return rs[r]
 }
 
-func (rs *regInUseSet) remove(r RealReg) {
-	rs[r] = VRegInvalid
+func (rs *regInUseSet[I, B, F]) remove(r RealReg) {
+	rs[r] = nil
 }
 
-func (rs *regInUseSet) add(r RealReg, vr VReg) {
+func (rs *regInUseSet[I, B, F]) add(r RealReg, vr *vrState[I, B, F]) {
 	if r >= 64 {
 		return
 	}
 	rs[r] = vr
 }
 
-func (rs *regInUseSet) range_(f func(allocatedRealReg RealReg, vr VReg)) {
+func (rs *regInUseSet[I, B, F]) range_(f func(allocatedRealReg RealReg, vr *vrState[I, B, F])) {
 	for i, vr := range rs {
-		if vr != VRegInvalid {
+		if vr != nil {
 			f(RealReg(i), vr)
 		}
 	}
