@@ -6,8 +6,8 @@ import (
 
 // QueueCtx is a context-aware form of Queue{}.
 type QueueCtx[StructType any] struct {
-	Queue[StructType]
 	ch chan struct{}
+	Queue[StructType]
 }
 
 // PopFront pops the current value at front of the queue, else blocking on ctx.

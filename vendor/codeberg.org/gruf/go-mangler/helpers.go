@@ -69,7 +69,7 @@ func deref_ptr_mangler(ctx typecontext, mangle Mangler, n uint) Mangler {
 		}
 
 		if ptr == nil {
-			// Check for nil values
+			// Final nil val check
 			buf = append(buf, '0')
 			return buf
 		}
@@ -144,8 +144,8 @@ func iter_struct_mangler(ctx typecontext, manglers []Mangler) Mangler {
 	}
 
 	type field struct {
-		offset uintptr
 		mangle Mangler
+		offset uintptr
 	}
 
 	// Bundle together the fields and manglers.

@@ -20,17 +20,6 @@ func DefaultIgnoreErr(err error) bool {
 // for initializing a struct cache.
 type CacheConfig[StructType any] struct {
 
-	// Indices defines indices to create
-	// in the Cache for the receiving
-	// generic struct type parameter.
-	Indices []IndexConfig
-
-	// MaxSize defines the maximum number
-	// of items allowed in the Cache at
-	// one time, before old items start
-	// getting evicted.
-	MaxSize int
-
 	// IgnoreErr defines which errors to
 	// ignore (i.e. not cache) returned
 	// from load function callback calls.
@@ -48,6 +37,17 @@ type CacheConfig[StructType any] struct {
 	// as the values passed to Put() / Store(),
 	// or by the keys by calls to Invalidate().
 	Invalidate func(StructType)
+
+	// Indices defines indices to create
+	// in the Cache for the receiving
+	// generic struct type parameter.
+	Indices []IndexConfig
+
+	// MaxSize defines the maximum number
+	// of items allowed in the Cache at
+	// one time, before old items start
+	// getting evicted.
+	MaxSize int
 }
 
 // Cache provides a structure cache with automated
@@ -56,23 +56,23 @@ type CacheConfig[StructType any] struct {
 // of negative results (errors!) returned by LoadOne().
 type Cache[StructType any] struct {
 
-	// indices used in storing passed struct
-	// types by user defined sets of fields.
-	indices []Index
+	// hook functions.
+	ignore  func(error) bool
+	copy    func(StructType) StructType
+	invalid func(StructType)
 
 	// keeps track of all indexed items,
 	// in order of last recently used (LRU).
 	lru list
 
+	// indices used in storing passed struct
+	// types by user defined sets of fields.
+	indices []Index
+
 	// max cache size, imposes size
 	// limit on the lruList in order
 	// to evict old entries.
 	maxSize int
-
-	// hook functions.
-	ignore  func(error) bool
-	copy    func(StructType) StructType
-	invalid func(StructType)
 
 	// protective mutex, guards:
 	// - Cache{}.lruList

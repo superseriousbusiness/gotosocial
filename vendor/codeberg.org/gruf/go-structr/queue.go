@@ -10,15 +10,15 @@ import (
 // for initializing a struct queue.
 type QueueConfig[StructType any] struct {
 
-	// Indices defines indices to create
-	// in the Queue for the receiving
-	// generic struct parameter type.
-	Indices []IndexConfig
-
 	// Pop is called when queue values
 	// are popped, during calls to any
 	// of the Pop___() series of fns.
 	Pop func(StructType)
+
+	// Indices defines indices to create
+	// in the Queue for the receiving
+	// generic struct parameter type.
+	Indices []IndexConfig
 }
 
 // Queue provides a structure model queue with
@@ -26,17 +26,17 @@ type QueueConfig[StructType any] struct {
 // defined lookups of field combinations.
 type Queue[StructType any] struct {
 
-	// indices used in storing passed struct
-	// types by user defined sets of fields.
-	indices []Index
+	// hook functions.
+	copy func(StructType) StructType
+	pop  func(StructType)
 
 	// main underlying
 	// struct item queue.
 	queue list
 
-	// hook functions.
-	copy func(StructType) StructType
-	pop  func(StructType)
+	// indices used in storing passed struct
+	// types by user defined sets of fields.
+	indices []Index
 
 	// protective mutex, guards:
 	// - Queue{}.queue

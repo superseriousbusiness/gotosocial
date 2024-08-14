@@ -16,10 +16,6 @@ import (
 type struct_field struct {
 	rtype reflect.Type
 
-	// offsets defines whereabouts in
-	// memory this field is located.
-	offsets []next_offset
-
 	// struct field type mangling
 	// (i.e. fast serializing) fn.
 	mangle mangler.Mangler
@@ -33,6 +29,10 @@ type struct_field struct {
 	// if set this indicates zero
 	// values of field not allowed
 	zerostr string
+
+	// offsets defines whereabouts in
+	// memory this field is located.
+	offsets []next_offset
 }
 
 // next_offset defines a next offset location

@@ -349,15 +349,15 @@ type index_entry struct {
 	// elem.data is ptr to index_entry.
 	elem list_elem
 
-	// raw cache key
-	// for this entry.
-	key string
-
 	// index this is stored in.
 	index *Index
 
 	// underlying indexed item.
 	item *indexed_item
+
+	// raw cache key
+	// for this entry.
+	key string
 }
 
 var index_entry_pool sync.Pool

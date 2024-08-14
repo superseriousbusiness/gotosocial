@@ -23,7 +23,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-storage v0.1.2
-	codeberg.org/gruf/go-structr v0.8.7
+	codeberg.org/gruf/go-structr v0.8.8
 	codeberg.org/superseriousbusiness/exif-terminator v0.9.0
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.6.1
@@ -89,7 +89,7 @@ require (
 	codeberg.org/gruf/go-atomics v1.1.0 // indirect
 	codeberg.org/gruf/go-bitutil v1.1.0 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
-	codeberg.org/gruf/go-mangler v1.4.0 // indirect
+	codeberg.org/gruf/go-mangler v1.4.1 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
