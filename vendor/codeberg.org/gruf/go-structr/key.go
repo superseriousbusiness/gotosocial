@@ -10,8 +10,8 @@ import (
 // lookup (potentially) stored
 // entries in an Index.
 type Key struct {
-	raw []any
 	key string
+	raw []any
 }
 
 // Key returns the underlying cache key string.

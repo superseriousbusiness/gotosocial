@@ -64,8 +64,8 @@ codeberg.org/gruf/go-logger/v2 v2.2.1 h1:RP2u059EQKTBFV3cN8X6xDxNk2RkzqdgXGKflKq
 codeberg.org/gruf/go-logger/v2 v2.2.1/go.mod h1:m/vBfG5jNUmYXI8Hg9aVSk7Pn8YgEBITQB/B/CzdRss=
 codeberg.org/gruf/go-loosy v0.0.0-20231007123304-bb910d1ab5c4 h1:IXwfoU7f2whT6+JKIKskNl/hBlmWmnF1vZd84Eb3cyA=
 codeberg.org/gruf/go-loosy v0.0.0-20231007123304-bb910d1ab5c4/go.mod h1:fiO8HE1wjZCephcYmRRsVnNI/i0+mhy44Z5dQalS0rM=
-codeberg.org/gruf/go-mangler v1.4.0 h1:yOQMygLgCnU0ERt1JDAtv/LsjDwJtAdRpwhm648rA/E=
-codeberg.org/gruf/go-mangler v1.4.0/go.mod h1:TVbrburPF+UjuRSwxH1tHP3pZZXzdyJJO8+PToTEiKg=
+codeberg.org/gruf/go-mangler v1.4.1 h1:Dv58jFfy9On49L11ji6tpADUknwoJA46iaiZvnNXecs=
+codeberg.org/gruf/go-mangler v1.4.1/go.mod h1:mDmW8Ia352RvNFaXoP9K60TgcmCZJtX0j6wm3vjAsJE=
 codeberg.org/gruf/go-maps v1.0.3 h1:VDwhnnaVNUIy5O93CvkcE2IZXnMB1+IJjzfop9V12es=
 codeberg.org/gruf/go-maps v1.0.3/go.mod h1:D5LNDxlC9rsDuVQVM6JObaVGAdHB6g2dTdOdkh1aXWA=
 codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760 h1:m2/UCRXhjDwAg4vyji6iKCpomKw6P4PmBOUi5DvAMH4=
@@ -80,8 +80,8 @@ codeberg.org/gruf/go-sched v1.2.3 h1:H5ViDxxzOBR3uIyGBCf0eH8b1L8wMybOXcdtUUTXZHk
 codeberg.org/gruf/go-sched v1.2.3/go.mod h1:vT9uB6KWFIIwnG9vcPY2a0alYNoqdL1mSzRM8I+PK7A=
 codeberg.org/gruf/go-storage v0.1.2 h1:dIOVOKq1CJpRmuhbB8Zok3mmo8V6VV/nX5GLIm6hywA=
 codeberg.org/gruf/go-storage v0.1.2/go.mod h1:LRDpFHqRJi0f+35c3ltBH2e/pGfwY5dGlNlgCJ/R1DA=
-codeberg.org/gruf/go-structr v0.8.7 h1:agYCI6tSXU4JHVYPwZk3Og5rrBePNVv5iPWsDu7ZJIw=
-codeberg.org/gruf/go-structr v0.8.7/go.mod h1:O0FTNgzUnUKwWey4dEW99QD8rPezKPi5sxCVxYOJ1Fg=
+codeberg.org/gruf/go-structr v0.8.8 h1:lRPpyTmLKvQCkkQiSUbOAh6jtL2wncEO8DwksMqQXM8=
+codeberg.org/gruf/go-structr v0.8.8/go.mod h1:zkoXVrAnKosh8VFAsbP/Hhs8FmLBjbVVy5w/Ngm8ApM=
 codeberg.org/superseriousbusiness/exif-terminator v0.9.0 h1:/EfyGI6HIrbkhFwgXGSjZ9o1kr/+k8v4mKdfXTH02Go=
 codeberg.org/superseriousbusiness/exif-terminator v0.9.0/go.mod h1:gCWKduudUWFzsnixoMzu0FYVdxHWG+AbXnZ50DqxsUE=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=

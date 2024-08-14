@@ -10,12 +10,12 @@ type indexed_item struct {
 	// is stored in a main list.
 	elem list_elem
 
+	// cached data with type.
+	data interface{}
+
 	// indexed stores the indices
 	// this item is stored under.
 	indexed []*index_entry
-
-	// cached data with type.
-	data interface{}
 }
 
 var indexed_item_pool sync.Pool
