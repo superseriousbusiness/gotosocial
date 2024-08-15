@@ -66,6 +66,7 @@ func osDowngradeLock(file *os.File, state LockLevel) _ErrorCode {
 		if rc := osReadLock(file, _SHARED_FIRST, _SHARED_SIZE, 0); rc != _OK {
 			// This should never happen.
 			// We should always be able to reacquire the read lock.
+			// notest
 			return _IOERR_RDLOCK
 		}
 	}

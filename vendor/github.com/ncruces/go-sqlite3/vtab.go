@@ -247,7 +247,7 @@ type VTabCursor interface {
 	// https://sqlite.org/vtab.html#xeof
 	EOF() bool
 	// https://sqlite.org/vtab.html#xcolumn
-	Column(ctx *Context, n int) error
+	Column(ctx Context, n int) error
 	// https://sqlite.org/vtab.html#xrowid
 	RowID() (int64, error)
 }
@@ -618,7 +618,7 @@ func cursorNextCallback(ctx context.Context, mod api.Module, pCur uint32) uint32
 func cursorColumnCallback(ctx context.Context, mod api.Module, pCur, pCtx uint32, n int32) uint32 {
 	cursor := vtabGetHandle(ctx, mod, pCur).(VTabCursor)
 	db := ctx.Value(connKey{}).(*Conn)
-	err := cursor.Column(&Context{db, pCtx}, int(n))
+	err := cursor.Column(Context{db, pCtx}, int(n))
 	return vtabError(ctx, mod, pCur, _CURSOR_ERROR, err)
 }
 

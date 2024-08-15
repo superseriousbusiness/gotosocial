@@ -69,6 +69,7 @@ func (vfsOS) Access(name string, flags AccessFlag) (bool, error) {
 }
 
 func (vfsOS) Open(name string, flags OpenFlag) (File, OpenFlag, error) {
+	// notest // OpenFilename is called instead
 	return nil, 0, _CANTOPEN
 }
 

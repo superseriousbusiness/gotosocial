@@ -32,7 +32,7 @@ func (s *mmapState) new(ctx context.Context, mod api.Module, size int32) *Mapped
 
 	// Allocate page aligned memmory.
 	alloc := mod.ExportedFunction("aligned_alloc")
-	stack := [2]uint64{
+	stack := [...]uint64{
 		uint64(unix.Getpagesize()),
 		uint64(size),
 	}

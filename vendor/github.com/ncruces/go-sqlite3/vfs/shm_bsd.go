@@ -72,11 +72,11 @@ func (s *vfsShm) Close() error {
 		return nil
 	}
 
-	// Unlock everything.
-	s.shmLock(0, _SHM_NLOCK, _SHM_UNLOCK)
-
 	vfsShmFilesMtx.Lock()
 	defer vfsShmFilesMtx.Unlock()
+
+	// Unlock everything.
+	s.shmLock(0, _SHM_NLOCK, _SHM_UNLOCK)
 
 	// Decrease reference count.
 	if s.vfsShmFile.refs > 1 {
@@ -84,16 +84,16 @@ func (s *vfsShm) Close() error {
 		s.vfsShmFile = nil
 		return nil
 	}
+
+	err := s.File.Close()
 	for i, g := range vfsShmFiles {
 		if g == s.vfsShmFile {
 			vfsShmFiles[i] = nil
-			break
+			s.vfsShmFile = nil
+			return err
 		}
 	}
-
-	err := s.File.Close()
-	s.vfsShmFile = nil
-	return err
+	panic(util.AssertErr())
 }
 
 func (s *vfsShm) shmOpen() (rc _ErrorCode) {
@@ -234,6 +234,8 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 			s.vfsShmFile.lock[i] = -1
 			s.lock[i] = true
 		}
+	default:
+		panic(util.AssertErr())
 	}
 
 	return _OK
@@ -256,5 +258,4 @@ func (s *vfsShm) shmUnmap(delete bool) {
 		os.Remove(s.path)
 	}
 	s.Close()
-	s.vfsShmFile = nil
 }
