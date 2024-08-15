@@ -1538,8 +1538,7 @@ func (c *Compiler) lowerCurrentOpcode() {
 		builder.SetCurrentBlock(elseBlk)
 
 	case wasm.OpcodeBrTable:
-		labels := state.tmpForBrTable
-		labels = labels[:0]
+		labels := state.tmpForBrTable[:0]
 		labelCount := c.readI32u()
 		for i := 0; i < int(labelCount); i++ {
 			labels = append(labels, c.readI32u())
@@ -1557,6 +1556,7 @@ func (c *Compiler) lowerCurrentOpcode() {
 		} else {
 			c.lowerBrTable(labels, index)
 		}
+		state.tmpForBrTable = labels // reuse the temporary slice for next use.
 		state.unreachable = true
 
 	case wasm.OpcodeNop:
@@ -4068,13 +4068,14 @@ func (c *Compiler) lowerBrTable(labels []uint32, index ssa.Value) {
 		numArgs = len(f.blockType.Results)
 	}
 
-	targets := make([]ssa.BasicBlock, len(labels))
+	varPool := builder.VarLengthPool()
+	trampolineBlockIDs := varPool.Allocate(len(labels))
 
 	// We need trampoline blocks since depending on the target block structure, we might end up inserting moves before jumps,
 	// which cannot be done with br_table. Instead, we can do such per-block moves in the trampoline blocks.
 	// At the linking phase (very end of the backend), we can remove the unnecessary jumps, and therefore no runtime overhead.
 	currentBlk := builder.CurrentBlock()
-	for i, l := range labels {
+	for _, l := range labels {
 		// Args are always on the top of the stack. Note that we should not share the args slice
 		// among the jump instructions since the args are modified during passes (e.g. redundant phi elimination).
 		args := c.nPeekDup(numArgs)
@@ -4082,17 +4083,17 @@ func (c *Compiler) lowerBrTable(labels []uint32, index ssa.Value) {
 		trampoline := builder.AllocateBasicBlock()
 		builder.SetCurrentBlock(trampoline)
 		c.insertJumpToBlock(args, targetBlk)
-		targets[i] = trampoline
+		trampolineBlockIDs = trampolineBlockIDs.Append(builder.VarLengthPool(), ssa.Value(trampoline.ID()))
 	}
 	builder.SetCurrentBlock(currentBlk)
 
 	// If the target block has no arguments, we can just jump to the target block.
 	brTable := builder.AllocateInstruction()
-	brTable.AsBrTable(index, targets)
+	brTable.AsBrTable(index, trampolineBlockIDs)
 	builder.InsertInstruction(brTable)
 
-	for _, trampoline := range targets {
-		builder.Seal(trampoline)
+	for _, trampolineID := range trampolineBlockIDs.View() {
+		builder.Seal(builder.BasicBlock(ssa.BasicBlockID(trampolineID)))
 	}
 }
 

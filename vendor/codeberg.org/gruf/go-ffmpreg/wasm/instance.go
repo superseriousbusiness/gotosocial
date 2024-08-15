@@ -10,6 +10,10 @@ import (
 )
 
 type Args struct {
+	// Optional further module configuration function.
+	// (e.g. to mount filesystem dir, set env vars, etc).
+	Config func(wazero.ModuleConfig) wazero.ModuleConfig
+
 	// Standard FDs.
 	Stdin  io.Reader
 	Stdout io.Writer
@@ -17,10 +21,6 @@ type Args struct {
 
 	// CLI args.
 	Args []string
-
-	// Optional further module configuration function.
-	// (e.g. to mount filesystem dir, set env vars, etc).
-	Config func(wazero.ModuleConfig) wazero.ModuleConfig
 }
 
 type Instantiator struct {
