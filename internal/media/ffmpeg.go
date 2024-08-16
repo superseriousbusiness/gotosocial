@@ -484,7 +484,7 @@ func (res *ffprobeResult) Process() (*result, error) {
 
 		// Parse as integer value.
 		i, _ := strconv.Atoi(str)
-		if i <= 0 || i >= 9 {
+		if i < 0 || i >= 9 {
 			return nil, errors.New("invalid orientation data")
 		}
 
