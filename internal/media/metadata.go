@@ -73,7 +73,7 @@ func clearMetadata(ctx context.Context, filepath string) error {
 }
 
 // terminateExif cleans exif data from file at input path, into file
-// at output path, exusing given file extension to determine cleaning.
+// at output path, using given file extension to determine cleaning type.
 func terminateExif(outpath, inpath string, ext string) error {
 	// Open input file at given path.
 	inFile, err := os.Open(inpath)
