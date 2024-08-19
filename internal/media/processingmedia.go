@@ -162,7 +162,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 	// Pass input file through ffprobe to
 	// parse further metadata information.
-	result, err := ffprobe(ctx, temppath)
+	result, err := probe(ctx, temppath)
 	if err != nil && !isUnsupportedTypeErr(err) {
 		return gtserror.Newf("ffprobe error: %w", err)
 	} else if result == nil {
