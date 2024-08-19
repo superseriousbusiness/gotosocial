@@ -213,7 +213,7 @@ var Defaults = Configuration{
 	HTTPClient: HTTPClientConfiguration{
 		AllowIPs:              make([]string, 0),
 		BlockIPs:              make([]string, 0),
-		Timeout:               10 * time.Second,
+		Timeout:               30 * time.Second,
 		TLSInsecureSkipVerify: false,
 	},
 

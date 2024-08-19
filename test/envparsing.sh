@@ -96,7 +96,7 @@ EXPECT=$(cat << "EOF"
     "http-client": {
         "allow-ips": [],
         "block-ips": [],
-        "timeout": 10000000000,
+        "timeout": 30000000000,
         "tls-insecure-skip-verify": false
     },
     "instance-deliver-to-shared-inboxes": false,
