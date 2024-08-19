@@ -933,9 +933,9 @@ http-client:
   # Duration. Timeout to use for outgoing HTTP requests. If the timeout
   # is exceeded, the connection to the remote server will be dropped.
   # A value of 0s indicates no timeout: this is not advised!
-  # Examples: ["5s", "10s", "0s"]
-  # Default: "10s"
-  timeout: "10s"
+  # Examples: ["5s", "30s", "0s"]
+  # Default: "30s"
+  timeout: "30s"
 
   ########################################
   #### RESERVED IP RANGE EXCEPTIONS ######
