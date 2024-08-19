@@ -35,7 +35,8 @@ const (
 	magicJPEG = "\xff\xd8\xff"
 )
 
-// probe ...
+// probe will first attempt to probe the file at path using native Go code
+// (for performance), but falls back to using ffprobe to retrieve media details.
 func probe(ctx context.Context, filepath string) (*result, error) {
 	// Open input file at given path.
 	file, err := os.Open(filepath)
@@ -56,25 +57,28 @@ func probe(ctx context.Context, filepath string) (*result, error) {
 		return nil, gtserror.Newf("error reading file %s: %w", filepath, err)
 	}
 
+	switch {
 	// Attempt to probe JPEG types
 	// separately, to save calls into
-	// WebAssembly for a common type.
-	if string(buf) == magicJPEG {
+	// WebAssembly for a common image.
+	case string(buf[:len(magicJPEG)]) == magicJPEG:
 		log.Debug(ctx, "probing jpeg")
 		return probeJPEG(file)
+
+	default:
+		// Close BEFORE
+		// pass to ffprobe.
+		_ = file.Close()
+
+		// For everything else, fall back
+		// to calling ffprobe on input file.
+		log.Debug(ctx, "ffprobing file")
+		return ffprobe(ctx, filepath)
 	}
-
-	// Close BEFORE
-	// pass to ffprobe.
-	_ = file.Close()
-
-	// For everything else, fall back
-	// to calling ffprobe on input file.
-	log.Debug(ctx, "ffprobing file")
-	return ffprobe(ctx, filepath)
 }
 
-// probeJEPG ...
+// probeJPEG decodes the given file as JPEG and determines
+// image details from the decoded JPEG using native Go code.
 func probeJPEG(file *os.File) (*result, error) {
 	// Attempt to decode JPEG, adding back hdr magic.
 	cfg, err := jpeg.DecodeConfig(io.MultiReader(
