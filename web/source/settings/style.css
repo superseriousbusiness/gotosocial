@@ -374,6 +374,18 @@ section.with-sidebar > form {
 		flex-wrap: wrap;
 		gap: 0.4rem;
 	}
+
+	.select-wrapper {
+		position: relative;
+
+		&::after {
+			content: "▼";
+			font-size: 0.8rem;
+			top: 0.3rem;
+			right: 1rem;
+			position: absolute;
+		  }
+	}
 }
 
 .form-flex {
