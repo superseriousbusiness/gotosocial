@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	rMediaPath = "../../../testrig/media"
+	rMediaPath    = "../../../testrig/media"
 	rTemplatePath = "../../../web/template"
 )
 
