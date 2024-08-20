@@ -308,6 +308,10 @@ main {
 						"eye sensitive ."
 						".   sensitive  .";
 
+					&::-webkit-details-marker {
+						display: none; /* Safari */
+					}
+
 					.eye.button {
 						grid-area: eye;
 						align-self: start;
