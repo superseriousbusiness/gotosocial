@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
+	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type SurfaceNotifyTestSuite struct {
@@ -35,8 +36,8 @@ type SurfaceNotifyTestSuite struct {
 }
 
 func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	surface := &workers.Surface{
 		State:         testStructs.State,

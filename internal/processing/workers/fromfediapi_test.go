@@ -42,8 +42,8 @@ type FromFediAPITestSuite struct {
 
 // remote_account_1 boosts the first status of local_account_1
 func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	boostedStatus := &gtsmodel.Status{}
 	*boostedStatus = *suite.testStatuses["local_account_1_status_1"]
@@ -106,8 +106,8 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	repliedAccount := &gtsmodel.Account{}
 	*repliedAccount = *suite.testAccounts["local_account_1"]
@@ -190,8 +190,8 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFave() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	favedAccount := suite.testAccounts["local_account_1"]
 	favedStatus := suite.testStatuses["local_account_1_status_1"]
@@ -262,8 +262,8 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 // This tests for an issue we were seeing where Misskey sends out faves to inboxes of people that don't own
 // the fave, but just follow the actor who received the fave.
 func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	receivingAccount := suite.testAccounts["local_account_2"]
 	favedAccount := suite.testAccounts["local_account_1"]
@@ -327,8 +327,8 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 }
 
 func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	ctx := context.Background()
 
@@ -421,8 +421,8 @@ func (suite *FromFediAPITestSuite) TestProcessAccountDelete() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	ctx := context.Background()
 
@@ -478,8 +478,8 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestLocked() {
 }
 
 func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	ctx := context.Background()
 
@@ -579,8 +579,8 @@ func (suite *FromFediAPITestSuite) TestProcessFollowRequestUnlocked() {
 
 // TestCreateStatusFromIRI checks if a forwarded status can be dereferenced by the processor.
 func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	ctx := context.Background()
 
@@ -604,8 +604,8 @@ func (suite *FromFediAPITestSuite) TestCreateStatusFromIRI() {
 }
 
 func (suite *FromFediAPITestSuite) TestMoveAccount() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	// We're gonna migrate foss_satan to our local admin account.
 	ctx := context.Background()
