@@ -47,6 +47,8 @@ EXPECT=$(cat << "EOF"
         "in-reply-to-ids-mem-ratio": 3,
         "instance-mem-ratio": 1,
         "interaction-approval-mem-ratio": 1,
+        "interaction-rejection-mem-ratio": 0.5,
+        "interaction-request-mem-ratio": 0.5,
         "list-entry-mem-ratio": 2,
         "list-mem-ratio": 1,
         "marker-mem-ratio": 0.5,

@@ -26,12 +26,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -488,128 +487,143 @@ func (u *utils) decrementFollowRequestsCount(
 	return nil
 }
 
-// approveFave stores + returns an
-// interactionApproval for a fave.
-func (u *utils) approveFave(
+// pendFave stores an interaction request for the given
+// fave, and notifies the interactee of a pending fave.
+func (u *utils) pendFave(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
-) (*gtsmodel.InteractionApproval, error) {
-	id := id.NewULID()
-
-	approval := &gtsmodel.InteractionApproval{
-		ID:                   id,
-		AccountID:            fave.TargetAccountID,
-		Account:              fave.TargetAccount,
-		InteractingAccountID: fave.AccountID,
-		InteractingAccount:   fave.Account,
-		InteractionURI:       fave.URI,
-		InteractionType:      gtsmodel.InteractionLike,
-		URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+) error {
+	// Only create interaction request
+	// if fave targets a local status.
+	if fave.Status == nil ||
+		!fave.Status.IsLocal() {
+		return nil
 	}
 
-	if err := u.state.DB.PutInteractionApproval(ctx, approval); err != nil {
-		err := gtserror.Newf("db error inserting interaction approval: %w", err)
-		return nil, err
+	// Lock on the interaction URI.
+	unlock := u.state.ProcessingLocks.Lock(fave.URI)
+	defer unlock()
+
+	// Ensure no req with this URI exists already.
+	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, fave.URI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error checking for existing interaction request: %w", err)
 	}
 
-	// Mark the fave itself as now approved.
-	fave.PendingApproval = util.Ptr(false)
-	fave.PreApproved = false
-	fave.ApprovedByURI = approval.URI
-
-	if err := u.state.DB.UpdateStatusFave(
-		ctx,
-		fave,
-		"pending_approval",
-		"approved_by_uri",
-	); err != nil {
-		err := gtserror.Newf("db error updating status fave: %w", err)
-		return nil, err
+	if req != nil {
+		// Interaction req already exists,
+		// no need to do anything else.
+		return nil
 	}
 
-	return approval, nil
+	// Create + store new interaction request.
+	req, err = typeutils.StatusFaveToInteractionRequest(ctx, fave)
+	if err != nil {
+		return gtserror.Newf("error creating interaction request: %w", err)
+	}
+
+	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
+		return gtserror.Newf("db error storing interaction request: %w", err)
+	}
+
+	// Notify *local* account of pending announce.
+	if err := u.surface.notifyPendingFave(ctx, fave); err != nil {
+		return gtserror.Newf("error notifying pending fave: %w", err)
+	}
+
+	return nil
 }
 
-// approveReply stores + returns an
-// interactionApproval for a reply.
-func (u *utils) approveReply(
+// pendReply stores an interaction request for the given
+// status, and notifies the interactee of a pending reply.
+func (u *utils) pendReply(
 	ctx context.Context,
-	status *gtsmodel.Status,
-) (*gtsmodel.InteractionApproval, error) {
-	id := id.NewULID()
-
-	approval := &gtsmodel.InteractionApproval{
-		ID:                   id,
-		AccountID:            status.InReplyToAccountID,
-		Account:              status.InReplyToAccount,
-		InteractingAccountID: status.AccountID,
-		InteractingAccount:   status.Account,
-		InteractionURI:       status.URI,
-		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+	reply *gtsmodel.Status,
+) error {
+	// Only create interaction request if
+	// status replies to a local status.
+	if reply.InReplyTo == nil ||
+		!reply.InReplyTo.IsLocal() {
+		return nil
 	}
 
-	if err := u.state.DB.PutInteractionApproval(ctx, approval); err != nil {
-		err := gtserror.Newf("db error inserting interaction approval: %w", err)
-		return nil, err
+	// Lock on the interaction URI.
+	unlock := u.state.ProcessingLocks.Lock(reply.URI)
+	defer unlock()
+
+	// Ensure no req with this URI exists already.
+	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, reply.URI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error checking for existing interaction request: %w", err)
 	}
 
-	// Mark the status itself as now approved.
-	status.PendingApproval = util.Ptr(false)
-	status.PreApproved = false
-	status.ApprovedByURI = approval.URI
-
-	if err := u.state.DB.UpdateStatus(
-		ctx,
-		status,
-		"pending_approval",
-		"approved_by_uri",
-	); err != nil {
-		err := gtserror.Newf("db error updating status: %w", err)
-		return nil, err
+	if req != nil {
+		// Interaction req already exists,
+		// no need to do anything else.
+		return nil
 	}
 
-	return approval, nil
+	// Create + store interaction request.
+	req, err = typeutils.StatusToInteractionRequest(ctx, reply)
+	if err != nil {
+		return gtserror.Newf("error creating interaction request: %w", err)
+	}
+
+	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
+		return gtserror.Newf("db error storing interaction request: %w", err)
+	}
+
+	// Notify *local* account of pending reply.
+	if err := u.surface.notifyPendingReply(ctx, reply); err != nil {
+		return gtserror.Newf("error notifying pending reply: %w", err)
+	}
+
+	return nil
 }
 
-// approveAnnounce stores + returns an
-// interactionApproval for an announce.
-func (u *utils) approveAnnounce(
+// pendAnnounce stores an interaction request for the given
+// status, and notifies the interactee of a pending announce.
+func (u *utils) pendAnnounce(
 	ctx context.Context,
 	boost *gtsmodel.Status,
-) (*gtsmodel.InteractionApproval, error) {
-	id := id.NewULID()
-
-	approval := &gtsmodel.InteractionApproval{
-		ID:                   id,
-		AccountID:            boost.BoostOfAccountID,
-		Account:              boost.BoostOfAccount,
-		InteractingAccountID: boost.AccountID,
-		InteractingAccount:   boost.Account,
-		InteractionURI:       boost.URI,
-		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+) error {
+	// Only create interaction request if
+	// status announces a local status.
+	if boost.BoostOf == nil ||
+		!boost.BoostOf.IsLocal() {
+		return nil
 	}
 
-	if err := u.state.DB.PutInteractionApproval(ctx, approval); err != nil {
-		err := gtserror.Newf("db error inserting interaction approval: %w", err)
-		return nil, err
+	// Lock on the interaction URI.
+	unlock := u.state.ProcessingLocks.Lock(boost.URI)
+	defer unlock()
+
+	// Ensure no req with this URI exists already.
+	req, err := u.state.DB.GetInteractionRequestByInteractionURI(ctx, boost.URI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error checking for existing interaction request: %w", err)
 	}
 
-	// Mark the status itself as now approved.
-	boost.PendingApproval = util.Ptr(false)
-	boost.PreApproved = false
-	boost.ApprovedByURI = approval.URI
-
-	if err := u.state.DB.UpdateStatus(
-		ctx,
-		boost,
-		"pending_approval",
-		"approved_by_uri",
-	); err != nil {
-		err := gtserror.Newf("db error updating boost wrapper status: %w", err)
-		return nil, err
+	if req != nil {
+		// Interaction req already exists,
+		// no need to do anything else.
+		return nil
 	}
 
-	return approval, nil
+	// Create + store interaction request.
+	req, err = typeutils.StatusToInteractionRequest(ctx, boost)
+	if err != nil {
+		return gtserror.Newf("error creating interaction request: %w", err)
+	}
+
+	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
+		return gtserror.Newf("db error storing interaction request: %w", err)
+	}
+
+	// Notify *local* account of pending announce.
+	if err := u.surface.notifyPendingAnnounce(ctx, boost); err != nil {
+		return gtserror.Newf("error notifying pending announce: %w", err)
+	}
+
+	return nil
 }

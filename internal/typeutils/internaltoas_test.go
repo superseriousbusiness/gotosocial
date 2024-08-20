@@ -1064,7 +1064,6 @@ func (suite *InternalToASTestSuite) TestInteractionApprovalToASAccept() {
 	interactionApproval := &gtsmodel.InteractionApproval{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		UpdatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 		AccountID:            acceptingAccount.ID,
 		Account:              acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,

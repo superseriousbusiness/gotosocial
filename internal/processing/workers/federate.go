@@ -1196,3 +1196,75 @@ func (f *federate) AcceptInteraction(
 
 	return nil
 }
+
+func (f *federate) RejectInteraction(
+	ctx context.Context,
+	rejection *gtsmodel.InteractionRejection,
+) error {
+	// Populate model.
+	if err := f.state.DB.PopulateInteractionRejection(ctx, rejection); err != nil {
+		return gtserror.Newf("error populating rejection: %w", err)
+	}
+
+	// Bail if interacting account is ours:
+	// we've already rejected internally and
+	// shouldn't send an Reject to ourselves.
+	if rejection.InteractingAccount.IsLocal() {
+		return nil
+	}
+
+	// Bail if account isn't ours:
+	// we can't Reject on another
+	// instance's behalf. (This
+	// should never happen but...)
+	if rejection.Account.IsRemote() {
+		return nil
+	}
+
+	// Parse relevant URI(s).
+	outboxIRI, err := parseURI(rejection.Account.OutboxURI)
+	if err != nil {
+		return err
+	}
+
+	rejectingAcctIRI, err := parseURI(rejection.Account.URI)
+	if err != nil {
+		return err
+	}
+
+	interactingAcctURI, err := parseURI(rejection.InteractingAccount.URI)
+	if err != nil {
+		return err
+	}
+
+	interactionURI, err := parseURI(rejection.InteractionURI)
+	if err != nil {
+		return err
+	}
+
+	// Create a new Reject.
+	reject := streams.NewActivityStreamsReject()
+
+	// Set interacted-with account
+	// as Actor of the Reject.
+	ap.AppendActorIRIs(reject, rejectingAcctIRI)
+
+	// Set the interacted-with object
+	// as Object of the Reject.
+	ap.AppendObjectIRIs(reject, interactionURI)
+
+	// Address the Reject To the interacting acct.
+	ap.AppendTo(reject, interactingAcctURI)
+
+	// Send the Reject via the Actor's outbox.
+	if _, err := f.FederatingActor().Send(
+		ctx, outboxIRI, reject,
+	); err != nil {
+		return gtserror.Newf(
+			"error sending activity %T for %v via outbox %s: %w",
+			reject, rejection.InteractionType, outboxIRI, err,
+		)
+	}
+
+	return nil
+}

@@ -1298,10 +1298,10 @@ button.tab-button {
 			word-break: break-word;
 		}
 
-		dt, dd {
+		dt, dd, span {
 			/*
 				Make sure any fa icons used in keys
-				or values are properly aligned.
+				or values etc. are properly aligned.
 			*/
 			.fa {
 				vertical-align: middle;
@@ -1494,6 +1494,60 @@ button.tab-button {
 				grid-template-columns: auto;
 			}
 		}
+	}
+}
+
+
+.interaction-requests-view {
+	.interaction-request {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		gap: 0.5rem;
+		color: $fg;
+
+		.info-list {
+			border: none;
+
+			.info-list-entry {
+				grid-template-columns: max(20%, 8rem) 1fr;
+				background: none;
+				padding: 0;
+			}
+		}
+
+		.action-buttons {
+			display: flex;
+			gap: 0.5rem;
+			align-items: center;
+
+			> .mutation-button
+			> button {
+				font-size: 1rem;
+				line-height: 1rem;
+			}
+		}
+	}
+}
+
+.interaction-request-detail {
+	.overview {
+		margin-top: 1rem;
+	}
+
+	h2 {
+		font-size: 1rem;
+	}
+
+	.thread .status .status-info {
+		border-bottom-left-radius: $br;
+		border-bottom-right-radius: $br;
+	}
+
+	.action-buttons {
+		display: flex;
+		gap: 0.5rem;
+		align-items: center;
 	}
 }
 

@@ -32,6 +32,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -44,6 +45,7 @@ type fediAPI struct {
 	surface  *Surface
 	federate *federate
 	account  *account.Processor
+	common   *common.Processor
 	utils    *utils
 }
 
@@ -228,13 +230,15 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		return nil
 	}
 
+	// We're going to possibly modify
+	// the status further, lock on its URI.
+	unlock := p.state.ProcessingLocks.Lock(status.URI)
+	defer unlock()
+
 	// If pending approval is true then
 	// status must reply to a LOCAL status
 	// that requires approval for the reply.
-	pendingApproval := util.PtrOrValue(
-		status.PendingApproval,
-		false,
-	)
+	pendingApproval := util.PtrOrZero(status.PendingApproval)
 
 	switch {
 	case pendingApproval && !status.PreApproved:
@@ -242,10 +246,8 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-
-		// Notify *local* account of pending reply.
-		if err := p.surface.notifyPendingReply(ctx, status); err != nil {
-			log.Errorf(ctx, "error notifying pending reply: %v", err)
+		if err := p.utils.pendReply(ctx, status); err != nil {
+			return gtserror.Newf("error pending reply: %w", err)
 		}
 
 		// Return early.
@@ -261,7 +263,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 
 		// Put approval in the database and
 		// update the status with approvedBy URI.
-		approval, err := p.utils.approveReply(ctx, status)
+		approval, err := p.common.ApproveReply(ctx, status)
 		if err != nil {
 			return gtserror.Newf("error pre-approving reply: %w", err)
 		}
@@ -401,6 +403,11 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", fMsg.GTSModel)
 	}
 
+	// We're going to possibly modify
+	// the fave further, lock on its URI.
+	unlock := p.state.ProcessingLocks.Lock(fave.URI)
+	defer unlock()
+
 	// Ensure fave populated.
 	if err := p.state.DB.PopulateStatusFave(ctx, fave); err != nil {
 		return gtserror.Newf("error populating status fave: %w", err)
@@ -409,10 +416,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 	// If pending approval is true then
 	// fave must target a LOCAL status
 	// that requires approval for the fave.
-	pendingApproval := util.PtrOrValue(
-		fave.PendingApproval,
-		false,
-	)
+	pendingApproval := util.PtrOrZero(fave.PendingApproval)
 
 	switch {
 	case pendingApproval && !fave.PreApproved:
@@ -420,10 +424,8 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-
-		// Notify *local* account of pending fave.
-		if err := p.surface.notifyPendingFave(ctx, fave); err != nil {
-			log.Errorf(ctx, "error notifying pending fave: %v", err)
+		if err := p.utils.pendFave(ctx, fave); err != nil {
+			return gtserror.Newf("error pending fave: %w", err)
 		}
 
 		// Return early.
@@ -439,7 +441,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 
 		// Put approval in the database and
 		// update the fave with approvedBy URI.
-		approval, err := p.utils.approveFave(ctx, fave)
+		approval, err := p.common.ApproveFave(ctx, fave)
 		if err != nil {
 			return gtserror.Newf("error pre-approving fave: %w", err)
 		}
@@ -493,13 +495,15 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		return gtserror.Newf("error dereferencing announce: %w", err)
 	}
 
+	// We're going to possibly modify
+	// the boost further, lock on its URI.
+	unlock := p.state.ProcessingLocks.Lock(boost.URI)
+	defer unlock()
+
 	// If pending approval is true then
 	// boost must target a LOCAL status
 	// that requires approval for the boost.
-	pendingApproval := util.PtrOrValue(
-		boost.PendingApproval,
-		false,
-	)
+	pendingApproval := util.PtrOrZero(boost.PendingApproval)
 
 	switch {
 	case pendingApproval && !boost.PreApproved:
@@ -507,10 +511,8 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-
-		// Notify *local* account of pending announce.
-		if err := p.surface.notifyPendingAnnounce(ctx, boost); err != nil {
-			log.Errorf(ctx, "error notifying pending boost: %v", err)
+		if err := p.utils.pendAnnounce(ctx, boost); err != nil {
+			return gtserror.Newf("error pending boost: %w", err)
 		}
 
 		// Return early.
@@ -526,7 +528,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 
 		// Put approval in the database and
 		// update the boost with approvedBy URI.
-		approval, err := p.utils.approveAnnounce(ctx, boost)
+		approval, err := p.common.ApproveAnnounce(ctx, boost)
 		if err != nil {
 			return gtserror.Newf("error pre-approving boost: %w", err)
 		}

@@ -168,6 +168,7 @@ export const gtsApi = createApi({
 		"HTTPHeaderAllows",
 		"HTTPHeaderBlocks",
 		"DefaultInteractionPolicies",
+		"InteractionRequest",
 	],
 	endpoints: (build) => ({
 		instanceV1: build.query<InstanceV1, void>({

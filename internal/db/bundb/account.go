@@ -1285,34 +1285,40 @@ func (a *accountDB) RegenerateAccountStats(ctx context.Context, account *gtsmode
 	if err := a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		var err error
 
-		// Scan database for account statuses.
+		// Scan database for account statuses, ignoring
+		// statuses that are currently pending approval.
 		statusesCount, err := tx.NewSelect().
-			Table("statuses").
-			Where("? = ?", bun.Ident("account_id"), account.ID).
+			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+			Where("? = ?", bun.Ident("status.account_id"), account.ID).
+			Where("NOT ? = ?", bun.Ident("status.pending_approval"), true).
 			Count(ctx)
 		if err != nil {
 			return err
 		}
 		stats.StatusesCount = &statusesCount
 
-		// Scan database for pinned statuses.
+		// Scan database for pinned statuses, ignoring
+		// statuses that are currently pending approval.
 		statusesPinnedCount, err := tx.NewSelect().
-			Table("statuses").
-			Where("? = ?", bun.Ident("account_id"), account.ID).
-			Where("? IS NOT NULL", bun.Ident("pinned_at")).
+			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+			Where("? = ?", bun.Ident("status.account_id"), account.ID).
+			Where("? IS NOT NULL", bun.Ident("status.pinned_at")).
+			Where("NOT ? = ?", bun.Ident("status.pending_approval"), true).
 			Count(ctx)
 		if err != nil {
 			return err
 		}
 		stats.StatusesPinnedCount = &statusesPinnedCount
 
-		// Scan database for last status.
+		// Scan database for last status, ignoring
+		// statuses that are currently pending approval.
 		lastStatusAt := time.Time{}
 		err = tx.
 			NewSelect().
 			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 			Column("status.created_at").
 			Where("? = ?", bun.Ident("status.account_id"), account.ID).
+			Where("NOT ? = ?", bun.Ident("status.pending_approval"), true).
 			Order("status.id DESC").
 			Limit(1).
 			Scan(ctx, &lastStatusAt)

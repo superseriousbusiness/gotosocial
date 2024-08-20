@@ -219,6 +219,8 @@ type CacheConfiguration struct {
 	InReplyToIDsMemRatio              float64       `name:"in-reply-to-ids-mem-ratio"`
 	InstanceMemRatio                  float64       `name:"instance-mem-ratio"`
 	InteractionApprovalMemRatio       float64       `name:"interaction-approval-mem-ratio"`
+	InteractionRejectionMemRatio      float64       `name:"interaction-rejection-mem-ratio"`
+	InteractionRequestMemRatio        float64       `name:"interaction-request-mem-ratio"`
 	ListMemRatio                      float64       `name:"list-mem-ratio"`
 	ListEntryMemRatio                 float64       `name:"list-entry-mem-ratio"`
 	MarkerMemRatio                    float64       `name:"marker-mem-ratio"`

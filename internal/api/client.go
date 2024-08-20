@@ -38,6 +38,7 @@ import (
 	importdata "github.com/superseriousbusiness/gotosocial/internal/api/client/import"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/interactionpolicies"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/interactionrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/media"
@@ -80,6 +81,7 @@ type Client struct {
 	importData          *importdata.Module          // api/v1/import
 	instance            *instance.Module            // api/v1/instance
 	interactionPolicies *interactionpolicies.Module // api/v1/interaction_policies
+	interactionRequests *interactionrequests.Module // api/v1/interaction_requests
 	lists               *lists.Module               // api/v1/lists
 	markers             *markers.Module             // api/v1/markers
 	media               *media.Module               // api/v1/media, api/v2/media
@@ -130,6 +132,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.importData.Route(h)
 	c.instance.Route(h)
 	c.interactionPolicies.Route(h)
+	c.interactionRequests.Route(h)
 	c.lists.Route(h)
 	c.markers.Route(h)
 	c.media.Route(h)
@@ -168,6 +171,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		importData:          importdata.New(p),
 		instance:            instance.New(p),
 		interactionPolicies: interactionpolicies.New(p),
+		interactionRequests: interactionrequests.New(p),
 		lists:               lists.New(p),
 		markers:             markers.New(p),
 		media:               media.New(p),

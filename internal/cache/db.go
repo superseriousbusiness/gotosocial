@@ -109,6 +109,12 @@ type DBCaches struct {
 	// InteractionApproval provides access to the gtsmodel InteractionApproval database cache.
 	InteractionApproval StructCache[*gtsmodel.InteractionApproval]
 
+	// InteractionRejection provides access to the gtsmodel InteractionRejection database cache.
+	InteractionRejection StructCache[*gtsmodel.InteractionRejection]
+
+	// InteractionRequest provides access to the gtsmodel InteractionRequest database cache.
+	InteractionRequest StructCache[*gtsmodel.InteractionRequest]
+
 	// InReplyToIDs provides access to the status in reply to IDs list database cache.
 	InReplyToIDs SliceCache[string]
 
@@ -818,8 +824,12 @@ func (c *Caches) initInteractionApproval() {
 		// Don't include ptr fields that
 		// will be populated separately.
 		// See internal/db/bundb/interaction.go.
+		i2.Status = nil
 		i2.Account = nil
 		i2.InteractingAccount = nil
+		i2.Like = nil
+		i2.Reply = nil
+		i2.Announce = nil
 
 		return i2
 	}
@@ -828,6 +838,80 @@ func (c *Caches) initInteractionApproval() {
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
 			{Fields: "URI"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initInteractionRejection() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofInteractionRejection(),
+		config.GetCacheInteractionRejectionMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(i1 *gtsmodel.InteractionRejection) *gtsmodel.InteractionRejection {
+		i2 := new(gtsmodel.InteractionRejection)
+		*i2 = *i1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/interaction.go.
+		i2.Status = nil
+		i2.Account = nil
+		i2.InteractingAccount = nil
+		i2.Like = nil
+		i2.Reply = nil
+		i2.Announce = nil
+
+		return i2
+	}
+
+	c.DB.InteractionRejection.Init(structr.CacheConfig[*gtsmodel.InteractionRejection]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "URI"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initInteractionRequest() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofInteractionRequest(),
+		config.GetCacheInteractionRequestMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(i1 *gtsmodel.InteractionRequest) *gtsmodel.InteractionRequest {
+		i2 := new(gtsmodel.InteractionRequest)
+		*i2 = *i1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/interaction.go.
+		i2.Status = nil
+		i2.TargetAccount = nil
+		i2.InteractingAccount = nil
+		i2.Like = nil
+		i2.Reply = nil
+		i2.Announce = nil
+
+		return i2
+	}
+
+	c.DB.InteractionRequest.Init(structr.CacheConfig[*gtsmodel.InteractionRequest]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "InteractionURI"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,

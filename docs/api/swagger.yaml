@@ -1962,6 +1962,35 @@ definitions:
         type: object
         x-go-name: InstanceV2Users
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    interactionApproval:
+        properties:
+            created_at:
+                description: The timestamp of the interaction approval (ISO 8601 Datetime)
+                type: string
+                x-go-name: CreatedAt
+            id:
+                description: The id of the interaction approval in the database.
+                type: string
+                x-go-name: ID
+            interacted_status:
+                $ref: '#/definitions/status'
+            interacting_account:
+                $ref: '#/definitions/account'
+            reply:
+                $ref: '#/definitions/status'
+            type:
+                description: |-
+                    The type of interaction that this interaction approval pertains to.
+
+                    `favourite` - Someone favourited a status.
+                    `reply` - Someone replied to a status.
+                    `reblog` - Someone reblogged / boosted a status.
+                type: string
+                x-go-name: Type
+        title: InteractionApproval represents an interaction of type favourite, reply, or reblog which has been approved by the user being interacted with.
+        type: object
+        x-go-name: InteractionApproval
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     interactionPolicy:
         properties:
             can_favourite:
@@ -2008,6 +2037,62 @@ definitions:
         title: One interaction policy entry for a status.
         type: string
         x-go-name: PolicyValue
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    interactionRejection:
+        properties:
+            created_at:
+                description: The timestamp of the interaction rejection (ISO 8601 Datetime)
+                type: string
+                x-go-name: CreatedAt
+            id:
+                description: The id of the interaction rejection in the database.
+                type: string
+                x-go-name: ID
+            interacted_status:
+                $ref: '#/definitions/status'
+            interacting_account:
+                $ref: '#/definitions/account'
+            type:
+                description: |-
+                    The type of interaction that this interaction rejection pertains to.
+
+                    `favourite` - Someone favourited a status.
+                    `reply` - Someone replied to a status.
+                    `reblog` - Someone reblogged / boosted a status.
+                type: string
+                x-go-name: Type
+        title: InteractionRejection represents an interaction of type favourite, reply, or reblog which has been rejected by the user being interacted with.
+        type: object
+        x-go-name: InteractionRejection
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    interactionRequest:
+        properties:
+            created_at:
+                description: The timestamp of the interaction request (ISO 8601 Datetime)
+                type: string
+                x-go-name: CreatedAt
+            id:
+                description: The id of the interaction request in the database.
+                type: string
+                x-go-name: ID
+            interacted_status:
+                $ref: '#/definitions/status'
+            interacting_account:
+                $ref: '#/definitions/account'
+            reply:
+                $ref: '#/definitions/status'
+            type:
+                description: |-
+                    The type of interaction that this interaction request pertains to.
+
+                    `favourite` - Someone favourited a status.
+                    `reply` - Someone replied to a status.
+                    `reblog` - Someone reblogged / boosted a status.
+                type: string
+                x-go-name: Type
+        title: InteractionRequest represents a pending/requested interaction of type favourite, reply, or reblog, awaiting approval by the user being interacted with.
+        type: object
+        x-go-name: InteractionRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     list:
         properties:
@@ -7513,6 +7598,177 @@ paths:
             summary: Update default interaction policies per visibility level for new statuses created by you.
             tags:
                 - interaction_policies
+    /api/v1/interaction_requests:
+        get:
+            description: |-
+                ```
+                <https://example.org/api/v1/interaction_requests?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/interaction_requests?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: getInteractionRequests
+            parameters:
+                - description: If set, then only interactions targeting the given status_id will be included in the results.
+                  in: query
+                  name: status_id
+                  type: string
+                - default: true
+                  description: If true or not set, pending favourites will be included in the results. At least one of favourites, replies, and reblogs must be true.
+                  in: query
+                  name: favourites
+                  type: boolean
+                - default: true
+                  description: If true or not set, pending replies will be included in the results. At least one of favourites, replies, and reblogs must be true.
+                  in: query
+                  name: replies
+                  type: boolean
+                - default: true
+                  description: If true or not set, pending reblogs will be included in the results. At least one of favourites, replies, and reblogs must be true.
+                  in: query
+                  name: reblogs
+                  type: boolean
+                - description: Return only interaction requests *OLDER* than the given max ID. The interaction with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only interaction requests *NEWER* than the given since ID. The interaction with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only interaction requests *IMMEDIATELY NEWER* than the given min ID. The interaction with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of interaction requests to return.
+                  in: query
+                  maximum: 80
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/interactionRequest'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:notifications
+            summary: Get an array of interactions requested on your statuses by other accounts, and pending your approval.
+            tags:
+                - interaction_requests
+    /api/v1/interaction_requests/{id}:
+        get:
+            operationId: getInteractionRequest
+            parameters:
+                - description: ID of the interaction request targeting you.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Interaction request.
+                    schema:
+                        $ref: '#/definitions/interactionRequest'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:notifications
+            summary: Get interaction request with the given ID.
+            tags:
+                - interaction_requests
+    /api/v1/interaction_requests/{id}/authorize:
+        post:
+            operationId: authorizeInteractionRequest
+            parameters:
+                - description: ID of the interaction request targeting you.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-approved interaction.
+                    schema:
+                        $ref: '#/definitions/interactionApproval'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Accept/authorize/approve an interaction request with the given ID.
+            tags:
+                - interaction_requests
+    /api/v1/interaction_requests/{id}/reject:
+        post:
+            operationId: rejectInteractionRequest
+            parameters:
+                - description: ID of the interaction request targeting you.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The now-rejected interaction.
+                    schema:
+                        $ref: '#/definitions/interactionRejection'
+                "400":
+                    description: bad request
+                "401":
+                    description: unrejectd
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Reject an interaction request with the given ID.
+            tags:
+                - interaction_requests
     /api/v1/lists:
         get:
             operationId: lists

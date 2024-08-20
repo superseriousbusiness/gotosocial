@@ -91,6 +91,13 @@ const (
 	AdminPermissionsKey = "permissions"
 	AdminRoleIDsKey     = "role_ids[]"
 	AdminInvitedByKey   = "invited_by"
+
+	/* Interaction policy + request keys */
+
+	InteractionStatusIDKey   = "status_id"
+	InteractionFavouritesKey = "favourites"
+	InteractionRepliesKey    = "replies"
+	InteractionReblogsKey    = "reblogs"
 )
 
 /*
@@ -192,6 +199,18 @@ func ParseAdminSuspended(value string, defaultValue bool) (bool, gtserror.WithCo
 
 func ParseAdminStaff(value string, defaultValue bool) (bool, gtserror.WithCode) {
 	return parseBool(value, defaultValue, AdminStaffKey)
+}
+
+func ParseInteractionFavourites(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, InteractionFavouritesKey)
+}
+
+func ParseInteractionReplies(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, InteractionRepliesKey)
+}
+
+func ParseInteractionReblogs(value string, defaultValue bool) (bool, gtserror.WithCode) {
+	return parseBool(value, defaultValue, InteractionReblogsKey)
 }
 
 /*

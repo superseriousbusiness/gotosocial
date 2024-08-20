@@ -445,12 +445,35 @@ func sizeofInteractionApproval() uintptr {
 	return uintptr(size.Of(&gtsmodel.InteractionApproval{
 		ID:                   exampleID,
 		CreatedAt:            exampleTime,
-		UpdatedAt:            exampleTime,
 		AccountID:            exampleID,
 		InteractingAccountID: exampleID,
 		InteractionURI:       exampleURI,
 		InteractionType:      gtsmodel.InteractionAnnounce,
 		URI:                  exampleURI,
+	}))
+}
+
+func sizeofInteractionRejection() uintptr {
+	return uintptr(size.Of(&gtsmodel.InteractionRejection{
+		ID:                   exampleID,
+		CreatedAt:            exampleTime,
+		AccountID:            exampleID,
+		InteractingAccountID: exampleID,
+		InteractionURI:       exampleURI,
+		InteractionType:      gtsmodel.InteractionAnnounce,
+		URI:                  exampleURI,
+	}))
+}
+
+func sizeofInteractionRequest() uintptr {
+	return uintptr(size.Of(&gtsmodel.InteractionRequest{
+		ID:                   exampleID,
+		CreatedAt:            exampleTime,
+		StatusID:             exampleID,
+		TargetAccountID:      exampleID,
+		InteractingAccountID: exampleID,
+		InteractionURI:       exampleURI,
+		InteractionType:      gtsmodel.InteractionAnnounce,
 	}))
 }
 

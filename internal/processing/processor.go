@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
 	filtersv1 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1"
 	filtersv2 "github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/interactionrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/list"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/markers"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
@@ -74,25 +75,26 @@ type Processor struct {
 		SUB-PROCESSORS
 	*/
 
-	account            account.Processor
-	admin              admin.Processor
-	advancedmigrations advancedmigrations.Processor
-	conversations      conversations.Processor
-	fedi               fedi.Processor
-	filtersv1          filtersv1.Processor
-	filtersv2          filtersv2.Processor
-	list               list.Processor
-	markers            markers.Processor
-	media              media.Processor
-	polls              polls.Processor
-	report             report.Processor
-	search             search.Processor
-	status             status.Processor
-	stream             stream.Processor
-	tags               tags.Processor
-	timeline           timeline.Processor
-	user               user.Processor
-	workers            workers.Processor
+	account             account.Processor
+	admin               admin.Processor
+	advancedmigrations  advancedmigrations.Processor
+	conversations       conversations.Processor
+	fedi                fedi.Processor
+	filtersv1           filtersv1.Processor
+	filtersv2           filtersv2.Processor
+	interactionRequests interactionrequests.Processor
+	list                list.Processor
+	markers             markers.Processor
+	media               media.Processor
+	polls               polls.Processor
+	report              report.Processor
+	search              search.Processor
+	status              status.Processor
+	stream              stream.Processor
+	tags                tags.Processor
+	timeline            timeline.Processor
+	user                user.Processor
+	workers             workers.Processor
 }
 
 func (p *Processor) Account() *account.Processor {
@@ -121,6 +123,10 @@ func (p *Processor) FiltersV1() *filtersv1.Processor {
 
 func (p *Processor) FiltersV2() *filtersv2.Processor {
 	return &p.filtersv2
+}
+
+func (p *Processor) InteractionRequests() *interactionrequests.Processor {
+	return &p.interactionRequests
 }
 
 func (p *Processor) List() *list.Processor {
@@ -209,6 +215,7 @@ func NewProcessor(
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
 	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)
+	processor.interactionRequests = interactionrequests.New(&common, state, converter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)
 	processor.polls = polls.New(&common, state, converter)
@@ -227,6 +234,7 @@ func NewProcessor(
 	// and pass subset of sub processors it needs.
 	processor.workers = workers.New(
 		state,
+		&common,
 		federator,
 		converter,
 		visFilter,

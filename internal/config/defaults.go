@@ -182,6 +182,8 @@ var Defaults = Configuration{
 		InReplyToIDsMemRatio:              3,
 		InstanceMemRatio:                  1,
 		InteractionApprovalMemRatio:       1,
+		InteractionRejectionMemRatio:      0.5,
+		InteractionRequestMemRatio:        0.5,
 		ListMemRatio:                      1,
 		ListEntryMemRatio:                 2,
 		MarkerMemRatio:                    0.5,

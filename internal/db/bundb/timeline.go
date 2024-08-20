@@ -89,19 +89,6 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		q = q.Where("? = ?", bun.Ident("status.local"), local)
 	}
 
-	if limit > 0 {
-		// limit amount of statuses returned
-		q = q.Limit(limit)
-	}
-
-	if frontToBack {
-		// Page down.
-		q = q.Order("status.id DESC")
-	} else {
-		// Page up.
-		q = q.Order("status.id ASC")
-	}
-
 	// As this is the home timeline, it should be
 	// populated by statuses from accounts followed
 	// by accountID, and posts from accountID itself.
@@ -136,6 +123,22 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		bun.Ident("status.account_id"),
 		bun.In(targetAccountIDs),
 	)
+
+	// Only include statuses that aren't pending approval.
+	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
+
+	if limit > 0 {
+		// limit amount of statuses returned
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
+	}
 
 	if err := q.Scan(ctx, &statusIDs); err != nil {
 		return nil, err
@@ -212,6 +215,9 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 		// return only statuses posted by local account havers
 		q = q.Where("? = ?", bun.Ident("status.local"), local)
 	}
+
+	// Only include statuses that aren't pending approval.
+	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
 
 	if limit > 0 {
 		// limit amount of statuses returned
@@ -395,6 +401,9 @@ func (t *timelineDB) GetListTimeline(
 		frontToBack = false
 	}
 
+	// Only include statuses that aren't pending approval.
+	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
+
 	if limit > 0 {
 		// limit amount of statuses returned
 		q = q.Limit(limit)
@@ -490,6 +499,9 @@ func (t *timelineDB) GetTagTimeline(
 		// page up
 		frontToBack = false
 	}
+
+	// Only include statuses that aren't pending approval.
+	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
 
 	if limit > 0 {
 		// limit amount of statuses returned

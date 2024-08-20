@@ -2591,3 +2591,160 @@ func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValu
 
 	return apiVals
 }
+
+// InteractionReqToAPIInteractionReq converts the given *gtsmodel.InteractionRequest
+// to an *apimodel.InteractionRequest, from the perspective of requestingAcct.
+func (c *Converter) InteractionReqToAPIInteractionReq(
+	ctx context.Context,
+	ir *gtsmodel.InteractionRequest,
+	requestingAcct *gtsmodel.Account,
+) (*apimodel.InteractionRequest, error) {
+	// Ensure interaction request is populated.
+	if err := c.state.DB.PopulateInteractionRequest(ctx, ir); err != nil {
+		err := gtserror.Newf("error populating: %w", err)
+		return nil, err
+	}
+
+	interactingAcct, err := c.AccountToAPIAccountPublic(ctx, ir.InteractingAccount)
+	if err != nil {
+		err := gtserror.Newf("error converting interacting acct: %w", err)
+		return nil, err
+	}
+
+	interactedStatus, err := c.StatusToAPIStatus(
+		ctx,
+		ir.Status,
+		requestingAcct,
+		statusfilter.FilterContextNone,
+		nil,
+		nil,
+	)
+	if err != nil {
+		err := gtserror.Newf("error converting interacted status: %w", err)
+		return nil, err
+	}
+
+	var reply *apimodel.Status
+	if ir.InteractionType == gtsmodel.InteractionReply {
+		reply, err = c.StatusToAPIStatus(
+			ctx,
+			ir.Reply,
+			requestingAcct,
+			statusfilter.FilterContextNone,
+			nil,
+			nil,
+		)
+		if err != nil {
+			err := gtserror.Newf("error converting reply: %w", err)
+			return nil, err
+		}
+	}
+
+	return &apimodel.InteractionRequest{
+		ID:                 ir.ID,
+		Type:               ir.InteractionType.String(),
+		CreatedAt:          util.FormatISO8601(ir.CreatedAt),
+		InteractingAccount: interactingAcct,
+		InteractedStatus:   interactedStatus,
+		Reply:              reply,
+	}, nil
+}
+
+// InteractionApprovalToAPIInteractionApproval converts the given *gtsmodel.InteractionApproval
+// to an *apimodel.InteractionApproval, from the perspective of requestingAcct.
+func (c *Converter) InteractionApprovalToAPIInteractionApproval(
+	ctx context.Context,
+	ia *gtsmodel.InteractionApproval,
+	requestingAcct *gtsmodel.Account,
+) (*apimodel.InteractionApproval, error) {
+	// Ensure interaction approval is populated.
+	if err := c.state.DB.PopulateInteractionApproval(ctx, ia); err != nil {
+		err := gtserror.Newf("error populating: %w", err)
+		return nil, err
+	}
+
+	interactingAcct, err := c.AccountToAPIAccountPublic(ctx, ia.InteractingAccount)
+	if err != nil {
+		err := gtserror.Newf("error converting interacting acct: %w", err)
+		return nil, err
+	}
+
+	interactedStatus, err := c.StatusToAPIStatus(
+		ctx,
+		ia.Status,
+		requestingAcct,
+		statusfilter.FilterContextNone,
+		nil,
+		nil,
+	)
+	if err != nil {
+		err := gtserror.Newf("error converting interacted status: %w", err)
+		return nil, err
+	}
+
+	var reply *apimodel.Status
+	if ia.InteractionType == gtsmodel.InteractionReply {
+		reply, err = c.StatusToAPIStatus(
+			ctx,
+			ia.Reply,
+			requestingAcct,
+			statusfilter.FilterContextNone,
+			nil,
+			nil,
+		)
+		if err != nil {
+			err := gtserror.Newf("error converting reply: %w", err)
+			return nil, err
+		}
+	}
+
+	return &apimodel.InteractionApproval{
+		ID:                 ia.ID,
+		Type:               ia.InteractionType.String(),
+		CreatedAt:          util.FormatISO8601(ia.CreatedAt),
+		InteractingAccount: interactingAcct,
+		InteractedStatus:   interactedStatus,
+		Reply:              reply,
+	}, nil
+}
+
+// InteractionRejectionToAPIInteractionRejection converts the given *gtsmodel.InteractionRejection
+// to an *apimodel.InteractionRejection, from the perspective of requestingAcct.
+func (c *Converter) InteractionRejectionToAPIInteractionRejection(
+	ctx context.Context,
+	ir *gtsmodel.InteractionRejection,
+	requestingAcct *gtsmodel.Account,
+) (*apimodel.InteractionRejection, error) {
+	// Ensure interaction rejection is populated.
+	if err := c.state.DB.PopulateInteractionRejection(ctx, ir); err != nil {
+		err := gtserror.Newf("error populating: %w", err)
+		return nil, err
+	}
+
+	interactingAcct, err := c.AccountToAPIAccountPublic(ctx, ir.InteractingAccount)
+	if err != nil {
+		err := gtserror.Newf("error converting interacting acct: %w", err)
+		return nil, err
+	}
+
+	interactedStatus, err := c.StatusToAPIStatus(
+		ctx,
+		ir.Status,
+		requestingAcct,
+		statusfilter.FilterContextNone,
+		nil,
+		nil,
+	)
+	if err != nil {
+		err := gtserror.Newf("error converting interacted status: %w", err)
+		return nil, err
+	}
+
+	return &apimodel.InteractionRejection{
+		ID:                 ir.ID,
+		Type:               ir.InteractionType.String(),
+		CreatedAt:          util.FormatISO8601(ir.CreatedAt),
+		InteractingAccount: interactingAcct,
+		InteractedStatus:   interactedStatus,
+	}, nil
+}

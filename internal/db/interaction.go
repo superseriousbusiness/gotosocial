@@ -21,14 +21,15 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type Interaction interface {
 	// GetInteractionApprovalByID gets one approval with the given id.
 	GetInteractionApprovalByID(ctx context.Context, id string) (*gtsmodel.InteractionApproval, error)
 
-	// GetInteractionApprovalByID gets one approval with the given uri.
-	GetInteractionApprovalByURI(ctx context.Context, id string) (*gtsmodel.InteractionApproval, error)
+	// GetInteractionApprovalByURI gets one approval with the given Accept uri.
+	GetInteractionApprovalByURI(ctx context.Context, uri string) (*gtsmodel.InteractionApproval, error)
 
 	// PopulateInteractionApproval ensures that the approval's struct fields are populated.
 	PopulateInteractionApproval(ctx context.Context, approval *gtsmodel.InteractionApproval) error
@@ -38,4 +39,52 @@ type Interaction interface {
 
 	// DeleteInteractionApprovalByID deletes one approval with the given ID.
 	DeleteInteractionApprovalByID(ctx context.Context, id string) error
+
+	// GetInteractionRejectionByID gets one rejection with the given id.
+	GetInteractionRejectionByID(ctx context.Context, id string) (*gtsmodel.InteractionRejection, error)
+
+	// GetInteractionRejectionByURI gets one rejection with the given Reject uri.
+	GetInteractionRejectionByURI(ctx context.Context, uri string) (*gtsmodel.InteractionRejection, error)
+
+	// InteractionRejected returns true if an rejection exists in the database for an
+	// object with the given interactionURI (ie., a status or announce or fave uri).
+	InteractionRejected(ctx context.Context, interactionURI string) (bool, error)
+
+	// PopulateInteractionRejection ensures that the rejection's struct fields are populated.
+	PopulateInteractionRejection(ctx context.Context, rejection *gtsmodel.InteractionRejection) error
+
+	// PutInteractionRejection puts a new rejection in the database.
+	PutInteractionRejection(ctx context.Context, rejection *gtsmodel.InteractionRejection) error
+
+	// DeleteInteractionRejectionByID deletes one rejection with the given ID.
+	DeleteInteractionRejectionByID(ctx context.Context, id string) error
+
+	// GetInteractionRequestByID gets one request with the given id.
+	GetInteractionRequestByID(ctx context.Context, id string) (*gtsmodel.InteractionRequest, error)
+
+	// GetInteractionRequestByID gets one request with the given interaction uri.
+	GetInteractionRequestByInteractionURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error)
+
+	// PopulateInteractionRequest ensures that the request's struct fields are populated.
+	PopulateInteractionRequest(ctx context.Context, request *gtsmodel.InteractionRequest) error
+
+	// PutInteractionRequest puts a new request in the database.
+	PutInteractionRequest(ctx context.Context, request *gtsmodel.InteractionRequest) error
+
+	// DeleteInteractionRequestByID deletes one request with the given ID.
+	DeleteInteractionRequestByID(ctx context.Context, id string) error
+
+	// GetInteractionsRequestsForAcct returns pending interactions targeting
+	// the given (optional) account ID and the given (optional) status ID.
+	//
+	// At least one of `likes`, `replies`, or `boosts` must be true.
+	GetInteractionsRequestsForAcct(
+		ctx context.Context,
+		acctID string,
+		statusID string,
+		likes bool,
+		replies bool,
+		boosts bool,
+		page *paging.Page,
+	) ([]*gtsmodel.InteractionRequest, error)
 }
