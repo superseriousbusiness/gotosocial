@@ -864,9 +864,6 @@ func (c *Caches) initInteractionRejection() {
 		i2.Status = nil
 		i2.Account = nil
 		i2.InteractingAccount = nil
-		i2.Like = nil
-		i2.Reply = nil
-		i2.Announce = nil
 
 		return i2
 	}

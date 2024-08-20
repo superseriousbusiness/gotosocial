@@ -95,7 +95,6 @@ func (p *Processor) RejectFave(
 		InteractingAccount:   fave.Account,
 		InteractionURI:       fave.URI,
 		InteractionType:      gtsmodel.InteractionLike,
-		Like:                 fave,
 		URI:                  uris.GenerateURIForReject(fave.TargetAccount.Username, id),
 	}
 
@@ -175,7 +174,6 @@ func (p *Processor) RejectReply(
 		InteractingAccount:   reply.Account,
 		InteractionURI:       reply.URI,
 		InteractionType:      gtsmodel.InteractionReply,
-		Reply:                reply,
 		URI:                  uris.GenerateURIForReject(reply.InReplyToAccount.Username, id),
 	}
 
@@ -255,7 +253,6 @@ func (p *Processor) RejectAnnounce(
 		InteractingAccount:   boost.Account,
 		InteractionURI:       boost.URI,
 		InteractionType:      gtsmodel.InteractionAnnounce,
-		Announce:             boost,
 		URI:                  uris.GenerateURIForReject(boost.BoostOfAccount.Username, id),
 	}
 

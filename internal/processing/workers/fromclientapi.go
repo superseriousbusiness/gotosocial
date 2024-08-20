@@ -25,6 +25,7 @@ import (
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -1159,8 +1160,23 @@ func (p *clientAPI) RejectLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("error federating rejection of like: %w", err)
 	}
 
+	// Get the rejected fave.
+	fave, err := p.state.DB.GetStatusFaveByURI(
+		gtscontext.SetBarebones(ctx),
+		rejection.InteractionURI,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error getting rejected fave: %w", err)
+	}
+
+	if fave == nil {
+		// Already wiped / race condition?
+		// Nothing left to do, anyway.
+		return nil
+	}
+
 	// Delete the status fave.
-	if err := p.state.DB.DeleteStatusFaveByID(ctx, rejection.Like.ID); err != nil {
+	if err := p.state.DB.DeleteStatusFaveByID(ctx, fave.ID); err != nil {
 		return gtserror.Newf("db error deleting status fave: %w", err)
 	}
 
@@ -1181,8 +1197,23 @@ func (p *clientAPI) RejectReply(ctx context.Context, cMsg *messages.FromClientAP
 		return gtserror.Newf("error federating rejection of reply: %w", err)
 	}
 
+	// Get the rejected status.
+	status, err := p.state.DB.GetStatusByURI(
+		gtscontext.SetBarebones(ctx),
+		rejection.InteractionURI,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error getting rejected reply: %w", err)
+	}
+
+	if status == nil {
+		// Already wiped / race condition?
+		// Nothing left to do, anyway.
+		return nil
+	}
+
 	// Totally wipe the status.
-	if err := p.utils.wipeStatus(ctx, rejection.Reply, true); err != nil {
+	if err := p.utils.wipeStatus(ctx, status, true); err != nil {
 		return gtserror.Newf("error wiping status: %w", err)
 	}
 
@@ -1203,8 +1234,23 @@ func (p *clientAPI) RejectAnnounce(ctx context.Context, cMsg *messages.FromClien
 		return gtserror.Newf("error federating rejection of announce: %w", err)
 	}
 
+	// Get the rejected boost.
+	boost, err := p.state.DB.GetStatusByURI(
+		gtscontext.SetBarebones(ctx),
+		rejection.InteractionURI,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error getting rejected announce: %w", err)
+	}
+
+	if boost == nil {
+		// Already wiped / race condition?
+		// Nothing left to do, anyway.
+		return nil
+	}
+
 	// Totally wipe the status.
-	if err := p.utils.wipeStatus(ctx, rejection.Announce, true); err != nil {
+	if err := p.utils.wipeStatus(ctx, boost, true); err != nil {
 		return gtserror.Newf("error wiping status: %w", err)
 	}
 

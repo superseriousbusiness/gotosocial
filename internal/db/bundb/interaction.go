@@ -19,7 +19,6 @@ package bundb
 
 import (
 	"context"
-	"errors"
 	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -272,14 +271,12 @@ func (i *interactionDB) PopulateInteractionRejection(ctx context.Context, reject
 	)
 
 	if rejection.Status == nil {
-		// Target status is not set, TRY TO fetch from the db,
-		// but since we might not keep rejected statuses around,
-		// don't fail if this is not available.
+		// Target status is not set, fetch from the database.
 		rejection.Status, err = i.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
 			rejection.StatusID,
 		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		if err != nil {
 			errs.Appendf("error populating interactionRejection target status: %w", err)
 		}
 	}
@@ -303,27 +300,6 @@ func (i *interactionDB) PopulateInteractionRejection(ctx context.Context, reject
 		)
 		if err != nil {
 			errs.Appendf("error populating interactionRejection interacting account: %w", err)
-		}
-	}
-
-	switch rejection.InteractionType {
-
-	case gtsmodel.InteractionLike:
-		rejection.Like, err = i.state.DB.GetStatusFaveByURI(ctx, rejection.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionRejection Like")
-		}
-
-	case gtsmodel.InteractionReply:
-		rejection.Reply, err = i.state.DB.GetStatusByURI(ctx, rejection.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionRejection Reply")
-		}
-
-	case gtsmodel.InteractionAnnounce:
-		rejection.Announce, err = i.state.DB.GetStatusByURI(ctx, rejection.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionRejection Announce")
 		}
 	}
 

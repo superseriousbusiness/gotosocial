@@ -108,8 +108,5 @@ type InteractionRejection struct {
 	InteractingAccount   *Account        `bun:"-"`                                                           // account corresponding to targetAccountID
 	InteractionURI       string          `bun:",nullzero,notnull"`                                           // URI of the interacting like, reply, or announce. NOT unique, as an interaction can be rejected by more than one person.
 	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
-	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
-	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
-	Announce             *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionAnnounce.
 	URI                  string          `bun:",nullzero,notnull,unique"`                                    // ActivityPub URI of the Reject.
 }
