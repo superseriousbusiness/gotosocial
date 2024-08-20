@@ -581,6 +581,10 @@ span.form-info {
 	.filter {
 		display: flex;
 		gap: 0.5rem;
+
+		button {
+			width: 100%;
+		}
 	}
 
 	.entry {
