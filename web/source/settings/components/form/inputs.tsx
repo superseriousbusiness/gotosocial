@@ -170,19 +170,21 @@ export function Select({
 			<label>
 				{label}
 				{children}
-				<select
-					onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-						onChange(e);
-						if (onChangeCallback !== undefined) {
-							onChangeCallback(e.target.value);
-						}
-					}}
-					value={value}
-					ref={ref as RefObject<HTMLSelectElement>}
-					{...props}
-				>
-					{options}
-				</select>
+				<div className="select-wrapper">
+					<select
+						onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
+							onChange(e);
+							if (onChangeCallback !== undefined) {
+								onChangeCallback(e.target.value);
+							}
+						}}
+						value={value}
+						ref={ref as RefObject<HTMLSelectElement>}
+						{...props}
+					>
+						{options}
+					</select>
+				</div>
 			</label>
 		</div>
 	);
