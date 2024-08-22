@@ -301,8 +301,8 @@ func validateNormalizeCreateStatus(form *apimodel.StatusCreateRequest) error {
 
 	// Check if the deprecated "federated" field was
 	// set in lieu of "local_only", and use it if so.
-	if form.LocalOnly == nil && form.DeprecatedFederated != nil {
-		form.LocalOnly = util.Ptr(!*form.DeprecatedFederated)
+	if form.LocalOnly == nil && form.Federated != nil {
+		form.LocalOnly = util.Ptr(!*form.Federated)
 	}
 
 	return nil

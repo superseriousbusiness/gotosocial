@@ -213,10 +213,8 @@ type StatusCreateRequest struct {
 	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
 	// Set to "true" if this status should not be federated, ie. it should be a "local only" status.
 	LocalOnly *bool `form:"local_only"`
-	// ***DEPRECATED***.
-	//
-	// Only used if LocalOnly is not set.
-	DeprecatedFederated *bool `form:"federated"`
+	// Deprecated: Only used if LocalOnly is not set.
+	Federated *bool `form:"federated"`
 	// ISO 8601 Datetime at which to schedule a status.
 	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
