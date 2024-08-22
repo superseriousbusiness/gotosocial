@@ -212,6 +212,12 @@ func (s *Status) IsLocal() bool {
 	return s.Local != nil && *s.Local
 }
 
+// IsLocalOnly returns true if this status
+// is "local-only" ie., unfederated.
+func (s *Status) IsLocalOnly() bool {
+	return s.Federated == nil || !*s.Federated
+}
+
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
 	StatusID string  `bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`

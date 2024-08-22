@@ -86,7 +86,7 @@ func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
 	suite.NoError(err)
-	suite.Len(statuses, 2)
+	suite.Len(statuses, 3)
 }
 
 // populateTestStatus adds mandatory fields to a partially populated status.

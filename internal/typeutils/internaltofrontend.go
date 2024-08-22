@@ -1333,6 +1333,7 @@ func (c *Converter) baseStatusToFrontend(
 		Sensitive:          *s.Sensitive,
 		SpoilerText:        s.ContentWarning,
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
+		LocalOnly:          s.IsLocalOnly(),
 		Language:           nil, // Set below.
 		URI:                s.URI,
 		URL:                s.URL,

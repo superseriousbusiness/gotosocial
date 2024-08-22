@@ -2635,6 +2635,10 @@ definitions:
                 example: en
                 type: string
                 x-go-name: Language
+            local_only:
+                description: Set to "true" if status is not federated, ie., a "local only" status; omitted from response otherwise.
+                type: boolean
+                x-go-name: LocalOnly
             media_attachments:
                 description: Media that is attached to this status.
                 items:
@@ -2828,6 +2832,10 @@ definitions:
                 example: en
                 type: string
                 x-go-name: Language
+            local_only:
+                description: Set to "true" if status is not federated, ie., a "local only" status; omitted from response otherwise.
+                type: boolean
+                x-go-name: LocalOnly
             media_attachments:
                 description: Media that is attached to this status.
                 items:
@@ -8654,6 +8662,17 @@ paths:
                   name: visibility
                   type: string
                   x-go-name: Visibility
+                - default: false
+                  description: If set to true, this status will be "local only" and will NOT be federated beyond the local timeline(s). If set to false (default), this status will be federated to your followers beyond the local timeline(s).
+                  in: formData
+                  name: local_only
+                  type: boolean
+                  x-go-name: LocalOnly
+                - description: '***DEPRECATED***. Included for back compat only. Only used if set and local_only is not yet. If set to true, this status will be federated beyond the local timeline(s). If set to false, this status will NOT be federated beyond the local timeline(s).'
+                  in: formData
+                  name: federated
+                  type: boolean
+                  x-go-name: Federated
                 - description: |-
                     ISO 8601 Datetime at which to schedule a status.
                     Providing this parameter will cause ScheduledStatus to be returned instead of Status.
@@ -8677,11 +8696,6 @@ paths:
                   name: content_type
                   type: string
                   x-go-name: ContentType
-                - description: This status will be federated beyond the local timeline(s).
-                  in: formData
-                  name: federated
-                  type: boolean
-                  x-go-name: Federated
             produces:
                 - application/json
             responses:

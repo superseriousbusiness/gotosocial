@@ -200,6 +200,43 @@ func (suite *StatusVisibleTestSuite) TestVisiblePending() {
 	}
 }
 
+func (suite *StatusVisibleTestSuite) TestVisibleLocalOnly() {
+	ctx := context.Background()
+
+	// Local-only, Public status.
+	testStatus := suite.testStatuses["local_account_2_status_4"]
+
+	for _, testCase := range []struct {
+		acct    *gtsmodel.Account
+		visible bool
+	}{
+		{
+			acct:    suite.testAccounts["local_account_2"],
+			visible: true, // Own status, always visible.
+		},
+		{
+			acct:    nil,
+			visible: false, // No auth, should not be visible..
+		},
+		{
+			acct:    suite.testAccounts["local_account_1"],
+			visible: true, // Local account, should be visible.
+		},
+		{
+			acct:    suite.testAccounts["remote_account_1"],
+			visible: false, // Blocked account, should not be visible.
+		},
+		{
+			acct:    suite.testAccounts["remote_account_2"],
+			visible: false, // Remote account, should not be visible.
+		},
+	} {
+		visible, err := suite.filter.StatusVisible(ctx, testCase.acct, testStatus)
+		suite.NoError(err)
+		suite.Equal(testCase.visible, visible)
+	}
+}
+
 func TestStatusVisibleTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusVisibleTestSuite))
 }

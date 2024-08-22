@@ -46,6 +46,8 @@ type Status struct {
 	// Visibility of this status.
 	// example: unlisted
 	Visibility Visibility `json:"visibility"`
+	// Set to "true" if status is not federated, ie., a "local only" status; omitted from response otherwise.
+	LocalOnly bool `json:"local_only,omitempty"`
 	// Primary language of this status (ISO 639 Part 1 two-letter language code).
 	// Will be null if language is not known.
 	// example: en
@@ -209,6 +211,12 @@ type StatusCreateRequest struct {
 	SpoilerText string `form:"spoiler_text" json:"spoiler_text" xml:"spoiler_text"`
 	// Visibility of the posted status.
 	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
+	// Set to "true" if this status should not be federated, ie. it should be a "local only" status.
+	LocalOnly *bool `form:"local_only"`
+	// ***DEPRECATED***.
+	//
+	// Only used if LocalOnly is not set.
+	DeprecatedFederated *bool `form:"federated"`
 	// ISO 8601 Datetime at which to schedule a status.
 	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
@@ -237,24 +245,6 @@ const (
 	// VisibilityDirect is visible only to accounts tagged in the status. It is equivalent to a direct message.
 	VisibilityDirect Visibility = "direct"
 )
-
-// AdvancedStatusCreateForm wraps the mastodon-compatible status create form along with the GTS advanced
-// visibility settings.
-//
-// swagger:ignore
-type AdvancedStatusCreateForm struct {
-	StatusCreateRequest
-	AdvancedVisibilityFlagsForm
-}
-
-// AdvancedVisibilityFlagsForm allows a few more advanced flags to be set on new statuses, in addition
-// to the standard mastodon-compatible ones.
-//
-// swagger:ignore
-type AdvancedVisibilityFlagsForm struct {
-	// This status will be federated beyond the local timeline(s).
-	Federated *bool `form:"federated" json:"federated" xml:"federated"`
-}
 
 // StatusContentType is the content type with which to parse the submitted status.
 // Can be either text/plain or text/markdown. Empty will default to text/plain.
