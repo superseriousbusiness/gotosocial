@@ -129,6 +129,18 @@ func (p *Processor) OutboxGet(
 			hi = statuses[0].ID
 		}
 
+		// Reslice statuses dropping all those invisible to requester
+		// (eg., local-only statuses, if the requester is remote).
+		statuses, err = p.visFilter.StatusesVisible(
+			ctx,
+			auth.requestingAcct,
+			statuses,
+		)
+		if err != nil {
+			err := gtserror.Newf("error filtering statuses: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
 		// Start building AS collection page params.
 		params.Total = util.Ptr(*receivingAcct.Stats.StatusesCount)
 		var pageParams ap.CollectionPageParams

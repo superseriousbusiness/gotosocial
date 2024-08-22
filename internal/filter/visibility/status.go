@@ -97,10 +97,10 @@ func (f *Filter) isStatusVisible(
 	}
 
 	// Check whether status accounts are visible to the requester.
-	visible, err := f.areStatusAccountsVisible(ctx, requester, status)
+	acctsVisible, err := f.areStatusAccountsVisible(ctx, requester, status)
 	if err != nil {
 		return false, gtserror.Newf("error checking status %s account visibility: %w", status.ID, err)
-	} else if !visible {
+	} else if !acctsVisible {
 		return false, nil
 	}
 
@@ -112,21 +112,33 @@ func (f *Filter) isStatusVisible(
 		)
 	}
 
-	if status.Visibility == gtsmodel.VisibilityPublic {
-		// This status will be visible to all.
-		return true, nil
+	if requester == nil {
+		// The request is unauthed. Only federated, Public statuses are visible without auth.
+		visibleUnauthed := !status.IsLocalOnly() && status.Visibility == gtsmodel.VisibilityPublic
+		return visibleUnauthed, nil
 	}
 
-	if requester == nil {
-		// This request is WITHOUT auth, and status is NOT public.
-		log.Trace(ctx, "unauthorized request to non-public status")
+	/*
+		From this point down we know the request is authed.
+	*/
+
+	if requester.IsRemote() && status.IsLocalOnly() {
+		// Remote accounts can't see local-only
+		// posts regardless of their visibility.
 		return false, nil
 	}
 
-	if status.Visibility == gtsmodel.VisibilityUnlocked {
-		// This status is visible to all auth'd accounts.
+	if status.Visibility == gtsmodel.VisibilityPublic ||
+		status.Visibility == gtsmodel.VisibilityUnlocked {
+		// This status is visible to all auth'd accounts
+		// (pending blocks, which we already checked above).
 		return true, nil
 	}
+
+	/*
+		From this point down we know the request
+		is of visibility followers-only or below.
+	*/
 
 	if requester.ID == status.AccountID {
 		// Author can always see their own status.

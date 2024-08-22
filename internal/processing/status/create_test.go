@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type StatusCreateTestSuite struct {
@@ -38,22 +39,18 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithQuotationMarks(
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "poopoo peepee",
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "\"test\"", // these should not be html-escaped when the final text is rendered
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			ContentType: apimodel.StatusContentTypePlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "poopoo peepee",
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		SpoilerText: "\"test\"", // these should not be html-escaped when the final text is rendered
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypePlain,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
@@ -69,22 +66,18 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithHTMLEscapedQuot
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "poopoo peepee",
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "&#34test&#34", // the html-escaped quotation marks should appear as normal quotation marks in the finished text
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			ContentType: apimodel.StatusContentTypePlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "poopoo peepee",
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		SpoilerText: "&#34test&#34", // the html-escaped quotation marks should appear as normal quotation marks in the finished text
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypePlain,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
@@ -105,21 +98,17 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "poopoo peepee :_rainbow_:",
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			ContentType: apimodel.StatusContentTypeMarkdown,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "poopoo peepee :_rainbow_:",
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypeMarkdown,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
@@ -135,22 +124,18 @@ func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithSpoilerTextEmoj
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "poopoo peepee",
-			SpoilerText: "testing something :rainbow:",
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			ContentType: apimodel.StatusContentTypeMarkdown,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "poopoo peepee",
+		SpoilerText: "testing something :rainbow:",
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypeMarkdown,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
@@ -170,22 +155,18 @@ func (suite *StatusCreateTestSuite) TestProcessMediaDescriptionTooShort() {
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "poopoo peepee",
-			MediaIDs:    []string{suite.testAttachments["local_account_1_unattached_1"].ID},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			ContentType: apimodel.StatusContentTypePlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "poopoo peepee",
+		MediaIDs:    []string{suite.testAttachments["local_account_1_unattached_1"].ID},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		SpoilerText: "",
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypePlain,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
@@ -199,22 +180,18 @@ func (suite *StatusCreateTestSuite) TestProcessLanguageWithScriptPart() {
 	creatingAccount := suite.testAccounts["local_account_1"]
 	creatingApplication := suite.testApplications["application_1"]
 
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "你好世界", // hello world
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: "",
-			Sensitive:   false,
-			SpoilerText: "",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "zh-Hans",
-			ContentType: apimodel.StatusContentTypePlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "你好世界", // hello world
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		SpoilerText: "",
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "zh-Hans",
+		ContentType: apimodel.StatusContentTypePlain,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
@@ -233,22 +210,18 @@ func (suite *StatusCreateTestSuite) TestProcessReplyToUnthreadedRemoteStatus() {
 
 	// Reply to a remote status that
 	// doesn't have a threadID set on it.
-	statusCreateForm := &apimodel.AdvancedStatusCreateForm{
-		StatusCreateRequest: apimodel.StatusCreateRequest{
-			Status:      "boobies",
-			MediaIDs:    []string{},
-			Poll:        nil,
-			InReplyToID: inReplyTo.ID,
-			Sensitive:   false,
-			SpoilerText: "this is a reply",
-			Visibility:  apimodel.VisibilityPublic,
-			ScheduledAt: "",
-			Language:    "en",
-			ContentType: apimodel.StatusContentTypePlain,
-		},
-		AdvancedVisibilityFlagsForm: apimodel.AdvancedVisibilityFlagsForm{
-			Federated: nil,
-		},
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "boobies",
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: inReplyTo.ID,
+		Sensitive:   false,
+		SpoilerText: "this is a reply",
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: "",
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypePlain,
 	}
 
 	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
