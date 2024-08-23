@@ -178,6 +178,16 @@ input, select, textarea, .input {
 	}
 }
 
+select {
+	/*
+		By default this looks awful on Gnome
+		Web so restyle a bit to try to make
+		it consistent with firefox + chrome.
+	*/
+	appearance: none;
+	line-height: 1.5rem;
+}
+
 /*
 	Squeeze emojis so they fit inline in text.
 */

@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
@@ -137,6 +138,24 @@ import (
 //			- direct
 //		in: formData
 //	-
+//		name: local_only
+//		x-go-name: LocalOnly
+//		description: >-
+//			If set to true, this status will be "local only" and will NOT be federated beyond the local timeline(s).
+//			If set to false (default), this status will be federated to your followers beyond the local timeline(s).
+//		type: boolean
+//		in: formData
+//		default: false
+//	-
+//		name: federated
+//		x-go-name: Federated
+//		description: >-
+//			***DEPRECATED***. Included for back compat only. Only used if set and local_only is not yet.
+//			If set to true, this status will be federated beyond the local timeline(s).
+//			If set to false, this status will NOT be federated beyond the local timeline(s).
+//		in: formData
+//		type: boolean
+//	-
 //		name: scheduled_at
 //		x-go-name: ScheduledAt
 //		description: |-
@@ -162,12 +181,6 @@ import (
 //			- text/plain
 //			- text/markdown
 //		in: formData
-//	-
-//		name: federated
-//		x-go-name: Federated
-//		description: This status will be federated beyond the local timeline(s).
-//		in: formData
-//		type: boolean
 //
 //	produces:
 //	- application/json
@@ -210,7 +223,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form := &apimodel.AdvancedStatusCreateForm{}
+	form := &apimodel.StatusCreateRequest{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -249,7 +262,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 // overlength inputs.
 //
 // Side effect: normalizes the post's language tag.
-func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) error {
+func validateNormalizeCreateStatus(form *apimodel.StatusCreateRequest) error {
 	hasStatus := form.Status != ""
 	hasMedia := len(form.MediaIDs) != 0
 	hasPoll := form.Poll != nil
@@ -286,10 +299,16 @@ func validateNormalizeCreateStatus(form *apimodel.AdvancedStatusCreateForm) erro
 		form.Language = language
 	}
 
+	// Check if the deprecated "federated" field was
+	// set in lieu of "local_only", and use it if so.
+	if form.LocalOnly == nil && form.Federated != nil { // nolint:staticcheck
+		form.LocalOnly = util.Ptr(!*form.Federated) // nolint:staticcheck
+	}
+
 	return nil
 }
 
-func validateNormalizeCreatePoll(form *apimodel.AdvancedStatusCreateForm) error {
+func validateNormalizeCreatePoll(form *apimodel.StatusCreateRequest) error {
 	maxPollOptions := config.GetStatusesPollMaxOptions()
 	maxPollChars := config.GetStatusesPollOptionMaxChars()
 

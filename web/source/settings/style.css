@@ -374,6 +374,21 @@ section.with-sidebar > form {
 		flex-wrap: wrap;
 		gap: 0.4rem;
 	}
+
+	.select-wrapper {
+		/*
+			Selects are normalized in base.css to not have a down arrow on the side.
+			Overcome this on settings panel forms by replacing the down arrow.
+		*/
+		position: relative;
+		&::after {
+			content: "▼";
+			font-size: 0.8rem;
+			top: 0.3rem;
+			right: 1rem;
+			position: absolute;
+		}
+	}
 }
 
 .form-flex {
@@ -581,6 +596,10 @@ span.form-info {
 	.filter {
 		display: flex;
 		gap: 0.5rem;
+
+		button {
+			width: 100%;
+		}
 	}
 
 	.entry {
