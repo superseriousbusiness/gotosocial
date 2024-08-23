@@ -17,7 +17,7 @@
 
 package model
 
-// InteractionRequest represents a pending/requested interaction of type favourite, reply, or reblog, awaiting approval by the user being interacted with.
+// InteractionRequest represents a pending, approved, or rejected interaction of type favourite, reply, or reblog.
 //
 // swagger:model interactionRequest
 type InteractionRequest struct {
@@ -37,46 +37,10 @@ type InteractionRequest struct {
 	InteractedStatus *Status `json:"interacted_status"`
 	// If type=reply, this field will be set to the reply that is awaiting approval. If type=favourite, or type=reblog, the field will be omitted.
 	Reply *Status `json:"reply,omitempty"`
-}
-
-// InteractionApproval represents an interaction of type favourite, reply, or reblog which has been approved by the user being interacted with.
-//
-// swagger:model interactionApproval
-type InteractionApproval struct {
-	// The id of the interaction approval in the database.
-	ID string `json:"id"`
-	// The type of interaction that this interaction approval pertains to.
-	//
-	//	`favourite` - Someone favourited a status.
-	//	`reply` - Someone replied to a status.
-	//	`reblog` - Someone reblogged / boosted a status.
-	Type string `json:"type"`
-	// The timestamp of the interaction approval (ISO 8601 Datetime)
-	CreatedAt string `json:"created_at"`
-	// The account that performed the interaction.
-	InteractingAccount *Account `json:"interacting_account"`
-	// Status targeted by the approved interaction.
-	InteractedStatus *Status `json:"interacted_status"`
-	// If type=reply, this field will be set to the approved reply. If type=favourite, or type=reblog, the field will be omitted.
-	Reply *Status `json:"reply,omitempty"`
-}
-
-// InteractionRejection represents an interaction of type favourite, reply, or reblog which has been rejected by the user being interacted with.
-//
-// swagger:model interactionRejection
-type InteractionRejection struct {
-	// The id of the interaction rejection in the database.
-	ID string `json:"id"`
-	// The type of interaction that this interaction rejection pertains to.
-	//
-	//	`favourite` - Someone favourited a status.
-	//	`reply` - Someone replied to a status.
-	//	`reblog` - Someone reblogged / boosted a status.
-	Type string `json:"type"`
-	// The timestamp of the interaction rejection (ISO 8601 Datetime)
-	CreatedAt string `json:"created_at"`
-	// The account that performed the interaction.
-	InteractingAccount *Account `json:"interacting_account"`
-	// Status targeted by the rejected interaction.
-	InteractedStatus *Status `json:"interacted_status"`
+	// The timestamp that the interaction request was accepted (ISO 8601 Datetime). Field omitted if request not accepted (yet).
+	AcceptedAt string `json:"accepted_at,omitempty"`
+	// The timestamp that the interaction request was rejected (ISO 8601 Datetime). Field omitted if request not rejected (yet).
+	RejectedAt string `json:"rejected_at,omitempty"`
+	// URI of the Accept or Reject. Only set if accepted_at or rejected_at is set, else omitted.
+	URI string `json:"uri,omitempty"`
 }

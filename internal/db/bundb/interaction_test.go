@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -222,12 +223,15 @@ func (suite *InteractionTestSuite) TestGetPendingRepliesOnly() {
 
 func (suite *InteractionTestSuite) TestInteractionRejected() {
 	var (
-		ctx            = context.Background()
-		interactionURI = "https://example.org/some/interaction/uri"
+		ctx = context.Background()
+		req = new(gtsmodel.InteractionRequest)
 	)
 
+	// Make a copy of the request we'll modify.
+	*req = *suite.testInteractionRequests["admin_account_reply_turtle"]
+
 	// No rejection in the db for this interaction URI so it should be OK.
-	rejected, err := suite.state.DB.InteractionRejected(ctx, interactionURI)
+	rejected, err := suite.state.DB.IsInteractionRejected(ctx, req.InteractionURI)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -235,22 +239,15 @@ func (suite *InteractionTestSuite) TestInteractionRejected() {
 		suite.FailNow("wanted rejected = false, got true")
 	}
 
-	// Put a reject in the database with this interaction URI.
-	rejection := &gtsmodel.InteractionRejection{
-		ID:                   "01J5NH20D7ZAF4H7HPAXA7AMFX",
-		StatusID:             "01J5NH28JJ81EA7ZC25KAVPED7",
-		AccountID:            "01J5NH2EBQ3DDH6P9PMES56XDS",
-		InteractingAccountID: "01J5NH2TEAPJHG11ZBVZCGQ929",
-		InteractionURI:       interactionURI,
-		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  "https://example.org/some/rejection/uri",
-	}
-	if err := suite.state.DB.PutInteractionRejection(ctx, rejection); err != nil {
+	// Update the interaction request to mark it rejected.
+	req.RejectedAt = time.Now()
+	req.URI = "https://some.reject.uri"
+	if err := suite.state.DB.UpdateInteractionRequest(ctx, req, "uri", "rejected_at"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Rejection in the db for this interaction URI now so it should be très mauvais.
-	rejected, err = suite.state.DB.InteractionRejected(ctx, interactionURI)
+	rejected, err = suite.state.DB.IsInteractionRejected(ctx, req.InteractionURI)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

@@ -20,12 +20,15 @@ package workers
 import (
 	"context"
 	"errors"
+	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -261,11 +264,33 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Put approval in the database and
-		// update the status with approvedBy URI.
-		approval, err := p.common.ApproveReply(ctx, status)
-		if err != nil {
-			return gtserror.Newf("error pre-approving reply: %w", err)
+		// Store an already-accepted interaction request.
+		id := id.NewULID()
+		approval := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             status.InReplyToID,
+			TargetAccountID:      status.InReplyToAccountID,
+			TargetAccount:        status.InReplyToAccount,
+			InteractingAccountID: status.AccountID,
+			InteractingAccount:   status.Account,
+			InteractionURI:       status.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Reply:                status,
+			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+			AcceptedAt:           time.Now(),
+		}
+
+		// Mark the status as now approved.
+		status.PendingApproval = util.Ptr(false)
+		status.PreApproved = false
+		status.ApprovedByURI = approval.URI
+		if err := p.state.DB.UpdateStatus(
+			ctx,
+			status,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating status: %w", err)
 		}
 
 		// Send out the approval as Accept.
@@ -439,11 +464,33 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Put approval in the database and
-		// update the fave with approvedBy URI.
-		approval, err := p.common.ApproveFave(ctx, fave)
-		if err != nil {
-			return gtserror.Newf("error pre-approving fave: %w", err)
+		// Store an already-accepted interaction request.
+		id := id.NewULID()
+		approval := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             fave.StatusID,
+			TargetAccountID:      fave.TargetAccountID,
+			TargetAccount:        fave.TargetAccount,
+			InteractingAccountID: fave.AccountID,
+			InteractingAccount:   fave.Account,
+			InteractionURI:       fave.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Like:                 fave,
+			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+			AcceptedAt:           time.Now(),
+		}
+
+		// Mark the fave itself as now approved.
+		fave.PendingApproval = util.Ptr(false)
+		fave.PreApproved = false
+		fave.ApprovedByURI = approval.URI
+		if err := p.state.DB.UpdateStatusFave(
+			ctx,
+			fave,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating status fave: %w", err)
 		}
 
 		// Send out the approval as Accept.
@@ -526,11 +573,33 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// collection. Do the Accept immediately and
 		// then process everything else as normal.
 
-		// Put approval in the database and
-		// update the boost with approvedBy URI.
-		approval, err := p.common.ApproveAnnounce(ctx, boost)
-		if err != nil {
-			return gtserror.Newf("error pre-approving boost: %w", err)
+		// Store an already-accepted interaction request.
+		id := id.NewULID()
+		approval := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             boost.BoostOfID,
+			TargetAccountID:      boost.BoostOfAccountID,
+			TargetAccount:        boost.BoostOfAccount,
+			InteractingAccountID: boost.AccountID,
+			InteractingAccount:   boost.Account,
+			InteractionURI:       boost.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Announce:             boost,
+			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+			AcceptedAt:           time.Now(),
+		}
+
+		// Mark the boost itself as now approved.
+		boost.PendingApproval = util.Ptr(false)
+		boost.PreApproved = false
+		boost.ApprovedByURI = approval.URI
+		if err := p.state.DB.UpdateStatus(
+			ctx,
+			boost,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating status: %w", err)
 		}
 
 		// Send out the approval as Accept.

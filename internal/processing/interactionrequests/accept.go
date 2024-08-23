@@ -19,38 +19,42 @@ package interactionrequests
 
 import (
 	"context"
-	"errors"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Accept accepts an interaction request with the given ID,
-// on behalf of the requester (whose post it must target).
+// on behalf of the given account (whose post it must target).
 func (p *Processor) Accept(
 	ctx context.Context,
-	requester *gtsmodel.Account,
+	acct *gtsmodel.Account,
 	intReqID string,
-) (*apimodel.InteractionApproval, gtserror.WithCode) {
+) (*apimodel.InteractionRequest, gtserror.WithCode) {
 	req, err := p.state.DB.GetInteractionRequestByID(ctx, intReqID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err != nil {
 		err := gtserror.Newf("db error getting interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if req == nil {
-		err := gtserror.Newf("interaction request %s not found", intReqID)
+	if req.TargetAccountID != acct.ID {
+		err := gtserror.Newf(
+			"interaction request %s does not belong to account %s",
+			intReqID, acct.ID,
+		)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if req.TargetAccountID != requester.ID {
+	if !req.IsPending() {
 		err := gtserror.Newf(
-			"interaction request %s does not belong to account %s",
-			intReqID, requester.ID,
+			"interaction request %s has already been handled",
+			intReqID,
 		)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
@@ -60,150 +64,176 @@ func (p *Processor) Accept(
 	unlock := p.state.ProcessingLocks.Lock(req.InteractionURI)
 	defer unlock()
 
-	// Delete the request from the db; we have it in
-	// memory now + we don't need it in the db anymore.
-	if err := p.state.DB.DeleteInteractionRequestByID(ctx, req.ID); err != nil {
-		err := gtserror.Newf("db error deleting interaction request: %w", err)
+	// Mark the request as accepted
+	// and generate a URI for it.
+	req.AcceptedAt = time.Now()
+	req.URI = uris.GenerateURIForAccept(acct.Username, req.ID)
+	if err := p.state.DB.UpdateInteractionRequest(
+		ctx,
+		req,
+		"accepted_at",
+		"uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-
-	// Derive approval + error depending on
-	// the type of interaction being approved.
-	var (
-		approval    *gtsmodel.InteractionApproval
-		errWithCode gtserror.WithCode
-	)
 
 	switch req.InteractionType {
 
 	case gtsmodel.InteractionLike:
-		approval, errWithCode = p.acceptLike(ctx, req)
+		if errWithCode := p.acceptLike(ctx, req); errWithCode != nil {
+			return nil, errWithCode
+		}
 
 	case gtsmodel.InteractionReply:
-		approval, errWithCode = p.acceptReply(ctx, req)
+		if errWithCode := p.acceptReply(ctx, req); errWithCode != nil {
+			return nil, errWithCode
+		}
 
 	case gtsmodel.InteractionAnnounce:
-		approval, errWithCode = p.acceptAnnounce(ctx, req)
+		if errWithCode := p.acceptAnnounce(ctx, req); errWithCode != nil {
+			return nil, errWithCode
+		}
 
 	default:
 		err := gtserror.Newf("unknown interaction type for interaction request %s", intReqID)
-		errWithCode = gtserror.NewErrorInternalError(err)
-	}
-
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-
-	// Return the approval to the caller so they
-	// can do something with it if they need to.
-	apiApproval, err := p.converter.InteractionApprovalToAPIInteractionApproval(
-		ctx,
-		approval,
-		requester,
-	)
-	if err != nil {
-		err := gtserror.Newf("error converting interaction approval: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return apiApproval, nil
+	// Return the now-accepted req to the caller so
+	// they can do something with it if they need to.
+	apiReq, err := p.converter.InteractionReqToAPIInteractionReq(
+		ctx,
+		req,
+		acct,
+	)
+	if err != nil {
+		err := gtserror.Newf("error converting interaction request: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return apiReq, nil
 }
 
-// Package-internal convenience function to accept a like.
+// Package-internal convenience
+// function to accept a like.
 func (p *Processor) acceptLike(
 	ctx context.Context,
 	req *gtsmodel.InteractionRequest,
-) (*gtsmodel.InteractionApproval, gtserror.WithCode) {
+) gtserror.WithCode {
+	// If the Like is missing, that means it's
+	// probably already been undone by someone,
+	// so there's nothing to actually accept.
 	if req.Like == nil {
-		// Like undone? Race condition?
-		// Nothing we can do anyway.
-		err := gtserror.New("req.Like was nil, nothing to accept")
-		errWithCode := gtserror.NewErrorNotFound(err)
-		return nil, errWithCode
+		err := gtserror.Newf("no Like found for interaction request %s", req.ID)
+		return gtserror.NewErrorNotFound(err)
 	}
 
-	// Mark fave as approved and store
-	// a new interactionApproval for it.
-	approval, err := p.c.ApproveFave(ctx, req.Like)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	// Update the Like.
+	req.Like.PendingApproval = util.Ptr(false)
+	req.Like.PreApproved = false
+	req.Like.ApprovedByURI = req.URI
+	if err := p.state.DB.UpdateStatusFave(
+		ctx,
+		req.Like,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating status fave: %w", err)
+		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Send the approval off through the client
-	// API processor to handle side effects.
+	// Send the accepted request off through the
+	// client API processor to handle side effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityLike,
 		APActivityType: ap.ActivityAccept,
-		GTSModel:       approval,
-		Origin:         approval.Account,
-		Target:         approval.InteractingAccount,
+		GTSModel:       req,
+		Origin:         req.TargetAccount,
+		Target:         req.InteractingAccount,
 	})
 
-	return approval, nil
+	return nil
 }
 
-// Package-internal convenience function to accept a reply.
+// Package-internal convenience
+// function to accept a reply.
 func (p *Processor) acceptReply(
 	ctx context.Context,
 	req *gtsmodel.InteractionRequest,
-) (*gtsmodel.InteractionApproval, gtserror.WithCode) {
+) gtserror.WithCode {
+	// If the Reply is missing, that means it's
+	// probably already been undone by someone,
+	// so there's nothing to actually accept.
 	if req.Reply == nil {
-		// Reply deleted? Race condition?
-		// Nothing we can do anyway.
-		err := gtserror.New("req.Reply was nil, nothing to accept")
-		errWithCode := gtserror.NewErrorNotFound(err)
-		return nil, errWithCode
+		err := gtserror.Newf("no Reply found for interaction request %s", req.ID)
+		return gtserror.NewErrorNotFound(err)
 	}
 
-	// Mark reply as approved and store
-	// a new interactionApproval for it.
-	approval, err := p.c.ApproveReply(ctx, req.Reply)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	// Update the Reply.
+	req.Reply.PendingApproval = util.Ptr(false)
+	req.Reply.PreApproved = false
+	req.Reply.ApprovedByURI = req.URI
+	if err := p.state.DB.UpdateStatus(
+		ctx,
+		req.Reply,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating status reply: %w", err)
+		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Send the approval off through the client
-	// API processor to handle side effects.
+	// Send the accepted request off through the
+	// client API processor to handle side effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityAccept,
-		GTSModel:       approval,
-		Origin:         approval.Account,
-		Target:         approval.InteractingAccount,
+		GTSModel:       req,
+		Origin:         req.TargetAccount,
+		Target:         req.InteractingAccount,
 	})
 
-	return approval, nil
+	return nil
 }
 
-// Package-internal convenience function to accept an announce.
+// Package-internal convenience
+// function to accept an announce.
 func (p *Processor) acceptAnnounce(
 	ctx context.Context,
 	req *gtsmodel.InteractionRequest,
-) (*gtsmodel.InteractionApproval, gtserror.WithCode) {
-	if req.Announce == nil {
-		// Announce undone? Race condition?
-		// Nothing we can do anyway.
-		err := gtserror.New("req.Announce was nil, nothing to accept")
-		errWithCode := gtserror.NewErrorNotFound(err)
-		return nil, errWithCode
+) gtserror.WithCode {
+	// If the Announce is missing, that means it's
+	// probably already been undone by someone,
+	// so there's nothing to actually accept.
+	if req.Reply == nil {
+		err := gtserror.Newf("no Announce found for interaction request %s", req.ID)
+		return gtserror.NewErrorNotFound(err)
 	}
 
-	// Mark announce as approved and store
-	// a new interactionApproval for it.
-	approval, err := p.c.ApproveAnnounce(ctx, req.Announce)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	// Update the Announce.
+	req.Announce.PendingApproval = util.Ptr(false)
+	req.Announce.PreApproved = false
+	req.Announce.ApprovedByURI = req.URI
+	if err := p.state.DB.UpdateStatus(
+		ctx,
+		req.Announce,
+		"pending_approval",
+		"approved_by_uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating status announce: %w", err)
+		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Send the approval off through the client
-	// API processor to handle side effects.
+	// Send the accepted request off through the
+	// client API processor to handle side effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ActivityAnnounce,
 		APActivityType: ap.ActivityAccept,
-		GTSModel:       approval,
-		Origin:         approval.Account,
-		Target:         approval.InteractingAccount,
+		GTSModel:       req,
+		Origin:         req.TargetAccount,
+		Target:         req.InteractingAccount,
 	})
 
-	return approval, nil
+	return nil
 }

@@ -30,9 +30,9 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-			// Drop previous version of interaction approvals
-			// table if it exists, ie., if instance was running
-			// on main between now and 2024-07-16.
+			// Drop interaction approvals table if it exists,
+			// ie., if instance was running on main between now
+			// and 2024-07-16.
 			//
 			// We might lose some interaction approvals this way,
 			// but since they weren't *really* used much yet this
@@ -42,32 +42,6 @@ func init() {
 				IfExists().
 				Exec(ctx); err != nil {
 				return err
-			}
-
-			// (Re-)add `interaction_approvals`
-			// table and new indexes.
-			if _, err := tx.
-				NewCreateTable().
-				Model(&gtsmodel.InteractionApproval{}).
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			for idx, col := range map[string]string{
-				"interaction_approvals_status_id_idx":              "status_id",
-				"interaction_approvals_account_id_idx":             "account_id",
-				"interaction_approvals_interacting_account_id_idx": "interacting_account_id",
-			} {
-				if _, err := tx.
-					NewCreateIndex().
-					Table("interaction_approvals").
-					Index(idx).
-					Column(col).
-					IfNotExists().
-					Exec(ctx); err != nil {
-					return err
-				}
 			}
 
 			// Add `interaction_requests`
@@ -159,33 +133,6 @@ func init() {
 				if _, err := tx.
 					NewInsert().
 					Model(req).
-					Exec(ctx); err != nil {
-					return err
-				}
-			}
-
-			// Add `interaction_rejections`
-			// table and new indexes.
-			if _, err := tx.
-				NewCreateTable().
-				Model(&gtsmodel.InteractionRejection{}).
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			for idx, col := range map[string]string{
-				"interaction_rejections_status_id_idx":              "status_id",
-				"interaction_rejections_account_id_idx":             "account_id",
-				"interaction_rejections_interacting_account_id_idx": "interacting_account_id",
-				"interaction_rejections_interaction_uri_idx":        "interaction_uri",
-			} {
-				if _, err := tx.
-					NewCreateIndex().
-					Table("interaction_rejections").
-					Index(idx).
-					Column(col).
-					IfNotExists().
 					Exec(ctx); err != nil {
 					return err
 				}

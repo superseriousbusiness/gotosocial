@@ -20,6 +20,7 @@ package workers
 import (
 	"context"
 	"errors"
+	"time"
 
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-logger/v2/level"
@@ -28,12 +29,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -298,14 +301,38 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// sending out the Create with the approval
 		// URI attached.
 
-		// Put approval in the database and
-		// update the status with approvedBy URI.
-		approval, err := p.common.ApproveReply(ctx, status)
-		if err != nil {
-			return gtserror.Newf("error pre-approving reply: %w", err)
+		// Store an already-accepted interaction request.
+		id := id.NewULID()
+		approval := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             status.InReplyToID,
+			TargetAccountID:      status.InReplyToAccountID,
+			TargetAccount:        status.InReplyToAccount,
+			InteractingAccountID: status.AccountID,
+			InteractingAccount:   status.Account,
+			InteractionURI:       status.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Reply:                status,
+			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+			AcceptedAt:           time.Now(),
+		}
+		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
+			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
-		// Send out the approval as Accept.
+		// Mark the status as now approved.
+		status.PendingApproval = util.Ptr(false)
+		status.PreApproved = false
+		status.ApprovedByURI = approval.URI
+		if err := p.state.DB.UpdateStatus(
+			ctx,
+			status,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating status: %w", err)
+		}
+
 		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
 			return gtserror.Newf("error federating pre-approval of reply: %w", err)
 		}
@@ -474,14 +501,38 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// sending out the Like with the approval
 		// URI attached.
 
-		// Put approval in the database and
-		// update the fave with approvedBy URI.
-		approval, err := p.common.ApproveFave(ctx, fave)
-		if err != nil {
-			return gtserror.Newf("error pre-approving fave: %w", err)
+		// Store an already-accepted interaction request.
+		id := id.NewULID()
+		approval := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             fave.StatusID,
+			TargetAccountID:      fave.TargetAccountID,
+			TargetAccount:        fave.TargetAccount,
+			InteractingAccountID: fave.AccountID,
+			InteractingAccount:   fave.Account,
+			InteractionURI:       fave.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Like:                 fave,
+			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+			AcceptedAt:           time.Now(),
+		}
+		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
+			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
-		// Send out the approval as Accept.
+		// Mark the fave itself as now approved.
+		fave.PendingApproval = util.Ptr(false)
+		fave.PreApproved = false
+		fave.ApprovedByURI = approval.URI
+		if err := p.state.DB.UpdateStatusFave(
+			ctx,
+			fave,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating status fave: %w", err)
+		}
+
 		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
 			return gtserror.Newf("error federating pre-approval of fave: %w", err)
 		}
@@ -545,14 +596,38 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// sending out the Create with the approval
 		// URI attached.
 
-		// Put approval in the database and
-		// update the boost with approvedBy URI.
-		approval, err := p.common.ApproveAnnounce(ctx, boost)
-		if err != nil {
-			return gtserror.Newf("error pre-approving boost: %w", err)
+		// Store an already-accepted interaction request.
+		id := id.NewULID()
+		approval := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             boost.BoostOfID,
+			TargetAccountID:      boost.BoostOfAccountID,
+			TargetAccount:        boost.BoostOfAccount,
+			InteractingAccountID: boost.AccountID,
+			InteractingAccount:   boost.Account,
+			InteractionURI:       boost.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Announce:             boost,
+			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+			AcceptedAt:           time.Now(),
+		}
+		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
+			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
-		// Send out the approval as Accept.
+		// Mark the boost itself as now approved.
+		boost.PendingApproval = util.Ptr(false)
+		boost.PreApproved = false
+		boost.ApprovedByURI = approval.URI
+		if err := p.state.DB.UpdateStatus(
+			ctx,
+			boost,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			return gtserror.Newf("db error updating status: %w", err)
+		}
+
 		if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
 			return gtserror.Newf("error federating pre-approval of boost: %w", err)
 		}
@@ -1053,22 +1128,22 @@ func (p *clientAPI) RejectUser(ctx context.Context, cMsg *messages.FromClientAPI
 }
 
 func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	approval, ok := cMsg.GTSModel.(*gtsmodel.InteractionApproval)
+	req, ok := cMsg.GTSModel.(*gtsmodel.InteractionRequest)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionApproval", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, approval.Like.StatusID)
+	p.surface.invalidateStatusFromTimelines(ctx, req.Like.StatusID)
 
 	// Notify the fave (distinct from the notif for the pending fave).
-	if err := p.surface.notifyFave(ctx, approval.Like); err != nil {
+	if err := p.surface.notifyFave(ctx, req.Like); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
-	// Send out the approval as Accept.
-	if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+	// Send out the Accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
 		return gtserror.Newf("error federating approval of like: %w", err)
 	}
 
@@ -1076,14 +1151,14 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 }
 
 func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	approval, ok := cMsg.GTSModel.(*gtsmodel.InteractionApproval)
+	req, ok := cMsg.GTSModel.(*gtsmodel.InteractionRequest)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionApproval", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
 	var (
-		interactingAcct = approval.InteractingAccount
-		reply           = approval.Reply
+		interactingAcct = req.InteractingAccount
+		reply           = req.Reply
 	)
 
 	// Update stats for the reply author account.
@@ -1100,8 +1175,8 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 		log.Errorf(ctx, "error timelining and notifying status reply: %v", err)
 	}
 
-	// Send out the approval as Accept.
-	if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+	// Send out the Accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
 		return gtserror.Newf("error federating approval of reply: %w", err)
 	}
 
@@ -1109,14 +1184,14 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 }
 
 func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	approval, ok := cMsg.GTSModel.(*gtsmodel.InteractionApproval)
+	req, ok := cMsg.GTSModel.(*gtsmodel.InteractionRequest)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionApproval", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
 	var (
-		interactingAcct = approval.InteractingAccount
-		boost           = approval.Announce
+		interactingAcct = req.InteractingAccount
+		boost           = req.Announce
 	)
 
 	// Update stats for the boost author account.
@@ -1138,8 +1213,8 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
-	// Send out the approval as Accept.
-	if err := p.federate.AcceptInteraction(ctx, approval); err != nil {
+	// Send out the Accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
 		return gtserror.Newf("error federating approval of announce: %w", err)
 	}
 
@@ -1147,23 +1222,23 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 }
 
 func (p *clientAPI) RejectLike(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	rejection, ok := cMsg.GTSModel.(*gtsmodel.InteractionRejection)
+	req, ok := cMsg.GTSModel.(*gtsmodel.InteractionRequest)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRejection", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
-	// At this point the InteractionRejection should already
+	// At this point the InteractionRequest should already
 	// be in the database, we just need to do side effects.
 
-	// Send out the rejection as Reject.
-	if err := p.federate.RejectInteraction(ctx, rejection); err != nil {
+	// Send out the Reject.
+	if err := p.federate.RejectInteraction(ctx, req); err != nil {
 		return gtserror.Newf("error federating rejection of like: %w", err)
 	}
 
 	// Get the rejected fave.
 	fave, err := p.state.DB.GetStatusFaveByURI(
 		gtscontext.SetBarebones(ctx),
-		rejection.InteractionURI,
+		req.InteractionURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting rejected fave: %w", err)
@@ -1184,23 +1259,23 @@ func (p *clientAPI) RejectLike(ctx context.Context, cMsg *messages.FromClientAPI
 }
 
 func (p *clientAPI) RejectReply(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	rejection, ok := cMsg.GTSModel.(*gtsmodel.InteractionRejection)
+	req, ok := cMsg.GTSModel.(*gtsmodel.InteractionRequest)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRejection", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
-	// At this point the InteractionRejection should already
+	// At this point the InteractionRequest should already
 	// be in the database, we just need to do side effects.
 
-	// Send out the rejection as Reject.
-	if err := p.federate.RejectInteraction(ctx, rejection); err != nil {
+	// Send out the Reject.
+	if err := p.federate.RejectInteraction(ctx, req); err != nil {
 		return gtserror.Newf("error federating rejection of reply: %w", err)
 	}
 
 	// Get the rejected status.
 	status, err := p.state.DB.GetStatusByURI(
 		gtscontext.SetBarebones(ctx),
-		rejection.InteractionURI,
+		req.InteractionURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting rejected reply: %w", err)
@@ -1221,23 +1296,23 @@ func (p *clientAPI) RejectReply(ctx context.Context, cMsg *messages.FromClientAP
 }
 
 func (p *clientAPI) RejectAnnounce(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	rejection, ok := cMsg.GTSModel.(*gtsmodel.InteractionRejection)
+	req, ok := cMsg.GTSModel.(*gtsmodel.InteractionRequest)
 	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRejection", cMsg.GTSModel)
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
-	// At this point the InteractionRejection should already
+	// At this point the InteractionRequest should already
 	// be in the database, we just need to do side effects.
 
-	// Send out the rejection as Reject.
-	if err := p.federate.RejectInteraction(ctx, rejection); err != nil {
+	// Send out the Reject.
+	if err := p.federate.RejectInteraction(ctx, req); err != nil {
 		return gtserror.Newf("error federating rejection of announce: %w", err)
 	}
 
 	// Get the rejected boost.
 	boost, err := p.state.DB.GetStatusByURI(
 		gtscontext.SetBarebones(ctx),
-		rejection.InteractionURI,
+		req.InteractionURI,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return gtserror.Newf("db error getting rejected announce: %w", err)

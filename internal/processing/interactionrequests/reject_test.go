@@ -51,22 +51,23 @@ func (suite *RejectTestSuite) TestReject() {
 		testStructs.TypeConverter,
 	)
 
-	apiRejection, errWithCode := p.Reject(ctx, acct, intReq.ID)
+	apiReq, errWithCode := p.Reject(ctx, acct, intReq.ID)
 	if errWithCode != nil {
 		suite.FailNow(errWithCode.Error())
 	}
 
 	// Get db interaction rejection.
-	dbRejection, err := state.DB.GetInteractionRejectionByID(ctx, apiRejection.ID)
+	dbReq, err := state.DB.GetInteractionRequestByID(ctx, apiReq.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.True(dbReq.IsRejected())
 
 	// Wait for interacting status to be deleted.
 	testrig.WaitFor(func() bool {
 		status, err := state.DB.GetStatusByURI(
 			gtscontext.SetBarebones(ctx),
-			dbRejection.InteractionURI,
+			dbReq.InteractionURI,
 		)
 		return status == nil && errors.Is(err, db.ErrNoEntries)
 	})

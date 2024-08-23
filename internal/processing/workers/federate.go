@@ -1127,17 +1127,17 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 
 func (f *federate) AcceptInteraction(
 	ctx context.Context,
-	approval *gtsmodel.InteractionApproval,
+	req *gtsmodel.InteractionRequest,
 ) error {
 	// Populate model.
-	if err := f.state.DB.PopulateInteractionApproval(ctx, approval); err != nil {
-		return gtserror.Newf("error populating approval: %w", err)
+	if err := f.state.DB.PopulateInteractionRequest(ctx, req); err != nil {
+		return gtserror.Newf("error populating request: %w", err)
 	}
 
 	// Bail if interacting account is ours:
 	// we've already accepted internally and
 	// shouldn't send an Accept to ourselves.
-	if approval.InteractingAccount.IsLocal() {
+	if req.InteractingAccount.IsLocal() {
 		return nil
 	}
 
@@ -1145,27 +1145,27 @@ func (f *federate) AcceptInteraction(
 	// we can't Accept on another
 	// instance's behalf. (This
 	// should never happen but...)
-	if approval.Account.IsRemote() {
+	if req.TargetAccount.IsRemote() {
 		return nil
 	}
 
 	// Parse relevant URI(s).
-	outboxIRI, err := parseURI(approval.Account.OutboxURI)
+	outboxIRI, err := parseURI(req.TargetAccount.OutboxURI)
 	if err != nil {
 		return err
 	}
 
-	acceptingAcctIRI, err := parseURI(approval.Account.URI)
+	acceptingAcctIRI, err := parseURI(req.TargetAccount.URI)
 	if err != nil {
 		return err
 	}
 
-	interactingAcctURI, err := parseURI(approval.InteractingAccount.URI)
+	interactingAcctURI, err := parseURI(req.InteractingAccount.URI)
 	if err != nil {
 		return err
 	}
 
-	interactionURI, err := parseURI(approval.InteractionURI)
+	interactionURI, err := parseURI(req.InteractionURI)
 	if err != nil {
 		return err
 	}
@@ -1190,7 +1190,7 @@ func (f *federate) AcceptInteraction(
 	); err != nil {
 		return gtserror.Newf(
 			"error sending activity %T for %v via outbox %s: %w",
-			accept, approval.InteractionType, outboxIRI, err,
+			accept, req.InteractionType, outboxIRI, err,
 		)
 	}
 
@@ -1199,17 +1199,17 @@ func (f *federate) AcceptInteraction(
 
 func (f *federate) RejectInteraction(
 	ctx context.Context,
-	rejection *gtsmodel.InteractionRejection,
+	req *gtsmodel.InteractionRequest,
 ) error {
 	// Populate model.
-	if err := f.state.DB.PopulateInteractionRejection(ctx, rejection); err != nil {
-		return gtserror.Newf("error populating rejection: %w", err)
+	if err := f.state.DB.PopulateInteractionRequest(ctx, req); err != nil {
+		return gtserror.Newf("error populating request: %w", err)
 	}
 
 	// Bail if interacting account is ours:
 	// we've already rejected internally and
 	// shouldn't send an Reject to ourselves.
-	if rejection.InteractingAccount.IsLocal() {
+	if req.InteractingAccount.IsLocal() {
 		return nil
 	}
 
@@ -1217,27 +1217,27 @@ func (f *federate) RejectInteraction(
 	// we can't Reject on another
 	// instance's behalf. (This
 	// should never happen but...)
-	if rejection.Account.IsRemote() {
+	if req.TargetAccount.IsRemote() {
 		return nil
 	}
 
 	// Parse relevant URI(s).
-	outboxIRI, err := parseURI(rejection.Account.OutboxURI)
+	outboxIRI, err := parseURI(req.TargetAccount.OutboxURI)
 	if err != nil {
 		return err
 	}
 
-	rejectingAcctIRI, err := parseURI(rejection.Account.URI)
+	rejectingAcctIRI, err := parseURI(req.TargetAccount.URI)
 	if err != nil {
 		return err
 	}
 
-	interactingAcctURI, err := parseURI(rejection.InteractingAccount.URI)
+	interactingAcctURI, err := parseURI(req.InteractingAccount.URI)
 	if err != nil {
 		return err
 	}
 
-	interactionURI, err := parseURI(rejection.InteractionURI)
+	interactionURI, err := parseURI(req.InteractionURI)
 	if err != nil {
 		return err
 	}
@@ -1262,7 +1262,7 @@ func (f *federate) RejectInteraction(
 	); err != nil {
 		return gtserror.Newf(
 			"error sending activity %T for %v via outbox %s: %w",
-			reject, rejection.InteractionType, outboxIRI, err,
+			reject, req.InteractionType, outboxIRI, err,
 		)
 	}
 

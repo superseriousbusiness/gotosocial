@@ -34,28 +34,29 @@ type BunDBStandardTestSuite struct {
 	state state.State
 
 	// standard suite models
-	testTokens       map[string]*gtsmodel.Token
-	testClients      map[string]*gtsmodel.Client
-	testApplications map[string]*gtsmodel.Application
-	testUsers        map[string]*gtsmodel.User
-	testAccounts     map[string]*gtsmodel.Account
-	testAttachments  map[string]*gtsmodel.MediaAttachment
-	testStatuses     map[string]*gtsmodel.Status
-	testTags         map[string]*gtsmodel.Tag
-	testMentions     map[string]*gtsmodel.Mention
-	testFollows      map[string]*gtsmodel.Follow
-	testEmojis       map[string]*gtsmodel.Emoji
-	testReports      map[string]*gtsmodel.Report
-	testBookmarks    map[string]*gtsmodel.StatusBookmark
-	testFaves        map[string]*gtsmodel.StatusFave
-	testLists        map[string]*gtsmodel.List
-	testListEntries  map[string]*gtsmodel.ListEntry
-	testAccountNotes map[string]*gtsmodel.AccountNote
-	testMarkers      map[string]*gtsmodel.Marker
-	testRules        map[string]*gtsmodel.Rule
-	testThreads      map[string]*gtsmodel.Thread
-	testPolls        map[string]*gtsmodel.Poll
-	testPollVotes    map[string]*gtsmodel.PollVote
+	testTokens              map[string]*gtsmodel.Token
+	testClients             map[string]*gtsmodel.Client
+	testApplications        map[string]*gtsmodel.Application
+	testUsers               map[string]*gtsmodel.User
+	testAccounts            map[string]*gtsmodel.Account
+	testAttachments         map[string]*gtsmodel.MediaAttachment
+	testStatuses            map[string]*gtsmodel.Status
+	testTags                map[string]*gtsmodel.Tag
+	testMentions            map[string]*gtsmodel.Mention
+	testFollows             map[string]*gtsmodel.Follow
+	testEmojis              map[string]*gtsmodel.Emoji
+	testReports             map[string]*gtsmodel.Report
+	testBookmarks           map[string]*gtsmodel.StatusBookmark
+	testFaves               map[string]*gtsmodel.StatusFave
+	testLists               map[string]*gtsmodel.List
+	testListEntries         map[string]*gtsmodel.ListEntry
+	testAccountNotes        map[string]*gtsmodel.AccountNote
+	testMarkers             map[string]*gtsmodel.Marker
+	testRules               map[string]*gtsmodel.Rule
+	testThreads             map[string]*gtsmodel.Thread
+	testPolls               map[string]*gtsmodel.Poll
+	testPollVotes           map[string]*gtsmodel.PollVote
+	testInteractionRequests map[string]*gtsmodel.InteractionRequest
 }
 
 func (suite *BunDBStandardTestSuite) SetupSuite() {
@@ -81,6 +82,7 @@ func (suite *BunDBStandardTestSuite) SetupSuite() {
 	suite.testThreads = testrig.NewTestThreads()
 	suite.testPolls = testrig.NewTestPolls()
 	suite.testPollVotes = testrig.NewTestPollVotes()
+	suite.testInteractionRequests = testrig.NewTestInteractionRequests()
 }
 
 func (suite *BunDBStandardTestSuite) SetupTest() {

@@ -1964,7 +1964,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 // to an ActivityStreams Accept, addressed to the interacting account.
 func (c *Converter) InteractionApprovalToASAccept(
 	ctx context.Context,
-	approval *gtsmodel.InteractionApproval,
+	approval *gtsmodel.InteractionRequest,
 ) (vocab.ActivityStreamsAccept, error) {
 	accept := streams.NewActivityStreamsAccept()
 
@@ -1973,7 +1973,7 @@ func (c *Converter) InteractionApprovalToASAccept(
 		return nil, gtserror.Newf("invalid accept uri: %w", err)
 	}
 
-	actorIRI, err := url.Parse(approval.Account.URI)
+	actorIRI, err := url.Parse(approval.TargetAccount.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid account uri: %w", err)
 	}

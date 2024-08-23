@@ -19,6 +19,7 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -35,56 +36,70 @@ type interactionDB struct {
 	state *state.State
 }
 
-func (i *interactionDB) newInteractionApprovalQ(approval interface{}) *bun.SelectQuery {
+func (i *interactionDB) newInteractionRequestQ(request interface{}) *bun.SelectQuery {
 	return i.db.
 		NewSelect().
-		Model(approval)
+		Model(request)
 }
 
-func (i *interactionDB) GetInteractionApprovalByID(ctx context.Context, id string) (*gtsmodel.InteractionApproval, error) {
-	return i.getInteractionApproval(
+func (i *interactionDB) GetInteractionRequestByID(ctx context.Context, id string) (*gtsmodel.InteractionRequest, error) {
+	return i.getInteractionRequest(
 		ctx,
 		"ID",
-		func(approval *gtsmodel.InteractionApproval) error {
+		func(request *gtsmodel.InteractionRequest) error {
 			return i.
-				newInteractionApprovalQ(approval).
-				Where("? = ?", bun.Ident("interaction_approval.id"), id).
+				newInteractionRequestQ(request).
+				Where("? = ?", bun.Ident("interaction_request.id"), id).
 				Scan(ctx)
 		},
 		id,
 	)
 }
 
-func (i *interactionDB) GetInteractionApprovalByURI(ctx context.Context, uri string) (*gtsmodel.InteractionApproval, error) {
-	return i.getInteractionApproval(
+func (i *interactionDB) GetInteractionRequestByInteractionURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error) {
+	return i.getInteractionRequest(
 		ctx,
-		"URI",
-		func(approval *gtsmodel.InteractionApproval) error {
+		"InteractionURI",
+		func(request *gtsmodel.InteractionRequest) error {
 			return i.
-				newInteractionApprovalQ(approval).
-				Where("? = ?", bun.Ident("interaction_approval.uri"), uri).
+				newInteractionRequestQ(request).
+				Where("? = ?", bun.Ident("interaction_request.interaction_uri"), uri).
 				Scan(ctx)
 		},
 		uri,
 	)
 }
 
-func (i *interactionDB) getInteractionApproval(
+func (i *interactionDB) GetInteractionRequestByURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error) {
+	return i.getInteractionRequest(
+		ctx,
+		"URI",
+		func(request *gtsmodel.InteractionRequest) error {
+			return i.
+				newInteractionRequestQ(request).
+				Where("? = ?", bun.Ident("interaction_request.uri"), uri).
+				Scan(ctx)
+		},
+		uri,
+	)
+}
+
+func (i *interactionDB) getInteractionRequest(
 	ctx context.Context,
 	lookup string,
-	dbQuery func(*gtsmodel.InteractionApproval) error,
+	dbQuery func(*gtsmodel.InteractionRequest) error,
 	keyParts ...any,
-) (*gtsmodel.InteractionApproval, error) {
-	// Fetch approval from database cache with loader callback
-	approval, err := i.state.Caches.DB.InteractionApproval.LoadOne(lookup, func() (*gtsmodel.InteractionApproval, error) {
-		var approval gtsmodel.InteractionApproval
+) (*gtsmodel.InteractionRequest, error) {
+	// Fetch request from database cache with loader callback
+	request, err := i.state.Caches.DB.InteractionRequest.LoadOne(lookup, func() (*gtsmodel.InteractionRequest, error) {
+		var request gtsmodel.InteractionRequest
 
 		// Not cached! Perform database query
-		if err := dbQuery(&approval); err != nil {
+		if err := dbQuery(&request); err != nil {
 			return nil, err
 		}
 
-		return &approval, nil
+		return &request, nil
 	}, keyParts...)
 	if err != nil {
 		// Error already processed.
@@ -93,232 +108,108 @@ func (i *interactionDB) getInteractionApproval(
 
 	if gtscontext.Barebones(ctx) {
 		// Only a barebones model was requested.
-		return approval, nil
+		return request, nil
 	}
 
-	if err := i.PopulateInteractionApproval(ctx, approval); err != nil {
+	if err := i.PopulateInteractionRequest(ctx, request); err != nil {
 		return nil, err
 	}
 
-	return approval, nil
+	return request, nil
 }
 
-func (i *interactionDB) PopulateInteractionApproval(ctx context.Context, approval *gtsmodel.InteractionApproval) error {
+func (i *interactionDB) PopulateInteractionRequest(ctx context.Context, req *gtsmodel.InteractionRequest) error {
 	var (
 		err  error
 		errs = gtserror.NewMultiError(4)
 	)
 
-	if approval.Status == nil {
+	if req.Status == nil {
 		// Target status is not set, fetch from the database.
-		approval.Status, err = i.state.DB.GetStatusByID(
+		req.Status, err = i.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
-			approval.StatusID,
+			req.StatusID,
 		)
 		if err != nil {
-			errs.Appendf("error populating interactionApproval target status: %w", err)
+			errs.Appendf("error populating interactionRequest target: %w", err)
 		}
 	}
 
-	if approval.Account == nil {
-		// Account is not set, fetch from the database.
-		approval.Account, err = i.state.DB.GetAccountByID(
+	if req.TargetAccount == nil {
+		// Target account is not set, fetch from the database.
+		req.TargetAccount, err = i.state.DB.GetAccountByID(
 			gtscontext.SetBarebones(ctx),
-			approval.AccountID,
+			req.TargetAccountID,
 		)
 		if err != nil {
-			errs.Appendf("error populating interactionApproval account: %w", err)
+			errs.Appendf("error populating interactionRequest target account: %w", err)
 		}
 	}
 
-	if approval.InteractingAccount == nil {
+	if req.InteractingAccount == nil {
 		// InteractingAccount is not set, fetch from the database.
-		approval.InteractingAccount, err = i.state.DB.GetAccountByID(
+		req.InteractingAccount, err = i.state.DB.GetAccountByID(
 			gtscontext.SetBarebones(ctx),
-			approval.InteractingAccountID,
+			req.InteractingAccountID,
 		)
 		if err != nil {
-			errs.Appendf("error populating interactionApproval interacting account: %w", err)
+			errs.Appendf("error populating interactionRequest interacting account: %w", err)
 		}
 	}
 
-	switch approval.InteractionType {
+	// Depending on the interaction type, *try* to populate
+	// the related model, but don't error if this is not
+	// possible, as it may have just already been deleted
+	// by its owner and we haven't cleaned up yet.
+	switch req.InteractionType {
 
 	case gtsmodel.InteractionLike:
-		approval.Like, err = i.state.DB.GetStatusFaveByURI(ctx, approval.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionApproval Like")
+		req.Like, err = i.state.DB.GetStatusFaveByURI(ctx, req.InteractionURI)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			errs.Appendf("error populating interactionRequest Like")
 		}
 
 	case gtsmodel.InteractionReply:
-		approval.Reply, err = i.state.DB.GetStatusByURI(ctx, approval.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionApproval Reply")
+		req.Reply, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			errs.Appendf("error populating interactionRequest Reply")
 		}
 
 	case gtsmodel.InteractionAnnounce:
-		approval.Announce, err = i.state.DB.GetStatusByURI(ctx, approval.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionApproval Announce")
+		req.Announce, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			errs.Appendf("error populating interactionRequest Announce")
 		}
 	}
 
 	return errs.Combine()
 }
 
-func (i *interactionDB) PutInteractionApproval(ctx context.Context, approval *gtsmodel.InteractionApproval) error {
-	return i.state.Caches.DB.InteractionApproval.Store(approval, func() error {
-		_, err := i.db.NewInsert().Model(approval).Exec(ctx)
+func (i *interactionDB) PutInteractionRequest(ctx context.Context, request *gtsmodel.InteractionRequest) error {
+	return i.state.Caches.DB.InteractionRequest.Store(request, func() error {
+		_, err := i.db.NewInsert().Model(request).Exec(ctx)
 		return err
 	})
 }
 
-func (i *interactionDB) DeleteInteractionApprovalByID(ctx context.Context, id string) error {
-	defer i.state.Caches.DB.InteractionApproval.Invalidate("ID", id)
-
-	_, err := i.db.NewDelete().
-		TableExpr("? AS ?", bun.Ident("interaction_approvals"), bun.Ident("interaction_approval")).
-		Where("? = ?", bun.Ident("interaction_approval.id"), id).
-		Exec(ctx)
-	return err
-}
-
-func (i *interactionDB) newInteractionRejectionQ(rejection interface{}) *bun.SelectQuery {
-	return i.db.
-		NewSelect().
-		Model(rejection)
-}
-
-func (i *interactionDB) GetInteractionRejectionByID(ctx context.Context, id string) (*gtsmodel.InteractionRejection, error) {
-	return i.getInteractionRejection(
-		ctx,
-		"ID",
-		func(rejection *gtsmodel.InteractionRejection) error {
-			return i.
-				newInteractionRejectionQ(rejection).
-				Where("? = ?", bun.Ident("interaction_rejection.id"), id).
-				Scan(ctx)
-		},
-		id,
-	)
-}
-
-func (i *interactionDB) GetInteractionRejectionByURI(ctx context.Context, uri string) (*gtsmodel.InteractionRejection, error) {
-	return i.getInteractionRejection(
-		ctx,
-		"URI",
-		func(rejection *gtsmodel.InteractionRejection) error {
-			return i.
-				newInteractionRejectionQ(rejection).
-				Where("? = ?", bun.Ident("interaction_rejection.uri"), uri).
-				Scan(ctx)
-		},
-		uri,
-	)
-}
-
-func (i *interactionDB) InteractionRejected(ctx context.Context, interactionURI string) (bool, error) {
-	ids := []string{}
-
-	err := i.db.
-		NewSelect().
-		Column("id").
-		Table("interaction_rejections").
-		Where("? = ?", bun.Ident("interaction_uri"), interactionURI).
-		Scan(ctx, &ids)
-
-	return len(ids) != 0, err
-}
-
-func (i *interactionDB) getInteractionRejection(
-	ctx context.Context,
-	lookup string,
-	dbQuery func(*gtsmodel.InteractionRejection) error,
-	keyParts ...any,
-) (*gtsmodel.InteractionRejection, error) {
-	// Fetch rejection from database cache with loader callback
-	rejection, err := i.state.Caches.DB.InteractionRejection.LoadOne(lookup, func() (*gtsmodel.InteractionRejection, error) {
-		var rejection gtsmodel.InteractionRejection
-
-		// Not cached! Perform database query
-		if err := dbQuery(&rejection); err != nil {
-			return nil, err
-		}
-
-		return &rejection, nil
-	}, keyParts...)
-	if err != nil {
-		// Error already processed.
-		return nil, err
-	}
-
-	if gtscontext.Barebones(ctx) {
-		// Only a barebones model was requested.
-		return rejection, nil
-	}
-
-	if err := i.PopulateInteractionRejection(ctx, rejection); err != nil {
-		return nil, err
-	}
-
-	return rejection, nil
-}
-
-func (i *interactionDB) PopulateInteractionRejection(ctx context.Context, rejection *gtsmodel.InteractionRejection) error {
-	var (
-		err  error
-		errs = gtserror.NewMultiError(4)
-	)
-
-	if rejection.Status == nil {
-		// Target status is not set, fetch from the database.
-		rejection.Status, err = i.state.DB.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			rejection.StatusID,
-		)
-		if err != nil {
-			errs.Appendf("error populating interactionRejection target status: %w", err)
-		}
-	}
-
-	if rejection.Account == nil {
-		// Account is not set, fetch from the database.
-		rejection.Account, err = i.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			rejection.AccountID,
-		)
-		if err != nil {
-			errs.Appendf("error populating interactionRejection account: %w", err)
-		}
-	}
-
-	if rejection.InteractingAccount == nil {
-		// InteractingAccount is not set, fetch from the database.
-		rejection.InteractingAccount, err = i.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			rejection.InteractingAccountID,
-		)
-		if err != nil {
-			errs.Appendf("error populating interactionRejection interacting account: %w", err)
-		}
-	}
-
-	return errs.Combine()
-}
-
-func (i *interactionDB) PutInteractionRejection(ctx context.Context, rejection *gtsmodel.InteractionRejection) error {
-	return i.state.Caches.DB.InteractionRejection.Store(rejection, func() error {
-		_, err := i.db.NewInsert().Model(rejection).Exec(ctx)
+func (i *interactionDB) UpdateInteractionRequest(ctx context.Context, request *gtsmodel.InteractionRequest, columns ...string) error {
+	return i.state.Caches.DB.InteractionRequest.Store(request, func() error {
+		_, err := i.db.
+			NewUpdate().
+			Model(request).
+			Where("? = ?", bun.Ident("interaction_request.id"), request.ID).
+			Column(columns...).
+			Exec(ctx)
 		return err
 	})
 }
 
-func (i *interactionDB) DeleteInteractionRejectionByID(ctx context.Context, id string) error {
-	defer i.state.Caches.DB.InteractionRejection.Invalidate("ID", id)
+func (i *interactionDB) DeleteInteractionRequestByID(ctx context.Context, id string) error {
+	defer i.state.Caches.DB.InteractionRequest.Invalidate("ID", id)
 
 	_, err := i.db.NewDelete().
-		TableExpr("? AS ?", bun.Ident("interaction_rejections"), bun.Ident("interaction_rejection")).
-		Where("? = ?", bun.Ident("interaction_rejection.id"), id).
+		TableExpr("? AS ?", bun.Ident("interaction_requests"), bun.Ident("interaction_request")).
+		Where("? = ?", bun.Ident("interaction_request.id"), id).
 		Exec(ctx)
 	return err
 }
@@ -355,7 +246,11 @@ func (i *interactionDB) GetInteractionsRequestsForAcct(
 			"? AS ?",
 			bun.Ident("interaction_requests"),
 			bun.Ident("interaction_request"),
-		)
+		).
+		// Select only interaction requests that
+		// are neither accepted or rejected yet,
+		// ie., without an Accept or Reject URI.
+		Where("? IS NULL", bun.Ident("uri"))
 
 	// Select interactions targeting status.
 	if statusID != "" {
@@ -437,150 +332,17 @@ func (i *interactionDB) GetInteractionsRequestsForAcct(
 	return reqs, nil
 }
 
-func (i *interactionDB) newInteractionRequestQ(request interface{}) *bun.SelectQuery {
-	return i.db.
-		NewSelect().
-		Model(request)
-}
-
-func (i *interactionDB) GetInteractionRequestByID(ctx context.Context, id string) (*gtsmodel.InteractionRequest, error) {
-	return i.getInteractionRequest(
-		ctx,
-		"ID",
-		func(request *gtsmodel.InteractionRequest) error {
-			return i.
-				newInteractionRequestQ(request).
-				Where("? = ?", bun.Ident("interaction_request.id"), id).
-				Scan(ctx)
-		},
-		id,
-	)
-}
-
-func (i *interactionDB) GetInteractionRequestByInteractionURI(ctx context.Context, uri string) (*gtsmodel.InteractionRequest, error) {
-	return i.getInteractionRequest(
-		ctx,
-		"InteractionURI",
-		func(request *gtsmodel.InteractionRequest) error {
-			return i.
-				newInteractionRequestQ(request).
-				Where("? = ?", bun.Ident("interaction_request.interaction_uri"), uri).
-				Scan(ctx)
-		},
-		uri,
-	)
-}
-
-func (i *interactionDB) getInteractionRequest(
-	ctx context.Context,
-	lookup string,
-	dbQuery func(*gtsmodel.InteractionRequest) error,
-	keyParts ...any,
-) (*gtsmodel.InteractionRequest, error) {
-	// Fetch request from database cache with loader callback
-	request, err := i.state.Caches.DB.InteractionRequest.LoadOne(lookup, func() (*gtsmodel.InteractionRequest, error) {
-		var request gtsmodel.InteractionRequest
-
-		// Not cached! Perform database query
-		if err := dbQuery(&request); err != nil {
-			return nil, err
-		}
-
-		return &request, nil
-	}, keyParts...)
-	if err != nil {
-		// Error already processed.
-		return nil, err
+func (i *interactionDB) IsInteractionRejected(ctx context.Context, interactionURI string) (bool, error) {
+	req, err := i.GetInteractionRequestByInteractionURI(ctx, interactionURI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return false, gtserror.Newf("db error getting interaction request: %w", err)
 	}
 
-	if gtscontext.Barebones(ctx) {
-		// Only a barebones model was requested.
-		return request, nil
+	if req == nil {
+		// No interaction req at all with this
+		// interactionURI so it can't be rejected.
+		return false, nil
 	}
 
-	if err := i.PopulateInteractionRequest(ctx, request); err != nil {
-		return nil, err
-	}
-
-	return request, nil
-}
-
-func (i *interactionDB) PopulateInteractionRequest(ctx context.Context, req *gtsmodel.InteractionRequest) error {
-	var (
-		err  error
-		errs = gtserror.NewMultiError(4)
-	)
-
-	if req.Status == nil {
-		// Target status is not set, fetch from the database.
-		req.Status, err = i.state.DB.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			req.StatusID,
-		)
-		if err != nil {
-			errs.Appendf("error populating interactionRequest target: %w", err)
-		}
-	}
-
-	if req.TargetAccount == nil {
-		// Target account is not set, fetch from the database.
-		req.TargetAccount, err = i.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			req.TargetAccountID,
-		)
-		if err != nil {
-			errs.Appendf("error populating interactionRequest target account: %w", err)
-		}
-	}
-
-	if req.InteractingAccount == nil {
-		// InteractingAccount is not set, fetch from the database.
-		req.InteractingAccount, err = i.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
-			req.InteractingAccountID,
-		)
-		if err != nil {
-			errs.Appendf("error populating interactionRequest interacting account: %w", err)
-		}
-	}
-
-	switch req.InteractionType {
-
-	case gtsmodel.InteractionLike:
-		req.Like, err = i.state.DB.GetStatusFaveByURI(ctx, req.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionRequest Like")
-		}
-
-	case gtsmodel.InteractionReply:
-		req.Reply, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionRequest Reply")
-		}
-
-	case gtsmodel.InteractionAnnounce:
-		req.Announce, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
-		if err != nil {
-			errs.Appendf("error populating interactionRequest Announce")
-		}
-	}
-
-	return errs.Combine()
-}
-
-func (i *interactionDB) PutInteractionRequest(ctx context.Context, request *gtsmodel.InteractionRequest) error {
-	return i.state.Caches.DB.InteractionRequest.Store(request, func() error {
-		_, err := i.db.NewInsert().Model(request).Exec(ctx)
-		return err
-	})
-}
-
-func (i *interactionDB) DeleteInteractionRequestByID(ctx context.Context, id string) error {
-	defer i.state.Caches.DB.InteractionRequest.Invalidate("ID", id)
-
-	_, err := i.db.NewDelete().
-		TableExpr("? AS ?", bun.Ident("interaction_requests"), bun.Ident("interaction_request")).
-		Where("? = ?", bun.Ident("interaction_request.id"), id).
-		Exec(ctx)
-	return err
+	return req.IsRejected(), nil
 }

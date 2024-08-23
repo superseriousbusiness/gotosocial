@@ -19,38 +19,41 @@ package interactionrequests
 
 import (
 	"context"
-	"errors"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // Reject rejects an interaction request with the given ID,
-// on behalf of the requester (whose post it must target).
+// on behalf of the given account (whose post it must target).
 func (p *Processor) Reject(
 	ctx context.Context,
-	requester *gtsmodel.Account,
+	acct *gtsmodel.Account,
 	intReqID string,
-) (*apimodel.InteractionRejection, gtserror.WithCode) {
+) (*apimodel.InteractionRequest, gtserror.WithCode) {
 	req, err := p.state.DB.GetInteractionRequestByID(ctx, intReqID)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err != nil {
 		err := gtserror.Newf("db error getting interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if req == nil {
-		err := gtserror.Newf("interaction request %s not found", intReqID)
+	if req.TargetAccountID != acct.ID {
+		err := gtserror.Newf(
+			"interaction request %s does not belong to account %s",
+			intReqID, acct.ID,
+		)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	if req.TargetAccountID != requester.ID {
+	if !req.IsPending() {
 		err := gtserror.Newf(
-			"interaction request %s does not belong to account %s",
-			intReqID, requester.ID,
+			"interaction request %s has already been handled",
+			intReqID,
 		)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
@@ -60,150 +63,71 @@ func (p *Processor) Reject(
 	unlock := p.state.ProcessingLocks.Lock(req.InteractionURI)
 	defer unlock()
 
-	// Delete the request from the db; we have it in
-	// memory now + we don't need it in the db anymore.
-	if err := p.state.DB.DeleteInteractionRequestByID(ctx, req.ID); err != nil {
-		err := gtserror.Newf("db error deleting interaction request: %w", err)
+	// Mark the request as rejected
+	// and generate a URI for it.
+	req.RejectedAt = time.Now()
+	req.URI = uris.GenerateURIForReject(acct.Username, req.ID)
+	if err := p.state.DB.UpdateInteractionRequest(
+		ctx,
+		req,
+		"rejected_at",
+		"uri",
+	); err != nil {
+		err := gtserror.Newf("db error updating interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-
-	// Derive rejection + error depending on
-	// the type of interaction being rejected.
-	var (
-		rejection   *gtsmodel.InteractionRejection
-		errWithCode gtserror.WithCode
-	)
 
 	switch req.InteractionType {
 
 	case gtsmodel.InteractionLike:
-		rejection, errWithCode = p.rejectLike(ctx, req)
+		// Send the rejected request off through the
+		// client API processor to handle side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityLike,
+			APActivityType: ap.ActivityReject,
+			GTSModel:       req,
+			Origin:         req.TargetAccount,
+			Target:         req.InteractingAccount,
+		})
 
 	case gtsmodel.InteractionReply:
-		rejection, errWithCode = p.rejectReply(ctx, req)
+		// Send the rejected request off through the
+		// client API processor to handle side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityReject,
+			GTSModel:       req,
+			Origin:         req.TargetAccount,
+			Target:         req.InteractingAccount,
+		})
 
 	case gtsmodel.InteractionAnnounce:
-		rejection, errWithCode = p.rejectAnnounce(ctx, req)
+		// Send the rejected request off through the
+		// client API processor to handle side effects.
+		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+			APObjectType:   ap.ActivityAnnounce,
+			APActivityType: ap.ActivityReject,
+			GTSModel:       req,
+			Origin:         req.TargetAccount,
+			Target:         req.InteractingAccount,
+		})
 
 	default:
 		err := gtserror.Newf("unknown interaction type for interaction request %s", intReqID)
-		errWithCode = gtserror.NewErrorInternalError(err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if errWithCode != nil {
-		return nil, errWithCode
-	}
-
-	// Return the rejection to the caller so they
-	// can do something with it if they need to.
-	apiRejection, err := p.converter.InteractionRejectionToAPIInteractionRejection(
+	// Return the now-rejected req to the caller so
+	// they can do something with it if they need to.
+	apiReq, err := p.converter.InteractionReqToAPIInteractionReq(
 		ctx,
-		rejection,
-		requester,
+		req,
+		acct,
 	)
 	if err != nil {
-		err := gtserror.Newf("error converting interaction rejection: %w", err)
+		err := gtserror.Newf("error converting interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return apiRejection, nil
-}
-
-// Package-internal convenience function to reject a like.
-func (p *Processor) rejectLike(
-	ctx context.Context,
-	req *gtsmodel.InteractionRequest,
-) (*gtsmodel.InteractionRejection, gtserror.WithCode) {
-	if req.Like == nil {
-		// Like undone? Race condition?
-		// Nothing we can do anyway.
-		err := gtserror.New("req.Like was nil, nothing to reject")
-		errWithCode := gtserror.NewErrorNotFound(err)
-		return nil, errWithCode
-	}
-
-	// Mark fave as rejected and store
-	// a new interactionRejection for it.
-	rejection, err := p.c.RejectFave(ctx, req.Like)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Send the rejection off through the client
-	// API processor to handle side effects.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActivityLike,
-		APActivityType: ap.ActivityReject,
-		GTSModel:       rejection,
-		Origin:         rejection.Account,
-		Target:         rejection.InteractingAccount,
-	})
-
-	return rejection, nil
-}
-
-// Package-internal convenience function to reject a reply.
-func (p *Processor) rejectReply(
-	ctx context.Context,
-	req *gtsmodel.InteractionRequest,
-) (*gtsmodel.InteractionRejection, gtserror.WithCode) {
-	if req.Reply == nil {
-		// Reply deleted? Race condition?
-		// Nothing we can do anyway.
-		err := gtserror.New("req.Reply was nil, nothing to reject")
-		errWithCode := gtserror.NewErrorNotFound(err)
-		return nil, errWithCode
-	}
-
-	// Mark reply as rejected and store
-	// a new interactionRejection for it.
-	rejection, err := p.c.RejectReply(ctx, req.Reply)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Send the rejection off through the client
-	// API processor to handle side effects.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ObjectNote,
-		APActivityType: ap.ActivityReject,
-		GTSModel:       rejection,
-		Origin:         rejection.Account,
-		Target:         rejection.InteractingAccount,
-	})
-
-	return rejection, nil
-}
-
-// Package-internal convenience function to reject an announce.
-func (p *Processor) rejectAnnounce(
-	ctx context.Context,
-	req *gtsmodel.InteractionRequest,
-) (*gtsmodel.InteractionRejection, gtserror.WithCode) {
-	if req.Announce == nil {
-		// Announce undone? Race condition?
-		// Nothing we can do anyway.
-		err := gtserror.New("req.Announce was nil, nothing to reject")
-		errWithCode := gtserror.NewErrorNotFound(err)
-		return nil, errWithCode
-	}
-
-	// Mark announce as rejected and store
-	// a new interactionRejection for it.
-	rejection, err := p.c.RejectAnnounce(ctx, req.Announce)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	// Send the rejection off through the client
-	// API processor to handle side effects.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActivityAnnounce,
-		APActivityType: ap.ActivityReject,
-		GTSModel:       rejection,
-		Origin:         rejection.Account,
-		Target:         rejection.InteractingAccount,
-	})
-
-	return rejection, nil
+	return apiReq, nil
 }

@@ -52,32 +52,9 @@ func (i InteractionType) String() string {
 	}
 }
 
-// InteractionApproval refers to a single Accept activity sent
-// *from this instance* in response to an interaction request,
-// in order to approve it.
-//
-// Accepts originating from remote instances are not stored
-// using this format; the URI of the remote Accept is instead
-// just added to the *gtsmodel.StatusFave or *gtsmodel.Status.
-type InteractionApproval struct {
-	ID                   string          `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt            time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	StatusID             string          `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the interaction target status.
-	Status               *Status         `bun:"-"`                                                           // Not stored in DB. Status being interacted with.
-	AccountID            string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account that owns this accept/approval
-	Account              *Account        `bun:"-"`                                                           // account corresponding to accountID
-	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account that did the interaction that this Accept targets.
-	InteractingAccount   *Account        `bun:"-"`                                                           // account corresponding to targetAccountID
-	InteractionURI       string          `bun:",nullzero,notnull,unique"`                                    // URI of the interacting like, reply, or announce. Unique.
-	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
-	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
-	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
-	Announce             *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionAnnounce.
-	URI                  string          `bun:",nullzero,notnull,unique"`                                    // ActivityPub URI of the Accept.
-}
-
 // InteractionRequest represents one interaction (like, reply, fave)
-// that is awaiting approval / rejection by the target account.
+// that is either accepted, rejected, or currently still awaiting
+// acceptance or rejection by the target account.
 type InteractionRequest struct {
 	ID                   string          `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt            time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
@@ -87,26 +64,30 @@ type InteractionRequest struct {
 	TargetAccount        *Account        `bun:"-"`                                                           // Not stored in DB. Account being interacted with.
 	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account requesting the interaction.
 	InteractingAccount   *Account        `bun:"-"`                                                           // Not stored in DB. Account corresponding to targetAccountID
-	InteractionURI       string          `bun:",nullzero,notnull,unique"`                                    // URI of the interacting like, reply, or announce. Unique.
+	InteractionURI       string          `bun:",nullzero,notnull"`                                           // URI of the interacting like, reply, or announce.
 	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
 	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
 	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
 	Announce             *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionAnnounce.
+	URI                  string          `bun:",nullzero,unique"`                                            // ActivityPub URI of the Accept (if accepted) or Reject (if rejected). Null/empty if currently neither accepted not rejected.
+	AcceptedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was accepted, time at which this occurred.
+	RejectedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was rejected, time at which this occurred.
 }
 
-// InteractionRejection refers to a single Reject activity sent
-// to or from this instance in response to an interaction request,
-// in order to reject / deny it.
-type InteractionRejection struct {
-	ID                   string          `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt            time.Time       `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	StatusID             string          `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the interaction target status.
-	Status               *Status         `bun:"-"`                                                           // Not stored in DB. Status being interacted with.
-	AccountID            string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account that owns this reject / deny.
-	Account              *Account        `bun:"-"`                                                           // account corresponding to accountID
-	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account that did the interaction that this Reject targets.
-	InteractingAccount   *Account        `bun:"-"`                                                           // account corresponding to targetAccountID
-	InteractionURI       string          `bun:",nullzero,notnull"`                                           // URI of the interacting like, reply, or announce. NOT unique, as an interaction can be rejected by more than one person.
-	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
-	URI                  string          `bun:",nullzero,notnull,unique"`                                    // ActivityPub URI of the Reject.
+// IsHandled returns true if interaction
+// request has been neither accepted or rejected.
+func (ir *InteractionRequest) IsPending() bool {
+	return ir.URI == "" && ir.AcceptedAt.IsZero() && ir.RejectedAt.IsZero()
+}
+
+// IsAccepted returns true if this
+// interaction request has been accepted.
+func (ir *InteractionRequest) IsAccepted() bool {
+	return ir.URI != "" && !ir.AcceptedAt.IsZero()
+}
+
+// IsRejected returns true if this
+// interaction request has been rejected.
+func (ir *InteractionRequest) IsRejected() bool {
+	return ir.URI != "" && !ir.RejectedAt.IsZero()
 }

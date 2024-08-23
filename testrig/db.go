@@ -41,8 +41,6 @@ var testModels = []interface{}{
 	&gtsmodel.FilterStatus{},
 	&gtsmodel.Follow{},
 	&gtsmodel.FollowRequest{},
-	&gtsmodel.InteractionApproval{},
-	&gtsmodel.InteractionRejection{},
 	&gtsmodel.InteractionRequest{},
 	&gtsmodel.List{},
 	&gtsmodel.ListEntry{},

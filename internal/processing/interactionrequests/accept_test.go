@@ -42,32 +42,33 @@ func (suite *AcceptTestSuite) TestAccept() {
 		intReq = suite.testInteractionRequests["admin_account_reply_turtle"]
 	)
 
-	// Create int reqs processor.
+	// Create interaction reqs processor.
 	p := interactionrequests.New(
 		testStructs.Common,
 		testStructs.State,
 		testStructs.TypeConverter,
 	)
 
-	apiApproval, errWithCode := p.Accept(ctx, acct, intReq.ID)
+	apiReq, errWithCode := p.Accept(ctx, acct, intReq.ID)
 	if errWithCode != nil {
 		suite.FailNow(errWithCode.Error())
 	}
 
-	// Get db interaction approval.
-	dbApproval, err := state.DB.GetInteractionApprovalByID(ctx, apiApproval.ID)
+	// Get db interaction request.
+	dbReq, err := state.DB.GetInteractionRequestByID(ctx, apiReq.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+	suite.True(dbReq.IsAccepted())
 
 	// Interacting status
 	// should now be approved.
-	dbStatus, err := state.DB.GetStatusByURI(ctx, dbApproval.InteractionURI)
+	dbStatus, err := state.DB.GetStatusByURI(ctx, dbReq.InteractionURI)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.False(*dbStatus.PendingApproval)
-	suite.Equal(dbApproval.URI, dbStatus.ApprovedByURI)
+	suite.Equal(dbReq.URI, dbStatus.ApprovedByURI)
 
 	// Wait for a notification
 	// for interacting status.
