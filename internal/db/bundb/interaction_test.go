@@ -36,7 +36,7 @@ type InteractionTestSuite struct {
 	BunDBStandardTestSuite
 }
 
-func (suite *InteractionTestSuite) markIntsPending(
+func (suite *InteractionTestSuite) markInteractionsPending(
 	ctx context.Context,
 	statusID string,
 ) (pendingCount int) {
@@ -153,7 +153,7 @@ func (suite *InteractionTestSuite) TestGetPending() {
 
 	// Update target test status to mark
 	// all interactions with it pending.
-	pendingCount := suite.markIntsPending(ctx, testStatus.ID)
+	pendingCount := suite.markInteractionsPending(ctx, testStatus.ID)
 
 	// Get pendingInts interactions.
 	pendingInts, err := suite.state.DB.GetInteractionsRequestsForAcct(
@@ -201,7 +201,7 @@ func (suite *InteractionTestSuite) TestGetPendingRepliesOnly() {
 
 	// Update target test status to mark
 	// all interactions with it pending.
-	suite.markIntsPending(ctx, testStatus.ID)
+	suite.markInteractionsPending(ctx, testStatus.ID)
 
 	// Get pendingInts interactions.
 	pendingInts, err := suite.state.DB.GetInteractionsRequestsForAcct(
