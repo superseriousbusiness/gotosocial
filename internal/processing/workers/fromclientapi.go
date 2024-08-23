@@ -1232,7 +1232,7 @@ func (p *clientAPI) RejectLike(ctx context.Context, cMsg *messages.FromClientAPI
 
 	// Send out the Reject.
 	if err := p.federate.RejectInteraction(ctx, req); err != nil {
-		return gtserror.Newf("error federating rejection of like: %w", err)
+		log.Errorf(ctx, "error federating rejection of like: %v", err)
 	}
 
 	// Get the rejected fave.
@@ -1263,7 +1263,7 @@ func (p *clientAPI) RejectReply(ctx context.Context, cMsg *messages.FromClientAP
 
 	// Send out the Reject.
 	if err := p.federate.RejectInteraction(ctx, req); err != nil {
-		return gtserror.Newf("error federating rejection of reply: %w", err)
+		log.Errorf(ctx, "error federating rejection of reply: %v", err)
 	}
 
 	// Get the rejected status.
@@ -1294,7 +1294,7 @@ func (p *clientAPI) RejectAnnounce(ctx context.Context, cMsg *messages.FromClien
 
 	// Send out the Reject.
 	if err := p.federate.RejectInteraction(ctx, req); err != nil {
-		return gtserror.Newf("error federating rejection of announce: %w", err)
+		log.Errorf(ctx, "error federating rejection of announce: %v", err)
 	}
 
 	// Get the rejected boost.
