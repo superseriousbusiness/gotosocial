@@ -84,7 +84,7 @@ func (m *Module) InteractionRequestAuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	intReqID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	reqID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -93,7 +93,7 @@ func (m *Module) InteractionRequestAuthorizePOSTHandler(c *gin.Context) {
 	approval, errWithCode := m.processor.InteractionRequests().Accept(
 		c.Request.Context(),
 		authed.Account,
-		intReqID,
+		reqID,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

@@ -34,9 +34,9 @@ import (
 func (p *Processor) Reject(
 	ctx context.Context,
 	acct *gtsmodel.Account,
-	intReqID string,
+	reqID string,
 ) (*apimodel.InteractionRequest, gtserror.WithCode) {
-	req, err := p.state.DB.GetInteractionRequestByID(ctx, intReqID)
+	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
 	if err != nil {
 		err := gtserror.Newf("db error getting interaction request: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -45,7 +45,7 @@ func (p *Processor) Reject(
 	if req.TargetAccountID != acct.ID {
 		err := gtserror.Newf(
 			"interaction request %s does not belong to account %s",
-			intReqID, acct.ID,
+			reqID, acct.ID,
 		)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
@@ -53,7 +53,7 @@ func (p *Processor) Reject(
 	if !req.IsPending() {
 		err := gtserror.Newf(
 			"interaction request %s has already been handled",
-			intReqID,
+			reqID,
 		)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
@@ -113,7 +113,7 @@ func (p *Processor) Reject(
 		})
 
 	default:
-		err := gtserror.Newf("unknown interaction type for interaction request %s", intReqID)
+		err := gtserror.Newf("unknown interaction type for interaction request %s", reqID)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
