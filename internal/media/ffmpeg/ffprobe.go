@@ -19,65 +19,22 @@ package ffmpeg
 
 import (
 	"context"
-
-	ffprobelib "codeberg.org/gruf/go-ffmpreg/embed/ffprobe"
-	"codeberg.org/gruf/go-ffmpreg/wasm"
-
-	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-// InitFfprobe initializes the ffprobe WebAssembly instance pool,
-// with given maximum limiting the number of concurrent instances.
+// ffprobeRunner limits the number of
+// ffprobe WebAssembly instances that
+// may be concurrently running, in
+// order to reduce memory usage.
+var ffprobeRunner runner
+
+// InitFfprobe precompiles the ffprobe WebAssembly source into memory and
+// prepares the runner to only allow max given concurrent running instances.
 func InitFfprobe(ctx context.Context, max int) error {
-	initCache() // ensure compilation cache initialized
-	return ffprobePool.Init(ctx, max)
+	ffprobeRunner.Init(max)
+	return compileFfprobe(ctx)
 }
 
 // Ffprobe runs the given arguments with an instance of ffprobe.
-func Ffprobe(ctx context.Context, args wasm.Args) (uint32, error) {
-	return ffprobePool.Run(ctx, args)
-}
-
-var ffprobePool = wasmInstancePool{
-	inst: wasm.Instantiator{
-
-		// WASM module name.
-		Module: "ffprobe",
-
-		// Per-instance WebAssembly runtime (with shared cache).
-		Runtime: func(ctx context.Context) wazero.Runtime {
-
-			// Prepare config with cache.
-			cfg := wazero.NewRuntimeConfig()
-			cfg = cfg.WithCoreFeatures(ffprobelib.CoreFeatures)
-			cfg = cfg.WithCompilationCache(cache)
-
-			// Instantiate runtime with our config.
-			rt := wazero.NewRuntimeWithConfig(ctx, cfg)
-
-			// Prepare default "env" host module.
-			env := rt.NewHostModuleBuilder("env")
-
-			// Instantiate "env" module in our runtime.
-			_, err := env.Instantiate(context.Background())
-			if err != nil {
-				panic(err)
-			}
-
-			// Instantiate the wasi snapshot preview 1 in runtime.
-			_, err = wasi_snapshot_preview1.Instantiate(ctx, rt)
-			if err != nil {
-				panic(err)
-			}
-
-			return rt
-		},
-
-		// Per-run module configuration.
-		Config: wazero.NewModuleConfig,
-
-		// Embedded WASM.
-		Source: ffprobelib.B,
-	},
+func Ffprobe(ctx context.Context, args Args) (uint32, error) {
+	return ffprobeRunner.Run(ctx, ffprobe, args)
 }

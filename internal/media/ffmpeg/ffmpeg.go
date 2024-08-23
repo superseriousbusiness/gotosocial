@@ -19,65 +19,22 @@ package ffmpeg
 
 import (
 	"context"
-
-	ffmpeglib "codeberg.org/gruf/go-ffmpreg/embed/ffmpeg"
-	"codeberg.org/gruf/go-ffmpreg/wasm"
-
-	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
 
-// InitFfmpeg initializes the ffmpeg WebAssembly instance pool,
-// with given maximum limiting the number of concurrent instances.
+// ffmpegRunner limits the number of
+// ffmpeg WebAssembly instances that
+// may be concurrently running, in
+// order to reduce memory usage.
+var ffmpegRunner runner
+
+// InitFfmpeg precompiles the ffmpeg WebAssembly source into memory and
+// prepares the runner to only allow max given concurrent running instances.
 func InitFfmpeg(ctx context.Context, max int) error {
-	initCache() // ensure compilation cache initialized
-	return ffmpegPool.Init(ctx, max)
+	ffmpegRunner.Init(max)
+	return compileFfmpeg(ctx)
 }
 
 // Ffmpeg runs the given arguments with an instance of ffmpeg.
-func Ffmpeg(ctx context.Context, args wasm.Args) (uint32, error) {
-	return ffmpegPool.Run(ctx, args)
-}
-
-var ffmpegPool = wasmInstancePool{
-	inst: wasm.Instantiator{
-
-		// WASM module name.
-		Module: "ffmpeg",
-
-		// Per-instance WebAssembly runtime (with shared cache).
-		Runtime: func(ctx context.Context) wazero.Runtime {
-
-			// Prepare config with cache.
-			cfg := wazero.NewRuntimeConfig()
-			cfg = cfg.WithCoreFeatures(ffmpeglib.CoreFeatures)
-			cfg = cfg.WithCompilationCache(cache)
-
-			// Instantiate runtime with our config.
-			rt := wazero.NewRuntimeWithConfig(ctx, cfg)
-
-			// Prepare default "env" host module.
-			env := rt.NewHostModuleBuilder("env")
-
-			// Instantiate "env" module in our runtime.
-			_, err := env.Instantiate(context.Background())
-			if err != nil {
-				panic(err)
-			}
-
-			// Instantiate the wasi snapshot preview 1 in runtime.
-			_, err = wasi_snapshot_preview1.Instantiate(ctx, rt)
-			if err != nil {
-				panic(err)
-			}
-
-			return rt
-		},
-
-		// Per-run module configuration.
-		Config: wazero.NewModuleConfig,
-
-		// Embedded WASM.
-		Source: ffmpeglib.B,
-	},
+func Ffmpeg(ctx context.Context, args Args) (uint32, error) {
+	return ffmpegRunner.Run(ctx, ffmpeg, args)
 }
