@@ -58,7 +58,7 @@ import (
 //		'400':
 //			description: bad request
 //		'401':
-//			description: unrejectd
+//			description: unauthorized
 //		'404':
 //			description: not found
 //		'406':
