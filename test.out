@@ -1,0 +1,147 @@
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/config	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/server	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media/prune	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/testrig	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/process-emoji	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/process-media	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/docs	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/activitypub/publickey	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/ap	8.817s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/activitypub/emoji	10.664s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/apps	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/blocks	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/conversations	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users	28.197s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/auth	14.423s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/interactionpolicies	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/markers	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/accounts	79.344s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/admin	50.398s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks	16.371s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/exports	12.922s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/favourites	13.090s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v1	33.225s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/preferences	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v2	68.995s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags	12.218s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests	21.208s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/import	12.646s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/instance	26.885s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/lists	15.070s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/media	16.662s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/mutes	12.143s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/notifications	13.362s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/polls	14.308s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/timelines	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/reports	28.714s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/health	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/model	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/nodeinfo	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/metrics	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/wellknown/hostmeta	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/cache	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/config/gen	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220315160814_admin_account_actions	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230328203024_migration_fix	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220905150505_custom_emoji_updates	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220214175650_media_cleanup	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230521105850_emoji_empty_domain_fix	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240318115336_account_settings	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240715204203_media_pipeline_improvements	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/postgres	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/sqlite	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/test	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/search	50.877s
+?   	github.com/superseriousbusiness/gotosocial/internal/filter/interaction	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/filter/status	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/filter/usermute	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/gtscontext	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/gtsmodel	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/headerfilter	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/id	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/iotools	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/metrics	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/statuses	57.402s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/streaming	12.931s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/tags	18.814s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/user	23.220s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/fileserver	21.204s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/util	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger	25.740s
+ok  	github.com/superseriousbusiness/gotosocial/internal/cache/domain	(cached)
+?   	github.com/superseriousbusiness/gotosocial/internal/oidc	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/cleaner	35.656s
+ok  	github.com/superseriousbusiness/gotosocial/internal/config	16.932s
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/advancedmigrations	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/common	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/fedi	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/list	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/markers	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/report	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/search	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/tags	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/queue	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/regexes	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/scheduler	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/state	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/storage	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/stream	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/tracing	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/trans/model	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/uris	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/web	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/workers	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/testrig	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/db/bundb	139.316s
+ok  	github.com/superseriousbusiness/gotosocial/internal/email	28.788s
+ok  	github.com/superseriousbusiness/gotosocial/internal/federation	70.871s
+ok  	github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing	87.366s
+ok  	github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb	46.053s
+ok  	github.com/superseriousbusiness/gotosocial/internal/filter/spam	33.170s
+ok  	github.com/superseriousbusiness/gotosocial/internal/filter/visibility	48.165s
+ok  	github.com/superseriousbusiness/gotosocial/internal/gtserror	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/httpclient	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/language	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/log	29.430s
+ok  	github.com/superseriousbusiness/gotosocial/internal/media	68.414s
+ok  	github.com/superseriousbusiness/gotosocial/internal/messages	29.570s
+ok  	github.com/superseriousbusiness/gotosocial/internal/middleware	46.247s
+ok  	github.com/superseriousbusiness/gotosocial/internal/oauth	32.837s
+ok  	github.com/superseriousbusiness/gotosocial/internal/paging	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing	41.140s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/account	65.846s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/admin	61.683s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/conversations	39.587s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/media	37.923s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/polls	27.006s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/status	39.159s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/stream	27.266s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/timeline	25.916s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/user	26.908s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/workers	105.968s
+ok  	github.com/superseriousbusiness/gotosocial/internal/router	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/text	48.003s
+ok  	github.com/superseriousbusiness/gotosocial/internal/timeline	25.708s
+ok  	github.com/superseriousbusiness/gotosocial/internal/trans	17.535s
+ok  	github.com/superseriousbusiness/gotosocial/internal/transport	20.249s
+ok  	github.com/superseriousbusiness/gotosocial/internal/transport/delivery	(cached)
+ok  	github.com/superseriousbusiness/gotosocial/internal/typeutils	61.786s
+ok  	github.com/superseriousbusiness/gotosocial/internal/util	11.277s
+ok  	github.com/superseriousbusiness/gotosocial/internal/validate	(cached)
