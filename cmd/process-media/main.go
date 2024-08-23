@@ -46,11 +46,11 @@ func main() {
 		log.Panic(ctx, "Usage: go run ./cmd/process-media <input-file> <output-processed> <output-thumbnail>")
 	}
 
-	if err := ffmpeg.InitFfprobe(ctx, -1); err != nil {
+	if err := ffmpeg.InitFfprobe(ctx, 1); err != nil {
 		log.Panic(ctx, err)
 	}
 
-	if err := ffmpeg.InitFfmpeg(ctx, -1); err != nil {
+	if err := ffmpeg.InitFfmpeg(ctx, 1); err != nil {
 		log.Panic(ctx, err)
 	}
 
