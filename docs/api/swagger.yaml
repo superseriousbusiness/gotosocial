@@ -1962,35 +1962,6 @@ definitions:
         type: object
         x-go-name: InstanceV2Users
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    interactionApproval:
-        properties:
-            created_at:
-                description: The timestamp of the interaction approval (ISO 8601 Datetime)
-                type: string
-                x-go-name: CreatedAt
-            id:
-                description: The id of the interaction approval in the database.
-                type: string
-                x-go-name: ID
-            interacted_status:
-                $ref: '#/definitions/status'
-            interacting_account:
-                $ref: '#/definitions/account'
-            reply:
-                $ref: '#/definitions/status'
-            type:
-                description: |-
-                    The type of interaction that this interaction approval pertains to.
-
-                    `favourite` - Someone favourited a status.
-                    `reply` - Someone replied to a status.
-                    `reblog` - Someone reblogged / boosted a status.
-                type: string
-                x-go-name: Type
-        title: InteractionApproval represents an interaction of type favourite, reply, or reblog which has been approved by the user being interacted with.
-        type: object
-        x-go-name: InteractionApproval
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     interactionPolicy:
         properties:
             can_favourite:
@@ -2038,35 +2009,12 @@ definitions:
         type: string
         x-go-name: PolicyValue
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
-    interactionRejection:
-        properties:
-            created_at:
-                description: The timestamp of the interaction rejection (ISO 8601 Datetime)
-                type: string
-                x-go-name: CreatedAt
-            id:
-                description: The id of the interaction rejection in the database.
-                type: string
-                x-go-name: ID
-            interacted_status:
-                $ref: '#/definitions/status'
-            interacting_account:
-                $ref: '#/definitions/account'
-            type:
-                description: |-
-                    The type of interaction that this interaction rejection pertains to.
-
-                    `favourite` - Someone favourited a status.
-                    `reply` - Someone replied to a status.
-                    `reblog` - Someone reblogged / boosted a status.
-                type: string
-                x-go-name: Type
-        title: InteractionRejection represents an interaction of type favourite, reply, or reblog which has been rejected by the user being interacted with.
-        type: object
-        x-go-name: InteractionRejection
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     interactionRequest:
         properties:
+            accepted_at:
+                description: The timestamp that the interaction request was accepted (ISO 8601 Datetime). Field omitted if request not accepted (yet).
+                type: string
+                x-go-name: AcceptedAt
             created_at:
                 description: The timestamp of the interaction request (ISO 8601 Datetime)
                 type: string
@@ -2079,6 +2027,10 @@ definitions:
                 $ref: '#/definitions/status'
             interacting_account:
                 $ref: '#/definitions/account'
+            rejected_at:
+                description: The timestamp that the interaction request was rejected (ISO 8601 Datetime). Field omitted if request not rejected (yet).
+                type: string
+                x-go-name: RejectedAt
             reply:
                 $ref: '#/definitions/status'
             type:
@@ -2090,7 +2042,11 @@ definitions:
                     `reblog` - Someone reblogged / boosted a status.
                 type: string
                 x-go-name: Type
-        title: InteractionRequest represents a pending/requested interaction of type favourite, reply, or reblog, awaiting approval by the user being interacted with.
+            uri:
+                description: URI of the Accept or Reject. Only set if accepted_at or rejected_at is set, else omitted.
+                type: string
+                x-go-name: URI
+        title: InteractionRequest represents a pending, approved, or rejected interaction of type favourite, reply, or reblog.
         type: object
         x-go-name: InteractionRequest
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
