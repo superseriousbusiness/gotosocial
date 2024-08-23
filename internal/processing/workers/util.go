@@ -487,9 +487,9 @@ func (u *utils) decrementFollowRequestsCount(
 	return nil
 }
 
-// pendFave stores an interaction request for the given
-// fave, and notifies the interactee of a pending fave.
-func (u *utils) pendFave(
+// requestFave stores an interaction request
+// for the given fave, and notifies the interactee.
+func (u *utils) requestFave(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
 ) error {
@@ -534,9 +534,9 @@ func (u *utils) pendFave(
 	return nil
 }
 
-// pendReply stores an interaction request for the given
-// status, and notifies the interactee of a pending reply.
-func (u *utils) pendReply(
+// requestReply stores an interaction request
+// for the given reply, and notifies the interactee.
+func (u *utils) requestReply(
 	ctx context.Context,
 	reply *gtsmodel.Status,
 ) error {
@@ -581,9 +581,9 @@ func (u *utils) pendReply(
 	return nil
 }
 
-// pendAnnounce stores an interaction request for the given
-// status, and notifies the interactee of a pending announce.
-func (u *utils) pendAnnounce(
+// requestAnnounce stores an interaction request
+// for the given announce, and notifies the interactee.
+func (u *utils) requestAnnounce(
 	ctx context.Context,
 	boost *gtsmodel.Status,
 ) error {

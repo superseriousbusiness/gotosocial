@@ -279,7 +279,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.pendReply(ctx, status); err != nil {
+		if err := p.utils.requestReply(ctx, status); err != nil {
 			return gtserror.Newf("error pending reply: %w", err)
 		}
 
@@ -479,7 +479,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.pendFave(ctx, fave); err != nil {
+		if err := p.utils.requestFave(ctx, fave); err != nil {
 			return gtserror.Newf("error pending fave: %w", err)
 		}
 
@@ -574,7 +574,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.pendAnnounce(ctx, boost); err != nil {
+		if err := p.utils.requestAnnounce(ctx, boost); err != nil {
 			return gtserror.Newf("error pending boost: %w", err)
 		}
 
