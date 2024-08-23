@@ -34,7 +34,7 @@ import (
 func (p *Processor) AcceptGet(
 	ctx context.Context,
 	requestedUser string,
-	approvalID string,
+	reqID string,
 ) (interface{}, gtserror.WithCode) {
 	// Authenticate incoming request, getting related accounts.
 	auth, errWithCode := p.authenticate(ctx, requestedUser)
@@ -52,24 +52,24 @@ func (p *Processor) AcceptGet(
 
 	receivingAcct := auth.receivingAcct
 
-	req, err := p.state.DB.GetInteractionRequestByID(ctx, approvalID)
+	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting approval %s: %w", approvalID, err)
+		err := gtserror.Newf("db error getting interaction request %s: %w", reqID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if req == nil || !req.IsAccepted() {
 		// Request doesn't exist or hasn't been accepted.
-		err := gtserror.Newf("accept %s not found", approvalID)
+		err := gtserror.Newf("interaction request %s not found", reqID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	if req.TargetAccountID != receivingAcct.ID {
-		const text = "accept does not belong to receiving account"
+		const text = "interaction request does not belong to receiving account"
 		return nil, gtserror.NewErrorNotFound(errors.New(text))
 	}
 
-	accept, err := p.converter.InteractionApprovalToASAccept(ctx, req)
+	accept, err := p.converter.InteractionReqToASAccept(ctx, req)
 	if err != nil {
 		err := gtserror.Newf("error converting accept: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

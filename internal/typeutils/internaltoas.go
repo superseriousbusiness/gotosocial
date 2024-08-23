@@ -1960,36 +1960,36 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	return policy, nil
 }
 
-// InteractionApprovalToASAccept converts a *gtsmodel.InteractionApproval
+// InteractionReqToASAccept converts a *gtsmodel.InteractionRequest
 // to an ActivityStreams Accept, addressed to the interacting account.
-func (c *Converter) InteractionApprovalToASAccept(
+func (c *Converter) InteractionReqToASAccept(
 	ctx context.Context,
-	approval *gtsmodel.InteractionRequest,
+	req *gtsmodel.InteractionRequest,
 ) (vocab.ActivityStreamsAccept, error) {
 	accept := streams.NewActivityStreamsAccept()
 
-	acceptID, err := url.Parse(approval.URI)
+	acceptID, err := url.Parse(req.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid accept uri: %w", err)
 	}
 
-	actorIRI, err := url.Parse(approval.TargetAccount.URI)
+	actorIRI, err := url.Parse(req.TargetAccount.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid account uri: %w", err)
 	}
 
-	objectIRI, err := url.Parse(approval.InteractionURI)
+	objectIRI, err := url.Parse(req.InteractionURI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid target uri: %w", err)
 	}
 
-	toIRI, err := url.Parse(approval.InteractingAccount.URI)
+	toIRI, err := url.Parse(req.InteractingAccount.URI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
 	// Set id to the URI of
-	// interactionApproval.
+	// interaction request.
 	ap.SetJSONLDId(accept, acceptID)
 
 	// Actor is the account that

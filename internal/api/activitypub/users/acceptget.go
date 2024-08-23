@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// AcceptGETHandler serves an interactionApproval as an ActivityStreams Accept.
+// AcceptGETHandler serves an interaction request as an ActivityStreams Accept.
 func (m *Module) AcceptGETHandler(c *gin.Context) {
 	username, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
 	if errWithCode != nil {
@@ -33,7 +33,7 @@ func (m *Module) AcceptGETHandler(c *gin.Context) {
 		return
 	}
 
-	acceptID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	reqID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -45,7 +45,7 @@ func (m *Module) AcceptGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Fedi().AcceptGet(c.Request.Context(), username, acceptID)
+	resp, errWithCode := m.processor.Fedi().AcceptGet(c.Request.Context(), username, reqID)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

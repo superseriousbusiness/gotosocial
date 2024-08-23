@@ -2015,6 +2015,8 @@ definitions:
                 description: The timestamp that the interaction request was accepted (ISO 8601 Datetime). Field omitted if request not accepted (yet).
                 type: string
                 x-go-name: AcceptedAt
+            account:
+                $ref: '#/definitions/account'
             created_at:
                 description: The timestamp of the interaction request (ISO 8601 Datetime)
                 type: string
@@ -2023,15 +2025,13 @@ definitions:
                 description: The id of the interaction request in the database.
                 type: string
                 x-go-name: ID
-            interacted_status:
-                $ref: '#/definitions/status'
-            interacting_account:
-                $ref: '#/definitions/account'
             rejected_at:
                 description: The timestamp that the interaction request was rejected (ISO 8601 Datetime). Field omitted if request not rejected (yet).
                 type: string
                 x-go-name: RejectedAt
             reply:
+                $ref: '#/definitions/status'
+            status:
                 $ref: '#/definitions/status'
             type:
                 description: |-
@@ -7682,9 +7682,9 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: The now-approved interaction.
+                    description: The now-approved interaction request.
                     schema:
-                        $ref: '#/definitions/interactionApproval'
+                        $ref: '#/definitions/interactionRequest'
                 "400":
                     description: bad request
                 "401":
@@ -7714,9 +7714,9 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: The now-rejected interaction.
+                    description: The now-rejected interaction request.
                     schema:
-                        $ref: '#/definitions/interactionRejection'
+                        $ref: '#/definitions/interactionRequest'
                 "400":
                     description: bad request
                 "401":

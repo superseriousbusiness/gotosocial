@@ -18,7 +18,6 @@
 */
 
 import {
-	InteractionApproval,
 	InteractionRequest,
 	SearchInteractionRequestsParams,
 	SearchInteractionRequestsResp,
@@ -66,7 +65,7 @@ const extended = gtsApi.injectEndpoints({
 			providesTags: [{ type: "InteractionRequest", id: "TRANSFORMED" }]
 		}),
 
-		approveInteractionRequest: build.mutation<InteractionApproval, string>({
+		approveInteractionRequest: build.mutation<InteractionRequest, string>({
 			query: (id) => ({
 				method: "POST",
 				url: `/api/v1/interaction_requests/${id}/authorize`,

@@ -32,9 +32,9 @@ type InteractionRequest struct {
 	// The timestamp of the interaction request (ISO 8601 Datetime)
 	CreatedAt string `json:"created_at"`
 	// The account that performed the interaction.
-	InteractingAccount *Account `json:"interacting_account"`
+	Account *Account `json:"account"`
 	// Status targeted by the requested interaction.
-	InteractedStatus *Status `json:"interacted_status"`
+	Status *Status `json:"status"`
 	// If type=reply, this field will be set to the reply that is awaiting approval. If type=favourite, or type=reblog, the field will be omitted.
 	Reply *Status `json:"reply,omitempty"`
 	// The timestamp that the interaction request was accepted (ISO 8601 Datetime). Field omitted if request not accepted (yet).

@@ -164,14 +164,14 @@ function ReqsListEntry({ req, linkTo, backLocation }: ReqsListEntryProps) {
 	const icon = useIcon(req.type);
 	
 	const strap = useMemo(() => {
-		return "@" + req.interacting_account.acct + " " + verbed + " your post.";
-	}, [req.interacting_account, verbed]);
+		return "@" + req.account.acct + " " + verbed + " your post.";
+	}, [req.account, verbed]);
 	
 	const label = useMemo(() => {
-		return noun + " from @" + req.interacting_account.acct;
-	}, [req.interacting_account, noun]);
+		return noun + " from @" + req.account.acct;
+	}, [req.account, noun]);
 
-	const ourContent = useContent(req.interacted_status);
+	const ourContent = useContent(req.status);
 	const theirContent = useContent(req.reply);
 
 	return (

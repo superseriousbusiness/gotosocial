@@ -1057,11 +1057,11 @@ func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
 }`, string(bytes))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionApprovalToASAccept() {
+func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
-	interactionApproval := &gtsmodel.InteractionRequest{
+	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 		TargetAccountID:      acceptingAccount.ID,
@@ -1074,9 +1074,9 @@ func (suite *InternalToASTestSuite) TestInteractionApprovalToASAccept() {
 		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
-	accept, err := suite.typeconverter.InteractionApprovalToASAccept(
+	accept, err := suite.typeconverter.InteractionReqToASAccept(
 		context.Background(),
-		interactionApproval,
+		req,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())

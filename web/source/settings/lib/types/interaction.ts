@@ -86,41 +86,11 @@ export interface InteractionRequest {
 	/**
 	 * Account that created the request.
 	 */
-	interacting_account: Account;
+	account: Account;
 	/**
 	 * Status being interacted with.
 	 */
-	interacted_status: Status;
-	/**
-	 * Replying status, if type = "reply".
-	 */
-	reply?: Status;
-}
-
-/**
- * Approval of an interaction request.
- */
-export interface InteractionApproval {
-    /**
-	 * ID of the approval.
-	 */
-	id: string;
-	/**
-	 * Type of approved interaction.
-	 */
-	type: "favourite" | "reply" | "reblog";
-	/**
-	 * Time when the approval was created.
-	 */
-	created_at: string;
-	/**
-	 * Account that created the approved interaction.
-	 */
-	interacting_account: Account;
-	/**
-	 * Status being interacted with.
-	 */
-	interacted_status: Status;
+	status: Status;
 	/**
 	 * Replying status, if type = "reply".
 	 */

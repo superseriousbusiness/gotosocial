@@ -42,7 +42,7 @@ func (f *federatingDB) GetAccept(
 	if err != nil {
 		return nil, err
 	}
-	return f.converter.InteractionApprovalToASAccept(ctx, approval)
+	return f.converter.InteractionReqToASAccept(ctx, approval)
 }
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {

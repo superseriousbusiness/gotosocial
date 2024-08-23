@@ -57,8 +57,8 @@ function InteractionRequestDetailForm({ data: req, backLocation }: { data: Inter
 	const icon = useIcon(req.type);
 
 	const strap = useMemo(() => {
-		return "@" + req.interacting_account.acct + " " + verbed + " your post.";
-	}, [req.interacting_account, verbed]);
+		return "@" + req.account.acct + " " + verbed + " your post.";
+	}, [req.account, verbed]);
 
 	return (
 		<>
@@ -71,17 +71,13 @@ function InteractionRequestDetailForm({ data: req, backLocation }: { data: Inter
 			
 			<h2>You wrote:</h2>
 			<div className="thread">
-				<Status
-					status={req.interacted_status}
-				/>
+				<Status status={req.status} />
 			</div>
 
 			{ req.reply && <>
 				<h2>They replied:</h2>
 				<div className="thread">
-					<Status
-						status={req.reply}
-					/>
+					<Status status={req.reply} />
 				</div>
 			</> }
 			

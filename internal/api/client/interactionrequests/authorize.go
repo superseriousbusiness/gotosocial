@@ -52,9 +52,9 @@ import (
 //	responses:
 //		'200':
 //			name: Approval.
-//			description: The now-approved interaction.
+//			description: The now-approved interaction request.
 //			schema:
-//				"$ref": "#/definitions/interactionApproval"
+//				"$ref": "#/definitions/interactionRequest"
 //		'400':
 //			description: bad request
 //		'401':
@@ -90,7 +90,7 @@ func (m *Module) InteractionRequestAuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	approval, errWithCode := m.processor.InteractionRequests().Accept(
+	apiReq, errWithCode := m.processor.InteractionRequests().Accept(
 		c.Request.Context(),
 		authed.Account,
 		reqID,
@@ -100,5 +100,5 @@ func (m *Module) InteractionRequestAuthorizePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiutil.JSON(c, http.StatusOK, approval)
+	apiutil.JSON(c, http.StatusOK, apiReq)
 }

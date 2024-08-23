@@ -2597,16 +2597,16 @@ func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValu
 // to an *apimodel.InteractionRequest, from the perspective of requestingAcct.
 func (c *Converter) InteractionReqToAPIInteractionReq(
 	ctx context.Context,
-	ir *gtsmodel.InteractionRequest,
+	req *gtsmodel.InteractionRequest,
 	requestingAcct *gtsmodel.Account,
 ) (*apimodel.InteractionRequest, error) {
 	// Ensure interaction request is populated.
-	if err := c.state.DB.PopulateInteractionRequest(ctx, ir); err != nil {
+	if err := c.state.DB.PopulateInteractionRequest(ctx, req); err != nil {
 		err := gtserror.Newf("error populating: %w", err)
 		return nil, err
 	}
 
-	interactingAcct, err := c.AccountToAPIAccountPublic(ctx, ir.InteractingAccount)
+	interactingAcct, err := c.AccountToAPIAccountPublic(ctx, req.InteractingAccount)
 	if err != nil {
 		err := gtserror.Newf("error converting interacting acct: %w", err)
 		return nil, err
@@ -2614,7 +2614,7 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 
 	interactedStatus, err := c.StatusToAPIStatus(
 		ctx,
-		ir.Status,
+		req.Status,
 		requestingAcct,
 		statusfilter.FilterContextNone,
 		nil,
@@ -2626,10 +2626,10 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 	}
 
 	var reply *apimodel.Status
-	if ir.InteractionType == gtsmodel.InteractionReply {
+	if req.InteractionType == gtsmodel.InteractionReply {
 		reply, err = c.StatusToAPIStatus(
 			ctx,
-			ir.Reply,
+			req.Reply,
 			requestingAcct,
 			statusfilter.FilterContextNone,
 			nil,
@@ -2642,24 +2642,24 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 	}
 
 	var acceptedAt string
-	if ir.IsAccepted() {
-		acceptedAt = util.FormatISO8601(ir.AcceptedAt)
+	if req.IsAccepted() {
+		acceptedAt = util.FormatISO8601(req.AcceptedAt)
 	}
 
 	var rejectedAt string
-	if ir.IsRejected() {
-		rejectedAt = util.FormatISO8601(ir.RejectedAt)
+	if req.IsRejected() {
+		rejectedAt = util.FormatISO8601(req.RejectedAt)
 	}
 
 	return &apimodel.InteractionRequest{
-		ID:                 ir.ID,
-		Type:               ir.InteractionType.String(),
-		CreatedAt:          util.FormatISO8601(ir.CreatedAt),
-		InteractingAccount: interactingAcct,
-		InteractedStatus:   interactedStatus,
-		Reply:              reply,
-		AcceptedAt:         acceptedAt,
-		RejectedAt:         rejectedAt,
-		URI:                ir.URI,
+		ID:         req.ID,
+		Type:       req.InteractionType.String(),
+		CreatedAt:  util.FormatISO8601(req.CreatedAt),
+		Account:    interactingAcct,
+		Status:     interactedStatus,
+		Reply:      reply,
+		AcceptedAt: acceptedAt,
+		RejectedAt: rejectedAt,
+		URI:        req.URI,
 	}, nil
 }

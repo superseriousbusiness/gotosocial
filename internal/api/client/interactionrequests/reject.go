@@ -52,9 +52,9 @@ import (
 //	responses:
 //		'200':
 //			name: Rejection.
-//			description: The now-rejected interaction.
+//			description: The now-rejected interaction request.
 //			schema:
-//				"$ref": "#/definitions/interactionRejection"
+//				"$ref": "#/definitions/interactionRequest"
 //		'400':
 //			description: bad request
 //		'401':
@@ -90,7 +90,7 @@ func (m *Module) InteractionRequestRejectPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	rejection, errWithCode := m.processor.InteractionRequests().Reject(
+	apiReq, errWithCode := m.processor.InteractionRequests().Reject(
 		c.Request.Context(),
 		authed.Account,
 		reqID,
@@ -100,5 +100,5 @@ func (m *Module) InteractionRequestRejectPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiutil.JSON(c, http.StatusOK, rejection)
+	apiutil.JSON(c, http.StatusOK, apiReq)
 }
