@@ -34,8 +34,11 @@ steps:
         path: /root/.cache/go-build
       - name: go-src
         path: /go
+      - name: wazero-compilation-cache
+        path: /root/.cache/wazero
     environment:
       CGO_ENABLED: "0"
+      GTS_WAZERO_COMPILATION_CACHE: "/root/.cache/wazero"
     commands:
       - apk update --no-cache && apk add git
       - >-
