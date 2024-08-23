@@ -166,19 +166,19 @@ func (i *interactionDB) PopulateInteractionRequest(ctx context.Context, req *gts
 	case gtsmodel.InteractionLike:
 		req.Like, err = i.state.DB.GetStatusFaveByURI(ctx, req.InteractionURI)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			errs.Appendf("error populating interactionRequest Like")
+			errs.Appendf("error populating interactionRequest Like: %w", err)
 		}
 
 	case gtsmodel.InteractionReply:
 		req.Reply, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			errs.Appendf("error populating interactionRequest Reply")
+			errs.Appendf("error populating interactionRequest Reply: %w", err)
 		}
 
 	case gtsmodel.InteractionAnnounce:
 		req.Announce, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			errs.Appendf("error populating interactionRequest Announce")
+			errs.Appendf("error populating interactionRequest Announce: %w", err)
 		}
 	}
 
