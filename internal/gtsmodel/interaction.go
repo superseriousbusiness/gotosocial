@@ -64,7 +64,7 @@ type InteractionRequest struct {
 	TargetAccount        *Account        `bun:"-"`                                                           // Not stored in DB. Account being interacted with.
 	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account requesting the interaction.
 	InteractingAccount   *Account        `bun:"-"`                                                           // Not stored in DB. Account corresponding to targetAccountID
-	InteractionURI       string          `bun:",nullzero,notnull"`                                           // URI of the interacting like, reply, or announce.
+	InteractionURI       string          `bun:",nullzero,notnull,unique"`                                    // URI of the interacting like, reply, or announce. Unique (only one interaction request allowed per interaction URI).
 	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
 	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
 	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
