@@ -1240,14 +1240,8 @@ func (p *clientAPI) RejectLike(ctx context.Context, cMsg *messages.FromClientAPI
 		gtscontext.SetBarebones(ctx),
 		req.InteractionURI,
 	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err != nil {
 		return gtserror.Newf("db error getting rejected fave: %w", err)
-	}
-
-	if fave == nil {
-		// Already wiped / race condition?
-		// Nothing left to do, anyway.
-		return nil
 	}
 
 	// Delete the status fave.
@@ -1277,14 +1271,8 @@ func (p *clientAPI) RejectReply(ctx context.Context, cMsg *messages.FromClientAP
 		gtscontext.SetBarebones(ctx),
 		req.InteractionURI,
 	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err != nil {
 		return gtserror.Newf("db error getting rejected reply: %w", err)
-	}
-
-	if status == nil {
-		// Already wiped / race condition?
-		// Nothing left to do, anyway.
-		return nil
 	}
 
 	// Totally wipe the status.
@@ -1314,14 +1302,8 @@ func (p *clientAPI) RejectAnnounce(ctx context.Context, cMsg *messages.FromClien
 		gtscontext.SetBarebones(ctx),
 		req.InteractionURI,
 	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err != nil {
 		return gtserror.Newf("db error getting rejected announce: %w", err)
-	}
-
-	if boost == nil {
-		// Already wiped / race condition?
-		// Nothing left to do, anyway.
-		return nil
 	}
 
 	// Totally wipe the status.
