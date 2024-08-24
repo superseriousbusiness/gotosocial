@@ -233,11 +233,6 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		return nil
 	}
 
-	// We're going to possibly modify
-	// the status further, lock on its URI.
-	unlock := p.state.ProcessingLocks.Lock(status.URI)
-	defer unlock()
-
 	// If pending approval is true then
 	// status must reply to a LOCAL status
 	// that requires approval for the reply.
@@ -428,11 +423,6 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", fMsg.GTSModel)
 	}
 
-	// We're going to possibly modify
-	// the fave further, lock on its URI.
-	unlock := p.state.ProcessingLocks.Lock(fave.URI)
-	defer unlock()
-
 	// Ensure fave populated.
 	if err := p.state.DB.PopulateStatusFave(ctx, fave); err != nil {
 		return gtserror.Newf("error populating status fave: %w", err)
@@ -541,11 +531,6 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// Actual error.
 		return gtserror.Newf("error dereferencing announce: %w", err)
 	}
-
-	// We're going to possibly modify
-	// the boost further, lock on its URI.
-	unlock := p.state.ProcessingLocks.Lock(boost.URI)
-	defer unlock()
 
 	// If pending approval is true then
 	// boost must target a LOCAL status
