@@ -349,14 +349,14 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
+	if err := p.federate.CreateStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error federating status: %v", err)
+	}
+
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
 		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
-	}
-
-	if err := p.federate.CreateStatus(ctx, status); err != nil {
-		log.Errorf(ctx, "error federating status: %v", err)
 	}
 
 	return nil
@@ -384,9 +384,6 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg *messages.FromClien
 	status := vote.Poll.Status
 	status.Poll = vote.Poll
 
-	// Interaction counts changed on the source status, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
-
 	if *status.Local {
 		// These are poll votes in a local status, we only need to
 		// federate the updated status model with latest vote counts.
@@ -399,6 +396,9 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg *messages.FromClien
 			log.Errorf(ctx, "error federating poll vote: %v", err)
 		}
 	}
+
+	// Interaction counts changed on the source status, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
 
 	return nil
 }
@@ -544,13 +544,13 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
-
 	if err := p.federate.Like(ctx, fave); err != nil {
 		log.Errorf(ctx, "error federating like: %v", err)
 	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
 
 	return nil
 }
@@ -650,13 +650,13 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		log.Errorf(ctx, "error notifying boost: %v", err)
 	}
 
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
-
 	if err := p.federate.Announce(ctx, boost); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
 	return nil
 }
@@ -707,9 +707,6 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error federating status update: %v", err)
 	}
 
-	// Status representation has changed, invalidate from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
-
 	if status.Poll != nil && status.Poll.Closing {
 
 		// If the latest status has a newly closed poll, at least compared
@@ -723,6 +720,9 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
 		log.Errorf(ctx, "error streaming status edit: %v", err)
 	}
+
+	// Status representation has changed, invalidate from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }
@@ -869,13 +869,13 @@ func (p *clientAPI) UndoFave(ctx context.Context, cMsg *messages.FromClientAPI) 
 		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", cMsg.GTSModel)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
-
 	if err := p.federate.UndoLike(ctx, statusFave); err != nil {
 		log.Errorf(ctx, "error federating like undo: %v", err)
 	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
 
 	return nil
 }
@@ -899,13 +899,13 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error removing timelined status: %v", err)
 	}
 
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
-
 	if err := p.federate.UndoAnnounce(ctx, status); err != nil {
 		log.Errorf(ctx, "error federating announce undo: %v", err)
 	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
 
 	return nil
 }
@@ -952,14 +952,14 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
+	if err := p.federate.DeleteStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error federating status delete: %v", err)
+	}
+
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
 		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
-	}
-
-	if err := p.federate.DeleteStatus(ctx, status); err != nil {
-		log.Errorf(ctx, "error federating status delete: %v", err)
 	}
 
 	return nil
@@ -1133,10 +1133,6 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
-	// Interaction counts changed on the faved status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, req.Like.StatusID)
-
 	// Notify the fave (distinct from the notif for the pending fave).
 	if err := p.surface.notifyFave(ctx, req.Like); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
@@ -1144,8 +1140,12 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 
 	// Send out the Accept.
 	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
-		return gtserror.Newf("error federating approval of like: %w", err)
+		log.Errorf(ctx, "error federating approval of like: %v", err)
 	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, req.Like.StatusID)
 
 	return nil
 }
@@ -1166,10 +1166,6 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
-	// Interaction counts changed on the replied status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, reply.InReplyToID)
-
 	// Timeline the reply + notify relevant accounts.
 	if err := p.surface.timelineAndNotifyStatus(ctx, reply); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status reply: %v", err)
@@ -1177,8 +1173,12 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 
 	// Send out the Accept.
 	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
-		return gtserror.Newf("error federating approval of reply: %w", err)
+		log.Errorf(ctx, "error federating approval of reply: %v", err)
 	}
+
+	// Interaction counts changed on the replied status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, reply.InReplyToID)
 
 	return nil
 }
@@ -1209,14 +1209,14 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 		log.Errorf(ctx, "error notifying announce: %v", err)
 	}
 
+	// Send out the Accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
+		log.Errorf(ctx, "error federating approval of announce: %v", err)
+	}
+
 	// Interaction counts changed on the original status;
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
-
-	// Send out the Accept.
-	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
-		return gtserror.Newf("error federating approval of announce: %w", err)
-	}
 
 	return nil
 }

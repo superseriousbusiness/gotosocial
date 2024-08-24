@@ -301,15 +301,15 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status; uncache the
 		// prepared version from all timelines. The status dereferencer
 		// functions will ensure necessary ancestors exist before this point.
 		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
-	}
-
-	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
-		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
 	return nil
@@ -342,9 +342,6 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 	status := vote.Poll.Status
 	status.Poll = vote.Poll
 
-	// Interaction counts changed on the source status, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
-
 	if *status.Local {
 		// Before federating it, increment the
 		// poll vote counts on our local copy.
@@ -356,6 +353,9 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 			log.Errorf(ctx, "error federating status update: %v", err)
 		}
 	}
+
+	// Interaction counts changed on the source status, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
 
 	return nil
 }
@@ -785,14 +785,14 @@ func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	// Interaction counts changed on the replied-to status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
-
 	// Send out the reply again, fully this time.
 	if err := p.federate.CreateStatus(ctx, status); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
+
+	// Interaction counts changed on the replied-to status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
 
 	return nil
 }
@@ -813,14 +813,14 @@ func (p *fediAPI) AcceptAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	// Interaction counts changed on the boosted status;
-	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
-
 	// Send out the boost again, fully this time.
 	if err := p.federate.Announce(ctx, boost); err != nil {
 		log.Errorf(ctx, "error federating announce: %v", err)
 	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
 	return nil
 }
@@ -848,9 +848,6 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		log.Errorf(ctx, "error refreshing status: %v", err)
 	}
 
-	// Status representation was refetched, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
-
 	if status.Poll != nil && status.Poll.Closing {
 
 		// If the latest status has a newly closed poll, at least compared
@@ -864,6 +861,9 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
 		log.Errorf(ctx, "error streaming status edit: %v", err)
 	}
+
+	// Status representation was refetched, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }
