@@ -274,6 +274,9 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
+		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
+			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
+		}
 
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
@@ -469,6 +472,9 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
+		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
+			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
+		}
 
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
@@ -572,6 +578,9 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 			Announce:             boost,
 			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
 			AcceptedAt:           time.Now(),
+		}
+		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
+			return gtserror.Newf("db error putting pre-approved interaction request: %w", err)
 		}
 
 		// Mark the boost itself as now approved.
