@@ -181,7 +181,7 @@ var Defaults = Configuration{
 		FollowRequestIDsMemRatio:          2,
 		InReplyToIDsMemRatio:              3,
 		InstanceMemRatio:                  1,
-		InteractionApprovalMemRatio:       1,
+		InteractionRequestMemRatio:        1,
 		ListMemRatio:                      1,
 		ListEntryMemRatio:                 2,
 		MarkerMemRatio:                    0.5,

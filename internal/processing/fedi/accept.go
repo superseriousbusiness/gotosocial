@@ -27,14 +27,14 @@ import (
 )
 
 // AcceptGet handles the getting of a fedi/activitypub
-// representation of a local interaction approval.
+// representation of a local interaction acceptance.
 //
 // It performs appropriate authentication before
 // returning a JSON serializable interface.
 func (p *Processor) AcceptGet(
 	ctx context.Context,
 	requestedUser string,
-	approvalID string,
+	reqID string,
 ) (interface{}, gtserror.WithCode) {
 	// Authenticate incoming request, getting related accounts.
 	auth, errWithCode := p.authenticate(ctx, requestedUser)
@@ -52,25 +52,26 @@ func (p *Processor) AcceptGet(
 
 	receivingAcct := auth.receivingAcct
 
-	approval, err := p.state.DB.GetInteractionApprovalByID(ctx, approvalID)
+	req, err := p.state.DB.GetInteractionRequestByID(ctx, reqID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err := gtserror.Newf("db error getting approval %s: %w", approvalID, err)
+		err := gtserror.Newf("db error getting interaction request %s: %w", reqID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if approval.AccountID != receivingAcct.ID {
-		const text = "approval does not belong to receiving account"
-		return nil, gtserror.NewErrorNotFound(errors.New(text))
-	}
-
-	if approval == nil {
-		err := gtserror.Newf("approval %s not found", approvalID)
+	if req == nil || !req.IsAccepted() {
+		// Request doesn't exist or hasn't been accepted.
+		err := gtserror.Newf("interaction request %s not found", reqID)
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	accept, err := p.converter.InteractionApprovalToASAccept(ctx, approval)
+	if req.TargetAccountID != receivingAcct.ID {
+		const text = "interaction request does not belong to receiving account"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
+
+	accept, err := p.converter.InteractionReqToASAccept(ctx, req)
 	if err != nil {
-		err := gtserror.Newf("error converting approval: %w", err)
+		err := gtserror.Newf("error converting accept: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

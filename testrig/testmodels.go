@@ -1509,6 +1509,31 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			ActivityStreamsType:      ap.ObjectNote,
 			PendingApproval:          util.Ptr(false),
 		},
+		"admin_account_status_5": {
+			ID:                       "01J5QVB9VC76NPPRQ207GG4DRZ",
+			URI:                      "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+			URL:                      "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+			Content:                  `<p>Hi <span class="h-card"><a href="http://localhost:8080/@1happyturtle" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>1happyturtle</span></a></span>, can I reply?</p>`,
+			Text:                     "Hi @1happyturtle, can I reply?",
+			CreatedAt:                TimeMustParse("2024-02-20T12:41:37+02:00"),
+			UpdatedAt:                TimeMustParse("2024-02-20T12:41:37+02:00"),
+			Local:                    util.Ptr(true),
+			AccountURI:               "http://localhost:8080/users/admin",
+			MentionIDs:               []string{"01J5QVP69ANF1K4WHES6GA4WXP"},
+			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
+			InReplyToID:              "01F8MHC8VWDRBQR0N1BATDDEM5",
+			InReplyToAccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
+			InReplyToURI:             "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
+			BoostOfID:                "",
+			BoostOfAccountID:         "",
+			ThreadID:                 "01HCWE4P0EW9HBA5WHW97D5YV0",
+			Visibility:               gtsmodel.VisibilityUnlocked,
+			Sensitive:                util.Ptr(false),
+			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
+			Federated:                util.Ptr(true),
+			ActivityStreamsType:      ap.ObjectNote,
+			PendingApproval:          util.Ptr(true),
+		},
 		"local_account_1_status_1": {
 			ID:                       "01F8MHAMCHF6Y650WCRSCP4WMY",
 			URI:                      "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
@@ -2298,6 +2323,10 @@ func NewTestThreadToStatus() []*gtsmodel.ThreadToStatus {
 			ThreadID: "01HCWE7ZNC2SS4P05WA5QYED23",
 			StatusID: "01G20ZM733MGN8J344T4ZDDFY1",
 		},
+		{
+			ThreadID: "01HCWE4P0EW9HBA5WHW97D5YV0",
+			StatusID: "01J5QVB9VC76NPPRQ207GG4DRZ",
+		},
 	}
 }
 
@@ -2351,6 +2380,18 @@ func NewTestMentions() map[string]*gtsmodel.Mention {
 			NameString:       "@the_mighty_zork",
 			TargetAccountURI: "http://localhost:8080/users/the_mighty_zork",
 			TargetAccountURL: "http://localhost:8080/@the_mighty_zork",
+		},
+		"admin_account_mention_turtle": {
+			ID:               "01J5QVP69ANF1K4WHES6GA4WXP",
+			StatusID:         "01J5QVB9VC76NPPRQ207GG4DRZ",
+			CreatedAt:        TimeMustParse("2024-02-20T12:41:37+02:00"),
+			UpdatedAt:        TimeMustParse("2024-02-20T12:41:37+02:00"),
+			OriginAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
+			OriginAccountURI: "http://localhost:8080/users/admin",
+			TargetAccountID:  "01F8MH5NBDF2MV7CTC4Q5128HF",
+			NameString:       "@1happyturtle",
+			TargetAccountURI: "http://localhost:8080/users/1happyturtle",
+			TargetAccountURL: "http://localhost:8080/@1happyturtle",
 		},
 		"remote_account_2_mention_admin": {
 			ID:               "01HE7XQNMKTVC8MNPCE1JGK4J3",
@@ -3428,6 +3469,20 @@ func NewTestFilterStatuses() map[string]*gtsmodel.FilterStatus {
 func NewTestUserMutes() map[string]*gtsmodel.UserMute {
 	// Not currently used.
 	return map[string]*gtsmodel.UserMute{}
+}
+
+func NewTestInteractionRequests() map[string]*gtsmodel.InteractionRequest {
+	return map[string]*gtsmodel.InteractionRequest{
+		"admin_account_reply_turtle": {
+			ID:                   "01J5QVXCCEATJYSXM9H6MZT4JR",
+			CreatedAt:            TimeMustParse("2024-02-20T12:41:37+02:00"),
+			StatusID:             "01F8MHC8VWDRBQR0N1BATDDEM5",
+			TargetAccountID:      "01F8MH5NBDF2MV7CTC4Q5128HF",
+			InteractingAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+			InteractionURI:       "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+			InteractionType:      gtsmodel.InteractionReply,
+		},
+	}
 }
 
 // GetSignatureForActivity prepares a mock HTTP request as if it were going to deliver activity to destination signed for privkey and pubKeyID, signs the request and returns the header values.

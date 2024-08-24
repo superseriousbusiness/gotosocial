@@ -21,17 +21,16 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
+)
+
+const (
+	rMediaPath    = "../../../testrig/media"
+	rTemplatePath = "../../../web/template"
 )
 
 type WorkersTestSuite struct {
@@ -54,23 +53,6 @@ type WorkersTestSuite struct {
 	testActivities   map[string]testrig.ActivityWithSignature
 	testLists        map[string]*gtsmodel.List
 	testListEntries  map[string]*gtsmodel.ListEntry
-}
-
-// TestStructs encapsulates structs needed to
-// run one test in this package. Each test should
-// call SetupTestStructs to get a new TestStructs,
-// and defer TearDownTestStructs to close it when
-// the test is complete. The reason for doing things
-// this way here is to prevent the tests in this
-// package from overwriting one another's processors
-// and worker queues, which was causing issues
-// when running all tests at once.
-type TestStructs struct {
-	State         *state.State
-	Processor     *processing.Processor
-	HTTPClient    *testrig.MockHTTPClient
-	TypeConverter *typeutils.Converter
-	EmailSender   email.Sender
 }
 
 func (suite *WorkersTestSuite) SetupSuite() {
@@ -131,64 +113,4 @@ func (suite *WorkersTestSuite) openStreams(ctx context.Context, processor *proce
 	}
 
 	return streams
-}
-
-func (suite *WorkersTestSuite) SetupTestStructs() *TestStructs {
-	state := state.State{}
-
-	state.Caches.Init()
-
-	db := testrig.NewTestDB(&state)
-	state.DB = db
-
-	storage := testrig.NewInMemoryStorage()
-	state.Storage = storage
-	typeconverter := typeutils.NewConverter(&state)
-
-	testrig.StartTimelines(
-		&state,
-		visibility.NewFilter(&state),
-		typeconverter,
-	)
-
-	httpClient := testrig.NewMockHTTPClient(nil, "../../../testrig/media")
-	httpClient.TestRemotePeople = testrig.NewTestFediPeople()
-	httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
-
-	transportController := testrig.NewTestTransportController(&state, httpClient)
-	mediaManager := testrig.NewTestMediaManager(&state)
-	federator := testrig.NewTestFederator(&state, transportController, mediaManager)
-	oauthServer := testrig.NewTestOauthServer(db)
-	emailSender := testrig.NewEmailSender("../../../web/template/", nil)
-
-	processor := processing.NewProcessor(
-		cleaner.New(&state),
-		typeconverter,
-		federator,
-		oauthServer,
-		mediaManager,
-		&state,
-		emailSender,
-		visibility.NewFilter(&state),
-		interaction.NewFilter(&state),
-	)
-
-	testrig.StartWorkers(&state, processor.Workers())
-
-	testrig.StandardDBSetup(db, suite.testAccounts)
-	testrig.StandardStorageSetup(storage, "../../../testrig/media")
-
-	return &TestStructs{
-		State:         &state,
-		Processor:     processor,
-		HTTPClient:    httpClient,
-		TypeConverter: typeconverter,
-		EmailSender:   emailSender,
-	}
-}
-
-func (suite *WorkersTestSuite) TearDownTestStructs(testStructs *TestStructs) {
-	testrig.StandardDBTeardown(testStructs.State.DB)
-	testrig.StandardStorageTeardown(testStructs.State.Storage)
-	testrig.StopWorkers(testStructs.State)
 }

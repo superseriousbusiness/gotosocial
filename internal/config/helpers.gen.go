@@ -3412,32 +3412,30 @@ func GetCacheInstanceMemRatio() float64 { return global.GetCacheInstanceMemRatio
 // SetCacheInstanceMemRatio safely sets the value for global configuration 'Cache.InstanceMemRatio' field
 func SetCacheInstanceMemRatio(v float64) { global.SetCacheInstanceMemRatio(v) }
 
-// GetCacheInteractionApprovalMemRatio safely fetches the Configuration value for state's 'Cache.InteractionApprovalMemRatio' field
-func (st *ConfigState) GetCacheInteractionApprovalMemRatio() (v float64) {
+// GetCacheInteractionRequestMemRatio safely fetches the Configuration value for state's 'Cache.InteractionRequestMemRatio' field
+func (st *ConfigState) GetCacheInteractionRequestMemRatio() (v float64) {
 	st.mutex.RLock()
-	v = st.config.Cache.InteractionApprovalMemRatio
+	v = st.config.Cache.InteractionRequestMemRatio
 	st.mutex.RUnlock()
 	return
 }
 
-// SetCacheInteractionApprovalMemRatio safely sets the Configuration value for state's 'Cache.InteractionApprovalMemRatio' field
-func (st *ConfigState) SetCacheInteractionApprovalMemRatio(v float64) {
+// SetCacheInteractionRequestMemRatio safely sets the Configuration value for state's 'Cache.InteractionRequestMemRatio' field
+func (st *ConfigState) SetCacheInteractionRequestMemRatio(v float64) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.Cache.InteractionApprovalMemRatio = v
+	st.config.Cache.InteractionRequestMemRatio = v
 	st.reloadToViper()
 }
 
-// CacheInteractionApprovalMemRatioFlag returns the flag name for the 'Cache.InteractionApprovalMemRatio' field
-func CacheInteractionApprovalMemRatioFlag() string { return "cache-interaction-approval-mem-ratio" }
+// CacheInteractionRequestMemRatioFlag returns the flag name for the 'Cache.InteractionRequestMemRatio' field
+func CacheInteractionRequestMemRatioFlag() string { return "cache-interaction-request-mem-ratio" }
 
-// GetCacheInteractionApprovalMemRatio safely fetches the value for global configuration 'Cache.InteractionApprovalMemRatio' field
-func GetCacheInteractionApprovalMemRatio() float64 {
-	return global.GetCacheInteractionApprovalMemRatio()
-}
+// GetCacheInteractionRequestMemRatio safely fetches the value for global configuration 'Cache.InteractionRequestMemRatio' field
+func GetCacheInteractionRequestMemRatio() float64 { return global.GetCacheInteractionRequestMemRatio() }
 
-// SetCacheInteractionApprovalMemRatio safely sets the value for global configuration 'Cache.InteractionApprovalMemRatio' field
-func SetCacheInteractionApprovalMemRatio(v float64) { global.SetCacheInteractionApprovalMemRatio(v) }
+// SetCacheInteractionRequestMemRatio safely sets the value for global configuration 'Cache.InteractionRequestMemRatio' field
+func SetCacheInteractionRequestMemRatio(v float64) { global.SetCacheInteractionRequestMemRatio(v) }
 
 // GetCacheListMemRatio safely fetches the Configuration value for state's 'Cache.ListMemRatio' field
 func (st *ConfigState) GetCacheListMemRatio() (v float64) {

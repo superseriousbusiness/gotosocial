@@ -26,6 +26,8 @@ import UserMigration from "./migration";
 import PostSettings from "./posts";
 import EmailPassword from "./emailpassword";
 import ExportImport from "./export-import";
+import InteractionRequests from "./interactions";
+import InteractionRequestDetail from "./interactions/detail";
 
 /**
  * - /settings/user/profile
@@ -33,6 +35,7 @@ import ExportImport from "./export-import";
  * - /settings/user/emailpassword
  * - /settings/user/migration
  * - /settings/user/export-import
+ * - /settings/users/interaction_requests
  */
 export default function UserRouter() {
 	const baseUrl = useBaseUrl();
@@ -50,6 +53,31 @@ export default function UserRouter() {
 						<Route path="/migration" component={UserMigration} />
 						<Route path="/export-import" component={ExportImport} />
 						<Route><Redirect to="/profile" /></Route>
+					</Switch>
+				</ErrorBoundary>
+				<InteractionRequestsRouter />
+			</Router>
+		</BaseUrlContext.Provider>
+	);
+}
+
+/**
+ * - /settings/users/interaction_requests/search
+ * - /settings/users/interaction_requests/{reqId}
+ */
+function InteractionRequestsRouter() {
+	const parentUrl = useBaseUrl();
+	const thisBase = "/interaction_requests";
+	const absBase = parentUrl + thisBase;
+
+	return (
+		<BaseUrlContext.Provider value={absBase}>
+			<Router base={thisBase}>
+				<ErrorBoundary>
+					<Switch>
+						<Route path="/search" component={InteractionRequests} />
+						<Route path="/:reqId" component={InteractionRequestDetail} />
+						<Route><Redirect to="/search"/></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>

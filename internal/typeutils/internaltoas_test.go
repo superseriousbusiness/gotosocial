@@ -1057,26 +1057,26 @@ func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
 }`, string(bytes))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionApprovalToASAccept() {
+func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
-	interactionApproval := &gtsmodel.InteractionApproval{
+	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		UpdatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		AccountID:            acceptingAccount.ID,
-		Account:              acceptingAccount,
+		TargetAccountID:      acceptingAccount.ID,
+		TargetAccount:        acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,
 		InteractingAccount:   interactingAccount,
 		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:      gtsmodel.InteractionAnnounce,
 		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
-	accept, err := suite.typeconverter.InteractionApprovalToASAccept(
+	accept, err := suite.typeconverter.InteractionReqToASAccept(
 		context.Background(),
-		interactionApproval,
+		req,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())

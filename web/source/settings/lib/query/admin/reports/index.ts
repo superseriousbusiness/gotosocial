@@ -77,8 +77,8 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			invalidatesTags: (res) =>
 				res
-					? [{ type: "Report", id: "LIST" }, { type: "Report", id: res.id }]
-					: [{ type: "Report", id: "LIST" }]
+					? [{ type: "Report", id: "TRANSFORMED" }, { type: "Report", id: res.id }]
+					: [{ type: "Report", id: "TRANSFORMED" }]
 		})
 	})
 });

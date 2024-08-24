@@ -2592,3 +2592,74 @@ func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValu
 
 	return apiVals
 }
+
+// InteractionReqToAPIInteractionReq converts the given *gtsmodel.InteractionRequest
+// to an *apimodel.InteractionRequest, from the perspective of requestingAcct.
+func (c *Converter) InteractionReqToAPIInteractionReq(
+	ctx context.Context,
+	req *gtsmodel.InteractionRequest,
+	requestingAcct *gtsmodel.Account,
+) (*apimodel.InteractionRequest, error) {
+	// Ensure interaction request is populated.
+	if err := c.state.DB.PopulateInteractionRequest(ctx, req); err != nil {
+		err := gtserror.Newf("error populating: %w", err)
+		return nil, err
+	}
+
+	interactingAcct, err := c.AccountToAPIAccountPublic(ctx, req.InteractingAccount)
+	if err != nil {
+		err := gtserror.Newf("error converting interacting acct: %w", err)
+		return nil, err
+	}
+
+	interactedStatus, err := c.StatusToAPIStatus(
+		ctx,
+		req.Status,
+		requestingAcct,
+		statusfilter.FilterContextNone,
+		nil,
+		nil,
+	)
+	if err != nil {
+		err := gtserror.Newf("error converting interacted status: %w", err)
+		return nil, err
+	}
+
+	var reply *apimodel.Status
+	if req.InteractionType == gtsmodel.InteractionReply {
+		reply, err = c.StatusToAPIStatus(
+			ctx,
+			req.Reply,
+			requestingAcct,
+			statusfilter.FilterContextNone,
+			nil,
+			nil,
+		)
+		if err != nil {
+			err := gtserror.Newf("error converting reply: %w", err)
+			return nil, err
+		}
+	}
+
+	var acceptedAt string
+	if req.IsAccepted() {
+		acceptedAt = util.FormatISO8601(req.AcceptedAt)
+	}
+
+	var rejectedAt string
+	if req.IsRejected() {
+		rejectedAt = util.FormatISO8601(req.RejectedAt)
+	}
+
+	return &apimodel.InteractionRequest{
+		ID:         req.ID,
+		Type:       req.InteractionType.String(),
+		CreatedAt:  util.FormatISO8601(req.CreatedAt),
+		Account:    interactingAcct,
+		Status:     interactedStatus,
+		Reply:      reply,
+		AcceptedAt: acceptedAt,
+		RejectedAt: rejectedAt,
+		URI:        req.URI,
+	}, nil
+}

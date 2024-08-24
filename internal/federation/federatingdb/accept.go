@@ -38,11 +38,11 @@ func (f *federatingDB) GetAccept(
 	ctx context.Context,
 	acceptIRI *url.URL,
 ) (vocab.ActivityStreamsAccept, error) {
-	approval, err := f.state.DB.GetInteractionApprovalByURI(ctx, acceptIRI.String())
+	approval, err := f.state.DB.GetInteractionRequestByURI(ctx, acceptIRI.String())
 	if err != nil {
 		return nil, err
 	}
-	return f.converter.InteractionApprovalToASAccept(ctx, approval)
+	return f.converter.InteractionReqToASAccept(ctx, approval)
 }
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {

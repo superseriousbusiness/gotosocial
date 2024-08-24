@@ -220,7 +220,7 @@ function StatusMediaEntry({ media }: { media: MediaAttachment }) {
 
 function StatusFooter({ status }: { status: StatusType }) {
 	return (
-		<aside className="status-info" aria-hidden="true">    
+		<aside className="status-info">
 			<dl className="status-stats">
 				<div className="stats-grouping">
 					<div className="stats-item published-at text-cutoff">

@@ -20,41 +20,12 @@ package migrations
 import (
 	"context"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			if _, err := tx.
-				NewCreateTable().
-				Model(&gtsmodel.InteractionApproval{}).
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			if _, err := tx.
-				NewCreateIndex().
-				Table("interaction_approvals").
-				Index("interaction_approvals_account_id_idx").
-				Column("account_id").
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			if _, err := tx.
-				NewCreateIndex().
-				Table("interaction_approvals").
-				Index("interaction_approvals_interacting_account_id_idx").
-				Column("interacting_account_id").
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
 			return nil
 		})
 	}

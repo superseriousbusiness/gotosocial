@@ -231,8 +231,8 @@ func (suite *FromClientAPITestSuite) conversationJSON(
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -344,8 +344,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -412,8 +412,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -473,8 +473,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -534,8 +534,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyOK() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	// We're modifying the test list so take a copy.
 	testList := new(gtsmodel.List)
@@ -610,8 +610,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyNo() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	// We're modifying the test list so take a copy.
 	testList := new(gtsmodel.List)
@@ -691,8 +691,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPolicyNone() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	// We're modifying the test list so take a copy.
 	testList := new(gtsmodel.List)
@@ -767,8 +767,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -831,8 +831,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -898,8 +898,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
 
 // A DM to a local user should create a conversation and accompanying notification.
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversation() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -984,8 +984,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversat
 
 // A public message to a local user should not result in a conversation notification.
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichShouldNotCreateConversation() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1054,8 +1054,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichShouldNotCreate
 // A public status with a hashtag followed by a local user who does not otherwise follow the author
 // should end up in the tag-following user's home timeline.
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1128,8 +1128,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 // should not end up in the tag-following user's home timeline
 // if the user has the author blocked.
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtagAndBlock() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1209,8 +1209,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtagA
 // who does not otherwise follow the author or booster
 // should end up in the tag-following user's home timeline as the original status.
 func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1312,8 +1312,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag()
 // should not end up in the tag-following user's home timeline
 // if the user has the author blocked.
 func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAndBlock() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1422,8 +1422,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAn
 // should not end up in the tag-following user's home timeline
 // if the user has the booster blocked.
 func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAndBlockedBoost() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1530,8 +1530,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAn
 // Updating a public status with a hashtag followed by a local user who does not otherwise follow the author
 // should stream a status update to the tag-following user's home timeline.
 func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx              = context.Background()
@@ -1601,8 +1601,8 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag(
 }
 
 func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
-	testStructs := suite.SetupTestStructs()
-	defer suite.TearDownTestStructs(testStructs)
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
 		ctx                  = context.Background()

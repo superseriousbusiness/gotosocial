@@ -114,7 +114,7 @@ const extended = gtsApi.injectEndpoints({
 					method: "POST",
 					url: `/api/v1/admin/accounts/${id}/${approve_or_reject}`,
 					asForm: true,
-					body: approve_or_reject === "reject" ?? formData,
+					body: approve_or_reject === "reject" && formData,
 				};
 			},
 			// Do an optimistic update on this account to mark it approved

@@ -20,6 +20,7 @@ package typeutils
 import (
 	"context"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -96,4 +97,81 @@ func (c *Converter) StatusToBoost(
 	}
 
 	return boost, nil
+}
+
+func StatusToInteractionRequest(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) (*gtsmodel.InteractionRequest, error) {
+	reqID, err := id.NewULIDFromTime(status.CreatedAt)
+	if err != nil {
+		return nil, gtserror.Newf("error generating ID: %w", err)
+	}
+
+	var (
+		targetID        string
+		target          *gtsmodel.Status
+		targetAccountID string
+		targetAccount   *gtsmodel.Account
+		interactionType gtsmodel.InteractionType
+		reply           *gtsmodel.Status
+		announce        *gtsmodel.Status
+	)
+
+	if status.InReplyToID != "" {
+		// It's a reply.
+		targetID = status.InReplyToID
+		target = status.InReplyTo
+		targetAccountID = status.InReplyToAccountID
+		targetAccount = status.InReplyToAccount
+		interactionType = gtsmodel.InteractionReply
+		reply = status
+	} else {
+		// It's a boost.
+		targetID = status.BoostOfID
+		target = status.BoostOf
+		targetAccountID = status.BoostOfAccountID
+		targetAccount = status.BoostOfAccount
+		interactionType = gtsmodel.InteractionAnnounce
+		announce = status
+	}
+
+	return &gtsmodel.InteractionRequest{
+		ID:                   reqID,
+		CreatedAt:            status.CreatedAt,
+		StatusID:             targetID,
+		Status:               target,
+		TargetAccountID:      targetAccountID,
+		TargetAccount:        targetAccount,
+		InteractingAccountID: status.AccountID,
+		InteractingAccount:   status.Account,
+		InteractionURI:       status.URI,
+		InteractionType:      interactionType,
+		Reply:                reply,
+		Announce:             announce,
+	}, nil
+}
+
+func StatusFaveToInteractionRequest(
+	ctx context.Context,
+	fave *gtsmodel.StatusFave,
+) (*gtsmodel.InteractionRequest, error) {
+	reqID, err := id.NewULIDFromTime(fave.CreatedAt)
+	if err != nil {
+		return nil, gtserror.Newf("error generating ID: %w", err)
+	}
+
+	return &gtsmodel.InteractionRequest{
+		ID:                   reqID,
+		CreatedAt:            fave.CreatedAt,
+		StatusID:             fave.StatusID,
+		Status:               fave.Status,
+		TargetAccountID:      fave.TargetAccountID,
+		TargetAccount:        fave.TargetAccount,
+		InteractingAccountID: fave.AccountID,
+		InteractingAccount:   fave.Account,
+		InteractionURI:       fave.URI,
+		InteractionType:      gtsmodel.InteractionLike,
+		Like:                 fave,
+	}, nil
 }

@@ -190,7 +190,7 @@ func totalOfRatios() float64 {
 		config.GetCacheFollowRequestMemRatio() +
 		config.GetCacheFollowRequestIDsMemRatio() +
 		config.GetCacheInstanceMemRatio() +
-		config.GetCacheInteractionApprovalMemRatio() +
+		config.GetCacheInteractionRequestMemRatio() +
 		config.GetCacheInReplyToIDsMemRatio() +
 		config.GetCacheListMemRatio() +
 		config.GetCacheListEntryMemRatio() +
@@ -441,16 +441,17 @@ func sizeofInstance() uintptr {
 	}))
 }
 
-func sizeofInteractionApproval() uintptr {
-	return uintptr(size.Of(&gtsmodel.InteractionApproval{
+func sizeofInteractionRequest() uintptr {
+	return uintptr(size.Of(&gtsmodel.InteractionRequest{
 		ID:                   exampleID,
 		CreatedAt:            exampleTime,
-		UpdatedAt:            exampleTime,
-		AccountID:            exampleID,
+		StatusID:             exampleID,
+		TargetAccountID:      exampleID,
 		InteractingAccountID: exampleID,
 		InteractionURI:       exampleURI,
 		InteractionType:      gtsmodel.InteractionAnnounce,
 		URI:                  exampleURI,
+		AcceptedAt:           exampleTime,
 	}))
 }
 
