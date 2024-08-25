@@ -154,7 +154,7 @@ func testDefaults() config.Configuration {
 		TracingTransport:         "grpc",
 		TracingInsecureTransport: true,
 
-		MetricsEnabled:     false,
+		MetricsEnabled:     true,
 		MetricsAuthEnabled: false,
 
 		SyslogEnabled:  false,

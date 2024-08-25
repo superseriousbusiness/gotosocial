@@ -439,13 +439,18 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // fileserver / web templates / emojis
 	pkThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // throttle public key endpoint separately
 
-	gzip := middleware.Gzip() // applied to all except fileserver
+	// Gzip middleware is applied to all endpoints except
+	// fileserver (compression too expensive for those),
+	// health (which really doesn't need compression), and
+	// metrics (which does its own compression handling that
+	// is rather annoying to neatly override).
+	gzip := middleware.Gzip()
 
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
 	authModule.Route(route, clLimit, clThrottle, gzip)
 	clientModule.Route(route, clLimit, clThrottle, gzip)
-	metricsModule.Route(route, clLimit, clThrottle, gzip)
+	metricsModule.Route(route, clLimit, clThrottle)
 	healthModule.Route(route, clLimit, clThrottle)
 	fileserverModule.Route(route, fsMainLimit, fsThrottle)
 	fileserverModule.RouteEmojis(route, instanceAccount.ID, fsEmojiLimit, fsThrottle)
