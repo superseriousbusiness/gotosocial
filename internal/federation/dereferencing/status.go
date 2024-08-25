@@ -520,7 +520,6 @@ func (d *Dereferencer) enrichStatus(
 	// based on the author's inclusion in a followers/following
 	// collection. By carrying over previously-set values we
 	// can avoid marking such statuses as "pending" again.
-	latestStatus.PendingApproval = status.PendingApproval
 	latestStatus.ApprovedByURI = status.ApprovedByURI
 
 	// Check if this is a permitted status we should accept.
