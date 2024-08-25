@@ -180,17 +180,8 @@ func initRuntime(ctx context.Context) error {
 	// Instantiate runtime with prepared config.
 	rt := wazero.NewRuntimeWithConfig(ctx, cfg)
 
-	// Prepare default "env" host module.
-	env := rt.NewHostModuleBuilder("env")
-
-	// Instantiate host "env" module.
-	_, err := env.Instantiate(ctx)
-	if err != nil {
-		return err
-	}
-
-	// Instantiate wasi snapshot preview features in runtime.
-	_, err = wasi_snapshot_preview1.Instantiate(ctx, rt)
+	// Instantiate wasi snapshot preview features into runtime.
+	_, err := wasi_snapshot_preview1.Instantiate(ctx, rt)
 	if err != nil {
 		return err
 	}
