@@ -523,7 +523,9 @@ func (d *Dereferencer) enrichStatus(
 	//
 	// If a remote has in the meantime retracted its approval,
 	// the next call to 'isPermittedStatus' will catch that.
-	latestStatus.ApprovedByURI = status.ApprovedByURI
+	if latestStatus.ApprovedByURI == "" && status.ApprovedByURI != "" {
+		latestStatus.ApprovedByURI = status.ApprovedByURI
+	}
 
 	// Check if this is a permitted status we should accept.
 	// Function also sets "PendingApproval" bool as necessary.
