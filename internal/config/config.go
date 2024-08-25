@@ -153,6 +153,7 @@ type Configuration struct {
 	SMTPUsername           string `name:"smtp-username" usage:"Username to authenticate with the smtp server as. Eg., 'postmaster@mail.example.org'"`
 	SMTPPassword           string `name:"smtp-password" usage:"Password to pass to the smtp server."`
 	SMTPFrom               string `name:"smtp-from" usage:"Address to use as the 'from' field of the email. Eg., 'gotosocial@example.org'"`
+	SMTPEncryption         string `name:"smtp-encryption" usage:"'SMTPS' (typically port 465, SMTP inside TLS) or 'STARTTLS' (typically port 587, TLS inside SMTP).  Defaults to 'STARTTLS'."`
 	SMTPDiscloseRecipients bool   `name:"smtp-disclose-recipients" usage:"If true, email notifications sent to multiple recipients will be To'd to every recipient at once. If false, recipients will not be disclosed"`
 
 	SyslogEnabled  bool   `name:"syslog-enabled" usage:"Enable the syslog logging hook. Logs will be mirrored to the configured destination."`

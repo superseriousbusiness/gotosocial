@@ -19,8 +19,10 @@ package email
 
 import (
 	"bytes"
+	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/smtp"
 	"os"
 	"path/filepath"
@@ -44,7 +46,7 @@ func (s *sender) sendTemplate(template string, subject string, data any, toAddre
 		return err
 	}
 
-	if err := smtp.SendMail(s.hostAddress, s.auth, s.from, toAddresses, msg); err != nil {
+	if err := SendMail(s.hostname, s.port, s.encryptionMode, s.auth, s.from, toAddresses, msg); err != nil {
 		return gtserror.SetSMTP(err)
 	}
 
@@ -117,4 +119,103 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, msgID
 	msg.WriteString(CRLF)
 
 	return msg.Bytes(), nil
+}
+
+// Slightly modified version of SendMail() from `net/smtp` standard library, in order to support encryptionMode STARTTLS vs. SMTPS
+func SendMail(hostname string, port int, encryptionMode string, a smtp.Auth, from string, to []string, msg []byte) error {
+	var err error
+	if err = validateLine(from); err != nil {
+		return err
+	}
+	for _, recp := range to {
+		if err = validateLine(recp); err != nil {
+			return err
+		}
+	}
+	var c *smtp.Client
+	if encryptionMode == "STARTTLS" {
+		c, err = Dial(hostname, port)
+	} else if encryptionMode == "SMTPS" {
+		c, err = DialTLS(hostname, port)
+	} else {
+		return errors.New(fmt.Sprintf("Unsupported SMTPEncryption '%s'. Only 'SMTPS' and 'STARTTLS' are supported.", encryptionMode))
+	}
+
+	if err != nil {
+		return err
+	}
+	defer c.Close()
+	if err = c.Hello("localhost"); err != nil {
+		return err
+	}
+	if encryptionMode == "STARTTLS" {
+		if ok, _ := c.Extension("STARTTLS"); ok {
+			config := &tls.Config{ServerName: hostname}
+			if err = c.StartTLS(config); err != nil {
+				return err
+			}
+		} else {
+			return errors.New(fmt.Sprintf(
+				"SMTPEncryption 'STARTTLS' but server '%s:%d' doesn't support the STARTTLS SMTP extension",
+				hostname, port,
+			))
+		}
+	}
+
+	if a != nil {
+		if ok, _ := c.Extension("AUTH"); !ok {
+			return errors.New("smtp: server doesn't support AUTH")
+		}
+		if err = c.Auth(a); err != nil {
+			return err
+		}
+	}
+	if err = c.Mail(from); err != nil {
+		return err
+	}
+	for _, addr := range to {
+		if err = c.Rcpt(addr); err != nil {
+			return err
+		}
+	}
+	w, err := c.Data()
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(msg)
+	if err != nil {
+		return err
+	}
+	err = w.Close()
+	if err != nil {
+		return err
+	}
+	return c.Quit()
+}
+
+// from `net/smtp` standard library
+func Dial(hostname string, port int) (*smtp.Client, error) {
+	conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", hostname, port))
+	if err != nil {
+		return nil, err
+	}
+	return smtp.NewClient(conn, hostname)
+}
+
+// Added to support SMTPS in addition  to STARTTLS
+func DialTLS(hostname string, port int) (*smtp.Client, error) {
+	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:%d", hostname, port), &tls.Config{ServerName: hostname})
+	if err != nil {
+		return nil, err
+	}
+	return smtp.NewClient(conn, hostname)
+}
+
+// from `net/smtp` standard library
+// validateLine checks to see if a line has CR or LF as per RFC 5321.
+func validateLine(line string) error {
+	if strings.ContainsAny(line, "\n\r") {
+		return errors.New("smtp: A line must not contain CR or LF")
+	}
+	return nil
 }

@@ -52,16 +52,17 @@ func main() {
 	var out string
 
 	// Load runtime config flags
-	flag.StringVar(&out, "out", "", "Generated file output path")
+	flag.StringVar(&out, "out", "./internal/config/helpers.gen.go", "Generated file output path")
 	flag.Parse()
 
 	// Open output file path
 	output, err := os.OpenFile(out, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0o644)
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("%+v. Try running this from the repository root or recreating that file if it got deleted.", err))
 	}
 
 	fmt.Fprint(output, "// THIS IS A GENERATED FILE, DO NOT EDIT BY HAND\n")
+	fmt.Fprint(output, "// edit internal/config/gen/gen.go instead.\n")
 	fmt.Fprint(output, license)
 	fmt.Fprint(output, "package config\n\n")
 	fmt.Fprint(output, "import (\n")

@@ -115,6 +115,7 @@ var Defaults = Configuration{
 	SMTPUsername:           "",
 	SMTPPassword:           "",
 	SMTPFrom:               "",
+	SMTPEncryption:         "STARTTLS",
 	SMTPDiscloseRecipients: false,
 
 	TracingEnabled:           false,
