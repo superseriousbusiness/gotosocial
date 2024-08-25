@@ -514,6 +514,17 @@ func (d *Dereferencer) enrichStatus(
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 
+	// Carry-over approvals. Remote instances might not yet
+	// serve statuses with the `approved_by` field, but we
+	// might have marked a status as pre-approved on our side
+	// based on the author's inclusion in a followers/following
+	// collection. By carrying over previously-set values we
+	// can avoid marking such statuses as "pending" again.
+	//
+	// If a remote has in the meantime retracted its approval,
+	// the next call to 'isPermittedStatus' will catch that.
+	latestStatus.ApprovedByURI = status.ApprovedByURI
+
 	// Check if this is a permitted status we should accept.
 	// Function also sets "PendingApproval" bool as necessary.
 	permit, err := d.isPermittedStatus(ctx, requestUser, status, latestStatus)
