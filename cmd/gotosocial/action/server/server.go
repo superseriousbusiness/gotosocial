@@ -31,7 +31,6 @@ import (
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/gin-gonic/gin"
-	"github.com/ncruces/go-sqlite3"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -73,13 +72,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Set GOMAXPROCS / GOMEMLIMIT
 	// to match container limits.
 	setLimits(ctx)
-
-	// Compile WASM modules ahead of first use
-	// to prevent unexpected initial slowdowns.
-	log.Info(ctx, "precompiling WebAssembly")
-	if err := precompileWASM(ctx); err != nil {
-		return err
-	}
 
 	var (
 		// Define necessary core variables
@@ -202,6 +194,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		Timeout:               config.GetHTTPClientTimeout(),
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
+
+	// Compile WASM modules ahead of first use
+	// to prevent unexpected initial slowdowns.
+	//
+	// Note that this can take a bit of memory
+	// and processing so we perform this much
+	// later after any database migrations.
+	log.Info(ctx, "compiling WebAssembly")
+	if err := compileWASM(ctx); err != nil {
+		return err
+	}
 
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(state)
@@ -491,11 +494,7 @@ func setLimits(ctx context.Context) {
 	}
 }
 
-func precompileWASM(ctx context.Context) error {
-	if err := sqlite3.Initialize(); err != nil {
-		return gtserror.Newf("error compiling sqlite3: %w", err)
-	}
-
+func compileWASM(ctx context.Context) error {
 	// Use admin-set ffmpeg pool size, and fall
 	// back to GOMAXPROCS if number 0 or less.
 	ffPoolSize := config.GetMediaFfmpegPoolSize()
