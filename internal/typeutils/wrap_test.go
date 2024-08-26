@@ -72,14 +72,17 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	createI, err := ap.Serialize(create)
 	suite.NoError(err)
 
-	// Chop off @context since
-	// ordering is non-determinate.
-	delete(createI, "@context")
-
 	bytes, err := json.MarshalIndent(createI, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY/activity#Create",

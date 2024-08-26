@@ -44,14 +44,23 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
   "discoverable": true,
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
@@ -94,14 +103,26 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "PropertyValue": "schema:PropertyValue",
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "schema": "http://schema.org#",
+      "toot": "http://joinmastodon.org/ns#",
+      "value": "schema:value"
+    }
+  ],
   "attachment": [
     {
       "name": "should you follow me?",
@@ -159,14 +180,28 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "alsoKnownAs": "as:alsoKnownAs",
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "movedTo": {
+        "@id": "as:movedTo",
+        "@type": "@id"
+      },
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
   "alsoKnownAs": [
     "http://localhost:8080/users/1happyturtle"
   ],
@@ -214,15 +249,27 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	// Despite only one field being set, attachments should still be a slice/array.
 	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "PropertyValue": "schema:PropertyValue",
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "schema": "http://schema.org#",
+      "toot": "http://joinmastodon.org/ns#",
+      "value": "schema:value"
+    }
+  ],
   "attachment": [
     {
       "name": "should you follow me?",
@@ -263,14 +310,24 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Emoji": "toot:Emoji",
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
   "discoverable": true,
   "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
   "followers": "http://localhost:8080/users/the_mighty_zork/followers",
@@ -325,14 +382,23 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
 	ser, err := ap.Serialize(asPerson)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
   "discoverable": true,
   "endpoints": {
     "sharedInbox": "http://localhost:8080/sharedInbox"
@@ -378,14 +444,17 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
   "attachment": [],
   "attributedTo": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
@@ -445,14 +514,21 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Emoji": "toot:Emoji",
+      "Hashtag": "as:Hashtag",
+      "blurhash": "toot:blurhash",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
   "attachment": [
     {
       "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
@@ -538,14 +614,21 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Emoji": "toot:Emoji",
+      "Hashtag": "as:Hashtag",
+      "blurhash": "toot:blurhash",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
   "attachment": [
     {
       "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
@@ -632,14 +715,17 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
 	ser, err := ap.Serialize(asStatus)
 	suite.NoError(err)
 
-	// Drop "@context" property as
-	// the ordering is non-determinate.
-	delete(ser, "@context")
-
 	bytes, err := json.MarshalIndent(ser, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "sensitive": "as:sensitive"
+    }
+  ],
   "attachment": [],
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": [
