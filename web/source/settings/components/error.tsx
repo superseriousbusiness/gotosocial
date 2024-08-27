@@ -79,10 +79,15 @@ function Error({ error, reset }: ErrorProps) {
 	
 	let message: ReactNode;
 	if ("status" in error) {
-		// RTK Query error with data.
-		const gtsError = error.data as GtsError;
-		const errMsg = gtsError.error_description ?? gtsError.error;
-		message = <>Code {error.status} {errMsg}</>;
+		if (typeof error.status === "number") {
+			// Error containing GTS API error data.
+			const gtsError = error.data as GtsError;
+			const errMsg = gtsError.error_description ?? gtsError.error;
+			message = <>Code {error.status}: {errMsg}</>;
+		} else {
+			// RTK Query fetching / parsing / timeout error.
+			message = <>{error.status}: {error.error}</>;
+		}
 	} else {
 		// SerializedError or Error.
 		const errMsg = error.message ?? JSON.stringify(error);
