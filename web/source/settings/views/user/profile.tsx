@@ -17,14 +17,13 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { useMemo } from "react";
 
 import {
 	useTextInput,
 	useFileInput,
 	useBoolInput,
 	useFieldArrayInput,
-	useRadioInput
 } from "../../lib/form";
 
 import useFormSubmit from "../../lib/form/submit";
@@ -35,7 +34,7 @@ import {
 	TextArea,
 	FileInput,
 	Checkbox,
-	RadioGroup
+	Select
 } from "../../components/form/inputs";
 
 import FormWithData from "../../lib/form/form-with-data";
@@ -81,15 +80,28 @@ function UserProfileForm({ data: profile }) {
 	
 	// Parse out available theme options into nice format.
 	const { data: themes } = useAccountThemesQuery();
-	let themeOptions = { "": "Default" };
-	themes?.forEach((theme) => {
-		let key = theme.file_name;
-		let value = theme.title;
-		if (theme.description) {
-			value += " - " + theme.description;
-		}
-		themeOptions[key] = value;
-	});
+	const themeOptions = useMemo(() => {
+		let themeOptions = [
+			<option key="" value="">
+				Default
+			</option>
+		];
+
+		themes?.forEach((theme) => {
+			const value = theme.file_name;
+			let text = theme.title;
+			if (theme.description) {
+				text += " - " + theme.description;
+			}
+			themeOptions.push(
+				<option key={value} value={value}>
+					{text}
+				</option>
+			);
+		});
+
+		return themeOptions;
+	}, [themes]);
 
 	const form = {
 		avatar: useFileInput("avatar", { withPreview: true }),
@@ -108,10 +120,7 @@ function UserProfileForm({ data: profile }) {
 			length: instanceConfig.maxPinnedFields
 		}),
 		customCSS: useTextInput("custom_css", { source: profile, nosubmit: !instanceConfig.allowCustomCSS }),
-		theme: useRadioInput("theme", {
-			source: profile,
-			options: themeOptions,
-		}),
+		theme: useTextInput("theme", { source: profile }),
 	};
 
 	const [submitForm, result] = useFormSubmit(form, useUpdateCredentialsMutation(), {
@@ -169,9 +178,10 @@ function UserProfileForm({ data: profile }) {
 						<br/>
 						<span>After choosing theme and saving, <a href={profile.url} target="_blank">open your profile</a> and refresh to see changes.</span>
 					</div>
-					<RadioGroup
+					<Select
 						aria-labelledby="theme-label"
 						field={form.theme}
+						options={<>{themeOptions}</>}
 					/>
 				</div>
 			</div>
