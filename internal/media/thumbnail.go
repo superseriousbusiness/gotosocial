@@ -34,6 +34,40 @@ import (
 	"golang.org/x/image/webp"
 )
 
+const (
+	maxThumbWidth  = 512
+	maxThumbHeight = 512
+)
+
+// thumbSize returns the dimensions to use for an input
+// image of given width / height, for its outgoing thumbnail.
+// This attempts to maintains the original image aspect ratio.
+func thumbSize(width, height int, aspect float32) (int, int) {
+
+	switch {
+	// Simplest case, within bounds!
+	case width < maxThumbWidth &&
+		height < maxThumbHeight:
+		return width, height
+
+	// Width is larger side.
+	case width > height:
+		// i.e. height = newWidth * (height / width)
+		height = int(float32(maxThumbWidth) / aspect)
+		return maxThumbWidth, height
+
+	// Height is larger side.
+	case height > width:
+		// i.e. width = newHeight * (width / height)
+		width = int(float32(maxThumbHeight) * aspect)
+		return width, maxThumbHeight
+
+	// Square.
+	default:
+		return maxThumbWidth, maxThumbHeight
+	}
+}
+
 // generateThumb generates a thumbnail for the
 // input file at path, resizing it to the given
 // dimensions and generating a blurhash if needed.
@@ -229,11 +263,17 @@ func generateNativeThumb(
 		img = imaging.Transverse(img)
 	}
 
-	// Resize image to dimens.
-	img = imaging.Resize(img,
-		width, height,
-		imaging.Linear,
-	)
+	// Resize image to dimens only if necessary.
+	if img.Bounds().Dx() > maxThumbWidth ||
+		img.Bounds().Dy() > maxThumbHeight {
+		// Note: We could call "imaging.Fit" here
+		// but there's no point, as we've already
+		// calculated target dimensions beforehand.
+		img = imaging.Resize(img,
+			width, height,
+			imaging.Linear,
+		)
+	}
 
 	// Open output file at given path.
 	outfile, err := os.Create(outpath)
@@ -255,7 +295,7 @@ func generateNativeThumb(
 	if needBlurhash {
 		// for generating blurhashes, it's more cost effective to
 		// lose detail since it's blurry, so make a tiny version.
-		tiny := imaging.Resize(img, 64, 64, imaging.NearestNeighbor)
+		tiny := imaging.Resize(img, 32, 0, imaging.NearestNeighbor)
 
 		// Drop the larger image
 		// ref as soon as possible
@@ -294,7 +334,7 @@ func generateWebpBlurhash(filepath string) (string, error) {
 
 	// for generating blurhashes, it's more cost effective to
 	// lose detail since it's blurry, so make a tiny version.
-	tiny := imaging.Resize(img, 64, 64, imaging.NearestNeighbor)
+	tiny := imaging.Resize(img, 32, 0, imaging.NearestNeighbor)
 
 	// Drop the larger image
 	// ref as soon as possible
