@@ -230,7 +230,7 @@ func generateNativeThumb(
 	}
 
 	// Resize image to dimens.
-	img = imaging.Resize(img,
+	img = imaging.Fit(img,
 		width, height,
 		imaging.Linear,
 	)
@@ -255,7 +255,7 @@ func generateNativeThumb(
 	if needBlurhash {
 		// for generating blurhashes, it's more cost effective to
 		// lose detail since it's blurry, so make a tiny version.
-		tiny := imaging.Resize(img, 64, 64, imaging.NearestNeighbor)
+		tiny := imaging.Resize(img, 32, 0, imaging.NearestNeighbor)
 
 		// Drop the larger image
 		// ref as soon as possible
