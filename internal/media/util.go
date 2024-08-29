@@ -39,39 +39,6 @@ func getExtension(path string) string {
 	return ""
 }
 
-// thumbSize returns the dimensions to use for an input
-// image of given width / height, for its outgoing thumbnail.
-// This attempts to maintains the original image aspect ratio.
-func thumbSize(width, height int, aspect float32) (int, int) {
-	const (
-		maxThumbWidth  = 512
-		maxThumbHeight = 512
-	)
-
-	switch {
-	// Simplest case, within bounds!
-	case width < maxThumbWidth &&
-		height < maxThumbHeight:
-		return width, height
-
-	// Width is larger side.
-	case width > height:
-		// i.e. height = newWidth * (height / width)
-		height = int(float32(maxThumbWidth) / aspect)
-		return maxThumbWidth, height
-
-	// Height is larger side.
-	case height > width:
-		// i.e. width = newHeight * (width / height)
-		width = int(float32(maxThumbHeight) * aspect)
-		return width, maxThumbHeight
-
-	// Square.
-	default:
-		return maxThumbWidth, maxThumbHeight
-	}
-}
-
 // getMimeType returns a suitable mimetype for file extension.
 func getMimeType(ext string) string {
 	const defaultType = "application/octet-stream"
