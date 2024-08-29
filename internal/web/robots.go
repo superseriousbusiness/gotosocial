@@ -31,6 +31,8 @@ const (
 
 # AI scrapers and the like.
 # https://github.com/ai-robots-txt/ai.robots.txt/
+User-agent: AI2Bot
+User-agent: Ai2Bot-Dolma
 User-agent: AdsBot-Google
 User-agent: Amazonbot
 User-agent: anthropic-ai
@@ -50,9 +52,11 @@ User-agent: GoogleOther
 User-agent: GoogleOther-Image
 User-agent: GoogleOther-Video
 User-agent: GPTBot
+User-agent: ICC-Crawler
 User-agent: ImagesiftBot
 User-agent: img2dataset
 User-agent: Meta-ExternalAgent
+User-agent: Meta-ExternalFetcher
 User-agent: OAI-SearchBot
 User-agent: omgili
 User-agent: omgilibot
@@ -61,6 +65,7 @@ User-agent: PetalBot
 User-agent: Scrapy
 User-agent: Timpibot
 User-agent: VelenPublicWebCrawler
+User-agent: Webzio-Extended
 User-agent: YouBot
 Disallow: /
 
