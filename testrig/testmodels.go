@@ -1078,7 +1078,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Thumbnail: gtsmodel.Thumbnail{
 				Path:        "01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpeg",
 				ContentType: "image/jpeg",
-				FileSize:    20394,
+				FileSize:    20395,
 				URL:         "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/small/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.webp",
 			},
 			Avatar: util.Ptr(false),
@@ -1124,7 +1124,7 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			Thumbnail: gtsmodel.Thumbnail{
 				Path:        "062G5WYKY35KKD12EMSM3F8PJ8/attachment/small/01PFPMWK2FF0D9WMHEJHR07C3R.jpeg",
 				ContentType: "image/webp",
-				FileSize:    20394,
+				FileSize:    20395,
 				URL:         "http://localhost:8080/fileserver/062G5WYKY35KKD12EMSM3F8PJ8/header/small/01PFPMWK2FF0D9WMHEJHR07C3R.webp",
 			},
 			Avatar: util.Ptr(false),

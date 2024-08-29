@@ -206,7 +206,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessful() {
 			Y: 0.5,
 		},
 	}, *attachmentReply.Meta)
-	suite.Equal("LjCGfG#6RkRn_NvzRjWF?urqV@a$", *attachmentReply.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", *attachmentReply.Blurhash)
 	suite.NotEmpty(attachmentReply.ID)
 	suite.NotEmpty(attachmentReply.URL)
 	suite.NotEmpty(attachmentReply.PreviewURL)
@@ -291,7 +291,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 			Y: 0.5,
 		},
 	}, *attachmentReply.Meta)
-	suite.Equal("LjCGfG#6RkRn_NvzRjWF?urqV@a$", *attachmentReply.Blurhash)
+	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", *attachmentReply.Blurhash)
 	suite.NotEmpty(attachmentReply.ID)
 	suite.Nil(attachmentReply.URL)
 	suite.NotEmpty(attachmentReply.PreviewURL)
