@@ -31,31 +31,48 @@ import (
 	"codeberg.org/gruf/go-mimetypes"
 )
 
-// readOneFile implements fs.FS to allow
-// read-only access to one file only.
-type readOneFile struct {
-	abs string
+// openFile represents one file in an
+// openFiles with the given flag and perms.
+type openFile struct {
+	abs  string
+	flag int
+	perm os.FileMode
 }
 
-func (rof *readOneFile) Open(name string) (fs.File, error) {
-	// Allowed to read file
-	// at absolute path.
-	if name == rof.abs {
-		return os.Open(rof.abs)
-	}
+// openFiles implements fs.FS to allow
+// access to a specified slice of files.
+type openFiles []openFile
 
-	// Check for other valid reads.
-	thisDir, thisFile := path.Split(rof.abs)
+// Open implements fs.FS.
+func (of openFiles) Open(name string) (fs.File, error) {
+	fmt.Println(name)
 
-	// Allowed to read directory itself.
-	if name == thisDir || name == "." {
-		return os.Open(thisDir)
-	}
+	for _, file := range of {
+		var (
+			abs  = file.abs
+			flag = file.flag
+			perm = file.perm
+		)
 
-	// Allowed to read file
-	// itself (relative path).
-	if name == thisFile {
-		return os.Open(rof.abs)
+		// Allowed to open file
+		// at absolute path.
+		if name == file.abs {
+			return os.OpenFile(abs, flag, perm)
+		}
+
+		// Check for other valid reads.
+		thisDir, thisFile := path.Split(file.abs)
+
+		// Allowed to read directory itself.
+		if name == thisDir || name == "." {
+			return os.OpenFile(thisDir, flag, perm)
+		}
+
+		// Allowed to read file
+		// itself (at relative path).
+		if name == thisFile {
+			return os.OpenFile(abs, flag, perm)
+		}
 	}
 
 	return nil, os.ErrPermission

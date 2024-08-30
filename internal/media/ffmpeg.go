@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -39,10 +40,7 @@ import (
 // any metadata encoded into the media stream itself will not be cleared. This is the best we
 // can do without absolutely tanking performance by requiring transcodes :(
 func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
-	// Get directory from filepath.
-	dirpath := path.Dir(inpath)
-
-	return ffmpeg(ctx, dirpath,
+	return ffmpeg(ctx, inpath, outpath,
 
 		// Only log errors.
 		"-loglevel", "error",
@@ -66,18 +64,15 @@ func ffmpegClearMetadata(ctx context.Context, outpath, inpath string) error {
 }
 
 // ffmpegGenerateWebpThumb generates a thumbnail webp from input media of any type, useful for any media.
-func ffmpegGenerateWebpThumb(ctx context.Context, filepath, outpath string, width, height int, pixfmt string) error {
-	// Get directory from filepath.
-	dirpath := path.Dir(filepath)
-
+func ffmpegGenerateWebpThumb(ctx context.Context, inpath, outpath string, width, height int, pixfmt string) error {
 	// Generate thumb with ffmpeg.
-	return ffmpeg(ctx, dirpath,
+	return ffmpeg(ctx, inpath, outpath,
 
 		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file.
-		"-i", filepath,
+		"-i", inpath,
 
 		// Encode using libwebp.
 		// (NOT as libwebp_anim).
@@ -116,27 +111,24 @@ func ffmpegGenerateWebpThumb(ctx context.Context, filepath, outpath string, widt
 }
 
 // ffmpegGenerateStatic generates a static png from input image of any type, useful for emoji.
-func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) {
+func ffmpegGenerateStatic(ctx context.Context, inpath string) (string, error) {
 	var outpath string
 
 	// Generate thumb output path REPLACING extension.
-	if i := strings.IndexByte(filepath, '.'); i != -1 {
-		outpath = filepath[:i] + "_static.png"
+	if i := strings.IndexByte(inpath, '.'); i != -1 {
+		outpath = inpath[:i] + "_static.png"
 	} else {
 		return "", gtserror.New("input file missing extension")
 	}
 
-	// Get directory from filepath.
-	dirpath := path.Dir(filepath)
-
 	// Generate static with ffmpeg.
-	if err := ffmpeg(ctx, dirpath,
+	if err := ffmpeg(ctx, inpath, outpath,
 
 		// Only log errors.
 		"-loglevel", "error",
 
 		// Input file.
-		"-i", filepath,
+		"-i", inpath,
 
 		// Only first frame.
 		"-frames:v", "1",
@@ -157,8 +149,8 @@ func ffmpegGenerateStatic(ctx context.Context, filepath string) (string, error) 
 	return outpath, nil
 }
 
-// ffmpeg calls `ffmpeg [args...]` (WASM) with directory path mounted in runtime.
-func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
+// ffmpeg calls `ffmpeg [args...]` (WASM) with in + out paths mounted in runtime.
+func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) error {
 	var stderr byteutil.Buffer
 	rc, err := _ffmpeg.Ffmpeg(ctx, _ffmpeg.Args{
 		Stderr: &stderr,
@@ -166,11 +158,59 @@ func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
 			fscfg := wazero.NewFSConfig()
 
-			// Needs read-only access to /dev/urandom for webp.
-			fscfg = fscfg.WithFSMount(&readOneFile{"/dev/urandom"}, "/dev")
+			// Needs read-only access to
+			// /dev/urandom for some types.
+			urandom := &openFiles{
+				{
+					abs:  "/dev/urandom",
+					flag: os.O_RDONLY,
+					perm: 0,
+				},
+			}
+			fscfg = fscfg.WithFSMount(urandom, "/dev")
 
-			// Needs read+write access to output dir.
-			fscfg = fscfg.WithDirMount(dirpath, dirpath)
+			// Check directories
+			// we need to access.
+			indir := path.Dir(inpath)
+			outdir := path.Dir(outpath)
+
+			if indir == outdir {
+				// Indir + outdir are the same, so we
+				// can share one file system for both.
+				shared := &openFiles{
+					{
+						abs:  inpath,
+						flag: os.O_RDONLY,
+						perm: 0,
+					},
+					{
+						abs:  outpath,
+						flag: os.O_RDWR | os.O_CREATE | os.O_TRUNC,
+						perm: 0666,
+					},
+				}
+				fscfg = fscfg.WithFSMount(shared, indir)
+			} else {
+				// Indir + outdir are different, so we
+				// need separate guest mounts for each.
+				in := &openFiles{
+					{
+						abs:  inpath,
+						flag: os.O_RDONLY,
+						perm: 0,
+					},
+				}
+				fscfg = fscfg.WithFSMount(in, indir)
+
+				out := &openFiles{
+					{
+						abs:  outpath,
+						flag: os.O_RDWR | os.O_CREATE | os.O_TRUNC,
+						perm: 0666,
+					},
+				}
+				fscfg = fscfg.WithFSMount(out, outdir)
+			}
 
 			return modcfg.WithFSConfig(fscfg)
 		},
@@ -224,8 +264,16 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
 			fscfg := wazero.NewFSConfig()
 
-			// Needs read-only access to file being probed.
-			fscfg = fscfg.WithFSMount(&readOneFile{filepath}, path.Dir(filepath))
+			// Needs read-only access
+			// to file being probed.
+			in := &openFiles{
+				{
+					abs:  filepath,
+					flag: os.O_RDONLY,
+					perm: 0,
+				},
+			}
+			fscfg = fscfg.WithFSMount(in, path.Dir(filepath))
 
 			return modcfg.WithFSConfig(fscfg)
 		},
