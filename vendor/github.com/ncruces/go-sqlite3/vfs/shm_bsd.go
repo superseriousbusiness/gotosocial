@@ -121,8 +121,8 @@ func (s *vfsShm) shmOpen() (rc _ErrorCode) {
 	// Find a shared file, increase the reference count.
 	for _, g := range vfsShmFiles {
 		if g != nil && os.SameFile(fi, g.info) {
-			g.refs++
 			s.vfsShmFile = g
+			g.refs++
 			return _OK
 		}
 	}
@@ -207,15 +207,22 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 	case flags&_SHM_UNLOCK != 0:
 		for i := offset; i < offset+n; i++ {
 			if s.lock[i] {
+				if s.vfsShmFile.lock[i] == 0 {
+					panic(util.AssertErr())
+				}
 				if s.vfsShmFile.lock[i] <= 0 {
 					s.vfsShmFile.lock[i] = 0
 				} else {
 					s.vfsShmFile.lock[i]--
 				}
+				s.lock[i] = false
 			}
 		}
 	case flags&_SHM_SHARED != 0:
 		for i := offset; i < offset+n; i++ {
+			if s.lock[i] {
+				panic(util.AssertErr())
+			}
 			if s.vfsShmFile.lock[i] < 0 {
 				return _BUSY
 			}
@@ -226,6 +233,9 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 		}
 	case flags&_SHM_EXCLUSIVE != 0:
 		for i := offset; i < offset+n; i++ {
+			if s.lock[i] {
+				panic(util.AssertErr())
+			}
 			if s.vfsShmFile.lock[i] != 0 {
 				return _BUSY
 			}
