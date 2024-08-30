@@ -263,17 +263,10 @@ func generateNativeThumb(
 		img = imaging.Transverse(img)
 	}
 
-	// Resize image to dimens only if necessary.
-	if img.Bounds().Dx() > maxThumbWidth ||
-		img.Bounds().Dy() > maxThumbHeight {
-		// Note: We could call "imaging.Fit" here
-		// but there's no point, as we've already
-		// calculated target dimensions beforehand.
-		img = imaging.Resize(img,
-			width, height,
-			imaging.Linear,
-		)
-	}
+	// Resize image to dimens.
+	img = resizeDownLinear(img,
+		width, height,
+	)
 
 	// Open output file at given path.
 	outfile, err := os.Create(outpath)
@@ -293,9 +286,10 @@ func generateNativeThumb(
 	}
 
 	if needBlurhash {
-		// for generating blurhashes, it's more cost effective to
-		// lose detail since it's blurry, so make a tiny version.
-		tiny := imaging.Resize(img, 32, 0, imaging.NearestNeighbor)
+		// for generating blurhashes, it's more
+		// cost effective to lose detail since it's
+		// blurry, so make a tiny version.
+		tiny := resizeDownLinear(img, 32, 0)
 
 		// Drop the larger image
 		// ref as soon as possible
