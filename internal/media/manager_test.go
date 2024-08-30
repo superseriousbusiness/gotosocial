@@ -276,7 +276,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal(22858, attachment.Thumbnail.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("LiB|W-#6RQR.~qvzRjWF_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -429,7 +429,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(312453, attachment.File.FileSize)
 	suite.Equal(5648, attachment.Thumbnail.FileSize)
-	suite.Equal("LfIYH~xtNskCxtfPW.kB_4aespof", attachment.Blurhash)
+	suite.Equal("LgIYH}xtNsofxtfPW.j[_4axn+of", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -489,7 +489,7 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(109569, attachment.File.FileSize)
 	suite.Equal(2976, attachment.Thumbnail.FileSize)
-	suite.Equal("LJQJfm?bM{?b~qRjt7WBayWBofWB", attachment.Blurhash)
+	suite.Equal("LIQJfl_3IU?b~qM{ofayWBWVofRj", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -549,7 +549,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(1409625, attachment.File.FileSize)
 	suite.Equal(14478, attachment.Thumbnail.FileSize)
-	suite.Equal("LJF?FZV@RO.99DM_RPWAx]V?ayMw", attachment.Blurhash)
+	suite.Equal("LLF$qyaeRO.9DgM_RPaetkV@WCMw", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -657,7 +657,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(17471, attachment.File.FileSize)
 	suite.Equal(6446, attachment.Thumbnail.FileSize)
-	suite.Equal("LFQT7e.A%O%4?co$M}M{_1W9~TxV", attachment.Blurhash)
+	suite.Equal("LGP%YL.A-?tA.9o#RURQ~ojp^~xW", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -713,7 +713,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(18832, attachment.File.FileSize)
 	suite.Equal(3592, attachment.Thumbnail.FileSize)
-	suite.Equal("LCONII.A%Oxw?co#M}M{_1ac~TxV", attachment.Blurhash)
+	suite.Equal("LCN^lE.A-?xd?co#N1RQ~ojp~SxW", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -769,7 +769,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal(22858, attachment.Thumbnail.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("LiB|W-#6RQR.~qvzRjWF_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -847,7 +847,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 	suite.Equal("image/jpeg", attachment.Thumbnail.ContentType)
 	suite.Equal(269739, attachment.File.FileSize)
 	suite.Equal(22858, attachment.Thumbnail.FileSize)
-	suite.Equal("LiBzRk#6V[WF_NvzV@WY_3rqV@a$", attachment.Blurhash)
+	suite.Equal("LiB|W-#6RQR.~qvzRjWF_3rqV@a$", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)

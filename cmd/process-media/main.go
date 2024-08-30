@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
@@ -112,6 +113,7 @@ func main() {
 
 	copyFile(ctx, &st, media.File.Path, os.Args[2])
 	copyFile(ctx, &st, media.Thumbnail.Path, os.Args[3])
+	fmt.Printf("\nblurhash: %s\n", media.Blurhash)
 }
 
 func copyFile(ctx context.Context, st *storage.Driver, key string, path string) {

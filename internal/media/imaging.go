@@ -24,11 +24,13 @@ import (
 )
 
 // NOTE:
-// the follow code is borrowed from
+// the following code is borrowed from
 // github.com/disintegration/imaging
-// but collapsed for the singular type
-// of image resizing we use (linear)
-// and to remove use of goroutines.
+// and collapses in some places for our
+// particular usecases and with parallel()
+// function (spans work across goroutines)
+// removed, instead working synchronously.
+//
 // at gotosocial we take particular
 // care about where we spawn goroutines
 // to ensure we're in control of the
@@ -40,7 +42,7 @@ import (
 func resizeDownLinear(img image.Image, width, height int) image.Image {
 	srcW, srcH := img.Bounds().Dx(), img.Bounds().Dy()
 	if srcW <= 0 || srcH <= 0 ||
-		width <= 0 || height <= 0 {
+		width < 0 || height < 0 {
 		return &image.NRGBA{}
 	}
 
@@ -67,6 +69,115 @@ func resizeDownLinear(img image.Image, width, height int) image.Image {
 	}
 
 	return img
+}
+
+// flipH flips the image horizontally (left to right).
+func flipH(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.w
+	dstH := src.h
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcY := y
+		src.scan(0, srcY, src.w, srcY+1, dst.Pix[i:i+rowSize])
+		reverse(dst.Pix[i : i+rowSize])
+	}
+	return dst
+}
+
+// flipV flips the image vertically (from top to bottom).
+func flipV(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.w
+	dstH := src.h
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcY := dstH - y - 1
+		src.scan(0, srcY, src.w, srcY+1, dst.Pix[i:i+rowSize])
+	}
+	return dst
+}
+
+// rotate90 rotates the image 90 counter-clockwise.
+func rotate90(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.h
+	dstH := src.w
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcX := dstH - y - 1
+		src.scan(srcX, 0, srcX+1, src.h, dst.Pix[i:i+rowSize])
+	}
+	return dst
+}
+
+// rotate180 rotates the image 180 counter-clockwise.
+func rotate180(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.w
+	dstH := src.h
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcY := dstH - y - 1
+		src.scan(0, srcY, src.w, srcY+1, dst.Pix[i:i+rowSize])
+		reverse(dst.Pix[i : i+rowSize])
+	}
+	return dst
+}
+
+// rotate270 rotates the image 270 counter-clockwise.
+func rotate270(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.h
+	dstH := src.w
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcX := y
+		src.scan(srcX, 0, srcX+1, src.h, dst.Pix[i:i+rowSize])
+		reverse(dst.Pix[i : i+rowSize])
+	}
+	return dst
+}
+
+// transpose flips the image horizontally and rotates 90 counter-clockwise.
+func transpose(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.h
+	dstH := src.w
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcX := y
+		src.scan(srcX, 0, srcX+1, src.h, dst.Pix[i:i+rowSize])
+	}
+	return dst
+}
+
+// transverse flips the image vertically and rotates 90 counter-clockwise.
+func transverse(img image.Image) image.Image {
+	src := newScanner(img)
+	dstW := src.h
+	dstH := src.w
+	rowSize := dstW * 4
+	dst := image.NewNRGBA(image.Rect(0, 0, dstW, dstH))
+	for y := 0; y < dstH; y++ {
+		i := y * dst.Stride
+		srcX := dstH - y - 1
+		src.scan(srcX, 0, srcX+1, src.h, dst.Pix[i:i+rowSize])
+		reverse(dst.Pix[i : i+rowSize])
+	}
+	return dst
 }
 
 // resizeHorizontalLinear resizes image to given width using linear resampling.
@@ -205,10 +316,12 @@ type scanner struct {
 
 // newScanner wraps an image.Image in scanner{} type.
 func newScanner(img image.Image) *scanner {
+	b := img.Bounds()
 	s := &scanner{
 		image: img,
-		w:     img.Bounds().Dx(),
-		h:     img.Bounds().Dy(),
+
+		w: b.Dx(),
+		h: b.Dy(),
 	}
 	if img, ok := img.(*image.Paletted); ok {
 		s.palette = make([]color.NRGBA, len(img.Palette))
@@ -474,6 +587,26 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 				j += 4
 			}
 		}
+	}
+}
+
+// reverse reverses the data
+// in contained pixel slice.
+func reverse(pix []uint8) {
+	if len(pix) <= 4 {
+		return
+	}
+	i := 0
+	j := len(pix) - 4
+	for i < j {
+		pi := pix[i : i+4 : i+4]
+		pj := pix[j : j+4 : j+4]
+		pi[0], pj[0] = pj[0], pi[0]
+		pi[1], pj[1] = pj[1], pi[1]
+		pi[2], pj[2] = pj[2], pi[2]
+		pi[3], pj[3] = pj[3], pi[3]
+		i += 4
+		j -= 4
 	}
 }
 
