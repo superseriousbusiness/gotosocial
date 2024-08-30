@@ -49,15 +49,16 @@ type Mention struct {
 	//
 	// This will not be put in the database, it's just for convenience.
 	NameString string `bun:"-"`
+
 	// TargetAccountURI is the AP ID (uri) of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.
 	TargetAccountURI string `bun:"-"`
+
 	// TargetAccountURL is the web url of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.
 	TargetAccountURL string `bun:"-"`
-	// A pointer to the gtsmodel account of the mentioned account.
 }
 
 // ParseMentionFunc describes a function that takes a lowercase account namestring

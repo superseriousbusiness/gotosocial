@@ -184,6 +184,35 @@ func (s *Status) GetMentionByTargetURI(uri string) (*Mention, bool) {
 	return nil, false
 }
 
+// GetMentionByUsernameDomain fetches the Mention associated with given
+// username and domains, typically extracted from a mention Namestring.
+func (s *Status) GetMentionByUsernameDomain(username, domain string) (*Mention, bool) {
+	for _, mention := range s.Mentions {
+
+		// We can only check if target
+		// account is set on the mention.
+		account := mention.TargetAccount
+		if account == nil {
+			continue
+		}
+
+		// Usernames must always match.
+		if account.Username != username {
+			continue
+		}
+
+		// Finally, either domains must
+		// match or an empty domain may
+		// be permitted if account local.
+		if account.Domain == domain ||
+			(domain == "" && account.IsLocal()) {
+			return mention, true
+		}
+	}
+
+	return nil, false
+}
+
 // GetTagByName searches status for Tag{} with name.
 func (s *Status) GetTagByName(name string) (*Tag, bool) {
 	for _, tag := range s.Tags {
