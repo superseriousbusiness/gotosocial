@@ -175,14 +175,18 @@ func (t *transport) SignDelivery(dlv *delivery.Delivery) error {
 		return gtserror.New("delivery request body not rewindable")
 	}
 
-	// Get a new copy of the request body.
-	body, err := dlv.Request.GetBody()
+	// Fetch a fresh copy of request body.
+	rBody, err := dlv.Request.GetBody()
 	if err != nil {
 		return gtserror.Newf("error getting request body: %w", err)
 	}
 
 	// Read body data into memory.
-	data, err := io.ReadAll(body)
+	data, err := io.ReadAll(rBody)
+
+	// Done with body.
+	_ = rBody.Close()
+
 	if err != nil {
 		return gtserror.Newf("error reading request body: %w", err)
 	}
