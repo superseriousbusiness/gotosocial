@@ -22,12 +22,59 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mimetypes"
 )
+
+// file represents one file
+// with the given flag and perms.
+type file struct {
+	abs  string
+	flag int
+	perm os.FileMode
+}
+
+// allowFiles implements fs.FS to allow
+// access to a specified slice of files.
+type allowFiles []file
+
+// Open implements fs.FS.
+func (af allowFiles) Open(name string) (fs.File, error) {
+	for _, file := range af {
+		var (
+			abs  = file.abs
+			flag = file.flag
+			perm = file.perm
+		)
+
+		// Allowed to open file
+		// at absolute path.
+		if name == file.abs {
+			return os.OpenFile(abs, flag, perm)
+		}
+
+		// Check for other valid reads.
+		thisDir, thisFile := path.Split(file.abs)
+
+		// Allowed to read directory itself.
+		if name == thisDir || name == "." {
+			return os.OpenFile(thisDir, flag, perm)
+		}
+
+		// Allowed to read file
+		// itself (at relative path).
+		if name == thisFile {
+			return os.OpenFile(abs, flag, perm)
+		}
+	}
+
+	return nil, os.ErrPermission
+}
 
 // getExtension splits file extension from path.
 func getExtension(path string) string {
