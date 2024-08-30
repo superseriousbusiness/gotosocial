@@ -12,6 +12,20 @@ It wraps a [Wasm](https://webassembly.org/) [build](embed/) of SQLite,
 and uses [wazero](https://wazero.io/) as the runtime.\
 Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ runtime dependencies [^1].
 
+### Getting started
+
+Using the [`database/sql`](https://pkg.go.dev/database/sql) driver:
+```go
+
+import "database/sql"
+import _ "github.com/ncruces/go-sqlite3/driver"
+import _ "github.com/ncruces/go-sqlite3/embed"
+
+var version string
+db, _ := sql.Open("sqlite3", "file:demo.db")
+db.QueryRow(`SELECT sqlite_version()`).Scan(&version)
+```
+
 ### Packages
 
 - [`github.com/ncruces/go-sqlite3`](https://pkg.go.dev/github.com/ncruces/go-sqlite3)
