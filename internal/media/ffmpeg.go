@@ -164,11 +164,15 @@ func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
 		Stderr: &stderr,
 		Args:   args,
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
-			fscfg := wazero.NewFSConfig() // needs /dev/urandom
-			fscfg = fscfg.WithReadOnlyDirMount("/dev", "/dev")
+			fscfg := wazero.NewFSConfig()
+
+			// Needs read-only access to /dev/urandom for webp.
+			fscfg = fscfg.WithFSMount(&readOneFile{"/dev/urandom"}, "/dev")
+
+			// Needs read+write access to output dir.
 			fscfg = fscfg.WithDirMount(dirpath, dirpath)
-			modcfg = modcfg.WithFSConfig(fscfg)
-			return modcfg
+
+			return modcfg.WithFSConfig(fscfg)
 		},
 	})
 	if err != nil {
@@ -182,9 +186,6 @@ func ffmpeg(ctx context.Context, dirpath string, args ...string) error {
 // ffprobe calls `ffprobe` (WASM) on filepath, returning parsed JSON output.
 func ffprobe(ctx context.Context, filepath string) (*result, error) {
 	var stdout byteutil.Buffer
-
-	// Get directory from filepath.
-	dirpath := path.Dir(filepath)
 
 	// Run ffprobe on our given file at path.
 	_, err := _ffmpeg.Ffprobe(ctx, _ffmpeg.Args{
@@ -222,9 +223,11 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 
 		Config: func(modcfg wazero.ModuleConfig) wazero.ModuleConfig {
 			fscfg := wazero.NewFSConfig()
-			fscfg = fscfg.WithReadOnlyDirMount(dirpath, dirpath)
-			modcfg = modcfg.WithFSConfig(fscfg)
-			return modcfg
+
+			// Needs read-only access to file being probed.
+			fscfg = fscfg.WithFSMount(&readOneFile{filepath}, path.Dir(filepath))
+
+			return modcfg.WithFSConfig(fscfg)
 		},
 	})
 	if err != nil {

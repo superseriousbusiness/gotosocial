@@ -22,12 +22,44 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
+	"path"
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mimetypes"
 )
+
+// readOneFile implements fs.FS to allow
+// read-only access to one file only.
+type readOneFile struct {
+	abs string
+}
+
+func (rof *readOneFile) Open(name string) (fs.File, error) {
+	// Allowed to read file
+	// at absolute path.
+	if name == rof.abs {
+		return os.Open(rof.abs)
+	}
+
+	// Check for other valid reads.
+	thisDir, thisFile := path.Split(rof.abs)
+
+	// Allowed to read directory itself.
+	if name == thisDir || name == "." {
+		return os.Open(thisDir)
+	}
+
+	// Allowed to read file
+	// itself (relative path).
+	if name == thisFile {
+		return os.Open(rof.abs)
+	}
+
+	return nil, os.ErrPermission
+}
 
 // getExtension splits file extension from path.
 func getExtension(path string) string {
