@@ -160,7 +160,7 @@ func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) 
 
 			// Needs read-only access to
 			// /dev/urandom for some types.
-			urandom := &openFiles{
+			urandom := &allowFiles{
 				{
 					abs:  "/dev/urandom",
 					flag: os.O_RDONLY,
@@ -169,48 +169,23 @@ func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) 
 			}
 			fscfg = fscfg.WithFSMount(urandom, "/dev")
 
-			// Check directories
-			// we need to access.
-			indir := path.Dir(inpath)
-			outdir := path.Dir(outpath)
-
-			if indir == outdir {
-				// Indir + outdir are the same, so we
-				// can share one file system for both.
-				shared := &openFiles{
-					{
-						abs:  inpath,
-						flag: os.O_RDONLY,
-						perm: 0,
-					},
-					{
-						abs:  outpath,
-						flag: os.O_RDWR | os.O_CREATE | os.O_TRUNC,
-						perm: 0666,
-					},
-				}
-				fscfg = fscfg.WithFSMount(shared, indir)
-			} else {
-				// Indir + outdir are different, so we
-				// need separate guest mounts for each.
-				in := &openFiles{
-					{
-						abs:  inpath,
-						flag: os.O_RDONLY,
-						perm: 0,
-					},
-				}
-				fscfg = fscfg.WithFSMount(in, indir)
-
-				out := &openFiles{
-					{
-						abs:  outpath,
-						flag: os.O_RDWR | os.O_CREATE | os.O_TRUNC,
-						perm: 0666,
-					},
-				}
-				fscfg = fscfg.WithFSMount(out, outdir)
+			// In+out dirs are always the same (tmp),
+			// so we can share one file system for
+			// both + grant different perms to inpath
+			// (read only) and outpath (read+write).
+			shared := &allowFiles{
+				{
+					abs:  inpath,
+					flag: os.O_RDONLY,
+					perm: 0,
+				},
+				{
+					abs:  outpath,
+					flag: os.O_RDWR | os.O_CREATE | os.O_TRUNC,
+					perm: 0666,
+				},
 			}
+			fscfg = fscfg.WithFSMount(shared, path.Dir(inpath))
 
 			return modcfg.WithFSConfig(fscfg)
 		},
@@ -266,7 +241,7 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 
 			// Needs read-only access
 			// to file being probed.
-			in := &openFiles{
+			in := &allowFiles{
 				{
 					abs:  filepath,
 					flag: os.O_RDONLY,

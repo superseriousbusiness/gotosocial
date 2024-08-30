@@ -31,21 +31,21 @@ import (
 	"codeberg.org/gruf/go-mimetypes"
 )
 
-// openFile represents one file in an
-// openFiles with the given flag and perms.
-type openFile struct {
+// file represents one file
+// with the given flag and perms.
+type file struct {
 	abs  string
 	flag int
 	perm os.FileMode
 }
 
-// openFiles implements fs.FS to allow
+// allowFiles implements fs.FS to allow
 // access to a specified slice of files.
-type openFiles []openFile
+type allowFiles []file
 
 // Open implements fs.FS.
-func (of openFiles) Open(name string) (fs.File, error) {
-	for _, file := range of {
+func (af allowFiles) Open(name string) (fs.File, error) {
+	for _, file := range af {
 		var (
 			abs  = file.abs
 			flag = file.flag
