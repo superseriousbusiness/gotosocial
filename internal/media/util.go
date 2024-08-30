@@ -45,8 +45,6 @@ type openFiles []openFile
 
 // Open implements fs.FS.
 func (of openFiles) Open(name string) (fs.File, error) {
-	fmt.Println(name)
-
 	for _, file := range of {
 		var (
 			abs  = file.abs
