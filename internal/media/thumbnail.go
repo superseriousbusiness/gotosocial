@@ -28,7 +28,6 @@ import (
 	"strings"
 
 	"github.com/buckket/go-blurhash"
-	"github.com/disintegration/imaging"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"golang.org/x/image/webp"
@@ -248,32 +247,25 @@ func generateNativeThumb(
 	// taking orientation into account.
 	switch orientation {
 	case orientationFlipH:
-		img = imaging.FlipH(img)
+		img = flipH(img)
 	case orientationFlipV:
-		img = imaging.FlipV(img)
+		img = flipV(img)
 	case orientationRotate90:
-		img = imaging.Rotate90(img)
+		img = rotate90(img)
 	case orientationRotate180:
-		img = imaging.Rotate180(img)
+		img = rotate180(img)
 	case orientationRotate270:
-		img = imaging.Rotate270(img)
+		img = rotate270(img)
 	case orientationTranspose:
-		img = imaging.Transpose(img)
+		img = transpose(img)
 	case orientationTransverse:
-		img = imaging.Transverse(img)
+		img = transverse(img)
 	}
 
-	// Resize image to dimens only if necessary.
-	if img.Bounds().Dx() > maxThumbWidth ||
-		img.Bounds().Dy() > maxThumbHeight {
-		// Note: We could call "imaging.Fit" here
-		// but there's no point, as we've already
-		// calculated target dimensions beforehand.
-		img = imaging.Resize(img,
-			width, height,
-			imaging.Linear,
-		)
-	}
+	// Resize image to dimens.
+	img = resizeDownLinear(img,
+		width, height,
+	)
 
 	// Open output file at given path.
 	outfile, err := os.Create(outpath)
@@ -293,9 +285,10 @@ func generateNativeThumb(
 	}
 
 	if needBlurhash {
-		// for generating blurhashes, it's more cost effective to
-		// lose detail since it's blurry, so make a tiny version.
-		tiny := imaging.Resize(img, 32, 0, imaging.NearestNeighbor)
+		// for generating blurhashes, it's more
+		// cost effective to lose detail since
+		// it's blurry, so make a tiny version.
+		tiny := resizeDownLinear(img, 32, 0)
 
 		// Drop the larger image
 		// ref as soon as possible
@@ -332,9 +325,10 @@ func generateWebpBlurhash(filepath string) (string, error) {
 		return "", gtserror.Newf("error decoding file %s: %w", filepath, err)
 	}
 
-	// for generating blurhashes, it's more cost effective to
-	// lose detail since it's blurry, so make a tiny version.
-	tiny := imaging.Resize(img, 32, 0, imaging.NearestNeighbor)
+	// for generating blurhashes, it's more
+	// cost effective to lose detail since
+	// it's blurry, so make a tiny version.
+	tiny := resizeDownLinear(img, 32, 0)
 
 	// Drop the larger image
 	// ref as soon as possible

@@ -175,9 +175,6 @@ github.com/coreos/go-systemd/v22/dbus
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/disintegration/imaging v1.6.2
-## explicit
-github.com/disintegration/imaging
 # github.com/docker/go-units v0.5.0
 ## explicit
 github.com/docker/go-units
@@ -1095,11 +1092,7 @@ golang.org/x/exp/slog/internal
 golang.org/x/exp/slog/internal/buffer
 # golang.org/x/image v0.19.0
 ## explicit; go 1.18
-golang.org/x/image/bmp
-golang.org/x/image/ccitt
 golang.org/x/image/riff
-golang.org/x/image/tiff
-golang.org/x/image/tiff/lzw
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
