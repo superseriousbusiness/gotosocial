@@ -38,7 +38,7 @@ steps:
         path: /root/.cache/wazero
     environment:
       CGO_ENABLED: "0"
-      GTS_WAZERO_COMPILATION_CACHE: "~/.cache/wazero"
+      GTS_WAZERO_COMPILATION_CACHE: "/root/.cache/wazero"
     commands:
       - apk update --no-cache && apk add git
       - >-
