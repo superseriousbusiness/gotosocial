@@ -399,9 +399,25 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 					g16 := uint16(s[1])
 					b16 := uint16(s[2])
 					a16 := uint16(a)
-					d[0] = uint8(r16 * 0xff / a16)
-					d[1] = uint8(g16 * 0xff / a16)
-					d[2] = uint8(b16 * 0xff / a16)
+
+					d0 := r16 * 0xff / a16
+					if d0 > math.MaxUint8 {
+						panic("overflow d0")
+					}
+
+					d1 := g16 * 0xff / a16
+					if d1 > math.MaxUint8 {
+						panic("overflow d1")
+					}
+
+					d2 := b16 * 0xff / a16
+					if d2 > math.MaxUint8 {
+						panic("overflow d2")
+					}
+
+					d[0] = uint8(d0) // #nosec G115 -- Just checked.
+					d[1] = uint8(d1) // #nosec G115 -- Just checked.
+					d[2] = uint8(d2) // #nosec G115 -- Just checked.
 					d[3] = a
 				}
 				j += 4
@@ -431,9 +447,25 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 					g32 := uint32(s[2])<<8 | uint32(s[3])
 					b32 := uint32(s[4])<<8 | uint32(s[5])
 					a32 := uint32(s[6])<<8 | uint32(s[7])
-					d[0] = uint8((r32 * 0xffff / a32) >> 8)
-					d[1] = uint8((g32 * 0xffff / a32) >> 8)
-					d[2] = uint8((b32 * 0xffff / a32) >> 8)
+
+					d0 := (r32 * 0xffff / a32) >> 8
+					if d0 > math.MaxUint8 {
+						panic("overflow d0")
+					}
+
+					d1 := (g32 * 0xffff / a32) >> 8
+					if d1 > math.MaxUint8 {
+						panic("overflow d1")
+					}
+
+					d2 := (b32 * 0xffff / a32) >> 8
+					if d2 > math.MaxUint8 {
+						panic("overflow d2")
+					}
+
+					d[0] = uint8(d0) // #nosec G115 -- Just checked.
+					d[1] = uint8(d1) // #nosec G115 -- Just checked.
+					d[2] = uint8(d2) // #nosec G115 -- Just checked.
 				}
 				d[3] = a
 				j += 4
@@ -514,12 +546,18 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 				} else {
 					r = ^(r >> 31)
 				}
+				if r > math.MaxUint8 {
+					panic("overflow r")
+				}
 
 				g := yy1 - 22554*cb1 - 46802*cr1
 				if uint32(g)&0xff000000 == 0 {
 					g >>= 16
 				} else {
 					g = ^(g >> 31)
+				}
+				if g > math.MaxUint8 {
+					panic("overflow g")
 				}
 
 				b := yy1 + 116130*cb1
@@ -528,11 +566,14 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 				} else {
 					b = ^(b >> 31)
 				}
+				if b > math.MaxUint8 {
+					panic("overflow b")
+				}
 
 				d := dst[j : j+4 : j+4]
-				d[0] = uint8(r)
-				d[1] = uint8(g)
-				d[2] = uint8(b)
+				d[0] = uint8(r) // #nosec G115 -- Just checked.
+				d[1] = uint8(g) // #nosec G115 -- Just checked.
+				d[2] = uint8(b) // #nosec G115 -- Just checked.
 				d[3] = 0xff
 
 				iy++
@@ -569,9 +610,24 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 				d := dst[j : j+4 : j+4]
 				switch a16 {
 				case 0xffff:
-					d[0] = uint8(r16 >> 8)
-					d[1] = uint8(g16 >> 8)
-					d[2] = uint8(b16 >> 8)
+					d0 := r16 >> 8
+					if d0 > math.MaxUint8 {
+						panic("overflow d0")
+					}
+
+					d1 := g16 >> 8
+					if d1 > math.MaxUint8 {
+						panic("overflow d1")
+					}
+
+					d2 := b16 >> 8
+					if d2 > math.MaxUint8 {
+						panic("overflow d2")
+					}
+
+					d[0] = uint8(d0) // #nosec G115 -- Just checked.
+					d[1] = uint8(d1) // #nosec G115 -- Just checked.
+					d[2] = uint8(d2) // #nosec G115 -- Just checked.
 					d[3] = 0xff
 				case 0:
 					d[0] = 0
@@ -579,10 +635,30 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 					d[2] = 0
 					d[3] = 0
 				default:
-					d[0] = uint8(((r16 * 0xffff) / a16) >> 8)
-					d[1] = uint8(((g16 * 0xffff) / a16) >> 8)
-					d[2] = uint8(((b16 * 0xffff) / a16) >> 8)
-					d[3] = uint8(a16 >> 8)
+					d0 := ((r16 * 0xffff) / a16) >> 8
+					if d0 > math.MaxUint8 {
+						panic("overflow d0")
+					}
+
+					d1 := ((g16 * 0xffff) / a16) >> 8
+					if d1 > math.MaxUint8 {
+						panic("overflow d1")
+					}
+
+					d2 := ((b16 * 0xffff) / a16) >> 8
+					if d2 > math.MaxUint8 {
+						panic("overflow d2")
+					}
+
+					d3 := a16 >> 8
+					if d3 > math.MaxUint8 {
+						panic("overflow d3")
+					}
+
+					d[0] = uint8(d0) // #nosec G115 -- Just checked.
+					d[1] = uint8(d1) // #nosec G115 -- Just checked.
+					d[2] = uint8(d2) // #nosec G115 -- Just checked.
+					d[3] = uint8(d3) // #nosec G115 -- Just checked.
 				}
 				j += 4
 			}
@@ -617,7 +693,7 @@ func clampFloat(x float64) uint8 {
 		return 255
 	}
 	if v > 0 {
-		return uint8(v)
+		return uint8(v) // #nosec G115 -- Just checked.
 	}
 	return 0
 }

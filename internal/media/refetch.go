@@ -49,9 +49,6 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		refetchIDs         []string
 	)
 
-	// Get max supported remote emoji media size.
-	maxsz := config.GetMediaEmojiRemoteMaxSize()
-
 	// page through emojis 20 at a time, looking for those with missing images
 	for {
 		// Fetch next block of emojis from database
@@ -111,8 +108,10 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 			continue
 		}
 
+		// Get max supported remote emoji media size.
+		maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
 		dataFunc := func(ctx context.Context) (reader io.ReadCloser, err error) {
-			return dereferenceMedia(ctx, emojiImageIRI, int64(maxsz))
+			return dereferenceMedia(ctx, emojiImageIRI, maxsz)
 		}
 
 		processingEmoji, err := m.UpdateEmoji(ctx, emoji, dataFunc, AdditionalEmojiInfo{

@@ -35,11 +35,11 @@ import (
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.AttachmentRequest) (*apimodel.Attachment, gtserror.WithCode) {
 
 	// Get maximum supported local media size.
-	maxsz := config.GetMediaLocalMaxSize()
+	maxsz := int64(config.GetMediaLocalMaxSize()) // #nosec G115 -- Already validated.
 
 	// Ensure media within size bounds.
-	if form.File.Size > int64(maxsz) {
-		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
+	if form.File.Size > maxsz {
+		text := fmt.Sprintf("media exceeds configured max size: %d", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
@@ -58,7 +58,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// Wrap the multipart file reader to ensure is limited to max.
-	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxsz)
 
 	// Create local media and write to instance storage.
 	attachment, errWithCode := p.c.StoreLocalMedia(ctx,

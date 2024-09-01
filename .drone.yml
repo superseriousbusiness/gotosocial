@@ -12,7 +12,7 @@ steps:
   # We use golangci-lint for linting.
   # See: https://golangci-lint.run/
   - name: lint
-    image: golangci/golangci-lint:v1.57.2
+    image: golangci/golangci-lint:v1.60.3
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -28,7 +28,7 @@ steps:
           - pull_request
 
   - name: test
-    image: golang:1.22-alpine
+    image: golang:1.23.0-alpine
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -38,7 +38,7 @@ steps:
         path: /root/.cache/wazero
     environment:
       CGO_ENABLED: "0"
-      GTS_WAZERO_COMPILATION_CACHE: "/root/.cache/wazero"
+      GTS_WAZERO_COMPILATION_CACHE: "~/.cache/wazero"
     commands:
       - apk update --no-cache && apk add git
       - >-
@@ -94,7 +94,7 @@ steps:
           - pull_request
 
   - name: snapshot
-    image: superseriousbusiness/gotosocial-drone-build:0.6.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.7.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -135,7 +135,7 @@ steps:
           - main
 
   - name: release
-    image: superseriousbusiness/gotosocial-drone-build:0.6.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.7.0 # https://github.com/superseriousbusiness/gotosocial-drone-build
     volumes:
       - name: go-build-cache
         path: /root/.cache/go-build
@@ -194,7 +194,7 @@ clone:
 
 steps:
   - name: mirror
-    image: superseriousbusiness/gotosocial-drone-build:0.6.0
+    image: superseriousbusiness/gotosocial-drone-build:0.7.0
     environment:
       ORIGIN_REPO: https://github.com/superseriousbusiness/gotosocial
       TARGET_REPO: https://codeberg.org/superseriousbusiness/gotosocial
@@ -207,6 +207,6 @@ steps:
 
 ---
 kind: signature
-hmac: f4008d87e4e5b67251eb89f255c1224e6ab5818828cab24fc319b8f829176058
+hmac: 90df190a8e49e082ec2a95738bdf44fb049a7ab64b71f522e1f1add1bb061a81
 
 ...

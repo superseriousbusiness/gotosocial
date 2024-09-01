@@ -45,11 +45,11 @@ func (p *Processor) EmojiCreate(
 ) (*apimodel.Emoji, gtserror.WithCode) {
 
 	// Get maximum supported local emoji size.
-	maxsz := config.GetMediaEmojiLocalMaxSize()
+	maxsz := int64(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 
 	// Ensure media within size bounds.
-	if form.Image.Size > int64(maxsz) {
-		text := fmt.Sprintf("emoji exceeds configured max size: %s", maxsz)
+	if form.Image.Size > maxsz {
+		text := fmt.Sprintf("emoji exceeds configured max size: %d", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
@@ -61,7 +61,7 @@ func (p *Processor) EmojiCreate(
 	}
 
 	// Wrap the multipart file reader to ensure is limited to max.
-	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxsz)
 	data := func(context.Context) (io.ReadCloser, error) {
 		return rc, nil
 	}
@@ -441,11 +441,11 @@ func (p *Processor) emojiUpdateModify(
 		// We can do both at the same time :)
 
 		// Get maximum supported local emoji size.
-		maxsz := config.GetMediaEmojiLocalMaxSize()
+		maxsz := int64(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 
 		// Ensure media within size bounds.
-		if image.Size > int64(maxsz) {
-			text := fmt.Sprintf("emoji exceeds configured max size: %s", maxsz)
+		if image.Size > maxsz {
+			text := fmt.Sprintf("emoji exceeds configured max size: %d", maxsz)
 			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
@@ -457,7 +457,7 @@ func (p *Processor) emojiUpdateModify(
 		}
 
 		// Wrap the multipart file reader to ensure is limited to max.
-		rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+		rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxsz)
 		data := func(context.Context) (io.ReadCloser, error) {
 			return rc, nil
 		}

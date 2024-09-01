@@ -77,14 +77,14 @@ func (d *Dereferencer) GetMedia(
 			}
 
 			// Get maximum supported remote media size.
-			maxsz := config.GetMediaRemoteMaxSize()
+			maxsz := int64(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
 
 			// Create media with prepared info.
 			return d.mediaManager.CreateMedia(
 				ctx,
 				accountID,
 				func(ctx context.Context) (io.ReadCloser, error) {
-					return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+					return tsport.DereferenceMedia(ctx, url, maxsz)
 				},
 				info,
 			)
@@ -168,14 +168,14 @@ func (d *Dereferencer) RefreshMedia(
 			}
 
 			// Get maximum supported remote media size.
-			maxsz := config.GetMediaRemoteMaxSize()
+			maxsz := int64(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
 
 			// Recache media with prepared info,
 			// this will also update media in db.
 			return d.mediaManager.CacheMedia(
 				attach,
 				func(ctx context.Context) (io.ReadCloser, error) {
-					return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+					return tsport.DereferenceMedia(ctx, url, maxsz)
 				},
 			), nil
 		},
