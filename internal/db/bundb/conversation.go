@@ -313,7 +313,14 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 			return gtserror.Newf("error deleting conversations for account %s: %w", accountID, err)
 		}
 
-		// Delete any conversation-to-status links matching the deleted conversation IDs.
+		if len(deletedConversationIDs) == 0 {
+			// Nothing
+			// to delete.
+			return nil
+		}
+
+		// Delete any conversation-to-status links
+		// matching the deleted conversation IDs.
 		if _, err := tx.NewDelete().
 			Model((*gtsmodel.ConversationToStatus)(nil)).
 			Where("? IN (?)", bun.Ident("conversation_id"), bun.In(deletedConversationIDs)).

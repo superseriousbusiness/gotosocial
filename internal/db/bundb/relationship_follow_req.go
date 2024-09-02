@@ -387,6 +387,12 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 		return err
 	}
 
+	if len(followReqIDs) == 0 {
+		// Nothing
+		// to delete.
+		return nil
+	}
+
 	defer func() {
 		// Invalidate all account's incoming / outoing follow requests on return.
 		r.state.Caches.DB.FollowRequest.Invalidate("AccountID", accountID)
