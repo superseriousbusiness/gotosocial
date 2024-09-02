@@ -81,8 +81,15 @@ func (r *relationshipDB) GetFollowRequestsByIDs(ctx context.Context, ids []strin
 	follows, err := r.state.Caches.DB.FollowRequest.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.FollowRequest, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
 			// Preallocate expected length of uncached followReqs.
-			follows := make([]*gtsmodel.FollowRequest, 0, len(uncached))
+			follows := make([]*gtsmodel.FollowRequest, 0, count)
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

@@ -64,8 +64,15 @@ func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsm
 	accounts, err := a.state.Caches.DB.Account.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Account, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+			
 			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
+			accounts := make([]*gtsmodel.Account, 0, count)
 
 			// Perform database query scanning
 			// the remaining (uncached) account IDs.
