@@ -105,8 +105,15 @@ func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*g
 	blocks, err := r.state.Caches.DB.Block.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Block, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
 			// Preallocate expected length of uncached blocks.
-			blocks := make([]*gtsmodel.Block, 0, len(uncached))
+			blocks := make([]*gtsmodel.Block, 0, count)
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

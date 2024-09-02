@@ -54,8 +54,15 @@ func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmo
 	statuses, err := s.state.Caches.DB.Status.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Status, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
 			// Preallocate expected length of uncached statuses.
-			statuses := make([]*gtsmodel.Status, 0, len(uncached))
+			statuses := make([]*gtsmodel.Status, 0, count)
 
 			// Perform database query scanning
 			// the remaining (uncached) status IDs.

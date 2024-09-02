@@ -73,8 +73,15 @@ func (s *statusBookmarkDB) GetStatusBookmarksByIDs(ctx context.Context, ids []st
 	bookmarks, err := s.state.Caches.DB.StatusBookmark.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.StatusBookmark, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
 			// Preallocate expected length of uncached bookmarks.
-			bookmarks := make([]*gtsmodel.StatusBookmark, 0, len(uncached))
+			bookmarks := make([]*gtsmodel.StatusBookmark, 0, count)
 
 			// Perform database query scanning
 			// the remaining (uncached) bookmarks.
