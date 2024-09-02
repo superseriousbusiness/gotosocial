@@ -70,7 +70,7 @@ func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsm
 			if count == 0 {
 				return nil, nil
 			}
-			
+
 			// Preallocate expected length of uncached accounts.
 			accounts := make([]*gtsmodel.Account, 0, count)
 
