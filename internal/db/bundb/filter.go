@@ -82,16 +82,23 @@ func (f *filterDB) GetFiltersForAccountID(ctx context.Context, accountID string)
 	// Get each filter by ID from the cache or DB.
 	filters, err := f.state.Caches.DB.Filter.LoadIDs("ID",
 		filterIDs,
-		func(uncachedFilterIDs []string) ([]*gtsmodel.Filter, error) {
-			uncachedFilters := make([]*gtsmodel.Filter, 0, len(uncachedFilterIDs))
+		func(uncached []string) ([]*gtsmodel.Filter, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
+			filters := make([]*gtsmodel.Filter, 0, count)
 			if err := f.db.
 				NewSelect().
-				Model(&uncachedFilters).
-				Where("? IN (?)", bun.Ident("id"), bun.In(uncachedFilterIDs)).
+				Model(&filters).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
-			return uncachedFilters, nil
+			return filters, nil
 		},
 	)
 	if err != nil {
