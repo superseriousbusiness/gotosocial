@@ -187,8 +187,15 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 		accountID,
 		conversationLastStatusIDs,
 		func(accountID string, uncached []string) ([]*gtsmodel.Conversation, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
 			// Preallocate expected length of uncached conversations.
-			conversations := make([]*gtsmodel.Conversation, 0, len(uncached))
+			conversations := make([]*gtsmodel.Conversation, 0, count)
 
 			// Perform database query scanning the remaining (uncached) IDs.
 			if err := c.db.NewSelect().
