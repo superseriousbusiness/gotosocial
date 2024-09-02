@@ -1,4 +1,5 @@
-# https://goreleaser.com
+# Version 2 of GoReleaser: https://goreleaser.com/errors/version/
+version: 2
 project_name: gotosocial
 before:
   # https://goreleaser.com/customization/hooks/
@@ -185,7 +186,7 @@ checksum:
   name_template: 'checksums.txt'
 snapshot:
   # https://goreleaser.com/customization/snapshots/
-  name_template: "{{ incpatch .Version }}-SNAPSHOT"
+  version_template: "{{ incpatch .Version }}-SNAPSHOT"
 source:
   # https://goreleaser.com/customization/source/
   enabled: true
