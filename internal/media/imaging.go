@@ -514,9 +514,6 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 				} else {
 					r = ^(r >> 31)
 				}
-				if r > math.MaxUint8 {
-					panic("overflow r")
-				}
 
 				g := yy1 - 22554*cb1 - 46802*cr1
 				if uint32(g)&0xff000000 == 0 { //nolint:gosec
@@ -524,18 +521,12 @@ func (s *scanner) scan(x1, y1, x2, y2 int, dst []uint8) {
 				} else {
 					g = ^(g >> 31)
 				}
-				if g > math.MaxUint8 {
-					panic("overflow g")
-				}
 
 				b := yy1 + 116130*cb1
 				if uint32(b)&0xff000000 == 0 { //nolint:gosec
 					b >>= 16
 				} else {
 					b = ^(b >> 31)
-				}
-				if b > math.MaxUint8 {
-					panic("overflow b")
 				}
 
 				d := dst[j : j+4 : j+4]
