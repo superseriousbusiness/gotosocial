@@ -112,20 +112,25 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 	// Get each filter keyword by ID from the cache or DB.
 	filterKeywords, err := f.state.Caches.DB.FilterKeyword.LoadIDs("ID",
 		filterKeywordIDs,
-		func(uncachedFilterKeywordIDs []string) ([]*gtsmodel.FilterKeyword, error) {
-			uncachedFilterKeywords := make([]*gtsmodel.FilterKeyword, 0, len(uncachedFilterKeywordIDs))
+		func(uncached []string) ([]*gtsmodel.FilterKeyword, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
 
-			// Scan from DB.
+			filterKeywords := make([]*gtsmodel.FilterKeyword, 0, count)
 			if err := f.db.
 				NewSelect().
-				Model(&uncachedFilterKeywords).
-				Where("? IN (?)", bun.Ident("id"), bun.In(uncachedFilterKeywordIDs)).
+				Model(&filterKeywords).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
 
 			// Compile all the keyword regular expressions.
-			uncachedFilterKeywords = slices.DeleteFunc(uncachedFilterKeywords, func(filterKeyword *gtsmodel.FilterKeyword) bool {
+			filterKeywords = slices.DeleteFunc(filterKeywords, func(filterKeyword *gtsmodel.FilterKeyword) bool {
 				if err := filterKeyword.Compile(); err != nil {
 					log.Errorf(ctx, "error compiling filter keyword regex: %v", err)
 					return true
@@ -133,7 +138,7 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 				return false
 			})
 
-			return uncachedFilterKeywords, nil
+			return filterKeywords, nil
 		},
 	)
 	if err != nil {

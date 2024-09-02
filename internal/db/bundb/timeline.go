@@ -351,6 +351,12 @@ func (t *timelineDB) GetListTimeline(
 		return nil, fmt.Errorf("error getting entries for list %s: %w", listID, err)
 	}
 
+	// If there's no list entries we can't
+	// possibly return anything for this list.
+	if len(listEntries) == 0 {
+		return make([]*gtsmodel.Status, 0), nil
+	}
+
 	// Extract just the IDs of each follow.
 	followIDs := make([]string, 0, len(listEntries))
 	for _, listEntry := range listEntries {

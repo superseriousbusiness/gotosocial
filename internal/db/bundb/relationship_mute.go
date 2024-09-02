@@ -249,6 +249,12 @@ func (r *relationshipDB) DeleteAccountMutes(ctx context.Context, accountID strin
 		return err
 	}
 
+	if len(muteIDs) == 0 {
+		// Nothing
+		// to delete.
+		return nil
+	}
+
 	defer func() {
 		// Invalidate all account's incoming / outoing mutes on return.
 		r.state.Caches.DB.UserMute.Invalidate("AccountID", accountID)

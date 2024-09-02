@@ -286,6 +286,12 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 		return err
 	}
 
+	if len(blockIDs) == 0 {
+		// Nothing
+		// to delete.
+		return nil
+	}
+
 	defer func() {
 		// Invalidate all account's incoming / outoing blocks on return.
 		r.state.Caches.DB.Block.Invalidate("AccountID", accountID)

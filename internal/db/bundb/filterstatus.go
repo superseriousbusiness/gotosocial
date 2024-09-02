@@ -99,16 +99,23 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 	// Get each filter status by ID from the cache or DB.
 	filterStatuses, err := f.state.Caches.DB.FilterStatus.LoadIDs("ID",
 		filterStatusIDs,
-		func(uncachedFilterStatusIDs []string) ([]*gtsmodel.FilterStatus, error) {
-			uncachedFilterStatuses := make([]*gtsmodel.FilterStatus, 0, len(uncachedFilterStatusIDs))
+		func(uncached []string) ([]*gtsmodel.FilterStatus, error) {
+			// Avoid querying
+			// if none uncached.
+			count := len(uncached)
+			if count == 0 {
+				return nil, nil
+			}
+
+			filterStatuses := make([]*gtsmodel.FilterStatus, 0, count)
 			if err := f.db.
 				NewSelect().
-				Model(&uncachedFilterStatuses).
-				Where("? IN (?)", bun.Ident("id"), bun.In(uncachedFilterStatusIDs)).
+				Model(&filterStatuses).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
 				Scan(ctx); err != nil {
 				return nil, err
 			}
-			return uncachedFilterStatuses, nil
+			return filterStatuses, nil
 		},
 	)
 	if err != nil {
