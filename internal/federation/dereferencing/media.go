@@ -244,6 +244,9 @@ func (d *Dereferencer) processMediaSafeley(
 			return nil, err
 		}
 
+		// Add processing media to hash map.
+		d.derefMedia[remoteURL] = processing
+
 		defer func() {
 			// Remove on finish.
 			d.derefMediaMu.Lock()

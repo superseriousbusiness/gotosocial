@@ -303,6 +303,9 @@ func (d *Dereferencer) processEmojiSafely(
 			return nil, err
 		}
 
+		// Add processing emoji media to hash map.
+		d.derefEmojis[shortcodeDomain] = processing
+
 		defer func() {
 			// Remove on finish.
 			d.derefEmojisMu.Lock()
