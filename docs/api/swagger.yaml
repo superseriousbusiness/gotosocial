@@ -10462,6 +10462,16 @@ paths:
                   in: formData
                   name: expires_in
                   type: number
+                - description: |-
+                    The action to be taken when a status matches this filter.
+
+                    Sample: warn
+                  enum:
+                    - warn
+                    - hide
+                  in: formData
+                  name: filter_action
+                  type: string
             produces:
                 - application/json
             responses:
