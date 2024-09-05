@@ -71,6 +71,16 @@ func (suite *RejectTestSuite) TestReject() {
 		)
 		return status == nil && errors.Is(err, db.ErrNoEntries)
 	})
+
+	// Wait for a copy of the status
+	// to be hurled into the sin bin.
+	testrig.WaitFor(func() bool {
+		sbStatus, err := state.DB.GetSinBinStatusByURI(
+			gtscontext.SetBarebones(ctx),
+			dbReq.InteractionURI,
+		)
+		return err == nil && sbStatus != nil
+	})
 }
 
 func TestRejectTestSuite(t *testing.T) {

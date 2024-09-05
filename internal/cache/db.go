@@ -145,6 +145,9 @@ type DBCaches struct {
 	// Report provides access to the gtsmodel Report database cache.
 	Report StructCache[*gtsmodel.Report]
 
+	// SinBinStatus provides access to the gtsmodel SinBinStatus database cache.
+	SinBinStatus StructCache[*gtsmodel.SinBinStatus]
+
 	// Status provides access to the gtsmodel Status database cache.
 	Status StructCache[*gtsmodel.Status]
 
@@ -1163,6 +1166,32 @@ func (c *Caches) initReport() {
 	c.DB.Report.Init(structr.CacheConfig[*gtsmodel.Report]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initSinBinStatus() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofSinBinStatus(), // model in-mem size.
+		config.GetCacheSinBinStatusMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.SinBinStatus) *gtsmodel.SinBinStatus {
+		s2 := new(gtsmodel.SinBinStatus)
+		*s2 = *s1
+		return s2
+	}
+
+	c.DB.SinBinStatus.Init(structr.CacheConfig[*gtsmodel.SinBinStatus]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "URI"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,

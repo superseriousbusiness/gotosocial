@@ -3712,6 +3712,31 @@ func GetCacheReportMemRatio() float64 { return global.GetCacheReportMemRatio() }
 // SetCacheReportMemRatio safely sets the value for global configuration 'Cache.ReportMemRatio' field
 func SetCacheReportMemRatio(v float64) { global.SetCacheReportMemRatio(v) }
 
+// GetCacheSinBinStatusMemRatio safely fetches the Configuration value for state's 'Cache.SinBinStatusMemRatio' field
+func (st *ConfigState) GetCacheSinBinStatusMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.SinBinStatusMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheSinBinStatusMemRatio safely sets the Configuration value for state's 'Cache.SinBinStatusMemRatio' field
+func (st *ConfigState) SetCacheSinBinStatusMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.SinBinStatusMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheSinBinStatusMemRatioFlag returns the flag name for the 'Cache.SinBinStatusMemRatio' field
+func CacheSinBinStatusMemRatioFlag() string { return "cache-sin-bin-status-mem-ratio" }
+
+// GetCacheSinBinStatusMemRatio safely fetches the value for global configuration 'Cache.SinBinStatusMemRatio' field
+func GetCacheSinBinStatusMemRatio() float64 { return global.GetCacheSinBinStatusMemRatio() }
+
+// SetCacheSinBinStatusMemRatio safely sets the value for global configuration 'Cache.SinBinStatusMemRatio' field
+func SetCacheSinBinStatusMemRatio(v float64) { global.SetCacheSinBinStatusMemRatio(v) }
+
 // GetCacheStatusMemRatio safely fetches the Configuration value for state's 'Cache.StatusMemRatio' field
 func (st *ConfigState) GetCacheStatusMemRatio() (v float64) {
 	st.mutex.RLock()

@@ -911,11 +911,6 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 }
 
 func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	// Don't delete attachments, just unattach them:
-	// this request comes from the client API and the
-	// poster may want to use attachments again later.
-	const deleteAttachments = false
-
 	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
@@ -942,8 +937,22 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	// (stops processing of remote origin data targeting this status).
 	p.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
 
-	// First perform the actual status deletion.
-	if err := p.utils.wipeStatus(ctx, status, deleteAttachments); err != nil {
+	// Don't delete attachments, just unattach them:
+	// this request comes from the client API and the
+	// poster may want to use attachments again later.
+	const deleteAttachments = false
+
+	// This is just a deletion, not a Reject,
+	// we don't need to take a copy of this status.
+	const copyToSinBin = false
+
+	// Perform the actual status deletion.
+	if err := p.utils.wipeStatus(
+		ctx,
+		status,
+		deleteAttachments,
+		copyToSinBin,
+	); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 
@@ -1275,9 +1284,23 @@ func (p *clientAPI) RejectReply(ctx context.Context, cMsg *messages.FromClientAP
 		return gtserror.Newf("db error getting rejected reply: %w", err)
 	}
 
-	// Totally wipe the status.
-	if err := p.utils.wipeStatus(ctx, status, true); err != nil {
-		return gtserror.Newf("error wiping status: %w", err)
+	// Delete attachments from this status.
+	// It's rejected so there's no possibility
+	// for the poster to delete + redraft it.
+	const deleteAttachments = true
+
+	// Keep a copy of the status in
+	// the sin bin for future review.
+	const copyToSinBin = true
+
+	// Perform the actual status deletion.
+	if err := p.utils.wipeStatus(
+		ctx,
+		status,
+		deleteAttachments,
+		copyToSinBin,
+	); err != nil {
+		log.Errorf(ctx, "error wiping reply: %v", err)
 	}
 
 	return nil
@@ -1306,9 +1329,22 @@ func (p *clientAPI) RejectAnnounce(ctx context.Context, cMsg *messages.FromClien
 		return gtserror.Newf("db error getting rejected announce: %w", err)
 	}
 
-	// Totally wipe the status.
-	if err := p.utils.wipeStatus(ctx, boost, true); err != nil {
-		return gtserror.Newf("error wiping status: %w", err)
+	// Boosts don't have attachments anyway
+	// so it doesn't matter what we set here.
+	const deleteAttachments = true
+
+	// This is just a boost, don't
+	// keep a copy in the sin bin.
+	const copyToSinBin = true
+
+	// Perform the actual status deletion.
+	if err := p.utils.wipeStatus(
+		ctx,
+		boost,
+		deleteAttachments,
+		copyToSinBin,
+	); err != nil {
+		log.Errorf(ctx, "error wiping announce: %v", err)
 	}
 
 	return nil

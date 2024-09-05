@@ -193,6 +193,7 @@ var Defaults = Configuration{
 		PollVoteMemRatio:                  2,
 		PollVoteIDsMemRatio:               2,
 		ReportMemRatio:                    1,
+		SinBinStatusMemRatio:              0.5,
 		StatusMemRatio:                    5,
 		StatusBookmarkMemRatio:            0.5,
 		StatusBookmarkIDsMemRatio:         2,
