@@ -1047,7 +1047,17 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 	return a.state.DB.GetStatusesByIDs(ctx, statusIDs)
 }
 
-func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, error) {
+func (a *accountDB) GetAccountWebStatuses(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	limit int,
+	maxID string,
+) ([]*gtsmodel.Status, error) {
+	// Check for an easy case: account exposes no statuses via the web.
+	if account.Settings.ShowWebStatuses == gtsmodel.ShowWebStatusesNone {
+		return nil, db.ErrNoEntries
+	}
+
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
@@ -1061,14 +1071,36 @@ func (a *accountDB) GetAccountWebStatuses(ctx context.Context, accountID string,
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
 		Column("status.id").
-		Where("? = ?", bun.Ident("status.account_id"), accountID).
+		Where("? = ?", bun.Ident("status.account_id"), account.ID).
 		// Don't show replies or boosts.
 		Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
-		Where("? IS NULL", bun.Ident("status.boost_of_id")).
+		Where("? IS NULL", bun.Ident("status.boost_of_id"))
+
+	// Select statuses for this account according
+	// to their ShowWebStatuses preference.
+	switch sws := account.Settings.ShowWebStatuses; sws {
+
+	case gtsmodel.ShowWebStatusesPublicOnly:
 		// Only Public statuses.
-		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
-		// Don't show local-only statuses on the web view.
-		Where("? = ?", bun.Ident("status.federated"), true)
+		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
+
+	case gtsmodel.ShowWebStatusesPublicAndUnlisted:
+		// Public or Unlocked.
+		visis := []gtsmodel.Visibility{
+			gtsmodel.VisibilityPublic,
+			gtsmodel.VisibilityUnlocked,
+		}
+		q = q.Where("? IN (?)", bun.Ident("status.visibility"), bun.In(visis))
+
+	default:
+		return nil, gtserror.Newf(
+			"unrecognized ShowWebStatuses for account %s: %d",
+			account.ID, sws,
+		)
+	}
+
+	// Don't show local-only statuses on the web view.
+	q = q.Where("? = ?", bun.Ident("status.federated"), true)
 
 	// return only statuses LOWER (ie., older) than maxID
 	if maxID == "" {

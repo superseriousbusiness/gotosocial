@@ -17,7 +17,10 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 // AccountSettings models settings / preferences for a local, non-instance account.
 type AccountSettings struct {
@@ -32,9 +35,44 @@ type AccountSettings struct {
 	CustomCSS                      string             `bun:",nullzero"`                                                   // Custom CSS that should be displayed for this Account's profile and statuses.
 	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
 	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
+	ShowWebStatuses                ShowWebStatuses    `bun:",notnull,default:0"`                                          // Visibility level of statuses that visitors can view via the web profile.
 	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.
 	InteractionPolicyMutualsOnly   *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new mutuals only visibility statuses. If null, assume default policy.
 	InteractionPolicyFollowersOnly *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new followers only visibility statuses. If null, assume default policy.
 	InteractionPolicyUnlocked      *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new unlocked visibility statuses. If null, assume default policy.
 	InteractionPolicyPublic        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new public visibility statuses. If null, assume default policy.
+}
+
+type ShowWebStatuses int
+
+const (
+	ShowWebStatusesPublicOnly = iota
+	ShowWebStatusesPublicAndUnlisted
+	ShowWebStatusesNone
+)
+
+func (wsv ShowWebStatuses) String() string {
+	switch wsv {
+	case ShowWebStatusesPublicOnly:
+		return "public_only"
+	case ShowWebStatusesPublicAndUnlisted:
+		return "public_and_unlisted"
+	case ShowWebStatusesNone:
+		return "none"
+	default:
+		panic("unknown ShowWebStatuses")
+	}
+}
+
+func ParseShowWebStatuses(in string) (ShowWebStatuses, error) {
+	switch in {
+	case "", "public_only":
+		return ShowWebStatusesPublicOnly, nil
+	case "public_and_unlisted":
+		return ShowWebStatusesPublicAndUnlisted, nil
+	case "none":
+		return ShowWebStatusesNone, nil
+	default:
+		return 0, fmt.Errorf("unrecognized ShowWebStatuses '%s'", in)
+	}
 }

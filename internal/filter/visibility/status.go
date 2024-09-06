@@ -113,9 +113,9 @@ func (f *Filter) isStatusVisible(
 	}
 
 	if requester == nil {
-		// The request is unauthed. Only federated, Public statuses are visible without auth.
-		visibleUnauthed := !status.IsLocalOnly() && status.Visibility == gtsmodel.VisibilityPublic
-		return visibleUnauthed, nil
+		// Use a different visibility
+		// heuristic for unauthed requests.
+		return f.isStatusVisibleUnauthed(ctx, status)
 	}
 
 	/*
@@ -243,6 +243,61 @@ func (f *Filter) isPendingStatusVisible(
 
 	// Nobody else can see this.
 	return false, nil
+}
+
+func (f *Filter) isStatusVisibleUnauthed(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) (bool, error) {
+	// For remote accounts, only show
+	// Public statuses via the web.
+	if status.Account.IsRemote() {
+		return status.Visibility == gtsmodel.VisibilityPublic, nil
+	}
+
+	// If status is local only,
+	// never show via the web.
+	if status.IsLocalOnly() {
+		return false, nil
+	}
+
+	// Check account's settings to see
+	// what they expose. Populate these
+	// from the DB if necessary.
+	if status.Account.Settings == nil {
+		var err error
+		status.Account.Settings, err = f.state.DB.GetAccountSettings(ctx, status.Account.ID)
+		if err != nil {
+			return false, gtserror.Newf(
+				"error getting settings for account %s: %w",
+				status.Account.ID, err,
+			)
+		}
+	}
+
+	switch sws := status.Account.Settings.ShowWebStatuses; sws {
+
+	// public_only: status must be Public.
+	case gtsmodel.ShowWebStatusesPublicOnly:
+		return status.Visibility == gtsmodel.VisibilityPublic, nil
+
+	// public_and_unlisted: status must be Public or Unlocked.
+	case gtsmodel.ShowWebStatusesPublicAndUnlisted:
+		visible := status.Visibility == gtsmodel.VisibilityPublic ||
+			status.Visibility == gtsmodel.VisibilityUnlocked
+		return visible, nil
+
+	// none: never show via the web.
+	case gtsmodel.ShowWebStatusesNone:
+		return false, nil
+
+	// Huh?
+	default:
+		return false, gtserror.Newf(
+			"unrecognized ShowWebStatuses for account %s: %d",
+			status.Account.ID, sws,
+		)
+	}
 }
 
 // areStatusAccountsVisible calls Filter{}.AccountVisible() on status author and the status boost-of (if set) author, returning visibility of status (and boost-of) to requester.

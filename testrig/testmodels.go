@@ -678,6 +678,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			Language:        "en",
 			EnableRSS:       util.Ptr(true),
 			HideCollections: util.Ptr(false),
+			ShowWebStatuses: gtsmodel.ShowWebStatusesPublicAndUnlisted,
 		},
 		"local_account_2": {
 			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",

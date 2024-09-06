@@ -330,6 +330,14 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		account.Settings.HideCollections = form.HideCollections
 	}
 
+	if form.ShowWebStatuses != nil {
+		showWebStatuses, err := gtsmodel.ParseShowWebStatuses(*form.ShowWebStatuses)
+		if err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+		account.Settings.ShowWebStatuses = showWebStatuses
+	}
+
 	if err := p.state.DB.UpdateAccount(ctx, account); err != nil {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("could not update account %s: %s", account.ID, err))
 	}
