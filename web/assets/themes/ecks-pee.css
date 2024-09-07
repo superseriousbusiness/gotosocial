@@ -120,7 +120,7 @@
 html, body {
   /* Try Atkinson, fall back to default GtS fonts */
   font-family: "Atkinson Hyperlegible", "Noto Sans", sans-serif;
-  font-size: larger;
+  font-size: large;
   text-shadow: 1px 1px 1px black;
   scrollbar-color: var(--ecks-pee-lighter-blue) var(--ecks-pee-white);
 }
