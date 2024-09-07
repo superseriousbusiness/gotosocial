@@ -52,6 +52,7 @@ User-agent: GoogleOther
 User-agent: GoogleOther-Image
 User-agent: GoogleOther-Video
 User-agent: GPTBot
+User-agent: iaskspider/2.0
 User-agent: ICC-Crawler
 User-agent: ImagesiftBot
 User-agent: img2dataset
