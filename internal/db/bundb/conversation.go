@@ -362,7 +362,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// so work around this by obtaining a new conn
 		// from the pool, and closing it when finished
 		// (thereby also cleaning up any temp tables).
-		tmpQ = "CREATE TEMPORARY TABLE ? AS (?)"
+		tmpQ = "CREATE TEMPORARY TABLE ? AS ?"
 
 		conn, cErr := c.db.Conn(ctx)
 		if cErr != nil {
@@ -559,13 +559,13 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 	// conversation other than that one, if there is such a status.
 	// Return conversation IDs for invalidation.
 	updateQ := tx.NewUpdate().
-		TableExpr("? AS ?", bun.Ident("conversations"), bun.Ident("conversation")).
+		Table("conversations").
 		TableExpr("? AS ?", bun.Ident(latestConversationStatusesTmp), bun.Ident("latest_conversation_statuses")).
-		Set("last_status_id = ?", bun.Ident("latest_conversation_statuses.id")).
-		Set("updated_at = ?", time.Now()).
-		Where("? = ?", bun.Ident("conversation.id"), bun.Ident("latest_conversation_statuses.conversation_id")).
+		Set("? = ?", bun.Ident("last_status_id"), bun.Ident("latest_conversation_statuses.id")).
+		Set("? = ?", bun.Ident("updated_at"), time.Now()).
+		Where("? = ?", bun.Ident("conversations.id"), bun.Ident("latest_conversation_statuses.conversation_id")).
 		Where("? IS NOT NULL", bun.Ident("latest_conversation_statuses.id")).
-		Returning("?", bun.Ident("conversation.id"))
+		Returning("?", bun.Ident("conversations.id"))
 	_, err = updateQ.Exec(ctx, &updatedConversationIDs)
 	if err != nil {
 		if err := tx.Rollback(); err != nil {
