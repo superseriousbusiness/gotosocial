@@ -352,7 +352,7 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	}
 
 	// Build SQLite connection address with prefs.
-	address = buildSQLiteAddress(address)
+	address, inMem := buildSQLiteAddress(address)
 
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite-gts", address)
@@ -365,7 +365,13 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	// - https://www.alexedwards.net/blog/configuring-sqldb
 	sqldb.SetMaxOpenConns(maxOpenConns()) // x number of conns per CPU
 	sqldb.SetMaxIdleConns(1)              // only keep max 1 idle connection around
-	sqldb.SetConnMaxLifetime(0)           // don't kill connections due to age
+	if inMem {
+		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
+		// Don't close aged connections as this may wipe the DB.
+		sqldb.SetConnMaxLifetime(0)
+	} else {
+		sqldb.SetConnMaxLifetime(5 * time.Minute)
+	}
 
 	db := bun.NewDB(sqldb, sqlitedialect.New())
 
@@ -485,7 +491,8 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 
 // buildSQLiteAddress will build an SQLite address string from given config input,
 // appending user defined SQLite connection preferences (e.g. cache_size, journal_mode etc).
-func buildSQLiteAddress(addr string) string {
+// The returned bool indicates whether this is an in-memory address or not.
+func buildSQLiteAddress(addr string) (string, bool) {
 	// Notes on SQLite preferences:
 	//
 	// - SQLite by itself supports setting a subset of its configuration options
@@ -543,11 +550,11 @@ func buildSQLiteAddress(addr string) string {
 	// see https://pkg.go.dev/modernc.org/sqlite#Driver.Open
 	prefs.Add("_txlock", "immediate")
 
+	inMem := false
 	if addr == ":memory:" {
-		log.Warn(nil, "using sqlite in-memory mode; all data will be deleted when gts shuts down; this mode should only be used for debugging or running tests")
-
 		// Use random name for in-memory instead of ':memory:', so
 		// multiple in-mem databases can be created without conflict.
+		inMem = true
 		addr = "/" + uuid.NewString()
 		prefs.Add("vfs", "memdb")
 	}
@@ -581,5 +588,5 @@ func buildSQLiteAddress(addr string) string {
 	b.WriteString(addr)
 	b.WriteString("?")
 	b.WriteString(prefs.Encode())
-	return b.String()
+	return b.String(), inMem
 }
