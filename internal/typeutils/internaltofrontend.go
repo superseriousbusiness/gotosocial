@@ -2031,6 +2031,7 @@ func (c *Converter) ListToAPIList(ctx context.Context, l *gtsmodel.List) (*apimo
 		ID:            l.ID,
 		Title:         l.Title,
 		RepliesPolicy: string(l.RepliesPolicy),
+		Exclusive:     *l.Exclusive,
 	}, nil
 }
 

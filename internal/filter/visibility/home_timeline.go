@@ -31,6 +31,7 @@ import (
 )
 
 // StatusHomeTimelineable checks if given status should be included on owner's home timeline. Primarily relying on status visibility to owner and the AP visibility setting, but also taking into account thread replies etc.
+// Despite the name, statuses that ultimately end up in exclusive lists also need to be home-timelineable.
 func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Account, status *gtsmodel.Status) (bool, error) {
 	const vtype = cache.VisibilityTypeHome
 

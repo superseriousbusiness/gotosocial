@@ -2554,6 +2554,7 @@ func NewTestLists() map[string]*gtsmodel.List {
 			Title:         "Cool Ass Posters From This Instance",
 			AccountID:     "01F8MH1H7YV1Z7D2C8K2730QBF",
 			RepliesPolicy: gtsmodel.RepliesPolicyFollowed,
+			Exclusive:     util.Ptr(false),
 		},
 	}
 }

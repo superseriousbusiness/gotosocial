@@ -89,7 +89,7 @@ func (suite *ListsTestSuite) getLists(targetAccountID string, expectedHTTPStatus
 
 func (suite *ListsTestSuite) TestGetListsHit() {
 	targetAccount := suite.testAccounts["admin_account"]
-	suite.getLists(targetAccount.ID, http.StatusOK, `[{"id":"01H0G8E4Q2J3FE3JDWJVWEDCD1","title":"Cool Ass Posters From This Instance","replies_policy":"followed"}]`)
+	suite.getLists(targetAccount.ID, http.StatusOK, `[{"id":"01H0G8E4Q2J3FE3JDWJVWEDCD1","title":"Cool Ass Posters From This Instance","replies_policy":"followed","exclusive":false}]`)
 }
 
 func (suite *ListsTestSuite) TestGetListsNoHit() {

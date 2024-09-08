@@ -34,7 +34,7 @@ import (
 )
 
 // timelineAndNotifyStatus inserts the given status into the HOME
-// and LIST timelines of accounts that follow the status author,
+// and/or LIST timelines of accounts that follow the status author,
 // as well as the HOME timelines of accounts that follow tags used by the status.
 //
 // It will also handle notifications for any mentions attached to
@@ -100,6 +100,7 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 // new status, if the status is eligible for notification.
 //
 // Returns a list of accounts which had this status inserted into their home timelines.
+// This will be used to prevent duplicate inserts when handling followed tags.
 func (s *Surface) timelineAndNotifyStatusForFollowers(
 	ctx context.Context,
 	status *gtsmodel.Status,
@@ -118,8 +119,13 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 		// it's a reblog, whether follower account wants to see reblogs.
 		//
 		// If it's not timelineable, we can just stop early, since lists
-		// are prettymuch subsets of the home timeline, so if it shouldn't
+		// are pretty much subsets of the home timeline, so if it shouldn't
 		// appear there, it shouldn't appear in lists either.
+		//
+		// Exclusive lists don't change this:
+		// if something is hometimelineable according to this filter,
+		// it's also eligible to appear in exclusive lists,
+		// even if it ultimately doesn't appear on the home timeline.
 		timelineable, err := s.VisFilter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
@@ -141,7 +147,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 
 		// Add status to any relevant lists
 		// for this follow, if applicable.
-		s.listTimelineStatusForFollow(
+		exclusive, listTimelined := s.listTimelineStatusForFollow(
 			ctx,
 			status,
 			follow,
@@ -152,27 +158,32 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 
 		// Add status to home timeline for owner
 		// of this follow, if applicable.
-		homeTimelined, err := s.timelineStatus(
-			ctx,
-			s.State.Timelines.Home.IngestOne,
-			follow.AccountID, // home timelines are keyed by account ID
-			follow.Account,
-			status,
-			stream.TimelineHome,
-			filters,
-			mutes,
-		)
-		if err != nil {
-			errs.Appendf("error home timelining status: %w", err)
-			continue
+		homeTimelined := false
+		if !exclusive {
+			homeTimelined, err = s.timelineStatus(
+				ctx,
+				s.State.Timelines.Home.IngestOne,
+				follow.AccountID, // home timelines are keyed by account ID
+				follow.Account,
+				status,
+				stream.TimelineHome,
+				filters,
+				mutes,
+			)
+			if err != nil {
+				errs.Appendf("error home timelining status: %w", err)
+				continue
+			}
+			if homeTimelined {
+				homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
+			}
 		}
 
-		if !homeTimelined {
-			// If status wasn't added to home
-			// timeline, we shouldn't notify it.
+		if !(homeTimelined || listTimelined) {
+			// If status wasn't added to home or list
+			// timelines, we shouldn't notify it.
 			continue
 		}
-		homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
 
 		if !*follow.Notify {
 			// This follower doesn't have notifs
@@ -188,7 +199,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 		// If we reach here, we know:
 		//
 		//   - This status is hometimelineable.
-		//   - This status was added to the home timeline for this follower.
+		//   - This status was added to the home timeline and/or list timelines for this follower.
 		//   - This follower wants to be notified when this account posts.
 		//   - This is a top-level post (not a reply or boost).
 		//
@@ -208,6 +219,10 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 
 // listTimelineStatusForFollow puts the given status
 // in any eligible lists owned by the given follower.
+//
+// It returns whether the status was added to any lists,
+// and whether the status author is on any exclusive lists
+// (in which case the status shouldn't be added to the home timeline).
 func (s *Surface) listTimelineStatusForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
@@ -215,7 +230,7 @@ func (s *Surface) listTimelineStatusForFollow(
 	errs *gtserror.MultiError,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-) {
+) (bool, bool) {
 	// To put this status in appropriate list timelines,
 	// we need to get each listEntry that pertains to
 	// this follow. Then, we want to iterate through all
@@ -223,18 +238,10 @@ func (s *Surface) listTimelineStatusForFollow(
 	// that the entry belongs to if it meets criteria for
 	// inclusion in the list.
 
-	// Get every list entry that targets this follow's ID.
-	listEntries, err := s.State.DB.GetListEntriesForFollowID(
-		// We only need the list IDs.
-		gtscontext.SetBarebones(ctx),
-		follow.ID,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("error getting list entries: %w", err)
-		return
-	}
+	listEntries, exclusive := s.getListEntriesAndExclusive(ctx, follow, errs)
 
 	// Check eligibility for each list entry (if any).
+	listTimelined := false
 	for _, listEntry := range listEntries {
 		eligible, err := s.listEligible(ctx, listEntry, status)
 		if err != nil {
@@ -250,7 +257,7 @@ func (s *Surface) listTimelineStatusForFollow(
 		// At this point we are certain this status
 		// should be included in the timeline of the
 		// list that this list entry belongs to.
-		if _, err := s.timelineStatus(
+		timelined, err := s.timelineStatus(
 			ctx,
 			s.State.Timelines.List.IngestOne,
 			listEntry.ListID, // list timelines are keyed by list ID
@@ -259,11 +266,60 @@ func (s *Surface) listTimelineStatusForFollow(
 			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
 			filters,
 			mutes,
-		); err != nil {
+		)
+		if err != nil {
 			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
 			// implicit continue
 		}
+		if timelined {
+			listTimelined = true
+		}
 	}
+
+	return exclusive, listTimelined
+}
+
+// getListEntriesAndExclusive returns list entries for a given follow,
+// and whether any of them belong to exclusive lists.
+func (s *Surface) getListEntriesAndExclusive(
+	ctx context.Context,
+	follow *gtsmodel.Follow,
+	errs *gtserror.MultiError,
+) ([]*gtsmodel.ListEntry, bool) {
+	// Get every list entry that targets this follow's ID.
+	listEntries, err := s.State.DB.GetListEntriesForFollowID(
+		// We only need the list IDs.
+		gtscontext.SetBarebones(ctx),
+		follow.ID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		errs.Appendf("error getting list entries: %w", err)
+		return nil, false
+	}
+
+	// Determine whether this follow is a member of any exclusive lists.
+	exclusive := false
+	listIDs := make([]string, 0, len(listEntries))
+	for _, listEntry := range listEntries {
+		listIDs = append(listIDs, listEntry.ListID)
+	}
+	lists, err := s.State.DB.GetListsByIDs(
+		// We only need the list exclusive flags.
+		gtscontext.SetBarebones(ctx),
+		listIDs,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		errs.Appendf("error getting lists for list entries: %w", err)
+		return nil, false
+	}
+	for _, list := range lists {
+		if *list.Exclusive {
+			exclusive = true
+			break
+		}
+	}
+
+	return listEntries, exclusive
 }
 
 // getFiltersAndMutes returns an account's filters and mutes.
@@ -643,8 +699,13 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 		// it's a reblog, whether follower account wants to see reblogs.
 		//
 		// If it's not timelineable, we can just stop early, since lists
-		// are prettymuch subsets of the home timeline, so if it shouldn't
+		// are pretty much subsets of the home timeline, so if it shouldn't
 		// appear there, it shouldn't appear in lists either.
+		//
+		// Exclusive lists don't change this:
+		// if something is hometimelineable according to this filter,
+		// it's also eligible to appear in exclusive lists,
+		// even if it ultimately doesn't appear on the home timeline.
 		timelineable, err := s.VisFilter.StatusHomeTimelineable(
 			ctx, follow.Account, status,
 		)
@@ -666,7 +727,7 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 
 		// Add status to any relevant lists
 		// for this follow, if applicable.
-		s.listTimelineStatusUpdateForFollow(
+		exclusive := s.listTimelineStatusUpdateForFollow(
 			ctx,
 			status,
 			follow,
@@ -677,21 +738,22 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 
 		// Add status to home timeline for owner
 		// of this follow, if applicable.
-		homeTimelined, err := s.timelineStreamStatusUpdate(
-			ctx,
-			follow.Account,
-			status,
-			stream.TimelineHome,
-			filters,
-			mutes,
-		)
-		if err != nil {
-			errs.Appendf("error home timelining status: %w", err)
-			continue
-		}
-
-		if homeTimelined {
-			homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
+		if !exclusive {
+			homeTimelined, err := s.timelineStreamStatusUpdate(
+				ctx,
+				follow.Account,
+				status,
+				stream.TimelineHome,
+				filters,
+				mutes,
+			)
+			if err != nil {
+				errs.Appendf("error home timelining status: %w", err)
+				continue
+			}
+			if homeTimelined {
+				homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
+			}
 		}
 	}
 
@@ -700,6 +762,9 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 
 // listTimelineStatusUpdateForFollow pushes edits of the given status
 // into any eligible lists streams opened by the given follower.
+//
+// It returns whether the status author is on any exclusive lists
+// (in which case the status shouldn't be added to the home timeline).
 func (s *Surface) listTimelineStatusUpdateForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
@@ -707,7 +772,7 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	errs *gtserror.MultiError,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-) {
+) bool {
 	// To put this status in appropriate list timelines,
 	// we need to get each listEntry that pertains to
 	// this follow. Then, we want to iterate through all
@@ -715,16 +780,7 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	// that the entry belongs to if it meets criteria for
 	// inclusion in the list.
 
-	// Get every list entry that targets this follow's ID.
-	listEntries, err := s.State.DB.GetListEntriesForFollowID(
-		// We only need the list IDs.
-		gtscontext.SetBarebones(ctx),
-		follow.ID,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("error getting list entries: %w", err)
-		return
-	}
+	listEntries, exclusive := s.getListEntriesAndExclusive(ctx, follow, errs)
 
 	// Check eligibility for each list entry (if any).
 	for _, listEntry := range listEntries {
@@ -754,6 +810,8 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 			// implicit continue
 		}
 	}
+
+	return exclusive
 }
 
 // timelineStatusUpdate streams the edited status to the user using the
