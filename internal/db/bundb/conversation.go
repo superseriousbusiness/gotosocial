@@ -342,8 +342,6 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// Method of creating + dropping temp
 		// tables differs depending on driver.
 		tmpQ string
-		tx   bun.Tx
-		err  error
 	)
 
 	if c.db.Dialect().Name() == dialect.PG {
@@ -352,264 +350,216 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		// use any connection from the pool without
 		// caring what happens to it when we're done.
 		tmpQ = "CREATE TEMPORARY TABLE ? ON COMMIT DROP AS (?)"
-
-		// Instantiate tx from the pool.
-		tx, err = c.db.BeginTx(ctx, nil)
 	} else {
 		// On SQLite, we can't instruct SQLite to drop
 		// temp tables on commit, and we can't manually
-		// drop temp tables without triggering a bug,
-		// so work around this by obtaining a new conn
-		// from the pool, and closing it when finished
-		// (thereby also cleaning up any temp tables).
+		// drop temp tables without triggering a bug.
+		// So we leave the temp tables alone, in the
+		// knowledge they'll be cleaned up when this
+		// connection gets recycled (in max 5min).
 		tmpQ = "CREATE TEMPORARY TABLE ? AS ?"
+	}
 
-		conn, cErr := c.db.Conn(ctx)
-		if cErr != nil {
+	c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// First delete this status from
+		// conversation-to-status links.
+		_, err := tx.
+			NewDelete().
+			Table("conversation_to_statuses").
+			Where("? = ?", bun.Ident("status_id"), statusID).
+			Exec(ctx)
+		if err != nil {
 			return gtserror.Newf(
-				"error getting conn while deleting status %s: %w",
-				statusID, cErr,
+				"error deleting conversation-to-status links while deleting status %s: %w",
+				statusID, err,
 			)
 		}
-		defer func() {
-			if err := conn.Close(); err != nil {
-				log.Errorf(ctx, "error closing conn: %v", err)
-			}
-		}()
 
-		// Instantiate tx from the new conn.
-		tx, err = conn.BeginTx(ctx, nil)
-	}
+		// Note: Bun doesn't currently support `CREATE TABLE … AS SELECT …`
+		// so we need to use raw queries to create temporary tables.
 
-	if err != nil {
-		return gtserror.Newf(
-			"error starting transaction while deleting status %s: %w",
-			statusID, err,
-		)
-	}
-
-	// From this point on, we *must* trigger
-	// tx.Rollback before returning on error.
-
-	// First delete this status from
-	// conversation-to-status links.
-	_, err = tx.
-		NewDelete().
-		Table("conversation_to_statuses").
-		Where("? = ?", bun.Ident("status_id"), statusID).
-		Exec(ctx)
-	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			log.Errorf(ctx, "error rolling back: %v", err)
-		}
-		return gtserror.Newf(
-			"error deleting conversation-to-status links while deleting status %s: %w",
-			statusID, err,
-		)
-	}
-
-	// Note: Bun doesn't currently support `CREATE TABLE … AS SELECT …`
-	// so we need to use raw queries to create temporary tables.
-
-	// Create a temporary table containing all statuses other than
-	// the deleted status, in each conversation for which the deleted
-	// status is the last status, if there are such statuses.
-	//
-	// This will produce a query like:
-	//
-	//	CREATE TEMPORARY TABLE "conversation_statuses_01J78T2AR0YCZ4YR12WSCZ608S"
-	//	  AS (
-	//	    SELECT
-	//	      "conversations"."id" AS "conversation_id",
-	//	      "conversation_to_statuses"."status_id" AS "id",
-	//	      "statuses"."created_at"
-	//	    FROM
-	//	      "conversations"
-	//	      LEFT JOIN "conversation_to_statuses" ON (
-	//	        "conversations"."id" = "conversation_to_statuses"."conversation_id"
-	//	      )
-	//	      AND (
-	//	        "conversation_to_statuses"."status_id" != '01J78T2BQ4TN5S2XSC9VNQ5GBS'
-	//	      )
-	//	      LEFT JOIN "statuses" ON (
-	//	        "conversation_to_statuses"."status_id" = "statuses"."id"
-	//	      )
-	//	    WHERE
-	//	      (
-	//	        "conversations"."last_status_id" = '01J78T2BQ4TN5S2XSC9VNQ5GBS'
-	//	      )
-	//	  )
-	conversationStatusesTmp := "conversation_statuses_" + id.NewULID()
-	conversationStatusesTmpQ := tx.NewRaw(
-		tmpQ,
-		bun.Ident(conversationStatusesTmp),
-		tx.NewSelect().
-			ColumnExpr(
-				"? AS ?",
-				bun.Ident("conversations.id"),
-				bun.Ident("conversation_id"),
-			).
-			ColumnExpr(
-				"? AS ?",
-				bun.Ident("conversation_to_statuses.status_id"),
-				bun.Ident("id"),
-			).
-			Column("statuses.created_at").
-			Table("conversations").
-			Join("LEFT JOIN ?", bun.Ident("conversation_to_statuses")).
-			JoinOn(
-				"? = ?",
-				bun.Ident("conversations.id"),
-				bun.Ident("conversation_to_statuses.conversation_id"),
-			).
-			JoinOn(
-				"? != ?",
-				bun.Ident("conversation_to_statuses.status_id"),
-				statusID,
-			).
-			Join("LEFT JOIN ?", bun.Ident("statuses")).
-			JoinOn(
-				"? = ?",
-				bun.Ident("conversation_to_statuses.status_id"),
-				bun.Ident("statuses.id"),
-			).
-			Where(
-				"? = ?",
-				bun.Ident("conversations.last_status_id"),
-				statusID,
-			),
-	)
-	_, err = conversationStatusesTmpQ.Exec(ctx)
-	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			log.Errorf(ctx, "error rolling back: %v", err)
-		}
-		return gtserror.Newf(
-			"error creating temp table %s while deleting status %s: %w",
-			conversationStatusesTmp, statusID, err,
-		)
-	}
-
-	// Create a temporary table with the most recently created
-	// status in each conversation for which the deleted status
-	// is the last status, if there is such a status.
-	//
-	// This will produce a query like:
-	//
-	//	CREATE TEMPORARY TABLE "latest_conversation_statuses_01J78T2AR0E46SJSH6C7NRZ7MR"
-	//	  AS (
-	//	    SELECT
-	//	      "conversation_statuses"."conversation_id",
-	//	      "conversation_statuses"."id"
-	//	    FROM
-	//	      "conversation_statuses_01J78T2AR0YCZ4YR12WSCZ608S" AS "conversation_statuses"
-	//	      LEFT JOIN "conversation_statuses_01J78T2AR0YCZ4YR12WSCZ608S" AS "later_statuses" ON (
-	//	        "conversation_statuses"."conversation_id" = "later_statuses"."conversation_id"
-	//	      )
-	//	      AND (
-	//	        "later_statuses"."created_at" > "conversation_statuses"."created_at"
-	//	      )
-	//	    WHERE
-	//	      ("later_statuses"."id" IS NULL)
-	//	  )
-	latestConversationStatusesTmp := "latest_conversation_statuses_" + id.NewULID()
-	latestConversationStatusesTmpQ := tx.NewRaw(
-		tmpQ,
-		bun.Ident(latestConversationStatusesTmp),
-		tx.NewSelect().
-			Column(
-				"conversation_statuses.conversation_id",
-				"conversation_statuses.id",
-			).
-			TableExpr(
-				"? AS ?",
-				bun.Ident(conversationStatusesTmp),
-				bun.Ident("conversation_statuses"),
-			).
-			Join(
-				"LEFT JOIN ? AS ?",
-				bun.Ident(conversationStatusesTmp),
-				bun.Ident("later_statuses"),
-			).
-			JoinOn(
-				"? = ?",
-				bun.Ident("conversation_statuses.conversation_id"),
-				bun.Ident("later_statuses.conversation_id"),
-			).
-			JoinOn(
-				"? > ?",
-				bun.Ident("later_statuses.created_at"),
-				bun.Ident("conversation_statuses.created_at"),
-			).
-			Where("? IS NULL", bun.Ident("later_statuses.id")),
-	)
-	_, err = latestConversationStatusesTmpQ.Exec(ctx)
-	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			log.Errorf(ctx, "error rolling back: %v", err)
-		}
-		return gtserror.Newf(
-			"error creating temp table %s while deleting status %s: %w",
-			conversationStatusesTmp, statusID, err,
-		)
-	}
-
-	// For every conversation where the given status was the last one,
-	// reset its last status to the most recently created in the
-	// conversation other than that one, if there is such a status.
-	// Return conversation IDs for invalidation.
-	updateQ := tx.NewUpdate().
-		Table("conversations").
-		TableExpr("? AS ?", bun.Ident(latestConversationStatusesTmp), bun.Ident("latest_conversation_statuses")).
-		Set("? = ?", bun.Ident("last_status_id"), bun.Ident("latest_conversation_statuses.id")).
-		Set("? = ?", bun.Ident("updated_at"), time.Now()).
-		Where("? = ?", bun.Ident("conversations.id"), bun.Ident("latest_conversation_statuses.conversation_id")).
-		Where("? IS NOT NULL", bun.Ident("latest_conversation_statuses.id")).
-		Returning("?", bun.Ident("conversations.id"))
-	_, err = updateQ.Exec(ctx, &updatedConversationIDs)
-	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			log.Errorf(ctx, "error rolling back: %v", err)
-		}
-		return gtserror.Newf(
-			"error rolling back last status for conversation while deleting status %s: %w",
-			statusID, err,
-		)
-	}
-
-	// If there is no such status,
-	// just delete the conversation.
-	// Return IDs for invalidation.
-	_, err = tx.
-		NewDelete().
-		Table("conversations").
-		Where(
-			"? IN (?)",
-			bun.Ident("id"),
+		// Create a temporary table containing all statuses other than
+		// the deleted status, in each conversation for which the deleted
+		// status is the last status, if there are such statuses.
+		//
+		// This will produce a query like:
+		//
+		//	CREATE TEMPORARY TABLE "conversation_statuses_01J78T2AR0YCZ4YR12WSCZ608S"
+		//	  AS (
+		//	    SELECT
+		//	      "conversations"."id" AS "conversation_id",
+		//	      "conversation_to_statuses"."status_id" AS "id",
+		//	      "statuses"."created_at"
+		//	    FROM
+		//	      "conversations"
+		//	      LEFT JOIN "conversation_to_statuses" ON (
+		//	        "conversations"."id" = "conversation_to_statuses"."conversation_id"
+		//	      )
+		//	      AND (
+		//	        "conversation_to_statuses"."status_id" != '01J78T2BQ4TN5S2XSC9VNQ5GBS'
+		//	      )
+		//	      LEFT JOIN "statuses" ON (
+		//	        "conversation_to_statuses"."status_id" = "statuses"."id"
+		//	      )
+		//	    WHERE
+		//	      (
+		//	        "conversations"."last_status_id" = '01J78T2BQ4TN5S2XSC9VNQ5GBS'
+		//	      )
+		//	  )
+		conversationStatusesTmp := "conversation_statuses_" + id.NewULID()
+		conversationStatusesTmpQ := tx.NewRaw(
+			tmpQ,
+			bun.Ident(conversationStatusesTmp),
 			tx.NewSelect().
-				Table(latestConversationStatusesTmp).
-				Column("conversation_id").
-				Where("? IS NULL", bun.Ident("id")),
-		).
-		Returning("?", bun.Ident("id")).
-		Exec(ctx, &deletedConversationIDs)
-	if err != nil {
-		if err := tx.Rollback(); err != nil {
-			log.Errorf(ctx, "error rolling back: %v", err)
+				ColumnExpr(
+					"? AS ?",
+					bun.Ident("conversations.id"),
+					bun.Ident("conversation_id"),
+				).
+				ColumnExpr(
+					"? AS ?",
+					bun.Ident("conversation_to_statuses.status_id"),
+					bun.Ident("id"),
+				).
+				Column("statuses.created_at").
+				Table("conversations").
+				Join("LEFT JOIN ?", bun.Ident("conversation_to_statuses")).
+				JoinOn(
+					"? = ?",
+					bun.Ident("conversations.id"),
+					bun.Ident("conversation_to_statuses.conversation_id"),
+				).
+				JoinOn(
+					"? != ?",
+					bun.Ident("conversation_to_statuses.status_id"),
+					statusID,
+				).
+				Join("LEFT JOIN ?", bun.Ident("statuses")).
+				JoinOn(
+					"? = ?",
+					bun.Ident("conversation_to_statuses.status_id"),
+					bun.Ident("statuses.id"),
+				).
+				Where(
+					"? = ?",
+					bun.Ident("conversations.last_status_id"),
+					statusID,
+				),
+		)
+		_, err = conversationStatusesTmpQ.Exec(ctx)
+		if err != nil {
+			return gtserror.Newf(
+				"error creating temp table %s while deleting status %s: %w",
+				conversationStatusesTmp, statusID, err,
+			)
 		}
-		return gtserror.Newf(
-			"error deleting conversation while deleting status %s: %w",
-			statusID, err,
-		)
-	}
 
-	// We're done, commit everything.
-	if err := tx.Commit(); err != nil {
-		return gtserror.Newf(
-			"error committing transaction while deleting status %s: %w",
-			statusID, err,
+		// Create a temporary table with the most recently created
+		// status in each conversation for which the deleted status
+		// is the last status, if there is such a status.
+		//
+		// This will produce a query like:
+		//
+		//	CREATE TEMPORARY TABLE "latest_conversation_statuses_01J78T2AR0E46SJSH6C7NRZ7MR"
+		//	  AS (
+		//	    SELECT
+		//	      "conversation_statuses"."conversation_id",
+		//	      "conversation_statuses"."id"
+		//	    FROM
+		//	      "conversation_statuses_01J78T2AR0YCZ4YR12WSCZ608S" AS "conversation_statuses"
+		//	      LEFT JOIN "conversation_statuses_01J78T2AR0YCZ4YR12WSCZ608S" AS "later_statuses" ON (
+		//	        "conversation_statuses"."conversation_id" = "later_statuses"."conversation_id"
+		//	      )
+		//	      AND (
+		//	        "later_statuses"."created_at" > "conversation_statuses"."created_at"
+		//	      )
+		//	    WHERE
+		//	      ("later_statuses"."id" IS NULL)
+		//	  )
+		latestConversationStatusesTmp := "latest_conversation_statuses_" + id.NewULID()
+		latestConversationStatusesTmpQ := tx.NewRaw(
+			tmpQ,
+			bun.Ident(latestConversationStatusesTmp),
+			tx.NewSelect().
+				Column(
+					"conversation_statuses.conversation_id",
+					"conversation_statuses.id",
+				).
+				TableExpr(
+					"? AS ?",
+					bun.Ident(conversationStatusesTmp),
+					bun.Ident("conversation_statuses"),
+				).
+				Join(
+					"LEFT JOIN ? AS ?",
+					bun.Ident(conversationStatusesTmp),
+					bun.Ident("later_statuses"),
+				).
+				JoinOn(
+					"? = ?",
+					bun.Ident("conversation_statuses.conversation_id"),
+					bun.Ident("later_statuses.conversation_id"),
+				).
+				JoinOn(
+					"? > ?",
+					bun.Ident("later_statuses.created_at"),
+					bun.Ident("conversation_statuses.created_at"),
+				).
+				Where("? IS NULL", bun.Ident("later_statuses.id")),
 		)
-	}
+		_, err = latestConversationStatusesTmpQ.Exec(ctx)
+		if err != nil {
+			return gtserror.Newf(
+				"error creating temp table %s while deleting status %s: %w",
+				conversationStatusesTmp, statusID, err,
+			)
+		}
+
+		// For every conversation where the given status was the last one,
+		// reset its last status to the most recently created in the
+		// conversation other than that one, if there is such a status.
+		// Return conversation IDs for invalidation.
+		updateQ := tx.NewUpdate().
+			Table("conversations").
+			TableExpr("? AS ?", bun.Ident(latestConversationStatusesTmp), bun.Ident("latest_conversation_statuses")).
+			Set("? = ?", bun.Ident("last_status_id"), bun.Ident("latest_conversation_statuses.id")).
+			Set("? = ?", bun.Ident("updated_at"), time.Now()).
+			Where("? = ?", bun.Ident("conversations.id"), bun.Ident("latest_conversation_statuses.conversation_id")).
+			Where("? IS NOT NULL", bun.Ident("latest_conversation_statuses.id")).
+			Returning("?", bun.Ident("conversations.id"))
+		_, err = updateQ.Exec(ctx, &updatedConversationIDs)
+		if err != nil {
+			return gtserror.Newf(
+				"error rolling back last status for conversation while deleting status %s: %w",
+				statusID, err,
+			)
+		}
+
+		// If there is no such status,
+		// just delete the conversation.
+		// Return IDs for invalidation.
+		_, err = tx.
+			NewDelete().
+			Table("conversations").
+			Where(
+				"? IN (?)",
+				bun.Ident("id"),
+				tx.NewSelect().
+					Table(latestConversationStatusesTmp).
+					Column("conversation_id").
+					Where("? IS NULL", bun.Ident("id")),
+			).
+			Returning("?", bun.Ident("id")).
+			Exec(ctx, &deletedConversationIDs)
+		if err != nil {
+			return gtserror.Newf(
+				"error deleting conversation while deleting status %s: %w",
+				statusID, err,
+			)
+		}
+
+		return nil
+	})
 
 	// Invalidate cache entries.
 	updatedConversationIDs = append(updatedConversationIDs, deletedConversationIDs...)
