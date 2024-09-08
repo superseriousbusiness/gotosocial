@@ -360,7 +360,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		tmpQ = "CREATE TEMPORARY TABLE ? AS ?"
 	}
 
-	c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	if err := c.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// First delete this status from
 		// conversation-to-status links.
 		_, err := tx.
@@ -559,7 +559,9 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
 
 	// Invalidate cache entries.
 	updatedConversationIDs = append(updatedConversationIDs, deletedConversationIDs...)
