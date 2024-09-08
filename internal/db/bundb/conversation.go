@@ -336,10 +336,8 @@ func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context
 
 func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, statusID string) error {
 	var (
-		updatedConversationIDs        = []string{}
-		deletedConversationIDs        = []string{}
-		conversationStatusesTmp       = "conversation_statuses_" + id.NewULID()
-		latestConversationStatusesTmp = "latest_conversation_statuses_" + id.NewULID()
+		updatedConversationIDs = []string{}
+		deletedConversationIDs = []string{}
 
 		// Method of creating + dropping temp
 		// tables differs depending on driver.
@@ -441,6 +439,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 	//	        "conversations"."last_status_id" = '01J78T2BQ4TN5S2XSC9VNQ5GBS'
 	//	      )
 	//	  )
+	conversationStatusesTmp := "conversation_statuses_" + id.NewULID()
 	conversationStatusesTmpQ := tx.NewRaw(
 		tmpQ,
 		bun.Ident(conversationStatusesTmp),
@@ -513,7 +512,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 	//	    WHERE
 	//	      ("later_statuses"."id" IS NULL)
 	//	  )
-
+	latestConversationStatusesTmp := "latest_conversation_statuses_" + id.NewULID()
 	latestConversationStatusesTmpQ := tx.NewRaw(
 		tmpQ,
 		bun.Ident(latestConversationStatusesTmp),
