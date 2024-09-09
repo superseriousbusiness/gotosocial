@@ -1090,7 +1090,7 @@ golang.org/x/exp/slices
 golang.org/x/exp/slog
 golang.org/x/exp/slog/internal
 golang.org/x/exp/slog/internal/buffer
-# golang.org/x/image v0.19.0
+# golang.org/x/image v0.20.0
 ## explicit; go 1.18
 golang.org/x/image/riff
 golang.org/x/image/vp8
