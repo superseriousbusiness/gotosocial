@@ -238,7 +238,14 @@ func (s *Surface) listTimelineStatusForFollow(
 	// that the entry belongs to if it meets criteria for
 	// inclusion in the list.
 
-	listEntries, exclusive := s.getListEntriesAndExclusive(ctx, follow, errs)
+	listEntries, err := s.getListEntries(ctx, follow)
+	if err != nil {
+		errs.Append(err)
+	}
+	exclusive, err := s.isAnyListExclusive(ctx, listEntries)
+	if err != nil {
+		errs.Append(err)
+	}
 
 	// Check eligibility for each list entry (if any).
 	listTimelined := false
@@ -271,21 +278,14 @@ func (s *Surface) listTimelineStatusForFollow(
 			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
 			// implicit continue
 		}
-		if timelined {
-			listTimelined = true
-		}
+		listTimelined = listTimelined || timelined
 	}
 
 	return exclusive, listTimelined
 }
 
-// getListEntriesAndExclusive returns list entries for a given follow,
-// and whether any of them belong to exclusive lists.
-func (s *Surface) getListEntriesAndExclusive(
-	ctx context.Context,
-	follow *gtsmodel.Follow,
-	errs *gtserror.MultiError,
-) ([]*gtsmodel.ListEntry, bool) {
+// getListEntries returns list entries for a given follow.
+func (s *Surface) getListEntries(ctx context.Context, follow *gtsmodel.Follow) ([]*gtsmodel.ListEntry, error) {
 	// Get every list entry that targets this follow's ID.
 	listEntries, err := s.State.DB.GetListEntriesForFollowID(
 		// We only need the list IDs.
@@ -293,12 +293,17 @@ func (s *Surface) getListEntriesAndExclusive(
 		follow.ID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("error getting list entries: %w", err)
-		return nil, false
+		return nil, gtserror.Newf("DB error getting list entries: %v", err)
+	}
+	return listEntries, nil
+}
+
+// isAnyListExclusive determines whether any provided list entry corresponds to an exclusive list.
+func (s *Surface) isAnyListExclusive(ctx context.Context, listEntries []*gtsmodel.ListEntry) (bool, error) {
+	if len(listEntries) == 0 {
+		return false, nil
 	}
 
-	// Determine whether this follow is a member of any exclusive lists.
-	exclusive := false
 	listIDs := make([]string, 0, len(listEntries))
 	for _, listEntry := range listEntries {
 		listIDs = append(listIDs, listEntry.ListID)
@@ -309,17 +314,18 @@ func (s *Surface) getListEntriesAndExclusive(
 		listIDs,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("error getting lists for list entries: %w", err)
-		return nil, false
+		return false, gtserror.Newf("DB error getting lists for list entries: %v", err)
+	}
+
+	if len(lists) == 0 {
+		return false, nil
 	}
 	for _, list := range lists {
 		if *list.Exclusive {
-			exclusive = true
-			break
+			return true, nil
 		}
 	}
-
-	return listEntries, exclusive
+	return false, nil
 }
 
 // getFiltersAndMutes returns an account's filters and mutes.
@@ -736,24 +742,26 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			mutes,
 		)
 
+		if exclusive {
+			continue
+		}
+
 		// Add status to home timeline for owner
 		// of this follow, if applicable.
-		if !exclusive {
-			homeTimelined, err := s.timelineStreamStatusUpdate(
-				ctx,
-				follow.Account,
-				status,
-				stream.TimelineHome,
-				filters,
-				mutes,
-			)
-			if err != nil {
-				errs.Appendf("error home timelining status: %w", err)
-				continue
-			}
-			if homeTimelined {
-				homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
-			}
+		homeTimelined, err := s.timelineStreamStatusUpdate(
+			ctx,
+			follow.Account,
+			status,
+			stream.TimelineHome,
+			filters,
+			mutes,
+		)
+		if err != nil {
+			errs.Appendf("error home timelining status: %w", err)
+			continue
+		}
+		if homeTimelined {
+			homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
 		}
 	}
 
@@ -780,7 +788,14 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	// that the entry belongs to if it meets criteria for
 	// inclusion in the list.
 
-	listEntries, exclusive := s.getListEntriesAndExclusive(ctx, follow, errs)
+	listEntries, err := s.getListEntries(ctx, follow)
+	if err != nil {
+		errs.Append(err)
+	}
+	exclusive, err := s.isAnyListExclusive(ctx, listEntries)
+	if err != nil {
+		errs.Append(err)
+	}
 
 	// Check eligibility for each list entry (if any).
 	for _, listEntry := range listEntries {

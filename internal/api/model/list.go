@@ -32,7 +32,7 @@ type List struct {
 	RepliesPolicy string `json:"replies_policy"`
 	// Exclusive setting for this list.
 	// If true, hide posts from members of this list from your home timeline.
-	Exclusive bool `form:"exclusive" json:"exclusive" xml:"exclusive"`
+	Exclusive bool `json:"exclusive"`
 }
 
 // ListCreateRequest models list creation parameters.

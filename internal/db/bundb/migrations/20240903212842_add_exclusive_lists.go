@@ -19,7 +19,6 @@ package migrations
 
 import (
 	"context"
-	"strings"
 
 	"github.com/uptrace/bun"
 )
@@ -27,11 +26,24 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.ExecContext(ctx, "ALTER TABLE ? ADD COLUMN ? BOOLEAN DEFAULT false", bun.Ident("lists"), bun.Ident("exclusive"))
-			if err != nil && !(strings.Contains(err.Error(), "already exists") || strings.Contains(err.Error(), "duplicate column name") || strings.Contains(err.Error(), "SQLSTATE 42701")) {
+			// Add the exclusive flag to lists.
+			tableName := "lists"
+			columnName := "exclusive"
+
+			// If column already exists we don't need to do anything.
+			if exists, err := doesColumnExist(ctx, tx, tableName, columnName); err != nil {
 				return err
+			} else if exists {
+				return nil
 			}
-			return nil
+
+			_, err := tx.ExecContext(
+				ctx,
+				"ALTER TABLE ? ADD COLUMN ? BOOLEAN DEFAULT FALSE",
+				bun.Ident(tableName),
+				bun.Ident(columnName),
+			)
+			return err
 		})
 	}
 
