@@ -275,7 +275,7 @@ func (f *Filter) isStatusVisibleUnauthed(
 		}
 	}
 
-	webVisibility := *status.Account.Settings.WebVisibility
+	webVisibility := status.Account.Settings.WebVisibility
 	switch webVisibility {
 
 	// public_only: status must be Public.

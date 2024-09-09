@@ -658,7 +658,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			Language:        "en",
 			EnableRSS:       util.Ptr(false),
 			HideCollections: util.Ptr(false),
-			WebVisibility:   util.Ptr(gtsmodel.VisibilityPublic),
+			WebVisibility:   gtsmodel.VisibilityPublic,
 		},
 		"admin_account": {
 			AccountID:       "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -669,7 +669,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			Language:        "en",
 			EnableRSS:       util.Ptr(true),
 			HideCollections: util.Ptr(false),
-			WebVisibility:   util.Ptr(gtsmodel.VisibilityPublic),
+			WebVisibility:   gtsmodel.VisibilityPublic,
 		},
 		"local_account_1": {
 			AccountID:       "01F8MH1H7YV1Z7D2C8K2730QBF",
@@ -680,7 +680,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			Language:        "en",
 			EnableRSS:       util.Ptr(true),
 			HideCollections: util.Ptr(false),
-			WebVisibility:   util.Ptr(gtsmodel.VisibilityUnlocked),
+			WebVisibility:   gtsmodel.VisibilityUnlocked,
 		},
 		"local_account_2": {
 			AccountID:       "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -691,7 +691,7 @@ func NewTestAccountSettings() map[string]*gtsmodel.AccountSettings {
 			Language:        "fr",
 			EnableRSS:       util.Ptr(false),
 			HideCollections: util.Ptr(true),
-			WebVisibility:   util.Ptr(gtsmodel.VisibilityPublic),
+			WebVisibility:   gtsmodel.VisibilityPublic,
 		},
 	}
 }

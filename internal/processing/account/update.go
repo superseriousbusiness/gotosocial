@@ -281,8 +281,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 	if form.WebVisibility != nil {
 		vis := apimodel.Visibility(*form.Source.Privacy)
-		webVisibility := typeutils.APIVisToVis(vis)
-		account.Settings.WebVisibility = &webVisibility
+		account.Settings.WebVisibility = typeutils.APIVisToVis(vis)
 		settingsColumns = append(settingsColumns, "web_visibility")
 	}
 

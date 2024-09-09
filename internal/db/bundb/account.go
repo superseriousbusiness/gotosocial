@@ -1055,7 +1055,7 @@ func (a *accountDB) GetAccountWebStatuses(
 	maxID string,
 ) ([]*gtsmodel.Status, error) {
 	// Check for an easy case: account exposes no statuses via the web.
-	webVisibility := *account.Settings.WebVisibility
+	webVisibility := account.Settings.WebVisibility
 	if webVisibility == gtsmodel.VisibilityNone {
 		return nil, db.ErrNoEntries
 	}
