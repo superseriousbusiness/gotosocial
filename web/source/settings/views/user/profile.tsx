@@ -236,12 +236,12 @@ function UserProfileForm({ data: profile }) {
 			</div>
 			<Select
 				field={form.showWebStatuses}
-				label="Show posts on the web view of your profile, and in your RSS feed (if enabled)."
+				label="Posts to show on your profile, and in your RSS feed (if enabled)."
 				options={
 					<>
-						<option value="public_only">Public only (the GoToSocial default)</option>
-						<option value="public_and_unlisted">Public and Unlisted (the Mastodon default)</option>
-						<option value="none">None (show no statuses on the web view)</option>
+						<option value="public_only">Show Public posts only (the GoToSocial default)</option>
+						<option value="public_and_unlisted">Show Public and Unlisted posts (the Mastodon default)</option>
+						<option value="none">Show no posts</option>
 					</>
 				}
 			/>

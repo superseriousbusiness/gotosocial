@@ -32,7 +32,7 @@ func (f *Filter) AccountVisible(ctx context.Context, requester *gtsmodel.Account
 	const vtype = cache.VisibilityTypeAccount
 
 	// By default we assume no auth.
-	requesterID := noauth
+	requesterID := NoAuth
 
 	if requester != nil {
 		// Use provided account ID.

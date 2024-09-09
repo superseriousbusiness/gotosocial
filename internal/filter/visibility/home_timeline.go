@@ -35,7 +35,7 @@ func (f *Filter) StatusHomeTimelineable(ctx context.Context, owner *gtsmodel.Acc
 	const vtype = cache.VisibilityTypeHome
 
 	// By default we assume no auth.
-	requesterID := noauth
+	requesterID := NoAuth
 
 	if owner != nil {
 		// Use provided account ID.

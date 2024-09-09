@@ -76,6 +76,26 @@ Some examples:
 
 ### Visibility and Privacy
 
+#### Posts to show on your profile
+
+Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web view of your profile, and served in your RSS feed (if you have enabled RSS).
+
+By default, GoToSocial shows only Public visibility posts on the web view of your profile, not Unlisted. You can change this setting to also show Unlisted visibility posts on your profile, which is similar to the default for other ActivityPub softwares like Mastodon etc.
+
+You can also choose to show no posts at all on the web view of your profile. This allows you to create Public and Unlisted visibility posts without having to worry about scrapers, rubberneckers, and other nosy parkers visiting your web profile and looking at your posts.
+
+This setting does not affect visibility of your posts over the ActivityPub protocol, so even if you choose to show no posts on your public web profile, others will be able to see your posts in their client if they follow you, and/or have your posts boosted onto their timeline, use a link to search a post of yours, etc.
+
+!!! warning
+    Be aware that changes to this setting also apply retroactively.
+    
+    That is, if you previously made a post on Unlisted visibility, while set to show only Public posts on your profile, and you change this setting to show Public and Unlisted, then the Unlisted post you previously made will be visible on your profile alongside your Public posts.
+    
+    Likewise, if you change this setting to show no posts, then all your posts will be hidden from your profile, regardless of when you created them, and what this option was set to at the time. This will apply until you change this setting again.
+
+!!! tip
+    Alongside (domain-)blocking, this is a good "emergency" setting to use if you're facing harassment from people trawling through your public posts. It won't hide your posts from people who can see them in their clients, via ActivityPub, but it will at least prevent them from being able to click through your posts in their browser with no authentication, and easily share them with others with a URL.
+
 #### Manually Approve Follow Requests (aka Lock Your Account)
 
 This checkbox allows you to decide whether or not you want to manually review follow requests to your account.

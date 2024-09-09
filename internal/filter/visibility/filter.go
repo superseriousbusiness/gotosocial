@@ -21,9 +21,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
-// noauth is a placeholder ID used in cache lookups
+// NoAuth is a placeholder ID used in cache lookups
 // when there is no authorized account ID to use.
-const noauth = "noauth"
+const NoAuth = "noauth"
 
 // Filter packages up a bunch of logic for checking whether
 // given statuses or accounts are visible to a requester.

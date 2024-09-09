@@ -54,7 +54,7 @@ func (f *Filter) StatusVisible(
 	const vtype = cache.VisibilityTypeStatus
 
 	// By default we assume no auth.
-	requesterID := noauth
+	requesterID := NoAuth
 
 	if requester != nil {
 		// Use provided account ID.
