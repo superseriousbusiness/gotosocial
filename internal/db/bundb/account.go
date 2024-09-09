@@ -28,6 +28,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -1177,10 +1178,33 @@ func (a *accountDB) UpdateAccountSettings(
 ) error {
 	return a.state.Caches.DB.AccountSettings.Store(settings, func() error {
 		settings.UpdatedAt = time.Now()
-		if len(columns) > 0 {
+
+		switch {
+
+		case len(columns) != 0:
 			// If we're updating by column,
 			// ensure "updated_at" is included.
 			columns = append(columns, "updated_at")
+
+			// If we're updating show_web_statuses we should
+			// fall through + invalidate visibility cache.
+			if !slices.Contains(columns, "show_web_statuses") {
+				break // No need to invalidate.
+			}
+
+			// Fallthrough
+			// to invalidate.
+			fallthrough
+
+		case len(columns) == 0:
+			// Status visibility may be changing for this account.
+			// Clear the visibility cache for unauthed requesters.
+			//
+			// todo: invalidate JUST this account's statuses.
+			defer a.state.Caches.Visibility.Invalidate(
+				"RequesterID",
+				visibility.NoAuth,
+			)
 		}
 
 		if _, err := a.db.

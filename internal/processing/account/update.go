@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -56,36 +55,39 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	var (
-		// Set this to true when a setting has changed that
-		// requires pushing out an Update to this account's
-		// followers across the S2S API, else we can skip.
-		sendUpdate bool
-
-		// Via the process of updating the account,
-		// it is possible that the emojis used by
-		// that account in note/display name/fields
-		// may change; we need to keep track of this.
+		// Indicates that the account's
+		// note, display name, and/or fields
+		// have changed, and so emojis should
+		// be re-parsed and updated as well.
 		textChanged bool
+
+		// DB columns on the account
+		// that need to be updated.
+		acctColumns []string
+
+		// DB columns on the settings
+		// that need to be updated.
+		settingsColumns []string
 	)
 
+	// Account flags.
+
 	if form.Discoverable != nil {
-		// Discoverable flag
-		// requires Update.
-		sendUpdate = true
 		account.Discoverable = form.Discoverable
+		acctColumns = append(acctColumns, "discoverable")
 	}
 
 	if form.Bot != nil {
-		// Bot flag requires Update.
-		sendUpdate = true
 		account.Bot = form.Bot
+		acctColumns = append(acctColumns, "bot")
+	}
+
+	if form.Locked != nil {
+		account.Locked = form.Locked
+		acctColumns = append(acctColumns, "locked")
 	}
 
 	if form.DisplayName != nil {
-		// Display name
-		// requires Update.
-		sendUpdate = true
-
 		// Display name text
 		// is changing.
 		textChanged = true
@@ -97,12 +99,10 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 
 		// Parse new display name (always from plaintext).
 		account.DisplayName = text.SanitizeToPlaintext(displayName)
+		acctColumns = append(acctColumns, "display_name")
 	}
 
 	if form.Note != nil {
-		// Note/bio requires Update.
-		sendUpdate = true
-
 		// Note text is changing.
 		textChanged = true
 
@@ -115,12 +115,13 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		// for now, we'll process
 		// the proper version later.
 		account.NoteRaw = note
+		acctColumns = append(acctColumns, []string{
+			"note",
+			"note_raw",
+		}...)
 	}
 
 	if form.FieldsAttributes != nil {
-		// Fields require Update.
-		sendUpdate = true
-
 		// Field text is changing.
 		textChanged = true
 
@@ -130,12 +131,17 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		); err != nil {
 			return nil, err
 		}
+		acctColumns = append(acctColumns, []string{
+			"fields",
+			"fields_raw",
+		}...)
 	}
 
 	if textChanged {
 		// Process display name, note, fields,
 		// and any concomitant emoji changes.
 		p.processAccountText(ctx, account)
+		acctColumns = append(acctColumns, "emojis")
 	}
 
 	if form.AvatarDescription != nil {
@@ -144,10 +150,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Avatar != nil && form.Avatar.Size != 0 {
-		// Avatar image change
-		// requires Update.
-		sendUpdate = true
-
 		avatarInfo, errWithCode := p.UpdateAvatar(ctx,
 			account,
 			form.Avatar,
@@ -158,7 +160,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 		account.AvatarMediaAttachmentID = avatarInfo.ID
 		account.AvatarMediaAttachment = avatarInfo
-		log.Tracef(ctx, "new avatar info for account %s is %+v", account.ID, avatarInfo)
+		acctColumns = append(acctColumns, "avatar_media_attachment_id")
 	} else if form.AvatarDescription != nil && account.AvatarMediaAttachment != nil {
 		// Update just existing description if possible.
 		account.AvatarMediaAttachment.Description = *form.AvatarDescription
@@ -178,10 +180,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Header != nil && form.Header.Size != 0 {
-		// Header image change
-		// requires Update.
-		sendUpdate = true
-
 		headerInfo, errWithCode := p.UpdateHeader(ctx,
 			account,
 			form.Header,
@@ -192,7 +190,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 		account.HeaderMediaAttachmentID = headerInfo.ID
 		account.HeaderMediaAttachment = headerInfo
-		log.Tracef(ctx, "new header info for account %s is %+v", account.ID, headerInfo)
+		acctColumns = append(acctColumns, "header_media_attachment_id")
 	} else if form.HeaderDescription != nil && account.HeaderMediaAttachment != nil {
 		// Update just existing description if possible.
 		account.HeaderMediaAttachment.Description = *form.HeaderDescription
@@ -206,35 +204,32 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
-	if form.Locked != nil {
-		// ManuallyApprovesFollowers
-		// requires Update.
-		sendUpdate = true
-		account.Locked = form.Locked
-	}
+	// Account settings flags.
 
 	if form.Source != nil {
-		// These Source flags are all internal
-		// things that don't require an Update.
-
 		if form.Source.Language != nil {
 			language, err := validate.Language(*form.Source.Language)
 			if err != nil {
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
+
 			account.Settings.Language = language
+			settingsColumns = append(settingsColumns, "language")
 		}
 
 		if form.Source.Sensitive != nil {
 			account.Settings.Sensitive = form.Source.Sensitive
+			settingsColumns = append(settingsColumns, "sensitive")
 		}
 
 		if form.Source.Privacy != nil {
 			if err := validate.Privacy(*form.Source.Privacy); err != nil {
 				return nil, gtserror.NewErrorBadRequest(err, err.Error())
 			}
-			privacy := typeutils.APIVisToVis(apimodel.Visibility(*form.Source.Privacy))
-			account.Settings.Privacy = privacy
+
+			priv := apimodel.Visibility(*form.Source.Privacy)
+			account.Settings.Privacy = typeutils.APIVisToVis(priv)
+			settingsColumns = append(settingsColumns, "privacy")
 		}
 
 		if form.Source.StatusContentType != nil {
@@ -243,6 +238,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			}
 
 			account.Settings.StatusContentType = *form.Source.StatusContentType
+			settingsColumns = append(settingsColumns, "status_content_type")
 		}
 	}
 
@@ -260,6 +256,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			}
 			account.Settings.Theme = theme
 		}
+		settingsColumns = append(settingsColumns, "theme")
 	}
 
 	if form.CustomCSS != nil {
@@ -267,15 +264,19 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err := validate.CustomCSS(customCSS); err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
+
 		account.Settings.CustomCSS = text.SanitizeToPlaintext(customCSS)
+		settingsColumns = append(settingsColumns, "custom_css")
 	}
 
 	if form.EnableRSS != nil {
 		account.Settings.EnableRSS = form.EnableRSS
+		settingsColumns = append(settingsColumns, "enable_rss")
 	}
 
 	if form.HideCollections != nil {
 		account.Settings.HideCollections = form.HideCollections
+		settingsColumns = append(settingsColumns, "hide_collections")
 	}
 
 	if form.ShowWebStatuses != nil {
@@ -283,40 +284,35 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		if err != nil {
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		account.Settings.ShowWebStatuses = showWebStatuses
 
-		// Status visibility is changing for this account.
-		// Clear the visibility cache for unauthed requesters.
-		//
-		// todo: invalidate JUST this account's statuses.
-		defer p.state.Caches.Visibility.Invalidate(
-			"RequesterID",
-			visibility.NoAuth,
-		)
+		account.Settings.ShowWebStatuses = showWebStatuses
+		settingsColumns = append(settingsColumns, "show_web_statuses")
 	}
 
 	// We've parsed + set everything, do
 	// necessary database updates now.
 
-	if err := p.state.DB.UpdateAccount(ctx, account); err != nil {
-		err := gtserror.Newf("db error updating account %s: %w", account.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
+	if len(acctColumns) > 0 {
+		if err := p.state.DB.UpdateAccount(ctx, account, acctColumns...); err != nil {
+			err := gtserror.Newf("db error updating account %s: %w", account.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
-	if err := p.state.DB.UpdateAccountSettings(ctx, account.Settings); err != nil {
-		err := gtserror.Newf("db error updating account settings %s: %w", account.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
+	if len(settingsColumns) > 0 {
+		if err := p.state.DB.UpdateAccountSettings(ctx, account.Settings, settingsColumns...); err != nil {
+			err := gtserror.Newf("db error updating account settings %s: %w", account.ID, err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
-	if sendUpdate {
-		// Only send out an ActivityPub Update if necessary.
-		p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-			APObjectType:   ap.ActorPerson,
-			APActivityType: ap.ActivityUpdate,
-			GTSModel:       account,
-			Origin:         account,
-		})
-	}
+	// Send out Update message over the s2s (fedi) API.
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		APObjectType:   ap.ActorPerson,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       account,
+		Origin:         account,
+	})
 
 	acctSensitive, err := p.converter.AccountToAPIAccountSensitive(ctx, account)
 	if err != nil {
