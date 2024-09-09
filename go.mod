@@ -74,10 +74,10 @@ require (
 	go.opentelemetry.io/otel/trace v1.29.0
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/crypto v0.26.0
-	golang.org/x/image v0.19.0
+	golang.org/x/image v0.20.0
 	golang.org/x/net v0.28.0
 	golang.org/x/oauth2 v0.22.0
-	golang.org/x/text v0.17.0
+	golang.org/x/text v0.18.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v0.0.0-00010101000000-000000000000
