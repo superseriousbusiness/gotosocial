@@ -227,6 +227,9 @@ type UpdateCredentialsRequest struct {
 	EnableRSS *bool `form:"enable_rss" json:"enable_rss"`
 	// Hide this account's following/followers collections.
 	HideCollections *bool `form:"hide_collections" json:"hide_collections"`
+	// Visibility of statuses to show via the web view.
+	// "none", "public" (default), or "unlisted" (which includes public as well).
+	WebVisibility *string `form:"web_visibility" json:"web_visibility"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.

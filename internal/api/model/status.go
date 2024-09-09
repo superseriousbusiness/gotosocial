@@ -232,6 +232,8 @@ type StatusCreateRequest struct {
 type Visibility string
 
 const (
+	// VisibilityNone is visible to nobody. This is only used for the visibility of web statuses.
+	VisibilityNone Visibility = "none"
 	// VisibilityPublic is visible to everyone, and will be available via the web even for nonauthenticated users.
 	VisibilityPublic Visibility = "public"
 	// VisibilityUnlisted is visible to everyone, but only on home timelines, lists, etc.

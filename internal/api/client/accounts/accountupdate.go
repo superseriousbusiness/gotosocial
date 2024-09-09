@@ -145,6 +145,15 @@ import (
 //		description: Hide the account's following/followers collections.
 //		type: boolean
 //	-
+//		name: web_visibility
+//		in: formData
+//		description: |-
+//			Posts to show on the web view of the account.
+//			"public": default, show only Public visibility posts on the web.
+//			"unlisted": show Public *and* Unlisted visibility posts on the web.
+//			"none": show no posts on the web, not even Public ones.
+//		type: string
+//	-
 //		name: fields_attributes[0][name]
 //		in: formData
 //		description: Name of 1st profile field to be added to this account's profile.
@@ -339,7 +348,8 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			form.Theme == nil &&
 			form.CustomCSS == nil &&
 			form.EnableRSS == nil &&
-			form.HideCollections == nil) {
+			form.HideCollections == nil &&
+			form.WebVisibility == nil) {
 		return nil, errors.New("empty form submitted")
 	}
 

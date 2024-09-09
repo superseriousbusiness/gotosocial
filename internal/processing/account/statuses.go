@@ -159,7 +159,7 @@ func (p *Processor) WebStatusesGet(
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	statuses, err := p.state.DB.GetAccountWebStatuses(ctx, targetAccountID, 10, maxID)
+	statuses, err := p.state.DB.GetAccountWebStatuses(ctx, account, 10, maxID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -206,9 +206,15 @@ func (p *Processor) WebStatusesGetPinned(
 
 	webStatuses := make([]*apimodel.WebStatus, 0, len(statuses))
 	for _, status := range statuses {
-		if status.Visibility != gtsmodel.VisibilityPublic {
-			// Skip non-public
-			// pinned status.
+		// Ensure visible via the web.
+		visible, err := p.visFilter.StatusVisible(ctx, nil, status)
+		if err != nil {
+			log.Errorf(ctx, "error checking status visibility: %v", err)
+			continue
+		}
+
+		if !visible {
+			// Don't serve.
 			continue
 		}
 

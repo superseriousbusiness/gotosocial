@@ -117,12 +117,11 @@ type Account interface {
 	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountPinnedStatuses(ctx context.Context, accountID string) ([]*gtsmodel.Status, error)
 
-	// GetAccountWebStatuses is similar to GetAccountStatuses, but it's specifically for returning statuses that
-	// should be visible via the web view of an account. So, only public, federated statuses that aren't boosts
-	// or replies.
+	// GetAccountWebStatuses is similar to GetAccountStatuses, but it's specifically for
+	// returning statuses that should be visible via the web view of a *LOCAL* account.
 	//
 	// In the case of no statuses, this function will return db.ErrNoEntries.
-	GetAccountWebStatuses(ctx context.Context, accountID string, limit int, maxID string) ([]*gtsmodel.Status, error)
+	GetAccountWebStatuses(ctx context.Context, account *gtsmodel.Account, limit int, maxID string) ([]*gtsmodel.Status, error)
 
 	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
 	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error
