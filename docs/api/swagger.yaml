@@ -2060,6 +2060,12 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     list:
         properties:
+            exclusive:
+                description: |-
+                    Exclusive setting for this list.
+                    If true, hide posts from members of this list from your home timeline.
+                type: boolean
+                x-go-name: Exclusive
             id:
                 description: The ID of the list.
                 type: string
@@ -7799,10 +7805,20 @@ paths:
                     list = Show replies to members of the list
                     none = Show replies to no one
                     Sample: list
+                  enum:
+                    - followed
+                    - list
+                    - none
                   in: formData
                   name: replies_policy
                   type: string
                   x-go-name: RepliesPolicy
+                - default: false
+                  description: Hide posts from members of this list from your home timeline.
+                  in: formData
+                  name: exclusive
+                  type: boolean
+                  x-go-name: Exclusive
             produces:
                 - application/json
             responses:
@@ -7920,6 +7936,10 @@ paths:
                   in: formData
                   name: replies_policy
                   type: string
+                - description: Hide posts from members of this list from your home timeline.
+                  in: formData
+                  name: exclusive
+                  type: boolean
             produces:
                 - application/json
             responses:

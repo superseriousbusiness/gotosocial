@@ -1527,6 +1527,317 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAn
 	)
 }
 
+// A public status with a hashtag followed by a local user who follows the author and has them on an exclusive list
+// should end up in the following user's timeline for that list, but not their home timeline.
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiveList() {
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["local_account_2"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		testList         = suite.testLists["local_account_1_list_1"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			[]string{testList.ID},
+		)
+		homeStream = streams[stream.TimelineHome]
+		listStream = streams[stream.TimelineList+":"+testList.ID]
+
+		// postingAccount posts a new public status not mentioning anyone.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Setup: make the list exclusive.
+	// We modify the existing list rather than create a new one, so that there's only one list in play for this test.
+	list := new(gtsmodel.List)
+	*list = *testList
+	list.Exclusive = util.Ptr(true)
+	if err := testStructs.State.DB.UpdateList(ctx, list); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in list stream.
+	suite.checkStreamed(
+		listStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
+	// Check status not in home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
+	)
+}
+
+// A public status with a hashtag followed by a local user who follows the author and has them on an exclusive list
+// should end up in the following user's timeline for that list, but not their home timeline.
+// This should happen regardless of whether the author is on any of the following user's *non*-exclusive lists.
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiveAndNonExclusiveLists() {
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	var (
+		ctx               = context.Background()
+		postingAccount    = suite.testAccounts["local_account_2"]
+		receivingAccount  = suite.testAccounts["local_account_1"]
+		testInclusiveList = suite.testLists["local_account_1_list_1"]
+		testExclusiveList = &gtsmodel.List{
+			ID:            id.NewULID(),
+			Title:         "Cool Ass Posters From This Instance (exclusive)",
+			AccountID:     receivingAccount.ID,
+			RepliesPolicy: gtsmodel.RepliesPolicyFollowed,
+			Exclusive:     util.Ptr(true),
+		}
+		testFollow               = suite.testFollows["local_account_1_local_account_2"]
+		testExclusiveListEntries = []*gtsmodel.ListEntry{
+			{
+				ID:       id.NewULID(),
+				ListID:   testExclusiveList.ID,
+				FollowID: testFollow.ID,
+			},
+		}
+		streams = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			[]string{
+				testInclusiveList.ID,
+				testExclusiveList.ID,
+			},
+		)
+		homeStream          = streams[stream.TimelineHome]
+		inclusiveListStream = streams[stream.TimelineList+":"+testInclusiveList.ID]
+		exclusiveListStream = streams[stream.TimelineList+":"+testExclusiveList.ID]
+
+		// postingAccount posts a new public status not mentioning anyone.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Precondition: the pre-existing inclusive list should actually be inclusive.
+	// This should be the case if we reset the DB correctly between tests in this file.
+	{
+		list, err := testStructs.State.DB.GetListByID(ctx, testInclusiveList.ID)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		if *list.Exclusive {
+			suite.FailNowf(
+				"test precondition failed: list %s should be inclusive, but isn't",
+				testInclusiveList.ID,
+			)
+		}
+	}
+
+	// Setup: create the exclusive list and its list entry.
+	if err := testStructs.State.DB.PutList(ctx, testExclusiveList); err != nil {
+		suite.FailNow(err.Error())
+	}
+	if err := testStructs.State.DB.PutListEntries(ctx, testExclusiveListEntries); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in inclusive list stream.
+	suite.checkStreamed(
+		inclusiveListStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
+	// Check status in exclusive list stream.
+	suite.checkStreamed(
+		exclusiveListStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
+	// Check status not in home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
+	)
+}
+
+// A public status with a hashtag followed by a local user who follows the author and has them on an exclusive list
+// should end up in the following user's timeline for that list, but not their home timeline.
+// When they have notifications on for that user, they should be notified.
+func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiveListAndNotificationsOn() {
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["local_account_2"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		testFollow       = suite.testFollows["local_account_1_local_account_2"]
+		testList         = suite.testLists["local_account_1_list_1"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			[]string{testList.ID},
+		)
+		homeStream  = streams[stream.TimelineHome]
+		listStream  = streams[stream.TimelineList+":"+testList.ID]
+		notifStream = streams[stream.TimelineNotifications]
+
+		// postingAccount posts a new public status not mentioning anyone.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Setup: Update the follow from receiving account -> posting account so
+	// that receiving account wants notifs when posting account posts.
+	follow := new(gtsmodel.Follow)
+	*follow = *testFollow
+	follow.Notify = util.Ptr(true)
+	if err := testStructs.State.DB.UpdateFollow(ctx, follow); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Setup: make the list exclusive.
+	list := new(gtsmodel.List)
+	*list = *testList
+	list.Exclusive = util.Ptr(true)
+	if err := testStructs.State.DB.UpdateList(ctx, list); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       status,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check status in list stream.
+	suite.checkStreamed(
+		listStream,
+		true,
+		"",
+		stream.EventTypeUpdate,
+	)
+
+	// Wait for a notification to appear for the status.
+	var notif *gtsmodel.Notification
+	if !testrig.WaitFor(func() bool {
+		var err error
+		notif, err = testStructs.State.DB.GetNotification(
+			ctx,
+			gtsmodel.NotificationStatus,
+			receivingAccount.ID,
+			postingAccount.ID,
+			status.ID,
+		)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for new status notification")
+	}
+
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil, nil)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	notifJSON, err := json.Marshal(apiNotif)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check message in notification stream.
+	suite.checkStreamed(
+		notifStream,
+		true,
+		string(notifJSON),
+		stream.EventTypeNotification,
+	)
+
+	// Check *notification* for status in home stream.
+	suite.checkStreamed(
+		homeStream,
+		true,
+		string(notifJSON),
+		stream.EventTypeNotification,
+	)
+
+	// Status itself should not be in home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
+	)
+}
+
 // Updating a public status with a hashtag followed by a local user who does not otherwise follow the author
 // should stream a status update to the tag-following user's home timeline.
 func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag() {

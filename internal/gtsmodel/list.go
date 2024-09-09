@@ -29,6 +29,7 @@ type List struct {
 	Account       *Account      `bun:"-"`                                                           // Account corresponding to accountID
 	ListEntries   []*ListEntry  `bun:"-"`                                                           // Entries contained by this list.
 	RepliesPolicy RepliesPolicy `bun:",nullzero,notnull,default:'followed'"`                        // RepliesPolicy for this list.
+	Exclusive     *bool         `bun:",nullzero,notnull,default:false"`                             // Hide posts from members of this list from your home timeline.
 }
 
 // ListEntry refers to a single follow entry in a list.

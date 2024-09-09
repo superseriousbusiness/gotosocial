@@ -30,6 +30,9 @@ type List struct {
 	//	list = Show replies to members of the list
 	//	none = Show replies to no one
 	RepliesPolicy string `json:"replies_policy"`
+	// Exclusive setting for this list.
+	// If true, hide posts from members of this list from your home timeline.
+	Exclusive bool `json:"exclusive"`
 }
 
 // ListCreateRequest models list creation parameters.
@@ -53,6 +56,11 @@ type ListCreateRequest struct {
 	//	- list
 	//	- none
 	RepliesPolicy string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
+	// Exclusive setting for this list.
+	// If true, hide posts from members of this list from your home timeline.
+	// default: false
+	// in: formData
+	Exclusive bool `form:"exclusive" json:"exclusive" xml:"exclusive"`
 }
 
 // ListUpdateRequest models list update parameters.
@@ -70,6 +78,10 @@ type ListUpdateRequest struct {
 	// Sample: list
 	// in: formData
 	RepliesPolicy *string `form:"replies_policy" json:"replies_policy" xml:"replies_policy"`
+	// Exclusive setting for this list.
+	// If true, hide posts from members of this list from your home timeline.
+	// in: formData
+	Exclusive *bool `form:"exclusive" json:"exclusive" xml:"exclusive"`
 }
 
 // ListAccountsChangeRequest is a list of account IDs to add to or remove from a list.

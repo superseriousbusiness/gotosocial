@@ -36,6 +36,7 @@ func (p *Processor) Update(
 	id string,
 	title *string,
 	repliesPolicy *gtsmodel.RepliesPolicy,
+	exclusive *bool,
 ) (*apimodel.List, gtserror.WithCode) {
 	list, errWithCode := p.getList(
 		// Use barebones ctx; no embedded
@@ -49,7 +50,7 @@ func (p *Processor) Update(
 	}
 
 	// Only update columns we're told to update.
-	columns := make([]string, 0, 2)
+	columns := make([]string, 0, 3)
 
 	if title != nil {
 		list.Title = *title
@@ -59,6 +60,11 @@ func (p *Processor) Update(
 	if repliesPolicy != nil {
 		list.RepliesPolicy = *repliesPolicy
 		columns = append(columns, "replies_policy")
+	}
+
+	if exclusive != nil {
+		list.Exclusive = exclusive
+		columns = append(columns, "exclusive")
 	}
 
 	if err := p.state.DB.UpdateList(ctx, list, columns...); err != nil {

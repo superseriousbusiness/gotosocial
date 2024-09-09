@@ -30,12 +30,19 @@ import (
 
 // Create creates one a new list for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
-func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, title string, repliesPolicy gtsmodel.RepliesPolicy) (*apimodel.List, gtserror.WithCode) {
+func (p *Processor) Create(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	title string,
+	repliesPolicy gtsmodel.RepliesPolicy,
+	exclusive bool,
+) (*apimodel.List, gtserror.WithCode) {
 	list := &gtsmodel.List{
 		ID:            id.NewULID(),
 		Title:         title,
 		AccountID:     account.ID,
 		RepliesPolicy: repliesPolicy,
+		Exclusive:     &exclusive,
 	}
 
 	if err := p.state.DB.PutList(ctx, list); err != nil {
