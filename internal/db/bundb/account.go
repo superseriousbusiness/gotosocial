@@ -28,7 +28,6 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -1202,10 +1201,7 @@ func (a *accountDB) UpdateAccountSettings(
 			// Clear the visibility cache for unauthed requesters.
 			//
 			// todo: invalidate JUST this account's statuses.
-			defer a.state.Caches.Visibility.Invalidate(
-				"RequesterID",
-				visibility.NoAuth,
-			)
+			defer a.state.Caches.Visibility.Clear()
 		}
 
 		if _, err := a.db.

@@ -38,6 +38,8 @@ func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
 		return gtsmodel.VisibilityMutualsOnly
 	case apimodel.VisibilityDirect:
 		return gtsmodel.VisibilityDirect
+	case apimodel.VisibilityNone:
+		return gtsmodel.VisibilityNone
 	}
 	return ""
 }

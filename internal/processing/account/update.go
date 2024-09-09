@@ -280,8 +280,17 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.WebVisibility != nil {
-		vis := apimodel.Visibility(*form.Source.Privacy)
-		account.Settings.WebVisibility = typeutils.APIVisToVis(vis)
+		apiVis := apimodel.Visibility(*form.WebVisibility)
+		webVisibility := typeutils.APIVisToVis(apiVis)
+		if webVisibility != gtsmodel.VisibilityPublic &&
+			webVisibility != gtsmodel.VisibilityUnlocked &&
+			webVisibility != gtsmodel.VisibilityNone {
+			const text = "web_visibility must be one of public, unlocked, or none"
+			err := errors.New(text)
+			return nil, gtserror.NewErrorBadRequest(err, text)
+		}
+
+		account.Settings.WebVisibility = webVisibility
 		settingsColumns = append(settingsColumns, "web_visibility")
 	}
 
