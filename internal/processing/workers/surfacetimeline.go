@@ -241,10 +241,12 @@ func (s *Surface) listTimelineStatusForFollow(
 	listEntries, err := s.getListEntries(ctx, follow)
 	if err != nil {
 		errs.Append(err)
+		return false, false
 	}
 	exclusive, err := s.isAnyListExclusive(ctx, listEntries)
 	if err != nil {
 		errs.Append(err)
+		return false, false
 	}
 
 	// Check eligibility for each list entry (if any).
@@ -791,10 +793,12 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	listEntries, err := s.getListEntries(ctx, follow)
 	if err != nil {
 		errs.Append(err)
+		return false
 	}
 	exclusive, err := s.isAnyListExclusive(ctx, listEntries)
 	if err != nil {
 		errs.Append(err)
+		return false
 	}
 
 	// Check eligibility for each list entry (if any).
