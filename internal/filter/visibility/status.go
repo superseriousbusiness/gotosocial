@@ -275,27 +275,28 @@ func (f *Filter) isStatusVisibleUnauthed(
 		}
 	}
 
-	switch sws := status.Account.Settings.ShowWebStatuses; sws {
+	webVisibility := *status.Account.Settings.WebVisibility
+	switch webVisibility {
 
 	// public_only: status must be Public.
-	case gtsmodel.ShowWebStatusesPublicOnly:
+	case gtsmodel.VisibilityPublic:
 		return status.Visibility == gtsmodel.VisibilityPublic, nil
 
-	// public_and_unlisted: status must be Public or Unlocked.
-	case gtsmodel.ShowWebStatusesPublicAndUnlisted:
+	// unlisted: status must be Public or Unlocked.
+	case gtsmodel.VisibilityUnlocked:
 		visible := status.Visibility == gtsmodel.VisibilityPublic ||
 			status.Visibility == gtsmodel.VisibilityUnlocked
 		return visible, nil
 
 	// none: never show via the web.
-	case gtsmodel.ShowWebStatusesNone:
+	case gtsmodel.VisibilityNone:
 		return false, nil
 
 	// Huh?
 	default:
 		return false, gtserror.Newf(
-			"unrecognized ShowWebStatuses for account %s: %d",
-			status.Account.ID, sws,
+			"unrecognized web visibility for account %s: %s",
+			status.Account.ID, webVisibility,
 		)
 	}
 }

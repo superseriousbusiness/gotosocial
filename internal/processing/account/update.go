@@ -279,14 +279,11 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		settingsColumns = append(settingsColumns, "hide_collections")
 	}
 
-	if form.ShowWebStatuses != nil {
-		showWebStatuses, err := gtsmodel.ParseShowWebStatuses(*form.ShowWebStatuses)
-		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err, err.Error())
-		}
-
-		account.Settings.ShowWebStatuses = showWebStatuses
-		settingsColumns = append(settingsColumns, "show_web_statuses")
+	if form.WebVisibility != nil {
+		vis := apimodel.Visibility(*form.Source.Privacy)
+		webVisibility := typeutils.APIVisToVis(vis)
+		account.Settings.WebVisibility = &webVisibility
+		settingsColumns = append(settingsColumns, "web_visibility")
 	}
 
 	// We've parsed + set everything, do

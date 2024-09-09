@@ -30,7 +30,7 @@ func init() {
 
 			// If column already exists we don't need to do anything.
 			exists, err := doesColumnExist(ctx, tx,
-				"account_settings", "show_web_statuses",
+				"account_settings", "web_visibility",
 			)
 
 			if err != nil {
@@ -45,9 +45,9 @@ func init() {
 			if _, err := tx.NewAddColumn().
 				Table("account_settings").
 				ColumnExpr(
-					"? INTEGER NOT NULL DEFAULT ?",
-					bun.Ident("show_web_statuses"),
-					gtsmodel.ShowWebStatusesPublicOnly,
+					"? TEXT NOT NULL DEFAULT ?",
+					bun.Ident("web_visibility"),
+					gtsmodel.VisibilityPublic,
 				).
 				Exec(ctx); err != nil {
 				return err

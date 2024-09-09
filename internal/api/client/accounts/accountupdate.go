@@ -145,12 +145,12 @@ import (
 //		description: Hide the account's following/followers collections.
 //		type: boolean
 //	-
-//		name: show_web_statuses
+//		name: web_visibility
 //		in: formData
 //		description: |-
 //			Posts to show on the web view of the account.
-//			"public_only": default, show only Public visibility posts on the web.
-//			"public_and_unlisted": show Public and Unlisted visibility posts on the web.
+//			"public": default, show only Public visibility posts on the web.
+//			"unlisted": show Public *and* Unlisted visibility posts on the web.
 //			"none": show no posts on the web, not even Public ones.
 //		type: string
 //	-
@@ -349,7 +349,7 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			form.CustomCSS == nil &&
 			form.EnableRSS == nil &&
 			form.HideCollections == nil &&
-			form.ShowWebStatuses == nil) {
+			form.WebVisibility == nil) {
 		return nil, errors.New("empty form submitted")
 	}
 

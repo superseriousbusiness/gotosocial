@@ -134,7 +134,7 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 
 	apiAccount.Source = &apimodel.Source{
 		Privacy:             c.VisToAPIVis(ctx, a.Settings.Privacy),
-		ShowWebStatuses:     a.Settings.ShowWebStatuses.String(),
+		WebVisibility:       c.VisToAPIVis(ctx, *a.Settings.WebVisibility),
 		Sensitive:           *a.Settings.Sensitive,
 		Language:            a.Settings.Language,
 		StatusContentType:   statusContentType,

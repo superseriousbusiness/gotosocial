@@ -115,7 +115,7 @@ function UserProfileForm({ data: profile }) {
 		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
 		hideCollections: useBoolInput("hide_collections", { source: profile }),
-		showWebStatuses: useTextInput("show_web_statuses", { source: profile, valueSelector: (p) => p.source?.show_web_statuses }),
+		webVisibility: useTextInput("web_visibility", { source: profile, valueSelector: (p) => p.source?.web_visibility }),
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
 			length: instanceConfig.maxPinnedFields
@@ -235,12 +235,12 @@ function UserProfileForm({ data: profile }) {
 				</a>
 			</div>
 			<Select
-				field={form.showWebStatuses}
-				label="Posts to show on your profile, and in your RSS feed (if enabled)."
+				field={form.webVisibility}
+				label="Visibility level of posts to show on your profile, and in your RSS feed (if enabled)."
 				options={
 					<>
-						<option value="public_only">Show Public posts only (the GoToSocial default)</option>
-						<option value="public_and_unlisted">Show Public and Unlisted posts (the Mastodon default)</option>
+						<option value="public">Show Public posts only (the GoToSocial default)</option>
+						<option value="unlisted">Show Public and Unlisted posts (the Mastodon default)</option>
 						<option value="none">Show no posts</option>
 					</>
 				}

@@ -1055,7 +1055,8 @@ func (a *accountDB) GetAccountWebStatuses(
 	maxID string,
 ) ([]*gtsmodel.Status, error) {
 	// Check for an easy case: account exposes no statuses via the web.
-	if account.Settings.ShowWebStatuses == gtsmodel.ShowWebStatusesNone {
+	webVisibility := *account.Settings.WebVisibility
+	if webVisibility == gtsmodel.VisibilityNone {
 		return nil, db.ErrNoEntries
 	}
 
@@ -1078,14 +1079,14 @@ func (a *accountDB) GetAccountWebStatuses(
 		Where("? IS NULL", bun.Ident("status.boost_of_id"))
 
 	// Select statuses for this account according
-	// to their ShowWebStatuses preference.
-	switch sws := account.Settings.ShowWebStatuses; sws {
+	// to their web visibility preference.
+	switch webVisibility {
 
-	case gtsmodel.ShowWebStatusesPublicOnly:
+	case gtsmodel.VisibilityPublic:
 		// Only Public statuses.
 		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
 
-	case gtsmodel.ShowWebStatusesPublicAndUnlisted:
+	case gtsmodel.VisibilityUnlocked:
 		// Public or Unlocked.
 		visis := []gtsmodel.Visibility{
 			gtsmodel.VisibilityPublic,
@@ -1095,8 +1096,8 @@ func (a *accountDB) GetAccountWebStatuses(
 
 	default:
 		return nil, gtserror.Newf(
-			"unrecognized ShowWebStatuses for account %s: %d",
-			account.ID, sws,
+			"unrecognized web visibility for account %s: %s",
+			account.ID, webVisibility,
 		)
 	}
 
@@ -1186,9 +1187,9 @@ func (a *accountDB) UpdateAccountSettings(
 			// ensure "updated_at" is included.
 			columns = append(columns, "updated_at")
 
-			// If we're updating show_web_statuses we should
+			// If we're updating web_visibility we should
 			// fall through + invalidate visibility cache.
-			if !slices.Contains(columns, "show_web_statuses") {
+			if !slices.Contains(columns, "web_visibility") {
 				break // No need to invalidate.
 			}
 

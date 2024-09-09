@@ -153,18 +153,18 @@ definitions:
                 description: Whether new statuses should be marked sensitive by default.
                 type: boolean
                 x-go-name: Sensitive
-            show_web_statuses:
-                description: |-
-                    Visibility level(s) of posts to show for this account via the web api.
-                    "public_only" = default, show only Public visibility posts on the web.
-                    "public_and_unlisted" = show Public and Unlisted visibility posts on the web.
-                    "none" = show no posts on the web, not even Public ones.
-                type: string
-                x-go-name: ShowWebStatuses
             status_content_type:
                 description: The default posting content type for new statuses.
                 type: string
                 x-go-name: StatusContentType
+            web_visibility:
+                description: |-
+                    Visibility level(s) of posts to show for this account via the web api.
+                    "public" = default, show only Public visibility posts on the web.
+                    "unlisted" = show Public *and* Unlisted visibility posts on the web.
+                    "none" = show no posts on the web, not even Public ones.
+                type: string
+                x-go-name: WebVisibility
         title: Source represents display or publishing preferences of user's own account.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -4410,11 +4410,11 @@ paths:
                   type: boolean
                 - description: |-
                     Posts to show on the web view of the account.
-                    "public_only": default, show only Public visibility posts on the web.
-                    "public_and_unlisted": show Public and Unlisted visibility posts on the web.
+                    "public": default, show only Public visibility posts on the web.
+                    "unlisted": show Public *and* Unlisted visibility posts on the web.
                     "none": show no posts on the web, not even Public ones.
                   in: formData
-                  name: show_web_statuses
+                  name: web_visibility
                   type: string
                 - description: Name of 1st profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
                   in: formData
