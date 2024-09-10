@@ -239,10 +239,8 @@ For bugs and feature requests, please check to see if there's [already an issue]
 
 The following open source libraries, frameworks, and tools are used by GoToSocial, with gratitude 💕
 
-- [abema/go-mp4](https://github.com/abema/go-mp4); mp4 parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes. [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
 - [coreos/go-oidc](https://github.com/coreos/go-oidc); OIDC client library. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
-- [disintegration/imaging](https://github.com/disintegration/imaging); image resizing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [DmitriyVTitov/size](https://github.com/DmitriyVTitov/size); runtime model memory size calculations. [MIT License](https://spdx.org/licenses/MIT.html).
 - Gin:
   - [gin-contrib/cors](https://github.com/gin-contrib/cors); Gin CORS middleware. [MIT License](https://spdx.org/licenses/MIT.html).
@@ -250,7 +248,6 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [gin-contrib/sessions](https://github.com/gin-contrib/sessions); Gin sessions middleware. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gin-gonic/gin](https://github.com/gin-gonic/gin); speedy router engine. [MIT License](https://spdx.org/licenses/MIT.html).
 - [google/uuid](https://github.com/google/uuid); UUID generation. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
-- [google/wuffs](https://github.com/google/wuffs); png-stripping code. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - Go-Playground:
   - [go-playground/form](https://github.com/go-playground/form); funky form mapping support. [MIT License](https://spdx.org/licenses/MIT.html).
   - [go-playground/validator](https://github.com/go-playground/validator); struct validation. [MIT License](https://spdx.org/licenses/MIT.html).
@@ -272,9 +269,8 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [gruf/go-sched](https://codeberg.org/gruf/go-sched); task scheduler. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-storage](https://codeberg.org/gruf/go-storage); file storage backend (local & s3). [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-structr](https://codeberg.org/gruf/go-structr); struct caching + queueing with automated indexing by field. [MIT License](https://spdx.org/licenses/MIT.html).
-- [h2non/filetype](https://github.com/h2non/filetype); filetype checking. [MIT License](https://spdx.org/licenses/MIT.html).
 - jackc:
-  - [jackc/pgx](https://github.com/jackc/pgconn); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [jackc/pgconn](https://github.com/jackc/pgconn); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).
   - [jackc/pgx](https://github.com/jackc/pgx); Postgres driver and toolkit. [MIT License](https://spdx.org/licenses/MIT.html).
 - [KimMachineGun/automemlimit](https://github.com/KimMachineGun/automemlimit); cgroups memory limit checking. [MIT License](https://spdx.org/licenses/MIT.html).
 - [mcuadros/go-syslog](https://github.com/mcuadros/go-syslog); Syslog server library. [MIT License](https://spdx.org/licenses/MIT.html).
