@@ -237,7 +237,7 @@ func (d *Dereferencer) DereferenceStatusDescendants(ctx context.Context, usernam
 
 	// Keep track of already dereferenced collection
 	// pages for this thread to prevent recursion.
-	derefdPages := make(map[string]struct{}, 10)
+	derefdPages := make(map[string]struct{}, 16)
 
 	// frame represents a single stack frame when
 	// iteratively derefencing status descendants.
