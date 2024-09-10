@@ -75,6 +75,11 @@ import (
 //			- list
 //			- none
 //		in: formData
+//	-
+//		name: exclusive
+//		in: formData
+//		description: Hide posts from members of this list from your home timeline.
+//		type: boolean
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -146,13 +151,20 @@ func (m *Module) ListUpdatePUTHandler(c *gin.Context) {
 		repliesPolicy = &rp
 	}
 
-	if form.Title == nil && repliesPolicy == nil {
-		err = errors.New("neither title nor replies_policy was set; nothing to update")
+	if form.Title == nil && repliesPolicy == nil && form.Exclusive == nil {
+		err = errors.New("neither title nor replies_policy nor exclusive was set; nothing to update")
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	apiList, errWithCode := m.processor.List().Update(c.Request.Context(), authed.Account, targetListID, form.Title, repliesPolicy)
+	apiList, errWithCode := m.processor.List().Update(
+		c.Request.Context(),
+		authed.Account,
+		targetListID,
+		form.Title,
+		repliesPolicy,
+		form.Exclusive,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

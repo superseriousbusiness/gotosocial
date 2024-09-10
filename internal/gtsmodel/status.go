@@ -242,6 +242,9 @@ type StatusToEmoji struct {
 type Visibility string
 
 const (
+	// VisibilityNone means nobody can see this.
+	// It's only used for web status visibility.
+	VisibilityNone Visibility = "none"
 	// VisibilityPublic means this status will be visible to everyone on all timelines.
 	VisibilityPublic Visibility = "public"
 	// VisibilityUnlocked means this status will be visible to everyone, but will only show on home timeline to followers, and in lists.

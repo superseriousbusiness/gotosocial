@@ -1,0 +1,145 @@
+/*
+  theme-title: Brutalist
+  theme-description: (Pseudo-)monochrome brutality
+*/
+
+:root {
+  /* Define our color palette, two whole colors, wow! */
+  --almost-black: #06170e;
+  --almost-white: #f1f3f2;
+
+  /* Overwrite orange trim */
+  --orange2: var(--almost-black);
+
+  /* Restyle basic colors */
+  --white1: var(--almost-white);
+  --white2: var(--almost-white);
+
+  /* Basic page styling (background + foreground) */
+  --bg:var(--almost-white);
+  --bg-accent: var(--almost-white);
+  --fg: var(--almost-black);
+  --fg-reduced: var(--almost-black);
+  --fg-accent: var(--almost-black);
+
+  /* Profile page styling (light) */
+  --profile-bg: var(--almost-white);
+
+  /* Statuses */
+  --status-bg: var(--almost-white);
+  --status-focus-bg: var(--almost-white);
+  --status-info-bg: var(--almost-white);
+  --status-focus-info-bg: var(--almost-white);
+
+  /* Used around statuses + other items */
+  --double-border: 0.5rem double var(--almost-black);
+  --dashed-border: 0.1rem dashed var(--almost-black);
+  --single-border: 0.2rem solid var(--almost-black);
+
+  /* Override some border stuff */
+  --boxshadow-border: var(--double-border);
+  --br: 0;
+  --br-inner: 0;
+
+  --plyr-video-control-color: var(--almost-black);
+}
+
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--almost-black) var(--almost-white);
+}
+
+.profile .profile-header {
+  border: var(--double-border);
+}
+
+.col-header {
+  border: var(--double-border);
+}
+
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.profile .profile-header .basic-info .avatar-image-wrapper {
+  border: var(--single-border);
+}
+.status .status-header > address > a .avatar {
+  border: var(--single-border);
+}
+
+/* Make about sections transparent */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  border-left: var(--double-border);
+  border-right: var(--double-border);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields .field:first-child {
+  border-top: var(--dashed-border);
+}
+.profile .about-user .fields .field {
+  border-bottom: var(--dashed-border);
+}
+.profile .about-user .accountstats {
+  border-top: var(--dashed-border);
+  border-bottom: var(--double-border);
+}
+
+/* Code snippets */
+.status .text .content pre, .status .text .content code {
+  background: var(--almost-black);
+  color: var(--almost-white);
+}
+
+/* Block quotes */
+.status .text .content blockquote {
+  background-color: var(--almost-black);
+  color: var(--almost-white);
+}
+
+/* Polls */
+.status .text .poll {
+  background-color: var(--almost-white);
+  border: var(--double-border);
+}
+.status .text .poll .poll-info {
+  background-color: var(--almost-white);
+  border: var(--dashed-border);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: var(--single-border);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--almost-black);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--almost-black);
+}
+
+/* Status info bars */
+.status .status-info,
+.status.expanded .status-info {
+  border-top: var(--dashed-border);
+}
+
+.status button, .status .button {
+  background-color: var(--almost-black);
+  color: var(--almost-white);
+  border: var(--dashed-border);
+}
+
+.status button:hover, .status .button:hover {
+  background-color: var(--almost-white);
+  color: var(--almost-black);
+  border: var(--dashed-border);
+}
+
+.emoji:hover {
+  border: none;
+}

@@ -120,6 +120,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "fields": [],
   "source": {
     "privacy": "public",
+    "web_visibility": "unlisted",
     "sensitive": false,
     "language": "en",
     "status_content_type": "text/plain",
@@ -304,6 +305,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "fields": [],
   "source": {
     "privacy": "public",
+    "web_visibility": "unlisted",
     "sensitive": false,
     "language": "en",
     "status_content_type": "text/plain",

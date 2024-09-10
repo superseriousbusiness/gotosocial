@@ -1,0 +1,223 @@
+/*
+  theme-title: Ecks Pee
+  theme-description: Looks suspiciously like a certain operating system
+*/
+
+:root {
+  /* Define our color palette */
+  --ecks-pee-blurple: #3833ac;
+  --ecks-pee-blue: #00309c;
+  --ecks-pee-dark-blue: #0336b3;
+  --ecks-pee-darkest-blue: #032680;
+  --ecks-pee-light-blue: #5a7edc;
+  --ecks-pee-lighter-blue: #91b1ee;
+  --ecks-pee-lightest-blue: #c5dafc;
+  --ecks-pee-orange: #f69438;
+  --ecks-pee-white: #ffffff;
+  --ecks-pee-green: #369836;
+  --ecks-pee-light-green: #96c496;
+  --ecks-pee-dark-green: #1f611f;
+  --ecks-pee-darkest-green: #184918;
+
+  /* Blurple gradient from ecks pee install screen */
+  --ecks-pee-blurple-gradient: linear-gradient(
+      45deg,
+      var(--ecks-pee-blurple),
+      var(--ecks-pee-blue),
+      var(--ecks-pee-blurple)
+    );
+
+  /*
+    Start menu / title bar gradient, borrowed from
+    https://github.com/botoxparty/XP.css/blob/main/themes/XP/_window.scss
+  */
+  --ecks-pee-start-menu: linear-gradient(
+      180deg,
+      #0997ff 0%,
+      #0053ee 8%,
+      #0050ee 40%,
+      #0066ff 88%,
+      #0066ff 93%,
+      #005bff 95%,
+      #003dd7 96%,
+      #003dd7 100%
+  );
+
+  /* Start button gradient */
+  --ecks-pee-start-button: linear-gradient(
+    180deg,
+    var(--ecks-pee-light-green) 0%,
+    var(--ecks-pee-green) 8%,
+    var(--ecks-pee-green) 93%,
+    var(--ecks-pee-dark-green) 100%
+);
+
+  /* Trim for between dark elements. */
+  --ecks-pee-dotted-trim: 0.2rem dotted var(--ecks-pee-orange);
+
+  /* Override orange trim */
+  --orange2: var(--ecks-pee-orange);
+
+  /* Restyle basic colors to use blurple */
+  --blue1: var(--ecks-pee-lighter-blue);
+  --blue2: var(--ecks-pee-lightest-blue);
+  --blue3: var(--ecks-pee-white);
+
+  /* Basic page styling (background + foreground) */
+  --bg: radial-gradient(circle closest-corner at 20% 20%, var(--ecks-pee-lighter-blue), var(--ecks-pee-light-blue));
+  --bg-accent: var(--ecks-pee-blue);
+  --fg: var(--ecks-pee-white);
+  --fg-reduced: var(--ecks-pee-lightest-blue);
+
+  /* Profile page styling */
+  --profile-bg: var(--ecks-pee-blurple-gradient);
+
+  /* Start buttons */
+  --button-bg: var(--ecks-pee-start-button);
+  --button-fg: var(--ecks-pee-white);
+
+  /* ecks-pee-ize statuses */
+  --status-bg: var(--ecks-pee-blurple-gradient);
+  --status-focus-bg: var(--ecks-pee-blurple-gradient);
+  --status-info-bg: var(--ecks-pee-start-menu);
+  --status-focus-info-bg: var(--ecks-pee-start-menu);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 1px solid var(--ecks-pee-darkest-blue);
+}
+
+/* Set fonts with woff fallbacks */
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-weight: normal;
+  font-style: normal;
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2) format('woff2');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Regular-102.woff) format('woff');
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-weight: bold;
+  font-style: normal;
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Bold-102a.woff2) format('woff2');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Bold-102.woff) format('woff');
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-weight: normal;
+  font-style: italic;
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Italic-102a.woff2) format('woff2');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Italic-102.woff) format('woff');
+}
+@font-face {
+  font-family: "Atkinson Hyperlegible";
+  font-weight: bold;
+  font-style: italic;
+  src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2) format('woff2');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff) format('woff');
+}
+
+/* Scroll bar */
+html, body {
+  /* Try Atkinson, fall back to default GtS fonts */
+  font-family: "Atkinson Hyperlegible", "Noto Sans", sans-serif;
+  font-size: large;
+  text-shadow: 1px 1px 1px black;
+  scrollbar-color: var(--ecks-pee-lighter-blue) var(--ecks-pee-white);
+}
+
+/* Make this more like an ecks pee top bar */
+.col-header {
+  background: var(--ecks-pee-start-menu);
+  border-top: 1px solid #0831d9;
+  border-left: 1px solid #0831d9;
+  border-right: 1px solid #001ea0;
+}
+
+/* Role and bot badge backgrounds */
+.profile .profile-header .basic-info .namerole .role,
+.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
+  background: black;
+}
+
+/* Profile fields */
+.profile .about-user .fields {
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+.profile .about-user .fields dt,
+.profile .about-user .fields dd {
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+.profile .about-user .fields .field {
+  background: var(--ecks-pee-dark-blue);
+  border-bottom: var(--ecks-pee-dotted-trim);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: none;
+}
+
+/* Profile bio */
+.profile .about-user .bio {
+  background: var(--ecks-pee-dark-blue);
+}
+
+/* Profile stats */
+.accountstats {
+  border-top: var(--ecks-pee-dotted-trim);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: 0.1rem solid black;
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--blue2);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: black;
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: black;
+}
+.status .text .poll .poll-info {
+  background: var(--ecks-pee-start-menu);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background: black;
+  color: var(--ecks-pee-white);
+}
+
+/* Block quotes */
+blockquote {
+  background: black;
+  color: var(--ecks-pee-white);
+}
+
+/* Cheeky little border */
+.status-info {
+  border-top: 1px solid #0831d9;
+  border-left: 1px solid #0831d9;
+  border-right: 1px solid #001ea0;
+}
+
+/* Button stuff */
+button, .button {
+  border-left: 1px solid var(--ecks-pee-darkest-green);
+  border-right: 1px solid var(--ecks-pee-darkest-green);
+}
+/* Differentiate start button on hover */
+button:hover, .button:hover {
+  background: var(--ecks-pee-light-green);
+}
+
+/* Make these bold or they don't contrast enough */
+.backnextlinks {
+  font-weight: bold;
+}

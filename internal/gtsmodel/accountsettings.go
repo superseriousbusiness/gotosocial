@@ -17,7 +17,9 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"time"
+)
 
 // AccountSettings models settings / preferences for a local, non-instance account.
 type AccountSettings struct {
@@ -32,6 +34,7 @@ type AccountSettings struct {
 	CustomCSS                      string             `bun:",nullzero"`                                                   // Custom CSS that should be displayed for this Account's profile and statuses.
 	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
 	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
+	WebVisibility                  Visibility         `bun:",nullzero,notnull,default:public"`                            // Visibility level of statuses that visitors can view via the web profile.
 	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.
 	InteractionPolicyMutualsOnly   *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new mutuals only visibility statuses. If null, assume default policy.
 	InteractionPolicyFollowersOnly *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new followers only visibility statuses. If null, assume default policy.

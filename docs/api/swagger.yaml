@@ -157,6 +157,14 @@ definitions:
                 description: The default posting content type for new statuses.
                 type: string
                 x-go-name: StatusContentType
+            web_visibility:
+                description: |-
+                    Visibility level(s) of posts to show for this account via the web api.
+                    "public" = default, show only Public visibility posts on the web.
+                    "unlisted" = show Public *and* Unlisted visibility posts on the web.
+                    "none" = show no posts on the web, not even Public ones.
+                type: string
+                x-go-name: WebVisibility
         title: Source represents display or publishing preferences of user's own account.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
@@ -2052,6 +2060,12 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     list:
         properties:
+            exclusive:
+                description: |-
+                    Exclusive setting for this list.
+                    If true, hide posts from members of this list from your home timeline.
+                type: boolean
+                x-go-name: Exclusive
             id:
                 description: The ID of the list.
                 type: string
@@ -4400,6 +4414,14 @@ paths:
                   in: formData
                   name: hide_collections
                   type: boolean
+                - description: |-
+                    Posts to show on the web view of the account.
+                    "public": default, show only Public visibility posts on the web.
+                    "unlisted": show Public *and* Unlisted visibility posts on the web.
+                    "none": show no posts on the web, not even Public ones.
+                  in: formData
+                  name: web_visibility
+                  type: string
                 - description: Name of 1st profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
                   in: formData
                   name: fields_attributes[0][name]
@@ -7783,10 +7805,20 @@ paths:
                     list = Show replies to members of the list
                     none = Show replies to no one
                     Sample: list
+                  enum:
+                    - followed
+                    - list
+                    - none
                   in: formData
                   name: replies_policy
                   type: string
                   x-go-name: RepliesPolicy
+                - default: false
+                  description: Hide posts from members of this list from your home timeline.
+                  in: formData
+                  name: exclusive
+                  type: boolean
+                  x-go-name: Exclusive
             produces:
                 - application/json
             responses:
@@ -7904,6 +7936,10 @@ paths:
                   in: formData
                   name: replies_policy
                   type: string
+                - description: Hide posts from members of this list from your home timeline.
+                  in: formData
+                  name: exclusive
+                  type: boolean
             produces:
                 - application/json
             responses:
@@ -10462,6 +10498,16 @@ paths:
                   in: formData
                   name: expires_in
                   type: number
+                - description: |-
+                    The action to be taken when a status matches this filter.
+
+                    Sample: warn
+                  enum:
+                    - warn
+                    - hide
+                  in: formData
+                  name: filter_action
+                  type: string
             produces:
                 - application/json
             responses:

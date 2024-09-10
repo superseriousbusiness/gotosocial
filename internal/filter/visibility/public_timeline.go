@@ -33,7 +33,7 @@ func (f *Filter) StatusPublicTimelineable(ctx context.Context, requester *gtsmod
 	const vtype = cache.VisibilityTypePublic
 
 	// By default we assume no auth.
-	requesterID := noauth
+	requesterID := NoAuth
 
 	if requester != nil {
 		// Use provided account ID.

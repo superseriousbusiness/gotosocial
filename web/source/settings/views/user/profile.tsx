@@ -115,6 +115,7 @@ function UserProfileForm({ data: profile }) {
 		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
 		hideCollections: useBoolInput("hide_collections", { source: profile }),
+		webVisibility: useTextInput("web_visibility", { source: profile, valueSelector: (p) => p.source?.web_visibility }),
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
 			length: instanceConfig.maxPinnedFields
@@ -233,21 +234,32 @@ function UserProfileForm({ data: profile }) {
 					Learn more about these settings (opens in a new tab)
 				</a>
 			</div>
+			<Select
+				field={form.webVisibility}
+				label="Visibility level of posts to show on your profile, and in your RSS feed (if enabled)."
+				options={
+					<>
+						<option value="public">Show Public posts only (the GoToSocial default)</option>
+						<option value="unlisted">Show Public and Unlisted posts (the Mastodon default)</option>
+						<option value="none">Show no posts</option>
+					</>
+				}
+			/>
 			<Checkbox
 				field={form.locked}
-				label="Manually approve follow requests"
+				label="Manually approve follow requests."
 			/>
 			<Checkbox
 				field={form.discoverable}
-				label="Mark account as discoverable by search engines and directories"
+				label="Mark account as discoverable by search engines and directories."
 			/>
 			<Checkbox
 				field={form.enableRSS}
-				label="Enable RSS feed of Public posts"
+				label="Enable RSS feed of posts."
 			/>
 			<Checkbox
 				field={form.hideCollections}
-				label="Hide who you follow / are followed by"
+				label="Hide who you follow / are followed by."
 			/>
 
 			<div className="form-section-docs">

@@ -121,6 +121,17 @@ import (
 //
 //			Sample: 86400
 //		type: number
+//	-
+//		name: filter_action
+//		in: formData
+//		description: |-
+//			The action to be taken when a status matches this filter.
+//
+//			Sample: warn
+//		type: string
+//		enum:
+//			- warn
+//			- hide
 //
 //	security:
 //	- OAuth2 Bearer:

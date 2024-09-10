@@ -46,6 +46,35 @@ import (
 //	produces:
 //	- application/json
 //
+//	parameters:
+//	-
+//		name: title
+//		type: string
+//		description: |-
+//			Title of this list.
+//			Sample: Cool People
+//		in: formData
+//	-
+//		name: replies_policy
+//		type: string
+//		description: |-
+//		  RepliesPolicy for this list.
+//		  followed = Show replies to any followed user
+//		  list = Show replies to members of the list
+//		  none = Show replies to no one
+//		  Sample: list
+//		enum:
+//			- followed
+//			- list
+//			- none
+//		in: formData
+//	-
+//		name: exclusive
+//		in: formData
+//		description: Hide posts from members of this list from your home timeline.
+//		type: boolean
+//		default: false
+//
 //	security:
 //	- OAuth2 Bearer:
 //		- write:lists
@@ -101,7 +130,13 @@ func (m *Module) ListCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	apiList, errWithCode := m.processor.List().Create(c.Request.Context(), authed.Account, form.Title, repliesPolicy)
+	apiList, errWithCode := m.processor.List().Create(
+		c.Request.Context(),
+		authed.Account,
+		form.Title,
+		repliesPolicy,
+		form.Exclusive,
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
