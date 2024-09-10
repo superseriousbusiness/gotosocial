@@ -196,10 +196,6 @@ func (s *Status) GetTagByName(name string) (*Tag, bool) {
 
 // MentionsAccount returns whether status mentions the given account ID.
 func (s *Status) MentionsAccount(accountID string) bool {
-	if s == nil {
-		return false
-	}
-
 	return slices.ContainsFunc(s.Mentions, func(m *Mention) bool {
 		return m.TargetAccountID == accountID
 	})

@@ -288,7 +288,7 @@ func (f *federatingDB) rejectStatusIRI(
 
 		// You can't mention an account and then Reject replies from that
 		// same account (harassment vector); don't process these Rejects.
-		if status.InReplyTo.MentionsAccount(status.AccountID) {
+		if status.InReplyTo != nil && status.InReplyTo.MentionsAccount(status.AccountID) {
 			const text = "refusing to process Reject of a reply from a mentioned account"
 			return gtserror.NewErrorForbidden(errors.New(text), text)
 		}
