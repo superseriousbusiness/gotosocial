@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 
@@ -144,6 +145,23 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		// ACCEPT (pending) ANNOUNCE
 		case ap.ActivityAnnounce:
 			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
+		}
+
+	// REJECT SOMETHING
+	case ap.ActivityReject:
+		switch fMsg.APObjectType {
+
+		// REJECT LIKE
+		case ap.ActivityLike:
+			return p.fediAPI.RejectLike(ctx, fMsg)
+
+		// REJECT NOTE/STATUS (ie., reject a reply)
+		case ap.ObjectNote:
+			return p.fediAPI.RejectReply(ctx, fMsg)
+
+		// REJECT BOOST
+		case ap.ActivityAnnounce:
+			return p.fediAPI.RejectAnnounce(ctx, fMsg)
 		}
 
 	// DELETE SOMETHING
@@ -878,11 +896,6 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 }
 
 func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) error {
-	// Delete attachments from this status, since this request
-	// comes from the federating API, and there's no way the
-	// poster can do a delete + redraft for it on our instance.
-	const deleteAttachments = true
-
 	status, ok := fMsg.GTSModel.(*gtsmodel.Status)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
@@ -909,8 +922,22 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	// (stops processing of remote origin data targeting this status).
 	p.state.Workers.Federator.Queue.Delete("TargetURI", status.URI)
 
-	// First perform the actual status deletion.
-	if err := p.utils.wipeStatus(ctx, status, deleteAttachments); err != nil {
+	// Delete attachments from this status, since this request
+	// comes from the federating API, and there's no way the
+	// poster can do a delete + redraft for it on our instance.
+	const deleteAttachments = true
+
+	// This is just a deletion, not a Reject,
+	// we don't need to take a copy of this status.
+	const copyToSinBin = false
+
+	// Perform the actual status deletion.
+	if err := p.utils.wipeStatus(
+		ctx,
+		status,
+		deleteAttachments,
+		copyToSinBin,
+	); err != nil {
 		log.Errorf(ctx, "error wiping status: %v", err)
 	}
 
@@ -952,6 +979,116 @@ func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 	// First perform the actual account deletion.
 	if err := p.account.Delete(ctx, account, account.ID); err != nil {
 		log.Errorf(ctx, "error deleting account: %v", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) RejectLike(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// At this point the InteractionRequest should already
+	// be in the database, we just need to do side effects.
+
+	// Send out the Reject.
+	if err := p.federate.RejectInteraction(ctx, req); err != nil {
+		log.Errorf(ctx, "error federating rejection of like: %v", err)
+	}
+
+	// Get the rejected fave.
+	fave, err := p.state.DB.GetStatusFaveByURI(
+		gtscontext.SetBarebones(ctx),
+		req.InteractionURI,
+	)
+	if err != nil {
+		return gtserror.Newf("db error getting rejected fave: %w", err)
+	}
+
+	// Delete the fave.
+	if err := p.state.DB.DeleteStatusFaveByID(ctx, fave.ID); err != nil {
+		return gtserror.Newf("db error deleting fave: %w", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) RejectReply(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// At this point the InteractionRequest should already
+	// be in the database, we just need to do side effects.
+
+	// Get the rejected status.
+	status, err := p.state.DB.GetStatusByURI(
+		gtscontext.SetBarebones(ctx),
+		req.InteractionURI,
+	)
+	if err != nil {
+		return gtserror.Newf("db error getting rejected reply: %w", err)
+	}
+
+	// Delete attachments from this status.
+	// It's rejected so there's no possibility
+	// for the poster to delete + redraft it.
+	const deleteAttachments = true
+
+	// Keep a copy of the status in
+	// the sin bin for future review.
+	const copyToSinBin = true
+
+	// Perform the actual status deletion.
+	if err := p.utils.wipeStatus(
+		ctx,
+		status,
+		deleteAttachments,
+		copyToSinBin,
+	); err != nil {
+		log.Errorf(ctx, "error wiping reply: %v", err)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) RejectAnnounce(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	req, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// At this point the InteractionRequest should already
+	// be in the database, we just need to do side effects.
+
+	// Get the rejected boost.
+	boost, err := p.state.DB.GetStatusByURI(
+		gtscontext.SetBarebones(ctx),
+		req.InteractionURI,
+	)
+	if err != nil {
+		return gtserror.Newf("db error getting rejected announce: %w", err)
+	}
+
+	// Boosts don't have attachments anyway
+	// so it doesn't matter what we set here.
+	const deleteAttachments = true
+
+	// This is just a boost, don't
+	// keep a copy in the sin bin.
+	const copyToSinBin = true
+
+	// Perform the actual status deletion.
+	if err := p.utils.wipeStatus(
+		ctx,
+		boost,
+		deleteAttachments,
+		copyToSinBin,
+	); err != nil {
+		log.Errorf(ctx, "error wiping announce: %v", err)
 	}
 
 	return nil

@@ -19,10 +19,15 @@ package typeutils
 
 import (
 	"context"
+	"errors"
+	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -173,5 +178,93 @@ func StatusFaveToInteractionRequest(
 		InteractionURI:       fave.URI,
 		InteractionType:      gtsmodel.InteractionLike,
 		Like:                 fave,
+	}, nil
+}
+
+func (c *Converter) StatusToSinBinStatus(
+	ctx context.Context,
+	status *gtsmodel.Status,
+) (*gtsmodel.SinBinStatus, error) {
+	// Populate status first so we have
+	// polls, mentions etc to copy over.
+	//
+	// ErrNoEntries is fine, we'll do our best.
+	err := c.state.DB.PopulateStatus(ctx, status)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("db error populating status: %w", err)
+	}
+
+	// Get domain of this status,
+	// empty for our own domain.
+	var domain string
+	if status.Account != nil {
+		domain = status.Account.Domain
+	} else {
+		uri, err := url.Parse(status.URI)
+		if err != nil {
+			return nil, gtserror.Newf("error parsing status URI: %w", err)
+		}
+
+		host := uri.Host
+		if host != config.GetAccountDomain() &&
+			host != config.GetHost() {
+			domain = host
+		}
+	}
+
+	// Extract just the image URLs from attachments.
+	attachLinks := make([]string, len(status.Attachments))
+	for i, attach := range status.Attachments {
+		if attach.IsLocal() {
+			attachLinks[i] = attach.URL
+		} else {
+			attachLinks[i] = attach.RemoteURL
+		}
+	}
+
+	// Extract just the target account URIs from mentions.
+	mentionTargetURIs := make([]string, 0, len(status.Mentions))
+	for _, mention := range status.Mentions {
+		if err := c.state.DB.PopulateMention(ctx, mention); err != nil {
+			log.Errorf(ctx, "error populating mention: %v", err)
+			continue
+		}
+
+		mentionTargetURIs = append(mentionTargetURIs, mention.TargetAccount.URI)
+	}
+
+	// Extract just the image URLs from emojis.
+	emojiLinks := make([]string, len(status.Emojis))
+	for i, emoji := range status.Emojis {
+		if emoji.IsLocal() {
+			emojiLinks[i] = emoji.ImageURL
+		} else {
+			emojiLinks[i] = emoji.ImageRemoteURL
+		}
+	}
+
+	// Extract just the poll option strings.
+	var pollOptions []string
+	if status.Poll != nil {
+		pollOptions = status.Poll.Options
+	}
+
+	return &gtsmodel.SinBinStatus{
+		ID:                  status.ID, // Reuse the status ID.
+		URI:                 status.URI,
+		URL:                 status.URL,
+		Domain:              domain,
+		AccountURI:          status.AccountURI,
+		InReplyToURI:        status.InReplyToURI,
+		Content:             status.Content,
+		AttachmentLinks:     attachLinks,
+		MentionTargetURIs:   mentionTargetURIs,
+		EmojiLinks:          emojiLinks,
+		PollOptions:         pollOptions,
+		ContentWarning:      status.ContentWarning,
+		Visibility:          status.Visibility,
+		Sensitive:           status.Sensitive,
+		Language:            status.Language,
+		ActivityStreamsType: status.ActivityStreamsType,
 	}, nil
 }

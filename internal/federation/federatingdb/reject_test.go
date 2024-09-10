@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -61,10 +62,11 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	// create a Reject
 	reject := streams.NewActivityStreamsReject()
 
+	// set an ID on it
+	ap.SetJSONLDId(reject, testrig.URLMustParse("https://example.org/some/reject/id"))
+
 	// set the rejecting actor on it
-	acceptActorProp := streams.NewActivityStreamsActorProperty()
-	acceptActorProp.AppendIRI(rejectingAccountURI)
-	reject.SetActivityStreamsActor(acceptActorProp)
+	ap.AppendActorIRIs(reject, rejectingAccountURI)
 
 	// Set the recreated follow as the 'object' property.
 	acceptObject := streams.NewActivityStreamsObjectProperty()
@@ -72,9 +74,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	reject.SetActivityStreamsObject(acceptObject)
 
 	// Set the To of the reject as the originator of the follow
-	acceptTo := streams.NewActivityStreamsToProperty()
-	acceptTo.AppendIRI(requestingAccountURI)
-	reject.SetActivityStreamsTo(acceptTo)
+	ap.AppendTo(reject, requestingAccountURI)
 
 	// process the reject in the federating database
 	err = suite.federatingDB.Reject(ctx, reject)

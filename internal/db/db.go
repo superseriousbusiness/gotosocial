@@ -48,6 +48,7 @@ type DB interface {
 	Rule
 	Search
 	Session
+	SinBinStatus
 	Status
 	StatusBookmark
 	StatusFave

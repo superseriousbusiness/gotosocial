@@ -76,6 +76,7 @@ type DBService struct {
 	db.Rule
 	db.Search
 	db.Session
+	db.SinBinStatus
 	db.Status
 	db.StatusBookmark
 	db.StatusFave
@@ -270,6 +271,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		},
 		Session: &sessionDB{
 			db: db,
+		},
+		SinBinStatus: &sinBinStatusDB{
+			db:    db,
+			state: state,
 		},
 		Status: &statusDB{
 			db:    db,

@@ -20,12 +20,17 @@ package federatingdb
 import (
 	"context"
 	"errors"
-	"fmt"
+	"time"
 
 	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
@@ -48,63 +53,450 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 	requestingAcct := activityContext.requestingAcct
 	receivingAcct := activityContext.receivingAcct
 
-	for _, obj := range ap.ExtractObjects(reject) {
+	activityID := ap.GetJSONLDId(reject)
+	if activityID == nil {
+		// We need an ID.
+		const text = "Reject had no id property"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
 
-		if obj.IsIRI() {
-			// we have just the URI of whatever is being rejected, so we need to find out what it is
-			rejectedObjectIRI := obj.GetIRI()
-			if uris.IsFollowPath(rejectedObjectIRI) {
-				// REJECT FOLLOW
-				followReq, err := f.state.DB.GetFollowRequestByURI(ctx, rejectedObjectIRI.String())
-				if err != nil {
-					return fmt.Errorf("Reject: couldn't get follow request with id %s from the database: %s", rejectedObjectIRI.String(), err)
-				}
+	for _, object := range ap.ExtractObjects(reject) {
+		if asType := object.GetType(); asType != nil {
+			// Check and handle any
+			// vocab.Type objects.
+			// nolint:gocritic
+			switch asType.GetTypeName() {
 
-				// Make sure the creator of the original follow
-				// is the same as whatever inbox this landed in.
-				if followReq.AccountID != receivingAcct.ID {
-					return errors.New("Reject: follow account and inbox account were not the same")
-				}
-
-				// Make sure the target of the original follow
-				// is the same as the account making the request.
-				if followReq.TargetAccountID != requestingAcct.ID {
-					return errors.New("Reject: follow target account and requesting account were not the same")
-				}
-
-				return f.state.DB.RejectFollowRequest(ctx, followReq.AccountID, followReq.TargetAccountID)
-			}
-		}
-
-		if t := obj.GetType(); t != nil {
-			// we have the whole object so we can figure out what we're rejecting
 			// REJECT FOLLOW
-			asFollow, ok := t.(vocab.ActivityStreamsFollow)
-			if !ok {
-				return errors.New("Reject: couldn't parse follow into vocab.ActivityStreamsFollow")
+			case ap.ActivityFollow:
+				if err := f.rejectFollowType(
+					ctx,
+					asType,
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
 			}
 
-			// convert the follow to something we can understand
-			gtsFollow, err := f.converter.ASFollowToFollow(ctx, asFollow)
-			if err != nil {
-				return fmt.Errorf("Reject: error converting asfollow to gtsfollow: %s", err)
-			}
+		} else if object.IsIRI() {
+			// Check and handle any
+			// IRI type objects.
+			switch objIRI := object.GetIRI(); {
 
-			// Make sure the creator of the original follow
-			// is the same as whatever inbox this landed in.
-			if gtsFollow.AccountID != receivingAcct.ID {
-				return errors.New("Reject: follow account and inbox account were not the same")
-			}
+			// REJECT FOLLOW
+			case uris.IsFollowPath(objIRI):
+				if err := f.rejectFollowIRI(
+					ctx,
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
 
-			// Make sure the target of the original follow
-			// is the same as the account making the request.
-			if gtsFollow.TargetAccountID != requestingAcct.ID {
-				return errors.New("Reject: follow target account and requesting account were not the same")
-			}
+			// REJECT STATUS (reply/boost)
+			case uris.IsStatusesPath(objIRI):
+				if err := f.rejectStatusIRI(
+					ctx,
+					activityID.String(),
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
 
-			return f.state.DB.RejectFollowRequest(ctx, gtsFollow.AccountID, gtsFollow.TargetAccountID)
+			// REJECT LIKE
+			case uris.IsLikePath(objIRI):
+				if err := f.rejectLikeIRI(
+					ctx,
+					activityID.String(),
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
+			}
 		}
 	}
+
+	return nil
+}
+
+func (f *federatingDB) rejectFollowType(
+	ctx context.Context,
+	asType vocab.Type,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Cast the vocab.Type object to known AS type.
+	asFollow := asType.(vocab.ActivityStreamsFollow)
+
+	// Reconstruct the follow.
+	follow, err := f.converter.ASFollowToFollow(ctx, asFollow)
+	if err != nil {
+		err := gtserror.Newf("error converting Follow to *gtsmodel.Follow: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Lock on the Follow URI
+	// as we may be updating it.
+	unlock := f.state.FedLocks.Lock(follow.URI)
+	defer unlock()
+
+	// Make sure the creator of the original follow
+	// is the same as whatever inbox this landed in.
+	if follow.AccountID != receivingAcct.ID {
+		const text = "Follow account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the original follow
+	// is the same as the account making the request.
+	if follow.TargetAccountID != requestingAcct.ID {
+		const text = "Follow target account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Reject the follow.
+	err = f.state.DB.RejectFollowRequest(
+		ctx,
+		follow.AccountID,
+		follow.TargetAccountID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error rejecting follow request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	return nil
+}
+
+func (f *federatingDB) rejectFollowIRI(
+	ctx context.Context,
+	objectIRI string,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Lock on this potential Follow
+	// URI as we may be updating it.
+	unlock := f.state.FedLocks.Lock(objectIRI)
+	defer unlock()
+
+	// Get the follow req from the db.
+	followReq, err := f.state.DB.GetFollowRequestByURI(ctx, objectIRI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting follow request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if followReq == nil {
+		// We didn't have a follow request
+		// with this URI, so nothing to do.
+		// Just return.
+		//
+		// TODO: Handle Reject Follow to remove
+		// an already-accepted follow relationship.
+		return nil
+	}
+
+	// Make sure the creator of the original follow
+	// is the same as whatever inbox this landed in.
+	if followReq.AccountID != receivingAcct.ID {
+		const text = "Follow account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the original follow
+	// is the same as the account making the request.
+	if followReq.TargetAccountID != requestingAcct.ID {
+		const text = "Follow target account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Reject the follow.
+	err = f.state.DB.RejectFollowRequest(
+		ctx,
+		followReq.AccountID,
+		followReq.TargetAccountID,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error rejecting follow request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	return nil
+}
+
+func (f *federatingDB) rejectStatusIRI(
+	ctx context.Context,
+	activityID string,
+	objectIRI string,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Lock on this potential status URI.
+	unlock := f.state.FedLocks.Lock(objectIRI)
+	defer unlock()
+
+	// Get the status from the db.
+	status, err := f.state.DB.GetStatusByURI(ctx, objectIRI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting status: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if status == nil {
+		// We didn't have a status with
+		// this URI, so nothing to do.
+		// Just return.
+		return nil
+	}
+
+	if !status.IsLocal() {
+		// We don't process Rejects of statuses
+		// that weren't created on our instance.
+		// Just return.
+		//
+		// TODO: Handle Reject to remove *remote*
+		// posts replying-to or boosting the
+		// Rejecting account.
+		return nil
+	}
+
+	// Make sure the creator of the original status
+	// is the same as the inbox processing the Reject;
+	// this also ensures the status is local.
+	if status.AccountID != receivingAcct.ID {
+		const text = "status author account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Check if we're dealing with a reply
+	// or an announce, and make sure the
+	// requester is permitted to Reject.
+	var apObjectType string
+	if status.InReplyToID != "" {
+		// Rejecting a Reply.
+		apObjectType = ap.ObjectNote
+		if status.InReplyToAccountID != requestingAcct.ID {
+			const text = "status reply to account and requesting account were not the same"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+		// You can't mention an account and then Reject replies from that
+		// same account (harassment vector); don't process these Rejects.
+		if status.InReplyTo != nil && status.InReplyTo.MentionsAccount(status.AccountID) {
+			const text = "refusing to process Reject of a reply from a mentioned account"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+
+	} else {
+		// Rejecting an Announce.
+		apObjectType = ap.ActivityAnnounce
+		if status.BoostOfAccountID != requestingAcct.ID {
+			const text = "status boost of account and requesting account were not the same"
+			return gtserror.NewErrorForbidden(errors.New(text), text)
+		}
+	}
+
+	// Check if there's an interaction request in the db for this status.
+	req, err := f.state.DB.GetInteractionRequestByInteractionURI(ctx, status.URI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting interaction request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	switch {
+	case req == nil:
+		// No interaction request existed yet for this
+		// status, create a pre-rejected request now.
+		req = &gtsmodel.InteractionRequest{
+			ID:                   id.NewULID(),
+			TargetAccountID:      requestingAcct.ID,
+			TargetAccount:        requestingAcct,
+			InteractingAccountID: receivingAcct.ID,
+			InteractingAccount:   receivingAcct,
+			InteractionURI:       status.URI,
+			URI:                  activityID,
+			RejectedAt:           time.Now(),
+		}
+
+		if apObjectType == ap.ObjectNote {
+			// Reply.
+			req.InteractionType = gtsmodel.InteractionReply
+			req.StatusID = status.InReplyToID
+			req.Status = status.InReplyTo
+			req.Reply = status
+		} else {
+			// Announce.
+			req.InteractionType = gtsmodel.InteractionAnnounce
+			req.StatusID = status.BoostOfID
+			req.Status = status.BoostOf
+			req.Announce = status
+		}
+
+		if err := f.state.DB.PutInteractionRequest(ctx, req); err != nil {
+			err := gtserror.Newf("db error inserting interaction request: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+	case req.IsRejected():
+		// Interaction has already been rejected. Just
+		// update to this Reject URI and then return early.
+		req.URI = activityID
+		if err := f.state.DB.UpdateInteractionRequest(ctx, req, "uri"); err != nil {
+			err := gtserror.Newf("db error updating interaction request: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+		return nil
+
+	default:
+		// Mark existing interaction request as
+		// Rejected, even if previously Accepted.
+		req.AcceptedAt = time.Time{}
+		req.RejectedAt = time.Now()
+		req.URI = activityID
+		if err := f.state.DB.UpdateInteractionRequest(ctx, req,
+			"accepted_at",
+			"rejected_at",
+			"uri",
+		); err != nil {
+			err := gtserror.Newf("db error updating interaction request: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	// Send the rejected request through to
+	// the fedi worker to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   apObjectType,
+		APActivityType: ap.ActivityReject,
+		GTSModel:       req,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
+	return nil
+}
+
+func (f *federatingDB) rejectLikeIRI(
+	ctx context.Context,
+	activityID string,
+	objectIRI string,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
+	// Lock on this potential Like
+	// URI as we may be updating it.
+	unlock := f.state.FedLocks.Lock(objectIRI)
+	defer unlock()
+
+	// Get the fave from the db.
+	fave, err := f.state.DB.GetStatusFaveByURI(ctx, objectIRI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting fave: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if fave == nil {
+		// We didn't have a fave with
+		// this URI, so nothing to do.
+		// Just return.
+		return nil
+	}
+
+	if !fave.Account.IsLocal() {
+		// We don't process Rejects of Likes
+		// that weren't created on our instance.
+		// Just return.
+		//
+		// TODO: Handle Reject to remove *remote*
+		// likes targeting the Rejecting account.
+		return nil
+	}
+
+	// Make sure the creator of the original Like
+	// is the same as the inbox processing the Reject;
+	// this also ensures the Like is local.
+	if fave.AccountID != receivingAcct.ID {
+		const text = "fave creator account and inbox account were not the same"
+		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+	}
+
+	// Make sure the target of the Like is the
+	// same as the account doing the Reject.
+	if fave.TargetAccountID != requestingAcct.ID {
+		const text = "status fave target account and requesting account were not the same"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Check if there's an interaction request in the db for this like.
+	req, err := f.state.DB.GetInteractionRequestByInteractionURI(ctx, fave.URI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting interaction request: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	switch {
+	case req == nil:
+		// No interaction request existed yet for this
+		// fave, create a pre-rejected request now.
+		req = &gtsmodel.InteractionRequest{
+			ID:                   id.NewULID(),
+			TargetAccountID:      requestingAcct.ID,
+			TargetAccount:        requestingAcct,
+			InteractingAccountID: receivingAcct.ID,
+			InteractingAccount:   receivingAcct,
+			InteractionURI:       fave.URI,
+			InteractionType:      gtsmodel.InteractionLike,
+			Like:                 fave,
+			URI:                  activityID,
+			RejectedAt:           time.Now(),
+		}
+
+		if err := f.state.DB.PutInteractionRequest(ctx, req); err != nil {
+			err := gtserror.Newf("db error inserting interaction request: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+	case req.IsRejected():
+		// Interaction has already been rejected. Just
+		// update to this Reject URI and then return early.
+		req.URI = activityID
+		if err := f.state.DB.UpdateInteractionRequest(ctx, req, "uri"); err != nil {
+			err := gtserror.Newf("db error updating interaction request: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+		return nil
+
+	default:
+		// Mark existing interaction request as
+		// Rejected, even if previously Accepted.
+		req.AcceptedAt = time.Time{}
+		req.RejectedAt = time.Now()
+		req.URI = activityID
+		if err := f.state.DB.UpdateInteractionRequest(ctx, req,
+			"accepted_at",
+			"rejected_at",
+			"uri",
+		); err != nil {
+			err := gtserror.Newf("db error updating interaction request: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+	}
+
+	// Send the rejected request through to
+	// the fedi worker to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityLike,
+		APActivityType: ap.ActivityReject,
+		GTSModel:       req,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
 
 	return nil
 }

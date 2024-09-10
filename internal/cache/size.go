@@ -593,6 +593,29 @@ func sizeofReport() uintptr {
 	}))
 }
 
+func sizeofSinBinStatus() uintptr {
+	return uintptr(size.Of(&gtsmodel.SinBinStatus{
+		ID:                  exampleID,
+		CreatedAt:           exampleTime,
+		UpdatedAt:           exampleTime,
+		URI:                 exampleURI,
+		URL:                 exampleURI,
+		Domain:              exampleURI,
+		AccountURI:          exampleURI,
+		InReplyToURI:        exampleURI,
+		Content:             exampleText,
+		AttachmentLinks:     []string{exampleURI, exampleURI},
+		MentionTargetURIs:   []string{exampleURI},
+		EmojiLinks:          []string{exampleURI},
+		PollOptions:         []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+		ContentWarning:      exampleTextSmall,
+		Visibility:          gtsmodel.VisibilityPublic,
+		Sensitive:           util.Ptr(false),
+		Language:            "en",
+		ActivityStreamsType: ap.ObjectNote,
+	}))
+}
+
 func sizeofStatus() uintptr {
 	return uintptr(size.Of(&gtsmodel.Status{
 		ID:                       exampleID,

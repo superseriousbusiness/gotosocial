@@ -70,10 +70,11 @@ func New(
 
 	// Init shared util funcs.
 	utils := &utils{
-		state:   state,
-		media:   media,
-		account: account,
-		surface: surface,
+		state:     state,
+		media:     media,
+		account:   account,
+		surface:   surface,
+		converter: converter,
 	}
 
 	return Processor{
