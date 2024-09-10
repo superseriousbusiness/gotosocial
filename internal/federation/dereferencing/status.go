@@ -165,15 +165,13 @@ func (d *Dereferencer) getStatusByURI(ctx context.Context, requestUser string, u
 		return status, nil, false, nil
 	}
 
-	// Try to deref and update existing status model.
-	latest, statusable, isNew, err := d.enrichStatusSafely(ctx,
+	// Try to deref and update existing.
+	return d.enrichStatusSafely(ctx,
 		requestUser,
 		uri,
 		status,
 		nil,
 	)
-
-	return latest, statusable, isNew, err
 }
 
 // RefreshStatus is functionally equivalent to GetStatusByURI(), except that it requires a pre
