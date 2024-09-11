@@ -33,18 +33,25 @@ import (
 // appropriate errors so caller doesn't need to bother.
 func (p *Processor) getList(ctx context.Context, accountID string, listID string) (*gtsmodel.List, gtserror.WithCode) {
 	list, err := p.state.DB.GetListByID(ctx, listID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// List doesn't seem to exist.
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		// Real database error.
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting list: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	if list == nil {
+		const text = "list not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
+	}
+
 	if list.AccountID != accountID {
-		err = fmt.Errorf("list with id %s does not belong to account %s", list.ID, accountID)
-		return nil, gtserror.NewErrorNotFound(err)
+		const text = "list not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New("list does not belong to account"),
+			text,
+		)
 	}
 
 	return list, nil
@@ -59,27 +66,4 @@ func (p *Processor) apiList(ctx context.Context, list *gtsmodel.List) (*apimodel
 	}
 
 	return apiList, nil
-}
-
-// isInList check if thisID is equal to the result of thatID
-// for any entry in the given list.
-//
-// Will return the id of the listEntry if true, empty if false,
-// or an error if the result of thatID returns an error.
-func isInList(
-	list *gtsmodel.List,
-	thisID string,
-	getThatID func(listEntry *gtsmodel.ListEntry) (string, error),
-) (string, error) {
-	for _, listEntry := range list.ListEntries {
-		thatID, err := getThatID(listEntry)
-		if err != nil {
-			return "", err
-		}
-
-		if thisID == thatID {
-			return listEntry.ID, nil
-		}
-	}
-	return "", nil
 }

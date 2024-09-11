@@ -29,9 +29,6 @@ type DBCaches struct {
 	// Account provides access to the gtsmodel Account database cache.
 	Account StructCache[*gtsmodel.Account]
 
-	// AccountIDsFollowingTag caches account IDs following a given tag ID.
-	AccountIDsFollowingTag SliceCache[string]
-
 	// AccountNote provides access to the gtsmodel Note database cache.
 	AccountNote StructCache[*gtsmodel.AccountNote]
 
@@ -103,6 +100,12 @@ type DBCaches struct {
 	// - '<'  for follower IDs
 	FollowRequestIDs SliceCache[string]
 
+	// FollowingTagIDs provides access to account IDs following / tag IDs followed by
+	// account db cache. THIS CACHE IS KEYED AS THE FOLLOWING {prefix}{id} WHERE:
+	// - '>{$accountID}' for tag IDs followed by account
+	// - '<{$tagIDs}' for account IDs following tag
+	FollowingTagIDs SliceCache[string]
+
 	// Instance provides access to the gtsmodel Instance database cache.
 	Instance StructCache[*gtsmodel.Instance]
 
@@ -115,8 +118,17 @@ type DBCaches struct {
 	// List provides access to the gtsmodel List database cache.
 	List StructCache[*gtsmodel.List]
 
-	// ListEntry provides access to the gtsmodel ListEntry database cache.
-	ListEntry StructCache[*gtsmodel.ListEntry]
+	// ListIDs provides access to the list IDs owned by account / list IDs follow
+	// contained in db cache. THIS CACHE IS KEYED AS FOLLOWING {prefix}{id} WHERE:
+	// - 'a{$accountID}' for list IDs owned by account
+	// - 'f{$followID}' for list IDs follow contained in
+	ListIDs SliceCache[string]
+
+	// ListedIDs provides access to the account IDs in list / follow IDs in
+	// list db cache. THIS CACHE IS KEYED AS FOLLOWING {prefix}{id} WHERE:
+	// - 'a{listID}' for account IDs in list ID
+	// - 'f{listID}' for follow IDs in list ID
+	ListedIDs SliceCache[string]
 
 	// Marker provides access to the gtsmodel Marker database cache.
 	Marker StructCache[*gtsmodel.Marker]
@@ -151,10 +163,10 @@ type DBCaches struct {
 	// Status provides access to the gtsmodel Status database cache.
 	Status StructCache[*gtsmodel.Status]
 
-	// StatusBookmark ...
+	// StatusBookmark provides access to the gtsmodel StatusBookmark database cache.
 	StatusBookmark StructCache[*gtsmodel.StatusBookmark]
 
-	// StatusBookmarkIDs ...
+	// StatusBookmarkIDs provides access to the status bookmark IDs list database cache.
 	StatusBookmarkIDs SliceCache[string]
 
 	// StatusFave provides access to the gtsmodel StatusFave database cache.
@@ -165,9 +177,6 @@ type DBCaches struct {
 
 	// Tag provides access to the gtsmodel Tag database cache.
 	Tag StructCache[*gtsmodel.Tag]
-
-	// TagIDsFollowedByAccount caches tag IDs followed by a given account ID.
-	TagIDsFollowedByAccount SliceCache[string]
 
 	// ThreadMute provides access to the gtsmodel ThreadMute database cache.
 	ThreadMute StructCache[*gtsmodel.ThreadMute]
@@ -241,17 +250,6 @@ func (c *Caches) initAccount() {
 		Copy:       copyF,
 		Invalidate: c.OnInvalidateAccount,
 	})
-}
-
-func (c *Caches) initAccountIDsFollowingTag() {
-	// Calculate maximum cache size.
-	cap := calculateSliceCacheMax(
-		config.GetCacheAccountIDsFollowingTagMemRatio(),
-	)
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.DB.AccountIDsFollowingTag.Init(0, cap)
 }
 
 func (c *Caches) initAccountNote() {
@@ -761,6 +759,17 @@ func (c *Caches) initFollowRequestIDs() {
 	c.DB.FollowRequestIDs.Init(0, cap)
 }
 
+func (c *Caches) initFollowingTagIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheFollowingTagIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.FollowingTagIDs.Init(0, cap)
+}
+
 func (c *Caches) initInReplyToIDs() {
 	// Calculate maximum cache size.
 	cap := calculateSliceCacheMax(
@@ -860,7 +869,6 @@ func (c *Caches) initList() {
 		// will be populated separately.
 		// See internal/db/bundb/list.go.
 		l2.Account = nil
-		l2.ListEntries = nil
 
 		return l2
 	}
@@ -876,37 +884,26 @@ func (c *Caches) initList() {
 	})
 }
 
-func (c *Caches) initListEntry() {
+func (c *Caches) initListIDs() {
 	// Calculate maximum cache size.
-	cap := calculateResultCacheMax(
-		sizeofListEntry(), // model in-mem size.
-		config.GetCacheListEntryMemRatio(),
+	cap := calculateSliceCacheMax(
+		config.GetCacheListIDsMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	copyF := func(l1 *gtsmodel.ListEntry) *gtsmodel.ListEntry {
-		l2 := new(gtsmodel.ListEntry)
-		*l2 = *l1
+	c.DB.ListIDs.Init(0, cap)
+}
 
-		// Don't include ptr fields that
-		// will be populated separately.
-		// See internal/db/bundb/list.go.
-		l2.Follow = nil
+func (c *Caches) initListedIDs() {
+	// Calculate maximum cache size.
+	cap := calculateSliceCacheMax(
+		config.GetCacheListedIDsMemRatio(),
+	)
 
-		return l2
-	}
+	log.Infof(nil, "cache size = %d", cap)
 
-	c.DB.ListEntry.Init(structr.CacheConfig[*gtsmodel.ListEntry]{
-		Indices: []structr.IndexConfig{
-			{Fields: "ID"},
-			{Fields: "ListID", Multiple: true},
-			{Fields: "FollowID", Multiple: true},
-		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
-	})
+	c.DB.ListedIDs.Init(0, cap)
 }
 
 func (c *Caches) initMarker() {
@@ -1366,17 +1363,6 @@ func (c *Caches) initTag() {
 		IgnoreErr: ignoreErrors,
 		Copy:      copyF,
 	})
-}
-
-func (c *Caches) initTagIDsFollowedByAccount() {
-	// Calculate maximum cache size.
-	cap := calculateSliceCacheMax(
-		config.GetCacheTagIDsFollowedByAccountMemRatio(),
-	)
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.DB.TagIDsFollowedByAccount.Init(0, cap)
 }
 
 func (c *Caches) initThreadMute() {

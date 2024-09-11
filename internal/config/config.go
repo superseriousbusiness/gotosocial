@@ -196,7 +196,6 @@ type HTTPClientConfiguration struct {
 type CacheConfiguration struct {
 	MemoryTarget                      bytesize.Size `name:"memory-target"`
 	AccountMemRatio                   float64       `name:"account-mem-ratio"`
-	AccountIDsFollowingTagMemRatio    float64       `name:"account-ids-following-tag-mem-ratio"`
 	AccountNoteMemRatio               float64       `name:"account-note-mem-ratio"`
 	AccountSettingsMemRatio           float64       `name:"account-settings-mem-ratio"`
 	AccountStatsMemRatio              float64       `name:"account-stats-mem-ratio"`
@@ -216,11 +215,13 @@ type CacheConfiguration struct {
 	FollowIDsMemRatio                 float64       `name:"follow-ids-mem-ratio"`
 	FollowRequestMemRatio             float64       `name:"follow-request-mem-ratio"`
 	FollowRequestIDsMemRatio          float64       `name:"follow-request-ids-mem-ratio"`
+	FollowingTagIDsMemRatio           float64       `name:"following-tag-ids-mem-ratio"`
 	InReplyToIDsMemRatio              float64       `name:"in-reply-to-ids-mem-ratio"`
 	InstanceMemRatio                  float64       `name:"instance-mem-ratio"`
 	InteractionRequestMemRatio        float64       `name:"interaction-request-mem-ratio"`
 	ListMemRatio                      float64       `name:"list-mem-ratio"`
-	ListEntryMemRatio                 float64       `name:"list-entry-mem-ratio"`
+	ListIDsMemRatio                   float64       `name:"list-ids-mem-ratio"`
+	ListedIDsMemRatio                 float64       `name:"listed-ids-mem-ratio"`
 	MarkerMemRatio                    float64       `name:"marker-mem-ratio"`
 	MediaMemRatio                     float64       `name:"media-mem-ratio"`
 	MentionMemRatio                   float64       `name:"mention-mem-ratio"`
@@ -237,7 +238,6 @@ type CacheConfiguration struct {
 	StatusFaveMemRatio                float64       `name:"status-fave-mem-ratio"`
 	StatusFaveIDsMemRatio             float64       `name:"status-fave-ids-mem-ratio"`
 	TagMemRatio                       float64       `name:"tag-mem-ratio"`
-	TagIDsFollowedByAccountMemRatio   float64       `name:"tag-ids-followed-by-account-mem-ratio"`
 	ThreadMuteMemRatio                float64       `name:"thread-mute-mem-ratio"`
 	TokenMemRatio                     float64       `name:"token-mem-ratio"`
 	TombstoneMemRatio                 float64       `name:"tombstone-mem-ratio"`

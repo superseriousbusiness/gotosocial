@@ -34,16 +34,14 @@ func (c *Converter) AccountToExportStats(
 	a *gtsmodel.Account,
 ) (*apimodel.AccountExportStats, error) {
 	// Ensure account stats populated.
-	if a.Stats == nil {
-		if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
-			return nil, gtserror.Newf(
-				"error getting stats for account %s: %w",
-				a.ID, err,
-			)
-		}
+	if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
+		return nil, gtserror.Newf(
+			"error getting stats for account %s: %w",
+			a.ID, err,
+		)
 	}
 
-	listsCount, err := c.state.DB.CountListsForAccountID(ctx, a.ID)
+	listsCount, err := c.state.DB.CountListsByAccountID(ctx, a.ID)
 	if err != nil {
 		return nil, gtserror.Newf(
 			"error counting lists for account %s: %w",
@@ -202,6 +200,7 @@ func (c *Converter) ListsToCSV(
 	ctx context.Context,
 	lists []*gtsmodel.List,
 ) ([][]string, error) {
+
 	// We need to know our own domain for this.
 	// Try account domain, fall back to host.
 	thisDomain := config.GetAccountDomain()
@@ -215,41 +214,23 @@ func (c *Converter) ListsToCSV(
 
 	// For each item, add a record.
 	for _, list := range lists {
-		for _, entry := range list.ListEntries {
-			if entry.Follow == nil {
-				// Retrieve follow.
-				var err error
-				entry.Follow, err = c.state.DB.GetFollowByID(
-					ctx,
-					entry.FollowID,
-				)
-				if err != nil {
-					return nil, gtserror.Newf(
-						"db error getting follow for list entry %s: %w",
-						entry.ID, err,
-					)
-				}
-			}
 
-			if entry.Follow.TargetAccount == nil {
-				// Retrieve account.
-				var err error
-				entry.Follow.TargetAccount, err = c.state.DB.GetAccountByID(
-					// Barebones is fine here.
-					gtscontext.SetBarebones(ctx),
-					entry.Follow.TargetAccountID,
-				)
-				if err != nil {
-					return nil, gtserror.Newf(
-						"db error getting target account for list entry %s: %w",
-						entry.ID, err,
-					)
-				}
-			}
+		// Get all follows contained with this list.
+		follows, err := c.state.DB.GetFollowsInList(ctx,
+			list.ID,
+			nil,
+		)
+		if err != nil {
+			err := gtserror.Newf("db error getting follows for list: %w", err)
+			return nil, err
+		}
 
+		// Append each follow as CSV record.
+		for _, follow := range follows {
 			var (
-				username = entry.Follow.TargetAccount.Username
-				domain   = entry.Follow.TargetAccount.Domain
+				// Extract username / domain from target.
+				username = follow.TargetAccount.Username
+				domain   = follow.TargetAccount.Domain
 			)
 
 			if domain == "" {
@@ -259,14 +240,16 @@ func (c *Converter) ListsToCSV(
 			}
 
 			records = append(records, []string{
-				// List title: eg., Very cool list
+				// List title: e.g.
+				// Very cool list
 				list.Title,
-				// Account address: eg., someone@example.org
-				// -- NOTE: without the leading '@'!
+
+				// Account address: e.g.,
+				// someone@example.org
+				// NOTE: without the leading '@'!
 				username + "@" + domain,
 			})
 		}
-
 	}
 
 	return records, nil

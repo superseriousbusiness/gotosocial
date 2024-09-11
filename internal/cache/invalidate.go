@@ -97,9 +97,6 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	// Invalidate follow request with this same ID.
 	c.DB.FollowRequest.Invalidate("ID", follow.ID)
 
-	// Invalidate any related list entries.
-	c.DB.ListEntry.Invalidate("FollowID", follow.ID)
-
 	// Invalidate follow origin account ID cached visibility.
 	c.Visibility.Invalidate("ItemID", follow.AccountID)
 	c.Visibility.Invalidate("RequesterID", follow.AccountID)
@@ -121,6 +118,15 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 		">"+follow.TargetAccountID,
 		"l>"+follow.TargetAccountID,
 	)
+
+	// Invalidate source account's lists
+	// and destination account's lists, and
+	// those specifically for this follow.
+	c.DB.ListIDs.Invalidate(
+		"a"+follow.AccountID,
+		"a"+follow.TargetAccountID,
+		"f"+follow.ID,
+	)
 }
 
 func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
@@ -139,8 +145,11 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 }
 
 func (c *Caches) OnInvalidateList(list *gtsmodel.List) {
-	// Invalidate all cached entries of this list.
-	c.DB.ListEntry.Invalidate("ListID", list.ID)
+	// Invalidate list ID entries.
+	c.DB.ListedIDs.Invalidate(
+		"a"+list.ID,
+		"f"+list.ID,
+	)
 }
 
 func (c *Caches) OnInvalidateMedia(media *gtsmodel.MediaAttachment) {

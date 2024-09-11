@@ -27,7 +27,6 @@ type List struct {
 	Title         string        `bun:",nullzero,notnull,unique:listaccounttitle"`                   // Title of this list.
 	AccountID     string        `bun:"type:CHAR(26),notnull,nullzero,unique:listaccounttitle"`      // Account that created/owns the list
 	Account       *Account      `bun:"-"`                                                           // Account corresponding to accountID
-	ListEntries   []*ListEntry  `bun:"-"`                                                           // Entries contained by this list.
 	RepliesPolicy RepliesPolicy `bun:",nullzero,notnull,default:'followed'"`                        // RepliesPolicy for this list.
 	Exclusive     *bool         `bun:",nullzero,notnull,default:false"`                             // Hide posts from members of this list from your home timeline.
 }
@@ -38,8 +37,9 @@ type ListEntry struct {
 	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	ListID    string    `bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"`   // ID of the list that this entry belongs to.
-	FollowID  string    `bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"`   // Follow that the account owning this entry wants to see posts of in the timeline.
-	Follow    *Follow   `bun:"-"`                                                           // Follow corresponding to followID.
+	//	List      *List     `bun:"-"`                                                           //
+	FollowID string  `bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"` // Follow that the account owning this entry wants to see posts of in the timeline.
+	Follow   *Follow `bun:"-"`                                                         // Follow corresponding to followID.
 }
 
 // RepliesPolicy denotes which replies should be shown in the list.

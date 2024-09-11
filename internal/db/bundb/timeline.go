@@ -370,28 +370,18 @@ func (t *timelineDB) GetListTimeline(
 		frontToBack = true
 	)
 
-	// Fetch all listEntries entries from the database.
-	listEntries, err := t.state.DB.GetListEntries(
-		// Don't need actual follows
-		// for this, just the IDs.
-		gtscontext.SetBarebones(ctx),
-		listID,
-		"", "", "", 0,
+	// Fetch all follow IDs contained in list from DB.
+	followIDs, err := t.state.DB.GetFollowIDsInList(
+		ctx, listID, nil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error getting entries for list %s: %w", listID, err)
+		return nil, fmt.Errorf("error getting follows in list: %w", err)
 	}
 
-	// If there's no list entries we can't
+	// If there's no list follows we can't
 	// possibly return anything for this list.
-	if len(listEntries) == 0 {
+	if len(followIDs) == 0 {
 		return make([]*gtsmodel.Status, 0), nil
-	}
-
-	// Extract just the IDs of each follow.
-	followIDs := make([]string, 0, len(listEntries))
-	for _, listEntry := range listEntries {
-		followIDs = append(followIDs, listEntry.FollowID)
 	}
 
 	// Select target account IDs from follows.
