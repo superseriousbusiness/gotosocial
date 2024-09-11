@@ -42,6 +42,18 @@ func ToSet[T comparable](in []T) Set[T] {
 	return set
 }
 
+// ToSetFunc creates a Set[T] from input slice, keys provided by func.
+func ToSetFunc[S any, T comparable](in []S, key func(S) T) Set[T] {
+	if key == nil {
+		panic("nil func")
+	}
+	set := make(Set[T], len(in))
+	for _, v := range in {
+		set[key(v)] = struct{}{}
+	}
+	return set
+}
+
 // FromSet extracts the values from set to slice.
 func FromSet[T comparable](in Set[T]) []T {
 	out := make([]T, len(in))

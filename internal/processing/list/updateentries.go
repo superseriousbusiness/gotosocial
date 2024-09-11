@@ -52,8 +52,8 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Convert the follows to a map keyed by the target account ID.
-	followsMap := util.KeyBy(follows, func(follow *gtsmodel.Follow) string {
+	// Convert the follows to a hash set containing the target account IDs.
+	inFollows := util.ToSetFunc(follows, func(follow *gtsmodel.Follow) string {
 		return follow.TargetAccountID
 	})
 
@@ -65,11 +65,27 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 	// Iterate all the account IDs in given target list.
 	for _, targetAccountID := range targetAccountIDs {
 
-		// Look for existing follow targetting ID.
-		follow, ok := followsMap[targetAccountID]
-
-		if ok {
+		// Look for follow to target account.
+		if inFollows.Has(targetAccountID) {
 			text := fmt.Sprintf("account %s is already in list %s", targetAccountID, listID)
+			return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+		}
+
+		// Get the actual follow to target.
+		follow, err := p.state.DB.GetFollow(
+
+			// We don't need any sub-models.
+			gtscontext.SetBarebones(ctx),
+			account.ID,
+			targetAccountID,
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("db error getting follow: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		if follow == nil {
+			text := fmt.Sprintf("account %s not currently followed", targetAccountID)
 			return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 		}
 
