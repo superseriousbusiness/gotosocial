@@ -84,19 +84,11 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 			continue
 		}
 
-		// Exclusive list, exclude all follow IDs.
+		// Exclusive list, index all its follow IDs.
 		for _, listEntry := range list.ListEntries {
 			ignoreFollowIDs[listEntry.FollowID] = struct{}{}
 		}
 	}
-
-	follows = slices.DeleteFunc(
-		follows,
-		func(follow *gtsmodel.Follow) bool {
-			_, removeFollowID := ignoreFollowIDs[follow.ID]
-			return removeFollowID
-		},
-	)
 
 	// Extract just the accountID from each follow,
 	// ignoring follows that are in exclusive lists.
