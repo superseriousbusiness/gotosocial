@@ -158,6 +158,46 @@ func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 	suite.checkStatuses(s, id.Highest, id.Lowest, 20)
 }
 
+func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
+	var (
+		ctx            = context.Background()
+		viewingAccount = suite.testAccounts["local_account_1"]
+	)
+
+	// local_account_1_list_1 contains both admin_account
+	// and local_account_2. If we mark this list as exclusive,
+	// and remove the list entry for admin account, we should
+	// only get statuses from zork and turtle in the timeline.
+	list := new(gtsmodel.List)
+	*list = *suite.testLists["local_account_1_list_1"]
+	list.Exclusive = util.Ptr(true)
+	if err := suite.db.UpdateList(ctx, list, "exclusive"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// First try with list just set to exclusive.
+	// We should only get zork's own statuses.
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
+
+	// Remove admin account from the exclusive list.
+	listEntryID := suite.testListEntries["local_account_1_list_1_entry_2"].ID
+	if err := suite.db.DeleteListEntry(ctx, listEntryID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Zork should only see their own
+	// statuses and admin's statuses now.
+	s, err = suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.checkStatuses(s, id.Highest, id.Lowest, 12)
+}
+
 func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 	var (
 		ctx            = context.Background()
