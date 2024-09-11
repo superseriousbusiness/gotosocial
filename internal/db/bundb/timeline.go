@@ -50,6 +50,72 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		frontToBack = true
 	)
 
+	// As this is the home timeline, it should be
+	// populated by statuses from accounts followed
+	// by accountID, and posts from accountID itself.
+	//
+	// So, begin by seeing who accountID follows.
+	// It should be a little cheaper to do this in
+	// a separate query like this, rather than using
+	// a join, since followIDs are cached in memory.
+	follows, err := t.state.DB.GetAccountFollows(
+		gtscontext.SetBarebones(ctx),
+		accountID,
+		nil, // select all
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("db error getting follows for account %s: %w", accountID, err)
+	}
+
+	// To take account of exclusive lists, get all of
+	// this account's lists, so we can filter out follows
+	// that are in contained in exclusive lists.
+	lists, err := t.state.DB.GetListsForAccountID(ctx, accountID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
+	}
+
+	// Index all follow IDs that fall in exclusive lists.
+	ignoreFollowIDs := make(map[string]struct{})
+	for _, list := range lists {
+		if !*list.Exclusive {
+			// Not exclusive,
+			// we don't care.
+			continue
+		}
+
+		// Exclusive list, exclude all follow IDs.
+		for _, listEntry := range list.ListEntries {
+			ignoreFollowIDs[listEntry.FollowID] = struct{}{}
+		}
+	}
+
+	follows = slices.DeleteFunc(
+		follows,
+		func(follow *gtsmodel.Follow) bool {
+			_, removeFollowID := ignoreFollowIDs[follow.ID]
+			return removeFollowID
+		},
+	)
+
+	// Extract just the accountID from each follow,
+	// ignoring follows that are in exclusive lists.
+	targetAccountIDs := make([]string, 0, len(follows)+1)
+	for _, f := range follows {
+		_, ignore := ignoreFollowIDs[f.ID]
+		if !ignore {
+			targetAccountIDs = append(
+				targetAccountIDs,
+				f.TargetAccountID,
+			)
+		}
+	}
+
+	// Add accountID itself as a pseudo follow so that
+	// accountID can see its own posts in the timeline.
+	targetAccountIDs = append(targetAccountIDs, accountID)
+
+	// Now start building the database query.
 	q := t.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
@@ -88,33 +154,6 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 		// return only statuses posted by local account havers
 		q = q.Where("? = ?", bun.Ident("status.local"), local)
 	}
-
-	// As this is the home timeline, it should be
-	// populated by statuses from accounts followed
-	// by accountID, and posts from accountID itself.
-	//
-	// So, begin by seeing who accountID follows.
-	// It should be a little cheaper to do this in
-	// a separate query like this, rather than using
-	// a join, since followIDs are cached in memory.
-	follows, err := t.state.DB.GetAccountFollows(
-		gtscontext.SetBarebones(ctx),
-		accountID,
-		nil, // select all
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("db error getting follows for account %s: %w", accountID, err)
-	}
-
-	// Extract just the accountID from each follow.
-	targetAccountIDs := make([]string, len(follows)+1)
-	for i, f := range follows {
-		targetAccountIDs[i] = f.TargetAccountID
-	}
-
-	// Add accountID itself as a pseudo follow so that
-	// accountID can see its own posts in the timeline.
-	targetAccountIDs[len(targetAccountIDs)-1] = accountID
 
 	// Select only statuses authored by
 	// accounts with IDs in the slice.
