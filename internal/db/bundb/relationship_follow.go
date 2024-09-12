@@ -20,7 +20,6 @@ package bundb
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 	"time"
 
@@ -255,8 +254,8 @@ func (r *relationshipDB) deleteFollow(ctx context.Context, id string) error {
 	}
 
 	// Delete every list entry that used this followID.
-	if err := r.state.DB.DeleteListEntriesTargettingFollowID(ctx, id); err != nil {
-		return fmt.Errorf("deleteFollow: error deleting list entries: %w", err)
+	if err := r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, id); err != nil {
+		return gtserror.Newf("error deleting list entries: %w", err)
 	}
 
 	return nil
@@ -373,12 +372,6 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 		return err
 	}
 
-	for _, id := range followIDs {
-		// Finally, delete all list entries associated with each follow ID.
-		if err := r.state.DB.DeleteListEntriesTargettingFollowID(ctx, id); err != nil {
-			return err
-		}
-	}
-
-	return nil
+	// Finally, delete all list entries associated with the follow IDs.
+	return r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, followIDs...)
 }

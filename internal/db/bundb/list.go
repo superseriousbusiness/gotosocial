@@ -123,7 +123,7 @@ func (l *listDB) GetAccountsInList(ctx context.Context, listID string, page *pag
 	return l.state.DB.GetAccountsByIDs(ctx, accountIDs)
 }
 
-func (l *listDB) IsAccountInListID(ctx context.Context, listID string, accountID string) (bool, error) {
+func (l *listDB) IsAccountInList(ctx context.Context, listID string, accountID string) (bool, error) {
 	accountIDs, err := l.GetAccountIDsInList(ctx, listID, nil)
 	return slices.Contains(accountIDs, accountID), err
 }
@@ -215,25 +215,11 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 	// Invalidate the main list database cache.
 	l.state.Caches.DB.List.Invalidate("ID", id)
 
-	// Invalidate account / follow IDs in list.
-	l.state.Caches.DB.ListedIDs.Invalidate(
-		"a"+id,
-		"f"+id,
-	)
+	// Invalidate cache of list IDs owned by account.
+	l.state.Caches.DB.ListIDs.Invalidate("a" + accountID)
 
-	// Generate ListID keys to invalidate.
-	keys := followIDs // just reuse slice.
-	for i, followID := range keys {
-
-		// List IDs containing follow.
-		keys[i] = "f" + followID
-	}
-
-	// ListIDs owned by account with ID.
-	keys = append(keys, "a"+accountID)
-
-	// Invalidate ListID slice cache entries.
-	l.state.Caches.DB.ListIDs.Invalidate(keys...)
+	// Invalidate all related entry caches for this list.
+	l.invalidateEntryCaches(ctx, []string{id}, followIDs)
 
 	return nil
 }
@@ -410,6 +396,61 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 		return e.FollowID
 	})
 
+	// Invalidate all related list entry caches.
+	l.invalidateEntryCaches(ctx, listIDs, followIDs)
+
+	return nil
+}
+
+func (l *listDB) DeleteListEntry(ctx context.Context, listID string, followID string) error {
+	// Delete list entry with given
+	// ID, returning its list ID.
+	if _, err := l.db.NewDelete().
+		Table("list_entries").
+		Where("? = ?", bun.Ident("list_id"), listID).
+		Where("? = ?", bun.Ident("follow_id"), followID).
+		Exec(ctx, &listID); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Invalidate all related list entry caches.
+	l.invalidateEntryCaches(ctx, []string{listID},
+		[]string{followID})
+
+	return nil
+}
+
+func (l *listDB) DeleteAllListEntriesByFollowIDs(ctx context.Context, followIDs ...string) error {
+	var listIDs []string
+
+	// Check for empty list.
+	if len(followIDs) == 0 {
+		return nil
+	}
+
+	// Delete all entries with follow
+	// ID, returning IDs and list IDs.
+	if _, err := l.db.NewDelete().
+		Table("list_entries").
+		Where("? IN (?)", bun.Ident("follow_id"), followIDs).
+		Returning("?", bun.Ident("list_id")).
+		Exec(ctx, &listIDs); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Deduplicate IDs before invalidate.
+	listIDs = util.Deduplicate(listIDs)
+
+	// Invalidate all related list entry caches.
+	l.invalidateEntryCaches(ctx, listIDs, followIDs)
+
+	return nil
+}
+
+// invalidateEntryCaches will invalidate all related ListEntry caches for given list IDs and follow IDs, including timelines.
+func (l *listDB) invalidateEntryCaches(ctx context.Context, listIDs, followIDs []string) {
 	var keys []string
 
 	// Generate ListedID keys to invalidate.
@@ -437,74 +478,4 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 
 	// Invalidate ListID slice cache entries.
 	l.state.Caches.DB.ListIDs.Invalidate(keys...)
-
-	return nil
-}
-
-func (l *listDB) DeleteListEntry(ctx context.Context, listID string, followID string) error {
-	// Delete list entry with given
-	// ID, returning its list ID.
-	if _, err := l.db.NewDelete().
-		Table("list_entries").
-		Where("? = ?", bun.Ident("list_id"), listID).
-		Where("? = ?", bun.Ident("follow_id"), followID).
-		Exec(ctx, &listID); err != nil &&
-		!errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Invalidate list IDs containing follow.
-	l.state.Caches.DB.ListIDs.Invalidate(
-		"f" + followID,
-	)
-
-	// Invalidate account / follow IDs in list.
-	l.state.Caches.DB.ListedIDs.Invalidate(
-		"a"+listID,
-		"f"+listID,
-	)
-
-	// Invalidate the timeline for the list this entry belongs to.
-	if err := l.state.Timelines.List.RemoveTimeline(ctx, listID); err != nil {
-		log.Errorf(ctx, "error invalidating list timeline: %q", err)
-	}
-
-	return nil
-}
-
-func (l *listDB) DeleteListEntriesTargettingFollowID(ctx context.Context, followID string) error {
-	var listIDs []string
-
-	// Delete all entries with follow
-	// ID, returning IDs and list IDs.
-	if _, err := l.db.NewDelete().
-		Table("list_entries").
-		Where("? = ?", bun.Ident("follow_id"), followID).
-		Returning("?", bun.Ident("list_id")).
-		Exec(ctx, &listIDs); err != nil &&
-		!errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Invalidate list IDs containing follow.
-	l.state.Caches.DB.ListIDs.Invalidate(
-		"f" + followID,
-	)
-
-	// Iterate through list IDs of deleted entries.
-	for _, listID := range util.Deduplicate(listIDs) {
-
-		// Invalidate account / follow IDs in list.
-		l.state.Caches.DB.ListedIDs.Invalidate(
-			"a"+listID,
-			"f"+listID,
-		)
-
-		// Invalidate the timeline for the list this entry belongs to.
-		if err := l.state.Timelines.List.RemoveTimeline(ctx, listID); err != nil {
-			log.Errorf(ctx, "error invalidating list timeline: %q", err)
-		}
-	}
-
-	return nil
 }

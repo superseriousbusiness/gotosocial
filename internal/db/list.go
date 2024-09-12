@@ -53,7 +53,7 @@ type List interface {
 	GetAccountsInList(ctx context.Context, listID string, page *paging.Page) ([]*gtsmodel.Account, error)
 
 	// IsAccountInListID returns whether given account with ID is in the list with ID.
-	IsAccountInListID(ctx context.Context, listID string, accountID string) (bool, error)
+	IsAccountInList(ctx context.Context, listID string, accountID string) (bool, error)
 
 	// PopulateList ensures that the list's struct fields are populated.
 	PopulateList(ctx context.Context, list *gtsmodel.List) error
@@ -75,6 +75,6 @@ type List interface {
 	// DeleteListEntry deletes the list entry with given list ID and follow ID.
 	DeleteListEntry(ctx context.Context, listID string, followID string) error
 
-	// DeleteListEntryForFollowID deletes all list entries with the given followID.
-	DeleteListEntriesTargettingFollowID(ctx context.Context, followID string) error
+	// DeleteAllListEntryByFollowID deletes all list entries with the given followIDs.
+	DeleteAllListEntriesByFollowIDs(ctx context.Context, followIDs ...string) error
 }

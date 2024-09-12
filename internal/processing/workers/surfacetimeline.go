@@ -333,7 +333,7 @@ func (s *Surface) listEligible(
 		//
 		// Check if replied-to account is
 		// also included in this list.
-		in, err := s.State.DB.IsAccountInListID(ctx,
+		in, err := s.State.DB.IsAccountInList(ctx,
 			list.ID,
 			status.InReplyToAccountID,
 		)
