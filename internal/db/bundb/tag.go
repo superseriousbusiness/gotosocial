@@ -197,12 +197,6 @@ func (t *tagDB) IsAccountFollowingTag(ctx context.Context, accountID string, tag
 	if err != nil {
 		return false, err
 	}
-
-	// NOTE: it should only become useful to cache
-	// FollowedTag{} objects separately here (for
-	// caching by AccountID.TagID) only if the number
-	// of accounts following a tag becomes rather ridiculous,
-	// i.e. in the order of thousands. So we should be good.
 	return slices.Contains(followingTagIDs, tagID), nil
 }
 

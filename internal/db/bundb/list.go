@@ -248,6 +248,7 @@ func (l *listDB) getListIDsByAccountID(ctx context.Context, accountID string) ([
 			Table("lists").
 			Column("id").
 			Where("? = ?", bun.Ident("account_id"), accountID).
+			OrderExpr("? DESC", bun.Ident("created_at")).
 			Exec(ctx, &listIDs); err != nil &&
 			!errors.Is(err, db.ErrNoEntries) {
 			return nil, err
@@ -267,6 +268,7 @@ func (l *listDB) getListIDsWithFollowID(ctx context.Context, followID string) ([
 			Table("list_entries").
 			Column("list_id").
 			Where("? = ?", bun.Ident("follow_id"), followID).
+			OrderExpr("? DESC", bun.Ident("created_at")).
 			Exec(ctx, &listIDs); err != nil &&
 			!errors.Is(err, db.ErrNoEntries) {
 			return nil, err
@@ -286,6 +288,7 @@ func (l *listDB) GetFollowIDsInList(ctx context.Context, listID string, page *pa
 			Table("list_entries").
 			Column("follow_id").
 			Where("? = ?", bun.Ident("list_id"), listID).
+			OrderExpr("? DESC", bun.Ident("created_at")).
 			Exec(ctx, &followIDs)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
@@ -307,6 +310,7 @@ func (l *listDB) GetAccountIDsInList(ctx context.Context, listID string, page *p
 			Join("INNER JOIN ?", bun.Ident("list_entries")).
 			JoinOn("? = ?", bun.Ident("follows.id"), bun.Ident("list_entries.follow_id")).
 			Where("? = ?", bun.Ident("list_entries.list_id"), listID).
+			OrderExpr("? DESC", bun.Ident("list_entries.created_at")).
 			Exec(ctx, &accountIDs)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err
