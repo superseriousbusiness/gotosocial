@@ -306,7 +306,8 @@ func (r *relationshipDB) DeleteFollowRequest(
 		Where("? = ?", bun.Ident("account_id"), sourceAccountID).
 		Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
 		Returning("?", bun.Ident("id")).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -334,7 +335,8 @@ func (r *relationshipDB) DeleteFollowRequestByID(ctx context.Context, id string)
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -361,7 +363,8 @@ func (r *relationshipDB) DeleteFollowRequestByURI(ctx context.Context, uri strin
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -394,13 +397,9 @@ func (r *relationshipDB) DeleteAccountFollowRequests(ctx context.Context, accoun
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
-	}
-
-	// Check for deletions.
-	if len(deleted) == 0 {
-		return nil
 	}
 
 	// Invalidate all account's incoming / outoing follows requests.

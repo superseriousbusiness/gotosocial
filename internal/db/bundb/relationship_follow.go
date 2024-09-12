@@ -264,7 +264,8 @@ func (r *relationshipDB) DeleteFollow(
 		Where("? = ?", bun.Ident("account_id"), sourceAccountID).
 		Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
 		Returning("?", bun.Ident("id")).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -297,7 +298,8 @@ func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error 
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -329,7 +331,8 @@ func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) erro
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -367,13 +370,19 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Check for deletions.
-	if len(deleted) == 0 {
-		return nil
+	// Gather the follow IDs that were deleted for removing related list entries.
+	followIDs := util.Gather(nil, deleted, func(follow *gtsmodel.Follow) string {
+		return follow.ID
+	})
+
+	// Delete every list entry that was created targetting any of these follow IDs.
+	if err := r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, followIDs...); err != nil {
+		return gtserror.Newf("error deleting list entries: %w", err)
 	}
 
 	// Invalidate all account's incoming / outoing follows.

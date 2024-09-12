@@ -228,7 +228,8 @@ func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -254,7 +255,8 @@ func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -286,13 +288,9 @@ func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID stri
 			bun.Ident("account_id"),
 			bun.Ident("target_account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
-	}
-
-	// Check for deletions.
-	if len(deleted) == 0 {
-		return nil
 	}
 
 	// Invalidate all account's incoming / outoing blocks.

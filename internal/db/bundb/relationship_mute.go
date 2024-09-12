@@ -212,7 +212,8 @@ func (r *relationshipDB) DeleteMuteByID(ctx context.Context, id string) error {
 		Model(&deleted).
 		Where("? = ?", bun.Ident("id"), id).
 		Returning("?", bun.Ident("account_id")).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -243,13 +244,9 @@ func (r *relationshipDB) DeleteAccountMutes(ctx context.Context, accountID strin
 		Returning("?",
 			bun.Ident("account_id"),
 		).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
-	}
-
-	// Check for deletions.
-	if len(deleted) == 0 {
-		return nil
 	}
 
 	// Invalidate all account's incoming / outoing user mutes.
