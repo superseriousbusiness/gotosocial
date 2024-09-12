@@ -276,7 +276,7 @@ func (r *relationshipDB) DeleteFollow(
 	r.state.Caches.OnInvalidateFollow(&deleted)
 
 	// Delete every list entry that was created targetting this follow ID.
-	if err := r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, deleted.ID); err != nil {
+	if err := r.state.DB.DeleteAllListEntriesByFollows(ctx, deleted.ID); err != nil {
 		return gtserror.Newf("error deleting list entries: %w", err)
 	}
 
@@ -309,7 +309,7 @@ func (r *relationshipDB) DeleteFollowByID(ctx context.Context, id string) error 
 	r.state.Caches.OnInvalidateFollow(&deleted)
 
 	// Delete every list entry that was created targetting this follow ID.
-	if err := r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, id); err != nil {
+	if err := r.state.DB.DeleteAllListEntriesByFollows(ctx, id); err != nil {
 		return gtserror.Newf("error deleting list entries: %w", err)
 	}
 
@@ -342,7 +342,7 @@ func (r *relationshipDB) DeleteFollowByURI(ctx context.Context, uri string) erro
 	r.state.Caches.OnInvalidateFollow(&deleted)
 
 	// Delete every list entry that was created targetting this follow ID.
-	if err := r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, deleted.ID); err != nil {
+	if err := r.state.DB.DeleteAllListEntriesByFollows(ctx, deleted.ID); err != nil {
 		return gtserror.Newf("error deleting list entries: %w", err)
 	}
 
@@ -381,7 +381,7 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 	})
 
 	// Delete every list entry that was created targetting any of these follow IDs.
-	if err := r.state.DB.DeleteAllListEntriesByFollowIDs(ctx, followIDs...); err != nil {
+	if err := r.state.DB.DeleteAllListEntriesByFollows(ctx, followIDs...); err != nil {
 		return gtserror.Newf("error deleting list entries: %w", err)
 	}
 

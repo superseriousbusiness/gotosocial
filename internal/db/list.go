@@ -75,6 +75,6 @@ type List interface {
 	// DeleteListEntry deletes the list entry with given list ID and follow ID.
 	DeleteListEntry(ctx context.Context, listID string, followID string) error
 
-	// DeleteAllListEntryByFollowID deletes all list entries with the given followIDs.
-	DeleteAllListEntriesByFollowIDs(ctx context.Context, followIDs ...string) error
+	// DeleteAllListEntryByFollow deletes all list entries with the given followIDs.
+	DeleteAllListEntriesByFollows(ctx context.Context, followIDs ...string) error
 }

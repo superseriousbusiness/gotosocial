@@ -421,7 +421,7 @@ func (l *listDB) DeleteListEntry(ctx context.Context, listID string, followID st
 	return nil
 }
 
-func (l *listDB) DeleteAllListEntriesByFollowIDs(ctx context.Context, followIDs ...string) error {
+func (l *listDB) DeleteAllListEntriesByFollows(ctx context.Context, followIDs ...string) error {
 	var listIDs []string
 
 	// Check for empty list.
@@ -433,7 +433,7 @@ func (l *listDB) DeleteAllListEntriesByFollowIDs(ctx context.Context, followIDs 
 	// ID, returning IDs and list IDs.
 	if _, err := l.db.NewDelete().
 		Table("list_entries").
-		Where("? IN (?)", bun.Ident("follow_id"), followIDs).
+		Where("? IN (?)", bun.Ident("follow_id"), bun.In(followIDs)).
 		Returning("?", bun.Ident("list_id")).
 		Exec(ctx, &listIDs); err != nil &&
 		!errors.Is(err, db.ErrNoEntries) {
