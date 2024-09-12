@@ -822,41 +822,6 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
 	})
 }
 
-func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
-	if *mediaAttachment.Avatar && *mediaAttachment.Header {
-		return errors.New("one media attachment cannot be both header and avatar")
-	}
-
-	var column bun.Ident
-	switch {
-	case *mediaAttachment.Avatar:
-		column = bun.Ident("account.avatar_media_attachment_id")
-	case *mediaAttachment.Header:
-		column = bun.Ident("account.header_media_attachment_id")
-	default:
-		return errors.New("given media attachment was neither a header nor an avatar")
-	}
-
-	// TODO: there are probably more side effects here that need to be handled
-	if _, err := a.db.
-		NewInsert().
-		Model(mediaAttachment).
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	if _, err := a.db.
-		NewUpdate().
-		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
-		Set("? = ?", column, mediaAttachment.ID).
-		Where("? = ?", bun.Ident("account.id"), accountID).
-		Exec(ctx); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, error) {
 	// Get local account.
 	account, err := a.GetAccountByUsernameDomain(ctx, username, "")

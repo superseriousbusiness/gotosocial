@@ -123,9 +123,6 @@ type Account interface {
 	// In the case of no statuses, this function will return db.ErrNoEntries.
 	GetAccountWebStatuses(ctx context.Context, account *gtsmodel.Account, limit int, maxID string) ([]*gtsmodel.Status, error)
 
-	// SetAccountHeaderOrAvatar sets the header or avatar for the given accountID to the given media attachment.
-	SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error
-
 	// GetInstanceAccount returns the instance account for the given domain.
 	// If domain is empty, this instance account will be returned.
 	GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, error)
