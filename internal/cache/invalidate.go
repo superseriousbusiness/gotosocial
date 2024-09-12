@@ -145,7 +145,12 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 }
 
 func (c *Caches) OnInvalidateList(list *gtsmodel.List) {
-	// Invalidate list ID entries.
+	// Invalidate list IDs cache.
+	c.DB.ListIDs.Invalidate(
+		"a" + list.AccountID,
+	)
+
+	// Invalidate listed IDs cache.
 	c.DB.ListedIDs.Invalidate(
 		"a"+list.ID,
 		"f"+list.ID,
