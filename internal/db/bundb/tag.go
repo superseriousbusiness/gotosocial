@@ -80,15 +80,8 @@ func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, err
 	tags, err := t.state.Caches.DB.Tag.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Tag, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached tags.
-			tags := make([]*gtsmodel.Tag, 0, count)
+			tags := make([]*gtsmodel.Tag, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

@@ -107,15 +107,8 @@ func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string
 	notifs, err := n.state.Caches.DB.Notification.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Notification, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached notifications.
-			notifs := make([]*gtsmodel.Notification, 0, count)
+			notifs := make([]*gtsmodel.Notification, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

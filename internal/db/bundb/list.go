@@ -325,15 +325,8 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 	lists, err := l.state.Caches.DB.List.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.List, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached lists.
-			lists := make([]*gtsmodel.List, 0, count)
+			lists := make([]*gtsmodel.List, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

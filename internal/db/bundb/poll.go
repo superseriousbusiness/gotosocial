@@ -274,15 +274,8 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 	votes, err := p.state.Caches.DB.PollVote.LoadIDs("ID",
 		voteIDs,
 		func(uncached []string) ([]*gtsmodel.PollVote, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached votes.
-			votes := make([]*gtsmodel.PollVote, 0, count)
+			votes := make([]*gtsmodel.PollVote, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

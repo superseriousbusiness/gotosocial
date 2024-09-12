@@ -87,15 +87,8 @@ func (r *relationshipDB) getMutesByIDs(ctx context.Context, ids []string) ([]*gt
 	mutes, err := r.state.Caches.DB.UserMute.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.UserMute, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached mutes.
-			mutes := make([]*gtsmodel.UserMute, 0, count)
+			mutes := make([]*gtsmodel.UserMute, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

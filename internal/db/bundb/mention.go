@@ -69,15 +69,8 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	mentions, err := m.state.Caches.DB.Mention.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Mention, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached mentions.
-			mentions := make([]*gtsmodel.Mention, 0, count)
+			mentions := make([]*gtsmodel.Mention, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

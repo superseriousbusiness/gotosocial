@@ -147,15 +147,8 @@ func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, er
 	tokens, err := a.state.Caches.DB.Token.LoadIDs("ID",
 		tokenIDs,
 		func(uncached []string) ([]*gtsmodel.Token, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached tokens.
-			tokens := make([]*gtsmodel.Token, 0, count)
+			tokens := make([]*gtsmodel.Token, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) token IDs.

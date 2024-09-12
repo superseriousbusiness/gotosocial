@@ -586,15 +586,8 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel
 	emojis, err := e.state.Caches.DB.Emoji.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Emoji, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached emojis.
-			emojis := make([]*gtsmodel.Emoji, 0, count)
+			emojis := make([]*gtsmodel.Emoji, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.
@@ -657,15 +650,8 @@ func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]
 	categories, err := e.state.Caches.DB.EmojiCategory.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.EmojiCategory, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached categories.
-			categories := make([]*gtsmodel.EmojiCategory, 0, count)
+			categories := make([]*gtsmodel.EmojiCategory, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.

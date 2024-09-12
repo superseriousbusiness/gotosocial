@@ -57,15 +57,8 @@ func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gts
 	media, err := m.state.Caches.DB.Media.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.MediaAttachment, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached media attachments.
-			media := make([]*gtsmodel.MediaAttachment, 0, count)
+			media := make([]*gtsmodel.MediaAttachment, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.
