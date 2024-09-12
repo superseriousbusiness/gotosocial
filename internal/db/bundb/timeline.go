@@ -70,7 +70,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	// To take account of exclusive lists, get all of
 	// this account's lists, so we can filter out follows
 	// that are in contained in exclusive lists.
-	lists, err := t.state.DB.GetListsForAccountID(ctx, accountID)
+	lists, err := t.state.DB.GetListsByAccountID(ctx, accountID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
 	}
@@ -84,9 +84,15 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 			continue
 		}
 
+		// Fetch all follow IDs of the entries ccontained in this list.
+		listFollowIDs, err := t.state.DB.GetFollowIDsInList(ctx, list.ID, nil)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.Newf("db error getting list entry follow ids: %w", err)
+		}
+
 		// Exclusive list, index all its follow IDs.
-		for _, listEntry := range list.ListEntries {
-			ignoreFollowIDs[listEntry.FollowID] = struct{}{}
+		for _, followID := range listFollowIDs {
+			ignoreFollowIDs[followID] = struct{}{}
 		}
 	}
 

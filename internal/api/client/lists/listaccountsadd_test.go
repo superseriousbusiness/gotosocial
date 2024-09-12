@@ -102,10 +102,13 @@ func (suite *ListAccountsAddTestSuite) TestPostListAccountNotFollowed() {
 }
 
 func (suite *ListAccountsAddTestSuite) TestPostListAccountOK() {
+	entry := suite.testListEntries["local_account_1_list_1_entry_1"]
+
 	// Remove turtle from the list.
 	if err := suite.db.DeleteListEntry(
 		context.Background(),
-		suite.testListEntries["local_account_1_list_1_entry_1"].ID,
+		entry.ListID,
+		entry.FollowID,
 	); err != nil {
 		suite.FailNow(err.Error())
 	}
