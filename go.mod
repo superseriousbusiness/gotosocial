@@ -23,7 +23,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
 	codeberg.org/gruf/go-storage v0.1.2
-	codeberg.org/gruf/go-structr v0.8.8
+	codeberg.org/gruf/go-structr v0.8.9
 	codeberg.org/superseriousbusiness/exif-terminator v0.9.0
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.6.1

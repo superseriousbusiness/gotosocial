@@ -75,7 +75,7 @@ codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
-# codeberg.org/gruf/go-structr v0.8.8
+# codeberg.org/gruf/go-structr v0.8.9
 ## explicit; go 1.21
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/exif-terminator v0.9.0

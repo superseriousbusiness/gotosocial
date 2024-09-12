@@ -375,6 +375,11 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 	// the lock.
 	unlock()
 
+	if len(keys) == 0 {
+		// We loaded everything!
+		return values, nil
+	}
+
 	// Load uncached values.
 	uncached, err := load(keys)
 	if err != nil {
