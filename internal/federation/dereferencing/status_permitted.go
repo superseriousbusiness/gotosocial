@@ -162,7 +162,7 @@ func (d *Dereferencer) isPermittedReply(
 		// borrow fields from the up-thread rejection.
 		// This collapses the chain beyond the first
 		// rejected reply and allows us to avoid derefing
-		// lots of statuses we already know we don't want.
+		// further replies we already know we don't want.
 		statusID := req.StatusID
 		targetAccountID := req.TargetAccountID
 		uri := strings.ReplaceAll(req.URI, req.ID, id)
@@ -172,7 +172,7 @@ func (d *Dereferencer) isPermittedReply(
 			StatusID:             statusID,
 			TargetAccountID:      targetAccountID,
 			InteractingAccountID: status.AccountID,
-			InteractionURI:       status.URI,
+			InteractionURI:       statusURI,
 			InteractionType:      gtsmodel.InteractionReply,
 			URI:                  uri,
 			RejectedAt:           time.Now(),
@@ -246,7 +246,7 @@ func (d *Dereferencer) isPermittedReply(
 			StatusID:             inReplyTo.ID,
 			TargetAccountID:      inReplyTo.AccountID,
 			InteractingAccountID: status.AccountID,
-			InteractionURI:       status.URI,
+			InteractionURI:       statusURI,
 			InteractionType:      gtsmodel.InteractionReply,
 			URI:                  uris.GenerateURIForReject(inReplyTo.Account.Username, id),
 			RejectedAt:           time.Now(),
