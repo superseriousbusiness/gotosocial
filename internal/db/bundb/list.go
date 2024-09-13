@@ -296,7 +296,7 @@ func (l *listDB) GetAccountIDsInList(ctx context.Context, listID string, page *p
 			Join("INNER JOIN ?", bun.Ident("list_entries")).
 			JoinOn("? = ?", bun.Ident("follows.id"), bun.Ident("list_entries.follow_id")).
 			Where("? = ?", bun.Ident("list_entries.list_id"), listID).
-			OrderExpr("? DESC", bun.Ident("list_entries.created_at")).
+			OrderExpr("? DESC", bun.Ident("list_entries.id")).
 			Exec(ctx, &accountIDs)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return nil, err

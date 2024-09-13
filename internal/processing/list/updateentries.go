@@ -86,7 +86,7 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 
 		if follow == nil {
 			text := fmt.Sprintf("account %s not currently followed", targetAccountID)
-			return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+			return gtserror.NewErrorNotFound(errors.New(text), text)
 		}
 
 		// Generate new entry for this follow in list.

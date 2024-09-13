@@ -19,7 +19,7 @@ package lists_test
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -97,7 +97,7 @@ func (suite *ListAccountsTestSuite) getListAccounts(
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	if err != nil {
 		return nil, "", err
 	}
@@ -151,8 +151,7 @@ func (suite *ListAccountsTestSuite) TestGetListAccountsPaginatedDefaultLimit() {
 
 	suite.Len(accounts, 2)
 	suite.Equal(
-		`<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=40&max_id=01H0G89MWVQE0M58VD2HQYMQWH>; rel="next", `+
-			`<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=40&min_id=01H0G8FFM1AGQDRNGBGGX8CYJQ>; rel="prev"`,
+		"<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=40&max_id=01F8MH5NBDF2MV7CTC4Q5128HF>; rel=\"next\", <http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=40&min_id=01F8MH17FWEB39HZJ76B6VXSKF>; rel=\"prev\"",
 		link,
 	)
 }
@@ -184,8 +183,7 @@ func (suite *ListAccountsTestSuite) TestGetListAccountsPaginatedNextPage() {
 
 	suite.Len(accounts, 1)
 	suite.Equal(
-		`<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&max_id=01H0G8FFM1AGQDRNGBGGX8CYJQ>; rel="next", `+
-			`<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&min_id=01H0G8FFM1AGQDRNGBGGX8CYJQ>; rel="prev"`,
+		"<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&max_id=01F8MH17FWEB39HZJ76B6VXSKF>; rel=\"next\", <http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&min_id=01F8MH17FWEB39HZJ76B6VXSKF>; rel=\"prev\"",
 		link,
 	)
 
@@ -206,8 +204,7 @@ func (suite *ListAccountsTestSuite) TestGetListAccountsPaginatedNextPage() {
 
 	suite.Len(accounts, 1)
 	suite.Equal(
-		`<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&max_id=01H0G89MWVQE0M58VD2HQYMQWH>; rel="next", `+
-			`<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&min_id=01H0G89MWVQE0M58VD2HQYMQWH>; rel="prev"`,
+		"<http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&max_id=01F8MH17FWEB39HZJ76B6VXSKF>; rel=\"next\", <http://localhost:8080/api/v1/lists/01H0G8E4Q2J3FE3JDWJVWEDCD1/accounts?limit=1&min_id=01F8MH17FWEB39HZJ76B6VXSKF>; rel=\"prev\"",
 		link,
 	)
 }

@@ -98,7 +98,7 @@ func (suite *ListAccountsAddTestSuite) TestPostListAccountNotFollowed() {
 
 	resp, err := suite.postListAccounts(http.StatusNotFound, listID, accountIDs)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Not Found: you do not follow account 01F8MH5ZK5VRH73AKHQM6Y9VNX"}`, string(resp))
+	suite.Equal(`{"error":"Not Found: account 01F8MH5ZK5VRH73AKHQM6Y9VNX not currently followed"}`, string(resp))
 }
 
 func (suite *ListAccountsAddTestSuite) TestPostListAccountOK() {
