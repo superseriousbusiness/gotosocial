@@ -248,45 +248,36 @@ func (r *reportDB) PutReport(ctx context.Context, report *gtsmodel.Report) error
 	})
 }
 
-func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, columns ...string) (*gtsmodel.Report, error) {
+func (r *reportDB) UpdateReport(ctx context.Context, report *gtsmodel.Report, columns ...string) error {
 	// Update the report's last-updated
 	report.UpdatedAt = time.Now()
 	if len(columns) != 0 {
 		columns = append(columns, "updated_at")
 	}
 
-	if _, err := r.db.
-		NewUpdate().
-		Model(report).
-		Where("? = ?", bun.Ident("report.id"), report.ID).
-		Column(columns...).
-		Exec(ctx); err != nil {
-		return nil, err
-	}
-
-	r.state.Caches.DB.Report.Invalidate("ID", report.ID)
-	return report, nil
+	return r.state.Caches.DB.Report.Store(report, func() error {
+		_, err := r.db.
+			NewUpdate().
+			Model(report).
+			Where("? = ?", bun.Ident("report.id"), report.ID).
+			Column(columns...).
+			Exec(ctx)
+		return err
+	})
 }
 
 func (r *reportDB) DeleteReportByID(ctx context.Context, id string) error {
-	defer r.state.Caches.DB.Report.Invalidate("ID", id)
-
-	// Load status into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := r.GetReportByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
+	// Delete the report from DB.
+	if _, err := r.db.NewDelete().
+		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
+		Where("? = ?", bun.Ident("report.id"), id).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Finally delete report from DB.
-	_, err = r.db.NewDelete().
-		TableExpr("? AS ?", bun.Ident("reports"), bun.Ident("report")).
-		Where("? = ?", bun.Ident("report.id"), id).
-		Exec(ctx)
-	return err
+	// Invalidate any cached report model by ID.
+	r.state.Caches.DB.Report.Invalidate("ID", id)
+
+	return nil
 }

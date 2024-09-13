@@ -57,9 +57,6 @@ type Poll interface {
 	// PutPollVote puts the given PollVote in the database.
 	PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
 
-	// DeletePollVotes deletes all PollVotes in Poll with given ID from the database.
-	DeletePollVotes(ctx context.Context, pollID string) error
-
 	// DeletePollVoteBy deletes the PollVote in Poll with ID, by account ID, from the database.
 	DeletePollVoteBy(ctx context.Context, pollID string, accountID string) error
 

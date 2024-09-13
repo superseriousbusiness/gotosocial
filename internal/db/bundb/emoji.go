@@ -20,7 +20,6 @@ package bundb
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"slices"
 	"strings"
 	"time"
@@ -70,34 +69,15 @@ func (e *emojiDB) UpdateEmoji(ctx context.Context, emoji *gtsmodel.Emoji, column
 
 func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 	var (
+		// Gather necessary fields from
+		// deleted for cache invaliation.
 		accountIDs []string
 		statusIDs  []string
 	)
 
-	defer func() {
-		// Invalidate cached emoji.
-		e.state.Caches.DB.Emoji.Invalidate("ID", id)
+	// Delete the emoji and all related links to it in a singular transaction.
+	if err := e.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-		// Invalidate cached account and status IDs.
-		e.state.Caches.DB.Account.InvalidateIDs("ID", accountIDs)
-		e.state.Caches.DB.Status.InvalidateIDs("ID", statusIDs)
-	}()
-
-	// Load emoji into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := e.GetEmojiByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// NOTE: even if db.ErrNoEntries is returned, we
-		// still run the below transaction to ensure related
-		// objects are appropriately deleted.
-		return err
-	}
-
-	return e.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Delete relational links between this emoji
 		// and any statuses using it, returning the
 		// status IDs so we can later update them.
@@ -195,7 +175,16 @@ func (e *emojiDB) DeleteEmojiByID(ctx context.Context, id string) error {
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Invalidate emoji, and any effected statuses / accounts.
+	e.state.Caches.DB.Emoji.Invalidate("ID", id)
+	e.state.Caches.DB.Account.InvalidateIDs("ID", accountIDs)
+	e.state.Caches.DB.Status.InvalidateIDs("ID", statusIDs)
+
+	return nil
 }
 
 func (e *emojiDB) GetEmojisBy(ctx context.Context, domain string, includeDisabled bool, includeEnabled bool, shortcode string, maxShortcodeDomain string, minShortcodeDomain string, limit int) ([]*gtsmodel.Emoji, error) {

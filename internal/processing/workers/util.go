@@ -126,11 +126,6 @@ func (u *utils) wipeStatus(
 			errs.Appendf("error deleting status poll: %w", err)
 		}
 
-		// Delete any poll votes pointing to this poll ID.
-		if err := u.state.DB.DeletePollVotes(ctx, pollID); err != nil {
-			errs.Appendf("error deleting status poll votes: %w", err)
-		}
-
 		// Cancel any scheduled expiry task for poll.
 		_ = u.state.Workers.Scheduler.Cancel(pollID)
 	}

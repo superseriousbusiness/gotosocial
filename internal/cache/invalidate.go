@@ -198,7 +198,7 @@ func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 	// the media IDs in use before the media table is
 	// aware of the status ID they are linked to.
 	//
-	// c.DB.Media().Invalidate("StatusID") will not work.
+	// c.DB.Media.Invalidate("StatusID") will not work.
 	c.DB.Media.InvalidateIDs("ID", status.AttachmentIDs)
 
 	if status.BoostOfID != "" {

@@ -789,20 +789,14 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 }
 
 func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
-	defer a.state.Caches.DB.Account.Invalidate("ID", id)
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.Account
+	deleted.ID = id
 
-	// Load account into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := a.GetAccountByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// NOTE: even if db.ErrNoEntries is returned, we
-		// still run the below transaction to ensure related
-		// objects are appropriately deleted.
-		return err
-	}
+	// Delete account from database and any related links in a transaction.
+	if err := a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-	return a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// clear out any emoji links
 		if _, err := tx.
 			NewDelete().
@@ -815,11 +809,21 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
 		// delete the account
 		_, err := tx.
 			NewDelete().
-			TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
-			Where("? = ?", bun.Ident("account.id"), id).
+			Model(&deleted).
+			Where("? = ?", bun.Ident("id"), id).
+			Returning("?", bun.Ident("uri")).
 			Exec(ctx)
 		return err
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Invalidate cached account by its ID, manually
+	// call invalidate hook in case not cached.
+	a.state.Caches.DB.Account.Invalidate("ID", id)
+	a.state.Caches.OnInvalidateAccount(&deleted)
+
+	return nil
 }
 
 func (a *accountDB) GetAccountCustomCSSByUsername(ctx context.Context, username string) (string, error) {
