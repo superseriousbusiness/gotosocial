@@ -19,10 +19,8 @@ package bundb
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -217,9 +215,9 @@ func (u *userDB) DeleteUserByID(ctx context.Context, userID string) error {
 	// Delete user from DB.
 	if _, err := u.db.NewDelete().
 		Model(&deleted).
-		Where("? = ?", bun.Ident("user.id"), userID).
-		Returning("?", bun.Ident("user.account_id")).
-		Exec(ctx); err != nil && !errors.Is(err, db.ErrNoEntries) {
+		Where("? = ?", bun.Ident("id"), userID).
+		Returning("?", bun.Ident("account_id")).
+		Exec(ctx); err != nil {
 		return err
 	}
 
