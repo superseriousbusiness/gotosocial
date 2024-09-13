@@ -87,7 +87,7 @@ export default function Export({ exportStats }: { exportStats: AccountExportStat
 			<div className="form-section-docs">
 				<h3>Export Data</h3>
 				<a
-					href="https://docs.gotosocial.org/en/latest/user_guide/export-import#export"
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#export"
 					target="_blank"
 					className="docslink"
 					rel="noreferrer"
