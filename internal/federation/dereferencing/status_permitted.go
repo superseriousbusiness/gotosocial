@@ -19,12 +19,19 @@ package dereferencing
 
 import (
 	"context"
+	"errors"
 	"net/url"
+	"strings"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -43,6 +50,14 @@ import (
 // pending approval, then "PendingApproval" will be set
 // to "true" on status. Callers should check this
 // and handle it as appropriate.
+//
+// If status is a reply that is not permitted based on
+// interaction policies, or status replies to a status
+// that's been Rejected before (ie., it has a rejected
+// InteractionRequest stored in the db) then the reply
+// will also be rejected, and a pre-rejected interaction
+// request will be stored for it before doing cleanup,
+// if one didn't already exist.
 func (d *Dereferencer) isPermittedStatus(
 	ctx context.Context,
 	requestUser string,
@@ -58,7 +73,7 @@ func (d *Dereferencer) isPermittedStatus(
 		log.Warnf(ctx, "status author suspended: %s", status.AccountURI)
 		permitted = false
 
-	case status.InReplyTo != nil:
+	case status.InReplyToURI != "":
 		// Status is a reply, check permissivity.
 		permitted, err = d.isPermittedReply(ctx,
 			requestUser,
@@ -101,8 +116,85 @@ func (d *Dereferencer) isPermittedReply(
 	requestUser string,
 	status *gtsmodel.Status,
 ) (bool, error) {
-	// Extract reply from status.
-	inReplyTo := status.InReplyTo
+	var (
+		statusURI    = status.URI          // Definitely set.
+		inReplyToURI = status.InReplyToURI // Definitely set.
+		inReplyTo    = status.InReplyTo    // Might not yet be set.
+	)
+
+	// Check if status with this URI has previously been rejected.
+	req, err := d.state.DB.GetInteractionRequestByInteractionURI(
+		gtscontext.SetBarebones(ctx),
+		statusURI,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting interaction request: %w", err)
+		return false, err
+	}
+
+	if req != nil && req.IsRejected() {
+		// This status has been
+		// rejected reviously, so
+		// it's not permitted now.
+		return false, nil
+	}
+
+	// Check if replied-to status has previously been rejected.
+	req, err = d.state.DB.GetInteractionRequestByInteractionURI(
+		gtscontext.SetBarebones(ctx),
+		inReplyToURI,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting interaction request: %w", err)
+		return false, err
+	}
+
+	if req != nil && req.IsRejected() {
+		// This status's parent was rejected,
+		// so this reply should be rejected too.
+		//
+		// We know already that we haven't inserted
+		// a rejected interaction request for this
+		// status yet so do it before returning.
+		id := id.NewULID()
+
+		// To ensure the Reject chain stays coherent,
+		// borrow fields from the up-thread rejection.
+		// This collapses the chain beyond the first
+		// rejected reply and allows us to avoid derefing
+		// lots of statuses we already know we don't want.
+		statusID := req.StatusID
+		targetAccountID := req.TargetAccountID
+		uri := strings.ReplaceAll(req.URI, req.ID, id)
+
+		rejection := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             statusID,
+			TargetAccountID:      targetAccountID,
+			InteractingAccountID: status.AccountID,
+			InteractionURI:       status.URI,
+			InteractionType:      gtsmodel.InteractionReply,
+			URI:                  uri,
+			RejectedAt:           time.Now(),
+		}
+		err := d.state.DB.PutInteractionRequest(ctx, rejection)
+		if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+			return false, gtserror.Newf("db error putting pre-rejected interaction request: %w", err)
+		}
+
+		return false, nil
+	}
+
+	if inReplyTo == nil {
+		// We didn't have the replied-to status in
+		// our database (yet) so we can't know if
+		// this reply is permitted or not. For now
+		// just return true; worst-case, the status
+		// sticks around on the instance for a couple
+		// hours until we try to dereference it again
+		// and realize it should be forbidden.
+		return true, nil
+	}
 
 	if inReplyTo.BoostOfID != "" {
 		// We do not permit replies to
@@ -142,8 +234,28 @@ func (d *Dereferencer) isPermittedReply(
 	}
 
 	if replyable.Forbidden() {
-		// Replier is not permitted
-		// to do this interaction.
+		// Reply is not permitted.
+		//
+		// Insert a pre-rejected interaction request
+		// into the db and return. This ensures that
+		// replies to this now-rejected status aren't
+		// inadvertently permitted.
+		id := id.NewULID()
+		rejection := &gtsmodel.InteractionRequest{
+			ID:                   id,
+			StatusID:             inReplyTo.ID,
+			TargetAccountID:      inReplyTo.AccountID,
+			InteractingAccountID: status.AccountID,
+			InteractionURI:       status.URI,
+			InteractionType:      gtsmodel.InteractionReply,
+			URI:                  uris.GenerateURIForReject(inReplyTo.Account.Username, id),
+			RejectedAt:           time.Now(),
+		}
+		err := d.state.DB.PutInteractionRequest(ctx, rejection)
+		if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
+			return false, gtserror.Newf("db error putting pre-rejected interaction request: %w", err)
+		}
+
 		return false, nil
 	}
 
@@ -193,7 +305,7 @@ func (d *Dereferencer) isPermittedReply(
 		ctx,
 		requestUser,
 		status.ApprovedByURI,
-		status.URI,
+		statusURI,
 		inReplyTo.AccountURI,
 	); err != nil {
 

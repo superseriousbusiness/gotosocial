@@ -373,7 +373,7 @@ func (d *Dereferencer) enrichStatus(
 	requestUser string,
 	uri *url.URL,
 	status *gtsmodel.Status,
-	apubStatus ap.Statusable,
+	statusable ap.Statusable,
 ) (
 	*gtsmodel.Status,
 	ap.Statusable,
@@ -393,7 +393,7 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.SetUnretrievable(err)
 	}
 
-	if apubStatus == nil {
+	if statusable == nil {
 		// Dereference latest version of the status.
 		rsp, err := tsport.Dereference(ctx, uri)
 		if err != nil {
@@ -402,7 +402,7 @@ func (d *Dereferencer) enrichStatus(
 		}
 
 		// Attempt to resolve ActivityPub status from response.
-		apubStatus, err = ap.ResolveStatusable(ctx, rsp.Body)
+		statusable, err = ap.ResolveStatusable(ctx, rsp.Body)
 
 		// Tidy up now done.
 		_ = rsp.Body.Close()
@@ -444,7 +444,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Get the attributed-to account in order to fetch profile.
-	attributedTo, err := ap.ExtractAttributedToURI(apubStatus)
+	attributedTo, err := ap.ExtractAttributedToURI(statusable)
 	if err != nil {
 		return nil, nil, gtserror.New("attributedTo was empty")
 	}
@@ -460,7 +460,7 @@ func (d *Dereferencer) enrichStatus(
 
 	// ActivityPub model was recently dereferenced, so assume passed status
 	// may contain out-of-date information. Convert AP model to our GTS model.
-	latestStatus, err := d.converter.ASStatusToStatus(ctx, apubStatus)
+	latestStatus, err := d.converter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
@@ -479,8 +479,8 @@ func (d *Dereferencer) enrichStatus(
 	matches, err := util.URIMatches(
 		uri,
 		append(
-			ap.GetURL(apubStatus),      // status URL(s)
-			ap.GetJSONLDId(apubStatus), // status URI
+			ap.GetURL(statusable),      // status URL(s)
+			ap.GetJSONLDId(statusable), // status URI
 		)...,
 	)
 	if err != nil {
@@ -591,7 +591,7 @@ func (d *Dereferencer) enrichStatus(
 		}
 	}
 
-	return latestStatus, apubStatus, nil
+	return latestStatus, statusable, nil
 }
 
 func (d *Dereferencer) fetchStatusMentions(
