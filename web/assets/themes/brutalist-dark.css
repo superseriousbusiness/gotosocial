@@ -1,6 +1,6 @@
 /*
-  theme-title: Brutalist
-  theme-description: (Pseudo-)monochrome brutality
+  theme-title: Brutalist Dark
+  theme-description: (Pseudo-)monochrome brutality (dark version)
 */
 
 :root {
@@ -9,44 +9,42 @@
   --almost-white: #f1f3f2;
 
   /* Overwrite orange trim */
-  --orange2: var(--almost-black);
+  --orange2: var(--almost-white);
 
   /* Restyle basic colors */
-  --white1: var(--almost-white);
-  --white2: var(--almost-white);
+  --white1: var(--almost-black);
+  --white2: var(--almost-black);
 
   /* Basic page styling (background + foreground) */
-  --bg:var(--almost-white);
-  --bg-accent: var(--almost-white);
-  --fg: var(--almost-black);
-  --fg-reduced: var(--almost-black);
-  --fg-accent: var(--almost-black);
+  --bg:var(--almost-black);
+  --bg-accent: var(--almost-black);
+  --fg: var(--almost-white);
+  --fg-reduced: var(--almost-white);
+  --fg-accent: var(--almost-white);
 
   /* Profile page styling (light) */
-  --profile-bg: var(--almost-white);
+  --profile-bg: var(--almost-black);
 
   /* Statuses */
-  --status-bg: var(--almost-white);
-  --status-focus-bg: var(--almost-white);
-  --status-info-bg: var(--almost-white);
-  --status-focus-info-bg: var(--almost-white);
+  --status-bg: var(--almost-black);
+  --status-focus-bg: var(--almost-black);
+  --status-info-bg: var(--almost-black);
+  --status-focus-info-bg: var(--almost-black);
 
   /* Used around statuses + other items */
-  --double-border: 0.5rem double var(--almost-black);
-  --dashed-border: 0.1rem dashed var(--almost-black);
-  --single-border: 0.2rem solid var(--almost-black);
+  --double-border: 0.5rem double var(--almost-white);
+  --dashed-border: 0.1rem dashed var(--almost-white);
+  --single-border: 0.2rem solid var(--almost-white);
 
   /* Override some border stuff */
   --boxshadow-border: var(--double-border);
   --br: 0;
   --br-inner: 0;
-
-  --plyr-video-control-color: var(--almost-black);
 }
 
 /* Scroll bar */
 html, body {
-  scrollbar-color: var(--almost-black) var(--almost-white);
+  scrollbar-color: var(--almost-white) var(--almost-black);
 }
 
 .profile .profile-header {
@@ -98,17 +96,17 @@ html, body {
 
 /* Block quotes */
 .status .text .content blockquote {
-  background-color: var(--almost-black);
-  color: var(--almost-white);
+  background-color: var(--almost-white);
+  color: var(--almost-black);
 }
 
 /* Polls */
 .status .text .poll {
-  background-color: var(--almost-white);
+  background-color: var(--almost-black);
   border: var(--double-border);
 }
 .status .text .poll .poll-info {
-  background-color: var(--almost-white);
+  background-color: var(--almost-black);
   border: var(--dashed-border);
 }
 
@@ -117,10 +115,10 @@ html, body {
   border: var(--single-border);
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
-  color: var(--almost-black);
+  color: var(--almost-white);
 }
 .status .media .media-wrapper details video.plyr-video {
-  background: var(--almost-black);
+  background: var(--almost-white);
 }
 
 /* Status info bars */
@@ -131,13 +129,13 @@ html, body {
 
 /* Make show more/less buttons more legible */
 .status button, .status .button {
-  background-color: var(--almost-black);
-  color: var(--almost-white);
+  background-color: var(--almost-white);
+  color: var(--almost-black);
   border: var(--dashed-border);
 }
 .status button:hover, .status .button:hover {
-  background-color: var(--almost-white);
-  color: var(--almost-black);
+  background-color: var(--almost-black);
+  color: var(--almost-white);
   border: var(--dashed-border);
 }
 
