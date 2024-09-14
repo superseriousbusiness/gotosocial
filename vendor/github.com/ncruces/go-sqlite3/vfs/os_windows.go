@@ -38,9 +38,9 @@ func osGetPendingLock(file *os.File, block bool) _ErrorCode {
 	return osWriteLock(file, _PENDING_BYTE, 1, timeout)
 }
 
-func osGetExclusiveLock(file *os.File, wait bool) _ErrorCode {
+func osGetExclusiveLock(file *os.File, block bool) _ErrorCode {
 	var timeout time.Duration
-	if wait {
+	if block {
 		timeout = time.Millisecond
 	}
 
@@ -134,10 +134,11 @@ func osLock(file *os.File, flags, start, len uint32, timeout time.Duration, def 
 			if errno, _ := err.(windows.Errno); errno != windows.ERROR_LOCK_VIOLATION {
 				break
 			}
-			if timeout < time.Since(before) {
+			if time.Since(before) > timeout {
 				break
 			}
-			time.Sleep(time.Duration(rand.Int63n(int64(time.Millisecond))))
+			const sleepIncrement = 1024*1024 - 1 // power of two, ~1ms
+			time.Sleep(time.Duration(rand.Int63() & sleepIncrement))
 		}
 	}
 	return osLockErrorCode(err, def)

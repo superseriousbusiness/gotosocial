@@ -7,13 +7,10 @@ const (
 	_ROW  = 100 /* sqlite3_step() has another row ready */
 	_DONE = 101 /* sqlite3_step() has finished executing */
 
-	_UTF8 = 1
-
-	_MAX_NAME            = 1e6 // Self-imposed limit for most NUL terminated strings.
-	_MAX_LENGTH          = 1e9
-	_MAX_SQL_LENGTH      = 1e9
-	_MAX_ALLOCATION_SIZE = 0x7ffffeff
-	_MAX_FUNCTION_ARG    = 100
+	_MAX_NAME         = 1e6 // Self-imposed limit for most NUL terminated strings.
+	_MAX_LENGTH       = 1e9
+	_MAX_SQL_LENGTH   = 1e9
+	_MAX_FUNCTION_ARG = 100
 
 	ptrlen = 4
 )

@@ -39,7 +39,7 @@ type mmappedMemory struct {
 func (m *mmappedMemory) Reallocate(size uint64) []byte {
 	com := uint64(len(m.buf))
 	res := uint64(cap(m.buf))
-	if com < size && size < res {
+	if com < size && size <= res {
 		// Round up to the page size.
 		rnd := uint64(unix.Getpagesize() - 1)
 		new := (size + rnd) &^ rnd
