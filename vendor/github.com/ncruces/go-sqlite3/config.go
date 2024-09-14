@@ -294,3 +294,17 @@ func autoVacuumCallback(ctx context.Context, mod api.Module, pApp, zSchema, nDbP
 	schema := util.ReadString(mod, zSchema, _MAX_NAME)
 	return uint32(fn(schema, uint(nDbPage), uint(nFreePage), uint(nBytePerPage)))
 }
+
+// SoftHeapLimit imposes a soft limit on heap size.
+//
+// https://sqlite.org/c3ref/hard_heap_limit64.html
+func (c *Conn) SoftHeapLimit(n int64) int64 {
+	return int64(c.call("sqlite3_soft_heap_limit64", uint64(n)))
+}
+
+// SoftHeapLimit imposes a hard limit on heap size.
+//
+// https://sqlite.org/c3ref/hard_heap_limit64.html
+func (c *Conn) HardHeapLimit(n int64) int64 {
+	return int64(c.call("sqlite3_hard_heap_limit64", uint64(n)))
+}

@@ -25,7 +25,6 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 
-	"github.com/ncruces/go-sqlite3"
 	sqlite3driver "github.com/ncruces/go-sqlite3/driver"
 	_ "github.com/ncruces/go-sqlite3/embed"     // embed wasm binary
 	_ "github.com/ncruces/go-sqlite3/vfs/memdb" // include memdb vfs
@@ -110,7 +109,7 @@ func (c *sqliteConn) ExecContext(ctx context.Context, query string, args []drive
 
 func (c *sqliteConn) Close() (err error) {
 	// Get acces the underlying raw sqlite3 conn.
-	raw := c.connIface.(sqlite3.DriverConn).Raw()
+	raw := c.connIface.(sqlite3driver.Conn).Raw()
 
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
 	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"

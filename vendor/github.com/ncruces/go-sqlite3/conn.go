@@ -23,6 +23,7 @@ type Conn struct {
 	interrupt  context.Context
 	pending    *Stmt
 	stmts      []*Stmt
+	timer      *time.Timer
 	busy       func(int) bool
 	log        func(xErrorCode, string)
 	collation  func(*Conn, string)
@@ -389,11 +390,25 @@ func timeoutCallback(ctx context.Context, mod api.Module, pDB uint32, count, tmo
 		}
 
 		if delay = min(delay, tmout-prior); delay > 0 {
-			time.Sleep(time.Duration(delay) * time.Millisecond)
-			retry = 1
+			delay := time.Duration(delay) * time.Millisecond
+			if c.interrupt == nil || c.interrupt.Done() == nil {
+				time.Sleep(delay)
+				return 1
+			}
+			if c.timer == nil {
+				c.timer = time.NewTimer(delay)
+			} else {
+				c.timer.Reset(delay)
+			}
+			select {
+			case <-c.interrupt.Done():
+				c.timer.Stop()
+			case <-c.timer.C:
+				return 1
+			}
 		}
 	}
-	return retry
+	return 0
 }
 
 // BusyHandler registers a callback to handle [BUSY] errors.
@@ -492,9 +507,7 @@ func (c *Conn) stmtsIter(yield func(*Stmt) bool) {
 
 // DriverConn is implemented by the SQLite [database/sql] driver connection.
 //
-// It can be used to access SQLite features like [online backup].
-//
-// [online backup]: https://sqlite.org/backup.html
+// Deprecated: use [github.com/ncruces/go-sqlite3/driver.Conn] instead.
 type DriverConn interface {
 	Raw() *Conn
 }

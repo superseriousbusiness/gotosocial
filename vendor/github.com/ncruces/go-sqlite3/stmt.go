@@ -246,10 +246,9 @@ func (s *Stmt) BindText(param int, value string) error {
 		return TOOBIG
 	}
 	ptr := s.c.newString(value)
-	r := s.c.call("sqlite3_bind_text64",
+	r := s.c.call("sqlite3_bind_text_go",
 		uint64(s.handle), uint64(param),
-		uint64(ptr), uint64(len(value)),
-		uint64(s.c.freer), _UTF8)
+		uint64(ptr), uint64(len(value)))
 	return s.c.error(r)
 }
 
@@ -262,10 +261,9 @@ func (s *Stmt) BindRawText(param int, value []byte) error {
 		return TOOBIG
 	}
 	ptr := s.c.newBytes(value)
-	r := s.c.call("sqlite3_bind_text64",
+	r := s.c.call("sqlite3_bind_text_go",
 		uint64(s.handle), uint64(param),
-		uint64(ptr), uint64(len(value)),
-		uint64(s.c.freer), _UTF8)
+		uint64(ptr), uint64(len(value)))
 	return s.c.error(r)
 }
 
@@ -279,10 +277,9 @@ func (s *Stmt) BindBlob(param int, value []byte) error {
 		return TOOBIG
 	}
 	ptr := s.c.newBytes(value)
-	r := s.c.call("sqlite3_bind_blob64",
+	r := s.c.call("sqlite3_bind_blob_go",
 		uint64(s.handle), uint64(param),
-		uint64(ptr), uint64(len(value)),
-		uint64(s.c.freer))
+		uint64(ptr), uint64(len(value)))
 	return s.c.error(r)
 }
 
@@ -335,10 +332,9 @@ func (s *Stmt) bindRFC3339Nano(param int, value time.Time) error {
 	buf := util.View(s.c.mod, ptr, maxlen)
 	buf = value.AppendFormat(buf[:0], time.RFC3339Nano)
 
-	r := s.c.call("sqlite3_bind_text64",
+	r := s.c.call("sqlite3_bind_text_go",
 		uint64(s.handle), uint64(param),
-		uint64(ptr), uint64(len(buf)),
-		uint64(s.c.freer), _UTF8)
+		uint64(ptr), uint64(len(buf)))
 	return s.c.error(r)
 }
 

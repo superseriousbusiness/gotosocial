@@ -6,6 +6,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"time"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
@@ -49,6 +50,7 @@ type vfsShm struct {
 	path     string
 	regions  []*util.MappedRegion
 	readOnly bool
+	blocking bool
 }
 
 func (s *vfsShm) shmOpen() _ErrorCode {
@@ -76,6 +78,13 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 		if s.readOnly {
 			return _READONLY_CANTINIT
 		}
+		// Do not use a blocking lock here.
+		// If the lock cannot be obtained immediately,
+		// it means some other connection is truncating the file.
+		// And after it has done so, it will not release its lock,
+		// but only downgrade it to a shared lock.
+		// So no point in blocking here.
+		// The call below to obtain the shared DMS lock may use a blocking lock.
 		if rc := osWriteLock(s.File, _SHM_DMS, 1, 0); rc != _OK {
 			return rc
 		}
@@ -83,7 +92,7 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 			return _IOERR_SHMOPEN
 		}
 	}
-	if rc := osReadLock(s.File, _SHM_DMS, 1, 0); rc != _OK {
+	if rc := osReadLock(s.File, _SHM_DMS, 1, time.Millisecond); rc != _OK {
 		return rc
 	}
 	return _OK
@@ -150,13 +159,18 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 		panic(util.AssertErr())
 	}
 
+	var timeout time.Duration
+	if s.blocking {
+		timeout = time.Millisecond
+	}
+
 	switch {
 	case flags&_SHM_UNLOCK != 0:
 		return osUnlock(s.File, _SHM_BASE+int64(offset), int64(n))
 	case flags&_SHM_SHARED != 0:
-		return osReadLock(s.File, _SHM_BASE+int64(offset), int64(n), 0)
+		return osReadLock(s.File, _SHM_BASE+int64(offset), int64(n), timeout)
 	case flags&_SHM_EXCLUSIVE != 0:
-		return osWriteLock(s.File, _SHM_BASE+int64(offset), int64(n), 0)
+		return osWriteLock(s.File, _SHM_BASE+int64(offset), int64(n), timeout)
 	default:
 		panic(util.AssertErr())
 	}
@@ -180,4 +194,8 @@ func (s *vfsShm) shmUnmap(delete bool) {
 	}
 	s.Close()
 	s.File = nil
+}
+
+func (s *vfsShm) shmEnableBlocking(block bool) {
+	s.blocking = block
 }

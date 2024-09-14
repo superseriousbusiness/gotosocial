@@ -130,6 +130,11 @@ type SQLite struct {
 	term func(*sqlite3.Conn) error
 }
 
+var (
+	// Ensure these interfaces are implemented:
+	_ driver.DriverContext = &SQLite{}
+)
+
 // Open implements [database/sql/driver.Driver].
 func (d *SQLite) Open(name string) (driver.Conn, error) {
 	c, err := d.newConnector(name)
@@ -255,6 +260,35 @@ func (n *connector) Connect(ctx context.Context) (_ driver.Conn, err error) {
 	return c, nil
 }
 
+// Conn is implemented by the SQLite [database/sql] driver connections.
+//
+// It can be used to access SQLite features like [online backup]:
+//
+//	db, err := driver.Open("temp.db")
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//	defer db.Close()
+//
+//	conn, err := db.Conn(context.TODO())
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+//	err = conn.Raw(func(driverConn any) error {
+//		conn := driverConn.(driver.Conn)
+//		return conn.Raw().Backup("main", "backup.db")
+//	})
+//	if err != nil {
+//		log.Fatal(err)
+//	}
+//
+// [online backup]: https://sqlite.org/backup.html
+type Conn interface {
+	Raw() *sqlite3.Conn
+	driver.Conn
+}
+
 type conn struct {
 	*sqlite3.Conn
 	txLock   string
@@ -266,10 +300,10 @@ type conn struct {
 
 var (
 	// Ensure these interfaces are implemented:
+	_ Conn                      = &conn{}
+	_ driver.ConnBeginTx        = &conn{}
 	_ driver.ConnPrepareContext = &conn{}
 	_ driver.ExecerContext      = &conn{}
-	_ driver.ConnBeginTx        = &conn{}
-	_ sqlite3.DriverConn        = &conn{}
 )
 
 func (c *conn) Raw() *sqlite3.Conn {

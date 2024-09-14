@@ -243,6 +243,15 @@ func vfsFileControl(ctx context.Context, mod api.Module, pFile uint32, op _Fcntl
 			return _OK
 		}
 
+	case _FCNTL_LOCK_TIMEOUT:
+		if file, ok := file.(FileSharedMemory); ok {
+			if iface, ok := file.SharedMemory().(interface{ shmEnableBlocking(bool) }); ok {
+				if i := util.ReadUint32(mod, pArg); i == 0 || i == 1 {
+					iface.shmEnableBlocking(i != 0)
+				}
+			}
+		}
+
 	case _FCNTL_PERSIST_WAL:
 		if file, ok := file.(FilePersistentWAL); ok {
 			if i := util.ReadUint32(mod, pArg); int32(i) >= 0 {
@@ -347,7 +356,7 @@ func vfsFileControl(ctx context.Context, mod api.Module, pFile uint32, op _Fcntl
 				out = err.Error()
 			}
 			if out != "" {
-				fn := mod.ExportedFunction("malloc")
+				fn := mod.ExportedFunction("sqlite3_malloc64")
 				stack := [...]uint64{uint64(len(out) + 1)}
 				if err := fn.CallWithStack(ctx, stack[:]); err != nil {
 					panic(err)
