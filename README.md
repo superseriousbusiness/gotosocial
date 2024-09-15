@@ -240,6 +240,7 @@ For bugs and feature requests, please check to see if there's [already an issue]
 The following open source libraries, frameworks, and tools are used by GoToSocial, with gratitude 💕
 
 - [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes. [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
+- [cespare/xxhash](https://github.com/cespare/xxhash); xxHash generation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [coreos/go-oidc](https://github.com/coreos/go-oidc); OIDC client library. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [DmitriyVTitov/size](https://github.com/DmitriyVTitov/size); runtime model memory size calculations. [MIT License](https://spdx.org/licenses/MIT.html).
 - Gin:
@@ -273,6 +274,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [jackc/pgconn](https://github.com/jackc/pgconn); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).
   - [jackc/pgx](https://github.com/jackc/pgx); Postgres driver and toolkit. [MIT License](https://spdx.org/licenses/MIT.html).
 - [KimMachineGun/automemlimit](https://github.com/KimMachineGun/automemlimit); cgroups memory limit checking. [MIT License](https://spdx.org/licenses/MIT.html).
+- [k3a/html2text](https://github.com/k3a/html2text); HTML-to-text conversion. [MIT License](https://spdx.org/licenses/MIT.html).
 - [mcuadros/go-syslog](https://github.com/mcuadros/go-syslog); Syslog server library. [MIT License](https://spdx.org/licenses/MIT.html).
 - [microcosm-cc/bluemonday](https://github.com/microcosm-cc/bluemonday); HTML user-input sanitization. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 - [miekg/dns](https://github.com/miekg/dns); DNS utilities. [Go License](https://go.dev/LICENSE).
