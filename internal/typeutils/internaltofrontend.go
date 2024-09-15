@@ -934,6 +934,14 @@ func (c *Converter) statusToAPIFilterResults(
 	}
 
 	// At this point, the status isn't muted, but might still be filtered.
+	if len(filters) == 0 {
+		// If it can't be filtered because there are no filters, we're done.
+		return nil, nil
+	}
+
+	// Extract text fields from the status that we will match filters against.
+	fields := filterableTextFields(s)
+
 	// Record all matching warn filters and the reasons they matched.
 	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 	for _, filter := range filters {
@@ -947,7 +955,6 @@ func (c *Converter) statusToAPIFilterResults(
 
 		// List all matching keywords.
 		keywordMatches := make([]string, 0, len(filter.Keywords))
-		fields := filterableTextFields(s)
 		for _, filterKeyword := range filter.Keywords {
 			var isMatch bool
 			for _, field := range fields {
