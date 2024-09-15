@@ -158,3 +158,90 @@ func TestContentToContentLanguage(t *testing.T) {
 		}
 	}
 }
+
+func TestFilterableText(t *testing.T) {
+	type testcase struct {
+		status       *gtsmodel.Status
+		expectedText string
+	}
+
+	for i, testcase := range []testcase{
+		{
+			status: &gtsmodel.Status{
+				ContentWarning: "This is a test status",
+				Content:        `<p>Import / export of account data via CSV files will be coming in 0.17.0 :) No more having to run scripts + CLI tools to import a list of accounts you follow, after doing a migration to a <a href="https://gts.superseriousbusiness.org/tags/gotosocial" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>GoToSocial</span></a> instance.</p>`,
+			},
+			expectedText: `This is a test status Import / export of account data via CSV files will be coming in 0.17.0 :) No more having to run scripts + CLI tools to import a list of accounts you follow, after doing a migration to a #GoToSocial <https://gts.superseriousbusiness.org/tags/gotosocial> instance.`,
+		},
+		{
+			status: &gtsmodel.Status{
+				Content: `<p><span class="h-card"><a href="https://example.org/@zlatko" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>zlatko</span></a></span> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)</p><p><a href="https://github.com/superseriousbusiness/gotosocial/pull/2863" rel="nofollow noreferrer noopener" target="_blank">https://github.com/superseriousbusiness/gotosocial/pull/2863</a></p>`,
+			},
+			expectedText: ` @zlatko <https://example.org/@zlatko> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)
+
+https://github.com/superseriousbusiness/gotosocial/pull/2863 <https://github.com/superseriousbusiness/gotosocial/pull/2863>`,
+		},
+		{
+			status: &gtsmodel.Status{
+				Content: `<p>Latest graphs for <a href="https://gts.superseriousbusiness.org/tags/gotosocial" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>GoToSocial</span></a> on <a href="https://github.com/ncruces/go-sqlite3" rel="nofollow noreferrer noopener" target="_blank">Wasm sqlite3</a> with <a href="https://codeberg.org/gruf/go-ffmpreg" rel="nofollow noreferrer noopener" target="_blank">embedded Wasm ffmpeg</a>, both running on <a href="https://wazero.io/" rel="nofollow noreferrer noopener" target="_blank">Wazero</a>, and configured with a <a href="https://github.com/superseriousbusiness/gotosocial/blob/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266" rel="nofollow noreferrer noopener" target="_blank">50MiB db cache target</a>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything.</p>`,
+				Attachments: []*gtsmodel.MediaAttachment{
+					{
+						Description: `Graph showing GtS using between 150-300 MiB of memory, steadily, over a few days.`,
+					},
+				},
+			},
+			expectedText: ` Latest graphs for #GoToSocial <https://gts.superseriousbusiness.org/tags/gotosocial> on Wasm sqlite3 <https://github.com/ncruces/go-sqlite3> with embedded Wasm ffmpeg <https://codeberg.org/gruf/go-ffmpreg>, both running on Wazero <https://wazero.io/>, and configured with a 50MiB db cache target <https://github.com/superseriousbusiness/gotosocial/blob/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything. Graph showing GtS using between 150-300 MiB of memory, steadily, over a few days.`,
+		},
+	} {
+		text := filterableText(testcase.status)
+		if text != testcase.expectedText {
+			t.Errorf(
+				"test %d expected text '%s' got '%s'",
+				i, testcase.expectedText, text,
+			)
+		}
+	}
+}
+
+func TestStatusHash(t *testing.T) {
+	type testcase struct {
+		status       *gtsmodel.Status
+		expectedHash string
+	}
+
+	for i, testcase := range []testcase{
+		{
+			status: &gtsmodel.Status{
+				ContentWarning: "This is a test status",
+				Content:        `<p>Import / export of account data via CSV files will be coming in 0.17.0 :) No more having to run scripts + CLI tools to import a list of accounts you follow, after doing a migration to a <a href="https://gts.superseriousbusiness.org/tags/gotosocial" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>GoToSocial</span></a> instance.</p>`,
+			},
+			expectedHash: `8bbb5439dbe62ae0`,
+		},
+		{
+			status: &gtsmodel.Status{
+				Content: `<p><span class="h-card"><a href="https://example.org/@zlatko" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>zlatko</span></a></span> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)</p><p><a href="https://github.com/superseriousbusiness/gotosocial/pull/2863" rel="nofollow noreferrer noopener" target="_blank">https://github.com/superseriousbusiness/gotosocial/pull/2863</a></p>`,
+			},
+			expectedHash: `d039dfb4d04752d5`,
+		},
+		{
+			status: &gtsmodel.Status{
+				Content: `<p>Latest graphs for <a href="https://gts.superseriousbusiness.org/tags/gotosocial" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>GoToSocial</span></a> on <a href="https://github.com/ncruces/go-sqlite3" rel="nofollow noreferrer noopener" target="_blank">Wasm sqlite3</a> with <a href="https://codeberg.org/gruf/go-ffmpreg" rel="nofollow noreferrer noopener" target="_blank">embedded Wasm ffmpeg</a>, both running on <a href="https://wazero.io/" rel="nofollow noreferrer noopener" target="_blank">Wazero</a>, and configured with a <a href="https://github.com/superseriousbusiness/gotosocial/blob/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266" rel="nofollow noreferrer noopener" target="_blank">50MiB db cache target</a>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything.</p>`,
+				Attachments: []*gtsmodel.MediaAttachment{
+					{
+						ID:          "01J7TYSH1V5V4DCTVPASH3K9PQ",
+						Description: `Graph showing GtS using between 150-300 MiB of memory, steadily, over a few days.`,
+					},
+				},
+			},
+			expectedHash: `414d975b2ef9d112`,
+		},
+	} {
+		hash := StatusHash(testcase.status)
+		if hash != testcase.expectedHash {
+			t.Errorf(
+				"test %d expected hash '%s' got '%s'",
+				i, testcase.expectedHash, hash,
+			)
+		}
+	}
+}

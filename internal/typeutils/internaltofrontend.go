@@ -35,7 +35,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -939,8 +938,18 @@ func (c *Converter) statusToAPIFilterResults(
 		return nil, nil
 	}
 
-	// Extract text fields from the status that we will match filters against.
-	fields := filterableTextFields(s)
+	// Derive a hash of this status.
+	statusHash := StatusHash(s)
+
+	// Check if we have the filterable
+	// text stored already for this hash.
+	statusText, stored := c.statusHashesToFilterableText.Get(statusHash)
+	if !stored {
+		// We don't have this filterable text
+		// cached, calculate + cache it now.
+		statusText = filterableText(s)
+		c.statusHashesToFilterableText.Set(statusHash, statusText)
+	}
 
 	// Record all matching warn filters and the reasons they matched.
 	filterResults := make([]apimodel.FilterResult, 0, len(filters))
@@ -956,14 +965,7 @@ func (c *Converter) statusToAPIFilterResults(
 		// List all matching keywords.
 		keywordMatches := make([]string, 0, len(filter.Keywords))
 		for _, filterKeyword := range filter.Keywords {
-			var isMatch bool
-			for _, field := range fields {
-				if filterKeyword.Regexp.MatchString(field) {
-					isMatch = true
-					break
-				}
-			}
-			if isMatch {
+			if filterKeyword.Regexp.MatchString(statusText) {
 				keywordMatches = append(keywordMatches, filterKeyword.Keyword)
 			}
 		}
@@ -999,40 +1001,6 @@ func (c *Converter) statusToAPIFilterResults(
 	}
 
 	return filterResults, nil
-}
-
-// filterableTextFields returns all text from a status that we might want to filter on:
-// - content
-// - content warning
-// - media descriptions
-// - poll options
-func filterableTextFields(s *gtsmodel.Status) []string {
-	fieldCount := 2 + len(s.Attachments)
-	if s.Poll != nil {
-		fieldCount += len(s.Poll.Options)
-	}
-	fields := make([]string, 0, fieldCount)
-
-	if s.Content != "" {
-		fields = append(fields, text.SanitizeToPlaintext(s.Content))
-	}
-	if s.ContentWarning != "" {
-		fields = append(fields, s.ContentWarning)
-	}
-	for _, attachment := range s.Attachments {
-		if attachment.Description != "" {
-			fields = append(fields, attachment.Description)
-		}
-	}
-	if s.Poll != nil {
-		for _, option := range s.Poll.Options {
-			if option != "" {
-				fields = append(fields, option)
-			}
-		}
-	}
-
-	return fields
 }
 
 // filterAppliesInContext returns whether a given filter applies in a given context.

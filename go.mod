@@ -28,6 +28,7 @@ require (
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.6.1
 	github.com/buckket/go-blurhash v1.1.0
+	github.com/cespare/xxhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.11.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-contrib/gzip v1.0.1
@@ -40,6 +41,7 @@ require (
 	github.com/gorilla/feeds v1.2.0
 	github.com/gorilla/websocket v1.5.2
 	github.com/jackc/pgx/v5 v5.6.0
+	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/miekg/dns v1.1.62
 	github.com/minio/minio-go/v7 v7.0.76

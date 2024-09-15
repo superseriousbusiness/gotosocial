@@ -19,6 +19,7 @@ package typeutils
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"math"
 	"net/url"
@@ -27,6 +28,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/cespare/xxhash/v2"
+	"github.com/k3a/html2text"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -283,4 +286,78 @@ func ContentToContentLanguage(
 	}
 
 	return contentStr, langTagStr
+}
+
+// StatusHash returns an xxhash of text
+// from a status, taking account of:
+//
+//   - content warning
+//   - content
+//   - media IDs + descriptions
+//   - poll options
+func StatusHash(s *gtsmodel.Status) string {
+	hash := xxhash.New()
+
+	// Content warning / title.
+	hash.WriteString(s.ContentWarning)
+
+	// Status content.
+	hash.WriteString(s.Content)
+
+	// Media IDs + descriptions.
+	for _, attachment := range s.Attachments {
+		hash.WriteString(attachment.ID)
+		hash.WriteString(attachment.Description)
+	}
+
+	// Poll options.
+	if s.Poll != nil {
+		for _, option := range s.Poll.Options {
+			hash.WriteString(option)
+		}
+	}
+
+	sum := hash.Sum(nil)
+	return hex.EncodeToString(sum)
+}
+
+// filterableText concatenates text from a
+// status that we might want to filter on:
+//
+//   - content warning
+//   - content (converted to plaintext from HTML)
+//   - media descriptions
+//   - poll options
+func filterableText(s *gtsmodel.Status) string {
+	fields := []string{}
+
+	// Content warning / title.
+	fields = append(fields, s.ContentWarning)
+
+	// Status content; use raw text if available,
+	// else use text parsed from content HTML.
+	if s.Text != "" {
+		fields = append(fields, s.Text)
+	} else {
+		text := html2text.HTML2TextWithOptions(
+			s.Content,
+			html2text.WithLinksInnerText(),
+			html2text.WithUnixLineBreaks(),
+		)
+		fields = append(fields, text)
+	}
+
+	// Media descriptions.
+	for _, attachment := range s.Attachments {
+		fields = append(fields, attachment.Description)
+	}
+
+	// Poll options.
+	if s.Poll != nil {
+		for _, option := range s.Poll.Options {
+			fields = append(fields, option)
+		}
+	}
+
+	return strings.Join(fields, " ")
 }
