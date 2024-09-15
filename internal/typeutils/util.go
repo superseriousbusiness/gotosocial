@@ -299,21 +299,21 @@ func StatusHash(s *gtsmodel.Status) string {
 	hash := xxhash.New()
 
 	// Content warning / title.
-	hash.WriteString(s.ContentWarning)
+	hash.WriteString(s.ContentWarning) // nolint:errcheck
 
 	// Status content.
-	hash.WriteString(s.Content)
+	hash.WriteString(s.Content) // nolint:errcheck
 
 	// Media IDs + descriptions.
 	for _, attachment := range s.Attachments {
-		hash.WriteString(attachment.ID)
-		hash.WriteString(attachment.Description)
+		hash.WriteString(attachment.ID)          // nolint:errcheck
+		hash.WriteString(attachment.Description) // nolint:errcheck
 	}
 
 	// Poll options.
 	if s.Poll != nil {
 		for _, option := range s.Poll.Options {
-			hash.WriteString(option)
+			hash.WriteString(option) // nolint:errcheck
 		}
 	}
 
@@ -354,9 +354,7 @@ func filterableText(s *gtsmodel.Status) string {
 
 	// Poll options.
 	if s.Poll != nil {
-		for _, option := range s.Poll.Options {
-			fields = append(fields, option)
-		}
+		fields = append(fields, s.Poll.Options...)
 	}
 
 	return strings.Join(fields, " ")
