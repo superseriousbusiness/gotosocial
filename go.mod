@@ -75,7 +75,7 @@ require (
 	go.uber.org/automaxprocs v1.5.3
 	golang.org/x/crypto v0.27.0
 	golang.org/x/image v0.20.0
-	golang.org/x/net v0.28.0
+	golang.org/x/net v0.29.0
 	golang.org/x/oauth2 v0.23.0
 	golang.org/x/text v0.18.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
