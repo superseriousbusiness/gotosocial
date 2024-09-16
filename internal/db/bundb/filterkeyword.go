@@ -113,14 +113,8 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 	filterKeywords, err := f.state.Caches.DB.FilterKeyword.LoadIDs("ID",
 		filterKeywordIDs,
 		func(uncached []string) ([]*gtsmodel.FilterKeyword, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
+			filterKeywords := make([]*gtsmodel.FilterKeyword, 0, len(uncached))
 
-			filterKeywords := make([]*gtsmodel.FilterKeyword, 0, count)
 			if err := f.db.
 				NewSelect().
 				Model(&filterKeywords).

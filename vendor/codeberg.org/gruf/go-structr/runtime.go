@@ -152,8 +152,10 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []unsafe.Pointer 
 			fptr = field.zero
 		}
 
+		// Set field ptr.
 		ptrs[i] = fptr
 	}
+
 	return ptrs
 }
 

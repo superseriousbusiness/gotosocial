@@ -649,7 +649,8 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 	}
 
 	// Remove turtle from the list.
-	if err := testStructs.State.DB.DeleteListEntry(ctx, suite.testListEntries["local_account_1_list_1_entry_1"].ID); err != nil {
+	testEntry := suite.testListEntries["local_account_1_list_1_entry_1"]
+	if err := testStructs.State.DB.DeleteListEntry(ctx, testEntry.ListID, testEntry.FollowID); err != nil {
 		suite.FailNow(err.Error())
 	}
 

@@ -41,7 +41,6 @@ func free_indexed_item(item *indexed_item) {
 }
 
 // drop_index will drop the given index entry from item's indexed.
-// note this also handles freeing the index_entry memory (e.g. to pool)
 func (i *indexed_item) drop_index(entry *index_entry) {
 	for x := 0; x < len(i.indexed); x++ {
 		if i.indexed[x] != entry {

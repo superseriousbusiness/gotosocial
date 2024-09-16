@@ -189,7 +189,7 @@ func (p *Processor) GetAPIStatus(
 // such invalidation will, in that case, be handled by the processor instead.
 func (p *Processor) InvalidateTimelinedStatus(ctx context.Context, accountID string, statusID string) error {
 	// Get lists first + bail if this fails.
-	lists, err := p.state.DB.GetListsForAccountID(ctx, accountID)
+	lists, err := p.state.DB.GetListsByAccountID(ctx, accountID)
 	if err != nil {
 		return gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
 	}

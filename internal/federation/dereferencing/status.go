@@ -826,9 +826,6 @@ func (d *Dereferencer) fetchStatusPoll(
 			if err := d.state.DB.DeletePollByID(ctx, pollID); err != nil {
 				return gtserror.Newf("error deleting existing poll from database: %w", err)
 			}
-			if err := d.state.DB.DeletePollVotes(ctx, pollID); err != nil {
-				return gtserror.Newf("error deleting existing votes from database: %w", err)
-			}
 			return nil
 		}
 	)

@@ -105,15 +105,8 @@ func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*g
 	blocks, err := r.state.Caches.DB.Block.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Block, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached blocks.
-			blocks := make([]*gtsmodel.Block, 0, count)
+			blocks := make([]*gtsmodel.Block, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.
@@ -222,94 +215,93 @@ func (r *relationshipDB) PutBlock(ctx context.Context, block *gtsmodel.Block) er
 }
 
 func (r *relationshipDB) DeleteBlockByID(ctx context.Context, id string) error {
-	// Load block into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := r.GetBlockByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.Block
+
+	// Delete block with given ID,
+	// returning the deleted models.
+	if _, err := r.db.NewDelete().
+		Model(&deleted).
+		Where("? = ?", bun.Ident("id"), id).
+		Returning("?, ?",
+			bun.Ident("account_id"),
+			bun.Ident("target_account_id"),
+		).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Drop this now-cached block on return after delete.
-	defer r.state.Caches.DB.Block.Invalidate("ID", id)
+	// Invalidate cached block with ID, manually
+	// call invalidate hook in case not cached.
+	r.state.Caches.DB.Block.Invalidate("ID", id)
+	r.state.Caches.OnInvalidateBlock(&deleted)
 
-	// Finally delete block from DB.
-	_, err = r.db.NewDelete().
-		Table("blocks").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	return err
+	return nil
 }
 
 func (r *relationshipDB) DeleteBlockByURI(ctx context.Context, uri string) error {
-	// Load block into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := r.GetBlockByURI(gtscontext.SetBarebones(ctx), uri)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.Block
+
+	// Delete block with given URI,
+	// returning the deleted models.
+	if _, err := r.db.NewDelete().
+		Model(&deleted).
+		Where("? = ?", bun.Ident("uri"), uri).
+		Returning("?, ?",
+			bun.Ident("account_id"),
+			bun.Ident("target_account_id"),
+		).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Drop this now-cached block on return after delete.
-	defer r.state.Caches.DB.Block.Invalidate("URI", uri)
+	// Invalidate cached block with URI, manually
+	// call invalidate hook in case not cached.
+	r.state.Caches.DB.Block.Invalidate("URI", uri)
+	r.state.Caches.OnInvalidateBlock(&deleted)
 
-	// Finally delete block from DB.
-	_, err = r.db.NewDelete().
-		Table("blocks").
-		Where("? = ?", bun.Ident("uri"), uri).
-		Exec(ctx)
-	return err
+	return nil
 }
 
 func (r *relationshipDB) DeleteAccountBlocks(ctx context.Context, accountID string) error {
-	var blockIDs []string
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted []*gtsmodel.Block
 
-	// Get full list of IDs.
-	if err := r.db.NewSelect().
-		Column("id").
-		Table("blocks").
+	// Delete all blocks either from
+	// account, or targeting account,
+	// returning the deleted models.
+	if _, err := r.db.NewDelete().
+		Model(&deleted).
 		WhereOr("? = ? OR ? = ?",
 			bun.Ident("account_id"),
 			accountID,
 			bun.Ident("target_account_id"),
 			accountID,
 		).
-		Scan(ctx, &blockIDs); err != nil {
+		Returning("?, ?",
+			bun.Ident("account_id"),
+			bun.Ident("target_account_id"),
+		).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	if len(blockIDs) == 0 {
-		// Nothing
-		// to delete.
-		return nil
+	// Invalidate all account's incoming / outoing blocks.
+	r.state.Caches.DB.Block.Invalidate("AccountID", accountID)
+	r.state.Caches.DB.Block.Invalidate("TargetAccountID", accountID)
+
+	// In case not all blocks were in
+	// cache, manually call invalidate hooks.
+	for _, block := range deleted {
+		r.state.Caches.OnInvalidateBlock(block)
 	}
 
-	defer func() {
-		// Invalidate all account's incoming / outoing blocks on return.
-		r.state.Caches.DB.Block.Invalidate("AccountID", accountID)
-		r.state.Caches.DB.Block.Invalidate("TargetAccountID", accountID)
-	}()
-
-	// Load all blocks into cache, this *really* isn't great
-	// but it is the only way we can ensure we invalidate all
-	// related caches correctly (e.g. visibility).
-	_, err := r.GetAccountBlocks(ctx, accountID, nil)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return err
-	}
-
-	// Finally delete all from DB.
-	_, err = r.db.NewDelete().
-		Table("blocks").
-		Where("? IN (?)", bun.Ident("id"), bun.In(blockIDs)).
-		Exec(ctx)
-	return err
+	return nil
 }

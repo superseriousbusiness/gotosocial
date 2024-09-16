@@ -22,6 +22,7 @@ import (
 	"errors"
 	"slices"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -107,15 +108,8 @@ func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string
 	notifs, err := n.state.Caches.DB.Notification.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Notification, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached notifications.
-			notifs := make([]*gtsmodel.Notification, 0, count)
+			notifs := make([]*gtsmodel.Notification, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.
@@ -299,7 +293,8 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 		NewDelete().
 		Table("notifications").
 		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx); err != nil {
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -310,7 +305,7 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 
 func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
-		return errors.New("DeleteNotifications: one of targetAccountID or originAccountID must be set")
+		return gtserror.New("one of targetAccountID or originAccountID must be set")
 	}
 
 	q := n.db.

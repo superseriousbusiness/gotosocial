@@ -19,10 +19,8 @@ package bundb
 
 import (
 	"context"
-	"errors"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -209,26 +207,26 @@ func (u *userDB) UpdateUser(ctx context.Context, user *gtsmodel.User, columns ..
 }
 
 func (u *userDB) DeleteUserByID(ctx context.Context, userID string) error {
-	defer u.state.Caches.DB.User.Invalidate("ID", userID)
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.User
+	deleted.ID = userID
 
-	// Load user into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := u.GetUserByID(gtscontext.SetBarebones(ctx), userID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
+	// Delete user from DB.
+	if _, err := u.db.NewDelete().
+		Model(&deleted).
+		Where("? = ?", bun.Ident("id"), userID).
+		Returning("?", bun.Ident("account_id")).
+		Exec(ctx); err != nil {
 		return err
 	}
 
-	// Finally delete user from DB.
-	_, err = u.db.NewDelete().
-		TableExpr("? AS ?", bun.Ident("users"), bun.Ident("user")).
-		Where("? = ?", bun.Ident("user.id"), userID).
-		Exec(ctx)
-	return err
+	// Invalidate cached user by ID, manually
+	// call invalidate hook in case not cached.
+	u.state.Caches.DB.User.Invalidate("ID", userID)
+	u.state.Caches.OnInvalidateUser(&deleted)
+
+	return nil
 }
 
 func (u *userDB) PutDeniedUser(ctx context.Context, deniedUser *gtsmodel.DeniedUser) error {

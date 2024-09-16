@@ -202,7 +202,7 @@ func (suite *ReportTestSuite) TestUpdateReport() {
 	report.ActionTakenByAccountID = suite.testAccounts["admin_account"].ID
 	report.ActionTakenAt = testrig.TimeMustParse("2022-05-14T12:20:03+02:00")
 
-	if _, err := suite.db.UpdateReport(ctx, report, "action_taken", "action_taken_by_account_id", "action_taken_at"); err != nil {
+	if err := suite.db.UpdateReport(ctx, report, "action_taken", "action_taken_by_account_id", "action_taken_at"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -228,7 +228,7 @@ func (suite *ReportTestSuite) TestUpdateReportAllColumns() {
 	report.ActionTakenByAccountID = suite.testAccounts["admin_account"].ID
 	report.ActionTakenAt = testrig.TimeMustParse("2022-05-14T12:20:03+02:00")
 
-	if _, err := suite.db.UpdateReport(ctx, report); err != nil {
+	if err := suite.db.UpdateReport(ctx, report); err != nil {
 		suite.FailNow(err.Error())
 	}
 

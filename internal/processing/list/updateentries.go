@@ -23,73 +23,90 @@ import (
 	"fmt"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // AddToList adds targetAccountIDs to the given list, if valid.
 func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, listID string, targetAccountIDs []string) gtserror.WithCode {
+
 	// Ensure this list exists + account owns it.
-	list, errWithCode := p.getList(ctx, account.ID, listID)
+	_, errWithCode := p.getList(ctx, account.ID, listID)
 	if errWithCode != nil {
 		return errWithCode
 	}
 
-	// Pre-assemble list of entries to add. We *could* add these
-	// one by one as we iterate through accountIDs, but according
-	// to the Mastodon API we should only add them all once we know
-	// they're all valid, no partial updates.
-	listEntries := make([]*gtsmodel.ListEntry, 0, len(targetAccountIDs))
+	// Get all follows that are entries in list.
+	follows, err := p.state.DB.GetFollowsInList(
 
-	// Check each targetAccountID is valid.
-	//   - Follow must exist.
-	//   - Follow must not already be in the given list.
+		// We only need barebones model.
+		gtscontext.SetBarebones(ctx),
+		listID,
+		nil,
+	)
+	if err != nil {
+		err := gtserror.Newf("error getting list follows: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Convert the follows to a hash set containing the target account IDs.
+	inFollows := util.ToSetFunc(follows, func(follow *gtsmodel.Follow) string {
+		return follow.TargetAccountID
+	})
+
+	// Preallocate a slice of expected list entries, we specifically
+	// gather and add all the target accounts in one go rather than
+	// individually, to ensure we don't end up with partial updates.
+	entries := make([]*gtsmodel.ListEntry, 0, len(targetAccountIDs))
+
+	// Iterate all the account IDs in given target list.
 	for _, targetAccountID := range targetAccountIDs {
-		// Ensure follow exists.
-		follow, err := p.state.DB.GetFollow(ctx, account.ID, targetAccountID)
-		if err != nil {
-			if errors.Is(err, db.ErrNoEntries) {
-				err = fmt.Errorf("you do not follow account %s", targetAccountID)
-				return gtserror.NewErrorNotFound(err, err.Error())
-			}
+
+		// Look for follow to target account.
+		if inFollows.Has(targetAccountID) {
+			text := fmt.Sprintf("account %s is already in list %s", targetAccountID, listID)
+			return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
+		}
+
+		// Get the actual follow to target.
+		follow, err := p.state.DB.GetFollow(
+
+			// We don't need any sub-models.
+			gtscontext.SetBarebones(ctx),
+			account.ID,
+			targetAccountID,
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("db error getting follow: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
 
-		// Ensure followID not already in list.
-		// This particular call to isInList will
-		// never error, so just check entryID.
-		entryID, _ := isInList(
-			list,
-			follow.ID,
-			func(listEntry *gtsmodel.ListEntry) (string, error) {
-				// Looking for the listEntry follow ID.
-				return listEntry.FollowID, nil
-			},
-		)
-
-		// Empty entryID means entry with given
-		// followID wasn't found in the list.
-		if entryID != "" {
-			err = fmt.Errorf("account with id %s is already in list %s with entryID %s", targetAccountID, listID, entryID)
-			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
+		if follow == nil {
+			text := fmt.Sprintf("account %s not currently followed", targetAccountID)
+			return gtserror.NewErrorNotFound(errors.New(text), text)
 		}
 
-		// Entry wasn't in the list, we can add it.
-		listEntries = append(listEntries, &gtsmodel.ListEntry{
+		// Generate new entry for this follow in list.
+		entries = append(entries, &gtsmodel.ListEntry{
 			ID:       id.NewULID(),
 			ListID:   listID,
 			FollowID: follow.ID,
 		})
 	}
 
-	// If we get to here we can assume all
-	// entries are valid, so try to add them.
-	if err := p.state.DB.PutListEntries(ctx, listEntries); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = fmt.Errorf("one or more errors inserting list entries: %w", err)
-			return gtserror.NewErrorUnprocessableEntity(err, err.Error())
-		}
+	// Add all of the gathered list entries to the database.
+	switch err := p.state.DB.PutListEntries(ctx, entries); {
+	case err == nil:
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		err := gtserror.Newf("conflict adding list entry: %w", err)
+		return gtserror.NewErrorUnprocessableEntity(err)
+
+	default:
+		err := gtserror.Newf("db error inserting list entries: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
@@ -97,54 +114,60 @@ func (p *Processor) AddToList(ctx context.Context, account *gtsmodel.Account, li
 }
 
 // RemoveFromList removes targetAccountIDs from the given list, if valid.
-func (p *Processor) RemoveFromList(ctx context.Context, account *gtsmodel.Account, listID string, targetAccountIDs []string) gtserror.WithCode {
+func (p *Processor) RemoveFromList(
+	ctx context.Context,
+	account *gtsmodel.Account,
+	listID string,
+	targetAccountIDs []string,
+) gtserror.WithCode {
 	// Ensure this list exists + account owns it.
-	list, errWithCode := p.getList(ctx, account.ID, listID)
+	_, errWithCode := p.getList(ctx, account.ID, listID)
 	if errWithCode != nil {
 		return errWithCode
 	}
 
-	// For each targetAccountID, we want to check if
-	// a follow with that targetAccountID is in the
-	// given list. If it is in there, we want to remove
-	// it from the list.
+	// Get all follows that are entries in list.
+	follows, err := p.state.DB.GetFollowsInList(
+
+		// We only need barebones model.
+		gtscontext.SetBarebones(ctx),
+		listID,
+		nil,
+	)
+	if err != nil {
+		err := gtserror.Newf("error getting list follows: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Convert the follows to a map keyed by the target account ID.
+	followsMap := util.KeyBy(follows, func(follow *gtsmodel.Follow) string {
+		return follow.TargetAccountID
+	})
+
+	var errs gtserror.MultiError
+
+	// Iterate all the account IDs in given target list.
 	for _, targetAccountID := range targetAccountIDs {
-		// Check if targetAccountID is
-		// on a follow in the list.
-		entryID, err := isInList(
-			list,
-			targetAccountID,
-			func(listEntry *gtsmodel.ListEntry) (string, error) {
-				// We need the follow so populate this
-				// entry, if it's not already populated.
-				if err := p.state.DB.PopulateListEntry(ctx, listEntry); err != nil {
-					return "", err
-				}
 
-				// Looking for the list entry targetAccountID.
-				return listEntry.Follow.TargetAccountID, nil
-			},
-		)
+		// Look for follow targetting this account.
+		follow, ok := followsMap[targetAccountID]
 
-		// Error may be returned here if there was an issue
-		// populating the list entry. We only return on proper
-		// DB errors, we can just skip no entry errors.
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("error checking if targetAccountID %s was in list %s: %w", targetAccountID, listID, err)
-			return gtserror.NewErrorInternalError(err)
-		}
-
-		if entryID == "" {
-			// There was an errNoEntries or targetAccount
-			// wasn't in this list anyway, so we can skip it.
+		if !ok {
+			// not in list.
 			continue
 		}
 
-		// TargetAccount was in the list, remove the entry.
-		if err := p.state.DB.DeleteListEntry(ctx, entryID); err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("error removing list entry %s from list %s: %w", entryID, listID, err)
-			return gtserror.NewErrorInternalError(err)
+		// Delete the list entry containing follow ID in list.
+		err := p.state.DB.DeleteListEntry(ctx, listID, follow.ID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			errs.Appendf("error removing list entry: %w", err)
+			continue
 		}
+	}
+
+	// Wrap errors in errWithCode if set.
+	if err := errs.Combine(); err != nil {
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	return nil

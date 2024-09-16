@@ -64,15 +64,8 @@ func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsm
 	accounts, err := a.state.Caches.DB.Account.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, count)
+			accounts := make([]*gtsmodel.Account, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) account IDs.
@@ -796,20 +789,14 @@ func (a *accountDB) UpdateAccount(ctx context.Context, account *gtsmodel.Account
 }
 
 func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
-	defer a.state.Caches.DB.Account.Invalidate("ID", id)
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.Account
+	deleted.ID = id
 
-	// Load account into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := a.GetAccountByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// NOTE: even if db.ErrNoEntries is returned, we
-		// still run the below transaction to ensure related
-		// objects are appropriately deleted.
-		return err
-	}
+	// Delete account from database and any related links in a transaction.
+	if err := a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-	return a.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// clear out any emoji links
 		if _, err := tx.
 			NewDelete().
@@ -822,44 +809,19 @@ func (a *accountDB) DeleteAccount(ctx context.Context, id string) error {
 		// delete the account
 		_, err := tx.
 			NewDelete().
-			TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
-			Where("? = ?", bun.Ident("account.id"), id).
+			Model(&deleted).
+			Where("? = ?", bun.Ident("id"), id).
+			Returning("?", bun.Ident("uri")).
 			Exec(ctx)
 		return err
-	})
-}
-
-func (a *accountDB) SetAccountHeaderOrAvatar(ctx context.Context, mediaAttachment *gtsmodel.MediaAttachment, accountID string) error {
-	if *mediaAttachment.Avatar && *mediaAttachment.Header {
-		return errors.New("one media attachment cannot be both header and avatar")
-	}
-
-	var column bun.Ident
-	switch {
-	case *mediaAttachment.Avatar:
-		column = bun.Ident("account.avatar_media_attachment_id")
-	case *mediaAttachment.Header:
-		column = bun.Ident("account.header_media_attachment_id")
-	default:
-		return errors.New("given media attachment was neither a header nor an avatar")
-	}
-
-	// TODO: there are probably more side effects here that need to be handled
-	if _, err := a.db.
-		NewInsert().
-		Model(mediaAttachment).
-		Exec(ctx); err != nil {
+	}); err != nil {
 		return err
 	}
 
-	if _, err := a.db.
-		NewUpdate().
-		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
-		Set("? = ?", column, mediaAttachment.ID).
-		Where("? = ?", bun.Ident("account.id"), accountID).
-		Exec(ctx); err != nil {
-		return err
-	}
+	// Invalidate cached account by its ID, manually
+	// call invalidate hook in case not cached.
+	a.state.Caches.DB.Account.Invalidate("ID", id)
+	a.state.Caches.OnInvalidateAccount(&deleted)
 
 	return nil
 }

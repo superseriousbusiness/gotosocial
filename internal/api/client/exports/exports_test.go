@@ -188,8 +188,8 @@ admin@localhost:8080
 			token:       suite.testTokens["local_account_1"],
 			user:        suite.testUsers["local_account_1"],
 			account:     suite.testAccounts["local_account_1"],
-			expect: `Cool Ass Posters From This Instance,admin@localhost:8080
-Cool Ass Posters From This Instance,1happyturtle@localhost:8080
+			expect: `Cool Ass Posters From This Instance,1happyturtle@localhost:8080
+Cool Ass Posters From This Instance,admin@localhost:8080
 `,
 		},
 		// Export Mutes.

@@ -17,12 +17,23 @@
 
 package util
 
+// KeyBy creates a map of T->S, keyed by value returned from key func.
+func KeyBy[S any, T comparable](in []S, key func(S) T) map[T]S {
+	if key == nil {
+		panic("nil func")
+	}
+	m := make(map[T]S, len(in))
+	for _, v := range in {
+		m[key(v)] = v
+	}
+	return m
+}
+
 // Set represents a hashmap of only keys,
 // useful for deduplication / key checking.
 type Set[T comparable] map[T]struct{}
 
-// ToSet creates a Set[T] from given values,
-// noting that this does not maintain any order.
+// ToSet creates a Set[T] from given values.
 func ToSet[T comparable](in []T) Set[T] {
 	set := make(Set[T], len(in))
 	for _, v := range in {
@@ -31,8 +42,19 @@ func ToSet[T comparable](in []T) Set[T] {
 	return set
 }
 
-// FromSet extracts the values from set to slice,
-// noting that this does not maintain any order.
+// ToSetFunc creates a Set[T] from input slice, keys provided by func.
+func ToSetFunc[S any, T comparable](in []S, key func(S) T) Set[T] {
+	if key == nil {
+		panic("nil func")
+	}
+	set := make(Set[T], len(in))
+	for _, v := range in {
+		set[key(v)] = struct{}{}
+	}
+	return set
+}
+
+// FromSet extracts the values from set to slice.
 func FromSet[T comparable](in Set[T]) []T {
 	out := make([]T, len(in))
 	var i int
