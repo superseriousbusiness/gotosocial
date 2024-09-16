@@ -240,7 +240,6 @@ For bugs and feature requests, please check to see if there's [already an issue]
 The following open source libraries, frameworks, and tools are used by GoToSocial, with gratitude 💕
 
 - [buckket/go-blurhash](https://github.com/buckket/go-blurhash); used for generating image blurhashes. [GPL-3.0 License](https://spdx.org/licenses/GPL-3.0-only.html).
-- [cespare/xxhash](https://github.com/cespare/xxhash); xxHash generation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [coreos/go-oidc](https://github.com/coreos/go-oidc); OIDC client library. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [DmitriyVTitov/size](https://github.com/DmitriyVTitov/size); runtime model memory size calculations. [MIT License](https://spdx.org/licenses/MIT.html).
 - Gin:
