@@ -215,7 +215,7 @@ func (t *tagDB) PutFollowedTag(ctx context.Context, accountID string, tagID stri
 		return nil
 	}
 
-	// If we deleted anything, invalidate caches.
+	// We updated something, invalidate caches.
 	t.state.Caches.DB.FollowingTagIDs.Invalidate(
 
 		// tag IDs followed by account
@@ -246,7 +246,7 @@ func (t *tagDB) DeleteFollowedTag(ctx context.Context, accountID string, tagID s
 		return nil
 	}
 
-	// If we deleted anything, invalidate caches.
+	// We deleted something, invalidate caches.
 	t.state.Caches.DB.FollowingTagIDs.Invalidate(
 
 		// tag IDs followed by account
