@@ -37,8 +37,8 @@ type List interface {
 	// CountListsByAccountID counts the number of lists owned by the given accountID.
 	CountListsByAccountID(ctx context.Context, accountID string) (int, error)
 
-	// GetListsWithFollowID gets all lists that contain the given follow with ID.
-	GetListsWithFollowID(ctx context.Context, followID string) ([]*gtsmodel.List, error)
+	// GetListsContainingFollowID gets all lists that contain the given follow with ID.
+	GetListsContainingFollowID(ctx context.Context, followID string) ([]*gtsmodel.List, error)
 
 	// GetFollowIDsInList returns all the follow IDs contained within given list ID.
 	GetFollowIDsInList(ctx context.Context, listID string, page *paging.Page) ([]string, error)

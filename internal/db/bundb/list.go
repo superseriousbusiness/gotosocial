@@ -99,7 +99,7 @@ func (l *listDB) CountListsByAccountID(ctx context.Context, accountID string) (i
 	return len(listIDs), err
 }
 
-func (l *listDB) GetListsWithFollowID(ctx context.Context, followID string) ([]*gtsmodel.List, error) {
+func (l *listDB) GetListsContainingFollowID(ctx context.Context, followID string) ([]*gtsmodel.List, error) {
 	listIDs, err := l.getListIDsWithFollowID(ctx, followID)
 	if err != nil {
 		return nil, err
