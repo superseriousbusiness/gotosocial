@@ -37,9 +37,8 @@ type ListEntry struct {
 	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
 	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	ListID    string    `bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"`   // ID of the list that this entry belongs to.
-	//	List      *List     `bun:"-"`                                                           //
-	FollowID string  `bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"` // Follow that the account owning this entry wants to see posts of in the timeline.
-	Follow   *Follow `bun:"-"`                                                         // Follow corresponding to followID.
+	FollowID  string    `bun:"type:CHAR(26),notnull,nullzero,unique:listentrylistfollow"`   // Follow that the account owning this entry wants to see posts of in the timeline.
+	Follow    *Follow   `bun:"-"`                                                           // Follow corresponding to followID.
 }
 
 // RepliesPolicy denotes which replies should be shown in the list.
