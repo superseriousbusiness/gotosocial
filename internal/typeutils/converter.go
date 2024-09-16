@@ -29,26 +29,30 @@ import (
 )
 
 type Converter struct {
-	state                        *state.State
-	defaultAvatars               []string
-	randAvatars                  sync.Map
-	visFilter                    *visibility.Filter
-	intFilter                    *interaction.Filter
-	statusHashesToFilterableText cache.TTLCache[string, string]
+	state          *state.State
+	defaultAvatars []string
+	randAvatars    sync.Map
+	visFilter      *visibility.Filter
+	intFilter      *interaction.Filter
+
+	// TTL cache of statuses -> filterable text fields.
+	// To ensure up-to-date fields, cache is keyed as:
+	// [status.ID][status.UpdatedAt.Unix()]`
+	statusesFilterableFields cache.TTLCache[string, []string]
 }
 
 func NewConverter(state *state.State) *Converter {
-	statusHashesToFilterableText := cache.NewTTL[string, string](0, 512, 0)
+	statusHashesToFilterableText := cache.NewTTL[string, []string](0, 512, 0)
 	statusHashesToFilterableText.SetTTL(time.Hour, true)
 	if !statusHashesToFilterableText.Start(time.Minute) {
 		log.Panic(nil, "failed to start statusHashesToFilterableText cache")
 	}
 
 	return &Converter{
-		state:                        state,
-		defaultAvatars:               populateDefaultAvatars(),
-		visFilter:                    visibility.NewFilter(state),
-		intFilter:                    interaction.NewFilter(state),
-		statusHashesToFilterableText: statusHashesToFilterableText,
+		state:                    state,
+		defaultAvatars:           populateDefaultAvatars(),
+		visFilter:                visibility.NewFilter(state),
+		intFilter:                interaction.NewFilter(state),
+		statusesFilterableFields: statusHashesToFilterableText,
 	}
 }

@@ -19,7 +19,6 @@ package typeutils
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math"
 	"net/url"
@@ -28,7 +27,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cespare/xxhash/v2"
 	"github.com/k3a/html2text"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -288,74 +286,63 @@ func ContentToContentLanguage(
 	return contentStr, langTagStr
 }
 
-// StatusHash returns an xxhash of text
-// from a status, taking account of:
-//
-//   - content warning
-//   - content
-//   - media IDs + descriptions
-//   - poll options
-func StatusHash(s *gtsmodel.Status) string {
-	hash := xxhash.New()
-
-	// Content warning / title.
-	hash.WriteString(s.ContentWarning) // nolint:errcheck
-
-	// Status content.
-	hash.WriteString(s.Content) // nolint:errcheck
-
-	// Media IDs + descriptions.
-	for _, attachment := range s.Attachments {
-		hash.WriteString(attachment.ID)          // nolint:errcheck
-		hash.WriteString(attachment.Description) // nolint:errcheck
-	}
-
-	// Poll options.
-	if s.Poll != nil {
-		for _, option := range s.Poll.Options {
-			hash.WriteString(option) // nolint:errcheck
-		}
-	}
-
-	sum := hash.Sum(nil)
-	return hex.EncodeToString(sum)
-}
-
-// filterableText concatenates text from a
-// status that we might want to filter on:
+// filterableFields returns text fields from
+// a status that we might want to filter on:
 //
 //   - content warning
 //   - content (converted to plaintext from HTML)
 //   - media descriptions
 //   - poll options
-func filterableText(s *gtsmodel.Status) string {
-	fields := []string{}
+//
+// Each field should be filtered separately.
+// This avoids scenarios where false-positive
+// multiple-word matches can be made by matching
+// the last word of one field + the first word
+// of the next field together.
+func filterableFields(s *gtsmodel.Status) []string {
+	// Estimate length of fields.
+	fieldCount := 2 + len(s.Attachments)
+	if s.Poll != nil {
+		fieldCount += len(s.Poll.Options)
+	}
+	fields := make([]string, 0, fieldCount)
 
 	// Content warning / title.
-	fields = append(fields, s.ContentWarning)
+	if s.ContentWarning != "" {
+		fields = append(fields, s.ContentWarning)
+	}
 
-	// Status content; use raw text if available,
-	// else use text parsed from content HTML.
-	if s.Text != "" {
-		fields = append(fields, s.Text)
-	} else {
+	// Status content. Though we have raw text
+	// available for statuses created on our
+	// instance, use the html2text version to
+	// remove markdown-formatting characters
+	// and ensure more consistent filtering.
+	if s.Content != "" {
 		text := html2text.HTML2TextWithOptions(
 			s.Content,
 			html2text.WithLinksInnerText(),
 			html2text.WithUnixLineBreaks(),
 		)
-		fields = append(fields, text)
+		if text != "" {
+			fields = append(fields, text)
+		}
 	}
 
 	// Media descriptions.
 	for _, attachment := range s.Attachments {
-		fields = append(fields, attachment.Description)
+		if attachment.Description != "" {
+			fields = append(fields, attachment.Description)
+		}
 	}
 
 	// Poll options.
 	if s.Poll != nil {
-		fields = append(fields, s.Poll.Options...)
+		for _, opt := range s.Poll.Options {
+			if opt != "" {
+				fields = append(fields, opt)
+			}
+		}
 	}
 
-	return strings.Join(fields, " ")
+	return fields
 }

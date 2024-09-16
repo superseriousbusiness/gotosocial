@@ -45,7 +45,7 @@ steps:
         go test
         -failfast
         -timeout=20m
-        -tags "netgo osusergo static_build kvformat timetzdata purego"
+        -tags "netgo osusergo static_build kvformat timetzdata"
         ./...
       - ./test/envparsing.sh
       - ./test/swagger.sh
@@ -207,6 +207,6 @@ steps:
 
 ---
 kind: signature
-hmac: 3f3a24557b67760dd0c4091eaaed4842b0545f5aa65f90ce70d5e45da23c5260
+hmac: f4008d87e4e5b67251eb89f255c1224e6ab5818828cab24fc319b8f829176058
 
 ...

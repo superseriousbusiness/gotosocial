@@ -1066,7 +1066,6 @@ func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wh
 	testStatus := new(gtsmodel.Status)
 	*testStatus = *suite.testStatuses["admin_account_status_1"]
 	testStatus.Content = `<p>doggo doggin' it</p><p><a href="https://example.test/tags/dogsofmastodon" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>dogsofmastodon</span></a></p>`
-	testStatus.Text = "doggo doggin' it\n\n#dogsofmastodon"
 
 	if boost {
 		boost, err := suite.typeconverter.StatusToBoost(

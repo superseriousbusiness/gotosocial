@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -938,35 +939,47 @@ func (c *Converter) statusToAPIFilterResults(
 		return nil, nil
 	}
 
-	// Derive a hash of this status.
-	statusHash := StatusHash(s)
+	// Key this status based on ID + last updated time,
+	// to ensure we always filter on latest version.
+	statusKey := fmt.Sprintf("%s%d", s.ID, s.UpdatedAt.Unix())
 
-	// Check if we have the filterable
-	// text stored already for this hash.
-	statusText, stored := c.statusHashesToFilterableText.Get(statusHash)
+	// Check if we have filterable fields cached for this status.
+	fields, stored := c.statusesFilterableFields.Get(statusKey)
 	if !stored {
-		// We don't have this filterable text
-		// cached, calculate + cache it now.
-		statusText = filterableText(s)
-		c.statusHashesToFilterableText.Set(statusHash, statusText)
+		// We don't have filterable fields
+		// cached, calculate + cache now.
+		fields = filterableFields(s)
+		c.statusesFilterableFields.Set(statusKey, fields)
 	}
 
 	// Record all matching warn filters and the reasons they matched.
 	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 	for _, filter := range filters {
 		if !filterAppliesInContext(filter, filterContext) {
-			// Filter doesn't apply to this context.
-			continue
-		}
-		if filter.Expired(now) {
+			// Filter doesn't apply
+			// to this context.
 			continue
 		}
 
-		// List all matching keywords.
+		if filter.Expired(now) {
+			// Filter doesn't
+			// apply anymore.
+			continue
+		}
+
+		// Assemble matching keywords (if any) from this filter.
 		keywordMatches := make([]string, 0, len(filter.Keywords))
-		for _, filterKeyword := range filter.Keywords {
-			if filterKeyword.Regexp.MatchString(statusText) {
-				keywordMatches = append(keywordMatches, filterKeyword.Keyword)
+		for _, keyword := range filter.Keywords {
+			// Check if at least one filterable field
+			// in the status matches on this filter.
+			if slices.ContainsFunc(
+				fields,
+				func(field string) bool {
+					return keyword.Regexp.MatchString(field)
+				},
+			) {
+				// At least one field matched on this filter.
+				keywordMatches = append(keywordMatches, keyword.Keyword)
 			}
 		}
 
