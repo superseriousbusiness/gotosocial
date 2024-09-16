@@ -827,7 +827,7 @@ func (suite *RelationshipTestSuite) TestUnfollowExisting() {
 	followID := follow.ID
 
 	// We should have lists that this follow is a part of.
-	lists, err := suite.db.GetListsWithFollowID(context.Background(), followID)
+	lists, err := suite.db.GetListsContainingFollowID(context.Background(), followID)
 	suite.NoError(err)
 	suite.NotEmpty(lists)
 
@@ -839,7 +839,7 @@ func (suite *RelationshipTestSuite) TestUnfollowExisting() {
 	suite.Nil(follow)
 
 	// Lists containing this follow should return empty too.
-	lists, err = suite.db.GetListsWithFollowID(context.Background(), followID)
+	lists, err = suite.db.GetListsContainingFollowID(context.Background(), followID)
 	suite.NoError(err)
 	suite.Empty(lists)
 }
