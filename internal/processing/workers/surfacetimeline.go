@@ -234,8 +234,8 @@ func (s *Surface) listTimelineStatusForFollow(
 	mutes *usermute.CompiledUserMuteList,
 ) (timelined bool, exclusive bool, err error) {
 
-	// Get all lists that contain this follow.
-	lists, err := s.State.DB.GetListsWithFollowID(
+	// Get all lists that contain this given follow.
+	lists, err := s.State.DB.GetListsContainingFollowID(
 
 		// We don't need list sub-models.
 		gtscontext.SetBarebones(ctx),
@@ -246,9 +246,6 @@ func (s *Surface) listTimelineStatusForFollow(
 	}
 
 	for _, list := range lists {
-		// Update exclusive flag if list is so.
-		exclusive = exclusive || *list.Exclusive
-
 		// Check whether list is eligible for this status.
 		eligible, err := s.listEligible(ctx, list, status)
 		if err != nil {
@@ -259,6 +256,9 @@ func (s *Surface) listTimelineStatusForFollow(
 		if !eligible {
 			continue
 		}
+
+		// Update exclusive flag if list is so.
+		exclusive = exclusive || *list.Exclusive
 
 		// At this point we are certain this status
 		// should be included in the timeline of the
@@ -362,7 +362,8 @@ func (s *Surface) listEligible(
 		return follows, nil
 
 	default:
-		panic("unknown reply policy: " + list.RepliesPolicy)
+		log.Panicf(ctx, "unknown reply policy: %s", list.RepliesPolicy)
+		return false, nil // unreachable code
 	}
 }
 
@@ -717,8 +718,8 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	mutes *usermute.CompiledUserMuteList,
 ) (bool, bool, error) {
 
-	// Get all lists that contain this follow.
-	lists, err := s.State.DB.GetListsWithFollowID(
+	// Get all lists that contain this given follow.
+	lists, err := s.State.DB.GetListsContainingFollowID(
 
 		// We don't need list sub-models.
 		gtscontext.SetBarebones(ctx),
@@ -731,9 +732,6 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	var exclusive, timelined bool
 	for _, list := range lists {
 
-		// Update exclusive flag if list is so.
-		exclusive = exclusive || *list.Exclusive
-
 		// Check whether list is eligible for this status.
 		eligible, err := s.listEligible(ctx, list, status)
 		if err != nil {
@@ -744,6 +742,9 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 		if !eligible {
 			continue
 		}
+
+		// Update exclusive flag if list is so.
+		exclusive = exclusive || *list.Exclusive
 
 		// At this point we are certain this status
 		// should be included in the timeline of the
