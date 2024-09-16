@@ -68,7 +68,7 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 	}
 
 	// Get all lists that this follow is an entry within.
-	lists, err := p.state.DB.GetListsWithFollowID(ctx, follow.ID)
+	lists, err := p.state.DB.GetListsContainingFollowID(ctx, follow.ID)
 	if err != nil {
 		err := gtserror.Newf("error getting lists for follow: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
