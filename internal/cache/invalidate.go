@@ -105,26 +105,46 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	c.Visibility.Invalidate("ItemID", follow.TargetAccountID)
 	c.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
 
-	// Invalidate source account's following
-	// lists, and destination's follwer lists.
-	// (see FollowIDs() comment for details).
+	// Invalidate ID slice cache.
 	c.DB.FollowIDs.Invalidate(
+
+		// Invalidate follow ID lists
+		// FROM the origin account
+		// (including local-only follows).
 		">"+follow.AccountID,
 		"l>"+follow.AccountID,
+
+		// Invalidate follow ID lists
+		// TARGETTING origin account
+		// (including local-only follows).
 		"<"+follow.AccountID,
 		"l<"+follow.AccountID,
+
+		// Invalidate follow ID lists
+		// FROM the target account
+		// (including local-only follows).
 		"<"+follow.TargetAccountID,
 		"l<"+follow.TargetAccountID,
+
+		// Invalidate follow ID lists
+		// TARGETTING the target account
+		// (including local-only follows).
 		">"+follow.TargetAccountID,
 		"l>"+follow.TargetAccountID,
 	)
 
-	// Invalidate source account's lists
-	// and destination account's lists, and
-	// those specifically for this follow.
+	// Invalidate ID slice cache.
 	c.DB.ListIDs.Invalidate(
+
+		// Invalidate source
+		// account's owned lists.
 		"a"+follow.AccountID,
+
+		// Invalidate target account's.
 		"a"+follow.TargetAccountID,
+
+		// Invalidate lists containing
+		// list entries for follow.
 		"f"+follow.ID,
 	)
 }
@@ -150,9 +170,15 @@ func (c *Caches) OnInvalidateList(list *gtsmodel.List) {
 		"a" + list.AccountID,
 	)
 
-	// Invalidate listed IDs cache.
+	// Invalidate ID slice cache.
 	c.DB.ListedIDs.Invalidate(
+
+		// Invalidate list of
+		// account IDs in list.
 		"a"+list.ID,
+
+		// Invalidate list of
+		// follow IDs in list.
 		"f"+list.ID,
 	)
 }
