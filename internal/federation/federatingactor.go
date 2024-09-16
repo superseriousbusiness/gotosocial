@@ -168,16 +168,24 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	// the POST request is authentic (properly signed) and authorized
 	// (permitted to interact with the target inbox).
 	//
-	// Post the activity to the Actor's inbox and trigger side effects .
+	// Post the activity to the Actor's inbox and trigger side effects.
 	if err := f.sideEffectActor.PostInbox(ctx, inboxID, activity); err != nil {
-		// Special case: We know it is a bad request if the object or target
-		// props needed to be populated, or we failed parsing activity details.
-		// Send the rejection to the peer.
-		if errors.Is(err, pub.ErrObjectRequired) ||
-			errors.Is(err, pub.ErrTargetRequired) ||
-			gtserror.IsMalformed(err) {
+		// Check if a function in the federatingDB
+		// has returned an explicit errWithCode for us.
+		if errWithCode, ok := err.(gtserror.WithCode); ok {
+			return false, errWithCode
+		}
 
-			// Log malformed activities to help debug.
+		// Check if it's a bad request because the
+		// object or target props weren't populated,
+		// or we failed parsing activity details.
+		//
+		// Log such activities to help debug, then
+		// return the rejection (400) to the peer.
+		if gtserror.IsMalformed(err) ||
+			errors.Is(err, pub.ErrObjectRequired) ||
+			errors.Is(err, pub.ErrTargetRequired) {
+
 			l = l.WithField("activity", activity)
 			l.Warnf("malformed incoming activity: %v", err)
 
@@ -185,7 +193,7 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 			return false, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
-		// There's been some real error.
+		// Default: there's been some real error.
 		err := gtserror.Newf("error calling sideEffectActor.PostInbox: %w", err)
 		return false, gtserror.NewErrorInternalError(err)
 	}

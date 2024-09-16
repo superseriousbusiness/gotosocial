@@ -861,7 +861,7 @@ func (c *Converter) getASObjectStatus(ctx context.Context, id string, with ap.Wi
 	// Check for status in database with provided object URI.
 	status, err := c.state.DB.GetStatusByURI(ctx, object[0].String())
 	if err != nil {
-		return nil, gtserror.Newf("error getting object account from database: %w", err)
+		return nil, gtserror.Newf("error getting object status from database: %w", err)
 	}
 
 	return status, nil
