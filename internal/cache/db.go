@@ -85,10 +85,23 @@ type DBCaches struct {
 
 	// FollowIDs provides access to the follower / following IDs database cache.
 	// THIS CACHE IS KEYED AS THE FOLLOWING {prefix}{accountID} WHERE PREFIX IS:
-	// - '>'  for following IDs
-	// - 'l>' for local following IDs
-	// - '<'  for follower IDs
-	// - 'l<' for local follower IDs
+	//
+	// - '>{$accountID}'  for following IDs
+	//   e.g. FollowIDs.Load(">" + account.ID, func() {})
+	//   which will load a slice of follows IDs FROM account.
+	//
+	// - 'l>{$accountID}' for local following IDs
+	//   e.g. FollowIDs.Load("l>" + account.ID, func() {})
+	//   which will load a slice of LOCAL follows IDs FROM account.
+	//
+	// - '<{$accountID}' for follower IDs
+	//   e.g. FollowIDs.Load("<" + account.ID, func() {})
+	//   which will load a slice of follows IDs TARGETTING account.
+	//
+	// - 'l<{$accountID}' for local follower IDs
+	//   e.g. FollowIDs.Load("l<" + account.ID, func() {})
+	//   which will load a slice of LOCAL follows IDs TARGETTING account.
+	//
 	FollowIDs SliceCache[string]
 
 	// FollowRequest provides access to the gtsmodel FollowRequest database cache.
@@ -96,14 +109,28 @@ type DBCaches struct {
 
 	// FollowRequestIDs provides access to the follow requester / requesting IDs database
 	// cache. THIS CACHE IS KEYED AS THE FOLLOWING {prefix}{accountID} WHERE PREFIX IS:
-	// - '>'  for following IDs
-	// - '<'  for follower IDs
+	//
+	// - '>{$accountID}'  for follow request IDs
+	//   e.g. FollowRequestIDs.Load(">" + account.ID, func() {})
+	//   which will load a slice of follow request IDs TARGETTING account.
+	//
+	// - '<{$accountID}'  for follow request IDs
+	//   e.g. FollowRequestIDs.Load("<" + account.ID, func() {})
+	//   which will load a slice of follow request IDs FROM account.
+	//
 	FollowRequestIDs SliceCache[string]
 
 	// FollowingTagIDs provides access to account IDs following / tag IDs followed by
 	// account db cache. THIS CACHE IS KEYED AS THE FOLLOWING {prefix}{id} WHERE:
+	//
 	// - '>{$accountID}' for tag IDs followed by account
+	//   e.g. FollowingTagIDs.Load(">" + account.ID, func() {})
+	//   which will load a slice of tag IDs followed by account.
+	//
 	// - '<{$tagIDs}' for account IDs following tag
+	//   e.g. FollowingTagIDs.Load("<" + tag.ID, func() {})
+	//   which will load a slice of account IDs following tag.
+	//
 	FollowingTagIDs SliceCache[string]
 
 	// Instance provides access to the gtsmodel Instance database cache.
@@ -120,14 +147,28 @@ type DBCaches struct {
 
 	// ListIDs provides access to the list IDs owned by account / list IDs follow
 	// contained in db cache. THIS CACHE IS KEYED AS FOLLOWING {prefix}{id} WHERE:
+	//
 	// - 'a{$accountID}' for list IDs owned by account
+	//   e.g. ListIDs.Load("a" + account.ID, func() {})
+	//   which will load a slice of list IDs owned by account.
+	//
 	// - 'f{$followID}' for list IDs follow contained in
+	//   e.g. ListIDs.Load("f" + follow.ID, func() {})
+	//   which will load a slice of list IDs containing follow.
+	//
 	ListIDs SliceCache[string]
 
 	// ListedIDs provides access to the account IDs in list / follow IDs in
 	// list db cache. THIS CACHE IS KEYED AS FOLLOWING {prefix}{id} WHERE:
+	//
 	// - 'a{listID}' for account IDs in list ID
+	//   e.g. ListedIDs.Load("a" + list.ID, func() {})
+	//   which will load a slice of account IDs in list.
+	//
 	// - 'f{listID}' for follow IDs in list ID
+	//   e.g. ListedIDs.Load("f" + list.ID, func() {})
+	//   which will load a slice of follow IDs in list.
+	//
 	ListedIDs SliceCache[string]
 
 	// Marker provides access to the gtsmodel Marker database cache.

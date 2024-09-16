@@ -109,28 +109,28 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	c.DB.FollowIDs.Invalidate(
 
 		// Invalidate follow ID lists
-		// FROM the origin account
+		// TARGETTING origin account
 		// (including local-only follows).
 		">"+follow.AccountID,
 		"l>"+follow.AccountID,
 
 		// Invalidate follow ID lists
-		// TARGETTING origin account
+		// FROM the origin account
 		// (including local-only follows).
 		"<"+follow.AccountID,
 		"l<"+follow.AccountID,
-
-		// Invalidate follow ID lists
-		// FROM the target account
-		// (including local-only follows).
-		"<"+follow.TargetAccountID,
-		"l<"+follow.TargetAccountID,
 
 		// Invalidate follow ID lists
 		// TARGETTING the target account
 		// (including local-only follows).
 		">"+follow.TargetAccountID,
 		"l>"+follow.TargetAccountID,
+
+		// Invalidate follow ID lists
+		// FROM the target account
+		// (including local-only follows).
+		"<"+follow.TargetAccountID,
+		"l<"+follow.TargetAccountID,
 	)
 
 	// Invalidate ID slice cache.
@@ -153,13 +153,27 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 	// Invalidate follow with this same ID.
 	c.DB.Follow.Invalidate("ID", followReq.ID)
 
-	// Invalidate source account's followreq
-	// lists, and destinations follow req lists.
-	// (see FollowRequestIDs() comment for details).
+	// Invalidate ID slice cache.
 	c.DB.FollowRequestIDs.Invalidate(
+
+		// Invalidate follow request ID
+		// lists TARGETTING origin account
+		// (including local-only follows).
 		">"+followReq.AccountID,
+
+		// Invalidate follow request ID
+		// lists FROM the origin account
+		// (including local-only follows).
 		"<"+followReq.AccountID,
+
+		// Invalidate follow request ID
+		// lists TARGETTING target account
+		// (including local-only follows).
 		">"+followReq.TargetAccountID,
+
+		// Invalidate follow request ID
+		// lists FROM the target account
+		// (including local-only follows).
 		"<"+followReq.TargetAccountID,
 	)
 }
