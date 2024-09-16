@@ -39,7 +39,8 @@ type Poll interface {
 	// UpdatePoll updates the Poll in the database, only on selected columns if provided (else, all).
 	UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...string) error
 
-	// DeletePollByID deletes the Poll with given ID from the database.
+	// DeletePollByID deletes the Poll with given ID from the
+	// database, along with all its associated poll votes.
 	DeletePollByID(ctx context.Context, id string) error
 
 	// GetPollVoteByID gets the PollVote with given ID from the database.
@@ -56,9 +57,6 @@ type Poll interface {
 
 	// PutPollVote puts the given PollVote in the database.
 	PutPollVote(ctx context.Context, vote *gtsmodel.PollVote) error
-
-	// DeletePollVotes deletes all PollVotes in Poll with given ID from the database.
-	DeletePollVotes(ctx context.Context, pollID string) error
 
 	// DeletePollVoteBy deletes the PollVote in Poll with ID, by account ID, from the database.
 	DeletePollVoteBy(ctx context.Context, pollID string, accountID string) error

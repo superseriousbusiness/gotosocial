@@ -166,6 +166,7 @@ func calculateCacheMax(keySz, valSz uintptr, ratio float64) int {
 
 // totalOfRatios returns the total of all cache ratios added together.
 func totalOfRatios() float64 {
+
 	// NOTE: this is not performant calculating
 	// this every damn time (mainly the mutex unlocks
 	// required to access each config var). fortunately
@@ -189,11 +190,13 @@ func totalOfRatios() float64 {
 		config.GetCacheFollowIDsMemRatio() +
 		config.GetCacheFollowRequestMemRatio() +
 		config.GetCacheFollowRequestIDsMemRatio() +
+		config.GetCacheFollowingTagIDsMemRatio() +
+		config.GetCacheInReplyToIDsMemRatio() +
 		config.GetCacheInstanceMemRatio() +
 		config.GetCacheInteractionRequestMemRatio() +
-		config.GetCacheInReplyToIDsMemRatio() +
 		config.GetCacheListMemRatio() +
-		config.GetCacheListEntryMemRatio() +
+		config.GetCacheListIDsMemRatio() +
+		config.GetCacheListedIDsMemRatio() +
 		config.GetCacheMarkerMemRatio() +
 		config.GetCacheMediaMemRatio() +
 		config.GetCacheMentionMemRatio() +
@@ -201,7 +204,9 @@ func totalOfRatios() float64 {
 		config.GetCacheNotificationMemRatio() +
 		config.GetCachePollMemRatio() +
 		config.GetCachePollVoteMemRatio() +
+		config.GetCachePollVoteIDsMemRatio() +
 		config.GetCacheReportMemRatio() +
+		config.GetCacheSinBinStatusMemRatio() +
 		config.GetCacheStatusMemRatio() +
 		config.GetCacheStatusBookmarkMemRatio() +
 		config.GetCacheStatusBookmarkIDsMemRatio() +
@@ -212,6 +217,8 @@ func totalOfRatios() float64 {
 		config.GetCacheTokenMemRatio() +
 		config.GetCacheTombstoneMemRatio() +
 		config.GetCacheUserMemRatio() +
+		config.GetCacheUserMuteMemRatio() +
+		config.GetCacheUserMuteIDsMemRatio() +
 		config.GetCacheWebfingerMemRatio() +
 		config.GetCacheVisibilityMemRatio()
 }
@@ -463,16 +470,6 @@ func sizeofList() uintptr {
 		Title:         exampleTextSmall,
 		AccountID:     exampleID,
 		RepliesPolicy: gtsmodel.RepliesPolicyFollowed,
-	}))
-}
-
-func sizeofListEntry() uintptr {
-	return uintptr(size.Of(&gtsmodel.ListEntry{
-		ID:        exampleID,
-		CreatedAt: exampleTime,
-		UpdatedAt: exampleTime,
-		ListID:    exampleID,
-		FollowID:  exampleID,
 	}))
 }
 

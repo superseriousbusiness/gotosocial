@@ -26,7 +26,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -284,41 +283,6 @@ func (suite *PollTestSuite) TestDeletePoll() {
 		_, err = suite.db.GetPollByID(ctx, poll.ID)
 		suite.ErrorIs(err, db.ErrNoEntries)
 	}
-}
-
-func (suite *PollTestSuite) TestDeletePollVotes() {
-	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
-	defer cncl()
-
-	for _, poll := range suite.testPolls {
-		// Delete votes associated with poll from database.
-		err := suite.db.DeletePollVotes(ctx, poll.ID)
-		suite.NoError(err)
-
-		// Fetch latest version of poll from database.
-		poll, err = suite.db.GetPollByID(
-			gtscontext.SetBarebones(ctx),
-			poll.ID,
-		)
-		suite.NoError(err)
-
-		// Check that poll counts are all zero.
-		suite.Equal(*poll.Voters, 0)
-		suite.Equal(make([]int, len(poll.Options)), poll.Votes)
-	}
-}
-
-func (suite *PollTestSuite) TestDeletePollVotesNoPoll() {
-	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
-	defer cncl()
-
-	// Try to delete votes of nonexistent poll.
-	nonPollID := "01HF6V4XWTSZWJ80JNPPDTD4DB"
-
-	err := suite.db.DeletePollVotes(ctx, nonPollID)
-	suite.NoError(err)
 }
 
 func (suite *PollTestSuite) TestDeletePollVotesBy() {

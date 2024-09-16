@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -79,15 +80,8 @@ func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, err
 	tags, err := t.state.Caches.DB.Tag.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Tag, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached tags.
-			tags := make([]*gtsmodel.Tag, 0, count)
+			tags := make([]*gtsmodel.Tag, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.
@@ -148,17 +142,11 @@ func (t *tagDB) GetFollowedTags(ctx context.Context, accountID string, page *pag
 	if err != nil {
 		return nil, err
 	}
-
-	tags, err := t.GetTags(ctx, tagIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	return tags, nil
+	return t.GetTags(ctx, tagIDs)
 }
 
 func (t *tagDB) getTagIDsFollowedByAccount(ctx context.Context, accountID string, page *paging.Page) ([]string, error) {
-	return loadPagedIDs(&t.state.Caches.DB.TagIDsFollowedByAccount, accountID, page, func() ([]string, error) {
+	return loadPagedIDs(&t.state.Caches.DB.FollowingTagIDs, ">"+accountID, page, func() ([]string, error) {
 		var tagIDs []string
 
 		// Tag IDs not in cache. Perform DB query.
@@ -178,7 +166,7 @@ func (t *tagDB) getTagIDsFollowedByAccount(ctx context.Context, accountID string
 }
 
 func (t *tagDB) getAccountIDsFollowingTag(ctx context.Context, tagID string) ([]string, error) {
-	return loadPagedIDs(&t.state.Caches.DB.AccountIDsFollowingTag, tagID, nil, func() ([]string, error) {
+	return loadPagedIDs(&t.state.Caches.DB.FollowingTagIDs, "<"+tagID, nil, func() ([]string, error) {
 		var accountIDs []string
 
 		// Account IDs not in cache. Perform DB query.
@@ -198,18 +186,11 @@ func (t *tagDB) getAccountIDsFollowingTag(ctx context.Context, tagID string) ([]
 }
 
 func (t *tagDB) IsAccountFollowingTag(ctx context.Context, accountID string, tagID string) (bool, error) {
-	accountTagIDs, err := t.getTagIDsFollowedByAccount(ctx, accountID, nil)
+	followingTagIDs, err := t.getTagIDsFollowedByAccount(ctx, accountID, nil)
 	if err != nil {
 		return false, err
 	}
-
-	for _, accountTagID := range accountTagIDs {
-		if accountTagID == tagID {
-			return true, nil
-		}
-	}
-
-	return false, nil
+	return slices.Contains(followingTagIDs, tagID), nil
 }
 
 func (t *tagDB) PutFollowedTag(ctx context.Context, accountID string, tagID string) error {
@@ -234,9 +215,15 @@ func (t *tagDB) PutFollowedTag(ctx context.Context, accountID string, tagID stri
 		return nil
 	}
 
-	// Otherwise, this is a new followed tag, so we invalidate caches related to it.
-	t.state.Caches.DB.AccountIDsFollowingTag.Invalidate(tagID)
-	t.state.Caches.DB.TagIDsFollowedByAccount.Invalidate(accountID)
+	// We updated something, invalidate caches.
+	t.state.Caches.DB.FollowingTagIDs.Invalidate(
+
+		// tag IDs followed by account
+		">"+accountID,
+
+		// account IDs following tag
+		"<"+tagID,
+	)
 
 	return nil
 }
@@ -259,9 +246,15 @@ func (t *tagDB) DeleteFollowedTag(ctx context.Context, accountID string, tagID s
 		return nil
 	}
 
-	// If we deleted anything, invalidate caches related to it.
-	t.state.Caches.DB.AccountIDsFollowingTag.Invalidate(tagID)
-	t.state.Caches.DB.TagIDsFollowedByAccount.Invalidate(accountID)
+	// We deleted something, invalidate caches.
+	t.state.Caches.DB.FollowingTagIDs.Invalidate(
+
+		// tag IDs followed by account
+		">"+accountID,
+
+		// account IDs following tag
+		"<"+tagID,
+	)
 
 	return err
 }
@@ -278,16 +271,26 @@ func (t *tagDB) DeleteFollowedTagsByAccountID(ctx context.Context, accountID str
 		return gtserror.Newf("error deleting followed tags for account %s: %w", accountID, err)
 	}
 
-	// Invalidate account ID caches for the account and those tags.
-	t.state.Caches.DB.TagIDsFollowedByAccount.Invalidate(accountID)
-	t.state.Caches.DB.AccountIDsFollowingTag.Invalidate(tagIDs...)
+	// Convert tag IDs to the keys
+	// we use for caching tag follow
+	// and following IDs.
+	keys := tagIDs
+	for i := range keys {
+		keys[i] = "<" + keys[i]
+	}
+	keys = append(keys, ">"+accountID)
+
+	// If we deleted anything, invalidate caches with keys.
+	t.state.Caches.DB.FollowingTagIDs.Invalidate(keys...)
 
 	return nil
 }
 
 func (t *tagDB) GetAccountIDsFollowingTagIDs(ctx context.Context, tagIDs []string) ([]string, error) {
-	// Accounts might be following multiple tags in this list, but we only want to return each account once.
-	accountIDs := []string{}
+	// Make conservative estimate for no. accounts.
+	accountIDs := make([]string, 0, len(tagIDs))
+
+	// Gather all accounts following tags.
 	for _, tagID := range tagIDs {
 		tagAccountIDs, err := t.getAccountIDsFollowingTag(ctx, tagID)
 		if err != nil {
@@ -295,5 +298,8 @@ func (t *tagDB) GetAccountIDsFollowingTagIDs(ctx context.Context, tagIDs []strin
 		}
 		accountIDs = append(accountIDs, tagAccountIDs...)
 	}
+
+	// Accounts might be following multiple tags in list,
+	// but we only want to return each account once.
 	return util.Deduplicate(accountIDs), nil
 }

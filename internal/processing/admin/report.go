@@ -142,7 +142,7 @@ func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account
 		columns = append(columns, "action_taken")
 	}
 
-	updatedReport, err := p.state.DB.UpdateReport(ctx, report, columns...)
+	err = p.state.DB.UpdateReport(ctx, report, columns...)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -156,7 +156,7 @@ func (p *Processor) ReportResolve(ctx context.Context, account *gtsmodel.Account
 		Target:         report.Account,
 	})
 
-	apimodelReport, err := p.converter.ReportToAdminAPIReport(ctx, updatedReport, account)
+	apimodelReport, err := p.converter.ReportToAdminAPIReport(ctx, report, account)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}

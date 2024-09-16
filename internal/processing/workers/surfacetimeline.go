@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -63,13 +62,9 @@ func (s *Surface) timelineAndNotifyStatus(ctx context.Context, status *gtsmodel.
 		})
 	}
 
-	// Timeline the status for each local follower of this account.
-	// This will also handle notifying any followers with notify
-	// set to true on their follow.
-	homeTimelinedAccountIDs, err := s.timelineAndNotifyStatusForFollowers(ctx, status, follows)
-	if err != nil {
-		return gtserror.Newf("error timelining status %s for followers: %w", status.ID, err)
-	}
+	// Timeline the status for each local follower of this account. This will
+	// also handle notifying any followers with notify set to true on their follow.
+	homeTimelinedAccountIDs := s.timelineAndNotifyStatusForFollowers(ctx, status, follows)
 
 	// Timeline the status for each local account who follows a tag used by this status.
 	if err := s.timelineAndNotifyStatusForTagFollowers(ctx, status, homeTimelinedAccountIDs); err != nil {
@@ -105,12 +100,10 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follows []*gtsmodel.Follow,
-) ([]string, error) {
+) (homeTimelinedAccountIDs []string) {
 	var (
-		errs                    gtserror.MultiError
-		boost                   = status.BoostOfID != ""
-		reply                   = status.InReplyToURI != ""
-		homeTimelinedAccountIDs = []string{}
+		boost = (status.BoostOfID != "")
+		reply = (status.InReplyToURI != "")
 	)
 
 	for _, follow := range follows {
@@ -130,7 +123,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			ctx, follow.Account, status,
 		)
 		if err != nil {
-			errs.Appendf("error checking status %s hometimelineability: %w", status.ID, err)
+			log.Errorf(ctx, "error checking status home visibility for follow: %v", err)
 			continue
 		}
 
@@ -139,29 +132,36 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			continue
 		}
 
+		// Get relevant filters and mutes for this follow's account.
+		// (note the origin account of the follow is receiver of status).
 		filters, mutes, err := s.getFiltersAndMutes(ctx, follow.AccountID)
 		if err != nil {
-			errs.Append(err)
+			log.Error(ctx, err)
 			continue
 		}
 
-		// Add status to any relevant lists
-		// for this follow, if applicable.
-		exclusive, listTimelined := s.listTimelineStatusForFollow(
-			ctx,
+		// Add status to any relevant lists for this follow, if applicable.
+		listTimelined, exclusive, err := s.listTimelineStatusForFollow(ctx,
 			status,
 			follow,
-			&errs,
 			filters,
 			mutes,
 		)
+		if err != nil {
+			log.Errorf(ctx, "error list timelining status: %v", err)
+			continue
+		}
 
-		// Add status to home timeline for owner
-		// of this follow, if applicable.
-		homeTimelined := false
+		var homeTimelined bool
+
+		// If this was timelined into
+		// list with exclusive flag set,
+		// don't add to home timeline.
 		if !exclusive {
-			homeTimelined, err = s.timelineStatus(
-				ctx,
+
+			// Add status to home timeline for owner of
+			// this follow (origin account), if applicable.
+			homeTimelined, err = s.timelineStatus(ctx,
 				s.State.Timelines.Home.IngestOne,
 				follow.AccountID, // home timelines are keyed by account ID
 				follow.Account,
@@ -171,10 +171,12 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 				mutes,
 			)
 			if err != nil {
-				errs.Appendf("error home timelining status: %w", err)
+				log.Errorf(ctx, "error home timelining status: %v", err)
 				continue
 			}
+
 			if homeTimelined {
+				// If hometimelined, add to list of returned account IDs.
 				homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
 			}
 		}
@@ -210,11 +212,12 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			status.Account,
 			status.ID,
 		); err != nil {
-			errs.Appendf("error notifying account %s about new status: %w", follow.AccountID, err)
+			log.Errorf(ctx, "error notifying status for account: %v", err)
+			continue
 		}
 	}
 
-	return homeTimelinedAccountIDs, errs.Combine()
+	return homeTimelinedAccountIDs
 }
 
 // listTimelineStatusForFollow puts the given status
@@ -227,107 +230,59 @@ func (s *Surface) listTimelineStatusForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
-	errs *gtserror.MultiError,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-) (bool, bool) {
-	// To put this status in appropriate list timelines,
-	// we need to get each listEntry that pertains to
-	// this follow. Then, we want to iterate through all
-	// those list entries, and add the status to the list
-	// that the entry belongs to if it meets criteria for
-	// inclusion in the list.
+) (timelined bool, exclusive bool, err error) {
 
-	listEntries, err := s.getListEntries(ctx, follow)
+	// Get all lists that contain this given follow.
+	lists, err := s.State.DB.GetListsContainingFollowID(
+
+		// We don't need list sub-models.
+		gtscontext.SetBarebones(ctx),
+		follow.ID,
+	)
 	if err != nil {
-		errs.Append(err)
-		return false, false
-	}
-	exclusive, err := s.isAnyListExclusive(ctx, listEntries)
-	if err != nil {
-		errs.Append(err)
-		return false, false
+		return false, false, gtserror.Newf("error getting lists for follow: %w", err)
 	}
 
-	// Check eligibility for each list entry (if any).
-	listTimelined := false
-	for _, listEntry := range listEntries {
-		eligible, err := s.listEligible(ctx, listEntry, status)
+	for _, list := range lists {
+		// Check whether list is eligible for this status.
+		eligible, err := s.listEligible(ctx, list, status)
 		if err != nil {
-			errs.Appendf("error checking list eligibility: %w", err)
+			log.Errorf(ctx, "error checking list eligibility: %v", err)
 			continue
 		}
 
 		if !eligible {
-			// Don't add this.
 			continue
 		}
+
+		// Update exclusive flag if list is so.
+		exclusive = exclusive || *list.Exclusive
 
 		// At this point we are certain this status
 		// should be included in the timeline of the
 		// list that this list entry belongs to.
-		timelined, err := s.timelineStatus(
+		listTimelined, err := s.timelineStatus(
 			ctx,
 			s.State.Timelines.List.IngestOne,
-			listEntry.ListID, // list timelines are keyed by list ID
+			list.ID, // list timelines are keyed by list ID
 			follow.Account,
 			status,
-			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
+			stream.TimelineList+":"+list.ID, // key streamType to this specific list
 			filters,
 			mutes,
 		)
 		if err != nil {
-			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
-			// implicit continue
+			log.Errorf(ctx, "error adding status to list timeline: %v", err)
+			continue
 		}
-		listTimelined = listTimelined || timelined
+
+		// Update flag based on if timelined.
+		timelined = timelined || listTimelined
 	}
 
-	return exclusive, listTimelined
-}
-
-// getListEntries returns list entries for a given follow.
-func (s *Surface) getListEntries(ctx context.Context, follow *gtsmodel.Follow) ([]*gtsmodel.ListEntry, error) {
-	// Get every list entry that targets this follow's ID.
-	listEntries, err := s.State.DB.GetListEntriesForFollowID(
-		// We only need the list IDs.
-		gtscontext.SetBarebones(ctx),
-		follow.ID,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("DB error getting list entries: %v", err)
-	}
-	return listEntries, nil
-}
-
-// isAnyListExclusive determines whether any provided list entry corresponds to an exclusive list.
-func (s *Surface) isAnyListExclusive(ctx context.Context, listEntries []*gtsmodel.ListEntry) (bool, error) {
-	if len(listEntries) == 0 {
-		return false, nil
-	}
-
-	listIDs := make([]string, 0, len(listEntries))
-	for _, listEntry := range listEntries {
-		listIDs = append(listIDs, listEntry.ListID)
-	}
-	lists, err := s.State.DB.GetListsByIDs(
-		// We only need the list exclusive flags.
-		gtscontext.SetBarebones(ctx),
-		listIDs,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return false, gtserror.Newf("DB error getting lists for list entries: %v", err)
-	}
-
-	if len(lists) == 0 {
-		return false, nil
-	}
-	for _, list := range lists {
-		if *list.Exclusive {
-			return true, nil
-		}
-	}
-	return false, nil
+	return timelined, exclusive, nil
 }
 
 // getFiltersAndMutes returns an account's filters and mutes.
@@ -341,8 +296,8 @@ func (s *Surface) getFiltersAndMutes(ctx context.Context, accountID string) ([]*
 	if err != nil {
 		return nil, nil, gtserror.Newf("couldn't retrieve mutes for account %s: %w", accountID, err)
 	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
+	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 	return filters, compiledMutes, err
 }
 
@@ -351,7 +306,7 @@ func (s *Surface) getFiltersAndMutes(ctx context.Context, accountID string) ([]*
 // belongs to, based on the replies policy of the list.
 func (s *Surface) listEligible(
 	ctx context.Context,
-	listEntry *gtsmodel.ListEntry,
+	list *gtsmodel.List,
 	status *gtsmodel.Status,
 ) (bool, error) {
 	if status.InReplyToURI == "" {
@@ -366,18 +321,6 @@ func (s *Surface) listEligible(
 		return false, nil
 	}
 
-	// Status is a reply to a known account.
-	// We need to fetch the list that this
-	// entry belongs to, in order to check
-	// the list's replies policy.
-	list, err := s.State.DB.GetListByID(
-		ctx, listEntry.ListID,
-	)
-	if err != nil {
-		err := gtserror.Newf("db error getting list %s: %w", listEntry.ListID, err)
-		return false, err
-	}
-
 	switch list.RepliesPolicy {
 	case gtsmodel.RepliesPolicyNone:
 		// This list should not show
@@ -390,20 +333,15 @@ func (s *Surface) listEligible(
 		//
 		// Check if replied-to account is
 		// also included in this list.
-		includes, err := s.State.DB.ListIncludesAccount(
-			ctx,
+		in, err := s.State.DB.IsAccountInList(ctx,
 			list.ID,
 			status.InReplyToAccountID,
 		)
 		if err != nil {
-			err := gtserror.Newf(
-				"db error checking if account %s in list %s: %w",
-				status.InReplyToAccountID, listEntry.ListID, err,
-			)
+			err := gtserror.Newf("db error checking if account in list: %w", err)
 			return false, err
 		}
-
-		return includes, nil
+		return in, nil
 
 	case gtsmodel.RepliesPolicyFollowed:
 		// This list should show replies
@@ -418,22 +356,14 @@ func (s *Surface) listEligible(
 			status.InReplyToAccountID,
 		)
 		if err != nil {
-			err := gtserror.Newf(
-				"db error checking if account %s is followed by %s: %w",
-				status.InReplyToAccountID, list.AccountID, err,
-			)
+			err := gtserror.Newf("db error checking if account followed: %w", err)
 			return false, err
 		}
-
 		return follows, nil
 
 	default:
-		// HUH??
-		err := gtserror.Newf(
-			"reply policy '%s' not recognized on list %s",
-			list.RepliesPolicy, list.ID,
-		)
-		return false, err
+		log.Panicf(ctx, "unknown reply policy: %s", list.RepliesPolicy)
+		return false, nil // unreachable code
 	}
 }
 
@@ -452,6 +382,7 @@ func (s *Surface) timelineStatus(
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) (bool, error) {
+
 	// Ingest status into given timeline using provided function.
 	if inserted, err := ingest(ctx, timelineID, status); err != nil {
 		err = gtserror.Newf("error ingesting status %s: %w", status.ID, err)
@@ -461,7 +392,7 @@ func (s *Surface) timelineStatus(
 		return false, nil
 	}
 
-	// The status was inserted so stream it to the user.
+	// Convert updated database model to frontend model.
 	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
 		status,
 		account,
@@ -473,6 +404,8 @@ func (s *Surface) timelineStatus(
 		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err
 	}
+
+	// The status was inserted so stream it to the user.
 	s.Stream.Update(ctx, account, apiStatus, streamType)
 
 	return true, nil
@@ -492,7 +425,8 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 	}
 
 	if status.BoostOf != nil {
-		// Unwrap boost and work with the original status.
+		// Unwrap boost and work
+		// with the original status.
 		status = status.BoostOf
 	}
 
@@ -523,6 +457,7 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 			)
 		}
 	}
+
 	return errs.Combine()
 }
 
@@ -667,17 +602,15 @@ func (s *Surface) timelineStatusUpdate(ctx context.Context, status *gtsmodel.Sta
 		follows = append(follows, &gtsmodel.Follow{
 			AccountID:   status.AccountID,
 			Account:     status.Account,
-			Notify:      func() *bool { b := false; return &b }(), // Account shouldn't notify itself.
-			ShowReblogs: func() *bool { b := true; return &b }(),  // Account should show own reblogs.
+			Notify:      util.Ptr(false), // Account shouldn't notify itself.
+			ShowReblogs: util.Ptr(true),  // Account should show own reblogs.
 		})
 	}
 
-	// Push to streams for each local follower of this account.
-	homeTimelinedAccountIDs, err := s.timelineStatusUpdateForFollowers(ctx, status, follows)
-	if err != nil {
-		return gtserror.Newf("error timelining status %s for followers: %w", status.ID, err)
-	}
+	// Push updated status to streams for each local follower of this account.
+	homeTimelinedAccountIDs := s.timelineStatusUpdateForFollowers(ctx, status, follows)
 
+	// Push updated status to streams for each local follower of tags in status, if applicable.
 	if err := s.timelineStatusUpdateForTagFollowers(ctx, status, homeTimelinedAccountIDs); err != nil {
 		return gtserror.Newf("error timelining status %s for tag followers: %w", status.ID, err)
 	}
@@ -695,12 +628,7 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follows []*gtsmodel.Follow,
-) ([]string, error) {
-	var (
-		errs                    gtserror.MultiError
-		homeTimelinedAccountIDs = []string{}
-	)
-
+) (homeTimelinedAccountIDs []string) {
 	for _, follow := range follows {
 		// Check to see if the status is timelineable for this follower,
 		// taking account of its visibility, who it replies to, and, if
@@ -718,7 +646,7 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			ctx, follow.Account, status,
 		)
 		if err != nil {
-			errs.Appendf("error checking status %s hometimelineability: %w", status.ID, err)
+			log.Errorf(ctx, "error checking status home visibility for follow: %v", err)
 			continue
 		}
 
@@ -727,31 +655,36 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			continue
 		}
 
+		// Get relevant filters and mutes for this follow's account.
+		// (note the origin account of the follow is receiver of status).
 		filters, mutes, err := s.getFiltersAndMutes(ctx, follow.AccountID)
 		if err != nil {
-			errs.Append(err)
+			log.Error(ctx, err)
 			continue
 		}
 
-		// Add status to any relevant lists
-		// for this follow, if applicable.
-		exclusive := s.listTimelineStatusUpdateForFollow(
-			ctx,
+		// Add status to relevant lists for this follow, if applicable.
+		_, exclusive, err := s.listTimelineStatusUpdateForFollow(ctx,
 			status,
 			follow,
-			&errs,
 			filters,
 			mutes,
 		)
+		if err != nil {
+			log.Errorf(ctx, "error list timelining status: %v", err)
+			continue
+		}
 
+		// If this was timelined into
+		// list with exclusive flag set,
+		// don't add to home timeline.
 		if exclusive {
 			continue
 		}
 
-		// Add status to home timeline for owner
-		// of this follow, if applicable.
-		homeTimelined, err := s.timelineStreamStatusUpdate(
-			ctx,
+		// Add status to home timeline for owner of
+		// this follow (origin account), if applicable.
+		homeTimelined, err := s.timelineStreamStatusUpdate(ctx,
 			follow.Account,
 			status,
 			stream.TimelineHome,
@@ -759,15 +692,17 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			mutes,
 		)
 		if err != nil {
-			errs.Appendf("error home timelining status: %w", err)
+			log.Errorf(ctx, "error home timelining status: %v", err)
 			continue
 		}
+
 		if homeTimelined {
+			// If hometimelined, add to list of returned account IDs.
 			homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
 		}
 	}
 
-	return homeTimelinedAccountIDs, errs.Combine()
+	return homeTimelinedAccountIDs
 }
 
 // listTimelineStatusUpdateForFollow pushes edits of the given status
@@ -779,58 +714,59 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
-	errs *gtserror.MultiError,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-) bool {
-	// To put this status in appropriate list timelines,
-	// we need to get each listEntry that pertains to
-	// this follow. Then, we want to iterate through all
-	// those list entries, and add the status to the list
-	// that the entry belongs to if it meets criteria for
-	// inclusion in the list.
+) (bool, bool, error) {
 
-	listEntries, err := s.getListEntries(ctx, follow)
+	// Get all lists that contain this given follow.
+	lists, err := s.State.DB.GetListsContainingFollowID(
+
+		// We don't need list sub-models.
+		gtscontext.SetBarebones(ctx),
+		follow.ID,
+	)
 	if err != nil {
-		errs.Append(err)
-		return false
-	}
-	exclusive, err := s.isAnyListExclusive(ctx, listEntries)
-	if err != nil {
-		errs.Append(err)
-		return false
+		return false, false, gtserror.Newf("error getting lists for follow: %w", err)
 	}
 
-	// Check eligibility for each list entry (if any).
-	for _, listEntry := range listEntries {
-		eligible, err := s.listEligible(ctx, listEntry, status)
+	var exclusive, timelined bool
+	for _, list := range lists {
+
+		// Check whether list is eligible for this status.
+		eligible, err := s.listEligible(ctx, list, status)
 		if err != nil {
-			errs.Appendf("error checking list eligibility: %w", err)
+			log.Errorf(ctx, "error checking list eligibility: %v", err)
 			continue
 		}
 
 		if !eligible {
-			// Don't add this.
 			continue
 		}
+
+		// Update exclusive flag if list is so.
+		exclusive = exclusive || *list.Exclusive
 
 		// At this point we are certain this status
 		// should be included in the timeline of the
 		// list that this list entry belongs to.
-		if _, err := s.timelineStreamStatusUpdate(
+		listTimelined, err := s.timelineStreamStatusUpdate(
 			ctx,
 			follow.Account,
 			status,
-			stream.TimelineList+":"+listEntry.ListID, // key streamType to this specific list
+			stream.TimelineList+":"+list.ID, // key streamType to this specific list
 			filters,
 			mutes,
-		); err != nil {
-			errs.Appendf("error adding status to timeline for list %s: %w", listEntry.ListID, err)
-			// implicit continue
+		)
+		if err != nil {
+			log.Errorf(ctx, "error adding status to list timeline: %v", err)
+			continue
 		}
+
+		// Update flag based on if timelined.
+		timelined = timelined || listTimelined
 	}
 
-	return exclusive
+	return timelined, exclusive, nil
 }
 
 // timelineStatusUpdate streams the edited status to the user using the
@@ -845,16 +781,31 @@ func (s *Surface) timelineStreamStatusUpdate(
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) (bool, error) {
-	apiStatus, err := s.Converter.StatusToAPIStatus(ctx, status, account, statusfilter.FilterContextHome, filters, mutes)
-	if errors.Is(err, statusfilter.ErrHideStatus) {
+
+	// Convert updated database model to frontend model.
+	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
+		status,
+		account,
+		statusfilter.FilterContextHome,
+		filters,
+		mutes,
+	)
+
+	switch {
+	case err == nil:
+		// no issue.
+
+	case errors.Is(err, statusfilter.ErrHideStatus):
 		// Don't put this status in the stream.
 		return false, nil
+
+	default:
+		return false, gtserror.Newf("error converting status: %w", err)
 	}
-	if err != nil {
-		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
-		return false, err
-	}
+
+	// The status was updated so stream it to the user.
 	s.Stream.StatusUpdate(ctx, account, apiStatus, streamType)
+
 	return true, nil
 }
 

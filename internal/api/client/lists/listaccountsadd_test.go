@@ -98,14 +98,17 @@ func (suite *ListAccountsAddTestSuite) TestPostListAccountNotFollowed() {
 
 	resp, err := suite.postListAccounts(http.StatusNotFound, listID, accountIDs)
 	suite.NoError(err)
-	suite.Equal(`{"error":"Not Found: you do not follow account 01F8MH5ZK5VRH73AKHQM6Y9VNX"}`, string(resp))
+	suite.Equal(`{"error":"Not Found: account 01F8MH5ZK5VRH73AKHQM6Y9VNX not currently followed"}`, string(resp))
 }
 
 func (suite *ListAccountsAddTestSuite) TestPostListAccountOK() {
+	entry := suite.testListEntries["local_account_1_list_1_entry_1"]
+
 	// Remove turtle from the list.
 	if err := suite.db.DeleteListEntry(
 		context.Background(),
-		suite.testListEntries["local_account_1_list_1_entry_1"].ID,
+		entry.ListID,
+		entry.FollowID,
 	); err != nil {
 		suite.FailNow(err.Error())
 	}

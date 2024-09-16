@@ -70,7 +70,7 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	// To take account of exclusive lists, get all of
 	// this account's lists, so we can filter out follows
 	// that are in contained in exclusive lists.
-	lists, err := t.state.DB.GetListsForAccountID(ctx, accountID)
+	lists, err := t.state.DB.GetListsByAccountID(ctx, accountID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.Newf("db error getting lists for account %s: %w", accountID, err)
 	}
@@ -84,9 +84,15 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 			continue
 		}
 
+		// Fetch all follow IDs of the entries ccontained in this list.
+		listFollowIDs, err := t.state.DB.GetFollowIDsInList(ctx, list.ID, nil)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.Newf("db error getting list entry follow ids: %w", err)
+		}
+
 		// Exclusive list, index all its follow IDs.
-		for _, listEntry := range list.ListEntries {
-			ignoreFollowIDs[listEntry.FollowID] = struct{}{}
+		for _, followID := range listFollowIDs {
+			ignoreFollowIDs[followID] = struct{}{}
 		}
 	}
 
@@ -370,28 +376,18 @@ func (t *timelineDB) GetListTimeline(
 		frontToBack = true
 	)
 
-	// Fetch all listEntries entries from the database.
-	listEntries, err := t.state.DB.GetListEntries(
-		// Don't need actual follows
-		// for this, just the IDs.
-		gtscontext.SetBarebones(ctx),
-		listID,
-		"", "", "", 0,
+	// Fetch all follow IDs contained in list from DB.
+	followIDs, err := t.state.DB.GetFollowIDsInList(
+		ctx, listID, nil,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error getting entries for list %s: %w", listID, err)
+		return nil, fmt.Errorf("error getting follows in list: %w", err)
 	}
 
-	// If there's no list entries we can't
+	// If there's no list follows we can't
 	// possibly return anything for this list.
-	if len(listEntries) == 0 {
+	if len(followIDs) == 0 {
 		return make([]*gtsmodel.Status, 0), nil
-	}
-
-	// Extract just the IDs of each follow.
-	followIDs := make([]string, 0, len(listEntries))
-	for _, listEntry := range listEntries {
-		followIDs = append(followIDs, listEntry.FollowID)
 	}
 
 	// Select target account IDs from follows.

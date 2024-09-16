@@ -234,13 +234,17 @@ func (m *moveDB) UpdateMove(ctx context.Context, move *gtsmodel.Move, columns ..
 }
 
 func (m *moveDB) DeleteMoveByID(ctx context.Context, id string) error {
-	defer m.state.Caches.DB.Move.Invalidate("ID", id)
-
-	_, err := m.db.
-		NewDelete().
+	// Delete move with given ID.
+	if _, err := m.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("moves"), bun.Ident("move")).
 		Where("? = ?", bun.Ident("move.id"), id).
-		Exec(ctx)
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
+		return nil
+	}
 
-	return err
+	// Invalidate the cached move model with ID.
+	m.state.Caches.DB.Move.Invalidate("ID", id)
+
+	return nil
 }

@@ -68,6 +68,9 @@ type Relationship interface {
 	// GetFollow retrieves a follow if it exists between source and target accounts.
 	GetFollow(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.Follow, error)
 
+	// GetFollowsByIDs fetches all follows from database with given IDs.
+	GetFollowsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Follow, error)
+
 	// PopulateFollow populates the struct pointers on the given follow.
 	PopulateFollow(ctx context.Context, follow *gtsmodel.Follow) error
 
