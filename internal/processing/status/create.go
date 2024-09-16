@@ -495,22 +495,16 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	}
 
 	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
-	status.MentionIDs = gatherIDs(status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
-	status.TagIDs = gatherIDs(status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
-	status.EmojiIDs = gatherIDs(status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
+	status.MentionIDs = util.Gather(nil, status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
+	status.TagIDs = util.Gather(nil, status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
+	status.EmojiIDs = util.Gather(nil, status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
+
+	if status.ContentWarning != "" && len(status.AttachmentIDs) > 0 {
+		// If a content-warning is set, and
+		// the status contains media, always
+		// set the status sensitive flag.
+		status.Sensitive = util.Ptr(true)
+	}
 
 	return nil
-}
-
-// gatherIDs is a small utility function to gather IDs from a slice of type T.
-func gatherIDs[T any](in []T, getID func(T) string) []string {
-	if getID == nil {
-		// move nil check out loop.
-		panic("nil getID function")
-	}
-	ids := make([]string, len(in))
-	for i, t := range in {
-		ids[i] = getID(t)
-	}
-	return ids
 }
