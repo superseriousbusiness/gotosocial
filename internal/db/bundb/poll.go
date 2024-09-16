@@ -191,7 +191,7 @@ func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
 		// Delete the poll votes.
 		_, err := tx.NewDelete().
 			Table("poll_votes").
-			Where("? = ?", bun.Ident("id"), id).
+			Where("? = ?", bun.Ident("poll_id"), id).
 			Exec(ctx)
 		return err
 	}); err != nil {
