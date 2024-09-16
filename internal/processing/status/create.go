@@ -499,7 +499,7 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	status.TagIDs = util.Gather(nil, status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
 	status.EmojiIDs = util.Gather(nil, status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
 
-	if status.ContentWarning != "" && len(status.MentionIDs) > 0 {
+	if status.ContentWarning != "" && len(status.AttachmentIDs) > 0 {
 		// If a content-warning is set, and
 		// the status contains media, always
 		// set the status sensitive flag.
