@@ -125,6 +125,10 @@ func (c *Caches) Start() {
 	tryUntil("starting webfinger cache", 5, func() bool {
 		return c.Webfinger.Start(5 * time.Minute)
 	})
+
+	tryUntil("starting statusesFilterableFields cache", 5, func() bool {
+		return c.StatusesFilterableFields.Start(5 * time.Minute)
+	})
 }
 
 // Stop will stop any caches that require a background
@@ -133,6 +137,7 @@ func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
 	tryUntil("stopping webfinger cache", 5, c.Webfinger.Stop)
+	tryUntil("stopping statusesFilterableFields cache", 5, c.StatusesFilterableFields.Stop)
 }
 
 // Sweep will sweep all the available caches to ensure none
@@ -212,8 +217,8 @@ func (c *Caches) initWebfinger() {
 }
 
 func (c *Caches) initStatusesFilterableFields() {
-	c.Webfinger = new(ttl.Cache[string, string])
-	c.Webfinger.Init(
+	c.StatusesFilterableFields = new(ttl.Cache[string, []string])
+	c.StatusesFilterableFields.Init(
 		0,
 		512,
 		1*time.Hour,
