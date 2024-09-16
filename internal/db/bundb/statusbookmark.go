@@ -303,7 +303,8 @@ func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAcco
 		q = q.Where("? = ?", bun.Ident("account_id"), originAccountID)
 	}
 
-	if _, err := q.Exec(ctx); err != nil {
+	if _, err := q.Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
@@ -323,7 +324,7 @@ func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, s
 	q := s.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
-	if _, err := q.Exec(ctx); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if _, err := q.Exec(ctx); err != nil {
 		return err
 	}
 
