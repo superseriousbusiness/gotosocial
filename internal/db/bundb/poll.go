@@ -177,12 +177,24 @@ func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...st
 }
 
 func (p *pollDB) DeletePollByID(ctx context.Context, id string) error {
-	// Delete poll by ID from database.
-	if _, err := p.db.NewDelete().
-		Table("polls").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx); err != nil &&
-		!errors.Is(err, db.ErrNoEntries) {
+	// Delete poll vote with ID, and its associated votes from the database.
+	if err := p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+
+		// Delete poll from database.
+		if _, err := tx.NewDelete().
+			Table("polls").
+			Where("? = ?", bun.Ident("id"), id).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// Delete the poll votes.
+		_, err := tx.NewDelete().
+			Table("poll_votes").
+			Where("? = ?", bun.Ident("id"), id).
+			Exec(ctx)
+		return err
+	}); err != nil {
 		return err
 	}
 
