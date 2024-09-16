@@ -90,6 +90,8 @@ func (c *Converter) FollowingToCSV(
 	records[0] = []string{
 		"Account address",
 		"Show boosts",
+		"Notify on new posts",
+		"Languages",
 	}
 
 	// We need to know our own domain for this.
@@ -130,6 +132,10 @@ func (c *Converter) FollowingToCSV(
 			follow.TargetAccount.Username + "@" + domain,
 			// Show boosts: eg., true
 			strconv.FormatBool(*follow.ShowReblogs),
+			// Notify on new posts, eg., true
+			strconv.FormatBool(*follow.Notify),
+			// Languages: compat only, leave blank.
+			"",
 		})
 	}
 
@@ -387,15 +393,29 @@ func (c *Converter) CSVToFollowing(
 	)
 
 	for _, record := range records {
-		if len(record) != 2 {
+		recordLen := len(record)
+
+		// Older versions of this Masto CSV
+		// schema may not include "Show boosts",
+		// "Notify on new posts", or "Languages",
+		// so be lenient here in what we accept.
+		if recordLen == 0 ||
+			recordLen > 4 {
 			// Badly formatted,
 			// skip this one.
 			continue
 		}
 
+		// "Account address"
 		namestring := record[0]
 		if namestring == "" {
 			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		if namestring == "Account address" {
+			// CSV header row,
 			// skip this one.
 			continue
 		}
@@ -419,12 +439,34 @@ func (c *Converter) CSVToFollowing(
 			domain = ""
 		}
 
-		showReblogs, err := strconv.ParseBool(record[1])
-		if err != nil {
-			// Badly formatted,
-			// skip this one.
-			continue
+		// "Show boosts"
+		var showReblogs *bool
+		if recordLen > 1 {
+			b, err := strconv.ParseBool(record[1])
+			if err != nil {
+				// Badly formatted,
+				// skip this one.
+				continue
+			}
+			showReblogs = &b
 		}
+
+		// "Notify on new posts"
+		var notify *bool
+		if recordLen > 2 {
+			b, err := strconv.ParseBool(record[2])
+			if err != nil {
+				// Badly formatted,
+				// skip this one.
+				continue
+			}
+			notify = &b
+		}
+
+		// TODO: "Languages"
+		//
+		// Ignore this for now as we
+		// don't do anything with it.
 
 		// Looks good, whack it in the slice.
 		follows = append(follows, &gtsmodel.Follow{
@@ -432,7 +474,8 @@ func (c *Converter) CSVToFollowing(
 				Username: username,
 				Domain:   domain,
 			},
-			ShowReblogs: &showReblogs,
+			ShowReblogs: showReblogs,
+			Notify:      notify,
 		})
 	}
 
