@@ -298,8 +298,8 @@ func (r *relationshipDB) DeleteFollowRequest(
 	deleted.AccountID = sourceAccountID
 	deleted.TargetAccountID = targetAccountID
 
-	// Delete all blocks either from
-	// account, or targeting account,
+	// Delete all follow reqs either
+	// from account, or targeting account,
 	// returning the deleted models.
 	if _, err := r.db.NewDelete().
 		Model(&deleted).
