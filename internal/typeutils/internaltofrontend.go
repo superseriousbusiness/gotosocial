@@ -21,6 +21,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -35,7 +37,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -939,32 +940,48 @@ func (c *Converter) statusToAPIFilterResults(
 		return nil, nil
 	}
 
-	// Extract text fields from the status that we will match filters against.
-	fields := filterableTextFields(s)
+	// Key this status based on ID + last updated time,
+	// to ensure we always filter on latest version.
+	statusKey := s.ID + strconv.FormatInt(s.UpdatedAt.Unix(), 10)
+
+	// Check if we have filterable fields cached for this status.
+	cache := c.state.Caches.StatusesFilterableFields
+	fields, stored := cache.Get(statusKey)
+	if !stored {
+		// We don't have filterable fields
+		// cached, calculate + cache now.
+		fields = filterableFields(s)
+		cache.Set(statusKey, fields)
+	}
 
 	// Record all matching warn filters and the reasons they matched.
 	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 	for _, filter := range filters {
 		if !filterAppliesInContext(filter, filterContext) {
-			// Filter doesn't apply to this context.
-			continue
-		}
-		if filter.Expired(now) {
+			// Filter doesn't apply
+			// to this context.
 			continue
 		}
 
-		// List all matching keywords.
+		if filter.Expired(now) {
+			// Filter doesn't
+			// apply anymore.
+			continue
+		}
+
+		// Assemble matching keywords (if any) from this filter.
 		keywordMatches := make([]string, 0, len(filter.Keywords))
-		for _, filterKeyword := range filter.Keywords {
-			var isMatch bool
-			for _, field := range fields {
-				if filterKeyword.Regexp.MatchString(field) {
-					isMatch = true
-					break
-				}
-			}
-			if isMatch {
-				keywordMatches = append(keywordMatches, filterKeyword.Keyword)
+		for _, keyword := range filter.Keywords {
+			// Check if at least one filterable field
+			// in the status matches on this filter.
+			if slices.ContainsFunc(
+				fields,
+				func(field string) bool {
+					return keyword.Regexp.MatchString(field)
+				},
+			) {
+				// At least one field matched on this filter.
+				keywordMatches = append(keywordMatches, keyword.Keyword)
 			}
 		}
 
@@ -999,40 +1016,6 @@ func (c *Converter) statusToAPIFilterResults(
 	}
 
 	return filterResults, nil
-}
-
-// filterableTextFields returns all text from a status that we might want to filter on:
-// - content
-// - content warning
-// - media descriptions
-// - poll options
-func filterableTextFields(s *gtsmodel.Status) []string {
-	fieldCount := 2 + len(s.Attachments)
-	if s.Poll != nil {
-		fieldCount += len(s.Poll.Options)
-	}
-	fields := make([]string, 0, fieldCount)
-
-	if s.Content != "" {
-		fields = append(fields, text.SanitizeToPlaintext(s.Content))
-	}
-	if s.ContentWarning != "" {
-		fields = append(fields, s.ContentWarning)
-	}
-	for _, attachment := range s.Attachments {
-		if attachment.Description != "" {
-			fields = append(fields, attachment.Description)
-		}
-	}
-	if s.Poll != nil {
-		for _, option := range s.Poll.Options {
-			if option != "" {
-				fields = append(fields, option)
-			}
-		}
-	}
-
-	return fields
 }
 
 // filterAppliesInContext returns whether a given filter applies in a given context.

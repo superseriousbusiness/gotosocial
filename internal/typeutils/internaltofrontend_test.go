@@ -1063,15 +1063,21 @@ func (suite *InternalToFrontendTestSuite) TestHideFilteredBoostToFrontend() {
 
 // Test that a hashtag filter for a hashtag in Mastodon HTML content works the way most users would expect.
 func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wholeWord bool, boost bool) {
-	testStatus := suite.testStatuses["admin_account_status_1"]
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["admin_account_status_1"]
 	testStatus.Content = `<p>doggo doggin' it</p><p><a href="https://example.test/tags/dogsofmastodon" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>dogsofmastodon</span></a></p>`
 
 	if boost {
-		// Modify a fixture boost into a boost of the above status.
-		boostStatus := suite.testStatuses["admin_account_status_4"]
-		boostStatus.BoostOf = testStatus
-		boostStatus.BoostOfID = testStatus.ID
-		testStatus = boostStatus
+		boost, err := suite.typeconverter.StatusToBoost(
+			context.Background(),
+			testStatus,
+			suite.testAccounts["admin_account"],
+			"",
+		)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		testStatus = boost
 	}
 
 	requestingAccount := suite.testAccounts["local_account_1"]
@@ -1103,9 +1109,11 @@ func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wh
 		[]*gtsmodel.Filter{filter},
 		nil,
 	)
-	if suite.NoError(err) {
-		suite.NotEmpty(apiStatus.Filtered)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
+
+	suite.NotEmpty(apiStatus.Filtered)
 }
 
 func (suite *InternalToFrontendTestSuite) TestHashtagWholeWordFilteredStatusToFrontend() {

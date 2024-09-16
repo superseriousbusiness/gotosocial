@@ -47,6 +47,11 @@ type Caches struct {
 	// Webfinger provides access to the webfinger URL cache.
 	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
 
+	// TTL cache of statuses -> filterable text fields.
+	// To ensure up-to-date fields, cache is keyed as:
+	// `[status.ID][status.UpdatedAt.Unix()]`
+	StatusesFilterableFields *ttl.Cache[string, []string]
+
 	// prevent pass-by-value.
 	_ nocopy
 }
@@ -109,6 +114,7 @@ func (c *Caches) Init() {
 	c.initUserMuteIDs()
 	c.initWebfinger()
 	c.initVisibility()
+	c.initStatusesFilterableFields()
 }
 
 // Start will start any caches that require a background
@@ -119,6 +125,10 @@ func (c *Caches) Start() {
 	tryUntil("starting webfinger cache", 5, func() bool {
 		return c.Webfinger.Start(5 * time.Minute)
 	})
+
+	tryUntil("starting statusesFilterableFields cache", 5, func() bool {
+		return c.StatusesFilterableFields.Start(5 * time.Minute)
+	})
 }
 
 // Stop will stop any caches that require a background
@@ -127,6 +137,7 @@ func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
 	tryUntil("stopping webfinger cache", 5, c.Webfinger.Stop)
+	tryUntil("stopping statusesFilterableFields cache", 5, c.StatusesFilterableFields.Stop)
 }
 
 // Sweep will sweep all the available caches to ensure none
@@ -202,5 +213,14 @@ func (c *Caches) initWebfinger() {
 		0,
 		cap,
 		24*time.Hour,
+	)
+}
+
+func (c *Caches) initStatusesFilterableFields() {
+	c.StatusesFilterableFields = new(ttl.Cache[string, []string])
+	c.StatusesFilterableFields.Init(
+		0,
+		512,
+		1*time.Hour,
 	)
 }

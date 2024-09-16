@@ -20,6 +20,8 @@ package gtsmodel
 import (
 	"regexp"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Filter stores a filter created by a local account.
@@ -61,14 +63,23 @@ type FilterKeyword struct {
 
 // Compile will compile this FilterKeyword as a prepared regular expression.
 func (k *FilterKeyword) Compile() (err error) {
-	var wordBreak string
-	if k.WholeWord != nil && *k.WholeWord {
-		wordBreak = `\b`
+	var (
+		wordBreakStart string
+		wordBreakEnd   string
+	)
+
+	if util.PtrOrZero(k.WholeWord) {
+		// Either word boundary or
+		// whitespace or start of line.
+		wordBreakStart = `(?:\b|\s|^)`
+		// Either word boundary or
+		// whitespace or end of line.
+		wordBreakEnd = `(?:\b|\s|$)`
 	}
 
 	// Compile keyword filter regexp.
 	quoted := regexp.QuoteMeta(k.Keyword)
-	k.Regexp, err = regexp.Compile(`(?i)` + wordBreak + quoted + wordBreak)
+	k.Regexp, err = regexp.Compile(`(?i)` + wordBreakStart + quoted + wordBreakEnd)
 	return // caller is expected to wrap this error
 }
 

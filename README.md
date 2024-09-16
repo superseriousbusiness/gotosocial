@@ -273,6 +273,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [jackc/pgconn](https://github.com/jackc/pgconn); Postgres driver. [MIT License](https://spdx.org/licenses/MIT.html).
   - [jackc/pgx](https://github.com/jackc/pgx); Postgres driver and toolkit. [MIT License](https://spdx.org/licenses/MIT.html).
 - [KimMachineGun/automemlimit](https://github.com/KimMachineGun/automemlimit); cgroups memory limit checking. [MIT License](https://spdx.org/licenses/MIT.html).
+- [k3a/html2text](https://github.com/k3a/html2text); HTML-to-text conversion. [MIT License](https://spdx.org/licenses/MIT.html).
 - [mcuadros/go-syslog](https://github.com/mcuadros/go-syslog); Syslog server library. [MIT License](https://spdx.org/licenses/MIT.html).
 - [microcosm-cc/bluemonday](https://github.com/microcosm-cc/bluemonday); HTML user-input sanitization. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 - [miekg/dns](https://github.com/miekg/dns); DNS utilities. [Go License](https://go.dev/LICENSE).

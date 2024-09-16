@@ -40,6 +40,7 @@ require (
 	github.com/gorilla/feeds v1.2.0
 	github.com/gorilla/websocket v1.5.2
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/miekg/dns v1.1.62
 	github.com/minio/minio-go/v7 v7.0.76
