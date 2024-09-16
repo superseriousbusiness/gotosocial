@@ -47,6 +47,11 @@ type Caches struct {
 	// Webfinger provides access to the webfinger URL cache.
 	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
 
+	// TTL cache of statuses -> filterable text fields.
+	// To ensure up-to-date fields, cache is keyed as:
+	// `[status.ID][status.UpdatedAt.Unix()]`
+	StatusesFilterableFields *ttl.Cache[string, []string]
+
 	// prevent pass-by-value.
 	_ nocopy
 }
@@ -109,6 +114,7 @@ func (c *Caches) Init() {
 	c.initUserMuteIDs()
 	c.initWebfinger()
 	c.initVisibility()
+	c.initStatusesFilterableFields()
 }
 
 // Start will start any caches that require a background
@@ -202,5 +208,14 @@ func (c *Caches) initWebfinger() {
 		0,
 		cap,
 		24*time.Hour,
+	)
+}
+
+func (c *Caches) initStatusesFilterableFields() {
+	c.Webfinger = new(ttl.Cache[string, string])
+	c.Webfinger.Init(
+		0,
+		512,
+		1*time.Hour,
 	)
 }

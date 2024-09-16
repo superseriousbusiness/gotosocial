@@ -19,12 +19,9 @@ package typeutils
 
 import (
 	"sync"
-	"time"
 
-	"codeberg.org/gruf/go-cache/v3"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -34,25 +31,13 @@ type Converter struct {
 	randAvatars    sync.Map
 	visFilter      *visibility.Filter
 	intFilter      *interaction.Filter
-
-	// TTL cache of statuses -> filterable text fields.
-	// To ensure up-to-date fields, cache is keyed as:
-	// [status.ID][status.UpdatedAt.Unix()]`
-	statusesFilterableFields cache.TTLCache[string, []string]
 }
 
 func NewConverter(state *state.State) *Converter {
-	statusHashesToFilterableText := cache.NewTTL[string, []string](0, 512, 0)
-	statusHashesToFilterableText.SetTTL(time.Hour, true)
-	if !statusHashesToFilterableText.Start(time.Minute) {
-		log.Panic(nil, "failed to start statusHashesToFilterableText cache")
-	}
-
 	return &Converter{
-		state:                    state,
-		defaultAvatars:           populateDefaultAvatars(),
-		visFilter:                visibility.NewFilter(state),
-		intFilter:                interaction.NewFilter(state),
-		statusesFilterableFields: statusHashesToFilterableText,
+		state:          state,
+		defaultAvatars: populateDefaultAvatars(),
+		visFilter:      visibility.NewFilter(state),
+		intFilter:      interaction.NewFilter(state),
 	}
 }

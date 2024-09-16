@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -941,15 +942,16 @@ func (c *Converter) statusToAPIFilterResults(
 
 	// Key this status based on ID + last updated time,
 	// to ensure we always filter on latest version.
-	statusKey := fmt.Sprintf("%s%d", s.ID, s.UpdatedAt.Unix())
+	statusKey := s.ID + strconv.FormatInt(s.UpdatedAt.Unix(), 10)
 
 	// Check if we have filterable fields cached for this status.
-	fields, stored := c.statusesFilterableFields.Get(statusKey)
+	cache := c.state.Caches.StatusesFilterableFields
+	fields, stored := cache.Get(statusKey)
 	if !stored {
 		// We don't have filterable fields
 		// cached, calculate + cache now.
 		fields = filterableFields(s)
-		c.statusesFilterableFields.Set(statusKey, fields)
+		cache.Set(statusKey, fields)
 	}
 
 	// Record all matching warn filters and the reasons they matched.
