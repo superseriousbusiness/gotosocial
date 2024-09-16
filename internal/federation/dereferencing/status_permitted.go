@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -150,8 +149,8 @@ func (d *Dereferencer) isPermittedReply(
 	}
 
 	if req != nil && req.IsRejected() {
-		// This status's parent was rejected,
-		// so this reply should be rejected too.
+		// This status's parent was rejected, so
+		// implicitly this reply should be rejected too.
 		//
 		// We know already that we haven't inserted
 		// a rejected interaction request for this
@@ -165,7 +164,12 @@ func (d *Dereferencer) isPermittedReply(
 		// further replies we already know we don't want.
 		statusID := req.StatusID
 		targetAccountID := req.TargetAccountID
-		uri := strings.ReplaceAll(req.URI, req.ID, id)
+
+		// As nobody is actually Rejecting the reply
+		// directly, but it's an implicit Reject coming
+		// from our internal logic, don't bother setting
+		// a URI (it's not a required field anyway).
+		uri := ""
 
 		rejection := &gtsmodel.InteractionRequest{
 			ID:                   id,
