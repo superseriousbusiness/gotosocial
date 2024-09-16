@@ -18,13 +18,13 @@
 package typeutils
 
 import (
-	"log"
 	"sync"
 	"time"
 
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
