@@ -139,7 +139,7 @@ func (m *Module) ListAccountsGETHandler(c *gin.Context) {
 	page, errWithCode := paging.ParseIDPage(c,
 		1,  // min limit
 		80, // max limit
-		0,  // no paging allowed
+		0,  // default = paging disabled
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
