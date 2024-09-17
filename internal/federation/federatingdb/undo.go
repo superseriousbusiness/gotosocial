@@ -91,7 +91,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 
 		// UNHANDLED
 		default:
-			log.Warnf(ctx, "unhandled object type: %s", name)
+			log.Debugf(ctx, "unhandled object type: %s", name)
 		}
 	}
 
