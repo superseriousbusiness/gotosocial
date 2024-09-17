@@ -222,7 +222,7 @@ func (m *Module) PoliciesDefaultsPATCHHandler(c *gin.Context) {
 		return
 	}
 
-	form, err := parseUpdateAccountForm(c)
+	form, err := parseUpdatePoliciesForm(c)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -290,7 +290,7 @@ func customBind(
 	return nil
 }
 
-func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateInteractionPoliciesRequest, error) {
+func parseUpdatePoliciesForm(c *gin.Context) (*apimodel.UpdateInteractionPoliciesRequest, error) {
 	form := new(apimodel.UpdateInteractionPoliciesRequest)
 
 	switch ct := c.ContentType(); ct {

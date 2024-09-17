@@ -196,33 +196,44 @@ type StatusCreateRequest struct {
 	// Text content of the status.
 	// If media_ids is provided, this becomes optional.
 	// Attaching a poll is optional while status is provided.
-	Status string `form:"status" json:"status" xml:"status"`
+	Status string `form:"status" json:"status"`
 	// Array of Attachment ids to be attached as media.
 	// If provided, status becomes optional, and poll cannot be used.
-	MediaIDs []string `form:"media_ids[]" json:"media_ids" xml:"media_ids"`
+	MediaIDs []string `form:"media_ids[]" json:"media_ids"`
 	// Poll to include with this status.
-	Poll *PollRequest `form:"poll" json:"poll" xml:"poll"`
+	Poll *PollRequest `form:"poll" json:"poll"`
 	// ID of the status being replied to, if status is a reply.
-	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id" xml:"in_reply_to_id"`
+	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id"`
 	// Status and attached media should be marked as sensitive.
-	Sensitive bool `form:"sensitive" json:"sensitive" xml:"sensitive"`
+	Sensitive bool `form:"sensitive" json:"sensitive"`
 	// Text to be shown as a warning or subject before the actual content.
 	// Statuses are generally collapsed behind this field.
-	SpoilerText string `form:"spoiler_text" json:"spoiler_text" xml:"spoiler_text"`
+	SpoilerText string `form:"spoiler_text" json:"spoiler_text"`
 	// Visibility of the posted status.
-	Visibility Visibility `form:"visibility" json:"visibility" xml:"visibility"`
+	Visibility Visibility `form:"visibility" json:"visibility"`
 	// Set to "true" if this status should not be federated, ie. it should be a "local only" status.
-	LocalOnly *bool `form:"local_only"`
+	LocalOnly *bool `form:"local_only" json:"local_only"`
 	// Deprecated: Only used if LocalOnly is not set.
-	Federated *bool `form:"federated"`
+	Federated *bool `form:"federated" json:"federated"`
 	// ISO 8601 Datetime at which to schedule a status.
 	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
-	ScheduledAt string `form:"scheduled_at" json:"scheduled_at" xml:"scheduled_at"`
+	ScheduledAt string `form:"scheduled_at" json:"scheduled_at"`
 	// ISO 639 language code for this status.
-	Language string `form:"language" json:"language" xml:"language"`
+	Language string `form:"language" json:"language"`
 	// Content type to use when parsing this status.
-	ContentType StatusContentType `form:"content_type" json:"content_type" xml:"content_type"`
+	ContentType StatusContentType `form:"content_type" json:"content_type"`
+	// Interaction policy to use for this status.
+	InteractionPolicy *InteractionPolicy `form:"-" json:"interaction_policy"`
+}
+
+// Separate form for parsing interaction
+// policy on status create requests.
+//
+// swagger:ignore
+type StatusInteractionPolicyForm struct {
+	// Interaction policy to use for this status.
+	InteractionPolicy *InteractionPolicy `form:"interaction_policy" json:"-"`
 }
 
 // Visibility models the visibility of a status.

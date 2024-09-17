@@ -117,7 +117,7 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if err := processVisibility(form, requester.Settings.Privacy, status); err != nil {
+	if err := p.processVisibility(ctx, form, requester.Settings.Privacy, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -337,7 +337,8 @@ func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.StatusCr
 	return nil
 }
 
-func processVisibility(
+func (p *Processor) processVisibility(
+	ctx context.Context,
 	form *apimodel.StatusCreateRequest,
 	accountDefaultVis gtsmodel.Visibility,
 	status *gtsmodel.Status,
@@ -347,13 +348,17 @@ func processVisibility(
 	case form.Visibility != "":
 		status.Visibility = typeutils.APIVisToVis(form.Visibility)
 
-	// Fall back to account default.
+	// Fall back to account default, set
+	// this back on the form for later use.
 	case accountDefaultVis != "":
 		status.Visibility = accountDefaultVis
+		form.Visibility = p.converter.VisToAPIVis(ctx, accountDefaultVis)
 
-	// What? Fall back to global default.
+	// What? Fall back to global default, set
+	// this back on the form for later use.
 	default:
 		status.Visibility = gtsmodel.VisibilityDefault
+		form.Visibility = p.converter.VisToAPIVis(ctx, gtsmodel.VisibilityDefault)
 	}
 
 	// Set federated according to "local_only" field,
@@ -365,17 +370,32 @@ func processVisibility(
 }
 
 func processInteractionPolicy(
-	_ *apimodel.StatusCreateRequest,
+	form *apimodel.StatusCreateRequest,
 	settings *gtsmodel.AccountSettings,
 	status *gtsmodel.Status,
-) error {
-	// TODO: parse policy for this
-	// status from form and prefer this.
+) gtserror.WithCode {
 
+	// If policy is set on the
+	// form then prefer this.
+	//
 	// TODO: prevent scope widening by
 	// limiting interaction policy if
 	// inReplyTo status has a stricter
 	// interaction policy than this one.
+	if form.InteractionPolicy != nil {
+		p, err := typeutils.APIInteractionPolicyToInteractionPolicy(
+			form.InteractionPolicy,
+			form.Visibility,
+		)
+
+		if err != nil {
+			errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
+			return errWithCode
+		}
+
+		status.InteractionPolicy = p
+		return nil
+	}
 
 	switch status.Visibility {
 
