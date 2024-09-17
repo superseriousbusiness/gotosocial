@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -36,15 +35,11 @@ import (
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"id", id},
-		}...)
-	l.Debug("entering Owns")
+	log.DebugKV(ctx, "id", id)
 
 	// if the id host isn't this instance host, we don't own this IRI
 	if host := config.GetHost(); id.Host != host {
-		l.Tracef("we DO NOT own activity because the host is %s not %s", id.Host, host)
+		log.Tracef(ctx, "we DO NOT own activity because the host is %s not %s", id.Host, host)
 		return false, nil
 	}
 
@@ -85,7 +80,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		l.Debugf("we own url %s", id.String())
+		log.Debugf(ctx, "we own url %s", id)
 		return true, nil
 	}
 
@@ -102,7 +97,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		l.Debugf("we own url %s", id.String())
+		log.Debugf(ctx, "we own url %s", id)
 		return true, nil
 	}
 
@@ -119,7 +114,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching account with username %s: %s", username, err)
 		}
-		l.Debugf("we own url %s", id.String())
+		log.Debugf(ctx, "we own url %s", id)
 		return true, nil
 	}
 
@@ -148,7 +143,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 			// an actual error happened
 			return false, fmt.Errorf("database error fetching block with id %s: %s", blockID, err)
 		}
-		l.Debugf("we own url %s", id.String())
+		log.Debugf(ctx, "we own url %s", id)
 		return true, nil
 	}
 

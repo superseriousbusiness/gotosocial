@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log/syslog"
 	"os"
+	"slices"
 	"strings"
 	"syscall"
 	"time"
@@ -102,12 +103,28 @@ func Tracef(ctx context.Context, s string, a ...interface{}) {
 	logf(ctx, 3, level.TRACE, nil, s, a...)
 }
 
+func TraceKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.TRACE, []kv.Field{{K: key, V: value}}, "")
+}
+
+func TraceKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.TRACE, kvs, "")
+}
+
 func Debug(ctx context.Context, a ...interface{}) {
 	logf(ctx, 3, level.DEBUG, nil, args(len(a)), a...)
 }
 
 func Debugf(ctx context.Context, s string, a ...interface{}) {
 	logf(ctx, 3, level.DEBUG, nil, s, a...)
+}
+
+func DebugKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.DEBUG, []kv.Field{{K: key, V: value}}, "")
+}
+
+func DebugKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.DEBUG, kvs, "")
 }
 
 func Info(ctx context.Context, a ...interface{}) {
@@ -118,6 +135,14 @@ func Infof(ctx context.Context, s string, a ...interface{}) {
 	logf(ctx, 3, level.INFO, nil, s, a...)
 }
 
+func InfoKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.INFO, []kv.Field{{K: key, V: value}}, "")
+}
+
+func InfoKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.INFO, kvs, "")
+}
+
 func Warn(ctx context.Context, a ...interface{}) {
 	logf(ctx, 3, level.WARN, nil, args(len(a)), a...)
 }
@@ -126,12 +151,28 @@ func Warnf(ctx context.Context, s string, a ...interface{}) {
 	logf(ctx, 3, level.WARN, nil, s, a...)
 }
 
+func WarnKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.WARN, []kv.Field{{K: key, V: value}}, "")
+}
+
+func WarnKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.WARN, kvs, "")
+}
+
 func Error(ctx context.Context, a ...interface{}) {
 	logf(ctx, 3, level.ERROR, nil, args(len(a)), a...)
 }
 
 func Errorf(ctx context.Context, s string, a ...interface{}) {
 	logf(ctx, 3, level.ERROR, nil, s, a...)
+}
+
+func ErrorKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.ERROR, []kv.Field{{K: key, V: value}}, "")
+}
+
+func ErrorKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.WARN, kvs, "")
 }
 
 func Fatal(ctx context.Context, a ...interface{}) {
@@ -144,6 +185,14 @@ func Fatalf(ctx context.Context, s string, a ...interface{}) {
 	logf(ctx, 3, level.FATAL, nil, s, a...)
 }
 
+func FatalKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.FATAL, []kv.Field{{K: key, V: value}}, "")
+}
+
+func FatalKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.FATAL, kvs, "")
+}
+
 func Panic(ctx context.Context, a ...interface{}) {
 	defer panic(fmt.Sprint(a...))
 	logf(ctx, 3, level.PANIC, nil, args(len(a)), a...)
@@ -152,6 +201,14 @@ func Panic(ctx context.Context, a ...interface{}) {
 func Panicf(ctx context.Context, s string, a ...interface{}) {
 	defer panic(fmt.Sprintf(s, a...))
 	logf(ctx, 3, level.PANIC, nil, s, a...)
+}
+
+func PanicKV(ctx context.Context, key string, value interface{}) {
+	logf(ctx, 3, level.PANIC, []kv.Field{{K: key, V: value}}, "")
+}
+
+func PanicKVs(ctx context.Context, kvs ...kv.Field) {
+	logf(ctx, 3, level.PANIC, kvs, "")
 }
 
 // Log will log formatted args as 'msg' field to the log at given level.
@@ -164,14 +221,34 @@ func Logf(ctx context.Context, lvl level.LEVEL, s string, a ...interface{}) {
 	logf(ctx, 3, lvl, nil, s, a...)
 }
 
+// LogKV will log the one key-value field to the log at given level.
+func LogKV(ctx context.Context, lvl level.LEVEL, key string, value interface{}) { //nolint:revive
+	logf(ctx, 3, level.DEBUG, []kv.Field{{K: key, V: value}}, "")
+}
+
+// LogKVs will log key-value fields to the log at given level.
+func LogKVs(ctx context.Context, lvl level.LEVEL, kvs ...kv.Field) { //nolint:revive
+	logf(ctx, 3, lvl, kvs, "")
+}
+
 // Print will log formatted args to the stdout log output.
 func Print(a ...interface{}) {
 	printf(3, nil, args(len(a)), a...)
 }
 
-// Print will log format string to the stdout log output.
+// Printf will log format string to the stdout log output.
 func Printf(s string, a ...interface{}) {
 	printf(3, nil, s, a...)
+}
+
+// PrintKVs will log the one key-value field to the stdout log output.
+func PrintKV(key string, value interface{}) {
+	printf(3, []kv.Field{{K: key, V: value}}, "")
+}
+
+// PrintKVs will log key-value fields to the stdout log output.
+func PrintKVs(kvs ...kv.Field) {
+	printf(3, kvs, "")
 }
 
 func printf(depth int, fields []kv.Field, s string, a ...interface{}) {
@@ -249,10 +326,16 @@ func logf(ctx context.Context, depth int, lvl level.LEVEL, fields []kv.Field, s 
 		}
 	}
 
-	// Append formatted fields with msg
-	kv.Fields(append(fields, kv.Field{
-		K: "msg", V: fmt.Sprintf(s, a...),
-	})).AppendFormat(buf, false)
+	if s != "" {
+		// Append message to log fields.
+		fields = slices.Grow(fields, 1)
+		fields = append(fields, kv.Field{
+			K: "msg", V: fmt.Sprintf(s, a...),
+		})
+	}
+
+	// Append formatted fields to log buffer.
+	kv.Fields(fields).AppendFormat(buf, false)
 
 	if buf.B[len(buf.B)-1] != '\n' {
 		// Append a final newline
