@@ -41,7 +41,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	log.DebugKV(ctx, "update", asType)
+	log.DebugKV(ctx, "update", serialize{asType})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
