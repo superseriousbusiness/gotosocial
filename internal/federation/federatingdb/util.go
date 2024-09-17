@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"codeberg.org/gruf/go-logger/v2/level"
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -91,15 +91,7 @@ func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityS
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
 func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(t)
-		if err != nil {
-			return nil, err
-		}
-		l := log.WithContext(ctx).
-			WithField("newID", i)
-		l.Debug("entering NewID")
-	}
+	log.DebugKV(ctx, "newID", serialize{t})
 
 	// Most of our types set an ID already
 	// by this point, return this if found.
@@ -268,16 +260,20 @@ func getActivityContext(ctx context.Context) activityContext {
 	}
 }
 
-func marshalItem(item vocab.Type) (string, error) {
-	m, err := ap.Serialize(item)
+// serialize wraps a vocab.Type to provide
+// lazy-serialization along with error output.
+type serialize struct{ item vocab.Type }
+
+func (s serialize) String() string {
+	m, err := ap.Serialize(s.item)
 	if err != nil {
-		return "", err
+		return "!(error serializing item: " + err.Error() + ")"
 	}
 
 	b, err := json.Marshal(m)
 	if err != nil {
-		return "", err
+		return "!(error json marshaling item: " + err.Error() + ")"
 	}
 
-	return string(b), nil
+	return byteutil.B2S(b)
 }

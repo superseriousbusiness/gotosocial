@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -48,17 +47,7 @@ import (
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
-	if log.Level() >= level.TRACE {
-		i, err := marshalItem(asType)
-		if err != nil {
-			return err
-		}
-
-		log.
-			WithContext(ctx).
-			WithField("create", i).
-			Trace("entering Create")
-	}
+	log.DebugKV(ctx, "create", serialize{asType})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
@@ -74,7 +63,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		return nil
 	}
 
-	switch asType.GetTypeName() {
+	switch name := asType.GetTypeName(); name {
 	case ap.ActivityBlock:
 		// BLOCK SOMETHING
 		return f.activityBlock(ctx, asType, receivingAcct, requestingAcct)
@@ -90,6 +79,8 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	case ap.ActivityFlag:
 		// FLAG / REPORT SOMETHING
 		return f.activityFlag(ctx, asType, receivingAcct, requestingAcct)
+	default:
+		log.Debugf(ctx, "unhandled object type: %s", name)
 	}
 
 	return nil

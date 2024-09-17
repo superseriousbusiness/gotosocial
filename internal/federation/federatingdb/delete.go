@@ -37,6 +37,8 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
+	log.DebugKV(ctx, "id", id)
+
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
 		return nil // Already processed.
@@ -81,9 +83,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		return nil
 	}
 
-	// Log at debug level, as lots of these could indicate federation
-	// issues between remote and this instance, or help with debugging.
-	log.Debugf(ctx, "received delete for unknown target: %s", uriStr)
+	log.Debugf(ctx, "unknown iri: %s", uriStr)
 	return nil
 }
 

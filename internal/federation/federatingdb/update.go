@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -42,16 +41,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
-	l := log.WithContext(ctx)
-
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(asType)
-		if err != nil {
-			return err
-		}
-		l = l.WithField("update", i)
-		l.Debug("entering Update")
-	}
+	log.DebugKV(ctx, "update", serialize{asType})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
@@ -69,6 +59,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		return f.updateStatusable(ctx, receivingAcct, requestingAcct, statusable)
 	}
 
+	log.Debugf(ctx, "unhandled object type: %T", asType)
 	return nil
 }
 

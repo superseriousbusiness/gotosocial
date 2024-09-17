@@ -27,7 +27,6 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -37,15 +36,7 @@ import (
 )
 
 func (f *federatingDB) Move(ctx context.Context, move vocab.ActivityStreamsMove) error {
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(move)
-		if err != nil {
-			return err
-		}
-		l := log.WithContext(ctx).
-			WithField("move", i)
-		l.Debug("entering Move")
-	}
+	log.DebugKV(ctx, "move", serialize{move})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {

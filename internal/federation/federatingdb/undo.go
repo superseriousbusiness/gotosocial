@@ -22,7 +22,6 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -33,15 +32,7 @@ import (
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(undo)
-		if err != nil {
-			return err
-		}
-		l := log.WithContext(ctx).
-			WithField("undo", i)
-		l.Debug("entering Undo")
-	}
+	log.DebugKV(ctx, "undo", serialize{undo})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
@@ -59,9 +50,8 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 			continue
 		}
 
-		// Check and handle any
-		// vocab.Type objects.
-		switch asType.GetTypeName() {
+		// Check and handle any vocab.Type objects.
+		switch name := asType.GetTypeName(); name {
 
 		// UNDO FOLLOW
 		case ap.ActivityFollow:
@@ -99,10 +89,9 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 				return err
 			}
 
-		// UNDO ANNOUNCE
-		case ap.ActivityAnnounce:
-			// TODO: actually handle this!
-			log.Warn(ctx, "skipped undo announce")
+		// UNHANDLED
+		default:
+			log.Debugf(ctx, "unhandled object type: %s", name)
 		}
 	}
 
