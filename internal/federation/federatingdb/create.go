@@ -80,7 +80,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 		// FLAG / REPORT SOMETHING
 		return f.activityFlag(ctx, asType, receivingAcct, requestingAcct)
 	default:
-		log.Warnf(ctx, "unhandled object type: %s", name)
+		log.Debugf(ctx, "unhandled object type: %s", name)
 	}
 
 	return nil

@@ -83,7 +83,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 		return nil
 	}
 
-	log.Warnf(ctx, "unknown iri: %s", uriStr)
+	log.Debugf(ctx, "unknown iri: %s", uriStr)
 	return nil
 }
 

@@ -59,7 +59,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 		return f.updateStatusable(ctx, receivingAcct, requestingAcct, statusable)
 	}
 
-	log.Warnf(ctx, "unhandled object type: %T", asType)
+	log.Debugf(ctx, "unhandled object type: %T", asType)
 	return nil
 }
 

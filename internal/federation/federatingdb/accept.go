@@ -89,7 +89,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 
 			// UNHANDLED
 			default:
-				log.Warnf(ctx, "unhandled object type: %s", name)
+				log.Debugf(ctx, "unhandled object type: %s", name)
 			}
 
 		} else if object.IsIRI() {
@@ -134,7 +134,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 
 			// UNHANDLED
 			default:
-				log.Warnf(ctx, "unhandled iri type: %s", objIRI)
+				log.Debugf(ctx, "unhandled iri type: %s", objIRI)
 			}
 		}
 	}
