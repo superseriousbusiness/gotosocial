@@ -1170,7 +1170,7 @@ func extractPolicyValues[T WithIRI](
 		case owner.FollowersURI:
 			PolicyValues = append(PolicyValues, gtsmodel.PolicyValueFollowers)
 		case owner.FollowingURI:
-			PolicyValues = append(PolicyValues, gtsmodel.PolicyValueFollowers)
+			PolicyValues = append(PolicyValues, gtsmodel.PolicyValueFollowing)
 		case owner.URI:
 			PolicyValues = append(PolicyValues, gtsmodel.PolicyValueAuthor)
 		default:
