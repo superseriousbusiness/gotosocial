@@ -311,7 +311,8 @@ func (f *federatingDB) acceptStatusIRI(
 		return nil
 	}
 
-	if util.PtrOrValue(status.PendingApproval, false) {
+	pendingApproval := util.PtrOrValue(status.PendingApproval, false)
+	if !pendingApproval {
 		// Status doesn't need approval or it's
 		// already been approved by an Accept.
 		// Just return.
@@ -402,7 +403,8 @@ func (f *federatingDB) acceptLikeIRI(
 		return nil
 	}
 
-	if !util.PtrOrValue(fave.PendingApproval, false) {
+	pendingApproval := util.PtrOrValue(fave.PendingApproval, false)
+	if !pendingApproval {
 		// Like doesn't need approval or it's
 		// already been approved by an Accept.
 		// Just return.
