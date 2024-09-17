@@ -154,6 +154,8 @@ func (suite *StatusCreateTestSuite) postStatus(
 		rawMap["account"] = "yeah this is my account, what about it punk"
 	}
 
+	// For readability, don't
+	// escape HTML, and indent json.
 	out := new(bytes.Buffer)
 	enc := json.NewEncoder(out)
 	enc.SetEscapeHTML(false)
@@ -332,6 +334,125 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
 }`, out)
 }
 
+func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
+	out, recorder := suite.postStatus(nil, `{
+  "status": "this is a brand new status! #helloworld",
+  "interaction_policy": {
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "following"
+      ],
+      "with_approval": [
+        "public"
+      ]
+    },
+    "can_announce": {
+      "always": []
+    }
+  }
+}`)
+
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Custom interaction policies
+	// should be set on the status.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "following",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": [
+        "public"
+      ]
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [
+    {
+      "name": "helloworld",
+      "url": "http://localhost:8080/tags/helloworld"
+    }
+  ],
+  "text": "this is a brand new status! #helloworld",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
+	out, recorder := suite.postStatus(nil, `{
+  "status": "this is a brand new status! #helloworld",
+  "visibility": "followers_only",
+  "interaction_policy": {
+    "can_reply": {
+      "always": [
+        "public"
+      ]
+    }
+  }
+}`)
+
+	// We should have 400 from
+	// our call to the function.
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	// We should have a helpful error
+  // message telling us how we screwed up.
+	suite.Equal(`{
+  "error": "Bad Request: error converting followers_only.can_reply.always: policyURI public is not feasible for visibility followers_only"
+}`, out)
+}
+
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status":       {statusMarkdown},
@@ -342,6 +463,9 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 	// We should have OK from
 	// our call to the function.
 	suite.Equal(http.StatusOK, recorder.Code)
+
+	// The content field should have
+	// all the nicely parsed markdown stuff.
 	suite.Equal(`{
   "account": "yeah this is my account, what about it punk",
   "application": {
@@ -491,7 +615,7 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 }`, out)
 }
 
-func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
+func (suite *StatusCreateTestSuite) TestPostStatusWithLinksAndTags() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status": {statusWithLinksAndTags},
 	}, "")
@@ -499,6 +623,9 @@ func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
 	// We should have OK from
 	// our call to the function.
 	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Status should have proper
+	// tags + formatted links.
 	suite.Equal(`{
   "account": "yeah this is my account, what about it punk",
   "application": {
@@ -676,6 +803,9 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
 	// We should have OK from
 	// our call to the function.
 	suite.Equal(http.StatusOK, recorder.Code)
+
+	// in_reply_to_x
+	// fields should be set.
 	suite.Equal(`{
   "account": "yeah this is my account, what about it punk",
   "application": {
@@ -755,6 +885,9 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
 	// We should have OK from
 	// our call to the function.
 	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Status should have
+	// media attached.
 	suite.Equal(`{
   "account": "yeah this is my account, what about it punk",
   "application": {
@@ -930,6 +1063,9 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
 	// We should have OK from
 	// our call to the function.
 	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Status poll should
+	// be as expected.
 	suite.Equal(`{
   "account": "yeah this is my account, what about it punk",
   "application": {
@@ -1009,27 +1145,101 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
 }`, out)
 }
 
-// func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
-// 	out, recorder := suite.postStatus(map[string][]string{})
+func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
+	out, recorder := suite.postStatus(nil, `{
+  "status": "this is a status with a poll!",
+  "visibility": "public",
+  "poll": {
+    "options": ["first option", "second option"],
+    "expires_in": 3600,
+    "multiple": true
+  }
+}`)
 
-// 	// We should have OK from
-// 	// our call to the function.
-// 	suite.Equal(http.StatusOK, recorder.Code)
-// 	suite.Equal(``, out)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-// 	suite.testPostNewStatusWithPoll(func(request *http.Request) {
-// 		request.Header.Set("content-type", "application/json")
-// 		request.Body = io.NopCloser(strings.NewReader(`{
-// 			"status": "this is a status with a poll!",
-// 			"visibility": "public",
-// 			"poll": {
-// 				"options": ["first option", "second option"],
-// 				"expires_in": 3600,
-// 				"multiple": true
-// 			}
-// 		}`))
-// 	})
-// }
+	// Status poll should
+	// be as expected.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a status with a poll!</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": {
+    "emojis": [],
+    "expired": false,
+    "expires_at": "ah like you know whatever dude it's chill",
+    "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+    "multiple": true,
+    "options": [
+      {
+        "title": "first option",
+        "votes_count": 0
+      },
+      {
+        "title": "second option",
+        "votes_count": 0
+      }
+    ],
+    "own_votes": [],
+    "voted": true,
+    "voters_count": 0,
+    "votes_count": 0
+  },
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "this is a status with a poll!",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+}
 
 func TestStatusCreateTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusCreateTestSuite))

@@ -121,10 +121,10 @@ func (p *Processor) Create(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Process policy AFTER visibility as it
-	// relies on status.Visibility being set.
-	if err := processInteractionPolicy(form, requester.Settings, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	// Process policy AFTER visibility as it relies
+	// on status.Visibility and form.Visibility being set.
+	if errWithCode := processInteractionPolicy(form, requester.Settings, status); errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	if err := processLanguage(form, requester.Settings.Language, status); err != nil {
