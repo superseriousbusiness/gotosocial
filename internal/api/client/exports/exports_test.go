@@ -161,8 +161,8 @@ func (suite *ExportsTestSuite) TestExports() {
 			user:        suite.testUsers["local_account_1"],
 			account:     suite.testAccounts["local_account_1"],
 			expect: `Account address,Show boosts,Notify on new posts,Languages
-admin@localhost:8080,true,false,
 1happyturtle@localhost:8080,true,false,
+admin@localhost:8080,true,false,
 `,
 		},
 		// Export Followers.
