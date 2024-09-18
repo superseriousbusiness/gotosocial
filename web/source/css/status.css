@@ -122,9 +122,10 @@ main {
 	}
 
 	.text-spoiler > summary {
-		display: inline-block;
 		list-style: none;
-
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
 		padding-bottom: 0.5rem;
 
 		&::-webkit-details-marker {
@@ -132,6 +133,7 @@ main {
 		}
 
 		.button {
+			width: fit-content;
 			white-space: nowrap;
 			cursor: pointer;
 			padding: 0.2rem 0.3rem;
