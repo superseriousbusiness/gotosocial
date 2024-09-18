@@ -24,6 +24,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/go-playground/form/v4"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -35,10 +37,27 @@ import (
 
 // StatusCreatePOSTHandler swagger:operation POST /api/v1/statuses statusCreate
 //
-// Create a new status.
+// Create a new status using the given form field parameters.
 //
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
-// The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+//
+// The 'interaction_policy' field can be used to set an interaction policy for this status.
+//
+// If submitting using form data, use the following pattern to set an interaction policy:
+//
+// `interaction_policy[INTERACTION_TYPE][CONDITION][INDEX]=Value`
+//
+// For example: `interaction_policy[can_reply][always][0]=author`
+//
+// Using `curl` this might look something like:
+//
+// `curl -F 'interaction_policy[can_reply][always][0]=author' -F 'interaction_policy[can_reply][always][1]=followers' [... other form fields ...]`
+//
+// The JSON equivalent would be:
+//
+// `curl -H 'Content-Type: application/json' -d '{"interaction_policy":{"can_reply":{"always":["author","followers"]}} [... other json fields ...]}'`
+//
+// The server will perform some normalization on the submitted policy so that you can't submit something totally invalid.
 //
 //	---
 //	tags:
@@ -46,7 +65,6 @@ import (
 //
 //	consumes:
 //	- application/json
-//	- application/xml
 //	- application/x-www-form-urlencoded
 //
 //	parameters:
@@ -181,6 +199,36 @@ import (
 //			- text/plain
 //			- text/markdown
 //		in: formData
+//	-
+//		name: interaction_policy[can_favourite][always][0]
+//		in: formData
+//		description: Nth entry for interaction_policy.can_favourite.always.
+//		type: string
+//	-
+//		name: interaction_policy[can_favourite][with_approval][0]
+//		in: formData
+//		description: Nth entry for interaction_policy.can_favourite.with_approval.
+//		type: string
+//	-
+//		name: interaction_policy[can_reply][always][0]
+//		in: formData
+//		description: Nth entry for interaction_policy.can_reply.always.
+//		type: string
+//	-
+//		name: interaction_policy[can_reply][with_approval][0]
+//		in: formData
+//		description: Nth entry for interaction_policy.can_reply.with_approval.
+//		type: string
+//	-
+//		name: interaction_policy[can_reblog][always][0]
+//		in: formData
+//		description: Nth entry for interaction_policy.can_reblog.always.
+//		type: string
+//	-
+//		name: interaction_policy[can_reblog][with_approval][0]
+//		in: formData
+//		description: Nth entry for interaction_policy.can_reblog.with_approval.
+//		type: string
 //
 //	produces:
 //	- application/json
@@ -223,8 +271,8 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form := &apimodel.StatusCreateRequest{}
-	if err := c.ShouldBind(form); err != nil {
+	form, err := parseStatusCreateForm(c)
+	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
@@ -255,6 +303,75 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, apiStatus)
+}
+
+// intPolicyFormBinding satisfies gin's binding.Binding interface.
+// Should only be used specifically for multipart/form-data MIME type.
+type intPolicyFormBinding struct{}
+
+func (i intPolicyFormBinding) Name() string {
+	return "InteractionPolicy"
+}
+
+func (intPolicyFormBinding) Bind(req *http.Request, obj any) error {
+	if err := req.ParseForm(); err != nil {
+		return err
+	}
+
+	// Change default namespace prefix and suffix to
+	// allow correct parsing of the field attributes.
+	decoder := form.NewDecoder()
+	decoder.SetNamespacePrefix("[")
+	decoder.SetNamespaceSuffix("]")
+
+	return decoder.Decode(obj, req.Form)
+}
+
+func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, error) {
+	form := new(apimodel.StatusCreateRequest)
+
+	switch ct := c.ContentType(); ct {
+	case binding.MIMEJSON:
+		// Just bind with default json binding.
+		if err := c.ShouldBindWith(form, binding.JSON); err != nil {
+			return nil, err
+		}
+
+	case binding.MIMEPOSTForm:
+		// Bind with default form binding first.
+		if err := c.ShouldBindWith(form, binding.FormPost); err != nil {
+			return nil, err
+		}
+
+		// Now do custom binding.
+		intReqForm := new(apimodel.StatusInteractionPolicyForm)
+		if err := c.ShouldBindWith(intReqForm, intPolicyFormBinding{}); err != nil {
+			return nil, err
+		}
+		form.InteractionPolicy = intReqForm.InteractionPolicy
+
+	case binding.MIMEMultipartPOSTForm:
+		// Bind with default form binding first.
+		if err := c.ShouldBindWith(form, binding.FormMultipart); err != nil {
+			return nil, err
+		}
+
+		// Now do custom binding.
+		intReqForm := new(apimodel.StatusInteractionPolicyForm)
+		if err := c.ShouldBindWith(intReqForm, intPolicyFormBinding{}); err != nil {
+			return nil, err
+		}
+		form.InteractionPolicy = intReqForm.InteractionPolicy
+
+	default:
+		err := fmt.Errorf(
+			"content-type %s not supported for this endpoint; supported content-types are %s, %s, %s",
+			ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm,
+		)
+		return nil, err
+	}
+
+	return form, nil
 }
 
 // validateNormalizeCreateStatus checks the form
