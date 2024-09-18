@@ -54,8 +54,6 @@
 	}
 
 	.status {
-
-
 		&.indent-1 {
 			margin-left: 0.5rem;
 		}
@@ -83,7 +81,7 @@
 		&.indent-5 {
 			.status-link {
 				margin-left: -0.5rem;
-				border-left: 0.1rem dashed $border-accent;
+				border-left: 0.15rem dashed $border-accent;
 			}
 		}
 
