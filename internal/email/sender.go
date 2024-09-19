@@ -77,11 +77,18 @@ func NewSender() (Sender, error) {
 	port := config.GetSMTPPort()
 	from := config.GetSMTPFrom()
 	msgIDHost := config.GetHost()
+	var smtpAuth smtp.Auth
+
+	if (username == "" || password == "") {
+		smtpAuth = nil
+	} else {
+		smtpAuth = smtp.PlainAuth("", username, password, host)
+	}
 
 	return &sender{
 		hostAddress: fmt.Sprintf("%s:%d", host, port),
 		from:        from,
-		auth:        smtp.PlainAuth("", username, password, host),
+		auth:        smtpAuth,
 		msgIDHost:   msgIDHost,
 		template:    t,
 	}, nil
