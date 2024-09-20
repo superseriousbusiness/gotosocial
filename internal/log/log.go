@@ -247,7 +247,7 @@ func ErrorKV(ctx context.Context, key string, value interface{}) {
 //
 //go:noinline
 func ErrorKVs(ctx context.Context, kvs ...kv.Field) {
-	logf(ctx, 3, WARN, kvs, "")
+	logf(ctx, 3, ERROR, kvs, "")
 }
 
 // Panic will log formatted args as 'msg' field to the log at PANIC level.
