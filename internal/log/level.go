@@ -32,16 +32,6 @@ const (
 	ALL   LEVEL = ^LEVEL(0)
 )
 
-// available logging level outputs.
-var levels = [int(ALL) + 1]string{
-	TRACE: "TRACE",
-	DEBUG: "DEBUG",
-	INFO:  "INFO",
-	WARN:  "WARN",
-	ERROR: "ERROR",
-	PANIC: "PANIC",
-}
-
 // CanLog returns whether an incoming log of 'lvl' can be logged against receiving level.
 func (loglvl LEVEL) CanLog(lvl LEVEL) bool {
 	return loglvl > lvl
