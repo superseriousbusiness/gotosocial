@@ -44,9 +44,6 @@ codeberg.org/gruf/go-kv/format
 # codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 ## explicit; go 1.21.3
 codeberg.org/gruf/go-list
-# codeberg.org/gruf/go-logger/v2 v2.2.1
-## explicit; go 1.19
-codeberg.org/gruf/go-logger/v2/level
 # codeberg.org/gruf/go-mangler v1.4.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-mangler

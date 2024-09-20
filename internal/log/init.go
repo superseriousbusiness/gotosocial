@@ -21,25 +21,23 @@ import (
 	"fmt"
 	"log/syslog"
 	"strings"
-
-	"codeberg.org/gruf/go-logger/v2/level"
 )
 
-// ParseLevel will parse the log level from given string and set to appropriate level.
+// ParseLevel will parse the log level from given string and set to appropriate LEVEL.
 func ParseLevel(str string) error {
 	switch strings.ToLower(str) {
 	case "trace":
-		SetLevel(level.TRACE)
+		SetLevel(TRACE)
 	case "debug":
-		SetLevel(level.DEBUG)
+		SetLevel(DEBUG)
 	case "", "info":
-		SetLevel(level.INFO)
+		SetLevel(INFO)
 	case "warn":
-		SetLevel(level.WARN)
+		SetLevel(WARN)
 	case "error":
-		SetLevel(level.ERROR)
-	case "fatal":
-		SetLevel(level.FATAL)
+		SetLevel(ERROR)
+	case "fatal", "panic":
+		SetLevel(PANIC)
 	default:
 		return fmt.Errorf("unknown log level: %q", str)
 	}

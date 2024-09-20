@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-kv"
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -62,7 +61,7 @@ func (p *Processor) ProcessFromClientAPI(ctx context.Context, cMsg *messages.Fro
 
 	// Include GTSModel in logs if appropriate.
 	if cMsg.GTSModel != nil &&
-		log.Level() >= level.DEBUG {
+		log.Level() >= log.DEBUG {
 		fields = append(fields, kv.Field{
 			"model", cMsg.GTSModel,
 		})

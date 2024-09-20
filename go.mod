@@ -16,7 +16,6 @@ require (
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv v1.6.4
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
-	codeberg.org/gruf/go-logger/v2 v2.2.1
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 	codeberg.org/gruf/go-mimetypes v1.2.0
 	codeberg.org/gruf/go-mutexes v1.5.1

@@ -24,7 +24,6 @@ type LEVEL uint8
 const (
 	UNSET LEVEL = 0
 	PANIC LEVEL = 1
-	FATAL LEVEL = 50
 	ERROR LEVEL = 100
 	WARN  LEVEL = 150
 	INFO  LEVEL = 200
@@ -40,7 +39,6 @@ var levels = [int(ALL) + 1]string{
 	INFO:  "INFO",
 	WARN:  "WARN",
 	ERROR: "ERROR",
-	FATAL: "FATAL",
 	PANIC: "PANIC",
 }
 
