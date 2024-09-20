@@ -17,39 +17,22 @@
 
 package log
 
-import (
-	"runtime"
-	"strings"
+// LEVEL defines a level of logging.
+type LEVEL uint8
+
+// Default levels of logging.
+const (
+	UNSET LEVEL = 0
+	PANIC LEVEL = 1
+	ERROR LEVEL = 100
+	WARN  LEVEL = 150
+	INFO  LEVEL = 200
+	DEBUG LEVEL = 250
+	TRACE LEVEL = 254
+	ALL   LEVEL = ^LEVEL(0)
 )
 
-// Caller fetches the calling function name, skipping 'depth'.
-//
-//go:noinline
-func Caller(depth int) string {
-	pcs := make([]uintptr, 1)
-
-	// Fetch calling func using depth.
-	_ = runtime.Callers(depth, pcs)
-	fn := runtime.FuncForPC(pcs[0])
-
-	if fn == nil {
-		return ""
-	}
-
-	// Get func name.
-	name := fn.Name()
-
-	// Drop all but package and function name, no path.
-	if idx := strings.LastIndex(name, "/"); idx >= 0 {
-		name = name[idx+1:]
-	}
-
-	const params = `[...]`
-
-	// Drop any function generic type parameter markers.
-	if idx := strings.Index(name, params); idx >= 0 {
-		name = name[:idx] + name[idx+len(params):]
-	}
-
-	return name
+// CanLog returns whether an incoming log of 'lvl' can be logged against receiving level.
+func (loglvl LEVEL) CanLog(lvl LEVEL) bool {
+	return loglvl > lvl
 }

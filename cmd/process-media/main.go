@@ -24,7 +24,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"codeberg.org/gruf/go-storage/memory"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -40,7 +39,7 @@ func main() {
 	ctx, cncl := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer cncl()
 
-	log.SetLevel(level.INFO)
+	log.SetLevel(log.INFO)
 
 	if len(os.Args) != 4 {
 		log.Panic(ctx, "Usage: go run ./cmd/process-media <input-file> <output-processed> <output-thumbnail>")
