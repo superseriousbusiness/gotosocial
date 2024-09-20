@@ -51,6 +51,7 @@ func (p *Processor) GetTargetStatusBy(
 	// Fetch the target status from db.
 	target, err := getTargetFromDB()
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting from db: %w", err)
 		return nil, false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -66,6 +67,7 @@ func (p *Processor) GetTargetStatusBy(
 	// Check whether target status is visible to requesting account.
 	visible, err = p.visFilter.StatusVisible(ctx, requester, target)
 	if err != nil {
+		err := gtserror.Newf("error checking visibility: %w", err)
 		return nil, false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -183,7 +185,7 @@ func (p *Processor) GetAPIStatus(
 		nil,
 	)
 	if err != nil {
-		err := gtserror.Newf("error converting status: %w", err)
+		err := gtserror.Newf("error converting: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	return apiStatus, nil
@@ -213,7 +215,7 @@ func (p *Processor) GetVisibleAPIStatuses(
 			status,
 		)
 		if err != nil {
-			log.Errorf(ctx, "error checking status visibility: %v", err)
+			log.Errorf(ctx, "error checking visibility: %v", err)
 			continue
 		}
 
@@ -230,7 +232,7 @@ func (p *Processor) GetVisibleAPIStatuses(
 			compUserMutes,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-			log.Errorf(ctx, "error converting to api model: %v", err)
+			log.Errorf(ctx, "error converting: %v", err)
 			continue
 		}
 
