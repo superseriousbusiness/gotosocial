@@ -20,18 +20,14 @@ package statuses_test
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -81,91 +77,7 @@ func (suite *StatusCreateTestSuite) postStatus(
 
 	// Trigger handler.
 	suite.statusModule.StatusCreatePOSTHandler(ctx)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-
-	data, err := io.ReadAll(result.Body)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	rawMap := make(map[string]any)
-	if err := json.Unmarshal(data, &rawMap); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// Replace any fields from the raw map that
-	// aren't determinate (date, id, url, etc).
-	if _, ok := rawMap["id"]; ok {
-		rawMap["id"] = id.Highest
-	}
-
-	if _, ok := rawMap["uri"]; ok {
-		rawMap["uri"] = "http://localhost:8080/some/determinate/url"
-	}
-
-	if _, ok := rawMap["url"]; ok {
-		rawMap["url"] = "http://localhost:8080/some/determinate/url"
-	}
-
-	if _, ok := rawMap["created_at"]; ok {
-		rawMap["created_at"] = "right the hell just now babyee"
-	}
-
-	// Make ID of any mentions determinate.
-	if menchiesRaw, ok := rawMap["mentions"]; ok {
-		menchies, ok := menchiesRaw.([]any)
-		if !ok {
-			suite.FailNow("couldn't coerce menchies")
-		}
-
-		for _, menchieRaw := range menchies {
-			menchie, ok := menchieRaw.(map[string]any)
-			if !ok {
-				suite.FailNow("couldn't coerce menchie")
-			}
-
-			if _, ok := menchie["id"]; ok {
-				menchie["id"] = id.Highest
-			}
-		}
-	}
-
-	// Make fields of any poll determinate.
-	if pollRaw, ok := rawMap["poll"]; ok && pollRaw != nil {
-		poll, ok := pollRaw.(map[string]any)
-		if !ok {
-			suite.FailNow("couldn't coerce poll")
-		}
-
-		if _, ok := poll["id"]; ok {
-			poll["id"] = id.Highest
-		}
-
-		if _, ok := poll["expires_at"]; ok {
-			poll["expires_at"] = "ah like you know whatever dude it's chill"
-		}
-	}
-
-	// Replace account since that's not really
-	// what we care about for these tests.
-	if _, ok := rawMap["account"]; ok {
-		rawMap["account"] = "yeah this is my account, what about it punk"
-	}
-
-	// For readability, don't
-	// escape HTML, and indent json.
-	out := new(bytes.Buffer)
-	enc := json.NewEncoder(out)
-	enc.SetEscapeHTML(false)
-	enc.SetIndent("", "  ")
-
-	if err := enc.Encode(&rawMap); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	return strings.TrimSpace(out.String()), recorder
+	return suite.parseStatusResponse(recorder)
 }
 
 // Post a new status with some custom visibility settings
@@ -447,7 +359,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 	suite.Equal(http.StatusBadRequest, recorder.Code)
 
 	// We should have a helpful error
-  // message telling us how we screwed up.
+	// message telling us how we screwed up.
 	suite.Equal(`{
   "error": "Bad Request: error converting followers_only.can_reply.always: policyURI public is not feasible for visibility followers_only"
 }`, out)
