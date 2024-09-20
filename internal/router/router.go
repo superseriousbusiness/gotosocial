@@ -176,7 +176,7 @@ func (r *Router) Start() error {
 	go func() {
 		log.Infof(nil, "listening on %s", r.srv.Addr)
 		if err := listen(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf(nil, "listen: %s", err)
+			log.Panicf(nil, "listen: %v", err)
 		}
 	}()
 
@@ -273,7 +273,7 @@ func (r *Router) letsEncryptTLS() (func() error, error) {
 		log.Infof(nil, "letsencrypt listening on %s", leSrv.Addr)
 		if err := leSrv.ListenAndServe(); err != nil &&
 			err != http.ErrServerClosed {
-			log.Fatalf(nil, "letsencrypt: listen: %s", err)
+			log.Panicf(nil, "letsencrypt: listen: %v", err)
 		}
 	}()
 
