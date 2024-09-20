@@ -42,6 +42,7 @@ func (p *Processor) GetTargetAccountBy(
 	// Fetch the target account from db.
 	target, err := getTargetFromDB()
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting from db: %w", err)
 		return nil, false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -57,6 +58,7 @@ func (p *Processor) GetTargetAccountBy(
 	// Check whether target account is visible to requesting account.
 	visible, err = p.visFilter.AccountVisible(ctx, requester, target)
 	if err != nil {
+		err := gtserror.Newf("error checking visibility: %w", err)
 		return nil, false, gtserror.NewErrorInternalError(err)
 	}
 
@@ -128,7 +130,8 @@ func (p *Processor) GetVisibleTargetAccount(
 	return target, nil
 }
 
-// GetAPIAccount fetches the appropriate API account model depending on whether requester = target.
+// GetAPIAccount fetches the appropriate API account
+// model depending on whether requester = target.
 func (p *Processor) GetAPIAccount(
 	ctx context.Context,
 	requester *gtsmodel.Account,
@@ -148,14 +151,15 @@ func (p *Processor) GetAPIAccount(
 	}
 
 	if err != nil {
-		err := gtserror.Newf("error converting account: %w", err)
+		err := gtserror.Newf("error converting: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return apiAcc, nil
 }
 
-// GetAPIAccountBlocked fetches the limited "blocked" account model for given target.
+// GetAPIAccountBlocked fetches the limited
+// "blocked" account model for given target.
 func (p *Processor) GetAPIAccountBlocked(
 	ctx context.Context,
 	targetAcc *gtsmodel.Account,
@@ -165,7 +169,7 @@ func (p *Processor) GetAPIAccountBlocked(
 ) {
 	apiAccount, err := p.converter.AccountToAPIAccountBlocked(ctx, targetAcc)
 	if err != nil {
-		err = gtserror.Newf("error converting account: %w", err)
+		err := gtserror.Newf("error converting: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	return apiAccount, nil
@@ -182,7 +186,7 @@ func (p *Processor) GetAPIAccountSensitive(
 ) {
 	apiAccount, err := p.converter.AccountToAPIAccountSensitive(ctx, targetAcc)
 	if err != nil {
-		err = gtserror.Newf("error converting account: %w", err)
+		err := gtserror.Newf("error converting: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 	return apiAccount, nil
@@ -226,8 +230,7 @@ func (p *Processor) getVisibleAPIAccounts(
 ) []*apimodel.Account {
 	// Start new log entry with
 	// the above calling func's name.
-	l := log.
-		WithContext(ctx).
+	l := log.WithContext(ctx).
 		WithField("caller", log.Caller(calldepth+1))
 
 	// Preallocate slice according to expected length.

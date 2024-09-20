@@ -194,6 +194,10 @@ func (p *Processor) GetAPIStatus(
 // GetVisibleAPIStatuses converts a slice of statuses to API
 // model statuses, filtering according to visibility to requester
 // along with given filter context, filters and user mutes.
+//
+// Please note that all errors will be logged at ERROR level,
+// but will not be returned. Callers are likely to run into
+// show-stopping errors in the lead-up to this function.
 func (p *Processor) GetVisibleAPIStatuses(
 	ctx context.Context,
 	requester *gtsmodel.Account,
@@ -202,6 +206,13 @@ func (p *Processor) GetVisibleAPIStatuses(
 	filters []*gtsmodel.Filter,
 	userMutes []*gtsmodel.UserMute,
 ) []apimodel.Status {
+
+	// Start new log entry with
+	// the calling function name
+	// as a field in each entry.
+	l := log.WithContext(ctx).
+		WithField("caller", log.Caller(3))
+
 	// Compile mutes to useable user mutes for type converter.
 	compUserMutes := usermute.NewCompiledUserMuteList(userMutes)
 
@@ -215,7 +226,7 @@ func (p *Processor) GetVisibleAPIStatuses(
 			status,
 		)
 		if err != nil {
-			log.Errorf(ctx, "error checking visibility: %v", err)
+			l.Errorf("error checking visibility: %v", err)
 			continue
 		}
 
@@ -232,7 +243,7 @@ func (p *Processor) GetVisibleAPIStatuses(
 			compUserMutes,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-			log.Errorf(ctx, "error converting: %v", err)
+			l.Errorf("error converting: %v", err)
 			continue
 		}
 
