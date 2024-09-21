@@ -18,6 +18,8 @@
 package cache
 
 import (
+	"sync/atomic"
+
 	"codeberg.org/gruf/go-structr"
 	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -135,6 +137,13 @@ type DBCaches struct {
 
 	// Instance provides access to the gtsmodel Instance database cache.
 	Instance StructCache[*gtsmodel.Instance]
+
+	// InstanceCounts ...
+	InstanceCounts struct {
+		Domains  atomic.Pointer[int]
+		Statuses atomic.Pointer[int]
+		Users    atomic.Pointer[int]
+	}
 
 	// InteractionRequest provides access to the gtsmodel InteractionRequest database cache.
 	InteractionRequest StructCache[*gtsmodel.InteractionRequest]
@@ -849,9 +858,10 @@ func (c *Caches) initInstance() {
 			{Fields: "ID"},
 			{Fields: "Domain"},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateInstance,
 	})
 }
 

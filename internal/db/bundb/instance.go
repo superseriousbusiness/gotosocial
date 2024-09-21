@@ -39,6 +39,11 @@ type instanceDB struct {
 }
 
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, error) {
+	// Check for a cached instance user count, if so return this.
+	if n := i.state.Caches.DB.InstanceCounts.Users.Load(); n != nil {
+		return *n, nil
+	}
+
 	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
@@ -58,10 +63,19 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 	if err != nil {
 		return 0, err
 	}
+
+	// Update cached instance users account value.
+	i.state.Caches.DB.InstanceCounts.Users.Store(&count)
+
 	return count, nil
 }
 
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, error) {
+	// Check for a cached instance statuses count, if so return this.
+	if n := i.state.Caches.DB.InstanceCounts.Statuses.Load(); n != nil {
+		return *n, nil
+	}
+
 	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status"))
@@ -83,10 +97,19 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 	if err != nil {
 		return 0, err
 	}
+
+	// Update cached instance statuses account value.
+	i.state.Caches.DB.InstanceCounts.Statuses.Store(&count)
+
 	return count, nil
 }
 
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, error) {
+	// Check for a cached instance domains count, if so return this.
+	if n := i.state.Caches.DB.InstanceCounts.Domains.Load(); n != nil {
+		return *n, nil
+	}
+
 	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance"))
@@ -106,6 +129,10 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	if err != nil {
 		return 0, err
 	}
+
+	// Update cached instance domains account value.
+	i.state.Caches.DB.InstanceCounts.Domains.Store(&count)
+
 	return count, nil
 }
 
@@ -215,13 +242,15 @@ func (i *instanceDB) PopulateInstance(ctx context.Context, instance *gtsmodel.In
 }
 
 func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instance) error {
-	// Normalize the domain as punycode
 	var err error
+
+	// Normalize the domain as punycode
 	instance.Domain, err = util.Punify(instance.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", instance.Domain, err)
 	}
 
+	// Store the new instance model in database, invalidating cache.
 	return i.state.Caches.DB.Instance.Store(instance, func() error {
 		_, err := i.db.NewInsert().Model(instance).Exec(ctx)
 		return err
