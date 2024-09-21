@@ -41,10 +41,11 @@ type instanceDB struct {
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, error) {
 	localhost := (domain == config.GetHost() || domain == config.GetAccountDomain())
 
-	// Check for a cached instance user count, if so return this.
-	if n := i.state.Caches.DB.InstanceCounts.Users.Load(); n != nil &&
-		localhost {
-		return *n, nil
+	if localhost {
+		// Check for a cached instance user count, if so return this.
+		if n := i.state.Caches.DB.LocalInstance.Users.Load(); n != nil {
+			return *n, nil
+		}
 	}
 
 	q := i.db.
@@ -69,7 +70,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 
 	if localhost {
 		// Update cached instance users account value.
-		i.state.Caches.DB.InstanceCounts.Users.Store(&count)
+		i.state.Caches.DB.LocalInstance.Users.Store(&count)
 	}
 
 	return count, nil
@@ -78,10 +79,11 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, error) {
 	localhost := (domain == config.GetHost() || domain == config.GetAccountDomain())
 
-	// Check for a cached instance statuses count, if so return this.
-	if n := i.state.Caches.DB.InstanceCounts.Statuses.Load(); n != nil &&
-		localhost {
-		return *n, nil
+	if localhost {
+		// Check for a cached instance statuses count, if so return this.
+		if n := i.state.Caches.DB.LocalInstance.Statuses.Load(); n != nil {
+			return *n, nil
+		}
 	}
 
 	q := i.db.
@@ -108,7 +110,7 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 
 	if localhost {
 		// Update cached instance statuses account value.
-		i.state.Caches.DB.InstanceCounts.Statuses.Store(&count)
+		i.state.Caches.DB.LocalInstance.Statuses.Store(&count)
 	}
 
 	return count, nil
@@ -117,10 +119,11 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, error) {
 	localhost := (domain == config.GetHost() || domain == config.GetAccountDomain())
 
-	// Check for a cached instance domains count, if so return this.
-	if n := i.state.Caches.DB.InstanceCounts.Domains.Load(); n != nil &&
-		localhost {
-		return *n, nil
+	if localhost {
+		// Check for a cached instance domains count, if so return this.
+		if n := i.state.Caches.DB.LocalInstance.Domains.Load(); n != nil {
+			return *n, nil
+		}
 	}
 
 	q := i.db.
@@ -145,7 +148,7 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 
 	if localhost {
 		// Update cached instance domains account value.
-		i.state.Caches.DB.InstanceCounts.Domains.Store(&count)
+		i.state.Caches.DB.LocalInstance.Domains.Store(&count)
 	}
 
 	return count, nil

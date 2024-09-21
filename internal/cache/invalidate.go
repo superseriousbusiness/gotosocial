@@ -181,7 +181,7 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 
 func (c *Caches) OnInvalidateInstance(instance *gtsmodel.Instance) {
 	// Invalidate the local domains count.
-	c.DB.InstanceCounts.Domains.Store(nil)
+	c.DB.LocalInstance.Domains.Store(nil)
 }
 
 func (c *Caches) OnInvalidateList(list *gtsmodel.List) {
@@ -264,7 +264,7 @@ func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 
 	if util.PtrOrZero(status.Local) {
 		// Invalidate the local statuses count.
-		c.DB.InstanceCounts.Statuses.Store(nil)
+		c.DB.LocalInstance.Statuses.Store(nil)
 	}
 }
 
@@ -284,7 +284,7 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 	c.Visibility.Invalidate("RequesterID", user.AccountID)
 
 	// Invalidate the local users count.
-	c.DB.InstanceCounts.Users.Store(nil)
+	c.DB.LocalInstance.Users.Store(nil)
 }
 
 func (c *Caches) OnInvalidateUserMute(mute *gtsmodel.UserMute) {
