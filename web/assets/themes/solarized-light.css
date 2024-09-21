@@ -1,0 +1,147 @@
+/*
+  theme-title: Solarized (light)
+  theme-description: Solarized sloth (light)
+*/
+
+/*
+  Solarized colors + design - https://github.com/altercation/solarized
+
+  Copyright (c) 2011 Ethan Schoonover
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+  
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
+:root {
+  /* Define solarized palette */
+  --base03:    #002b36;
+  --base02:    #073642;
+  --base01:    #586e75;
+  --base00:    #657b83;
+  --base0:     #839496;
+  --base1:     #93a1a1;
+  --base2:     #eee8d5;
+  --base3:     #fdf6e3;
+  --yellow:    #b58900;
+  --orange:    #cb4b16;
+  --red:       #dc322f;
+  --magenta:   #d33682;
+  --violet:    #6c71c4;
+  --blue:      #268bd2;
+  --cyan:      #2aa198;
+  --green:     #859900;
+
+  /* Override orange trim */
+  --orange2: var(--orange);
+
+  /* Restyle basic colors to use Solarized */
+  --white1: var(--base3);
+  --white2: var(--base2);
+  --blue1: var(--cyan);
+  --blue2: var(--base03);
+  --blue3: var(--base02);
+
+  /* Basic page styling (background + foreground) */
+  --bg: var(--white1);
+  --bg-accent: var(--white2);
+  --fg: var(--base02);
+  --fg-reduced: var(--base01);
+
+  /* Profile page styling (light) */
+  --profile-bg: var(--white2);
+
+  /* Solarize buttons */
+  --button-bg: var(--blue2);
+  --button-fg: var(--white1);
+
+  /* Solarize statuses */
+  --status-bg: var(--white1);
+  --status-focus-bg: var(--white1);
+  --status-info-bg: var(--white2);
+  --status-focus-info-bg: var(--white2);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 0.1rem solid var(--base1);
+
+  --plyr-video-control-color: var(--fg-reduced);
+  --plyr-video-control-color-hover: var(--fg);
+}
+
+@font-face {
+  font-family: "Noto Sans Mono";
+  font-weight: normal;
+  font-style: normal;
+  src: url(/assets/fonts/noto-sans-mono-v30-latin-regular.woff2) format('woff2');
+}
+
+/* Scroll bar */
+html, body {
+  font-family: 'Noto Sans Mono', monospace;
+  scrollbar-color: var(--orange2) var(--white1) ;
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: var(--boxshadow-border);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: var(--boxshadow-border);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: var(--boxshadow-border);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--blue2);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: transparent;
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--white2);
+}
+.status .text .poll .poll-info {
+  background-color: var(--white1);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+  background-color: black;
+  color: var(--base3);
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--bg-accent);
+  color: var(--fg);
+}
+
+button,
+.button,
+.status .text-spoiler > summary .button {
+  font-family: 'Noto Sans Mono', monospace;
+}
+
+/* Ensure role badge readable */
+.profile .profile-header .basic-info .namerole .role.admin {
+  color: var(--base03);
+}
