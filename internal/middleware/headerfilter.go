@@ -18,6 +18,7 @@
 package middleware
 
 import (
+	"errors"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -31,6 +32,9 @@ import (
 var (
 	allowMatches = matchstats{m: make(map[string]uint64)}
 	blockMatches = matchstats{m: make(map[string]uint64)}
+
+	errHeaderNotAllowed = errors.New("header did not match allow filter")
+	errHeaderBlocked    = errors.New("header matched block filter")
 )
 
 // matchstats is a simple statistics
@@ -83,6 +87,7 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 		}
 
 		if block {
+			c.Error(errHeaderBlocked)
 			respondBlocked(c)
 			return
 		}
@@ -95,6 +100,7 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 		}
 
 		if notAllow {
+			c.Error(errHeaderNotAllowed)
 			respondBlocked(c)
 			return
 		}
@@ -129,6 +135,7 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 			}
 
 			if block {
+				c.Error(errHeaderBlocked)
 				respondBlocked(c)
 				return
 			}
