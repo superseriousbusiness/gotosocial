@@ -1,10 +1,10 @@
 # Roadmap to Beta <!-- omit in toc -->
 
-This document contains the roadmap for GoToSocial to be considered eligible for its first [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta).
+This document contains the roadmap for GoToSocial to be considered eligible for its first proper [stable release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release).
 
 All the info contained in this document is best-guess only. It's useful to have a rough timeline we can direct people to, but things will undoubtedly change along the way; don't hold us to anything in this doc!
 
-Thank you to [NLnet](https://nlnet.nl) for helping to fund the alpha phase of GoToSocial development and get us moving towards beta!
+Thank you to [NLnet](https://nlnet.nl) for helping to fund the alpha and beta phases of GoToSocial development!
 
 Big thank you to all of our [Open Collective](https://opencollective.com/gotosocial) and [Liberapay](https://liberapay.com/gotosocial) contributors, who've helped us keep the lights on! 💕 
 
@@ -17,6 +17,7 @@ Big thank you to all of our [Open Collective](https://opencollective.com/gotosoc
   - [Early 2024](#early-2024)
   - [BETA milestone](#beta-milestone)
   - [Remainder 2024 - early 2025](#remainder-2024---early-2025)
+  - [On the way out of BETA to STABLE RELEASE](#on-the-way-out-of-beta-to-stable-release)
 - [Wishlist](#wishlist)
 
 ## Beta Aims
@@ -61,7 +62,7 @@ What follows is a rough timeline of features that will be implemented on the roa
 
 ### BETA milestone
 
-Completion of all above features indicates that we are now in the BETA phase of GoToSocial. We foresee this happening around Feb/March 2024.
+Completion of all above features indicates that we are now in the BETA phase of GoToSocial. We foresee this happening around Feb/March 2024. EDIT: It ended up happening in September/October 2024, whoops!
 
 ### Remainder 2024 - early 2025
 
@@ -69,9 +70,9 @@ These are provided in no specific order.
 
 - [x] **Filters v2** -- implement v2 of the filters API.
 - [x] **Mute accounts** -- mute accounts to prevent their posts showing up in your home timeline (optional: for limited period of time).
-- [ ] **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
+- [x] **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
 - [ ] **Block + allow list subscriptions** -- allow instance admins to subscribe their instance to plaintext domain block/allow lists (much of the work for this is already in place).
-- [ ] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
+- [x] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
 - [ ] **Oauth token management** -- create / view / invalidate OAuth tokens via the settings panel.
 - [ ] **Status EDIT support** -- edit statuses that you've created, without having to delete + redraft. Federate edits out properly.
 - [ ] **Fediverse relay support** -- publish posts to relays, pull posts from relays.
@@ -79,6 +80,10 @@ These are provided in no specific order.
 - [ ] **Moderation: Append content warning / mark-as-sensitive all content from an instance/account**.
 
 More tbd!
+
+### On the way out of BETA to STABLE RELEASE
+
+Tbd.
 
 ## Wishlist
 
