@@ -18,6 +18,7 @@
 package typeutils_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
@@ -1706,6 +1707,130 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
     }
   }
 }`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval() {
+	var (
+		testStatus        = suite.testStatuses["admin_account_status_5"]
+		requestingAccount = suite.testAccounts["local_account_2"]
+	)
+
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextNone,
+		nil,
+		nil,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// We want to see the HTML in
+	// the status so don't escape it.
+	out := new(bytes.Buffer)
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(apiStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "id": "01J5QVB9VC76NPPRQ207GG4DRZ",
+  "created_at": "2024-02-20T10:41:37.000Z",
+  "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
+  "in_reply_to_account_id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+  "sensitive": false,
+  "spoiler_text": "",
+  "visibility": "unlisted",
+  "language": null,
+  "uri": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "url": "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": false,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": false,
+  "pinned": false,
+  "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p><hr><p><i lang=\"en\">ℹ️ Note from localhost:8080: This reply is pending your approval. You can quickly accept it by liking, boosting or replying to it. You can also accept or reject it at the following link: <a href=\"http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR\" rel=\"noreferrer noopener nofollow\" target=\"_blank\">http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR</a>.</i></p>",
+  "reblog": null,
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
+  },
+  "media_attachments": [],
+  "mentions": [
+    {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "url": "http://localhost:8080/@1happyturtle",
+      "acct": "1happyturtle"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
+  "text": "Hi @1happyturtle, can I reply?",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  }
+}
+`, out.String())
 }
 
 func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {

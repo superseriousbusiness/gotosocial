@@ -223,7 +223,7 @@ func NewProcessor(
 	processor.tags = tags.New(state, converter)
 	processor.timeline = timeline.New(state, converter, visFilter)
 	processor.search = search.New(state, federator, converter, visFilter)
-	processor.status = status.New(state, &common, &processor.polls, federator, converter, visFilter, intFilter, parseMentionFunc)
+	processor.status = status.New(state, &common, &processor.polls, &processor.interactionRequests, federator, converter, visFilter, intFilter, parseMentionFunc)
 	processor.user = user.New(state, converter, oauthServer, emailSender)
 
 	// The advanced migrations processor sequences advanced migrations from all other processors.
