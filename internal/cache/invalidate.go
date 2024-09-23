@@ -19,6 +19,7 @@ package cache
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // Below are cache invalidation hooks between other caches,
@@ -178,6 +179,11 @@ func (c *Caches) OnInvalidateFollowRequest(followReq *gtsmodel.FollowRequest) {
 	)
 }
 
+func (c *Caches) OnInvalidateInstance(instance *gtsmodel.Instance) {
+	// Invalidate the local domains count.
+	c.DB.LocalInstance.Domains.Store(nil)
+}
+
 func (c *Caches) OnInvalidateList(list *gtsmodel.List) {
 	// Invalidate list IDs cache.
 	c.DB.ListIDs.Invalidate(
@@ -255,6 +261,11 @@ func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 		// Invalidate cache of attached poll ID.
 		c.DB.Poll.Invalidate("ID", status.PollID)
 	}
+
+	if util.PtrOrZero(status.Local) {
+		// Invalidate the local statuses count.
+		c.DB.LocalInstance.Statuses.Store(nil)
+	}
 }
 
 func (c *Caches) OnInvalidateStatusBookmark(bookmark *gtsmodel.StatusBookmark) {
@@ -271,6 +282,9 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 	// Invalidate local account ID cached visibility.
 	c.Visibility.Invalidate("ItemID", user.AccountID)
 	c.Visibility.Invalidate("RequesterID", user.AccountID)
+
+	// Invalidate the local users count.
+	c.DB.LocalInstance.Users.Store(nil)
 }
 
 func (c *Caches) OnInvalidateUserMute(mute *gtsmodel.UserMute) {

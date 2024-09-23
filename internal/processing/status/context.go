@@ -24,7 +24,6 @@ import (
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -308,22 +307,7 @@ func (p *Processor) ContextGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	convert := func(
-		ctx context.Context,
-		status *gtsmodel.Status,
-		requestingAccount *gtsmodel.Account,
-	) (*apimodel.Status, error) {
-		return p.converter.StatusToAPIStatus(
-			ctx,
-			status,
-			requestingAccount,
-			statusfilter.FilterContextThread,
-			filters,
-			usermute.NewCompiledUserMuteList(mutes),
-		)
-	}
-
-	// Retrieve the thread context.
+	// Retrieve the full thread context.
 	threadContext, errWithCode := p.contextGet(
 		ctx,
 		requester,
@@ -333,34 +317,27 @@ func (p *Processor) ContextGet(
 		return nil, errWithCode
 	}
 
-	apiContext := &apimodel.ThreadContext{
-		Ancestors:   make([]apimodel.Status, 0, len(threadContext.ancestors)),
-		Descendants: make([]apimodel.Status, 0, len(threadContext.descendants)),
-	}
+	var apiContext apimodel.ThreadContext
 
-	// Convert ancestors + filter
-	// out ones that aren't visible.
-	for _, status := range threadContext.ancestors {
-		if v, err := p.visFilter.StatusVisible(ctx, requester, status); err == nil && v {
-			status, err := convert(ctx, status, requester)
-			if err == nil {
-				apiContext.Ancestors = append(apiContext.Ancestors, *status)
-			}
-		}
-	}
+	// Convert and filter the thread context ancestors.
+	apiContext.Ancestors = p.c.GetVisibleAPIStatuses(ctx,
+		requester,
+		threadContext.ancestors,
+		statusfilter.FilterContextThread,
+		filters,
+		mutes,
+	)
 
-	// Convert descendants + filter
-	// out ones that aren't visible.
-	for _, status := range threadContext.descendants {
-		if v, err := p.visFilter.StatusVisible(ctx, requester, status); err == nil && v {
-			status, err := convert(ctx, status, requester)
-			if err == nil {
-				apiContext.Descendants = append(apiContext.Descendants, *status)
-			}
-		}
-	}
+	// Convert and filter the thread context descendants
+	apiContext.Descendants = p.c.GetVisibleAPIStatuses(ctx,
+		requester,
+		threadContext.descendants,
+		statusfilter.FilterContextThread,
+		filters,
+		mutes,
+	)
 
-	return apiContext, nil
+	return &apiContext, nil
 }
 
 // WebContextGet is like ContextGet, but is explicitly
