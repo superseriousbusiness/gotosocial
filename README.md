@@ -153,52 +153,52 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-dark.png"/>
   <figcaption>Blurple dark</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png"/>
   <figcaption>Blurple light</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png"/>
   <figcaption>Brutalist light</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png"/>
   <figcaption>Brutalist dark</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png"/>
   <figcaption>Ecks pee</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png"/>
   <figcaption>Midnight trip</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png"/>
   <figcaption>Rainforest</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png"/>
   <figcaption>Soft</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png"/>
   <figcaption>Solarized dark</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png"/>
   <figcaption>Solarized light</figcaption>
 </figure>
-
+<hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png"/>
   <figcaption>Sunset</figcaption>
