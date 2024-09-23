@@ -77,7 +77,7 @@ function UserProfileForm({ data: profile }) {
 			maxPinnedFields: instance?.configuration?.accounts?.max_profile_fields ?? 6
 		};
 	}, [instance]);
-	
+
 	// Parse out available theme options into nice format.
 	const { data: themes } = useAccountThemesQuery();
 	const themeOptions = useMemo(() => {
@@ -114,6 +114,7 @@ function UserProfileForm({ data: profile }) {
 		locked: useBoolInput("locked", { source: profile }),
 		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
+		hideBoosts: useBoolInput("hide_boosts", { source: profile }),
 		hideCollections: useBoolInput("hide_collections", { source: profile }),
 		webVisibility: useTextInput("web_visibility", { source: profile, valueSelector: (p) => p.source?.web_visibility }),
 		fields: useFieldArrayInput("fields_attributes", {
@@ -158,7 +159,7 @@ function UserProfileForm({ data: profile }) {
 						autoCapitalize="sentences"
 					/>
 				</div>
-				
+
 				<div className="file-input-with-image-description">
 					<FileInput
 						label="Avatar (1:1 images look best)"
@@ -256,6 +257,10 @@ function UserProfileForm({ data: profile }) {
 			<Checkbox
 				field={form.enableRSS}
 				label="Enable RSS feed of posts."
+			/>
+			<Checkbox
+				field={form.hideBoosts}
+				label="Hide boosts from your public page"
 			/>
 			<Checkbox
 				field={form.hideCollections}

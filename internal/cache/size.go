@@ -38,7 +38,7 @@ const (
 	exampleURI  = "https://social.bbc/users/ItsMePrinceCharlesInit"
 	exampleText = `
 oh no me nan's gone and done it :shocked:
-	
+
 she fuckin killed the king :regicide:
 
 nan what have you done :shocked:
@@ -277,6 +277,7 @@ func sizeofAccountSettings() uintptr {
 		StatusContentType: "text/plain",
 		CustomCSS:         exampleText,
 		EnableRSS:         util.Ptr(true),
+		HideBoosts:        util.Ptr(false),
 		HideCollections:   util.Ptr(false),
 	}))
 }

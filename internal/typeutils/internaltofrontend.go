@@ -302,7 +302,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	// Bits that vary between remote + local accounts:
 	//   - Account (acct) string.
 	//   - Role.
-	//   - Settings things (enableRSS, theme, customCSS, hideCollections).
+	//   - Settings things (enableRSS, theme, customCSS, hideBoosts ,hideCollections).
 
 	var (
 		acct            string
@@ -310,6 +310,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		enableRSS       bool
 		theme           string
 		customCSS       string
+		hideBoosts		bool
 		hideCollections bool
 	)
 
@@ -338,6 +339,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			enableRSS = *a.Settings.EnableRSS
 			theme = a.Settings.Theme
 			customCSS = a.Settings.CustomCSS
+			hideBoosts = *a.Settings.HideBoosts
 			hideCollections = *a.Settings.HideCollections
 		}
 
@@ -380,6 +382,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Theme:             theme,
 		CustomCSS:         customCSS,
 		EnableRSS:         enableRSS,
+		HideBoosts:        hideBoosts,
 		HideCollections:   hideCollections,
 		Roles:             roles,
 	}
