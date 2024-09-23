@@ -30,9 +30,7 @@ import (
 )
 
 var (
-	allowMatches = matchstats{m: make(map[string]uint64)}
-	blockMatches = matchstats{m: make(map[string]uint64)}
-
+	// errors set on gin context by header filter middleware.
 	errHeaderNotAllowed = errors.New("header did not match allow filter")
 	errHeaderBlocked    = errors.New("header matched block filter")
 )
@@ -168,11 +166,9 @@ func isHeaderBlocked(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		if expr != "" {
-			// Increment block matches stat.
+		if expr != "" { //nolint:revive
 			// TODO: replace expvar with build
 			// taggable metrics types in State{}.
-			blockMatches.Add(key, expr)
 		}
 
 		// A header was matched against!
@@ -205,11 +201,9 @@ func isHeaderAllowed(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		if expr != "" {
-			// Increment allow matches stat.
+		if expr != "" { //nolint:revive
 			// TODO: replace expvar with build
 			// taggable metrics types in State{}.
-			allowMatches.Add(key, expr)
 		}
 
 		// A header was matched against!
@@ -242,11 +236,9 @@ func isHeaderNotAllowed(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		if expr != "" {
-			// Increment allow matches stat.
+		if expr != "" { //nolint:revive
 			// TODO: replace expvar with build
 			// taggable metrics types in State{}.
-			allowMatches.Add(key, expr)
 		}
 
 		// A header was matched against!
