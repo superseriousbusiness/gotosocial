@@ -34,7 +34,7 @@ Here's a screenshot of the instance landing page!
   - [Local-only posting](#local-only-posting)
   - [RSS feed](#rss-feed)
   - [Rich text formatting](#rich-text-formatting)
-  - [Customizability](#customizability)
+  - [Themes and custom CSS](#themes-and-custom-css)
   - [Easy to run](#easy-to-run)
   - [Safety + security features](#safety--security-features)
   - [Various federation modes](#various-federation-modes)
@@ -140,34 +140,81 @@ With GoToSocial, you can write posts using the popular, easy-to-use Markdown mar
 
 ![markdown-formatted post](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/markdown-post.png)
 
-### Customizability
+### Themes and custom CSS
 
 Users can [choose from a variety of fun themes](https://docs.gotosocial.org/en/latest/user_guide/settings/#select-theme) for their profile, or even write their own [custom CSS](https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css).
+
+It's also easy for admins to [add their own custom themes](https://docs.gotosocial.org/en/latest/admin/themes/) for users to choose from.
 
 <details>
 <summary>Show theme examples</summary>
 
-| Theme name      | Screenshot                                                                                                                             |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| Blurple dark    | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-dark.png" width="500" />    |
-| Blurple light   | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png" width="500" />   |
-| Brutalist light | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png" width="500" /> |
-| Brutalist dark  | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png" width="500" />  |
-| Ecks pee        | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png" width="500" />        |
-| Midnight trip   | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png" width="500" />   |
-| Rainforest      | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png" width="500" />      |
-| Soft            | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png" width="500" />            |
-| Solarized dark  | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png" width="500" />  |
-| Solarized light | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png" width="500" /> |
-| Sunset          | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png" width="500" />          |
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-dark.png"/>
+  <figcaption>Blurple dark</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png" width="500" />
+  <figcaption>Blurple light</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png" width="500" />
+  <figcaption>Brutalist light</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png" width="500" />
+  <figcaption>Brutalist dark</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png" width="500" />
+  <figcaption>Ecks pee</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png" width="500" />
+  <figcaption>Midnight trip</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png" width="500" />
+  <figcaption>Rainforest</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png" width="500" />
+  <figcaption>Soft</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png" width="500" />
+  <figcaption>Solarized dark</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png" width="500" />
+  <figcaption>Solarized light</figcaption>
+</figure>
+
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png" width="500" />
+  <figcaption>Sunset</figcaption>
+</figure>
 
 </details>
 
 ### Easy to run
 
-No external dependencies apart from a database (or just use SQLite!). Simply download the binary + assets (or Docker container), and run.
+GoToSocial uses only about 250-350MiB of RAM, and requires very little CPU power, so it plays nice with single-board computers, old laptops and tiny $5/month VPSes.
 
-GoToSocial uses only about 200-300MiB of RAM, and requires very little CPU power, so it plays nice with single-board computers, old laptops and tiny $5/month VPSes.
+![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/getting-started-memory-graph.png)
+
+No external dependencies apart from a database (or just use SQLite!).
+
+Simply download the binary + assets (or Docker container), tweak your configuration, and run.
 
 ### Safety + security features
 
