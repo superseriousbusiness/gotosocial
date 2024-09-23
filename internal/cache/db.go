@@ -138,8 +138,8 @@ type DBCaches struct {
 	// Instance provides access to the gtsmodel Instance database cache.
 	Instance StructCache[*gtsmodel.Instance]
 
-	// LocalInstance provides caching
-	// for common local instance queries.
+	// LocalInstance provides caching for
+	// simple + common local instance queries.
 	LocalInstance struct {
 		Domains  atomic.Pointer[int]
 		Statuses atomic.Pointer[int]
