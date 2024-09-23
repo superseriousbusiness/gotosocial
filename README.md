@@ -148,7 +148,6 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
 
 <details>
 <summary>Show theme examples</summary>
-
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-dark.png"/>
   <figcaption>Blurple dark</figcaption>
@@ -203,7 +202,7 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png"/>
   <figcaption>Sunset</figcaption>
 </figure>
-
+<hr/>
 </details>
 
 ### Easy to run
