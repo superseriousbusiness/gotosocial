@@ -221,10 +221,10 @@ func (c *Converter) pendingReplyNote(
 	var note strings.Builder
 	note.WriteString(`<hr>`)
 	note.WriteString(`<p><i lang="en">ℹ️ Note from ` + host + `: `)
-	note.WriteString(`This reply to your status is pending your approval. You can accept the reply by liking, replying to, or boosting it. You can also accept or reject the reply at the following link: `)
+	note.WriteString(`This reply is pending your approval. You can quickly accept it by liking, boosting or replying to it. You can also accept or reject it at the following link: `)
 	note.WriteString(`<a href="` + settingsURL + `" `)
 	note.WriteString(`rel="noreferrer noopener" target="_blank">`)
-	note.WriteString(settingsURL + ` (opens in a new tab)`)
+	note.WriteString(settingsURL)
 	note.WriteString(`</a>.`)
 	note.WriteString(`</i></p>`)
 
