@@ -155,6 +155,7 @@ Users can [choose from a variety of fun themes](https://docs.gotosocial.org/en/l
 | Brutalist dark  | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png" width="500" />  |
 | Ecks pee        | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png" width="500" />        |
 | Midnight trip   | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png" width="500" />   |
+| Rainforest      | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png" width="500" />      |
 | Soft            | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png" width="500" />            |
 | Solarized dark  | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png" width="500" />  |
 | Solarized light | <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png" width="500" /> |
