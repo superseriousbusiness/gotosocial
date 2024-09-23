@@ -155,52 +155,52 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png"/>
   <figcaption>Blurple light</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png"/>
   <figcaption>Brutalist light</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png"/>
   <figcaption>Brutalist dark</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png"/>
   <figcaption>Ecks pee</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png"/>
   <figcaption>Midnight trip</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png"/>
   <figcaption>Rainforest</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png"/>
   <figcaption>Soft</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png"/>
   <figcaption>Solarized dark</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png"/>
   <figcaption>Solarized light</figcaption>
 </figure>
 
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png" width="500" />
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png"/>
   <figcaption>Sunset</figcaption>
 </figure>
 
