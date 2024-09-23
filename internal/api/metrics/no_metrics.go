@@ -15,46 +15,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build !nometrics
+//go:build nometrics
 
 package metrics
 
 import (
-	"net/http"
-
 	"github.com/gin-gonic/gin"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type Module struct {
-	handler http.Handler
-}
+type Module struct{}
 
-func New() *Module {
-	// Let prometheus use "identity", ie., no compression,
-	// or "gzip", to match our own gzip compression middleware.
-	opts := promhttp.HandlerOpts{
-		OfferedCompressions: []promhttp.Compression{
-			promhttp.Identity,
-			promhttp.Gzip,
-		},
-	}
-
-	// Instrument handler itself.
-	handler := promhttp.InstrumentMetricHandler(
-		prometheus.DefaultRegisterer,
-		promhttp.HandlerFor(prometheus.DefaultGatherer, opts),
-	)
-
-	return &Module{
-		handler: handler,
-	}
-}
+func New() *Module { return &Module{} }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, "", func(c *gin.Context) {
-		// Defer all "/metrics" handling to prom.
-		m.handler.ServeHTTP(c.Writer, c.Request)
-	})
 }
