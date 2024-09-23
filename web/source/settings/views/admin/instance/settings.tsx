@@ -143,7 +143,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			<TextArea
 				field={form.shortDesc}
 				label={`Short description (markdown accepted, max ${shortDescLimit} characters)`}
-				placeholder="A small testing instance for the GoToSocial alpha software."
+				placeholder="A small testing instance for GoToSocial."
 				autoCapitalize="sentences"
 				rows={6}
 			/>
@@ -151,7 +151,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			<TextArea
 				field={form.description}
 				label={`Full description (markdown accepted, max ${descLimit} characters)`}
-				placeholder="A small testing instance for the GoToSocial alpha software. Just trying it out, my main instance is https://example.com"
+				placeholder="A small testing instance for GoToSocial. Just trying it out, my main instance is https://example.com"
 				autoCapitalize="sentences"
 				rows={6}
 			/>
