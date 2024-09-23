@@ -635,7 +635,7 @@ type ffprobeResult struct {
 type ffprobePacketOrFrame struct {
 	Type string      `json:"type"`
 	Tags ffprobeTags `json:"tags"`
-	//SideDataList []ffprobeSideData `json:"side_data_list"`
+	// SideDataList []ffprobeSideData `json:"side_data_list"`
 }
 
 type ffprobeTags struct {
