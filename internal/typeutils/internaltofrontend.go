@@ -2683,7 +2683,7 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 	if req.InteractionType == gtsmodel.InteractionReply {
 		reply, err = c.statusToAPIStatus(
 			ctx,
-			req.Status,
+			req.Reply,
 			requestingAcct,
 			statusfilter.FilterContextNone,
 			nil,  // No filters.
