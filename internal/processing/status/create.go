@@ -164,6 +164,23 @@ func (p *Processor) Create(
 		}
 	}
 
+	// If the new status replies to a status that
+	// replies to us, use our reply as an implicit
+	// accept of any pending interaction.
+	implicitlyAccepted, errWithCode := p.implicitlyAccept(ctx,
+		requester, status,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// If we ended up implicitly accepting, mark the
+	// replied-to status as no longer pending approval
+	// so it's serialized properly via the API.
+	if implicitlyAccepted {
+		status.InReplyTo.PendingApproval = util.Ptr(false)
+	}
+
 	return p.c.GetAPIStatus(ctx, requester, status)
 }
 

@@ -18,6 +18,7 @@
 package typeutils_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"testing"
@@ -1709,6 +1710,130 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval() {
+	var (
+		testStatus        = suite.testStatuses["admin_account_status_5"]
+		requestingAccount = suite.testAccounts["local_account_2"]
+	)
+
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextNone,
+		nil,
+		nil,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// We want to see the HTML in
+	// the status so don't escape it.
+	out := new(bytes.Buffer)
+	enc := json.NewEncoder(out)
+	enc.SetIndent("", "  ")
+	enc.SetEscapeHTML(false)
+	if err := enc.Encode(apiStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "id": "01J5QVB9VC76NPPRQ207GG4DRZ",
+  "created_at": "2024-02-20T10:41:37.000Z",
+  "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
+  "in_reply_to_account_id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+  "sensitive": false,
+  "spoiler_text": "",
+  "visibility": "unlisted",
+  "language": null,
+  "uri": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "url": "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+  "replies_count": 0,
+  "reblogs_count": 0,
+  "favourites_count": 0,
+  "favourited": false,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": false,
+  "pinned": false,
+  "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p><hr><p><i lang=\"en\">ℹ️ Note from localhost:8080: This reply is pending your approval. You can quickly accept it by liking, boosting or replying to it. You can also accept or reject it at the following link: <a href=\"http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR\" rel=\"noreferrer noopener nofollow\" target=\"_blank\">http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR</a>.</i></p>",
+  "reblog": null,
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
+  },
+  "media_attachments": [],
+  "mentions": [
+    {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "url": "http://localhost:8080/@1happyturtle",
+      "acct": "1happyturtle"
+    }
+  ],
+  "tags": [],
+  "emojis": [],
+  "card": null,
+  "poll": null,
+  "text": "Hi @1happyturtle, can I reply?",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  }
+}
+`, out.String())
+}
+
 func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
 	testAttachment := suite.testAttachments["local_account_1_status_4_attachment_2"]
 	apiAttachment, err := suite.typeconverter.AttachmentToAPIAttachment(context.Background(), testAttachment)
@@ -2993,6 +3118,244 @@ func (suite *InternalToFrontendTestSuite) TestRelationshipFollowRequested() {
   "domain_blocking": false,
   "endorsed": false,
   "note": ""
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
+	requestingAccount := suite.testAccounts["local_account_2"]
+	adminReport, err := suite.typeconverter.InteractionReqToAPIInteractionReq(
+		context.Background(),
+		suite.testInteractionRequests["admin_account_reply_turtle"],
+		requestingAccount,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(adminReport, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "id": "01J5QVXCCEATJYSXM9H6MZT4JR",
+  "type": "reply",
+  "created_at": "2024-02-20T10:41:37.000Z",
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ]
+  },
+  "status": {
+    "id": "01F8MHC8VWDRBQR0N1BATDDEM5",
+    "created_at": "2021-10-20T10:40:37.000Z",
+    "in_reply_to_id": null,
+    "in_reply_to_account_id": null,
+    "sensitive": true,
+    "spoiler_text": "you won't be able to reply to this without my approval",
+    "visibility": "unlisted",
+    "language": "en",
+    "uri": "http://localhost:8080/users/1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
+    "url": "http://localhost:8080/@1happyturtle/statuses/01F8MHC8VWDRBQR0N1BATDDEM5",
+    "replies_count": 1,
+    "reblogs_count": 0,
+    "favourites_count": 0,
+    "favourited": false,
+    "reblogged": false,
+    "muted": false,
+    "bookmarked": false,
+    "pinned": false,
+    "content": "🐢 i don't mind people sharing and liking this one but I want to moderate replies to it 🐢",
+    "reblog": null,
+    "application": {
+      "name": "kindaweird",
+      "website": "https://kindaweird.app"
+    },
+    "account": {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "acct": "1happyturtle",
+      "display_name": "happy little turtle :3",
+      "locked": true,
+      "discoverable": false,
+      "bot": false,
+      "created_at": "2022-06-04T13:12:00.000Z",
+      "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+      "url": "http://localhost:8080/@1happyturtle",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 8,
+      "last_status_at": "2021-07-28T08:40:37.000Z",
+      "emojis": [],
+      "fields": [
+        {
+          "name": "should you follow me?",
+          "value": "maybe!",
+          "verified_at": null
+        },
+        {
+          "name": "age",
+          "value": "120",
+          "verified_at": null
+        }
+      ],
+      "hide_collections": true
+    },
+    "media_attachments": [],
+    "mentions": [],
+    "tags": [],
+    "emojis": [],
+    "card": null,
+    "poll": null,
+    "text": "🐢 i don't mind people sharing and liking this one but I want to moderate replies to it 🐢",
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "author",
+          "me"
+        ],
+        "with_approval": [
+          "public"
+        ]
+      },
+      "can_reblog": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      }
+    }
+  },
+  "reply": {
+    "id": "01J5QVB9VC76NPPRQ207GG4DRZ",
+    "created_at": "2024-02-20T10:41:37.000Z",
+    "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
+    "in_reply_to_account_id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "sensitive": false,
+    "spoiler_text": "",
+    "visibility": "unlisted",
+    "language": null,
+    "uri": "http://localhost:8080/users/admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+    "url": "http://localhost:8080/@admin/statuses/01J5QVB9VC76NPPRQ207GG4DRZ",
+    "replies_count": 0,
+    "reblogs_count": 0,
+    "favourites_count": 0,
+    "favourited": false,
+    "reblogged": false,
+    "muted": false,
+    "bookmarked": false,
+    "pinned": false,
+    "content": "\u003cp\u003eHi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003e1happyturtle\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e, can I reply?\u003c/p\u003e",
+    "reblog": null,
+    "application": {
+      "name": "superseriousbusiness",
+      "website": "https://superserious.business"
+    },
+    "account": {
+      "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+      "username": "admin",
+      "acct": "admin",
+      "display_name": "",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-17T13:10:59.000Z",
+      "note": "",
+      "url": "http://localhost:8080/@admin",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 4,
+      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true,
+      "roles": [
+        {
+          "id": "admin",
+          "name": "admin",
+          "color": ""
+        }
+      ]
+    },
+    "media_attachments": [],
+    "mentions": [
+      {
+        "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+        "username": "1happyturtle",
+        "url": "http://localhost:8080/@1happyturtle",
+        "acct": "1happyturtle"
+      }
+    ],
+    "tags": [],
+    "emojis": [],
+    "card": null,
+    "poll": null,
+    "text": "Hi @1happyturtle, can I reply?",
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      }
+    }
+  }
 }`, string(b))
 }
 

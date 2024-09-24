@@ -52,10 +52,10 @@ export default function UserRouter() {
 						<Route path="/emailpassword" component={EmailPassword} />
 						<Route path="/migration" component={UserMigration} />
 						<Route path="/export-import" component={ExportImport} />
+						<InteractionRequestsRouter />
 						<Route><Redirect to="/profile" /></Route>
 					</Switch>
 				</ErrorBoundary>
-				<InteractionRequestsRouter />
 			</Router>
 		</BaseUrlContext.Provider>
 	);
@@ -73,13 +73,11 @@ function InteractionRequestsRouter() {
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<ErrorBoundary>
-					<Switch>
-						<Route path="/search" component={InteractionRequests} />
-						<Route path="/:reqId" component={InteractionRequestDetail} />
-						<Route><Redirect to="/search"/></Route>
-					</Switch>
-				</ErrorBoundary>
+				<Switch>
+					<Route path="/search" component={InteractionRequests} />
+					<Route path="/:reqId" component={InteractionRequestDetail} />
+					<Route><Redirect to="/search"/></Route>
+				</Switch>
 			</Router>
 		</BaseUrlContext.Provider>
 	);

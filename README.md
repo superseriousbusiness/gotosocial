@@ -11,7 +11,7 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.webp" width="300"/>
 </p>
 
-**GoToSocial is still [ALPHA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Alpha)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We foresee entering beta around the beginning of 2024.
+**GoToSocial is still [BETA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We left alpha stage around September/October 2024, and we intend to exit beta some time around 2026.
 
 Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
 
@@ -29,8 +29,12 @@ Here's a screenshot of the instance landing page!
   - [History and Status](#history-and-status)
 - [Features](#features)
   - [Mastodon API compatibility](#mastodon-api-compatibility)
-  - [Granular post settings](#granular-post-settings)
-  - [Customizability](#customizability)
+  - [Granular post visibility settings](#granular-post-visibility-settings)
+  - [Reply controls](#reply-controls)
+  - [Local-only posting](#local-only-posting)
+  - [RSS feed](#rss-feed)
+  - [Rich text formatting](#rich-text-formatting)
+  - [Themes and custom CSS](#themes-and-custom-css)
   - [Easy to run](#easy-to-run)
   - [Safety + security features](#safety--security-features)
   - [Various federation modes](#various-federation-modes)
@@ -90,7 +94,9 @@ This project sprang up in February/March 2021 out of a dissatisfaction with the 
 
 It began as a solo project, and then picked up steam as more developers became interested and jumped on.
 
-For a detailed view on what's implemented and what's not, and progress made towards [beta release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta), please see [the roadmap document](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md).
+We made our first Alpha release in November 2021. We left Alpha and entered Beta in September/October 2024.
+
+For a detailed view on what's implemented and what's not, and progress made towards [stable release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release), please see [the roadmap document](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md).
 
 ---
 
@@ -100,44 +106,120 @@ For a detailed view on what's implemented and what's not, and progress made towa
 
 The Mastodon API has become the de facto standard for client communication with federated servers, so GoToSocial has implemented and extended the API with custom functionality.
 
-Though most apps that implement the Mastodon API should work, GoToSocial works reliably with beautiful apps like:
+Though most apps that implement the Mastodon API should work, GoToSocial is tested and works reliably with beautiful apps like:
 
 * [Tusky](https://tusky.app/) for Android
 * [Semaphore](https://semaphore.social/) in the browser
 * [Feditext](https://github.com/feditext/feditext) (beta) on iOS, iPadOS and macOS
 
-If you've used Mastodon with any of these apps before, you'll find using GoToSocial a breeze.
+If you've used Mastodon with a third-party app before, you'll find using GoToSocial a breeze.
 
-### Granular post settings
+### Granular post visibility settings
 
 It's important that when you post something, you can choose who sees it.
 
-GoToSocial offers public/unlisted/friends-only/mutuals-only/and direct posts (slide in DMs! -- with consent).
+GoToSocial offers public, unlisted/unlocked, followers-only, and direct posts (slide in DMs! -- with consent).
 
-It also allows you to customize how people interact with your posts:
+### Reply controls
 
-- Local-only posts.
-- Rebloggable/boostable toggle.
-- 'Likeable' toggle.
-- 'Replyable' toggle.
+GoToSocial lets you choose who can reply to your posts, via [interaction policies](https://docs.gotosocial.org/en/latest/user_guide/settings/#default-interaction-policies). You can choose to let anyone reply to your posts, let only your friends reply, and more.
 
-### Customizability
+![interaction policies settings](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/user-settings-interaction-policy-1.png)
+
+### Local-only posting
+
+Sometimes you only want to talk to people you share an instance with. GoToSocial supports this via local-only posting, which ensures that your post stays on your instance only. (Local-only posting is currently dependent on client support.)
+
+### RSS feed
+
+GoToSocial lets you opt-in to exposing your profile as an RSS feed, so that people can subscribe to your public feed without missing a post.
+
+### Rich text formatting
+
+With GoToSocial, you can write posts using the popular, easy-to-use Markdown markup language, which lets you produce rich HTML posts with support for blockquotes, syntax-highlighted code blocks, lists, inline links, and more.
+
+![markdown-formatted post](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/markdown-post.png)
+
+### Themes and custom CSS
 
 Users can [choose from a variety of fun themes](https://docs.gotosocial.org/en/latest/user_guide/settings/#select-theme) for their profile, or even write their own [custom CSS](https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css).
 
-Plenty of [config options](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml) for admins to play around with too.
+It's also easy for admins to [add their own custom themes](https://docs.gotosocial.org/en/latest/admin/themes/) for users to choose from.
+
+<details>
+<summary>Show theme examples</summary>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-dark.png"/>
+  <figcaption>Blurple dark</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png"/>
+  <figcaption>Blurple light</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png"/>
+  <figcaption>Brutalist light</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png"/>
+  <figcaption>Brutalist dark</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png"/>
+  <figcaption>Ecks pee</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png"/>
+  <figcaption>Midnight trip</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png"/>
+  <figcaption>Rainforest</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png"/>
+  <figcaption>Soft</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png"/>
+  <figcaption>Solarized dark</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png"/>
+  <figcaption>Solarized light</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png"/>
+  <figcaption>Sunset</figcaption>
+</figure>
+<hr/>
+</details>
 
 ### Easy to run
 
-No external dependencies apart from a database (or just use SQLite!). Simply download the binary + assets (or Docker container), and run.
+GoToSocial uses only about 250-350MiB of RAM, and requires very little CPU power, so it plays nice with single-board computers, old laptops and tiny $5/month VPSes.
 
-GoToSocial uses only about 150-250MiB of RAM, so it plays nice with single-board computers, old laptops and tiny $5/month VPSes.
+![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/getting-started-memory-graph.png)
+
+No external dependencies apart from a database (or just use SQLite!).
+
+Simply download the binary + assets (or Docker container), tweak your configuration, and run.
 
 ### Safety + security features
 
 - Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
 - Strict privacy enforcement for posts and strict blocking logic.
-- Import and export allow lists and deny lists. Subscribe to community-created block lists (think Ad blocker, but for federation!).
+- Import and export allow lists and deny lists. Subscribe to community-created block lists (think Ad blocker, but for federation!) (feature still in progress).
 - HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
 
 ### Various federation modes
@@ -166,7 +248,7 @@ On top of this API, web developers are encouraged to build any front-end impleme
 
 ## Known Issues
 
-Since GoToSocial is still in alpha, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
+Since GoToSocial is still in beta, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
 
 Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://github.com/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
 

@@ -384,8 +384,9 @@ func (s *Surface) timelineStatus(
 ) (bool, error) {
 
 	// Ingest status into given timeline using provided function.
-	if inserted, err := ingest(ctx, timelineID, status); err != nil {
-		err = gtserror.Newf("error ingesting status %s: %w", status.ID, err)
+	if inserted, err := ingest(ctx, timelineID, status); err != nil &&
+		!errors.Is(err, statusfilter.ErrHideStatus) {
+		err := gtserror.Newf("error ingesting status %s: %w", status.ID, err)
 		return false, err
 	} else if !inserted {
 		// Nothing more to do.
@@ -400,15 +401,19 @@ func (s *Surface) timelineStatus(
 		filters,
 		mutes,
 	)
-	if err != nil {
-		err = gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
+	if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+		err := gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
 		return true, err
 	}
 
-	// The status was inserted so stream it to the user.
-	s.Stream.Update(ctx, account, apiStatus, streamType)
+	if apiStatus != nil {
+		// The status was inserted so stream it to the user.
+		s.Stream.Update(ctx, account, apiStatus, streamType)
+		return true, nil
+	}
 
-	return true, nil
+	// Status was hidden.
+	return false, nil
 }
 
 // timelineAndNotifyStatusForTagFollowers inserts the status into the

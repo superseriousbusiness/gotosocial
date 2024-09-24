@@ -803,26 +803,55 @@ func (c *Converter) TagToAPITag(ctx context.Context, t *gtsmodel.Tag, stubHistor
 	}, nil
 }
 
-// StatusToAPIStatus converts a gts model status into its api
-// (frontend) representation for serialization on the API.
+// StatusToAPIStatus converts a gts model
+// status into its api (frontend) representation
+// for serialization on the API.
 //
 // Requesting account can be nil.
 //
-// Filter context can be the empty string if these statuses are not being filtered.
+// filterContext can be the empty string
+// if these statuses are not being filtered.
 //
-// If there is a matching "hide" filter, the returned status will be nil with a ErrHideStatus error;
-// callers need to handle that case by excluding it from results.
+// If there is a matching "hide" filter, the returned
+// status will be nil with a ErrHideStatus error; callers
+// need to handle that case by excluding it from results.
 func (c *Converter) StatusToAPIStatus(
 	ctx context.Context,
-	s *gtsmodel.Status,
+	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Status, error) {
+	return c.statusToAPIStatus(
+		ctx,
+		status,
+		requestingAccount,
+		filterContext,
+		filters,
+		mutes,
+		true,
+		true,
+	)
+}
+
+// statusToAPIStatus is the package-internal implementation
+// of StatusToAPIStatus that lets the caller customize whether
+// to placehold unknown attachment types, and/or add a note
+// about the status being pending and requiring approval.
+func (c *Converter) statusToAPIStatus(
+	ctx context.Context,
+	status *gtsmodel.Status,
+	requestingAccount *gtsmodel.Account,
+	filterContext statusfilter.FilterContext,
+	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
+	placeholdAttachments bool,
+	addPendingNote bool,
+) (*apimodel.Status, error) {
 	apiStatus, err := c.statusToFrontend(
 		ctx,
-		s,
+		status,
 		requestingAccount, // Can be nil.
 		filterContext,     // Can be empty.
 		filters,
@@ -833,7 +862,7 @@ func (c *Converter) StatusToAPIStatus(
 	}
 
 	// Convert author to API model.
-	acct, err := c.AccountToAPIAccountPublic(ctx, s.Account)
+	acct, err := c.AccountToAPIAccountPublic(ctx, status.Account)
 	if err != nil {
 		return nil, gtserror.Newf("error converting status acct: %w", err)
 	}
@@ -842,23 +871,43 @@ func (c *Converter) StatusToAPIStatus(
 	// Convert author of boosted
 	// status (if set) to API model.
 	if apiStatus.Reblog != nil {
-		boostAcct, err := c.AccountToAPIAccountPublic(ctx, s.BoostOfAccount)
+		boostAcct, err := c.AccountToAPIAccountPublic(ctx, status.BoostOfAccount)
 		if err != nil {
 			return nil, gtserror.Newf("error converting boost acct: %w", err)
 		}
 		apiStatus.Reblog.Account = boostAcct
 	}
 
-	// Normalize status for API by pruning
-	// attachments that were not locally
-	// stored, replacing them with a helpful
-	// message + links to remote.
-	var aside string
-	aside, apiStatus.MediaAttachments = placeholderAttachments(apiStatus.MediaAttachments)
-	apiStatus.Content += aside
-	if apiStatus.Reblog != nil {
-		aside, apiStatus.Reblog.MediaAttachments = placeholderAttachments(apiStatus.Reblog.MediaAttachments)
-		apiStatus.Reblog.Content += aside
+	if placeholdAttachments {
+		// Normalize status for API by pruning attachments
+		// that were not able to be locally stored, and replacing
+		// them with a helpful message + links to remote.
+		var attachNote string
+		attachNote, apiStatus.MediaAttachments = placeholderAttachments(apiStatus.MediaAttachments)
+		apiStatus.Content += attachNote
+
+		// Do the same for the reblogged status.
+		if apiStatus.Reblog != nil {
+			attachNote, apiStatus.Reblog.MediaAttachments = placeholderAttachments(apiStatus.Reblog.MediaAttachments)
+			apiStatus.Reblog.Content += attachNote
+		}
+	}
+
+	if addPendingNote {
+		// If this status is pending approval and
+		// replies to the requester, add a note
+		// about how to approve or reject the reply.
+		pendingApproval := util.PtrOrValue(status.PendingApproval, false)
+		if pendingApproval &&
+			requestingAccount != nil &&
+			requestingAccount.ID == status.InReplyToAccountID {
+			pendingNote, err := c.pendingReplyNote(ctx, status)
+			if err != nil {
+				return nil, gtserror.Newf("error deriving 'pending reply' note: %w", err)
+			}
+
+			apiStatus.Content += pendingNote
+		}
 	}
 
 	return apiStatus, nil
@@ -1991,7 +2040,20 @@ func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 		}
 	}
 	for _, s := range r.Statuses {
-		status, err := c.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+		status, err := c.statusToAPIStatus(
+			ctx,
+			s,
+			requestingAccount,
+			statusfilter.FilterContextNone,
+			nil,  // No filters.
+			nil,  // No mutes.
+			true, // Placehold unknown attachments.
+
+			// Don't add note about
+			// pending, it's not
+			// relevant here.
+			false,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("ReportToAdminAPIReport: error converting status with id %s to api status: %w", s.ID, err)
 		}
@@ -2628,8 +2690,8 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		req.Status,
 		requestingAcct,
 		statusfilter.FilterContextNone,
-		nil,
-		nil,
+		nil, // No filters.
+		nil, // No mutes.
 	)
 	if err != nil {
 		err := gtserror.Newf("error converting interacted status: %w", err)
@@ -2638,13 +2700,20 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 
 	var reply *apimodel.Status
 	if req.InteractionType == gtsmodel.InteractionReply {
-		reply, err = c.StatusToAPIStatus(
+		reply, err = c.statusToAPIStatus(
 			ctx,
 			req.Reply,
 			requestingAcct,
 			statusfilter.FilterContextNone,
-			nil,
-			nil,
+			nil,  // No filters.
+			nil,  // No mutes.
+			true, // Placehold unknown attachments.
+
+			// Don't add note about pending;
+			// requester already knows it's
+			// pending because they're looking
+			// at the request right now.
+			false,
 		)
 		if err != nil {
 			err := gtserror.Newf("error converting reply: %w", err)

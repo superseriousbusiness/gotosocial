@@ -39,6 +39,15 @@ type instanceDB struct {
 }
 
 func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int, error) {
+	localhost := (domain == config.GetHost() || domain == config.GetAccountDomain())
+
+	if localhost {
+		// Check for a cached instance user count, if so return this.
+		if n := i.state.Caches.DB.LocalInstance.Users.Load(); n != nil {
+			return *n, nil
+		}
+	}
+
 	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
@@ -46,7 +55,7 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 		Where("? != ?", bun.Ident("account.username"), domain).
 		Where("? IS NULL", bun.Ident("account.suspended_at"))
 
-	if domain == config.GetHost() || domain == config.GetAccountDomain() {
+	if localhost {
 		// If the domain is *this* domain, just
 		// count where the domain field is null.
 		q = q.Where("? IS NULL", bun.Ident("account.domain"))
@@ -58,15 +67,30 @@ func (i *instanceDB) CountInstanceUsers(ctx context.Context, domain string) (int
 	if err != nil {
 		return 0, err
 	}
+
+	if localhost {
+		// Update cached instance users account value.
+		i.state.Caches.DB.LocalInstance.Users.Store(&count)
+	}
+
 	return count, nil
 }
 
 func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (int, error) {
+	localhost := (domain == config.GetHost() || domain == config.GetAccountDomain())
+
+	if localhost {
+		// Check for a cached instance statuses count, if so return this.
+		if n := i.state.Caches.DB.LocalInstance.Statuses.Load(); n != nil {
+			return *n, nil
+		}
+	}
+
 	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status"))
 
-	if domain == config.GetHost() || domain == config.GetAccountDomain() {
+	if localhost {
 		// if the domain is *this* domain, just count where local is true
 		q = q.Where("? = ?", bun.Ident("status.local"), true)
 	} else {
@@ -83,15 +107,30 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 	if err != nil {
 		return 0, err
 	}
+
+	if localhost {
+		// Update cached instance statuses account value.
+		i.state.Caches.DB.LocalInstance.Statuses.Store(&count)
+	}
+
 	return count, nil
 }
 
 func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (int, error) {
+	localhost := (domain == config.GetHost() || domain == config.GetAccountDomain())
+
+	if localhost {
+		// Check for a cached instance domains count, if so return this.
+		if n := i.state.Caches.DB.LocalInstance.Domains.Load(); n != nil {
+			return *n, nil
+		}
+	}
+
 	q := i.db.
 		NewSelect().
 		TableExpr("? AS ?", bun.Ident("instances"), bun.Ident("instance"))
 
-	if domain == config.GetHost() {
+	if localhost {
 		// if the domain is *this* domain, just count other instances it knows about
 		// exclude domains that are blocked
 		q = q.
@@ -106,6 +145,12 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 	if err != nil {
 		return 0, err
 	}
+
+	if localhost {
+		// Update cached instance domains account value.
+		i.state.Caches.DB.LocalInstance.Domains.Store(&count)
+	}
+
 	return count, nil
 }
 
@@ -215,13 +260,15 @@ func (i *instanceDB) PopulateInstance(ctx context.Context, instance *gtsmodel.In
 }
 
 func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instance) error {
-	// Normalize the domain as punycode
 	var err error
+
+	// Normalize the domain as punycode
 	instance.Domain, err = util.Punify(instance.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", instance.Domain, err)
 	}
 
+	// Store the new instance model in database, invalidating cache.
 	return i.state.Caches.DB.Instance.Store(instance, func() error {
 		_, err := i.db.NewInsert().Model(instance).Exec(ctx)
 		return err
