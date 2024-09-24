@@ -310,7 +310,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		enableRSS       bool
 		theme           string
 		customCSS       string
-		hideBoosts		bool
+		hideBoosts      bool
 		hideCollections bool
 	)
 
@@ -1046,7 +1046,15 @@ func (c *Converter) StatusToWebStatus(
 	ctx context.Context,
 	s *gtsmodel.Status,
 ) (*apimodel.WebStatus, error) {
-	apiStatus, err := c.statusToFrontend(ctx, s,
+
+	isBoost := s.BoostOf != nil
+	status := s
+
+	if isBoost {
+		status = s.BoostOf
+	}
+
+	apiStatus, err := c.statusToFrontend(ctx, status,
 		nil,                            // No authed requester.
 		statusfilter.FilterContextNone, // No filters.
 		nil,                            // No filters.
@@ -1057,7 +1065,7 @@ func (c *Converter) StatusToWebStatus(
 	}
 
 	// Convert status author to web model.
-	acct, err := c.AccountToWebAccount(ctx, s.Account)
+	acct, err := c.AccountToWebAccount(ctx, status.Account)
 	if err != nil {
 		return nil, err
 	}
@@ -1065,6 +1073,14 @@ func (c *Converter) StatusToWebStatus(
 	webStatus := &apimodel.WebStatus{
 		Status:  apiStatus,
 		Account: acct,
+	}
+
+	if isBoost {
+		reblogAcct, err := c.AccountToWebAccount(ctx, s.Account)
+		if err != nil {
+			return nil, err
+		}
+		webStatus.ReblogAccount = reblogAcct
 	}
 
 	// Whack a newline before and after each "pre" to make it easier to outdent it.

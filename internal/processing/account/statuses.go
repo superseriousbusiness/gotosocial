@@ -184,6 +184,7 @@ func (p *Processor) WebStatusesGet(
 			log.Errorf(ctx, "error convering to web status: %v", err)
 			continue
 		}
+
 		items = append(items, item)
 	}
 

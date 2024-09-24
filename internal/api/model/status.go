@@ -118,6 +118,10 @@ type WebStatus struct {
 	// Override API account with web account.
 	Account *WebAccount `json:"account"`
 
+	// Account that reblogged the status.
+	// needed to properly render reblogged statuses on profile pages.
+	ReblogAccount *WebAccount `json:"reblog_account"`
+
 	// Web version of media
 	// attached to this status.
 	MediaAttachments []*WebAttachment `json:"media_attachments"`
