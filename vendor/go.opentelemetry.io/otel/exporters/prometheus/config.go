@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/common/model"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/sdk/metric"
@@ -132,10 +131,7 @@ func WithoutScopeInfo() Option {
 // have special behavior based on their name.
 func WithNamespace(ns string) Option {
 	return optionFunc(func(cfg config) config {
-		if model.NameValidationScheme != model.UTF8Validation {
-			// Only sanitize if prometheus does not support UTF-8.
-			ns = model.EscapeName(ns, model.NameEscapingScheme)
-		}
+		ns = sanitizeName(ns)
 		if !strings.HasSuffix(ns, "_") {
 			// namespace and metric names should be separated with an underscore,
 			// adds a trailing underscore if there is not one already.
