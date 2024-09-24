@@ -123,8 +123,8 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		}
 
 		// Add each status to the rss feed.
-		for _, s := range statuses {
-			item, err := p.converter.StatusToRSSItem(ctx, s)
+		for _, status := range statuses {
+			item, err := p.converter.StatusToRSSItem(ctx, status)
 			if err != nil {
 				err = gtserror.Newf("error converting status to feed item: %w", err)
 				return "", gtserror.NewErrorInternalError(err)
