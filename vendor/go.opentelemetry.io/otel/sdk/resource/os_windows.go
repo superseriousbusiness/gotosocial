@@ -17,6 +17,7 @@ import (
 func platformOSDescription() (string, error) {
 	k, err := registry.OpenKey(
 		registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows NT\CurrentVersion`, registry.QUERY_VALUE)
+
 	if err != nil {
 		return "", err
 	}
