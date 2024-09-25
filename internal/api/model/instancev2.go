@@ -53,6 +53,8 @@ type InstanceV2 struct {
 	Description string `json:"description"`
 	// Raw (unparsed) version of description.
 	DescriptionText string `json:"description_text,omitempty"`
+	// Instance Custom Css
+	CustomCSS string `json:"custom_css,omitempty"`
 	// Basic anonymous usage data for this instance.
 	Usage InstanceV2Usage `json:"usage"`
 	// An image used to represent this instance.

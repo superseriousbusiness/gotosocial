@@ -59,7 +59,7 @@ func (m *Module) tagGETHandler(c *gin.Context) {
 		Template:    "tag.tmpl",
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
-		Stylesheets: []string{cssFA, cssThread, cssTag},
+		Stylesheets: []string{cssFA, cssThread, cssTag, instanceCustomCSSPath},
 		Extra:       map[string]any{"tagName": tagName},
 	}
 

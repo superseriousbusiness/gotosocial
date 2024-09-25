@@ -38,6 +38,8 @@ type InstanceV1 struct {
 	//
 	// This should be displayed on the 'about' page for an instance.
 	Description string `json:"description"`
+	// Custom CSS for the instance.
+	CustomCSS string `json:"custom_css,omitempty"`
 	// Raw (unparsed) version of description.
 	DescriptionText string `json:"description_text,omitempty"`
 	// A shorter description of the instance.

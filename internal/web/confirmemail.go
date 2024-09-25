@@ -127,8 +127,9 @@ func (m *Module) confirmEmailPOSTHandler(c *gin.Context) {
 	// Serve page informing user that their
 	// email address is now confirmed.
 	page := apiutil.WebPage{
-		Template: "confirmed_email.tmpl",
-		Instance: instance,
+		Template:    "confirmed_email.tmpl",
+		Instance:    instance,
+		Stylesheets: []string{instanceCustomCSSPath},
 		Extra: map[string]any{
 			"email":    user.Email,
 			"username": user.Account.Username,
