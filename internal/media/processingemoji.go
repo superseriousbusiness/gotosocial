@@ -216,10 +216,18 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		"png",
 	)
 
+	// Get mimetype for the file container
+	// type, falling back to generic data.
+	p.emoji.ImageContentType = getMimeType(ext)
+
+	// Set the known emoji static content type.
+	p.emoji.ImageStaticContentType = "image/png"
+
 	// Copy temporary file into storage at path.
 	filesz, err := p.mgr.state.Storage.PutFile(ctx,
 		p.emoji.ImagePath,
 		temppath,
+		p.emoji.ImageContentType,
 	)
 	if err != nil {
 		return gtserror.Newf("error writing emoji to storage: %w", err)
@@ -229,6 +237,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	staticsz, err := p.mgr.state.Storage.PutFile(ctx,
 		p.emoji.ImageStaticPath,
 		staticpath,
+		p.emoji.ImageStaticContentType,
 	)
 	if err != nil {
 		return gtserror.Newf("error writing static to storage: %w", err)
@@ -255,13 +264,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		pathID,
 		"png",
 	)
-
-	// Get mimetype for the file container
-	// type, falling back to generic data.
-	p.emoji.ImageContentType = getMimeType(ext)
-
-	// Set the known emoji static content type.
-	p.emoji.ImageStaticContentType = "image/png"
 
 	// We can now consider this cached.
 	p.emoji.Cached = util.Ptr(true)
