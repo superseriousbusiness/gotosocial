@@ -21,7 +21,7 @@ require (
 	codeberg.org/gruf/go-mutexes v1.5.1
 	codeberg.org/gruf/go-runners v1.6.2
 	codeberg.org/gruf/go-sched v1.2.3
-	codeberg.org/gruf/go-storage v0.1.2
+	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.8.9
 	codeberg.org/superseriousbusiness/exif-terminator v0.9.0
 	github.com/DmitriyVTitov/size v1.5.0
@@ -42,7 +42,7 @@ require (
 	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/miekg/dns v1.1.62
-	github.com/minio/minio-go/v7 v7.0.76
+	github.com/minio/minio-go/v7 v7.0.77
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.18.3
 	github.com/oklog/ulid v1.3.1
