@@ -1,0 +1,779 @@
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media/prune	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/config	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/server	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/testrig	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/process-emoji	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/cmd/process-media	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/docs	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/activitypub/publickey	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/apps	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/blocks	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/conversations	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/customemojis	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/featuredtags	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/interactionpolicies	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/interactionrequests	[no test files]
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+--- FAIL: TestExtractAttachmentsTestSuite (0.00s)
+    --- FAIL: TestExtractAttachmentsTestSuite/TestExtractAttachmentMissingURL (0.00s)
+        extractattachments_test.go:39: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/ap/extractattachments_test.go:39
+            	Error:      	Error message not equal:
+            	            	expected: "ExtractAttachment: error extracting attachment URL: ExtractURL: no valid URL property found"
+            	            	actual  : "ap.ExtractAttachment: error extracting attachment URL: ap.ExtractURL: no valid URL property found"
+            	Test:       	TestExtractAttachmentsTestSuite/TestExtractAttachmentMissingURL
+--- FAIL: TestExtractMentionsTestSuite (0.00s)
+    --- FAIL: TestExtractMentionsTestSuite/TestExtractMentions (0.00s)
+        extractmentions_test.go:115: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/ap/extractmentions_test.go:115
+            	Error:      	
+            	Test:       	TestExtractMentionsTestSuite/TestExtractMentions
+            	Messages:   	test 4 expected error ExtractMention: neither Name nor Href were set, got ap.ExtractMention: neither Name nor Href were set
+--- FAIL: TestResolveTestSuite (0.01s)
+    --- FAIL: TestResolveTestSuite/TestResolveDocumentAsAccountable (0.00s)
+        resolve_test.go:52: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/ap/resolve_test.go:52
+            	Error:      	Error message not equal:
+            	            	expected: "ResolveAccountable: cannot resolve vocab type *typedocument.ActivityStreamsDocument as accountable"
+            	            	actual  : "gtserror.SetWrongType: cannot resolve vocab type *typedocument.ActivityStreamsDocument as accountable"
+            	Test:       	TestResolveTestSuite/TestResolveDocumentAsAccountable
+    --- FAIL: TestResolveTestSuite/TestResolveHTMLAsAccountable (0.00s)
+        resolve_test.go:64: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/ap/resolve_test.go:64
+            	Error:      	Error message not equal:
+            	            	expected: "ResolveAccountable: error decoding into json: invalid character '<' looking for beginning of value"
+            	            	actual  : "ap.ResolveAccountable: error decoding into json: invalid character '<' looking for beginning of value"
+            	Test:       	TestResolveTestSuite/TestResolveHTMLAsAccountable
+    --- FAIL: TestResolveTestSuite/TestResolveNonAPJSONAsAccountable (0.00s)
+        resolve_test.go:79: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/ap/resolve_test.go:79
+            	Error:      	Error message not equal:
+            	            	expected: "ResolveAccountable: error resolving json into ap vocab type: activity stream did not match any known types"
+            	            	actual  : "ap.ResolveAccountable: error resolving json into ap vocab type: activity stream did not match any known types"
+            	Test:       	TestResolveTestSuite/TestResolveNonAPJSONAsAccountable
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/ap	24.089s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/markers	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/activitypub/emoji	30.719s
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/preferences	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/client/timelines	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/health	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/model	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/nodeinfo	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/metrics	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/wellknown/hostmeta	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users	97.335s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/auth	43.113s
+?   	github.com/superseriousbusiness/gotosocial/internal/cache	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/config/gen	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220315160814_admin_account_actions	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220214175650_media_cleanup	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220905150505_custom_emoji_updates	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230328203024_migration_fix	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20230521105850_emoji_empty_domain_fix	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240318115336_account_settings	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240715204203_media_pipeline_improvements	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/postgres	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/sqlite	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/db/test	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/filter/interaction	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/filter/status	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/filter/usermute	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/gtscontext	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/gtsmodel	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/headerfilter	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/id	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/iotools	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/metrics	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/oidc	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/advancedmigrations	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/common	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/fedi	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/filters/v1	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/filters/v2	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/list	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/markers	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/report	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/search	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/processing/tags	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/queue	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/regexes	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/scheduler	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/state	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/storage	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/stream	[no test files]
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:12.359" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:32:15.273" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:20.488" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:23.007" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:25.370" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:27.220" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:29.298" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:31.369" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:32:33.189" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:38.184" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:43.378" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:48.202" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:52.291" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:32:56.943" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:00.848" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:05.330" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:09.964" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:12.360" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:15.274" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:15.542" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:18.831" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:20.488" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:20.869" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:22.563" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:23.008" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:24.306" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:25.371" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:25.750" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:27.221" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:27.651" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:29.299" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:29.471" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:31.217" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:31.373" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:33.110" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:33.190" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:36.022" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+--- FAIL: TestMuteTestSuite (18.05s)
+    --- FAIL: TestMuteTestSuite/TestPostMuteNonexistentAccount (2.24s)
+        mute_test.go:167: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/accounts/mute_test.go:167
+            	Error:      	accounts_test.(*MuteTestSuite).postMute: expected {"error":"Not Found: getMuteTarget: target account not_even_a_real_ULID not found in the db"} got {"error":"Not Found: account.(*Processor).getMuteTarget: target account not_even_a_real_ULID not found in the db"}
+            	Test:       	TestMuteTestSuite/TestPostMuteNonexistentAccount
+    --- FAIL: TestMuteTestSuite/TestPostMuteSelf (2.29s)
+        mute_test.go:159: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/accounts/mute_test.go:159
+            	Error:      	accounts_test.(*MuteTestSuite).postMute: expected {"error":"Not Acceptable: getMuteTarget: account 01F8MH1H7YV1Z7D2C8K2730QBF cannot mute or unmute itself"} got {"error":"Not Acceptable: account.(*Processor).getMuteTarget: account 01F8MH1H7YV1Z7D2C8K2730QBF cannot mute or unmute itself"}
+            	Test:       	TestMuteTestSuite/TestPostMuteSelf
+    --- FAIL: TestMuteTestSuite/TestPostUnmuteNonexistentAccount (1.95s)
+        unmute_test.go:134: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/accounts/unmute_test.go:134
+            	Error:      	accounts_test.(*MuteTestSuite).postUnmute: expected {"error":"Not Found: getMuteTarget: target account not_even_a_real_ULID not found in the db"} got {"error":"Not Found: account.(*Processor).getMuteTarget: target account not_even_a_real_ULID not found in the db"}
+            	Test:       	TestMuteTestSuite/TestPostUnmuteNonexistentAccount
+    --- FAIL: TestMuteTestSuite/TestPostUnmuteSelf (1.31s)
+        unmute_test.go:126: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/api/client/accounts/unmute_test.go:126
+            	Error:      	accounts_test.(*MuteTestSuite).postUnmute: expected {"error":"Not Acceptable: getMuteTarget: account 01F8MH1H7YV1Z7D2C8K2730QBF cannot mute or unmute itself"} got {"error":"Not Acceptable: account.(*Processor).getMuteTarget: account 01F8MH1H7YV1Z7D2C8K2730QBF cannot mute or unmute itself"}
+            	Test:       	TestMuteTestSuite/TestPostUnmuteSelf
+timestamp="26/09/2024 14:33:38.184" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:40.438" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:43.383" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:44.381" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:47.793" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:48.203" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:50.888" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:52.293" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:54.295" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:56.483" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:56.943" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:33:58.039" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:33:59.822" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:34:00.854" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:34:01.888" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:34:04.246" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:34:05.333" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:34:05.785" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:34:07.895" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+timestamp="26/09/2024 14:34:09.581" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:34:09.967" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+timestamp="26/09/2024 14:34:11.529" func=oauth.newTokenStore.func1 level=ERROR msg="error while sweeping oauth entries: sql: database is closed"
+[GIN-debug] [WARNING] Running in "debug" mode. Switch to "release" mode in production.
+ - using env:	export GIN_MODE=release
+ - using code:	gin.SetMode(gin.ReleaseMode)
+
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/api/client/accounts	209.116s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/admin	145.414s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks	42.507s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/exports	30.428s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/favourites	33.112s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v1	104.994s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v2	188.560s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/followedtags	34.604s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests	55.681s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/import	31.729s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/instance	92.859s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/lists	39.447s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/media	62.981s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/mutes	43.428s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/notifications	49.298s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/polls	49.619s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/reports	87.168s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/search	126.700s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/statuses	132.248s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/streaming	47.987s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/tags	56.642s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/client/user	61.558s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/fileserver	41.295s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/util	0.063s
+ok  	github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger	40.428s
+ok  	github.com/superseriousbusiness/gotosocial/internal/cache/domain	0.003s
+ok  	github.com/superseriousbusiness/gotosocial/internal/cleaner	46.636s
+ok  	github.com/superseriousbusiness/gotosocial/internal/config	29.079s
+?   	github.com/superseriousbusiness/gotosocial/internal/tracing	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/trans/model	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/uris	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/web	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/internal/workers	[no test files]
+?   	github.com/superseriousbusiness/gotosocial/testrig	[no test files]
+ok  	github.com/superseriousbusiness/gotosocial/internal/db/bundb	161.948s
+ok  	github.com/superseriousbusiness/gotosocial/internal/email	29.949s
+ok  	github.com/superseriousbusiness/gotosocial/internal/federation	72.541s
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+timestamp="26/09/2024 14:33:37.371" func=dereferencing.(*Dereferencer).RefreshAccount level=ERROR msg="error enriching remote account: dereferencing.(*Dereferencer).enrichAccount: account https://turnip.farm/users/turniplover6969 pubkey has changed (key rotation required?)"
+--- FAIL: TestAccountTestSuite (38.59s)
+    --- FAIL: TestAccountTestSuite/TestDereferenceRemoteAccountWithNonMatchingURI (2.91s)
+        account_test.go:235: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/federation/dereferencing/account_test.go:235
+            	Error:      	Not equal: 
+            	            	expected: "dereferencing.(*Dereferencer).enrichAccount: account uri https://turnip.farm/users/turniplover6969 does not match https://turnip.farm/users/turniphater420"
+            	            	actual  : "enrichAccount: account uri https://turnip.farm/users/turniplover6969 does not match https://turnip.farm/users/turniphater420"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-dereferencing.(*Dereferencer).enrichAccount: account uri https://turnip.farm/users/turniplover6969 does not match https://turnip.farm/users/turniphater420
+            	            	+enrichAccount: account uri https://turnip.farm/users/turniplover6969 does not match https://turnip.farm/users/turniphater420
+            	Test:       	TestAccountTestSuite/TestDereferenceRemoteAccountWithNonMatchingURI
+    --- FAIL: TestAccountTestSuite/TestDereferenceRemoteAccountWithUnexpectedKeyChange (2.72s)
+        account_test.go:274: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/federation/dereferencing/account_test.go:274
+            	Error:      	Not equal: 
+            	            	expected: "dereferencing.(*Dereferencer).RefreshAccount: dereferencing.(*Dereferencer).enrichAccount: account https://turnip.farm/users/turniplover6969 pubkey has changed (key rotation required?)"
+            	            	actual  : "RefreshAccount: enrichAccount: account https://turnip.farm/users/turniplover6969 pubkey has changed (key rotation required?)"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-dereferencing.(*Dereferencer).RefreshAccount: dereferencing.(*Dereferencer).enrichAccount: account https://turnip.farm/users/turniplover6969 pubkey has changed (key rotation required?)
+            	            	+RefreshAccount: enrichAccount: account https://turnip.farm/users/turniplover6969 pubkey has changed (key rotation required?)
+            	Test:       	TestAccountTestSuite/TestDereferenceRemoteAccountWithUnexpectedKeyChange
+--- FAIL: TestStatusTestSuite (14.01s)
+    --- FAIL: TestStatusTestSuite/TestDereferenceStatusWithNonMatchingURI (2.55s)
+        status_test.go:228: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/federation/dereferencing/status_test.go:228
+            	Error:      	Not equal: 
+            	            	expected: "dereferencing.(*Dereferencer).enrichStatus: dereferenced status uri https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042 does not match https://turnip.farm/users/turniphater420/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"
+            	            	actual  : "enrichStatus: dereferenced status uri https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042 does not match https://turnip.farm/users/turniphater420/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-dereferencing.(*Dereferencer).enrichStatus: dereferenced status uri https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042 does not match https://turnip.farm/users/turniphater420/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042
+            	            	+enrichStatus: dereferenced status uri https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042 does not match https://turnip.farm/users/turniphater420/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042
+            	Test:       	TestStatusTestSuite/TestDereferenceStatusWithNonMatchingURI
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing	84.059s
+ok  	github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb	35.455s
+ok  	github.com/superseriousbusiness/gotosocial/internal/filter/spam	22.505s
+ok  	github.com/superseriousbusiness/gotosocial/internal/filter/visibility	36.832s
+--- FAIL: TestMultiError (0.00s)
+    multi_test.go:51: errString 'sql: no rows in result set
+        oopsie woopsie we did a fucky wucky etc
+        gtserror_test.TestMultiError: appended + wrapped error: already exists' should be 'sql: no rows in result set
+        oopsie woopsie we did a fucky wucky etc
+        TestMultiError: appended + wrapped error: already exists'
+--- FAIL: TestResponseError (0.00s)
+    new_test.go:66: unexpected error string: recv="gtserror_test.testResponseError: GET request to https://google.com/users/sundar failed: status=\"404 Not Found\" body=\"{\"error\": \"user not found\"}\"" expct="toBody: GET request to https://google.com/users/sundar failed: status=\"404 Not Found\" body=\"{\"error\": \"user not found\"}\""
+    new_test.go:66: unexpected error string: recv="gtserror_test.testResponseError: POST request to https://google.com/inbox failed: status=\"401 Unauthorized\" body=\"Unauthorized\"" expct="toURL: POST request to https://google.com/inbox failed: status=\"401 Unauthorized\" body=\"Unauthorized\""
+    new_test.go:66: unexpected error string: recv="gtserror_test.testResponseError: GET request to https://google.com/users/sundar failed: status=\"404 Not Found\" body=\"<empty>\"" expct="TestResponseError: GET request to https://google.com/users/sundar failed: status=\"404 Not Found\" body=\"<empty>\""
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/gtserror	0.023s
+ok  	github.com/superseriousbusiness/gotosocial/internal/httpclient	0.027s
+ok  	github.com/superseriousbusiness/gotosocial/internal/language	0.008s
+ok  	github.com/superseriousbusiness/gotosocial/internal/log	20.502s
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+--- FAIL: TestManagerTestSuite (35.46s)
+    --- FAIL: TestManagerTestSuite/TestEmojiProcessTooLarge (2.21s)
+        manager_test.go:191: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/media/manager_test.go:191
+            	Error:      	Error message not equal:
+            	            	expected: "store: error draining data to tmp: reached read limit 630kiB"
+            	            	actual  : "media.(*ProcessingEmoji).store: error draining data to tmp: reached read limit 630kiB"
+            	Test:       	TestManagerTestSuite/TestEmojiProcessTooLarge
+    --- FAIL: TestManagerTestSuite/TestSimpleJpegProcessTooLarge (1.44s)
+        manager_test.go:325: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/media/manager_test.go:325
+            	Error:      	Error message not equal:
+            	            	expected: "store: error draining data to tmp: reached read limit 263kiB"
+            	            	actual  : "media.(*ProcessingMedia).store: error draining data to tmp: reached read limit 263kiB"
+            	Test:       	TestManagerTestSuite/TestSimpleJpegProcessTooLarge
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/media	62.240s
+ok  	github.com/superseriousbusiness/gotosocial/internal/messages	20.491s
+ok  	github.com/superseriousbusiness/gotosocial/internal/middleware	34.733s
+ok  	github.com/superseriousbusiness/gotosocial/internal/oauth	23.133s
+ok  	github.com/superseriousbusiness/gotosocial/internal/paging	0.051s
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+timestamp="26/09/2024 14:33:47.152" func=dereferencing.(*Dereferencer).RefreshAccount level=ERROR msg="error enriching remote account: gtserror.SetUnretrievable: error dereferencing http://fossbros-anonymous.io/users/foss_satan: transport.(*transport).Dereference: GET request to http://fossbros-anonymous.io/users/foss_satan failed: status=\"\" body=\"{\"error\":\"404 not found\"}\""
+--- FAIL: TestParseMentionTestSuite (2.55s)
+    --- FAIL: TestParseMentionTestSuite/TestParseMentionFunc (2.55s)
+        parsemention_test.go:77: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/processing/parsemention_test.go:77
+            	Error:      	Error message not equal:
+            	            	expected: "error fetching mention remote target account: enrichAccount: error webfingering account: fingerRemoteAccount: error webfingering @foss_satan@aaaaaaaaaaaaaaaaaaa.example.org: failed to discover webfinger URL fallback for: aaaaaaaaaaaaaaaaaaa.example.org through host-meta: GET request for https://aaaaaaaaaaaaaaaaaaa.example.org/.well-known/host-meta failed: "
+            	            	actual  : "error fetching mention remote target account: gtserror.SetUnretrievable: error webfingering account: dereferencing.(*Dereferencer).fingerRemoteAccount: error webfingering @foss_satan@aaaaaaaaaaaaaaaaaaa.example.org: failed to discover webfinger URL fallback for: aaaaaaaaaaaaaaaaaaa.example.org through host-meta: GET request for https://aaaaaaaaaaaaaaaaaaa.example.org/.well-known/host-meta failed: "
+            	Test:       	TestParseMentionTestSuite/TestParseMentionFunc
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/processing	29.515s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/account	59.020s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/admin	54.655s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/conversations	34.375s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/interactionrequests	29.179s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/media	37.461s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/polls	26.017s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/status	43.373s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/stream	30.152s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/timeline	29.767s
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+--- FAIL: TestChangePasswordTestSuite (2.14s)
+    --- FAIL: TestChangePasswordTestSuite/TestChangePasswordIncorrectOld (0.65s)
+        password_test.go:57: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/processing/user/password_test.go:57
+            	Error:      	Error message not equal:
+            	            	expected: "PasswordChange: crypto/bcrypt: hashedPassword is not the hash of the given password"
+            	            	actual  : "user.(*Processor).PasswordChange: crypto/bcrypt: hashedPassword is not the hash of the given password"
+            	Test:       	TestChangePasswordTestSuite/TestChangePasswordIncorrectOld
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/processing/user	30.212s
+ok  	github.com/superseriousbusiness/gotosocial/internal/processing/workers	127.154s
+ok  	github.com/superseriousbusiness/gotosocial/internal/router	0.039s
+ok  	github.com/superseriousbusiness/gotosocial/internal/text	43.435s
+ok  	github.com/superseriousbusiness/gotosocial/internal/timeline	22.229s
+ok  	github.com/superseriousbusiness/gotosocial/internal/trans	14.287s
+ok  	github.com/superseriousbusiness/gotosocial/internal/transport	16.821s
+ok  	github.com/superseriousbusiness/gotosocial/internal/transport/delivery	1.457s
+testrig: precompiling ffmpeg WASM
+testrig: precompiling ffprobe WASM
+
+
+
+{"id":"01G42D57DTCJQE8XT9KD4K88RK","username":"rgh","acct":"rgh@owncast.example.org","display_name":"Rob's Owncast Server","locked":false,"discoverable":true,"bot":true,"created_at":"2022-05-22T18:44:57.000Z","note":"linux audio stuff","url":"https://owncast.example.org/federation/user/rgh","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.webp","header_static":"http://localhost:8080/assets/default_header.webp","followers_count":0,"following_count":0,"statuses_count":0,"last_status_at":null,"emojis":[],"fields":[{"name":"Stream","value":"\u003ca href=\"https://owncast.example.org\" rel=\"me nofollow noopener noreferrer\" target=\"_blank\"\u003ehttps://owncast.example.org\u003c/a\u003e","verified_at":null}]}
+
+
+--- FAIL: TestASToInternalTestSuite (12.83s)
+    --- FAIL: TestASToInternalTestSuite/TestParseAccountableWithoutAnyUsername (0.78s)
+        astointernal_test.go:686: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/typeutils/astointernal_test.go:686
+            	Error:      	Not equal: 
+            	            	expected: "gtserror.SetMalformed: missing username for https://unknown-instance.com/users/brand_new_person"
+            	            	actual  : "ASRepresentationToAccount: missing username for https://unknown-instance.com/users/brand_new_person"
+            	            	
+            	            	Diff:
+            	            	--- Expected
+            	            	+++ Actual
+            	            	@@ -1 +1 @@
+            	            	-gtserror.SetMalformed: missing username for https://unknown-instance.com/users/brand_new_person
+            	            	+ASRepresentationToAccount: missing username for https://unknown-instance.com/users/brand_new_person
+            	Test:       	TestASToInternalTestSuite/TestParseAccountableWithoutAnyUsername
+    --- FAIL: TestASToInternalTestSuite/TestParseFlag3 (0.72s)
+        astointernal_test.go:375: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/typeutils/astointernal_test.go:375
+            	Error:      	Error message not equal:
+            	            	expected: "ASFlagToReport: error getting target account http://localhost:8080/users/mr_e_man from database: sql: no rows in result set"
+            	            	actual  : "typeutils.(*Converter).ASFlagToReport: error getting target account http://localhost:8080/users/mr_e_man from database: sql: no rows in result set"
+            	Test:       	TestASToInternalTestSuite/TestParseFlag3
+    --- FAIL: TestASToInternalTestSuite/TestParseFlag4 (0.60s)
+        astointernal_test.go:400: 
+            	Error Trace:	/home/kim/Projects/main/gts.4/internal/typeutils/astointernal_test.go:400
+            	Error:      	Error message not equal:
+            	            	expected: "ASFlagToReport: missing target account uri for http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d"
+            	            	actual  : "gtserror.SetMalformed: missing target account uri for http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d"
+            	Test:       	TestASToInternalTestSuite/TestParseFlag4
+FAIL
+FAIL	github.com/superseriousbusiness/gotosocial/internal/typeutils	61.185s
+ok  	github.com/superseriousbusiness/gotosocial/internal/util	11.113s
+ok  	github.com/superseriousbusiness/gotosocial/internal/validate	0.012s
+FAIL

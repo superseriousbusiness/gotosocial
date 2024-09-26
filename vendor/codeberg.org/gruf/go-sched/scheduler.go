@@ -225,7 +225,7 @@ func (sch *Scheduler) handle(v interface{}) {
 
 		// Update the next call time
 		next := v.timing.Next(now)
-		v.next.Store(next)
+		storeTime(&v.next, next)
 
 		// Append this job to queued
 		sch.jobs = append(sch.jobs, v)
@@ -261,7 +261,7 @@ func (sch *Scheduler) schedule(now time.Time) {
 
 		// Update the next call time
 		next := job.timing.Next(now)
-		job.next.Store(next)
+		storeTime(&job.next, next)
 
 		if next.IsZero() {
 			// Zero time, this job is done and can be dropped

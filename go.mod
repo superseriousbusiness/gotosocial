@@ -19,8 +19,8 @@ require (
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 	codeberg.org/gruf/go-mimetypes v1.2.0
 	codeberg.org/gruf/go-mutexes v1.5.1
-	codeberg.org/gruf/go-runners v1.6.2
-	codeberg.org/gruf/go-sched v1.2.3
+	codeberg.org/gruf/go-runners v1.6.3
+	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.8.9
 	codeberg.org/superseriousbusiness/exif-terminator v0.9.0
@@ -85,8 +85,6 @@ require (
 )
 
 require (
-	codeberg.org/gruf/go-atomics v1.1.0 // indirect
-	codeberg.org/gruf/go-bitutil v1.1.0 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-mangler v1.4.1 // indirect
 	codeberg.org/gruf/go-maps v1.0.3 // indirect
