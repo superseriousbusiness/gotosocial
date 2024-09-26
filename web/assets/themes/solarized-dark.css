@@ -29,40 +29,29 @@
 
 :root {
   /* Define solarized palette */
-  --base3:     #002b36;
-  --base2:     #073642;
-  --base1:     #586e75;
-  --base0:     #657b83;
-  --base00:    #839496;
-  --base01:    #93a1a1;
-  --base02:    #eee8d5;
-  --base03:    #fdf6e3;
-  --yellow:    #b58900;
-  --orange:    #cb4b16;
-  --red:       #dc322f;
-  --magenta:   #d33682;
-  --violet:    #6c71c4;
-  --blue:      #268bd2;
-  --cyan:      #2aa198;
-  --green:     #859900;
+  --base03:    #002b36; /* Background. */
+  --base02:    #073642; /* Background highlights. */
+  --base01:    #586e75; /* Comments / secondary color. */
+  --base0:     #839496; /* Body text / default code / primary content. */
+  --base1:     #93a1a1; /* Optional emphasized content. */
+  --red:       #dc322f; /* Trim. */
 
   /* Override orange trim */
   --orange2: var(--red);
 
   /* Restyle basic colors to use Solarized */
-  --white1: var(--base3);
-  --white2: var(--base2);
-  --blue1: var(--cyan);
-  --blue2: var(--base03);
-  --blue3: var(--base02);
+  --white1: var(--base02);
+  --white2: var(--base03);
+  --blue2: var(--base0);
+  --blue3: var(--base1);
 
   /* Basic page styling (background + foreground) */
   --bg: var(--white1);
   --bg-accent: var(--white2);
-  --fg: var(--base02);
-  --fg-reduced: var(--base01);
+  --fg-reduced: var(--base0);
+  --fg: var(--base1);
 
-  /* Profile page styling (light) */
+  /* Profile page styling */
   --profile-bg: var(--white2);
 
   /* Solarize buttons */
@@ -76,10 +65,10 @@
   --status-focus-info-bg: var(--white2);
 
   /* Used around statuses + other items */
-  --boxshadow-border: 0.1rem solid var(--base1);
+  --boxshadow-border: 0.15rem solid var(--base01);
 
-  --plyr-video-control-color: var(--fg-reduced);
-  --plyr-video-control-color-hover: var(--fg);
+  --plyr-video-control-color: var(--fg);
+  --plyr-video-control-color-hover: var(--fg-reduced);
 }
 
 @font-face {
@@ -108,7 +97,7 @@ html, body {
   border: var(--boxshadow-border);
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
-  color: var(--blue2);
+  color: var(--base01);
 }
 .status .media .media-wrapper details video.plyr-video {
   background: transparent;
@@ -126,22 +115,38 @@ html, body {
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
   background-color: black;
-  color: var(--base03);
+  color: #93a1a1;
 }
 
 /* Block quotes */
 blockquote {
-  background-color: var(--bg-accent);
-  color: var(--fg);
+  background-color: var(--base03);
+  color: var(--base0);
 }
 
-button,
-.button,
+button, .button,
 .status .text-spoiler > summary .button {
   font-family: 'Noto Sans Mono', monospace;
+}
+
+.button {
+  color: var(--base0);
+  background: var(--base03);
+  border: var(--boxshadow-border);
+}
+
+.button:hover {
+  color: var(--base1);
+  background: var(--base02);
+  border: var(--boxshadow-border);
 }
 
 /* Ensure role badge readable */
 .profile .profile-header .basic-info .namerole .role.admin {
   color: var(--base03);
+}
+
+.col-header a {
+  font-size: 1.2rem;
+  font-weight: bold;
 }
