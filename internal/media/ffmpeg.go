@@ -381,11 +381,19 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 			return gtsmodel.FileTypeAudio, "wma"
 		}
 	case "ogg":
-		switch {
-		case len(res.video) > 0:
-			return gtsmodel.FileTypeVideo, "ogv"
-		case len(res.audio) > 0:
-			return gtsmodel.FileTypeAudio, "ogg"
+		if len(res.video) > 0 {
+			switch res.video[0].codec {
+			case "theora", "dirac": // daala, tarkin
+				return gtsmodel.FileTypeVideo, "ogv"
+			}
+		}
+		if len(res.audio) > 0 {
+			switch res.audio[0].codec {
+			case "opus", "libopus":
+				return gtsmodel.FileTypeAudio, "opus"
+			default:
+				return gtsmodel.FileTypeAudio, "ogg"
+			}
 		}
 	case "matroska,webm":
 		switch {
