@@ -40,7 +40,19 @@ const (
 	notRelevantKey
 	spamKey
 	notPermittedKey
+	limitReachedKey
 )
+
+// LimitReached ...
+func LimitReached(err error) bool {
+	_, ok := errors.Value(err, limitReachedKey).(struct{})
+	return ok
+}
+
+// SetLimitReached ...
+func SetLimitReached(err error) error {
+	return errors.WithValue(err, limitReachedKey, struct{}{})
+}
 
 // IsUnretrievable indicates that a call to retrieve a resource
 // (account, status, attachment, etc) could not be fulfilled, either

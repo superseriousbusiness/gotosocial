@@ -29,6 +29,7 @@ import (
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
 	"codeberg.org/gruf/go-mimetypes"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // file represents one file
@@ -144,7 +145,8 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 	// Check to see if limit was reached,
 	// (produces more useful error messages).
 	if lr != nil && !iotools.AtEOF(lr.R) {
-		return path, fmt.Errorf("reached read limit %s", bytesize.Size(limit))
+		err := fmt.Errorf("reached read limit %s", bytesize.Size(limit))
+		return path, gtserror.SetLimitReached(err)
 	}
 
 	return path, nil
