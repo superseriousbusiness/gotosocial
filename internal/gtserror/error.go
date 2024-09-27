@@ -43,13 +43,15 @@ const (
 	limitReachedKey
 )
 
-// LimitReached ...
+// LimitReached indicates that this error was caused by
+// some kind of limit being reached, e.g. media upload limit.
 func LimitReached(err error) bool {
 	_, ok := errors.Value(err, limitReachedKey).(struct{})
 	return ok
 }
 
-// SetLimitReached ...
+// SetLimitReached will wrap the given error to store a "limit reached"
+// flag, returning wrapped error. See LimitReached() for example use-cases.
 func SetLimitReached(err error) error {
 	return errors.WithValue(err, limitReachedKey, struct{}{})
 }
