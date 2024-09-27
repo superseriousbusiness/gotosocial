@@ -150,7 +150,7 @@ code, code[class*="language-"] {
 /* Block quotes */
 blockquote {
   background-color: var(--base3);
-  color: var(--base00);
+  color: var(--base01);
 }
 
 button, .button,
