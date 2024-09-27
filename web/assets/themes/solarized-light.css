@@ -1,6 +1,6 @@
 /*
-  theme-title: Solarized (dark)
-  theme-description: Solarized sloth (dark)
+  theme-title: Solarized light
+  theme-description: Beige and grey solarized theme with orange trim
 */
 
 /*
@@ -46,17 +46,13 @@
   --blue3: var(--base01);
 
   /* Basic page styling (background + foreground) */
-  --bg: var(--white1);
-  --bg-accent: var(--white2);
+  --bg: var(--base2);
+  --bg-accent: var(--base3);
   --fg-reduced: var(--base00);
   --fg: var(--base01);
 
   /* Profile page styling */
   --profile-bg: var(--white2);
-
-  /* Solarize buttons */
-  --button-bg: var(--blue2);
-  --button-fg: var(--white1);
 
   /* Solarize statuses */
   --status-bg: var(--white1);
@@ -65,7 +61,7 @@
   --status-focus-info-bg: var(--white2);
 
   /* Used around statuses + other items */
-  --boxshadow-border: 0.15rem solid var(--base1);
+  --boxshadow-border: 0.1rem solid var(--base1);
 
   --plyr-video-control-color: var(--fg);
   --plyr-video-control-color-hover: var(--fg-reduced);
@@ -84,6 +80,36 @@ html, body {
   scrollbar-color: var(--orange2) var(--white1) ;
 }
 
+/* Column headers */
+.col-header {
+  border: var(--boxshadow-border);
+  background: var(--base3);
+}
+
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Header card */
+.profile .profile-header {
+  border: var(--boxshadow-border);
+  background: var(--base3);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  background: var(--base3);
+  color: var(--base01);
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .accountstats {
+  border-bottom: var(--boxshadow-border);
+}
+
 /* Profile fields */
 .profile .about-user .fields .field {
   border-bottom: var(--boxshadow-border);
@@ -98,6 +124,7 @@ html, body {
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
   color: var(--base1);
+  border: 0.2rem dashed var(--base1);
 }
 .status .media .media-wrapper details video.plyr-video {
   background: transparent;
@@ -105,10 +132,12 @@ html, body {
 
 /* Status polls */
 .status .text .poll {
-  background-color: var(--white2);
+  background-color: var(--base3);
+  border: var(--boxshadow-border);
 }
 .status .text .poll .poll-info {
-  background-color: var(--white1);
+  background-color: var(--base3);
+  border: var(--boxshadow-border);
 }
 
 /* Code snippets */
@@ -121,7 +150,7 @@ code, code[class*="language-"] {
 /* Block quotes */
 blockquote {
   background-color: var(--base3);
-  color: var(--base00);
+  color: var(--base01);
 }
 
 button, .button,
@@ -131,22 +160,32 @@ button, .button,
 
 .button {
   color: var(--base01);
-  background: var(--base2);
+  background: var(--base3);
   border: var(--boxshadow-border);
 }
 
 .button:hover {
-  color: var(--base00);
-  background: var(--base3);
+  color: var(--base01);
+  background: var(--base2);
   border: var(--boxshadow-border);
 }
 
 /* Ensure role badge readable */
 .profile .profile-header .basic-info .namerole .role.admin {
-  color: var(--base3);
+  background: var(--base3);
+  color: var(--base01);
 }
 
-.col-header a {
-  font-size: 1.2rem;
-  font-weight: bold;
+/* Back + next links */
+.backnextlinks {
+  padding: 0.5rem;
+  background: var(--base3);
+  border: var(--boxshadow-border);
+  border-radius: var(--br);
+}
+
+.page-footer {
+  margin-top: 2rem;
+  background-color: var(--base3);
+  border-top: var(--boxshadow-border);
 }
