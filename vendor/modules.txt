@@ -7,8 +7,8 @@ codeberg.org/gruf/go-bytesize
 # codeberg.org/gruf/go-byteutil v1.3.0
 ## explicit; go 1.20
 codeberg.org/gruf/go-byteutil
-# codeberg.org/gruf/go-cache/v3 v3.5.7
-## explicit; go 1.19
+# codeberg.org/gruf/go-cache/v3 v3.6.1
+## explicit; go 1.20
 codeberg.org/gruf/go-cache/v3
 codeberg.org/gruf/go-cache/v3/simple
 codeberg.org/gruf/go-cache/v3/ttl
@@ -31,8 +31,8 @@ codeberg.org/gruf/go-ffmpreg/embed/ffprobe
 # codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 ## explicit; go 1.21
 codeberg.org/gruf/go-iotools
-# codeberg.org/gruf/go-kv v1.6.4
-## explicit; go 1.19
+# codeberg.org/gruf/go-kv v1.6.5
+## explicit; go 1.20
 codeberg.org/gruf/go-kv
 codeberg.org/gruf/go-kv/format
 # codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
@@ -41,8 +41,8 @@ codeberg.org/gruf/go-list
 # codeberg.org/gruf/go-mangler v1.4.1
 ## explicit; go 1.19
 codeberg.org/gruf/go-mangler
-# codeberg.org/gruf/go-maps v1.0.3
-## explicit; go 1.19
+# codeberg.org/gruf/go-maps v1.0.4
+## explicit; go 1.20
 codeberg.org/gruf/go-maps
 # codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 ## explicit; go 1.22.2
