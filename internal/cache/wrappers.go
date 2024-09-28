@@ -240,7 +240,3 @@ func (c *StructCache[T]) Len() int {
 func (c *StructCache[T]) Cap() int {
 	return c.cache.Cap()
 }
-
-func (c *StructCache[T]) Debug() map[string]any {
-	return c.cache.Debug()
-}
