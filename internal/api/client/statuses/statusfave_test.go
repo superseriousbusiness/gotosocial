@@ -293,6 +293,7 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
 		suite.FailNow(err.Error())
 	}
 	suite.False(*dbStatus.PendingApproval)
+	suite.NotEmpty(dbStatus.ApprovedByURI)
 
 	// There should be an Accept
 	// stored for the target status.

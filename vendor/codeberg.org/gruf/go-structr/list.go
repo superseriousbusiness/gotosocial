@@ -48,27 +48,17 @@ func free_list(list *list) {
 
 // push_front will push the given elem to front (head) of list.
 func (l *list) push_front(elem *list_elem) {
-	if l.len == 0 {
-		// Set new tail + head
-		l.head = elem
-		l.tail = elem
+	// Set new head.
+	oldHead := l.head
+	l.head = elem
 
-		// Link elem to itself
-		elem.next = elem
-		elem.prev = elem
-	} else {
-		oldHead := l.head
-
+	if oldHead != nil {
 		// Link to old head
 		elem.next = oldHead
 		oldHead.prev = elem
-
-		// Link up to tail
-		elem.prev = l.tail
-		l.tail.next = elem
-
-		// Set new head
-		l.head = elem
+	} else {
+		// First in list.
+		l.tail = elem
 	}
 
 	// Incr count
@@ -77,27 +67,17 @@ func (l *list) push_front(elem *list_elem) {
 
 // push_back will push the given elem to back (tail) of list.
 func (l *list) push_back(elem *list_elem) {
-	if l.len == 0 {
-		// Set new tail + head
-		l.head = elem
-		l.tail = elem
+	// Set new tail.
+	oldTail := l.tail
+	l.tail = elem
 
-		// Link elem to itself
-		elem.next = elem
-		elem.prev = elem
-	} else {
-		oldTail := l.tail
-
+	if oldTail != nil {
 		// Link to old tail
 		elem.prev = oldTail
 		oldTail.next = elem
-
-		// Link up to head
-		elem.next = l.head
-		l.head.prev = elem
-
-		// Set new tail
-		l.tail = elem
+	} else {
+		// First in list.
+		l.head = elem
 	}
 
 	// Incr count
@@ -105,52 +85,56 @@ func (l *list) push_back(elem *list_elem) {
 }
 
 // move_front will move given elem to front (head) of list.
+// if it is already at front this call is a no-op.
 func (l *list) move_front(elem *list_elem) {
+	if elem == l.head {
+		return
+	}
 	l.remove(elem)
 	l.push_front(elem)
 }
 
-// move_back will move given elem to back (tail) of list.
+// move_back will move given elem to back (tail) of list,
+// if it is already at back this call is a no-op.
 func (l *list) move_back(elem *list_elem) {
+	if elem == l.tail {
+		return
+	}
 	l.remove(elem)
 	l.push_back(elem)
 }
 
 // remove will remove given elem from list.
 func (l *list) remove(elem *list_elem) {
-	if l.len <= 1 {
-		// Drop elem's links
-		elem.next = nil
-		elem.prev = nil
-
-		// Only elem in list
-		l.head = nil
-		l.tail = nil
-		l.len = 0
-		return
-	}
-
-	// Get surrounding elems
+	// Get linked elems.
 	next := elem.next
 	prev := elem.prev
 
-	// Relink chain
-	next.prev = prev
-	prev.next = next
-
-	switch elem {
-	// Set new head
-	case l.head:
-		l.head = next
-
-	// Set new tail
-	case l.tail:
-		l.tail = prev
-	}
-
-	// Drop elem's links
+	// Unset elem.
 	elem.next = nil
 	elem.prev = nil
+
+	switch {
+	// elem is ONLY one in list.
+	case next == nil && prev == nil:
+		l.head = nil
+		l.tail = nil
+
+	// elem is front in list.
+	case next != nil && prev == nil:
+		l.head = next
+		next.prev = nil
+
+	// elem is last in list.
+	case prev != nil && next == nil:
+		l.tail = prev
+		prev.next = nil
+
+	// elem in middle of list.
+	default:
+		next.prev = prev
+		prev.next = next
+	}
 
 	// Decr count
 	l.len--
@@ -161,9 +145,11 @@ func (l *list) rangefn(fn func(*list_elem)) {
 	if fn == nil {
 		panic("nil fn")
 	}
-	elem := l.head
-	for i := 0; i < l.len; i++ {
-		fn(elem)
-		elem = elem.next
+	for e := l.head; //
+	e != nil;        //
+	{
+		n := e.next
+		fn(e)
+		e = n
 	}
 }

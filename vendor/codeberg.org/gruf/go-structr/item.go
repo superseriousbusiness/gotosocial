@@ -50,12 +50,9 @@ func (i *indexed_item) drop_index(entry *index_entry) {
 			continue
 		}
 
-		// Unset tptr value to
-		// ensure GC can take it.
-		i.indexed[x] = nil
-
 		// Move all index entries down + reslice.
 		_ = copy(i.indexed[x:], i.indexed[x+1:])
+		i.indexed[len(i.indexed)-1] = nil
 		i.indexed = i.indexed[:len(i.indexed)-1]
 		break
 	}
