@@ -575,8 +575,9 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 	item.data = value
 
 	if index != nil {
-		// Append item to index.
-		index.append(key, item)
+		// Append item to index a key
+		// was already generated for.
+		index.append(&c.lru, key, item)
 	}
 
 	// Get ptr to value data.
@@ -607,8 +608,8 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 			continue
 		}
 
-		// Append item to index.
-		idx.append(key, item)
+		// Append item to this index.
+		idx.append(&c.lru, key, item)
 	}
 
 	// Add item to main lru list.
@@ -645,8 +646,9 @@ func (c *Cache[T]) store_error(index *Index, key string, err error) {
 	// Set error val.
 	item.data = err
 
-	// Append item to index.
-	index.append(key, item)
+	// Append item to index a key
+	// was already generated for.
+	index.append(&c.lru, key, item)
 
 	// Add item to main lru list.
 	c.lru.push_front(&item.elem)

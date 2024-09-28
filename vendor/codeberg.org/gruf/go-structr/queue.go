@@ -308,8 +308,8 @@ func (q *Queue[T]) index(value T) *indexed_item {
 			continue
 		}
 
-		// Append item to index.
-		idx.append(key, item)
+		// Append item to this index.
+		idx.append(&q.queue, key, item)
 	}
 
 	// Done with buf.
