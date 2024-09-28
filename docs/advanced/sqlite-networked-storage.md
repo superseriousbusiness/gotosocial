@@ -9,11 +9,11 @@ SQLite's operating model assumes the database and the processes or applications 
 
 This also means that any other processes accessing the database need to run in the same namespace or container context.
 
-It is in theory possible to run SQLite over Samba, NFS, iSCSI or other forms of filesystems accessed over the network. But it is neither recommended nor supported by the SQLite maintainers, irrespective of whether you're running with write-ahead logging or not. Doing so puts you at risk of database corruption.
+It is in theory possible to run SQLite over Samba, NFS, iSCSI or other forms of filesystems accessed over the network. But it is neither recommended nor supported by the SQLite maintainers, irrespective of whether you're running with write-ahead logging or not. Doing so puts you at risk of database corruption. There is a long history of networked storage having synchronisation issues in their locking primitives, or implementing them with weaker guarantees than what a local filesystem can provide.
 
 Your cloud provider's external volumes, like Hetzner Cloud Volumes, AWS EBS, GCP Persistent Disk etc. may also cause problems, and add variable latency. This has a tendency to severely degrade SQLite's performance.
 
-If you're going to introduce network latency as part of accessing the database, it's better to use a database designed for this operating model. GoToSocial supports Postgres for such use-cases.
+If you're going to access your database over the network, it's better to use a database with a client-server architecture. GoToSocial supports Postgres for such use-cases.
 
 For the purpose of having a copy of the SQLite database on durable long-term storage, refer to [SQLite streaming replication](replicating-sqlite.md) instead. Remember that neither replication nor using a networked filesystem are a substitute [for having backups](../admin/backup_and_restore.md).
 
