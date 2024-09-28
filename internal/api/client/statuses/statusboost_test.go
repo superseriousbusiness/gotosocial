@@ -591,7 +591,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
     "text": "Hi @1happyturtle, can I reply?",
     "uri": "http://localhost:8080/some/determinate/url",
     "url": "http://localhost:8080/some/determinate/url",
-    "visibility": "unlisted"
+    "visibility": "public"
   },
   "reblogged": true,
   "reblogs_count": 0,
@@ -601,7 +601,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
   "tags": [],
   "uri": "http://localhost:8080/some/determinate/url",
   "url": "http://localhost:8080/some/determinate/url",
-  "visibility": "unlisted"
+  "visibility": "public"
 }`, out)
 
 	// Target status should no

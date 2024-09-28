@@ -74,7 +74,8 @@ func (suite *TimelineTestSuite) publicCount() int {
 	var publicCount int
 	for _, status := range suite.testStatuses {
 		if status.Visibility == gtsmodel.VisibilityPublic &&
-			status.BoostOfID == "" {
+			status.BoostOfID == "" &&
+			!util.PtrOrZero(status.PendingApproval) {
 			publicCount++
 		}
 	}
