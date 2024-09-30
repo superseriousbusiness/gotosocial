@@ -10,7 +10,7 @@ as well as direct access to most of the [C SQLite API](https://sqlite.org/cintro
 
 It wraps a [Wasm](https://webassembly.org/) [build](embed/) of SQLite,
 and uses [wazero](https://wazero.io/) as the runtime.\
-Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ runtime dependencies [^1].
+Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ runtime dependencies.
 
 ### Getting started
 
@@ -49,6 +49,8 @@ db.QueryRow(`SELECT sqlite_version()`).Scan(&version)
   simplifies [incremental BLOB I/O](https://sqlite.org/c3ref/blob_open.html).
 - [`github.com/ncruces/go-sqlite3/ext/bloom`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/bloom)
   provides a [Bloom filter](https://github.com/nalgeon/sqlean/issues/27#issuecomment-1002267134) virtual table.
+- [`github.com/ncruces/go-sqlite3/ext/closure`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/closure)
+  provides a transitive closure virtual table.
 - [`github.com/ncruces/go-sqlite3/ext/csv`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/csv)
   reads [comma-separated values](https://sqlite.org/csv.html).
 - [`github.com/ncruces/go-sqlite3/ext/fileio`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/fileio)
@@ -108,7 +110,7 @@ It also benefits greatly from [SQLite's](https://sqlite.org/testing.html) and
 [wazero's](https://tetrate.io/blog/introducing-wazero-from-tetrate/#:~:text=Rock%2Dsolid%20test%20approach) thorough testing.
 
 Every commit is [tested](https://github.com/ncruces/go-sqlite3/wiki/Test-matrix) on
-Linux (amd64/arm64/386/riscv64/s390x), macOS (amd64/arm64),
+Linux (amd64/arm64/386/riscv64/ppc64le/s390x), macOS (amd64/arm64),
 Windows (amd64), FreeBSD (amd64), OpenBSD (amd64), NetBSD (amd64),
 illumos (amd64), and Solaris (amd64).
 
@@ -129,6 +131,3 @@ The Wasm and VFS layers are also tested by running SQLite's
 - [`crawshaw.io/sqlite`](https://pkg.go.dev/crawshaw.io/sqlite)
 - [`github.com/mattn/go-sqlite3`](https://pkg.go.dev/github.com/mattn/go-sqlite3)
 - [`github.com/zombiezen/go-sqlite`](https://pkg.go.dev/github.com/zombiezen/go-sqlite)
-
-[^1]: anything else you find in `go.mod` is either a test dependency,
-      or needed by one of the extensions.

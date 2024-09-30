@@ -1,4 +1,4 @@
-//go:build (amd64 || arm64 || riscv64) && !sqlite3_nosys
+//go:build (amd64 || arm64 || riscv64 || ppc64le) && !sqlite3_nosys
 
 package vfs
 
@@ -9,6 +9,7 @@ import (
 )
 
 const (
+	// https://godbolt.org/z/1PcK5vea3
 	_F2FS_IOC_START_ATOMIC_WRITE  = 62721
 	_F2FS_IOC_COMMIT_ATOMIC_WRITE = 62722
 	_F2FS_IOC_ABORT_ATOMIC_WRITE  = 62725

@@ -302,7 +302,7 @@ func (c *Conn) SoftHeapLimit(n int64) int64 {
 	return int64(c.call("sqlite3_soft_heap_limit64", uint64(n)))
 }
 
-// SoftHeapLimit imposes a hard limit on heap size.
+// HardHeapLimit imposes a hard limit on heap size.
 //
 // https://sqlite.org/c3ref/hard_heap_limit64.html
 func (c *Conn) HardHeapLimit(n int64) int64 {
