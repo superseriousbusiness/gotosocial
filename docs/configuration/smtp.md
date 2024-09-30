@@ -8,6 +8,18 @@ In order to make GoToSocial email sending work, you need an smtp-compatible mail
 
 To validate your configuration, you can use the "Administration -> Actions -> Email" section of the settings panel to send a test email.
 
+!!! warning
+    Pending an smtp library update, currently only email providers that work with STARTTLS will work with GoToSocial. STARTTLS is generally available over **port 587**.
+    
+    For more info, see:
+
+    - [STARTTLS vs SSL vs TLS](https://mailtrap.io/blog/starttls-ssl-tls/)
+    - [Understanding Ports](https://www.mailgun.com/blog/email/which-smtp-port-understanding-ports-25-465-587/)
+    - [Port 587](https://www.mailgun.com/blog/deliverability/smtp-port-587/)
+
+!!! info
+    For safety reasons, the smtp library used by GoToSocial will refuse to send authentication credentials over an unencrypted connection, unless the mail provider is running on localhost.
+
 ## Settings
 
 The configuration options for smtp are as follows:
@@ -26,6 +38,7 @@ The configuration options for smtp are as follows:
 smtp-host: ""
 
 # Int. Port to use to connect to the smtp server.
+# In the majority of cases, you should use port 587.
 # Examples: []
 # Default: 0
 smtp-port: 0

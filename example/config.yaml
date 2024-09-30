@@ -817,6 +817,7 @@ oidc-admin-groups: []
 smtp-host: ""
 
 # Int. Port to use to connect to the smtp server.
+# In the majority of cases, you should use port 587.
 # Examples: []
 # Default: 0
 smtp-port: 0
