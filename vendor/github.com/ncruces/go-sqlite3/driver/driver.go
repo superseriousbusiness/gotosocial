@@ -578,7 +578,14 @@ type rows struct {
 	*stmt
 	names []string
 	types []string
+	nulls []bool
 }
+
+var (
+	// Ensure these interfaces are implemented:
+	_ driver.RowsColumnTypeDatabaseTypeName = &rows{}
+	_ driver.RowsColumnTypeNullable         = &rows{}
+)
 
 func (r *rows) Close() error {
 	r.Stmt.ClearBindings()
@@ -596,6 +603,22 @@ func (r *rows) Columns() []string {
 	return r.names
 }
 
+func (r *rows) loadTypes() {
+	if r.nulls == nil {
+		count := r.Stmt.ColumnCount()
+		r.nulls = make([]bool, count)
+		r.types = make([]string, count)
+		for i := range r.nulls {
+			if col := r.Stmt.ColumnOriginName(i); col != "" {
+				r.types[i], _, r.nulls[i], _, _, _ = r.Stmt.Conn().TableColumnMetadata(
+					r.Stmt.ColumnDatabaseName(i),
+					r.Stmt.ColumnTableName(i),
+					col)
+			}
+		}
+	}
+}
+
 func (r *rows) declType(index int) string {
 	if r.types == nil {
 		count := r.Stmt.ColumnCount()
@@ -608,13 +631,22 @@ func (r *rows) declType(index int) string {
 }
 
 func (r *rows) ColumnTypeDatabaseTypeName(index int) string {
-	decltype := r.declType(index)
+	r.loadTypes()
+	decltype := r.types[index]
 	if len := len(decltype); len > 0 && decltype[len-1] == ')' {
 		if i := strings.LastIndexByte(decltype, '('); i >= 0 {
 			decltype = decltype[:i]
 		}
 	}
 	return strings.TrimSpace(decltype)
+}
+
+func (r *rows) ColumnTypeNullable(index int) (nullable, ok bool) {
+	r.loadTypes()
+	if r.nulls[index] {
+		return false, true
+	}
+	return true, false
 }
 
 func (r *rows) Next(dest []driver.Value) error {
