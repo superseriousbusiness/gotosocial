@@ -76,15 +76,7 @@ smtp-disclose-recipients: false
 
 Note that if you don't set `Host`, then email sending via smtp will be disabled, and the other settings will be ignored. GoToSocial will still log (at trace level) emails that *would* have been sent if smtp was enabled.
 
-## Behavior
-
-### SSL
-
-GoToSocial requires your smtp server to present valid SSL certificates. Most of the big services like Mailgun do this anyway, but if you're running your own mail server without SSL for some reason, and you're trying to connect GoToSocial to it, it will not work.
-
-The exception to this requirement is if you're running your mail server (or bridge to a mail server) on `localhost`, in which case SSL certs are not required.
-
-### When are emails sent?
+## When are emails sent?
 
 Currently, emails are sent:
 
@@ -92,11 +84,11 @@ Currently, emails are sent:
 - To all active instance moderators + admins when a new moderation report is received. By default, recipients are Bcc'd, but you can change this behavior with the setting `smtp-disclose-recipients`.
 - To the creator of a report (on this instance) when the report is closed by a moderator.
 
-### Can I test if my SMTP configuration is correct?
+## Can I test if my SMTP configuration is correct?
 
 Yes, you can use the API to send a test email to yourself. Check the API documentation for the `/api/v1/admin/email/test` endpoint.
 
-### HTML versus Plaintext
+## HTML versus Plaintext
 
 Emails are sent in plaintext by default. At this point, there is no option to send emails in html, but this is something that might be added later if there's enough demand for it.
 
