@@ -40,9 +40,12 @@ func new_list() *list {
 
 // free_list releases the list.
 func free_list(list *list) {
-	list.head = nil
-	list.tail = nil
-	list.len = 0
+	if list.head != nil ||
+		list.tail != nil ||
+		list.len != 0 {
+		should_not_reach()
+		return
+	}
 	list_pool.Put(list)
 }
 
@@ -115,20 +118,27 @@ func (l *list) remove(elem *list_elem) {
 	elem.prev = nil
 
 	switch {
-	// elem is ONLY one in list.
-	case next == nil && prev == nil:
-		l.head = nil
-		l.tail = nil
+	case next == nil:
+		if prev == nil {
+			// next == nil && prev == nil
+			//
+			// elem is ONLY one in list.
+			l.head = nil
+			l.tail = nil
+		} else {
+			// next == nil && prev != nil
+			//
+			// elem is last in list.
+			l.tail = prev
+			prev.next = nil
+		}
 
-	// elem is front in list.
-	case next != nil && prev == nil:
+	case prev == nil:
+		// next != nil && prev == nil
+		//
+		// elem is front in list.
 		l.head = next
 		next.prev = nil
-
-	// elem is last in list.
-	case prev != nil && next == nil:
-		l.tail = prev
-		prev.next = nil
 
 	// elem in middle of list.
 	default:
@@ -138,18 +148,4 @@ func (l *list) remove(elem *list_elem) {
 
 	// Decr count
 	l.len--
-}
-
-// rangefn will range all elems in list, passing each to fn.
-func (l *list) rangefn(fn func(*list_elem)) {
-	if fn == nil {
-		panic("nil fn")
-	}
-	for e := l.head; //
-	e != nil;        //
-	{
-		n := e.next
-		fn(e)
-		e = n
-	}
 }
