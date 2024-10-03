@@ -618,7 +618,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 
 	if diff := len(accountsSorted) - len(preserializedKeys); diff > 0 {
-		keyStrings := make([]string, diff)
+		keyStrings := make([]string, 0, diff)
 		for i := 0; i < diff; i++ {
 			priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 			key, _ := x509.MarshalPKCS8PrivateKey(priv)
