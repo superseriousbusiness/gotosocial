@@ -112,7 +112,7 @@ func (c *sqliteConn) Close() (err error) {
 	raw := c.connIface.(sqlite3driver.Conn).Raw()
 
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
-	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
+	const onClose = "PRAGMA optimize;"
 	_ = raw.Exec(onClose)
 
 	// Finally, close.
