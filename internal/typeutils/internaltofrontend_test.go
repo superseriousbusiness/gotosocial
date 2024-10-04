@@ -3358,6 +3358,321 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
 }`, string(b))
 }
 
+func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
+	var (
+		ctx                                       = context.Background()
+		requester                                 = suite.testAccounts["local_account_1"]
+		lastStatus                                = suite.testStatuses["local_account_1_status_1"]
+		filters    []*gtsmodel.Filter             = nil
+		mutes      *usermute.CompiledUserMuteList = nil
+	)
+
+	convo := &gtsmodel.Conversation{
+		ID:            "01J9C6K86PKZ5GY5WXV94DGH6R",
+		CreatedAt:     testrig.TimeMustParse("2022-06-10T15:22:08Z"),
+		UpdatedAt:     testrig.TimeMustParse("2022-06-10T15:22:08Z"),
+		AccountID:     requester.ID,
+		Account:       requester,
+		OtherAccounts: nil,
+		LastStatus:    lastStatus,
+		Read:          util.Ptr(true),
+	}
+
+	apiConvo, err := suite.typeconverter.ConversationToAPIConversation(
+		ctx,
+		convo,
+		requester,
+		filters,
+		mutes,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(apiConvo, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// No other accounts involved, so we should only
+	// have our own account in the "accounts" field.
+	suite.Equal(`{
+  "id": "01J9C6K86PKZ5GY5WXV94DGH6R",
+  "unread": false,
+  "accounts": [
+    {
+      "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+      "username": "the_mighty_zork",
+      "acct": "the_mighty_zork",
+      "display_name": "original zork (he/they)",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-20T11:09:18.000Z",
+      "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+      "url": "http://localhost:8080/@the_mighty_zork",
+      "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+      "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
+      "avatar_description": "a green goblin looking nasty",
+      "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+      "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
+      "header_description": "A very old-school screenshot of the original team fortress mod for quake",
+      "followers_count": 2,
+      "following_count": 2,
+      "statuses_count": 8,
+      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true
+    }
+  ],
+  "last_status": {
+    "id": "01F8MHAMCHF6Y650WCRSCP4WMY",
+    "created_at": "2021-10-20T10:40:37.000Z",
+    "in_reply_to_id": null,
+    "in_reply_to_account_id": null,
+    "sensitive": true,
+    "spoiler_text": "introduction post",
+    "visibility": "public",
+    "language": "en",
+    "uri": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "replies_count": 2,
+    "reblogs_count": 1,
+    "favourites_count": 1,
+    "favourited": false,
+    "reblogged": false,
+    "muted": false,
+    "bookmarked": false,
+    "pinned": false,
+    "content": "hello everyone!",
+    "reblog": null,
+    "application": {
+      "name": "really cool gts application",
+      "website": "https://reallycool.app"
+    },
+    "account": {
+      "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+      "username": "the_mighty_zork",
+      "acct": "the_mighty_zork",
+      "display_name": "original zork (he/they)",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-20T11:09:18.000Z",
+      "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+      "url": "http://localhost:8080/@the_mighty_zork",
+      "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+      "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
+      "avatar_description": "a green goblin looking nasty",
+      "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+      "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
+      "header_description": "A very old-school screenshot of the original team fortress mod for quake",
+      "followers_count": 2,
+      "following_count": 2,
+      "statuses_count": 8,
+      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true
+    },
+    "media_attachments": [],
+    "mentions": [],
+    "tags": [],
+    "emojis": [],
+    "card": null,
+    "poll": null,
+    "text": "hello everyone!",
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      }
+    }
+  }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
+	var (
+		ctx                                       = context.Background()
+		requester                                 = suite.testAccounts["local_account_1"]
+		lastStatus                                = suite.testStatuses["local_account_1_status_1"]
+		filters    []*gtsmodel.Filter             = nil
+		mutes      *usermute.CompiledUserMuteList = nil
+	)
+
+	convo := &gtsmodel.Conversation{
+		ID:        "01J9C6K86PKZ5GY5WXV94DGH6R",
+		CreatedAt: testrig.TimeMustParse("2022-06-10T15:22:08Z"),
+		UpdatedAt: testrig.TimeMustParse("2022-06-10T15:22:08Z"),
+		AccountID: requester.ID,
+		Account:   requester,
+		OtherAccounts: []*gtsmodel.Account{
+			suite.testAccounts["local_account_2"],
+		},
+		LastStatus: lastStatus,
+		Read:       util.Ptr(false),
+	}
+
+	apiConvo, err := suite.typeconverter.ConversationToAPIConversation(
+		ctx,
+		convo,
+		requester,
+		filters,
+		mutes,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(apiConvo, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// One other account is involved, so they
+	// should in the "accounts" field and not us.
+	suite.Equal(`{
+  "id": "01J9C6K86PKZ5GY5WXV94DGH6R",
+  "unread": true,
+  "accounts": [
+    {
+      "id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+      "username": "1happyturtle",
+      "acct": "1happyturtle",
+      "display_name": "happy little turtle :3",
+      "locked": true,
+      "discoverable": false,
+      "bot": false,
+      "created_at": "2022-06-04T13:12:00.000Z",
+      "note": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
+      "url": "http://localhost:8080/@1happyturtle",
+      "avatar": "",
+      "avatar_static": "",
+      "header": "http://localhost:8080/assets/default_header.webp",
+      "header_static": "http://localhost:8080/assets/default_header.webp",
+      "followers_count": 1,
+      "following_count": 1,
+      "statuses_count": 8,
+      "last_status_at": "2021-07-28T08:40:37.000Z",
+      "emojis": [],
+      "fields": [
+        {
+          "name": "should you follow me?",
+          "value": "maybe!",
+          "verified_at": null
+        },
+        {
+          "name": "age",
+          "value": "120",
+          "verified_at": null
+        }
+      ],
+      "hide_collections": true
+    }
+  ],
+  "last_status": {
+    "id": "01F8MHAMCHF6Y650WCRSCP4WMY",
+    "created_at": "2021-10-20T10:40:37.000Z",
+    "in_reply_to_id": null,
+    "in_reply_to_account_id": null,
+    "sensitive": true,
+    "spoiler_text": "introduction post",
+    "visibility": "public",
+    "language": "en",
+    "uri": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
+    "replies_count": 2,
+    "reblogs_count": 1,
+    "favourites_count": 1,
+    "favourited": false,
+    "reblogged": false,
+    "muted": false,
+    "bookmarked": false,
+    "pinned": false,
+    "content": "hello everyone!",
+    "reblog": null,
+    "application": {
+      "name": "really cool gts application",
+      "website": "https://reallycool.app"
+    },
+    "account": {
+      "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
+      "username": "the_mighty_zork",
+      "acct": "the_mighty_zork",
+      "display_name": "original zork (he/they)",
+      "locked": false,
+      "discoverable": true,
+      "bot": false,
+      "created_at": "2022-05-20T11:09:18.000Z",
+      "note": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+      "url": "http://localhost:8080/@the_mighty_zork",
+      "avatar": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
+      "avatar_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp",
+      "avatar_description": "a green goblin looking nasty",
+      "header": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
+      "header_static": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/small/01PFPMWK2FF0D9WMHEJHR07C3Q.webp",
+      "header_description": "A very old-school screenshot of the original team fortress mod for quake",
+      "followers_count": 2,
+      "following_count": 2,
+      "statuses_count": 8,
+      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "emojis": [],
+      "fields": [],
+      "enable_rss": true
+    },
+    "media_attachments": [],
+    "mentions": [],
+    "tags": [],
+    "emojis": [],
+    "card": null,
+    "poll": null,
+    "text": "hello everyone!",
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      }
+    }
+  }
+}`, string(b))
+}
+
 func TestInternalToFrontendTestSuite(t *testing.T) {
 	suite.Run(t, new(InternalToFrontendTestSuite))
 }

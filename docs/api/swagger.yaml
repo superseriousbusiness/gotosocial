@@ -950,7 +950,12 @@ definitions:
             with "direct message" visibility.
         properties:
             accounts:
-                description: Participants in the conversation.
+                description: |-
+                    Participants in the conversation.
+
+                    If this is a conversation between no accounts (ie., a self-directed DM),
+                    this will include only the requesting account itself. Otherwise, it will
+                    include every other account in the conversation *except* the requester.
                 items:
                     $ref: '#/definitions/account'
                 type: array

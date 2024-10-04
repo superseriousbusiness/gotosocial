@@ -1832,46 +1832,23 @@ func (c *Converter) NotificationToAPINotification(
 func (c *Converter) ConversationToAPIConversation(
 	ctx context.Context,
 	conversation *gtsmodel.Conversation,
-	requestingAccount *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Conversation, error) {
 	apiConversation := &apimodel.Conversation{
-		ID:       conversation.ID,
-		Unread:   !*conversation.Read,
-		Accounts: []apimodel.Account{},
+		ID:     conversation.ID,
+		Unread: !*conversation.Read,
 	}
-	for _, account := range conversation.OtherAccounts {
-		var apiAccount *apimodel.Account
-		blocked, err := c.state.DB.IsEitherBlocked(ctx, requestingAccount.ID, account.ID)
-		if err != nil {
-			return nil, gtserror.Newf(
-				"DB error checking blocks between accounts %s and %s: %w",
-				requestingAccount.ID,
-				account.ID,
-				err,
-			)
-		}
-		if blocked || account.IsSuspended() {
-			apiAccount, err = c.AccountToAPIAccountBlocked(ctx, account)
-		} else {
-			apiAccount, err = c.AccountToAPIAccountPublic(ctx, account)
-		}
-		if err != nil {
-			return nil, gtserror.Newf(
-				"error converting account %s to API representation: %w",
-				account.ID,
-				err,
-			)
-		}
-		apiConversation.Accounts = append(apiConversation.Accounts, *apiAccount)
-	}
+
+	// Populate most recent status in convo;
+	// can be nil if this status is filtered.
 	if conversation.LastStatus != nil {
 		var err error
 		apiConversation.LastStatus, err = c.StatusToAPIStatus(
 			ctx,
 			conversation.LastStatus,
-			requestingAccount,
+			requester,
 			statusfilter.FilterContextNotifications,
 			filters,
 			mutes,
@@ -1883,6 +1860,60 @@ func (c *Converter) ConversationToAPIConversation(
 				err,
 			)
 		}
+	}
+
+	// If no other accounts are involved in this convo,
+	// just include the requesting account and return.
+	//
+	// See: https://github.com/superseriousbusiness/gotosocial/issues/3385#issuecomment-2394033477
+	otherAcctsLen := len(conversation.OtherAccounts)
+	if otherAcctsLen == 0 {
+		apiAcct, err := c.AccountToAPIAccountPublic(ctx, requester)
+		if err != nil {
+			err := gtserror.Newf(
+				"error converting account %s to API representation: %w",
+				requester.ID, err,
+			)
+			return nil, err
+		}
+
+		apiConversation.Accounts = []apimodel.Account{*apiAcct}
+		return apiConversation, nil
+	}
+
+	// Other accounts are involved in the
+	// convo. Convert each to API model.
+	apiConversation.Accounts = make([]apimodel.Account, otherAcctsLen)
+	for i, account := range conversation.OtherAccounts {
+		blocked, err := c.state.DB.IsEitherBlocked(ctx,
+			requester.ID, account.ID,
+		)
+		if err != nil {
+			err := gtserror.Newf(
+				"db error checking blocks between accounts %s and %s: %w",
+				requester.ID, account.ID, err,
+			)
+			return nil, err
+		}
+
+		// API account model varies depending
+		// on status of conversation participant.
+		var apiAcct *apimodel.Account
+		if blocked || account.IsSuspended() {
+			apiAcct, err = c.AccountToAPIAccountBlocked(ctx, account)
+		} else {
+			apiAcct, err = c.AccountToAPIAccountPublic(ctx, account)
+		}
+
+		if err != nil {
+			err := gtserror.Newf(
+				"error converting account %s to API representation: %w",
+				account.ID, err,
+			)
+			return nil, err
+		}
+
+		apiConversation.Accounts[i] = *apiAcct
 	}
 
 	return apiConversation, nil
