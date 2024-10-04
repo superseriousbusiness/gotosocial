@@ -569,6 +569,7 @@ For example, the following json object `Reject`s the attempt of `@someone@somewh
 
 ```json
 {
+  "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "https://example.org/users/post_author",
   "to": "https://somewhere.else.example.org/users/someone",
   "id": "https://example.org/users/post_author/activities/reject/01J0K2YXP9QCT5BE1JWQSAM3B6",
@@ -591,7 +592,12 @@ For example, the following json object `Accept`s the attempt of `@someone@somewh
 
 ```json
 {
+  "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "https://example.org/users/post_author",
+  "cc": [
+    "https://www.w3.org/ns/activitystreams#Public",
+    "https://example.org/users/post_author/followers"
+  ],
   "to": "https://somewhere.else.example.org/users/someone",
   "id": "https://example.org/users/post_author/activities/reject/01J0K2YXP9QCT5BE1JWQSAM3B6",
   "object": "https://somewhere.else.example.org/users/someone/statuses/01J17XY2VXGMNNPH1XR7BG2524",
@@ -600,6 +606,9 @@ For example, the following json object `Accept`s the attempt of `@someone@somewh
 ```
 
 If this happens, `@someone@somewhere.else.example.org` (and their instance) should consider the interaction as having been approved / accepted. The instance can then feel free to distribute the interaction `Activity` to all of the recipients targed by `to`, `cc`, etc, with the additional property `approvedBy` ([see below](#approvedby)).
+
+!!! Note
+    In the above example, actor `https://example.org/users/post_author` addresses the `Accept` activity not just to the interacting actor `https://somewhere.else.example.org/users/someone`, but to their followers collection as well (and, implicitly, to the public). This allows followers of `https://example.org/users/post_author` on other servers to also mark the interaction as accepted, and to show the interaction alongside the interacted-with post.
 
 ### Validating presence in a Followers / Following collection
 

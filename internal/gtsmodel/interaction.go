@@ -69,25 +69,29 @@ type InteractionRequest struct {
 	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
 	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
 	Announce             *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionAnnounce.
-	URI                  string          `bun:",nullzero,unique"`                                            // ActivityPub URI of the Accept (if accepted) or Reject (if rejected). Null/empty if currently neither accepted not rejected.
 	AcceptedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was accepted, time at which this occurred.
 	RejectedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was rejected, time at which this occurred.
+
+	// ActivityPub URI of the Accept (if accepted) or Reject (if rejected).
+	// Field may be empty if currently neither accepted not rejected, or if
+	// acceptance/rejection was implicit (ie., not resulting from an Activity).
+	URI string `bun:",nullzero,unique"`
 }
 
 // IsHandled returns true if interaction
 // request has been neither accepted or rejected.
 func (ir *InteractionRequest) IsPending() bool {
-	return ir.URI == "" && ir.AcceptedAt.IsZero() && ir.RejectedAt.IsZero()
+	return !ir.IsAccepted() && !ir.IsRejected()
 }
 
 // IsAccepted returns true if this
 // interaction request has been accepted.
 func (ir *InteractionRequest) IsAccepted() bool {
-	return ir.URI != "" && !ir.AcceptedAt.IsZero()
+	return !ir.AcceptedAt.IsZero()
 }
 
 // IsRejected returns true if this
 // interaction request has been rejected.
 func (ir *InteractionRequest) IsRejected() bool {
-	return ir.URI != "" && !ir.RejectedAt.IsZero()
+	return !ir.RejectedAt.IsZero()
 }

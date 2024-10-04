@@ -20,6 +20,7 @@ package workers
 import (
 	"context"
 	"errors"
+	"net/url"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
@@ -144,6 +145,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		// ACCEPT (pending) ANNOUNCE
 		case ap.ActivityAnnounce:
 			return p.fediAPI.AcceptAnnounce(ctx, fMsg)
+
+		// ACCEPT (remote) REPLY or ANNOUNCE
+		case ap.ObjectUnknown:
+			return p.fediAPI.AcceptRemoteStatus(ctx, fMsg)
 		}
 
 	// REJECT SOMETHING
@@ -819,6 +824,60 @@ func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 	// Interaction counts changed on the replied-to status;
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+
+	return nil
+}
+
+func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// See if we can accept a remote
+	// status we don't have stored yet.
+	objectIRI, ok := fMsg.APObject.(*url.URL)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *url.URL", fMsg.APObject)
+	}
+
+	acceptIRI := fMsg.APIRI
+	if acceptIRI == nil {
+		return gtserror.New("acceptIRI was nil")
+	}
+
+	// Assume we're accepting a status; create a
+	// barebones status for dereferencing purposes.
+	bareStatus := &gtsmodel.Status{
+		URI:           objectIRI.String(),
+		ApprovedByURI: acceptIRI.String(),
+	}
+
+	// Call RefreshStatus() to process the provided
+	// barebones status and insert it into the database,
+	// if indeed it's actually a status URI we can fetch.
+	//
+	// This will also check whether the given AcceptIRI
+	// actually grants permission for this status.
+	status, _, err := p.federate.RefreshStatus(ctx,
+		fMsg.Receiving.Username,
+		bareStatus,
+		nil, nil,
+	)
+	if err != nil {
+		return gtserror.Newf("error processing accepted status %s: %w", bareStatus.URI, err)
+	}
+
+	// No error means it was indeed a remote status, and the
+	// given acceptIRI permitted it. Timeline and notify it.
+	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+		log.Errorf(ctx, "error timelining and notifying status: %v", err)
+	}
+
+	// Interaction counts changed on the interacted status;
+	// uncache the prepared version from all timelines.
+	if status.InReplyToID != "" {
+		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+	}
+
+	if status.BoostOfID != "" {
+		p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
+	}
 
 	return nil
 }

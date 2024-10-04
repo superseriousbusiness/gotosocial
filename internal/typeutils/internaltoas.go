@@ -1988,6 +1988,16 @@ func (c *Converter) InteractionReqToASAccept(
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
+	publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid public uri: %w", err)
+	}
+
+	followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid followers uri: %w", err)
+	}
+
 	// Set id to the URI of
 	// interaction request.
 	ap.SetJSONLDId(accept, acceptID)
@@ -2002,6 +2012,9 @@ func (c *Converter) InteractionReqToASAccept(
 	// Address to the owner
 	// of interaction URI.
 	ap.AppendTo(accept, toIRI)
+
+	// Cc to the actor's followers, and to Public.
+	ap.AppendCc(accept, publicIRI, followersIRI)
 
 	return accept, nil
 }
@@ -2034,6 +2047,16 @@ func (c *Converter) InteractionReqToASReject(
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
+	publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid public uri: %w", err)
+	}
+
+	followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid followers uri: %w", err)
+	}
+
 	// Set id to the URI of
 	// interaction request.
 	ap.SetJSONLDId(reject, rejectID)
@@ -2048,6 +2071,9 @@ func (c *Converter) InteractionReqToASReject(
 	// Address to the owner
 	// of interaction URI.
 	ap.AppendTo(reject, toIRI)
+
+	// Cc to the actor's followers, and to Public.
+	ap.AppendCc(reject, publicIRI, followersIRI)
 
 	return reject, nil
 }
