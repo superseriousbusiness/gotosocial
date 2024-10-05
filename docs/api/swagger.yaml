@@ -8947,7 +8947,7 @@ paths:
                     Providing this parameter will cause ScheduledStatus to be returned instead of Status.
                     Must be at least 5 minutes in the future.
 
-                    This feature isn't implemented yet.
+                    This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
                   in: formData
                   name: scheduled_at
                   type: string
@@ -9008,6 +9008,8 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+                "501":
+                    description: scheduled_at was set, but this feature is not yet implemented
             security:
                 - OAuth2 Bearer:
                     - write:statuses

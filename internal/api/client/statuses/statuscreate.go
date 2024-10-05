@@ -181,7 +181,7 @@ import (
 //			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 //			Must be at least 5 minutes in the future.
 //
-//			This feature isn't implemented yet.
+//			This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
 //		type: string
 //		in: formData
 //	-
@@ -254,6 +254,8 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
+//		'501':
+//			description: scheduled_at was set, but this feature is not yet implemented
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -286,8 +288,8 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	// }
 	// form.Status += "\n\nsent from " + user + "'s iphone\n"
 
-	if err := validateNormalizeCreateStatus(form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	if errWithCode := validateStatusCreateForm(form); errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -374,46 +376,61 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, error
 	return form, nil
 }
 
-// validateNormalizeCreateStatus checks the form
-// for disallowed combinations of attachments and
-// overlength inputs.
+// validateStatusCreateForm checks the form for disallowed
+// combinations of attachments, overlength inputs, etc.
 //
 // Side effect: normalizes the post's language tag.
-func validateNormalizeCreateStatus(form *apimodel.StatusCreateRequest) error {
-	hasStatus := form.Status != ""
-	hasMedia := len(form.MediaIDs) != 0
-	hasPoll := form.Poll != nil
+func validateStatusCreateForm(form *apimodel.StatusCreateRequest) gtserror.WithCode {
+	var (
+		chars         = len([]rune(form.Status)) + len([]rune(form.SpoilerText))
+		maxChars      = config.GetStatusesMaxChars()
+		mediaFiles    = len(form.MediaIDs)
+		maxMediaFiles = config.GetStatusesMediaMaxFiles()
+		hasMedia      = mediaFiles != 0
+		hasPoll       = form.Poll != nil
+	)
 
-	if !hasStatus && !hasMedia && !hasPoll {
-		return errors.New("no status, media, or poll provided")
+	if chars == 0 && !hasMedia && !hasPoll {
+		// Status must contain *some* kind of content.
+		const text = "no status content, content warning, media, or poll provided"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	if hasMedia && hasPoll {
-		return errors.New("can't post media + poll in same status")
+	if chars > maxChars {
+		text := fmt.Sprintf(
+			"status too long, %d characters provided (including content warning) but limit is %d",
+			chars, maxChars,
+		)
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
-	maxChars := config.GetStatusesMaxChars()
-	if length := len([]rune(form.Status)) + len([]rune(form.SpoilerText)); length > maxChars {
-		return fmt.Errorf("status too long, %d characters provided (including spoiler/content warning) but limit is %d", length, maxChars)
-	}
-
-	maxMediaFiles := config.GetStatusesMediaMaxFiles()
-	if len(form.MediaIDs) > maxMediaFiles {
-		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), maxMediaFiles)
+	if mediaFiles > maxMediaFiles {
+		text := fmt.Sprintf(
+			"too many media files attached to status, %d attached but limit is %d",
+			mediaFiles, maxMediaFiles,
+		)
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
 	if form.Poll != nil {
-		if err := validateNormalizeCreatePoll(form); err != nil {
-			return err
+		if errWithCode := validateStatusPoll(form); errWithCode != nil {
+			return errWithCode
 		}
 	}
 
+	if form.ScheduledAt != "" {
+		const text = "scheduled_at is not yet implemented"
+		return gtserror.NewErrorNotImplemented(errors.New(text), text)
+	}
+
+	// Validate + normalize
+	// language tag if provided.
 	if form.Language != "" {
-		language, err := validate.Language(form.Language)
+		lang, err := validate.Language(form.Language)
 		if err != nil {
-			return err
+			return gtserror.NewErrorBadRequest(err, err.Error())
 		}
-		form.Language = language
+		form.Language = lang
 	}
 
 	// Check if the deprecated "federated" field was
@@ -425,9 +442,36 @@ func validateNormalizeCreateStatus(form *apimodel.StatusCreateRequest) error {
 	return nil
 }
 
-func validateNormalizeCreatePoll(form *apimodel.StatusCreateRequest) error {
-	maxPollOptions := config.GetStatusesPollMaxOptions()
-	maxPollChars := config.GetStatusesPollOptionMaxChars()
+func validateStatusPoll(form *apimodel.StatusCreateRequest) gtserror.WithCode {
+	var (
+		maxPollOptions     = config.GetStatusesPollMaxOptions()
+		pollOptions        = len(form.Poll.Options)
+		maxPollOptionChars = config.GetStatusesPollOptionMaxChars()
+	)
+
+	if pollOptions == 0 {
+		const text = "poll with no options"
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	if pollOptions > maxPollOptions {
+		text := fmt.Sprintf(
+			"too many poll options provided, %d provided but limit is %d",
+			pollOptions, maxPollOptions,
+		)
+		return gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	for _, option := range form.Poll.Options {
+		optionChars := len([]rune(option))
+		if optionChars > maxPollOptionChars {
+			text := fmt.Sprintf(
+				"poll option too long, %d characters provided but limit is %d",
+				optionChars, maxPollOptionChars,
+			)
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+	}
 
 	// Normalize poll expiry if necessary.
 	// If we parsed this as JSON, expires_in
@@ -440,27 +484,15 @@ func validateNormalizeCreatePoll(form *apimodel.StatusCreateRequest) error {
 		case string:
 			expiresIn, err := strconv.Atoi(e)
 			if err != nil {
-				return fmt.Errorf("could not parse expires_in value %s as integer: %w", e, err)
+				text := fmt.Sprintf("could not parse expires_in value %s as integer: %v", e, err)
+				return gtserror.NewErrorBadRequest(errors.New(text), text)
 			}
 
 			form.Poll.ExpiresIn = expiresIn
 
 		default:
-			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
-		}
-	}
-
-	if len(form.Poll.Options) == 0 {
-		return errors.New("poll with no options")
-	}
-
-	if len(form.Poll.Options) > maxPollOptions {
-		return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
-	}
-
-	for _, p := range form.Poll.Options {
-		if length := len([]rune(p)); length > maxPollChars {
-			return fmt.Errorf("poll option too long, %d characters provided but limit is %d", length, maxPollChars)
+			text := fmt.Sprintf("could not parse expires_in type %T as integer", ei)
+			return gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 	}
 
