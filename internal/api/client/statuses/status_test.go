@@ -18,6 +18,12 @@
 package statuses_test
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
+	"net/http/httptest"
+	"strings"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -25,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -57,6 +64,113 @@ type StatusStandardTestSuite struct {
 
 	// module being tested
 	statusModule *statuses.Module
+}
+
+// Normalizes a status response to a determinate
+// form, and pretty-prints it to JSON.
+func (suite *StatusStandardTestSuite) parseStatusResponse(
+	recorder *httptest.ResponseRecorder,
+) (string, *httptest.ResponseRecorder) {
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	data, err := io.ReadAll(result.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	rawMap := make(map[string]any)
+	if err := json.Unmarshal(data, &rawMap); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Make status fields determinate.
+	suite.determinateStatus(rawMap)
+
+	// For readability, don't
+	// escape HTML, and indent json.
+	out := new(bytes.Buffer)
+	enc := json.NewEncoder(out)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "  ")
+
+	if err := enc.Encode(&rawMap); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return strings.TrimSpace(out.String()), recorder
+}
+
+func (suite *StatusStandardTestSuite) determinateStatus(rawMap map[string]any) {
+	// Replace any fields from the raw map that
+	// aren't determinate (date, id, url, etc).
+	if _, ok := rawMap["id"]; ok {
+		rawMap["id"] = id.Highest
+	}
+
+	if _, ok := rawMap["uri"]; ok {
+		rawMap["uri"] = "http://localhost:8080/some/determinate/url"
+	}
+
+	if _, ok := rawMap["url"]; ok {
+		rawMap["url"] = "http://localhost:8080/some/determinate/url"
+	}
+
+	if _, ok := rawMap["created_at"]; ok {
+		rawMap["created_at"] = "right the hell just now babyee"
+	}
+
+	// Make ID of any mentions determinate.
+	if menchiesRaw, ok := rawMap["mentions"]; ok {
+		menchies, ok := menchiesRaw.([]any)
+		if !ok {
+			suite.FailNow("couldn't coerce menchies")
+		}
+
+		for _, menchieRaw := range menchies {
+			menchie, ok := menchieRaw.(map[string]any)
+			if !ok {
+				suite.FailNow("couldn't coerce menchie")
+			}
+
+			if _, ok := menchie["id"]; ok {
+				menchie["id"] = id.Highest
+			}
+		}
+	}
+
+	// Make fields of any poll determinate.
+	if pollRaw, ok := rawMap["poll"]; ok && pollRaw != nil {
+		poll, ok := pollRaw.(map[string]any)
+		if !ok {
+			suite.FailNow("couldn't coerce poll")
+		}
+
+		if _, ok := poll["id"]; ok {
+			poll["id"] = id.Highest
+		}
+
+		if _, ok := poll["expires_at"]; ok {
+			poll["expires_at"] = "ah like you know whatever dude it's chill"
+		}
+	}
+
+	// Replace account since that's not really
+	// what we care about for these tests.
+	if _, ok := rawMap["account"]; ok {
+		rawMap["account"] = "yeah this is my account, what about it punk"
+	}
+
+	// If status contains an embedded
+	// reblog do the same thing for that.
+	if reblogRaw, ok := rawMap["reblog"]; ok && reblogRaw != nil {
+		reblog, ok := reblogRaw.(map[string]any)
+		if !ok {
+			suite.FailNow("couldn't coerce reblog")
+		}
+		suite.determinateStatus(reblog)
+	}
 }
 
 func (suite *StatusStandardTestSuite) SetupSuite() {

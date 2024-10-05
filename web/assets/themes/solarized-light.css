@@ -1,0 +1,191 @@
+/*
+  theme-title: Solarized light
+  theme-description: Beige and grey solarized theme with orange trim
+*/
+
+/*
+  Solarized colors + design - https://github.com/altercation/solarized
+
+  Copyright (c) 2011 Ethan Schoonover
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+  
+  The above copyright notice and this permission notice shall be included in
+  all copies or substantial portions of the Software.
+  
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+*/
+
+:root {
+  /* Define solarized palette */
+  --base3:     #fdf6e3; /* Background. */
+  --base2:     #eee8d5; /* Background highlights. */
+  --base1:     #93a1a1; /* Comments / secondary color. */
+  --base00:    #657b83; /* Body text / default code / primary content. */
+  --base01:    #586e75; /* Optional emphasized content. */
+  --red:       #cb4b16; /* Trim. */
+
+  /* Override orange trim */
+  --orange2: var(--red);
+
+  /* Restyle basic colors to use Solarized */
+  --white1: var(--base3);
+  --white2: var(--base2);
+  --blue2: var(--base00);
+  --blue3: var(--base01);
+
+  /* Basic page styling (background + foreground) */
+  --bg: var(--base2);
+  --bg-accent: var(--base3);
+  --fg-reduced: var(--base00);
+  --fg: var(--base01);
+
+  /* Profile page styling */
+  --profile-bg: var(--white2);
+
+  /* Solarize statuses */
+  --status-bg: var(--white1);
+  --status-focus-bg: var(--white1);
+  --status-info-bg: var(--white2);
+  --status-focus-info-bg: var(--white2);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 0.1rem solid var(--base1);
+
+  --plyr-video-control-color: var(--fg);
+  --plyr-video-control-color-hover: var(--fg-reduced);
+}
+
+@font-face {
+  font-family: "Noto Sans Mono";
+  font-weight: normal;
+  font-style: normal;
+  src: url(/assets/fonts/noto-sans-mono-v30-latin-regular.woff2) format('woff2');
+}
+
+/* Scroll bar */
+html, body {
+  font-family: 'Noto Sans Mono', monospace;
+  scrollbar-color: var(--orange2) var(--white1) ;
+}
+
+/* Column headers */
+.col-header {
+  border: var(--boxshadow-border);
+  background: var(--base3);
+}
+
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Header card */
+.profile .profile-header {
+  border: var(--boxshadow-border);
+  background: var(--base3);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  background: var(--base3);
+  color: var(--base01);
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .accountstats {
+  border-bottom: var(--boxshadow-border);
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: var(--boxshadow-border);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: var(--boxshadow-border);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: var(--boxshadow-border);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--base1);
+  border: 0.2rem dashed var(--base1);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: transparent;
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--base3);
+  border: var(--boxshadow-border);
+}
+.status .text .poll .poll-info {
+  background-color: var(--base3);
+  border: var(--boxshadow-border);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+  background-color: black;
+  color: #93a1a1;
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--base3);
+  color: var(--base01);
+}
+
+button, .button,
+.status .text-spoiler > summary .button {
+  font-family: 'Noto Sans Mono', monospace;
+}
+
+.button {
+  color: var(--base01);
+  background: var(--base3);
+  border: var(--boxshadow-border);
+}
+
+.button:hover {
+  color: var(--base01);
+  background: var(--base2);
+  border: var(--boxshadow-border);
+}
+
+/* Ensure role badge readable */
+.profile .profile-header .basic-info .namerole .role.admin {
+  background: var(--base3);
+  color: var(--base01);
+}
+
+/* Back + next links */
+.backnextlinks {
+  padding: 0.5rem;
+  background: var(--base3);
+  border: var(--boxshadow-border);
+  border-radius: var(--br);
+}
+
+.page-footer {
+  margin-top: 2rem;
+  background-color: var(--base3);
+  border-top: var(--boxshadow-border);
+}

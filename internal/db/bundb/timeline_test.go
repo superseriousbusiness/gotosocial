@@ -74,7 +74,8 @@ func (suite *TimelineTestSuite) publicCount() int {
 	var publicCount int
 	for _, status := range suite.testStatuses {
 		if status.Visibility == gtsmodel.VisibilityPublic &&
-			status.BoostOfID == "" {
+			status.BoostOfID == "" &&
+			!util.PtrOrZero(status.PendingApproval) {
 			publicCount++
 		}
 	}
@@ -184,8 +185,8 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
 
 	// Remove admin account from the exclusive list.
-	listEntryID := suite.testListEntries["local_account_1_list_1_entry_2"].ID
-	if err := suite.db.DeleteListEntry(ctx, listEntryID); err != nil {
+	listEntry := suite.testListEntries["local_account_1_list_1_entry_2"]
+	if err := suite.db.DeleteListEntry(ctx, listEntry.ListID, listEntry.FollowID); err != nil {
 		suite.FailNow(err.Error())
 	}
 

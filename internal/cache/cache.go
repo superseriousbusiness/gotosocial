@@ -47,6 +47,11 @@ type Caches struct {
 	// Webfinger provides access to the webfinger URL cache.
 	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
 
+	// TTL cache of statuses -> filterable text fields.
+	// To ensure up-to-date fields, cache is keyed as:
+	// `[status.ID][status.UpdatedAt.Unix()]`
+	StatusesFilterableFields *ttl.Cache[string, []string]
+
 	// prevent pass-by-value.
 	_ nocopy
 }
@@ -57,7 +62,6 @@ func (c *Caches) Init() {
 	log.Infof(nil, "init: %p", c)
 
 	c.initAccount()
-	c.initAccountIDsFollowingTag()
 	c.initAccountNote()
 	c.initAccountSettings()
 	c.initAccountStats()
@@ -79,11 +83,13 @@ func (c *Caches) Init() {
 	c.initFollowIDs()
 	c.initFollowRequest()
 	c.initFollowRequestIDs()
+	c.initFollowingTagIDs()
 	c.initInReplyToIDs()
 	c.initInstance()
 	c.initInteractionRequest()
 	c.initList()
-	c.initListEntry()
+	c.initListIDs()
+	c.initListedIDs()
 	c.initMarker()
 	c.initMedia()
 	c.initMention()
@@ -100,7 +106,6 @@ func (c *Caches) Init() {
 	c.initStatusFave()
 	c.initStatusFaveIDs()
 	c.initTag()
-	c.initTagIDsFollowedByAccount()
 	c.initThreadMute()
 	c.initToken()
 	c.initTombstone()
@@ -109,6 +114,7 @@ func (c *Caches) Init() {
 	c.initUserMuteIDs()
 	c.initWebfinger()
 	c.initVisibility()
+	c.initStatusesFilterableFields()
 }
 
 // Start will start any caches that require a background
@@ -119,6 +125,10 @@ func (c *Caches) Start() {
 	tryUntil("starting webfinger cache", 5, func() bool {
 		return c.Webfinger.Start(5 * time.Minute)
 	})
+
+	tryUntil("starting statusesFilterableFields cache", 5, func() bool {
+		return c.StatusesFilterableFields.Start(5 * time.Minute)
+	})
 }
 
 // Stop will stop any caches that require a background
@@ -127,6 +137,7 @@ func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
 	tryUntil("stopping webfinger cache", 5, c.Webfinger.Stop)
+	tryUntil("stopping statusesFilterableFields cache", 5, c.StatusesFilterableFields.Stop)
 }
 
 // Sweep will sweep all the available caches to ensure none
@@ -137,7 +148,6 @@ func (c *Caches) Stop() {
 // significant overhead to all cache writes.
 func (c *Caches) Sweep(threshold float64) {
 	c.DB.Account.Trim(threshold)
-	c.DB.AccountIDsFollowingTag.Trim(threshold)
 	c.DB.AccountNote.Trim(threshold)
 	c.DB.AccountSettings.Trim(threshold)
 	c.DB.AccountStats.Trim(threshold)
@@ -157,11 +167,13 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.FollowIDs.Trim(threshold)
 	c.DB.FollowRequest.Trim(threshold)
 	c.DB.FollowRequestIDs.Trim(threshold)
+	c.DB.FollowingTagIDs.Trim(threshold)
 	c.DB.InReplyToIDs.Trim(threshold)
 	c.DB.Instance.Trim(threshold)
 	c.DB.InteractionRequest.Trim(threshold)
 	c.DB.List.Trim(threshold)
-	c.DB.ListEntry.Trim(threshold)
+	c.DB.ListIDs.Trim(threshold)
+	c.DB.ListedIDs.Trim(threshold)
 	c.DB.Marker.Trim(threshold)
 	c.DB.Media.Trim(threshold)
 	c.DB.Mention.Trim(threshold)
@@ -178,7 +190,6 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.StatusFave.Trim(threshold)
 	c.DB.StatusFaveIDs.Trim(threshold)
 	c.DB.Tag.Trim(threshold)
-	c.DB.TagIDsFollowedByAccount.Trim(threshold)
 	c.DB.ThreadMute.Trim(threshold)
 	c.DB.Token.Trim(threshold)
 	c.DB.Tombstone.Trim(threshold)
@@ -202,5 +213,14 @@ func (c *Caches) initWebfinger() {
 		0,
 		cap,
 		24*time.Hour,
+	)
+}
+
+func (c *Caches) initStatusesFilterableFields() {
+	c.StatusesFilterableFields = new(ttl.Cache[string, []string])
+	c.StatusesFilterableFields.Init(
+		0,
+		512,
+		1*time.Hour,
 	)
 }

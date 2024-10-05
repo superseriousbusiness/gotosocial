@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *Processor) getFaveableStatus(
@@ -138,8 +139,6 @@ func (p *Processor) FaveCreate(
 		pendingApproval = false
 	}
 
-	status.PendingApproval = &pendingApproval
-
 	// Create a new fave, marking it
 	// as pending approval if necessary.
 	faveID := id.NewULID()
@@ -157,7 +156,7 @@ func (p *Processor) FaveCreate(
 	}
 
 	if err := p.state.DB.PutStatusFave(ctx, gtsFave); err != nil {
-		err = fmt.Errorf("FaveCreate: error putting fave in database: %w", err)
+		err = gtserror.Newf("db error putting fave: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
@@ -169,6 +168,23 @@ func (p *Processor) FaveCreate(
 		Origin:         requester,
 		Target:         status.Account,
 	})
+
+	// If the fave target status replies to a status
+	// that we own, and has a pending interaction
+	// request, use the fave as an implicit accept.
+	implicitlyAccepted, errWithCode := p.implicitlyAccept(ctx,
+		requester, status,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// If we ended up implicitly accepting, mark the
+	// target status as no longer pending approval so
+	// it's serialized properly via the API.
+	if implicitlyAccepted {
+		status.PendingApproval = util.Ptr(false)
+	}
 
 	return p.c.GetAPIStatus(ctx, requester, status)
 }

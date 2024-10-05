@@ -19,8 +19,14 @@
   --blue3: var(--acid-green);
 }
 
+/* Main page background */
 body {
-  background: linear-gradient(90deg, var(--darkmagenta), black, var(--darkmagenta));
+  background: linear-gradient(
+    90deg,
+    var(--darkmagenta),
+    black,
+    var(--darkmagenta)
+  );
 }
 
 html, body {

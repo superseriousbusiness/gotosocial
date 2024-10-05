@@ -22,7 +22,6 @@ import (
 	"net/url"
 	"slices"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -31,15 +30,7 @@ import (
 )
 
 func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(announce)
-		if err != nil {
-			return err
-		}
-		l := log.WithContext(ctx).
-			WithField("announce", i)
-		l.Debug("entering Announce")
-	}
+	log.DebugKV(ctx, "announce", serialize{announce})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {

@@ -20,7 +20,7 @@ You can find more detail on system requirements below, but in short you should a
 
 For a small instance (1-20 active users), GoToSocial will likely hover consistently between 250MB and 350MB of RAM usage once the internal caches are hydrated:
 
-![Grafana graph showing GoToSocial heap in use hovering around 300MB and spiking occasionally to 400MB-500MB.](../assets/getting-started-memory-graph.png)
+![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](../assets/getting-started-memory-graph.png)
 
 In the graph above you can see that RAM usage spikes during periods of load. This happens, for example, when when a status gets boosted by someone with many followers, or when the embedded `ffmpeg` binary is decoding or reencoding media files into thumbnails (especially larger video files).
 
@@ -65,13 +65,15 @@ If you decide to use a VPS instead, you can spin yourself up something cheap wit
 
 [Greenhost](https://greenhost.net) is also great: it has zero CO2 emissions, but is a bit more costly. Their 1GB, 1-cpu VPS works great for a single-user or small instance.
 
+!!! warning "Cloud storage volumes"
+    Not all cloud VPS storage offerings are equal, and just because something claims to be backed by an SSD doesn't mean that it will necessarily be suitable to run a GoToSocial instance.
+    
+    The [performance of Hetzner Cloud Volumes](https://github.com/superseriousbusiness/gotosocial/issues/2471#issuecomment-1891098323) is not guaranteed and seems to have very volatile latency. This will result in your GoToSocial instance performing poorly.
+
 !!! danger "Oracle Free Tier"
     [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) servers are not suitable for a GoToSocial deployment if you intend to federate with more than a handful of other instances and users.
     
     GoToSocial admins running on Oracle Cloud Free Tier have reported that their instances become extremely slow or unresponsive during periods of moderate load. This is most likely due to memory or storage latency, which causes even simple database queries to take a long time to run.
-
-!!! danger "Hetzner Cloud Volume"
-    The [performance of Hetzner Cloud Volumes](https://github.com/superseriousbusiness/gotosocial/issues/2471#issuecomment-1891098323) is not guaranteed and seems to have very volatile latency. You're going to have a bad time running your database on those, with extremely poor query performance for even the most basic operations. Before filing performance issues against GoToSocial, make sure the problems reproduce with local storage.
 
 ### Distribution system requirements
 
@@ -99,12 +101,14 @@ GoToSocial supports both SQLite and Postgres as database drivers. Though it is p
 
 SQLite is the default driver and it's been shown to work brilliantly for instances in the range of 1-30 users (or maybe more).
 
+!!! danger "SQLite on networked storage"
+    Don't put your SQLite database on remote storage, whether that's NFS/Samba, iSCSI volumes, things like Ceph/Gluster or your cloud provider's network volume storage solution.
+
+    See [SQLite on networked storage](../advanced/sqlite-networked-storage.md) for further information.
+
 If you're planning on hosting more people than this on an instance, you may wish to use Postgres instead, as it offers the possibility of database clustering and redundancy, at the cost of some complexity.
 
 Regardless of which database driver you choose, for proper performance they should be run on fast storage that operates with low and stable latency. It is possible to run databases on network attached storage, but this adds variable latency and network congestion to the mix, as well as potential I/O contention on the origin storage.
-
-!!! danger "Cloud Storage Volumes"
-    Not all cloud VPS storage offerings are equal, and just because something claims to be backed by an SSD doesn't mean that it will necessarily be suitable to run a GoToSocial instance on. Please see the [Server/VPS section](#vps) section below.
 
 !!! tip
     Please [backup your database](../admin/backup_and_restore.md). The database contains encryption keys for the instance and any user accounts. You won't be able to federate again from the same domain if you lose these keys!

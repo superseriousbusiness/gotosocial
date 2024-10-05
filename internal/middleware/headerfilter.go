@@ -18,7 +18,7 @@
 package middleware
 
 import (
-	"sync"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -29,24 +29,10 @@ import (
 )
 
 var (
-	allowMatches = matchstats{m: make(map[string]uint64)}
-	blockMatches = matchstats{m: make(map[string]uint64)}
+	// errors set on gin context by header filter middleware.
+	errHeaderNotAllowed = errors.New("header did not match allow filter")
+	errHeaderBlocked    = errors.New("header matched block filter")
 )
-
-// matchstats is a simple statistics
-// counter for header filter matches.
-// TODO: replace with otel.
-type matchstats struct {
-	m map[string]uint64
-	l sync.Mutex
-}
-
-func (m *matchstats) Add(hdr, regex string) {
-	m.l.Lock()
-	key := hdr + ":" + regex
-	m.m[key]++
-	m.l.Unlock()
-}
 
 // HeaderFilter returns a gin middleware handler that provides HTTP
 // request blocking (filtering) based on database allow / block filters.
@@ -83,6 +69,7 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 		}
 
 		if block {
+			_ = c.Error(errHeaderBlocked)
 			respondBlocked(c)
 			return
 		}
@@ -95,6 +82,7 @@ func headerFilterAllowMode(state *state.State) func(c *gin.Context) {
 		}
 
 		if notAllow {
+			_ = c.Error(errHeaderNotAllowed)
 			respondBlocked(c)
 			return
 		}
@@ -129,6 +117,7 @@ func headerFilterBlockMode(state *state.State) func(c *gin.Context) {
 			}
 
 			if block {
+				_ = c.Error(errHeaderBlocked)
 				respondBlocked(c)
 				return
 			}
@@ -146,7 +135,7 @@ func isHeaderBlocked(state *state.State, c *gin.Context) (bool, error) {
 	)
 
 	// Perform an explicit is-blocked check on request header.
-	key, expr, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
+	key, _, err := state.DB.BlockHeaderRegularMatch(ctx, hdr)
 	switch err {
 	case nil:
 		break
@@ -161,12 +150,10 @@ func isHeaderBlocked(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		if expr != "" {
-			// Increment block matches stat.
-			// TODO: replace expvar with build
-			// taggable metrics types in State{}.
-			blockMatches.Add(key, expr)
-		}
+		// if expr != "" {
+		// 	// TODO: replace expvar with build
+		// 	// taggable metrics types in State{}.
+		// }
 
 		// A header was matched against!
 		// i.e. this request is blocked.
@@ -183,7 +170,7 @@ func isHeaderAllowed(state *state.State, c *gin.Context) (bool, error) {
 	)
 
 	// Perform an explicit is-allowed check on request header.
-	key, expr, err := state.DB.AllowHeaderRegularMatch(ctx, hdr)
+	key, _, err := state.DB.AllowHeaderRegularMatch(ctx, hdr)
 	switch err {
 	case nil:
 		break
@@ -198,12 +185,10 @@ func isHeaderAllowed(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		if expr != "" {
-			// Increment allow matches stat.
-			// TODO: replace expvar with build
-			// taggable metrics types in State{}.
-			allowMatches.Add(key, expr)
-		}
+		// if expr != "" {
+		// 	// TODO: replace expvar with build
+		// 	// taggable metrics types in State{}.
+		// }
 
 		// A header was matched against!
 		// i.e. this request is allowed.
@@ -220,7 +205,7 @@ func isHeaderNotAllowed(state *state.State, c *gin.Context) (bool, error) {
 	)
 
 	// Perform an explicit is-NOT-allowed check on request header.
-	key, expr, err := state.DB.AllowHeaderInverseMatch(ctx, hdr)
+	key, _, err := state.DB.AllowHeaderInverseMatch(ctx, hdr)
 	switch err {
 	case nil:
 		break
@@ -235,12 +220,10 @@ func isHeaderNotAllowed(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		if expr != "" {
-			// Increment allow matches stat.
-			// TODO: replace expvar with build
-			// taggable metrics types in State{}.
-			allowMatches.Add(key, expr)
-		}
+		// if expr != "" {
+		// 	// TODO: replace expvar with build
+		// 	// taggable metrics types in State{}.
+		// }
 
 		// A header was matched against!
 		// i.e. request is NOT allowed.

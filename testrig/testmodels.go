@@ -618,7 +618,7 @@ func NewTestAccounts() map[string]*gtsmodel.Account {
 	}
 
 	if diff := len(accountsSorted) - len(preserializedKeys); diff > 0 {
-		keyStrings := make([]string, diff)
+		keyStrings := make([]string, 0, diff)
 		for i := 0; i < diff; i++ {
 			priv, _ := rsa.GenerateKey(rand.Reader, 2048)
 			key, _ := x509.MarshalPKCS8PrivateKey(priv)
@@ -1531,7 +1531,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			BoostOfID:                "",
 			BoostOfAccountID:         "",
 			ThreadID:                 "01HCWE4P0EW9HBA5WHW97D5YV0",
-			Visibility:               gtsmodel.VisibilityUnlocked,
+			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
 			Federated:                util.Ptr(true),
@@ -1811,7 +1811,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			BoostOfID:                "",
 			ThreadID:                 "01HCWE4P0EW9HBA5WHW97D5YV0",
 			ContentWarning:           "you won't be able to reply to this without my approval",
-			Visibility:               gtsmodel.VisibilityUnlocked,
+			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(true),
 			Language:                 "en",
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",

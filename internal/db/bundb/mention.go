@@ -69,15 +69,8 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	mentions, err := m.state.Caches.DB.Mention.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Mention, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached mentions.
-			mentions := make([]*gtsmodel.Mention, 0, count)
+			mentions := make([]*gtsmodel.Mention, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) IDs.
@@ -166,24 +159,18 @@ func (m *mentionDB) PutMention(ctx context.Context, mention *gtsmodel.Mention) e
 }
 
 func (m *mentionDB) DeleteMentionByID(ctx context.Context, id string) error {
-	defer m.state.Caches.DB.Mention.Invalidate("ID", id)
-
-	// Load mention into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := m.GetMention(gtscontext.SetBarebones(ctx), id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
+	// Delete mention with given ID,
+	// returning the deleted models.
+	if _, err := m.db.NewDelete().
+		Table("mentions").
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Finally delete mention from DB.
-	_, err = m.db.NewDelete().
-		Table("mentions").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	return err
+	// Invalidate the cached mention with ID.
+	m.state.Caches.DB.Mention.Invalidate("ID", id)
+
+	return nil
 }

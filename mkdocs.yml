@@ -116,6 +116,7 @@ nav:
     - "advanced/tracing.md"
     - "advanced/metrics.md"
     - "advanced/replicating-sqlite.md"
+    - "advanced/sqlite-networked-storage.md"
 
   - "Admin":
       - "admin/settings.md"

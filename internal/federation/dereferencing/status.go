@@ -373,7 +373,7 @@ func (d *Dereferencer) enrichStatus(
 	requestUser string,
 	uri *url.URL,
 	status *gtsmodel.Status,
-	apubStatus ap.Statusable,
+	statusable ap.Statusable,
 ) (
 	*gtsmodel.Status,
 	ap.Statusable,
@@ -393,7 +393,7 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.SetUnretrievable(err)
 	}
 
-	if apubStatus == nil {
+	if statusable == nil {
 		// Dereference latest version of the status.
 		rsp, err := tsport.Dereference(ctx, uri)
 		if err != nil {
@@ -402,7 +402,7 @@ func (d *Dereferencer) enrichStatus(
 		}
 
 		// Attempt to resolve ActivityPub status from response.
-		apubStatus, err = ap.ResolveStatusable(ctx, rsp.Body)
+		statusable, err = ap.ResolveStatusable(ctx, rsp.Body)
 
 		// Tidy up now done.
 		_ = rsp.Body.Close()
@@ -444,7 +444,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Get the attributed-to account in order to fetch profile.
-	attributedTo, err := ap.ExtractAttributedToURI(apubStatus)
+	attributedTo, err := ap.ExtractAttributedToURI(statusable)
 	if err != nil {
 		return nil, nil, gtserror.New("attributedTo was empty")
 	}
@@ -460,7 +460,7 @@ func (d *Dereferencer) enrichStatus(
 
 	// ActivityPub model was recently dereferenced, so assume passed status
 	// may contain out-of-date information. Convert AP model to our GTS model.
-	latestStatus, err := d.converter.ASStatusToStatus(ctx, apubStatus)
+	latestStatus, err := d.converter.ASStatusToStatus(ctx, statusable)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error converting statusable to gts model for status %s: %w", uri, err)
 	}
@@ -479,8 +479,8 @@ func (d *Dereferencer) enrichStatus(
 	matches, err := util.URIMatches(
 		uri,
 		append(
-			ap.GetURL(apubStatus),      // status URL(s)
-			ap.GetJSONLDId(apubStatus), // status URI
+			ap.GetURL(statusable),      // status URL(s)
+			ap.GetJSONLDId(statusable), // status URI
 		)...,
 	)
 	if err != nil {
@@ -516,10 +516,12 @@ func (d *Dereferencer) enrichStatus(
 		latestStatus.ID = status.ID
 	}
 
-	// Carry-over values and set fetch time.
-	latestStatus.UpdatedAt = status.UpdatedAt
+	// Set latest fetch time and carry-
+	// over some values from "old" status.
 	latestStatus.FetchedAt = time.Now()
+	latestStatus.UpdatedAt = status.UpdatedAt
 	latestStatus.Local = status.Local
+	latestStatus.PinnedAt = status.PinnedAt
 
 	// Carry-over approvals. Remote instances might not yet
 	// serve statuses with the `approved_by` field, but we
@@ -591,7 +593,7 @@ func (d *Dereferencer) enrichStatus(
 		}
 	}
 
-	return latestStatus, apubStatus, nil
+	return latestStatus, statusable, nil
 }
 
 func (d *Dereferencer) fetchStatusMentions(
@@ -825,9 +827,6 @@ func (d *Dereferencer) fetchStatusPoll(
 		deleteStatusPoll = func(ctx context.Context, pollID string) error {
 			if err := d.state.DB.DeletePollByID(ctx, pollID); err != nil {
 				return gtserror.Newf("error deleting existing poll from database: %w", err)
-			}
-			if err := d.state.DB.DeletePollVotes(ctx, pollID); err != nil {
-				return gtserror.Newf("error deleting existing votes from database: %w", err)
 			}
 			return nil
 		}

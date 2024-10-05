@@ -67,12 +67,14 @@ func (t *tombstoneDB) PutTombstone(ctx context.Context, tombstone *gtsmodel.Tomb
 }
 
 func (t *tombstoneDB) DeleteTombstone(ctx context.Context, id string) error {
-	defer t.state.Caches.DB.Tombstone.Invalidate("ID", id)
-
 	// Delete tombstone from DB.
 	_, err := t.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("tombstones"), bun.Ident("tombstone")).
 		Where("? = ?", bun.Ident("tombstone.id"), id).
 		Exec(ctx)
+
+	// Invalidate any cached tombstone by given ID.
+	t.state.Caches.DB.Tombstone.Invalidate("ID", id)
+
 	return err
 }

@@ -133,15 +133,8 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 	faves, err := s.state.Caches.DB.StatusFave.LoadIDs("ID",
 		faveIDs,
 		func(uncached []string) ([]*gtsmodel.StatusFave, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached faves.
-			faves := make([]*gtsmodel.StatusFave, 0, count)
+			faves := make([]*gtsmodel.StatusFave, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) fave IDs.

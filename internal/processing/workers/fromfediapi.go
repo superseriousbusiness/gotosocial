@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-kv"
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
@@ -69,7 +68,7 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 
 	// Include GTSModel in logs if appropriate.
 	if fMsg.GTSModel != nil &&
-		log.Level() >= level.DEBUG {
+		log.Level() >= log.DEBUG {
 		fields = append(fields, kv.Field{
 			"model", fMsg.GTSModel,
 		})

@@ -2005,3 +2005,49 @@ func (c *Converter) InteractionReqToASAccept(
 
 	return accept, nil
 }
+
+// InteractionReqToASReject converts a *gtsmodel.InteractionRequest
+// to an ActivityStreams Reject, addressed to the interacting account.
+func (c *Converter) InteractionReqToASReject(
+	ctx context.Context,
+	req *gtsmodel.InteractionRequest,
+) (vocab.ActivityStreamsReject, error) {
+	reject := streams.NewActivityStreamsReject()
+
+	rejectID, err := url.Parse(req.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid reject uri: %w", err)
+	}
+
+	actorIRI, err := url.Parse(req.TargetAccount.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid account uri: %w", err)
+	}
+
+	objectIRI, err := url.Parse(req.InteractionURI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid target uri: %w", err)
+	}
+
+	toIRI, err := url.Parse(req.InteractingAccount.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
+	}
+
+	// Set id to the URI of
+	// interaction request.
+	ap.SetJSONLDId(reject, rejectID)
+
+	// Actor is the account that
+	// owns the approval / reject.
+	ap.AppendActorIRIs(reject, actorIRI)
+
+	// Object is the interaction URI.
+	ap.AppendObjectIRIs(reject, objectIRI)
+
+	// Address to the owner
+	// of interaction URI.
+	ap.AppendTo(reject, toIRI)
+
+	return reject, nil
+}

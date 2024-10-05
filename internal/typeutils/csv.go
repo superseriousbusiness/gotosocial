@@ -18,12 +18,13 @@
 package typeutils
 
 import (
+	"cmp"
 	"context"
+	"slices"
 	"strconv"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -34,16 +35,14 @@ func (c *Converter) AccountToExportStats(
 	a *gtsmodel.Account,
 ) (*apimodel.AccountExportStats, error) {
 	// Ensure account stats populated.
-	if a.Stats == nil {
-		if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
-			return nil, gtserror.Newf(
-				"error getting stats for account %s: %w",
-				a.ID, err,
-			)
-		}
+	if err := c.state.DB.PopulateAccountStats(ctx, a); err != nil {
+		return nil, gtserror.Newf(
+			"error getting stats for account %s: %w",
+			a.ID, err,
+		)
 	}
 
-	listsCount, err := c.state.DB.CountListsForAccountID(ctx, a.ID)
+	listsCount, err := c.state.DB.CountListsByAccountID(ctx, a.ID)
 	if err != nil {
 		return nil, gtserror.Newf(
 			"error counting lists for account %s: %w",
@@ -79,6 +78,8 @@ func (c *Converter) AccountToExportStats(
 
 // FollowingToCSV converts a slice of follows into
 // a slice of CSV-compatible Following records.
+//
+// Each follow should be populated.
 func (c *Converter) FollowingToCSV(
 	ctx context.Context,
 	following []*gtsmodel.Follow,
@@ -92,6 +93,8 @@ func (c *Converter) FollowingToCSV(
 	records[0] = []string{
 		"Account address",
 		"Show boosts",
+		"Notify on new posts",
+		"Languages",
 	}
 
 	// We need to know our own domain for this.
@@ -101,24 +104,19 @@ func (c *Converter) FollowingToCSV(
 		thisDomain = config.GetHost()
 	}
 
+	// Pre-sort the follows
+	// by domain and username.
+	slices.SortFunc(
+		following,
+		func(a *gtsmodel.Follow, b *gtsmodel.Follow) int {
+			aStr := a.TargetAccount.Domain + "/" + a.TargetAccount.Username
+			bStr := b.TargetAccount.Domain + "/" + b.TargetAccount.Username
+			return cmp.Compare(aStr, bStr)
+		},
+	)
+
 	// For each item, add a record.
 	for _, follow := range following {
-		if follow.TargetAccount == nil {
-			// Retrieve target account.
-			var err error
-			follow.TargetAccount, err = c.state.DB.GetAccountByID(
-				// Barebones is fine here.
-				gtscontext.SetBarebones(ctx),
-				follow.TargetAccountID,
-			)
-			if err != nil {
-				return nil, gtserror.Newf(
-					"db error getting target account for follow %s: %w",
-					follow.ID, err,
-				)
-			}
-		}
-
 		domain := follow.TargetAccount.Domain
 		if domain == "" {
 			// Local account,
@@ -132,6 +130,10 @@ func (c *Converter) FollowingToCSV(
 			follow.TargetAccount.Username + "@" + domain,
 			// Show boosts: eg., true
 			strconv.FormatBool(*follow.ShowReblogs),
+			// Notify on new posts, eg., true
+			strconv.FormatBool(*follow.Notify),
+			// Languages: compat only, leave blank.
+			"",
 		})
 	}
 
@@ -140,6 +142,8 @@ func (c *Converter) FollowingToCSV(
 
 // FollowersToCSV converts a slice of follows into
 // a slice of CSV-compatible Followers records.
+//
+// Each follow should be populated.
 func (c *Converter) FollowersToCSV(
 	ctx context.Context,
 	followers []*gtsmodel.Follow,
@@ -161,24 +165,19 @@ func (c *Converter) FollowersToCSV(
 		thisDomain = config.GetHost()
 	}
 
+	// Pre-sort the follows
+	// by domain and username.
+	slices.SortFunc(
+		followers,
+		func(a *gtsmodel.Follow, b *gtsmodel.Follow) int {
+			aStr := a.Account.Domain + "/" + a.Account.Username
+			bStr := b.Account.Domain + "/" + b.Account.Username
+			return cmp.Compare(aStr, bStr)
+		},
+	)
+
 	// For each item, add a record.
 	for _, follow := range followers {
-		if follow.Account == nil {
-			// Retrieve account.
-			var err error
-			follow.Account, err = c.state.DB.GetAccountByID(
-				// Barebones is fine here.
-				gtscontext.SetBarebones(ctx),
-				follow.AccountID,
-			)
-			if err != nil {
-				return nil, gtserror.Newf(
-					"db error getting account for follow %s: %w",
-					follow.ID, err,
-				)
-			}
-		}
-
 		domain := follow.Account.Domain
 		if domain == "" {
 			// Local account,
@@ -202,6 +201,7 @@ func (c *Converter) ListsToCSV(
 	ctx context.Context,
 	lists []*gtsmodel.List,
 ) ([][]string, error) {
+
 	// We need to know our own domain for this.
 	// Try account domain, fall back to host.
 	thisDomain := config.GetAccountDomain()
@@ -213,43 +213,45 @@ func (c *Converter) ListsToCSV(
 	// CSV doesn't use column headers.
 	records := make([][]string, 0)
 
+	// Pre-sort the lists
+	// alphabetically.
+	slices.SortFunc(
+		lists,
+		func(a *gtsmodel.List, b *gtsmodel.List) int {
+			return cmp.Compare(a.Title, b.Title)
+		},
+	)
+
 	// For each item, add a record.
 	for _, list := range lists {
-		for _, entry := range list.ListEntries {
-			if entry.Follow == nil {
-				// Retrieve follow.
-				var err error
-				entry.Follow, err = c.state.DB.GetFollowByID(
-					ctx,
-					entry.FollowID,
-				)
-				if err != nil {
-					return nil, gtserror.Newf(
-						"db error getting follow for list entry %s: %w",
-						entry.ID, err,
-					)
-				}
-			}
 
-			if entry.Follow.TargetAccount == nil {
-				// Retrieve account.
-				var err error
-				entry.Follow.TargetAccount, err = c.state.DB.GetAccountByID(
-					// Barebones is fine here.
-					gtscontext.SetBarebones(ctx),
-					entry.Follow.TargetAccountID,
-				)
-				if err != nil {
-					return nil, gtserror.Newf(
-						"db error getting target account for list entry %s: %w",
-						entry.ID, err,
-					)
-				}
-			}
+		// Get all follows contained with this list.
+		follows, err := c.state.DB.GetFollowsInList(ctx,
+			list.ID,
+			nil,
+		)
+		if err != nil {
+			err := gtserror.Newf("db error getting follows for list: %w", err)
+			return nil, err
+		}
 
+		// Pre-sort the follows
+		// by domain and username.
+		slices.SortFunc(
+			follows,
+			func(a *gtsmodel.Follow, b *gtsmodel.Follow) int {
+				aStr := a.TargetAccount.Domain + "/" + a.TargetAccount.Username
+				bStr := b.TargetAccount.Domain + "/" + b.TargetAccount.Username
+				return cmp.Compare(aStr, bStr)
+			},
+		)
+
+		// Append each follow as CSV record.
+		for _, follow := range follows {
 			var (
-				username = entry.Follow.TargetAccount.Username
-				domain   = entry.Follow.TargetAccount.Domain
+				// Extract username / domain from target.
+				username = follow.TargetAccount.Username
+				domain   = follow.TargetAccount.Domain
 			)
 
 			if domain == "" {
@@ -259,14 +261,16 @@ func (c *Converter) ListsToCSV(
 			}
 
 			records = append(records, []string{
-				// List title: eg., Very cool list
+				// List title: e.g.
+				// Very cool list
 				list.Title,
-				// Account address: eg., someone@example.org
-				// -- NOTE: without the leading '@'!
+
+				// Account address: e.g.,
+				// someone@example.org
+				// NOTE: without the leading '@'!
 				username + "@" + domain,
 			})
 		}
-
 	}
 
 	return records, nil
@@ -274,6 +278,8 @@ func (c *Converter) ListsToCSV(
 
 // BlocksToCSV converts a slice of blocks into
 // a slice of CSV-compatible blocks records.
+//
+// Each block should be populated.
 func (c *Converter) BlocksToCSV(
 	ctx context.Context,
 	blocks []*gtsmodel.Block,
@@ -289,24 +295,19 @@ func (c *Converter) BlocksToCSV(
 	// CSV doesn't use column headers.
 	records := make([][]string, 0, len(blocks))
 
+	// Pre-sort the blocks
+	// by domain and username.
+	slices.SortFunc(
+		blocks,
+		func(a *gtsmodel.Block, b *gtsmodel.Block) int {
+			aStr := a.TargetAccount.Domain + "/" + a.TargetAccount.Username
+			bStr := b.TargetAccount.Domain + "/" + b.TargetAccount.Username
+			return cmp.Compare(aStr, bStr)
+		},
+	)
+
 	// For each item, add a record.
 	for _, block := range blocks {
-		if block.TargetAccount == nil {
-			// Retrieve target account.
-			var err error
-			block.TargetAccount, err = c.state.DB.GetAccountByID(
-				// Barebones is fine here.
-				gtscontext.SetBarebones(ctx),
-				block.TargetAccountID,
-			)
-			if err != nil {
-				return nil, gtserror.Newf(
-					"db error getting target account for block %s: %w",
-					block.ID, err,
-				)
-			}
-		}
-
 		domain := block.TargetAccount.Domain
 		if domain == "" {
 			// Local account,
@@ -326,6 +327,8 @@ func (c *Converter) BlocksToCSV(
 
 // MutesToCSV converts a slice of mutes into
 // a slice of CSV-compatible mute records.
+//
+// Each mute should be populated.
 func (c *Converter) MutesToCSV(
 	ctx context.Context,
 	mutes []*gtsmodel.UserMute,
@@ -348,24 +351,19 @@ func (c *Converter) MutesToCSV(
 		thisDomain = config.GetHost()
 	}
 
+	// Pre-sort the mutes
+	// by domain and username.
+	slices.SortFunc(
+		mutes,
+		func(a *gtsmodel.UserMute, b *gtsmodel.UserMute) int {
+			aStr := a.TargetAccount.Domain + "/" + a.TargetAccount.Username
+			bStr := b.TargetAccount.Domain + "/" + b.TargetAccount.Username
+			return cmp.Compare(aStr, bStr)
+		},
+	)
+
 	// For each item, add a record.
 	for _, mute := range mutes {
-		if mute.TargetAccount == nil {
-			// Retrieve target account.
-			var err error
-			mute.TargetAccount, err = c.state.DB.GetAccountByID(
-				// Barebones is fine here.
-				gtscontext.SetBarebones(ctx),
-				mute.TargetAccountID,
-			)
-			if err != nil {
-				return nil, gtserror.Newf(
-					"db error getting target account for mute %s: %w",
-					mute.ID, err,
-				)
-			}
-		}
-
 		domain := mute.TargetAccount.Domain
 		if domain == "" {
 			// Local account,
@@ -404,15 +402,29 @@ func (c *Converter) CSVToFollowing(
 	)
 
 	for _, record := range records {
-		if len(record) != 2 {
+		recordLen := len(record)
+
+		// Older versions of this Masto CSV
+		// schema may not include "Show boosts",
+		// "Notify on new posts", or "Languages",
+		// so be lenient here in what we accept.
+		if recordLen == 0 ||
+			recordLen > 4 {
 			// Badly formatted,
 			// skip this one.
 			continue
 		}
 
+		// "Account address"
 		namestring := record[0]
 		if namestring == "" {
 			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		if namestring == "Account address" {
+			// CSV header row,
 			// skip this one.
 			continue
 		}
@@ -436,12 +448,34 @@ func (c *Converter) CSVToFollowing(
 			domain = ""
 		}
 
-		showReblogs, err := strconv.ParseBool(record[1])
-		if err != nil {
-			// Badly formatted,
-			// skip this one.
-			continue
+		// "Show boosts"
+		var showReblogs *bool
+		if recordLen > 1 {
+			b, err := strconv.ParseBool(record[1])
+			if err != nil {
+				// Badly formatted,
+				// skip this one.
+				continue
+			}
+			showReblogs = &b
 		}
+
+		// "Notify on new posts"
+		var notify *bool
+		if recordLen > 2 {
+			b, err := strconv.ParseBool(record[2])
+			if err != nil {
+				// Badly formatted,
+				// skip this one.
+				continue
+			}
+			notify = &b
+		}
+
+		// TODO: "Languages"
+		//
+		// Ignore this for now as we
+		// don't do anything with it.
 
 		// Looks good, whack it in the slice.
 		follows = append(follows, &gtsmodel.Follow{
@@ -449,7 +483,8 @@ func (c *Converter) CSVToFollowing(
 				Username: username,
 				Domain:   domain,
 			},
-			ShowReblogs: &showReblogs,
+			ShowReblogs: showReblogs,
+			Notify:      notify,
 		})
 	}
 

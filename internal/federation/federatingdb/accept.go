@@ -22,7 +22,6 @@ import (
 	"errors"
 	"net/url"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -46,15 +45,7 @@ func (f *federatingDB) GetAccept(
 }
 
 func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(accept)
-		if err != nil {
-			return err
-		}
-		l := log.WithContext(ctx).
-			WithField("accept", i)
-		l.Debug("entering Accept")
-	}
+	log.DebugKV(ctx, "accept", serialize{accept})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
@@ -81,10 +72,9 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	// handling the ones we know how to handle.
 	for _, object := range ap.ExtractObjects(accept) {
 		if asType := object.GetType(); asType != nil {
-			// Check and handle any
-			// vocab.Type objects.
-			// nolint:gocritic
-			switch asType.GetTypeName() {
+
+			// Check and handle any vocab.Type objects.
+			switch name := asType.GetTypeName(); name {
 
 			// ACCEPT FOLLOW
 			case ap.ActivityFollow:
@@ -96,6 +86,10 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				); err != nil {
 					return err
 				}
+
+			// UNHANDLED
+			default:
+				log.Debugf(ctx, "unhandled object type: %s", name)
 			}
 
 		} else if object.IsIRI() {
@@ -137,6 +131,10 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 				); err != nil {
 					return err
 				}
+
+			// UNHANDLED
+			default:
+				log.Debugf(ctx, "unhandled iri type: %s", objIRI)
 			}
 		}
 	}
@@ -311,7 +309,8 @@ func (f *federatingDB) acceptStatusIRI(
 		return nil
 	}
 
-	if util.PtrOrValue(status.PendingApproval, false) {
+	pendingApproval := util.PtrOrValue(status.PendingApproval, false)
+	if !pendingApproval {
 		// Status doesn't need approval or it's
 		// already been approved by an Accept.
 		// Just return.
@@ -402,7 +401,8 @@ func (f *federatingDB) acceptLikeIRI(
 		return nil
 	}
 
-	if !util.PtrOrValue(fave.PendingApproval, false) {
+	pendingApproval := util.PtrOrValue(fave.PendingApproval, false)
+	if !pendingApproval {
 		// Like doesn't need approval or it's
 		// already been approved by an Accept.
 		// Just return.

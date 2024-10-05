@@ -19,8 +19,10 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
@@ -110,13 +112,18 @@ func (s *sinBinStatusDB) UpdateSinBinStatus(
 }
 
 func (s *sinBinStatusDB) DeleteSinBinStatusByID(ctx context.Context, id string) error {
-	// On return ensure status invalidated from cache.
-	defer s.state.Caches.DB.SinBinStatus.Invalidate("ID", id)
-
-	_, err := s.db.
+	// Delete the status from DB.
+	if _, err := s.db.
 		NewDelete().
 		TableExpr("? AS ?", bun.Ident("sin_bin_statuses"), bun.Ident("sin_bin_status")).
 		Where("? = ?", bun.Ident("sin_bin_status.id"), id).
-		Exec(ctx)
-	return err
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Invalidate any cached sinbin status model by ID.
+	s.state.Caches.DB.SinBinStatus.Invalidate("ID", id)
+
+	return nil
 }

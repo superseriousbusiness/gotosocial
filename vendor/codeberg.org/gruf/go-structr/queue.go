@@ -68,9 +68,9 @@ func (q *Queue[T]) Init(config QueueConfig[T]) {
 
 // Index selects index with given name from queue, else panics.
 func (q *Queue[T]) Index(name string) *Index {
-	for i := range q.indices {
-		if q.indices[i].name == name {
-			return &q.indices[i]
+	for i, idx := range q.indices {
+		if idx.name == name {
+			return &(q.indices[i])
 		}
 	}
 	panic("unknown index: " + name)
@@ -207,17 +207,17 @@ func (q *Queue[T]) Len() int {
 
 // Debug returns debug stats about queue.
 func (q *Queue[T]) Debug() map[string]any {
-	m := make(map[string]any)
+	m := make(map[string]any, 2)
 	q.mutex.Lock()
 	m["queue"] = q.queue.len
-	indices := make(map[string]any)
+	indices := make(map[string]any, len(q.indices))
 	m["indices"] = indices
-	for i := range q.indices {
+	for _, idx := range q.indices {
 		var n uint64
-		for _, l := range q.indices[i].data.m {
+		for _, l := range idx.data.m {
 			n += uint64(l.len)
 		}
-		indices[q.indices[i].name] = n
+		indices[idx.name] = n
 	}
 	q.mutex.Unlock()
 	return m
@@ -308,8 +308,8 @@ func (q *Queue[T]) index(value T) *indexed_item {
 			continue
 		}
 
-		// Append item to index.
-		idx.append(key, item)
+		// Append item to this index.
+		idx.append(&q.queue, key, item)
 	}
 
 	// Done with buf.

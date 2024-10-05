@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
@@ -32,9 +31,7 @@ import (
 //
 // The library makes this call only after acquiring a lock first.
 func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{{"id", id}}...)
-	l.Debug("entering Get")
+	log.DebugKV(ctx, "id", id)
 
 	switch {
 

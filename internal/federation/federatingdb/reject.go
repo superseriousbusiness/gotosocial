@@ -22,7 +22,6 @@ import (
 	"errors"
 	"time"
 
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -35,15 +34,7 @@ import (
 )
 
 func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
-	if log.Level() >= level.DEBUG {
-		i, err := marshalItem(reject)
-		if err != nil {
-			return err
-		}
-		l := log.WithContext(ctx).
-			WithField("reject", i)
-		l.Debug("entering Reject")
-	}
+	log.DebugKV(ctx, "reject", serialize{reject})
 
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
@@ -62,10 +53,8 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 
 	for _, object := range ap.ExtractObjects(reject) {
 		if asType := object.GetType(); asType != nil {
-			// Check and handle any
-			// vocab.Type objects.
-			// nolint:gocritic
-			switch asType.GetTypeName() {
+			// Check and handle any vocab.Type objects.
+			switch name := asType.GetTypeName(); name {
 
 			// REJECT FOLLOW
 			case ap.ActivityFollow:
@@ -77,6 +66,10 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 				); err != nil {
 					return err
 				}
+
+			// UNHANDLED
+			default:
+				log.Debugf(ctx, "unhandled object type: %s", name)
 			}
 
 		} else if object.IsIRI() {
@@ -118,6 +111,10 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 				); err != nil {
 					return err
 				}
+
+			// UNHANDLED
+			default:
+				log.Debugf(ctx, "unhandled iri type: %s", objIRI)
 			}
 		}
 	}

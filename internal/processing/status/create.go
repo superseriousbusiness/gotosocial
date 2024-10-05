@@ -117,14 +117,14 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if err := processVisibility(form, requester.Settings.Privacy, status); err != nil {
+	if err := p.processVisibility(ctx, form, requester.Settings.Privacy, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Process policy AFTER visibility as it
-	// relies on status.Visibility being set.
-	if err := processInteractionPolicy(form, requester.Settings, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	// Process policy AFTER visibility as it relies
+	// on status.Visibility and form.Visibility being set.
+	if errWithCode := processInteractionPolicy(form, requester.Settings, status); errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	if err := processLanguage(form, requester.Settings.Language, status); err != nil {
@@ -162,6 +162,23 @@ func (p *Processor) Create(
 		if err := p.polls.ScheduleExpiry(ctx, status.Poll); err != nil {
 			log.Errorf(ctx, "error scheduling poll expiry: %v", err)
 		}
+	}
+
+	// If the new status replies to a status that
+	// replies to us, use our reply as an implicit
+	// accept of any pending interaction.
+	implicitlyAccepted, errWithCode := p.implicitlyAccept(ctx,
+		requester, status,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// If we ended up implicitly accepting, mark the
+	// replied-to status as no longer pending approval
+	// so it's serialized properly via the API.
+	if implicitlyAccepted {
+		status.InReplyTo.PendingApproval = util.Ptr(false)
 	}
 
 	return p.c.GetAPIStatus(ctx, requester, status)
@@ -337,7 +354,8 @@ func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.StatusCr
 	return nil
 }
 
-func processVisibility(
+func (p *Processor) processVisibility(
+	ctx context.Context,
 	form *apimodel.StatusCreateRequest,
 	accountDefaultVis gtsmodel.Visibility,
 	status *gtsmodel.Status,
@@ -347,13 +365,17 @@ func processVisibility(
 	case form.Visibility != "":
 		status.Visibility = typeutils.APIVisToVis(form.Visibility)
 
-	// Fall back to account default.
+	// Fall back to account default, set
+	// this back on the form for later use.
 	case accountDefaultVis != "":
 		status.Visibility = accountDefaultVis
+		form.Visibility = p.converter.VisToAPIVis(ctx, accountDefaultVis)
 
-	// What? Fall back to global default.
+	// What? Fall back to global default, set
+	// this back on the form for later use.
 	default:
 		status.Visibility = gtsmodel.VisibilityDefault
+		form.Visibility = p.converter.VisToAPIVis(ctx, gtsmodel.VisibilityDefault)
 	}
 
 	// Set federated according to "local_only" field,
@@ -365,17 +387,32 @@ func processVisibility(
 }
 
 func processInteractionPolicy(
-	_ *apimodel.StatusCreateRequest,
+	form *apimodel.StatusCreateRequest,
 	settings *gtsmodel.AccountSettings,
 	status *gtsmodel.Status,
-) error {
-	// TODO: parse policy for this
-	// status from form and prefer this.
+) gtserror.WithCode {
 
+	// If policy is set on the
+	// form then prefer this.
+	//
 	// TODO: prevent scope widening by
 	// limiting interaction policy if
 	// inReplyTo status has a stricter
 	// interaction policy than this one.
+	if form.InteractionPolicy != nil {
+		p, err := typeutils.APIInteractionPolicyToInteractionPolicy(
+			form.InteractionPolicy,
+			form.Visibility,
+		)
+
+		if err != nil {
+			errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
+			return errWithCode
+		}
+
+		status.InteractionPolicy = p
+		return nil
+	}
 
 	switch status.Visibility {
 
@@ -495,22 +532,16 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	}
 
 	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
-	status.MentionIDs = gatherIDs(status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
-	status.TagIDs = gatherIDs(status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
-	status.EmojiIDs = gatherIDs(status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
+	status.MentionIDs = util.Gather(nil, status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
+	status.TagIDs = util.Gather(nil, status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
+	status.EmojiIDs = util.Gather(nil, status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
+
+	if status.ContentWarning != "" && len(status.AttachmentIDs) > 0 {
+		// If a content-warning is set, and
+		// the status contains media, always
+		// set the status sensitive flag.
+		status.Sensitive = util.Ptr(true)
+	}
 
 	return nil
-}
-
-// gatherIDs is a small utility function to gather IDs from a slice of type T.
-func gatherIDs[T any](in []T, getID func(T) string) []string {
-	if getID == nil {
-		// move nil check out loop.
-		panic("nil getID function")
-	}
-	ids := make([]string, len(in))
-	for i, t := range in {
-		ids[i] = getID(t)
-	}
-	return ids
 }

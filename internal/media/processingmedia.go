@@ -261,10 +261,15 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		ext,
 	)
 
+	// Get mimetype for the file container
+	// type, falling back to generic data.
+	p.media.File.ContentType = getMimeType(ext)
+
 	// Copy temporary file into storage at path.
 	filesz, err := p.mgr.state.Storage.PutFile(ctx,
 		p.media.File.Path,
 		temppath,
+		p.media.File.ContentType,
 	)
 	if err != nil {
 		return gtserror.Newf("error writing media to storage: %w", err)
@@ -286,10 +291,14 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			thumbExt,
 		)
 
+		// Determine thumbnail content-type from thumb ext.
+		p.media.Thumbnail.ContentType = getMimeType(thumbExt)
+
 		// Copy thumbnail file into storage at path.
 		thumbsz, err := p.mgr.state.Storage.PutFile(ctx,
 			p.media.Thumbnail.Path,
 			thumbpath,
+			p.media.Thumbnail.ContentType,
 		)
 		if err != nil {
 			return gtserror.Newf("error writing thumb to storage: %w", err)
@@ -297,9 +306,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 		// Set final determined thumbnail size.
 		p.media.Thumbnail.FileSize = int(thumbsz)
-
-		// Determine thumbnail content-type from thumb ext.
-		p.media.Thumbnail.ContentType = getMimeType(thumbExt)
 
 		// Generate a media attachment thumbnail URL.
 		p.media.Thumbnail.URL = uris.URIForAttachment(
@@ -319,10 +325,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.ID,
 		ext,
 	)
-
-	// Get mimetype for the file container
-	// type, falling back to generic data.
-	p.media.File.ContentType = getMimeType(ext)
 
 	// We can now consider this cached.
 	p.media.Cached = util.Ptr(true)

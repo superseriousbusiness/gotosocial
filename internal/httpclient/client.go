@@ -48,9 +48,6 @@ var (
 
 	// ErrReservedAddr is returned if a dialed address resolves to an IP within a blocked or reserved net.
 	ErrReservedAddr = errors.New("dial within blocked / reserved IP range")
-
-	// ErrBodyTooLarge is returned when a received response body is above predefined limit (default 40MB).
-	ErrBodyTooLarge = errors.New("body size too large")
 )
 
 // Config provides configuration details for setting up a new
@@ -302,7 +299,6 @@ func (c *Client) do(r *Request) (rsp *http.Response, retry bool, err error) {
 		if errorsv2.IsV2(err,
 			context.DeadlineExceeded,
 			context.Canceled,
-			ErrBodyTooLarge,
 			ErrReservedAddr,
 		) {
 			// Non-retryable errors.

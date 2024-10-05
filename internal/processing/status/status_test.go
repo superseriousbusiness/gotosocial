@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/interactionrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -100,11 +101,13 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 
 	common := common.New(&suite.state, suite.mediaManager, suite.typeConverter, suite.federator, visFilter)
 	polls := polls.New(&common, &suite.state, suite.typeConverter)
+	intReqs := interactionrequests.New(&common, &suite.state, suite.typeConverter)
 
 	suite.status = status.New(
 		&suite.state,
 		&common,
 		&polls,
+		&intReqs,
 		suite.federator,
 		suite.typeConverter,
 		visFilter,

@@ -54,15 +54,8 @@ func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmo
 	statuses, err := s.state.Caches.DB.Status.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.Status, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached statuses.
-			statuses := make([]*gtsmodel.Status, 0, count)
+			statuses := make([]*gtsmodel.Status, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) status IDs.
@@ -486,24 +479,13 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 }
 
 func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
-	// Load status into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := s.GetStatusByID(
-		gtscontext.SetBarebones(ctx),
-		id,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		// NOTE: even if db.ErrNoEntries is returned, we
-		// still run the below transaction to ensure related
-		// objects are appropriately deleted.
-		return err
-	}
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.Status
+	deleted.ID = id
 
-	// On return ensure status invalidated from cache.
-	defer s.state.Caches.DB.Status.Invalidate("ID", id)
-
-	return s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	// Delete status from database and any related links in a transaction.
+	if err := s.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// delete links between this status and any emojis it uses
 		if _, err := tx.
 			NewDelete().
@@ -524,26 +506,42 @@ func (s *statusDB) DeleteStatusByID(ctx context.Context, id string) error {
 
 		// Delete links between this status
 		// and any threads it was a part of.
-		_, err = tx.
+		if _, err := tx.
 			NewDelete().
 			TableExpr("? AS ?", bun.Ident("thread_to_statuses"), bun.Ident("thread_to_status")).
 			Where("? = ?", bun.Ident("thread_to_status.status_id"), id).
-			Exec(ctx)
-		if err != nil {
+			Exec(ctx); err != nil {
 			return err
 		}
 
 		// delete the status itself
 		if _, err := tx.
 			NewDelete().
-			TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-			Where("? = ?", bun.Ident("status.id"), id).
-			Exec(ctx); err != nil {
+			Model(&deleted).
+			Where("? = ?", bun.Ident("id"), id).
+			Returning("?, ?, ?, ?, ?",
+				bun.Ident("account_id"),
+				bun.Ident("boost_of_id"),
+				bun.Ident("in_reply_to_id"),
+				bun.Ident("attachments"),
+				bun.Ident("poll_id"),
+			).
+			Exec(ctx); err != nil &&
+			!errors.Is(err, db.ErrNoEntries) {
 			return err
 		}
 
 		return nil
-	})
+	}); err != nil {
+		return err
+	}
+
+	// Invalidate cached status by its ID, manually
+	// call the invalidate hook in case not cached.
+	s.state.Caches.DB.Status.Invalidate("ID", id)
+	s.state.Caches.OnInvalidateStatus(&deleted)
+
+	return nil
 }
 
 func (s *statusDB) GetStatusesUsingEmoji(ctx context.Context, emojiID string) ([]*gtsmodel.Status, error) {

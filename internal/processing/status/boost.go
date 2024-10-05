@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // BoostCreate processes the boost/reblog of target
@@ -137,6 +138,23 @@ func (p *Processor) BoostCreate(
 		Origin:         requester,
 		Target:         target.Account,
 	})
+
+	// If the boost target status replies to a status
+	// that we own, and has a pending interaction
+	// request, use the boost as an implicit accept.
+	implicitlyAccepted, errWithCode := p.implicitlyAccept(ctx,
+		requester, target,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// If we ended up implicitly accepting, mark the
+	// target status as no longer pending approval so
+	// it's serialized properly via the API.
+	if implicitlyAccepted {
+		target.PendingApproval = util.Ptr(false)
+	}
 
 	return p.c.GetAPIStatus(ctx, requester, boost)
 }

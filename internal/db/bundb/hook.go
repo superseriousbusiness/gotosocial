@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-kv"
-	"codeberg.org/gruf/go-logger/v2/level"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
@@ -50,7 +49,7 @@ func (queryHook) AfterQuery(ctx context.Context, event *bun.QueryEvent) {
 
 	// On trace, we log query information,
 	// manually crafting so DB query not escaped.
-	case log.Level() >= level.TRACE:
+	case log.Level() >= log.TRACE:
 		log.Printf("level=TRACE duration=%s query=%s", dur, event.Query)
 	}
 }

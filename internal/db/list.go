@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type List interface {
@@ -30,11 +31,29 @@ type List interface {
 	// GetListsByIDs fetches all lists with the provided IDs.
 	GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.List, error)
 
-	// GetListsForAccountID gets all lists owned by the given accountID.
-	GetListsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error)
+	// GetListsByAccountID gets all lists owned by the given accountID.
+	GetListsByAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error)
 
-	// CountListsForAccountID counts the number of lists owned by the given accountID.
-	CountListsForAccountID(ctx context.Context, accountID string) (int, error)
+	// CountListsByAccountID counts the number of lists owned by the given accountID.
+	CountListsByAccountID(ctx context.Context, accountID string) (int, error)
+
+	// GetListsContainingFollowID gets all lists that contain the given follow with ID.
+	GetListsContainingFollowID(ctx context.Context, followID string) ([]*gtsmodel.List, error)
+
+	// GetFollowIDsInList returns all the follow IDs contained within given list ID.
+	GetFollowIDsInList(ctx context.Context, listID string, page *paging.Page) ([]string, error)
+
+	// GetFollowsInList returns all the follows contained within given list ID.
+	GetFollowsInList(ctx context.Context, listID string, page *paging.Page) ([]*gtsmodel.Follow, error)
+
+	// GetAccountIDsInList return all the account IDs (follow targets) contained within given list ID.
+	GetAccountIDsInList(ctx context.Context, listID string, page *paging.Page) ([]string, error)
+
+	// GetAccountsInList return all the accounts (follow targets) contained within given list ID.
+	GetAccountsInList(ctx context.Context, listID string, page *paging.Page) ([]*gtsmodel.Account, error)
+
+	// IsAccountInListID returns whether given account with ID is in the list with ID.
+	IsAccountInList(ctx context.Context, listID string, accountID string) (bool, error)
 
 	// PopulateList ensures that the list's struct fields are populated.
 	PopulateList(ctx context.Context, list *gtsmodel.List) error
@@ -49,31 +68,13 @@ type List interface {
 	// DeleteListByID deletes one list with the given ID.
 	DeleteListByID(ctx context.Context, id string) error
 
-	// GetListEntryByID gets one list entry with the given ID.
-	GetListEntryByID(ctx context.Context, id string) (*gtsmodel.ListEntry, error)
-
-	// GetListEntriesyIDs fetches all list entries with the provided IDs.
-	GetListEntriesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.ListEntry, error)
-
-	// GetListEntries gets list entries from the given listID, using the given parameters.
-	GetListEntries(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.ListEntry, error)
-
-	// GetListEntriesForFollowID returns all listEntries that pertain to the given followID.
-	GetListEntriesForFollowID(ctx context.Context, followID string) ([]*gtsmodel.ListEntry, error)
-
-	// PopulateListEntry ensures that the listEntry's struct fields are populated.
-	PopulateListEntry(ctx context.Context, listEntry *gtsmodel.ListEntry) error
-
 	// PutListEntries inserts a slice of listEntries into the database.
 	// It uses a transaction to ensure no partial updates.
 	PutListEntries(ctx context.Context, listEntries []*gtsmodel.ListEntry) error
 
-	// DeleteListEntry deletes one list entry with the given id.
-	DeleteListEntry(ctx context.Context, id string) error
+	// DeleteListEntry deletes the list entry with given list ID and follow ID.
+	DeleteListEntry(ctx context.Context, listID string, followID string) error
 
-	// DeleteListEntryForFollowID deletes all list entries with the given followID.
-	DeleteListEntriesForFollowID(ctx context.Context, followID string) error
-
-	// ListIncludesAccount returns true if the given listID includes the given accountID.
-	ListIncludesAccount(ctx context.Context, listID string, accountID string) (bool, error)
+	// DeleteAllListEntryByFollow deletes all list entries with the given followIDs.
+	DeleteAllListEntriesByFollows(ctx context.Context, followIDs ...string) error
 }

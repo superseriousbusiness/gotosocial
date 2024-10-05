@@ -100,14 +100,7 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 	filterStatuses, err := f.state.Caches.DB.FilterStatus.LoadIDs("ID",
 		filterStatusIDs,
 		func(uncached []string) ([]*gtsmodel.FilterStatus, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
-			filterStatuses := make([]*gtsmodel.FilterStatus, 0, count)
+			filterStatuses := make([]*gtsmodel.FilterStatus, 0, len(uncached))
 			if err := f.db.
 				NewSelect().
 				Model(&filterStatuses).

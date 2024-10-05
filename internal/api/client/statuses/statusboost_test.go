@@ -17,9 +17,6 @@ package statuses_test
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -28,7 +25,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -38,212 +35,596 @@ type StatusBoostTestSuite struct {
 	StatusStandardTestSuite
 }
 
-func (suite *StatusBoostTestSuite) TestPostBoost() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	targetStatus := suite.testStatuses["admin_account_status_1"]
-
-	// setup
+func (suite *StatusBoostTestSuite) postStatusBoost(
+	targetStatusID string,
+	app *gtsmodel.Application,
+	token *gtsmodel.Token,
+	user *gtsmodel.User,
+	account *gtsmodel.Account,
+) (string, *httptest.ResponseRecorder) {
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Set(oauth.SessionAuthorizedApplication, app)
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(token))
+	ctx.Set(oauth.SessionAuthorizedUser, user)
+	ctx.Set(oauth.SessionAuthorizedAccount, account)
+
+	const pathBase = "http://localhost:8080/api" + statuses.ReblogPath
+	path := strings.ReplaceAll(pathBase, ":"+apiutil.IDKey, targetStatusID)
+	ctx.Request = httptest.NewRequest(http.MethodPost, path, nil)
 	ctx.Request.Header.Set("accept", "application/json")
 
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
+	// Populate target status ID.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   statuses.IDKey,
-			Value: targetStatus.ID,
+			Key:   apiutil.IDKey,
+			Value: targetStatusID,
 		},
 	}
 
+	// Trigger handler.
 	suite.statusModule.StatusBoostPOSTHandler(ctx)
+	return suite.parseStatusResponse(recorder)
+}
 
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
+func (suite *StatusBoostTestSuite) TestPostBoost() {
+	var (
+		targetStatus = suite.testStatuses["admin_account_status_1"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_1"]
+		user         = suite.testUsers["local_account_1"]
+		account      = suite.testAccounts["local_account_1"]
+	)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
+	out, recorder := suite.postStatusBoost(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
 
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	suite.False(statusReply.Sensitive)
-	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
-
-	suite.Empty(statusReply.SpoilerText)
-	suite.Empty(statusReply.Content)
-	suite.Equal("the_mighty_zork", statusReply.Account.Username)
-	suite.Len(statusReply.MediaAttachments, 0)
-	suite.Len(statusReply.Mentions, 0)
-	suite.Len(statusReply.Emojis, 0)
-	suite.Len(statusReply.Tags, 0)
-
-	suite.NotNil(statusReply.Application)
-	suite.Equal("really cool gts application", statusReply.Application.Name)
-
-	suite.NotNil(statusReply.Reblog)
-	suite.Equal(1, statusReply.Reblog.ReblogsCount)
-	suite.Equal(1, statusReply.Reblog.FavouritesCount)
-	suite.Equal(targetStatus.Content, statusReply.Reblog.Content)
-	suite.Equal(targetStatus.ContentWarning, statusReply.Reblog.SpoilerText)
-	suite.Equal(targetStatus.AccountID, statusReply.Reblog.Account.ID)
-	suite.Len(statusReply.Reblog.MediaAttachments, 1)
-	suite.Len(statusReply.Reblog.Tags, 1)
-	suite.Len(statusReply.Reblog.Emojis, 1)
-	suite.True(statusReply.Reblogged)
-	suite.True(statusReply.Reblog.Reblogged)
-	suite.Equal("superseriousbusiness", statusReply.Reblog.Application.Name)
+	// Target status should now
+	// be "reblogged" by us.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": true,
+  "card": null,
+  "content": "",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": true,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": null,
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": {
+    "account": "yeah this is my account, what about it punk",
+    "application": {
+      "name": "superseriousbusiness",
+      "website": "https://superserious.business"
+    },
+    "bookmarked": true,
+    "card": null,
+    "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+    "created_at": "right the hell just now babyee",
+    "emojis": [
+      {
+        "category": "reactions",
+        "shortcode": "rainbow",
+        "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+        "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+        "visible_in_picker": true
+      }
+    ],
+    "favourited": true,
+    "favourites_count": 1,
+    "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+    "in_reply_to_account_id": null,
+    "in_reply_to_id": null,
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      }
+    },
+    "language": "en",
+    "media_attachments": [
+      {
+        "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
+        "description": "Black and white image of some 50's style text saying: Welcome On Board",
+        "id": "01F8MH6NEM8D7527KZAECTCR76",
+        "meta": {
+          "focus": {
+            "x": 0,
+            "y": 0
+          },
+          "original": {
+            "aspect": 1.9047619,
+            "height": 630,
+            "size": "1200x630",
+            "width": 1200
+          },
+          "small": {
+            "aspect": 1.9104477,
+            "height": 268,
+            "size": "512x268",
+            "width": 512
+          }
+        },
+        "preview_remote_url": null,
+        "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
+        "remote_url": null,
+        "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+        "type": "image",
+        "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
+      }
+    ],
+    "mentions": [],
+    "muted": false,
+    "pinned": false,
+    "poll": null,
+    "reblog": null,
+    "reblogged": true,
+    "reblogs_count": 1,
+    "replies_count": 1,
+    "sensitive": false,
+    "spoiler_text": "",
+    "tags": [
+      {
+        "name": "welcome",
+        "url": "http://localhost:8080/tags/welcome"
+      }
+    ],
+    "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+    "uri": "http://localhost:8080/some/determinate/url",
+    "url": "http://localhost:8080/some/determinate/url",
+    "visibility": "public"
+  },
+  "reblogged": true,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
 func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
+	var (
+		targetStatus = suite.testStatuses["local_account_1_status_5"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_1"]
+		user         = suite.testUsers["local_account_1"]
+		account      = suite.testAccounts["local_account_1"]
+	)
 
-	testStatus := suite.testStatuses["local_account_1_status_5"]
-	testAccount := suite.testAccounts["local_account_1"]
-	testUser := suite.testUsers["local_account_1"]
+	out, recorder := suite.postStatusBoost(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
 
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, testUser)
-	ctx.Set(oauth.SessionAuthorizedAccount, testAccount)
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", testStatus.ID, 1)), nil)
-	ctx.Request.Header.Set("accept", "application/json")
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   statuses.IDKey,
-			Value: testStatus.ID,
-		},
-	}
-
-	suite.statusModule.StatusBoostPOSTHandler(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	responseStatus := &apimodel.Status{}
-	err = json.Unmarshal(b, responseStatus)
-	suite.NoError(err)
-
-	suite.False(responseStatus.Sensitive)
-	suite.Equal(suite.tc.VisToAPIVis(context.Background(), testStatus.Visibility), responseStatus.Visibility)
-
-	suite.Empty(responseStatus.SpoilerText)
-	suite.Empty(responseStatus.Content)
-	suite.Equal("the_mighty_zork", responseStatus.Account.Username)
-	suite.Len(responseStatus.MediaAttachments, 0)
-	suite.Len(responseStatus.Mentions, 0)
-	suite.Len(responseStatus.Emojis, 0)
-	suite.Len(responseStatus.Tags, 0)
-
-	suite.NotNil(responseStatus.Application)
-	suite.Equal("really cool gts application", responseStatus.Application.Name)
-
-	suite.NotNil(responseStatus.Reblog)
-	suite.Equal(1, responseStatus.Reblog.ReblogsCount)
-	suite.Equal(0, responseStatus.Reblog.FavouritesCount)
-	suite.Equal(testStatus.Content, responseStatus.Reblog.Content)
-	suite.Equal(testStatus.ContentWarning, responseStatus.Reblog.SpoilerText)
-	suite.Equal(testStatus.AccountID, responseStatus.Reblog.Account.ID)
-	suite.Equal(suite.tc.VisToAPIVis(context.Background(), testStatus.Visibility), responseStatus.Reblog.Visibility)
-	suite.Empty(responseStatus.Reblog.MediaAttachments)
-	suite.Empty(responseStatus.Reblog.Tags)
-	suite.Empty(responseStatus.Reblog.Emojis)
-	suite.True(responseStatus.Reblogged)
-	suite.True(responseStatus.Reblog.Reblogged)
-	suite.Equal("really cool gts application", responseStatus.Reblog.Application.Name)
+	// Target status should now
+	// be "reblogged" by us.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": null,
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": {
+    "account": "yeah this is my account, what about it punk",
+    "application": {
+      "name": "really cool gts application",
+      "website": "https://reallycool.app"
+    },
+    "bookmarked": false,
+    "card": null,
+    "content": "hi!",
+    "created_at": "right the hell just now babyee",
+    "emojis": [],
+    "favourited": false,
+    "favourites_count": 0,
+    "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+    "in_reply_to_account_id": null,
+    "in_reply_to_id": null,
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "author",
+          "followers",
+          "mentioned",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "author",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "author",
+          "followers",
+          "mentioned",
+          "me"
+        ],
+        "with_approval": []
+      }
+    },
+    "language": "en",
+    "media_attachments": [],
+    "mentions": [],
+    "muted": false,
+    "pinned": false,
+    "poll": null,
+    "reblog": null,
+    "reblogged": true,
+    "reblogs_count": 1,
+    "replies_count": 0,
+    "sensitive": false,
+    "spoiler_text": "",
+    "tags": [],
+    "text": "hi!",
+    "uri": "http://localhost:8080/some/determinate/url",
+    "url": "http://localhost:8080/some/determinate/url",
+    "visibility": "private"
+  },
+  "reblogged": true,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "private"
+}`, out)
 }
 
-// try to boost a status that's not boostable / visible to us
+// Try to boost a status that's
+// not boostable / visible to us.
 func (suite *StatusBoostTestSuite) TestPostUnboostable() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
+	var (
+		targetStatus = suite.testStatuses["local_account_2_status_4"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_1"]
+		user         = suite.testUsers["local_account_1"]
+		account      = suite.testAccounts["local_account_1"]
+	)
 
-	targetStatus := suite.testStatuses["local_account_2_status_4"]
+	out, recorder := suite.postStatusBoost(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
 
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   statuses.IDKey,
-			Value: targetStatus.ID,
-		},
-	}
-
-	suite.statusModule.StatusBoostPOSTHandler(ctx)
-
-	// check response
+	// We should have 403 from
+	// our call to the function.
 	suite.Equal(http.StatusForbidden, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.Equal(`{"error":"Forbidden: you do not have permission to boost this status"}`, string(b))
+	// We should have a helpful message.
+	suite.Equal(`{
+  "error": "Forbidden: you do not have permission to boost this status"
+}`, out)
 }
 
-// try to boost a status that's not visible to the user
+// Try to boost a status that's not visible to the user.
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {
-	// stop local_account_2 following zork
-	err := suite.db.DeleteByID(context.Background(), suite.testFollows["local_account_2_local_account_1"].ID, &gtsmodel.Follow{})
-	suite.NoError(err)
-
-	t := suite.testTokens["local_account_2"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	targetStatus := suite.testStatuses["local_account_1_status_3"] // this is a mutual only status and these accounts aren't mutuals
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_2"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_2"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.ReblogPath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   statuses.IDKey,
-			Value: targetStatus.ID,
-		},
+	// Stop local_account_2 following zork.
+	err := suite.db.DeleteFollowByID(
+		context.Background(),
+		suite.testFollows["local_account_2_local_account_1"].ID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	suite.statusModule.StatusBoostPOSTHandler(ctx)
+	var (
+		// This is a mutual only status and
+		// these accounts aren't mutuals anymore.
+		targetStatus = suite.testStatuses["local_account_1_status_3"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_2"]
+		user         = suite.testUsers["local_account_2"]
+		account      = suite.testAccounts["local_account_2"]
+	)
 
-	// check response
-	suite.Equal(http.StatusNotFound, recorder.Code) // we 404 statuses that aren't visible
+	out, recorder := suite.postStatusBoost(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
+
+	// We should have 404 from
+	// our call to the function.
+	suite.Equal(http.StatusNotFound, recorder.Code)
+
+	// We should have a helpful message.
+	suite.Equal(`{
+  "error": "Not Found: target status not found"
+}`, out)
+}
+
+// Boost a status that's pending approval by us.
+func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
+	var (
+		targetStatus = suite.testStatuses["admin_account_status_5"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_2"]
+		user         = suite.testUsers["local_account_2"]
+		account      = suite.testAccounts["local_account_2"]
+	)
+
+	out, recorder := suite.postStatusBoost(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
+
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Target status should now
+	// be "reblogged" by us.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": null,
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": {
+    "account": "yeah this is my account, what about it punk",
+    "application": {
+      "name": "superseriousbusiness",
+      "website": "https://superserious.business"
+    },
+    "bookmarked": false,
+    "card": null,
+    "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p>",
+    "created_at": "right the hell just now babyee",
+    "emojis": [],
+    "favourited": false,
+    "favourites_count": 0,
+    "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+    "in_reply_to_account_id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+    "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
+    "interaction_policy": {
+      "can_favourite": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reblog": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      },
+      "can_reply": {
+        "always": [
+          "public",
+          "me"
+        ],
+        "with_approval": []
+      }
+    },
+    "language": null,
+    "media_attachments": [],
+    "mentions": [
+      {
+        "acct": "1happyturtle",
+        "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+        "url": "http://localhost:8080/@1happyturtle",
+        "username": "1happyturtle"
+      }
+    ],
+    "muted": false,
+    "pinned": false,
+    "poll": null,
+    "reblog": null,
+    "reblogged": true,
+    "reblogs_count": 1,
+    "replies_count": 0,
+    "sensitive": false,
+    "spoiler_text": "",
+    "tags": [],
+    "text": "Hi @1happyturtle, can I reply?",
+    "uri": "http://localhost:8080/some/determinate/url",
+    "url": "http://localhost:8080/some/determinate/url",
+    "visibility": "public"
+  },
+  "reblogged": true,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+
+	// Target status should no
+	// longer be pending approval.
+	dbStatus, err := suite.state.DB.GetStatusByID(
+		context.Background(),
+		targetStatus.ID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(*dbStatus.PendingApproval)
+
+	// There should be an Accept
+	// stored for the target status.
+	intReq, err := suite.state.DB.GetInteractionRequestByInteractionURI(
+		context.Background(), targetStatus.URI,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotZero(intReq.AcceptedAt)
+	suite.NotEmpty(intReq.URI)
 }
 
 func TestStatusBoostTestSuite(t *testing.T) {

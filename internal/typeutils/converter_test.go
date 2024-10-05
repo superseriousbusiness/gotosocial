@@ -473,19 +473,20 @@ const (
 
 type TypeUtilsTestSuite struct {
 	suite.Suite
-	db                 db.DB
-	state              state.State
-	testAccounts       map[string]*gtsmodel.Account
-	testStatuses       map[string]*gtsmodel.Status
-	testAttachments    map[string]*gtsmodel.MediaAttachment
-	testPeople         map[string]vocab.ActivityStreamsPerson
-	testEmojis         map[string]*gtsmodel.Emoji
-	testReports        map[string]*gtsmodel.Report
-	testMentions       map[string]*gtsmodel.Mention
-	testPollVotes      map[string]*gtsmodel.PollVote
-	testFilters        map[string]*gtsmodel.Filter
-	testFilterKeywords map[string]*gtsmodel.FilterKeyword
-	testFilterStatues  map[string]*gtsmodel.FilterStatus
+	db                      db.DB
+	state                   state.State
+	testAccounts            map[string]*gtsmodel.Account
+	testStatuses            map[string]*gtsmodel.Status
+	testAttachments         map[string]*gtsmodel.MediaAttachment
+	testPeople              map[string]vocab.ActivityStreamsPerson
+	testEmojis              map[string]*gtsmodel.Emoji
+	testReports             map[string]*gtsmodel.Report
+	testMentions            map[string]*gtsmodel.Mention
+	testPollVotes           map[string]*gtsmodel.PollVote
+	testFilters             map[string]*gtsmodel.Filter
+	testFilterKeywords      map[string]*gtsmodel.FilterKeyword
+	testFilterStatues       map[string]*gtsmodel.FilterStatus
+	testInteractionRequests map[string]*gtsmodel.InteractionRequest
 
 	typeconverter *typeutils.Converter
 }
@@ -512,6 +513,7 @@ func (suite *TypeUtilsTestSuite) SetupTest() {
 	suite.testFilters = testrig.NewTestFilters()
 	suite.testFilterKeywords = testrig.NewTestFilterKeywords()
 	suite.testFilterStatues = testrig.NewTestFilterStatuses()
+	suite.testInteractionRequests = testrig.NewTestInteractionRequests()
 	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
 	testrig.StandardDBSetup(suite.db, nil)

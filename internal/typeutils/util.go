@@ -19,6 +19,7 @@ package typeutils
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"net/url"
@@ -27,8 +28,11 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/k3a/html2text"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -186,6 +190,47 @@ func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Att
 	return text.SanitizeToHTML(note.String()), arr
 }
 
+func (c *Converter) pendingReplyNote(
+	ctx context.Context,
+	s *gtsmodel.Status,
+) (string, error) {
+	intReq, err := c.state.DB.GetInteractionRequestByInteractionURI(ctx, s.URI)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Something's gone wrong.
+		err := gtserror.Newf("db error getting interaction request for %s: %w", s.URI, err)
+		return "", err
+	}
+
+	// No interaction request present
+	// for this status. Race condition?
+	if intReq == nil {
+		return "", nil
+	}
+
+	var (
+		proto = config.GetProtocol()
+		host  = config.GetHost()
+
+		// Build the settings panel URL at which the user
+		// can view + approve/reject the interaction request.
+		//
+		// Eg., https://example.org/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR
+		settingsURL = proto + "://" + host + "/settings/user/interaction_requests/" + intReq.ID
+	)
+
+	var note strings.Builder
+	note.WriteString(`<hr>`)
+	note.WriteString(`<p><i lang="en">ℹ️ Note from ` + host + `: `)
+	note.WriteString(`This reply is pending your approval. You can quickly accept it by liking, boosting or replying to it. You can also accept or reject it at the following link: `)
+	note.WriteString(`<a href="` + settingsURL + `" `)
+	note.WriteString(`rel="noreferrer noopener" target="_blank">`)
+	note.WriteString(settingsURL)
+	note.WriteString(`</a>.`)
+	note.WriteString(`</i></p>`)
+
+	return text.SanitizeToHTML(note.String()), nil
+}
+
 // ContentToContentLanguage tries to
 // extract a content string and language
 // tag string from the given intermediary
@@ -283,4 +328,65 @@ func ContentToContentLanguage(
 	}
 
 	return contentStr, langTagStr
+}
+
+// filterableFields returns text fields from
+// a status that we might want to filter on:
+//
+//   - content warning
+//   - content (converted to plaintext from HTML)
+//   - media descriptions
+//   - poll options
+//
+// Each field should be filtered separately.
+// This avoids scenarios where false-positive
+// multiple-word matches can be made by matching
+// the last word of one field + the first word
+// of the next field together.
+func filterableFields(s *gtsmodel.Status) []string {
+	// Estimate length of fields.
+	fieldCount := 2 + len(s.Attachments)
+	if s.Poll != nil {
+		fieldCount += len(s.Poll.Options)
+	}
+	fields := make([]string, 0, fieldCount)
+
+	// Content warning / title.
+	if s.ContentWarning != "" {
+		fields = append(fields, s.ContentWarning)
+	}
+
+	// Status content. Though we have raw text
+	// available for statuses created on our
+	// instance, use the html2text version to
+	// remove markdown-formatting characters
+	// and ensure more consistent filtering.
+	if s.Content != "" {
+		text := html2text.HTML2TextWithOptions(
+			s.Content,
+			html2text.WithLinksInnerText(),
+			html2text.WithUnixLineBreaks(),
+		)
+		if text != "" {
+			fields = append(fields, text)
+		}
+	}
+
+	// Media descriptions.
+	for _, attachment := range s.Attachments {
+		if attachment.Description != "" {
+			fields = append(fields, attachment.Description)
+		}
+	}
+
+	// Poll options.
+	if s.Poll != nil {
+		for _, opt := range s.Poll.Options {
+			if opt != "" {
+				fields = append(fields, opt)
+			}
+		}
+	}
+
+	return fields
 }

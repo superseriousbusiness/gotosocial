@@ -73,15 +73,8 @@ func (s *statusBookmarkDB) GetStatusBookmarksByIDs(ctx context.Context, ids []st
 	bookmarks, err := s.state.Caches.DB.StatusBookmark.LoadIDs("ID",
 		ids,
 		func(uncached []string) ([]*gtsmodel.StatusBookmark, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached bookmarks.
-			bookmarks := make([]*gtsmodel.StatusBookmark, 0, count)
+			bookmarks := make([]*gtsmodel.StatusBookmark, 0, len(uncached))
 
 			// Perform database query scanning
 			// the remaining (uncached) bookmarks.
@@ -264,60 +257,86 @@ func (s *statusBookmarkDB) PutStatusBookmark(ctx context.Context, bookmark *gtsm
 }
 
 func (s *statusBookmarkDB) DeleteStatusBookmarkByID(ctx context.Context, id string) error {
-	_, err := s.db.
-		NewDelete().
-		Table("status_bookmarks").
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.StatusBookmark
+	deleted.ID = id
+
+	// Delete block with given URI,
+	// returning the deleted models.
+	if _, err := s.db.NewDelete().
+		Model(&deleted).
 		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	if err != nil {
+		Returning("?", bun.Ident("status_id")).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
+
+	// Invalidate cached status bookmark by its ID,
+	// manually call invalidate hook in case not cached.
 	s.state.Caches.DB.StatusBookmark.Invalidate("ID", id)
+	s.state.Caches.OnInvalidateStatusBookmark(&deleted)
+
 	return nil
 }
 
 func (s *statusBookmarkDB) DeleteStatusBookmarks(ctx context.Context, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
-		return errors.New("DeleteBookmarks: one of targetAccountID or originAccountID must be set")
+		return gtserror.New("one of targetAccountID or originAccountID must be set")
 	}
+
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted []*gtsmodel.StatusBookmark
 
 	q := s.db.
 		NewDelete().
-		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark"))
+		Model(&deleted).
+		Returning("?", bun.Ident("status_id"))
 
 	if targetAccountID != "" {
-		q = q.Where("? = ?", bun.Ident("status_bookmark.target_account_id"), targetAccountID)
-		defer s.state.Caches.DB.StatusBookmark.Invalidate("TargetAccountID", targetAccountID)
+		q = q.Where("? = ?", bun.Ident("target_account_id"), targetAccountID)
 	}
 
 	if originAccountID != "" {
-		q = q.Where("? = ?", bun.Ident("status_bookmark.account_id"), originAccountID)
-		defer s.state.Caches.DB.StatusBookmark.Invalidate("AccountID", originAccountID)
+		q = q.Where("? = ?", bun.Ident("account_id"), originAccountID)
 	}
 
-	if _, err := q.Exec(ctx); err != nil {
+	if _, err := q.Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	if targetAccountID != "" {
-		s.state.Caches.DB.StatusBookmark.Invalidate("TargetAccountID", targetAccountID)
-	}
-
-	if originAccountID != "" {
-		s.state.Caches.DB.StatusBookmark.Invalidate("AccountID", originAccountID)
+	for _, deleted := range deleted {
+		// Invalidate cached status bookmark by status ID,
+		// manually call invalidate hook in case not cached.
+		s.state.Caches.DB.StatusBookmark.Invalidate("StatusID", deleted.StatusID)
+		s.state.Caches.OnInvalidateStatusBookmark(deleted)
 	}
 
 	return nil
 }
 
 func (s *statusBookmarkDB) DeleteStatusBookmarksForStatus(ctx context.Context, statusID string) error {
-	q := s.db.
-		NewDelete().
+	// Delete status bookmarks
+	// from database by status ID.
+	q := s.db.NewDelete().
 		TableExpr("? AS ?", bun.Ident("status_bookmarks"), bun.Ident("status_bookmark")).
 		Where("? = ?", bun.Ident("status_bookmark.status_id"), statusID)
 	if _, err := q.Exec(ctx); err != nil {
 		return err
 	}
+
+	// Wrap provided ID in a bookmark
+	// model for calling cache hook.
+	var deleted gtsmodel.StatusBookmark
+	deleted.StatusID = statusID
+
+	// Invalidate cached status bookmark by status ID,
+	// manually call invalidate hook in case not cached.
 	s.state.Caches.DB.StatusBookmark.Invalidate("StatusID", statusID)
+	s.state.Caches.OnInvalidateStatusBookmark(&deleted)
+
 	return nil
 }

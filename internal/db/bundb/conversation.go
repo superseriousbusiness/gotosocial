@@ -188,15 +188,8 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 		accountID,
 		conversationLastStatusIDs,
 		func(accountID string, uncached []string) ([]*gtsmodel.Conversation, error) {
-			// Avoid querying
-			// if none uncached.
-			count := len(uncached)
-			if count == 0 {
-				return nil, nil
-			}
-
 			// Preallocate expected length of uncached conversations.
-			conversations := make([]*gtsmodel.Conversation, 0, count)
+			conversations := make([]*gtsmodel.Conversation, 0, len(uncached))
 
 			// Perform database query scanning the remaining (uncached) IDs.
 			if err := c.db.NewSelect().
@@ -267,27 +260,27 @@ func (c *conversationDB) LinkConversationToStatus(ctx context.Context, conversat
 }
 
 func (c *conversationDB) DeleteConversationByID(ctx context.Context, id string) error {
-	// Load conversation into cache before attempting a delete,
-	// as we need it cached in order to trigger the invalidate
-	// callback. This in turn invalidates others.
-	_, err := c.GetConversationByID(gtscontext.SetBarebones(ctx), id)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			// not an issue.
-			err = nil
-		}
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted gtsmodel.Conversation
+	deleted.ID = id
+
+	// Delete conversation from DB.
+	if _, err := c.db.NewDelete().
+		Model(&deleted).
+		Where("? = ?", bun.Ident("id"), id).
+		Returning("?", bun.Ident("account_id")).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
 		return err
 	}
 
-	// Drop this now-cached conversation on return after delete.
-	defer c.state.Caches.DB.Conversation.Invalidate("ID", id)
+	// Invalidate cached conversation by ID,
+	// manually invalidate hook in case not cached.
+	c.state.Caches.DB.Conversation.Invalidate("ID", id)
+	c.state.Caches.OnInvalidateConversation(&deleted)
 
-	// Finally delete conversation from DB.
-	_, err = c.db.NewDelete().
-		Model((*gtsmodel.Conversation)(nil)).
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	return err
+	return nil
 }
 
 func (c *conversationDB) DeleteConversationsByOwnerAccountID(ctx context.Context, accountID string) error {

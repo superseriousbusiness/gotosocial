@@ -25,6 +25,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // ListAccountsGETHandler swagger:operation GET /api/v1/lists/{id}/accounts listAccounts
@@ -129,42 +130,27 @@ func (m *Module) ListAccountsGETHandler(c *gin.Context) {
 
 	targetListID := c.Param(IDKey)
 	if targetListID == "" {
-		err := errors.New("no list id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		const text = "no list id specified"
+		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	limit, errWithCode := apiutil.ParseLimit(c.Query(apiutil.LimitKey), 40, 80, 0)
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		0,  // default = paging disabled
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	var (
-		ctx = c.Request.Context()
-	)
-
-	if limit == 0 {
-		// Return all accounts in the list without pagination.
-		accounts, errWithCode := m.processor.List().GetAllListAccounts(ctx, authed.Account, targetListID)
-		if errWithCode != nil {
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-			return
-		}
-
-		c.JSON(http.StatusOK, accounts)
-		return
-	}
-
-	// Return subset of accounts in the list with pagination.
 	resp, errWithCode := m.processor.List().GetListAccounts(
-		ctx,
+		c.Request.Context(),
 		authed.Account,
 		targetListID,
-		c.Query(MaxIDKey),
-		c.Query(SinceIDKey),
-		c.Query(MinIDKey),
-		limit,
+		page,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

@@ -14,6 +14,8 @@
   --ecks-pee-lightest-blue: #c5dafc;
   --ecks-pee-orange: #f69438;
   --ecks-pee-white: #ffffff;
+  --ecks-pee-beige: #ece9d8;
+  --ecks-pee-darker-beige: #a8a79b;
   --ecks-pee-green: #369836;
   --ecks-pee-light-green: #96c496;
   --ecks-pee-dark-green: #1f611f;
@@ -64,7 +66,7 @@
   --blue3: var(--ecks-pee-white);
 
   /* Basic page styling (background + foreground) */
-  --bg: radial-gradient(circle closest-corner at 20% 20%, var(--ecks-pee-lighter-blue), var(--ecks-pee-light-blue));
+  --bg: var(--ecks-pee-light-blue);
   --bg-accent: var(--ecks-pee-blue);
   --fg: var(--ecks-pee-white);
   --fg-reduced: var(--ecks-pee-lightest-blue);
@@ -114,6 +116,15 @@
   font-style: italic;
   src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2) format('woff2');
   src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff) format('woff');
+}
+
+/* Main page background */
+body {
+  background: radial-gradient(
+    circle closest-corner at 20% 20%,
+    var(--ecks-pee-lighter-blue),
+    var(--ecks-pee-light-blue)
+  );
 }
 
 /* Scroll bar */
@@ -168,6 +179,17 @@ html, body {
   border-top: var(--ecks-pee-dotted-trim);
 }
 
+/* Status text */
+.status .text {
+  padding: 0.5rem;
+  background: var(--ecks-pee-beige);
+  border: 0.2rem inset var(--ecks-pee-darker-beige);
+
+  color: black;
+  text-shadow: none;
+  --link-fg: var(--ecks-pee-darkest-blue);
+}
+
 /* Status media */
 .status .media .media-wrapper {
   border: 0.1rem solid black;
@@ -181,10 +203,14 @@ html, body {
 
 /* Status polls */
 .status .text .poll {
-  background-color: black;
+  background-color: var(--ecks-pee-beige);
+  border: 0.1rem solid var(--ecks-pee-darker-beige);
+  border-radius: 0;
 }
 .status .text .poll .poll-info {
-  background: var(--ecks-pee-start-menu);
+  background: var(--ecks-pee-beige);
+  border: 0.1rem solid var(--ecks-pee-darker-beige);
+  border-radius: 0;
 }
 
 /* Code snippets */
@@ -192,12 +218,17 @@ pre, pre[class*="language-"],
 code, code[class*="language-"] {
 	background: black;
   color: var(--ecks-pee-white);
+  border-radius: 0;
 }
 
 /* Block quotes */
 blockquote {
-  background: black;
-  color: var(--ecks-pee-white);
+  padding: 0.5rem;
+  background: var(--ecks-pee-beige);
+  border-top: 0.1rem solid var(--ecks-pee-darker-beige);
+  border-right: 0.1rem solid var(--ecks-pee-darker-beige);
+  border-bottom: 0.1rem solid var(--ecks-pee-darker-beige);
+  border-radius: 0;
 }
 
 /* Cheeky little border */

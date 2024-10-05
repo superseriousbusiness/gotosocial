@@ -18,22 +18,16 @@
 package statuses_test
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -45,459 +39,1118 @@ type StatusCreateTestSuite struct {
 const (
 	statusWithLinksAndTags = "#test alright, should be able to post #links with fragments in them now, let's see........\n\nhttps://docs.gotosocial.org/en/latest/user_guide/posts/#links\n\n#gotosocial\n\n(tobi remember to pull the docker image challenge)"
 	statusMarkdown         = "# Title\n\n## Smaller title\n\nThis is a post written in [markdown](https://www.markdownguide.org/)\n\n<img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\"/>"
-	statusMarkdownExpected = "<h1>Title</h1><h2>Smaller title</h2><p>This is a post written in <a href=\"https://www.markdownguide.org/\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">markdown</a></p>"
 )
 
-// Post a new status with some custom visibility settings
-func (suite *StatusCreateTestSuite) TestPostNewStatus() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
+func (suite *StatusCreateTestSuite) postStatus(
+	formData map[string][]string,
+	jsonData string,
+) (string, *httptest.ResponseRecorder) {
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(suite.testTokens["local_account_1"]))
 	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
 	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
+
+	if formData != nil {
+		buf, w, err := testrig.CreateMultipartFormData(nil, formData)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		ctx.Request = httptest.NewRequest(
+			http.MethodPost,
+			"http://localhost:8080"+statuses.BasePath,
+			bytes.NewReader(buf.Bytes()),
+		)
+		ctx.Request.Header.Set("content-type", w.FormDataContentType())
+	} else {
+		ctx.Request = httptest.NewRequest(
+			http.MethodPost,
+			"http://localhost:8080"+statuses.BasePath,
+			bytes.NewReader([]byte(jsonData)),
+		)
+		ctx.Request.Header.Set("content-type", "application/json")
+	}
+
 	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+
+	// Trigger handler.
+	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	return suite.parseStatusResponse(recorder)
+}
+
+// Post a new status with some custom visibility settings
+func (suite *StatusCreateTestSuite) TestPostNewStatus() {
+	out, recorder := suite.postStatus(map[string][]string{
 		"status":       {"this is a brand new status! #helloworld"},
 		"spoiler_text": {"hello hello"},
 		"sensitive":    {"true"},
 		"visibility":   {string(apimodel.VisibilityMutualsOnly)},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	// check response
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": true,
+  "spoiler_text": "hello hello",
+  "tags": [
+    {
+      "name": "helloworld",
+      "url": "http://localhost:8080/tags/helloworld"
+    }
+  ],
+  "text": "this is a brand new status! #helloworld",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "private"
+}`, out)
+}
 
-	// 1. we should have OK from our call to the function
-	suite.EqualValues(http.StatusOK, recorder.Code)
+// Post a new status with some custom visibility settings
+func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
+	out, recorder := suite.postStatus(map[string][]string{
+		"status": {"this is a brand new status! #helloworld"},
+		"interaction_policy[can_reply][always][0]":        {"author"},
+		"interaction_policy[can_reply][always][1]":        {"followers"},
+		"interaction_policy[can_reply][always][2]":        {"following"},
+		"interaction_policy[can_reply][with_approval][0]": {"public"},
+		"interaction_policy[can_announce][always][0]":     {""},
+	}, "")
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
+	// Custom interaction policies
+	// should be set on the status.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "following",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": [
+        "public"
+      ]
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [
+    {
+      "name": "helloworld",
+      "url": "http://localhost:8080/tags/helloworld"
+    }
+  ],
+  "text": "this is a brand new status! #helloworld",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+}
 
-	suite.Equal("hello hello", statusReply.SpoilerText)
-	suite.Equal("<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>", statusReply.Content)
-	suite.True(statusReply.Sensitive)
-	suite.Equal(apimodel.VisibilityPrivate, statusReply.Visibility) // even though we set this status to mutuals only, it should serialize to private, because the mastodon api has no idea about mutuals_only
-	suite.Len(statusReply.Tags, 1)
-	suite.Equal(apimodel.Tag{
-		Name: "helloworld",
-		URL:  "http://localhost:8080/tags/helloworld",
-	}, statusReply.Tags[0])
+func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
+	out, recorder := suite.postStatus(nil, `{
+  "status": "this is a brand new status! #helloworld",
+  "interaction_policy": {
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "following"
+      ],
+      "with_approval": [
+        "public"
+      ]
+    },
+    "can_announce": {
+      "always": []
+    }
+  }
+}`)
 
-	gtsTag := &gtsmodel.Tag{}
-	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "helloworld"}}, gtsTag)
-	suite.NoError(err)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Custom interaction policies
+	// should be set on the status.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a brand new status! <a href=\"http://localhost:8080/tags/helloworld\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>helloworld</span></a></p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "author",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "author",
+        "followers",
+        "following",
+        "mentioned",
+        "me"
+      ],
+      "with_approval": [
+        "public"
+      ]
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [
+    {
+      "name": "helloworld",
+      "url": "http://localhost:8080/tags/helloworld"
+    }
+  ],
+  "text": "this is a brand new status! #helloworld",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
+	out, recorder := suite.postStatus(nil, `{
+  "status": "this is a brand new status! #helloworld",
+  "visibility": "followers_only",
+  "interaction_policy": {
+    "can_reply": {
+      "always": [
+        "public"
+      ]
+    }
+  }
+}`)
+
+	// We should have 400 from
+	// our call to the function.
+	suite.Equal(http.StatusBadRequest, recorder.Code)
+
+	// We should have a helpful error
+	// message telling us how we screwed up.
+	suite.Equal(`{
+  "error": "Bad Request: error converting followers_only.can_reply.always: policyURI public is not feasible for visibility followers_only"
+}`, out)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
-	// Copy zork.
-	testAccount := &gtsmodel.Account{}
-	*testAccount = *suite.testAccounts["local_account_1"]
+	out, recorder := suite.postStatus(map[string][]string{
+		"status":       {statusMarkdown},
+		"visibility":   {string(apimodel.VisibilityPublic)},
+		"content_type": {"text/markdown"},
+	}, "")
 
-	// Copy zork's settings.
-	settings := &gtsmodel.AccountSettings{}
-	*settings = *suite.testAccounts["local_account_1"].Settings
-	testAccount.Settings = settings
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	// set default post language of zork to markdown
-	testAccount.Settings.StatusContentType = "text/markdown"
-	err := suite.db.UpdateAccountSettings(context.Background(), testAccount.Settings)
-	if err != nil {
+	// The content field should have
+	// all the nicely parsed markdown stuff.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<h1>Title</h1><h2>Smaller title</h2><p>This is a post written in <a href=\"https://www.markdownguide.org/\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">markdown</a></p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "# Title\n\n## Smaller title\n\nThis is a post written in [markdown](https://www.markdownguide.org/)\n\n<img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\"/>",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+}
+
+// Mention an account that is not yet known to the
+// instance -- it should be looked up and put in the db.
+func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
+	// First remove remote account 1 from the database
+	// so it gets looked up again when we mention it.
+	remoteAccount := suite.testAccounts["remote_account_1"]
+	if err := suite.db.DeleteAccount(
+		context.Background(),
+		remoteAccount.ID,
+	); err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Equal(testAccount.Settings.StatusContentType, "text/markdown")
 
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, testAccount)
-
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil)
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
-		"status":     {statusMarkdown},
-		"visibility": {string(apimodel.VisibilityPublic)},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
-
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	suite.Equal(statusMarkdownExpected, statusReply.Content)
-}
-
-// mention an account that is not yet known to the instance -- it should be looked up and put in the db
-func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
-	// first remove remote account 1 from the database so it gets looked up again
-	remoteAccount := suite.testAccounts["remote_account_1"]
-	err := suite.db.DeleteAccount(context.Background(), remoteAccount.ID)
-	suite.NoError(err)
-
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+	out, recorder := suite.postStatus(map[string][]string{
 		"status":     {"hello @brand_new_person@unknown-instance.com"},
 		"visibility": {string(apimodel.VisibilityPublic)},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	// if the status is properly formatted, that means the account has been put in the db
-	suite.Equal(`<p>hello <span class="h-card"><a href="https://unknown-instance.com/@brand_new_person" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>brand_new_person</span></a></span></p>`, statusReply.Content)
-	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
+	// Status should have a mention of
+	// the now-freshly-looked-up account.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>hello <span class=\"h-card\"><a href=\"https://unknown-instance.com/@brand_new_person\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>brand_new_person</span></a></span></p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [
+    {
+      "acct": "brand_new_person@unknown-instance.com",
+      "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "url": "https://unknown-instance.com/@brand_new_person",
+      "username": "brand_new_person"
+    }
+  ],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "hello @brand_new_person@unknown-instance.com",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
-func (suite *StatusCreateTestSuite) TestPostAnotherNewStatus() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+func (suite *StatusCreateTestSuite) TestPostStatusWithLinksAndTags() {
+	out, recorder := suite.postStatus(map[string][]string{
 		"status": {statusWithLinksAndTags},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	// check response
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	// 1. we should have OK from our call to the function
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	suite.Equal("<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let's see........<br><br><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br><br><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br><br>(tobi remember to pull the docker image challenge)</p>", statusReply.Content)
+	// Status should have proper
+	// tags + formatted links.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p><a href=\"http://localhost:8080/tags/test\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>test</span></a> alright, should be able to post <a href=\"http://localhost:8080/tags/links\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>links</span></a> with fragments in them now, let's see........<br><br><a href=\"https://docs.gotosocial.org/en/latest/user_guide/posts/#links\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://docs.gotosocial.org/en/latest/user_guide/posts/#links</a><br><br><a href=\"http://localhost:8080/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>gotosocial</span></a><br><br>(tobi remember to pull the docker image challenge)</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [
+    {
+      "name": "test",
+      "url": "http://localhost:8080/tags/test"
+    },
+    {
+      "name": "links",
+      "url": "http://localhost:8080/tags/links"
+    },
+    {
+      "name": "gotosocial",
+      "url": "http://localhost:8080/tags/gotosocial"
+    }
+  ],
+  "text": "#test alright, should be able to post #links with fragments in them now, let's see........\n\nhttps://docs.gotosocial.org/en/latest/user_guide/posts/#links\n\n#gotosocial\n\n(tobi remember to pull the docker image challenge)",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+	out, recorder := suite.postStatus(map[string][]string{
 		"status": {"here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: "},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	suite.Equal("", statusReply.SpoilerText)
-	suite.Equal("<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>", statusReply.Content)
-
-	suite.Len(statusReply.Emojis, 1)
-	apiEmoji := statusReply.Emojis[0]
-	gtsEmoji := testrig.NewTestEmojis()["rainbow"]
-
-	suite.Equal(gtsEmoji.Shortcode, apiEmoji.Shortcode)
-	suite.Equal(gtsEmoji.ImageURL, apiEmoji.URL)
-	suite.Equal(gtsEmoji.ImageStaticURL, apiEmoji.StaticURL)
+	// Emojis array should be
+	// populated on returned status.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow:<br>here's an emoji that isn't in the db: :test_emoji:</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [
+    {
+      "category": "reactions",
+      "shortcode": "rainbow",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true
+    }
+  ],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "here is a rainbow emoji a few times! :rainbow: :rainbow: :rainbow: \n here's an emoji that isn't in the db: :test_emoji: ",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
 // Try to reply to a status that doesn't exist
 func (suite *StatusCreateTestSuite) TestReplyToNonexistentStatus() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+	out, recorder := suite.postStatus(map[string][]string{
 		"status":         {"this is a reply to a status that doesn't exist"},
 		"spoiler_text":   {"don't open cuz it won't work"},
 		"in_reply_to_id": {"3759e7ef-8ee1-4c0c-86f6-8b70b9ad3d50"},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	// check response
-
-	suite.EqualValues(http.StatusNotFound, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-	suite.Equal(`{"error":"Not Found: target status not found"}`, string(b))
+	// We should have 404 from
+	// our call to the function.
+	suite.Equal(http.StatusNotFound, recorder.Code)
+	suite.Equal(`{
+  "error": "Not Found: target status not found"
+}`, out)
 }
 
-// Post a reply to the status of a local user that allows replies.
+// Post a reply to the status of
+// a local user that allows replies.
 func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+	out, recorder := suite.postStatus(map[string][]string{
 		"status":         {fmt.Sprintf("hello @%s this reply should work!", testrig.NewTestAccounts()["local_account_2"].Username)},
 		"in_reply_to_id": {testrig.NewTestStatuses()["local_account_2_status_1"].ID},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	suite.Equal("", statusReply.SpoilerText)
-	suite.Equal(fmt.Sprintf("<p>hello <span class=\"h-card\"><a href=\"http://localhost:8080/@%s\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>%s</span></a></span> this reply should work!</p>", testrig.NewTestAccounts()["local_account_2"].Username, testrig.NewTestAccounts()["local_account_2"].Username), statusReply.Content)
-	suite.False(statusReply.Sensitive)
-	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
-	suite.Equal(testrig.NewTestStatuses()["local_account_2_status_1"].ID, *statusReply.InReplyToID)
-	suite.Equal(testrig.NewTestAccounts()["local_account_2"].ID, *statusReply.InReplyToAccountID)
-	suite.Len(statusReply.Mentions, 1)
+	// in_reply_to_x
+	// fields should be set.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>hello <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span> this reply should work!</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+  "in_reply_to_id": "01F8MHBQCBTDKN6X5VHGMMN4MA",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [
+    {
+      "acct": "1happyturtle",
+      "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "url": "http://localhost:8080/@1happyturtle",
+      "username": "1happyturtle"
+    }
+  ],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "hello @1happyturtle this reply should work!",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
-// Take a media file which is currently not associated with a status, and attach it to a new status.
+// Take a media file which is currently not associated
+// with a status, and attach it to a new status.
 func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
 	attachment := suite.testAttachments["local_account_1_unattached_1"]
 
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+	out, recorder := suite.postStatus(map[string][]string{
 		"status":      {"here's an image attachment"},
 		"media_ids[]": {attachment.ID},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusResponse := &apimodel.Status{}
-	err = json.Unmarshal(b, statusResponse)
-	suite.NoError(err)
-
-	suite.Equal("", statusResponse.SpoilerText)
-	suite.Equal("<p>here's an image attachment</p>", statusResponse.Content)
-	suite.False(statusResponse.Sensitive)
-	suite.Equal(apimodel.VisibilityPublic, statusResponse.Visibility)
-
-	// there should be one media attachment
-	suite.Len(statusResponse.MediaAttachments, 1)
-
-	// get the updated media attachment from the database
-	gtsAttachment, err := suite.db.GetAttachmentByID(context.Background(), statusResponse.MediaAttachments[0].ID)
-	suite.NoError(err)
-
-	// convert it to a api attachment
-	gtsAttachmentAsapi, err := suite.tc.AttachmentToAPIAttachment(context.Background(), gtsAttachment)
-	suite.NoError(err)
-
-	// compare it with what we have now
-	suite.EqualValues(*statusResponse.MediaAttachments[0], gtsAttachmentAsapi)
-
-	// the status id of the attachment should now be set to the id of the status we just created
-	suite.Equal(statusResponse.ID, gtsAttachment.StatusID)
+	// Status should have
+	// media attached.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>here's an image attachment</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [
+    {
+      "blurhash": "LNABP8o#Dge,S6M}axxVEQjYxWbH",
+      "description": "the oh you meme",
+      "id": "01F8MH8RMYQ6MSNY3JM2XT1CQ5",
+      "meta": {
+        "focus": {
+          "x": 0,
+          "y": 0
+        },
+        "original": {
+          "aspect": 1.7777778,
+          "height": 450,
+          "size": "800x450",
+          "width": 800
+        },
+        "small": {
+          "aspect": 1.7777778,
+          "height": 288,
+          "size": "512x288",
+          "width": 512
+        }
+      },
+      "preview_remote_url": null,
+      "preview_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/small/01F8MH8RMYQ6MSNY3JM2XT1CQ5.webp",
+      "remote_url": null,
+      "text_url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpg",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpg"
+    }
+  ],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "here's an image attachment",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
-// Post a new status with a language tag that is not in canonical format
+// Post a new status with a language
+// tag that is not in canonical format.
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	ctx.Request.Form = url.Values{
+	out, recorder := suite.postStatus(map[string][]string{
 		"status":   {"English? what's English? i speak American"},
 		"language": {"en-us"},
-	}
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
+	}, "")
 
-	suite.EqualValues(http.StatusOK, recorder.Code)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	suite.Equal("<p>English? what's English? i speak American</p>", statusReply.Content)
-	suite.NotNil(statusReply.Language)
-	suite.Equal("en-US", *statusReply.Language)
-}
-
-// Post a new status with an attached poll.
-func (suite *StatusCreateTestSuite) testPostNewStatusWithPoll(configure func(request *http.Request)) {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080/%s", statuses.BasePath), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
-	configure(ctx.Request)
-	suite.statusModule.StatusCreatePOSTHandler(ctx)
-
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	suite.NoError(err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	suite.NoError(err)
-
-	suite.Equal("<p>this is a status with a poll!</p>", statusReply.Content)
-	suite.Equal(apimodel.VisibilityPublic, statusReply.Visibility)
-	if suite.NotNil(statusReply.Poll) {
-		if suite.Len(statusReply.Poll.Options, 2) {
-			suite.Equal("first option", statusReply.Poll.Options[0].Title)
-			suite.Equal("second option", statusReply.Poll.Options[1].Title)
-		}
-		suite.NotZero(statusReply.Poll.ExpiresAt)
-		suite.False(statusReply.Poll.Expired)
-		suite.True(statusReply.Poll.Multiple)
-	}
+	// The returned language tag should
+	// use its canonicalized version rather
+	// than the format we submitted.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>English? what's English? i speak American</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en-US",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "English? what's English? i speak American",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
-	suite.testPostNewStatusWithPoll(func(request *http.Request) {
-		request.Form = url.Values{
-			"status":           {"this is a status with a poll!"},
-			"visibility":       {"public"},
-			"poll[options][]":  {"first option", "second option"},
-			"poll[expires_in]": {"3600"},
-			"poll[multiple]":   {"true"},
-		}
-	})
+	out, recorder := suite.postStatus(map[string][]string{
+		"status":           {"this is a status with a poll!"},
+		"visibility":       {"public"},
+		"poll[options][]":  {"first option", "second option"},
+		"poll[expires_in]": {"3600"},
+		"poll[multiple]":   {"true"},
+	}, "")
+
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Status poll should
+	// be as expected.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a status with a poll!</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": {
+    "emojis": [],
+    "expired": false,
+    "expires_at": "ah like you know whatever dude it's chill",
+    "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+    "multiple": true,
+    "options": [
+      {
+        "title": "first option",
+        "votes_count": 0
+      },
+      {
+        "title": "second option",
+        "votes_count": 0
+      }
+    ],
+    "own_votes": [],
+    "voted": true,
+    "voters_count": 0,
+    "votes_count": 0
+  },
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "this is a status with a poll!",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
-	suite.testPostNewStatusWithPoll(func(request *http.Request) {
-		request.Header.Set("content-type", "application/json")
-		request.Body = io.NopCloser(strings.NewReader(`{
-			"status": "this is a status with a poll!",
-			"visibility": "public",
-			"poll": {
-				"options": ["first option", "second option"],
-				"expires_in": 3600,
-				"multiple": true
-			}
-		}`))
-	})
+	out, recorder := suite.postStatus(nil, `{
+  "status": "this is a status with a poll!",
+  "visibility": "public",
+  "poll": {
+    "options": ["first option", "second option"],
+    "expires_in": 3600,
+    "multiple": true
+  }
+}`)
+
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Status poll should
+	// be as expected.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "really cool gts application",
+    "website": "https://reallycool.app"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>this is a status with a poll!</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": false,
+  "favourites_count": 0,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": {
+    "emojis": [],
+    "expired": false,
+    "expires_at": "ah like you know whatever dude it's chill",
+    "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+    "multiple": true,
+    "options": [
+      {
+        "title": "first option",
+        "votes_count": 0
+      },
+      {
+        "title": "second option",
+        "votes_count": 0
+      }
+    ],
+    "own_votes": [],
+    "voted": true,
+    "voters_count": 0,
+    "votes_count": 0
+  },
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "this is a status with a poll!",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

@@ -1149,40 +1149,17 @@ func (f *federate) AcceptInteraction(
 		return nil
 	}
 
-	// Parse relevant URI(s).
+	// Parse outbox URI.
 	outboxIRI, err := parseURI(req.TargetAccount.OutboxURI)
 	if err != nil {
 		return err
 	}
 
-	acceptingAcctIRI, err := parseURI(req.TargetAccount.URI)
+	// Convert req to Accept.
+	accept, err := f.converter.InteractionReqToASAccept(ctx, req)
 	if err != nil {
-		return err
+		return gtserror.Newf("error converting request to Accept: %w", err)
 	}
-
-	interactingAcctURI, err := parseURI(req.InteractingAccount.URI)
-	if err != nil {
-		return err
-	}
-
-	interactionURI, err := parseURI(req.InteractionURI)
-	if err != nil {
-		return err
-	}
-
-	// Create a new Accept.
-	accept := streams.NewActivityStreamsAccept()
-
-	// Set interacted-with account
-	// as Actor of the Accept.
-	ap.AppendActorIRIs(accept, acceptingAcctIRI)
-
-	// Set the interacted-with object
-	// as Object of the Accept.
-	ap.AppendObjectIRIs(accept, interactionURI)
-
-	// Address the Accept To the interacting acct.
-	ap.AppendTo(accept, interactingAcctURI)
 
 	// Send the Accept via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(
@@ -1221,40 +1198,17 @@ func (f *federate) RejectInteraction(
 		return nil
 	}
 
-	// Parse relevant URI(s).
+	// Parse outbox URI.
 	outboxIRI, err := parseURI(req.TargetAccount.OutboxURI)
 	if err != nil {
 		return err
 	}
 
-	rejectingAcctIRI, err := parseURI(req.TargetAccount.URI)
+	// Convert req to Reject.
+	reject, err := f.converter.InteractionReqToASReject(ctx, req)
 	if err != nil {
-		return err
+		return gtserror.Newf("error converting request to Reject: %w", err)
 	}
-
-	interactingAcctURI, err := parseURI(req.InteractingAccount.URI)
-	if err != nil {
-		return err
-	}
-
-	interactionURI, err := parseURI(req.InteractionURI)
-	if err != nil {
-		return err
-	}
-
-	// Create a new Reject.
-	reject := streams.NewActivityStreamsReject()
-
-	// Set interacted-with account
-	// as Actor of the Reject.
-	ap.AppendActorIRIs(reject, rejectingAcctIRI)
-
-	// Set the interacted-with object
-	// as Object of the Reject.
-	ap.AppendObjectIRIs(reject, interactionURI)
-
-	// Address the Reject To the interacting acct.
-	ap.AppendTo(reject, interactingAcctURI)
 
 	// Send the Reject via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(

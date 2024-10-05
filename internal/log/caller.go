@@ -23,11 +23,13 @@ import (
 )
 
 // Caller fetches the calling function name, skipping 'depth'.
+//
+//go:noinline
 func Caller(depth int) string {
-	var pcs [1]uintptr
+	pcs := make([]uintptr, 1)
 
-	// Fetch calling function using calldepth
-	_ = runtime.Callers(depth, pcs[:])
+	// Fetch calling func using depth.
+	_ = runtime.Callers(depth, pcs)
 	fn := runtime.FuncForPC(pcs[0])
 
 	if fn == nil {
@@ -37,14 +39,14 @@ func Caller(depth int) string {
 	// Get func name.
 	name := fn.Name()
 
-	// Drop all but the package name and function name, no mod path
+	// Drop all but package and function name, no path.
 	if idx := strings.LastIndex(name, "/"); idx >= 0 {
 		name = name[idx+1:]
 	}
 
 	const params = `[...]`
 
-	// Drop any generic type parameter markers
+	// Drop any function generic type parameter markers.
 	if idx := strings.Index(name, params); idx >= 0 {
 		name = name[:idx] + name[idx+len(params):]
 	}

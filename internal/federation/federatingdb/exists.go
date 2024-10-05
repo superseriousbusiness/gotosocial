@@ -20,9 +20,6 @@ package federatingdb
 import (
 	"context"
 	"net/url"
-
-	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // Exists returns true if the database has an entry for the specified
@@ -32,10 +29,5 @@ import (
 //
 // Implementation note: this just straight up isn't implemented, and doesn't *really* need to be either.
 func (f *federatingDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
-	l := log.WithContext(ctx).
-		WithFields(kv.Fields{
-			{"id", id},
-		}...)
-	l.Debug("entering Exists")
 	return false, nil
 }

@@ -16,3 +16,4 @@ We consider these topics advanced because applying them incorrectly does have th
 * [Tracing](tracing.md)
 * [Metrics](metrics.md)
 * [Replicating SQLite](replicating-sqlite.md)
+* [SQLite on networked storage](sqlite-networked-storage.md)

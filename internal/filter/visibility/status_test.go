@@ -168,6 +168,9 @@ func (suite *StatusVisibleTestSuite) TestVisiblePending() {
 	testStatus := new(gtsmodel.Status)
 	*testStatus = *suite.testStatuses["admin_account_status_3"]
 	testStatus.PendingApproval = util.Ptr(true)
+	if err := suite.state.DB.UpdateStatus(ctx, testStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
 
 	for _, testCase := range []struct {
 		acct    *gtsmodel.Account
@@ -192,6 +195,43 @@ func (suite *StatusVisibleTestSuite) TestVisiblePending() {
 		{
 			acct:    nil,   // Unauthed request.
 			visible: false, // None of their business.
+		},
+	} {
+		visible, err := suite.filter.StatusVisible(ctx, testCase.acct, testStatus)
+		suite.NoError(err)
+		suite.Equal(testCase.visible, visible)
+	}
+
+	// Update the status to mark it as approved.
+	testStatus.PendingApproval = util.Ptr(false)
+	testStatus.ApprovedByURI = "http://localhost:8080/some/accept/uri"
+	if err := suite.state.DB.UpdateStatus(ctx, testStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	for _, testCase := range []struct {
+		acct    *gtsmodel.Account
+		visible bool
+	}{
+		{
+			acct:    suite.testAccounts["admin_account"],
+			visible: true, // Own status, always visible.
+		},
+		{
+			acct:    suite.testAccounts["local_account_1"],
+			visible: true, // Reply to zork, always visible.
+		},
+		{
+			acct:    suite.testAccounts["local_account_2"],
+			visible: true, // Should be visible now.
+		},
+		{
+			acct:    suite.testAccounts["remote_account_1"],
+			visible: true, // Should be visible now.
+		},
+		{
+			acct:    nil,  // Unauthed request.
+			visible: true, // Should be visible now (public status).
 		},
 	} {
 		visible, err := suite.filter.StatusVisible(ctx, testCase.acct, testStatus)

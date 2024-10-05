@@ -30,8 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-var noLists = make([]*apimodel.List, 0)
-
 // ListsGet returns all lists owned by requestingAccount, which contain a follow for targetAccountID.
 func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Account, targetAccountID string) ([]*apimodel.List, gtserror.WithCode) {
 	targetAccount, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
@@ -54,52 +52,35 @@ func (p *Processor) ListsGet(ctx context.Context, requestingAccount *gtsmodel.Ac
 	// Requester has to follow targetAccount
 	// for them to be in any of their lists.
 	follow, err := p.state.DB.GetFollow(
+
 		// Don't populate follow.
 		gtscontext.SetBarebones(ctx),
 		requestingAccount.ID,
 		targetAccountID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
+		err := gtserror.Newf("error getting follow: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if follow == nil {
-		return noLists, nil // by definition we know they're in no lists
+		return []*apimodel.List{}, nil
 	}
 
-	listEntries, err := p.state.DB.GetListEntriesForFollowID(
-		// Don't populate entries.
-		gtscontext.SetBarebones(ctx),
-		follow.ID,
-	)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error: %w", err))
+	// Get all lists that this follow is an entry within.
+	lists, err := p.state.DB.GetListsContainingFollowID(ctx, follow.ID)
+	if err != nil {
+		err := gtserror.Newf("error getting lists for follow: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	count := len(listEntries)
-	if count == 0 {
-		return noLists, nil
-	}
-
-	apiLists := make([]*apimodel.List, 0, count)
-	for _, listEntry := range listEntries {
-		list, err := p.state.DB.GetListByID(
-			// Don't populate list.
-			gtscontext.SetBarebones(ctx),
-			listEntry.ListID,
-		)
-
-		if err != nil {
-			log.Debugf(ctx, "skipping list %s due to error %q", listEntry.ListID, err)
-			continue
-		}
-
+	apiLists := make([]*apimodel.List, 0, len(lists))
+	for _, list := range lists {
 		apiList, err := p.converter.ListToAPIList(ctx, list)
 		if err != nil {
-			log.Debugf(ctx, "skipping list %s due to error %q", listEntry.ListID, err)
+			log.Errorf(ctx, "error converting list: %v", err)
 			continue
 		}
-
 		apiLists = append(apiLists, apiList)
 	}
 

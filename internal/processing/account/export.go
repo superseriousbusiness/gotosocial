@@ -98,7 +98,7 @@ func (p *Processor) ExportLists(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 ) ([][]string, gtserror.WithCode) {
-	lists, err := p.state.DB.GetListsForAccountID(ctx, requester.ID)
+	lists, err := p.state.DB.GetListsByAccountID(ctx, requester.ID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting lists: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

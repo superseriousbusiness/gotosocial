@@ -18,20 +18,19 @@
 package statuses_test
 
 import (
-	"encoding/json"
-	"fmt"
-	"io/ioutil"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -40,90 +39,281 @@ type StatusFaveTestSuite struct {
 	StatusStandardTestSuite
 }
 
-// fave a status
-func (suite *StatusFaveTestSuite) TestPostFave() {
-	t := suite.testTokens["local_account_1"]
-	oauthToken := oauth.DBTokenToToken(t)
-
-	targetStatus := suite.testStatuses["admin_account_status_2"]
-
-	// setup
+func (suite *StatusFaveTestSuite) postStatusFave(
+	targetStatusID string,
+	app *gtsmodel.Application,
+	token *gtsmodel.Token,
+	user *gtsmodel.User,
+	account *gtsmodel.Account,
+) (string, *httptest.ResponseRecorder) {
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["local_account_1"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["local_account_1"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
+	ctx.Set(oauth.SessionAuthorizedApplication, app)
+	ctx.Set(oauth.SessionAuthorizedToken, oauth.DBTokenToToken(token))
+	ctx.Set(oauth.SessionAuthorizedUser, user)
+	ctx.Set(oauth.SessionAuthorizedAccount, account)
+
+	const pathBase = "http://localhost:8080/api" + statuses.FavouritePath
+	path := strings.ReplaceAll(pathBase, ":"+apiutil.IDKey, targetStatusID)
+	ctx.Request = httptest.NewRequest(http.MethodPost, path, nil)
 	ctx.Request.Header.Set("accept", "application/json")
 
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
+	// Populate target status ID.
 	ctx.Params = gin.Params{
 		gin.Param{
-			Key:   statuses.IDKey,
-			Value: targetStatus.ID,
+			Key:   apiutil.IDKey,
+			Value: targetStatusID,
 		},
 	}
 
+	// Trigger handler.
 	suite.statusModule.StatusFavePOSTHandler(ctx)
-
-	// check response
-	suite.EqualValues(http.StatusOK, recorder.Code)
-
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-
-	statusReply := &apimodel.Status{}
-	err = json.Unmarshal(b, statusReply)
-	assert.NoError(suite.T(), err)
-
-	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
-	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
-	assert.True(suite.T(), statusReply.Sensitive)
-	assert.Equal(suite.T(), apimodel.VisibilityPublic, statusReply.Visibility)
-	assert.True(suite.T(), statusReply.Favourited)
-	assert.Equal(suite.T(), 1, statusReply.FavouritesCount)
+	return suite.parseStatusResponse(recorder)
 }
 
-// try to fave a status that's not faveable
+// Fave a status we haven't faved yet.
+func (suite *StatusFaveTestSuite) TestPostFave() {
+	var (
+		targetStatus = suite.testStatuses["admin_account_status_2"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_1"]
+		user         = suite.testUsers["local_account_1"]
+		account      = suite.testAccounts["local_account_1"]
+	)
+
+	out, recorder := suite.postStatusFave(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
+
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Target status should now
+	// be "favourited" by us.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "🐕🐕🐕🐕🐕",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": true,
+  "favourites_count": 1,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": null,
+  "in_reply_to_id": null,
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": "en",
+  "media_attachments": [],
+  "mentions": [],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": true,
+  "spoiler_text": "open to see some puppies",
+  "tags": [],
+  "text": "🐕🐕🐕🐕🐕",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+}
+
+// Try to fave a status
+// that's not faveable by us.
 func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
-	t := suite.testTokens["admin_account"]
-	oauthToken := oauth.DBTokenToToken(t)
+	var (
+		targetStatus = suite.testStatuses["local_account_1_status_3"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["admin_account"]
+		user         = suite.testUsers["admin_account"]
+		account      = suite.testAccounts["admin_account"]
+	)
 
-	targetStatus := suite.testStatuses["local_account_1_status_3"] // this one is unlikeable
+	out, recorder := suite.postStatusFave(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
 
-	// setup
-	recorder := httptest.NewRecorder()
-	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
-	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
-	ctx.Set(oauth.SessionAuthorizedToken, oauthToken)
-	ctx.Set(oauth.SessionAuthorizedUser, suite.testUsers["admin_account"])
-	ctx.Set(oauth.SessionAuthorizedAccount, suite.testAccounts["admin_account"])
-	ctx.Request = httptest.NewRequest(http.MethodPost, fmt.Sprintf("http://localhost:8080%s", strings.Replace(statuses.FavouritePath, ":id", targetStatus.ID, 1)), nil) // the endpoint we're hitting
-	ctx.Request.Header.Set("accept", "application/json")
+	// We should have 403 from
+	// our call to the function.
+	suite.Equal(http.StatusForbidden, recorder.Code)
 
-	// normally the router would populate these params from the path values,
-	// but because we're calling the function directly, we need to set them manually.
-	ctx.Params = gin.Params{
-		gin.Param{
-			Key:   statuses.IDKey,
-			Value: targetStatus.ID,
-		},
+	// We should get a helpful error.
+	suite.Equal(`{
+  "error": "Forbidden: you do not have permission to fave this status"
+}`, out)
+}
+
+// Fave a status that's pending approval by us.
+func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
+	var (
+		ctx          = context.Background()
+		targetStatus = suite.testStatuses["admin_account_status_5"]
+		app          = suite.testApplications["application_1"]
+		token        = suite.testTokens["local_account_2"]
+		user         = suite.testUsers["local_account_2"]
+		account      = suite.testAccounts["local_account_2"]
+		visFilter    = visibility.NewFilter(&suite.state)
+	)
+
+	// Check visibility of status to public before posting fave.
+	visible, err := visFilter.StatusVisible(ctx, nil, targetStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	if visible {
+		suite.FailNow("status should not be visible yet")
 	}
 
-	suite.statusModule.StatusFavePOSTHandler(ctx)
+	out, recorder := suite.postStatusFave(
+		targetStatus.ID,
+		app,
+		token,
+		user,
+		account,
+	)
 
-	// check response
-	suite.EqualValues(http.StatusForbidden, recorder.Code)
+	// We should have OK from
+	// our call to the function.
+	suite.Equal(http.StatusOK, recorder.Code)
 
-	result := recorder.Result()
-	defer result.Body.Close()
-	b, err := ioutil.ReadAll(result.Body)
-	assert.NoError(suite.T(), err)
-	assert.Equal(suite.T(), `{"error":"Forbidden: you do not have permission to fave this status"}`, string(b))
+	// Target status should now
+	// be "favourited" by us.
+	suite.Equal(`{
+  "account": "yeah this is my account, what about it punk",
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "bookmarked": false,
+  "card": null,
+  "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p>",
+  "created_at": "right the hell just now babyee",
+  "emojis": [],
+  "favourited": true,
+  "favourites_count": 1,
+  "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+  "in_reply_to_account_id": "01F8MH5NBDF2MV7CTC4Q5128HF",
+  "in_reply_to_id": "01F8MHC8VWDRBQR0N1BATDDEM5",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  },
+  "language": null,
+  "media_attachments": [],
+  "mentions": [
+    {
+      "acct": "1happyturtle",
+      "id": "ZZZZZZZZZZZZZZZZZZZZZZZZZZ",
+      "url": "http://localhost:8080/@1happyturtle",
+      "username": "1happyturtle"
+    }
+  ],
+  "muted": false,
+  "pinned": false,
+  "poll": null,
+  "reblog": null,
+  "reblogged": false,
+  "reblogs_count": 0,
+  "replies_count": 0,
+  "sensitive": false,
+  "spoiler_text": "",
+  "tags": [],
+  "text": "Hi @1happyturtle, can I reply?",
+  "uri": "http://localhost:8080/some/determinate/url",
+  "url": "http://localhost:8080/some/determinate/url",
+  "visibility": "public"
+}`, out)
+
+	// Target status should no
+	// longer be pending approval.
+	dbStatus, err := suite.state.DB.GetStatusByID(
+		ctx,
+		targetStatus.ID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(*dbStatus.PendingApproval)
+	suite.NotEmpty(dbStatus.ApprovedByURI)
+
+	// There should be an Accept
+	// stored for the target status.
+	intReq, err := suite.state.DB.GetInteractionRequestByInteractionURI(
+		ctx, targetStatus.URI,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotZero(intReq.AcceptedAt)
+	suite.NotEmpty(intReq.URI)
+
+	// Check visibility of status to public after posting fave.
+	visible, err = visFilter.StatusVisible(ctx, nil, dbStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	if !visible {
+		suite.FailNow("status should be visible")
+	}
 }
 
 func TestStatusFaveTestSuite(t *testing.T) {

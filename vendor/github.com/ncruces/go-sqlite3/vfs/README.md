@@ -46,7 +46,7 @@ to check if your build supports file locking.
 
 ### Write-Ahead Logging
 
-On 64-bit Unix, this module uses `mmap` to implement
+On 64-bit little-endian Unix, this module uses `mmap` to implement
 [shared-memory for the WAL-index](https://sqlite.org/wal.html#implementation_of_shared_memory_for_the_wal_index),
 like SQLite.
 
