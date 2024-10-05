@@ -302,9 +302,9 @@ func (i *interactionDB) GetInteractionsRequestsForAcct(
 			bun.Ident("interaction_request"),
 		).
 		// Select only interaction requests that
-		// are neither accepted or rejected yet,
-		// ie., without an Accept or Reject URI.
-		Where("? IS NULL", bun.Ident("uri"))
+		// are neither accepted or rejected yet.
+		Where("? IS NULL", bun.Ident("accepted_at")).
+		Where("? IS NULL", bun.Ident("rejected_at"))
 
 	// Select interactions targeting status.
 	if statusID != "" {
