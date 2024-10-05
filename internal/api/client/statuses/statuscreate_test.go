@@ -365,6 +365,25 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 }`, out)
 }
 
+func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
+	out, recorder := suite.postStatus(map[string][]string{
+		"status":       {"this is a brand new status! #helloworld"},
+		"spoiler_text": {"hello hello"},
+		"sensitive":    {"true"},
+		"visibility":   {string(apimodel.VisibilityMutualsOnly)},
+		"scheduled_at": {"2080-10-04T15:32:02.018Z"},
+	}, "")
+
+	// We should have 501 from
+	// our call to the function.
+	suite.Equal(http.StatusNotImplemented, recorder.Code)
+
+	// We should have a helpful error message.
+	suite.Equal(`{
+  "error": "Not Implemented: scheduled_at is not yet implemented"
+}`, out)
+}
+
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status":       {statusMarkdown},
