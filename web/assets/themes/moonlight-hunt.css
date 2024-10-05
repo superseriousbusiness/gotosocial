@@ -1,45 +1,32 @@
 /*
   theme-title: Moonlight Hunt
-  theme-description: Moonlit grey-blue-green with a tinge of blood red. You may think it all a mere bad dream.
+  theme-description: Ominous dark blue / black with a tinge of blood red. You may think it all a mere bad dream.
 */
 
 :root {
   /* Define our palette */
-  --ghastly-moon-shadow: #f3e3d4;
-  --ghastly-moon: #fdf2d2;
-  --blue-mood: #456e74;
-  --blue-mood-see-through: rgb(69, 110, 116, 50%);
-  --ice-blue: #96abae;
-  --ice-blue-see-through: rgb(150, 171, 174, 75%);
-  --ice-blue-almost-see-through: rgb(150, 171, 174, 85%);
+  --bleached-bone: #f3e3d4;
+  --void-blue: #0e131f;
+  --outer-space: #06080e;
+  --ghastly-blue: #88bebe;
   --blood-red: #6c1619;
   --bright-red: #f61a1ae6;
   --feral-orange: #f78d17;
-  --earth-grey: #48372f;
-  --charred-brown: #1f1714;
 
   /* Restyle basic colors */
-  --white1: var(--ice-blue-see-through);
-  --white2: var(--ice-blue-see-through);
-  --orange2: var(--blood-red);
-  --blue1: var(--blue-mood);
-  --blue2: var(--blue-mood);
-  --blue3: var(--charred-brown);
+  --white1: var(--void-blue);
+  --white2: var(--void-blue);
+  --orange2: var(--bright-red);
+  --blue1: var(--ghastly-blue);
+  --blue2: var(--ghastly-blue);
+  --blue3: var(--ghastly-blue);
 
   /* Basic page styling (background + foreground) */
-  --bg: radial-gradient(
-    circle at 85% 22.5%,
-    var(--ghastly-moon-shadow) 10%,
-    var(--ghastly-moon) 13%,
-    var(--ice-blue) 40%,
-    var(--blue-mood) 65%,
-    var(--blood-red) 85%,
-    var(--charred-brown) 100%
-  );
-  --bg-accent: var(--white2);
-  --fg: var(--charred-brown);
-  --fg-reduced: var(--charred-brown);
-  --profile-bg: var(--white2); 
+  --bg: var(--void-blue);
+  --bg-accent: var(--void-blue);
+  --fg: var(--bleached-bone);
+  --fg-reduced: var(--bleached-bone);
+  --profile-bg: var(--void-blue); 
 
   /* Buttons */
   --bloodshot: linear-gradient(
@@ -53,31 +40,37 @@
     var(--blood-red) 100%
   );
   --button-bg: var(--bloodshot);
-  --button-fg: var(--ghastly-moon);
+  --button-fg: var(--bleached-bone);
 
   /* Statuses */
-  --status-bg: var(--ice-blue-almost-see-through);
-  --status-focus-bg: var(--ice-blue-almost-see-through);
+  --status-bg: var(--void-blue);
+  --status-focus-bg: var(--void-blue);
 
   /* Used around statuses + other items */
-  --ghastly-border: 0.1rem solid var(--ghastly-moon);
+  --ghastly-border: 0.1rem solid var(--ghastly-blue);
   --boxshadow-border: var(--ghastly-border);
+}
+
+/* Main page background */
+body {
+  background: linear-gradient(
+    90deg,
+    var(--blood-red),
+    black 20%,
+    black 80%,
+    var(--blood-red)
+  );
 }
 
 /* Scroll bar */
 html, body {
-  scrollbar-color: var(--blood-red) var(--ice-blue);
+  scrollbar-color: var(--bright-red) var(--outer-space);
+  text-shadow: 1px 1px var(--blood-red);
 }
 
 /* Instance title color */
-.page-header {
-  grid-column: 2;
-  align-self: start;
-  margin: 1rem 0 1rem 0;
-  background: var(--ice-blue-see-through);
-  color: var(--charred-brown);
-  border-radius: var(--br);
-  border: var(--ghastly-border);
+.page-header a h1 {
+  color: var(--bleached-bone);
 }
 
 .profile .profile-header {
@@ -86,9 +79,11 @@ html, body {
 
 .col-header {
   border: var(--ghastly-border);
+  background: var(--outer-space);
 }
 
 .profile .about-user .col-header {
+  background: var(--void-blue);
   border-bottom: none;
   margin-bottom: 0;
 }
@@ -102,12 +97,13 @@ html, body {
 }
 .profile .about-user .accountstats {
   border-bottom: var(--ghastly-border);
+  background: var(--outer-space);
 }
 
 /* Role and bot badge backgrounds */
 .profile .profile-header .basic-info .namerole .role,
 .profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
-  background: var(--ghastly-moon);
+  background: var(--outer-space);
 }
 
 /* Status media */
@@ -115,63 +111,56 @@ html, body {
   border: var(--ghastly-border);
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
-  color: var(--charred-brown);
+  color: var(--bleached-bone);
 }
 .status .media .media-wrapper details video.plyr-video {
-  background: var(--ice-blue-see-through);
+  background: var(--outer-space);
 }
 
 /* Status polls */
 .status .text .poll {
-  background-color: var(--ice-blue-see-through);
+  background-color: var(--outer-space);
   border: var(--ghastly-border);
 }
 .status .text .poll .poll-info {
-  background-color: var(--ice-blue-see-through);
-  border: var(--ghastly-border);
+  background-color: var(--void-blue);
 }
 
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-  background-color: var(--charred-brown);
-  color: var(--ghastly-moon);
+  background-color: var(--outer-space);
+  color: var(--bleached-bone);
 }
 
 /* Block quotes */
 blockquote {
-  background-color: var(--charred-brown);
-  color: var(--ghastly-moon);
+  background-color: var(--outer-space);
+  color: var(--bleached-bone);
 }
 
 /* Status info bars */
 .status .status-info,
 .status.expanded .status-info {
-  color: var(--ghastly-moon-shadow);
-  border-top: var(--ghastly-border);
-  background: var(--blue-mood);
+  color: var(--ghastly-blue);
+  border-top: 0.1rem dotted var(--ghastly-blue);
+  background: var(--outer-space);
 }
 
 /* Make show more/less buttons more legible */
-.status button, .status .button {
-  border: 1px solid var(--blood-red);
+.status .button {
+  border: 1px solid var(--feral-orange);
 }
-.status button:hover, .status .button:hover {
-  border: 1px solid var(--ghastly-moon);
+.status .button:hover {
+  border: 1px solid var(--bleached-bone);
   background: var(--bloodshot);
 }
 
 /* Back + next links */
-.backnextlinks {
-  background: var(--ice-blue-see-through);
-  padding: 0.5rem;
-  border: var(--ghastly-border);
-  border-radius: var(--br);
-  font-weight: bold;
+.profile .statuses .backnextlinks a {
+  color: var(--bleached-bone);
 }
 
-.page-footer {
-  margin-top: 2rem;
-  background: var(--ice-blue-almost-see-through);
-  border-top: var(--ghastly-border);
+.page-footer nav ul li a {
+  color: var(--bleached-bone);
 }

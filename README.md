@@ -177,6 +177,10 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png"/>
   <figcaption>Midnight trip</figcaption>
 </figure>
+<figure>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-moonlight-hunt.png"/>
+  <figcaption>Moonlight hunt</figcaption>
+</figure>
 <hr/>
 <figure>
   <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png"/>
