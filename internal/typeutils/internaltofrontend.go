@@ -2711,7 +2711,7 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 	}
 
 	var reply *apimodel.Status
-	if req.InteractionType == gtsmodel.InteractionReply {
+	if req.InteractionType == gtsmodel.InteractionReply && req.Reply != nil {
 		reply, err = c.statusToAPIStatus(
 			ctx,
 			req.Reply,
