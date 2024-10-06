@@ -19,20 +19,18 @@ package ffmpeg
 
 import (
 	"context"
-	"io"
 	"os"
 
 	ffmpeglib "codeberg.org/gruf/go-ffmpreg/embed/ffmpeg"
 	ffprobelib "codeberg.org/gruf/go-ffmpreg/embed/ffprobe"
+	"codeberg.org/gruf/go-ffmpreg/wasm"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
-	"github.com/tetratelabs/wazero/sys"
 )
 
 // Use all core features required by ffmpeg / ffprobe
 // (these should be the same but we OR just in case).
-const corefeatures = ffprobelib.CoreFeatures |
-	ffmpeglib.CoreFeatures
+const corefeatures = wasm.CoreFeatures
 
 var (
 	// shared WASM runtime instance.
@@ -47,65 +45,7 @@ var (
 // configuration options to run an instance
 // of a compiled WebAssembly module that is
 // run in a typical CLI manner.
-type Args struct {
-
-	// Optional further module configuration function.
-	// (e.g. to mount filesystem dir, set env vars, etc).
-	Config func(wazero.ModuleConfig) wazero.ModuleConfig
-
-	// Standard FDs.
-	Stdin  io.Reader
-	Stdout io.Writer
-	Stderr io.Writer
-
-	// CLI args.
-	Args []string
-}
-
-// run will run the given compiled
-// WebAssembly module using given args,
-// using the global wazero runtime.
-func run(
-	ctx context.Context,
-	cmod wazero.CompiledModule,
-	args Args,
-) (
-	uint32, // exit code
-	error,
-) {
-	// Prefix module name as argv0 to args.
-	cargs := make([]string, len(args.Args)+1)
-	copy(cargs[1:], args.Args)
-	cargs[0] = cmod.Name()
-
-	// Create base module config.
-	modcfg := wazero.NewModuleConfig()
-	modcfg = modcfg.WithArgs(cargs...)
-	modcfg = modcfg.WithStdin(args.Stdin)
-	modcfg = modcfg.WithStdout(args.Stdout)
-	modcfg = modcfg.WithStderr(args.Stderr)
-
-	if args.Config != nil {
-		// Pass through config fn.
-		modcfg = args.Config(modcfg)
-	}
-
-	// Instantiate the module from precompiled wasm module data.
-	mod, err := runtime.InstantiateModule(ctx, cmod, modcfg)
-
-	if mod != nil {
-		// Ensure closed.
-		_ = mod.Close(ctx)
-	}
-
-	// Try extract exit code.
-	switch err := err.(type) {
-	case *sys.ExitError:
-		return err.ExitCode(), nil
-	default:
-		return 0, err
-	}
-}
+type Args = wasm.Args
 
 // compileFfmpeg ensures the ffmpeg WebAssembly has been
 // pre-compiled into memory. If already compiled is a no-op.

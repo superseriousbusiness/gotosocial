@@ -20,6 +20,7 @@ package ffmpeg
 import (
 	"context"
 
+	"codeberg.org/gruf/go-ffmpreg/wasm"
 	"github.com/tetratelabs/wazero"
 )
 
@@ -65,6 +66,6 @@ func (r *runner) Run(ctx context.Context, cmod wazero.CompiledModule, args Args)
 	// Release slot back to pool on end.
 	defer func() { r.pool <- struct{}{} }()
 
-	// Pass to main module runner.
-	return run(ctx, cmod, args)
+	// Pass to main module runner function.
+	return wasm.Run(ctx, runtime, cmod, args)
 }

@@ -3,8 +3,6 @@ package ffprobe
 import (
 	_ "embed"
 	"os"
-
-	"github.com/tetratelabs/wazero/api"
 )
 
 func init() {
@@ -22,15 +20,6 @@ func init() {
 		panic(err)
 	}
 }
-
-// CoreFeatures is the WebAssembly Core specification
-// features this embedded binary was compiled with.
-const CoreFeatures = api.CoreFeatureSIMD |
-	api.CoreFeatureBulkMemoryOperations |
-	api.CoreFeatureNonTrappingFloatToIntConversion |
-	api.CoreFeatureMutableGlobal |
-	api.CoreFeatureReferenceTypes |
-	api.CoreFeatureSignExtensionOps
 
 //go:embed ffprobe.wasm
 var B []byte
