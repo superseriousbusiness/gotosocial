@@ -12,7 +12,7 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.3
-	codeberg.org/gruf/go-ffmpreg v0.2.6
+	codeberg.org/gruf/go-ffmpreg v0.3.1
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv v1.6.5
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
@@ -55,7 +55,7 @@ require (
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.20.37
 	github.com/technologize/otel-go-contrib v1.1.1
-	github.com/tetratelabs/wazero v1.8.0
+	github.com/tetratelabs/wazero v1.8.1
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
 	github.com/uptrace/bun v1.2.1

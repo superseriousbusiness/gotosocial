@@ -24,10 +24,11 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
-# codeberg.org/gruf/go-ffmpreg v0.2.6
+# codeberg.org/gruf/go-ffmpreg v0.3.1
 ## explicit; go 1.22.0
 codeberg.org/gruf/go-ffmpreg/embed/ffmpeg
 codeberg.org/gruf/go-ffmpreg/embed/ffprobe
+codeberg.org/gruf/go-ffmpreg/wasm
 # codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 ## explicit; go 1.21
 codeberg.org/gruf/go-iotools
@@ -844,7 +845,7 @@ github.com/tdewolff/parse/v2/strconv
 # github.com/technologize/otel-go-contrib v1.1.1
 ## explicit; go 1.17
 github.com/technologize/otel-go-contrib/otelginmetrics
-# github.com/tetratelabs/wazero v1.8.0
+# github.com/tetratelabs/wazero v1.8.1
 ## explicit; go 1.21
 github.com/tetratelabs/wazero
 github.com/tetratelabs/wazero/api
