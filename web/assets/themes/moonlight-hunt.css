@@ -30,14 +30,10 @@
 
   /* Buttons */
   --bloodshot: linear-gradient(
-    var(--blood-red) 0%,
-    var(--feral-orange) 2%,
-    var(--bright-red) 5%,
-    var(--blood-red) 40%,
-    var(--blood-red) 60%,
-    var(--bright-red) 95%,
-    var(--feral-orange) 98%,
-    var(--blood-red) 100%
+    var(--bright-red),
+    var(--blood-red),
+    var(--blood-red),
+    var(--bright-red)
   );
   --button-bg: var(--bloodshot);
   --button-fg: var(--bleached-bone);
