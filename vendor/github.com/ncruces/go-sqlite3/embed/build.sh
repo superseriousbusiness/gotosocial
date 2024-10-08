@@ -14,7 +14,7 @@ trap 'rm -f sqlite3.tmp' EXIT
 	-o sqlite3.wasm "$ROOT/sqlite3/main.c" \
 	-I"$ROOT/sqlite3" \
 	-mexec-model=reactor \
-	-matomics -msimd128 -mmutable-globals \
+	-matomics -msimd128 -mmutable-globals -mmultivalue \
 	-mbulk-memory -mreference-types \
 	-mnontrapping-fptoint -msign-ext \
 	-fno-stack-protector -fno-stack-clash-protection \

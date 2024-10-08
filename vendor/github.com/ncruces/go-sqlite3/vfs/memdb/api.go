@@ -43,7 +43,8 @@ func Create(name string, data []byte) {
 	}
 
 	// Convert data from WAL/2 to rollback journal.
-	if len(data) >= 20 && (data[18] == 2 && data[19] == 2 ||
+	if len(data) >= 20 && (false ||
+		data[18] == 2 && data[19] == 2 ||
 		data[18] == 3 && data[19] == 3) {
 		data[18] = 1
 		data[19] = 1

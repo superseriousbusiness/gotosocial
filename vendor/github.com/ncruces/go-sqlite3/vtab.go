@@ -57,9 +57,12 @@ func CreateModule[T VTab](db *Conn, name string, create, connect VTabConstructor
 		flags |= VTAB_SHADOWTABS
 	}
 
+	var modulePtr uint32
 	defer db.arena.mark()()
 	namePtr := db.arena.string(name)
-	modulePtr := util.AddHandle(db.ctx, module[T]{create, connect})
+	if connect != nil {
+		modulePtr = util.AddHandle(db.ctx, module[T]{create, connect})
+	}
 	r := db.call("sqlite3_create_module_go", uint64(db.handle),
 		uint64(namePtr), uint64(flags), uint64(modulePtr))
 	return db.error(r)
@@ -352,8 +355,9 @@ func (idx *IndexInfo) load() {
 	idx.OrderBy = make([]IndexOrderBy, util.ReadUint32(mod, ptr+8))
 
 	constraintPtr := util.ReadUint32(mod, ptr+4)
+	constraint := idx.Constraint
 	for i := range idx.Constraint {
-		idx.Constraint[i] = IndexConstraint{
+		constraint[i] = IndexConstraint{
 			Column: int(int32(util.ReadUint32(mod, constraintPtr+0))),
 			Op:     IndexConstraintOp(util.ReadUint8(mod, constraintPtr+4)),
 			Usable: util.ReadUint8(mod, constraintPtr+5) != 0,
@@ -362,8 +366,9 @@ func (idx *IndexInfo) load() {
 	}
 
 	orderByPtr := util.ReadUint32(mod, ptr+12)
-	for i := range idx.OrderBy {
-		idx.OrderBy[i] = IndexOrderBy{
+	orderBy := idx.OrderBy
+	for i := range orderBy {
+		orderBy[i] = IndexOrderBy{
 			Column: int(int32(util.ReadUint32(mod, orderByPtr+0))),
 			Desc:   util.ReadUint8(mod, orderByPtr+4) != 0,
 		}

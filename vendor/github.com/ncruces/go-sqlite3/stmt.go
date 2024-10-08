@@ -30,12 +30,13 @@ func (s *Stmt) Close() error {
 	}
 
 	r := s.c.call("sqlite3_finalize", uint64(s.handle))
-	for i := range s.c.stmts {
-		if s == s.c.stmts[i] {
-			l := len(s.c.stmts) - 1
-			s.c.stmts[i] = s.c.stmts[l]
-			s.c.stmts[l] = nil
-			s.c.stmts = s.c.stmts[:l]
+	stmts := s.c.stmts
+	for i := range stmts {
+		if s == stmts[i] {
+			l := len(stmts) - 1
+			stmts[i] = stmts[l]
+			stmts[l] = nil
+			s.c.stmts = stmts[:l]
 			break
 		}
 	}
@@ -105,7 +106,7 @@ func (s *Stmt) Busy() bool {
 //
 // https://sqlite.org/c3ref/step.html
 func (s *Stmt) Step() bool {
-	s.c.checkInterrupt()
+	s.c.checkInterrupt(s.c.handle)
 	r := s.c.call("sqlite3_step", uint64(s.handle))
 	switch r {
 	case _ROW:
@@ -376,6 +377,15 @@ func (s *Stmt) BindValue(param int, value Value) error {
 	return s.c.error(r)
 }
 
+// DataCount resets the number of columns in a result set.
+//
+// https://sqlite.org/c3ref/data_count.html
+func (s *Stmt) DataCount() int {
+	r := s.c.call("sqlite3_data_count",
+		uint64(s.handle))
+	return int(int32(r))
+}
+
 // ColumnCount returns the number of columns in a result set.
 //
 // https://sqlite.org/c3ref/column_count.html
@@ -630,7 +640,7 @@ func (s *Stmt) Columns(dest []any) error {
 	defer s.c.arena.mark()()
 	count := uint64(len(dest))
 	typePtr := s.c.arena.new(count)
-	dataPtr := s.c.arena.new(8 * count)
+	dataPtr := s.c.arena.new(count * 8)
 
 	r := s.c.call("sqlite3_columns_go",
 		uint64(s.handle), count, uint64(typePtr), uint64(dataPtr))
@@ -639,26 +649,31 @@ func (s *Stmt) Columns(dest []any) error {
 	}
 
 	types := util.View(s.c.mod, typePtr, count)
+
+	// Avoid bounds checks on types below.
+	if len(types) != len(dest) {
+		panic(util.AssertErr())
+	}
+
 	for i := range dest {
 		switch types[i] {
 		case byte(INTEGER):
-			dest[i] = int64(util.ReadUint64(s.c.mod, dataPtr+8*uint32(i)))
-			continue
+			dest[i] = int64(util.ReadUint64(s.c.mod, dataPtr))
 		case byte(FLOAT):
-			dest[i] = util.ReadFloat64(s.c.mod, dataPtr+8*uint32(i))
-			continue
+			dest[i] = util.ReadFloat64(s.c.mod, dataPtr)
 		case byte(NULL):
 			dest[i] = nil
-			continue
+		default:
+			ptr := util.ReadUint32(s.c.mod, dataPtr+0)
+			len := util.ReadUint32(s.c.mod, dataPtr+4)
+			buf := util.View(s.c.mod, ptr, uint64(len))
+			if types[i] == byte(TEXT) {
+				dest[i] = string(buf)
+			} else {
+				dest[i] = buf
+			}
 		}
-		ptr := util.ReadUint32(s.c.mod, dataPtr+8*uint32(i)+0)
-		len := util.ReadUint32(s.c.mod, dataPtr+8*uint32(i)+4)
-		buf := util.View(s.c.mod, ptr, uint64(len))
-		if types[i] == byte(TEXT) {
-			dest[i] = string(buf)
-		} else {
-			dest[i] = buf
-		}
+		dataPtr += 8
 	}
 	return nil
 }

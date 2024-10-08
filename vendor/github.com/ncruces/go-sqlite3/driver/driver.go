@@ -40,14 +40,14 @@
 // When using a custom time struct, you'll have to implement
 // [database/sql/driver.Valuer] and [database/sql.Scanner].
 //
-// The Value method should ideally serialise to a time [format] supported by SQLite.
+// The Value method should ideally encode to a time [format] supported by SQLite.
 // This ensures SQL date and time functions work as they should,
 // and that your schema works with other SQLite tools.
 // [sqlite3.TimeFormat.Encode] may help.
 //
 // The Scan method needs to take into account that the value it receives can be of differing types.
 // It can already be a [time.Time], if the driver decoded the value according to "_timefmt" rules.
-// Or it can be a: string, int64, float64, []byte, nil,
+// Or it can be a: string, int64, float64, []byte, or nil,
 // depending on the column type and what whoever wrote the value.
 // [sqlite3.TimeFormat.Decode] may help.
 //
@@ -202,19 +202,19 @@ func (n *connector) Driver() driver.Driver {
 	return n.driver
 }
 
-func (n *connector) Connect(ctx context.Context) (_ driver.Conn, err error) {
+func (n *connector) Connect(ctx context.Context) (res driver.Conn, err error) {
 	c := &conn{
 		txLock:  n.txLock,
 		tmRead:  n.tmRead,
 		tmWrite: n.tmWrite,
 	}
 
-	c.Conn, err = sqlite3.Open(n.name)
+	c.Conn, err = sqlite3.OpenContext(ctx, n.name)
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
-		if err != nil {
+		if res == nil {
 			c.Close()
 		}
 	}()
@@ -239,6 +239,7 @@ func (n *connector) Connect(ctx context.Context) (_ driver.Conn, err error) {
 		if err != nil {
 			return nil, err
 		}
+		defer s.Close()
 		if s.Step() && s.ColumnBool(0) {
 			c.readOnly = '1'
 		} else {
@@ -466,6 +467,7 @@ func (s *stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (drive
 	defer s.Stmt.Conn().SetInterrupt(old)
 
 	err = s.Stmt.Exec()
+	s.Stmt.ClearBindings()
 	if err != nil {
 		return nil, err
 	}
@@ -488,7 +490,7 @@ func (s *stmt) setupBindings(args []driver.NamedValue) (err error) {
 		if arg.Name == "" {
 			ids = append(ids, arg.Ordinal)
 		} else {
-			for _, prefix := range []string{":", "@", "$"} {
+			for _, prefix := range [...]string{":", "@", "$"} {
 				if id := s.Stmt.BindIndex(prefix + arg.Name); id != 0 {
 					ids = append(ids, id)
 				}
@@ -522,9 +524,9 @@ func (s *stmt) setupBindings(args []driver.NamedValue) (err error) {
 			default:
 				panic(util.AssertErr())
 			}
-		}
-		if err != nil {
-			return err
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -595,10 +597,11 @@ func (r *rows) Close() error {
 func (r *rows) Columns() []string {
 	if r.names == nil {
 		count := r.Stmt.ColumnCount()
-		r.names = make([]string, count)
-		for i := range r.names {
-			r.names[i] = r.Stmt.ColumnName(i)
+		names := make([]string, count)
+		for i := range names {
+			names[i] = r.Stmt.ColumnName(i)
 		}
+		r.names = names
 	}
 	return r.names
 }
@@ -606,26 +609,29 @@ func (r *rows) Columns() []string {
 func (r *rows) loadTypes() {
 	if r.nulls == nil {
 		count := r.Stmt.ColumnCount()
-		r.nulls = make([]bool, count)
-		r.types = make([]string, count)
-		for i := range r.nulls {
+		nulls := make([]bool, count)
+		types := make([]string, count)
+		for i := range nulls {
 			if col := r.Stmt.ColumnOriginName(i); col != "" {
-				r.types[i], _, r.nulls[i], _, _, _ = r.Stmt.Conn().TableColumnMetadata(
+				types[i], _, nulls[i], _, _, _ = r.Stmt.Conn().TableColumnMetadata(
 					r.Stmt.ColumnDatabaseName(i),
 					r.Stmt.ColumnTableName(i),
 					col)
 			}
 		}
+		r.nulls = nulls
+		r.types = types
 	}
 }
 
 func (r *rows) declType(index int) string {
 	if r.types == nil {
 		count := r.Stmt.ColumnCount()
-		r.types = make([]string, count)
-		for i := range r.types {
-			r.types[i] = strings.ToUpper(r.Stmt.ColumnDeclType(i))
+		types := make([]string, count)
+		for i := range types {
+			types[i] = strings.ToUpper(r.Stmt.ColumnDeclType(i))
 		}
+		r.types = types
 	}
 	return r.types[index]
 }
@@ -665,27 +671,23 @@ func (r *rows) Next(dest []driver.Value) error {
 	for i := range dest {
 		if t, ok := r.decodeTime(i, dest[i]); ok {
 			dest[i] = t
-			continue
-		}
-		if s, ok := dest[i].(string); ok {
-			t, ok := maybeTime(s)
-			if ok {
-				dest[i] = t
-			}
 		}
 	}
 	return err
 }
 
 func (r *rows) decodeTime(i int, v any) (_ time.Time, ok bool) {
-	switch r.tmRead {
-	case sqlite3.TimeFormatDefault, time.RFC3339Nano:
-		// handled by maybeTime
-		return
-	}
-	switch v.(type) {
-	case int64, float64, string:
+	switch v := v.(type) {
+	case int64, float64:
 		// could be a time value
+	case string:
+		if r.tmWrite != "" && r.tmWrite != time.RFC3339 && r.tmWrite != time.RFC3339Nano {
+			break
+		}
+		t, ok := maybeTime(v)
+		if ok {
+			return t, true
+		}
 	default:
 		return
 	}

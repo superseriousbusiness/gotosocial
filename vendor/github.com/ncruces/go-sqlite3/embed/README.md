@@ -9,6 +9,7 @@ The following optional features are compiled in:
 - [JSON](https://sqlite.org/json1.html)
 - [R*Tree](https://sqlite.org/rtree.html)
 - [GeoPoly](https://sqlite.org/geopoly.html)
+- [Spellfix1](https://sqlite.org/spellfix1.html)
 - [soundex](https://sqlite.org/lang_corefunc.html#soundex)
 - [stat4](https://sqlite.org/compile.html#enable_stat4)
 - [base64](https://github.com/sqlite/sqlite/blob/master/ext/misc/base64.c)

@@ -3,7 +3,6 @@ package sqlite3
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -136,23 +135,21 @@ type Savepoint struct {
 //
 // https://sqlite.org/lang_savepoint.html
 func (c *Conn) Savepoint() Savepoint {
-	// Names can be reused; this makes catching bugs more likely.
-	name := saveptName() + "_" + strconv.Itoa(int(rand.Int31()))
+	name := callerName()
+	if name == "" {
+		name = "sqlite3.Savepoint"
+	}
+	// Names can be reused, but this makes catching bugs more likely.
+	name = QuoteIdentifier(name + "_" + strconv.Itoa(int(rand.Int31())))
 
-	err := c.txnExecInterrupted(fmt.Sprintf("SAVEPOINT %q;", name))
+	err := c.txnExecInterrupted("SAVEPOINT " + name)
 	if err != nil {
 		panic(err)
 	}
 	return Savepoint{c: c, name: name}
 }
 
-func saveptName() (name string) {
-	defer func() {
-		if name == "" {
-			name = "sqlite3.Savepoint"
-		}
-	}()
-
+func callerName() (name string) {
 	var pc [8]uintptr
 	n := runtime.Callers(3, pc[:])
 	if n <= 0 {
@@ -189,7 +186,7 @@ func (s Savepoint) Release(errp *error) {
 		if s.c.GetAutocommit() { // There is nothing to commit.
 			return
 		}
-		*errp = s.c.Exec(fmt.Sprintf("RELEASE %q;", s.name))
+		*errp = s.c.Exec("RELEASE " + s.name)
 		if *errp == nil {
 			return
 		}
@@ -201,10 +198,8 @@ func (s Savepoint) Release(errp *error) {
 		return
 	}
 	// ROLLBACK and RELEASE even if interrupted.
-	err := s.c.txnExecInterrupted(fmt.Sprintf(`
-		ROLLBACK TO %[1]q;
-		RELEASE %[1]q;
-	`, s.name))
+	err := s.c.txnExecInterrupted("ROLLBACK TO " +
+		s.name + "; RELEASE " + s.name)
 	if err != nil {
 		panic(err)
 	}
@@ -217,7 +212,7 @@ func (s Savepoint) Release(errp *error) {
 // https://sqlite.org/lang_transaction.html
 func (s Savepoint) Rollback() error {
 	// ROLLBACK even if interrupted.
-	return s.c.txnExecInterrupted(fmt.Sprintf("ROLLBACK TO %q;", s.name))
+	return s.c.txnExecInterrupted("ROLLBACK TO " + s.name)
 }
 
 func (c *Conn) txnExecInterrupted(sql string) error {
