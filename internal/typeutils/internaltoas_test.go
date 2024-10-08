@@ -1181,6 +1181,10 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
+  "cc": [
+    "https://www.w3.org/ns/activitystreams#Public",
+    "http://localhost:8080/users/the_mighty_zork/followers"
+  ],
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
   "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
