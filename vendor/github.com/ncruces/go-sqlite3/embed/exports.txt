@@ -51,6 +51,7 @@ sqlite3_create_collation_go
 sqlite3_create_function_go
 sqlite3_create_module_go
 sqlite3_create_window_function_go
+sqlite3_data_count
 sqlite3_database_file_object
 sqlite3_db_cacheflush
 sqlite3_db_config

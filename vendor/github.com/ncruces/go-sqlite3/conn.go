@@ -24,7 +24,7 @@ type Conn struct {
 	pending    *Stmt
 	stmts      []*Stmt
 	timer      *time.Timer
-	busy       func(int) bool
+	busy       func(context.Context, int) bool
 	log        func(xErrorCode, string)
 	collation  func(*Conn, string)
 	wal        func(*Conn, string, int) error
@@ -38,14 +38,20 @@ type Conn struct {
 	handle uint32
 }
 
-// Open calls [OpenFlags] with [OPEN_READWRITE], [OPEN_CREATE], [OPEN_URI] and [OPEN_NOFOLLOW].
+// Open calls [OpenFlags] with [OPEN_READWRITE], [OPEN_CREATE] and [OPEN_URI].
 func Open(filename string) (*Conn, error) {
-	return newConn(filename, OPEN_READWRITE|OPEN_CREATE|OPEN_URI|OPEN_NOFOLLOW)
+	return newConn(context.Background(), filename, OPEN_READWRITE|OPEN_CREATE|OPEN_URI)
+}
+
+// OpenContext is like [Open] but includes a context,
+// which is used to interrupt the process of opening the connectiton.
+func OpenContext(ctx context.Context, filename string) (*Conn, error) {
+	return newConn(ctx, filename, OPEN_READWRITE|OPEN_CREATE|OPEN_URI)
 }
 
 // OpenFlags opens an SQLite database file as specified by the filename argument.
 //
-// If none of the required flags is used, a combination of [OPEN_READWRITE] and [OPEN_CREATE] is used.
+// If none of the required flags are used, a combination of [OPEN_READWRITE] and [OPEN_CREATE] is used.
 // If a URI filename is used, PRAGMA statements to execute can be specified using "_pragma":
 //
 //	sqlite3.Open("file:demo.db?_pragma=busy_timeout(10000)")
@@ -55,25 +61,33 @@ func OpenFlags(filename string, flags OpenFlag) (*Conn, error) {
 	if flags&(OPEN_READONLY|OPEN_READWRITE|OPEN_CREATE) == 0 {
 		flags |= OPEN_READWRITE | OPEN_CREATE
 	}
-	return newConn(filename, flags)
+	return newConn(context.Background(), filename, flags)
 }
 
 type connKey struct{}
 
-func newConn(filename string, flags OpenFlag) (conn *Conn, err error) {
-	sqlite, err := instantiateSQLite()
+func newConn(ctx context.Context, filename string, flags OpenFlag) (res *Conn, _ error) {
+	err := ctx.Err()
+	if err != nil {
+		return nil, err
+	}
+
+	c := &Conn{interrupt: ctx}
+	c.sqlite, err = instantiateSQLite()
 	if err != nil {
 		return nil, err
 	}
 	defer func() {
-		if conn == nil {
-			sqlite.close()
+		if res == nil {
+			c.Close()
+			c.sqlite.close()
+		} else {
+			c.interrupt = context.Background()
 		}
 	}()
 
-	c := &Conn{sqlite: sqlite}
-	c.arena = c.newArena(1024)
 	c.ctx = context.WithValue(c.ctx, connKey{}, c)
+	c.arena = c.newArena(1024)
 	c.handle, err = c.openDB(filename, flags)
 	if err == nil {
 		err = initExtensions(c)
@@ -98,6 +112,7 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (uint32, error) {
 		return 0, err
 	}
 
+	c.call("sqlite3_progress_handler_go", uint64(handle), 100)
 	if flags|OPEN_URI != 0 && strings.HasPrefix(filename, "file:") {
 		var pragmas strings.Builder
 		if _, after, ok := strings.Cut(filename, "?"); ok {
@@ -109,6 +124,7 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (uint32, error) {
 			}
 		}
 		if pragmas.Len() != 0 {
+			c.checkInterrupt(handle)
 			pragmaPtr := c.arena.string(pragmas.String())
 			r := c.call("sqlite3_exec", uint64(handle), uint64(pragmaPtr), 0, 0, 0)
 			if err := c.sqlite.error(r, handle, pragmas.String()); err != nil {
@@ -118,7 +134,6 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (uint32, error) {
 			}
 		}
 	}
-	c.call("sqlite3_progress_handler_go", uint64(handle), 100)
 	return handle, nil
 }
 
@@ -160,10 +175,10 @@ func (c *Conn) Close() error {
 //
 // https://sqlite.org/c3ref/exec.html
 func (c *Conn) Exec(sql string) error {
-	c.checkInterrupt()
 	defer c.arena.mark()()
 	sqlPtr := c.arena.string(sql)
 
+	c.checkInterrupt(c.handle)
 	r := c.call("sqlite3_exec", uint64(c.handle), uint64(sqlPtr), 0, 0, 0)
 	return c.error(r, sql)
 }
@@ -301,8 +316,7 @@ func (c *Conn) ReleaseMemory() error {
 	return c.error(r)
 }
 
-// GetInterrupt gets the context set with [Conn.SetInterrupt],
-// or nil if none was set.
+// GetInterrupt gets the context set with [Conn.SetInterrupt].
 func (c *Conn) GetInterrupt() context.Context {
 	return c.interrupt
 }
@@ -322,9 +336,11 @@ func (c *Conn) GetInterrupt() context.Context {
 //
 // https://sqlite.org/c3ref/interrupt.html
 func (c *Conn) SetInterrupt(ctx context.Context) (old context.Context) {
-	// Is it the same context?
-	if ctx == c.interrupt {
-		return ctx
+	old = c.interrupt
+	c.interrupt = ctx
+
+	if ctx == old || ctx.Done() == old.Done() {
+		return old
 	}
 
 	// A busy SQL statement prevents SQLite from ignoring an interrupt
@@ -333,32 +349,29 @@ func (c *Conn) SetInterrupt(ctx context.Context) (old context.Context) {
 		defer c.arena.mark()()
 		stmtPtr := c.arena.new(ptrlen)
 		loopPtr := c.arena.string(`WITH RECURSIVE c(x) AS (VALUES(0) UNION ALL SELECT x FROM c) SELECT x FROM c`)
-		c.call("sqlite3_prepare_v3", uint64(c.handle), uint64(loopPtr), math.MaxUint64, 0, uint64(stmtPtr), 0)
+		c.call("sqlite3_prepare_v3", uint64(c.handle), uint64(loopPtr), math.MaxUint64,
+			uint64(PREPARE_PERSISTENT), uint64(stmtPtr), 0)
 		c.pending = &Stmt{c: c}
 		c.pending.handle = util.ReadUint32(c.mod, stmtPtr)
 	}
 
-	old = c.interrupt
-	c.interrupt = ctx
-
-	if old != nil && old.Done() != nil && (ctx == nil || ctx.Err() == nil) {
+	if old.Done() != nil && ctx.Err() == nil {
 		c.pending.Reset()
 	}
-	if ctx != nil && ctx.Done() != nil {
+	if ctx.Done() != nil {
 		c.pending.Step()
 	}
 	return old
 }
 
-func (c *Conn) checkInterrupt() {
-	if c.interrupt != nil && c.interrupt.Err() != nil {
-		c.call("sqlite3_interrupt", uint64(c.handle))
+func (c *Conn) checkInterrupt(handle uint32) {
+	if c.interrupt.Err() != nil {
+		c.call("sqlite3_interrupt", uint64(handle))
 	}
 }
 
-func progressCallback(ctx context.Context, mod api.Module, pDB uint32) (interrupt uint32) {
-	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.handle == pDB &&
-		c.interrupt != nil && c.interrupt.Err() != nil {
+func progressCallback(ctx context.Context, mod api.Module, _ uint32) (interrupt uint32) {
+	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.interrupt.Err() != nil {
 		interrupt = 1
 	}
 	return interrupt
@@ -373,9 +386,8 @@ func (c *Conn) BusyTimeout(timeout time.Duration) error {
 	return c.error(r)
 }
 
-func timeoutCallback(ctx context.Context, mod api.Module, pDB uint32, count, tmout int32) (retry uint32) {
-	if c, ok := ctx.Value(connKey{}).(*Conn); ok &&
-		(c.interrupt == nil || c.interrupt.Err() == nil) {
+func timeoutCallback(ctx context.Context, mod api.Module, count, tmout int32) (retry uint32) {
+	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.interrupt.Err() == nil {
 		const delays = "\x01\x02\x05\x0a\x0f\x14\x19\x19\x19\x32\x32\x64"
 		const totals = "\x00\x01\x03\x08\x12\x21\x35\x4e\x67\x80\xb2\xe4"
 		const ndelay = int32(len(delays) - 1)
@@ -391,7 +403,7 @@ func timeoutCallback(ctx context.Context, mod api.Module, pDB uint32, count, tmo
 
 		if delay = min(delay, tmout-prior); delay > 0 {
 			delay := time.Duration(delay) * time.Millisecond
-			if c.interrupt == nil || c.interrupt.Done() == nil {
+			if c.interrupt.Done() == nil {
 				time.Sleep(delay)
 				return 1
 			}
@@ -414,7 +426,7 @@ func timeoutCallback(ctx context.Context, mod api.Module, pDB uint32, count, tmo
 // BusyHandler registers a callback to handle [BUSY] errors.
 //
 // https://sqlite.org/c3ref/busy_handler.html
-func (c *Conn) BusyHandler(cb func(count int) (retry bool)) error {
+func (c *Conn) BusyHandler(cb func(ctx context.Context, count int) (retry bool)) error {
 	var enable uint64
 	if cb != nil {
 		enable = 1
@@ -428,9 +440,12 @@ func (c *Conn) BusyHandler(cb func(count int) (retry bool)) error {
 }
 
 func busyCallback(ctx context.Context, mod api.Module, pDB uint32, count int32) (retry uint32) {
-	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.handle == pDB && c.busy != nil &&
-		(c.interrupt == nil || c.interrupt.Err() == nil) {
-		if c.busy(int(count)) {
+	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.handle == pDB && c.busy != nil {
+		interrupt := c.interrupt
+		if interrupt == nil {
+			interrupt = context.Background()
+		}
+		if interrupt.Err() == nil && c.busy(interrupt, int(count)) {
 			retry = 1
 		}
 	}

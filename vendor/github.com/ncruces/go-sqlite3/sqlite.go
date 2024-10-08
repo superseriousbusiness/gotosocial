@@ -131,7 +131,7 @@ func (sqlt *sqlite) error(rc uint64, handle uint32, sql ...string) error {
 			err.msg = util.ReadString(sqlt.mod, uint32(r), _MAX_LENGTH)
 		}
 
-		if sql != nil {
+		if len(sql) != 0 {
 			if r := sqlt.call("sqlite3_error_offset", uint64(handle)); r != math.MaxUint32 {
 				err.sql = sql[0][r:]
 			}
@@ -301,7 +301,7 @@ func (a *arena) string(s string) uint32 {
 
 func exportCallbacks(env wazero.HostModuleBuilder) wazero.HostModuleBuilder {
 	util.ExportFuncII(env, "go_progress_handler", progressCallback)
-	util.ExportFuncIIII(env, "go_busy_timeout", timeoutCallback)
+	util.ExportFuncIII(env, "go_busy_timeout", timeoutCallback)
 	util.ExportFuncIII(env, "go_busy_handler", busyCallback)
 	util.ExportFuncII(env, "go_commit_hook", commitCallback)
 	util.ExportFuncVI(env, "go_rollback_hook", rollbackCallback)

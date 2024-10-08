@@ -19,17 +19,18 @@ func (vfsOS) FullPathname(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fi, err := os.Lstat(path)
+	return path, testSymlinks(filepath.Dir(path))
+}
+
+func testSymlinks(path string) error {
+	p, err := filepath.EvalSymlinks(path)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return path, nil
-		}
-		return "", err
+		return err
 	}
-	if fi.Mode()&fs.ModeSymlink != 0 {
-		err = _OK_SYMLINK
+	if p != path {
+		return _OK_SYMLINK
 	}
-	return path, err
+	return nil
 }
 
 func (vfsOS) Delete(path string, syncDir bool) error {
@@ -74,7 +75,7 @@ func (vfsOS) Open(name string, flags OpenFlag) (File, OpenFlag, error) {
 }
 
 func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error) {
-	var oflags int
+	oflags := _O_NOFOLLOW
 	if flags&OPEN_EXCLUSIVE != 0 {
 		oflags |= os.O_EXCL
 	}

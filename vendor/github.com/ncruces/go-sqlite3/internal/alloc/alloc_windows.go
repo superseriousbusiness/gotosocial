@@ -56,7 +56,7 @@ func (m *virtualMemory) Reallocate(size uint64) []byte {
 		// Commit additional memory up to new bytes.
 		_, err := windows.VirtualAlloc(m.addr, uintptr(new), windows.MEM_COMMIT, windows.PAGE_READWRITE)
 		if err != nil {
-			panic(err)
+			return nil
 		}
 
 		// Update committed memory.

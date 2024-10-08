@@ -47,7 +47,7 @@ func (m *mmappedMemory) Reallocate(size uint64) []byte {
 		// Commit additional memory up to new bytes.
 		err := unix.Mprotect(m.buf[com:new], unix.PROT_READ|unix.PROT_WRITE)
 		if err != nil {
-			panic(err)
+			return nil
 		}
 
 		// Update committed memory.
