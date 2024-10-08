@@ -235,7 +235,7 @@ func (d *Dereferencer) isPermittedReply(
 
 	// Status doesn't claim to be approved.
 	// Check interaction policy of inReplyTo
-	// to see if it doesn't require approval.
+	// to see what we need to do with it.
 	replyable, err := d.intFilter.StatusReplyable(ctx,
 		reply.Account,
 		inReplyTo,
@@ -260,35 +260,52 @@ func (d *Dereferencer) isPermittedReply(
 		)
 	}
 
-	// Reply is permitted according to the interaction
-	// policy set on the replied-to status (if any).
-
-	if !replyable.MatchedOnCollection() {
-		// If we didn't match on a collection,
-		// then we don't require an acceptIRI,
-		// and we don't need to send an Accept;
-		// just permit the reply full stop.
+	if replyable.Permitted() &&
+		!replyable.MatchedOnCollection() {
+		// Reply is permitted and match was *not* made
+		// based on inclusion in a followers/following
+		// collection. Just permit the reply full stop
+		// as no approval / accept URI is necessary.
 		return true, nil
 	}
 
-	// Reply is permitted, but match was made based
-	// on inclusion in a followers/following collection.
-	//
-	// If the status is ours, mark it as PreApproved
-	// so the processor knows to create and send out
-	// an Accept for it immediately.
-	if inReplyTo.IsLocal() {
+	// Reply is either permitted based on inclusion in a
+	// followers/following collection, *or* is permitted
+	// pending approval, though we know at this point
+	// that the status did not include an approvedBy URI.
+
+	if !inReplyTo.IsLocal() {
+		// If the replied-to status is remote, we should just
+		// drop this reply at this point, as we can't verify
+		// that the remote replied-to account approves it, and
+		// we can't verify the presence of a remote account
+		// in one of another remote account's collections.
+		//
+		// It's possible we'll get an Accept from the replied-
+		// to account later, and we can store this reply then.
+		return false, nil
+	}
+
+	// Replied-to status is ours, so the
+	// replied-to account is ours as well.
+
+	if replyable.MatchedOnCollection() {
+		// If permission was granted based on inclusion in
+		// a followers/following collection, pre-approve the
+		// reply, as we ourselves can validate presence of the
+		// replier in the appropriate collection. Pre-approval
+		// lets the processor know it should send out an Accept
+		// straight away on behalf of the replied-to account.
 		reply.PendingApproval = util.Ptr(true)
 		reply.PreApproved = true
 		return true, nil
 	}
 
-	// For replies to remote statuses, which matched
-	// on a followers/following collection, but did not
-	// include an acceptIRI, we should just drop it.
-	// It's possible we'll get an Accept for it later
-	// and we can check everything again.
-	return false, nil
+	// Reply just requires approval from the local account
+	// it replies to. Set PendingApproval so the processor
+	// knows to create a pending interaction request.
+	reply.PendingApproval = util.Ptr(true)
+	return true, nil
 }
 
 // unpermittedByParent marks the given reply as rejected
