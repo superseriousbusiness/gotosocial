@@ -54,7 +54,7 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 		Template:    "about.tmpl",
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
-		Stylesheets: []string{cssAbout},
+		Stylesheets: []string{cssAbout, instanceCustomCSSPath},
 		Extra: map[string]any{
 			"showStrap":        true,
 			"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),

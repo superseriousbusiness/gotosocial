@@ -46,7 +46,7 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 	const shortDescLimit = 500;
 	const descLimit = 5000;
 	const termsLimit = 5000;
-	
+
 	const form = {
 		title: useTextInput("title", {
 			source: instance,
@@ -65,6 +65,10 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 			// Select "raw" text version of parsed field for editing.
 			valueSelector: (s: InstanceV1) => s.description_text,
 			validator: (val: string) => val.length <= descLimit ? "" : `Instance description is ${val.length} characters; must be ${descLimit} characters or less`
+		}),
+		customCSS: useTextInput("custom_css", {
+			source: instance,
+			valueSelector: (s: InstanceV1) => s.custom_css
 		}),
 		terms: useTextInput("terms", {
 			source: instance,
@@ -189,6 +193,15 @@ function InstanceSettingsForm({ data: instance }: InstanceSettingsFormProps) {
 				label="Contact email"
 				placeholder="admin@example.com"
 				type="email"
+			/>
+
+			<TextArea
+				field={form.customCSS}
+				label={"Custom CSS"}
+				className="monospace"
+				rows={8}
+				autoCapitalize="none"
+				spellCheck="false"
 			/>
 
 			<MutationButton label="Save" result={result} disabled={false} />

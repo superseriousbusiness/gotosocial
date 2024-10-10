@@ -36,20 +36,21 @@ import (
 )
 
 const (
-	confirmEmailPath   = "/" + uris.ConfirmEmailPath
-	profileGroupPath   = "/@:username"
-	statusPath         = "/statuses/:" + apiutil.WebStatusIDKey // leave out the '/@:username' prefix as this will be served within the profile group
-	tagsPath           = "/tags/:" + apiutil.TagNameKey
-	customCSSPath      = profileGroupPath + "/custom.css"
-	rssFeedPath        = profileGroupPath + "/feed.rss"
-	assetsPathPrefix   = "/assets"
-	distPathPrefix     = assetsPathPrefix + "/dist"
-	themesPathPrefix   = assetsPathPrefix + "/themes"
-	settingsPathPrefix = "/settings"
-	settingsPanelGlob  = settingsPathPrefix + "/*panel"
-	userPanelPath      = settingsPathPrefix + "/user"
-	adminPanelPath     = settingsPathPrefix + "/admin"
-	signupPath         = "/signup"
+	confirmEmailPath      = "/" + uris.ConfirmEmailPath
+	profileGroupPath      = "/@:username"
+	statusPath            = "/statuses/:" + apiutil.WebStatusIDKey // leave out the '/@:username' prefix as this will be served within the profile group
+	tagsPath              = "/tags/:" + apiutil.TagNameKey
+	customCSSPath         = profileGroupPath + "/custom.css"
+	instanceCustomCSSPath = "/custom.css"
+	rssFeedPath           = profileGroupPath + "/feed.rss"
+	assetsPathPrefix      = "/assets"
+	distPathPrefix        = assetsPathPrefix + "/dist"
+	themesPathPrefix      = assetsPathPrefix + "/themes"
+	settingsPathPrefix    = "/settings"
+	settingsPanelGlob     = settingsPathPrefix + "/*panel"
+	userPanelPath         = settingsPathPrefix + "/user"
+	adminPanelPath        = settingsPathPrefix + "/admin"
+	signupPath            = "/signup"
 
 	cacheControlHeader    = "Cache-Control"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control
 	cacheControlNoCache   = "no-cache"          // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#response_directives
@@ -114,6 +115,7 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, settingsPathPrefix, m.SettingsPanelHandler)
 	r.AttachHandler(http.MethodGet, settingsPanelGlob, m.SettingsPanelHandler)
 	r.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
+	r.AttachHandler(http.MethodGet, instanceCustomCSSPath, m.instanceCustomCSSGETHandler)
 	r.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
 	r.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
 	r.AttachHandler(http.MethodPost, confirmEmailPath, m.confirmEmailPOSTHandler)
