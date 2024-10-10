@@ -12,7 +12,9 @@ before:
   - yarn --cwd ./web/source build
 builds:
   # https://goreleaser.com/customization/build/
+  # DEFAULT WASM SQLITE BINARY BUILDS
   -
+    id: gotosocial
     main: ./cmd/gotosocial
     binary: gotosocial
     ldflags:
@@ -29,13 +31,12 @@ builds:
       - timetzdata
       - >-
         {{ if and (index .Env "DEBUG") (.Env.DEBUG) }}debugenv{{ end }}
-      - >-
-        {{ if and (index .Env "MODERNCSQLITE3") (.Env.MODERNCSQLITE3) }}moderncsqlite3{{ end }}
     env:
       - CGO_ENABLED=0
     goos:
       - linux
       - freebsd
+      - openbsd
     goarch:
       - 386
       - amd64
@@ -45,20 +46,79 @@ builds:
       - 6
       - 7
     ignore:
-      # build freebsd only for amd64
+      # build freebsd + openbsd only for amd64
       - goos: freebsd
         goarch: arm64
       - goos: freebsd
         goarch: arm
       - goos: freebsd
         goarch: 386
+      - goos: openbsd
+        goarch: arm64
+      - goos: openbsd
+        goarch: arm
+      - goos: openbsd
+        goarch: 386
+    mod_timestamp: "{{ .CommitTimestamp }}"
+  # MODERNC SQLITE BINARY BUILDS
+  -
+    id: gotosocial_moderncsqlite
+    main: ./cmd/gotosocial
+    binary: gotosocial
+    ldflags:
+      - -s
+      - -w
+      - -extldflags
+      - -static
+      - -X main.Version={{.Version}}
+    tags:
+      - netgo
+      - osusergo
+      - static_build
+      - kvformat
+      - timetzdata
+      - >-
+        {{ if and (index .Env "DEBUG") (.Env.DEBUG) }}debugenv{{ end }}
+      - moderncsqlite3
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - freebsd
+      - openbsd
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+      - 7
+    ignore:
+      # build freebsd + openbsd only for amd64
+      - goos: freebsd
+        goarch: arm64
+      - goos: freebsd
+        goarch: arm
+      - goos: freebsd
+        goarch: 386
+      - goos: openbsd
+        goarch: arm64
+      - goos: openbsd
+        goarch: arm
+      - goos: openbsd
+        goarch: 386
     mod_timestamp: "{{ .CommitTimestamp }}"
 dockers:
   # https://goreleaser.com/customization/docker/
+  # DEFAULT WASM SQLITE DOCKER BUILDS
   -
     use: buildx
     goos: linux
     goarch: amd64
+    id: amd64
+    ids:
+    - gotosocial
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64"
     - "superseriousbusiness/{{ .ProjectName }}:latest-amd64"
@@ -79,6 +139,9 @@ dockers:
     use: buildx
     goos: linux
     goarch: arm64
+    id: arm64v8
+    ids:
+    - gotosocial
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8"
     - "superseriousbusiness/{{ .ProjectName }}:latest-arm64v8"
@@ -100,6 +163,9 @@ dockers:
     goos: linux
     goarch: arm
     goarm: 6
+    id: armv6
+    ids:
+    - gotosocial
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6"
     - "superseriousbusiness/{{ .ProjectName }}:latest-armv6"
@@ -121,6 +187,9 @@ dockers:
     goos: linux
     goarch: arm
     goarm: 7
+    id: armv7
+    ids:
+    - gotosocial
     image_templates:
     - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7"
     - "superseriousbusiness/{{ .ProjectName }}:latest-armv7"
@@ -137,7 +206,103 @@ dockers:
     - go.sum
     - cmd
     - internal
+  # MODERNC SQLITE DOCKER BUILDS
+  -
+    use: buildx
+    goos: linux
+    goarch: amd64
+    id: amd64-moderncsqlite
+    ids:
+    - gotosocial_moderncsqlite
+    image_templates:
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64-moderncsqlite"
+    - "superseriousbusiness/{{ .ProjectName }}:latest-amd64-moderncsqlite"
+    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-amd64-moderncsqlite{{ end }}"
+    build_flag_templates:
+    - "--platform=linux/amd64"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
+  -
+    use: buildx
+    goos: linux
+    goarch: arm64
+    id: arm64v8-moderncsqlite
+    ids:
+    - gotosocial_moderncsqlite
+    image_templates:
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8-moderncsqlite"
+    - "superseriousbusiness/{{ .ProjectName }}:latest-arm64v8-moderncsqlite"
+    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8-moderncsqlite{{ end }}"
+    build_flag_templates:
+    - "--platform=linux/arm64/v8"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
+  -
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: 6
+    id: armv6-moderncsqlite
+    ids:
+    - gotosocial_moderncsqlite
+    image_templates:
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6-moderncsqlite"
+    - "superseriousbusiness/{{ .ProjectName }}:latest-armv6-moderncsqlite"
+    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-armv6-moderncsqlite{{ end }}"
+    build_flag_templates:
+    - "--platform=linux/arm/v6"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
+  -
+    use: buildx
+    goos: linux
+    goarch: arm
+    goarm: 7
+    id: armv7-moderncsqlite
+    ids:
+    - gotosocial_moderncsqlite
+    image_templates:
+    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7-moderncsqlite"
+    - "superseriousbusiness/{{ .ProjectName }}:latest-armv7-moderncsqlite"
+    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-armv7-moderncsqlite{{ end }}"
+    build_flag_templates:
+    - "--platform=linux/arm/v7"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.title={{.ProjectName}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.version={{.Version}}"
+    extra_files:
+    - web
+    - go.mod
+    - go.sum
+    - cmd
+    - internal
 docker_manifests:
+  # DEFAULT WASM SQLITE BUILDS
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
     image_templates:
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64
@@ -156,10 +321,32 @@ docker_manifests:
     - superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8
     - superseriousbusiness/{{ .ProjectName }}:snapshot-armv6
     - superseriousbusiness/{{ .ProjectName }}:snapshot-armv7
+  # MODERNC SQLITE BUILDS
+  - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-moderncsqlite
+    image_templates:
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv6-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-armv7-moderncsqlite
+  - name_template: superseriousbusiness/{{ .ProjectName }}:latest-moderncsqlite
+    image_templates:
+    - superseriousbusiness/{{ .ProjectName }}:latest-amd64-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:latest-arm64v8-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:latest-armv6-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:latest-armv7-moderncsqlite
+  - name_template: "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-moderncsqlite{{ end }}"
+    image_templates:
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-amd64-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-armv6-moderncsqlite
+    - superseriousbusiness/{{ .ProjectName }}:snapshot-armv7-moderncsqlite
 archives:
   # https://goreleaser.com/customization/archive/
+  # DEFAULT WASM SQLITE BUILD
   -
-    id: binary-release
+    id: gotosocial
+    builds:
+      - gotosocial
     files:
     # standard release files
     - LICENSE
@@ -171,6 +358,24 @@ archives:
     # example config files
     - example/config.yaml
     - example/gotosocial.service
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 \"v1\") }}{{ .Amd64 }}{{ end }}"
+  # MODERNC SQLITE BUILD
+  -
+    id: gotosocial_moderncsqlite
+    builds:
+      - gotosocial_moderncsqlite
+    files:
+    # standard release files
+    - LICENSE
+    - README.md
+    - CHANGELOG*
+    # web stuff minus source
+    - web/assets
+    - web/template
+    # example config files
+    - example/config.yaml
+    - example/gotosocial.service
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 \"v1\") }}{{ .Amd64 }}{{ end }}_moderncsqlite"
   -
     id: web-assets
     files:
