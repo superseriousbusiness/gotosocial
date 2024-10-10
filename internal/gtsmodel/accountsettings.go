@@ -33,6 +33,7 @@ type AccountSettings struct {
 	Theme                          string             `bun:",nullzero"`                                                   // Preset CSS theme filename selected by this Account (empty string if nothing set).
 	CustomCSS                      string             `bun:",nullzero"`                                                   // Custom CSS that should be displayed for this Account's profile and statuses.
 	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
+	HideBoosts                     *bool              `bun:",nullzero,notnull,default:false"`                             // Hide boosts from this accounts profile page.
 	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
 	WebVisibility                  Visibility         `bun:",nullzero,notnull,default:public"`                            // Visibility level of statuses that visitors can view via the web profile.
 	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.

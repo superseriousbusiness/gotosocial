@@ -247,6 +247,16 @@
                         class="status expanded"
                         {{- includeAttr "status_attributes.tmpl" . | indentAttr 6  }}
                     >
+                        {{- if .ReblogAccount }}
+                        <div class="boosted text-cutoff">
+                            <i class="fa fa-retweet" aria-hidden="true"></i>&nbsp
+                            {{- if $.account.DisplayName }}
+                            {{- emojify $.account.Emojis (escape $.account.DisplayName) }} boosted
+                            {{- else }}
+                            {{- $.account.Username }} boosted
+                            {{- end }}
+                        </div>
+                        {{- end }}
                         {{- include "status.tmpl" . | indent 6 }}
                     </article>
                     {{- end }}

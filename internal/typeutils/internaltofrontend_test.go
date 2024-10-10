@@ -1402,6 +1402,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "emojis": [],
     "fields": []
   },
+  "reblog_account": null,
   "media_attachments": [
     {
       "id": "01HE7Y3C432WRSNS10EZM86SA5",

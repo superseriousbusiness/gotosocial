@@ -48,6 +48,16 @@
                 alt="Avatar for {{ .Username -}}"
                 title="Avatar for {{ .Username -}}"
             >
+            {{ if $.ReblogAccount }}
+            <img
+                class="boosted-avatar"
+                src="{{ $.ReblogAccount.Avatar }}"
+                alt="Avatar for {{ $.ReblogAccount.Username -}}"
+                title="Avatar for {{ $.ReblogAccount.Username -}}"
+            >
+            {{ end }}
+
+
         </picture>
         <div class="author-strap">
             <span class="displayname text-cutoff">

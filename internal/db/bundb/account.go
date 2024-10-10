@@ -1017,6 +1017,7 @@ func (a *accountDB) GetAccountWebStatuses(
 ) ([]*gtsmodel.Status, error) {
 	// Check for an easy case: account exposes no statuses via the web.
 	webVisibility := account.Settings.WebVisibility
+	hideBoosts := *account.Settings.HideBoosts
 	if webVisibility == gtsmodel.VisibilityNone {
 		return nil, db.ErrNoEntries
 	}
@@ -1035,9 +1036,12 @@ func (a *accountDB) GetAccountWebStatuses(
 		// Select only IDs from table
 		Column("status.id").
 		Where("? = ?", bun.Ident("status.account_id"), account.ID).
-		// Don't show replies or boosts.
-		Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
-		Where("? IS NULL", bun.Ident("status.boost_of_id"))
+		// Don't show replies.
+		Where("? IS NULL", bun.Ident("status.in_reply_to_uri"))
+
+	if hideBoosts {
+		q = q.Where("? IS NULL", bun.Ident("status.boost_of_id"))
+	}
 
 	// Select statuses for this account according
 	// to their web visibility preference.

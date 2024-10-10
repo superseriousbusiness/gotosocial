@@ -274,6 +274,11 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		settingsColumns = append(settingsColumns, "enable_rss")
 	}
 
+	if form.HideBoosts != nil {
+		account.Settings.HideBoosts = form.HideBoosts
+		settingsColumns = append(settingsColumns, "hide_boosts")
+	}
+
 	if form.HideCollections != nil {
 		account.Settings.HideCollections = form.HideCollections
 		settingsColumns = append(settingsColumns, "hide_collections")

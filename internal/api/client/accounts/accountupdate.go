@@ -348,6 +348,7 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			form.Theme == nil &&
 			form.CustomCSS == nil &&
 			form.EnableRSS == nil &&
+			form.HideBoosts == nil &&
 			form.HideCollections == nil &&
 			form.WebVisibility == nil) {
 		return nil, errors.New("empty form submitted")
