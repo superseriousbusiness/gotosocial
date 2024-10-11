@@ -1988,16 +1988,6 @@ func (c *Converter) InteractionReqToASAccept(
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
-	publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
-	if err != nil {
-		return nil, gtserror.Newf("invalid public uri: %w", err)
-	}
-
-	followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
-	if err != nil {
-		return nil, gtserror.Newf("invalid followers uri: %w", err)
-	}
-
 	// Set id to the URI of
 	// interaction request.
 	ap.SetJSONLDId(accept, acceptID)
@@ -2013,8 +2003,39 @@ func (c *Converter) InteractionReqToASAccept(
 	// of interaction URI.
 	ap.AppendTo(accept, toIRI)
 
-	// Cc to the actor's followers, and to Public.
-	ap.AppendCc(accept, publicIRI, followersIRI)
+	// Whether or not we cc this Accept to
+	// followers and public depends on the
+	// type of interaction it Accepts.
+
+	var cc bool
+	switch req.InteractionType {
+
+	case gtsmodel.InteractionLike:
+		// Accept of Like doesn't get cc'd
+		// because it's not that important.
+
+	case gtsmodel.InteractionReply:
+		// Accept of reply gets cc'd.
+		cc = true
+
+	case gtsmodel.InteractionAnnounce:
+		// Accept of announce gets cc'd.
+		cc = true
+	}
+
+	if cc {
+		publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid public uri: %w", err)
+		}
+
+		followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid followers uri: %w", err)
+		}
+
+		ap.AppendCc(accept, publicIRI, followersIRI)
+	}
 
 	return accept, nil
 }
@@ -2047,16 +2068,6 @@ func (c *Converter) InteractionReqToASReject(
 		return nil, gtserror.Newf("invalid interacting account uri: %w", err)
 	}
 
-	publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
-	if err != nil {
-		return nil, gtserror.Newf("invalid public uri: %w", err)
-	}
-
-	followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
-	if err != nil {
-		return nil, gtserror.Newf("invalid followers uri: %w", err)
-	}
-
 	// Set id to the URI of
 	// interaction request.
 	ap.SetJSONLDId(reject, rejectID)
@@ -2072,8 +2083,39 @@ func (c *Converter) InteractionReqToASReject(
 	// of interaction URI.
 	ap.AppendTo(reject, toIRI)
 
-	// Cc to the actor's followers, and to Public.
-	ap.AppendCc(reject, publicIRI, followersIRI)
+	// Whether or not we cc this Reject to
+	// followers and public depends on the
+	// type of interaction it Rejects.
+
+	var cc bool
+	switch req.InteractionType {
+
+	case gtsmodel.InteractionLike:
+		// Reject of Like doesn't get cc'd
+		// because it's not that important.
+
+	case gtsmodel.InteractionReply:
+		// Reject of reply gets cc'd.
+		cc = true
+
+	case gtsmodel.InteractionAnnounce:
+		// Reject of announce gets cc'd.
+		cc = true
+	}
+
+	if cc {
+		publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid public uri: %w", err)
+		}
+
+		followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid followers uri: %w", err)
+		}
+
+		ap.AppendCc(reject, publicIRI, followersIRI)
+	}
 
 	return reject, nil
 }
