@@ -1143,7 +1143,7 @@ func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
 }`, string(bytes))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
+func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
@@ -1185,6 +1185,51 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
     "https://www.w3.org/ns/activitystreams#Public",
     "http://localhost:8080/users/the_mighty_zork/followers"
   ],
+  "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Accept"
+}`, string(b))
+}
+
+func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		TargetAccountID:      acceptingAccount.ID,
+		TargetAccount:        acceptingAccount,
+		InteractingAccountID: interactingAccount.ID,
+		InteractingAccount:   interactingAccount,
+		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:      gtsmodel.InteractionLike,
+		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+	}
+
+	accept, err := suite.typeconverter.InteractionReqToASAccept(
+		context.Background(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
   "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
