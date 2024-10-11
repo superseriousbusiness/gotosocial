@@ -23,6 +23,7 @@ import (
 
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -58,6 +59,7 @@ type federatingDB struct {
 	state      *state.State
 	converter  *typeutils.Converter
 	visFilter  *visibility.Filter
+	intFilter  *interaction.Filter
 	spamFilter *spam.Filter
 }
 
@@ -67,12 +69,14 @@ func New(
 	state *state.State,
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
+	intFilter *interaction.Filter,
 	spamFilter *spam.Filter,
 ) DB {
 	fdb := federatingDB{
 		state:      state,
 		converter:  converter,
 		visFilter:  visFilter,
+		intFilter:  intFilter,
 		spamFilter: spamFilter,
 	}
 	return &fdb
