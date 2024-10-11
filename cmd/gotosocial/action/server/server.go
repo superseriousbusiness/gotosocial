@@ -213,7 +213,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	visFilter := visibility.NewFilter(state)
 	intFilter := interaction.NewFilter(state)
 	spamFilter := spam.NewFilter(state)
-	federatingDB := federatingdb.New(state, typeConverter, visFilter, spamFilter)
+	federatingDB := federatingdb.New(state, typeConverter, visFilter, intFilter, spamFilter)
 	transportController := transport.NewController(state, federatingDB, &federation.Clock{}, client)
 	federator := federation.NewFederator(
 		state,
