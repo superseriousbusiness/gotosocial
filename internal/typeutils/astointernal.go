@@ -664,6 +664,10 @@ func (c *Converter) ASAnnounceToStatus(
 	boost.MentionIDs = make([]string, 0)
 	boost.EmojiIDs = make([]string, 0)
 
+	// Assume not pending approval; this may
+	// change when permissivity is checked.
+	boost.PendingApproval = util.Ptr(false)
+
 	// Remaining fields on the boost will be
 	// taken from the target status; it's not
 	// our job to do all that dereferencing here.
