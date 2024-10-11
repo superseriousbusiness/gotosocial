@@ -78,6 +78,10 @@ func (p *Processor) Create(
 		Sensitive:                &form.Sensitive,
 		CreatedWithApplicationID: application.ID,
 		Text:                     form.Status,
+
+		// Assume not pending approval; this may
+		// change when permissivity is checked.
+		PendingApproval: util.Ptr(false),
 	}
 
 	if form.Poll != nil {

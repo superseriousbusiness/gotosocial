@@ -40,7 +40,7 @@ func init() {
 				table      string
 				column     string
 				columnType string
-				defaultVal string
+				extra      string
 			}
 			for _, spec := range []spec{
 				// Statuses.
@@ -48,19 +48,19 @@ func init() {
 					table:      "statuses",
 					column:     "interaction_policy",
 					columnType: "JSONB",
-					defaultVal: "",
+					extra:      "",
 				},
 				{
 					table:      "statuses",
 					column:     "pending_approval",
 					columnType: "BOOLEAN",
-					defaultVal: "DEFAULT false",
+					extra:      "NOT NULL DEFAULT false",
 				},
 				{
 					table:      "statuses",
 					column:     "approved_by_uri",
 					columnType: "varchar",
-					defaultVal: "",
+					extra:      "",
 				},
 
 				// Status faves.
@@ -68,13 +68,13 @@ func init() {
 					table:      "status_faves",
 					column:     "pending_approval",
 					columnType: "BOOLEAN",
-					defaultVal: "DEFAULT false",
+					extra:      "NOT NULL DEFAULT false",
 				},
 				{
 					table:      "status_faves",
 					column:     "approved_by_uri",
 					columnType: "varchar",
-					defaultVal: "",
+					extra:      "",
 				},
 
 				// Columns that must be added to the
@@ -85,31 +85,31 @@ func init() {
 					table:      "account_settings",
 					column:     "interaction_policy_direct",
 					columnType: "JSONB",
-					defaultVal: "",
+					extra:      "",
 				},
 				{
 					table:      "account_settings",
 					column:     "interaction_policy_mutuals_only",
 					columnType: "JSONB",
-					defaultVal: "",
+					extra:      "",
 				},
 				{
 					table:      "account_settings",
 					column:     "interaction_policy_followers_only",
 					columnType: "JSONB",
-					defaultVal: "",
+					extra:      "",
 				},
 				{
 					table:      "account_settings",
 					column:     "interaction_policy_unlocked",
 					columnType: "JSONB",
-					defaultVal: "",
+					extra:      "",
 				},
 				{
 					table:      "account_settings",
 					column:     "interaction_policy_public",
 					columnType: "JSONB",
-					defaultVal: "",
+					extra:      "",
 				},
 			} {
 				exists, err := doesColumnExist(ctx, tx,
@@ -130,9 +130,9 @@ func init() {
 				}
 
 				qStr := "ALTER TABLE ? ADD COLUMN ? ?"
-				if spec.defaultVal != "" {
+				if spec.extra != "" {
 					qStr += " ?"
-					args = append(args, bun.Safe(spec.defaultVal))
+					args = append(args, bun.Safe(spec.extra))
 				}
 
 				log.Infof(ctx, "adding column '%s' to '%s'...", spec.column, spec.table)

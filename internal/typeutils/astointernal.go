@@ -432,6 +432,10 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		status.ApprovedByURI = approvedByURI.String()
 	}
 
+	// Assume not pending approval; this may
+	// change when permissivity is checked.
+	status.PendingApproval = util.Ptr(false)
+
 	// status.Sensitive
 	sensitive := ap.ExtractSensitive(statusable)
 	status.Sensitive = &sensitive
@@ -531,6 +535,10 @@ func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 		StatusID:        target.ID,
 		Status:          target,
 		URI:             uri,
+
+		// Assume not pending approval; this may
+		// change when permissivity is checked.
+		PendingApproval: util.Ptr(false),
 	}, nil
 }
 
@@ -655,6 +663,10 @@ func (c *Converter) ASAnnounceToStatus(
 	boost.TagIDs = make([]string, 0)
 	boost.MentionIDs = make([]string, 0)
 	boost.EmojiIDs = make([]string, 0)
+
+	// Assume not pending approval; this may
+	// change when permissivity is checked.
+	boost.PendingApproval = util.Ptr(false)
 
 	// Remaining fields on the boost will be
 	// taken from the target status; it's not
