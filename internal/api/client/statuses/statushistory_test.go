@@ -115,7 +115,7 @@ func (suite *StatusHistoryTestSuite) TestGetHistory() {
       "followers_count": 2,
       "following_count": 2,
       "statuses_count": 8,
-      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "last_status_at": "2024-01-10",
       "emojis": [],
       "fields": [],
       "enable_rss": true

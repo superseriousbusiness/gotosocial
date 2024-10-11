@@ -156,7 +156,7 @@ func (suite *ReportsGetTestSuite) TestGetReports() {
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }
@@ -246,7 +246,7 @@ func (suite *ReportsGetTestSuite) TestGetReports4() {
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }
@@ -320,7 +320,7 @@ func (suite *ReportsGetTestSuite) TestGetReports6() {
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }
@@ -378,7 +378,7 @@ func (suite *ReportsGetTestSuite) TestGetReports7() {
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }

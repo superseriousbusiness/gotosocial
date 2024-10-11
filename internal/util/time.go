@@ -21,11 +21,18 @@ import "time"
 
 // ISO8601 is a formatter for serializing times that forces ISO8601 behavior.
 const ISO8601 = "2006-01-02T15:04:05.000Z"
+const ISO8601Date = "2006-01-02"
 
 // FormatISO8601 converts the given time to UTC and then formats it
 // using the ISO8601 const, which the Mastodon API is able to understand.
 func FormatISO8601(t time.Time) string {
 	return t.UTC().Format(ISO8601)
+}
+
+// Mastodon returns UTC dates (without time) for last_status_at/LastStatusAt as
+// a special case, but most of the time you want to use FormatISO8601 instead.
+func FormatISO8601Date(t time.Time) string {
+	return t.UTC().Format(ISO8601Date)
 }
 
 // ParseISO8601 parses the given time string according to the ISO8601 const.
