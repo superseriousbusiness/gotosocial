@@ -385,7 +385,7 @@ We use [golangci-lint](https://golangci-lint.run/) for linting, which allows us 
 
 If you make a PR that doesn't pass the linter, it will be rejected. As such, it's good practice to run the linter locally before pushing or opening a PR.
 
-To do this, first install the linter following the instructions [here](https://golangci-lint.run/usage/install/#local-installation).
+To do this, first install the linter following the instructions [here](https://golangci-lint.run/welcome/install/).
 
 Then, you can run the linter with:
 
