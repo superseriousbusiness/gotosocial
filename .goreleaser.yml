@@ -409,6 +409,7 @@ source:
 # https://goreleaser.com/customization/release/
 release:
   draft: true
+  prerelease: auto
   header: |
     Here's version {{ .Version }} of GoToSocial.
 

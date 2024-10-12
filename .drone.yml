@@ -113,7 +113,7 @@ steps:
     commands:
       # Create a snapshot build with GoReleaser.
       - git fetch --tags
-      - goreleaser release --clean --snapshot
+      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v rc | sort -V --reverse | head -n 1) goreleaser release --clean --snapshot
       
       # Login to Docker, push Docker image snapshots + manifests.
       - /go/dockerlogin.sh
@@ -156,7 +156,7 @@ steps:
     commands:
       - git fetch --tags
       - /go/dockerlogin.sh
-      - goreleaser release --clean
+      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v rc | sort -V --reverse | head -n 1) goreleaser release --clean
     when:
       event:
         include:
@@ -213,6 +213,6 @@ steps:
 
 ---
 kind: signature
-hmac: e4eddd7db143f4c7d5ab4248114da363e23d086b7438dd057375e0b5d2060f1e
+hmac: 775bf28a96ff87f0f417f2b0fa2ecac025df1d9aa75bcc56bc3ba7d4780dce67
 
 ...
