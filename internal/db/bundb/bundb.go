@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"runtime"
@@ -407,13 +408,12 @@ func maxOpenConns() int {
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
-	url := config.GetDbPostgresConnectionString()
-
-	// if database URL is defined, ignore other DB related configuration fields
-	if url != "" {
-		cfg, err := pgx.ParseConfig(url)
-		return cfg, err
+	// If database URL is defined, ignore
+	// other DB-related configuration fields.
+	if url := config.GetDbPostgresConnectionString(); url != "" {
+		return pgx.ParseConfig(url)
 	}
+
 	// these are all optional, the db adapter figures out defaults
 	address := config.GetDbAddress()
 
@@ -477,7 +477,10 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		cfg.Host = address
 	}
 	if port := config.GetDbPort(); port > 0 {
-		cfg.Port = uint16(port) //nolint:gosec
+		if port > math.MaxUint16 {
+			return nil, errors.New("invalid port, must be in range 1-65535")
+		}
+		cfg.Port = uint16(port) // #nosec G115 -- Just validated above.
 	}
 	if u := config.GetDbUser(); u != "" {
 		cfg.User = u
