@@ -466,7 +466,7 @@ func (p *Processor) UpdateAvatar(
 
 	// Ensure media within size bounds.
 	if avatar.Size > maxsz {
-		text := fmt.Sprintf("media exceeds configured max size: %d", maxsz)
+		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
@@ -511,7 +511,7 @@ func (p *Processor) UpdateHeader(
 
 	// Ensure media within size bounds.
 	if header.Size > maxsz {
-		text := fmt.Sprintf("media exceeds configured max size: %d", maxsz)
+		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
