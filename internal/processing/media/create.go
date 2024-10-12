@@ -38,7 +38,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	maxsz := config.GetMediaLocalMaxSize()
 
 	// Ensure media within size bounds.
-	if form.File.Size > int64(maxsz) {
+	if form.File.Size > int64(maxsz) { //nolint:gosec
 		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
@@ -58,7 +58,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// Wrap the multipart file reader to ensure is limited to max.
-	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz)) //nolint:gosec
 
 	// Create local media and write to instance storage.
 	attachment, errWithCode := p.c.StoreLocalMedia(ctx,

@@ -146,7 +146,7 @@ func validateCreateEmoji(form *apimodel.EmojiCreateRequest) error {
 	}
 
 	maxSize := config.GetMediaEmojiLocalMaxSize()
-	if form.Image.Size > int64(maxSize) {
+	if form.Image.Size > int64(maxSize) { //nolint:gosec
 		return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, maxSize/1024)
 	}
 

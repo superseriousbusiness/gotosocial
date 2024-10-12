@@ -477,7 +477,7 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		cfg.Host = address
 	}
 	if port := config.GetDbPort(); port > 0 {
-		cfg.Port = uint16(port)
+		cfg.Port = uint16(port) //nolint:gosec
 	}
 	if u := config.GetDbUser(); u != "" {
 		cfg.User = u

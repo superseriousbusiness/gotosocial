@@ -101,7 +101,7 @@ func (d *Dereferencer) GetEmoji(
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
-				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				return tsport.DereferenceMedia(ctx, url, int64(maxsz)) //nolint:gosec
 			}
 
 			// Create new emoji with prepared info.
@@ -193,7 +193,7 @@ func (d *Dereferencer) RefreshEmoji(
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
-				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				return tsport.DereferenceMedia(ctx, url, int64(maxsz)) //nolint:gosec
 			}
 
 			// Update emoji with prepared info.
@@ -259,7 +259,7 @@ func (d *Dereferencer) RecacheEmoji(
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
-				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				return tsport.DereferenceMedia(ctx, url, int64(maxsz)) //nolint:gosec
 			}
 
 			// Recache emoji with prepared info.

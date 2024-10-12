@@ -84,7 +84,7 @@ func (d *Dereferencer) GetMedia(
 				ctx,
 				accountID,
 				func(ctx context.Context) (io.ReadCloser, error) {
-					return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+					return tsport.DereferenceMedia(ctx, url, int64(maxsz)) //nolint:gosec
 				},
 				info,
 			)
@@ -175,7 +175,7 @@ func (d *Dereferencer) RefreshMedia(
 			return d.mediaManager.CacheMedia(
 				attach,
 				func(ctx context.Context) (io.ReadCloser, error) {
-					return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+					return tsport.DereferenceMedia(ctx, url, int64(maxsz)) //nolint:gosec
 				},
 			), nil
 		},

@@ -112,7 +112,7 @@ func (m *Manager) RefetchEmojis(ctx context.Context, domain string, dereferenceM
 		}
 
 		dataFunc := func(ctx context.Context) (reader io.ReadCloser, err error) {
-			return dereferenceMedia(ctx, emojiImageIRI, int64(maxsz))
+			return dereferenceMedia(ctx, emojiImageIRI, int64(maxsz)) //nolint:gosec
 		}
 
 		processingEmoji, err := m.UpdateEmoji(ctx, emoji, dataFunc, AdditionalEmojiInfo{

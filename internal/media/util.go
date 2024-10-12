@@ -145,7 +145,7 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 	// Check to see if limit was reached,
 	// (produces more useful error messages).
 	if lr != nil && lr.N <= 0 {
-		err := fmt.Errorf("reached read limit %s", bytesize.Size(limit))
+		err := fmt.Errorf("reached read limit %s", bytesize.Size(limit)) //nolint:gosec
 		return path, gtserror.SetLimitReached(err)
 	}
 
