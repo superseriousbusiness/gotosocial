@@ -1531,7 +1531,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		Registrations:        config.GetAccountsRegistrationOpen(),
 		ApprovalRequired:     true,                               // approval always required
 		InvitesEnabled:       false,                              // todo: not supported yet
-		MaxTootChars:         uint(config.GetStatusesMaxChars()), //nolint:gosec
+		MaxTootChars:         uint(config.GetStatusesMaxChars()), // #nosec G115 -- Already validated.
 		Rules:                c.InstanceRulesToAPIRules(i.Rules),
 		Terms:                i.Terms,
 		TermsRaw:             i.TermsText,

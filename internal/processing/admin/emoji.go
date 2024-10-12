@@ -25,7 +25,6 @@ import (
 	"mime/multipart"
 	"strings"
 
-	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -300,11 +299,11 @@ func (p *Processor) emojiUpdateCopy(
 	}
 
 	// Get maximum supported local emoji size.
-	maxsz := config.GetMediaEmojiLocalMaxSize()
+	maxsz := int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated
 
 	// Ensure target emoji image within size bounds.
-	if bytesize.Size(target.ImageFileSize) > maxsz { //nolint:gosec
-		text := fmt.Sprintf("emoji exceeds configured max size: %s", maxsz)
+	if target.ImageFileSize > maxsz {
+		text := fmt.Sprintf("emoji exceeds configured max size: %d", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
 
