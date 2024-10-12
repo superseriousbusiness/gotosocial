@@ -21,7 +21,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"math"
 	"os"
 	"path"
 	"strconv"
@@ -557,18 +556,10 @@ func (res *ffprobeResult) Process() (*result, error) {
 				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
 					n, _ := strconv.ParseUint(p[0], 10, 32)
 					d, _ := strconv.ParseUint(p[1], 10, 32)
-
-					if n > math.MaxUint32 || d > math.MaxUint32 {
-						return nil, gtserror.Newf("overflowed numerator or denominator")
-					}
-					num, den = uint32(n), uint32(d) // #nosec G115 -- Just checked.
+					num, den = uint32(n), uint32(d) // #nosec G115 -- ParseUint is configured to check
 				} else {
 					n, _ := strconv.ParseUint(p[0], 10, 32)
-
-					if n > math.MaxUint32 {
-						return nil, gtserror.Newf("overflowed numerator")
-					}
-					num = uint32(n) // #nosec G115 -- Just checked.
+					num = uint32(n) // #nosec G115 -- ParseUint is configured to check
 				}
 
 				// Set final divised framerate.
