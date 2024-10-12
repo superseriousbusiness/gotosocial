@@ -66,7 +66,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "followers_count": 2,
   "following_count": 2,
   "statuses_count": 8,
-  "last_status_at": "2024-01-10T09:24:00.000Z",
+  "last_status_at": "2024-01-10",
   "emojis": [],
   "fields": [],
   "enable_rss": true
@@ -116,7 +116,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "followers_count": 2,
   "following_count": 2,
   "statuses_count": 8,
-  "last_status_at": "2024-01-10T09:24:00.000Z",
+  "last_status_at": "2024-01-10",
   "emojis": [],
   "fields": [],
   "source": {
@@ -158,7 +158,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 8,
-    "last_status_at": "2021-07-28T08:40:37.000Z",
+    "last_status_at": "2021-07-28",
     "emojis": [],
     "fields": [
       {
@@ -211,7 +211,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "followers_count": 2,
   "following_count": 2,
   "statuses_count": 8,
-  "last_status_at": "2024-01-10T09:24:00.000Z",
+  "last_status_at": "2024-01-10",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -258,7 +258,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "followers_count": 2,
   "following_count": 2,
   "statuses_count": 8,
-  "last_status_at": "2024-01-10T09:24:00.000Z",
+  "last_status_at": "2024-01-10",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -301,7 +301,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "followers_count": 2,
   "following_count": 2,
   "statuses_count": 8,
-  "last_status_at": "2024-01-10T09:24:00.000Z",
+  "last_status_at": "2024-01-10",
   "emojis": [],
   "fields": [],
   "source": {
@@ -489,7 +489,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -666,7 +666,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -853,7 +853,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
       "followers_count": 2,
       "following_count": 2,
       "statuses_count": 8,
-      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "last_status_at": "2024-01-10",
       "emojis": [],
       "fields": [],
       "enable_rss": true
@@ -980,7 +980,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -1235,7 +1235,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 1,
-    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "last_status_at": "2023-11-02",
     "emojis": [],
     "fields": []
   },
@@ -1398,7 +1398,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 1,
-    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "last_status_at": "2023-11-02",
     "emojis": [],
     "fields": []
   },
@@ -1530,7 +1530,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -1674,7 +1674,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
     "followers_count": 2,
     "following_count": 2,
     "statuses_count": 8,
-    "last_status_at": "2024-01-10T09:24:00.000Z",
+    "last_status_at": "2024-01-10",
     "emojis": [],
     "fields": [],
     "enable_rss": true
@@ -1780,7 +1780,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -1990,7 +1990,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -2130,7 +2130,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
-      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "last_status_at": "2021-10-20",
       "emojis": [],
       "fields": [],
       "enable_rss": true,
@@ -2250,7 +2250,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 3,
-    "last_status_at": "2021-09-11T09:40:37.000Z",
+    "last_status_at": "2021-09-11",
     "emojis": [],
     "fields": []
   }
@@ -2293,7 +2293,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 8,
-    "last_status_at": "2021-07-28T08:40:37.000Z",
+    "last_status_at": "2021-07-28",
     "emojis": [],
     "fields": [
       {
@@ -2369,7 +2369,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }
@@ -2414,7 +2414,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 8,
-      "last_status_at": "2021-07-28T08:40:37.000Z",
+      "last_status_at": "2021-07-28",
       "emojis": [],
       "fields": [
         {
@@ -2472,7 +2472,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
-      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "last_status_at": "2021-10-20",
       "emojis": [],
       "fields": [],
       "enable_rss": true,
@@ -2526,7 +2526,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
-      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "last_status_at": "2021-10-20",
       "emojis": [],
       "fields": [],
       "enable_rss": true,
@@ -2603,7 +2603,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 8,
-      "last_status_at": "2021-07-28T08:40:37.000Z",
+      "last_status_at": "2021-07-28",
       "emojis": [],
       "fields": [
         {
@@ -2661,7 +2661,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }
@@ -2708,7 +2708,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
         "followers_count": 0,
         "following_count": 0,
         "statuses_count": 3,
-        "last_status_at": "2021-09-11T09:40:37.000Z",
+        "last_status_at": "2021-09-11",
         "emojis": [],
         "fields": []
       },
@@ -2866,7 +2866,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "followers_count": 0,
       "following_count": 0,
       "statuses_count": 3,
-      "last_status_at": "2021-09-11T09:40:37.000Z",
+      "last_status_at": "2021-09-11",
       "emojis": [],
       "fields": []
     }
@@ -2958,7 +2958,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
-      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "last_status_at": "2021-10-20",
       "emojis": [],
       "fields": [],
       "enable_rss": true,
@@ -3012,7 +3012,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
-      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "last_status_at": "2021-10-20",
       "emojis": [],
       "fields": [],
       "enable_rss": true,
@@ -3158,7 +3158,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
     "followers_count": 1,
     "following_count": 1,
     "statuses_count": 4,
-    "last_status_at": "2021-10-20T10:41:37.000Z",
+    "last_status_at": "2021-10-20",
     "emojis": [],
     "fields": [],
     "enable_rss": true,
@@ -3213,7 +3213,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 8,
-      "last_status_at": "2021-07-28T08:40:37.000Z",
+      "last_status_at": "2021-07-28",
       "emojis": [],
       "fields": [
         {
@@ -3305,7 +3305,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 4,
-      "last_status_at": "2021-10-20T10:41:37.000Z",
+      "last_status_at": "2021-10-20",
       "emojis": [],
       "fields": [],
       "enable_rss": true,
@@ -3420,7 +3420,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
       "followers_count": 2,
       "following_count": 2,
       "statuses_count": 8,
-      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "last_status_at": "2024-01-10",
       "emojis": [],
       "fields": [],
       "enable_rss": true
@@ -3471,7 +3471,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
       "followers_count": 2,
       "following_count": 2,
       "statuses_count": 8,
-      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "last_status_at": "2024-01-10",
       "emojis": [],
       "fields": [],
       "enable_rss": true
@@ -3572,7 +3572,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
       "followers_count": 1,
       "following_count": 1,
       "statuses_count": 8,
-      "last_status_at": "2021-07-28T08:40:37.000Z",
+      "last_status_at": "2021-07-28",
       "emojis": [],
       "fields": [
         {
@@ -3634,7 +3634,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
       "followers_count": 2,
       "following_count": 2,
       "statuses_count": 8,
-      "last_status_at": "2024-01-10T09:24:00.000Z",
+      "last_status_at": "2024-01-10",
       "emojis": [],
       "fields": [],
       "enable_rss": true

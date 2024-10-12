@@ -148,7 +148,7 @@ func (suite *MutesTestSuite) TestIndefinitelyMutedAccountSerializesMuteExpiratio
 
 	// Fetch all muted accounts for the logged-in account.
 	// The expected body contains `"mute_expires_at":null`.
-	_, err = suite.getMutedAccounts(http.StatusOK, `[{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"discoverable":true,"bot":false,"created_at":"2021-09-26T10:52:36.000Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.webp","header_static":"http://localhost:8080/assets/default_header.webp","followers_count":0,"following_count":0,"statuses_count":3,"last_status_at":"2021-09-11T09:40:37.000Z","emojis":[],"fields":[],"mute_expires_at":null}]`)
+	_, err = suite.getMutedAccounts(http.StatusOK, `[{"id":"01F8MH5ZK5VRH73AKHQM6Y9VNX","username":"foss_satan","acct":"foss_satan@fossbros-anonymous.io","display_name":"big gerald","locked":false,"discoverable":true,"bot":false,"created_at":"2021-09-26T10:52:36.000Z","note":"i post about like, i dunno, stuff, or whatever!!!!","url":"http://fossbros-anonymous.io/@foss_satan","avatar":"","avatar_static":"","header":"http://localhost:8080/assets/default_header.webp","header_static":"http://localhost:8080/assets/default_header.webp","followers_count":0,"following_count":0,"statuses_count":3,"last_status_at":"2021-09-11","emojis":[],"fields":[],"mute_expires_at":null}]`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

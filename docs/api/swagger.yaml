@@ -296,8 +296,8 @@ definitions:
                 type: string
                 x-go-name: ID
             last_status_at:
-                description: When the account's most recent status was posted (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
+                description: When the account's most recent status was posted (ISO 8601 Date).
+                example: "2021-07-30"
                 type: string
                 x-go-name: LastStatusAt
             locked:
@@ -2301,8 +2301,8 @@ definitions:
                 type: string
                 x-go-name: ID
             last_status_at:
-                description: When the account's most recent status was posted (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
+                description: When the account's most recent status was posted (ISO 8601 Date).
+                example: "2021-07-30"
                 type: string
                 x-go-name: LastStatusAt
             locked:

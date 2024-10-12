@@ -259,7 +259,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 			if a.Stats.LastStatusAt.IsZero() {
 				return nil
 			}
-			return util.Ptr(util.FormatISO8601(a.Stats.LastStatusAt))
+			return util.Ptr(util.FormatISO8601Date(a.Stats.LastStatusAt))
 		}()
 	)
 

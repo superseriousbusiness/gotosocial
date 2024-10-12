@@ -84,8 +84,8 @@ type Account struct {
 	FollowingCount int `json:"following_count"`
 	// Number of statuses posted by this account, according to our instance.
 	StatusesCount int `json:"statuses_count"`
-	// When the account's most recent status was posted (ISO 8601 Datetime).
-	// example: 2021-07-30T09:20:25+00:00
+	// When the account's most recent status was posted (ISO 8601 Date).
+	// example: 2021-07-30
 	LastStatusAt *string `json:"last_status_at"`
 	// Array of custom emojis used in this account's note or display name.
 	// Empty for blocked accounts.

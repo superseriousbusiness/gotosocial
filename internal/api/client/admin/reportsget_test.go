@@ -186,7 +186,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "followers_count": 0,
         "following_count": 0,
         "statuses_count": 3,
-        "last_status_at": "2021-09-11T09:40:37.000Z",
+        "last_status_at": "2021-09-11",
         "emojis": [],
         "fields": []
       }
@@ -231,7 +231,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "followers_count": 1,
         "following_count": 1,
         "statuses_count": 8,
-        "last_status_at": "2021-07-28T08:40:37.000Z",
+        "last_status_at": "2021-07-28",
         "emojis": [],
         "fields": [
           {
@@ -289,7 +289,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "followers_count": 1,
         "following_count": 1,
         "statuses_count": 4,
-        "last_status_at": "2021-10-20T10:41:37.000Z",
+        "last_status_at": "2021-10-20",
         "emojis": [],
         "fields": [],
         "enable_rss": true,
@@ -343,7 +343,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "followers_count": 1,
         "following_count": 1,
         "statuses_count": 4,
-        "last_status_at": "2021-10-20T10:41:37.000Z",
+        "last_status_at": "2021-10-20",
         "emojis": [],
         "fields": [],
         "enable_rss": true,
@@ -410,7 +410,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "followers_count": 1,
         "following_count": 1,
         "statuses_count": 8,
-        "last_status_at": "2021-07-28T08:40:37.000Z",
+        "last_status_at": "2021-07-28",
         "emojis": [],
         "fields": [
           {
@@ -468,7 +468,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "followers_count": 0,
         "following_count": 0,
         "statuses_count": 3,
-        "last_status_at": "2021-09-11T09:40:37.000Z",
+        "last_status_at": "2021-09-11",
         "emojis": [],
         "fields": []
       }
@@ -515,7 +515,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
           "followers_count": 0,
           "following_count": 0,
           "statuses_count": 3,
-          "last_status_at": "2021-09-11T09:40:37.000Z",
+          "last_status_at": "2021-09-11",
           "emojis": [],
           "fields": []
         },
@@ -660,7 +660,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "followers_count": 1,
         "following_count": 1,
         "statuses_count": 8,
-        "last_status_at": "2021-07-28T08:40:37.000Z",
+        "last_status_at": "2021-07-28",
         "emojis": [],
         "fields": [
           {
@@ -718,7 +718,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "followers_count": 0,
         "following_count": 0,
         "statuses_count": 3,
-        "last_status_at": "2021-09-11T09:40:37.000Z",
+        "last_status_at": "2021-09-11",
         "emojis": [],
         "fields": []
       }
@@ -765,7 +765,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
           "followers_count": 0,
           "following_count": 0,
           "statuses_count": 3,
-          "last_status_at": "2021-09-11T09:40:37.000Z",
+          "last_status_at": "2021-09-11",
           "emojis": [],
           "fields": []
         },
@@ -910,7 +910,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "followers_count": 1,
         "following_count": 1,
         "statuses_count": 8,
-        "last_status_at": "2021-07-28T08:40:37.000Z",
+        "last_status_at": "2021-07-28",
         "emojis": [],
         "fields": [
           {
@@ -968,7 +968,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "followers_count": 0,
         "following_count": 0,
         "statuses_count": 3,
-        "last_status_at": "2021-09-11T09:40:37.000Z",
+        "last_status_at": "2021-09-11",
         "emojis": [],
         "fields": []
       }
@@ -1015,7 +1015,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
           "followers_count": 0,
           "following_count": 0,
           "statuses_count": 3,
-          "last_status_at": "2021-09-11T09:40:37.000Z",
+          "last_status_at": "2021-09-11",
           "emojis": [],
           "fields": []
         },

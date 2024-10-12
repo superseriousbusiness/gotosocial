@@ -100,7 +100,7 @@ func (suite *GetTestSuite) TestGet() {
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 1,
-    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "last_status_at": "2023-11-02",
     "emojis": [],
     "fields": []
   }
