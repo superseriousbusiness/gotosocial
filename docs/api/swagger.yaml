@@ -2114,7 +2114,7 @@ definitions:
             bitrate:
                 description: Bitrate of the media in bits per second.
                 example: 1000000
-                format: int64
+                format: uint64
                 type: integer
                 x-go-name: Bitrate
             duration:
