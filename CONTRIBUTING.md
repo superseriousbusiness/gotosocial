@@ -195,7 +195,7 @@ Then install Node and Yarn as described in [Stylesheet / Web dev](#stylesheet--w
 Finally, to create a snapshot build, do:
 
 ```bash
-GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v rc | sort -V --reverse | head -n 1) goreleaser --clean --snapshot
+GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v rc | sort -V -r | head -n 1) goreleaser --clean --snapshot
 ```
 
 If all goes according to plan, you should now have a number of multiple-architecture binaries and tars inside the `./dist` folder, and snapshot Docker images should be built (check your terminal output for version).
