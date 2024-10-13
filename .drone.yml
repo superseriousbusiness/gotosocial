@@ -113,7 +113,7 @@ steps:
     commands:
       # Create a snapshot build with GoReleaser.
       - git fetch --tags
-      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v rc | sort -V -r | head -n 1) goreleaser release --clean --snapshot
+      - goreleaser release --clean --snapshot
       
       # Login to Docker, push Docker image snapshots + manifests.
       - /go/dockerlogin.sh
@@ -156,7 +156,17 @@ steps:
     commands:
       - git fetch --tags
       - /go/dockerlogin.sh
-      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v rc | sort -V -r | head -n 1) goreleaser release --clean
+      
+      # When releasing, compare commits to the most recent tag that is not the
+      # current one AND is not a release candidate tag (ie., no "rc" in the name).
+      #
+      # The DRONE_TAG env var should point to the tag that triggered this build.
+      # See: https://docs.drone.io/pipeline/environment/reference/drone-tag/ 
+      #
+      # Note, this may cause annoyances when doing backport releases, for example,
+      # releasing v0.10.1 when we've already released v0.15.0 or whatever, but
+      # they should only be superficial annoyances related to the release notes.
+      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v "rc\|${DRONE_TAG}" | sort -V -r | head -n 1) goreleaser release --clean
     when:
       event:
         include:
@@ -213,6 +223,6 @@ steps:
 
 ---
 kind: signature
-hmac: 3f2066e1e1f7f05b7cdb51327d6c9aea5d06a3dbceb518421110d9c1c3b325f8
+hmac: 1b89e3a538fbca72eb9a0b398cd82f09a774ba3649013e19d36012eda327e83f
 
 ...
