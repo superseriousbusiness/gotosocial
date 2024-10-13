@@ -470,34 +470,34 @@ release:
     | ------- | ----------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
     | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
     | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
-    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[1](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
-    | Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[1](#32-bit)</sup>  | [linux_armv7_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
-    | Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[1](#32-bit)</sup>  | [linux_armv6_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
-    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[1](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
-    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟡 Partial<sup>[2](#freebsd)</sup> | [freebsd_amd64_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64_moderncsqlite.tar.gz) | None provided                                                  |
-    
-    #### 32-bit
-    
-    `moderncsqlite` version is needed, as performance with regular WASM SQLite is not guaranteed when running on 32-bit.
-    
-    Remote media processing will likely not work with reasonable performance, so you may need to set the following config variables to prevent download of remote media onto your instance:
-    
-    ```yaml
-    media-remote-max-size: 0
-    media-emoji-remote-max-size: 0
-    ``` 
+    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#freebsd)</sup>    | [freebsd_amd64_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64_moderncsqlite.tar.gz) | None provided                                                  |
+    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_armv7_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_armv6_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
     
     #### FreeBSD
     
-    `moderncsqlite` version recommended, though you might have success with the regular WASM SQLite version.
+    `moderncsqlite` version currently recommended, though you might have success with the regular WASM SQLite version.
     
-    If running with regular WASM SQLite and having instability or memory issues, try the following settings:
+    If running with regular WASM SQLite and having instability or memory issues, the following settings *may* help:
     
     ```yaml
     db-max-open-conns-multiplier: 0
     db-sqlite-journal-mode: "TRUNCATE"
     db-sqlite-synchronous: "FULL"
     ```
+    
+    #### 32-bit
+    
+    `moderncsqlite` version is needed, as performance with regular WASM SQLite is not guaranteed when running on 32-bit.
+    
+    Remote media processing will likely not work with reasonable performance, so you should set the following config variables to prevent download of remote media onto your instance:
+    
+    ```yaml
+    media-remote-max-size: 0
+    media-emoji-remote-max-size: 0
+    ``` 
 
 # https://goreleaser.com/customization/changelog/
 changelog:
