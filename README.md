@@ -41,7 +41,11 @@ Here's a screenshot of the instance landing page!
   - [OIDC integration](#oidc-integration)
   - [Backend-first design](#backend-first-design)
 - [Known Issues](#known-issues)
-- [Getting Started](#getting-started)
+- [Installing GoToSocial](#installing-gotosocial)
+  - [Supported Platforms](#supported-platforms)
+    - [FreeBSD](#freebsd)
+    - [32-bit](#32-bit)
+    - [OpenBSD](#openbsd)
   - [Stable Releases](#stable-releases)
   - [Snapshot Releases](#snapshot-releases)
     - [Docker](#docker)
@@ -258,9 +262,49 @@ Since every ActivityPub server implementation has a slightly different interpret
 
 ---
 
-## Getting Started
+## Installing GoToSocial
 
-Check our [releases page](https://github.com/superseriousbusiness/gotosocial/releases) and our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation.
+Check our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation! And have a peruse of our [releases page](https://github.com/superseriousbusiness/gotosocial/releases).
+
+<!--releases-start-->
+### Supported Platforms
+
+While we try to support a reasonable number of architectures and operating systems, it's not always possible to support a given platform due to library constraints or performance issues.
+
+Platforms that we don't officially support *may* still work, but we can't test or guarantee performance or stability.
+
+This is the current status of support offered by GoToSocial for different platforms (if something is unlisted it means we haven't checked yet so we don't know):
+
+| OS      | Architecture            | Support level                      | Binary archive | Docker container |
+| ------- | ----------------------- | ---------------------------------- | -------------- | ---------------- |
+| Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | Yes            | Yes              |
+| Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | Yes            | Yes              |
+| FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#freebsd)</sup>    | Yes            | No               |
+| Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
+| Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
+| Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
+| Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
+| OpenBSD | Any                     | 🔴 None<sup>[3](#openbsd)</sup>    | No             | No               |
+
+#### FreeBSD
+
+Mostly works, just a few issues with WASM SQLite; check release notes carefully when installing on FreeBSD. If running with Postgres you should have no issues.
+
+#### 32-bit
+
+GtS doesn't work well on 32-bit systems like i386, or Armv6/v7, mainly due to performance of media decoding.
+
+As such, we don't recommend running GtS on 32-bit, but you may have success if you turn off downloading of remote media.
+
+For more guidance, check release notes when trying to install on 32-bit. 
+
+#### OpenBSD
+
+Marked as unsupported due to performance issues (high memory usage when idle, crashes while processing media).
+
+You may have some success if you turn off decoding of remote media.
+
+We hope to support OpenBSD better in future, but this is not guaranteed.
 
 ### Stable Releases
 
@@ -302,6 +346,7 @@ You can also deploy your own instance of GoToSocial with the help of:
 - [Ansible Playbook (MASH)](https://github.com/mother-of-all-self-hosting/mash-playbook): The playbook supports a many services, including GoToSocial. [Documentation](https://github.com/mother-of-all-self-hosting/mash-playbook/blob/main/docs/services/gotosocial.md)
 - [GoToSocial Helm Chart](https://github.com/fSocietySocial/charts/tree/main/charts/gotosocial) by [0hlov3](https://github.com/0hlov3).
 
+<!--releases-end-->
 ---
 
 ## Contributing
