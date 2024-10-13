@@ -39,9 +39,10 @@ USER 1000:1000
 #
 # See https://docs.docker.com/engine/reference/builder/#workdir
 #
-# First make sure storage exists + is owned by 1000:1000, then go back
-# to just /gotosocial, where we'll run from
+# First make sure storage + cache exist and are owned by 1000:1000,
+# then go back to just /gotosocial, where we'll actually run from.
 WORKDIR "/gotosocial/storage"
+WORKDIR "/gotosocial/.cache"
 WORKDIR "/gotosocial"
 
 # copy the dist binary created by goreleaser or build.sh
@@ -51,5 +52,5 @@ COPY --chown=1000:1000 gotosocial /gotosocial/gotosocial
 COPY --chown=1000:1000 --from=bundler web /gotosocial/web
 COPY --chown=1000:1000 --from=swagger /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml web/assets/swagger.yaml
 
-VOLUME [ "/gotosocial/storage" ]
+VOLUME [ "/gotosocial/storage", "/gotosocial/.cache" ]
 ENTRYPOINT [ "/gotosocial/gotosocial", "server", "start" ]
