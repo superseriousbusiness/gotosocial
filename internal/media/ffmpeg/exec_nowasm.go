@@ -33,7 +33,8 @@ import (
 
 func init() {
 	fmt.Println("!! you are using an unsupported build configuration of gotosocial with WebAssembly disabled !!")
-	fmt.Println("!! please do not file bug reports, this build configuration is provided as a nice-to-have !!")
+	fmt.Println("!! please do not file bug reports regarding media processing with this configuration !!")
+	fmt.Println("!! it is also less secure; this does not enforce version checks on ffmpeg / ffprobe versions !!")
 }
 
 // runCmd will run 'name' with the given arguments, returning exit code or error.
