@@ -401,6 +401,18 @@ func maxOpenConns() int {
 	if multiplier < 1 {
 		return 1
 	}
+
+	// Specifically for SQLite databases with
+	// a journal mode of anything EXCEPT "wal",
+	// only 1 concurrent connection is supported.
+	if strings.ToLower(config.GetDbType()) == "sqlite" {
+		journalMode := config.GetDbSqliteJournalMode()
+		journalMode = strings.ToLower(journalMode)
+		if journalMode != "wal" {
+			return 1
+		}
+	}
+
 	return multiplier * runtime.GOMAXPROCS(0)
 }
 
