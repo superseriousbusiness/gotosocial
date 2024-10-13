@@ -133,7 +133,7 @@ On startup, GoToSocial compiles embedded WebAssembly `ffmpeg` and `ffprobe` bina
 
 To speed up startup time of GoToSocial, you can cache the compiled modules between restarts so that GoToSocial doesn't have to compile them on every startup from scratch.
 
-You can instruct GoToSocial on where to store the Wazero artifacts by setting the environment variable `GTS_WAZERO_COMPILATION_CACHE` to a directory, which will be used by GtS to store some smallish artifacts of 20MiB or so.
+You can instruct GoToSocial on where to store the Wazero artifacts by setting the environment variable `GTS_WAZERO_COMPILATION_CACHE` to a directory, which will be used by GtS to store two smallish artifacts of ~50MiB or so each (~100MiB total).
 
 For an example of this in action, see the [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml), and the [gotosocial.service](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) example files.
 
