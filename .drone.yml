@@ -157,15 +157,16 @@ steps:
       - git fetch --tags
       - /go/dockerlogin.sh
       
-      # When releasing, compare commits to the most recent tag
-      # that is not the current one AND is not a release candidate
-      # version (ie., no "rc" in the tag name).
+      # When releasing, compare commits to the most recent tag that is not the
+      # current one AND is not a release candidate tag (ie., no "rc" in the name).
       #
-      # Note, this may cause annoyances when doing backport releases
-      # (ie., releasing v0.10.1 when we've already released v0.15.0
-      # or whatever), but they should only be superficial annoyances.
-      - export GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v "rc\|${DRONE_TAG}" | sort -V -r | head -n 1)
-      - goreleaser release --clean
+      # The DRONE_TAG env var should point to the tag that triggered this build.
+      # See: https://docs.drone.io/pipeline/environment/reference/drone-tag/ 
+      #
+      # Note, this may cause annoyances when doing backport releases, for example,
+      # releasing v0.10.1 when we've already released v0.15.0 or whatever, but
+      # they should only be superficial annoyances related to the release notes.
+      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v "rc\|${DRONE_TAG}" | sort -V -r | head -n 1) goreleaser release --clean
     when:
       event:
         include:
@@ -222,6 +223,6 @@ steps:
 
 ---
 kind: signature
-hmac: 883be019998713a2e52465918f62a3289459b425f3aa7dffada505ffdccc4cba
+hmac: 1b89e3a538fbca72eb9a0b398cd82f09a774ba3649013e19d36012eda327e83f
 
 ...
