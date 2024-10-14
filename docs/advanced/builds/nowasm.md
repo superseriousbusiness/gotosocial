@@ -1,6 +1,6 @@
 # Build without Wazero / WASM
 
-!!! Danger "Officially unsupported"
+!!! Danger "This is unsupported"
     We do not offer any kind of support for deployments of GoToSocial built with the `nowasm` tag described in this section. Such builds should be considered strictly experimental, and any issues that come when running them are none of our business! Please don't open issues on the repo looking for help debugging deployments of `nowasm` builds.
 
 On [supported platforms](../../getting_started/releases.md#supported-platforms), GoToSocial uses the WebAssembly runtime [Wazero](https://wazero.io/) to sandbox `ffmpeg`, `ffprobe`, and `sqlite3` WebAssembly binaries, allowing these applications to be packaged and run inside the GoToSocial binary, without requiring admins to install + manage any external dependencies.
@@ -23,5 +23,5 @@ GO_BUILDTAGS=nowasm ./scripts/build.sh
 
 In order to run a version of GoToSocial built in this way, you must ensure that `ffmpeg` and `ffprobe` are installed on the host. This is usually as simple as running a command like `doas -u root pkg_add ffmpeg` (OpenBSD), or `sudo apt install ffmpeg` (Debian etc.). 
 
-!!! Danger "No really though, it's officially unsupported"
-    Again, if running builds of GoToSocial with `nowasm` works for your OS/Arch combination, that's great, but we do not officially support such builds and we won't be able to help debugging why something doesn't work.
+!!! Danger "No really though, it's unsupported"
+    Again, if running builds of GoToSocial with `nowasm` works for your OS/Arch combination, that's great, but we do not support such builds and we won't be able to help debugging why something doesn't work.
