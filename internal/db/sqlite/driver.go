@@ -23,12 +23,43 @@ import (
 	"context"
 	"database/sql/driver"
 
+	"codeberg.org/gruf/go-bytesize"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/tetratelabs/wazero"
 
+	"github.com/ncruces/go-sqlite3"
 	sqlite3driver "github.com/ncruces/go-sqlite3/driver"
 	_ "github.com/ncruces/go-sqlite3/embed"     // embed wasm binary
 	_ "github.com/ncruces/go-sqlite3/vfs/memdb" // include memdb vfs
 )
+
+func init() {
+	// Initialize WASM runtime config.
+	cfg := wazero.NewRuntimeConfig()
+
+	// The size of a page in WASM.
+	const pageSize = uint32(^uint16(0))
+
+	// The following check is compile-time:
+	//
+	// Size of a pointer on this platform,
+	// i.e. are we running on 32 / 64 bit.
+	//
+	// See: https://github.com/ncruces/go-sqlite3/issues/168#issuecomment-2412429221
+	const ptrsz = 32 << (^uintptr(0) >> 63)
+	switch ptrsz {
+	case 32:
+		const memoryLimit = uint32(32*bytesize.MiB) / pageSize
+		cfg = cfg.WithMemoryLimitPages(memoryLimit)
+	case 64:
+		const memoryLimit = uint32(256*bytesize.MiB) / pageSize
+		cfg = cfg.WithMemoryLimitPages(memoryLimit)
+	}
+
+	// Set runtime config before
+	// initialize func gets called.
+	sqlite3.RuntimeConfig = cfg
+}
 
 // Driver is our own wrapper around the
 // driver.SQLite{} type in order to wrap
