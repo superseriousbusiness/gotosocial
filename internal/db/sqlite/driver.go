@@ -198,6 +198,7 @@ type stmtIface interface {
 	driver.Stmt
 	driver.StmtExecContext
 	driver.StmtQueryContext
+	driver.NamedValueChecker
 }
 
 // RowsIface is the driver.Rows interface
@@ -207,4 +208,5 @@ type stmtIface interface {
 type rowsIface interface {
 	driver.Rows
 	driver.RowsColumnTypeDatabaseTypeName
+	driver.RowsColumnTypeNullable
 }
