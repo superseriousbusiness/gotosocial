@@ -15,32 +15,14 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build !nowasm
-
 package ffmpeg
 
 import (
-	"context"
-
 	"codeberg.org/gruf/go-ffmpreg/wasm"
 )
 
-// ffmpegRunner limits the number of
-// ffmpeg WebAssembly instances that
-// may be concurrently running, in
-// order to reduce memory usage.
-var ffmpegRunner runner
-
-// InitFfmpeg precompiles the ffmpeg WebAssembly source into memory and
-// prepares the runner to only allow max given concurrent running instances.
-func InitFfmpeg(ctx context.Context, max int) error {
-	ffmpegRunner.Init(max)
-	return compileFfmpeg(ctx)
-}
-
-// Ffmpeg runs the given arguments with an instance of ffmpeg.
-func Ffmpeg(ctx context.Context, args Args) (uint32, error) {
-	return ffmpegRunner.Run(ctx, func() (uint32, error) {
-		return wasm.Run(ctx, runtime, ffmpeg, args)
-	})
-}
+// Args encapsulates the passing of common
+// configuration options to run an instance
+// of a compiled WebAssembly module that is
+// run in a typical CLI manner.
+type Args = wasm.Args

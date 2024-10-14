@@ -15,32 +15,35 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build !nowasm
+//go:build nowasm
 
 package ffmpeg
 
 import (
 	"context"
-
-	"codeberg.org/gruf/go-ffmpreg/wasm"
+	"os/exec"
 )
 
-// ffmpegRunner limits the number of
-// ffmpeg WebAssembly instances that
+// ffprobeRunner limits the number of
+// ffprobe WebAssembly instances that
 // may be concurrently running, in
 // order to reduce memory usage.
-var ffmpegRunner runner
+var ffprobeRunner runner
 
-// InitFfmpeg precompiles the ffmpeg WebAssembly source into memory and
-// prepares the runner to only allow max given concurrent running instances.
-func InitFfmpeg(ctx context.Context, max int) error {
-	ffmpegRunner.Init(max)
-	return compileFfmpeg(ctx)
+// InitFfprobe looks for a local copy of ffprobe in path, and prepares
+// the runner to only allow max given concurrent running instances.
+func InitFfprobe(ctx context.Context, max int) error {
+	_, err := exec.LookPath("ffprobe")
+	if err != nil {
+		return err
+	}
+	ffprobeRunner.Init(max)
+	return nil
 }
 
-// Ffmpeg runs the given arguments with an instance of ffmpeg.
-func Ffmpeg(ctx context.Context, args Args) (uint32, error) {
-	return ffmpegRunner.Run(ctx, func() (uint32, error) {
-		return wasm.Run(ctx, runtime, ffmpeg, args)
+// Ffprobe runs the given arguments with an instance of ffprobe.
+func Ffprobe(ctx context.Context, args Args) (uint32, error) {
+	return ffprobeRunner.Run(ctx, func() (uint32, error) {
+		return runCmd(ctx, "ffprobe", args)
 	})
 }
