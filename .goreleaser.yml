@@ -39,7 +39,6 @@ builds:
     goos:
       - linux
       - freebsd
-      - openbsd
     goarch:
       - 386
       - amd64
@@ -49,18 +48,13 @@ builds:
       - 6
       - 7
     ignore:
-      # build freebsd + openbsd only for amd64
+      # Build FreeBSD
+      # only for amd64.
       - goos: freebsd
         goarch: arm64
       - goos: freebsd
         goarch: arm
       - goos: freebsd
-        goarch: 386
-      - goos: openbsd
-        goarch: arm64
-      - goos: openbsd
-        goarch: arm
-      - goos: openbsd
         goarch: 386
     mod_timestamp: "{{ .CommitTimestamp }}"
   # MODERNC SQLITE BINARY BUILDS
@@ -88,7 +82,6 @@ builds:
     goos:
       - linux
       - freebsd
-      - openbsd
     goarch:
       - 386
       - amd64
@@ -98,18 +91,13 @@ builds:
       - 6
       - 7
     ignore:
-      # build freebsd + openbsd only for amd64
+      # Build FreeBSD
+      # only for amd64.
       - goos: freebsd
         goarch: arm64
       - goos: freebsd
         goarch: arm
       - goos: freebsd
-        goarch: 386
-      - goos: openbsd
-        goarch: arm64
-      - goos: openbsd
-        goarch: arm
-      - goos: openbsd
         goarch: 386
     mod_timestamp: "{{ .CommitTimestamp }}"
 
@@ -474,17 +462,42 @@ release:
     
     Tl;dr: Regardless of whether you're using SQLite or Postgres as your DB driver, you most likely you want the regular version without `moderncsqlite` in the name.
     
-    However, if you're on FreeBSD or OpenBSD, use the `moderncsqlite` version instead. See the table below:
+    However, if you're on FreeBSD, 32-bit Linux or 32-bit ARM, we recommend using the `moderncsqlite` version instead.
     
-    | OS      | Architecture            | Binary archive                                                                                                                                                                     | Docker                                                         |
-    | ------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-    | Linux   | x86-64/AMD64 (64-bit)   | [linux_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
-    | Linux   | x86-32/i386 (32-bit)    | [linux_386.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386.tar.gz)                                     | `superseriousbusiness/gotosocial:{{ .Version }}`               |
-    | Linux   | Armv8/ARM64 (64-bit)    | [linux_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
-    | Linux   | Armv7/ARM32 (32-bit)    | [linux_armv7.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
-    | Linux   | Armv6/ARM32 (32-bit)    | [linux_armv6.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv6.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
-    | OpenBSD | x86-64/AMD64 (64-bit)   | [openbsd_amd64_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_openbsd_amd64_moderncsqlite.tar.gz) | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
-    | FreeBSD | x86-64/AMD64 (64-bit)   | [freebsd_amd64_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64_moderncsqlite.tar.gz) | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    You may need to change some configuration options too. See the table below:
+    
+    | OS      | Architecture            | Support level                      | Binary archive                                                                                                                                                                     | Docker                                                         |
+    | ------- | ----------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+    | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
+    | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
+    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#freebsd)</sup>    | [freebsd_amd64_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64_moderncsqlite.tar.gz) | None provided                                                  |
+    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_armv7_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_armv6_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    
+    #### FreeBSD
+    
+    `moderncsqlite` version currently recommended, though you might have success with the regular WASM SQLite version.
+    
+    If running with regular WASM SQLite and having instability or memory issues, the following settings *may* help:
+    
+    ```yaml
+    db-max-open-conns-multiplier: 0
+    db-sqlite-journal-mode: "TRUNCATE"
+    db-sqlite-synchronous: "FULL"
+    ```
+    
+    #### 32-bit
+    
+    `moderncsqlite` version is needed, as performance with regular WASM SQLite is not guaranteed when running on 32-bit.
+    
+    Remote media processing will likely not work with reasonable performance, so you should set the following config variables to prevent download of remote media onto your instance:
+    
+    ```yaml
+    media-remote-max-size: 0
+    media-emoji-remote-max-size: 0
+    ``` 
 
 # https://goreleaser.com/customization/changelog/
 changelog:
