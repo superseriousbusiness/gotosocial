@@ -294,7 +294,7 @@ Mostly works, just a few issues with WASM SQLite; check release notes carefully 
 
 GtS doesn't work well on 32-bit systems like i386, or Armv6/v7, mainly due to performance of media decoding.
 
-As such, we don't recommend running GtS on 32-bit, but you may have success if you turn off downloading of remote media.
+We don't recommend running GtS on 32-bit, but you may have some success either turning off remote media processing altogether, or building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
 
 For more guidance, check release notes when trying to install on 32-bit. 
 
@@ -302,9 +302,7 @@ For more guidance, check release notes when trying to install on 32-bit.
 
 Marked as unsupported due to performance issues (high memory usage when idle, crashes while processing media).
 
-You may have some success if you turn off decoding of remote media.
-
-We hope to support OpenBSD better in future, but this is not guaranteed.
+While we don't support running GtS on OpenBSD, you may have some success building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
 
 ### Stable Releases
 
