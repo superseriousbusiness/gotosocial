@@ -13,6 +13,15 @@ Group=gotosocial
 Type=exec
 Restart=on-failure
 
+# For speedier restart times, you can uncomment the following Environment line to have GoToSocial cache compiled
+# Wazero artifacts in the given directory between restarts, so that it doesn't need to compile on startup every time.
+#
+# You may need to change the exact path depending on where you've got GoToSocial installed, for example if you've
+# installed at "~/gotosocial" then change the value to "GTS_WAZERO_COMPILATION_CACHE=~/gotosocial/.cache".
+#
+# Whatever you do, make sure the dir exists and that the gotosocial user has permission to write + read from it.
+#Environment="GTS_WAZERO_COMPILATION_CACHE=/gotosocial/.cache"
+
 # change if your path to the GoToSocial binary is different
 ExecStart=/gotosocial/gotosocial --config-path config.yaml server start
 WorkingDirectory=/gotosocial

@@ -15,6 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+//go:build !nowasm
+
 package ffmpeg
 
 import (
@@ -40,12 +42,6 @@ var (
 	ffmpeg  wazero.CompiledModule
 	ffprobe wazero.CompiledModule
 )
-
-// Args encapsulates the passing of common
-// configuration options to run an instance
-// of a compiled WebAssembly module that is
-// run in a typical CLI manner.
-type Args = wasm.Args
 
 // compileFfmpeg ensures the ffmpeg WebAssembly has been
 // pre-compiled into memory. If already compiled is a no-op.

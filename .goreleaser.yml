@@ -1,7 +1,9 @@
 # https://goreleaser.com
 project_name: gotosocial
+version: 2
+
+# https://goreleaser.com/customization/hooks/
 before:
-  # https://goreleaser.com/customization/hooks/
   hooks:
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
   - swagger generate spec --scan-models --exclude-deps -o web/assets/swagger.yaml
@@ -10,8 +12,9 @@ before:
   - yarn --cwd ./web/source install
   - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
   - yarn --cwd ./web/source build
+
+# https://goreleaser.com/customization/build/
 builds:
-  # https://goreleaser.com/customization/build/
   # DEFAULT WASM SQLITE BINARY BUILDS
   -
     id: gotosocial
@@ -36,7 +39,6 @@ builds:
     goos:
       - linux
       - freebsd
-      - openbsd
     goarch:
       - 386
       - amd64
@@ -46,18 +48,13 @@ builds:
       - 6
       - 7
     ignore:
-      # build freebsd + openbsd only for amd64
+      # Build FreeBSD
+      # only for amd64.
       - goos: freebsd
         goarch: arm64
       - goos: freebsd
         goarch: arm
       - goos: freebsd
-        goarch: 386
-      - goos: openbsd
-        goarch: arm64
-      - goos: openbsd
-        goarch: arm
-      - goos: openbsd
         goarch: 386
     mod_timestamp: "{{ .CommitTimestamp }}"
   # MODERNC SQLITE BINARY BUILDS
@@ -85,7 +82,6 @@ builds:
     goos:
       - linux
       - freebsd
-      - openbsd
     goarch:
       - 386
       - amd64
@@ -95,22 +91,18 @@ builds:
       - 6
       - 7
     ignore:
-      # build freebsd + openbsd only for amd64
+      # Build FreeBSD
+      # only for amd64.
       - goos: freebsd
         goarch: arm64
       - goos: freebsd
         goarch: arm
       - goos: freebsd
-        goarch: 386
-      - goos: openbsd
-        goarch: arm64
-      - goos: openbsd
-        goarch: arm
-      - goos: openbsd
         goarch: 386
     mod_timestamp: "{{ .CommitTimestamp }}"
+
+# https://goreleaser.com/customization/docker/
 dockers:
-  # https://goreleaser.com/customization/docker/
   # DEFAULT WASM SQLITE DOCKER BUILDS
   -
     use: buildx
@@ -301,6 +293,8 @@ dockers:
     - go.sum
     - cmd
     - internal
+
+# https://goreleaser.com/customization/docker_manifest/
 docker_manifests:
   # DEFAULT WASM SQLITE BUILDS
   - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
@@ -340,8 +334,9 @@ docker_manifests:
     - superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8-moderncsqlite
     - superseriousbusiness/{{ .ProjectName }}:snapshot-armv6-moderncsqlite
     - superseriousbusiness/{{ .ProjectName }}:snapshot-armv7-moderncsqlite
+
+# https://goreleaser.com/customization/archive/
 archives:
-  # https://goreleaser.com/customization/archive/
   # DEFAULT WASM SQLITE BUILD
   -
     id: gotosocial
@@ -385,13 +380,142 @@ archives:
     - web/template
     meta: true
     name_template: "{{ .ProjectName }}_{{ .Version }}_web-assets"
+
+# https://goreleaser.com/customization/checksum/
 checksum:
-  # https://goreleaser.com/customization/checksum/
   name_template: 'checksums.txt'
+
+# https://goreleaser.com/customization/snapshots/
 snapshot:
-  # https://goreleaser.com/customization/snapshots/
-  name_template: "{{ incpatch .Version }}-SNAPSHOT"
+  version_template: "{{ incpatch .Version }}-SNAPSHOT"
+
+# https://goreleaser.com/customization/source/
 source:
-  # https://goreleaser.com/customization/source/
   enabled: true
   name_template: "{{ .ProjectName }}-{{ .Version }}-source-code"
+
+# https://goreleaser.com/customization/release/
+release:
+  draft: true
+  prerelease: auto
+  header: |
+    Here's version {{ .Version }} of GoToSocial.
+
+    Please read the [migration notes](#migration-notes) carefully for instructions on how to upgrade to this version.
+    
+    ## Release highlights
+
+    - Pee pee
+    - Poo poo
+    - Wee wee
+    
+    ## Migration notes
+    
+    ### Upgrading
+    
+    To upgrade to {{ .Tag }} from a previous release:
+    
+    #### Binary/tar
+    
+    1. Stop GoToSocial.
+    2. **Back up your database!** If you're running on SQLite, this is as simple as copying your `sqlite.db` file, eg., `cp sqlite.db sqlite.db.backup`.
+    3. Download and untar the new release, including the web assets and html templates.
+    4. Edit your config.yaml file if necessary (see below).
+    5. Start GoToSocial.
+    6. Wait patiently for any migrations to run, **do not interrupt migrations or you could leave your db in a broken state and will have to restore from backup**!
+    7. Enjoy your updated instance.
+
+    #### Docker
+    
+    1. Stop GoToSocial.
+    2. **Back up your database!** If you're running on SQLite, this is as simple as copying your `sqlite.db` file, eg., `cp sqlite.db sqlite.db.backup`.
+    3. Pull the new docker container (`superseriousbusiness/gotosocial:{{ .Version }}` or `superseriousbusiness/gotosocial:latest`)
+    4. Edit your config.yaml file or environment variables if necessary (see below).
+    5. Start GoToSocial.
+    6. Wait patiently for any migrations to run, **do not interrupt migrations or you could leave your db in a broken state and will have to restore from backup**!
+    7. Enjoy your updated instance.
+    
+    ### config.yaml
+    
+    The configuration file has changed since the previous release.
+    
+    - Changed `pee pee` to `poo poo`.
+    - Changed `wee wee` to `more wee wee`.
+
+    You can see a diff of the config file here: https://github.com/superseriousbusiness/gotosocial/compare/{{ .PreviousTag }}...{{ .Tag }}#diff-c071e03510b2c57e193a44503fd9528a785f0f411497cc75841a9f8d0b1ac622
+    
+    ### Database Migrations
+    
+    ⚠️⚠️⚠️
+    
+    This release may contain database migrations which will run the first time you start up this new version.
+    
+    Be sure not to interrupt this migration process.
+    
+    This will take anywhere between a couple seconds and ten minutes or more (on slower hardware).
+    
+    **Please be patient!**
+
+    ⚠️⚠️⚠️
+    
+    ### Which release archive/container should I use?
+    
+    Tl;dr: Regardless of whether you're using SQLite or Postgres as your DB driver, you most likely you want the regular version without `moderncsqlite` in the name.
+    
+    However, if you're on FreeBSD, 32-bit Linux or 32-bit ARM, we recommend using the `moderncsqlite` version instead.
+    
+    You may need to change some configuration options too. See the table below:
+    
+    | OS      | Architecture            | Support level                      | Binary archive                                                                                                                                                                     | Docker                                                         |
+    | ------- | ----------------------- | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+    | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
+    | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                                 | `superseriousbusiness/gotosocial:{{ .Version }}`               |
+    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#freebsd)</sup>    | [freebsd_amd64_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64_moderncsqlite.tar.gz) | None provided                                                  |
+    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_armv7_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_armv6_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_armv7_moderncsqlite.tar.gz)     | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | [linux_386_moderncsqlite.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_386_moderncsqlite.tar.gz)         | `superseriousbusiness/gotosocial:{{ .Version }}-moderncsqlite` |
+    
+    #### FreeBSD
+    
+    `moderncsqlite` version currently recommended, though you might have success with the regular WASM SQLite version.
+    
+    If running with regular WASM SQLite and having instability or memory issues, the following settings *may* help:
+    
+    ```yaml
+    db-max-open-conns-multiplier: 0
+    db-sqlite-journal-mode: "TRUNCATE"
+    db-sqlite-synchronous: "FULL"
+    ```
+    
+    #### 32-bit
+    
+    `moderncsqlite` version is needed, as performance with regular WASM SQLite is not guaranteed when running on 32-bit.
+    
+    Remote media processing will likely not work with reasonable performance, so you should set the following config variables to prevent download of remote media onto your instance:
+    
+    ```yaml
+    media-remote-max-size: 0
+    media-emoji-remote-max-size: 0
+    ``` 
+
+# https://goreleaser.com/customization/changelog/
+changelog:
+  use: github
+  abbrev: 9
+  format: "{{ .Message }}, by {{ with .AuthorUsername }}@{{ . }}{{ else }}{{ .AuthorName }} <{{ .AuthorEmail }}>{{ end }} ({{ .SHA }})"
+  groups:
+    - title: Features and performance
+      regexp: '^\[(?:feature|performance).*\].*$'
+      order: 0
+    - title: Bug fixes
+      regexp: '^\[bug.*\].*$'
+      order: 1
+    - title: Chores & version bumps
+      regexp: '^\[chore.*\].*$'
+      order: 2
+    - title: Documentation
+      regexp: '^\[doc.*\].*$'
+      order: 3
+    - title: Other
+      order: 999

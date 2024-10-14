@@ -441,8 +441,8 @@ github.com/json-iterator/go
 # github.com/k3a/html2text v1.2.1
 ## explicit; go 1.16
 github.com/k3a/html2text
-# github.com/klauspost/compress v1.17.9
-## explicit; go 1.20
+# github.com/klauspost/compress v1.17.11
+## explicit; go 1.21
 github.com/klauspost/compress
 github.com/klauspost/compress/fse
 github.com/klauspost/compress/huff0
@@ -486,8 +486,8 @@ github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.77
-## explicit; go 1.21
+# github.com/minio/minio-go/v7 v7.0.78
+## explicit; go 1.22
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/pkg/cors
 github.com/minio/minio-go/v7/pkg/credentials
@@ -954,7 +954,7 @@ github.com/vmihailenco/tagparser/v2/internal/parser
 # github.com/wagslane/go-password-validator v0.3.0
 ## explicit; go 1.16
 github.com/wagslane/go-password-validator
-# github.com/yuin/goldmark v1.7.4
+# github.com/yuin/goldmark v1.7.6
 ## explicit; go 1.19
 github.com/yuin/goldmark
 github.com/yuin/goldmark/ast
