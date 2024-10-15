@@ -283,7 +283,6 @@ This is the current status of support offered by GoToSocial for different platfo
 | Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
 | Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
 | Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
-| Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
 | OpenBSD | Any                     | 🔴 None<sup>[3](#openbsd)</sup>    | No             | No               |
 
 #### FreeBSD
