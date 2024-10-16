@@ -24,12 +24,12 @@ profile gotosocial flags=(attach_disconnected, mediate_deleted) {
 
   # Embedded ffmpeg needs read
   # permission on /dev/urandom.
-  owner /dev/ r,
-  owner /dev/urandom r,
+  /dev/ r,
+  /dev/urandom r,
 
   # Temp dir access is needed for storing
   # files briefly during media processing.
-  owner /tmp/ r,
+  /tmp/ r,
   owner /tmp/* rwk,
 
   # If running with GTS_WAZERO_COMPILATION_CACHE set,
@@ -39,7 +39,7 @@ profile gotosocial flags=(attach_disconnected, mediate_deleted) {
 
   # If you've enabled logging to syslog, allow GoToSocial
   # to write logs by uncommenting the following line:
-  # owner /var/log/syslog w,
+  # /var/log/syslog w,
 
   # These directories are not currently used by any of
   # the recommended GoToSocial installation methods, but
@@ -65,6 +65,7 @@ profile gotosocial flags=(attach_disconnected, mediate_deleted) {
   /etc/services r,
   /proc/sys/net/core/somaxconn r,
   /sys/fs/cgroup/system.slice/gotosocial.service/{,*} r,
+  /sys/kernel/mm/hugepages/ r,
   /sys/kernel/mm/transparent_hugepage/hpage_pmd_size r,
   owner /proc/*/cgroup r,
   owner /proc/*/cpuset r,
