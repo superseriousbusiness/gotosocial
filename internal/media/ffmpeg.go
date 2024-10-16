@@ -556,10 +556,10 @@ func (res *ffprobeResult) Process() (*result, error) {
 				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
 					n, _ := strconv.ParseUint(p[0], 10, 32)
 					d, _ := strconv.ParseUint(p[1], 10, 32)
-					num, den = uint32(n), uint32(d)
+					num, den = uint32(n), uint32(d) // #nosec G115 -- ParseUint is configured to check
 				} else {
 					n, _ := strconv.ParseUint(p[0], 10, 32)
-					num = uint32(n)
+					num = uint32(n) // #nosec G115 -- ParseUint is configured to check
 				}
 
 				// Set final divised framerate.

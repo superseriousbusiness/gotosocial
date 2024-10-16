@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"runtime"
@@ -489,7 +490,10 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		cfg.Host = address
 	}
 	if port := config.GetDbPort(); port > 0 {
-		cfg.Port = uint16(port)
+		if port > math.MaxUint16 {
+			return nil, errors.New("invalid port, must be in range 1-65535")
+		}
+		cfg.Port = uint16(port) // #nosec G115 -- Just validated above.
 	}
 	if u := config.GetDbUser(); u != "" {
 		cfg.User = u

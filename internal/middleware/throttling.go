@@ -82,12 +82,16 @@ func Throttle(cpuMultiplier int, retryAfter time.Duration) gin.HandlerFunc {
 		return func(c *gin.Context) {}
 	}
 
+	if retryAfter < 0 {
+		retryAfter = 0
+	}
+
 	var (
 		limit         = runtime.GOMAXPROCS(0) * cpuMultiplier
 		queueLimit    = limit * cpuMultiplier
 		tokens        = make(chan token, limit)
 		requestCount  = atomic.Int64{}
-		retryAfterStr = strconv.FormatUint(uint64(retryAfter/time.Second), 10)
+		retryAfterStr = strconv.FormatUint(uint64(retryAfter/time.Second), 10) // #nosec G115 -- Checked right above
 	)
 
 	// prefill token channel

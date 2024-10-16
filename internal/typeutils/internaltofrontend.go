@@ -647,7 +647,7 @@ func (c *Converter) AttachmentToAPIAttachment(ctx context.Context, media *gtsmod
 			Size:      toAPISize(media.FileMeta.Original.Width, media.FileMeta.Original.Height),
 			FrameRate: toAPIFrameRate(media.FileMeta.Original.Framerate),
 			Duration:  util.PtrOrZero(media.FileMeta.Original.Duration),
-			Bitrate:   int(util.PtrOrZero(media.FileMeta.Original.Bitrate)),
+			Bitrate:   util.PtrOrZero(media.FileMeta.Original.Bitrate),
 		}
 
 		// Copy over local file URL.
@@ -1529,9 +1529,9 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		Version:              config.GetSoftwareVersion(),
 		Languages:            config.GetInstanceLanguages().TagStrs(),
 		Registrations:        config.GetAccountsRegistrationOpen(),
-		ApprovalRequired:     true,  // approval always required
-		InvitesEnabled:       false, // todo: not supported yet
-		MaxTootChars:         uint(config.GetStatusesMaxChars()),
+		ApprovalRequired:     true,                               // approval always required
+		InvitesEnabled:       false,                              // todo: not supported yet
+		MaxTootChars:         uint(config.GetStatusesMaxChars()), // #nosec G115 -- Already validated.
 		Rules:                c.InstanceRulesToAPIRules(i.Rules),
 		Terms:                i.Terms,
 		TermsRaw:             i.TermsText,
@@ -1551,9 +1551,9 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
-	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize())
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
-	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize())
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
 	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
@@ -1563,7 +1563,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
 	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
-	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
+	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
 	// URLs
@@ -1695,9 +1695,9 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
-	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize())
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
-	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize())
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
 	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
@@ -1707,7 +1707,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
 	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
-	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize())
+	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
 	// registrations
