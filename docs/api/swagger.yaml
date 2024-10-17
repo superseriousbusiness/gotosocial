@@ -284,6 +284,12 @@ definitions:
                 example: https://example.org/media/some_user/header/static/header.png
                 type: string
                 x-go-name: HeaderStatic
+            hide_boosts:
+                description: |-
+                    Account has opted to hide boosts from their profile.
+                    Key/value omitted if false.
+                type: boolean
+                x-go-name: HideBoosts
             hide_collections:
                 description: |-
                     Account has opted to hide their followers/following collections.
@@ -2289,6 +2295,12 @@ definitions:
                 example: https://example.org/media/some_user/header/static/header.png
                 type: string
                 x-go-name: HeaderStatic
+            hide_boosts:
+                description: |-
+                    Account has opted to hide boosts from their profile.
+                    Key/value omitted if false.
+                type: boolean
+                x-go-name: HideBoosts
             hide_collections:
                 description: |-
                     Account has opted to hide their followers/following collections.

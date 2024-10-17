@@ -104,6 +104,9 @@ type Account struct {
 	// Account has enabled RSS feed.
 	// Key/value omitted if false.
 	EnableRSS bool `json:"enable_rss,omitempty"`
+	// Account has opted to hide boosts from their profile.
+	// Key/value omitted if false.
+	HideBoosts bool `json:"hide_boosts,omitempty"`
 	// Account has opted to hide their followers/following collections.
 	// Key/value omitted if false.
 	HideCollections bool `json:"hide_collections,omitempty"`
@@ -225,6 +228,8 @@ type UpdateCredentialsRequest struct {
 	CustomCSS *string `form:"custom_css" json:"custom_css"`
 	// Enable RSS feed of public toots for this account at /@[username]/feed.rss
 	EnableRSS *bool `form:"enable_rss" json:"enable_rss"`
+	// Hide boosts from this account's profile page.
+	HideBoosts *bool `form:"hide_boosts" json:"hide_boosts"`
 	// Hide this account's following/followers collections.
 	HideCollections *bool `form:"hide_collections" json:"hide_collections"`
 	// Visibility of statuses to show via the web view.

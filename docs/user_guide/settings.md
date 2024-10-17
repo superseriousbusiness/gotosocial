@@ -88,9 +88,9 @@ This setting does not affect visibility of your posts over the ActivityPub proto
 
 !!! warning
     Be aware that changes to this setting also apply retroactively.
-    
+
     That is, if you previously made a post on Unlisted visibility, while set to show only Public posts on your profile, and you change this setting to show Public and Unlisted, then the Unlisted post you previously made will be visible on your profile alongside your Public posts.
-    
+
     Likewise, if you change this setting to show no posts, then all your posts will be hidden from your profile, regardless of when you created them, and what this option was set to at the time. This will apply until you change this setting again.
 
 !!! tip
@@ -133,6 +133,11 @@ This feed only includes posts set as 'Public' (see [Privacy Settings](./posts.md
 
 !!! warning
     Exposing your RSS feed allows *anyone* to subscribe to updates on your Public posts anonymously, bypassing follows and follow requests.
+
+#### Hide boosts from your public page
+
+By default, GoToSocial will display posts boosted by you on your public web profile. If you do not wish to display them, You can hide them by checking this box.
+
 
 #### Hide Who You Follow / Are Followed By
 
@@ -196,7 +201,7 @@ If you want to reset all your policies to the initial defaults, you can click on
 
 !!! danger
     While GoToSocial respects interaction policies, it is not guaranteed that other server softwares will, and it is possible that accounts on other servers will still send out replies and boosts of your post to their followers, even if your instance forbids these interactions.
-    
+
     As more ActivityPub servers roll out support for interaction policies, this issue will hopefully diminish, but in the meantime GoToSocial can offer only a "best effort" attempt to restrict interactions with your posts according to the policies you have set.
 
 ## Email & Password
