@@ -126,9 +126,10 @@ func (m *Module) signupPOSTHandler(c *gin.Context) {
 	// Serve a page informing the
 	// user that they've signed up.
 	page := apiutil.WebPage{
-		Template: "signed-up.tmpl",
-		Instance: instance,
-		OGMeta:   apiutil.OGBase(instance),
+		Template:    "signed-up.tmpl",
+		Instance:    instance,
+		Stylesheets: []string{instanceCustomCSSPath},
+		OGMeta:      apiutil.OGBase(instance),
 		Extra: map[string]any{
 			"email":    user.UnconfirmedEmail,
 			"username": user.Account.Username,

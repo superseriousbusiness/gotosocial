@@ -115,7 +115,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Prepare stylesheets for thread.
-	stylesheets := make([]string, 0, 5)
+	stylesheets := make([]string, 0, 6)
 
 	// Basic thread stylesheets.
 	stylesheets = append(
@@ -131,6 +131,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	if theme := targetAccount.Theme; theme != "" {
 		stylesheets = append(
 			stylesheets,
+			instanceCustomCSSPath,
 			themesPathPrefix+"/"+theme,
 		)
 	}
