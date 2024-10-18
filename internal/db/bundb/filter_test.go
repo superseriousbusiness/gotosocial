@@ -247,6 +247,54 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	}
 }
 
+func (suite *FilterTestSuite) TestFilterTitleOverlap() {
+	var (
+		ctx      = context.Background()
+		account1 = "01HNEJXCPRTJVJY9MV0VVHGD47"
+		account2 = "01JAG5BRJPJYA0FSA5HR2MMFJH"
+	)
+
+	// Create an empty filter for account 1.
+	account1filter1 := &gtsmodel.Filter{
+		ID:          "01HNEJNVZZVXJTRB3FX3K2B1YF",
+		AccountID:   account1,
+		Title:       "my filter",
+		Action:      gtsmodel.FilterActionWarn,
+		ContextHome: util.Ptr(true),
+	}
+	if err := suite.db.PutFilter(ctx, account1filter1); err != nil {
+		suite.FailNow("", "error putting account1filter1: %s", err)
+	}
+
+	// Create a filter for account 2 with
+	// the same title, should be no issue.
+	account2filter1 := &gtsmodel.Filter{
+		ID:          "01JAG5GPXG7H5Y4ZP78GV1F2ET",
+		AccountID:   account2,
+		Title:       "my filter",
+		Action:      gtsmodel.FilterActionWarn,
+		ContextHome: util.Ptr(true),
+	}
+	if err := suite.db.PutFilter(ctx, account2filter1); err != nil {
+		suite.FailNow("", "error putting account2filter1: %s", err)
+	}
+
+	// Try to create another filter for
+	// account 1 with the same name as
+	// an existing filter of theirs.
+	account1filter2 := &gtsmodel.Filter{
+		ID:          "01JAG5J8NYKQE2KYCD28Y4P05V",
+		AccountID:   account1,
+		Title:       "my filter",
+		Action:      gtsmodel.FilterActionWarn,
+		ContextHome: util.Ptr(true),
+	}
+	err := suite.db.PutFilter(ctx, account1filter2)
+	if !errors.Is(err, db.ErrAlreadyExists) {
+		suite.FailNow("", "wanted ErrAlreadyExists, got %s", err)
+	}
+}
+
 func TestFilterTestSuite(t *testing.T) {
 	suite.Run(t, new(FilterTestSuite))
 }
