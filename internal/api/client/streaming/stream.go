@@ -399,7 +399,7 @@ func (m *Module) writeToWSConn(
 		// - receipt of msg
 		// - timeout of pingCtx
 		// - stream closed.
-		msg, gotMsg := stream.Recv(pingCtx)
+		msg, haveMsg := stream.Recv(pingCtx)
 
 		// If ping context has timed
 		// out, we should send a ping.
@@ -410,35 +410,38 @@ func (m *Module) writeToWSConn(
 		cncl()
 
 		switch {
+		case !haveMsg && !shouldPing:
+			// We have no message and we shouldn't
+			// send a ping; this means the stream
+			// has been closed from the client's end,
+			// so there's nothing further to do here.
+			l.Trace("no message and we shouldn't ping, returning...")
+			return
 
-		// We have a message to stream.
-		case gotMsg:
+		case haveMsg:
+			// We have a message to stream.
 			l.Tracef("writing websocket message: %+v", msg)
+
 			if err := wsConn.WriteJSON(msg); err != nil {
 				// If there's an error writing then drop the
 				// connection, as client may have disappeared
 				// suddenly; they can reconnect if necessary.
 				l.Debugf("error writing websocket message: %v", err)
-				break
+				return
 			}
 
-		// We have no message but we
-		// need to send a keep-alive ping.
 		case shouldPing:
+			// We have no message but we do
+			// need to send a keep-alive ping.
 			l.Trace("writing websocket ping")
+
 			if err := wsConn.WriteControl(websocket.PingMessage, pingMsg, time.Time{}); err != nil {
 				// If there's an error writing then drop the
 				// connection, as client may have disappeared
 				// suddenly; they can reconnect if necessary.
 				l.Debugf("error writing websocket ping: %v", err)
-				break
+				return
 			}
-
-		// We have no message and we shouldn't
-		// send a ping; this means the stream
-		// has been closed from the client's end.
-		default:
-			return
 		}
 	}
 }
