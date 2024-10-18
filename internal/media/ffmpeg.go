@@ -78,22 +78,16 @@ func ffmpegGenerateWebpThumb(ctx context.Context, inpath, outpath string, width,
 		// (NOT as libwebp_anim).
 		"-codec:v", "libwebp",
 
-		// Select thumb from first 7 frames.
-		// (in particular <= 7 reduced memory usage, marginally)
-		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
-		"-filter:v", "thumbnail=n=7,"+
+		// Only one frame
+		"-frames:v", "1",
 
-			// Scale to dimensions
-			// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
-			"scale="+strconv.Itoa(width)+
-			":"+strconv.Itoa(height)+","+
+		// Scale to dimensions
+		// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
+		"-filter:v", "scale="+strconv.Itoa(width)+":"+strconv.Itoa(height)+","+
 
 			// Attempt to use original pixel format
 			// (format filter: https://ffmpeg.org/ffmpeg-filters.html#format)
 			"format=pix_fmts="+pixfmt,
-
-		// Only one frame
-		"-frames:v", "1",
 
 		// Quality not specified,
 		// i.e. use default which
