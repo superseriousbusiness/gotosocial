@@ -270,21 +270,25 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	//   - Emojis
 
 	var (
+		aviID           string
 		aviURL          string
 		aviURLStatic    string
 		aviDesc         string
+		headerID        string
 		headerURL       string
 		headerURLStatic string
 		headerDesc      string
 	)
 
 	if a.AvatarMediaAttachment != nil {
+		aviID = a.AvatarMediaAttachmentID
 		aviURL = a.AvatarMediaAttachment.URL
 		aviURLStatic = a.AvatarMediaAttachment.Thumbnail.URL
 		aviDesc = a.AvatarMediaAttachment.Description
 	}
 
 	if a.HeaderMediaAttachment != nil {
+		headerID = a.HeaderMediaAttachmentID
 		headerURL = a.HeaderMediaAttachment.URL
 		headerURLStatic = a.HeaderMediaAttachment.Thumbnail.URL
 		headerDesc = a.HeaderMediaAttachment.Description
@@ -367,9 +371,11 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		Avatar:            aviURL,
 		AvatarStatic:      aviURLStatic,
 		AvatarDescription: aviDesc,
+		AvatarMediaID:     aviID,
 		Header:            headerURL,
 		HeaderStatic:      headerURLStatic,
 		HeaderDescription: headerDesc,
+		HeaderMediaID:     headerID,
 		FollowersCount:    followersCount,
 		FollowingCount:    followingCount,
 		StatusesCount:     statusesCount,

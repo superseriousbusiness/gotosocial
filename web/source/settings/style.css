@@ -441,6 +441,11 @@ section.with-sidebar > form {
 	.profile {
 		max-width: 42rem;
 	}
+
+	.file-input-with-image-description {
+		max-width: 100%;
+		width: 100%;
+	}
 	
 	.overview {
 		display: flex;

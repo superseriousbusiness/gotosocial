@@ -19,6 +19,7 @@
 
 import React from "react";
 import Loading from "./loading";
+import { Error as ErrorC } from "./error";
 import { useVerifyCredentialsQuery, useLogoutMutation } from "../lib/query/oauth";
 import { useInstanceV1Query } from "../lib/query/gts-api";
 
@@ -29,16 +30,20 @@ export default function UserLogoutCard() {
 
 	if (isLoading) {
 		return <Loading />;
-	} else {
-		return (
-			<div className="account-card">
-				<img className="avatar" src={profile.avatar} alt="" />
-				<h3 className="text-cutoff">{profile.display_name?.length > 0 ? profile.display_name : profile.acct}</h3>
-				<span className="text-cutoff">@{profile.username}@{instance?.account_domain}</span>
-				<a onClick={logoutQuery} href="#" aria-label="Log out" title="Log out" className="logout">
-					<i className="fa fa-fw fa-sign-out" aria-hidden="true" />
-				</a>
-			</div>
-		);
 	}
+	
+	if (!profile) {
+		return <ErrorC error={new Error("account was undefined")} />;
+	}
+
+	return (
+		<div className="account-card">
+			<img className="avatar" src={profile.avatar} alt="" />
+			<h3 className="text-cutoff">{profile.display_name?.length > 0 ? profile.display_name : profile.acct}</h3>
+			<span className="text-cutoff">@{profile.username}@{instance?.account_domain}</span>
+			<a onClick={logoutQuery} href="#" aria-label="Log out" title="Log out" className="logout">
+				<i className="fa fa-fw fa-sign-out" aria-hidden="true" />
+			</a>
+		</div>
+	);
 }
