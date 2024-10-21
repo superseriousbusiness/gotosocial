@@ -53,8 +53,12 @@ export interface Account {
 	url: string,
 	avatar: string,
 	avatar_static: string,
+	avatar_description?: string,
+	avatar_media_id?: string,
 	header: string,
 	header_static: string,
+	header_description?: string,
+	header_media_id?: string,
 	followers_count: number,
 	following_count: number,
 	statuses_count: number,
@@ -68,7 +72,7 @@ export interface Account {
 }
 
 export interface AccountSource {
-	fields: any[];
+	fields: any;
 	follow_requests_count: number;
 	language: string;
 	note: string;

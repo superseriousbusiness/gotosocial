@@ -26,6 +26,7 @@ import {
 	authorize as oauthAuthorize,
 } from "../../../redux/oauth";
 import { RootState } from '../../../redux/store';
+import { Account } from '../../types/account';
 
 export interface OauthTokenRequestBody {
 	client_id: string;
@@ -58,7 +59,7 @@ const SETTINGS_URL = (getSettingsURL());
 // https://redux-toolkit.js.org/rtk-query/usage/customizing-queries#performing-multiple-requests-with-a-single-query
 const extended = gtsApi.injectEndpoints({
 	endpoints: (build) => ({
-		verifyCredentials: build.query<any, void>({
+		verifyCredentials: build.query<Account, void>({
 			providesTags: (_res, error) =>
 				error == undefined ? ["Auth"] : [],
 			async queryFn(_arg, api, _extraOpts, fetchWithBQ) {

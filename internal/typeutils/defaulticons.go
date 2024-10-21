@@ -117,6 +117,9 @@ func (c *Converter) ensureAvatar(account *apimodel.Account) {
 
 	account.Avatar = avatar
 	account.AvatarStatic = avatar
+
+	const defaultAviDesc = "Grayed-out line drawing of a cute sloth (default avatar)."
+	account.AvatarDescription = defaultAviDesc
 }
 
 // ensureHeader ensures that the given account has a value set
@@ -134,4 +137,7 @@ func (c *Converter) ensureHeader(account *apimodel.Account) {
 	h := config.GetProtocol() + "://" + config.GetHost() + defaultHeaderPath
 	account.Header = h
 	account.HeaderStatic = h
+
+	const defaultHeaderDesc = "Flat gray background (default header)."
+	account.HeaderDescription = defaultHeaderDesc
 }

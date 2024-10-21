@@ -206,6 +206,13 @@ definitions:
                 example: A cute drawing of a smiling sloth.
                 type: string
                 x-go-name: AvatarDescription
+            avatar_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's avatar image.
+                    Omitted if no avatar uploaded for this account (ie., default avatar).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: AvatarMediaID
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -277,6 +284,13 @@ definitions:
                 example: A sunlit field with purple flowers.
                 type: string
                 x-go-name: HeaderDescription
+            header_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's header image.
+                    Omitted if no header uploaded for this account (ie., default header).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: HeaderMediaID
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -2211,6 +2225,13 @@ definitions:
                 example: A cute drawing of a smiling sloth.
                 type: string
                 x-go-name: AvatarDescription
+            avatar_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's avatar image.
+                    Omitted if no avatar uploaded for this account (ie., default avatar).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: AvatarMediaID
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -2282,6 +2303,13 @@ definitions:
                 example: A sunlit field with purple flowers.
                 type: string
                 x-go-name: HeaderDescription
+            header_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's header image.
+                    Omitted if no header uploaded for this account (ie., default header).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: HeaderMediaID
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
