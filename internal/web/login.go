@@ -19,17 +19,18 @@ package web
 
 import (
 	"context"
-	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-func (m *Module) indexHandler(c *gin.Context) {
+const (
+	loginPath = "/login"
+)
+
+func (m *Module) loginGETHandler(c *gin.Context) {
 	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -48,19 +49,14 @@ func (m *Module) indexHandler(c *gin.Context) {
 		return
 	}
 
-	// If a landingPageUser is set in the config, redirect to
-	// that user's profile instead of rendering landing/index page.
-	if landingPageUser := config.GetLandingPageUser(); landingPageUser != "" {
-		c.Redirect(http.StatusFound, "/@"+strings.ToLower(landingPageUser))
-		return
-	}
-
 	page := apiutil.WebPage{
-		Template:    "index.tmpl",
+		Template:    "login.tmpl",
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
-		Stylesheets: []string{cssAbout, cssIndex},
-		Extra:       map[string]any{"showStrap": true, "showLoginButton": true},
+		Stylesheets: []string{cssLogin},
+		Extra: map[string]any{
+			"showStrap": false,
+		},
 	}
 
 	apiutil.TemplateWebPage(c, page)
