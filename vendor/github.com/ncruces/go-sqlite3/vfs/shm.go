@@ -1,4 +1,4 @@
-//go:build (darwin || linux) && (amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_flock || sqlite3_noshm || sqlite3_nosys)
+//go:build (darwin || linux) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_flock || sqlite3_noshm || sqlite3_nosys)
 
 package vfs
 
@@ -6,11 +6,13 @@ import (
 	"context"
 	"io"
 	"os"
+	"sync"
 	"time"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
 	"golang.org/x/sys/unix"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // SupportsSharedMemory is false on platforms that do not support shared memory.
@@ -45,12 +47,15 @@ func NewSharedMemory(path string, flags OpenFlag) SharedMemory {
 	}
 }
 
+var _ blockingSharedMemory = &vfsShm{}
+
 type vfsShm struct {
 	*os.File
 	path     string
 	regions  []*util.MappedRegion
 	readOnly bool
 	blocking bool
+	sync.Mutex
 }
 
 func (s *vfsShm) shmOpen() _ErrorCode {
@@ -194,6 +199,12 @@ func (s *vfsShm) shmUnmap(delete bool) {
 	}
 	s.Close()
 	s.File = nil
+}
+
+func (s *vfsShm) shmBarrier() {
+	s.Lock()
+	//lint:ignore SA2001 memory barrier.
+	s.Unlock()
 }
 
 func (s *vfsShm) shmEnableBlocking(block bool) {

@@ -1,4 +1,4 @@
-//go:build (freebsd || openbsd || netbsd || dragonfly || illumos || sqlite3_flock) && (amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_noshm || sqlite3_nosys)
+//go:build (freebsd || openbsd || netbsd || dragonfly || illumos || sqlite3_flock) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_noshm || sqlite3_nosys)
 
 package vfs
 
@@ -8,9 +8,10 @@ import (
 	"os"
 	"sync"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
 	"golang.org/x/sys/unix"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // SupportsSharedMemory is false on platforms that do not support shared memory.
@@ -268,4 +269,10 @@ func (s *vfsShm) shmUnmap(delete bool) {
 		os.Remove(s.path)
 	}
 	s.Close()
+}
+
+func (s *vfsShm) shmBarrier() {
+	s.lockMtx.Lock()
+	//lint:ignore SA2001 memory barrier.
+	s.lockMtx.Unlock()
 }
