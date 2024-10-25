@@ -253,6 +253,7 @@ func (b *Blob) Seek(offset int64, whence int) (int64, error) {
 //
 // https://sqlite.org/c3ref/blob_reopen.html
 func (b *Blob) Reopen(row int64) error {
+	b.c.checkInterrupt(b.c.handle)
 	err := b.c.error(b.c.call("sqlite3_blob_reopen", uint64(b.handle), uint64(row)))
 	b.bytes = int64(b.c.call("sqlite3_blob_bytes", uint64(b.handle)))
 	b.offset = 0

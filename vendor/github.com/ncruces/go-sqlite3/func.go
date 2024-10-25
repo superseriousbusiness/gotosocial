@@ -4,8 +4,9 @@ import (
 	"context"
 	"sync"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // CollationNeeded registers a callback to be invoked

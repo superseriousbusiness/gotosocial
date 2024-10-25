@@ -5,13 +5,15 @@ import (
 	"crypto/rand"
 	"io"
 	"reflect"
-	"sync"
+	"strings"
 	"time"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
-	"github.com/ncruces/julianday"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
+	"github.com/ncruces/go-sqlite3/util/sql3util"
+	"github.com/ncruces/julianday"
 )
 
 // ExportHostFunctions is an internal API users need not call directly.
@@ -146,7 +148,7 @@ func vfsOpen(ctx context.Context, mod api.Module, pVfs, zPath, pFile uint32, fla
 	}
 
 	if file, ok := file.(FilePowersafeOverwrite); ok {
-		if b, ok := util.ParseBool(name.URIParameter("psow")); ok {
+		if b, ok := sql3util.ParseBool(name.URIParameter("psow")); ok {
 			file.SetPowersafeOverwrite(b)
 		}
 	}
@@ -157,6 +159,7 @@ func vfsOpen(ctx context.Context, mod api.Module, pVfs, zPath, pFile uint32, fla
 	if pOutFlags != 0 {
 		util.WriteUint32(mod, pOutFlags, uint32(flags))
 	}
+	file = cksmWrapFile(name, flags, file)
 	vfsFileRegister(ctx, mod, pFile, file)
 	return _OK
 }
@@ -235,20 +238,19 @@ func vfsCheckReservedLock(ctx context.Context, mod api.Module, pFile, pResOut ui
 
 func vfsFileControl(ctx context.Context, mod api.Module, pFile uint32, op _FcntlOpcode, pArg uint32) _ErrorCode {
 	file := vfsFileGet(ctx, mod, pFile).(File)
+	if file, ok := file.(fileControl); ok {
+		return file.fileControl(ctx, mod, op, pArg)
+	}
+	return vfsFileControlImpl(ctx, mod, file, op, pArg)
+}
 
+func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _FcntlOpcode, pArg uint32) _ErrorCode {
 	switch op {
 	case _FCNTL_LOCKSTATE:
 		if file, ok := file.(FileLockState); ok {
-			util.WriteUint32(mod, pArg, uint32(file.LockState()))
-			return _OK
-		}
-
-	case _FCNTL_LOCK_TIMEOUT:
-		if file, ok := file.(FileSharedMemory); ok {
-			if iface, ok := file.SharedMemory().(interface{ shmEnableBlocking(bool) }); ok {
-				if i := util.ReadUint32(mod, pArg); i == 0 || i == 1 {
-					iface.shmEnableBlocking(i != 0)
-				}
+			if lk := file.LockState(); lk <= LOCK_EXCLUSIVE {
+				util.WriteUint32(mod, pArg, uint32(lk))
+				return _OK
 			}
 		}
 
@@ -329,15 +331,15 @@ func vfsFileControl(ctx context.Context, mod api.Module, pFile uint32, op _Fcntl
 			return vfsErrorCode(err, _IOERR_ROLLBACK_ATOMIC)
 		}
 
-	case _FCNTL_CKPT_DONE:
-		if file, ok := file.(FileCheckpoint); ok {
-			err := file.CheckpointDone()
-			return vfsErrorCode(err, _IOERR)
-		}
 	case _FCNTL_CKPT_START:
 		if file, ok := file.(FileCheckpoint); ok {
-			err := file.CheckpointStart()
-			return vfsErrorCode(err, _IOERR)
+			file.CheckpointStart()
+			return _OK
+		}
+	case _FCNTL_CKPT_DONE:
+		if file, ok := file.(FileCheckpoint); ok {
+			file.CheckpointDone()
+			return _OK
 		}
 
 	case _FCNTL_PRAGMA:
@@ -349,7 +351,7 @@ func vfsFileControl(ctx context.Context, mod api.Module, pFile uint32, op _Fcntl
 				value = util.ReadString(mod, ptr, _MAX_SQL_LENGTH)
 			}
 
-			out, err := file.Pragma(name, value)
+			out, err := file.Pragma(strings.ToLower(name), value)
 
 			ret := vfsErrorCode(err, _ERROR)
 			if ret == _ERROR {
@@ -365,6 +367,14 @@ func vfsFileControl(ctx context.Context, mod api.Module, pFile uint32, op _Fcntl
 				util.WriteString(mod, uint32(stack[0]), out)
 			}
 			return ret
+		}
+
+	case _FCNTL_LOCK_TIMEOUT:
+		if file, ok := file.(FileSharedMemory); ok {
+			if shm, ok := file.SharedMemory().(blockingSharedMemory); ok {
+				shm.shmEnableBlocking(util.ReadUint32(mod, pArg) != 0)
+				return _OK
+			}
 		}
 	}
 
@@ -385,11 +395,9 @@ func vfsDeviceCharacteristics(ctx context.Context, mod api.Module, pFile uint32)
 	return file.DeviceCharacteristics()
 }
 
-var shmBarrier sync.Mutex
-
 func vfsShmBarrier(ctx context.Context, mod api.Module, pFile uint32) {
-	shmBarrier.Lock()
-	defer shmBarrier.Unlock()
+	shm := vfsFileGet(ctx, mod, pFile).(FileSharedMemory).SharedMemory()
+	shm.shmBarrier()
 }
 
 func vfsShmMap(ctx context.Context, mod api.Module, pFile uint32, iRegion, szRegion int32, bExtend, pp uint32) _ErrorCode {

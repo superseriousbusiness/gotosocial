@@ -51,6 +51,7 @@ const (
 	_IOERR_BEGIN_ATOMIC      _ErrorCode = util.IOERR_BEGIN_ATOMIC
 	_IOERR_COMMIT_ATOMIC     _ErrorCode = util.IOERR_COMMIT_ATOMIC
 	_IOERR_ROLLBACK_ATOMIC   _ErrorCode = util.IOERR_ROLLBACK_ATOMIC
+	_IOERR_DATA              _ErrorCode = util.IOERR_DATA
 	_BUSY_SNAPSHOT           _ErrorCode = util.BUSY_SNAPSHOT
 	_CANTOPEN_FULLPATH       _ErrorCode = util.CANTOPEN_FULLPATH
 	_CANTOPEN_ISDIR          _ErrorCode = util.CANTOPEN_ISDIR

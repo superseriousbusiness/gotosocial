@@ -4,8 +4,9 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // CreateModule registers a new virtual table module name.

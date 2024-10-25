@@ -2,10 +2,12 @@ package sqlite3
 
 import (
 	"context"
+	"strconv"
+
+	"github.com/tetratelabs/wazero/api"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/ncruces/go-sqlite3/vfs"
-	"github.com/tetratelabs/wazero/api"
 )
 
 // Config makes configuration changes to a database connection.
@@ -15,8 +17,19 @@ import (
 //
 // https://sqlite.org/c3ref/db_config.html
 func (c *Conn) Config(op DBConfig, arg ...bool) (bool, error) {
+	if op < DBCONFIG_ENABLE_FKEY || op > DBCONFIG_REVERSE_SCANORDER {
+		return false, MISUSE
+	}
+
+	// We need to call sqlite3_db_config, a variadic function.
+	// We only support the `int int*` variants.
+	// The int is a three-valued bool: -1 queries, 0/1 sets false/true.
+	// The int* points to where new state will be written to.
+	// The vararg is a pointer to an array containing these arguments:
+	// an int and an int* pointing to that int.
+
 	defer c.arena.mark()()
-	argsPtr := c.arena.new(2 * ptrlen)
+	argsPtr := c.arena.new(intlen + ptrlen)
 
 	var flag int
 	switch {
@@ -63,18 +76,23 @@ func logCallback(ctx context.Context, mod api.Module, _, iCode, zMsg uint32) {
 // https://sqlite.org/c3ref/file_control.html
 func (c *Conn) FileControl(schema string, op FcntlOpcode, arg ...any) (any, error) {
 	defer c.arena.mark()()
+	ptr := c.arena.new(max(ptrlen, intlen))
 
 	var schemaPtr uint32
 	if schema != "" {
 		schemaPtr = c.arena.string(schema)
 	}
 
+	var rc uint64
+	var res any
 	switch op {
+	default:
+		return nil, MISUSE
+
 	case FCNTL_RESET_CACHE:
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), 0)
-		return nil, c.error(r)
 
 	case FCNTL_PERSIST_WAL, FCNTL_POWERSAFE_OVERWRITE:
 		var flag int
@@ -84,70 +102,69 @@ func (c *Conn) FileControl(schema string, op FcntlOpcode, arg ...any) (any, erro
 		case arg[0]:
 			flag = 1
 		}
-		ptr := c.arena.new(4)
 		util.WriteUint32(c.mod, ptr, uint32(flag))
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		return util.ReadUint32(c.mod, ptr) != 0, c.error(r)
+		res = util.ReadUint32(c.mod, ptr) != 0
 
 	case FCNTL_CHUNK_SIZE:
-		ptr := c.arena.new(4)
 		util.WriteUint32(c.mod, ptr, uint32(arg[0].(int)))
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		return nil, c.error(r)
 
 	case FCNTL_RESERVE_BYTES:
 		bytes := -1
 		if len(arg) > 0 {
 			bytes = arg[0].(int)
 		}
-		ptr := c.arena.new(4)
 		util.WriteUint32(c.mod, ptr, uint32(bytes))
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		return int(util.ReadUint32(c.mod, ptr)), c.error(r)
+		res = int(util.ReadUint32(c.mod, ptr))
 
 	case FCNTL_DATA_VERSION:
-		ptr := c.arena.new(4)
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		return util.ReadUint32(c.mod, ptr), c.error(r)
+		res = util.ReadUint32(c.mod, ptr)
 
 	case FCNTL_LOCKSTATE:
-		ptr := c.arena.new(4)
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		return vfs.LockLevel(util.ReadUint32(c.mod, ptr)), c.error(r)
+		res = vfs.LockLevel(util.ReadUint32(c.mod, ptr))
 
 	case FCNTL_VFS_POINTER:
-		ptr := c.arena.new(4)
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		const zNameOffset = 16
-		ptr = util.ReadUint32(c.mod, ptr)
-		ptr = util.ReadUint32(c.mod, ptr+zNameOffset)
-		name := util.ReadString(c.mod, ptr, _MAX_NAME)
-		return vfs.Find(name), c.error(r)
+		if rc == _OK {
+			const zNameOffset = 16
+			ptr = util.ReadUint32(c.mod, ptr)
+			ptr = util.ReadUint32(c.mod, ptr+zNameOffset)
+			name := util.ReadString(c.mod, ptr, _MAX_NAME)
+			res = vfs.Find(name)
+		}
 
 	case FCNTL_FILE_POINTER, FCNTL_JOURNAL_POINTER:
-		ptr := c.arena.new(4)
-		r := c.call("sqlite3_file_control",
+		rc = c.call("sqlite3_file_control",
 			uint64(c.handle), uint64(schemaPtr),
 			uint64(op), uint64(ptr))
-		const fileHandleOffset = 4
-		ptr = util.ReadUint32(c.mod, ptr)
-		ptr = util.ReadUint32(c.mod, ptr+fileHandleOffset)
-		return util.GetHandle(c.ctx, ptr), c.error(r)
+		if rc == _OK {
+			const fileHandleOffset = 4
+			ptr = util.ReadUint32(c.mod, ptr)
+			ptr = util.ReadUint32(c.mod, ptr+fileHandleOffset)
+			res = util.GetHandle(c.ctx, ptr)
+		}
 	}
 
-	return nil, MISUSE
+	if err := c.error(rc); err != nil {
+		return nil, err
+	}
+	return res, nil
 }
 
 // Limit allows the size of various constructs to be
@@ -234,10 +251,10 @@ func traceCallback(ctx context.Context, mod api.Module, evt TraceEvent, pDB, pAr
 	return rc
 }
 
-// WalCheckpoint checkpoints a WAL database.
+// WALCheckpoint checkpoints a WAL database.
 //
 // https://sqlite.org/c3ref/wal_checkpoint_v2.html
-func (c *Conn) WalCheckpoint(schema string, mode CheckpointMode) (nLog, nCkpt int, err error) {
+func (c *Conn) WALCheckpoint(schema string, mode CheckpointMode) (nLog, nCkpt int, err error) {
 	defer c.arena.mark()()
 	nLogPtr := c.arena.new(ptrlen)
 	nCkptPtr := c.arena.new(ptrlen)
@@ -250,19 +267,19 @@ func (c *Conn) WalCheckpoint(schema string, mode CheckpointMode) (nLog, nCkpt in
 	return nLog, nCkpt, c.error(r)
 }
 
-// WalAutoCheckpoint configures WAL auto-checkpoints.
+// WALAutoCheckpoint configures WAL auto-checkpoints.
 //
 // https://sqlite.org/c3ref/wal_autocheckpoint.html
-func (c *Conn) WalAutoCheckpoint(pages int) error {
+func (c *Conn) WALAutoCheckpoint(pages int) error {
 	r := c.call("sqlite3_wal_autocheckpoint", uint64(c.handle), uint64(pages))
 	return c.error(r)
 }
 
-// WalHook registers a callback function to be invoked
+// WALHook registers a callback function to be invoked
 // each time data is committed to a database in WAL mode.
 //
 // https://sqlite.org/c3ref/wal_hook.html
-func (c *Conn) WalHook(cb func(db *Conn, schema string, pages int) error) {
+func (c *Conn) WALHook(cb func(db *Conn, schema string, pages int) error) {
 	var enable uint64
 	if cb != nil {
 		enable = 1
@@ -310,4 +327,47 @@ func (c *Conn) SoftHeapLimit(n int64) int64 {
 // https://sqlite.org/c3ref/hard_heap_limit64.html
 func (c *Conn) HardHeapLimit(n int64) int64 {
 	return int64(c.call("sqlite3_hard_heap_limit64", uint64(n)))
+}
+
+// EnableChecksums enables checksums on a database.
+//
+// https://sqlite.org/cksumvfs.html
+func (c *Conn) EnableChecksums(schema string) error {
+	r, err := c.FileControl(schema, FCNTL_RESERVE_BYTES)
+	if err != nil {
+		return err
+	}
+	if r == 8 {
+		// Correct value, enabled.
+		return nil
+	}
+	if r == 0 {
+		// Default value, enable.
+		_, err = c.FileControl(schema, FCNTL_RESERVE_BYTES, 8)
+		if err != nil {
+			return err
+		}
+		r, err = c.FileControl(schema, FCNTL_RESERVE_BYTES)
+		if err != nil {
+			return err
+		}
+	}
+	if r != 8 {
+		// Invalid value.
+		return util.ErrorString("sqlite3: reserve bytes must be 8, is: " + strconv.Itoa(r.(int)))
+	}
+
+	// VACUUM the database.
+	if schema != "" {
+		err = c.Exec(`VACUUM ` + QuoteIdentifier(schema))
+	} else {
+		err = c.Exec(`VACUUM`)
+	}
+	if err != nil {
+		return err
+	}
+
+	// Checkpoint the WAL.
+	_, _, err = c.WALCheckpoint(schema, CHECKPOINT_RESTART)
+	return err
 }

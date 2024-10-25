@@ -1,4 +1,4 @@
-//go:build (amd64 || arm64 || riscv64 || ppc64le) && !sqlite3_nosys
+//go:build (amd64 || arm64 || riscv64) && !sqlite3_nosys
 
 package vfs
 
@@ -13,7 +13,7 @@ const (
 	_F2FS_IOC_START_ATOMIC_WRITE  = 62721
 	_F2FS_IOC_COMMIT_ATOMIC_WRITE = 62722
 	_F2FS_IOC_ABORT_ATOMIC_WRITE  = 62725
-	_F2FS_IOC_GET_FEATURES        = 2147808524
+	_F2FS_IOC_GET_FEATURES        = 2147808524 // -2147158772
 	_F2FS_FEATURE_ATOMIC_WRITE    = 4
 )
 

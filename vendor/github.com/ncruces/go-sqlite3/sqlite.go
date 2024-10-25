@@ -9,11 +9,12 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
-	"github.com/ncruces/go-sqlite3/vfs"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
+	"github.com/ncruces/go-sqlite3/vfs"
 )
 
 // Configure SQLite Wasm.
@@ -49,10 +50,15 @@ func compileSQLite() {
 	cfg := RuntimeConfig
 	if cfg == nil {
 		cfg = wazero.NewRuntimeConfig()
+		if bits.UintSize >= 64 {
+			cfg = cfg.WithMemoryLimitPages(4096) // 256MB
+		} else {
+			cfg = cfg.WithMemoryLimitPages(512) // 32MB
+		}
 	}
+	cfg = cfg.WithCoreFeatures(api.CoreFeaturesV2 | experimental.CoreFeaturesThreads)
 
-	instance.runtime = wazero.NewRuntimeWithConfig(ctx,
-		cfg.WithCoreFeatures(api.CoreFeaturesV2|experimental.CoreFeaturesThreads))
+	instance.runtime = wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	env := instance.runtime.NewHostModuleBuilder("env")
 	env = vfs.ExportHostFunctions(env)

@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/tetratelabs/wazero/api"
+
 	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/ncruces/go-sqlite3/vfs"
-	"github.com/tetratelabs/wazero/api"
 )
 
 // Conn is a database connection handle.
@@ -204,6 +205,7 @@ func (c *Conn) PrepareFlags(sql string, flags PrepareFlag) (stmt *Stmt, tail str
 	tailPtr := c.arena.new(ptrlen)
 	sqlPtr := c.arena.string(sql)
 
+	c.checkInterrupt(c.handle)
 	r := c.call("sqlite3_prepare_v3", uint64(c.handle),
 		uint64(sqlPtr), uint64(len(sql)+1), uint64(flags),
 		uint64(stmtPtr), uint64(tailPtr))
@@ -457,8 +459,8 @@ func busyCallback(ctx context.Context, mod api.Module, pDB uint32, count int32) 
 // https://sqlite.org/c3ref/db_status.html
 func (c *Conn) Status(op DBStatus, reset bool) (current, highwater int, err error) {
 	defer c.arena.mark()()
-	hiPtr := c.arena.new(4)
-	curPtr := c.arena.new(4)
+	hiPtr := c.arena.new(intlen)
+	curPtr := c.arena.new(intlen)
 
 	var i uint64
 	if reset {
@@ -484,8 +486,8 @@ func (c *Conn) TableColumnMetadata(schema, table, column string) (declType, coll
 	declTypePtr := c.arena.new(ptrlen)
 	collSeqPtr := c.arena.new(ptrlen)
 	notNullPtr := c.arena.new(ptrlen)
-	primaryKeyPtr := c.arena.new(ptrlen)
 	autoIncPtr := c.arena.new(ptrlen)
+	primaryKeyPtr := c.arena.new(ptrlen)
 	if schema != "" {
 		schemaPtr = c.arena.string(schema)
 	}
@@ -518,11 +520,4 @@ func (c *Conn) stmtsIter(yield func(*Stmt) bool) {
 			break
 		}
 	}
-}
-
-// DriverConn is implemented by the SQLite [database/sql] driver connection.
-//
-// Deprecated: use [github.com/ncruces/go-sqlite3/driver.Conn] instead.
-type DriverConn interface {
-	Raw() *Conn
 }
