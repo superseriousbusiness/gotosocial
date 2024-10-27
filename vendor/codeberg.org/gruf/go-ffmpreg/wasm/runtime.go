@@ -2,7 +2,6 @@ package wasm
 
 import (
 	"context"
-	"os"
 
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
@@ -29,17 +28,6 @@ func NewRuntime(ctx context.Context, cfg wazero.RuntimeConfig) (wazero.Runtime, 
 
 	// Set core features ffmpeg compiled with.
 	cfg = cfg.WithCoreFeatures(CoreFeatures)
-
-	if dir := os.Getenv("WAZERO_COMPILATION_CACHE"); dir != "" {
-		// Use on-filesystem compilation cache given by env.
-		cache, err := wazero.NewCompilationCacheWithDir(dir)
-		if err != nil {
-			return nil, err
-		}
-
-		// Update runtime config with cache.
-		cfg = cfg.WithCompilationCache(cache)
-	}
 
 	// Instantiate runtime with prepared config.
 	rt := wazero.NewRuntimeWithConfig(ctx, cfg)

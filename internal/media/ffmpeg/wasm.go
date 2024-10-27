@@ -21,6 +21,7 @@ package ffmpeg
 
 import (
 	"context"
+	"os"
 
 	ffmpeglib "codeberg.org/gruf/go-ffmpreg/embed/ffmpeg"
 	ffprobelib "codeberg.org/gruf/go-ffmpreg/embed/ffprobe"
@@ -89,6 +90,22 @@ func initRuntime(ctx context.Context) (err error) {
 	if runtime != nil {
 		return nil
 	}
-	runtime, err = wasm.NewRuntime(ctx, nil)
+
+	// Create new runtime config.
+	cfg := wazero.NewRuntimeConfig()
+
+	if dir := os.Getenv("GTS_WAZERO_COMPILATION_CACHE"); dir != "" {
+		// Use on-filesystem compilation cache given by env.
+		cache, err := wazero.NewCompilationCacheWithDir(dir)
+		if err != nil {
+			return err
+		}
+
+		// Update runtime config with cache.
+		cfg = cfg.WithCompilationCache(cache)
+	}
+
+	// Initialize new runtime from config.
+	runtime, err = wasm.NewRuntime(ctx, cfg)
 	return
 }
