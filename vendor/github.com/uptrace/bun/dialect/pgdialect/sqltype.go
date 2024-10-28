@@ -1,6 +1,7 @@
 package pgdialect
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net"
 	"reflect"
@@ -27,14 +28,6 @@ const (
 	pgTypeSerial      = "SERIAL"      // 4 byte autoincrementing integer
 	pgTypeBigSerial   = "BIGSERIAL"   // 8 byte autoincrementing integer
 
-	// Character Types
-	pgTypeChar = "CHAR" // fixed length string (blank padded)
-	pgTypeText = "TEXT" // variable length string without limit
-
-	// JSON Types
-	pgTypeJSON  = "JSON"  // text representation of json data
-	pgTypeJSONB = "JSONB" // binary representation of json data
-
 	// Binary Data Types
 	pgTypeBytea = "BYTEA" // binary string
 )
@@ -43,6 +36,7 @@ var (
 	ipType             = reflect.TypeOf((*net.IP)(nil)).Elem()
 	ipNetType          = reflect.TypeOf((*net.IPNet)(nil)).Elem()
 	jsonRawMessageType = reflect.TypeOf((*json.RawMessage)(nil)).Elem()
+	nullStringType     = reflect.TypeOf((*sql.NullString)(nil)).Elem()
 )
 
 func (d *Dialect) DefaultVarcharLen() int {
@@ -78,12 +72,14 @@ func fieldSQLType(field *schema.Field) string {
 
 func sqlType(typ reflect.Type) string {
 	switch typ {
+	case nullStringType: // typ.Kind() == reflect.Struct, test for exact match
+		return sqltype.VarChar
 	case ipType:
 		return pgTypeInet
 	case ipNetType:
 		return pgTypeCidr
 	case jsonRawMessageType:
-		return pgTypeJSONB
+		return sqltype.JSONB
 	}
 
 	sqlType := schema.DiscoverSQLType(typ)
@@ -93,16 +89,16 @@ func sqlType(typ reflect.Type) string {
 	}
 
 	switch typ.Kind() {
-	case reflect.Map, reflect.Struct:
+	case reflect.Map, reflect.Struct: // except typ == nullStringType, see above
 		if sqlType == sqltype.VarChar {
-			return pgTypeJSONB
+			return sqltype.JSONB
 		}
 		return sqlType
 	case reflect.Array, reflect.Slice:
 		if typ.Elem().Kind() == reflect.Uint8 {
 			return pgTypeBytea
 		}
-		return pgTypeJSONB
+		return sqltype.JSONB
 	}
 
 	return sqlType

@@ -576,6 +576,9 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/puzpuzpuz/xsync/v3 v3.4.0
+## explicit; go 1.18
+github.com/puzpuzpuz/xsync/v3
 # github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b
 ## explicit
 github.com/quasoft/memstore
@@ -919,8 +922,8 @@ github.com/ugorji/go/codec
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-# github.com/uptrace/bun v1.2.1
-## explicit; go 1.21
+# github.com/uptrace/bun v1.2.5
+## explicit; go 1.22
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
 github.com/uptrace/bun/dialect/feature
@@ -931,8 +934,8 @@ github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
 github.com/uptrace/bun/schema
-# github.com/uptrace/bun/dialect/pgdialect v1.2.1
-## explicit; go 1.21
+# github.com/uptrace/bun/dialect/pgdialect v1.2.5
+## explicit; go 1.22
 github.com/uptrace/bun/dialect/pgdialect
 # github.com/uptrace/bun/dialect/sqlitedialect v1.2.1
 ## explicit; go 1.21
