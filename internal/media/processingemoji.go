@@ -158,7 +158,7 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	if err != nil && !isUnsupportedTypeErr(err) {
 		return gtserror.Newf("ffprobe error: %w", err)
 	} else if result == nil {
-		log.Warn(ctx, "unsupported data type")
+		log.Warnf(ctx, "unsupported data type by ffprobe: %v", err)
 		return nil
 	}
 
