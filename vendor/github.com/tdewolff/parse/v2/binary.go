@@ -510,14 +510,6 @@ func NewBinaryReader2File(filename string) (*BinaryReader2, error) {
 	return NewBinaryReader2(f), nil
 }
 
-func NewBinaryReader2Mmap(filename string) (*BinaryReader2, error) {
-	f, err := newBinaryReaderMmap(filename)
-	if err != nil {
-		return nil, err
-	}
-	return NewBinaryReader2(f), nil
-}
-
 func (r *BinaryReader2) Err() error {
 	return r.err
 }
