@@ -22,6 +22,7 @@ import (
 	"os"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-runners"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -166,7 +167,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if err != nil && !isUnsupportedTypeErr(err) {
 		return gtserror.Newf("ffprobe error: %w", err)
 	} else if result == nil {
-		log.Warn(ctx, "unsupported data type")
+		log.Warnf(ctx, "unsupported data type by ffprobe: %v", err)
 		return nil
 	}
 
@@ -214,7 +215,10 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		// metadata, in order to keep tags.
 
 	default:
-		log.Warn(ctx, "unsupported data type: %s", result.format)
+		log.WarnKVs(ctx, kv.Fields{
+			{K: "format", V: result.format},
+			{K: "msg", V: "unsupported data type"},
+		}...)
 		return nil
 	}
 
