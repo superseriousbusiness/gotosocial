@@ -78,11 +78,11 @@ Some examples:
 
 #### Visibility Level of Posts to Show on Your Profile
 
-Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web view of your profile, on thread web views, and served in your RSS feed (if you have enabled RSS).
+Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web views of your profile, of your statuses, and in your RSS feed (if you have enabled RSS).
 
-**By default, GoToSocial shows only Public visibility posts on the web view of your profile, not Unlisted.** You can adjust this setting to also show Unlisted visibility posts on your profile, which is similar to the default for other ActivityPub softwares like Mastodon etc.
+**By default, GoToSocial shows only Public visibility posts on its web views, not Unlisted.** You can adjust this setting to also show Unlisted visibility posts, which is similar to the default for other ActivityPub softwares like Mastodon etc.
 
-You can also choose to show no posts at all on the web view of your profile. This allows you to write posts without having to worry about scrapers, rubberneckers, and other nosy parkers visiting your web profile and looking at your posts.
+You can also choose to show no posts at all on GoToSocial's web views. This allows you to write posts without having to worry about scrapers, rubberneckers, and other nosy parkers visiting your web profile and looking at your posts.
 
 This setting only applies to the visibility of your own posts. Other user's Unlisted posts are never shown.
 
