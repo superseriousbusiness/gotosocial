@@ -702,7 +702,7 @@ func compileTemplates(filenames ...string) (*template.Template, error) {
 			tmpl = tmpl.New(name)
 		}
 
-		b, err := ioutil.ReadFile(filename)
+		b, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, err
 		}

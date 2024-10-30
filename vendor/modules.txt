@@ -24,7 +24,7 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
-# codeberg.org/gruf/go-ffmpreg v0.3.1
+# codeberg.org/gruf/go-ffmpreg v0.4.2
 ## explicit; go 1.22.0
 codeberg.org/gruf/go-ffmpreg/embed/ffmpeg
 codeberg.org/gruf/go-ffmpreg/embed/ffprobe
@@ -486,7 +486,7 @@ github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
-# github.com/minio/minio-go/v7 v7.0.78
+# github.com/minio/minio-go/v7 v7.0.79
 ## explicit; go 1.22
 github.com/minio/minio-go/v7
 github.com/minio/minio-go/v7/pkg/cors
@@ -833,11 +833,11 @@ github.com/superseriousbusiness/oauth2/v4/generates
 github.com/superseriousbusiness/oauth2/v4/manage
 github.com/superseriousbusiness/oauth2/v4/models
 github.com/superseriousbusiness/oauth2/v4/server
-# github.com/tdewolff/minify/v2 v2.21.0
+# github.com/tdewolff/minify/v2 v2.21.1
 ## explicit; go 1.18
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.17
+# github.com/tdewolff/parse/v2 v2.7.18
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer

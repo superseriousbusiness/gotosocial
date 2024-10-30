@@ -392,18 +392,31 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 	case "matroska,webm":
 		switch {
 		case len(res.video) > 0:
+			var isWebm bool
+
 			switch res.video[0].codec {
 			case "vp8", "vp9", "av1":
-			default:
-				return gtsmodel.FileTypeVideo, "mkv"
-			}
-			if len(res.audio) > 0 {
-				switch res.audio[0].codec {
-				case "vorbis", "opus", "libopus":
-					// webm only supports [VP8/VP9/AV1]+[vorbis/opus]
-					return gtsmodel.FileTypeVideo, "webm"
+				if len(res.audio) > 0 {
+					switch res.audio[0].codec {
+					case "vorbis", "opus", "libopus":
+						// webm only supports [VP8/VP9/AV1] +
+						//                    [vorbis/opus]
+						isWebm = true
+					}
+				} else {
+					// no audio with correct
+					// video codec also fine.
+					isWebm = true
 				}
 			}
+
+			if isWebm {
+				// Check for valid webm codec config.
+				return gtsmodel.FileTypeVideo, "webm"
+			}
+
+			// All else falls under generic mkv.
+			return gtsmodel.FileTypeVideo, "mkv"
 		case len(res.audio) > 0:
 			return gtsmodel.FileTypeAudio, "mka"
 		}

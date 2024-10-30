@@ -81,3 +81,11 @@ func (r *binaryReaderMmap) Bytes(n int, off int64) ([]byte, error) {
 	}
 	return r.data[off : off+int64(n) : off+int64(n)], nil
 }
+
+func NewBinaryReader2Mmap(filename string) (*BinaryReader2, error) {
+	f, err := newBinaryReaderMmap(filename)
+	if err != nil {
+		return nil, err
+	}
+	return NewBinaryReader2(f), nil
+}

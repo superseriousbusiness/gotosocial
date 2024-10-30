@@ -27,12 +27,7 @@ import (
 	ffprobelib "codeberg.org/gruf/go-ffmpreg/embed/ffprobe"
 	"codeberg.org/gruf/go-ffmpreg/wasm"
 	"github.com/tetratelabs/wazero"
-	"github.com/tetratelabs/wazero/imports/wasi_snapshot_preview1"
 )
-
-// Use all core features required by ffmpeg / ffprobe
-// (these should be the same but we OR just in case).
-const corefeatures = wasm.CoreFeatures
 
 var (
 	// shared WASM runtime instance.
@@ -91,38 +86,26 @@ func compileFfprobe(ctx context.Context) error {
 
 // initRuntime initializes the global wazero.Runtime,
 // if already initialized this function is a no-op.
-func initRuntime(ctx context.Context) error {
+func initRuntime(ctx context.Context) (err error) {
 	if runtime != nil {
 		return nil
 	}
 
-	var cache wazero.CompilationCache
+	// Create new runtime config.
+	cfg := wazero.NewRuntimeConfig()
 
 	if dir := os.Getenv("GTS_WAZERO_COMPILATION_CACHE"); dir != "" {
-		var err error
-
 		// Use on-filesystem compilation cache given by env.
-		cache, err = wazero.NewCompilationCacheWithDir(dir)
+		cache, err := wazero.NewCompilationCacheWithDir(dir)
 		if err != nil {
 			return err
 		}
+
+		// Update runtime config with cache.
+		cfg = cfg.WithCompilationCache(cache)
 	}
 
-	// Prepare config with cache.
-	cfg := wazero.NewRuntimeConfig()
-	cfg = cfg.WithCoreFeatures(corefeatures)
-	cfg = cfg.WithCompilationCache(cache)
-
-	// Instantiate runtime with prepared config.
-	rt := wazero.NewRuntimeWithConfig(ctx, cfg)
-
-	// Instantiate wasi snapshot preview features into runtime.
-	_, err := wasi_snapshot_preview1.Instantiate(ctx, rt)
-	if err != nil {
-		return err
-	}
-
-	// Set runtime.
-	runtime = rt
-	return nil
+	// Initialize new runtime from config.
+	runtime, err = wasm.NewRuntime(ctx, cfg)
+	return
 }

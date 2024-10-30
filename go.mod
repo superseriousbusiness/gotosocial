@@ -12,7 +12,7 @@ require (
 	codeberg.org/gruf/go-debug v1.3.0
 	codeberg.org/gruf/go-errors/v2 v2.3.2
 	codeberg.org/gruf/go-fastcopy v1.1.3
-	codeberg.org/gruf/go-ffmpreg v0.3.1
+	codeberg.org/gruf/go-ffmpreg v0.4.2
 	codeberg.org/gruf/go-iotools v0.0.0-20240710125620-934ae9c654cf
 	codeberg.org/gruf/go-kv v1.6.5
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
@@ -42,7 +42,7 @@ require (
 	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/miekg/dns v1.1.62
-	github.com/minio/minio-go/v7 v7.0.78
+	github.com/minio/minio-go/v7 v7.0.79
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.20.0
 	github.com/oklog/ulid v1.3.1
@@ -53,7 +53,7 @@ require (
 	github.com/superseriousbusiness/activity v1.9.0-gts
 	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
-	github.com/tdewolff/minify/v2 v2.21.0
+	github.com/tdewolff/minify/v2 v2.21.1
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/tetratelabs/wazero v1.8.1
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
@@ -197,7 +197,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe // indirect
 	github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB // indirect
-	github.com/tdewolff/parse/v2 v2.7.17 // indirect
+	github.com/tdewolff/parse/v2 v2.7.18 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
