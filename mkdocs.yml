@@ -45,7 +45,7 @@ extra:
       lang: zh
 
 extra_css:
-  - assets/css/colours.css
+  - public/css/colours.css
 
 markdown_extensions:
   - admonition
