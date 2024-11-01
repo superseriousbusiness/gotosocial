@@ -48,9 +48,6 @@ codeberg.org/gruf/go-maps
 # codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 ## explicit; go 1.22.2
 codeberg.org/gruf/go-mempool
-# codeberg.org/gruf/go-mimetypes v1.2.0
-## explicit; go 1.17
-codeberg.org/gruf/go-mimetypes
 # codeberg.org/gruf/go-mutexes v1.5.1
 ## explicit; go 1.22.2
 codeberg.org/gruf/go-mutexes
