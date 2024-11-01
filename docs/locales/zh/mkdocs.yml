@@ -2,8 +2,15 @@ INHERIT: ../../../mkdocs.yml
 site_name: "GoToSocial 文档"
 theme:
   language: zh
+  palette:
+    - scheme: slate
+      toggle:
+        name: 切换到浅色模式
+    - scheme: default
+      toggle:
+        name: 切换到深色模式
 docs_dir: .
-edit_uri: edit/main/docs/locales/zh-cn/
+edit_uri: edit/main/docs/locales/zh/
 copyright: GoToSocial 以 GNU AGPL v3 许可授权。版权所有 (C) 全体 GoToSocial 开发者 admin@gotosocial.org
 
 nav:
