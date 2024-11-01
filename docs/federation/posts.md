@@ -914,7 +914,7 @@ Now, `remote_1` boosts/reblogs a post from a third account, `remote_2`, residing
 
 `local_account` does not follow `remote_2`, and neither does anybody else on `our.server`, which means that `our.server` has not seen this post by `remote_2` before.
 
-![A diagram of the conversation thread, showing the post from remote_2, and possible ancestor and descendant posts](../assets/diagrams/conversation_thread.png)
+![A diagram of the conversation thread, showing the post from remote_2, and possible ancestor and descendant posts](../public/diagrams/conversation_thread.png)
 
 What GoToSocial will do now, is 'dereference' the post by `remote_2` to check if it is part of a thread and, if so, whether any other parts of the thread can be obtained.
 

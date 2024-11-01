@@ -2,7 +2,7 @@
 
 RSS 是[简易信息聚合](https://en.wikipedia.org/wiki/RSS)的缩写。这是一种在网络上共享内容的非常成熟的标准。你可能在你喜欢的新闻网站和博客上看到过这个活泼的橙色 RSS 标志：
 
-![橙色 RSS 图标](../assets/rss.svg)
+![橙色 RSS 图标](../public/rss.svg)
 
 如果你愿意，可以配置你的 GoToSocial 账户，以将你的贴文以 RSS 订阅源的形式发布到网上。这让没有 Fediverse 账户的人也能定期获取你的贴文更新。这非常适合使用 GoToSocial 发布长篇博客形式的贴文，并希望任何人都能轻松阅读它们的情况。
 

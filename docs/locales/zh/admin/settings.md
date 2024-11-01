@@ -20,13 +20,13 @@ GoToSocial 管理设置面板使用 [管理 API](https://docs.gotosocial.org/zh-
 
 ### 举报
 
-![一个展示未解决举报的举报列表。](../assets/admin-settings-reports.png)
+![一个展示未解决举报的举报列表。](../public/admin-settings-reports.png)
 
 举报部分显示来自本站用户或外站（匿名显示，仅显示实例名称，不显示具体用户名）的举报列表。
 
 点击举报可以查看其是否已解决（若有理由则显示），更多信息，以及由举报用户选定的被举报贴文列表。你也可以在此视图中将举报标记为已解决，并填写评论。如果该用户来自你的实例，你在此处输入的任何评论都会对创建举报的用户可见。
 
-![待处理的举报的详细视图，显示被举报的贴文和举报理由。](../assets/admin-settings-report-detail.png)
+![待处理的举报的详细视图，显示被举报的贴文和举报理由。](../public/admin-settings-report-detail.png)
 
 点击被举报账户的用户名会在“账户”视图中打开该账户，从而允许你对其执行管理操作。
 
@@ -36,7 +36,7 @@ GoToSocial 管理设置面板使用 [管理 API](https://docs.gotosocial.org/zh-
 
 ### 联合
 
-![已封禁实例列表，有一个字段用于过滤/添加新的屏蔽。下面是批量导入/导出界面的链接](../assets/admin-settings-federation.png)
+![已封禁实例列表，有一个字段用于过滤/添加新的屏蔽。下面是批量导入/导出界面的链接](../public/admin-settings-federation.png)
 
 在联合部分，你可以创建、删除和审核明确的域名屏蔽和域名允许。
 
@@ -56,7 +56,7 @@ GoToSocial 管理设置面板使用 [管理 API](https://docs.gotosocial.org/zh-
 
 通过联合部分底部的链接（或访问 `/settings/admin/federation/import-export`），你可以批量导入/导出屏蔽列表和允许列表。
 
-![导入中包含的域列表，提供选择某些或全部域的方法，更改其域，以及更新子域使用方法。](../assets/admin-settings-federation-import-export.png)
+![导入中包含的域列表，提供选择某些或全部域的方法，更改其域，以及更新子域使用方法。](../public/admin-settings-federation-import-export.png)
 
 通过输入字段或文件导入列表后，你可以在导入子集之前查看列表中的条目。你还会在使用子域的条目中收到警告，此处还提供一种轻松将其更改为主域的方法。
 
@@ -86,7 +86,7 @@ GoToSocial 管理设置面板使用 [管理 API](https://docs.gotosocial.org/zh-
 
 #### 本站
 
-![本站自定义表情部分，显示按类别排序的自定义表情概览。有很多加菲猫表情。](../assets/admin-settings-emoji-local.png)
+![本站自定义表情部分，显示按类别排序的自定义表情概览。有很多加菲猫表情。](../public/admin-settings-emoji-local.png)
 
 此部分显示你的实例上启用的所有自定义表情的概览，按类别排序。点击某个表情可显示其详细信息，并提供更改类别或图像的选项，或完全删除它。这里无法更新短代码，你需要自己上传带有新短代码的表情（可以选择删除旧的表情）。
 
@@ -94,7 +94,7 @@ GoToSocial 管理设置面板使用 [管理 API](https://docs.gotosocial.org/zh-
 
 #### 外站
 
-![外站自定义表情部分，显示从输入的贴文中解析的 3 个表情的列表： blobcat、blobfoxbox 和 blobhajmlem。可以选择它们，微调短代码，并在提交复制或删除操作前为其分配类别](../assets/admin-settings-emoji-remote.png)
+![外站自定义表情部分，显示从输入的贴文中解析的 3 个表情的列表： blobcat、blobfoxbox 和 blobhajmlem。可以选择它们，微调短代码，并在提交复制或删除操作前为其分配类别](../public/admin-settings-emoji-remote.png)
 
 通过“外站”部分，你可以查找任何外站贴文的链接（前提是该实例未被封禁）。如果使用了任何自定义表情，它们将被列出，这样就提供了一种轻松复制到本站表情的方法（供你自己在贴文中使用），或者也可以禁止它们（从贴文中隐藏）。
 
@@ -102,7 +102,7 @@ GoToSocial 管理设置面板使用 [管理 API](https://docs.gotosocial.org/zh-
 
 ### 实例设置
 
-![GoToSocial 管理面板的截图，显示了更改实例设置的字段](../assets/admin-settings-instance.png)
+![GoToSocial 管理面板的截图，显示了更改实例设置的字段](../public/admin-settings-instance.png)
 
 在这里，你可以为你的实例设置各种元数据，如显示名称/标题、缩略图、（简短）描述和联系信息。
 
