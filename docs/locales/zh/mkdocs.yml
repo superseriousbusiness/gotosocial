@@ -2,6 +2,7 @@ INHERIT: ../../../mkdocs.yml
 site_name: "GoToSocial 文档"
 theme:
   language: zh
+  custom_dir: ../../overrides
   palette:
     - scheme: slate
       toggle:
