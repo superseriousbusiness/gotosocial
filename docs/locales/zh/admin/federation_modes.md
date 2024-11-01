@@ -33,7 +33,7 @@ GoToSocial 当前提供“黑名单”和“白名单”联合模式，可以通
 
 可以同时屏蔽和允许同一个域，结合这两者的效果取决于你的实例当前使用的联合模式。
 
-![一个流程图，显示两种不同联合模式如何处理传入的请求。](../../../assets/diagrams/federation_modes.png)
+![一个流程图，显示两种不同联合模式如何处理传入的请求。](../assets/diagrams/federation_modes.png)
 
 ### 在黑名单模式下
 

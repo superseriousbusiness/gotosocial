@@ -907,7 +907,7 @@ GoToSocial 通过在对话贴文串上下迭代，尽可能获取外站贴文，
 
 `local_account` 未关注 `remote_2`，`our.server` 上也没有其他人关注，因此 `our.server` 未曾见过 `remote_2` 的这篇贴文。
 
-![贴文串的示意图，展示了来自 remote_2 的贴文，以及可能的祖先和后代贴文](../../../assets/diagrams/conversation_thread.png)
+![贴文串的示意图，展示了来自 remote_2 的贴文，以及可能的祖先和后代贴文](../assets/diagrams/conversation_thread.png)
 
 此时，GoToSocial 会对 `remote_2` 的贴文进行“解引用”，检查其是否属于某个贴文串，以及贴文串的其他部分是否可以获取。
 

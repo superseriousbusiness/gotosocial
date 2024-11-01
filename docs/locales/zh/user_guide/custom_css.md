@@ -14,7 +14,7 @@ CSS（级联样式表）是一种与 HTML 一起使用的编码语言，它决�
 
 这是一个标准的 GoToSocial 账户页面：
 
-![一个 GoToSocial 测试账户页面。标准配色方案是灰色、蓝色和橙色。](./../../../assets/cssstandard.png)
+![一个 GoToSocial 测试账户页面。标准配色方案是灰色、蓝色和橙色。](./../assets/cssstandard.png)
 
 假设我们想将背景颜色改为黑色而不是灰色。
 
@@ -30,7 +30,7 @@ CSS（级联样式表）是一种与 HTML 一起使用的编码语言，它决�
 
 如果我们返回到账户页面并刷新页面，现在它看起来是这样的：
 
-![同一个 GoToSocial 测试账户页面。背景现在是黑色。](./../../../assets/cssblack.png)
+![同一个 GoToSocial 测试账户页面。背景现在是黑色。](./../assets/cssblack.png)
 
 如果我们想要更炫一点，可以使用下面的 CSS 代码为背景添加渐变效果：
 
@@ -42,7 +42,7 @@ CSS（级联样式表）是一种与 HTML 一起使用的编码语言，它决�
 
 保存 CSS 并刷新账户页面后，页面现在看起来是这样的：
 
-![同一个 GoToSocial 测试账户页面。背景现在从深红色开始，向下渐变为紫色。](./../../../assets/cssgradient.png)
+![同一个 GoToSocial 测试账户页面。背景现在从深红色开始，向下渐变为紫色。](./../assets/cssgradient.png)
 
 ## 可访问性
 

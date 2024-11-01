@@ -39,6 +39,6 @@ tracing-insecure-transport: true
 
 选择一个追踪后，将打开第二个面板，显示对应数据跨度的可视化视图。你可以从那里深入浏览，通过点击每个子跨度查看其执行的操作。
 
-![Grafana 显示 /api/v1/instance 端点的追踪](../../../assets/tracing.png)
+![Grafana 显示 /api/v1/instance 端点的追踪](../assets/tracing.png)
 
 [traceql]: https://grafana.com/docs/tempo/latest/traceql/

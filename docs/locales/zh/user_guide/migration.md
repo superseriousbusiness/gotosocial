@@ -53,7 +53,7 @@ GoToSocial 支持使用 `Move` 活动进行账号迁移。
 
 然后，进入“迁移”部分，查看“别名账号”子部分：
 
-![展示已填写账号别名的别名账号子部分。](../../../assets/migration-aliasing.png)
+![展示已填写账号别名的别名账号子部分。](../assets/migration-aliasing.png)
 
 在第一个还未填写账号别名框中，输入你希望**发起迁移**的账号的 URL。这表示你要发起迁移的账号属于你，即你“也被称为”该账号。
 
@@ -65,7 +65,7 @@ GoToSocial 支持使用 `Move` 活动进行账号迁移。
 
 在 Mastodon 上，“账号迁移”设置部分看起来如下：
 
-![Mastodon “账号迁移”设置页面。](../../../assets/migration-mastodon.png)
+![Mastodon “账号迁移”设置页面。](../assets/migration-mastodon.png)
 
 如果你正在从 Mastodon 账号迁移到 GoToSocial 账号，你会在“新账号代号”字段中填写 GoToSocial 账号的 `@[username]@[domain]` 值。例如，如果你的 GoToSocial 账号用户名是 `@someone`，并且在实例 `example.org` 上，那么在此处输入 `@someone@example.org`。
 

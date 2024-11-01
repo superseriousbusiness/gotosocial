@@ -4,6 +4,7 @@ theme:
   name: material
   language: en
   font: false
+  custom_dir: docs/overrides
   features:
     - header.autohide
     - content.code.copy
