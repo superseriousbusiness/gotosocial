@@ -6,9 +6,11 @@ theme:
   palette:
     - scheme: slate
       toggle:
+        icon: material/brightness-7
         name: 切换到浅色模式
     - scheme: default
       toggle:
+        icon: material/brightness-4
         name: 切换到深色模式
 docs_dir: .
 edit_uri: edit/main/docs/locales/zh/
