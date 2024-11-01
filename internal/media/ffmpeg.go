@@ -330,7 +330,7 @@ func (res *result) GetFileType() (gtsmodel.FileType, string, string) {
 			"video/mpeg", "mpeg"
 	case "mjpeg":
 		return gtsmodel.FileTypeVideo,
-			"", "mjpeg"
+			"video/x-motion-jpeg", "mjpeg"
 	case "mov,mp4,m4a,3gp,3g2,mj2":
 		switch {
 		case len(res.video) > 0:
