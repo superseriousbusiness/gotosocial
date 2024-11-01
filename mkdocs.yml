@@ -67,6 +67,9 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
 
+exclude_docs: |
+  locales/**
+
 nav:
   - "Home": "index.md"
   - "FAQ": "faq.md"
