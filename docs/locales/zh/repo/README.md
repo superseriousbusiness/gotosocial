@@ -266,8 +266,6 @@ GoToSocial 支持 [OpenID Connect (OIDC)](https://openid.net/connect/) 身份提
 
 查看我们的 [入门文档](https://docs.gotosocial.org/zh-cn/latest/getting_started/)，并浏览我们的 [发布页面](https://github.com/superseriousbusiness/gotosocial/releases)。
 
----
-
 <!--releases-start-->
 ### 支持的平台
 
@@ -363,6 +361,7 @@ S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获
 ---
 
 ## 致谢
+<!--body-1-end-->
 
 ### 库
 
@@ -428,6 +427,7 @@ GoToSocial 使用以下开源库、框架和工具，在此声明并致谢 💕
 - [wagslane/go-password-validator](https://github.com/wagslane/go-password-validator); 密码强度验证。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [yuin/goldmark](https://github.com/yuin/goldmark); Markdown 解析器。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 
+<!--body-2-start-->
 ### 图像归属与许可
 
 树懒标志由 [Anna Abramek](https://abramek.art/) 设计。

@@ -16,6 +16,9 @@ docs_dir: .
 edit_uri: edit/main/docs/locales/zh/
 copyright: GoToSocial 以 GNU AGPL v3 许可授权。版权所有 (C) 全体 GoToSocial 开发者 admin@gotosocial.org
 
+exclude_docs: |
+  repo/**
+
 nav:
   - "主页": "index.md"
   - "FAQ": "faq.md"
