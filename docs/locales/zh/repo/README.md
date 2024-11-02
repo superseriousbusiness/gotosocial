@@ -15,7 +15,7 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
 
 文档位于 [docs.gotosocial.org](https://docs.gotosocial.org/zh-cn/)。你可以直接跳至 [API 文档](https://docs.gotosocial.org/zh-cn/latest/api/swagger/)。
 
-要从源代码构建，请查看 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) 文件。
+要从源代码构建，请查看 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
 
 这是实例首页的截图！
 
@@ -100,7 +100,7 @@ GoToSocial 的愿景是让许多小而特别的实例遍布联邦宇宙，让人
 
 我们在 2021 年 11 月进行了首次 Alpha 发布。我们于 2024 年 9 月/10 月离开 Alpha，进入 Beta 阶段。
 
-要详细了解已实现和未实现的内容，以及 [稳定发布](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release) 的进展，请查看 [路线图](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md)。
+要详细了解已实现和未实现的内容，以及 [稳定发布](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release) 的进展，请查看 [路线图](https://github.com/superseriousbusiness/gotosocial/blob/main/docs/locales/zh/repo/ROADMAP.md)。
 
 ---
 
@@ -327,7 +327,7 @@ S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获
 
 ### 从源代码构建
 
-有关从源代码构建 GoToSocial 的说明，请参见 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) 文件。
+有关从源代码构建 GoToSocial 的说明，请参见 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
 
 ### 第三方打包
 
@@ -348,7 +348,7 @@ S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获
 
 ## 参与贡献
 
-你想为 GtS 作出贡献吗？太好了！❤️❤️❤️ 请查看问题页面，看看是否有你想参与的内容，并阅读 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) 文件以获取指南并配置开发环境。
+你想为 GtS 作出贡献吗？太好了！❤️❤️❤️ 请查看问题页面，看看是否有你想参与的内容，并阅读 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件以获取指南并配置开发环境。
 
 ---
 
