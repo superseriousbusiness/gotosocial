@@ -514,7 +514,7 @@ GoToSocial 是自由软件，采用 [GNU AGPL v3 许可](https://github.com/supe
 
 > 如果你修改了程序，并且你的修改版本支持通过计算机网络与用户进行远程交互，你的版本必须显著地向所有这些用户提供获得你的版本对应源码的机会，方式需为通过网络服务器以不收费的方式，或通过某种标准或习惯方式提供以便于复制软件。
 
-版权所有 (C) 全体 GoToSocial 贡献者
+版权所有 (C) 全体 GoToSocial 开发者
 
 <!--I'm adding this here to take the crown of having the 1000th commit ~ kim-->
 <!--body-2-end-->

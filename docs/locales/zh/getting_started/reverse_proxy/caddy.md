@@ -83,7 +83,7 @@ example.org {
 
 默认情况下，caddy 在转发请求中设置 `X-Forwarded-For`。为了使其与速率限制配合使用，请设置 `trusted-proxies` 配置变量。详见[速率限制](../../api/ratelimiting.md)和[通用配置](../../configuration/general.md)文档。
 
-有关高级配置，请查看 Caddy 文档中的[反向代理指令](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)。
+有关进阶配置，请查看 Caddy 文档中的[反向代理指令](https://caddyserver.com/docs/caddyfile/directives/reverse_proxy)。
 
 现在检查配置错误。
 

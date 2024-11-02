@@ -137,7 +137,7 @@ sudo systemctl start gotosocial
 
 ## 安全加固
 
-如果你想通过高级配置选项加强 NGINX 部署，网上有很多指南（[例如这个](https://beaglesecurity.com/blog/article/nginx-server-security.html)）。请尝试找到最新的指南。Mozilla 还[在此处](https://ssl-config.mozilla.org/)发布了最佳实践 SSL 配置。
+如果你想通过进阶配置选项加强 NGINX 部署，网上有很多指南（[例如这个](https://beaglesecurity.com/blog/article/nginx-server-security.html)）。请尝试找到最新的指南。Mozilla 还[在此处](https://ssl-config.mozilla.org/)发布了最佳实践 SSL 配置。
 
 ## 结果
 
@@ -183,4 +183,4 @@ server {
 }
 ```
 
-关于 nginx 的其他配置选项（包括静态资源服务和缓存），请参阅文档的[高级部分](../../advanced/index.md)。
+关于 nginx 的其他配置选项（包括静态资源服务和缓存），请参阅文档的[进阶配置部分](../../advanced/index.md)。

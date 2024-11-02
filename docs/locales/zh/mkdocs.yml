@@ -79,7 +79,7 @@ nav:
     - "advanced/metrics.md"
     - "advanced/replicating-sqlite.md"
     - "advanced/sqlite-networked-storage.md"
-    - "Advanced builds":
+    - "适用进阶场景的构建":
       - "advanced/builds/nowasm.md"
 
   - "管理":
