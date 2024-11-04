@@ -84,17 +84,21 @@ func generateThumb(
 	needBlurhash bool,
 ) (
 	outpath string,
+	mimeType string,
 	blurhash string,
 	err error,
 ) {
 	var ext string
+
+	// Default type is webp.
+	mimeType = "image/webp"
 
 	// Generate thumb output path REPLACING extension.
 	if i := strings.IndexByte(filepath, '.'); i != -1 {
 		outpath = filepath[:i] + "_thumb.webp"
 		ext = filepath[i+1:] // old extension
 	} else {
-		return "", "", gtserror.New("input file missing extension")
+		return "", "", "", gtserror.New("input file missing extension")
 	}
 
 	// Check for the few media types we
@@ -106,6 +110,7 @@ func generateThumb(
 		// Replace the "webp" with "jpeg", as we'll
 		// use our native Go thumbnailing generation.
 		outpath = outpath[:len(outpath)-4] + "jpeg"
+		mimeType = "image/jpeg"
 
 		log.Debug(ctx, "generating thumb from jpeg")
 		blurhash, err := generateNativeThumb(
@@ -117,7 +122,7 @@ func generateThumb(
 			jpeg.Decode,
 			needBlurhash,
 		)
-		return outpath, blurhash, err
+		return outpath, mimeType, blurhash, err
 
 	// We specifically only allow generating native
 	// thumbnails from gif IF it doesn't contain an
@@ -128,6 +133,7 @@ func generateThumb(
 		// Replace the "webp" with "jpeg", as we'll
 		// use our native Go thumbnailing generation.
 		outpath = outpath[:len(outpath)-4] + "jpeg"
+		mimeType = "image/jpeg"
 
 		log.Debug(ctx, "generating thumb from gif")
 		blurhash, err := generateNativeThumb(
@@ -139,7 +145,7 @@ func generateThumb(
 			gif.Decode,
 			needBlurhash,
 		)
-		return outpath, blurhash, err
+		return outpath, mimeType, blurhash, err
 
 	// We specifically only allow generating native
 	// thumbnails from png IF it doesn't contain an
@@ -150,6 +156,7 @@ func generateThumb(
 		// Replace the "webp" with "jpeg", as we'll
 		// use our native Go thumbnailing generation.
 		outpath = outpath[:len(outpath)-4] + "jpeg"
+		mimeType = "image/jpeg"
 
 		log.Debug(ctx, "generating thumb from png")
 		blurhash, err := generateNativeThumb(
@@ -161,7 +168,7 @@ func generateThumb(
 			png.Decode,
 			needBlurhash,
 		)
-		return outpath, blurhash, err
+		return outpath, mimeType, blurhash, err
 
 	// We specifically only allow generating native
 	// thumbnails from webp IF it doesn't contain an
@@ -172,6 +179,7 @@ func generateThumb(
 		// Replace the "webp" with "jpeg", as we'll
 		// use our native Go thumbnailing generation.
 		outpath = outpath[:len(outpath)-4] + "jpeg"
+		mimeType = "image/jpeg"
 
 		log.Debug(ctx, "generating thumb from webp")
 		blurhash, err := generateNativeThumb(
@@ -183,7 +191,7 @@ func generateThumb(
 			webp.Decode,
 			needBlurhash,
 		)
-		return outpath, blurhash, err
+		return outpath, mimeType, blurhash, err
 	}
 
 	// The fallback for thumbnail generation, which
@@ -196,18 +204,18 @@ func generateThumb(
 		height,
 		pixfmt,
 	); err != nil {
-		return outpath, "", err
+		return outpath, "", "", err
 	}
 
 	if needBlurhash {
 		// Generate new blurhash from webp output thumb.
 		blurhash, err = generateWebpBlurhash(outpath)
 		if err != nil {
-			return outpath, "", gtserror.Newf("error generating blurhash: %w", err)
+			return outpath, "", "", gtserror.Newf("error generating blurhash: %w", err)
 		}
 	}
 
-	return outpath, blurhash, err
+	return outpath, mimeType, blurhash, nil
 }
 
 // generateNativeThumb generates a thumbnail

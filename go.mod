@@ -17,7 +17,6 @@ require (
 	codeberg.org/gruf/go-kv v1.6.5
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
-	codeberg.org/gruf/go-mimetypes v1.2.0
 	codeberg.org/gruf/go-mutexes v1.5.1
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4

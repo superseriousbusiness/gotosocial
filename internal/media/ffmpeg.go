@@ -323,14 +323,14 @@ type videoStream struct {
 //
 // Note the checks for (len(res.video) > 0) may catch some audio files with embedded
 // album art as video, but i blame that on the hellscape that is media filetypes.
-//
-// TODO: we can update this code to also return a mimetype and avoid later parsing!
-func (res *result) GetFileType() (gtsmodel.FileType, string) {
+func (res *result) GetFileType() (gtsmodel.FileType, string, string) {
 	switch res.format {
 	case "mpeg":
-		return gtsmodel.FileTypeVideo, "mpeg"
+		return gtsmodel.FileTypeVideo,
+			"video/mpeg", "mpeg"
 	case "mjpeg":
-		return gtsmodel.FileTypeVideo, "mjpeg"
+		return gtsmodel.FileTypeVideo,
+			"video/x-motion-jpeg", "mjpeg"
 	case "mov,mp4,m4a,3gp,3g2,mj2":
 		switch {
 		case len(res.video) > 0:
@@ -338,55 +338,70 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 				res.duration <= 30 {
 				// Short, soundless
 				// video file aka gifv.
-				return gtsmodel.FileTypeGifv, "mp4"
+				return gtsmodel.FileTypeGifv,
+					"video/mp4", "mp4"
 			} else {
 				// Video file (with or without audio).
-				return gtsmodel.FileTypeVideo, "mp4"
+				return gtsmodel.FileTypeVideo,
+					"video/mp4", "mp4"
 			}
 		case len(res.audio) > 0 &&
 			res.audio[0].codec == "aac":
 			// m4a only supports [aac] audio.
-			return gtsmodel.FileTypeAudio, "m4a"
+			return gtsmodel.FileTypeAudio,
+				"audio/mp4", "m4a"
 		}
 	case "apng":
-		return gtsmodel.FileTypeImage, "apng"
+		return gtsmodel.FileTypeImage,
+			"image/apng", "apng"
 	case "png_pipe":
-		return gtsmodel.FileTypeImage, "png"
+		return gtsmodel.FileTypeImage,
+			"image/png", "png"
 	case "image2", "image2pipe", "jpeg_pipe":
-		return gtsmodel.FileTypeImage, "jpeg"
+		return gtsmodel.FileTypeImage,
+			"image/jpeg", "jpeg"
 	case "webp", "webp_pipe":
-		return gtsmodel.FileTypeImage, "webp"
+		return gtsmodel.FileTypeImage,
+			"image/webp", "webp"
 	case "gif":
-		return gtsmodel.FileTypeImage, "gif"
+		return gtsmodel.FileTypeImage,
+			"image/gif", "gif"
 	case "mp3":
 		if len(res.audio) > 0 {
 			switch res.audio[0].codec {
 			case "mp2":
-				return gtsmodel.FileTypeAudio, "mp2"
+				return gtsmodel.FileTypeAudio,
+					"audio/mp2", "mp2"
 			case "mp3":
-				return gtsmodel.FileTypeAudio, "mp3"
+				return gtsmodel.FileTypeAudio,
+					"audio/mp3", "mp3"
 			}
 		}
 	case "asf":
 		switch {
 		case len(res.video) > 0:
-			return gtsmodel.FileTypeVideo, "wmv"
+			return gtsmodel.FileTypeVideo,
+				"video/x-ms-wmv", "wmv"
 		case len(res.audio) > 0:
-			return gtsmodel.FileTypeAudio, "wma"
+			return gtsmodel.FileTypeAudio,
+				"audio/x-ms-wma", "wma"
 		}
 	case "ogg":
 		if len(res.video) > 0 {
 			switch res.video[0].codec {
 			case "theora", "dirac": // daala, tarkin
-				return gtsmodel.FileTypeVideo, "ogv"
+				return gtsmodel.FileTypeVideo,
+					"video/ogg", "ogv"
 			}
 		}
 		if len(res.audio) > 0 {
 			switch res.audio[0].codec {
 			case "opus", "libopus":
-				return gtsmodel.FileTypeAudio, "opus"
+				return gtsmodel.FileTypeAudio,
+					"audio/opus", "opus"
 			default:
-				return gtsmodel.FileTypeAudio, "ogg"
+				return gtsmodel.FileTypeAudio,
+					"audio/ogg", "ogg"
 			}
 		}
 	case "matroska,webm":
@@ -411,21 +426,27 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 			}
 
 			if isWebm {
-				// Check for valid webm codec config.
-				return gtsmodel.FileTypeVideo, "webm"
+				// Check valid webm codec config.
+				return gtsmodel.FileTypeVideo,
+					"video/webm", "webm"
 			}
 
 			// All else falls under generic mkv.
-			return gtsmodel.FileTypeVideo, "mkv"
+			return gtsmodel.FileTypeVideo,
+				"video/x-matroska", "mkv"
 		case len(res.audio) > 0:
-			return gtsmodel.FileTypeAudio, "mka"
+			return gtsmodel.FileTypeAudio,
+				"audio/x-matroska", "mka"
 		}
 	case "avi":
-		return gtsmodel.FileTypeVideo, "avi"
+		return gtsmodel.FileTypeVideo,
+			"video/x-msvideo", "avi"
 	case "flac":
-		return gtsmodel.FileTypeAudio, "flac"
+		return gtsmodel.FileTypeAudio,
+			"audio/flac", "flac"
 	}
-	return gtsmodel.FileTypeUnknown, res.format
+	return gtsmodel.FileTypeUnknown,
+		"", res.format
 }
 
 // ImageMeta extracts image metadata contained within ffprobe'd media result streams.

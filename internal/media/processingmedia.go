@@ -186,8 +186,8 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	p.media.FileMeta.Original.Duration = util.PtrIf(float32(result.duration))
 	p.media.FileMeta.Original.Bitrate = util.PtrIf(result.bitrate)
 
-	// Set media type from ffprobe format data.
-	p.media.Type, ext = result.GetFileType()
+	// Set generic media type and mimetype from ffprobe format data.
+	p.media.Type, p.media.File.ContentType, ext = result.GetFileType()
 
 	// Add file extension to path.
 	newpath := temppath + "." + ext
@@ -236,10 +236,10 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 
 		// Determine if blurhash needs generating.
 		needBlurhash := (p.media.Blurhash == "")
-		var newBlurhash string
+		var newBlurhash, mimeType string
 
-		// Generate thumbnail, and new blurhash if need from media.
-		thumbpath, newBlurhash, err = generateThumb(ctx, temppath,
+		// Generate thumbnail, and new blurhash if needed from temp media.
+		thumbpath, mimeType, newBlurhash, err = generateThumb(ctx, temppath,
 			thumbWidth,
 			thumbHeight,
 			result.orientation,
@@ -249,6 +249,9 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		if err != nil {
 			return gtserror.Newf("error generating image thumb: %w", err)
 		}
+
+		// Set generated thumbnail's mimetype.
+		p.media.Thumbnail.ContentType = mimeType
 
 		if needBlurhash {
 			// Set newly determined blurhash.
@@ -264,10 +267,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 		p.media.ID,
 		ext,
 	)
-
-	// Get mimetype for the file container
-	// type, falling back to generic data.
-	p.media.File.ContentType = getMimeType(ext)
 
 	// Copy temporary file into storage at path.
 	filesz, err := p.mgr.state.Storage.PutFile(ctx,
@@ -294,9 +293,6 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 			p.media.ID,
 			thumbExt,
 		)
-
-		// Determine thumbnail content-type from thumb ext.
-		p.media.Thumbnail.ContentType = getMimeType(thumbExt)
 
 		// Copy thumbnail file into storage at path.
 		thumbsz, err := p.mgr.state.Storage.PutFile(ctx,

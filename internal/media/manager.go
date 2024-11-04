@@ -56,7 +56,7 @@ var SupportedMIMETypes = []string{
 	"video/ogg", // .ogv
 
 	// mpeg4 types
-	"audio/x-m4a",     // .m4a
+	"audio/mp4",       // .m4a
 	"video/mp4",       // .mp4
 	"video/quicktime", // .mov
 
