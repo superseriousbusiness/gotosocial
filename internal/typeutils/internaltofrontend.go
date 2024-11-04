@@ -18,9 +18,11 @@
 package typeutils
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -42,16 +44,13 @@ import (
 )
 
 const (
-	instanceStatusesCharactersReservedPerURL    = 25
-	instanceMediaAttachmentsImageMatrixLimit    = 16777216 // width * height
-	instanceMediaAttachmentsVideoMatrixLimit    = 16777216 // width * height
-	instanceMediaAttachmentsVideoFrameRateLimit = 60
-	instancePollsMinExpiration                  = 300     // seconds
-	instancePollsMaxExpiration                  = 2629746 // seconds
-	instanceAccountsMaxFeaturedTags             = 10
-	instanceAccountsMaxProfileFields            = 6 // FIXME: https://github.com/superseriousbusiness/gotosocial/issues/1876
-	instanceSourceURL                           = "https://github.com/superseriousbusiness/gotosocial"
-	instanceMastodonVersion                     = "3.5.3"
+	instanceStatusesCharactersReservedPerURL = 25
+	instancePollsMinExpiration               = 300     // seconds
+	instancePollsMaxExpiration               = 2629746 // seconds
+	instanceAccountsMaxFeaturedTags          = 10
+	instanceAccountsMaxProfileFields         = 6 // FIXME: https://github.com/superseriousbusiness/gotosocial/issues/1876
+	instanceSourceURL                        = "https://github.com/superseriousbusiness/gotosocial"
+	instanceMastodonVersion                  = "3.5.3"
 )
 
 var instanceStatusesSupportedMimeTypes = []string{
@@ -1563,11 +1562,24 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
-	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
-	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
-	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
-	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
-	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
+
+	// NOTE: we use the local max sizes here
+	// as it hints to apps like Tusky for image
+	// compression of locally uploaded media.
+	//
+	// TODO: return local / remote depending
+	// on authorized endpoint user (if any)?
+	localMax := config.GetMediaLocalMaxSize()
+	imageSz := cmp.Or(config.GetMediaImageSizeHint(), localMax)
+	videoSz := cmp.Or(config.GetMediaVideoSizeHint(), localMax)
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(imageSz) // #nosec G115 -- Already validated.
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(videoSz) // #nosec G115 -- Already validated.
+
+	// we don't actually set any limits on these. set to max possible.
+	instance.Configuration.MediaAttachments.ImageMatrixLimit = math.MaxInt
+	instance.Configuration.MediaAttachments.VideoFrameRateLimit = math.MaxInt
+	instance.Configuration.MediaAttachments.VideoMatrixLimit = math.MaxInt
+
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
 	instance.Configuration.Polls.MaxCharactersPerOption = config.GetStatusesPollOptionMaxChars()
 	instance.Configuration.Polls.MinExpiration = instancePollsMinExpiration
@@ -1713,11 +1725,24 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
-	instance.Configuration.MediaAttachments.ImageSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
-	instance.Configuration.MediaAttachments.ImageMatrixLimit = instanceMediaAttachmentsImageMatrixLimit
-	instance.Configuration.MediaAttachments.VideoSizeLimit = int(config.GetMediaRemoteMaxSize()) // #nosec G115 -- Already validated.
-	instance.Configuration.MediaAttachments.VideoFrameRateLimit = instanceMediaAttachmentsVideoFrameRateLimit
-	instance.Configuration.MediaAttachments.VideoMatrixLimit = instanceMediaAttachmentsVideoMatrixLimit
+
+	// NOTE: we use the local max sizes here
+	// as it hints to apps like Tusky for image
+	// compression of locally uploaded media.
+	//
+	// TODO: return local / remote depending
+	// on authorized endpoint user (if any)?
+	localMax := config.GetMediaLocalMaxSize()
+	imageSz := cmp.Or(config.GetMediaImageSizeHint(), localMax)
+	videoSz := cmp.Or(config.GetMediaVideoSizeHint(), localMax)
+	instance.Configuration.MediaAttachments.ImageSizeLimit = int(imageSz) // #nosec G115 -- Already validated.
+	instance.Configuration.MediaAttachments.VideoSizeLimit = int(videoSz) // #nosec G115 -- Already validated.
+
+	// we don't actually set any limits on these. set to max possible.
+	instance.Configuration.MediaAttachments.ImageMatrixLimit = math.MaxInt
+	instance.Configuration.MediaAttachments.VideoFrameRateLimit = math.MaxInt
+	instance.Configuration.MediaAttachments.VideoMatrixLimit = math.MaxInt
+
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
 	instance.Configuration.Polls.MaxCharactersPerOption = config.GetStatusesPollOptionMaxChars()
 	instance.Configuration.Polls.MinExpiration = instancePollsMinExpiration

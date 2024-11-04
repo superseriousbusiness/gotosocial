@@ -129,9 +129,11 @@ EXPECT=$(cat << "EOF"
     "media-emoji-local-max-size": 420,
     "media-emoji-remote-max-size": 420,
     "media-ffmpeg-pool-size": 8,
+    "media-image-size-hint": 5242880,
     "media-local-max-size": 420,
     "media-remote-cache-days": 30,
     "media-remote-max-size": 420,
+    "media-video-size-hint": 41943040,
     "metrics-auth-enabled": false,
     "metrics-auth-password": "",
     "metrics-auth-username": "",
@@ -244,12 +246,14 @@ GTS_ACCOUNTS_REGISTRATION_OPEN=true \
 GTS_ACCOUNTS_REASON_REQUIRED=false \
 GTS_MEDIA_DESCRIPTION_MIN_CHARS=69 \
 GTS_MEDIA_DESCRIPTION_MAX_CHARS=5000 \
+GTS_MEDIA_IMAGE_SIZE_HINT='5MiB' \
 GTS_MEDIA_LOCAL_MAX_SIZE=420 \
 GTS_MEDIA_REMOTE_MAX_SIZE=420 \
 GTS_MEDIA_REMOTE_CACHE_DAYS=30 \
 GTS_MEDIA_EMOJI_LOCAL_MAX_SIZE=420 \
 GTS_MEDIA_EMOJI_REMOTE_MAX_SIZE=420 \
 GTS_MEDIA_FFMPEG_POOL_SIZE=8 \
+GTS_MEDIA_VIDEO_SIZE_HINT='40MiB' \
 GTS_METRICS_AUTH_ENABLED=false \
 GTS_METRICS_ENABLED=false \
 GTS_STORAGE_BACKEND='local' \

@@ -471,6 +471,24 @@ accounts-custom-css-length: 10000
 # Default: 40MiB (41943040 bytes)
 media-local-max-size: 40MiB
 
+# Size. Size in bytes of max image size referred to on /api/v_/instance endpoints,
+# used by applications like Tusky to automatically scale locally uploaded media.
+#
+# Leaving this unset will default to media-local-max-size.
+#
+# Examples: [64, 500, 5MiB, 5MB, 50M]
+# Default: unset
+media-image-size-hint: 5MiB
+
+# Size. Size in bytes of max video size referred to on /api/v_/instance endpoints,
+# used by applications like Tusky to automatically scale locally uploaded media.
+#
+# Leaving this unset will default to media-local-max-size.
+#
+# Examples: [64, 4096, 4MiB, 4MB, 40M]
+# Default: unset
+media-video-size-hint: 40MiB
+
 # Size. Max size in bytes of media to download from other instances.
 #
 # Lowering this limit may cause your instance not to fetch post media.
