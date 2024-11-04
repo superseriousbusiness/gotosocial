@@ -24,7 +24,7 @@ codeberg.org/gruf/go-fastcopy
 # codeberg.org/gruf/go-fastpath/v2 v2.0.0
 ## explicit; go 1.14
 codeberg.org/gruf/go-fastpath/v2
-# codeberg.org/gruf/go-ffmpreg v0.4.2
+# codeberg.org/gruf/go-ffmpreg v0.5.0
 ## explicit; go 1.22.0
 codeberg.org/gruf/go-ffmpreg/embed/ffmpeg
 codeberg.org/gruf/go-ffmpreg/embed/ffprobe
