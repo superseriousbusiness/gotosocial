@@ -21,7 +21,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
@@ -474,25 +473,19 @@ func validateStatusPoll(form *apimodel.StatusCreateRequest) gtserror.WithCode {
 	}
 
 	// Normalize poll expiry if necessary.
-	// If we parsed this as JSON, expires_in
-	// may be either a float64 or a string.
-	if ei := form.Poll.ExpiresInI; ei != nil {
-		switch e := ei.(type) {
-		case float64:
-			form.Poll.ExpiresIn = int(e)
+	if form.Poll.ExpiresInI != nil {
+		// If we parsed this as JSON, expires_in
+		// may be either a float64 or a string.
+		expiresIn, err := apiutil.ParseDuration(
+			form.Poll.ExpiresInI,
+			"expires_in",
+		)
+		if err != nil {
+			return gtserror.NewErrorBadRequest(err, err.Error())
+		}
 
-		case string:
-			expiresIn, err := strconv.Atoi(e)
-			if err != nil {
-				text := fmt.Sprintf("could not parse expires_in value %s as integer: %v", e, err)
-				return gtserror.NewErrorBadRequest(errors.New(text), text)
-			}
-
-			form.Poll.ExpiresIn = expiresIn
-
-		default:
-			text := fmt.Sprintf("could not parse expires_in type %T as integer", ei)
-			return gtserror.NewErrorBadRequest(errors.New(text), text)
+		if expiresIn != nil {
+			form.Poll.ExpiresIn = *expiresIn
 		}
 	}
 
