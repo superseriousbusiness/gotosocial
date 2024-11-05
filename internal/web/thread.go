@@ -115,17 +115,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	}
 
 	// Prepare stylesheets for thread.
-	stylesheets := make([]string, 0, 5)
-
-	// Basic thread stylesheets.
-	stylesheets = append(
-		stylesheets,
-		[]string{
-			cssFA,
-			cssStatus,
-			cssThread,
-		}...,
-	)
+	stylesheets := make([]string, 0, 2)
 
 	// User-selected theme if set.
 	if theme := targetAccount.Theme; theme != "" {
