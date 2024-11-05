@@ -47,9 +47,13 @@ skulk({
 	},
 	servers: {
 		express: {
-			proxy: "http://127.0.0.1:8081",
-			assets: "/assets"
-		}
+			proxy: {
+				target: "http://127.0.0.1:8081",
+				onProxyRes: (proxyRes) => {
+					// CSP header prevents react-devtools and redux-devtools extensions from working
+					delete proxyRes.headers['content-security-policy'];
+				},
+			},
 	},
 	bundles: {
 		frontend: {
