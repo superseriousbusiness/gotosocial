@@ -114,5 +114,5 @@ func initWASM(ctx context.Context) error {
 // dealing with weird Go interface nil bullshit.
 func isNil(i interface{}) bool {
 	type eface struct{ Type, Data unsafe.Pointer }
-	return (*(*eface)(unsafe.Pointer(&i))).Data == nil
+	return (*eface)(unsafe.Pointer(&i)).Data == nil
 }
