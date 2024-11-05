@@ -17,15 +17,23 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-module.exports = {
-	"extends": ["@joepie91/eslint-config/react"],
-	"parser": "@typescript-eslint/parser",
-	"plugins": ["@typescript-eslint", "license-header"],
-	"rules": {
-		"license-header/header": ["error", __dirname + "/.license-header.js"],
-		"no-console": 'error'
+module.exports = [
+	{
+		files: ["**/*.ts", "**/*.tsx"],
+		languageOptions: {
+			parserOptions: {
+				project: true,
+				ecmaFeatures: {
+					jsx: true
+				}
+			}
+		},
+		plugins: {
+			"license-header": require("eslint-plugin-license-header")
+		},
+		rules: {
+			"license-header/header": ["error", __dirname + "/.license-header.js"]
+		}
 	},
-	"parserOptions": {
-		"sourceType": "module"
-	}
-};
+	...require("@f0x52/eslint-config")
+];
