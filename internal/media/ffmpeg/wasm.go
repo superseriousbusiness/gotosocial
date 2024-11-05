@@ -30,11 +30,17 @@ import (
 	"github.com/tetratelabs/wazero"
 )
 
+// ffmpreg is a concurrency-safe pointer
+// to our necessary WebAssembly runtime
+// and compiled ffmpreg module instance.
 var ffmpreg atomic.Pointer[struct {
 	run wazero.Runtime
 	mod wazero.CompiledModule
 }]
 
+// initWASM safely prepares new WebAssembly runtime
+// and compiles ffmpreg module instance, if the global
+// pointer has not been already. else, is a no-op.
 func initWASM(ctx context.Context) error {
 	if ffmpreg.Load() != nil {
 		return nil
