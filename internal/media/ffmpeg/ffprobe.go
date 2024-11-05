@@ -40,7 +40,7 @@ func InitFfprobe(ctx context.Context, max int) error {
 
 // Ffprobe runs the given arguments with an instance of ffprobe.
 func Ffprobe(ctx context.Context, args Args) (uint32, error) {
-	return ffmpegRunner.Run(ctx, func() (uint32, error) {
+	return ffprobeRunner.Run(ctx, func() (uint32, error) {
 		return wasm.Run(ctx, runtime, ffprobe, args)
 	})
 }
