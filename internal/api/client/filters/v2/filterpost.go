@@ -239,7 +239,7 @@ func validateNormalizeCreateFilter(form *apimodel.FilterCreateRequestV2) error {
 		}
 	}
 
-	// Ensure no zero duration is set.
+	// Interpret zero as indefinite duration..
 	if form.ExpiresIn != nil && *form.ExpiresIn == 0 {
 		form.ExpiresIn = nil
 	}
