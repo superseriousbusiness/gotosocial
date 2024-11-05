@@ -23,11 +23,11 @@
 */ -}}
 
 {{- define "votes" -}}
-    {{- if eq . 1 -}}
-        {{- . -}}&nbsp;vote
-    {{- else -}}
-        {{- . }}&nbsp;votes
-    {{- end -}}
+{{- if eq . 1 -}}
+{{- . -}}&nbsp;vote
+{{- else -}}
+{{- . }}&nbsp;votes
+{{- end -}}
 {{- end -}}
 
 {{- with . }}
@@ -51,14 +51,14 @@
         <span class="total-votes">
             {{- template "votes" .Poll.VotesCount -}}&nbsp;
             {{- if .Poll.Expired -}}
-                total
+            total
             {{- else -}}
-                so far
+            so far
             {{- end -}}
         </span>
     </figcaption>
     <ul class="poll-options nodot">
-    {{- range $index, $pollOption := .PollOptions }}
+        {{- range $index, $pollOption := .PollOptions }}
         <li class="poll-option">
             <span class="sr-only">Option {{ increment $index }},</span>
             <span lang="{{- .LanguageTag.TagStr -}}">{{ emojify .Emojis (noescape $pollOption.Title) }}</span>
@@ -75,7 +75,7 @@
                 {{- end }}
             </div>
         </li>
-    {{- end }}
+        {{- end }}
     </ul>
 </figure>
 {{- end }}

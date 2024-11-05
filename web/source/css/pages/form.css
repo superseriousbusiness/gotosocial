@@ -1,0 +1,50 @@
+/*
+	Page with form, used for sign-in/sign-up/authorization flows
+*/
+section.with-form {
+	form {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+
+		padding-bottom: 1rem;
+		padding-top: 1rem;
+
+		p {
+			/*
+				We use gap so we don't
+				need top + bottom margins.
+			*/
+			margin-top: 0;
+			margin-bottom: 0;
+		}
+
+		label, input {
+			padding-left: 0.2rem;
+		}
+
+		.labelinput {
+			display: flex;
+			flex-direction: column;
+			gap: 0.4rem;
+		}
+
+		.checkbox {
+			display: flex;
+			flex-direction: row-reverse;
+			gap: 0.4rem;
+
+			& > input {
+				height: 100%;
+				width: 5%;
+				min-width: 1.2rem;
+				align-self: center;
+			}
+		}
+
+		.btn {
+			/* Visually separate buttons a bit */
+			margin-top: 1rem;
+		}
+	}
+}

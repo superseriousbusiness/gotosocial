@@ -20,19 +20,20 @@
 {{- define "registrationLimits" -}}
 New account registration is currently&nbsp;
 {{- if .instance.Registrations -}}
-    <b>open</b>.
+<b>open</b>.
 {{- else -}}
-    <b>closed</b>.
+<b>closed</b>.
 {{- end -}}
 {{- end -}}
 
 {{- with . }}
-<section class="about-section" role="region" aria-labelledby="signup">
-    <h3 id="signup">Register an Account on {{ .instance.Title -}}</h3>
-    <div class="about-section-contents">
+<section role="region" aria-labelledby="signup">
+    <h2 id="signup">Register an Account on {{ .instance.Title -}}</h2>
+    <div>
         <p>{{- template "registrationLimits" . -}}</p>
         {{- if .instance.Registrations }}
-        <p>To register a new account, please first read the <a href="/about#rules">rules</a> and <a href="/about#terms">terms</a>.</p>
+        <p>To register a new account, please first read the <a href="/about#rules">rules</a> and <a
+                href="/about#terms">terms</a>.</p>
         <p>Then, use the <a href="/signup">sign-up page</a> to register an account.</p>
         <p>Manual admin approval is <b>required</b> for new accounts.</p>
         {{- end }}

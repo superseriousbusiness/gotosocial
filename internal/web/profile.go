@@ -156,6 +156,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		Javascript:  []string{jsFrontend},
 		Extra: map[string]any{
 			"account":          targetAccount,
+			"pageType":         "wider",
 			"rssFeed":          rssFeed,
 			"robotsMeta":       robotsMeta,
 			"statuses":         statusResp.Items,

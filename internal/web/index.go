@@ -60,7 +60,7 @@ func (m *Module) indexHandler(c *gin.Context) {
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
 		Stylesheets: []string{},
-		Extra:       map[string]any{"showStrap": true},
+		Extra:       map[string]any{"showStrap": true, "largeHeader": true},
 	}
 
 	apiutil.TemplateWebPage(c, page)

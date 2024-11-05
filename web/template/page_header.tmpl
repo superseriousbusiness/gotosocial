@@ -27,31 +27,31 @@ Instance Logo
 
 {{- define "strapUsers" -}}
 {{- with deref .instance.Stats.user_count -}}
-    {{- if eq . 1 -}}
-        <span class="count">{{- . -}}</span> user
-    {{- else -}}
-        <span class="count">{{- . -}}</span> users
-    {{- end -}}
+{{- if eq . 1 -}}
+<span class="count">{{- . -}}</span> user
+{{- else -}}
+<span class="count">{{- . -}}</span> users
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "strapPosts" -}}
 {{- with deref .instance.Stats.status_count -}}
-    {{- if eq . 1 -}}
-        <span class="count">{{- . -}}</span> post
-    {{- else -}}
-        <span class="count">{{- . -}}</span> posts
-    {{- end -}}
+{{- if eq . 1 -}}
+<span class="count">{{- . -}}</span> post
+{{- else -}}
+<span class="count">{{- . -}}</span> posts
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "strapInstances" -}}
 {{- with deref .instance.Stats.domain_count -}}
-    {{- if eq . 1 -}}
-        <span class="count">{{- . -}}</span> other instance
-    {{- else -}}
-        <span class="count">{{- . -}}</span> other instances
-    {{- end -}}
+{{- if eq . 1 -}}
+<span class="count">{{- . -}}</span> other instance
+{{- else -}}
+<span class="count">{{- . -}}</span> other instances
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -59,21 +59,16 @@ Instance Logo
 <a aria-label="{{- .instance.Title -}}. Go to instance homepage" href="/" class="nounderline">
     <picture>
         {{- if .instance.ThumbnailStatic }}
-        <source
-            srcset="{{- .instance.ThumbnailStatic -}}"
-            type="{{- .instance.ThumbnailStaticType -}}"
-            media="(prefers-reduced-motion: reduce)"
-        />
+        <source srcset="{{- .instance.ThumbnailStatic -}}" type="{{- .instance.ThumbnailStaticType -}}"
+            media="(prefers-reduced-motion: reduce)" />
         {{- end }}
-        <img
-            src="{{- .instance.Thumbnail -}}"
-            alt="{{- template "thumbnailDescription" . -}}"
-            title="{{- template "thumbnailDescription" . -}}"
-        />
+        <img src="{{- .instance.Thumbnail -}}" alt="{{- template "thumbnailDescription" . -}}"
+            title="{{- template "thumbnailDescription" . -}}" />
     </picture>
     <h1>{{- .instance.Title -}}</h1>
 </a>
 {{- if .showStrap }}
-<aside>home to {{ template "strapUsers" . }} who wrote {{ template "strapPosts" . }}, federating with {{ template "strapInstances" . }}</aside>
+<aside>home to {{ template "strapUsers" . }} who wrote {{ template "strapPosts" . }}, federating with
+    {{ template "strapInstances" . }}</aside>
 {{- end }}
 {{- end }}

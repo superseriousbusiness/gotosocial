@@ -21,43 +21,29 @@
 <nav>
     <ul class="nodot">
         <li id="about">
-            <a
-                href="/about"
-                class="nounderline"
-            >
+            <a href="/about" class="nounderline">
                 About {{ .instance.Title }}
             </a>
         </li>
         <li id="version">
-            <a
-                href="https://github.com/superseriousbusiness/gotosocial"
-                class="nounderline"
-                rel="nofollow noreferrer noopener"
-                target="_blank"
-            >
+            <a href="https://github.com/superseriousbusiness/gotosocial" class="nounderline"
+                rel="nofollow noreferrer noopener" target="_blank">
                 <span aria-hidden="true">🦥</span>
                 Source - GoToSocial {{ .instance.Version }}
                 <span aria-hidden="true">🦥</span>
             </a>
         </li>
-        {{- if .instance.ContactAccount }} 
+        {{- if .instance.ContactAccount }}
         <li id="contact">
-            <a
-                href="/@{{- .instance.ContactAccount.Username -}}"
-                class="nounderline"
-            >
+            <a href="/@{{- .instance.ContactAccount.Username -}}" class="nounderline">
                 Contact account - {{ .instance.ContactAccount.Username }}
             </a>
         </li>
         {{- end }}
-        {{- if .instance.Email }} 
+        {{- if .instance.Email }}
         <li id="email">
-            <a
-                href="mailto:{{- .instance.Email -}}"
-                class="nounderline"
-                rel="nofollow noreferrer noopener"
-                target="_blank"
-            >
+            <a href="mailto:{{- .instance.Email -}}" class="nounderline" rel="nofollow noreferrer noopener"
+                target="_blank">
                 Email - {{ .instance.Email }}
             </a>
         </li>

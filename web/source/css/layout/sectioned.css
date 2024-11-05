@@ -1,0 +1,16 @@
+main.sectioned {
+	gap: 2rem;
+	
+	section {
+		padding: 1.5rem;
+		background: $bg-accent;
+		box-shadow: $boxshadow;
+		border: $boxshadow-border;
+		border-radius: $br;
+	}
+
+	h1, h2, h3, h4, h5 {
+		margin-top: 0;
+		margin-bottom: 0.75rem;
+	}
+}

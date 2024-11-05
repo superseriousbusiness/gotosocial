@@ -31,19 +31,14 @@
             </p>
             <div class="labelinput">
                 <label for="username">
-                    Username (lowercase a-z, numbers, and underscores; max 64 characters).<br/>
-                    <small>Your username will be part of your fediverse handle, and cannot be changed later, so choose thoughtfully!</small>
+                    Username (lowercase a-z, numbers, and underscores; max 64 characters).<br />
+                    <small>Your username will be part of your fediverse handle, and cannot be changed later, so choose
+                        thoughtfully!</small>
                 </label>
-                <input 
-                    id="username"
-                    type="text"
-                    name="username"
-                    required
-                    placeholder="Please enter your desired username"
-                    pattern="^[a-z0-9_]{1,64}$"
+                <input id="username" type="text" name="username" required
+                    placeholder="Please enter your desired username" pattern="^[a-z0-9_]{1,64}$"
                     title="lowercase a-z, numbers, and underscores; max 64 characters"
-                    value="{{- .preferredUsername -}}"
-                >
+                    value="{{- .preferredUsername -}}">
             </div>
             <input type="hidden" name="name" value="{{- .name -}}">
             <button type="submit" class="btn btn-success">Submit</button>

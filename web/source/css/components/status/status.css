@@ -1,30 +1,6 @@
-/*
-	GoToSocial
-	Copyright (C) GoToSocial Authors admin@gotosocial.org
-	SPDX-License-Identifier: AGPL-3.0-or-later
-
-	This program is free software: you can redistribute it and/or modify
-	it under the terms of the GNU Affero General Public License as published by
-	the Free Software Foundation, either version 3 of the License, or
-	(at your option) any later version.
-
-	This program is distributed in the hope that it will be useful,
-	but WITHOUT ANY WARRANTY; without even the implied warranty of
-	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-	GNU Affero General Public License for more details.
-
-	You should have received a copy of the GNU Affero General Public License
-	along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 @import "photoswipe/dist/photoswipe.css";
 @import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
 @import "plyr/dist/plyr.css";
-
-main {
-	background: transparent;
-	grid-auto-rows: auto;
-}
 
 .status {
 	background: $status-bg;
@@ -39,74 +15,6 @@ main {
 		z-index: 1;
 		color: inherit;
 		text-decoration: none;
-	}
-
-	.status-header > address {
-		/*
-			Avoid stretching so wide that user
-			can't click on open thread link that's
-			behind the status header link.
-		*/
-		width: fit-content;
-
-		> a {
-			padding: 0 0.75rem;
-			display: grid;
-			grid-template-columns: 3.5rem 1fr auto;
-			grid-template-rows: auto auto;
-			grid-template-areas:
-				"avatar author-strap author-strap"
-				"avatar author-strap author-strap";
-			gap: 0 0.5rem;
-			font-style: normal;
-	
-			.avatar {
-				grid-area: avatar;
-				height: 3.5rem;
-				width: 3.5rem;
-				object-fit: cover;
-	
-				border: 0.15rem solid $avatar-border;
-				border-radius: $br;
-				overflow: hidden; /* hides corners from img overflowing */
-	
-				img {
-					height: 100%;
-					width: 100%;
-					object-fit: cover;
-					background: $bg;
-				}
-			}
-	
-			.author-strap {
-				grid-area: author-strap;
-				display: grid;
-				grid-template-columns: 1fr auto;
-				grid-template-rows: auto;
-				grid-template-areas:
-					"display display"
-					"user    user";
-				gap: 0 0.5rem;
-	
-				.displayname, .username {
-					justify-self: start;
-					align-self: start;
-					max-width: 100%;
-					font-size: 1rem;
-					line-height: 1.3rem;
-				}
-			
-				.displayname {
-					grid-area: display;
-					font-weight: bold;
-				}
-		
-				.username {
-					grid-area: user;
-					color: $link-fg;
-				}
-			}
-		}
 	}
 
 	.status-body {

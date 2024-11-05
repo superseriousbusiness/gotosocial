@@ -1,0 +1,14 @@
+main.single-page {
+	gap: 2rem;
+
+	padding: 1.5rem;
+
+	background: $bg-accent;
+	box-shadow: $boxshadow;
+	border: $boxshadow-border;
+	border-radius: $br;
+
+	h2:first-child {
+		margin-top: 0;
+	}
+}

@@ -18,34 +18,24 @@
 */ -}}
 
 {{- with . }}
-<section role="region" class="about-section what-is-this" aria-labelledby="what-is-this">
-    <h3 id="what-is-this">What is this?</h3>
-    <div class="about-section-contents">
+<section role="region" class="what-is-this" aria-labelledby="what-is-this">
+    <h2 id="what-is-this">What is this?</h2>
+    <div>
         <p>
             The web page you're reading right now is served by an instance of GoToSocial,
             a federated, distributed, open-source microblogging software which connects
             to other instances across a network known as the "fediverse".
         </p>
-        <h4 id="what-is-an-instance">What is an "instance"?</h4>
+        <h3 id="what-is-an-instance">What is an "instance"?</h3>
         <p>
             "Instance" is a term commonly used for one node in the fediverse. Each instance
             has its own web address, user(s), culture, rules, and settings. Instances exchange
             data by "talking" to each other over the internet using a protocol called ActivityPub.
         </p>
-        <a
-            class="activitypub-logo-wrapper"
-            href="https://activitypub.rocks/"
-            rel="nofollow noreferrer noopener"
-            target="_blank"
-        >
-            <img
-                class="activitypub-logo"
-                src="/assets/activitypub_light.svg"
-                alt="ActivityPub logo by mray, CC0 1.0"
-                title="ActivityPub logo by mray, CC0 1.0"
-                width="250"
-                height="65"
-            />
+        <a class="activitypub-logo-wrapper" href="https://activitypub.rocks/" rel="nofollow noreferrer noopener"
+            target="_blank">
+            <img class="activitypub-logo" src="/assets/activitypub_light.svg" alt="ActivityPub logo by mray, CC0 1.0"
+                title="ActivityPub logo by mray, CC0 1.0" width="250" height="65" />
             Learn more about ActivityPub (opens in a new tab).
         </a>
         <p>
@@ -55,7 +45,7 @@
         <p>
             There are thousands of fediverse instances, connecting millions of people together.
         </p>
-        <h4 id="how-do-i-join-the-fediverse">How do I join the fediverse?</h4>
+        <h3 id="how-do-i-join-the-fediverse">How do I join the fediverse?</h3>
         <p>
             You can join the fediverse by running your own instance of an ActivityPub software,
             or by finding an existing instance that aligns with your values and expectations,
@@ -65,8 +55,10 @@
             To help you find an instance that suits you, you can try one of the following tools:
         </p>
         <ul>
-            <li><a href="https://fediverse.observer" rel="nofollow noreferrer noopener" target="_blank">Fediverse Observer (opens in a new tab)</a></li>
-            <li><a href="https://fedidb.org/network" rel="nofollow noreferrer noopener" target="_blank">FediDB (opens in a new tab)</a></li>
+            <li><a href="https://fediverse.observer" rel="nofollow noreferrer noopener" target="_blank">Fediverse
+                    Observer (opens in a new tab)</a></li>
+            <li><a href="https://fedidb.org/network" rel="nofollow noreferrer noopener" target="_blank">FediDB (opens in
+                    a new tab)</a></li>
         </ul>
         {{- if .instance.Registrations }}
         <p>Or, just <a href="signup">register for an account on this instance</a>!</p>

@@ -33,9 +33,9 @@ export function FakeStatus({ children }) {
 		<article className="status expanded">
 			<header className="status-header">
 				<address>
-					<a style={{margin: 0}}>
+					<a style={{ margin: 0 }}>
 						<img className="avatar" src={account.avatar} alt="" />
-						<dl className="author-strap">
+						<dl className="author-strapline">
 							<dt className="sr-only">Display name</dt>
 							<dd className="displayname text-cutoff">
 								{account.display_name.trim().length > 0 ? account.display_name : account.username}
@@ -82,7 +82,7 @@ export function Status({ status }: { status: StatusType }) {
 
 function StatusHeader({ status }: { status: StatusType }) {
 	const author = status.account;
-	
+
 	return (
 		<header className="status-header">
 			<address>
@@ -99,7 +99,7 @@ function StatusHeader({ status }: { status: StatusType }) {
 						alt={`Avatar for ${author.username}`}
 						title={`Avatar for ${author.username}`}
 					/>
-					<div className="author-strap">
+					<div className="author-strapline">
 						<span className="displayname text-cutoff">{author.display_name}</span>
 						<span className="sr-only">,</span>
 						<span className="username text-cutoff">@{author.acct}</span>
@@ -130,7 +130,7 @@ function StatusBody({ status }: { status: StatusType }) {
 						className="spoiler-text"
 						lang={status.language}
 					>
-						{ status.spoiler_text
+						{status.spoiler_text
 							? status.spoiler_text + " "
 							: "[no content warning set] "
 						}
@@ -146,7 +146,7 @@ function StatusBody({ status }: { status: StatusType }) {
 				</summary>
 				<div
 					className="text"
-					dangerouslySetInnerHTML={{__html: content}}
+					dangerouslySetInnerHTML={{ __html: content }}
 				/>
 			</details>
 			<StatusMedia status={status} />
@@ -170,7 +170,7 @@ function StatusMedia({ status }: { status: StatusType }) {
 			role="group"
 			aria-label={aria_label}
 		>
-			{ status.media_attachments.map((media) => {
+			{status.media_attachments.map((media) => {
 				return (
 					<StatusMediaEntry
 						key={media.id}
@@ -227,7 +227,7 @@ function StatusFooter({ status }: { status: StatusType }) {
 						<dt className="sr-only">Published</dt>
 						<dd>
 							<time dateTime={status.created_at}>
-								{ new Date(status.created_at).toLocaleString() }
+								{new Date(status.created_at).toLocaleString()}
 							</time>
 						</dd>
 					</div>

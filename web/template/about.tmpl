@@ -42,7 +42,7 @@
     {{- end }}
 </ol>
 {{- else }}
-<p>No preferred languages have yet been set for this instance.</p> 
+<p>No preferred languages have yet been set for this instance.</p>
 {{- end }}
 {{- end -}}
 
@@ -60,7 +60,8 @@
 {{- end -}}
 
 {{- define "customCSSLimits" -}}
-<a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css" target="_blank" rel="noopener noreferrer">Custom CSS</a> is&nbsp;
+<a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css" target="_blank"
+    rel="noopener noreferrer">Custom CSS</a> is&nbsp;
 {{- if .instance.Configuration.Accounts.AllowCustomCSS -}}
 <b>enabled</b>
 {{- else -}}
@@ -82,43 +83,43 @@ Polls can have up to
 {{- end -}}
 
 {{- with . }}
-<main class="about">
-    <nav class="about-section" aria-labelledby="toc">
-        <h3 id="toc">Table of Contents</h3>
-        <div class="about-section-contents">
-            <ol>
-                <li><a href="#about">About {{ .instance.Title -}}</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#languages">Languages</a></li>
-                <li><a href="#signup">Register an Account on {{ .instance.Title -}}</a></li>
-                <li><a href="#rules">Rules</a></li>
-                <li><a href="#terms">Terms and Conditions</a></li>
-                <li><a href="#moderated-servers">Moderated Servers</a></li>
-            </ol>
-        </div>
-    </nav>
-    <section class="about-section" role="region" aria-labelledby="about">
-        <h3 id="about">About {{ .instance.Title -}}</h3>
-        <div class="about-section-contents">
+<nav class="sidebar" aria-labelledby="toc">
+    <h2 id="toc">Table of Contents</h2>
+    <div>
+        <ol>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+            <li><a href="#features">Features</a></li>
+            <li><a href="#languages">Languages</a></li>
+            <li><a href="#signup">Register an Account</a></li>
+            <li><a href="#rules">Rules</a></li>
+            <li><a href="#terms">Terms and Conditions</a></li>
+            <li><a href="#moderated-servers">Moderated Servers</a></li>
+        </ol>
+    </div>
+</nav>
+<main class="single-page">
+    <section role="region" aria-labelledby="about">
+        <h2 id="about">About {{ .instance.Title -}}</h2>
+        <div>
             {{- with . }}
             {{- include "description" . | indent 3 }}
             {{- end }}
         </div>
     </section>
-    <section class="about-section" role="region" aria-labelledby="contact">
-        <h3 id="contact">Admin Contact</h3>
-        <div class="about-section-contents">
+    <section role="region" aria-labelledby="contact">
+        <h2 id="contact">Admin Contact</h2>
+        <div>
             {{- if .instance.ContactAccount }}
             <a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
-                <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt=""/>
-                <h3>
+                <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt="" />
+                <b>
                     {{- if .instance.ContactAccount.DisplayName -}}
                     {{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
                     {{- else -}}
                     {{- .instance.ContactAccount.Username -}}
                     {{- end -}}
-                </h3>
+                </b>
                 <span>@{{- .instance.ContactAccount.Username -}}</span>
             </a>
             {{- else }}
@@ -131,9 +132,9 @@ Polls can have up to
             {{- end }}
         </div>
     </section>
-    <section class="about-section" role="region" aria-labelledby="features">
-        <h3 id="features">Instance Features</h3>
-        <div class="about-section-contents">
+    <section role="region" aria-labelledby="features">
+        <h2 id="features">Instance Features</h2>
+        <div>
             <ul>
                 <li>{{- template "statusLimits" . -}}</li>
                 <li>{{- template "pollLimits" . -}}</li>
@@ -141,34 +142,34 @@ Polls can have up to
             </ul>
         </div>
     </section>
-    <section class="about-section" role="region" aria-labelledby="languages">
-        <h3 id="languages">Languages</h3>
-        <div class="about-section-contents">
+    <section role="region" aria-labelledby="languages">
+        <h2 id="languages">Languages</h2>
+        <div>
             {{- with . }}
             {{- include "languages" . | indent 3 }}
             {{- end }}
         </div>
     </section>
     {{- include "index_register.tmpl" . | indent 1 }}
-    <section class="about-section" role="region" aria-labelledby="rules">
-        <h3 id="rules">Instance Rules</h3>
-        <div class="about-section-contents">
+    <section role="region" aria-labelledby="rules">
+        <h2 id="rules">Instance Rules</h2>
+        <div>
             {{- with . }}
             {{- include "rules" . | indent 3 }}
             {{- end }}
         </div>
     </section>
-    <section class="about-section" role="region" aria-labelledby="terms">
-        <h3 id="terms">Terms and Conditions</h3>
-        <div class="about-section-contents">
+    <section role="region" aria-labelledby="terms">
+        <h2 id="terms">Terms and Conditions</h2>
+        <div>
             {{- with . }}
             {{- include "termsAndConditions" . | indent 3 }}
             {{- end }}
         </div>
     </section>
-    <section class="about-section" role="region" aria-labelledby="moderated-servers">
-        <h3 id="moderated-servers">Moderated servers</h3>
-        <div class="about-section-contents">
+    <section role="region" aria-labelledby="moderated-servers">
+        <h2 id="moderated-servers">Moderated servers</h2>
+        <div>
             <p>
                 ActivityPub instances federate with other instances by exchanging data with them over the network.
                 Exchanged data includes things like accounts, statuses, likes, boosts, and media attachments.
@@ -176,8 +177,10 @@ Polls can have up to
                 by an instance admin. When an instance is domain blocked by another instance:
             </p>
             <ul>
-                <li>Any existing data from the blocked instance is deleted from the storage of the instance doing the blocking.</li>
-                <li>Interaction between the two instances is cut off in both directions; neither instance can interact with the other.</li>
+                <li>Any existing data from the blocked instance is deleted from the storage of the instance doing the
+                    blocking.</li>
+                <li>Interaction between the two instances is cut off in both directions; neither instance can interact
+                    with the other.</li>
                 <li>No new data from the blocked instance will be created on the instance that blocks it.</li>
             </ul>
             <p>

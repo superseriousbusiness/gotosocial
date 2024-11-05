@@ -38,7 +38,8 @@
     {{- if .SpoilerText }}
     <details class="text-spoiler">
         <summary>
-            <span class="spoiler-text" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
+            <span class="spoiler-text"
+                lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
             <span class="button" role="button" tabindex="0">Toggle visibility</span>
         </summary>
         <div class="text">
@@ -64,26 +65,16 @@
     {{- include "status_attachments.tmpl" . | indent 1 }}
     {{- end }}
 </div>
-<aside class="status-info" aria-hidden="true">
+<aside class="status-info">
     {{- include "status_info.tmpl" . | indent 1 }}
 </aside>
 {{- if .Local }}
-<a
-    href="{{- .URL -}}"
-    class="status-link"
-    data-nosnippet
-    title="Open thread at this post"
->
+<a href="{{- .URL -}}" class="status-link" data-nosnippet title="Open thread at this post">
     Open thread at this post
 </a>
 {{- else }}
-<a
-    href="{{- .URL -}}"
-    class="status-link"
-    data-nosnippet
-    rel="nofollow noreferrer noopener" target="_blank"
-    title="Open remote post (opens in a new window)"
->
+<a href="{{- .URL -}}" class="status-link" data-nosnippet rel="nofollow noreferrer noopener" target="_blank"
+    title="Open remote post (opens in a new window)">
     Open remote post (opens in a new window)
 </a>
 {{- end }}

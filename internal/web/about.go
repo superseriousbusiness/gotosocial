@@ -59,6 +59,7 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 			"showStrap":        true,
 			"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
 			"languages":        config.GetInstanceLanguages().DisplayStrs(),
+			"pageType":         "with-sidebar",
 		},
 	}
 
