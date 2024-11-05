@@ -20,13 +20,13 @@ Instance moderation settings.
 
 ### Reports
 
-![List of reports for testing, showing one open report.](../assets/admin-settings-reports.png)
+![List of reports for testing, showing one open report.](../public/admin-settings-reports.png)
 
 The reports section shows a list of reports, originating from your local users, or remote instances (shown anonymously as just the name of the instance, without specific username).
 
 Clicking a report shows if it was resolved (with the reasoning if available), more information, and a list of reported toots if selected by the reporting user. You can also use this view to mark a report as resolved, and fill in a comment. Whatever comment you enter here will be visible to the user that created the report, if that user is from your instance.
 
-![The detailed view of an open report, showing the reported status and the reason for the report.](../assets/admin-settings-report-detail.png)
+![The detailed view of an open report, showing the reported status and the reason for the report.](../public/admin-settings-report-detail.png)
 
 Clicking on the username of the reported account opens that account in the 'Accounts' view, allowing you to perform moderation actions on it.
 
@@ -36,7 +36,7 @@ You can use this section to search for an account and perform moderation actions
 
 ### Federation
 
-![List of suspended instances, with a field to filter/add new blocks. Below is a link to the bulk import/export interface](../assets/admin-settings-federation.png)
+![List of suspended instances, with a field to filter/add new blocks. Below is a link to the bulk import/export interface](../public/admin-settings-federation.png)
 
 In the federation section you can create, delete, and review explicit domain blocks and domain allows.
 
@@ -56,7 +56,7 @@ The domain allows section works much like the domain blocks section, described a
 
 Through the link at the bottom of the Federation section (or going to `/settings/admin/federation/import-export`) you can do bulk import/export of blocklists and allowlists.
 
-![List of domains included in an import, providing ways to select some or all of them, change their domains, and update the use of subdomains.](../assets/admin-settings-federation-import-export.png)
+![List of domains included in an import, providing ways to select some or all of them, change their domains, and update the use of subdomains.](../public/admin-settings-federation-import-export.png)
 
 Upon importing a list, either through the input field or from a file, you can review the entries in the list before importing a subset. You'll also be warned for entries that use subdomains, providing an easy way to change them to the main domain.
 
@@ -86,7 +86,7 @@ Custom Emoji will be automatically fetched when included in remote toots, but to
 
 #### Local
 
-![Local custom emoji section, showing an overview of custom emoji sorted by category. There are a lot of garfields.](../assets/admin-settings-emoji-local.png)
+![Local custom emoji section, showing an overview of custom emoji sorted by category. There are a lot of garfields.](../public/admin-settings-emoji-local.png)
 
 This section shows an overview of all the custom emoji enabled on your instance, sorted by their category. Clicking an emoji shows it's details, and provides options to change the category or image, or delete it completely. The shortcode cannot be updated here, you would have to upload it with the new shortcode yourself (and optionally delete the old one).
 
@@ -94,7 +94,7 @@ Below the overview you can upload your own custom emoji, after previewing how th
 
 #### Remote
 
-![Remote custom emoji section, showing a list of 3 emoji parsed from the entered toot, garfield, blobfoxbox and blobhajmlem. They can be selected, their shortcode can be tweaked, and they can be assigned to a category, before submitting as a copy or delete operation](../assets/admin-settings-emoji-remote.png)
+![Remote custom emoji section, showing a list of 3 emoji parsed from the entered toot, garfield, blobfoxbox and blobhajmlem. They can be selected, their shortcode can be tweaked, and they can be assigned to a category, before submitting as a copy or delete operation](../public/admin-settings-emoji-remote.png)
 
 Through the 'remote' section, you can look up a link to any remote toots (provided the instance isn't suspended). If they use any custom emoji they will be listed, providing an easy way to copy them to the local emoji (for use in your own toots), or disable them ( hiding them from toots).
 
@@ -102,7 +102,7 @@ Through the 'remote' section, you can look up a link to any remote toots (provid
 
 ### Instance Settings
 
-![Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings](../assets/admin-settings-instance.png)
+![Screenshot of the GoToSocial admin panel, showing the fields to change an instance's settings](../public/admin-settings-instance.png)
 
 Here you can set various metadata for your instance, like the displayed name/title, thumbnail image, (short) description, and contact info.
 

@@ -1,0 +1,111 @@
+INHERIT: ../../../mkdocs.yml
+site_name: "GoToSocial 文档"
+theme:
+  language: zh
+  custom_dir: ../../overrides
+  palette:
+    - scheme: slate
+      toggle:
+        icon: material/brightness-7
+        name: 切换到浅色模式
+    - scheme: default
+      toggle:
+        icon: material/brightness-4
+        name: 切换到深色模式
+docs_dir: .
+edit_uri: edit/main/docs/locales/zh/
+copyright: GoToSocial 以 GNU AGPL v3 许可授权。版权所有 (C) 全体 GoToSocial 开发者 admin@gotosocial.org
+
+exclude_docs: |
+  repo/**
+
+nav:
+  - "主页": "index.md"
+  - "FAQ": "faq.md"
+  - "使用指南":
+      - "user_guide/settings.md"
+      - "user_guide/posts.md"
+      - "user_guide/search.md"
+      - "user_guide/custom_css.md"
+      - "user_guide/password_management.md"
+      - "user_guide/rss.md"
+      - "user_guide/migration.md"
+  - "开始部署":
+      - "getting_started/index.md"
+      - "getting_started/releases.md"
+      - "安装":
+        - "getting_started/installation/index.md"
+        - "getting_started/installation/metal.md"
+        - "getting_started/installation/container.md"
+      - "反向代理":
+        - "getting_started/reverse_proxy/index.md"
+        - "getting_started/reverse_proxy/nginx.md"
+        - "getting_started/reverse_proxy/apache-httpd.md"
+        - "getting_started/reverse_proxy/caddy.md"
+        - "getting_started/reverse_proxy/websocket.md"
+      - "getting_started/user_creation.md"
+  - "配置":
+      - "configuration/index.md"
+      - "configuration/general.md"
+      - "configuration/database.md"
+      - "configuration/web.md"
+      - "configuration/instance.md"
+      - "configuration/accounts.md"
+      - "configuration/media.md"
+      - "configuration/storage.md"
+      - "configuration/statuses.md"
+      - "configuration/tls.md"
+      - "configuration/oidc.md"
+      - "configuration/smtp.md"
+      - "configuration/syslog.md"
+      - "configuration/httpclient.md"
+      - "configuration/advanced.md"
+      - "configuration/observability.md"
+  - "进阶":
+    - "概述": "advanced/index.md"
+    - "advanced/host-account-domain.md"
+    - "advanced/outgoing-proxy.md"
+    - "缓存":
+      - "advanced/caching/index.md"
+      - "advanced/caching/api.md"
+      - "advanced/caching/assets-media.md"
+    - "advanced/certificates.md"
+    - "安全加固":
+      - "advanced/security/index.md"
+      - "advanced/security/sandboxing.md"
+      - "advanced/security/firewall.md"
+    - "advanced/healthchecks.md"
+    - "advanced/tracing.md"
+    - "advanced/metrics.md"
+    - "advanced/replicating-sqlite.md"
+    - "advanced/sqlite-networked-storage.md"
+    - "适用进阶场景的构建":
+      - "advanced/builds/nowasm.md"
+
+  - "管理":
+      - "admin/settings.md"
+      - "admin/signups.md"
+      - "admin/federation_modes.md"
+      - "admin/domain_blocks.md"
+      - "admin/request_filtering_modes.md"
+      - "admin/robots.md"
+      - "admin/cli.md"
+      - "admin/backup_and_restore.md"
+      - "admin/media_caching.md"
+      - "admin/spam.md"
+      - "admin/database_maintenance.md"
+      - "admin/themes.md"
+  - "联合":
+      - "federation/index.md"
+      - "federation/http_signatures.md"
+      - "federation/access_control.md"
+      - "federation/ratelimiting.md"
+      - "federation/actors.md"
+      - "federation/posts.md"
+      - "federation/moderation.md"
+      - "federation/glossary.md"
+  - "客户端 API 文档":
+      - "api/authentication.md"
+      - "api/swagger.md"
+      - "api/ratelimiting.md"
+      - "api/throttling.md"

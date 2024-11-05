@@ -4,6 +4,7 @@ theme:
   name: material
   language: en
   font: false
+  custom_dir: docs/overrides
   features:
     - header.autohide
     - content.code.copy
@@ -34,8 +35,17 @@ plugins:
       syntaxHighlightTheme: obsidian
   - include-markdown
 
+extra:
+  alternate:
+    - name: English
+      link: /en/ 
+      lang: en
+    - name: 中文
+      link: /zh-cn/
+      lang: zh
+
 extra_css:
-  - assets/css/colours.css
+  - public/css/colours.css
 
 markdown_extensions:
   - admonition
@@ -56,6 +66,9 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.tabbed:
       alternate_style: true
+
+exclude_docs: |
+  locales/**
 
 nav:
   - "Home": "index.md"

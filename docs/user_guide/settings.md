@@ -8,7 +8,7 @@ You will be prompted to log in with your email address and password after provid
 
 ## Profile
 
-![Screenshot of the profile section of the user settings interface, showing a preview of the avatar, header and display name, and providing form fields to change them](../assets/user-settings-profile-info.png)
+![Screenshot of the profile section of the user settings interface, showing a preview of the avatar, header and display name, and providing form fields to change them](../public/user-settings-profile-info.png)
 
 In the profile section you can change your display name, avatar and header images. You can also choose to enable manually approving follow requests, and opt-in to providing a public RSS feed of your posts.
 
@@ -184,7 +184,7 @@ This allows you to do things like:
 
 For example, the below image shows a policy for Public visibility posts that allows anyone to like or boost, but only allows followers, and people you follow, to reply.
 
-![Policy showing "Who can like" = "anyone", "Who can reply" = "followers" and "following", and "Who can boost" = "anyone".](../assets/user-settings-interaction-policy-1.png)
+![Policy showing "Who can like" = "anyone", "Who can reply" = "followers" and "following", and "Who can boost" = "anyone".](../public/user-settings-interaction-policy-1.png)
 
 Bear in mind that policies do not apply retroactively. Posts created after you've applied a default interaction policy will use that policy, but any post created before then will use whatever policy was the default when the post was created.
 
@@ -231,7 +231,7 @@ Please see the [migration document](./migration.md) for more information on movi
 
 In the export & import section, you can export data from your GoToSocial account, or import data into it.
 
-![The export/import page.](../assets/user-settings-export-import.png)
+![The export/import page.](../public/user-settings-export-import.png)
 
 ### Export
 
