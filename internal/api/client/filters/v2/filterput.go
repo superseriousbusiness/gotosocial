@@ -283,7 +283,7 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 		}
 	}
 
-	// Interpret zero as indefinite duration..
+	// Interpret zero as indefinite duration.
 	if form.ExpiresIn != nil && *form.ExpiresIn == 0 {
 		form.ExpiresIn = nil
 	}
