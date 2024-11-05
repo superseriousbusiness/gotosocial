@@ -8,7 +8,7 @@ GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server
 With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles. All without being tracked or advertised to!
 
 <p align="middle">
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/sloth.webp" width="300"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/sloth.webp" width="300"/>
 </p>
 
 **GoToSocial is still [BETA SOFTWARE](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta)**. It is already deployable and useable, and it federates cleanly with many other Fediverse servers (not yet all). However, many things are not yet implemented, and there are plenty of bugs! We left alpha stage around September/October 2024, and we intend to exit beta some time around 2026.
@@ -19,7 +19,7 @@ To build from source, check the [CONTRIBUTING.md](https://github.com/superseriou
 
 Here's a screenshot of the instance landing page!
 
-![Screenshot of the landing page for the GoToSocial instance goblin.technology. It shows basic information about the instance; number of users and posts etc.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/instancesplash.png)
+![Screenshot of the landing page for the GoToSocial instance goblin.technology. It shows basic information about the instance; number of users and posts etc.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/instancesplash.png)
 <!--overview-end-->
 
 ## Table of Contents <!-- omit in toc -->
@@ -72,7 +72,7 @@ GoToSocial provides a lightweight, customizable, and safety-focused entryway int
 
 If you've ever used something like Twitter or Tumblr (or even Myspace!) GoToSocial will probably feel familiar to you: You can follow people and have followers, you make posts which people can favourite and reply to and share, and you scroll through posts from people you follow using a timeline. You can write long posts or short posts, or just post images, it's up to you. You can also, of course, block people or otherwise limit interactions that you don't want by posting just to your friends.
 
-![Screenshot of the web view of a profile in GoToSocial, showing header and avatar, bio, and numbers of followers/following.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/profile1.png)
+![Screenshot of the web view of a profile in GoToSocial, showing header and avatar, bio, and numbers of followers/following.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/profile1.png)
 
 **GoToSocial does NOT use recommendation algorithms or collect data about you to suggest content or 'improve your experience'**. The timeline is chronological: whatever you see at the top of your timeline is there because it's *just been posted*, not because it's been selected as interesting (or controversial) based on your personal profile.
 
@@ -84,7 +84,7 @@ GoToSocial doesn't claim to be *better* than any other application, but it offer
 
 Because GoToSocial uses [ActivityPub](https://activitypub.rocks/), you can hang out not just with people on your home server, but with people all over the [Fediverse](https://en.wikipedia.org/wiki/Fediverse), seamlessly.
 
-![the activitypub logo](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/ap_logo.svg)
+![the activitypub logo](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/ap_logo.svg)
 
 Federation means that your home server is part of a network of servers all over the world that all communicate using the same protocol. Your data is no longer centralized on one company's servers, but resides on your own server and is shared — as you see fit — across a resilient web of servers run by other people.
 
@@ -128,7 +128,7 @@ GoToSocial offers public, unlisted/unlocked, followers-only, and direct posts (s
 
 GoToSocial lets you choose who can reply to your posts, via [interaction policies](https://docs.gotosocial.org/en/latest/user_guide/settings/#default-interaction-policies). You can choose to let anyone reply to your posts, let only your friends reply, and more.
 
-![interaction policies settings](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/user-settings-interaction-policy-1.png)
+![interaction policies settings](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/user-settings-interaction-policy-1.png)
 
 ### Local-only posting
 
@@ -142,7 +142,7 @@ GoToSocial lets you opt-in to exposing your profile as an RSS feed, so that peop
 
 With GoToSocial, you can write posts using the popular, easy-to-use Markdown markup language, which lets you produce rich HTML posts with support for blockquotes, syntax-highlighted code blocks, lists, inline links, and more.
 
-![markdown-formatted post](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/markdown-post.png)
+![markdown-formatted post](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/markdown-post.png)
 
 ### Themes and custom CSS
 
@@ -153,61 +153,61 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
 <details>
 <summary>Show theme examples</summary>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-dark.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-blurple-dark.png"/>
   <figcaption>Blurple dark</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-blurple-light.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-blurple-light.png"/>
   <figcaption>Blurple light</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-light.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-brutalist-light.png"/>
   <figcaption>Brutalist light</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-brutalist-dark.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-brutalist-dark.png"/>
   <figcaption>Brutalist dark</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-ecks-pee.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-ecks-pee.png"/>
   <figcaption>Ecks pee</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-midnight-trip.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-midnight-trip.png"/>
   <figcaption>Midnight trip</figcaption>
 </figure>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-moonlight-hunt.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-moonlight-hunt.png"/>
   <figcaption>Moonlight hunt</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-rainforest.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-rainforest.png"/>
   <figcaption>Rainforest</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-soft.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-soft.png"/>
   <figcaption>Soft</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-dark.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-solarized-dark.png"/>
   <figcaption>Solarized dark</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-solarized-light.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-solarized-light.png"/>
   <figcaption>Solarized light</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/theme-sunset.png"/>
+  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-sunset.png"/>
   <figcaption>Sunset</figcaption>
 </figure>
 <hr/>
@@ -217,7 +217,7 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
 
 GoToSocial uses only about 250-350MiB of RAM, and requires very little CPU power, so it plays nice with single-board computers, old laptops and tiny $5/month VPSes.
 
-![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/assets/getting-started-memory-graph.png)
+![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/getting-started-memory-graph.png)
 
 No external dependencies apart from a database (or just use SQLite!).
 
