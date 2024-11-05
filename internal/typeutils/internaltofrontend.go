@@ -1576,9 +1576,9 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.MediaAttachments.VideoSizeLimit = int(videoSz) // #nosec G115 -- Already validated.
 
 	// we don't actually set any limits on these. set to max possible.
-	instance.Configuration.MediaAttachments.ImageMatrixLimit = math.MaxInt
-	instance.Configuration.MediaAttachments.VideoFrameRateLimit = math.MaxInt
-	instance.Configuration.MediaAttachments.VideoMatrixLimit = math.MaxInt
+	instance.Configuration.MediaAttachments.ImageMatrixLimit = math.MaxInt32
+	instance.Configuration.MediaAttachments.VideoFrameRateLimit = math.MaxInt32
+	instance.Configuration.MediaAttachments.VideoMatrixLimit = math.MaxInt32
 
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
 	instance.Configuration.Polls.MaxCharactersPerOption = config.GetStatusesPollOptionMaxChars()
@@ -1739,9 +1739,9 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.MediaAttachments.VideoSizeLimit = int(videoSz) // #nosec G115 -- Already validated.
 
 	// we don't actually set any limits on these. set to max possible.
-	instance.Configuration.MediaAttachments.ImageMatrixLimit = math.MaxInt
-	instance.Configuration.MediaAttachments.VideoFrameRateLimit = math.MaxInt
-	instance.Configuration.MediaAttachments.VideoMatrixLimit = math.MaxInt
+	instance.Configuration.MediaAttachments.ImageMatrixLimit = math.MaxInt32
+	instance.Configuration.MediaAttachments.VideoFrameRateLimit = math.MaxInt32
+	instance.Configuration.MediaAttachments.VideoMatrixLimit = math.MaxInt32
 
 	instance.Configuration.Polls.MaxOptions = config.GetStatusesPollMaxOptions()
 	instance.Configuration.Polls.MaxCharactersPerOption = config.GetStatusesPollOptionMaxChars()

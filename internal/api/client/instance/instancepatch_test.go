@@ -130,10 +130,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
         "video/x-matroska"
       ],
       "image_size_limit": 41943040,
-      "image_matrix_limit": 9223372036854775807,
+      "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
-      "video_frame_rate_limit": 9223372036854775807,
-      "video_matrix_limit": 9223372036854775807
+      "video_frame_rate_limit": 2147483647,
+      "video_matrix_limit": 2147483647
     },
     "polls": {
       "max_options": 6,
@@ -271,10 +271,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
         "video/x-matroska"
       ],
       "image_size_limit": 41943040,
-      "image_matrix_limit": 9223372036854775807,
+      "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
-      "video_frame_rate_limit": 9223372036854775807,
-      "video_matrix_limit": 9223372036854775807
+      "video_frame_rate_limit": 2147483647,
+      "video_matrix_limit": 2147483647
     },
     "polls": {
       "max_options": 6,
@@ -412,10 +412,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
         "video/x-matroska"
       ],
       "image_size_limit": 41943040,
-      "image_matrix_limit": 9223372036854775807,
+      "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
-      "video_frame_rate_limit": 9223372036854775807,
-      "video_matrix_limit": 9223372036854775807
+      "video_frame_rate_limit": 2147483647,
+      "video_matrix_limit": 2147483647
     },
     "polls": {
       "max_options": 6,
@@ -604,10 +604,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
         "video/x-matroska"
       ],
       "image_size_limit": 41943040,
-      "image_matrix_limit": 9223372036854775807,
+      "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
-      "video_frame_rate_limit": 9223372036854775807,
-      "video_matrix_limit": 9223372036854775807
+      "video_frame_rate_limit": 2147483647,
+      "video_matrix_limit": 2147483647
     },
     "polls": {
       "max_options": 6,
@@ -767,10 +767,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
         "video/x-matroska"
       ],
       "image_size_limit": 41943040,
-      "image_matrix_limit": 9223372036854775807,
+      "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
-      "video_frame_rate_limit": 9223372036854775807,
-      "video_matrix_limit": 9223372036854775807
+      "video_frame_rate_limit": 2147483647,
+      "video_matrix_limit": 2147483647
     },
     "polls": {
       "max_options": 6,
@@ -949,10 +949,10 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
         "video/x-matroska"
       ],
       "image_size_limit": 41943040,
-      "image_matrix_limit": 9223372036854775807,
+      "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
-      "video_frame_rate_limit": 9223372036854775807,
-      "video_matrix_limit": 9223372036854775807
+      "video_frame_rate_limit": 2147483647,
+      "video_matrix_limit": 2147483647
     },
     "polls": {
       "max_options": 6,
