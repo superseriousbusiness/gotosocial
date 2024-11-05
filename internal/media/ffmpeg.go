@@ -181,6 +181,10 @@ func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) 
 			}
 			fscfg = fscfg.WithFSMount(shared, path.Dir(inpath))
 
+			// Set anonymous module name.
+			modcfg = modcfg.WithName("")
+
+			// Update with prepared fs config.
 			return modcfg.WithFSConfig(fscfg)
 		},
 	})
@@ -247,6 +251,10 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 			}
 			fscfg = fscfg.WithFSMount(in, path.Dir(filepath))
 
+			// Set anonymous module name.
+			modcfg = modcfg.WithName("")
+
+			// Update with prepared fs config.
 			return modcfg.WithFSConfig(fscfg)
 		},
 	})
