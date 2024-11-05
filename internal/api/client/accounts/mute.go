@@ -149,7 +149,7 @@ func normalizeCreateUpdateMute(form *apimodel.UserMuteCreateUpdateRequest) error
 		form.Duration = duration
 	}
 
-	// Ensure no zero duration is set.
+	// Interpret zero as indefinite duration.
 	if form.Duration != nil && *form.Duration == 0 {
 		form.Duration = nil
 	}
