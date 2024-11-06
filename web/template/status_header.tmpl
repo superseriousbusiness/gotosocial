@@ -19,31 +19,31 @@
 
 {{- with .Account }}
 <address>
-    {{- if $.Local }}
-    <a href="{{- .URL -}}" rel="author" title="Open profile">
-        {{- else }}
-        <a href="{{- .URL -}}" rel="author nofollow noreferrer noopener" target="_blank"
-            title="Open remote profile (opens in a new window)">
-            {{- end }}
-            <picture class="avatar" aria-hidden="true">
-                {{- if .AvatarAttachment }}
-                <source srcset="{{- .AvatarStatic -}}" type="{{- .AvatarAttachment.PreviewMIMEType -}}"
-                    media="(prefers-reduced-motion: reduce)" />
-                {{- end }}
-                <img src="{{- .Avatar -}}" alt="Avatar for {{ .Username -}}" title="Avatar for {{ .Username -}}">
-            </picture>
-            <div class="author-strapline">
-                <span class="displayname text-cutoff">
-                    {{- if .DisplayName -}}
-                    {{- emojify .Emojis (escape .DisplayName) -}}
-                    {{- else -}}
-                    {{- .Username -}}
-                    {{- end -}}
-                </span>
-                <span class="sr-only">,</span>
-                <span class="username text-cutoff">@{{- .Acct -}}</span>
-            </div>
-            <span class="sr-only">(open profile)</span>
-        </a>
+	{{- if $.Local }}
+	<a href="{{- .URL -}}" rel="author" title="Open profile">
+		{{- else }}
+		<a href="{{- .URL -}}" rel="author nofollow noreferrer noopener" target="_blank"
+			title="Open remote profile (opens in a new window)">
+			{{- end }}
+			<picture class="avatar" aria-hidden="true">
+				{{- if .AvatarAttachment }}
+				<source srcset="{{- .AvatarStatic -}}" type="{{- .AvatarAttachment.PreviewMIMEType -}}"
+					media="(prefers-reduced-motion: reduce)" />
+				{{- end }}
+				<img src="{{- .Avatar -}}" alt="Avatar for {{ .Username -}}" title="Avatar for {{ .Username -}}">
+			</picture>
+			<div class="author-strapline">
+				<span class="displayname text-cutoff">
+					{{- if .DisplayName -}}
+					{{- emojify .Emojis (escape .DisplayName) -}}
+					{{- else -}}
+					{{- .Username -}}
+					{{- end -}}
+				</span>
+				<span class="sr-only">,</span>
+				<span class="username text-cutoff">@{{- .Acct -}}</span>
+			</div>
+			<span class="sr-only">(open profile)</span>
+		</a>
 </address>
 {{- end }}

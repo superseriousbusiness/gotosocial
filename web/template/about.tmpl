@@ -37,9 +37,9 @@
 {{- if .languages }}
 <p>This instance prefers the following languages:</p>
 <ol>
-    {{- range .languages }}
-    <li>{{- . -}}</li>
-    {{- end }}
+	{{- range .languages }}
+	<li>{{- . -}}</li>
+	{{- end }}
 </ol>
 {{- else }}
 <p>No preferred languages have yet been set for this instance.</p>
@@ -50,9 +50,9 @@
 {{- if .instance.Rules }}
 <p>This instance has the following rules:</p>
 <ol>
-    {{- range .instance.Rules }}
-    <li>{{- .Text -}}</li>
-    {{- end }}
+	{{- range .instance.Rules }}
+	<li>{{- .Text -}}</li>
+	{{- end }}
 </ol>
 {{- else }}
 <p>No rules have yet been set for this instance.</p>
@@ -61,7 +61,7 @@
 
 {{- define "customCSSLimits" -}}
 <a href="https://docs.gotosocial.org/en/latest/user_guide/settings/#custom-css" target="_blank"
-    rel="noopener noreferrer">Custom CSS</a> is&nbsp;
+	rel="noopener noreferrer">Custom CSS</a> is&nbsp;
 {{- if .instance.Configuration.Accounts.AllowCustomCSS -}}
 <b>enabled</b>
 {{- else -}}
@@ -84,113 +84,113 @@ Polls can have up to
 
 {{- with . }}
 <nav class="sidebar" aria-labelledby="toc">
-    <h2 id="toc">Table of Contents</h2>
-    <div>
-        <ol>
-            <li><a href="#about">About</a></li>
-            <li><a href="#contact">Contact</a></li>
-            <li><a href="#features">Features</a></li>
-            <li><a href="#languages">Languages</a></li>
-            <li><a href="#signup">Register an Account</a></li>
-            <li><a href="#rules">Rules</a></li>
-            <li><a href="#terms">Terms and Conditions</a></li>
-            <li><a href="#moderated-servers">Moderated Servers</a></li>
-        </ol>
-    </div>
+	<h2 id="toc">Table of Contents</h2>
+	<div>
+		<ol>
+			<li><a href="#about">About</a></li>
+			<li><a href="#contact">Contact</a></li>
+			<li><a href="#features">Features</a></li>
+			<li><a href="#languages">Languages</a></li>
+			<li><a href="#signup">Register an Account</a></li>
+			<li><a href="#rules">Rules</a></li>
+			<li><a href="#terms">Terms and Conditions</a></li>
+			<li><a href="#moderated-servers">Moderated Servers</a></li>
+		</ol>
+	</div>
 </nav>
 <main class="single-page">
-    <section role="region" aria-labelledby="about">
-        <h2 id="about">About {{ .instance.Title -}}</h2>
-        <div>
-            {{- with . }}
-            {{- include "description" . | indent 3 }}
-            {{- end }}
-        </div>
-    </section>
-    <section role="region" aria-labelledby="contact">
-        <h2 id="contact">Admin Contact</h2>
-        <div>
-            {{- if .instance.ContactAccount }}
-            <a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
-                <img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt="" />
-                <b>
-                    {{- if .instance.ContactAccount.DisplayName -}}
-                    {{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
-                    {{- else -}}
-                    {{- .instance.ContactAccount.Username -}}
-                    {{- end -}}
-                </b>
-                <span>@{{- .instance.ContactAccount.Username -}}</span>
-            </a>
-            {{- else }}
-            <p>This instance has not yet set a contact account.</p>
-            {{- end }}
-            {{- if .instance.Email }}
-            <p>Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a></p>
-            {{- else }}
-            <p>This instance has not yet set a contact email address.</p>
-            {{- end }}
-        </div>
-    </section>
-    <section role="region" aria-labelledby="features">
-        <h2 id="features">Instance Features</h2>
-        <div>
-            <ul>
-                <li>{{- template "statusLimits" . -}}</li>
-                <li>{{- template "pollLimits" . -}}</li>
-                <li>{{- template "customCSSLimits" . -}}</li>
-            </ul>
-        </div>
-    </section>
-    <section role="region" aria-labelledby="languages">
-        <h2 id="languages">Languages</h2>
-        <div>
-            {{- with . }}
-            {{- include "languages" . | indent 3 }}
-            {{- end }}
-        </div>
-    </section>
-    {{- include "index_register.tmpl" . | indent 1 }}
-    <section role="region" aria-labelledby="rules">
-        <h2 id="rules">Instance Rules</h2>
-        <div>
-            {{- with . }}
-            {{- include "rules" . | indent 3 }}
-            {{- end }}
-        </div>
-    </section>
-    <section role="region" aria-labelledby="terms">
-        <h2 id="terms">Terms and Conditions</h2>
-        <div>
-            {{- with . }}
-            {{- include "termsAndConditions" . | indent 3 }}
-            {{- end }}
-        </div>
-    </section>
-    <section role="region" aria-labelledby="moderated-servers">
-        <h2 id="moderated-servers">Moderated servers</h2>
-        <div>
-            <p>
-                ActivityPub instances federate with other instances by exchanging data with them over the network.
-                Exchanged data includes things like accounts, statuses, likes, boosts, and media attachments.
-                This exchange of data can be prevented for instances on specific domains via a domain block created
-                by an instance admin. When an instance is domain blocked by another instance:
-            </p>
-            <ul>
-                <li>Any existing data from the blocked instance is deleted from the storage of the instance doing the
-                    blocking.</li>
-                <li>Interaction between the two instances is cut off in both directions; neither instance can interact
-                    with the other.</li>
-                <li>No new data from the blocked instance will be created on the instance that blocks it.</li>
-            </ul>
-            <p>
-                {{- if .blocklistExposed }}
-                <a href="/about/suspended">View the list of domains blocked by this instance</a>
-                {{- else }}
-                This instance does not publically share their list of blocked domains.
-                {{- end }}
-            </p>
-        </div>
-    </section>
+	<section role="region" aria-labelledby="about">
+		<h2 id="about">About {{ .instance.Title -}}</h2>
+		<div>
+			{{- with . }}
+			{{- include "description" . | indent 3 }}
+			{{- end }}
+		</div>
+	</section>
+	<section role="region" aria-labelledby="contact">
+		<h2 id="contact">Admin Contact</h2>
+		<div>
+			{{- if .instance.ContactAccount }}
+			<a href="{{- .instance.ContactAccount.URL -}}" class="account-card">
+				<img class="avatar" src="{{- .instance.ContactAccount.Avatar -}}" alt="" />
+				<b>
+					{{- if .instance.ContactAccount.DisplayName -}}
+					{{- emojify .instance.ContactAccount.Emojis (escape .instance.ContactAccount.DisplayName) -}}
+					{{- else -}}
+					{{- .instance.ContactAccount.Username -}}
+					{{- end -}}
+				</b>
+				<span>@{{- .instance.ContactAccount.Username -}}</span>
+			</a>
+			{{- else }}
+			<p>This instance has not yet set a contact account.</p>
+			{{- end }}
+			{{- if .instance.Email }}
+			<p>Email: <a href="mailto:{{- .instance.Email -}}">{{- .instance.Email -}}</a></p>
+			{{- else }}
+			<p>This instance has not yet set a contact email address.</p>
+			{{- end }}
+		</div>
+	</section>
+	<section role="region" aria-labelledby="features">
+		<h2 id="features">Instance Features</h2>
+		<div>
+			<ul>
+				<li>{{- template "statusLimits" . -}}</li>
+				<li>{{- template "pollLimits" . -}}</li>
+				<li>{{- template "customCSSLimits" . -}}</li>
+			</ul>
+		</div>
+	</section>
+	<section role="region" aria-labelledby="languages">
+		<h2 id="languages">Languages</h2>
+		<div>
+			{{- with . }}
+			{{- include "languages" . | indent 3 }}
+			{{- end }}
+		</div>
+	</section>
+	{{- include "index_register.tmpl" . | indent 1 }}
+	<section role="region" aria-labelledby="rules">
+		<h2 id="rules">Instance Rules</h2>
+		<div>
+			{{- with . }}
+			{{- include "rules" . | indent 3 }}
+			{{- end }}
+		</div>
+	</section>
+	<section role="region" aria-labelledby="terms">
+		<h2 id="terms">Terms and Conditions</h2>
+		<div>
+			{{- with . }}
+			{{- include "termsAndConditions" . | indent 3 }}
+			{{- end }}
+		</div>
+	</section>
+	<section role="region" aria-labelledby="moderated-servers">
+		<h2 id="moderated-servers">Moderated servers</h2>
+		<div>
+			<p>
+				ActivityPub instances federate with other instances by exchanging data with them over the network.
+				Exchanged data includes things like accounts, statuses, likes, boosts, and media attachments.
+				This exchange of data can be prevented for instances on specific domains via a domain block created
+				by an instance admin. When an instance is domain blocked by another instance:
+			</p>
+			<ul>
+				<li>Any existing data from the blocked instance is deleted from the storage of the instance doing the
+					blocking.</li>
+				<li>Interaction between the two instances is cut off in both directions; neither instance can interact
+					with the other.</li>
+				<li>No new data from the blocked instance will be created on the instance that blocks it.</li>
+			</ul>
+			<p>
+				{{- if .blocklistExposed }}
+				<a href="/about/suspended">View the list of domains blocked by this instance</a>
+				{{- else }}
+				This instance does not publically share their list of blocked domains.
+				{{- end }}
+			</p>
+		</div>
+	</section>
 </main>
 {{- end }}

@@ -64,36 +64,36 @@ Thread of {{ .context.ThreadLength }} posts
 {{- with . }}
 </section>
 <section class="thread thread-replies" aria-labelledby="replies" open>
-    <div class="col-header wrap replies{{- if not .context.ThreadRepliesShown }} hidden-only{{- end -}}">
-        <h2 id="replies">{{- template "repliesSummary" . -}}</h2>
-        <a href="#thread-summary">back to top</a>
-    </div>
-    {{- end }}
-    {{- end -}}
+	<div class="col-header wrap replies{{- if not .context.ThreadRepliesShown }} hidden-only{{- end -}}">
+		<h2 id="replies">{{- template "repliesSummary" . -}}</h2>
+		<a href="#thread-summary">back to top</a>
+	</div>
+	{{- end }}
+	{{- end -}}
 
-    {{- with . }}
-    <main class="thread-wrapper" data-nosnippet>
-        <section class="thread thread-main" aria-labelledby="thread-summary">
-            <div class="col-header wrap">
-                <h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
-                {{- if .context.ThreadRepliesShown }}
-                <a href="#replies">jump to replies</a>
-                {{- end }}
-            </div>
+	{{- with . }}
+	<main class="thread-wrapper" data-nosnippet>
+		<section class="thread thread-main" aria-labelledby="thread-summary">
+			<div class="col-header wrap">
+				<h2 id="thread-summary">{{- template "threadSummary" . -}}</h2>
+				{{- if .context.ThreadRepliesShown }}
+				<a href="#replies">jump to replies</a>
+				{{- end }}
+			</div>
 
-            {{- range $status := .context.Statuses }}
-            <article
-                class="status{{- if $status.ThreadContextStatus }} expanded{{- end -}}{{- if $status.Indent }} indent-{{ $status.Indent }}{{- end -}}"
-                {{- includeAttr "status_attributes.tmpl" $status | indentAttr 3 }}>
-                {{- include "status.tmpl" $status | indent 3 }}
-            </article>
-            {{- if and $status.ThreadLastMain $.context.ThreadReplies }}
-            {{- include "repliesStart" $ | indent 1 }}
-            {{- end }}
-            {{- end }}
+			{{- range $status := .context.Statuses }}
+			<article
+				class="status{{- if $status.ThreadContextStatus }} expanded{{- end -}}{{- if $status.Indent }} indent-{{ $status.Indent }}{{- end -}}"
+				{{- includeAttr "status_attributes.tmpl" $status | indentAttr 3 }}>
+				{{- include "status.tmpl" $status | indent 3 }}
+			</article>
+			{{- if and $status.ThreadLastMain $.context.ThreadReplies }}
+			{{- include "repliesStart" $ | indent 1 }}
+			{{- end }}
+			{{- end }}
 
-            {{- if .context.ThreadReplies }}
-        </section>
-        {{- end }}
-    </main>
-    {{- end }}
+			{{- if .context.ThreadReplies }}
+		</section>
+		{{- end }}
+	</main>
+	{{- end }}

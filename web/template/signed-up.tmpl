@@ -19,12 +19,12 @@
 
 {{- with . }}
 <main>
-    <section aria-labelledby="signed-up">
-        <h2 id="signed-up">Thanks for signing up to {{ .instance.Title -}}!</h2>
-        <p>Hi <b>{{- .username -}}</b>!</p>
-        <p>Your sign-up has been registered, and a confirmation email has been sent to <b>{{- .email -}}</b>.</p>
-        <p>Please check your email inbox and click the link to confirm your email.</p>
-        <p>Once an admin has approved your sign-up, you will be able to log in and use your account.</p>
-    </section>
+	<section aria-labelledby="signed-up">
+		<h2 id="signed-up">Thanks for signing up to {{ .instance.Title -}}!</h2>
+		<p>Hi <b>{{- .username -}}</b>!</p>
+		<p>Your sign-up has been registered, and a confirmation email has been sent to <b>{{- .email -}}</b>.</p>
+		<p>Please check your email inbox and click the link to confirm your email.</p>
+		<p>Once an admin has approved your sign-up, you will be able to log in and use your account.</p>
+	</section>
 </main>
 {{- end }}

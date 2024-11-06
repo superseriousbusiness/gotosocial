@@ -19,25 +19,25 @@
 
 {{- with . }}
 <main>
-    <section class="with-form" aria-labelledby="authorize">
-        <h2 id="authorize">Authorize app</h2>
-        <form action="/oauth/authorize" method="POST">
-            <p>Hi <b>{{- .user -}}</b>!</p>
-            <p>
-                Application
-                {{- if .appwebsite }}
-                <a href="{{- .appwebsite -}}" rel="nofollow noreferrer noopener" target="_blank">{{- .appname -}}</a>
-                {{- else }}
-                <b>{{- .appname -}}</b>
-                {{- end }}
-                would like to perform actions on your behalf, with scope
-                <em>{{- .scope -}}</em>.
-            </p>
-            <p>
-                To continue, the application will redirect to: <code>{{- .redirect -}}</code>
-            </p>
-            <button type="submit" class="btn btn-success">Allow</button>
-        </form>
-    </section>
+	<section class="with-form" aria-labelledby="authorize">
+		<h2 id="authorize">Authorize app</h2>
+		<form action="/oauth/authorize" method="POST">
+			<p>Hi <b>{{- .user -}}</b>!</p>
+			<p>
+				Application
+				{{- if .appwebsite }}
+				<a href="{{- .appwebsite -}}" rel="nofollow noreferrer noopener" target="_blank">{{- .appname -}}</a>
+				{{- else }}
+				<b>{{- .appname -}}</b>
+				{{- end }}
+				would like to perform actions on your behalf, with scope
+				<em>{{- .scope -}}</em>.
+			</p>
+			<p>
+				To continue, the application will redirect to: <code>{{- .redirect -}}</code>
+			</p>
+			<button type="submit" class="btn btn-success">Allow</button>
+		</form>
+	</section>
 </main>
 {{- end }}

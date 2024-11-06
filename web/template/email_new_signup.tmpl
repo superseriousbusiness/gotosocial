@@ -23,10 +23,13 @@ Someone has submitted a new account sign-up to your instance.
 
 They provided the following details:
 
-Email address: {{ .SignupEmail }}
-Username:      {{ .SignupUsername }}
+Email address:
+{{ .SignupEmail }}
+Username:
+{{ .SignupUsername }}
 {{- if .SignupReason }}
-Reason:        {{ .SignupReason }}
+Reason:
+{{ .SignupReason }}
 {{- end }}
 
 To view the sign-up, paste the following link into your browser: {{ .SignupURL }}

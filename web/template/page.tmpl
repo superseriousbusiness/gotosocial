@@ -45,45 +45,45 @@ image/webp
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="{{- if .robotsMeta -}}{{- .robotsMeta -}}{{- else -}}noindex, nofollow{{- end -}}">
-    {{- if .ogMeta }}
-    {{- include "page_ogmeta.tmpl" . | indent 2 }}
-    {{- else }}
-    {{- end }}
-    {{- if .rssFeed }}
-    <link rel="alternate" type="application/rss+xml" href="{{- .rssFeed -}}" title="{{- template "instanceTitle" . -}}">
-    {{- else }}
-    {{- end }}
-    {{- if .account }}
-    <link rel="alternate" type="application/activity+json" href="/users/{{- .account.Username -}}">
-    {{- else if .status }}
-    <link rel="alternate" type="application/activity+json"
-        href="/users/{{- .status.Account.Username -}}/statuses/{{- .status.ID -}}">
-    {{- else }}
-    {{- end }}
-    <link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
-    <link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
-    <link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
-    {{- include "page_stylesheets.tmpl" . | indent 2 }}
-    {{- range .javascript }}
-    <script type="text/javascript" src="{{- . -}}" async="" defer=""></script>
-    {{- end }}
-    <title>{{- template "instanceTitle" . -}}</title>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta name="robots" content="{{- if .robotsMeta -}}{{- .robotsMeta -}}{{- else -}}noindex, nofollow{{- end -}}">
+	{{- if .ogMeta }}
+	{{- include "page_ogmeta.tmpl" . | indent 2 }}
+	{{- else }}
+	{{- end }}
+	{{- if .rssFeed }}
+	<link rel="alternate" type="application/rss+xml" href="{{- .rssFeed -}}" title="{{- template "instanceTitle" . -}}">
+	{{- else }}
+	{{- end }}
+	{{- if .account }}
+	<link rel="alternate" type="application/activity+json" href="/users/{{- .account.Username -}}">
+	{{- else if .status }}
+	<link rel="alternate" type="application/activity+json"
+		href="/users/{{- .status.Account.Username -}}/statuses/{{- .status.ID -}}">
+	{{- else }}
+	{{- end }}
+	<link rel="icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+	<link rel="apple-touch-icon" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+	<link rel="apple-touch-startup-image" href="{{- .instance.Thumbnail -}}" type="{{- template "thumbnailType" . -}}">
+	{{- include "page_stylesheets.tmpl" . | indent 2 }}
+	{{- range .javascript }}
+	<script type="text/javascript" src="{{- . -}}" async="" defer=""></script>
+	{{- end }}
+	<title>{{- template "instanceTitle" . -}}</title>
 </head>
 
 <body class="page{{if .pageType}} {{.pageType}}{{end}}">
-    <header class="page-header{{if .largeHeader}} large{{end}}">
-        {{- include "page_header.tmpl" . | indent 3 }}
-    </header>
-    <div class="page-content">
-        {{- include .pageContent . | indent 3 | outdentPre }}
-    </div>
-    <footer class="page-footer">
-        {{- include "page_footer.tmpl" . | indent 3 }}
-    </footer>
+	<header class="page-header{{if .largeHeader}} large{{end}}">
+		{{- include "page_header.tmpl" . | indent 3 }}
+	</header>
+	<div class="page-content">
+		{{- include .pageContent . | indent 3 | outdentPre }}
+	</div>
+	<footer class="page-footer">
+		{{- include "page_footer.tmpl" . | indent 3 }}
+	</footer>
 </body>
 
 </html>

@@ -32,50 +32,50 @@
 
 {{- with . }}
 <figure class="poll">
-    <figcaption class="poll-info">
-        <span class="poll-expiry">
-            {{- if .Poll.Multiple -}}
-            Multiple-choice poll&nbsp;
-            {{- else -}}
-            Poll&nbsp;
-            {{- end -}}
-            {{- if .Poll.Expired -}}
-            closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
-            {{- else if .Poll.ExpiresAt -}}
-            open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
-            {{- else -}}
-            open forever
-            {{- end -}}
-        </span>
-        <span class="sr-only">,</span>
-        <span class="total-votes">
-            {{- template "votes" .Poll.VotesCount -}}&nbsp;
-            {{- if .Poll.Expired -}}
-            total
-            {{- else -}}
-            so far
-            {{- end -}}
-        </span>
-    </figcaption>
-    <ul class="poll-options nodot">
-        {{- range $index, $pollOption := .PollOptions }}
-        <li class="poll-option">
-            <span class="sr-only">Option {{ increment $index }},</span>
-            <span lang="{{- .LanguageTag.TagStr -}}">{{ emojify .Emojis (noescape $pollOption.Title) }}</span>
-            <meter aria-hidden="true" min="0" max="100" value="{{- $pollOption.VoteShare -}}"></meter>
-            <div class="poll-vote-summary">
-                {{- if isNil $pollOption.VotesCount }}
-                Results not yet published.
-                {{- else }}
-                {{- with deref $pollOption.VotesCount }}
-                <span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
-                <span class="sr-only">,</span>
-                <span class="poll-vote-count">{{- template "votes" . -}}</span>
-                {{- end }}
-                {{- end }}
-            </div>
-        </li>
-        {{- end }}
-    </ul>
+	<figcaption class="poll-info">
+		<span class="poll-expiry">
+			{{- if .Poll.Multiple -}}
+			Multiple-choice poll&nbsp;
+			{{- else -}}
+			Poll&nbsp;
+			{{- end -}}
+			{{- if .Poll.Expired -}}
+			closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
+			{{- else if .Poll.ExpiresAt -}}
+			open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
+			{{- else -}}
+			open forever
+			{{- end -}}
+		</span>
+		<span class="sr-only">,</span>
+		<span class="total-votes">
+			{{- template "votes" .Poll.VotesCount -}}&nbsp;
+			{{- if .Poll.Expired -}}
+			total
+			{{- else -}}
+			so far
+			{{- end -}}
+		</span>
+	</figcaption>
+	<ul class="poll-options nodot">
+		{{- range $index, $pollOption := .PollOptions }}
+		<li class="poll-option">
+			<span class="sr-only">Option {{ increment $index }},</span>
+			<span lang="{{- .LanguageTag.TagStr -}}">{{ emojify .Emojis (noescape $pollOption.Title) }}</span>
+			<meter aria-hidden="true" min="0" max="100" value="{{- $pollOption.VoteShare -}}"></meter>
+			<div class="poll-vote-summary">
+				{{- if isNil $pollOption.VotesCount }}
+				Results not yet published.
+				{{- else }}
+				{{- with deref $pollOption.VotesCount }}
+				<span class="poll-vote-share">{{- $pollOption.VoteShareStr -}}&#37;</span>
+				<span class="sr-only">,</span>
+				<span class="poll-vote-count">{{- template "votes" . -}}</span>
+				{{- end }}
+				{{- end }}
+			</div>
+		</li>
+		{{- end }}
+	</ul>
 </figure>
 {{- end }}

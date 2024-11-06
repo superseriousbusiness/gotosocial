@@ -20,7 +20,7 @@
 {{- define "statusContent" -}}
 {{- with .Content }}
 <div class="content" lang="{{- $.LanguageTag.TagStr -}}">
-    {{ noescape . | emojify $.Emojis }}
+	{{ noescape . | emojify $.Emojis }}
 </div>
 {{- end }}
 {{- end -}}
@@ -32,50 +32,50 @@
 
 {{- with . }}
 <header class="status-header">
-    {{- include "status_header.tmpl" . | indent 1 }}
+	{{- include "status_header.tmpl" . | indent 1 }}
 </header>
 <div class="status-body">
-    {{- if .SpoilerText }}
-    <details class="text-spoiler">
-        <summary>
-            <span class="spoiler-text"
-                lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
-            <span class="button" role="button" tabindex="0">Toggle visibility</span>
-        </summary>
-        <div class="text">
-            {{- with . }}
-            {{- include "statusContent" . | indent 3 }}
-            {{- end }}
-            {{- if .Poll }}
-            {{- include "status_poll.tmpl" . | indent 3 }}
-            {{- end }}
-        </div>
-    </details>
-    {{- else }}
-    <div class="text">
-        {{- with . }}
-        {{- include "statusContent" . | indent 2 }}
-        {{- end }}
-        {{- if .Poll }}
-        {{- include "status_poll.tmpl" . | indent 2 }}
-        {{- end }}
-    </div>
-    {{- end }}
-    {{- if .MediaAttachments }}
-    {{- include "status_attachments.tmpl" . | indent 1 }}
-    {{- end }}
+	{{- if .SpoilerText }}
+	<details class="text-spoiler">
+		<summary>
+			<span class="spoiler-text"
+				lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
+			<span class="button" role="button" tabindex="0">Toggle visibility</span>
+		</summary>
+		<div class="text">
+			{{- with . }}
+			{{- include "statusContent" . | indent 3 }}
+			{{- end }}
+			{{- if .Poll }}
+			{{- include "status_poll.tmpl" . | indent 3 }}
+			{{- end }}
+		</div>
+	</details>
+	{{- else }}
+	<div class="text">
+		{{- with . }}
+		{{- include "statusContent" . | indent 2 }}
+		{{- end }}
+		{{- if .Poll }}
+		{{- include "status_poll.tmpl" . | indent 2 }}
+		{{- end }}
+	</div>
+	{{- end }}
+	{{- if .MediaAttachments }}
+	{{- include "status_attachments.tmpl" . | indent 1 }}
+	{{- end }}
 </div>
 <aside class="status-info">
-    {{- include "status_info.tmpl" . | indent 1 }}
+	{{- include "status_info.tmpl" . | indent 1 }}
 </aside>
 {{- if .Local }}
 <a href="{{- .URL -}}" class="status-link" data-nosnippet title="Open thread at this post">
-    Open thread at this post
+	Open thread at this post
 </a>
 {{- else }}
 <a href="{{- .URL -}}" class="status-link" data-nosnippet rel="nofollow noreferrer noopener" target="_blank"
-    title="Open remote post (opens in a new window)">
-    Open remote post (opens in a new window)
+	title="Open remote post (opens in a new window)">
+	Open remote post (opens in a new window)
 </a>
 {{- end }}
 {{- end }}

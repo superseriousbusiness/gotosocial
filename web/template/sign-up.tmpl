@@ -19,53 +19,53 @@
 
 {{- with . }}
 <main>
-    <section class="with-form" aria-labelledby="sign-up">
-        <h2 id="sign-up">Sign up for an account on {{ .instance.Title -}}</h2>
-        {{- if not .registrationOpen }}
-        <p>This instance is not currently open to new sign-ups.</p>
-        {{- else }}
-        <form action="/signup" method="POST">
-            <div class="labelinput">
-                <label for="email">Email</label>
-                <input id="email" type="email" name="email" required placeholder="Email address">
-            </div>
-            <div class="labelinput">
-                <label for="password">Password</label>
-                <input id="password" type="password" name="password" required
-                    placeholder="Please enter your desired password" autocomplete="new-password">
-            </div>
-            <div class="labelinput">
-                <label for="username">
-                    Username (lowercase a-z, numbers, and underscores; max 64 characters).<br />
-                    <small>Your username will be part of your fediverse handle, and cannot be changed later, so choose
-                        thoughtfully!</small>
-                </label>
-                <input id="username" type="text" name="username" required
-                    placeholder="Please enter your desired username" pattern="^[a-z0-9_]{1,64}$" autocapitalize="off"
-                    spellcheck="false" title="lowercase a-z, numbers, and underscores; max 64 characters">
-            </div>
-            {{- if .reasonRequired }}
-            <div class="labelinput">
-                <label for="reason">
-                    Reason you want to join {{ .instance.Title }} (40-500 characters).<br />
-                    <small>The admin(s) will use this text to decide whether or not to approve your sign-up.</small>
-                </label>
-                <textarea id="reason" name="reason" required
-                    placeholder="Enter a few sentences about why you want to join this instance. If you know someone on the instance already, you may want to mention them here. You might want to link to any other accounts you have elsewhere too."
-                    rows="8" minlength="40" maxlength="500" autocapitalize="sentences"
-                    title="40-500 characters"></textarea>
-            </div>
-            {{- end }}
-            <div class="checkbox">
-                <label for="agreement">I have read and accept the <a href="/about#terms">terms and conditions</a> of
-                    {{ .instance.Title }}, and I agree to abide by the <a href="/about#rules">instance
-                        rules</a>.</label>
-                <input id="agreement" type="checkbox" name="agreement" required value="true">
-            </div>
-            <input type="hidden" name="locale" value="en">
-            <button type="submit" class="btn btn-success">Submit</button>
-        </form>
-        {{- end }}
-    </section>
+	<section class="with-form" aria-labelledby="sign-up">
+		<h2 id="sign-up">Sign up for an account on {{ .instance.Title -}}</h2>
+		{{- if not .registrationOpen }}
+		<p>This instance is not currently open to new sign-ups.</p>
+		{{- else }}
+		<form action="/signup" method="POST">
+			<div class="labelinput">
+				<label for="email">Email</label>
+				<input id="email" type="email" name="email" required placeholder="Email address">
+			</div>
+			<div class="labelinput">
+				<label for="password">Password</label>
+				<input id="password" type="password" name="password" required
+					placeholder="Please enter your desired password" autocomplete="new-password">
+			</div>
+			<div class="labelinput">
+				<label for="username">
+					Username (lowercase a-z, numbers, and underscores; max 64 characters).<br />
+					<small>Your username will be part of your fediverse handle, and cannot be changed later, so choose
+						thoughtfully!</small>
+				</label>
+				<input id="username" type="text" name="username" required
+					placeholder="Please enter your desired username" pattern="^[a-z0-9_]{1,64}$" autocapitalize="off"
+					spellcheck="false" title="lowercase a-z, numbers, and underscores; max 64 characters">
+			</div>
+			{{- if .reasonRequired }}
+			<div class="labelinput">
+				<label for="reason">
+					Reason you want to join {{ .instance.Title }} (40-500 characters).<br />
+					<small>The admin(s) will use this text to decide whether or not to approve your sign-up.</small>
+				</label>
+				<textarea id="reason" name="reason" required
+					placeholder="Enter a few sentences about why you want to join this instance. If you know someone on the instance already, you may want to mention them here. You might want to link to any other accounts you have elsewhere too."
+					rows="8" minlength="40" maxlength="500" autocapitalize="sentences"
+					title="40-500 characters"></textarea>
+			</div>
+			{{- end }}
+			<div class="checkbox">
+				<label for="agreement">I have read and accept the <a href="/about#terms">terms and conditions</a> of
+					{{ .instance.Title }}, and I agree to abide by the <a href="/about#rules">instance
+						rules</a>.</label>
+				<input id="agreement" type="checkbox" name="agreement" required value="true">
+			</div>
+			<input type="hidden" name="locale" value="en">
+			<button type="submit" class="btn btn-success">Submit</button>
+		</form>
+		{{- end }}
+	</section>
 </main>
 {{- end }}
