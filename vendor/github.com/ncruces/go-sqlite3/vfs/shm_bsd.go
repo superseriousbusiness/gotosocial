@@ -1,4 +1,4 @@
-//go:build (freebsd || openbsd || netbsd || dragonfly || illumos || sqlite3_flock) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_noshm || sqlite3_nosys)
+//go:build ((freebsd || openbsd || netbsd || dragonfly || illumos) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_dotlk || sqlite3_nosys)) || sqlite3_flock
 
 package vfs
 
@@ -14,44 +14,14 @@ import (
 	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
-// SupportsSharedMemory is false on platforms that do not support shared memory.
-// To use [WAL without shared-memory], you need to set [EXCLUSIVE locking mode].
-//
-// [WAL without shared-memory]: https://sqlite.org/wal.html#noshm
-// [EXCLUSIVE locking mode]: https://sqlite.org/pragma.html#pragma_locking_mode
-const SupportsSharedMemory = true
-
-const _SHM_NLOCK = 8
-
-func (f *vfsFile) SharedMemory() SharedMemory { return f.shm }
-
-// NewSharedMemory returns a shared-memory WAL-index
-// backed by a file with the given path.
-// It will return nil if shared-memory is not supported,
-// or not appropriate for the given flags.
-// Only [OPEN_MAIN_DB] databases may need a WAL-index.
-// You must ensure all concurrent accesses to a database
-// use shared-memory instances created with the same path.
-func NewSharedMemory(path string, flags OpenFlag) SharedMemory {
-	if flags&OPEN_MAIN_DB == 0 || flags&(OPEN_DELETEONCLOSE|OPEN_MEMORY) != 0 {
-		return nil
-	}
-	return &vfsShm{
-		path:     path,
-		readOnly: flags&OPEN_READONLY != 0,
-	}
-}
-
 type vfsShmFile struct {
 	*os.File
 	info os.FileInfo
 
-	// +checklocks:vfsShmFilesMtx
-	refs int
+	refs int // +checklocks:vfsShmFilesMtx
 
-	// +checklocks:lockMtx
-	lock    [_SHM_NLOCK]int16
-	lockMtx sync.Mutex
+	lock [_SHM_NLOCK]int16 // +checklocks:Mutex
+	sync.Mutex
 }
 
 var (
@@ -62,10 +32,9 @@ var (
 
 type vfsShm struct {
 	*vfsShmFile
-	path     string
-	lock     [_SHM_NLOCK]bool
-	regions  []*util.MappedRegion
-	readOnly bool
+	path    string
+	lock    [_SHM_NLOCK]bool
+	regions []*util.MappedRegion
 }
 
 func (s *vfsShm) Close() error {
@@ -80,7 +49,7 @@ func (s *vfsShm) Close() error {
 	s.shmLock(0, _SHM_NLOCK, _SHM_UNLOCK)
 
 	// Decrease reference count.
-	if s.vfsShmFile.refs > 1 {
+	if s.vfsShmFile.refs > 0 {
 		s.vfsShmFile.refs--
 		s.vfsShmFile = nil
 		return nil
@@ -97,7 +66,7 @@ func (s *vfsShm) Close() error {
 	panic(util.AssertErr())
 }
 
-func (s *vfsShm) shmOpen() (rc _ErrorCode) {
+func (s *vfsShm) shmOpen() _ErrorCode {
 	if s.vfsShmFile != nil {
 		return _OK
 	}
@@ -128,34 +97,29 @@ func (s *vfsShm) shmOpen() (rc _ErrorCode) {
 		}
 	}
 
-	// Lock and truncate the file, if not readonly.
+	// Lock and truncate the file.
 	// The lock is only released by closing the file.
-	if s.readOnly {
-		rc = _READONLY_CANTINIT
-	} else {
-		if rc := osLock(f, unix.LOCK_EX|unix.LOCK_NB, _IOERR_LOCK); rc != _OK {
-			return rc
-		}
-		if err := f.Truncate(0); err != nil {
-			return _IOERR_SHMOPEN
-		}
+	if rc := osLock(f, unix.LOCK_EX|unix.LOCK_NB, _IOERR_LOCK); rc != _OK {
+		return rc
+	}
+	if err := f.Truncate(0); err != nil {
+		return _IOERR_SHMOPEN
 	}
 
 	// Add the new shared file.
 	s.vfsShmFile = &vfsShmFile{
 		File: f,
 		info: fi,
-		refs: 1,
 	}
 	f = nil // Don't close the file.
 	for i, g := range vfsShmFiles {
 		if g == nil {
 			vfsShmFiles[i] = s.vfsShmFile
-			return rc
+			return _OK
 		}
 	}
 	vfsShmFiles = append(vfsShmFiles, s.vfsShmFile)
-	return rc
+	return _OK
 }
 
 func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (uint32, _ErrorCode) {
@@ -177,32 +141,22 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 		if !extend {
 			return 0, _OK
 		}
-		err := osAllocate(s.File, n)
-		if err != nil {
+		if osAllocate(s.File, n) != nil {
 			return 0, _IOERR_SHMSIZE
 		}
 	}
 
-	var prot int
-	if s.readOnly {
-		prot = unix.PROT_READ
-	} else {
-		prot = unix.PROT_READ | unix.PROT_WRITE
-	}
-	r, err := util.MapRegion(ctx, mod, s.File, int64(id)*int64(size), size, prot)
+	r, err := util.MapRegion(ctx, mod, s.File, int64(id)*int64(size), size, false)
 	if err != nil {
 		return 0, _IOERR_SHMMAP
 	}
 	s.regions = append(s.regions, r)
-	if s.readOnly {
-		return r.Ptr, _READONLY
-	}
 	return r.Ptr, _OK
 }
 
 func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
-	s.lockMtx.Lock()
-	defer s.lockMtx.Unlock()
+	s.Lock()
+	defer s.Unlock()
 
 	switch {
 	case flags&_SHM_UNLOCK != 0:
@@ -224,7 +178,7 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 			if s.lock[i] {
 				panic(util.AssertErr())
 			}
-			if s.vfsShmFile.lock[i] < 0 {
+			if s.vfsShmFile.lock[i]+1 <= 0 {
 				return _BUSY
 			}
 		}
@@ -261,8 +215,7 @@ func (s *vfsShm) shmUnmap(delete bool) {
 	for _, r := range s.regions {
 		r.Unmap()
 	}
-	clear(s.regions)
-	s.regions = s.regions[:0]
+	s.regions = nil
 
 	// Close the file.
 	if delete {
@@ -272,7 +225,7 @@ func (s *vfsShm) shmUnmap(delete bool) {
 }
 
 func (s *vfsShm) shmBarrier() {
-	s.lockMtx.Lock()
+	s.Lock()
 	//lint:ignore SA2001 memory barrier.
-	s.lockMtx.Unlock()
+	s.Unlock()
 }

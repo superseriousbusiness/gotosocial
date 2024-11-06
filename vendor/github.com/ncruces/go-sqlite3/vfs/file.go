@@ -35,10 +35,10 @@ func testSymlinks(path string) error {
 
 func (vfsOS) Delete(path string, syncDir bool) error {
 	err := os.Remove(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return _IOERR_DELETE_NOENT
+	}
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return _IOERR_DELETE_NOENT
-		}
 		return err
 	}
 	if runtime.GOOS != "windows" && syncDir {
@@ -151,6 +151,7 @@ func (f *vfsFile) Close() error {
 	if f.shm != nil {
 		f.shm.Close()
 	}
+	f.Unlock(LOCK_NONE)
 	return f.File.Close()
 }
 
@@ -206,10 +207,10 @@ func (f *vfsFile) HasMoved() (bool, error) {
 		return false, err
 	}
 	pi, err := os.Stat(f.Name())
+	if errors.Is(err, fs.ErrNotExist) {
+		return true, nil
+	}
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return true, nil
-		}
 		return false, err
 	}
 	return !os.SameFile(fi, pi), nil

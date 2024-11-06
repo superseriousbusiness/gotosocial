@@ -234,4 +234,8 @@ const (
 	_SHM_LOCK      _ShmFlag = 2
 	_SHM_SHARED    _ShmFlag = 4
 	_SHM_EXCLUSIVE _ShmFlag = 8
+
+	_SHM_NLOCK = 8
+	_SHM_BASE  = 120
+	_SHM_DMS   = _SHM_BASE + _SHM_NLOCK
 )

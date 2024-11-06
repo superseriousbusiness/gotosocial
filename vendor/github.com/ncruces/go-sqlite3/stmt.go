@@ -255,6 +255,7 @@ func (s *Stmt) BindText(param int, value string) error {
 
 // BindRawText binds a []byte to the prepared statement as text.
 // The leftmost SQL parameter has an index of 1.
+// Binding a nil slice is the same as calling [Stmt.BindNull].
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindRawText(param int, value []byte) error {

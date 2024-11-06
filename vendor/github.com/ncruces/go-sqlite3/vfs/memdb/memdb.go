@@ -78,19 +78,15 @@ type memDB struct {
 
 	// +checklocks:dataMtx
 	data []*[sectorSize]byte
-
 	// +checklocks:dataMtx
 	size int64
 
-	// +checklocks:lockMtx
-	shared int32
-	// +checklocks:lockMtx
-	reserved bool
-	// +checklocks:lockMtx
-	pending bool
-
 	// +checklocks:memoryMtx
-	refs int
+	refs int32
+
+	shared   int32 // +checklocks:lockMtx
+	pending  bool  // +checklocks:lockMtx
+	reserved bool  // +checklocks:lockMtx
 
 	lockMtx sync.Mutex
 	dataMtx sync.RWMutex
@@ -253,11 +249,11 @@ func (m *memFile) Unlock(lock vfs.LockLevel) error {
 	m.lockMtx.Lock()
 	defer m.lockMtx.Unlock()
 
-	if m.pending && m.lock >= vfs.LOCK_PENDING {
-		m.pending = false
-	}
-	if m.reserved && m.lock >= vfs.LOCK_RESERVED {
+	if m.lock >= vfs.LOCK_RESERVED {
 		m.reserved = false
+	}
+	if m.lock >= vfs.LOCK_PENDING {
+		m.pending = false
 	}
 	if lock < vfs.LOCK_SHARED {
 		m.shared--
