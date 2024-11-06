@@ -19,7 +19,7 @@ WORKDIR /go/src/github.com/superseriousbusiness/gotosocial
 RUN /go/bin/swagger generate spec -o /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml --scan-models
 
 # stage 2: generate the web/assets/dist bundles
-FROM --platform=${BUILDPLATFORM} node:18-alpine AS bundler
+FROM --platform=${BUILDPLATFORM} node:20-alpine AS bundler
 
 COPY web web
 RUN yarn --cwd ./web/source install && \
