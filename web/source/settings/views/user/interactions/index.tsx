@@ -18,9 +18,13 @@
 */
 
 import React from "react";
+
+import { Redirect, Route, Router, Switch } from "wouter";
+import { BaseUrlContext, useBaseUrl } from "../../../lib/navigation/util";
+import InteractionRequestDetail from "./detail";
 import InteractionRequestsSearchForm from "./search";
 
-export default function InteractionRequests() {
+function InteractionRequests() {
 	return (
 		<div className="interaction-requests-view">
 			<div className="form-section-docs">
@@ -32,5 +36,27 @@ export default function InteractionRequests() {
 			</div>
 			<InteractionRequestsSearchForm />
 		</div>
+	);
+}
+
+/**
+ * - /settings/users/interaction-requests/search
+ * - /settings/users/interaction-requests/{reqId}
+ */
+export default function InteractionRequestsRouter() {
+	const parentUrl = useBaseUrl();
+	const thisBase = "/interaction-requests";
+	const absBase = parentUrl + thisBase;
+
+	return (
+		<BaseUrlContext.Provider value={absBase}>
+			<Router base={thisBase}>
+				<Switch>
+					<Route path="/search" component={InteractionRequests} />
+					<Route path="/:reqId" component={InteractionRequestDetail} />
+					<Redirect to="/search" />
+				</Switch>
+			</Router>
+		</BaseUrlContext.Provider>
 	);
 }
