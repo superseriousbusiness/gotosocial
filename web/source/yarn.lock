@@ -1345,10 +1345,10 @@
   dependencies:
     levn "^0.4.1"
 
-"@f0x52/eslint-config@^2.0.9":
-  version "2.0.9"
-  resolved "https://registry.yarnpkg.com/@f0x52/eslint-config/-/eslint-config-2.0.9.tgz#96320799d6c1ecaabd663091a796a765ca075869"
-  integrity sha512-4XiXUe6wMm5btpMBXpkB90W6aSl4EtuUSmswc9LtsByTvmYQ4+dn0zXoRh2WkWzvZx/VHFIxqu73BMeHHzBDxg==
+"@f0x52/eslint-config@^2.0.11":
+  version "2.0.11"
+  resolved "https://registry.yarnpkg.com/@f0x52/eslint-config/-/eslint-config-2.0.11.tgz#a8f1cdc057344b6fa61794b7bea437f0b6e269c5"
+  integrity sha512-QsNeb3uQ/CR5XNKbI98ThchD2vj4IjMh8oEMoFQiB7ae51NCUruSQiE91hq4IvvXGZy4li61loavO4avbm6DJA==
   dependencies:
     "@eslint/js" "^9.11.0"
     "@stylistic/eslint-plugin" "^2.8.0"
@@ -3540,6 +3540,11 @@ eslint-plugin-license-header@^0.6.0:
   integrity sha512-IEywStBWaDBDMkogYoKUAdaOuomZ+YaQmdoSD2vHmXobekM+XuP6SWLlvwUUhIbdocn3MTlb5CUJ8E4VHz1c/w==
   dependencies:
     requireindex "^1.2.0"
+
+eslint-plugin-only-warn@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-only-warn/-/eslint-plugin-only-warn-1.1.0.tgz#c6ddc37ddc4e72c121f07be565fcb7b6671fe78a"
+  integrity sha512-2tktqUAT+Q3hCAU0iSf4xAN1k9zOpjK5WO8104mB0rT/dGhOa09582HN5HlbxNbPRZ0THV7nLGvzugcNOSjzfA==
 
 eslint-scope@^8.2.0:
   version "8.2.0"

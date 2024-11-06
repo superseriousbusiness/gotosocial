@@ -29,7 +29,8 @@ module.exports = [
 			}
 		},
 		plugins: {
-			"license-header": require("eslint-plugin-license-header")
+			"license-header": require("eslint-plugin-license-header"),
+			"only-warn": require("eslint-plugin-only-warn")
 		},
 		rules: {
 			"license-header/header": ["error", __dirname + "/.license-header.js"]
