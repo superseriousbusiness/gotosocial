@@ -14,6 +14,11 @@ import (
 // wazero.Runtime on module instantiation.
 type Args struct {
 
+	// Program name, depending on the
+	// module being run this may or may
+	// not be necessary.
+	Name string
+
 	// Optional further module configuration function.
 	// (e.g. to mount filesystem dir, set env vars, etc).
 	Config func(wazero.ModuleConfig) wazero.ModuleConfig
@@ -39,7 +44,7 @@ func Run(
 
 	// Prefix arguments with module name.
 	cargs := make([]string, len(args.Args)+1)
-	cargs[0] = module.Name()
+	cargs[0] = args.Name
 	copy(cargs[1:], args.Args)
 
 	// Prepare new module configuration.
