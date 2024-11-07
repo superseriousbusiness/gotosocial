@@ -2,6 +2,7 @@ package sqlite3
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 
 	"github.com/tetratelabs/wazero/api"
@@ -67,6 +68,15 @@ func logCallback(ctx context.Context, mod api.Module, _, iCode, zMsg uint32) {
 	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.log != nil {
 		msg := util.ReadString(mod, zMsg, _MAX_LENGTH)
 		c.log(xErrorCode(iCode), msg)
+	}
+}
+
+// Log writes a message into the error log established by [Conn.ConfigLog].
+//
+// https://sqlite.org/c3ref/log.html
+func (c *Conn) Log(code ExtendedErrorCode, format string, a ...any) {
+	if c.log != nil {
+		c.log(code, fmt.Sprintf(format, a...))
 	}
 }
 

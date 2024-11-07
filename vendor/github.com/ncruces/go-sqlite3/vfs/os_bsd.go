@@ -1,4 +1,4 @@
-//go:build (freebsd || openbsd || netbsd || dragonfly || illumos || sqlite3_flock) && !sqlite3_nosys
+//go:build ((freebsd || openbsd || netbsd || dragonfly || illumos) && !(sqlite3_dotlk || sqlite3_nosys)) || sqlite3_flock
 
 package vfs
 

@@ -1,4 +1,4 @@
-//go:build !sqlite3_nosys
+//go:build !(sqlite3_dotlk || sqlite3_nosys)
 
 package vfs
 

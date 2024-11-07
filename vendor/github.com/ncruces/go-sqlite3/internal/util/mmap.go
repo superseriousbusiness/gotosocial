@@ -1,4 +1,4 @@
-//go:build unix && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_noshm || sqlite3_nosys)
+//go:build unix && !sqlite3_nosys
 
 package util
 
@@ -55,10 +55,10 @@ type MappedRegion struct {
 	used bool
 }
 
-func MapRegion(ctx context.Context, mod api.Module, f *os.File, offset int64, size int32, prot int) (*MappedRegion, error) {
+func MapRegion(ctx context.Context, mod api.Module, f *os.File, offset int64, size int32, readOnly bool) (*MappedRegion, error) {
 	s := ctx.Value(moduleKey{}).(*moduleState)
 	r := s.new(ctx, mod, size)
-	err := r.mmap(f, offset, prot)
+	err := r.mmap(f, offset, readOnly)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,11 @@ func (r *MappedRegion) Unmap() error {
 	return err
 }
 
-func (r *MappedRegion) mmap(f *os.File, offset int64, prot int) error {
+func (r *MappedRegion) mmap(f *os.File, offset int64, readOnly bool) error {
+	prot := unix.PROT_READ
+	if !readOnly {
+		prot |= unix.PROT_WRITE
+	}
 	_, err := unix.MmapPtr(int(f.Fd()), offset, r.addr, uintptr(r.size),
 		prot, unix.MAP_SHARED|unix.MAP_FIXED)
 	r.used = err == nil
