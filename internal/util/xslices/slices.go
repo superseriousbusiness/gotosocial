@@ -29,7 +29,7 @@ import (
 // may allocate more than necessary extra size.
 func GrowJust[T any](in []T, size int) []T {
 	if cap(in)-len(in) < size {
-		in2 := make([]T, len(in)+size)
+		in2 := make([]T, len(in), len(in)+size)
 		_ = copy(in2, in)
 		in = in2
 	}
