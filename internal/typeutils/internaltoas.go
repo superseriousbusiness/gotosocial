@@ -36,7 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // AccountToAS converts a gts model account into an activity streams person, suitable for federation
@@ -1819,7 +1819,7 @@ func populateValuesForProp[T ap.WithIRI](
 	// Deduplicate the iri strings to
 	// make sure we're not parsing + adding
 	// the same string multiple times.
-	iriStrs = util.Deduplicate(iriStrs)
+	iriStrs = xslices.Deduplicate(iriStrs)
 
 	// Append them to the property.
 	for _, iriStr := range iriStrs {

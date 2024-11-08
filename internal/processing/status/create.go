@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
@@ -536,9 +537,9 @@ func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.Pa
 	}
 
 	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
-	status.MentionIDs = util.Gather(nil, status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
-	status.TagIDs = util.Gather(nil, status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
-	status.EmojiIDs = util.Gather(nil, status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
+	status.MentionIDs = xslices.Gather(nil, status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
+	status.TagIDs = xslices.Gather(nil, status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
+	status.EmojiIDs = xslices.Gather(nil, status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
 
 	if status.ContentWarning != "" && len(status.AttachmentIDs) > 0 {
 		// If a content-warning is set, and

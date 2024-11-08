@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -209,7 +209,7 @@ func (c *conversationDB) getConversationsByLastStatusIDs(
 
 	// Reorder the conversations by their last status IDs to ensure correct order.
 	getID := func(b *gtsmodel.Conversation) string { return b.ID }
-	util.OrderBy(conversations, conversationLastStatusIDs, getID)
+	xslices.OrderBy(conversations, conversationLastStatusIDs, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -558,7 +558,7 @@ func (c *conversationDB) DeleteStatusFromConversations(ctx context.Context, stat
 
 	// Invalidate cache entries.
 	updatedConversationIDs = append(updatedConversationIDs, deletedConversationIDs...)
-	updatedConversationIDs = util.Deduplicate(updatedConversationIDs)
+	updatedConversationIDs = xslices.Deduplicate(updatedConversationIDs)
 	c.state.Caches.DB.Conversation.InvalidateIDs("ID", updatedConversationIDs)
 
 	return nil

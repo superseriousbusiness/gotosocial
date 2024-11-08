@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -78,7 +78,7 @@ func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gts
 	// Reorder the media by their
 	// IDs to ensure in correct order.
 	getID := func(m *gtsmodel.MediaAttachment) string { return m.ID }
-	util.OrderBy(media, ids, getID)
+	xslices.OrderBy(media, ids, getID)
 
 	return media, nil
 }

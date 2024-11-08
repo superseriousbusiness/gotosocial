@@ -15,22 +15,68 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package util_test
+package xslices_test
 
 import (
 	"net/url"
 	"slices"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/stretchr/testify/assert"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
-var (
-	testURLSlice = []*url.URL{}
-)
+func TestGrowJust(t *testing.T) {
+	for _, l := range []int{0, 2, 4, 8, 16, 32, 64} {
+		for _, x := range []int{0, 2, 4, 8, 16, 32, 64} {
+			s := make([]int, l, l+x)
+			for _, g := range []int{0, 2, 4, 8, 16, 32, 64} {
+				s2 := xslices.GrowJust(s, g)
+
+				switch {
+				// If slice already has capacity for
+				// 'g' then it should not be changed.
+				case cap(s) >= len(s)+g:
+					assert.Equal(t, cap(s), cap(s2))
+
+				// Else, returned slice should only
+				// have capacity for original length
+				// plus extra elements, NOTHING MORE.
+				default:
+					assert.Equal(t, cap(s2), len(s)+g)
+				}
+			}
+		}
+	}
+}
+
+func TestAppendJust(t *testing.T) {
+	for _, l := range []int{0, 2, 4, 8, 16, 32, 64} {
+		for _, x := range []int{0, 2, 4, 8, 16, 32, 64} {
+			s := make([]int, l, l+x)
+			for _, a := range []int{0, 2, 4, 8, 16, 32, 64} {
+				toAppend := make([]int, a)
+				s2 := xslices.AppendJust(s, toAppend...)
+
+				switch {
+				// If slice already has capacity for
+				// 'toAppend' then it should not change.
+				case cap(s) >= len(s)+a:
+					assert.Equal(t, cap(s), cap(s2))
+
+				// Else, returned slice should only
+				// have capacity for original length
+				// plus extra elements, NOTHING MORE.
+				default:
+					assert.Equal(t, cap(s2), len(s)+len(toAppend))
+				}
+			}
+		}
+	}
+}
 
 func TestGather(t *testing.T) {
-	out := util.Gather(nil, []*url.URL{
+	out := xslices.Gather(nil, []*url.URL{
 		{Scheme: "https", Host: "google.com", Path: "/some-search"},
 		{Scheme: "http", Host: "example.com", Path: "/robots.txt"},
 	}, (*url.URL).String)
@@ -41,7 +87,7 @@ func TestGather(t *testing.T) {
 		t.Fatal("unexpected gather output")
 	}
 
-	out = util.Gather([]string{
+	out = xslices.Gather([]string{
 		"starting input string",
 		"another starting input",
 	}, []*url.URL{
@@ -59,7 +105,7 @@ func TestGather(t *testing.T) {
 }
 
 func TestGatherIf(t *testing.T) {
-	out := util.GatherIf(nil, []string{
+	out := xslices.GatherIf(nil, []string{
 		"hello world",
 		"not hello world",
 		"hello world",
@@ -73,7 +119,7 @@ func TestGatherIf(t *testing.T) {
 		t.Fatal("unexpected gatherif output")
 	}
 
-	out = util.GatherIf([]string{
+	out = xslices.GatherIf([]string{
 		"starting input string",
 		"another starting input",
 	}, []string{

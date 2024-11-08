@@ -15,11 +15,43 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package util
+package xslices
 
 import (
 	"slices"
 )
+
+// GrowJust increases slice capacity to guarantee
+// extra room 'size', where in the case that it does
+// need to allocate more it ONLY allocates 'size' extra.
+// This is different to typical slices.Grow behaviour,
+// which simply guarantees extra through append() which
+// may allocate more than necessary extra size.
+func GrowJust[T any](in []T, size int) []T {
+	if cap(in)-len(in) < size {
+		in2 := make([]T, len(in)+size)
+		_ = copy(in2, in)
+		in = in2
+	}
+	return in
+}
+
+// AppendJust appends extra elements to slice,
+// ONLY allocating at most len(extra) elements. This
+// is different to the typical append behaviour which
+// will append extra, in a manner to reduce the need
+// for new allocations on every call to append.
+func AppendJust[T any](in []T, extra ...T) []T {
+	if cap(in)-len(in) < len(extra) {
+		in2 := make([]T, len(in)+len(extra))
+		_ = copy(in2, in)
+		in = in2
+	} else {
+		in = in[:len(in)+len(extra)]
+	}
+	_ = copy(in[len(in):], extra)
+	return in
+}
 
 // Deduplicate deduplicates entries in the given slice.
 func Deduplicate[T comparable](in []T) []T {

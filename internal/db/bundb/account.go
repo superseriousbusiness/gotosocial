@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -86,7 +87,7 @@ func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsm
 	// Reorder the statuses by their
 	// IDs to ensure in correct order.
 	getID := func(a *gtsmodel.Account) string { return a.ID }
-	util.OrderBy(accounts, ids, getID)
+	xslices.OrderBy(accounts, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

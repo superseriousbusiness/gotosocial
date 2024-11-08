@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // Conversation represents direct messages between the owner account and a set of other accounts.
@@ -62,7 +62,7 @@ type Conversation struct {
 
 // ConversationOtherAccountsKey creates an OtherAccountsKey from a list of OtherAccountIDs.
 func ConversationOtherAccountsKey(otherAccountIDs []string) string {
-	otherAccountIDs = util.Deduplicate(otherAccountIDs)
+	otherAccountIDs = xslices.Deduplicate(otherAccountIDs)
 	slices.Sort(otherAccountIDs)
 	return strings.Join(otherAccountIDs, ",")
 }
