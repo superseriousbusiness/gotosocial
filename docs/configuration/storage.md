@@ -1,5 +1,7 @@
 # Storage
 
+When configuring an object storage backend, the `storage-s3-endpoint` **must not** include the bucket name. That's what `s3-bucket-name` is for. Using subfolders in a bucket isn't currently supported.
+
 ## Settings
 
 ```yaml
