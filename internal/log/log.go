@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"log/syslog"
 	"os"
-	"slices"
 	"strings"
 	"time"
 
@@ -420,11 +419,20 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 	}
 
 	if s != "" {
-		// Append message to log fields.
-		fields = slices.Grow(fields, 1)
-		fields = append(fields, kv.Field{
+		if len(fields) >= cap(fields) {
+			// Reallocate fields to store JUST 1 more.
+			fields2 := make([]kv.Field, len(fields)+1)
+			_ = copy(fields2, fields)
+			fields = fields2
+		} else {
+			// Reslice to JUST store one more.
+			fields = fields[:len(fields)+1]
+		}
+
+		// Append msg as final log field.
+		fields[len(fields)-1] = kv.Field{
 			K: "msg", V: fmt.Sprintf(s, a...),
-		})
+		}
 	}
 
 	// Append formatted fields to log buffer.
