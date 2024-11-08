@@ -4,6 +4,12 @@ go 1.22.2
 
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
 
+replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.29.0
+
+replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.29.0
+
+replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.29.0
+
 require (
 	codeberg.org/gruf/go-bytes v1.0.2
 	codeberg.org/gruf/go-bytesize v1.0.3
