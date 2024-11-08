@@ -24,7 +24,7 @@ var _ TableModel = (*hasManyModel)(nil)
 func newHasManyModel(j *relationJoin) *hasManyModel {
 	baseTable := j.BaseModel.Table()
 	joinModel := j.JoinModel.(*sliceTableModel)
-	baseValues := baseValues(joinModel, j.Relation.BaseFields)
+	baseValues := baseValues(joinModel, j.Relation.BasePKs)
 	if len(baseValues) == 0 {
 		return nil
 	}
@@ -92,9 +92,9 @@ func (m *hasManyModel) Scan(src interface{}) error {
 		return err
 	}
 
-	for _, f := range m.rel.JoinFields {
+	for _, f := range m.rel.JoinPKs {
 		if f.Name == field.Name {
-			m.structKey = append(m.structKey, field.Value(m.strct).Interface())
+			m.structKey = append(m.structKey, indirectFieldValue(field.Value(m.strct)))
 			break
 		}
 	}
@@ -103,6 +103,7 @@ func (m *hasManyModel) Scan(src interface{}) error {
 }
 
 func (m *hasManyModel) parkStruct() error {
+
 	baseValues, ok := m.baseValues[internal.NewMapKey(m.structKey)]
 	if !ok {
 		return fmt.Errorf(
@@ -143,7 +144,19 @@ func baseValues(model TableModel, fields []*schema.Field) map[internal.MapKey][]
 
 func modelKey(key []interface{}, strct reflect.Value, fields []*schema.Field) []interface{} {
 	for _, f := range fields {
-		key = append(key, f.Value(strct).Interface())
+		key = append(key, indirectFieldValue(f.Value(strct)))
 	}
 	return key
+}
+
+// indirectFieldValue return the field value dereferencing the pointer if necessary.
+// The value is then used as a map key.
+func indirectFieldValue(field reflect.Value) interface{} {
+	if field.Kind() != reflect.Ptr {
+		return field.Interface()
+	}
+	if field.IsNil() {
+		return nil
+	}
+	return field.Elem().Interface()
 }
