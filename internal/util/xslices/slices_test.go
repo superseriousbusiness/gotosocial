@@ -33,6 +33,9 @@ func TestGrowJust(t *testing.T) {
 			for _, g := range []int{0, 2, 4, 8, 16, 32, 64} {
 				s2 := xslices.GrowJust(s, g)
 
+				// Slice length should not be different.
+				assert.Equal(t, len(s), len(s2))
+
 				switch {
 				// If slice already has capacity for
 				// 'g' then it should not be changed.
@@ -58,6 +61,9 @@ func TestAppendJust(t *testing.T) {
 				toAppend := make([]int, a)
 				s2 := xslices.AppendJust(s, toAppend...)
 
+				// Slice length should be as expected.
+				assert.Equal(t, len(s2), len(s)+a)
+
 				switch {
 				// If slice already has capacity for
 				// 'toAppend' then it should not change.
@@ -68,7 +74,7 @@ func TestAppendJust(t *testing.T) {
 				// have capacity for original length
 				// plus extra elements, NOTHING MORE.
 				default:
-					assert.Equal(t, cap(s2), len(s)+len(toAppend))
+					assert.Equal(t, cap(s2), len(s)+a)
 				}
 			}
 		}
