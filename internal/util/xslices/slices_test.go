@@ -18,6 +18,7 @@
 package xslices_test
 
 import (
+	"math/rand"
 	"net/url"
 	"slices"
 	"testing"
@@ -57,12 +58,27 @@ func TestAppendJust(t *testing.T) {
 	for _, l := range []int{0, 2, 4, 8, 16, 32, 64} {
 		for _, x := range []int{0, 2, 4, 8, 16, 32, 64} {
 			s := make([]int, l, l+x)
+
+			// Randomize slice.
+			for i := range s {
+				s[i] = rand.Int()
+			}
+
 			for _, a := range []int{0, 2, 4, 8, 16, 32, 64} {
 				toAppend := make([]int, a)
+
+				// Randomize appended vals.
+				for i := range toAppend {
+					toAppend[i] = rand.Int()
+				}
+
 				s2 := xslices.AppendJust(s, toAppend...)
 
 				// Slice length should be as expected.
-				assert.Equal(t, len(s2), len(s)+a)
+				assert.Equal(t, len(s)+a, len(s2))
+
+				// Slice contents should be as expected.
+				assert.Equal(t, append(s, toAppend...), s2)
 
 				switch {
 				// If slice already has capacity for
@@ -74,7 +90,7 @@ func TestAppendJust(t *testing.T) {
 				// have capacity for original length
 				// plus extra elements, NOTHING MORE.
 				default:
-					assert.Equal(t, cap(s2), len(s)+a)
+					assert.Equal(t, len(s)+a, cap(s2))
 				}
 			}
 		}

@@ -28,11 +28,14 @@ import (
 // which simply guarantees extra through append() which
 // may allocate more than necessary extra size.
 func GrowJust[T any](in []T, size int) []T {
+
 	if cap(in)-len(in) < size {
+		// Reallocate enough for in + size.
 		in2 := make([]T, len(in), len(in)+size)
 		_ = copy(in2, in)
 		in = in2
 	}
+
 	return in
 }
 
@@ -42,14 +45,20 @@ func GrowJust[T any](in []T, size int) []T {
 // will append extra, in a manner to reduce the need
 // for new allocations on every call to append.
 func AppendJust[T any](in []T, extra ...T) []T {
-	if cap(in)-len(in) < len(extra) {
-		in2 := make([]T, len(in)+len(extra))
+	l := len(in)
+
+	if cap(in)-l < len(extra) {
+		// Reallocate enough for + extra.
+		in2 := make([]T, l+len(extra))
 		_ = copy(in2, in)
 		in = in2
 	} else {
-		in = in[:len(in)+len(extra)]
+		// Reslice for + extra.
+		in = in[:l+len(extra)]
 	}
-	_ = copy(in[len(in):], extra)
+
+	// Copy extra into slice.
+	_ = copy(in[l:], extra)
 	return in
 }
 
