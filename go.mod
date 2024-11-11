@@ -91,7 +91,7 @@ require (
 	golang.org/x/crypto v0.29.0
 	golang.org/x/image v0.22.0
 	golang.org/x/net v0.31.0
-	golang.org/x/oauth2 v0.23.0
+	golang.org/x/oauth2 v0.24.0
 	golang.org/x/text v0.20.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
 	gopkg.in/yaml.v3 v3.0.1
