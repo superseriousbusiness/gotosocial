@@ -2,11 +2,21 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.22.2
 
+// Replace modernc/sqlite with our version that fixes the concurrency INTERRUPT issue
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
 
+// Below pin otel libraries to v1.29.0 until we can figure out issues
 replace go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.29.0
 
+replace go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
+
+replace go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0
+
 replace go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.29.0
+
+replace go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v1.29.0
+
+replace go.opentelemetry.io/otel/sdk/metric => go.opentelemetry.io/otel/sdk/metric v1.29.0
 
 replace go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.29.0
 
@@ -70,12 +80,12 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.7.8
 	go.opentelemetry.io/otel v1.31.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0
 	go.opentelemetry.io/otel/exporters/prometheus v0.51.0
 	go.opentelemetry.io/otel/metric v1.31.0
-	go.opentelemetry.io/otel/sdk v1.29.0
-	go.opentelemetry.io/otel/sdk/metric v1.29.0
+	go.opentelemetry.io/otel/sdk v1.31.0
+	go.opentelemetry.io/otel/sdk/metric v1.31.0
 	go.opentelemetry.io/otel/trace v1.31.0
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.29.0

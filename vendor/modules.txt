@@ -998,14 +998,14 @@ go.opentelemetry.io/otel/semconv/v1.7.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/exporters/otlp/otlptrace
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/internal/tracetransform
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.31.0 => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/envconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/otlpconfig
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc/internal/retry
-# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.31.0 => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
 go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal
@@ -1020,7 +1020,7 @@ go.opentelemetry.io/otel/exporters/prometheus
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
 go.opentelemetry.io/otel/metric/noop
-# go.opentelemetry.io/otel/sdk v1.29.0
+# go.opentelemetry.io/otel/sdk v1.31.0 => go.opentelemetry.io/otel/sdk v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/sdk
 go.opentelemetry.io/otel/sdk/instrumentation
@@ -1028,7 +1028,7 @@ go.opentelemetry.io/otel/sdk/internal/env
 go.opentelemetry.io/otel/sdk/internal/x
 go.opentelemetry.io/otel/sdk/resource
 go.opentelemetry.io/otel/sdk/trace
-# go.opentelemetry.io/otel/sdk/metric v1.29.0
+# go.opentelemetry.io/otel/sdk/metric v1.31.0 => go.opentelemetry.io/otel/sdk/metric v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/sdk/metric
 go.opentelemetry.io/otel/sdk/metric/internal
@@ -1347,5 +1347,9 @@ modernc.org/token
 mvdan.cc/xurls/v2
 # modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
 # go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.29.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
+# go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0
 # go.opentelemetry.io/otel/metric => go.opentelemetry.io/otel/metric v1.29.0
+# go.opentelemetry.io/otel/sdk => go.opentelemetry.io/otel/sdk v1.29.0
+# go.opentelemetry.io/otel/sdk/metric => go.opentelemetry.io/otel/sdk/metric v1.29.0
 # go.opentelemetry.io/otel/trace => go.opentelemetry.io/otel/trace v1.29.0
