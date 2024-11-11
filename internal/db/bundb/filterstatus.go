@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -116,7 +116,7 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 	}
 
 	// Put the filter status structs in the same order as the filter status IDs.
-	util.OrderBy(filterStatuses, filterStatusIDs, func(filterStatus *gtsmodel.FilterStatus) string {
+	xslices.OrderBy(filterStatuses, filterStatusIDs, func(filterStatus *gtsmodel.FilterStatus) string {
 		return filterStatus.ID
 	})
 

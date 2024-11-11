@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -127,7 +127,7 @@ func (r *relationshipDB) GetBlocksByIDs(ctx context.Context, ids []string) ([]*g
 	// Reorder the blocks by their
 	// IDs to ensure in correct order.
 	getID := func(b *gtsmodel.Block) string { return b.ID }
-	util.OrderBy(blocks, ids, getID)
+	xslices.OrderBy(blocks, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

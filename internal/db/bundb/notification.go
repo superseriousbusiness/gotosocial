@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -130,7 +130,7 @@ func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string
 	// Reorder the notifs by their
 	// IDs to ensure in correct order.
 	getID := func(n *gtsmodel.Notification) string { return n.ID }
-	util.OrderBy(notifs, ids, getID)
+	xslices.OrderBy(notifs, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

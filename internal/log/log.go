@@ -22,11 +22,11 @@ import (
 	"fmt"
 	"log/syslog"
 	"os"
-	"slices"
 	"strings"
 	"time"
 
 	"codeberg.org/gruf/go-kv"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 var (
@@ -412,7 +412,10 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 	buf.B = append(buf.B, lvlstrs[lvl]...)
 	buf.B = append(buf.B, ' ')
 
-	if ctx != nil {
+	if ctx != nil && len(ctxhooks) > 0 {
+		// Ensure fields have space for hooks (+1 for below).
+		fields = xslices.GrowJust(fields, len(ctxhooks)+1)
+
 		// Pass context through hooks.
 		for _, hook := range ctxhooks {
 			fields = hook(ctx, fields)
@@ -420,9 +423,8 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 	}
 
 	if s != "" {
-		// Append message to log fields.
-		fields = slices.Grow(fields, 1)
-		fields = append(fields, kv.Field{
+		// Append message (if given) as final log field.
+		fields = xslices.AppendJust(fields, kv.Field{
 			K: "msg", V: fmt.Sprintf(s, a...),
 		})
 	}

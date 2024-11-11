@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -102,7 +102,7 @@ func (t *tagDB) GetTags(ctx context.Context, ids []string) ([]*gtsmodel.Tag, err
 	// Reorder the tags by their
 	// IDs to ensure in correct order.
 	getID := func(t *gtsmodel.Tag) string { return t.ID }
-	util.OrderBy(tags, ids, getID)
+	xslices.OrderBy(tags, ids, getID)
 
 	return tags, nil
 }
@@ -301,5 +301,5 @@ func (t *tagDB) GetAccountIDsFollowingTagIDs(ctx context.Context, tagIDs []strin
 
 	// Accounts might be following multiple tags in list,
 	// but we only want to return each account once.
-	return util.Deduplicate(accountIDs), nil
+	return xslices.Deduplicate(accountIDs), nil
 }

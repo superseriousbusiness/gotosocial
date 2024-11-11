@@ -35,7 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 type errOtherIRIBlocked struct {
@@ -162,7 +162,7 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 
 	// OtherIRIs will likely contain some
 	// duplicate entries now, so remove them.
-	otherIRIs = util.DeduplicateFunc(otherIRIs,
+	otherIRIs = xslices.DeduplicateFunc(otherIRIs,
 		(*url.URL).String, // serialized URL is 'key()'
 	)
 

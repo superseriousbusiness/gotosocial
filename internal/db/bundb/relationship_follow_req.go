@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -103,7 +103,7 @@ func (r *relationshipDB) GetFollowRequestsByIDs(ctx context.Context, ids []strin
 	// Reorder the requests by their
 	// IDs to ensure in correct order.
 	getID := func(f *gtsmodel.FollowRequest) string { return f.ID }
-	util.OrderBy(follows, ids, getID)
+	xslices.OrderBy(follows, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
