@@ -413,8 +413,8 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 	buf.B = append(buf.B, ' ')
 
 	if ctx != nil && len(ctxhooks) > 0 {
-		// Ensure fields have extra necessary space.
-		fields = xslices.GrowJust(fields, len(ctxhooks))
+		// Ensure fields have space for hooks (+1 for below).
+		fields = xslices.GrowJust(fields, len(ctxhooks)+1)
 
 		// Pass context through hooks.
 		for _, hook := range ctxhooks {
@@ -423,7 +423,7 @@ func logf(ctx context.Context, depth int, lvl LEVEL, fields []kv.Field, s string
 	}
 
 	if s != "" {
-		// Append message as final log field.
+		// Append message (if given) as final log field.
 		fields = xslices.AppendJust(fields, kv.Field{
 			K: "msg", V: fmt.Sprintf(s, a...),
 		})
