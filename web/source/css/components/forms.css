@@ -1,0 +1,68 @@
+input, select, textarea, .input {
+	box-sizing: border-box;
+	border: 0.15rem solid $input-border;
+	border-radius: 0.1rem;
+	color: $fg;
+	background: $input-bg;
+	width: 100%;
+	font-family: 'Noto Sans', sans-serif;
+	font-size: 1rem;
+	padding: 0.3rem;
+
+	&:focus, &:active {
+		border-color: $input-focus-border;
+	}
+
+	&:invalid, .invalid & {
+		border-color: $input-error-border;
+	}
+
+	&:disabled {
+		background: transparent;
+	}
+
+	&::placeholder {
+		opacity: 1;
+		color: $fg-reduced
+	}
+}
+
+.button, button {
+	border-radius: $br-inner;
+	color: $button-fg;
+	background: $button-bg;
+	box-shadow: $boxshadow;
+	border: $button-border;
+	text-decoration: none;
+	font-size: 1.2rem;
+	font-weight: bold;
+	padding: 0.5rem;
+	border: none;
+	cursor: pointer;
+	text-align: center;
+	font-family: 'Noto Sans', sans-serif;
+
+	&.danger {
+		color: $button-danger-fg;
+		background: $button-danger-bg;
+
+		&:hover {
+			background: $button-danger-hover-bg;
+		}
+	}
+
+	&:disabled,
+	&.disabled {
+		color: $white2;
+		background: $gray2;
+		cursor: not-allowed;
+
+		&:hover {
+			background: $gray3;
+		}
+	}
+
+	&:hover {
+		background: $button-hover-bg;
+	}
+}

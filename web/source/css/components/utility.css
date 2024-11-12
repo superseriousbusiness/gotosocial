@@ -1,0 +1,21 @@
+.hidden {
+	display: none;
+}
+
+.nounderline {
+	text-decoration: none;
+}
+
+.accent {
+	color: $acc1;
+}
+
+.text-cutoff {
+	text-overflow: ellipsis;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.wrap-text {
+	word-wrap: anywhere; 
+}

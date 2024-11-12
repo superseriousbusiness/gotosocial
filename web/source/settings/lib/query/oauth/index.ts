@@ -188,7 +188,7 @@ const extended = gtsApi.injectEndpoints({
 				return { data: null };
 			},
 		}),
-		logout: build.mutation({
+		logout: build.mutation<null, void>({
 			queryFn: (_arg, api) => {
 				api.dispatch(oauthRemove());
 				return { data: null };

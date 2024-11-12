@@ -1,0 +1,71 @@
+/*
+	Outdent block quotes a bit; use
+	orange strip for left border.
+*/
+blockquote {
+	padding: 0.5rem;
+	border-left: 0.2rem solid $border-accent;
+	margin: 0;
+	font-style: normal;
+
+	/*
+		Same background color we
+		use for code blocks
+	*/
+	background-color: $gray2;
+	border-radius: 0;
+}
+
+/*
+	Nice dashed orange line
+	for horizontal rules.
+*/
+hr {
+	border: 0;
+	border-top: 1px dashed $border-accent;
+}
+
+/*
+	Don't indent definition
+	lists and definitions.
+*/
+dl {
+	margin: 0;
+
+	dd {
+		margin-left: 0;
+	}
+}
+
+label {
+	cursor: pointer;
+}
+
+/*
+	Set our own nice background for
+	monospace code and pre blocks.
+*/
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+	background-color: $gray2;
+}
+
+/*
+	Just code on its own inside status
+	content, ie, `here is some code`.
+*/
+code {
+	padding: 0.25rem;
+	border-radius: $br-inner;
+	white-space: pre-wrap;
+}
+
+select {
+	/*
+		By default this looks awful on Gnome
+		Web so restyle a bit to try to make
+		it consistent with firefox + chrome.
+	*/
+	appearance: none;
+	line-height: 1.5rem;
+}

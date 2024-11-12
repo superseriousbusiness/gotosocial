@@ -17,20 +17,24 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-.about {
-	display: flex;
-	flex-direction: column;
-	gap: 2rem;
-	padding: 2rem;
-
-	background: $bg-accent;
-	box-shadow: $boxshadow;
-	border: $boxshadow-border;
-	border-radius: $br;
-
-	.about-section {	
-		h1, h2, h3, h4, h5 {
-			margin-top: 0;
+module.exports = [
+	{
+		files: ["**/*.ts", "**/*.tsx"],
+		languageOptions: {
+			parserOptions: {
+				project: true,
+				ecmaFeatures: {
+					jsx: true
+				}
+			}
+		},
+		plugins: {
+			"license-header": require("eslint-plugin-license-header"),
+			"only-warn": require("eslint-plugin-only-warn")
+		},
+		rules: {
+			"license-header/header": ["error", __dirname + "/.license-header.js"]
 		}
-	}
-}
+	},
+	...require("@f0x52/eslint-config")
+];

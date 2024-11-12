@@ -67,7 +67,7 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		Template:    "domain-blocklist.tmpl",
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
-		Stylesheets: []string{cssFA},
+		Stylesheets: []string{},
 		Javascript:  []string{jsFrontend},
 		Extra:       map[string]any{"blocklist": domainBlocks},
 	}

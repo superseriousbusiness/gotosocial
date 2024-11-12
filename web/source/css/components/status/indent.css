@@ -1,0 +1,43 @@
+.status {
+	&.indent-1 {
+		margin-left: 0.5rem;
+	}
+
+	&.indent-2 {
+		margin-left: 1rem;
+	}
+
+	&.indent-3 {
+		margin-left: 1.5rem;
+	}
+
+	&.indent-4 {
+		margin-left: 2rem;
+	}
+
+	&.indent-5 {
+		margin-left: 2.5rem;
+	}
+
+	&.indent-1,
+	&.indent-2,
+	&.indent-3,
+	&.indent-4,
+	&.indent-5 {
+		.status-link {
+			margin-left: -0.5rem;
+			border-left: 0.15rem dashed $border-accent;
+		}
+	}
+
+	border-radius: 0;
+	&:last-child {
+		border-bottom-left-radius: $br;
+		border-bottom-right-radius: $br;
+
+		.status-info {
+			border-bottom-left-radius: $br;
+			border-bottom-right-radius: $br;
+		}
+	}
+}

@@ -1,0 +1,67 @@
+.status .status-header > address {
+	/*
+		Avoid stretching so wide that user
+		can't click on open thread link that's
+		behind the status header link.
+	*/
+	width: fit-content;
+
+	> a {
+		padding: 0 0.75rem;
+		display: grid;
+		grid-template-columns: 3.5rem 1fr auto;
+		grid-template-rows: auto auto;
+		grid-template-areas:
+			"avatar author-strapline author-strapline"
+			"avatar author-strapline author-strapline";
+		gap: 0 0.5rem;
+		font-style: normal;
+
+		.avatar {
+			grid-area: avatar;
+			height: 3.5rem;
+			width: 3.5rem;
+			object-fit: cover;
+
+			border: 0.15rem solid $avatar-border;
+			border-radius: $br;
+			overflow: hidden; /* hides corners from img overflowing */
+
+			img {
+				height: 100%;
+				width: 100%;
+				object-fit: cover;
+				background: $bg;
+			}
+		}
+
+		.author-strapline {
+			grid-area: author-strapline;
+			display: grid;
+			grid-template-columns: 1fr auto;
+			grid-template-rows: auto;
+			grid-template-areas:
+				"display display"
+				"user    user";
+			gap: 0 0.5rem;
+
+			.displayname, .username {
+				justify-self: start;
+				align-self: start;
+				max-width: 100%;
+				font-size: 1rem;
+				line-height: 1.3rem;
+			}
+		
+			.displayname {
+				grid-area: display;
+				font-weight: bold;
+			}
+	
+			.username {
+				grid-area: user;
+				color: $link-fg;
+			}
+		}
+	}
+}

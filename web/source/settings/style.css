@@ -916,7 +916,7 @@ button.tab-button {
 	border-bottom-left-radius: 0;
 	border-bottom-right-radius: 0;
 	box-shadow: none;
-	background: $blue1;
+	background: $blue2;
 
 	&:hover {
 		background: $button-hover-bg;

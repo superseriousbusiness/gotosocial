@@ -1,0 +1,8 @@
+section.oob-token {
+	code {
+		background: $gray1;
+		padding: 0.5rem;
+		margin: 0;
+		border-radius: 0.3rem;
+	}
+}

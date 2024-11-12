@@ -1,0 +1,128 @@
+/*
+	Restyle unordered lists; outdent
+	and replace dot with orange dot (unless .nodot class applied).
+*/
+
+ul {
+	padding-left: 2.5rem;
+	list-style: none;
+
+	li::before {
+		content: "\2022";
+		color: $border-accent;
+		font-weight: bold;
+		display: inline-block;
+		width: 1.5rem;
+		margin-left: -1.5rem;
+	}
+
+	&.nodot {
+		li::before {
+			content: initial;
+		}
+	}
+}
+
+/*
+	Mirror the same styling a little bit
+	for ordered lists by making marker bold.
+*/ 
+
+ol {
+	padding-left: 2.5rem;
+
+	li::marker {
+		font-weight: bold;
+	}
+}
+
+/* Tabulated list */
+.list {
+	display: flex;
+	flex-direction: column;
+
+	.header, .entry {
+		padding: 0.5rem;
+	}
+
+	.header {
+		border: 0.1rem solid transparent !important; /* for alignment with .entry border padding */
+		background: $gray1 !important;
+		display: flex;
+		font-weight: bold;
+	}
+
+	.entries {
+		display: flex;
+		flex-direction: column;
+
+		&.scrolling {
+			height: 20rem;
+			max-height: 20rem;
+			overflow: auto;
+		}
+	}
+
+	input[type=checkbox] {
+		margin-left: 0.5rem;
+	}
+
+	.entry {
+		display: flex;
+		flex-wrap: wrap;
+		background: $list-entry-bg;
+		border: 0.1rem solid transparent;
+
+		&:nth-child(even) {
+			background: $list-entry-alternate-bg;
+		}
+	
+		&:hover {
+			background: $list-entry-hover-bg;
+		}
+	
+		&:active, &:focus, &:hover, &:target {
+			border-color: $fg-accent;
+		}
+	}
+}
+
+/* Extends .list styling for domain-blocklist.tmpl */
+.domain-blocklist {
+	box-shadow: $boxshadow;
+
+	.entry {
+		display: grid;
+		grid-template-columns: max(30%, 10rem) 1fr;
+		gap: 0.5rem;
+		align-items: start;
+		border: $boxshadow-border;
+		border-top-color: transparent;
+
+		& > div {
+			display: flex;
+			align-items: center
+		}
+
+		.domain a {
+			font-weight: bold;
+			text-decoration: none;
+			display: inline-block; /* so it wraps properly */
+		}
+
+		.public_comment p {
+			margin: 0;
+		}
+	}
+
+	.header .domain {
+		color: $fg;
+	}
+}
+
+@media screen and (max-width: 30rem) {
+	.domain-blocklist .entry {
+		grid-template-columns: 1fr;
+		gap: 0;
+	}
+}

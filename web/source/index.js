@@ -18,12 +18,12 @@
 */
 
 const skulk = require("skulk");
-const fs = require("fs");
 const path = require("path");
+const { globSync } = require("glob");
 
-let cssEntryFiles = fs.readdirSync(path.join(__dirname, "./css")).map((file) => {
-	return path.join(__dirname, "./css", file);
-});
+const cssDir = path.join(__dirname, "./css");
+const cssFiles = globSync(cssDir + "/**/*.css", { ignore: cssDir + "/themes/**" });
+const cssThemes = globSync(cssDir + "/themes/**/*.css");
 
 const prodCfg = {
 	transform: [
@@ -47,9 +47,13 @@ skulk({
 	},
 	servers: {
 		express: {
-			proxy: "http://127.0.0.1:8081",
-			assets: "/assets"
-		}
+			proxy: {
+				target: "http://127.0.0.1:8081",
+				onProxyRes: (proxyRes) => {
+					// CSP header prevents react-devtools and redux-devtools extensions from working
+					delete proxyRes.headers['content-security-policy'];
+				},
+			},
 	},
 	bundles: {
 		frontend: {
@@ -88,11 +92,18 @@ skulk({
 				}]
 			]
 		},
-		css: {
-			entryFiles: cssEntryFiles,
+		cssThemes: {
+			entryFiles: cssThemes,
 			outputFile: "_discard",
 			presets: [["postcss", {
 				output: "_split"
+			}]]
+		},
+		css: {
+			entryFiles: cssFiles,
+			outputFile: "_discard",
+			presets: [["postcss", {
+				output: "style.css"
 			}]]
 		}
 	}

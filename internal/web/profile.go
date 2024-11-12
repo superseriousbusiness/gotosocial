@@ -132,18 +132,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	// Prepare stylesheets for profile.
-	stylesheets := make([]string, 0, 6)
-
-	// Basic profile stylesheets.
-	stylesheets = append(
-		stylesheets,
-		[]string{
-			cssFA,
-			cssStatus,
-			cssThread,
-			cssProfile,
-		}...,
-	)
+	stylesheets := make([]string, 0, 2)
 
 	// User-selected theme if set.
 	if theme := targetAccount.Theme; theme != "" {
@@ -167,6 +156,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		Javascript:  []string{jsFrontend},
 		Extra: map[string]any{
 			"account":          targetAccount,
+			"pageType":         "wider",
 			"rssFeed":          rssFeed,
 			"robotsMeta":       robotsMeta,
 			"statuses":         statusResp.Items,

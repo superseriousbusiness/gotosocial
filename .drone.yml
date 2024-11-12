@@ -57,7 +57,7 @@ steps:
           - pull_request
 
   - name: web-setup
-    image: node:18-alpine
+    image: node:20-alpine
     volumes:
       - name: yarn_cache
         path: /tmp/cache
@@ -72,7 +72,7 @@ steps:
           - pull_request
 
   - name: web-lint
-    image: node:18-alpine
+    image: node:20-alpine
     commands:
       - yarn --cwd ./web/source lint
     depends_on:
@@ -83,7 +83,7 @@ steps:
           - pull_request
 
   - name: web-build
-    image: node:18-alpine
+    image: node:20-alpine
     commands:
       - yarn --cwd ./web/source build
     depends_on:
@@ -114,7 +114,7 @@ steps:
       # Create a snapshot build with GoReleaser.
       - git fetch --tags
       - goreleaser release --clean --snapshot
-      
+
       # Login to Docker, push Docker image snapshots + manifests.
       - /go/dockerlogin.sh
       - docker push superseriousbusiness/gotosocial:snapshot-armv6
@@ -129,7 +129,7 @@ steps:
       - docker push superseriousbusiness/gotosocial:snapshot-amd64-moderncsqlite
       - docker manifest create superseriousbusiness/gotosocial:snapshot-moderncsqlite superseriousbusiness/gotosocial:snapshot-armv6-moderncsqlite superseriousbusiness/gotosocial:snapshot-armv7-moderncsqlite superseriousbusiness/gotosocial:snapshot-amd64-moderncsqlite superseriousbusiness/gotosocial:snapshot-arm64v8-moderncsqlite
       - docker manifest push superseriousbusiness/gotosocial:snapshot-moderncsqlite
-      
+
       # Publish binary .tar.gz snapshots to S3.
       - /go/snapshot_publish.sh
     when:
@@ -156,12 +156,12 @@ steps:
     commands:
       - git fetch --tags
       - /go/dockerlogin.sh
-      
+
       # When releasing, compare commits to the most recent tag that is not the
       # current one AND is not a release candidate tag (ie., no "rc" in the name).
       #
       # The DRONE_TAG env var should point to the tag that triggered this build.
-      # See: https://docs.drone.io/pipeline/environment/reference/drone-tag/ 
+      # See: https://docs.drone.io/pipeline/environment/reference/drone-tag/
       #
       # Note, this may cause annoyances when doing backport releases, for example,
       # releasing v0.10.1 when we've already released v0.15.0 or whatever, but
@@ -224,5 +224,3 @@ steps:
 ---
 kind: signature
 hmac: 1b89e3a538fbca72eb9a0b398cd82f09a774ba3649013e19d36012eda327e83f
-
-...

@@ -26,7 +26,7 @@ import React from "react";
  * - /settings/user/emailpassword
  * - /settings/user/migration
  */
-export default function UserMenu() {	
+export default function UserMenu() {
 	return (
 		<MenuItem
 			name="User"
@@ -45,7 +45,7 @@ export default function UserMenu() {
 			/>
 			<MenuItem
 				name="Interaction Requests"
-				itemUrl="interaction_requests"
+				itemUrl="interaction-requests"
 				icon="fa-commenting-o"
 			/>
 			<MenuItem

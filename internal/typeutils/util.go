@@ -214,8 +214,8 @@ func (c *Converter) pendingReplyNote(
 		// Build the settings panel URL at which the user
 		// can view + approve/reject the interaction request.
 		//
-		// Eg., https://example.org/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR
-		settingsURL = proto + "://" + host + "/settings/user/interaction_requests/" + intReq.ID
+		// Eg., https://example.org/settings/user/interaction-requests/01J5QVXCCEATJYSXM9H6MZT4JR
+		settingsURL = proto + "://" + host + "/settings/user/interaction-requests/" + intReq.ID
 	)
 
 	var note strings.Builder

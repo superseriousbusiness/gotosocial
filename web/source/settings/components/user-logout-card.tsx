@@ -31,7 +31,7 @@ export default function UserLogoutCard() {
 	if (isLoading) {
 		return <Loading />;
 	}
-	
+
 	if (!profile) {
 		return <ErrorC error={new Error("account was undefined")} />;
 	}
@@ -39,9 +39,9 @@ export default function UserLogoutCard() {
 	return (
 		<div className="account-card">
 			<img className="avatar" src={profile.avatar} alt="" />
-			<h3 className="text-cutoff">{profile.display_name?.length > 0 ? profile.display_name : profile.acct}</h3>
+			<b className="text-cutoff">{profile.display_name.length > 0 ? profile.display_name : profile.acct}</b>
 			<span className="text-cutoff">@{profile.username}@{instance?.account_domain}</span>
-			<a onClick={logoutQuery} href="#" aria-label="Log out" title="Log out" className="logout">
+			<a onClick={() => void logoutQuery()} href="#" aria-label="Log out" title="Log out" className="logout">
 				<i className="fa fa-fw fa-sign-out" aria-hidden="true" />
 			</a>
 		</div>

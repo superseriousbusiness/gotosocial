@@ -1,0 +1,15 @@
+.thread,
+.thread-wrapper {
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+
+	.col-header.replies.hidden-only {
+		/*
+			No visible replies below this column
+			header, so round off the bottom.
+		*/
+		border-bottom-left-radius: $br;
+		border-bottom-right-radius: $br;
+	}
+}

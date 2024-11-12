@@ -19,10 +19,10 @@
 
 {{- with . }}
 <main>
-    <section class="oob-token">
-        <h1>Hi <b>{{- .user -}}</b>!</h1>
-        <p>Here's your out-of-band token with scope "<em>{{- .scope -}}</em>", use it wisely:</p>
-        <code>{{- .oobToken -}}</code>
-    </section>
+	<section class="oob-token">
+		<h1>Hi <b>{{- .user -}}</b>!</h1>
+		<p>Here's your out-of-band token with scope "<em>{{- .scope -}}</em>", use it wisely:</p>
+		<code>{{- .oobToken -}}</code>
+	</section>
 </main>
 {{- end }}

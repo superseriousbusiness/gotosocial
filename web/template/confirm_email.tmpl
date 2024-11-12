@@ -19,15 +19,15 @@
 
 {{- with . }}
 <main>
-    <section class="with-form" aria-labelledby="confirm">
-        <h2 id="confirm">Confirm email address</h2>
-        <form action="/confirm_email?token={{ .token }}" method="POST">
-            <p>
-                Hi <b>{{- .username -}}</b>!
-                Please click the button to confirm your email address <b>{{- .email -}}</b>.
-            </p>
-            <button type="submit" class="btn btn-success">Confirm</button>
-        </form>
-    </section>
+	<section class="with-form" aria-labelledby="confirm">
+		<h2 id="confirm">Confirm email address</h2>
+		<form action="/confirm_email?token={{ .token }}" method="POST">
+			<p>
+				Hi <b>{{- .username -}}</b>!
+				Please click the button to confirm your email address <b>{{- .email -}}</b>.
+			</p>
+			<button type="submit" class="btn btn-success">Confirm</button>
+		</form>
+	</section>
 </main>
 {{- end }}

@@ -3,6 +3,9 @@
 	"go.lintFlags": [
 	  "--fast"
 	],
+	"go.testEnvVars": {
+		"WAZERO_COMPILATION_CACHE": "~/.cache/wazero"
+	},
 	"gopls": {
 		"analyses": {
 			"composites": false
@@ -19,5 +22,9 @@
 	],
 	"editor.codeActionsOnSave": {
 		"source.fixAll.eslint": "explicit"
-	}
+	},
+	"html.format.wrapLineLength": 0,
+	"html.format.wrapAttributes": "preserve",
+	"files.insertFinalNewline": true,
+	"files.trimFinalNewlines": true,
 }

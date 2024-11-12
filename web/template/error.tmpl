@@ -19,14 +19,14 @@
 
 {{- with . }}
 <main>
-    <section class="error">
-        <h1>An error occured:</h1>
-        <pre>{{- .error -}}</pre>
-        {{- if .requestID }}
-        <div>
-            <span>Request ID:</span> <code>{{- .requestID -}}</code>
-        </div>
-        {{- end }}
-    </section>
+	<section class="error">
+		<h1>An error occured:</h1>
+		<pre>{{- .error -}}</pre>
+		{{- if .requestID }}
+		<div>
+			<span>Request ID:</span> <code>{{- .requestID -}}</code>
+		</div>
+		{{- end }}
+	</section>
 </main>
 {{- end }}

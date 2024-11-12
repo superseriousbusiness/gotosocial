@@ -49,9 +49,6 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 		Template: "settings.tmpl",
 		Instance: instance,
 		Stylesheets: []string{
-			cssFA,
-			cssProfile, // Used for rendering stub/fake profiles.
-			cssStatus,  // Used for rendering stub/fake statuses.
 			cssSettings,
 		},
 		Javascript: []string{jsSettings},

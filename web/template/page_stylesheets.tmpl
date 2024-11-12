@@ -25,16 +25,14 @@
     See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/preload.
 */ -}}
 
+<link rel="preload" href="/assets/fonts/noto-sans-v27-latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/assets/fonts/noto-sans-v27-latin-700.woff2" as="font" type="font/woff2" crossorigin>
 {{- with . }}
-<link rel="preload" href="/assets/dist/_colors.css" as="style">
-<link rel="preload" href="/assets/dist/base.css" as="style">
-<link rel="preload" href="/assets/dist/page.css" as="style">
 {{- range .stylesheets }}
 <link rel="preload" href="{{- . -}}" as="style">
 {{- end }}
-<link rel="stylesheet" href="/assets/dist/_colors.css">
-<link rel="stylesheet" href="/assets/dist/base.css">
-<link rel="stylesheet" href="/assets/dist/page.css">
+<link rel="stylesheet" href="/assets/dist/default.css">
+<link rel="stylesheet" href="/assets/dist/style.css">
 {{- range .stylesheets }}
 <link rel="stylesheet" href="{{- . -}}">
 {{- end }}

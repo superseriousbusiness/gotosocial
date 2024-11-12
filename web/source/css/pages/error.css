@@ -1,0 +1,17 @@
+/* 
+	Error-only page, used by error.tmpl 
+	TODO: unify colors with theming
+*/
+section.error {
+	word-break: break-word;
+	margin-bottom: 0.5rem;
+
+	pre {
+		border: 1px solid #ff000080;
+		padding: 0.5rem;
+		border-radius: 0.5em;
+		background-color: #ff000010;
+		font-size: 1.3em;
+		white-space: pre-wrap;
+	}
+}
