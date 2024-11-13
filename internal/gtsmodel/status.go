@@ -55,6 +55,8 @@ type Status struct {
 	BoostOf                  *Status            `bun:"-"`                                                           // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID
 	ThreadID                 string             `bun:"type:CHAR(26),nullzero"`                                      // id of the thread to which this status belongs; only set for remote statuses if a local account is involved at some point in the thread, otherwise null
+	EditIDs                  []string           `bun:",array"`                                                      //
+	Edits                    []*StatusEdit      `bun:"-"`                                                           //
 	PollID                   string             `bun:"type:CHAR(26),nullzero"`                                      //
 	Poll                     *Poll              `bun:"-"`                                                           //
 	ContentWarning           string             `bun:",nullzero"`                                                   // cw string for this status
@@ -92,7 +94,8 @@ func (s *Status) GetBoostOfAccountID() string {
 	return s.BoostOfAccountID
 }
 
-// AttachmentsPopulated returns whether media attachments are populated according to current AttachmentIDs.
+// AttachmentsPopulated returns whether media attachments
+// are populated according to current AttachmentIDs.
 func (s *Status) AttachmentsPopulated() bool {
 	if len(s.AttachmentIDs) != len(s.Attachments) {
 		// this is the quickest indicator.
@@ -106,7 +109,8 @@ func (s *Status) AttachmentsPopulated() bool {
 	return true
 }
 
-// TagsPopulated returns whether tags are populated according to current TagIDs.
+// TagsPopulated returns whether tags are
+// populated according to current TagIDs.
 func (s *Status) TagsPopulated() bool {
 	if len(s.TagIDs) != len(s.Tags) {
 		// this is the quickest indicator.
@@ -120,7 +124,8 @@ func (s *Status) TagsPopulated() bool {
 	return true
 }
 
-// MentionsPopulated returns whether mentions are populated according to current MentionIDs.
+// MentionsPopulated returns whether mentions are
+// populated according to current MentionIDs.
 func (s *Status) MentionsPopulated() bool {
 	if len(s.MentionIDs) != len(s.Mentions) {
 		// this is the quickest indicator.
@@ -134,7 +139,8 @@ func (s *Status) MentionsPopulated() bool {
 	return true
 }
 
-// EmojisPopulated returns whether emojis are populated according to current EmojiIDs.
+// EmojisPopulated returns whether emojis are
+// populated according to current EmojiIDs.
 func (s *Status) EmojisPopulated() bool {
 	if len(s.EmojiIDs) != len(s.Emojis) {
 		// this is the quickest indicator.
@@ -142,6 +148,21 @@ func (s *Status) EmojisPopulated() bool {
 	}
 	for i, id := range s.EmojiIDs {
 		if s.Emojis[i].ID != id {
+			return false
+		}
+	}
+	return true
+}
+
+// EditsPopulated returns whether edits are
+// populated according to current EditIDs.
+func (s *Status) EditsPopulated() bool {
+	if len(s.EditIDs) != len(s.Edits) {
+		// this is quickest indicator.
+		return false
+	}
+	for i, id := range s.EditIDs {
+		if s.Edits[i].ID != id {
 			return false
 		}
 	}

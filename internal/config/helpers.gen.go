@@ -3912,6 +3912,31 @@ func GetCacheStatusBookmarkIDsMemRatio() float64 { return global.GetCacheStatusB
 // SetCacheStatusBookmarkIDsMemRatio safely sets the value for global configuration 'Cache.StatusBookmarkIDsMemRatio' field
 func SetCacheStatusBookmarkIDsMemRatio(v float64) { global.SetCacheStatusBookmarkIDsMemRatio(v) }
 
+// GetCacheStatusEditMemRatio safely fetches the Configuration value for state's 'Cache.StatusEditMemRatio' field
+func (st *ConfigState) GetCacheStatusEditMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.StatusEditMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheStatusEditMemRatio safely sets the Configuration value for state's 'Cache.StatusEditMemRatio' field
+func (st *ConfigState) SetCacheStatusEditMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.StatusEditMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheStatusEditMemRatioFlag returns the flag name for the 'Cache.StatusEditMemRatio' field
+func CacheStatusEditMemRatioFlag() string { return "cache-status-edit-mem-ratio" }
+
+// GetCacheStatusEditMemRatio safely fetches the value for global configuration 'Cache.StatusEditMemRatio' field
+func GetCacheStatusEditMemRatio() float64 { return global.GetCacheStatusEditMemRatio() }
+
+// SetCacheStatusEditMemRatio safely sets the value for global configuration 'Cache.StatusEditMemRatio' field
+func SetCacheStatusEditMemRatio(v float64) { global.SetCacheStatusEditMemRatio(v) }
+
 // GetCacheStatusFaveMemRatio safely fetches the Configuration value for state's 'Cache.StatusFaveMemRatio' field
 func (st *ConfigState) GetCacheStatusFaveMemRatio() (v float64) {
 	st.mutex.RLock()

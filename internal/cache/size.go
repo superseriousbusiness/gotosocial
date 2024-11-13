@@ -674,6 +674,23 @@ func sizeofStatusBookmark() uintptr {
 	}))
 }
 
+func sizeofStatusEdit() uintptr {
+	return uintptr(size.Of(&gtsmodel.StatusEdit{
+		ID:             exampleID,
+		Content:        exampleText,
+		ContentWarning: exampleUsername, // similar length
+		Text:           exampleText,
+		Language:       "en",
+		Sensitive:      func() *bool { ok := false; return &ok }(),
+		AttachmentIDs:  []string{exampleID, exampleID, exampleID},
+		Attachments:    nil,
+		PollOptions:    []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+		PollVotes:      []int{69, 420, 1337, 1969},
+		StatusID:       exampleID,
+		CreatedAt:      exampleTime,
+	}))
+}
+
 func sizeofStatusFave() uintptr {
 	return uintptr(size.Of(&gtsmodel.StatusFave{
 		ID:              exampleID,

@@ -537,11 +537,7 @@ func (u *utils) requestFave(
 	}
 
 	// Create + store new interaction request.
-	req, err = typeutils.StatusFaveToInteractionRequest(ctx, fave)
-	if err != nil {
-		return gtserror.Newf("error creating interaction request: %w", err)
-	}
-
+	req = typeutils.StatusFaveToInteractionRequest(fave)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
@@ -584,11 +580,7 @@ func (u *utils) requestReply(
 	}
 
 	// Create + store interaction request.
-	req, err = typeutils.StatusToInteractionRequest(ctx, reply)
-	if err != nil {
-		return gtserror.Newf("error creating interaction request: %w", err)
-	}
-
+	req = typeutils.StatusToInteractionRequest(reply)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
@@ -631,11 +623,7 @@ func (u *utils) requestAnnounce(
 	}
 
 	// Create + store interaction request.
-	req, err = typeutils.StatusToInteractionRequest(ctx, boost)
-	if err != nil {
-		return gtserror.Newf("error creating interaction request: %w", err)
-	}
-
+	req = typeutils.StatusToInteractionRequest(boost)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}

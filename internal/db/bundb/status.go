@@ -181,13 +181,17 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	var (
 		err  error
-		errs = gtserror.NewMultiError(9)
+		errs gtserror.MultiError
 	)
+
+	// For sub-models we only want
+	// barebones versions of them.
+	ctx = gtscontext.SetBarebones(ctx)
 
 	if status.Account == nil {
 		// Status author is not set, fetch from database.
 		status.Account, err = s.state.DB.GetAccountByID(
-			gtscontext.SetBarebones(ctx),
+			ctx,
 			status.AccountID,
 		)
 		if err != nil {
@@ -199,7 +203,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.InReplyTo == nil {
 			// Status parent is not set, fetch from database.
 			status.InReplyTo, err = s.GetStatusByID(
-				gtscontext.SetBarebones(ctx),
+				ctx,
 				status.InReplyToID,
 			)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -210,7 +214,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.InReplyToAccount == nil {
 			// Status parent author is not set, fetch from database.
 			status.InReplyToAccount, err = s.state.DB.GetAccountByID(
-				gtscontext.SetBarebones(ctx),
+				ctx,
 				status.InReplyToAccountID,
 			)
 			if err != nil {
@@ -223,7 +227,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.BoostOf == nil {
 			// Status boost is not set, fetch from database.
 			status.BoostOf, err = s.GetStatusByID(
-				gtscontext.SetBarebones(ctx),
+				ctx,
 				status.BoostOfID,
 			)
 			if err != nil {
@@ -234,7 +238,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.BoostOfAccount == nil {
 			// Status boost author is not set, fetch from database.
 			status.BoostOfAccount, err = s.state.DB.GetAccountByID(
-				gtscontext.SetBarebones(ctx),
+				ctx,
 				status.BoostOfAccountID,
 			)
 			if err != nil {
@@ -246,7 +250,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if status.PollID != "" && status.Poll == nil {
 		// Status poll is not set, fetch from database.
 		status.Poll, err = s.state.DB.GetPollByID(
-			gtscontext.SetBarebones(ctx),
+			ctx,
 			status.PollID,
 		)
 		if err != nil {
@@ -257,7 +261,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.AttachmentsPopulated() {
 		// Status attachments are out-of-date with IDs, repopulate.
 		status.Attachments, err = s.state.DB.GetAttachmentsByIDs(
-			ctx, // these are already barebones
+			ctx,
 			status.AttachmentIDs,
 		)
 		if err != nil {
@@ -279,7 +283,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.MentionsPopulated() {
 		// Status mentions are out-of-date with IDs, repopulate.
 		status.Mentions, err = s.state.DB.GetMentions(
-			ctx, // leave fully populated for now
+			ctx,
 			status.MentionIDs,
 		)
 		if err != nil {
@@ -290,7 +294,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.EmojisPopulated() {
 		// Status emojis are out-of-date with IDs, repopulate.
 		status.Emojis, err = s.state.DB.GetEmojisByIDs(
-			ctx, // these are already barebones
+			ctx,
 			status.EmojiIDs,
 		)
 		if err != nil {
@@ -298,10 +302,21 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
+	if !status.EditsPopulated() {
+		// Status edits are out-of-date with IDs, repopulate.
+		status.Edits, err = s.state.DB.GetStatusEditsByIDs(
+			ctx,
+			status.EditIDs,
+		)
+		if err != nil {
+			errs.Appendf("error populating status edits: %w", err)
+		}
+	}
+
 	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
 		// Populate the status' expected CreatedWithApplication (not always set).
 		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
-			ctx, // these are already barebones
+			ctx,
 			status.CreatedWithApplicationID,
 		)
 		if err != nil {

@@ -62,6 +62,7 @@ func (d *Dereferencer) isPermittedStatus(
 	requestUser string,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
+	isNew bool,
 ) (
 	permitted bool, // is permitted?
 	err error,
@@ -98,7 +99,7 @@ func (d *Dereferencer) isPermittedStatus(
 		permitted = true
 	}
 
-	if !permitted && existing != nil {
+	if !permitted && !isNew {
 		log.Infof(ctx, "deleting unpermitted: %s", existing.URI)
 
 		// Delete existing status from database as it's no longer permitted.
@@ -110,11 +111,13 @@ func (d *Dereferencer) isPermittedStatus(
 	return
 }
 
+// isPermittedReply ...
 func (d *Dereferencer) isPermittedReply(
 	ctx context.Context,
 	requestUser string,
 	reply *gtsmodel.Status,
 ) (bool, error) {
+
 	var (
 		replyURI     = reply.URI           // Definitely set.
 		inReplyToURI = reply.InReplyToURI  // Definitely set.
@@ -149,8 +152,7 @@ func (d *Dereferencer) isPermittedReply(
 		// If this status's parent was rejected,
 		// implicitly this reply should be too;
 		// there's nothing more to check here.
-		return false, d.unpermittedByParent(
-			ctx,
+		return false, d.unpermittedByParent(ctx,
 			reply,
 			thisReq,
 			parentReq,
@@ -164,6 +166,7 @@ func (d *Dereferencer) isPermittedReply(
 	// be approved, then we should just reject it
 	// again, as nothing's changed since last time.
 	if thisRejected && acceptIRI == "" {
+
 		// Nothing changed,
 		// still rejected.
 		return false, nil
@@ -174,6 +177,7 @@ func (d *Dereferencer) isPermittedReply(
 	// to be approved. Continue permission checks.
 
 	if inReplyTo == nil {
+
 		// If we didn't have the replied-to status
 		// in our database (yet), we can't check
 		// right now if this reply is permitted.

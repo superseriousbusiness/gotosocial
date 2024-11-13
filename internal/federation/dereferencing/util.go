@@ -52,7 +52,7 @@ func emojiChanged(existing, latest *gtsmodel.Emoji) bool {
 
 // pollChanged returns whether a poll has changed in way that
 // indicates that this should be an entirely new poll. i.e. if
-// the available options have changed, or the expiry has increased.
+// the available options have changed, or the expiry has changed.
 func pollChanged(existing, latest *gtsmodel.Poll) bool {
 	return !slices.Equal(existing.Options, latest.Options) ||
 		!existing.ExpiresAt.Equal(latest.ExpiresAt)
@@ -69,4 +69,13 @@ func pollUpdated(existing, latest *gtsmodel.Poll) bool {
 // pollJustClosed returns whether a poll has *just* closed.
 func pollJustClosed(existing, latest *gtsmodel.Poll) bool {
 	return existing.ClosedAt.IsZero() && latest.Closed()
+}
+
+// statusChanged returns whether a status has changed in a way that
+// indicates that existing should be snapshotted for version history.
+func statusChanged(existing, latest *gtsmodel.Status) bool {
+	return !existing.UpdatedAt.Equal(latest.UpdatedAt) ||
+		existing.Content != latest.Content ||
+		existing.ContentWarning != latest.ContentWarning ||
+		!slices.Equal(existing.AttachmentIDs, latest.AttachmentIDs)
 }

@@ -226,6 +226,9 @@ type DBCaches struct {
 	// StatusBookmarkIDs provides access to the status bookmark IDs list database cache.
 	StatusBookmarkIDs SliceCache[string]
 
+	// StatusEdit provides access to the gtsmodel StatusEdit database cache.
+	StatusEdit StructCache[*gtsmodel.StatusEdit]
+
 	// StatusFave provides access to the gtsmodel StatusFave database cache.
 	StatusFave StructCache[*gtsmodel.StatusFave]
 
@@ -1383,6 +1386,38 @@ func (c *Caches) initStatusBookmarkIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.DB.StatusBookmarkIDs.Init(0, cap)
+}
+
+func (c *Caches) initStatusEdit() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofStatusEdit(), // model in-mem size.
+		config.GetCacheStatusEditMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.StatusEdit) *gtsmodel.StatusEdit {
+		s2 := new(gtsmodel.StatusEdit)
+		*s2 = *s1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		s2.Attachments = nil
+
+		return s2
+	}
+
+	c.DB.StatusEdit.Init(structr.CacheConfig[*gtsmodel.StatusEdit]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "StatusID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateStatusEdit,
+	})
 }
 
 func (c *Caches) initStatusFave() {

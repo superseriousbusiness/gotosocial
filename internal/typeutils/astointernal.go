@@ -111,6 +111,13 @@ func (c *Converter) ASRepresentationToAccount(
 		acct.UpdatedAt = pub
 	}
 
+	// Extract updated time if possible, i.e. last edited.
+	if upd := ap.GetUpdated(accountable); !upd.IsZero() {
+		acct.UpdatedAt = upd
+	} else {
+		acct.UpdatedAt = acct.CreatedAt
+	}
+
 	// Extract a preferred name (display name), fallback to username.
 	if displayName := ap.ExtractName(accountable); displayName != "" {
 		acct.DisplayName = displayName

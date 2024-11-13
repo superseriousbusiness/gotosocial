@@ -45,13 +45,14 @@ func NewULID() string {
 	return ulid.String()
 }
 
-// NewULIDFromTime returns a new ULID string using the given time, or an error if something goes wrong.
-func NewULIDFromTime(t time.Time) (string, error) {
+// NewULIDFromTime returns a new ULID string using
+// given time, or from current time on any error.
+func NewULIDFromTime(t time.Time) string {
 	newUlid, err := ulid.New(ulid.Timestamp(t), rand.Reader)
 	if err != nil {
-		return "", err
+		return NewULID()
 	}
-	return newUlid.String(), nil
+	return newUlid.String()
 }
 
 // NewRandomULID returns a new ULID string using a random time in an ~80 year range around the current datetime, or an error if something goes wrong.

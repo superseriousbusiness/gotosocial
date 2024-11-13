@@ -302,6 +302,7 @@ func (d *Dereferencer) enrichStatusSafely(
 		uri,
 		status,
 		statusable,
+		isNew,
 	)
 
 	// Check for a returned HTTP code via error.
@@ -374,6 +375,7 @@ func (d *Dereferencer) enrichStatus(
 	uri *url.URL,
 	status *gtsmodel.Status,
 	statusable ap.Statusable,
+	isNew bool,
 ) (
 	*gtsmodel.Status,
 	ap.Statusable,
@@ -476,8 +478,7 @@ func (d *Dereferencer) enrichStatus(
 
 	// Ensure the final parsed status URI or URL matches
 	// the input URI we fetched (or received) it as.
-	matches, err := util.URIMatches(
-		uri,
+	matches, err := util.URIMatches(uri,
 		append(
 			ap.GetURL(statusable),      // status URL(s)
 			ap.GetJSONLDId(statusable), // status URI
@@ -497,19 +498,10 @@ func (d *Dereferencer) enrichStatus(
 		)
 	}
 
-	var isNew bool
-
-	// Based on the original provided
-	// status model, determine whether
-	// this is a new insert / update.
-	if isNew = (status.ID == ""); isNew {
+	if isNew {
 
 		// Generate new status ID from the provided creation date.
-		latestStatus.ID, err = id.NewULIDFromTime(latestStatus.CreatedAt)
-		if err != nil {
-			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
-			latestStatus.ID = id.NewULID() // just use "now"
-		}
+		latestStatus.ID = id.NewULIDFromTime(latestStatus.CreatedAt)
 	} else {
 
 		// Reuse existing status ID.
@@ -538,8 +530,9 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	// Check if this is a permitted status we should accept.
-	// Function also sets "PendingApproval" bool as necessary.
-	permit, err := d.isPermittedStatus(ctx, requestUser, status, latestStatus)
+	// Function also sets "PendingApproval" bool as necessary,
+	// and handles removal of existing statuses no longer permitted.
+	permit, err := d.isPermittedStatus(ctx, requestUser, status, latestStatus, isNew)
 	if err != nil {
 		return nil, nil, gtserror.Newf("error checking permissibility for status %s: %w", uri, err)
 	}
@@ -553,11 +546,6 @@ func (d *Dereferencer) enrichStatus(
 	// Ensure the status' mentions are populated, and pass in existing to check for changes.
 	if err := d.fetchStatusMentions(ctx, requestUser, status, latestStatus); err != nil {
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
-	}
-
-	// Ensure the status' poll remains consistent, else reset the poll.
-	if err := d.fetchStatusPoll(ctx, status, latestStatus); err != nil {
-		return nil, nil, gtserror.Newf("error populating poll for status %s: %w", uri, err)
 	}
 
 	// Now that we know who this status replies to (handled by ASStatusToStatus)
@@ -582,27 +570,28 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	if isNew {
-		// This is new, put the status in the database.
-		err := d.state.DB.PutStatus(ctx, latestStatus)
-		if err != nil {
-			return nil, nil, gtserror.Newf("error putting in database: %w", err)
+		// This is a new status, insert it into the database.
+		if err := d.insertStatus(ctx, latestStatus); err != nil {
+			return nil, nil, gtserror.Newf("error inserting new status %s: %w", uri, err)
 		}
 	} else {
 		// This is an existing status, update the model in the database.
-		if err := d.state.DB.UpdateStatus(ctx, latestStatus); err != nil {
-			return nil, nil, gtserror.Newf("error updating database: %w", err)
+		if err := d.updateStatus(ctx, status, latestStatus); err != nil {
+			return nil, nil, gtserror.Newf("error updating existing status %s: %w", uri, err)
 		}
 	}
 
 	return latestStatus, statusable, nil
 }
 
+// fetchStatusMentions ...
 func (d *Dereferencer) fetchStatusMentions(
 	ctx context.Context,
 	requestUser string,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) error {
+
 	// Allocate new slice to take the yet-to-be created mention IDs.
 	status.MentionIDs = make([]string, len(status.Mentions))
 
@@ -637,11 +626,7 @@ func (d *Dereferencer) fetchStatusMentions(
 		// Generate new ID according to status creation.
 		// TODO: update this to use "edited_at" when we add
 		//       support for edited status revision history.
-		mention.ID, err = id.NewULIDFromTime(status.CreatedAt)
-		if err != nil {
-			log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
-			mention.ID = id.NewULID() // just use "now"
-		}
+		mention.ID = id.NewULIDFromTime(status.CreatedAt)
 
 		// Set known further mention details.
 		mention.CreatedAt = status.CreatedAt
@@ -681,7 +666,9 @@ func (d *Dereferencer) fetchStatusMentions(
 	return nil
 }
 
+// threadStatus ...
 func (d *Dereferencer) threadStatus(ctx context.Context, status *gtsmodel.Status) error {
+
 	if status.InReplyTo != nil {
 		if parentThreadID := status.InReplyTo.ThreadID; parentThreadID != "" {
 			// Simplest case: parent status
@@ -719,24 +706,27 @@ func (d *Dereferencer) threadStatus(ctx context.Context, status *gtsmodel.Status
 	// it to the status.
 	threadID := id.NewULID()
 
-	if err := d.state.DB.PutThread(
-		ctx,
-		&gtsmodel.Thread{
-			ID: threadID,
-		},
+	// ...
+	if err := d.state.DB.PutThread(ctx,
+		&gtsmodel.Thread{ID: threadID},
 	); err != nil {
 		return gtserror.Newf("error inserting new thread in db: %w", err)
 	}
 
+	// Set thread on latest status.
 	status.ThreadID = threadID
 	return nil
 }
 
+// fetchStatusTags populates the tags on 'status', fetching existing
+// from the database and creating new where needed. 'existing' is used
+// to fetch tags that have not changed since previous stored status.
 func (d *Dereferencer) fetchStatusTags(
 	ctx context.Context,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) error {
+
 	// Allocate new slice to take the yet-to-be determined tag IDs.
 	status.TagIDs = make([]string, len(status.Tags))
 
@@ -791,103 +781,14 @@ func (d *Dereferencer) fetchStatusTags(
 	return nil
 }
 
-func (d *Dereferencer) fetchStatusPoll(
-	ctx context.Context,
-	existing *gtsmodel.Status,
-	status *gtsmodel.Status,
-) error {
-	var (
-		// insertStatusPoll generates ID and inserts the poll attached to status into the database.
-		insertStatusPoll = func(ctx context.Context, status *gtsmodel.Status) error {
-			var err error
-
-			// Generate new ID for poll from the status CreatedAt.
-			// TODO: update this to use "edited_at" when we add
-			//       support for edited status revision history.
-			status.Poll.ID, err = id.NewULIDFromTime(status.CreatedAt)
-			if err != nil {
-				log.Errorf(ctx, "invalid created at date (falling back to 'now'): %v", err)
-				status.Poll.ID = id.NewULID() // just use "now"
-			}
-
-			// Update the status<->poll links.
-			status.PollID = status.Poll.ID
-			status.Poll.StatusID = status.ID
-			status.Poll.Status = status
-
-			// Insert this latest poll into the database.
-			err = d.state.DB.PutPoll(ctx, status.Poll)
-			if err != nil {
-				return gtserror.Newf("error putting in database: %w", err)
-			}
-
-			return nil
-		}
-
-		// deleteStatusPoll deletes the poll with ID, and all attached votes, from the database.
-		deleteStatusPoll = func(ctx context.Context, pollID string) error {
-			if err := d.state.DB.DeletePollByID(ctx, pollID); err != nil {
-				return gtserror.Newf("error deleting existing poll from database: %w", err)
-			}
-			return nil
-		}
-	)
-
-	switch {
-	case existing.Poll == nil && status.Poll == nil:
-		// no poll before or after, nothing to do.
-		return nil
-
-	case existing.Poll == nil && status.Poll != nil:
-		// no previous poll, insert new poll!
-		return insertStatusPoll(ctx, status)
-
-	case status.Poll == nil:
-		// existing poll has been deleted, remove this.
-		return deleteStatusPoll(ctx, existing.PollID)
-
-	case pollChanged(existing.Poll, status.Poll):
-		// poll has changed since original, delete and reinsert new.
-		if err := deleteStatusPoll(ctx, existing.PollID); err != nil {
-			return err
-		}
-		return insertStatusPoll(ctx, status)
-
-	case pollUpdated(existing.Poll, status.Poll):
-		// Since we last saw it, the poll has updated!
-		// Whether that be stats, or close time.
-		poll := existing.Poll
-		poll.Closing = pollJustClosed(existing.Poll, status.Poll)
-		poll.ClosedAt = status.Poll.ClosedAt
-		poll.Voters = status.Poll.Voters
-		poll.Votes = status.Poll.Votes
-
-		// Update poll model in the database (specifically only the possible changed columns).
-		if err := d.state.DB.UpdatePoll(ctx, poll, "closed_at", "voters", "votes"); err != nil {
-			return gtserror.Newf("error updating poll: %w", err)
-		}
-
-		// Update poll on status.
-		status.PollID = poll.ID
-		status.Poll = poll
-		return nil
-
-	default:
-		// latest and existing
-		// polls are up to date.
-		poll := existing.Poll
-		status.PollID = poll.ID
-		status.Poll = poll
-		return nil
-	}
-}
-
+// fetchStatusAttachments ...
 func (d *Dereferencer) fetchStatusAttachments(
 	ctx context.Context,
 	requestUser string,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) error {
+
 	// Allocate new slice to take the yet-to-be fetched attachment IDs.
 	status.AttachmentIDs = make([]string, len(status.Attachments))
 
@@ -916,8 +817,7 @@ func (d *Dereferencer) fetchStatusAttachments(
 		}
 
 		// Load this new media attachment.
-		attachment, err := d.GetMedia(
-			ctx,
+		attachment, err := d.GetMedia(ctx,
 			requestUser,
 			status.AccountID,
 			placeholder.RemoteURL,
@@ -958,11 +858,13 @@ func (d *Dereferencer) fetchStatusAttachments(
 	return nil
 }
 
+// fetchStatusEmojis ...
 func (d *Dereferencer) fetchStatusEmojis(
 	ctx context.Context,
 	existing *gtsmodel.Status,
 	status *gtsmodel.Status,
 ) error {
+
 	// Fetch the updated emojis for our status.
 	emojis, changed, err := d.fetchEmojis(ctx,
 		existing.Emojis,
@@ -986,6 +888,175 @@ func (d *Dereferencer) fetchStatusEmojis(
 	status.EmojiIDs = make([]string, len(emojis))
 	for i, emoji := range emojis {
 		status.EmojiIDs[i] = emoji.ID
+	}
+
+	return nil
+}
+
+// insertStatus handles the insert of a new status into the database, inserting new poll if necessary.
+func (d *Dereferencer) insertStatus(ctx context.Context, status *gtsmodel.Status) error {
+
+	if status.Poll != nil {
+		// Insert this poll attached to status in the database.
+		if err := d.insertStatusPoll(ctx, status); err != nil {
+			return err
+		}
+	}
+
+	// Insert new status into the database.
+	err := d.state.DB.PutStatus(ctx, status)
+	if err != nil {
+		return gtserror.Newf("error putting status in database: %w", err)
+	}
+
+	return nil
+}
+
+// updateStatus handles the updating of an existing status in the
+// database, handling any required poll changes and / or staus edits.
+func (d *Dereferencer) updateStatus(
+	ctx context.Context,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) error {
+
+	// Handle any changes in status poll from existing to new.
+	pollChanged, err := d.updateStatusPoll(ctx, existing, status)
+	if err != nil {
+		return err
+	}
+
+	// If there was no change to poll, look for
+	// any other changes in status content itself.
+	if pollChanged || statusChanged(existing, status) {
+
+		// Status has been editted since last
+		// we saw it, take snapshot of existing.
+		var edit gtsmodel.StatusEdit
+		edit.ID = id.NewULIDFromTime(status.UpdatedAt)
+		edit.Content = existing.Content
+		edit.ContentWarning = existing.ContentWarning
+		edit.Text = existing.Text
+		edit.Language = existing.Language
+		edit.Sensitive = existing.Sensitive
+		edit.AttachmentIDs = existing.AttachmentIDs
+		edit.Attachments = existing.Attachments
+
+		// Edit creation is last update time.
+		edit.CreatedAt = existing.UpdatedAt
+
+		if existing.Poll != nil {
+			// Poll only set if existing contained them.
+			edit.PollOptions = existing.Poll.Options
+
+			if pollChanged {
+				// Votes are only set if the poll
+				// itself changed during this edit.
+				edit.PollVotes = existing.Poll.Votes
+			}
+		}
+
+		// Insert this new edit of existing status into database.
+		if err := d.state.DB.PutStatusEdit(ctx, &edit); err != nil {
+			return gtserror.Newf("error putting edit in database: %w", err)
+		}
+
+		// Add edit to list of edits on the status.
+		status.EditIDs = append(status.EditIDs, edit.ID)
+		status.Edits = append(status.Edits, &edit)
+	}
+
+	// Update the existing status in database with new details.
+	if err := d.state.DB.UpdateStatus(ctx, status); err != nil {
+		return gtserror.Newf("error updating status in database: %w", err)
+	}
+
+	return nil
+}
+
+// updateStatusPoll handles updates of a status poll from an existing
+// stored status to latest model. this handles the case of simple vote
+// count updates (without being classified as a change of the poll
+// itself), as well as full poll changes that delete existing instance.
+// 'changed' indicates whether the entire poll was changed.
+func (d *Dereferencer) updateStatusPoll(
+	ctx context.Context,
+	existing *gtsmodel.Status,
+	status *gtsmodel.Status,
+) (
+	changed bool,
+	err error,
+) {
+	switch {
+	case existing.Poll == nil && status.Poll == nil:
+		// no poll before or after, nothing to do.
+		return false, nil
+
+	case existing.Poll == nil && status.Poll != nil:
+		// no previous poll, insert new status poll!
+		return true, d.insertStatusPoll(ctx, status)
+
+	case status.Poll == nil:
+		// existing status poll has been deleted, remove this from the database.
+		if err = d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
+			err = gtserror.Newf("error deleting poll from database: %w", err)
+		}
+		return true, err
+
+	case pollChanged(existing.Poll, status.Poll):
+		// existing status poll has been changed, remove this from the database.
+		if err = d.state.DB.DeletePollByID(ctx, existing.Poll.ID); err != nil {
+			return true, gtserror.Newf("error deleting poll from database: %w", err)
+		}
+
+		// insert latest poll version into database.
+		return true, d.insertStatusPoll(ctx, status)
+
+	case pollUpdated(existing.Poll, status.Poll):
+		// Since we last saw it, the poll has updated!
+		// Whether that be stats, or close time.
+		poll := existing.Poll
+		poll.Closing = pollJustClosed(existing.Poll, status.Poll)
+		poll.ClosedAt = status.Poll.ClosedAt
+		poll.Voters = status.Poll.Voters
+		poll.Votes = status.Poll.Votes
+
+		// Update poll model in the database (specifically only the possible changed columns).
+		if err = d.state.DB.UpdatePoll(ctx, poll, "closed_at", "voters", "votes"); err != nil {
+			return false, gtserror.Newf("error updating poll: %w", err)
+		}
+
+		// Update poll on status.
+		status.PollID = poll.ID
+		status.Poll = poll
+		return false, nil
+
+	default:
+		// latest and existing
+		// polls are up to date.
+		poll := existing.Poll
+		status.PollID = poll.ID
+		status.Poll = poll
+		return false, nil
+	}
+}
+
+// insertStatusPoll ...
+func (d *Dereferencer) insertStatusPoll(ctx context.Context, status *gtsmodel.Status) error {
+	var err error
+
+	// Generate new ID for poll from latest updated time.
+	status.Poll.ID = id.NewULIDFromTime(status.UpdatedAt)
+
+	// Update the status<->poll links.
+	status.PollID = status.Poll.ID
+	status.Poll.StatusID = status.ID
+	status.Poll.Status = status
+
+	// Insert this latest poll into the database.
+	err = d.state.DB.PutPoll(ctx, status.Poll)
+	if err != nil {
+		return gtserror.Newf("error putting poll in database: %w", err)
 	}
 
 	return nil

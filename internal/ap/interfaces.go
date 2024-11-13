@@ -187,6 +187,7 @@ type Accountable interface {
 	WithEndpoints
 	WithTag
 	WithPublished
+	WithUpdated
 }
 
 // Statusable represents the minimum activitypub interface for representing a 'status'.
