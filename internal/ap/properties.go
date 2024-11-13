@@ -81,6 +81,15 @@ func SetJSONLDIdStr(with WithJSONLDId, id string) error {
 	return nil
 }
 
+// TryGet tries to get value from 'a' with 'get', only if necessary interface is implemented.
+func TryGet[W any, T any](get func(W) T, a any) (T, bool) {
+	if with, ok := a.(W); ok {
+		return get(with), true
+	}
+	var zero T
+	return zero, false
+}
+
 // GetTo returns the IRIs contained in the To property of 'with'. Panics on entries with missing ID.
 func GetTo(with WithTo) []*url.URL {
 	toProp := with.GetActivityStreamsTo()
@@ -406,6 +415,25 @@ func SetPublished(with WithPublished, published time.Time) {
 		with.SetActivityStreamsPublished(publishProp)
 	}
 	publishProp.Set(published)
+}
+
+// GetUpdated returns the time contained in the Updated property of 'with'.
+func GetUpdated(with WithUpdated) time.Time {
+	updateProp := with.GetActivityStreamsUpdated()
+	if updateProp == nil || !updateProp.IsXMLSchemaDateTime() {
+		return time.Time{}
+	}
+	return updateProp.Get()
+}
+
+// SetUpdated sets the given time on the Updated property of 'with'.
+func SetUpdated(with WithUpdated, updated time.Time) {
+	updateProp := with.GetActivityStreamsUpdated()
+	if updateProp == nil {
+		updateProp = streams.NewActivityStreamsUpdatedProperty()
+		with.SetActivityStreamsUpdated(updateProp)
+	}
+	updateProp.Set(updated)
 }
 
 // GetEndTime returns the time contained in the EndTime property of 'with'.
