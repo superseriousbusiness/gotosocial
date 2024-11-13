@@ -369,9 +369,6 @@ func (m *Manager) createOrUpdateEmoji(
 	if info.URI != nil {
 		emoji.URI = *info.URI
 	}
-	if info.CreatedAt != nil {
-		emoji.CreatedAt = *info.CreatedAt
-	}
 	if info.Domain != nil {
 		emoji.Domain = *info.Domain
 	}

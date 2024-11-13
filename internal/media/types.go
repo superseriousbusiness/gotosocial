@@ -20,7 +20,6 @@ package media
 import (
 	"context"
 	"io"
-	"time"
 )
 
 type Size string
@@ -88,10 +87,6 @@ type AdditionalEmojiInfo struct {
 	// ActivityPub URI of
 	// this remote emoji.
 	URI *string
-
-	// Time that this emoji was
-	// created; defaults to time.Now().
-	CreatedAt *time.Time
 
 	// Domain the emoji originated from. Blank
 	// for this instance's domain. Defaults to "".
