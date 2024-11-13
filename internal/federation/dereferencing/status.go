@@ -511,7 +511,6 @@ func (d *Dereferencer) enrichStatus(
 	// Set latest fetch time and carry-
 	// over some values from "old" status.
 	latestStatus.FetchedAt = time.Now()
-	latestStatus.UpdatedAt = status.UpdatedAt
 	latestStatus.Local = status.Local
 	latestStatus.PinnedAt = status.PinnedAt
 
@@ -624,12 +623,10 @@ func (d *Dereferencer) fetchStatusMentions(
 
 		// This mention didn't exist yet.
 		// Generate new ID according to status creation.
-		// TODO: update this to use "edited_at" when we add
-		//       support for edited status revision history.
-		mention.ID = id.NewULIDFromTime(status.CreatedAt)
+		mention.ID = id.NewULIDFromTime(status.UpdatedAt)
 
 		// Set known further mention details.
-		mention.CreatedAt = status.CreatedAt
+		mention.CreatedAt = status.UpdatedAt
 		mention.UpdatedAt = status.UpdatedAt
 		mention.OriginAccount = status.Account
 		mention.OriginAccountID = status.AccountID
