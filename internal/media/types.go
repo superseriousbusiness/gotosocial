@@ -44,10 +44,6 @@ const (
 // should be added to attachment when processing a piece of media.
 type AdditionalMediaInfo struct {
 
-	// Time that this media was
-	// created; defaults to time.Now().
-	CreatedAt *time.Time
-
 	// ID of the status to which this
 	// media is attached; defaults to "".
 	StatusID *string

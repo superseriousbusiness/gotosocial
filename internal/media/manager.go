@@ -124,9 +124,6 @@ func (m *Manager) CreateMedia(
 	// Check if we were provided additional info
 	// to add to the attachment, and overwrite
 	// some of the attachment fields if so.
-	if info.CreatedAt != nil {
-		attachment.CreatedAt = *info.CreatedAt
-	}
 	if info.StatusID != nil {
 		attachment.StatusID = *info.StatusID
 	}
