@@ -52,6 +52,7 @@ var testModels = []interface{}{
 	&gtsmodel.Status{},
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
+	&gtsmodel.StatusEdit{},
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
 	&gtsmodel.Tag{},
