@@ -37,10 +37,7 @@ type TimelineTestSuite struct {
 
 func getFutureStatus() *gtsmodel.Status {
 	theDistantFuture := time.Now().Add(876600 * time.Hour)
-	id, err := id.NewULIDFromTime(theDistantFuture)
-	if err != nil {
-		panic(err)
-	}
+	id := id.NewULIDFromTime(theDistantFuture)
 
 	return &gtsmodel.Status{
 		ID:                       id,

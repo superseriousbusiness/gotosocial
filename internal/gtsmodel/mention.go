@@ -26,7 +26,6 @@ import (
 type Mention struct {
 	ID               string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt        time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt        time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	StatusID         string    `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the status this mention originates from
 	Status           *Status   `bun:"rel:belongs-to"`                                              // status referred to by statusID
 	OriginAccountID  string    `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the mention creator account

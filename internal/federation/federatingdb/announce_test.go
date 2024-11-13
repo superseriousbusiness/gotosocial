@@ -79,7 +79,7 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 
 	// Insert the boost-of status into the
 	// DB cache to emulate processor handling
-	boost.ID, _ = id.NewULIDFromTime(boost.CreatedAt)
+	boost.ID = id.NewULIDFromTime(boost.CreatedAt)
 	suite.state.Caches.DB.Status.Put(boost)
 
 	// only the URI will be set for the boosted status

@@ -627,7 +627,6 @@ func (d *Dereferencer) fetchStatusMentions(
 
 		// Set known further mention details.
 		mention.CreatedAt = status.UpdatedAt
-		mention.UpdatedAt = status.UpdatedAt
 		mention.OriginAccount = status.Account
 		mention.OriginAccountID = status.AccountID
 		mention.OriginAccountURI = status.AccountURI

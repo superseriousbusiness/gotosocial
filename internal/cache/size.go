@@ -532,7 +532,6 @@ func sizeofMention() uintptr {
 		ID:               exampleURI,
 		StatusID:         exampleURI,
 		CreatedAt:        exampleTime,
-		UpdatedAt:        exampleTime,
 		OriginAccountID:  exampleURI,
 		OriginAccountURI: exampleURI,
 		TargetAccountID:  exampleID,
