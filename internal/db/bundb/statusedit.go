@@ -19,8 +19,10 @@ package bundb
 
 import (
 	"context"
+	"errors"
 	"slices"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -144,4 +146,48 @@ func (s *statusEditDB) PutStatusEdit(ctx context.Context, edit *gtsmodel.StatusE
 		_, err := s.db.NewInsert().Model(edit).Exec(ctx)
 		return err
 	})
+}
+
+func (s *statusEditDB) DeleteStatusEdits(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	// Gather necessary fields from
+	// deleted for cache invalidation.
+	var deleted []*gtsmodel.StatusEdit
+	deleted = make([]*gtsmodel.StatusEdit, 0, len(ids))
+
+	// Delete all edits with IDs pertaining
+	// to given slice, returning status IDs.
+	if _, err := s.db.NewDelete().
+		Model(&deleted).
+		Where("? IN (?)", bun.Ident("id"), bun.In(ids)).
+		Returning("?", bun.Ident("status_id")).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	// Invalidate all the cached status edits with IDs.
+	s.state.Caches.DB.StatusEdit.InvalidateIDs("ID", ids)
+
+	// Make sure we only end up calling
+	// the invalidate hook for each status
+	// once. This should just be the one,
+	// but we double check to save cycles.
+	m := make(map[string]struct{}, 1)
+	for _, edit := range deleted {
+
+		// Check not already called for status.
+		if _, ok := m[edit.StatusID]; ok {
+			continue
+		}
+
+		// Manually call status edit invalidate hook.
+		s.state.Caches.OnInvalidateStatusEdit(edit)
+		m[edit.StatusID] = struct{}{}
+	}
+
+	return nil
 }

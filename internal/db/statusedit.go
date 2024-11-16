@@ -36,4 +36,7 @@ type StatusEdit interface {
 
 	// PutStatusEdit ...
 	PutStatusEdit(ctx context.Context, edit *gtsmodel.StatusEdit) error
+
+	// DeleteStatusEdits ...
+	DeleteStatusEdits(ctx context.Context, ids []string) error
 }
