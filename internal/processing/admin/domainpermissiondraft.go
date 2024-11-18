@@ -249,38 +249,37 @@ func (p *Processor) DomainPermissionDraftAccept(
 		deleteDraft()
 
 		return new, actionID, errWithCode
-	} else {
-		// Domain permission exists but we should overwrite
-		// it by just updating the existing domain permission.
-		// Domain can't change, so no need to re-run side effects.
-		existing.SetCreatedByAccountID(permDraft.CreatedByAccountID)
-		existing.SetCreatedByAccount(permDraft.CreatedByAccount)
-		existing.SetPrivateComment(permDraft.PrivateComment)
-		existing.SetPublicComment(permDraft.PublicComment)
-		existing.SetObfuscate(permDraft.Obfuscate)
-		existing.SetSubscriptionID(permDraft.SubscriptionID)
-
-		var err error
-		switch dp := existing.(type) {
-		case *gtsmodel.DomainBlock:
-			err = p.state.DB.UpdateDomainBlock(ctx, dp)
-
-		case *gtsmodel.DomainAllow:
-			err = p.state.DB.UpdateDomainAllow(ctx, dp)
-		}
-
-		if err != nil {
-			err := gtserror.Newf("db error updating existing domain permission: %w", err)
-			return nil, "", gtserror.NewErrorInternalError(err)
-		}
-
-		// Clean up the draft
-		// before returning.
-		deleteDraft()
-
-		apiPerm, errWithCode := p.apiDomainPerm(ctx, existing, false)
-		return apiPerm, "", errWithCode
 	}
+
+	// Domain permission exists but we should overwrite
+	// it by just updating the existing domain permission.
+	// Domain can't change, so no need to re-run side effects.
+	existing.SetCreatedByAccountID(permDraft.CreatedByAccountID)
+	existing.SetCreatedByAccount(permDraft.CreatedByAccount)
+	existing.SetPrivateComment(permDraft.PrivateComment)
+	existing.SetPublicComment(permDraft.PublicComment)
+	existing.SetObfuscate(permDraft.Obfuscate)
+	existing.SetSubscriptionID(permDraft.SubscriptionID)
+
+	switch dp := existing.(type) {
+	case *gtsmodel.DomainBlock:
+		err = p.state.DB.UpdateDomainBlock(ctx, dp)
+
+	case *gtsmodel.DomainAllow:
+		err = p.state.DB.UpdateDomainAllow(ctx, dp)
+	}
+
+	if err != nil {
+		err := gtserror.Newf("db error updating existing domain permission: %w", err)
+		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+
+	// Clean up the draft
+	// before returning.
+	deleteDraft()
+
+	apiPerm, errWithCode := p.apiDomainPerm(ctx, existing, false)
+	return apiPerm, "", errWithCode
 }
 
 func (p *Processor) DomainPermissionDraftRemove(
