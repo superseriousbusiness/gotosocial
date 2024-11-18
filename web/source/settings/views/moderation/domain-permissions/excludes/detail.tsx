@@ -30,8 +30,6 @@ import MutationButton from "../../../../components/form/mutation-button";
 export default function DomainPermissionExcludeDetail() {
 	const baseUrl = useBaseUrl();
 	const backLocation: string = history.state?.backLocation ?? `~${baseUrl}`;
-	const [_location, setLocation] = useLocation();
-	const [ deleteExclude, deleteResult ] = useDeleteDomainPermissionExcludeMutation();
 
 	const params = useParams();
 	let id = params.excludeId as string | undefined;
@@ -86,25 +84,36 @@ export default function DomainPermissionExcludeDetail() {
 					<dd>{privateComment}</dd>
 				</div>
 			</dl>
-			<MutationButton
-				label={`Delete exclude`}
-				title={`Delete exclude`}
-				type="button"
-				className="button danger"
-				onClick={(e) => {
-					e.preventDefault();
-					e.stopPropagation();
-					deleteExclude(id).then(res => {
-						if ("data" in res) {
-							setLocation(backLocation);
-						}
-					});
-				}}
-				disabled={false}
-				showError={true}
-				result={deleteResult}
+			<HandleExclude
+				id={id}
+				backLocation={backLocation}
 			/>
 		</div>
 	);
 }
 
+function HandleExclude({ id, backLocation}: {id: string, backLocation: string}) {
+	const [_location, setLocation] = useLocation();
+	const [ deleteExclude, deleteResult ] = useDeleteDomainPermissionExcludeMutation();
+	
+	return (
+		<MutationButton
+			label={`Delete exclude`}
+			title={`Delete exclude`}
+			type="button"
+			className="button danger"
+			onClick={(e) => {
+				e.preventDefault();
+				e.stopPropagation();
+				deleteExclude(id).then(res => {
+					if ("data" in res) {
+						setLocation(backLocation);
+					}
+				});
+			}}
+			disabled={false}
+			showError={true}
+			result={deleteResult}
+		/>
+	);
+}
