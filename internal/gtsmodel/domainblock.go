@@ -45,6 +45,10 @@ func (d *DomainBlock) GetUpdatedAt() time.Time {
 	return d.UpdatedAt
 }
 
+func (d *DomainBlock) SetUpdatedAt(i time.Time) {
+	d.UpdatedAt = i
+}
+
 func (d *DomainBlock) GetDomain() string {
 	return d.Domain
 }
@@ -53,24 +57,48 @@ func (d *DomainBlock) GetCreatedByAccountID() string {
 	return d.CreatedByAccountID
 }
 
+func (d *DomainBlock) SetCreatedByAccountID(i string) {
+	d.CreatedByAccountID = i
+}
+
 func (d *DomainBlock) GetCreatedByAccount() *Account {
 	return d.CreatedByAccount
+}
+
+func (d *DomainBlock) SetCreatedByAccount(i *Account) {
+	d.CreatedByAccount = i
 }
 
 func (d *DomainBlock) GetPrivateComment() string {
 	return d.PrivateComment
 }
 
+func (d *DomainBlock) SetPrivateComment(i string) {
+	d.PrivateComment = i
+}
+
 func (d *DomainBlock) GetPublicComment() string {
 	return d.PublicComment
+}
+
+func (d *DomainBlock) SetPublicComment(i string) {
+	d.PublicComment = i
 }
 
 func (d *DomainBlock) GetObfuscate() *bool {
 	return d.Obfuscate
 }
 
+func (d *DomainBlock) SetObfuscate(i *bool) {
+	d.Obfuscate = i
+}
+
 func (d *DomainBlock) GetSubscriptionID() string {
 	return d.SubscriptionID
+}
+
+func (d *DomainBlock) SetSubscriptionID(i string) {
+	d.SubscriptionID = i
 }
 
 func (d *DomainBlock) GetType() DomainPermissionType {

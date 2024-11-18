@@ -208,6 +208,7 @@ type CacheConfiguration struct {
 	ClientMemRatio                    float64       `name:"client-mem-ratio"`
 	ConversationMemRatio              float64       `name:"conversation-mem-ratio"`
 	ConversationLastStatusIDsMemRatio float64       `name:"conversation-last-status-ids-mem-ratio"`
+	DomainPermissionDraftMemRation    float64       `name:"domain-permission-draft-mem-ratio"`
 	EmojiMemRatio                     float64       `name:"emoji-mem-ratio"`
 	EmojiCategoryMemRatio             float64       `name:"emoji-category-mem-ratio"`
 	FilterMemRatio                    float64       `name:"filter-mem-ratio"`

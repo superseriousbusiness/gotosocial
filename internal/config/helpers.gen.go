@@ -3156,6 +3156,37 @@ func SetCacheConversationLastStatusIDsMemRatio(v float64) {
 	global.SetCacheConversationLastStatusIDsMemRatio(v)
 }
 
+// GetCacheDomainPermissionDraftMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
+func (st *ConfigState) GetCacheDomainPermissionDraftMemRation() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.DomainPermissionDraftMemRation
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheDomainPermissionDraftMemRation safely sets the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
+func (st *ConfigState) SetCacheDomainPermissionDraftMemRation(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.DomainPermissionDraftMemRation = v
+	st.reloadToViper()
+}
+
+// CacheDomainPermissionDraftMemRationFlag returns the flag name for the 'Cache.DomainPermissionDraftMemRation' field
+func CacheDomainPermissionDraftMemRationFlag() string {
+	return "cache-domain-permission-draft-mem-ratio"
+}
+
+// GetCacheDomainPermissionDraftMemRation safely fetches the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
+func GetCacheDomainPermissionDraftMemRation() float64 {
+	return global.GetCacheDomainPermissionDraftMemRation()
+}
+
+// SetCacheDomainPermissionDraftMemRation safely sets the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
+func SetCacheDomainPermissionDraftMemRation(v float64) {
+	global.SetCacheDomainPermissionDraftMemRation(v)
+}
+
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
 func (st *ConfigState) GetCacheEmojiMemRatio() (v float64) {
 	st.mutex.RLock()

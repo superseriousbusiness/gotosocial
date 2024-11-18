@@ -342,6 +342,21 @@ func sizeofConversation() uintptr {
 	}))
 }
 
+func sizeofDomainPermissionDraft() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainPermissionDraft{
+		ID:                 exampleID,
+		CreatedAt:          exampleTime,
+		UpdatedAt:          exampleTime,
+		PermissionType:     gtsmodel.DomainPermissionBlock,
+		Domain:             "example.org",
+		CreatedByAccountID: exampleID,
+		PrivateComment:     exampleTextSmall,
+		PublicComment:      exampleTextSmall,
+		Obfuscate:          util.Ptr(false),
+		SubscriptionID:     exampleID,
+	}))
+}
+
 func sizeofEmoji() uintptr {
 	return uintptr(size.Of(&gtsmodel.Emoji{
 		ID:                     exampleID,
