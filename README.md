@@ -17,7 +17,7 @@ Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can 
 
 To build from source, check the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file.
 
-Here's a screenshot of the instance landing page!
+Here's a screenshot of the instance landing page! Check out the project's [official account](https://gts.superseriousbusiness.org/@gotosocial) running on GoToSocial.
 
 ![Screenshot of the landing page for the GoToSocial instance goblin.technology. It shows basic information about the instance; number of users and posts etc.](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/instancesplash.png)
 <!--overview-end-->
