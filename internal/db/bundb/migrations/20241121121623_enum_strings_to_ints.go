@@ -146,21 +146,18 @@ func convertEnums[OldType ~string, NewType ~int](
 		table, column,
 	)
 
-	var columnExpr string
-	var columnArgs []any
-
-	// Build new column expr with args.
-	columnExpr = "? INTEGER NOT NULL"
-	columnArgs = []any{bun.Ident(newColumn)}
-	if defaultValue != nil {
-		columnExpr += " DEFAULT ?"
-		columnArgs = append(columnArgs, *defaultValue)
+	// Ensure a default value.
+	if defaultValue == nil {
+		var zero NewType
+		defaultValue = &zero
 	}
 
 	// Add new column to database.
 	if _, err := tx.NewAddColumn().
 		Table(table).
-		ColumnExpr(columnExpr, columnArgs...).
+		ColumnExpr("? INTEGER NOT NULL DEFAULT ?",
+			bun.Ident(newColumn),
+			*defaultValue).
 		Exec(ctx); err != nil {
 		return err
 	}
