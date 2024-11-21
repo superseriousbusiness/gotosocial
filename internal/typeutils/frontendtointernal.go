@@ -41,7 +41,7 @@ func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
 	case apimodel.VisibilityNone:
 		return gtsmodel.VisibilityNone
 	}
-	return ""
+	return 0
 }
 
 func APIMarkerNameToMarkerName(m apimodel.MarkerName) gtsmodel.MarkerName {

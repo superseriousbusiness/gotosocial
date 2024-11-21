@@ -34,20 +34,51 @@ type Notification struct {
 	Read             *bool            `bun:",nullzero,notnull,default:false"`                             // Notification has been seen/read
 }
 
-// NotificationType describes the reason/type of this notification.
-type NotificationType string
+// NotificationType describes the
+// reason/type of this notification.
+type NotificationType int
 
-// Notification Types
 const (
-	NotificationFollow        NotificationType = "follow"            // NotificationFollow -- someone followed you
-	NotificationFollowRequest NotificationType = "follow_request"    // NotificationFollowRequest -- someone requested to follow you
-	NotificationMention       NotificationType = "mention"           // NotificationMention -- someone mentioned you in their status
-	NotificationReblog        NotificationType = "reblog"            // NotificationReblog -- someone boosted one of your statuses
-	NotificationFave          NotificationType = "favourite"         // NotificationFave -- someone faved/liked one of your statuses
-	NotificationPoll          NotificationType = "poll"              // NotificationPoll -- a poll you voted in or created has ended
-	NotificationStatus        NotificationType = "status"            // NotificationStatus -- someone you enabled notifications for has posted a status.
-	NotificationSignup        NotificationType = "admin.sign_up"     // NotificationSignup -- someone has submitted a new account sign-up to the instance.
-	NotificationPendingFave   NotificationType = "pending.favourite" // Someone has faved a status of yours, which requires approval by you.
-	NotificationPendingReply  NotificationType = "pending.reply"     // Someone has replied to a status of yours, which requires approval by you.
-	NotificationPendingReblog NotificationType = "pending.reblog"    // Someone has boosted a status of yours, which requires approval by you.
+	// Notification Types
+	NotificationFollow        NotificationType = 1  // NotificationFollow -- someone followed you
+	NotificationFollowRequest NotificationType = 2  // NotificationFollowRequest -- someone requested to follow you
+	NotificationMention       NotificationType = 3  // NotificationMention -- someone mentioned you in their status
+	NotificationReblog        NotificationType = 4  // NotificationReblog -- someone boosted one of your statuses
+	NotificationFave          NotificationType = 5  // NotificationFave -- someone faved/liked one of your statuses
+	NotificationPoll          NotificationType = 6  // NotificationPoll -- a poll you voted in or created has ended
+	NotificationStatus        NotificationType = 7  // NotificationStatus -- someone you enabled notifications for has posted a status.
+	NotificationSignup        NotificationType = 8  // NotificationSignup -- someone has submitted a new account sign-up to the instance.
+	NotificationPendingFave   NotificationType = 9  // Someone has faved a status of yours, which requires approval by you.
+	NotificationPendingReply  NotificationType = 10 // Someone has replied to a status of yours, which requires approval by you.
+	NotificationPendingReblog NotificationType = 11 // Someone has boosted a status of yours, which requires approval by you.
 )
+
+// String returns a stringified, frontend API compatible form of NotificationType.
+func (t NotificationType) String() string {
+	switch t {
+	case NotificationFollow:
+		return "follow"
+	case NotificationFollowRequest:
+		return "follow_request"
+	case NotificationMention:
+		return "mention"
+	case NotificationReblog:
+		return "reblog"
+	case NotificationFave:
+		return "favourite"
+	case NotificationPoll:
+		return "poll"
+	case NotificationStatus:
+		return "status"
+	case NotificationSignup:
+		return "admin.sign_up"
+	case NotificationPendingFave:
+		return "pending.favourite"
+	case NotificationPendingReply:
+		return "pending.reply"
+	case NotificationPendingReblog:
+		return "pending.reblog"
+	default:
+		panic("invalid notification type")
+	}
+}
