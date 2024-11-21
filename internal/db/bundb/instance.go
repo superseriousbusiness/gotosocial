@@ -107,7 +107,6 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 	q = q.Where("NOT ? = ?", bun.Ident("status.visibility"), "direct")
 
 	count, err := q.Count(ctx)
-
 	if err != nil {
 		return 0, err
 	}
