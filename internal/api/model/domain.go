@@ -61,6 +61,9 @@ type DomainPermission struct {
 	// Time at which the permission entry was created (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at,omitempty"`
+	// Permission type of this entry (block, allow).
+	// Only set for domain permission drafts.
+	PermissionType string `json:"permission_type,omitempty"`
 }
 
 // DomainPermissionRequest is the form submitted as a POST to create a new domain permission entry (allow/block).
@@ -69,22 +72,24 @@ type DomainPermission struct {
 type DomainPermissionRequest struct {
 	// A list of domains for which this permission request should apply.
 	// Only used if import=true is specified.
-	Domains *multipart.FileHeader `form:"domains" json:"domains" xml:"domains"`
+	Domains *multipart.FileHeader `form:"domains" json:"domains"`
 	// A single domain for which this permission request should apply.
 	// Only used if import=true is NOT specified or if import=false.
 	// example: example.org
-	Domain string `form:"domain" json:"domain" xml:"domain"`
+	Domain string `form:"domain" json:"domain"`
 	// Obfuscate the domain name when displaying this permission entry publicly.
 	// Ie., instead of 'example.org' show something like 'e**mpl*.or*'.
 	// example: false
-	Obfuscate bool `form:"obfuscate" json:"obfuscate" xml:"obfuscate"`
+	Obfuscate bool `form:"obfuscate" json:"obfuscate"`
 	// Private comment for other admins on why this permission entry was created.
 	// example: don't like 'em!!!!
-	PrivateComment string `form:"private_comment" json:"private_comment" xml:"private_comment"`
+	PrivateComment string `form:"private_comment" json:"private_comment"`
 	// Public comment on why this permission entry was created.
 	// Will be visible to requesters at /api/v1/instance/peers if this endpoint is exposed.
 	// example: foss dorks 😫
-	PublicComment string `form:"public_comment" json:"public_comment" xml:"public_comment"`
+	PublicComment string `form:"public_comment" json:"public_comment"`
+	// Permission type to create (only applies to domain permission drafts, not explicit blocks and allows).
+	PermissionType string `form:"permission_type" json:"permission_type"`
 }
 
 // DomainKeysExpireRequest is the form submitted as a POST to /api/v1/admin/domain_keys_expire to expire a domain's public keys.
@@ -92,5 +97,5 @@ type DomainPermissionRequest struct {
 // swagger:parameters domainKeysExpire
 type DomainKeysExpireRequest struct {
 	// hostname/domain to expire keys for.
-	Domain string `form:"domain" json:"domain" xml:"domain"`
+	Domain string `form:"domain" json:"domain"`
 }

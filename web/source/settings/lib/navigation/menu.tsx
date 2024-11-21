@@ -110,12 +110,19 @@ export function MenuItem(props: PropsWithChildren<MenuItemProps>) {
 	if (topLevel) {
 		classNames.push("category", "top-level");
 	} else {
-		if (thisLevel === 1 && hasChildren) {
-			classNames.push("category", "expanding");
-		} else if (thisLevel === 1 && !hasChildren) {
-			classNames.push("view", "expanding");
-		} else if (thisLevel === 2) {
-			classNames.push("view", "nested");
+		switch (true) {
+			case thisLevel === 1 && hasChildren:
+				classNames.push("category", "expanding");
+				break;
+			case thisLevel === 1 && !hasChildren:
+				classNames.push("view", "expanding");
+				break;
+			case thisLevel >= 2 && hasChildren:
+				classNames.push("nested", "category");
+				break;
+			case thisLevel >= 2 && !hasChildren:
+				classNames.push("nested", "view");
+				break;
 		}
 	}
 

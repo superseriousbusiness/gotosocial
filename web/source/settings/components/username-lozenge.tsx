@@ -17,18 +17,107 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useLocation } from "wouter";
 import { AdminAccount } from "../lib/types/account";
+import { useLazyGetAccountQuery } from "../lib/query/admin";
+import Loading from "./loading";
+import { Error as ErrorC } from "./error";
 
-interface UsernameProps {
+interface UsernameLozengeProps {
+	/**
+	 * Either an account ID (for fetching) or an account.
+	 */
+	account?: string | AdminAccount;
+	/**
+	 * Make the lozenge clickable and link to this location.
+	 */
+	linkTo?: string;
+	/**
+	 * Location to set as backLocation after linking to linkTo.
+	 */
+	backLocation?: string;
+	/**
+	 * Additional classnames to add to the lozenge.
+	 */
+	classNames?: string[];
+}
+
+export default function UsernameLozenge({ account, linkTo, backLocation, classNames }: UsernameLozengeProps) {
+	if (account === undefined) {
+		return <>[unknown]</>;
+	} else if (typeof account === "string") {
+		return (
+			<FetchUsernameLozenge
+				accountID={account}
+				linkTo={linkTo}
+				backLocation={backLocation}
+				classNames={classNames}
+			/>
+		);
+	} else {
+		return (
+			<ReadyUsernameLozenge
+				account={account}
+				linkTo={linkTo}
+				backLocation={backLocation}
+				classNames={classNames}
+			/>
+		);
+	}
+
+}
+
+interface FetchUsernameLozengeProps {
+	accountID: string;
+	linkTo?: string;
+	backLocation?: string;
+	classNames?: string[];
+}
+
+function FetchUsernameLozenge({ accountID, linkTo, backLocation, classNames }: FetchUsernameLozengeProps) {
+	const [ trigger, result ] = useLazyGetAccountQuery();
+	
+	// Call to get the account
+	// using the provided ID.
+	useEffect(() => {
+		trigger(accountID, true);
+	}, [trigger, accountID]);
+
+	const {
+		data: account,
+		isLoading,
+		isFetching,
+		isError,
+		error,
+	} = result;
+
+	// Wait for the account
+	// model to be returned.
+	if (isError) {
+		return <ErrorC error={error} />;
+	} else if (isLoading || isFetching || account === undefined) {
+		return <Loading />;
+	}
+
+	return (
+		<ReadyUsernameLozenge
+			account={account}
+			linkTo={linkTo}
+			backLocation={backLocation}
+			classNames={classNames}
+		/>
+	);
+}
+
+interface ReadyUsernameLozengeProps {
 	account: AdminAccount;
 	linkTo?: string;
 	backLocation?: string;
 	classNames?: string[];
 }
 
-export default function Username({ account, linkTo, backLocation, classNames }: UsernameProps) {
+function ReadyUsernameLozenge({ account, linkTo, backLocation, classNames }: ReadyUsernameLozengeProps) {
 	const [ _location, setLocation ] = useLocation();
 	
 	let className = "username-lozenge";

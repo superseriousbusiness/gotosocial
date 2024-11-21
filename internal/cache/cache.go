@@ -74,6 +74,8 @@ func (c *Caches) Init() {
 	c.initConversationLastStatusIDs()
 	c.initDomainAllow()
 	c.initDomainBlock()
+	c.initDomainPermissionDraft()
+	c.initDomainPermissionExclude()
 	c.initEmoji()
 	c.initEmojiCategory()
 	c.initFilter()

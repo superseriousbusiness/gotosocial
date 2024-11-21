@@ -39,37 +39,47 @@ import { NoArg } from "../../../lib/types/query";
 import { Error } from "../../../components/error";
 import { useBaseUrl } from "../../../lib/navigation/util";
 import { PermType } from "../../../lib/types/perm";
-import isValidDomain from "is-valid-domain";
+import { useCapitalize } from "../../../lib/util";
+import { formDomainValidator } from "../../../lib/util/formvalidators";
 
 export default function DomainPermDetail() {
 	const baseUrl = useBaseUrl();
-	
-	// Parse perm type from routing params.
-	let params = useParams();
-	if (params.permType !== "blocks" && params.permType !== "allows") {
+	const search = useSearch();
+
+	// Parse perm type from routing params, converting
+	// "blocks" => "block" and "allows" => "allow".
+	const params = useParams();
+	const permTypeRaw = params.permType;
+	if (permTypeRaw !== "blocks" && permTypeRaw !== "allows") {
 		throw "unrecognized perm type " + params.permType;
 	}
-	const permType = params.permType.slice(0, -1) as PermType;
+	const permType = useMemo(() => {
+		return permTypeRaw.slice(0, -1) as PermType;
+	}, [permTypeRaw]);
 	
-	const { data: domainBlocks = {}, isLoading: isLoadingDomainBlocks } = useDomainBlocksQuery(NoArg, { skip: permType !== "block" });
-	const { data: domainAllows = {}, isLoading: isLoadingDomainAllows } = useDomainAllowsQuery(NoArg, { skip: permType !== "allow" });
+	// Conditionally fetch either domain blocks or domain
+	// allows depending on which perm type we're looking at.
+	const {
+		data: blocks = {},
+		isLoading: loadingBlocks,
+		isFetching: fetchingBlocks,
+	} = useDomainBlocksQuery(NoArg, { skip: permType !== "block" });
+	const {
+		data: allows = {},
+		isLoading: loadingAllows,
+		isFetching: fetchingAllows,
+	} = useDomainAllowsQuery(NoArg, { skip: permType !== "allow" });
 
-	let isLoading;
-	switch (permType) {
-		case "block":
-			isLoading = isLoadingDomainBlocks;
-			break;
-		case "allow":
-			isLoading = isLoadingDomainAllows;
-			break;
-		default:
-			throw "perm type unknown";
+	// Wait until we're done loading.
+	const loading = permType === "block"
+		? loadingBlocks || fetchingBlocks
+		: loadingAllows || fetchingAllows;
+	if (loading) {
+		return <Loading />;
 	}
 
 	// Parse domain from routing params.
 	let domain = params.domain ?? "unknown";
-
-	const search = useSearch();
 	if (domain === "view") {
 		// Retrieve domain from form field submission.
 		const searchParams = new URLSearchParams(search);
@@ -81,36 +91,41 @@ export default function DomainPermDetail() {
 		domain = searchDomain;
 	}
 
-	// Normalize / decode domain (it may be URL-encoded).
+	// Normalize / decode domain
+	// (it may be URL-encoded).
 	domain = decodeURIComponent(domain);
 
-	// Check if we already have a perm of the desired type for this domain.
-	const existingPerm: DomainPerm | undefined = useMemo(() => {
-		if (permType == "block") {
-			return domainBlocks[domain];
-		} else {
-			return domainAllows[domain];
-		}
-	}, [domainBlocks, domainAllows, domain, permType]);
-
+	// Check if we already have a perm
+	// of the desired type for this domain.
+	const existingPerm = permType === "block"
+		? blocks[domain]
+		: allows[domain];
+	
+	// Render different into content depending on
+	// if we have a perm already for this domain.
 	let infoContent: React.JSX.Element;
-
-	if (isLoading) {
-		infoContent = <Loading />;
-	} else if (existingPerm == undefined) {
-		infoContent = <span>No stored {permType} yet, you can add one below:</span>;
+	if (existingPerm === undefined) {
+		infoContent = (
+			<span>
+				No stored {permType} yet, you can add one below:
+			</span>
+		);
 	} else {
 		infoContent = (
 			<div className="info">
 				<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
-				<b>Editing domain permissions isn't implemented yet, <a href="https://github.com/superseriousbusiness/gotosocial/issues/1198" target="_blank" rel="noopener noreferrer">check here for progress</a></b>
+				<b>Editing existing domain {permTypeRaw} isn't implemented yet, <a href="https://github.com/superseriousbusiness/gotosocial/issues/1198" target="_blank" rel="noopener noreferrer">check here for progress</a></b>
 			</div>
 		);
 	}
 
 	return (
 		<div>
-			<h1 className="text-cutoff"><BackButton to={`~${baseUrl}/${permType}s`}/> Domain {permType} for: <span title={domain}>{domain}</span></h1>
+			<h1 className="text-cutoff">
+				<BackButton to={`~${baseUrl}/${permTypeRaw}`} />
+				{" "}
+				Domain {permType} for {domain}
+			</h1>
 			{infoContent}
 			<DomainPermForm
 				defaultDomain={domain}
@@ -143,28 +158,7 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 		domain: useTextInput("domain", {
 			source: perm,
 			defaultValue: defaultDomain,
-			validator: (v: string) => {
-				if (v.length === 0) {
-					return "";
-				}
-
-				if (v[v.length-1] === ".") {
-					return "invalid domain";
-				}
-
-				const valid = isValidDomain(v, {
-					subdomain: true,
-					wildcard: false,
-					allowUnicode: true,
-					topLevel: false,
-				});
-
-				if (valid) {
-					return "";
-				}
-
-				return "invalid domain";
-			}
+			validator: formDomainValidator,
 		}),
 		obfuscate: useBoolInput("obfuscate", { source: perm }),
 		commentPrivate: useTextInput("private_comment", { source: perm }),
@@ -209,9 +203,7 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 	const [submitForm, submitFormResult] = useFormSubmit(form, [addTrigger, addResult], { changedOnly: false });
 
 	// Uppercase first letter of given permType.
-	const permTypeUpper = useMemo(() => {
-		return permType.charAt(0).toUpperCase() + permType.slice(1); 
-	}, [permType]);
+	const permTypeUpper = useCapitalize(permType);
 
 	const [location, setLocation] = useLocation();
 

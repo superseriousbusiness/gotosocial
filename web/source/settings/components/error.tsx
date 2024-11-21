@@ -107,7 +107,11 @@ function Error({ error, reset }: ErrorProps) {
 			{ reset && 
 				<span 
 					className="dismiss"
-					onClick={reset}
+					onClick={(e) => {
+						e.preventDefault();
+						e.stopPropagation();
+						reset();
+					}}
 					role="button"
 					tabIndex={0}
 				>

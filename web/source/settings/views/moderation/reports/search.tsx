@@ -25,7 +25,7 @@ import { PageableList } from "../../../components/pageable-list";
 import { Select } from "../../../components/form/inputs";
 import MutationButton from "../../../components/form/mutation-button";
 import { useLocation, useSearch } from "wouter";
-import Username from "../../../components/username";
+import UsernameLozenge from "../../../components/username-lozenge";
 import { AdminReport } from "../../../lib/types/report";
 
 export default function ReportsSearch() {
@@ -206,7 +206,7 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 				<div className="info-list-entry">
 					<dt>Reported account:</dt>
 					<dd className="text-cutoff">
-						<Username
+						<UsernameLozenge
 							account={target}
 							classNames={["text-cutoff report-byline"]}
 						/>
@@ -216,7 +216,7 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 				<div className="info-list-entry">
 					<dt>Reported by:</dt>
 					<dd className="text-cutoff reported-by">
-						<Username account={from} />
+						<UsernameLozenge account={from} />
 					</dd>
 				</div>
 

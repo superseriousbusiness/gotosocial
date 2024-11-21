@@ -21,7 +21,7 @@ import React, { ReactNode } from "react";
 import { useSearchAccountsQuery } from "../../../../lib/query/admin";
 import { PageableList } from "../../../../components/pageable-list";
 import { useLocation } from "wouter";
-import Username from "../../../../components/username";
+import UsernameLozenge from "../../../../components/username-lozenge";
 import { AdminAccount } from "../../../../lib/types/account";
 
 export default function AccountsPending() {
@@ -32,7 +32,7 @@ export default function AccountsPending() {
 	function itemToEntry(account: AdminAccount): ReactNode {
 		const acc = account.account;
 		return (
-			<Username
+			<UsernameLozenge
 				key={acc.acct}
 				account={account}
 				linkTo={`/${account.id}`}

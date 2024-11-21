@@ -1962,7 +1962,8 @@ func (c *Converter) ConversationToAPIConversation(
 	return apiConversation, nil
 }
 
-// DomainPermToAPIDomainPerm converts a gts model domin block or allow into an api domain permission.
+// DomainPermToAPIDomainPerm converts a gtsmodel domain block,
+// allow, draft, or ignore into an api domain permission.
 func (c *Converter) DomainPermToAPIDomainPerm(
 	ctx context.Context,
 	d gtsmodel.DomainPermission,
@@ -1994,6 +1995,11 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	domainPerm.SubscriptionID = d.GetSubscriptionID()
 	domainPerm.CreatedBy = d.GetCreatedByAccountID()
 	domainPerm.CreatedAt = util.FormatISO8601(d.GetCreatedAt())
+
+	// If this is a draft, also add the permission type.
+	if _, ok := d.(*gtsmodel.DomainPermissionDraft); ok {
+		domainPerm.PermissionType = d.GetType().String()
+	}
 
 	return domainPerm, nil
 }
