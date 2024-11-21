@@ -24,6 +24,7 @@ import (
 	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241121121623_enum_strings_to_ints"
 	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 
 	"github.com/uptrace/bun"
 )
@@ -31,6 +32,20 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+
+			// Tables with visibility types.
+			var visTables = []struct {
+				Table   string
+				Column  string
+				Default *new_gtsmodel.Visibility
+			}{
+				{Table: "statuses", Column: "visibility"},
+				{Table: "sin_bin_statuses", Column: "visibility"},
+				{Table: "account_settings", Column: "privacy", Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+				{Table: "account_settings", Column: "web_visibility", Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+			}
+
+			// Visibility type indices.
 			var visIndices = []struct {
 				name  string
 				cols  []string
@@ -63,17 +78,19 @@ func init() {
 				}
 			}
 
-			// Now migrate old visibility column type over to new type.
-			if err := convertEnums(ctx, tx, "statuses", "visibility",
-				map[old_gtsmodel.Visibility]new_gtsmodel.Visibility{
-					old_gtsmodel.VisibilityNone:          new_gtsmodel.VisibilityNone,
-					old_gtsmodel.VisibilityPublic:        new_gtsmodel.VisibilityPublic,
-					old_gtsmodel.VisibilityUnlocked:      new_gtsmodel.VisibilityUnlocked,
-					old_gtsmodel.VisibilityFollowersOnly: new_gtsmodel.VisibilityFollowersOnly,
-					old_gtsmodel.VisibilityMutualsOnly:   new_gtsmodel.VisibilityMutualsOnly,
-					old_gtsmodel.VisibilityDirect:        new_gtsmodel.VisibilityDirect,
-				}, nil); err != nil {
-				return err
+			// Convert all visibility tables.
+			for _, table := range visTables {
+				if err := convertEnums(ctx, tx, table.Table, table.Column,
+					map[old_gtsmodel.Visibility]new_gtsmodel.Visibility{
+						old_gtsmodel.VisibilityNone:          new_gtsmodel.VisibilityNone,
+						old_gtsmodel.VisibilityPublic:        new_gtsmodel.VisibilityPublic,
+						old_gtsmodel.VisibilityUnlocked:      new_gtsmodel.VisibilityUnlocked,
+						old_gtsmodel.VisibilityFollowersOnly: new_gtsmodel.VisibilityFollowersOnly,
+						old_gtsmodel.VisibilityMutualsOnly:   new_gtsmodel.VisibilityMutualsOnly,
+						old_gtsmodel.VisibilityDirect:        new_gtsmodel.VisibilityDirect,
+					}, table.Default); err != nil {
+					return err
+				}
 			}
 
 			// Recreate the visibility indices.
