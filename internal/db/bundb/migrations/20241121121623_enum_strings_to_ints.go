@@ -165,15 +165,35 @@ func convertEnums[OldType ~string, NewType ~int](
 		return err
 	}
 
-	// Update existing values via mapping.
+	// Get a count of all in table.
+	total, err := tx.NewSelect().
+		Table(table).
+		Count(ctx)
+	if err != nil {
+		return err
+	}
+
+	var updated int
 	for old, new := range mapping {
-		if _, err := tx.NewUpdate().
+
+		// Update old to new values.
+		res, err := tx.NewUpdate().
 			Table(table).
 			Where("? = ?", bun.Ident(column), old).
 			Set("? = ?", bun.Ident(newColumn), new).
-			Exec(ctx); err != nil {
+			Exec(ctx)
+		if err != nil {
 			return err
 		}
+
+		// Count number items updated.
+		n, _ := res.RowsAffected()
+		updated += int(n)
+	}
+
+	// Check total updated.
+	if total != updated {
+		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
 	}
 
 	// Drop the old column from table.
