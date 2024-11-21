@@ -22,7 +22,6 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -65,14 +64,6 @@ func (d *domainDB) IsDomainPermissionExcluded(ctx context.Context, domain string
 		return false, err
 	}
 
-	// Check if our host and given domain are equal
-	// or part of the same second-level domain; we
-	// always exclude such perms as creating blocks
-	// or allows in such cases may break things.
-	if dns.CompareDomainName(domain, config.GetHost()) >= 2 {
-		return true, nil
-	}
-
 	// Func to scan list of all
 	// excluded domain perms from DB.
 	loadF := func() ([]string, error) {
@@ -80,11 +71,15 @@ func (d *domainDB) IsDomainPermissionExcluded(ctx context.Context, domain string
 
 		if err := d.db.
 			NewSelect().
-			Table("domain_excludes").
+			Table("domain_permission_excludes").
 			Column("domain").
 			Scan(ctx, &domains); err != nil {
 			return nil, err
 		}
+
+		// Exclude our own domain as creating blocks
+		// or allows for self will likely break things.
+		domains = append(domains, config.GetHost())
 
 		return domains, nil
 	}

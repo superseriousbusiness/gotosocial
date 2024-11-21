@@ -129,4 +129,7 @@ type Domain interface {
 
 	// DeleteDomainPermissionExclude deletes one DomainPermissionExclude with the given id.
 	DeleteDomainPermissionExclude(ctx context.Context, id string) error
+
+	// IsDomainPermissionExcluded returns true if the given domain matches in the list of excluded domains.
+	IsDomainPermissionExcluded(ctx context.Context, domain string) (bool, error)
 }

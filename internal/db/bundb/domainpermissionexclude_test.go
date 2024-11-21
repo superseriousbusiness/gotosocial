@@ -23,6 +23,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
@@ -96,6 +97,85 @@ func (suite *DomainPermissionExcludeTestSuite) TestPermExcludeCreateGetDelete() 
 	} {
 		if err := suite.state.DB.DeleteDomainPermissionExclude(ctx, id); err != nil {
 			suite.FailNow("error deleting domain permission exclude")
+		}
+	}
+}
+
+func (suite *DomainPermissionExcludeTestSuite) TestExcluded() {
+	var (
+		ctx                = context.Background()
+		createdByAccountID = suite.testAccounts["admin_account"].ID
+	)
+
+	// Insert some excludes into the db.
+	for _, exclude := range []*gtsmodel.DomainPermissionExclude{
+		{
+			ID:                 "01JD7AFFBBZSPY8R2M0JCGQGPW",
+			Domain:             "example.org",
+			CreatedByAccountID: createdByAccountID,
+		},
+		{
+			ID:                 "01JD7AMK98E2QX78KXEZJ1RF5Z",
+			Domain:             "boobs.com",
+			CreatedByAccountID: createdByAccountID,
+		},
+		{
+			ID:                 "01JD7AMXW3R3W98E91R62ACDA0",
+			Domain:             "rad.boobs.com",
+			CreatedByAccountID: createdByAccountID,
+		},
+		{
+			ID:                 "01JD7AYYN5TXQVASB30PT08CE1",
+			Domain:             "honkers.org",
+			CreatedByAccountID: createdByAccountID,
+		},
+	} {
+		if err := suite.state.DB.PutDomainPermissionExclude(ctx, exclude); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	type testCase struct {
+		domain   string
+		excluded bool
+	}
+
+	for i, testCase := range []testCase{
+		{
+			domain:   config.GetHost(),
+			excluded: true,
+		},
+		{
+			domain:   "test.example.org",
+			excluded: true,
+		},
+		{
+			domain:   "example.org",
+			excluded: true,
+		},
+		{
+			domain:   "boobs.com",
+			excluded: true,
+		},
+		{
+			domain:   "rad.boobs.com",
+			excluded: true,
+		},
+		{
+			domain:   "sir.not.appearing.in.this.list",
+			excluded: false,
+		},
+	} {
+		excluded, err := suite.state.DB.IsDomainPermissionExcluded(ctx, testCase.domain)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+
+		if excluded != testCase.excluded {
+			suite.Failf("",
+				"test %d: %s excluded should be %t",
+				i, testCase.domain, testCase.excluded,
+			)
 		}
 	}
 }
