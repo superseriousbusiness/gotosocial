@@ -22,7 +22,7 @@ import { useMemo } from "react";
 import { useTextInput } from "../../../../lib/form";
 import { useListEmojiQuery } from "../../../../lib/query/admin/custom-emoji";
 
-const shortcodeRegex = /^\w{2,30}$/;
+const shortcodeRegex = /^\w{1,30}$/;
 
 export default function useShortcode() {
 	const { data: emoji = [] } = useListEmojiQuery({
@@ -42,8 +42,8 @@ export default function useShortcode() {
 				return "Shortcode already in use";
 			}
 
-			if (code.length < 2 || code.length > 30) {
-				return "Shortcode must be between 2 and 30 characters";
+			if (code.length < 1 || code.length > 30) {
+				return "Shortcode must be between 1 and 30 characters";
 			}
 
 			if (!shortcodeRegex.test(code)) {

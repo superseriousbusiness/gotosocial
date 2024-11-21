@@ -4920,7 +4920,7 @@ paths:
                 - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance.
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   required: true
                   type: string
                 - description: A png or gif image of the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
@@ -5066,7 +5066,7 @@ paths:
                 - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. Works for the `copy` action type only.
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   type: string
                 - description: A new png or gif image to use for the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default. Works for LOCAL emojis only.
                   in: formData

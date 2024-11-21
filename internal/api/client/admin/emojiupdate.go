@@ -85,7 +85,7 @@ import (
 //			The code to use for the emoji, which will be used by instance denizens to select it.
 //			This must be unique on the instance. Works for the `copy` action type only.
 //		type: string
-//		pattern: \w{2,30}
+//		pattern: \w{1,30}
 //	-
 //		name: image
 //		in: formData
