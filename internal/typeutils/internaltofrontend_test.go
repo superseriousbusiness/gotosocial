@@ -1993,7 +1993,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 20,
+    "status_count": 19,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.webp",
