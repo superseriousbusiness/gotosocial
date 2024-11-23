@@ -278,8 +278,9 @@ func (suite *FiltersTestSuite) TestPutNonexistentFilter() {
 }
 
 // setFilterExpiration sets filter expiration.
-func (suite *FiltersTestSuite) setFilterExpiration(id string, expiresIn *int, expiresInStr *string, requestJson *string) *apimodel.FilterV1 {
-	filter, err := suite.putFilter(id, nil, nil, nil, nil, expiresIn, expiresInStr, requestJson, http.StatusOK, "")
+func (suite *FiltersTestSuite) setFilterExpiration(id string, phrase *string, expiresIn *int, expiresInStr *string, requestJson *string) *apimodel.FilterV1 {
+	context := []string{"home"}
+	filter, err := suite.putFilter(id, phrase, &context, nil, nil, expiresIn, expiresInStr, requestJson, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -288,36 +289,42 @@ func (suite *FiltersTestSuite) setFilterExpiration(id string, expiresIn *int, ex
 
 // Regression test for https://github.com/superseriousbusiness/gotosocial/issues/3497
 func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateEmptyString() {
-	id := suite.testFilters["local_account_1_filter_2"].ID
+	filterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	id := filterKeyword.ID
+	phrase := filterKeyword.Keyword
 
 	// Setup: set an expiration date for the filter.
 	expiresIn := 86400
-	filter := suite.setFilterExpiration(id, &expiresIn, nil, nil)
+	filter := suite.setFilterExpiration(id, &phrase, &expiresIn, nil, nil)
 	if !suite.NotNil(filter.ExpiresAt) {
 		suite.FailNow("Test precondition failed")
 	}
 
 	// Unset the filter's expiration date by setting it to an empty string.
 	expiresInStr := ""
-	filter = suite.setFilterExpiration(id, nil, &expiresInStr, nil)
+	filter = suite.setFilterExpiration(id, &phrase, nil, &expiresInStr, nil)
 	suite.Nil(filter.ExpiresAt)
 }
 
 // Regression test related to https://github.com/superseriousbusiness/gotosocial/issues/3497
 func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateNullJSON() {
-	id := suite.testFilters["local_account_1_filter_3"].ID
+	filterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	id := filterKeyword.ID
+	phrase := filterKeyword.Keyword
 
 	// Setup: set an expiration date for the filter.
 	expiresIn := 86400
-	filter := suite.setFilterExpiration(id, &expiresIn, nil, nil)
+	filter := suite.setFilterExpiration(id, &phrase, &expiresIn, nil, nil)
 	if !suite.NotNil(filter.ExpiresAt) {
 		suite.FailNow("Test precondition failed")
 	}
 
 	// Unset the filter's expiration date by setting it to a null literal.
 	requestJson := `{
+		"phrase": "fnord",
+		"context": ["home"],
 		"expires_in": null
 	}`
-	filter = suite.setFilterExpiration(id, nil, nil, &requestJson)
+	filter = suite.setFilterExpiration(id, nil, nil, nil, &requestJson)
 	suite.Nil(filter.ExpiresAt)
 }
