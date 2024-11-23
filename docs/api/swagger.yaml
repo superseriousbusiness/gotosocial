@@ -3630,6 +3630,35 @@ paths:
             summary: Block account with id.
             tags:
                 - accounts
+    /api/v1/accounts/{id}/featured_tags:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: accountsFeaturedTags
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Get an array of a user's featured tags.
+            tags:
+                - accounts
     /api/v1/accounts/{id}/follow:
         post:
             consumes:
