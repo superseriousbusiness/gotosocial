@@ -18,7 +18,10 @@
 package v2
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -180,10 +183,41 @@ func (m *Module) FilterPUTHandler(c *gin.Context) {
 		return
 	}
 
+	// If the request is JSON:
+	// Explicitly check whether `expires_in` is a null literal (vs. not being set at all).
+	hasNullExpiresIn := false
+	if c.ContentType() == gin.MIMEJSON {
+		// To do this, we need to read the request body twice, once here and once below for the form, so we buffer it.
+		// If a filter update request is bigger than a megabyte, somebody's messing with us.
+		bodyBytes, err := io.ReadAll(io.LimitReader(c.Request.Body, 1024*1024))
+		if err != nil {
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+			return
+		}
+		c.Request.Body = io.NopCloser(bytes.NewReader(bodyBytes))
+
+		// Partially parse the body as a JSON object.
+		requestJSONObject := map[string]json.RawMessage{}
+		if err := json.Unmarshal(bodyBytes, &requestJSONObject); err != nil {
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+			return
+		}
+
+		// Try to parse the `expires_in` field as a literal null.
+		if raw, found := requestJSONObject["expires_in"]; found {
+			hasNullExpiresIn = string(raw) == "null"
+		}
+	}
+
 	form := &apimodel.FilterUpdateRequestV2{}
 	if err := c.ShouldBind(form); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
+	}
+
+	// Interpret a literal null `expires_in` as unsetting the expiration date.
+	if hasNullExpiresIn {
+		form.ExpiresIn = util.Ptr(0)
 	}
 
 	if err := validateNormalizeUpdateFilter(form); err != nil {
@@ -281,11 +315,6 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	// Interpret zero as indefinite duration.
-	if form.ExpiresIn != nil && *form.ExpiresIn == 0 {
-		form.ExpiresIn = nil
 	}
 
 	// Normalize and validate updates.
