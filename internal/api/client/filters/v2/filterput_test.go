@@ -394,3 +394,20 @@ func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateNullJSON() {
 	filter = suite.setFilterExpiration(id, nil, nil, &requestJson)
 	suite.Nil(filter.ExpiresAt)
 }
+
+// Regression test related to https://github.com/superseriousbusiness/gotosocial/issues/3497
+func (suite *FiltersTestSuite) TestPutFilterUnalteredExpirationDateJSON() {
+	id := suite.testFilters["local_account_1_filter_4"].ID
+
+	// Setup: set an expiration date for the filter.
+	expiresIn := 86400
+	filter := suite.setFilterExpiration(id, &expiresIn, nil, nil)
+	if !suite.NotNil(filter.ExpiresAt) {
+		suite.FailNow("Test precondition failed")
+	}
+
+	// Update nothing. There should still be an expiration date.
+	requestJson := `{}`
+	filter = suite.setFilterExpiration(id, nil, nil, &requestJson)
+	suite.NotNil(filter.ExpiresAt)
+}
