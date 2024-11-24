@@ -1878,6 +1878,12 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID key pair: %w", err)
+	}
+	instance.Configuration.VAPID.PublicKey = vapidKeyPair.Public
+
 	// registrations
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
 	instance.Registrations.ApprovalRequired = true // always required
