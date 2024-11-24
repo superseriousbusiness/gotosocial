@@ -27,7 +27,6 @@ import (
 	"strings"
 	"time"
 
-	webpushgo "github.com/SherClockHolmes/webpush-go"
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -49,6 +48,9 @@ const rsaKeyBits = 2048
 type adminDB struct {
 	db    *bun.DB
 	state *state.State
+
+	// Since the VAPID key pair is very small and never written to concurrently, we can cache it here.
+	vapidKeyPair *gtsmodel.VAPIDKeyPair
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, error) {
@@ -443,36 +445,37 @@ func (a *adminDB) CountUnhandledSignups(ctx context.Context) (int, error) {
 		Count(ctx)
 }
 
-func (a *adminDB) GetOrCreateVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error) {
-	var err error
-	var vapidKeyPair *gtsmodel.VAPIDKeyPair
+func (a *adminDB) GetVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error) {
+	// Look for cached keys.
+	if a.vapidKeyPair != nil {
+		return a.vapidKeyPair, nil
+	}
 
-	// Look for previously generated keys.
-	if err = a.db.NewSelect().
-		Model(vapidKeyPair).
+	// Look for previously generated keys in the database.
+	if err := a.db.NewSelect().
+		Model(a.vapidKeyPair).
 		Limit(1).
 		Scan(ctx); // nocollapse
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		return nil, gtserror.Newf("DB error getting VAPID key pair: %w", err)
 	}
 
-	if vapidKeyPair == nil {
-		// Generate new keys.
-		vapidKeyPair = &gtsmodel.VAPIDKeyPair{}
-		if vapidKeyPair.Private, vapidKeyPair.Public, err = webpushgo.GenerateVAPIDKeys(); err != nil {
-			return nil, gtserror.Newf("error generating VAPID key pair: %w", err)
-		}
+	return a.vapidKeyPair, nil
+}
 
-		// Save them to the database.
-		if _, err = a.db.NewInsert().
-			Model(vapidKeyPair).
-			Exec(ctx); // nocollapse
-		err != nil {
-			return nil, gtserror.Newf("DB error saving VAPID key pair: %w", err)
-		}
+func (a *adminDB) PutVAPIDKeyPair(ctx context.Context, vapidKeyPair *gtsmodel.VAPIDKeyPair) error {
+	// Store the keys in the database.
+	if _, err := a.db.NewInsert().
+		Model(a.vapidKeyPair).
+		Exec(ctx); // nocollapse
+	err != nil {
+		return gtserror.Newf("DB error putting VAPID key pair: %w", err)
 	}
 
-	return vapidKeyPair, err
+	// Cache the keys.
+	a.vapidKeyPair = vapidKeyPair
+
+	return nil
 }
 
 /*

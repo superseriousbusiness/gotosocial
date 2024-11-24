@@ -30,6 +30,7 @@ import (
 	"time"
 
 	"github.com/KimMachineGun/automemlimit/memlimit"
+	webpushgo "github.com/SherClockHolmes/webpush-go"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
@@ -40,6 +41,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/metrics"
@@ -245,6 +247,22 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		emailSender, err = email.NewNoopSender(nil)
 		if err != nil {
 			return fmt.Errorf("error creating noop email sender: %s", err)
+		}
+	}
+
+	// Get or create a VAPID key pair.
+	vapidKeyPair, err := dbService.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return gtserror.Newf("error getting VAPID key pair: %w", err)
+	}
+	if vapidKeyPair == nil {
+		// Generate and store a new key pair.
+		vapidKeyPair = &gtsmodel.VAPIDKeyPair{}
+		if vapidKeyPair.Private, vapidKeyPair.Public, err = webpushgo.GenerateVAPIDKeys(); err != nil {
+			return gtserror.Newf("error generating VAPID key pair: %w", err)
+		}
+		if err := dbService.PutVAPIDKeyPair(ctx, vapidKeyPair); err != nil {
+			return gtserror.Newf("error putting VAPID key pair: %w", err)
 		}
 	}
 

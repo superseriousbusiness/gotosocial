@@ -19,7 +19,7 @@ package testrig
 
 import (
 	"context"
-
+	webpushgo "github.com/SherClockHolmes/webpush-go"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -366,6 +366,15 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	if err := db.CreateInstanceInstance(ctx); err != nil {
 		log.Panic(ctx, err)
+	}
+
+	vapidKeyPair := &gtsmodel.VAPIDKeyPair{}
+	var err error
+	if vapidKeyPair.Private, vapidKeyPair.Public, err = webpushgo.GenerateVAPIDKeys(); err != nil {
+		log.Panic(nil, err)
+	}
+	if err = db.PutVAPIDKeyPair(ctx, vapidKeyPair); err != nil {
+		log.Panic(nil, err)
 	}
 
 	log.Debug(ctx, "testing db setup complete")
