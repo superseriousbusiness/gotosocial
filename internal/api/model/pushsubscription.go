@@ -18,21 +18,27 @@
 package model
 
 // PushSubscription represents a subscription to the push streaming server.
+//
+// swagger:model pushSubscription
 type PushSubscription struct {
 	// The id of the push subscription in the database.
 	ID string `json:"id"`
 	// Where push alerts will be sent to.
 	Endpoint string `json:"endpoint"`
-	// The streaming server's VAPID key.
+	// The streaming server's VAPID public key.
 	ServerKey string `json:"server_key"`
 	// Which alerts should be delivered to the endpoint.
 	Alerts *PushSubscriptionAlerts `json:"alerts"`
 }
 
 // PushSubscriptionAlerts represents the specific alerts that this push subscription will give.
+//
+// swagger:model pushSubscriptionAlerts
 type PushSubscriptionAlerts struct {
 	// Receive a push notification when someone has followed you?
 	Follow bool `json:"follow"`
+	// Receive a push notification when someone has requested to followed you?
+	FollowRequest bool `json:"follow_request"`
 	// Receive a push notification when a status you created has been favourited by someone else?
 	Favourite bool `json:"favourite"`
 	// Receive a push notification when someone else has mentioned you in a status?
@@ -41,4 +47,12 @@ type PushSubscriptionAlerts struct {
 	Reblog bool `json:"reblog"`
 	// Receive a push notification when a poll you voted in or created has ended?
 	Poll bool `json:"poll"`
+	// Receive a push notification when a subscribed account posts a status?
+	Status bool `json:"status"`
+	// Receive a push notification when a status you interacted with has been edited?
+	Update bool `json:"update"`
+	// Receive a push notification when a new user has signed up?
+	AdminSignup bool `json:"admin.sign_up"`
+	// Receive a push notification when a new report has been filed?
+	AdminReport bool `json:"admin.report"`
 }
