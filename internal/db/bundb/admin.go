@@ -27,6 +27,7 @@ import (
 	"strings"
 	"time"
 
+	webpushgo "github.com/SherClockHolmes/webpush-go"
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -440,6 +441,38 @@ func (a *adminDB) CountUnhandledSignups(ctx context.Context) (int, error) {
 		// Explicitly rejected sign-ups end up elsewhere.
 		Where("? = ?", bun.Ident("user.approved"), false).
 		Count(ctx)
+}
+
+func (a *adminDB) GetOrCreateVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error) {
+	var err error
+	var vapidKeyPair *gtsmodel.VAPIDKeyPair
+
+	// Look for previously generated keys.
+	if err = a.db.NewSelect().
+		Model(vapidKeyPair).
+		Limit(1).
+		Scan(ctx); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.Newf("DB error getting VAPID key pair: %w", err)
+	}
+
+	if vapidKeyPair == nil {
+		// Generate new keys.
+		vapidKeyPair = &gtsmodel.VAPIDKeyPair{}
+		if vapidKeyPair.Private, vapidKeyPair.Public, err = webpushgo.GenerateVAPIDKeys(); err != nil {
+			return nil, gtserror.Newf("error generating VAPID key pair: %w", err)
+		}
+
+		// Save them to the database.
+		if _, err = a.db.NewInsert().
+			Model(vapidKeyPair).
+			Exec(ctx); // nocollapse
+		err != nil {
+			return nil, gtserror.Newf("DB error saving VAPID key pair: %w", err)
+		}
+	}
+
+	return vapidKeyPair, err
 }
 
 /*

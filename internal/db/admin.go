@@ -68,6 +68,10 @@ type Admin interface {
 	// the number of pending sign-ups sitting in the backlog.
 	CountUnhandledSignups(ctx context.Context) (int, error)
 
+	// GetOrCreateVAPIDKeyPair creates and stores a VAPID key pair,
+	// or retrieves the existing VAPID key pair.
+	GetOrCreateVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error)
+
 	/*
 		ACTION FUNCS
 	*/
