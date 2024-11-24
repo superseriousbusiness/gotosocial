@@ -616,6 +616,11 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 }
 
 func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
+	}
+
 	return &apimodel.Application{
 		ID:           a.ID,
 		Name:         a.Name,
@@ -623,6 +628,7 @@ func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Applic
 		RedirectURI:  a.RedirectURI,
 		ClientID:     a.ClientID,
 		ClientSecret: a.ClientSecret,
+		VapidKey:     vapidKeyPair.Public,
 	}, nil
 }
 
@@ -1880,7 +1886,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
 	if err != nil {
-		return nil, gtserror.Newf("error getting VAPID key pair: %w", err)
+		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
 	}
 	instance.Configuration.VAPID.PublicKey = vapidKeyPair.Public
 
