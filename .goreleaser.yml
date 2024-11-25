@@ -1,12 +1,12 @@
-# https://goreleaser.com
-project_name: gotosocial
+# Version 2 of GoReleaser: https://goreleaser.com/errors/version/
 version: 2
+project_name: gotosocial
 
 # https://goreleaser.com/customization/hooks/
 before:
   hooks:
   # generate the swagger.yaml file using go-swagger and bundle it into the assets directory
-  - swagger generate spec --scan-models --exclude-deps -o web/assets/swagger.yaml
+  - go run ./vendor/github.com/go-swagger/go-swagger/cmd/swagger generate spec --scan-models --exclude-deps -o web/assets/swagger.yaml
   - sed -i "s/REPLACE_ME/{{ incpatch .Version }}/" web/assets/swagger.yaml
   # Install web deps + bundle web assets
   - yarn --cwd ./web/source install

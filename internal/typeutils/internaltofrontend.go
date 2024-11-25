@@ -1862,7 +1862,7 @@ func (c *Converter) NotificationToAPINotification(
 
 	return &apimodel.Notification{
 		ID:        n.ID,
-		Type:      string(n.NotificationType),
+		Type:      n.NotificationType.String(),
 		CreatedAt: util.FormatISO8601(n.CreatedAt),
 		Account:   apiAccount,
 		Status:    apiStatus,

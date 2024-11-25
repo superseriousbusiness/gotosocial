@@ -265,8 +265,8 @@ func (r *relationshipDB) AcceptFollowRequest(ctx context.Context, sourceAccountI
 	}
 
 	// Delete original follow request notification
-	if err := r.state.DB.DeleteNotifications(ctx, []string{
-		string(gtsmodel.NotificationFollowRequest),
+	if err := r.state.DB.DeleteNotifications(ctx, []gtsmodel.NotificationType{
+		gtsmodel.NotificationFollowRequest,
 	}, targetAccountID, sourceAccountID); err != nil {
 		return nil, err
 	}
@@ -281,8 +281,8 @@ func (r *relationshipDB) RejectFollowRequest(ctx context.Context, sourceAccountI
 	}
 
 	// Delete follow request notification
-	return r.state.DB.DeleteNotifications(ctx, []string{
-		string(gtsmodel.NotificationFollowRequest),
+	return r.state.DB.DeleteNotifications(ctx, []gtsmodel.NotificationType{
+		gtsmodel.NotificationFollowRequest,
 	}, targetAccountID, sourceAccountID)
 }
 

@@ -372,7 +372,7 @@ func (p *Processor) processVisibility(
 
 	// Fall back to account default, set
 	// this back on the form for later use.
-	case accountDefaultVis != "":
+	case accountDefaultVis != 0:
 		status.Visibility = accountDefaultVis
 		form.Visibility = p.converter.VisToAPIVis(ctx, accountDefaultVis)
 
