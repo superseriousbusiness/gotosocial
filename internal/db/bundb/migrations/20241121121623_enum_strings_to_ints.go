@@ -22,6 +22,7 @@ import (
 	"errors"
 
 	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241121121623_enum_strings_to_ints"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -163,7 +164,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 			bun.Ident(newColumn),
 			*defaultValue).
 		Exec(ctx); err != nil {
-		return err
+		return gtserror.Newf("error adding new column: %w", err)
 	}
 
 	// Get a count of all in table.
@@ -171,7 +172,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 		Table(table).
 		Count(ctx)
 	if err != nil {
-		return err
+		return gtserror.Newf("error selecting total count: %w", err)
 	}
 
 	var updated int
@@ -184,7 +185,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 			Set("? = ?", bun.Ident(newColumn), new).
 			Exec(ctx)
 		if err != nil {
-			return err
+			return gtserror.Newf("error updating old column values: %w", err)
 		}
 
 		// Count number items updated.
@@ -202,7 +203,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 		Table(table).
 		ColumnExpr("?", bun.Ident(column)).
 		Exec(ctx); err != nil {
-		return err
+		return gtserror.Newf("error dropping old column: %w", err)
 	}
 
 	// Rename new to old name.
@@ -212,7 +213,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 		bun.Ident(newColumn),
 		bun.Ident(column),
 	).Exec(ctx); err != nil {
-		return err
+		return gtserror.Newf("error renaming new column: %w", err)
 	}
 
 	return nil
