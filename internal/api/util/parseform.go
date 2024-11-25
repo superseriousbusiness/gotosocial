@@ -20,12 +20,13 @@ package util
 import (
 	"fmt"
 	"strconv"
+
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// ParseDuration parses the given raw interface belonging to
+// ParseDuration parses the given raw interface belonging
 // the given fieldName as an integer duration.
-//
-// Will return nil, nil if rawI is the zero value of its type.
 func ParseDuration(rawI any, fieldName string) (*int, error) {
 	var (
 		asInteger int
@@ -60,11 +61,28 @@ func ParseDuration(rawI any, fieldName string) (*int, error) {
 		return nil, err
 	}
 
-	// Someone submitted 0,
-	// don't point to this.
-	if asInteger == 0 {
-		return nil, nil
+	return &asInteger, nil
+}
+
+// ParseNullableDuration is like ParseDuration, but
+// for JSON values that may have been sent as `null`.
+//
+// IsSpecified should be checked and "true" on the
+// given nullable before calling this function.
+func ParseNullableDuration(
+	nullable apimodel.Nullable[any],
+	fieldName string,
+) (*int, error) {
+	if nullable.IsNull() {
+		// Was specified as `null`,
+		// return pointer to zero value.
+		return util.Ptr(0), nil
 	}
 
-	return &asInteger, nil
+	rawI, err := nullable.Get()
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseDuration(rawI, fieldName)
 }
