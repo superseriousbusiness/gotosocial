@@ -41,8 +41,8 @@ type nullableState uint8
 
 const (
 	nullableStateUnspecified nullableState = 0
-	nullableStateNull                      = 1
-	nullableStateSet                       = 2
+	nullableStateNull        nullableState = 1
+	nullableStateSet         nullableState = 2
 )
 
 // Get retrieves the underlying value, if present,
