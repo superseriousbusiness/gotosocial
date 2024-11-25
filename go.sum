@@ -238,8 +238,6 @@ github.com/go-playground/universal-translator v0.18.1/go.mod h1:xekY+UJKNuX9WP91
 github.com/go-playground/validator/v10 v10.20.0 h1:K9ISHbSaI0lyB2eWMPJo+kOS/FBExVwjEviJTixqxL8=
 github.com/go-playground/validator/v10 v10.20.0/go.mod h1:dbuPbCMFw/DrkbEynArYaCwl3amGuJotoKCe95atGMM=
 github.com/go-session/session v3.1.2+incompatible/go.mod h1:8B3iivBQjrz/JtC68Np2T1yBBLxTan3mn/3OM0CyRt0=
-github.com/go-swagger/go-swagger v0.31.0 h1:H8eOYQnY2u7vNKWDNykv2xJP3pBhRG/R+SOCAmKrLlc=
-github.com/go-swagger/go-swagger v0.31.0/go.mod h1:WSigRRWEig8zV6t6Sm8Y+EmUjlzA/HoaZJ5edupq7po=
 github.com/go-test/deep v1.0.8 h1:TDsG77qcSprGbC6vTN8OuXp5g+J+b5Pcguhf7Zt61VM=
 github.com/go-test/deep v1.0.8/go.mod h1:5C2ZWiW0ErCdrYzpqxLbTX7MG14M9iiw8DgHncVwcsE=
 github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b h1:khEcpUM4yFcxg4/FHQWkvVRmgijNXRfzkIDHh23ggEo=
@@ -330,8 +328,6 @@ github.com/gorilla/securecookie v1.1.2/go.mod h1:NfCASbcHqRSY+3a8tlWJwsQap2VX5pw
 github.com/gorilla/sessions v1.2.2 h1:lqzMYz6bOfvn2WriPUjNByzeXIlVzURcPmgMczkmTjY=
 github.com/gorilla/sessions v1.2.2/go.mod h1:ePLdVu+jbEgHH+KWw8I1z2wqd0BAdAQh/8LRvBeoNcQ=
 github.com/gorilla/websocket v1.4.2/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
-github.com/gorilla/websocket v1.5.2 h1:qoW6V1GT3aZxybsbC6oLnailWnB+qTMVwMreOso9XUw=
-github.com/gorilla/websocket v1.5.2/go.mod h1:0n9H61RBAcf5/38py2MCYbxzPIY9rOkpvvMT24Rqs30=
 github.com/gorilla/websocket v1.5.3 h1:saDtZ6Pbx/0u+bgYQ3q96pZgCzfhKXGPqt7kZ72aNNg=
 github.com/gorilla/websocket v1.5.3/go.mod h1:YR8l580nyteQvAITg2hZ9XVh4b55+EU/adAjf1fMHhE=
 github.com/grpc-ecosystem/grpc-gateway/v2 v2.22.0 h1:asbCHRVmodnJTuQ3qamDwqVOIjwqUPTYmYuemVOx+Ys=
@@ -538,6 +534,8 @@ github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430
 github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe/go.mod h1:gH4P6gN1V+wmIw5o97KGaa1RgXB/tVpC2UNzijhg3E4=
 github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB h1:8psprYSK1KdOSH7yQ4PbJq0YYaGQY+gzdW/B0ExDb/8=
 github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB/go.mod h1:ymKGfy9kg4dIdraeZRAdobMS/flzLk3VcRPLpEWOAXg=
+github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix h1:CXcjArOyxBPFgsNAu4As+RK9BwOUEG1LL7ja4g7iax0=
+github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix/go.mod h1:WSigRRWEig8zV6t6Sm8Y+EmUjlzA/HoaZJ5edupq7po=
 github.com/superseriousbusiness/httpsig v1.2.0-SSB h1:BinBGKbf2LSuVT5+MuH0XynHN9f0XVshx2CTDtkaWj0=
 github.com/superseriousbusiness/httpsig v1.2.0-SSB/go.mod h1:+rxfATjFaDoDIVaJOTSP0gj6UrbicaYPEptvCLC9F28=
 github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8 h1:nTIhuP157oOFcscuoK1kCme1xTeGIzztSw70lX9NrDQ=

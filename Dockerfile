@@ -2,7 +2,7 @@
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
 # stage 1: generate up-to-date swagger.yaml to put in the final container
-FROM --platform=${BUILDPLATFORM} golang:1.22-alpine AS swagger
+FROM --platform=${BUILDPLATFORM} golang:1.23-alpine AS swagger
 
 RUN \
     ### Installs goswagger for building swagger definitions inside this container
@@ -28,7 +28,7 @@ RUN yarn --cwd ./web/source install && \
     rm -rf ./web/source
 
 # stage 3: build the executor container
-FROM --platform=${TARGETPLATFORM} alpine:3.19.1 as executor
+FROM --platform=${TARGETPLATFORM} alpine:3.20 as executor
 
 # switch to non-root user:group for GtS
 USER 1000:1000

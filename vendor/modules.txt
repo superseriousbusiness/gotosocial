@@ -300,7 +300,7 @@ github.com/go-playground/universal-translator
 # github.com/go-playground/validator/v10 v10.20.0
 ## explicit; go 1.18
 github.com/go-playground/validator/v10
-# github.com/go-swagger/go-swagger v0.31.0
+# github.com/go-swagger/go-swagger v0.31.0 => github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
 ## explicit; go 1.21
 github.com/go-swagger/go-swagger/cmd/swagger
 github.com/go-swagger/go-swagger/cmd/swagger/commands
@@ -1344,6 +1344,7 @@ modernc.org/token
 # mvdan.cc/xurls/v2 v2.5.0
 ## explicit; go 1.19
 mvdan.cc/xurls/v2
+# github.com/go-swagger/go-swagger => github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
 # modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
 # go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.29.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
