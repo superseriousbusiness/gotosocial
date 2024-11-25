@@ -389,6 +389,8 @@ checksum:
 # https://goreleaser.com/customization/snapshots/
 snapshot:
   version_template: "{{ incpatch .Version }}-SNAPSHOT"
+
+# https://goreleaser.com/customization/source/
 source:
   enabled: true
   name_template: "{{ .ProjectName }}-{{ .Version }}-source-code"
