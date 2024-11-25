@@ -106,7 +106,7 @@ func (suite *AccountTestSuite) populateTestStatus(testAccountKey string, status 
 	status.URI = fmt.Sprintf("http://localhost:8080/users/%s/statuses/%s", testAccount.Username, status.ID)
 	status.Local = util.Ptr(true)
 
-	if status.Visibility == "" {
+	if status.Visibility == 0 {
 		status.Visibility = gtsmodel.VisibilityDefault
 	}
 	if status.ActivityStreamsType == "" {

@@ -46,7 +46,7 @@ func (p *Processor) PreferencesGet(ctx context.Context, accountID string) (*apim
 func mastoPrefVisibility(vis gtsmodel.Visibility) string {
 	switch vis {
 	case gtsmodel.VisibilityPublic, gtsmodel.VisibilityDirect:
-		return string(vis)
+		return vis.String()
 	case gtsmodel.VisibilityUnlocked:
 		return "unlisted"
 	default:

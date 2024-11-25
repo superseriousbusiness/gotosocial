@@ -196,8 +196,8 @@ func (n *notificationDB) GetAccountNotifications(
 	sinceID string,
 	minID string,
 	limit int,
-	types []string,
-	excludeTypes []string,
+	types []gtsmodel.NotificationType,
+	excludeTypes []gtsmodel.NotificationType,
 ) ([]*gtsmodel.Notification, error) {
 	// Ensure reasonable
 	if limit < 0 {
@@ -303,7 +303,7 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 	return nil
 }
 
-func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error {
+func (n *notificationDB) DeleteNotifications(ctx context.Context, types []gtsmodel.NotificationType, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
 		return gtserror.New("one of targetAccountID or originAccountID must be set")
 	}

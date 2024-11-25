@@ -28,7 +28,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -99,7 +98,7 @@ func (suite *AccountVerifyTestSuite) TestAccountVerifyGet() {
 	suite.Equal(2, apimodelAccount.FollowersCount)
 	suite.Equal(2, apimodelAccount.FollowingCount)
 	suite.Equal(8, apimodelAccount.StatusesCount)
-	suite.EqualValues(gtsmodel.VisibilityPublic, apimodelAccount.Source.Privacy)
+	suite.EqualValues(apimodel.VisibilityPublic, apimodelAccount.Source.Privacy)
 	suite.Equal(testAccount.Settings.Language, apimodelAccount.Source.Language)
 	suite.Equal(testAccount.NoteRaw, apimodelAccount.Source.Note)
 }

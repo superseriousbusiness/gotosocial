@@ -164,6 +164,18 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		limit = int(i)
 	}
 
+	types, errWithCode := apiutil.ParseNotificationTypes(c.QueryArray(TypesKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	exclTypes, errWithCode := apiutil.ParseNotificationTypes(c.QueryArray(ExcludeTypesKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
 	resp, errWithCode := m.processor.Timeline().NotificationsGet(
 		c.Request.Context(),
 		authed,
@@ -171,8 +183,8 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		c.Query(SinceIDKey),
 		c.Query(MinIDKey),
 		limit,
-		c.QueryArray(TypesKey),
-		c.QueryArray(ExcludeTypesKey),
+		types,
+		exclTypes,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

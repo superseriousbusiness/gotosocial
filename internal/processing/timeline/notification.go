@@ -41,8 +41,8 @@ func (p *Processor) NotificationsGet(
 	sinceID string,
 	minID string,
 	limit int,
-	types []string,
-	excludeTypes []string,
+	types []gtsmodel.NotificationType,
+	excludeTypes []gtsmodel.NotificationType,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	notifs, err := p.state.DB.GetAccountNotifications(
 		ctx,
