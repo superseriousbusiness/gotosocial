@@ -107,10 +107,10 @@ func (p *Processor) NotificationsGet(
 	// Build type query string.
 	query := make(url.Values)
 	for _, typ := range types {
-		query.Add("types", typ.String())
+		query.Add("types[]", typ.String())
 	}
 	for _, typ := range excludeTypes {
-		query.Add("exclude_types", typ.String())
+		query.Add("exclude_types[]", typ.String())
 	}
 
 	return paging.PackageResponse(paging.ResponseParams{
