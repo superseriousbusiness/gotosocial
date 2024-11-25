@@ -5,7 +5,7 @@
 set -eu
 
 swagger_cmd() {
-  go run github.com/go-swagger/go-swagger/cmd/swagger "$@"
+  go run ./vendor/github.com/go-swagger/go-swagger/cmd/swagger "$@"
 }
 swagger_spec='docs/api/swagger.yaml'
 

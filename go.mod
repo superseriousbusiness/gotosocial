@@ -2,6 +2,9 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.23
 
+// Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
+replace github.com/go-swagger/go-swagger => github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
+
 // Replace modernc/sqlite with our version that fixes the concurrency INTERRUPT issue
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
 
