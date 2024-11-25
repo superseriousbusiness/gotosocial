@@ -36,7 +36,7 @@ type Notification struct {
 
 // NotificationType describes the
 // reason/type of this notification.
-type NotificationType int
+type NotificationType enumType
 
 const (
 	// Notification Types

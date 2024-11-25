@@ -265,7 +265,7 @@ type StatusToEmoji struct {
 
 // Visibility represents the
 // visibility granularity of a status.
-type Visibility int
+type Visibility enumType
 
 const (
 	// VisibilityNone means nobody can see this.

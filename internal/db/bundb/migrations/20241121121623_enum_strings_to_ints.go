@@ -130,7 +130,7 @@ func init() {
 // convertEnums performs a transaction that converts
 // a table's column of our old-style enums (strings) to
 // more performant and space-saving integer types.
-func convertEnums[OldType ~string, NewType ~int](
+func convertEnums[OldType ~string, NewType ~int16](
 	ctx context.Context,
 	tx bun.Tx,
 	table string,
@@ -159,7 +159,7 @@ func convertEnums[OldType ~string, NewType ~int](
 	// Add new column to database.
 	if _, err := tx.NewAddColumn().
 		Table(table).
-		ColumnExpr("? INTEGER NOT NULL DEFAULT ?",
+		ColumnExpr("? SMALLINT NOT NULL DEFAULT ?",
 			bun.Ident(newColumn),
 			*defaultValue).
 		Exec(ctx); err != nil {
