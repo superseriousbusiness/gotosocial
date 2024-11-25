@@ -78,17 +78,13 @@ func init() {
 				}
 			}
 
+			// Get the mapping of old enum string values to new integer values.
+			visibilityMapping := visibilityEnumMapping[old_gtsmodel.Visibility]()
+
 			// Convert all visibility tables.
 			for _, table := range visTables {
 				if err := convertEnums(ctx, tx, table.Table, table.Column,
-					map[old_gtsmodel.Visibility]new_gtsmodel.Visibility{
-						old_gtsmodel.VisibilityNone:          new_gtsmodel.VisibilityNone,
-						old_gtsmodel.VisibilityPublic:        new_gtsmodel.VisibilityPublic,
-						old_gtsmodel.VisibilityUnlocked:      new_gtsmodel.VisibilityUnlocked,
-						old_gtsmodel.VisibilityFollowersOnly: new_gtsmodel.VisibilityFollowersOnly,
-						old_gtsmodel.VisibilityMutualsOnly:   new_gtsmodel.VisibilityMutualsOnly,
-						old_gtsmodel.VisibilityDirect:        new_gtsmodel.VisibilityDirect,
-					}, table.Default); err != nil {
+					visibilityMapping, table.Default); err != nil {
 					return err
 				}
 			}
@@ -107,21 +103,12 @@ func init() {
 				}
 			}
 
+			// Get the mapping of old enum string values to the new integer value types.
+			notificationMapping := notificationEnumMapping[old_gtsmodel.NotificationType]()
+
 			// Migrate over old notifications table column over to new column type.
 			if err := convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
-				map[old_gtsmodel.NotificationType]new_gtsmodel.NotificationType{
-					old_gtsmodel.NotificationFollow:        new_gtsmodel.NotificationFollow,
-					old_gtsmodel.NotificationFollowRequest: new_gtsmodel.NotificationFollowRequest,
-					old_gtsmodel.NotificationMention:       new_gtsmodel.NotificationMention,
-					old_gtsmodel.NotificationReblog:        new_gtsmodel.NotificationReblog,
-					old_gtsmodel.NotificationFave:          new_gtsmodel.NotificationFave,
-					old_gtsmodel.NotificationPoll:          new_gtsmodel.NotificationPoll,
-					old_gtsmodel.NotificationStatus:        new_gtsmodel.NotificationStatus,
-					old_gtsmodel.NotificationSignup:        new_gtsmodel.NotificationSignup,
-					old_gtsmodel.NotificationPendingFave:   new_gtsmodel.NotificationPendingFave,
-					old_gtsmodel.NotificationPendingReply:  new_gtsmodel.NotificationPendingReply,
-					old_gtsmodel.NotificationPendingReblog: new_gtsmodel.NotificationPendingReblog,
-				}, nil); err != nil {
+				notificationMapping, nil); err != nil {
 				return err
 			}
 
@@ -229,4 +216,33 @@ func convertEnums[OldType ~string, NewType ~int](
 	}
 
 	return nil
+}
+
+// visibilityEnumMapping maps old Visibility enum values to their newer integer type.
+func visibilityEnumMapping[T ~string]() map[T]new_gtsmodel.Visibility {
+	return map[T]new_gtsmodel.Visibility{
+		T(old_gtsmodel.VisibilityNone):          new_gtsmodel.VisibilityNone,
+		T(old_gtsmodel.VisibilityPublic):        new_gtsmodel.VisibilityPublic,
+		T(old_gtsmodel.VisibilityUnlocked):      new_gtsmodel.VisibilityUnlocked,
+		T(old_gtsmodel.VisibilityFollowersOnly): new_gtsmodel.VisibilityFollowersOnly,
+		T(old_gtsmodel.VisibilityMutualsOnly):   new_gtsmodel.VisibilityMutualsOnly,
+		T(old_gtsmodel.VisibilityDirect):        new_gtsmodel.VisibilityDirect,
+	}
+}
+
+// notificationEnumMapping maps old NotificationType enum values to their newer integer type.
+func notificationEnumMapping[T ~string]() map[T]new_gtsmodel.NotificationType {
+	return map[T]new_gtsmodel.NotificationType{
+		T(old_gtsmodel.NotificationFollow):        new_gtsmodel.NotificationFollow,
+		T(old_gtsmodel.NotificationFollowRequest): new_gtsmodel.NotificationFollowRequest,
+		T(old_gtsmodel.NotificationMention):       new_gtsmodel.NotificationMention,
+		T(old_gtsmodel.NotificationReblog):        new_gtsmodel.NotificationReblog,
+		T(old_gtsmodel.NotificationFave):          new_gtsmodel.NotificationFave,
+		T(old_gtsmodel.NotificationPoll):          new_gtsmodel.NotificationPoll,
+		T(old_gtsmodel.NotificationStatus):        new_gtsmodel.NotificationStatus,
+		T(old_gtsmodel.NotificationSignup):        new_gtsmodel.NotificationSignup,
+		T(old_gtsmodel.NotificationPendingFave):   new_gtsmodel.NotificationPendingFave,
+		T(old_gtsmodel.NotificationPendingReply):  new_gtsmodel.NotificationPendingReply,
+		T(old_gtsmodel.NotificationPendingReblog): new_gtsmodel.NotificationPendingReblog,
+	}
 }

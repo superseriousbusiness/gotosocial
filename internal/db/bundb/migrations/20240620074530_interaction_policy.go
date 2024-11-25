@@ -20,7 +20,6 @@ package migrations
 import (
 	"context"
 
-	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	oldmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy"
@@ -162,20 +161,14 @@ func init() {
 				return err
 			}
 
+			// Get the mapping of old enum string values to new integer values.
+			visibilityMapping := visibilityEnumMapping[oldmodel.Visibility]()
+
 			// For each status found in this way, update
 			// to new version of interaction policy.
 			for _, oldStatus := range oldStatuses {
 				// Start with default policy for this visibility.
-				v := func() gtsmodel.Visibility {
-					return map[oldmodel.Visibility]gtsmodel.Visibility{
-						oldmodel.VisibilityNone:          new_gtsmodel.VisibilityNone,
-						oldmodel.VisibilityPublic:        new_gtsmodel.VisibilityPublic,
-						oldmodel.VisibilityUnlocked:      new_gtsmodel.VisibilityUnlocked,
-						oldmodel.VisibilityFollowersOnly: new_gtsmodel.VisibilityFollowersOnly,
-						oldmodel.VisibilityMutualsOnly:   new_gtsmodel.VisibilityMutualsOnly,
-						oldmodel.VisibilityDirect:        new_gtsmodel.VisibilityDirect,
-					}[oldStatus.Visibility]
-				}()
+				v := visibilityMapping[oldStatus.Visibility]
 				policy := gtsmodel.DefaultInteractionPolicyFor(v)
 
 				if !*oldStatus.Likeable {
