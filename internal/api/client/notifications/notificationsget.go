@@ -18,14 +18,13 @@
 package notifications
 
 import (
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // NotificationsGETHandler swagger:operation GET /api/v1/notifications notifications
@@ -152,18 +151,6 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
-	}
-
 	types, errWithCode := apiutil.ParseNotificationTypes(c.QueryArray(TypesKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -176,13 +163,20 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		return
 	}
 
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		20, // no limit
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
 	resp, errWithCode := m.processor.Timeline().NotificationsGet(
 		c.Request.Context(),
 		authed,
-		c.Query(MaxIDKey),
-		c.Query(SinceIDKey),
-		c.Query(MinIDKey),
-		limit,
+		page,
 		types,
 		exclTypes,
 	)
