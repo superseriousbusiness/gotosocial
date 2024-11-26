@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -99,7 +99,7 @@ func (s *statusEditDB) GetStatusEditsByIDs(ctx context.Context, ids []string) ([
 	// Reorder the edits by their
 	// IDs to ensure in correct order.
 	getID := func(e *gtsmodel.StatusEdit) string { return e.ID }
-	util.OrderBy(edits, ids, getID)
+	xslices.OrderBy(edits, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -149,10 +149,6 @@ func (s *statusEditDB) PutStatusEdit(ctx context.Context, edit *gtsmodel.StatusE
 }
 
 func (s *statusEditDB) DeleteStatusEdits(ctx context.Context, ids []string) error {
-	if len(ids) == 0 {
-		return nil
-	}
-
 	// Gather necessary fields from
 	// deleted for cache invalidation.
 	var deleted []*gtsmodel.StatusEdit
@@ -169,24 +165,34 @@ func (s *statusEditDB) DeleteStatusEdits(ctx context.Context, ids []string) erro
 		return err
 	}
 
+	// Check for no deletes.
+	if len(deleted) == 0 {
+		return nil
+	}
+
 	// Invalidate all the cached status edits with IDs.
 	s.state.Caches.DB.StatusEdit.InvalidateIDs("ID", ids)
 
-	// Make sure we only end up calling
-	// the invalidate hook for each status
-	// once. This should just be the one,
-	// but we double check to save cycles.
-	m := make(map[string]struct{}, 1)
-	for _, edit := range deleted {
+	// With each invalidate hook mark status ID of
+	// edit we just called for. We only want to call
+	// invalidate hooks of edits from unique statuses.
+	invalidated := make(map[string]struct{}, 1)
 
+	// Invalidate the first delete manually, this
+	// opt negates need for initial hashmap lookup.
+	s.state.Caches.OnInvalidateStatusEdit(deleted[0])
+	invalidated[deleted[0].StatusID] = struct{}{}
+
+	for _, edit := range deleted {
 		// Check not already called for status.
-		if _, ok := m[edit.StatusID]; ok {
+		_, ok := invalidated[edit.StatusID]
+		if ok {
 			continue
 		}
 
 		// Manually call status edit invalidate hook.
 		s.state.Caches.OnInvalidateStatusEdit(edit)
-		m[edit.StatusID] = struct{}{}
+		invalidated[edit.StatusID] = struct{}{}
 	}
 
 	return nil

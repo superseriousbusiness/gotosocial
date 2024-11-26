@@ -19,8 +19,9 @@ package migrations
 
 import (
 	"context"
+	"reflect"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241113152126_add_status_edits_table"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241113152126_add_status_edits"
 
 	"github.com/uptrace/bun"
 )
@@ -28,7 +29,26 @@ import (
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			_, err := tx.NewCreateTable().
+			statusType := reflect.TypeOf((*gtsmodel.Status)(nil))
+
+			// Generate new Status.EditIDs column definition from bun.
+			colDef, err := getBunColumnDef(tx, statusType, "EditIDs")
+			if err != nil {
+				return err
+			}
+
+			// Add EditIDs column to Status table.
+			_, err = tx.NewAddColumn().
+				IfNotExists().
+				Model((*gtsmodel.Status)(nil)).
+				ColumnExpr(colDef).
+				Exec(ctx)
+			if err != nil {
+				return err
+			}
+
+			// Create the main StatusEdits table.
+			_, err = tx.NewCreateTable().
 				IfNotExists().
 				Model((*gtsmodel.StatusEdit)(nil)).
 				Exec(ctx)

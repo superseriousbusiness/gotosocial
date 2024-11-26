@@ -42,8 +42,9 @@ func (suite *StatusEditTestSuite) TestGetStatusEditBy() {
 	// Sentinel error to mark avoiding a test case.
 	sentinelErr := errors.New("sentinel")
 
-	// isEqual checks if 2 account models are equal.
+	// isEqual checks if 2 status edit models are equal.
 	isEqual := func(e1, e2 gtsmodel.StatusEdit) bool {
+
 		// Clear populated sub-models.
 		e1.Attachments = nil
 		e2.Attachments = nil
@@ -84,6 +85,10 @@ func (suite *StatusEditTestSuite) TestGetStatusEditBy() {
 			}
 		}
 	}
+}
+
+func (suite *StatusEditTestSuite) TestDeleteStatusEdits() {
+
 }
 
 func TestStatusEditTestSuite(t *testing.T) {

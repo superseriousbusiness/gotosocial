@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -37,6 +38,9 @@ import (
 // util provides util functions used by both
 // the fromClientAPI and fromFediAPI functions.
 type utils struct {
+	// common processor logic
+	c *common.Processor
+
 	state     *state.State
 	media     *media.Processor
 	account   *account.Processor
@@ -75,6 +79,21 @@ func (u *utils) wipeStatus(
 		}
 	}
 
+	// Before handling media, ensure
+	// historic edits are populated.
+	if !status.EditsPopulated() {
+		var err error
+
+		// Fetch all historical edits of status from database.
+		status.Edits, err = u.state.DB.GetStatusEditsByIDs(
+			gtscontext.SetBarebones(ctx),
+			status.EditIDs,
+		)
+		if err != nil {
+			errs.Appendf("error getting status edits from database: %w", err)
+		}
+	}
+
 	// Either delete all attachments for this status,
 	// or simply detach + clean them separately later.
 	//
@@ -83,17 +102,24 @@ func (u *utils) wipeStatus(
 	// status immediately (in case of delete + redraft).
 	if deleteAttachments {
 		// todo:u.state.DB.DeleteAttachmentsForStatus
-		for _, id := range status.AttachmentIDs {
+		for _, id := range status.AllAttachmentIDs() {
 			if err := u.media.Delete(ctx, id); err != nil {
 				errs.Appendf("error deleting media: %w", err)
 			}
 		}
 	} else {
 		// todo:u.state.DB.UnattachAttachmentsForStatus
-		for _, id := range status.AttachmentIDs {
+		for _, id := range status.AllAttachmentIDs() {
 			if _, err := u.media.Unattach(ctx, status.Account, id); err != nil {
 				errs.Appendf("error unattaching media: %w", err)
 			}
+		}
+	}
+
+	// Delete all historical edits of status.
+	if ids := status.EditIDs; len(ids) > 0 {
+		if err := u.state.DB.DeleteStatusEdits(ctx, ids); err != nil {
+			errs.Appendf("error deleting status edits: %w", err)
 		}
 	}
 
@@ -120,19 +146,20 @@ func (u *utils) wipeStatus(
 		errs.Appendf("error deleting status faves: %w", err)
 	}
 
-	if pollID := status.PollID; pollID != "" {
+	if id := status.PollID; id != "" {
 		// Delete this poll by ID from the database.
-		if err := u.state.DB.DeletePollByID(ctx, pollID); err != nil {
+		if err := u.state.DB.DeletePollByID(ctx, id); err != nil {
 			errs.Appendf("error deleting status poll: %w", err)
 		}
 
 		// Cancel any scheduled expiry task for poll.
-		_ = u.state.Workers.Scheduler.Cancel(pollID)
+		_ = u.state.Workers.Scheduler.Cancel(id)
 	}
 
 	// Get all boost of this status so that we can
 	// delete those boosts + remove them from timelines.
 	boosts, err := u.state.DB.GetStatusBoosts(
+
 		// We MUST set a barebones context here,
 		// as depending on where it came from the
 		// original BoostOf may already be gone.

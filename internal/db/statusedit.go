@@ -25,18 +25,19 @@ import (
 
 type StatusEdit interface {
 
-	// GetStatusEditByID ...
+	// GetStatusEditByID fetches the StatusEdit with given ID from the database.
 	GetStatusEditByID(ctx context.Context, id string) (*gtsmodel.StatusEdit, error)
 
-	// GetStatusEditsByIDs ...
+	// GetStatusEditsByIDs fetches all StatusEdits with given IDs from database,
+	// this is optimized and faster than multiple calls to GetStatusEditByID.
 	GetStatusEditsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.StatusEdit, error)
 
-	// PopulateStatusEdit ...
+	// PopulateStatusEdit ensures the given StatusEdit's sub-models are populated.
 	PopulateStatusEdit(ctx context.Context, edit *gtsmodel.StatusEdit) error
 
-	// PutStatusEdit ...
+	// PutStatusEdit inserts the given new StatusEdit into the database.
 	PutStatusEdit(ctx context.Context, edit *gtsmodel.StatusEdit) error
 
-	// DeleteStatusEdits ...
+	// DeleteStatusEdits deletes the StatusEdits with given IDs from the database.
 	DeleteStatusEdits(ctx context.Context, ids []string) error
 }

@@ -20,6 +20,8 @@ package gtsmodel
 import (
 	"slices"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
@@ -266,6 +268,35 @@ func (s *Status) IsLocal() bool {
 // is "local-only" ie., unfederated.
 func (s *Status) IsLocalOnly() bool {
 	return s.Federated == nil || !*s.Federated
+}
+
+// AllAttachmentIDs gathers ALL media attachment IDs from both the
+// receiving Status{}, and any historical Status{}.Edits. Note that
+// this function will panic if Status{}.Edits is not populated.
+func (s *Status) AllAttachmentIDs() []string {
+	var total int
+
+	if len(s.EditIDs) != len(s.Edits) {
+		panic("status attachments not populated")
+	}
+
+	// Get count of attachment IDs.
+	total += len(s.Attachments)
+	for _, edit := range s.Edits {
+		total += len(edit.AttachmentIDs)
+	}
+
+	// Start gathering of all IDs with *current* attachment IDs.
+	attachmentIDs := make([]string, len(s.AttachmentIDs), total)
+	copy(attachmentIDs, s.AttachmentIDs)
+
+	// Append IDs of historical edits.
+	for _, edit := range s.Edits {
+		attachmentIDs = append(attachmentIDs, edit.AttachmentIDs...)
+	}
+
+	// Deduplicate these IDs in case of shared media.
+	return xslices.Deduplicate(attachmentIDs)
 }
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
