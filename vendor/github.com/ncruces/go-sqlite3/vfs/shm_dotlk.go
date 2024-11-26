@@ -13,22 +13,22 @@ import (
 	"github.com/tetratelabs/wazero/api"
 )
 
-type vfsShmBuffer struct {
+type vfsShmParent struct {
 	shared [][_WALINDEX_PGSZ]byte
-	refs   int // +checklocks:vfsShmBuffersMtx
+	refs   int // +checklocks:vfsShmListMtx
 
 	lock [_SHM_NLOCK]int16 // +checklocks:Mutex
 	sync.Mutex
 }
 
 var (
-	// +checklocks:vfsShmBuffersMtx
-	vfsShmBuffers    = map[string]*vfsShmBuffer{}
-	vfsShmBuffersMtx sync.Mutex
+	// +checklocks:vfsShmListMtx
+	vfsShmList    = map[string]*vfsShmParent{}
+	vfsShmListMtx sync.Mutex
 )
 
 type vfsShm struct {
-	*vfsShmBuffer
+	*vfsShmParent
 	mod    api.Module
 	alloc  api.Function
 	free   api.Function
@@ -40,20 +40,20 @@ type vfsShm struct {
 }
 
 func (s *vfsShm) Close() error {
-	if s.vfsShmBuffer == nil {
+	if s.vfsShmParent == nil {
 		return nil
 	}
 
-	vfsShmBuffersMtx.Lock()
-	defer vfsShmBuffersMtx.Unlock()
+	vfsShmListMtx.Lock()
+	defer vfsShmListMtx.Unlock()
 
 	// Unlock everything.
 	s.shmLock(0, _SHM_NLOCK, _SHM_UNLOCK)
 
 	// Decrease reference count.
-	if s.vfsShmBuffer.refs > 0 {
-		s.vfsShmBuffer.refs--
-		s.vfsShmBuffer = nil
+	if s.vfsShmParent.refs > 0 {
+		s.vfsShmParent.refs--
+		s.vfsShmParent = nil
 		return nil
 	}
 
@@ -61,22 +61,22 @@ func (s *vfsShm) Close() error {
 	if err != nil && !errors.Is(err, fs.ErrNotExist) {
 		return _IOERR_UNLOCK
 	}
-	delete(vfsShmBuffers, s.path)
-	s.vfsShmBuffer = nil
+	delete(vfsShmList, s.path)
+	s.vfsShmParent = nil
 	return nil
 }
 
 func (s *vfsShm) shmOpen() _ErrorCode {
-	if s.vfsShmBuffer != nil {
+	if s.vfsShmParent != nil {
 		return _OK
 	}
 
-	vfsShmBuffersMtx.Lock()
-	defer vfsShmBuffersMtx.Unlock()
+	vfsShmListMtx.Lock()
+	defer vfsShmListMtx.Unlock()
 
 	// Find a shared buffer, increase the reference count.
-	if g, ok := vfsShmBuffers[s.path]; ok {
-		s.vfsShmBuffer = g
+	if g, ok := vfsShmList[s.path]; ok {
+		s.vfsShmParent = g
 		g.refs++
 		return _OK
 	}
@@ -92,8 +92,8 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 	}
 
 	// Add the new shared buffer.
-	s.vfsShmBuffer = &vfsShmBuffer{}
-	vfsShmBuffers[s.path] = s.vfsShmBuffer
+	s.vfsShmParent = &vfsShmParent{}
+	vfsShmList[s.path] = s.vfsShmParent
 	return _OK
 }
 
@@ -112,7 +112,7 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 
 	s.Lock()
 	defer s.Unlock()
-	defer s.shmAcquire()
+	defer s.shmAcquire(nil)
 
 	// Extend shared memory.
 	if int(id) >= len(s.shared) {
@@ -125,7 +125,6 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 	// Allocate shadow memory.
 	if int(id) >= len(s.shadow) {
 		s.shadow = append(s.shadow, make([][_WALINDEX_PGSZ]byte, int(id)-len(s.shadow)+1)...)
-		s.shadow[0][4] = 1 // force invalidation
 	}
 
 	// Allocate local memory.
@@ -141,70 +140,26 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 		s.ptrs = append(s.ptrs, uint32(s.stack[0]))
 	}
 
+	s.shadow[0][4] = 1
 	return s.ptrs[id], _OK
 }
 
-func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
+func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) (rc _ErrorCode) {
 	s.Lock()
 	defer s.Unlock()
 
 	switch {
 	case flags&_SHM_LOCK != 0:
-		defer s.shmAcquire()
+		defer s.shmAcquire(&rc)
 	case flags&_SHM_EXCLUSIVE != 0:
 		s.shmRelease()
 	}
 
-	switch {
-	case flags&_SHM_UNLOCK != 0:
-		for i := offset; i < offset+n; i++ {
-			if s.lock[i] {
-				if s.vfsShmBuffer.lock[i] == 0 {
-					panic(util.AssertErr())
-				}
-				if s.vfsShmBuffer.lock[i] <= 0 {
-					s.vfsShmBuffer.lock[i] = 0
-				} else {
-					s.vfsShmBuffer.lock[i]--
-				}
-				s.lock[i] = false
-			}
-		}
-	case flags&_SHM_SHARED != 0:
-		for i := offset; i < offset+n; i++ {
-			if s.lock[i] {
-				panic(util.AssertErr())
-			}
-			if s.vfsShmBuffer.lock[i]+1 <= 0 {
-				return _BUSY
-			}
-		}
-		for i := offset; i < offset+n; i++ {
-			s.vfsShmBuffer.lock[i]++
-			s.lock[i] = true
-		}
-	case flags&_SHM_EXCLUSIVE != 0:
-		for i := offset; i < offset+n; i++ {
-			if s.lock[i] {
-				panic(util.AssertErr())
-			}
-			if s.vfsShmBuffer.lock[i] != 0 {
-				return _BUSY
-			}
-		}
-		for i := offset; i < offset+n; i++ {
-			s.vfsShmBuffer.lock[i] = -1
-			s.lock[i] = true
-		}
-	default:
-		panic(util.AssertErr())
-	}
-
-	return _OK
+	return s.shmMemLock(offset, n, flags)
 }
 
 func (s *vfsShm) shmUnmap(delete bool) {
-	if s.vfsShmBuffer == nil {
+	if s.vfsShmParent == nil {
 		return
 	}
 	defer s.Close()

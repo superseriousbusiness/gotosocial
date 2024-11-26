@@ -64,7 +64,7 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 	return osReadLock(s.File, _SHM_DMS, 1, time.Millisecond)
 }
 
-func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (uint32, _ErrorCode) {
+func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (_ uint32, rc _ErrorCode) {
 	// Ensure size is a multiple of the OS page size.
 	if size != _WALINDEX_PGSZ || (windows.Getpagesize()-1)&_WALINDEX_PGSZ != 0 {
 		return 0, _IOERR_SHMMAP
@@ -78,7 +78,7 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 		return 0, rc
 	}
 
-	defer s.shmAcquire()
+	defer s.shmAcquire(&rc)
 
 	// Check if file is big enough.
 	o, err := s.Seek(0, io.SeekEnd)
@@ -107,7 +107,6 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 	// Allocate shadow memory.
 	if int(id) >= len(s.shadow) {
 		s.shadow = append(s.shadow, make([][_WALINDEX_PGSZ]byte, int(id)-len(s.shadow)+1)...)
-		s.shadow[0][4] = 1 // force invalidation
 	}
 
 	// Allocate local memory.
@@ -123,20 +122,21 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 		s.ptrs = append(s.ptrs, uint32(s.stack[0]))
 	}
 
+	s.shadow[0][4] = 1
 	return s.ptrs[id], _OK
 }
 
-func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
-	switch {
-	case flags&_SHM_LOCK != 0:
-		defer s.shmAcquire()
-	case flags&_SHM_EXCLUSIVE != 0:
-		s.shmRelease()
-	}
-
+func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) (rc _ErrorCode) {
 	var timeout time.Duration
 	if s.blocking {
 		timeout = time.Millisecond
+	}
+
+	switch {
+	case flags&_SHM_LOCK != 0:
+		defer s.shmAcquire(&rc)
+	case flags&_SHM_EXCLUSIVE != 0:
+		s.shmRelease()
 	}
 
 	switch {

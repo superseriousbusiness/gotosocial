@@ -177,6 +177,7 @@ const (
 	IOCAP_POWERSAFE_OVERWRITE   DeviceCharacteristic = 0x00001000
 	IOCAP_IMMUTABLE             DeviceCharacteristic = 0x00002000
 	IOCAP_BATCH_ATOMIC          DeviceCharacteristic = 0x00004000
+	IOCAP_SUBPAGE_READ          DeviceCharacteristic = 0x00008000
 )
 
 // https://sqlite.org/c3ref/c_fcntl_begin_atomic_write.html
