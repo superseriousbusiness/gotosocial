@@ -81,15 +81,6 @@ func SetJSONLDIdStr(with WithJSONLDId, id string) error {
 	return nil
 }
 
-// TryGet tries to get value from 'a' with 'get', only if necessary interface is implemented.
-func TryGet[W any, T any](get func(W) T, a any) (T, bool) {
-	if with, ok := a.(W); ok {
-		return get(with), true
-	}
-	var zero T
-	return zero, false
-}
-
 // GetTo returns the IRIs contained in the To property of 'with'. Panics on entries with missing ID.
 func GetTo(with WithTo) []*url.URL {
 	toProp := with.GetActivityStreamsTo()
