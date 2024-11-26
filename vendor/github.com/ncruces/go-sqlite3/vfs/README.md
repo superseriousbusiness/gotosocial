@@ -30,7 +30,6 @@ like SQLite.
 
 You can also opt into a cross-platform locking implementation
 with the `sqlite3_dotlk` build tag.
-The only requirement is an atomic `os.Mkdir`.
 
 Otherwise, file locking is not supported, and you must use
 [`nolock=1`](https://sqlite.org/uri.html#urinolock)

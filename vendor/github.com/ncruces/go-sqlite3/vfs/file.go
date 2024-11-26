@@ -187,7 +187,7 @@ func (f *vfsFile) SectorSize() int {
 }
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
-	var res DeviceCharacteristic
+	res := IOCAP_SUBPAGE_READ
 	if osBatchAtomic(f.File) {
 		res |= IOCAP_BATCH_ATOMIC
 	}

@@ -77,7 +77,7 @@ It also benefits greatly from [SQLite's](https://sqlite.org/testing.html) and
 Every commit is [tested](https://github.com/ncruces/go-sqlite3/wiki/Test-matrix) on
 Linux (amd64/arm64/386/riscv64/ppc64le/s390x), macOS (amd64/arm64),
 Windows (amd64), FreeBSD (amd64), OpenBSD (amd64), NetBSD (amd64),
-illumos (amd64), and Solaris (amd64).
+DragonFly BSD (amd64), illumos (amd64), and Solaris (amd64).
 
 The Go VFS is tested by running SQLite's
 [mptest](https://github.com/sqlite/sqlite/blob/master/mptest/mptest.c).
@@ -89,6 +89,17 @@ Perfomance of the [`database/sql`](https://pkg.go.dev/database/sql) driver is
 
 The Wasm and VFS layers are also tested by running SQLite's
 [speedtest1](https://github.com/sqlite/sqlite/blob/master/test/speedtest1.c).
+
+### FAQ, issues, new features
+
+For questions, please see [Discussions](https://github.com/ncruces/go-sqlite3/discussions/categories/q-a).
+
+Also, post there if you used this driver for something interesting
+([_"Show and tell"_](https://github.com/ncruces/go-sqlite3/discussions/categories/show-and-tell)),
+have an [idea](https://github.com/ncruces/go-sqlite3/discussions/categories/ideas)…
+
+The [Issue](https://github.com/ncruces/go-sqlite3/issues) tracker is for bugs we want fixed,
+and features we're working on, planning to work on, or asking for help with.
 
 ### Alternatives
 

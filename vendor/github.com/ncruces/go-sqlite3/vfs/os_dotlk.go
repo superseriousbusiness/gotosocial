@@ -28,7 +28,8 @@ func osGetSharedLock(file *os.File) _ErrorCode {
 	name := file.Name()
 	locker := vfsDotLocks[name]
 	if locker == nil {
-		err := os.Mkdir(name+".lock", 0777)
+		f, err := os.OpenFile(name+".lock", os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+		f.Close()
 		if errors.Is(err, fs.ErrExist) {
 			return _BUSY // Another process has the lock.
 		}

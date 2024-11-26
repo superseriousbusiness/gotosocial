@@ -50,14 +50,17 @@ func osGetExclusiveLock(file *os.File, state *LockLevel) _ErrorCode {
 
 	if rc != _OK {
 		// Reacquire the SHARED lock.
-		osReadLock(file, _SHARED_FIRST, _SHARED_SIZE, 0)
+		if rc := osReadLock(file, _SHARED_FIRST, _SHARED_SIZE, 0); rc != _OK {
+			// notest // this should never happen
+			return _IOERR_RDLOCK
+		}
 	}
 	return rc
 }
 
 func osDowngradeLock(file *os.File, state LockLevel) _ErrorCode {
 	if state >= LOCK_EXCLUSIVE {
-		// Release the EXCLUSIVE lock.
+		// Release the EXCLUSIVE lock while holding the PENDING lock.
 		osUnlock(file, _SHARED_FIRST, _SHARED_SIZE)
 
 		// Reacquire the SHARED lock.
@@ -78,7 +81,7 @@ func osDowngradeLock(file *os.File, state LockLevel) _ErrorCode {
 }
 
 func osReleaseLock(file *os.File, state LockLevel) _ErrorCode {
-	// Release all locks.
+	// Release all locks, PENDING must be last.
 	if state >= LOCK_RESERVED {
 		osUnlock(file, _RESERVED_BYTE, 1)
 	}
