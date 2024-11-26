@@ -21,8 +21,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
-
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -30,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"time"
 )
 
 // Update an existing filter for the given account, using the provided parameters.
@@ -68,10 +67,16 @@ func (p *Processor) Update(
 		filterColumns = append(filterColumns, "action")
 		filter.Action = typeutils.APIFilterActionToFilterAction(*form.FilterAction)
 	}
-	// TODO: (Vyr) is it possible to unset a filter expiration with this API?
 	if form.ExpiresIn != nil {
+		expiresIn := *form.ExpiresIn
 		filterColumns = append(filterColumns, "expires_at")
-		filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
+		if expiresIn == 0 {
+			// Unset the expiration date.
+			filter.ExpiresAt = time.Time{}
+		} else {
+			// Update the expiration date.
+			filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(expiresIn))
+		}
 	}
 	if form.Context != nil {
 		filterColumns = append(filterColumns,

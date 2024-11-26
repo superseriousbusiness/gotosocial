@@ -41,7 +41,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		Title:     form.Title,
 		Action:    typeutils.APIFilterActionToFilterAction(*form.FilterAction),
 	}
-	if form.ExpiresIn != nil {
+	if form.ExpiresIn != nil && *form.ExpiresIn != 0 {
 		filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
 	}
 	for _, context := range form.Context {

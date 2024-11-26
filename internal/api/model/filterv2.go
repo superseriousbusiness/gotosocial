@@ -134,7 +134,7 @@ type FilterCreateRequestV2 struct {
 	// Number of seconds from now that the filter should expire. If omitted, filter never expires.
 	//
 	// Example: 86400
-	ExpiresInI interface{} `json:"expires_in"`
+	ExpiresInI Nullable[any] `json:"expires_in"`
 
 	// Keywords to be added to the newly created filter.
 	Keywords []FilterKeywordCreateUpdateRequest `form:"-" json:"keywords_attributes" xml:"keywords_attributes"`
@@ -199,7 +199,7 @@ type FilterUpdateRequestV2 struct {
 	// Number of seconds from now that the filter should expire. If omitted, filter never expires.
 	//
 	// Example: 86400
-	ExpiresInI interface{} `json:"expires_in"`
+	ExpiresInI Nullable[any] `json:"expires_in"`
 
 	// Keywords to be added to the filter, modified, or removed.
 	Keywords []FilterKeywordCreateUpdateDeleteRequest `form:"-" json:"keywords_attributes" xml:"keywords_attributes"`

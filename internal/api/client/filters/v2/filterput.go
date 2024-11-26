@@ -269,23 +269,17 @@ func validateNormalizeUpdateFilter(form *apimodel.FilterUpdateRequestV2) error {
 		}
 	}
 
-	// Normalize filter expiry if necessary.
-	if form.ExpiresInI != nil {
-		// If we parsed this as JSON, expires_in
-		// may be either a float64 or a string.
+	// If `expires_in` was provided
+	// as JSON, then normalize it.
+	if form.ExpiresInI.IsSpecified() {
 		var err error
-		form.ExpiresIn, err = apiutil.ParseDuration(
+		form.ExpiresIn, err = apiutil.ParseNullableDuration(
 			form.ExpiresInI,
 			"expires_in",
 		)
 		if err != nil {
 			return err
 		}
-	}
-
-	// Interpret zero as indefinite duration.
-	if form.ExpiresIn != nil && *form.ExpiresIn == 0 {
-		form.ExpiresIn = nil
 	}
 
 	// Normalize and validate updates.
