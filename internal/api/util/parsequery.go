@@ -23,8 +23,6 @@ import (
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -216,28 +214,6 @@ func ParseInteractionReplies(value string, defaultValue bool) (bool, gtserror.Wi
 
 func ParseInteractionReblogs(value string, defaultValue bool) (bool, gtserror.WithCode) {
 	return parseBool(value, defaultValue, InteractionReblogsKey)
-}
-
-// ParseNotificationTypes converts the given slice of string values
-// to gtsmodel notification types, logging + skipping unknown types.
-func ParseNotificationTypes(values []string) []gtsmodel.NotificationType {
-	if len(values) == 0 {
-		return nil
-	}
-
-	ntypes := make([]gtsmodel.NotificationType, 0, len(values))
-	for _, value := range values {
-		ntype := gtsmodel.NewNotificationType(value)
-		if ntype == gtsmodel.NotificationUnknown {
-			// Type we don't know about (yet), log and ignore it.
-			log.Debugf(nil, "ignoring unknown notification type %s", value)
-			continue
-		}
-
-		ntypes = append(ntypes, ntype)
-	}
-
-	return ntypes
 }
 
 /*
