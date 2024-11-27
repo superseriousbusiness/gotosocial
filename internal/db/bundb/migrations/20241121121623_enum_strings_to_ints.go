@@ -19,12 +19,9 @@ package migrations
 
 import (
 	"context"
-	"errors"
 
 	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241121121623_enum_strings_to_ints"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 
 	"github.com/uptrace/bun"
@@ -126,97 +123,6 @@ func init() {
 	if err := Migrations.Register(up, down); err != nil {
 		panic(err)
 	}
-}
-
-// convertEnums performs a transaction that converts
-// a table's column of our old-style enums (strings) to
-// more performant and space-saving integer types.
-func convertEnums[OldType ~string, NewType ~int16](
-	ctx context.Context,
-	tx bun.Tx,
-	table string,
-	column string,
-	mapping map[OldType]NewType,
-	defaultValue *NewType,
-) error {
-	if len(mapping) == 0 {
-		return errors.New("empty mapping")
-	}
-
-	// Generate new column name.
-	newColumn := column + "_new"
-
-	log.Infof(ctx, "converting %s.%s enums; "+
-		"this may take a while, please don't interrupt!",
-		table, column,
-	)
-
-	// Ensure a default value.
-	if defaultValue == nil {
-		var zero NewType
-		defaultValue = &zero
-	}
-
-	// Add new column to database.
-	if _, err := tx.NewAddColumn().
-		Table(table).
-		ColumnExpr("? SMALLINT NOT NULL DEFAULT ?",
-			bun.Ident(newColumn),
-			*defaultValue).
-		Exec(ctx); err != nil {
-		return gtserror.Newf("error adding new column: %w", err)
-	}
-
-	// Get a count of all in table.
-	total, err := tx.NewSelect().
-		Table(table).
-		Count(ctx)
-	if err != nil {
-		return gtserror.Newf("error selecting total count: %w", err)
-	}
-
-	var updated int
-	for old, new := range mapping {
-
-		// Update old to new values.
-		res, err := tx.NewUpdate().
-			Table(table).
-			Where("? = ?", bun.Ident(column), old).
-			Set("? = ?", bun.Ident(newColumn), new).
-			Exec(ctx)
-		if err != nil {
-			return gtserror.Newf("error updating old column values: %w", err)
-		}
-
-		// Count number items updated.
-		n, _ := res.RowsAffected()
-		updated += int(n)
-	}
-
-	// Check total updated.
-	if total != updated {
-		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
-	}
-
-	// Drop the old column from table.
-	if _, err := tx.NewDropColumn().
-		Table(table).
-		ColumnExpr("?", bun.Ident(column)).
-		Exec(ctx); err != nil {
-		return gtserror.Newf("error dropping old column: %w", err)
-	}
-
-	// Rename new to old name.
-	if _, err := tx.NewRaw(
-		"ALTER TABLE ? RENAME COLUMN ? TO ?",
-		bun.Ident(table),
-		bun.Ident(newColumn),
-		bun.Ident(column),
-	).Exec(ctx); err != nil {
-		return gtserror.Newf("error renaming new column: %w", err)
-	}
-
-	return nil
 }
 
 // visibilityEnumMapping maps old Visibility enum values to their newer integer type.
