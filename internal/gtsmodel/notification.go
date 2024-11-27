@@ -17,7 +17,10 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.
 type Notification struct {
@@ -40,6 +43,7 @@ type NotificationType enumType
 
 const (
 	// Notification Types
+	NotificationUnknown       NotificationType = 0  // NotificationUnknown -- unknown notification type, error if this occurs
 	NotificationFollow        NotificationType = 1  // NotificationFollow -- someone followed you
 	NotificationFollowRequest NotificationType = 2  // NotificationFollowRequest -- someone requested to follow you
 	NotificationMention       NotificationType = 3  // NotificationMention -- someone mentioned you in their status
@@ -80,5 +84,35 @@ func (t NotificationType) String() string {
 		return "pending.reblog"
 	default:
 		panic("invalid notification type")
+	}
+}
+
+// NewNotificationType returns a notification type from the given value.
+func NewNotificationType(in string) NotificationType {
+	switch strings.ToLower(in) {
+	case "follow":
+		return NotificationFollow
+	case "follow_request":
+		return NotificationFollowRequest
+	case "mention":
+		return NotificationMention
+	case "reblog":
+		return NotificationReblog
+	case "favourite":
+		return NotificationFave
+	case "poll":
+		return NotificationPoll
+	case "status":
+		return NotificationStatus
+	case "admin.sign_up":
+		return NotificationSignup
+	case "pending.favourite":
+		return NotificationPendingFave
+	case "pending.reply":
+		return NotificationPendingReply
+	case "pending.reblog":
+		return NotificationPendingReblog
+	default:
+		return NotificationUnknown
 	}
 }
