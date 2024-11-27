@@ -56,7 +56,7 @@ type Status struct {
 	BoostOf                  *Status                     `bun:"-"`                                                           // status that corresponds to boostOfID
 	BoostOfAccount           *gtsmodel.Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID
 	ThreadID                 string                      `bun:"type:CHAR(26),nullzero"`                                      // id of the thread to which this status belongs; only set for remote statuses if a local account is involved at some point in the thread, otherwise null
-	EditIDs                  []string                    `bun:",array"`                                                      //
+	EditIDs                  []string                    `bun:"edits,array"`                                                 //
 	Edits                    []*StatusEdit               `bun:"-"`                                                           //
 	PollID                   string                      `bun:"type:CHAR(26),nullzero"`                                      //
 	Poll                     *gtsmodel.Poll              `bun:"-"`                                                           //

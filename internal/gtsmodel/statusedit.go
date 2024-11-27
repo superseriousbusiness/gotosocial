@@ -33,7 +33,7 @@ type StatusEdit struct {
 	Text           string             `bun:""`                                                            // Original status text, without formatting, at time of edit.
 	Language       string             `bun:",nullzero"`                                                   // Status language at time of edit.
 	Sensitive      *bool              `bun:",nullzero,notnull,default:false"`                             // Status sensitive flag at time of edit.
-	AttachmentIDs  []string           `bun:",array"`                                                      // Database IDs of media attachments associated with status at time of edit.
+	AttachmentIDs  []string           `bun:"attachments,array"`                                           // Database IDs of media attachments associated with status at time of edit.
 	Attachments    []*MediaAttachment `bun:"-"`                                                           // Media attachments relating to .AttachmentIDs field (not always populated).
 	PollOptions    []string           `bun:",array"`                                                      // Poll options of status at time of edit, only set if status contains a poll.
 	PollVotes      []int              `bun:",array"`                                                      // Poll vote count at time of status edit, only set if poll votes were reset.

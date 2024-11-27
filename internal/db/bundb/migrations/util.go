@@ -171,7 +171,7 @@ func getBunColumnDef(db bun.IDB, rtype reflect.Type, fieldName string) (string, 
 		} else {
 			buf = append(buf, sqltype.VarChar...)
 		}
-		buf = append(buf, sqltype.VarChar+"("...)
+		buf = append(buf, "("...)
 		buf = strconv.AppendInt(buf, int64(d.DefaultVarcharLen()), 10)
 		buf = append(buf, ")"...)
 	}

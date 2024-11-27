@@ -39,7 +39,6 @@ func init() {
 
 			// Add EditIDs column to Status table.
 			_, err = tx.NewAddColumn().
-				IfNotExists().
 				Model((*gtsmodel.Status)(nil)).
 				ColumnExpr(colDef).
 				Exec(ctx)
