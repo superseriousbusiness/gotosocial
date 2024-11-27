@@ -530,15 +530,12 @@ func buildSQLiteAddress(addr string) (string, bool) {
 	//
 	// - SQLite by itself supports setting a subset of its configuration options
 	//   via URI query arguments in the connection. Namely `mode` and `cache`.
-	//   This is the same situation for the directly transpiled C->Go code in
-	//   modernc.org/sqlite, i.e. modernc.org/sqlite/lib, NOT the Go SQL driver.
+	//   This is the same situation for our supported SQLite implementations.
 	//
-	// - `modernc.org/sqlite` has a "shim" around it to allow the directly
-	//   transpiled C code to be usable with a more native Go API. This is in
-	//   the form of a `database/sql/driver.Driver{}` implementation that calls
-	//   through to the transpiled C code.
+	// - Both implementations have a "shim" around them in the form of a
+	//   `database/sql/driver.Driver{}` implementation.
 	//
-	// - The SQLite shim we interface with adds support for setting ANY of the
+	// - The SQLite shims we interface with add support for setting ANY of the
 	//   configuration options via query arguments, through using a special `_pragma`
 	//   query key that specifies SQLite PRAGMAs to set upon opening each connection.
 	//   As such you will see below that most config is set with the `_pragma` key.
@@ -564,12 +561,6 @@ func buildSQLiteAddress(addr string) (string, bool) {
 	//   reached. And for whatever reason (:shrug:) SQLite is very particular about
 	//   setting this BEFORE the `journal_mode` is set, otherwise you can end up
 	//   running into more of these `SQLITE_BUSY` return codes than you might expect.
-	//
-	// - One final thing (I promise!): `SQLITE_BUSY` is only handled by the internal
-	//   `busy_timeout` handler in the case that a data race occurs contending for
-	//  table locks. THERE ARE STILL OTHER SITUATIONS IN WHICH THIS MAY BE RETURNED!
-	//  As such, we use our wrapping DB{} and Tx{} types (in "db.go") which make use
-	//  of our own retry-busy handler.
 
 	// Drop anything fancy from DB address
 	addr = strings.Split(addr, "?")[0]       // drop any provided query strings
