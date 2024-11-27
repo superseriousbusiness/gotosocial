@@ -20,6 +20,7 @@ package migrations
 import (
 	"context"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/uptrace/bun"
 )
 
@@ -37,7 +38,7 @@ func init() {
 
 			// Remove 'updated_at' column.
 			_, err = tx.NewDropColumn().
-				Table("mentions").
+				Model((*gtsmodel.Mention)(nil)).
 				Column("updated_at").
 				Exec(ctx)
 			return err
