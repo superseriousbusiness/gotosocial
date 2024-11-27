@@ -49,6 +49,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
+	"github.com/uptrace/bun/schema"
 )
 
 // DBService satisfies the DB interface
@@ -131,18 +132,18 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
-	var db *bun.DB
+	var sqldb *sql.DB
+	var dialect func() schema.Dialect
 	var err error
-	t := strings.ToLower(config.GetDbType())
 
-	switch t {
+	switch t := strings.ToLower(config.GetDbType()); t {
 	case "postgres":
-		db, err = pgConn(ctx)
+		sqldb, dialect, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		db, err = sqliteConn(ctx)
+		sqldb, dialect, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -150,33 +151,19 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", t)
 	}
 
-	// Add database query hooks.
-	db.AddQueryHook(queryHook{})
-	if config.GetTracingEnabled() {
-		db.AddQueryHook(tracing.InstrumentBun())
-	}
-	if config.GetMetricsEnabled() {
-		db.AddQueryHook(metrics.InstrumentBun())
-	}
-
-	// table registration is needed for many-to-many, see:
-	// https://bun.uptrace.dev/orm/many-to-many-relation/
-	for _, t := range []interface{}{
-		&gtsmodel.AccountToEmoji{},
-		&gtsmodel.ConversationToStatus{},
-		&gtsmodel.StatusToEmoji{},
-		&gtsmodel.StatusToTag{},
-		&gtsmodel.ThreadToStatus{},
-	} {
-		db.RegisterModel(t)
-	}
-
-	// perform any pending database migrations: this includes
-	// the very first 'migration' on startup which just creates
-	// necessary tables
-	if err := doMigration(ctx, db); err != nil {
+	// perform any pending database migrations: this includes the first
+	// 'migration' on startup which just creates necessary db tables.
+	//
+	// Note this uses its own instance of bun.DB as bun will automatically
+	// store in-memory reflect type schema of any Go models passed to it,
+	// and we still maintain lots of old model versions in the migrations.
+	if err := doMigration(ctx, bunDB(sqldb, dialect)); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
+
+	// Wrap sql.DB as bun.DB type,
+	// adding any connection hooks.
+	db := bunDB(sqldb, dialect)
 
 	ps := &DBService{
 		Account: &accountDB{
@@ -319,17 +306,47 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	return ps, nil
 }
 
-func pgConn(ctx context.Context) (*bun.DB, error) {
+// bunDB returns a new bun.DB for given sql.DB connection pool and dialect
+// function. This can be used to apply any necessary opts / hooks as we
+// initialize a bun.DB object both before and after performing migrations.
+func bunDB(sqldb *sql.DB, dialect func() schema.Dialect) *bun.DB {
+	db := bun.NewDB(sqldb, dialect())
+
+	// Add our SQL connection hooks.
+	db.AddQueryHook(queryHook{})
+	if config.GetTracingEnabled() {
+		db.AddQueryHook(tracing.InstrumentBun())
+	}
+	if config.GetMetricsEnabled() {
+		db.AddQueryHook(metrics.InstrumentBun())
+	}
+
+	// table registration is needed for many-to-many, see:
+	// https://bun.uptrace.dev/orm/many-to-many-relation/
+	for _, t := range []interface{}{
+		&gtsmodel.AccountToEmoji{},
+		&gtsmodel.ConversationToStatus{},
+		&gtsmodel.StatusToEmoji{},
+		&gtsmodel.StatusToTag{},
+		&gtsmodel.ThreadToStatus{},
+	} {
+		db.RegisterModel(t)
+	}
+
+	return db
+}
+
+func pgConn(ctx context.Context) (*sql.DB, func() schema.Dialect, error) {
 	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
-		return nil, fmt.Errorf("could not create bundb postgres options: %w", err)
+		return nil, nil, fmt.Errorf("could not create bundb postgres options: %w", err)
 	}
 
 	cfg := stdlib.RegisterConnConfig(opts)
 
 	sqldb, err := sql.Open("pgx-gts", cfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not open postgres db: %w", err)
+		return nil, nil, fmt.Errorf("could not open postgres db: %w", err)
 	}
 
 	// Tune db connections for postgres, see:
@@ -339,22 +356,20 @@ func pgConn(ctx context.Context) (*bun.DB, error) {
 	sqldb.SetMaxIdleConns(2)                  // assume default 2; if max idle is less than max open, it will be automatically adjusted
 	sqldb.SetConnMaxLifetime(5 * time.Minute) // fine to kill old connections
 
-	db := bun.NewDB(sqldb, pgdialect.New())
-
 	// ping to check the db is there and listening
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("postgres ping: %w", err)
+	if err := sqldb.PingContext(ctx); err != nil {
+		return nil, nil, fmt.Errorf("postgres ping: %w", err)
 	}
 
 	log.Info(ctx, "connected to POSTGRES database")
-	return db, nil
+	return sqldb, func() schema.Dialect { return pgdialect.New() }, nil
 }
 
-func sqliteConn(ctx context.Context) (*bun.DB, error) {
+func sqliteConn(ctx context.Context) (*sql.DB, func() schema.Dialect, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
-		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
+		return nil, nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
 	}
 
 	// Build SQLite connection address with prefs.
@@ -363,7 +378,7 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite-gts", address)
 	if err != nil {
-		return nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
+		return nil, nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
 	}
 
 	// Tune db connections for sqlite, see:
@@ -379,16 +394,14 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 		sqldb.SetConnMaxLifetime(5 * time.Minute)
 	}
 
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-
 	// ping to check the db is there and listening
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("sqlite ping: %w", err)
+	if err := sqldb.PingContext(ctx); err != nil {
+		return nil, nil, fmt.Errorf("sqlite ping: %w", err)
 	}
 
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
 
-	return db, nil
+	return sqldb, func() schema.Dialect { return sqlitedialect.New() }, nil
 }
 
 /*
