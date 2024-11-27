@@ -87,8 +87,8 @@ func (t NotificationType) String() string {
 	}
 }
 
-// NewNotificationType returns a notification type from the given value.
-func NewNotificationType(in string) NotificationType {
+// ParseNotificationType returns a notification type from the given value.
+func ParseNotificationType(in string) NotificationType {
 	switch strings.ToLower(in) {
 	case "follow":
 		return NotificationFollow

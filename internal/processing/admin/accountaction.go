@@ -40,7 +40,7 @@ func (p *Processor) AccountAction(
 		return "", gtserror.NewErrorInternalError(err)
 	}
 
-	switch gtsmodel.NewAdminActionType(request.Type) {
+	switch gtsmodel.ParseAdminActionType(request.Type) {
 	case gtsmodel.AdminActionSuspend:
 		return p.accountActionSuspend(ctx, adminAcct, targetAcct, request.Text)
 
