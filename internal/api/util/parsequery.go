@@ -18,13 +18,13 @@
 package util
 
 import (
-	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -218,49 +218,26 @@ func ParseInteractionReblogs(value string, defaultValue bool) (bool, gtserror.Wi
 	return parseBool(value, defaultValue, InteractionReblogsKey)
 }
 
-func ParseNotificationType(value string) (gtsmodel.NotificationType, gtserror.WithCode) {
-	switch strings.ToLower(value) {
-	case "follow":
-		return gtsmodel.NotificationFollow, nil
-	case "follow_request":
-		return gtsmodel.NotificationFollowRequest, nil
-	case "mention":
-		return gtsmodel.NotificationMention, nil
-	case "reblog":
-		return gtsmodel.NotificationReblog, nil
-	case "favourite":
-		return gtsmodel.NotificationFave, nil
-	case "poll":
-		return gtsmodel.NotificationPoll, nil
-	case "status":
-		return gtsmodel.NotificationStatus, nil
-	case "admin.sign_up":
-		return gtsmodel.NotificationSignup, nil
-	case "pending.favourite":
-		return gtsmodel.NotificationPendingFave, nil
-	case "pending.reply":
-		return gtsmodel.NotificationPendingReply, nil
-	case "pending.reblog":
-		return gtsmodel.NotificationPendingReblog, nil
-	default:
-		text := fmt.Sprintf("unrecognized notification type %s", value)
-		return 0, gtserror.NewErrorBadRequest(errors.New(text), text)
-	}
-}
-
-func ParseNotificationTypes(values []string) ([]gtsmodel.NotificationType, gtserror.WithCode) {
+// ParseNotificationTypes converts the given slice of string values
+// to gtsmodel notification types, logging + skipping unknown types.
+func ParseNotificationTypes(values []string) []gtsmodel.NotificationType {
 	if len(values) == 0 {
-		return nil, nil
+		return nil
 	}
-	ntypes := make([]gtsmodel.NotificationType, len(values))
-	for i, value := range values {
-		ntype, errWithCode := ParseNotificationType(value)
-		if errWithCode != nil {
-			return nil, errWithCode
+
+	ntypes := make([]gtsmodel.NotificationType, 0, len(values))
+	for _, value := range values {
+		ntype := gtsmodel.NewNotificationType(value)
+		if ntype == gtsmodel.NotificationUnknown {
+			// Type we don't know about (yet), log and ignore it.
+			log.Debugf(nil, "ignoring unknown notification type %s", value)
+			continue
 		}
-		ntypes[i] = ntype
+
+		ntypes = append(ntypes, ntype)
 	}
-	return ntypes, nil
+
+	return ntypes
 }
 
 /*

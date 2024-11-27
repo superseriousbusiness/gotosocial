@@ -151,18 +151,6 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		return
 	}
 
-	types, errWithCode := apiutil.ParseNotificationTypes(c.QueryArray(TypesKey))
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	exclTypes, errWithCode := apiutil.ParseNotificationTypes(c.QueryArray(ExcludeTypesKey))
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
 	page, errWithCode := paging.ParseIDPage(c,
 		1,  // min limit
 		80, // max limit
@@ -177,8 +165,8 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		c.Request.Context(),
 		authed,
 		page,
-		types,
-		exclTypes,
+		apiutil.ParseNotificationTypes(c.QueryArray(TypesKey)),        // Include types.
+		apiutil.ParseNotificationTypes(c.QueryArray(ExcludeTypesKey)), // Exclude types.
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
