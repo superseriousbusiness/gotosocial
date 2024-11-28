@@ -169,8 +169,8 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		ctx,
 		authed,
 		page,
-		ParseNotificationTypes(ctx, c.QueryArray(TypesKey)),        // Include types.
-		ParseNotificationTypes(ctx, c.QueryArray(ExcludeTypesKey)), // Exclude types.
+		parseNotificationTypes(ctx, c.QueryArray(TypesKey)),        // Include types.
+		parseNotificationTypes(ctx, c.QueryArray(ExcludeTypesKey)), // Exclude types.
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -184,9 +184,9 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 	apiutil.JSON(c, http.StatusOK, resp.Items)
 }
 
-// ParseNotificationTypes converts the given slice of string values
+// parseNotificationTypes converts the given slice of string values
 // to gtsmodel notification types, logging + skipping unknown types.
-func ParseNotificationTypes(
+func parseNotificationTypes(
 	ctx context.Context,
 	values []string,
 ) []gtsmodel.NotificationType {
@@ -196,10 +196,10 @@ func ParseNotificationTypes(
 
 	ntypes := make([]gtsmodel.NotificationType, 0, len(values))
 	for _, value := range values {
-		ntype := gtsmodel.NewNotificationType(value)
+		ntype := gtsmodel.ParseNotificationType(value)
 		if ntype == gtsmodel.NotificationUnknown {
 			// Type we don't know about (yet), log and ignore it.
-			log.Debugf(ctx, "ignoring unknown type %s", value)
+			log.Warnf(ctx, "ignoring unknown type %s", value)
 			continue
 		}
 
