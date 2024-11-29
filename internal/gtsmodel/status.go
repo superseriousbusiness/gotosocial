@@ -277,7 +277,7 @@ func (s *Status) AllAttachmentIDs() []string {
 	var total int
 
 	if len(s.EditIDs) != len(s.Edits) {
-		panic("status attachments not populated")
+		panic("status edits not populated")
 	}
 
 	// Get count of attachment IDs.
