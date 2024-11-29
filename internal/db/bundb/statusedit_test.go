@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -41,20 +42,6 @@ func (suite *StatusEditTestSuite) TestGetStatusEditBy() {
 
 	// Sentinel error to mark avoiding a test case.
 	sentinelErr := errors.New("sentinel")
-
-	// isEqual checks if 2 status edit models are equal.
-	isEqual := func(e1, e2 gtsmodel.StatusEdit) bool {
-
-		// Clear populated sub-models.
-		e1.Attachments = nil
-		e2.Attachments = nil
-
-		// Clear database-set fields.
-		e1.CreatedAt = time.Time{}
-		e2.CreatedAt = time.Time{}
-
-		return reflect.DeepEqual(e1, e2)
-	}
 
 	for _, edit := range suite.testStatusEdits {
 		for lookup, dbfunc := range map[string]func() (*gtsmodel.StatusEdit, error){
@@ -79,10 +66,49 @@ func (suite *StatusEditTestSuite) TestGetStatusEditBy() {
 			}
 
 			// Check received account data.
-			if !isEqual(*checkEdit, *edit) {
+			if !areEditsEqual(edit, checkEdit) {
 				t.Errorf("edit does not contain expected data: %+v", checkEdit)
 				continue
 			}
+		}
+	}
+}
+
+func (suite *StatusEditTestSuite) TestGetStatusEditsByIDs() {
+	t := suite.T()
+
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// editsByStatus returns all test edits by the given status with ID.
+	editsByStatus := func(status *gtsmodel.Status) []*gtsmodel.StatusEdit {
+		var edits []*gtsmodel.StatusEdit
+		for _, edit := range suite.testStatusEdits {
+			if edit.StatusID == status.ID {
+				edits = append(edits, edit)
+			}
+		}
+		return edits
+	}
+
+	for _, status := range suite.testStatuses {
+		// Get test status edit models
+		// that should be found for status.
+		check := editsByStatus(status)
+
+		// Fetch edits for the slice of IDs attached to status from database.
+		edits, err := suite.state.DB.GetStatusEditsByIDs(ctx, status.EditIDs)
+		suite.NoError(err)
+
+		// Ensure both slices
+		// sorted the same.
+		sortEdits(check)
+		sortEdits(edits)
+
+		// Check whether slices of status edits match.
+		if !slices.EqualFunc(check, edits, areEditsEqual) {
+			t.Error("status edit slices do not match")
 		}
 	}
 }
@@ -93,4 +119,37 @@ func (suite *StatusEditTestSuite) TestDeleteStatusEdits() {
 
 func TestStatusEditTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusEditTestSuite))
+}
+
+func areEditsEqual(e1, e2 *gtsmodel.StatusEdit) bool {
+	// Clone the 1st status edit.
+	e1Copy := new(gtsmodel.StatusEdit)
+	*e1Copy = *e1
+	e1 = e1Copy
+
+	// Clone the 2nd status edit.
+	e2Copy := new(gtsmodel.StatusEdit)
+	*e2Copy = *e2
+	e2 = e2Copy
+
+	// Clear populated sub-models.
+	e1.Attachments = nil
+	e2.Attachments = nil
+
+	// Clear database-set fields.
+	e1.CreatedAt = time.Time{}
+	e2.CreatedAt = time.Time{}
+
+	return reflect.DeepEqual(*e1, *e2)
+}
+
+func sortEdits(edits []*gtsmodel.StatusEdit) {
+	slices.SortFunc(edits, func(a, b *gtsmodel.StatusEdit) int {
+		if a.CreatedAt.Before(b.CreatedAt) {
+			return +1
+		} else if b.CreatedAt.Before(a.CreatedAt) {
+			return -1
+		}
+		return 0
+	})
 }

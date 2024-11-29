@@ -53,7 +53,7 @@ func (s *statusEditDB) GetStatusEditByID(ctx context.Context, id string) (*gtsmo
 			}
 
 			return &edit, nil
-		},
+		}, id,
 	)
 	if err != nil {
 		return nil, err

@@ -67,8 +67,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 8,
-  "last_status_at": "2024-01-10",
+  "statuses_count": 9,
+  "last_status_at": "2024-11-01",
   "emojis": [],
   "fields": [],
   "enable_rss": true
@@ -119,8 +119,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 8,
-  "last_status_at": "2024-01-10",
+  "statuses_count": 9,
+  "last_status_at": "2024-11-01",
   "emojis": [],
   "fields": [],
   "source": {
@@ -162,8 +162,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
     "header_description": "Flat gray background (default header).",
     "followers_count": 1,
     "following_count": 1,
-    "statuses_count": 8,
-    "last_status_at": "2021-07-28",
+    "statuses_count": 9,
+    "last_status_at": "2024-11-01",
     "emojis": [],
     "fields": [
       {
@@ -217,8 +217,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
   "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 8,
-  "last_status_at": "2024-01-10",
+  "statuses_count": 9,
+  "last_status_at": "2024-11-01",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -266,8 +266,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
   "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 8,
-  "last_status_at": "2024-01-10",
+  "statuses_count": 9,
+  "last_status_at": "2024-11-01",
   "emojis": [
     {
       "shortcode": "rainbow",
@@ -311,8 +311,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 8,
-  "last_status_at": "2024-01-10",
+  "statuses_count": 9,
+  "last_status_at": "2024-11-01",
   "emojis": [],
   "fields": [],
   "source": {
@@ -870,8 +870,8 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
       "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
       "followers_count": 2,
       "following_count": 2,
-      "statuses_count": 8,
-      "last_status_at": "2024-01-10",
+      "statuses_count": 9,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [],
       "enable_rss": true
@@ -1697,8 +1697,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
     "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
     "followers_count": 2,
     "following_count": 2,
-    "statuses_count": 8,
-    "last_status_at": "2024-01-10",
+    "statuses_count": 9,
+    "last_status_at": "2024-11-01",
     "emojis": [],
     "fields": [],
     "enable_rss": true
@@ -1993,7 +1993,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 19,
+    "status_count": 21,
     "user_count": 4
   },
   "thumbnail": "http://localhost:8080/assets/logo.webp",
@@ -2277,8 +2277,8 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
     "header_description": "Flat gray background (default header).",
     "followers_count": 0,
     "following_count": 0,
-    "statuses_count": 3,
-    "last_status_at": "2021-09-11",
+    "statuses_count": 4,
+    "last_status_at": "2024-11-01",
     "emojis": [],
     "fields": []
   }
@@ -2321,8 +2321,8 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
     "header_description": "Flat gray background (default header).",
     "followers_count": 1,
     "following_count": 1,
-    "statuses_count": 8,
-    "last_status_at": "2021-07-28",
+    "statuses_count": 9,
+    "last_status_at": "2024-11-01",
     "emojis": [],
     "fields": [
       {
@@ -2398,8 +2398,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "header_description": "Flat gray background (default header).",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 3,
-      "last_status_at": "2021-09-11",
+      "statuses_count": 4,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": []
     }
@@ -2444,8 +2444,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
       "header_description": "Flat gray background (default header).",
       "followers_count": 1,
       "following_count": 1,
-      "statuses_count": 8,
-      "last_status_at": "2021-07-28",
+      "statuses_count": 9,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [
         {
@@ -2636,8 +2636,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "header_description": "Flat gray background (default header).",
       "followers_count": 1,
       "following_count": 1,
-      "statuses_count": 8,
-      "last_status_at": "2021-07-28",
+      "statuses_count": 9,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [
         {
@@ -2695,8 +2695,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "header_description": "Flat gray background (default header).",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 3,
-      "last_status_at": "2021-09-11",
+      "statuses_count": 4,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": []
     }
@@ -2743,8 +2743,8 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
         "header_description": "Flat gray background (default header).",
         "followers_count": 0,
         "following_count": 0,
-        "statuses_count": 3,
-        "last_status_at": "2021-09-11",
+        "statuses_count": 4,
+        "last_status_at": "2024-11-01",
         "emojis": [],
         "fields": []
       },
@@ -3254,8 +3254,8 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
       "header_description": "Flat gray background (default header).",
       "followers_count": 1,
       "following_count": 1,
-      "statuses_count": 8,
-      "last_status_at": "2021-07-28",
+      "statuses_count": 9,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [
         {
@@ -3619,8 +3619,8 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
       "header_description": "Flat gray background (default header).",
       "followers_count": 1,
       "following_count": 1,
-      "statuses_count": 8,
-      "last_status_at": "2021-07-28",
+      "statuses_count": 9,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [
         {
@@ -3683,8 +3683,8 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
       "header_media_id": "01PFPMWK2FF0D9WMHEJHR07C3Q",
       "followers_count": 2,
       "following_count": 2,
-      "statuses_count": 8,
-      "last_status_at": "2024-01-10",
+      "statuses_count": 9,
+      "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [],
       "enable_rss": true

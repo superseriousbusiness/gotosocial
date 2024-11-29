@@ -179,7 +179,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 9)
 
 	// Remove admin account from the exclusive list.
 	listEntry := suite.testListEntries["local_account_1_list_1_entry_2"]
@@ -225,7 +225,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 9)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
@@ -293,7 +293,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 12)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 13)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {

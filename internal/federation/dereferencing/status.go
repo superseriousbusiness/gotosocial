@@ -622,7 +622,7 @@ func (d *Dereferencer) fetchStatusMentions(
 		}
 
 		// This mention didn't exist yet.
-		// Generate new ID according to status creation.
+		// Generate new ID according to latest update.
 		mention.ID = id.NewULIDFromTime(status.UpdatedAt)
 
 		// Set known further mention details.
