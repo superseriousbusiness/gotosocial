@@ -114,7 +114,20 @@ func (suite *StatusEditTestSuite) TestGetStatusEditsByIDs() {
 }
 
 func (suite *StatusEditTestSuite) TestDeleteStatusEdits() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
 
+	for _, status := range suite.testStatuses {
+		// Delete all edits for status with given IDs from database.
+		err := suite.state.DB.DeleteStatusEdits(ctx, status.EditIDs)
+		suite.NoError(err)
+
+		// Now attempt to fetch these edits from database, should be empty.
+		edits, err := suite.state.DB.GetStatusEditsByIDs(ctx, status.EditIDs)
+		suite.NoError(err)
+		suite.Empty(edits)
+	}
 }
 
 func TestStatusEditTestSuite(t *testing.T) {
