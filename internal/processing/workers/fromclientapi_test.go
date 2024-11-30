@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -177,6 +178,28 @@ func (suite *FromClientAPITestSuite) checkStreamed(
 	if expectEventType != "" && msg.Event != expectEventType {
 		suite.FailNow("", "expected event type %s but event type was: %s", expectEventType, msg.Event)
 	}
+}
+
+// checkWebPushed asserts that the target account got a single Web Push notification with a given type.
+func (suite *FromClientAPITestSuite) checkWebPushed(
+	sender *webpush.MockSender,
+	accountID string,
+	notificationType gtsmodel.NotificationType,
+) {
+	pushedNotifications := sender.Sent[accountID]
+	if suite.Len(pushedNotifications, 1) {
+		pushedNotification := pushedNotifications[0]
+		suite.Equal(notificationType, pushedNotification.NotificationType)
+	}
+}
+
+// checkNotWebPushed asserts that the target account got no Web Push notifications.
+func (suite *FromClientAPITestSuite) checkNotWebPushed(
+	sender *webpush.MockSender,
+	accountID string,
+) {
+	pushedNotifications := sender.Sent[accountID]
+	suite.Len(pushedNotifications, 0)
 }
 
 func (suite *FromClientAPITestSuite) statusJSON(
@@ -341,6 +364,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		string(notifJSON),
 		stream.EventTypeNotification,
 	)
+
+	// Check for a Web Push status notification.
+	suite.checkWebPushed(testStructs.WebPushSender, receivingAccount.ID, gtsmodel.NotificationStatus)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
@@ -409,6 +435,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 		statusJSON,
 		stream.EventTypeUpdate,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
@@ -470,6 +499,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyMuted() {
 
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Nil(notif)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
@@ -531,6 +563,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostMuted() {
 
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Nil(notif)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyOK() {
@@ -607,6 +642,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		statusJSON,
 		stream.EventTypeUpdate,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyListOnlyNo() {
@@ -689,6 +727,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusListRepliesPolicyLis
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPolicyNone() {
@@ -765,6 +806,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusReplyListRepliesPoli
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
@@ -829,6 +873,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoost() {
 		statusJSON,
 		stream.EventTypeUpdate,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusBoostNoReblogs() {
@@ -981,6 +1028,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichBeginsConversat
 		conversationJSON,
 		stream.EventTypeConversation,
 	)
+
+	// Check for a Web Push mention notification.
+	suite.checkWebPushed(testStructs.WebPushSender, receivingAccount.ID, gtsmodel.NotificationMention)
 }
 
 // A public message to a local user should not result in a conversation notification.
@@ -1050,6 +1100,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWhichShouldNotCreate
 		"",
 		"",
 	)
+
+	// Check for a Web Push mention notification.
+	suite.checkWebPushed(testStructs.WebPushSender, receivingAccount.ID, gtsmodel.NotificationMention)
 }
 
 // A public status with a hashtag followed by a local user who does not otherwise follow the author
@@ -1123,6 +1176,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtag(
 		"",
 		stream.EventTypeUpdate,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A public status with a hashtag followed by a local user who does not otherwise follow the author
@@ -1204,6 +1260,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithFollowedHashtagA
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A boost of a public status with a hashtag followed by a local user
@@ -1306,6 +1365,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtag()
 		"",
 		stream.EventTypeUpdate,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A boost of a public status with a hashtag followed by a local user
@@ -1416,6 +1478,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAn
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A boost of a public status with a hashtag followed by a local user
@@ -1526,6 +1591,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBoostWithFollowedHashtagAn
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A public status with a hashtag followed by a local user who follows the author and has them on an exclusive list
@@ -1598,6 +1666,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A public status with a hashtag followed by a local user who follows the author and has them on an exclusive list
@@ -1712,6 +1783,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 		"",
 		"",
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 // A public status with a hashtag followed by a local user who follows the author and has them on an exclusive list
@@ -1837,6 +1911,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 		"",
 		"",
 	)
+
+	// Check for a Web Push status notification.
+	suite.checkWebPushed(testStructs.WebPushSender, receivingAccount.ID, gtsmodel.NotificationStatus)
 }
 
 // Updating a public status with a hashtag followed by a local user who does not otherwise follow the author
@@ -1910,6 +1987,9 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag(
 		"",
 		stream.EventTypeStatusUpdate,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
 func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
@@ -1962,6 +2042,9 @@ func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
 		deletedStatus.ID,
 		stream.EventTypeDelete,
 	)
+
+	// Check for absence of Web Push notifications.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 
 	// Boost should no longer be in the database.
 	if !testrig.WaitFor(func() bool {
