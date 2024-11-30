@@ -113,7 +113,7 @@ Mastodon API 已成为客户端与联邦宇宙服务端通信的事实标准，�
 大多数实现 Mastodon API 的应用程序都应该可以使用 GoToSocial，但以下这些优秀的应用程序已经过测试，可与 GoToSocial 可靠地配合使用：
 
 * [Tusky](https://tusky.app/) 适用于 Android
-* [Semaphore](https://semaphore.social/) 适用于浏览器
+* [Pinafore](https://pinafore.social/) 适用于浏览器
 * [Feditext](https://github.com/feditext/feditext) (beta) 适用于 iOS, iPadOS 和 macOS
 
 如果你之前通过第三方应用来使用 Mastodon，使用 GoToSocial 将是轻而易举的。

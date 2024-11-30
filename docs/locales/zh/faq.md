@@ -2,7 +2,7 @@
 
 ## 用户界面在哪？
 
-GoToSocial 的大部分内容只是一个裸服务端，用于通过第三方应用程序进行使用。可通过 [Semaphore](https://semaphore.social/) 在浏览器使用，可通过 [Tusky](https://tusky.app/) 在 Android 使用，可通过 [Feditext](https://github.com/feditext/feditext) 在 iOS、iPadOS 和 macOS 使用。这些应用程序兼容性最好。任何由 Mastodon API 提供的实例功能都应该可以工作，除非它们是 GoToSocial 尚不具备的功能。永久链接和个账户页是通过 GoToSocial 直接提供的，设置面板也是如此，但大多数交互都是通过应用程序完成的。
+GoToSocial 的大部分内容只是一个裸服务端，用于通过第三方应用程序进行使用。可通过 [Pinafore](https://pinafore.social/) 在浏览器使用，可通过 [Tusky](https://tusky.app/) 在 Android 使用，可通过 [Feditext](https://github.com/feditext/feditext) 在 iOS、iPadOS 和 macOS 使用。这些应用程序兼容性最好。任何由 Mastodon API 提供的实例功能都应该可以工作，除非它们是 GoToSocial 尚不具备的功能。永久链接和个账户页是通过 GoToSocial 直接提供的，设置面板也是如此，但大多数交互都是通过应用程序完成的。
 
 ## 为什么我的贴文没有显示在我的账户页面上？
 

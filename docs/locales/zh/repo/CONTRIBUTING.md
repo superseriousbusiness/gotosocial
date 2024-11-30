@@ -24,7 +24,7 @@
     - [浏览代码结构](#浏览代码结构)
   - [风格/代码检查/格式化](#风格代码检查格式化)
   - [测试](#测试)
-    - [独立测试环境与 Semaphore](#独立测试环境与-semaphore)
+    - [独立测试环境与 Pinafore](#独立测试环境与-pinafore)
     - [运行自动化测试](#运行自动化测试)
       - [SQLite](#sqlite)
       - [Postgres](#postgres)
@@ -400,9 +400,9 @@ GoToSocial 提供了一个 [testrig](https://github.com/superseriousbusiness/got
 
 没有模拟的一个东西是数据库接口，因为使用内存中的 SQLite 数据库比模拟所有东西要简单得多。
 
-#### 独立测试环境与 Semaphore
+#### 独立测试环境与 Pinafore
 
-你可以启动一个在本地主机运行的独立测试服务器 testrig，可以通过 [Semaphore](https://github.com/NickColley/semaphore/) 连接。
+你可以启动一个在本地主机运行的独立测试服务器 testrig，可以通过 [Pinafore](https://github.com/NickColley/pinafore/) 连接。
 
 要做到这一点，首先用 `DEBUG=1 ./scripts/build.sh` 构建 gotosocial 二进制文件。
 
@@ -412,14 +412,14 @@ GoToSocial 提供了一个 [testrig](https://github.com/superseriousbusiness/got
 DEBUG=1 ./gotosocial testrig start
 ```
 
-要在本地开发模式下运行 Semaphore，首先克隆 [Semaphore](https://github.com/NickColley/semaphore/) 存储库，然后在克隆的目录中运行以下命令：
+要在本地开发模式下运行 Pinafore，首先克隆 [Pinafore](https://github.com/nolanlawson/pinafore/) 存储库，然后在克隆的目录中运行以下命令：
 
 ```bash
 yarn # 安装依赖
 yarn run dev
 ```
 
-Semaphore 实例将在 `localhost:4002` 上启动。
+Pinafore 实例将在 `localhost:4002` 上启动。
 
 要连接到 testrig，导航至 `http://localhost:4002`，并将在实例域名栏输入 `localhost:8080`。
 

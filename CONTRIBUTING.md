@@ -24,7 +24,7 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
     - [Finding your way around the code](#finding-your-way-around-the-code)
   - [Style / Linting / Formatting](#style--linting--formatting)
   - [Testing](#testing)
-    - [Standalone Testrig with Semaphore](#standalone-testrig-with-semaphore)
+    - [Standalone Testrig with Pinafore](#standalone-testrig-with-pinafore)
     - [Running automated tests](#running-automated-tests)
       - [SQLite](#sqlite)
       - [Postgres](#postgres)
@@ -401,9 +401,9 @@ GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosoci
 
 One thing that *isn't* mocked is the Database interface because it's just easier to use an in-memory SQLite database than to mock everything out.
 
-#### Standalone Testrig with Semaphore
+#### Standalone Testrig with Pinafore
 
-You can launch a testrig as a standalone server running at localhost, which you can connect to using something like [Semaphore](https://github.com/NickColley/semaphore/).
+You can launch a testrig as a standalone server running at localhost, which you can connect to using something like [Pinafore](https://github.com/nolanlawson/pinafore/).
 
 To do this, first build the gotosocial binary with `DEBUG=1 ./scripts/build.sh`.
 
@@ -413,14 +413,14 @@ Then, launch the testrig with the `DEBUG` environment variable set by invoking t
 DEBUG=1 ./gotosocial testrig start
 ```
 
-To run Semaphore locally in dev mode, first clone the [Semaphore](https://github.com/NickColley/semaphore/) repository, and then run the following commands in the cloned directory:
+To run Pinafore locally in dev mode, first clone the [Pinafore](https://github.com/nolanlawson/pinafore/) repository, and then run the following commands in the cloned directory:
 
 ```bash
 yarn # install dependencies
 yarn run dev
 ```
 
-The Semaphore instance will start running on `localhost:4002`.
+The Pinafore instance will start running on `localhost:4002`.
 
 To connect to the testrig, navigate to `http://localhost:4002` and enter your instance name as `localhost:8080`.
 
