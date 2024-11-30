@@ -22,7 +22,7 @@ package gtsmodel
 //
 // See: https://datatracker.ietf.org/doc/html/rfc8292
 type VAPIDKeyPair struct {
-	ID      int    `bun:"pk,notnull"`
-	Public  string `bun:"notnull,nullzero"`
-	Private string `bun:"notnull,nullzero"`
+	ID      int    `bun:",pk,notnull"`
+	Public  string `bun:",notnull,nullzero"`
+	Private string `bun:",notnull,nullzero"`
 }

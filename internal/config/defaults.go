@@ -213,6 +213,8 @@ var Defaults = Configuration{
 		UserMuteMemRatio:                      2,
 		UserMuteIDsMemRatio:                   3,
 		WebfingerMemRatio:                     0.1,
+		WebPushSubscriptionMemRatio:       1,
+		WebPushSubscriptionIDsMemRatio:    1,
 		VisibilityMemRatio:                    2,
 	},
 

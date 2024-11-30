@@ -48,13 +48,14 @@ const (
 	NotificationFollowRequest NotificationType = 2  // NotificationFollowRequest -- someone requested to follow you
 	NotificationMention       NotificationType = 3  // NotificationMention -- someone mentioned you in their status
 	NotificationReblog        NotificationType = 4  // NotificationReblog -- someone boosted one of your statuses
-	NotificationFave          NotificationType = 5  // NotificationFave -- someone faved/liked one of your statuses
+	NotificationFavourite     NotificationType = 5  // NotificationFavourite -- someone faved/liked one of your statuses
 	NotificationPoll          NotificationType = 6  // NotificationPoll -- a poll you voted in or created has ended
 	NotificationStatus        NotificationType = 7  // NotificationStatus -- someone you enabled notifications for has posted a status.
-	NotificationSignup        NotificationType = 8  // NotificationSignup -- someone has submitted a new account sign-up to the instance.
-	NotificationPendingFave   NotificationType = 9  // Someone has faved a status of yours, which requires approval by you.
-	NotificationPendingReply  NotificationType = 10 // Someone has replied to a status of yours, which requires approval by you.
-	NotificationPendingReblog NotificationType = 11 // Someone has boosted a status of yours, which requires approval by you.
+	NotificationAdminSignup   NotificationType = 8  // NotificationAdminSignup -- someone has submitted a new account sign-up to the instance.
+	NotificationPendingFave   NotificationType = 9  // NotificationPendingFave -- Someone has faved a status of yours, which requires approval by you.
+	NotificationPendingReply  NotificationType = 10 // NotificationPendingReply -- Someone has replied to a status of yours, which requires approval by you.
+	NotificationPendingReblog NotificationType = 11 // NotificationPendingReblog -- Someone has boosted a status of yours, which requires approval by you.
+	NotificationAdminReport   NotificationType = 12 // NotificationAdminReport -- someone has submitted a new report to the instance.
 )
 
 // String returns a stringified, frontend API compatible form of NotificationType.
@@ -68,13 +69,13 @@ func (t NotificationType) String() string {
 		return "mention"
 	case NotificationReblog:
 		return "reblog"
-	case NotificationFave:
+	case NotificationFavourite:
 		return "favourite"
 	case NotificationPoll:
 		return "poll"
 	case NotificationStatus:
 		return "status"
-	case NotificationSignup:
+	case NotificationAdminSignup:
 		return "admin.sign_up"
 	case NotificationPendingFave:
 		return "pending.favourite"
@@ -82,6 +83,8 @@ func (t NotificationType) String() string {
 		return "pending.reply"
 	case NotificationPendingReblog:
 		return "pending.reblog"
+	case NotificationAdminReport:
+		return "admin.report"
 	default:
 		panic("invalid notification type")
 	}
@@ -99,19 +102,21 @@ func ParseNotificationType(in string) NotificationType {
 	case "reblog":
 		return NotificationReblog
 	case "favourite":
-		return NotificationFave
+		return NotificationFavourite
 	case "poll":
 		return NotificationPoll
 	case "status":
 		return NotificationStatus
 	case "admin.sign_up":
-		return NotificationSignup
+		return NotificationAdminSignup
 	case "pending.favourite":
 		return NotificationPendingFave
 	case "pending.reply":
 		return NotificationPendingReply
 	case "pending.reblog":
 		return NotificationPendingReblog
+	case "admin.report":
+		return NotificationAdminReport
 	default:
 		return NotificationUnknown
 	}

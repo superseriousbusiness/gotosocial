@@ -19,6 +19,7 @@ package testrig
 
 import (
 	"context"
+
 	webpushgo "github.com/SherClockHolmes/webpush-go"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
@@ -61,6 +62,8 @@ var testModels = []interface{}{
 	&gtsmodel.ThreadToStatus{},
 	&gtsmodel.User{},
 	&gtsmodel.UserMute{},
+	&gtsmodel.VAPIDKeyPair{},
+	&gtsmodel.WebPushSubscription{},
 	&gtsmodel.Emoji{},
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
@@ -345,6 +348,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	for _, v := range NewTestUserMutes() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(ctx, err)
+		}
+	}
+
+	for _, v := range NewTestWebPushSubscriptions() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
 		}
 	}
 

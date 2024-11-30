@@ -48,9 +48,6 @@ const rsaKeyBits = 2048
 type adminDB struct {
 	db    *bun.DB
 	state *state.State
-
-	// Since the VAPID key pair is very small and never written to concurrently, we can cache it here.
-	vapidKeyPair *gtsmodel.VAPIDKeyPair
 }
 
 func (a *adminDB) IsUsernameAvailable(ctx context.Context, username string) (bool, error) {
@@ -443,39 +440,6 @@ func (a *adminDB) CountUnhandledSignups(ctx context.Context) (int, error) {
 		// Explicitly rejected sign-ups end up elsewhere.
 		Where("? = ?", bun.Ident("user.approved"), false).
 		Count(ctx)
-}
-
-func (a *adminDB) GetVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error) {
-	// Look for cached keys.
-	if a.vapidKeyPair != nil {
-		return a.vapidKeyPair, nil
-	}
-
-	// Look for previously generated keys in the database.
-	if err := a.db.NewSelect().
-		Model(a.vapidKeyPair).
-		Limit(1).
-		Scan(ctx); // nocollapse
-	err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.Newf("DB error getting VAPID key pair: %w", err)
-	}
-
-	return a.vapidKeyPair, nil
-}
-
-func (a *adminDB) PutVAPIDKeyPair(ctx context.Context, vapidKeyPair *gtsmodel.VAPIDKeyPair) error {
-	// Store the keys in the database.
-	if _, err := a.db.NewInsert().
-		Model(a.vapidKeyPair).
-		Exec(ctx); // nocollapse
-	err != nil {
-		return gtserror.Newf("DB error putting VAPID key pair: %w", err)
-	}
-
-	// Cache the keys.
-	a.vapidKeyPair = vapidKeyPair
-
-	return nil
 }
 
 /*

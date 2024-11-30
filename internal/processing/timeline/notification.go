@@ -184,7 +184,7 @@ func (p *Processor) notifVisible(
 		// If this is a new local account sign-up,
 		// skip normal visibility checking because
 		// origin account won't be confirmed yet.
-		if n.NotificationType == gtsmodel.NotificationSignup {
+		if n.NotificationType == gtsmodel.NotificationAdminSignup {
 			return true, nil
 		}
 

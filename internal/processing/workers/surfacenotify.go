@@ -250,7 +250,7 @@ func (s *Surface) notifyFave(
 	// notify status author
 	// of fave by account.
 	if err := s.Notify(ctx,
-		gtsmodel.NotificationFave,
+		gtsmodel.NotificationFavourite,
 		fave.TargetAccount,
 		fave.Account,
 		fave.StatusID,
@@ -521,7 +521,7 @@ func (s *Surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) erro
 	var errs gtserror.MultiError
 	for _, mod := range modAccounts {
 		if err := s.Notify(ctx,
-			gtsmodel.NotificationSignup,
+			gtsmodel.NotificationAdminSignup,
 			mod,
 			newUser.Account,
 			"",
