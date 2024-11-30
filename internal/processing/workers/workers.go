@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/internal/workers"
 )
 
@@ -44,6 +45,7 @@ func New(
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
 	emailSender email.Sender,
+	webPushSender webpush.Sender,
 	account *account.Processor,
 	media *media.Processor,
 	stream *stream.Processor,
@@ -65,6 +67,7 @@ func New(
 		Stream:        stream,
 		VisFilter:     visFilter,
 		EmailSender:   emailSender,
+		WebPushSender: webPushSender,
 		Conversations: conversations,
 	}
 

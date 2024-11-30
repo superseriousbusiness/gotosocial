@@ -647,5 +647,10 @@ func (s *Surface) Notify(
 	}
 	s.Stream.Notify(ctx, targetAccount, apiNotif)
 
+	// Send Web Push notification to the user.
+	if err = s.WebPushSender.Send(ctx, notif, filters, compiledMutes); err != nil {
+		return gtserror.Newf("error sending Web Push notifications: %w", err)
+	}
+
 	return nil
 }

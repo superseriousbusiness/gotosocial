@@ -50,6 +50,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -164,6 +165,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	federator := testrig.NewTestFederator(state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
+	webPushSender := webpush.NewMockSender()
 	typeConverter := typeutils.NewConverter(state)
 	filter := visibility.NewFilter(state)
 
@@ -187,7 +189,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
-	processor := testrig.NewTestProcessor(state, federator, emailSender, mediaManager)
+	processor := testrig.NewTestProcessor(state, federator, emailSender, webPushSender, mediaManager)
 
 	// Initialize workers.
 	testrig.StartWorkers(state, processor.Workers())
