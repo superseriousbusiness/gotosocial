@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -91,7 +92,13 @@ func (suite *ReportsStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		webpush.NewNoopSender(),
+		suite.mediaManager,
+	)
 	suite.reportsModule = reports.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -75,8 +76,21 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	suite.state.Storage = suite.storage
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), suite.mediaManager)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.federator = testrig.NewTestFederator(
+		&suite.state,
+		testrig.NewTestTransportController(
+			&suite.state,
+			testrig.NewMockHTTPClient(nil, "../../../testrig/media"),
+		),
+		suite.mediaManager,
+	)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		webpush.NewNoopSender(),
+		suite.mediaManager,
+	)
 
 	suite.tc = typeutils.NewConverter(&suite.state)
 

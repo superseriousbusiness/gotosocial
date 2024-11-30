@@ -34,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -95,6 +96,7 @@ func (suite *ExportsTestSuite) SetupTest() {
 		&suite.state,
 		federator,
 		testrig.NewEmailSender("../../../../web/template/", nil),
+		webpush.NewNoopSender(),
 		mediaManager,
 	)
 

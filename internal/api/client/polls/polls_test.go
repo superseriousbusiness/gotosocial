@@ -31,19 +31,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type PollsStandardTestSuite struct {
 	suite.Suite
-	db           db.DB
-	storage      *storage.Driver
-	mediaManager *media.Manager
-	federator    *federation.Federator
-	processor    *processing.Processor
-	emailSender  email.Sender
-	sentEmails   map[string]string
-	state        state.State
+	db            db.DB
+	storage       *storage.Driver
+	mediaManager  *media.Manager
+	federator     *federation.Federator
+	processor     *processing.Processor
+	emailSender   email.Sender
+	sentEmails    map[string]string
+	webPushSender *webpush.MockSender
+	state         state.State
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -91,7 +93,13 @@ func (suite *PollsStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		webpush.NewNoopSender(),
+		suite.mediaManager,
+	)
 	suite.pollsModule = polls.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

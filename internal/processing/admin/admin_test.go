@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -119,6 +120,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 		suite.mediaManager,
 		&suite.state,
 		suite.emailSender,
+		webpush.NewNoopSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)
