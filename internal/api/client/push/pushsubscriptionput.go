@@ -129,10 +129,9 @@ import (
 //
 //	responses:
 //		'200':
-//			name: pushSubscription
-//			description: Push subscription for current auth token.
+//			description: Web Push subscription for current access token.
 //			schema:
-//				"$ref": "#/definitions/pushSubscription"
+//				"$ref": "#/definitions/webPushSubscription"
 //		'400':
 //			description: bad request
 //		'401':

@@ -32,11 +32,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// TODO: (Vyr) real parameters
-
 // PushSubscriptionPOSTHandler swagger:operation POST /api/v1/push/subscription pushSubscriptionPost
 //
-// Get the push subscription
+// Create a new Web Push subscription for the current access token, or replace the existing one.
 //
 //	---
 //	tags:
@@ -156,10 +154,9 @@ import (
 //
 //	responses:
 //		'200':
-//			name: pushSubscription
-//			description: Push subscription for current auth token.
+//			description: Web Push subscription for current access token.
 //			schema:
-//				"$ref": "#/definitions/pushSubscription"
+//				"$ref": "#/definitions/webPushSubscription"
 //		'400':
 //			description: bad request
 //		'401':
