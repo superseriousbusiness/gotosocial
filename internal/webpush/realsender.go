@@ -101,7 +101,7 @@ func (r *realSender) Send(
 		case gtsmodel.NotificationAdminReport:
 			notify = *subscription.NotifyAdminReport
 		case gtsmodel.NotificationPendingFave:
-			notify = *subscription.NotifyPendingFave
+			notify = *subscription.NotifyPendingFavourite
 		case gtsmodel.NotificationPendingReply:
 			notify = *subscription.NotifyPendingReply
 		case gtsmodel.NotificationPendingReblog:
@@ -174,7 +174,7 @@ func (r *realSender) sendToSubscription(
 	}
 
 	// Create push notification payload struct.
-	pushNotification := &apimodel.PushNotification{
+	pushNotification := &apimodel.WebPushNotification{
 		NotificationID:   apiNotification.ID,
 		NotificationType: apiNotification.Type,
 		Icon:             apiNotification.Account.Avatar,

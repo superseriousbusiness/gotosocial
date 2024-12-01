@@ -17,12 +17,12 @@
 
 package model
 
-// PushNotification represents a notification summary delivered to the client by the Web Push server.
+// WebPushNotification represents a notification summary delivered to the client by the Web Push server.
 // It does not contain an entire Notification, just the NotificationID and some preview information.
-// It is not used in the client API directly.
+// It is not used in the client API directly, but is included in the API doc for decoding Web Push notifications.
 //
-// swagger:model pushNotification
-type PushNotification struct {
+// swagger:model webPushNotification
+type WebPushNotification struct {
 	// NotificationID is the Notification.ID of the referenced Notification.
 	NotificationID string `json:"notification_id"`
 

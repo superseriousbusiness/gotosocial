@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
@@ -54,7 +55,7 @@ func (w *webPushDB) PutVAPIDKeyPair(ctx context.Context, vapidKeyPair *gtsmodel.
 }
 
 func (w *webPushDB) GetWebPushSubscriptionByTokenID(ctx context.Context, tokenID string) (*gtsmodel.WebPushSubscription, error) {
-	return w.state.Caches.DB.WebPushSubscription.LoadOne(
+	subscription, err := w.state.Caches.DB.WebPushSubscription.LoadOne(
 		"TokenID",
 		func() (*gtsmodel.WebPushSubscription, error) {
 			var subscription gtsmodel.WebPushSubscription
@@ -67,6 +68,10 @@ func (w *webPushDB) GetWebPushSubscriptionByTokenID(ctx context.Context, tokenID
 		},
 		tokenID,
 	)
+	if err != nil {
+		return nil, err
+	}
+	return subscription, nil
 }
 
 func (w *webPushDB) PutWebPushSubscription(ctx context.Context, subscription *gtsmodel.WebPushSubscription) error {
@@ -85,14 +90,21 @@ func (w *webPushDB) UpdateWebPushSubscription(ctx context.Context, subscription 
 	}
 
 	// Update database.
-	if _, err := w.db.
+	result, err := w.db.
 		NewUpdate().
 		Model(subscription).
 		Column(columns...).
 		Where("? = ?", bun.Ident("id"), subscription.ID).
-		Exec(ctx); // nocollapse
-	err != nil {
+		Exec(ctx)
+	if err != nil {
 		return err
+	}
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return gtserror.Newf("error getting updated row count: %w", err)
+	}
+	if rowsAffected == 0 {
+		return db.ErrNoEntries
 	}
 
 	// Update cache.

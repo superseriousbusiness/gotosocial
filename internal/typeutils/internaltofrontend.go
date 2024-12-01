@@ -2997,3 +2997,34 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		URI:        req.URI,
 	}, nil
 }
+
+func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
+	ctx context.Context,
+	subscription *gtsmodel.WebPushSubscription,
+) (*apimodel.WebPushSubscription, error) {
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID key pair: %w", err)
+	}
+
+	return &apimodel.WebPushSubscription{
+		ID:        subscription.ID,
+		Endpoint:  subscription.Endpoint,
+		ServerKey: vapidKeyPair.Public,
+		Alerts: apimodel.WebPushSubscriptionAlerts{
+			Follow:           *subscription.NotifyFollow,
+			FollowRequest:    *subscription.NotifyFollowRequest,
+			Favourite:        *subscription.NotifyFavourite,
+			Mention:          *subscription.NotifyMention,
+			Reblog:           *subscription.NotifyReblog,
+			Poll:             *subscription.NotifyPoll,
+			Status:           *subscription.NotifyStatus,
+			Update:           *subscription.NotifyUpdate,
+			AdminSignup:      *subscription.NotifyAdminSignup,
+			AdminReport:      *subscription.NotifyAdminReport,
+			PendingFavourite: *subscription.NotifyPendingFavourite,
+			PendingReply:     *subscription.NotifyPendingReply,
+			PendingReblog:    *subscription.NotifyPendingReblog,
+		},
+	}, nil
+}

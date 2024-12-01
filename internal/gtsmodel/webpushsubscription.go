@@ -51,17 +51,17 @@ type WebPushSubscription struct {
 
 	// NotifyFollow and friends control which notifications are delivered to a given subscription.
 	// Corresponds to NotificationType and model.PushSubscriptionAlerts.
-	NotifyFollow        *bool `bun:",nullzero,notnull,default:false"`
-	NotifyFollowRequest *bool `bun:",nullzero,notnull,default:false"`
-	NotifyFavourite     *bool `bun:",nullzero,notnull,default:false"`
-	NotifyMention       *bool `bun:",nullzero,notnull,default:false"`
-	NotifyReblog        *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPoll          *bool `bun:",nullzero,notnull,default:false"`
-	NotifyStatus        *bool `bun:",nullzero,notnull,default:false"`
-	NotifyUpdate        *bool `bun:",nullzero,notnull,default:false"`
-	NotifyAdminSignup   *bool `bun:",nullzero,notnull,default:false"`
-	NotifyAdminReport   *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPendingFave   *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPendingReply  *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPendingReblog *bool `bun:",nullzero,notnull,default:false"`
+	NotifyFollow           *bool `bun:",nullzero,notnull,default:false"`
+	NotifyFollowRequest    *bool `bun:",nullzero,notnull,default:false"`
+	NotifyFavourite        *bool `bun:",nullzero,notnull,default:false"`
+	NotifyMention          *bool `bun:",nullzero,notnull,default:false"`
+	NotifyReblog           *bool `bun:",nullzero,notnull,default:false"`
+	NotifyPoll             *bool `bun:",nullzero,notnull,default:false"`
+	NotifyStatus           *bool `bun:",nullzero,notnull,default:false"`
+	NotifyUpdate           *bool `bun:",nullzero,notnull,default:false"`
+	NotifyAdminSignup      *bool `bun:",nullzero,notnull,default:false"`
+	NotifyAdminReport      *bool `bun:",nullzero,notnull,default:false"`
+	NotifyPendingFavourite *bool `bun:",nullzero,notnull,default:false"`
+	NotifyPendingReply     *bool `bun:",nullzero,notnull,default:false"`
+	NotifyPendingReblog    *bool `bun:",nullzero,notnull,default:false"`
 }

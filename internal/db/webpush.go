@@ -33,13 +33,15 @@ type WebPush interface {
 	// This should be called at most once, during server startup.
 	PutVAPIDKeyPair(ctx context.Context, vapidKeyPair *gtsmodel.VAPIDKeyPair) error
 
-	// GetWebPushSubscriptionByTokenID retrieves an access token's Web Push subscription, if there is one.
+	// GetWebPushSubscriptionByTokenID retrieves an access token's Web Push subscription.
+	// There may not be one, in which case an error will be returned.
 	GetWebPushSubscriptionByTokenID(ctx context.Context, tokenID string) (*gtsmodel.WebPushSubscription, error)
 
 	// PutWebPushSubscription creates an access token's Web Push subscription.
 	PutWebPushSubscription(ctx context.Context, subscription *gtsmodel.WebPushSubscription) error
 
 	// UpdateWebPushSubscription updates an access token's Web Push subscription.
+	// There may not be one, in which case an error will be returned.
 	UpdateWebPushSubscription(ctx context.Context, subscription *gtsmodel.WebPushSubscription, columns ...string) error
 
 	// DeleteWebPushSubscriptionByTokenID deletes an access token's Web Push subscription, if there is one.
