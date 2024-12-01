@@ -224,18 +224,18 @@ func validateNormalizeCreate(request *apimodel.WebPushSubscriptionCreateRequest)
 	if request.Subscription.Endpoint == "" {
 		return errors.New("endpoint is required")
 	}
-	endpointUrl, err := url.Parse(request.Subscription.Endpoint)
+	endpointURL, err := url.Parse(request.Subscription.Endpoint)
 	if err != nil {
 		return errors.New("endpoint must be a valid URL")
 	}
 	// TODO: (Vyr) remove http option after testing
-	if endpointUrl.Scheme != "https" && endpointUrl.Scheme != "http" {
+	if endpointURL.Scheme != "https" && endpointURL.Scheme != "http" {
 		return errors.New("endpoint must be an https:// URL")
 	}
-	if endpointUrl.Host == "" {
+	if endpointURL.Host == "" {
 		return errors.New("endpoint URL must have a host")
 	}
-	if endpointUrl.Fragment != "" {
+	if endpointURL.Fragment != "" {
 		return errors.New("endpoint URL must not have a fragment")
 	}
 

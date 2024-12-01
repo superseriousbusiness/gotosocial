@@ -42,7 +42,7 @@ type Sender interface {
 func NewSender(httpClient *httpclient.Client, state *state.State) Sender {
 	return NewRealSender(
 		&http.Client{
-			Transport: &gtsHttpClientRoundTripper{
+			Transport: &gtsHTTPClientRoundTripper{
 				httpClient: httpClient,
 			},
 			// Other fields are already set on the http.Client inside the httpclient.Client.

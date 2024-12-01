@@ -238,12 +238,12 @@ func (r *realSender) sendToSubscription(
 	return nil
 }
 
-// gtsHttpClientRoundTripper helps wrap a GtS HTTP client back into a regular HTTP client,
+// gtsHTTPClientRoundTripper helps wrap a GtS HTTP client back into a regular HTTP client,
 // so that webpush-go can use our IP filters, bad hosts list, and retries.
-type gtsHttpClientRoundTripper struct {
+type gtsHTTPClientRoundTripper struct {
 	httpClient *httpclient.Client
 }
 
-func (r *gtsHttpClientRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
+func (r *gtsHTTPClientRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
 	return r.httpClient.Do(request)
 }
