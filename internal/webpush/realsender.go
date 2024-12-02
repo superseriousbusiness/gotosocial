@@ -240,7 +240,7 @@ func (r *realSender) sendToSubscription(
 	}()
 
 	// If there's an error, log the response.
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, responseBodyMaxLen))
 		if err != nil {
 			return gtserror.Newf("error reading Web Push server response: %w", err)
