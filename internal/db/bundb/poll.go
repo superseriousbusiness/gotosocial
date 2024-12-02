@@ -88,12 +88,15 @@ func (p *pollDB) getPoll(ctx context.Context, lookup string, dbQuery func(*gtsmo
 func (p *pollDB) GetOpenPolls(ctx context.Context) ([]*gtsmodel.Poll, error) {
 	var pollIDs []string
 
-	// Select all polls with unset `closed_at` time.
+	// Select all polls with:
+	// - UNSET `closed_at`
+	// - SET   `expires_at`
 	if err := p.db.NewSelect().
 		Table("polls").
 		Column("polls.id").
 		Join("JOIN ? ON ? = ?", bun.Ident("statuses"), bun.Ident("polls.id"), bun.Ident("statuses.poll_id")).
 		Where("? = true", bun.Ident("statuses.local")).
+		Where("? IS NOT NULL", bun.Ident("polls.expires_at")).
 		Where("? IS NULL", bun.Ident("polls.closed_at")).
 		Scan(ctx, &pollIDs); err != nil {
 		return nil, err

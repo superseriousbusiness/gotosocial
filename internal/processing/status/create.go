@@ -85,25 +85,8 @@ func (p *Processor) Create(
 		PendingApproval: util.Ptr(false),
 	}
 
-	if form.Poll != nil {
-		// Update the status AS type to "Question".
-		status.ActivityStreamsType = ap.ActivityQuestion
-
-		// Create new poll for status from form.
-		secs := time.Duration(form.Poll.ExpiresIn)
-		status.Poll = &gtsmodel.Poll{
-			ID:         id.NewULID(),
-			Multiple:   &form.Poll.Multiple,
-			HideCounts: &form.Poll.HideTotals,
-			Options:    form.Poll.Options,
-			StatusID:   statusID,
-			Status:     status,
-			ExpiresAt:  now.Add(secs * time.Second),
-		}
-
-		// Set poll ID on the status.
-		status.PollID = status.Poll.ID
-	}
+	// Process any attached poll.
+	p.processPoll(status, form.Poll)
 
 	// Check + attach in-reply-to status.
 	if errWithCode := p.processInReplyTo(ctx,
@@ -153,6 +136,14 @@ func (p *Processor) Create(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
+	if status.Poll != nil && !status.Poll.ExpiresAt.IsZero() {
+		// Now that the status is inserted, and side effects queued,
+		// attempt to schedule an expiry handler for the status poll.
+		if err := p.polls.ScheduleExpiry(ctx, status.Poll); err != nil {
+			log.Errorf(ctx, "error scheduling poll expiry: %v", err)
+		}
+	}
+
 	// send it back to the client API worker for async side-effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
@@ -160,14 +151,6 @@ func (p *Processor) Create(
 		GTSModel:       status,
 		Origin:         requester,
 	})
-
-	if status.Poll != nil {
-		// Now that the status is inserted, and side effects queued,
-		// attempt to schedule an expiry handler for the status poll.
-		if err := p.polls.ScheduleExpiry(ctx, status.Poll); err != nil {
-			log.Errorf(ctx, "error scheduling poll expiry: %v", err)
-		}
-	}
 
 	// If the new status replies to a status that
 	// replies to us, use our reply as an implicit
@@ -187,6 +170,43 @@ func (p *Processor) Create(
 	}
 
 	return p.c.GetAPIStatus(ctx, requester, status)
+}
+
+func (p *Processor) processPoll(status *gtsmodel.Status, poll *apimodel.PollRequest) {
+	if poll == nil {
+		// No poll set.
+		// Nothing to do.
+		return
+	}
+
+	var expiresAt time.Time
+
+	// Now will have been set
+	// as the status creation.
+	now := status.CreatedAt
+
+	// Update the status AS type to "Question".
+	status.ActivityStreamsType = ap.ActivityQuestion
+
+	// Set an expiry time if one given.
+	if in := poll.ExpiresIn; in > 0 {
+		expiresIn := time.Duration(in)
+		expiresAt = now.Add(expiresIn * time.Second)
+	}
+
+	// Create new poll for status.
+	status.Poll = &gtsmodel.Poll{
+		ID:         id.NewULID(),
+		Multiple:   &poll.Multiple,
+		HideCounts: &poll.HideTotals,
+		Options:    poll.Options,
+		StatusID:   status.ID,
+		Status:     status,
+		ExpiresAt:  expiresAt,
+	}
+
+	// Set poll ID on the status.
+	status.PollID = status.Poll.ID
 }
 
 func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status, inReplyToID string) gtserror.WithCode {
