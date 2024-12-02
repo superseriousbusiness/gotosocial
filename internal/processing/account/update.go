@@ -463,9 +463,10 @@ func (p *Processor) UpdateAvatar(
 ) {
 	// Get maximum supported local media size.
 	maxsz := config.GetMediaLocalMaxSize()
+	maxszInt64 := int64(maxsz) // #nosec G115 -- Already validated.
 
 	// Ensure media within size bounds.
-	if avatar.Size > int64(maxsz) {
+	if avatar.Size > maxszInt64 {
 		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
@@ -478,7 +479,7 @@ func (p *Processor) UpdateAvatar(
 	}
 
 	// Wrap the multipart file reader to ensure is limited to max.
-	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxszInt64)
 
 	// Write to instance storage.
 	return p.c.StoreLocalMedia(ctx,
@@ -508,9 +509,10 @@ func (p *Processor) UpdateHeader(
 ) {
 	// Get maximum supported local media size.
 	maxsz := config.GetMediaLocalMaxSize()
+	maxszInt64 := int64(maxsz) // #nosec G115 -- Already validated.
 
 	// Ensure media within size bounds.
-	if header.Size > int64(maxsz) {
+	if header.Size > maxszInt64 {
 		text := fmt.Sprintf("media exceeds configured max size: %s", maxsz)
 		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 	}
@@ -523,7 +525,7 @@ func (p *Processor) UpdateHeader(
 	}
 
 	// Wrap the multipart file reader to ensure is limited to max.
-	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, int64(maxsz))
+	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxszInt64)
 
 	// Write to instance storage.
 	return p.c.StoreLocalMedia(ctx,

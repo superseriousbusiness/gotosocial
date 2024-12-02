@@ -19,25 +19,26 @@ func (vfsOS) FullPathname(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fi, err := os.Lstat(path)
+	return path, testSymlinks(filepath.Dir(path))
+}
+
+func testSymlinks(path string) error {
+	p, err := filepath.EvalSymlinks(path)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return path, nil
-		}
-		return "", err
+		return err
 	}
-	if fi.Mode()&fs.ModeSymlink != 0 {
-		err = _OK_SYMLINK
+	if p != path {
+		return _OK_SYMLINK
 	}
-	return path, err
+	return nil
 }
 
 func (vfsOS) Delete(path string, syncDir bool) error {
 	err := os.Remove(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return _IOERR_DELETE_NOENT
+	}
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return _IOERR_DELETE_NOENT
-		}
 		return err
 	}
 	if runtime.GOOS != "windows" && syncDir {
@@ -74,7 +75,7 @@ func (vfsOS) Open(name string, flags OpenFlag) (File, OpenFlag, error) {
 }
 
 func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error) {
-	var oflags int
+	oflags := _O_NOFOLLOW
 	if flags&OPEN_EXCLUSIVE != 0 {
 		oflags |= os.O_EXCL
 	}
@@ -150,6 +151,7 @@ func (f *vfsFile) Close() error {
 	if f.shm != nil {
 		f.shm.Close()
 	}
+	f.Unlock(LOCK_NONE)
 	return f.File.Close()
 }
 
@@ -185,7 +187,7 @@ func (f *vfsFile) SectorSize() int {
 }
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
-	var res DeviceCharacteristic
+	res := IOCAP_SUBPAGE_READ
 	if osBatchAtomic(f.File) {
 		res |= IOCAP_BATCH_ATOMIC
 	}
@@ -205,10 +207,10 @@ func (f *vfsFile) HasMoved() (bool, error) {
 		return false, err
 	}
 	pi, err := os.Stat(f.Name())
+	if errors.Is(err, fs.ErrNotExist) {
+		return true, nil
+	}
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return true, nil
-		}
 		return false, err
 	}
 	return !os.SameFile(fi, pi), nil

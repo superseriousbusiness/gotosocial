@@ -24,18 +24,22 @@ var indexed_item_pool sync.Pool
 func new_indexed_item() *indexed_item {
 	v := indexed_item_pool.Get()
 	if v == nil {
-		v = new(indexed_item)
+		i := new(indexed_item)
+		i.elem.data = unsafe.Pointer(i)
+		v = i
 	}
 	item := v.(*indexed_item)
-	ptr := unsafe.Pointer(item)
-	item.elem.data = ptr
 	return item
 }
 
 // free_indexed_item releases the indexed_item.
 func free_indexed_item(item *indexed_item) {
-	item.elem.data = nil
-	item.indexed = item.indexed[:0]
+	if len(item.indexed) > 0 ||
+		item.elem.next != nil ||
+		item.elem.prev != nil {
+		should_not_reach()
+		return
+	}
 	item.data = nil
 	indexed_item_pool.Put(item)
 }
@@ -50,12 +54,9 @@ func (i *indexed_item) drop_index(entry *index_entry) {
 			continue
 		}
 
-		// Unset tptr value to
-		// ensure GC can take it.
-		i.indexed[x] = nil
-
-		// Move all index entries down + reslice.
+		// Reslice index entries minus 'x'.
 		_ = copy(i.indexed[x:], i.indexed[x+1:])
+		i.indexed[len(i.indexed)-1] = nil
 		i.indexed = i.indexed[:len(i.indexed)-1]
 		break
 	}

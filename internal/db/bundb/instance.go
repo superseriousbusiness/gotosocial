@@ -103,6 +103,9 @@ func (i *instanceDB) CountInstanceStatuses(ctx context.Context, domain string) (
 	// Ignore statuses that are currently pending approval.
 	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
 
+	// Ignore statuses that are direct messages.
+	q = q.Where("NOT ? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityDirect)
+
 	count, err := q.Count(ctx)
 	if err != nil {
 		return 0, err

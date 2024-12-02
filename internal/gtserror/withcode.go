@@ -191,6 +191,19 @@ func NewErrorGone(original error, helpText ...string) WithCode {
 	}
 }
 
+// NewErrorNotImplemented returns an ErrorWithCode 501 with the given original error and optional help text.
+func NewErrorNotImplemented(original error, helpText ...string) WithCode {
+	safe := http.StatusText(http.StatusNotImplemented)
+	if helpText != nil {
+		safe = safe + ": " + strings.Join(helpText, ": ")
+	}
+	return withCode{
+		original: original,
+		safe:     errors.New(safe),
+		code:     http.StatusNotImplemented,
+	}
+}
+
 // NewErrorClientClosedRequest returns an ErrorWithCode 499 with the given original error.
 // This error type should only be used when an http caller has already hung up their request.
 // See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx

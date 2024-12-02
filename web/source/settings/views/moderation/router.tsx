@@ -29,6 +29,12 @@ import DomainPermDetail from "./domain-permissions/detail";
 import AccountsSearch from "./accounts";
 import AccountsPending from "./accounts/pending";
 import AccountDetail from "./accounts/detail";
+import DomainPermissionDraftsSearch from "./domain-permissions/drafts";
+import DomainPermissionDraftNew from "./domain-permissions/drafts/new";
+import DomainPermissionDraftDetail from "./domain-permissions/drafts/detail";
+import DomainPermissionExcludeDetail from "./domain-permissions/excludes/detail";
+import DomainPermissionExcludesSearch from "./domain-permissions/excludes";
+import DomainPermissionExcludeNew from "./domain-permissions/excludes/new";
 
 /*
 	EXPORTED COMPONENTS
@@ -139,6 +145,12 @@ function ModerationDomainPermsRouter() {
 					<Switch>
 						<Route path="/import-export" component={ImportExport} />
 						<Route path="/process" component={ImportExport} />
+						<Route path="/drafts/search" component={DomainPermissionDraftsSearch} />
+						<Route path="/drafts/new" component={DomainPermissionDraftNew} />
+						<Route path="/drafts/:permDraftId" component={DomainPermissionDraftDetail} />
+						<Route path="/excludes/search" component={DomainPermissionExcludesSearch} />
+						<Route path="/excludes/new" component={DomainPermissionExcludeNew} />
+						<Route path="/excludes/:excludeId" component={DomainPermissionExcludeDetail} />
 						<Route path="/:permType" component={DomainPermissionsOverview} />
 						<Route path="/:permType/:domain" component={DomainPermDetail} />
 						<Route><Redirect to="/blocks"/></Route>

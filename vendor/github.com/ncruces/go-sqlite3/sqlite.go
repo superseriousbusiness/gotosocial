@@ -9,11 +9,12 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
-	"github.com/ncruces/go-sqlite3/vfs"
 	"github.com/tetratelabs/wazero"
 	"github.com/tetratelabs/wazero/api"
 	"github.com/tetratelabs/wazero/experimental"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
+	"github.com/ncruces/go-sqlite3/vfs"
 )
 
 // Configure SQLite Wasm.
@@ -49,10 +50,15 @@ func compileSQLite() {
 	cfg := RuntimeConfig
 	if cfg == nil {
 		cfg = wazero.NewRuntimeConfig()
+		if bits.UintSize >= 64 {
+			cfg = cfg.WithMemoryLimitPages(4096) // 256MB
+		} else {
+			cfg = cfg.WithMemoryLimitPages(512) // 32MB
+		}
 	}
+	cfg = cfg.WithCoreFeatures(api.CoreFeaturesV2 | experimental.CoreFeaturesThreads)
 
-	instance.runtime = wazero.NewRuntimeWithConfig(ctx,
-		cfg.WithCoreFeatures(api.CoreFeaturesV2|experimental.CoreFeaturesThreads))
+	instance.runtime = wazero.NewRuntimeWithConfig(ctx, cfg)
 
 	env := instance.runtime.NewHostModuleBuilder("env")
 	env = vfs.ExportHostFunctions(env)
@@ -131,7 +137,7 @@ func (sqlt *sqlite) error(rc uint64, handle uint32, sql ...string) error {
 			err.msg = util.ReadString(sqlt.mod, uint32(r), _MAX_LENGTH)
 		}
 
-		if sql != nil {
+		if len(sql) != 0 {
 			if r := sqlt.call("sqlite3_error_offset", uint64(handle)); r != math.MaxUint32 {
 				err.sql = sql[0][r:]
 			}
@@ -301,7 +307,7 @@ func (a *arena) string(s string) uint32 {
 
 func exportCallbacks(env wazero.HostModuleBuilder) wazero.HostModuleBuilder {
 	util.ExportFuncII(env, "go_progress_handler", progressCallback)
-	util.ExportFuncIIII(env, "go_busy_timeout", timeoutCallback)
+	util.ExportFuncIII(env, "go_busy_timeout", timeoutCallback)
 	util.ExportFuncIII(env, "go_busy_handler", busyCallback)
 	util.ExportFuncII(env, "go_commit_hook", commitCallback)
 	util.ExportFuncVI(env, "go_rollback_hook", rollbackCallback)

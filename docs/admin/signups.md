@@ -17,7 +17,7 @@ You can open new account sign-ups for your instance by changing the variable `ac
 
 A sign-up form for your instance will be available at the `/signup` endpoint. For example, `https://your-instance.example.org/signup`.
 
-![Sign-up form, showing email, password, username, and reason fields.](../assets/signup-form.png)
+![Sign-up form, showing email, password, username, and reason fields.](../public/signup-form.png)
 
 Also, your instance homepage and "about" pages will be updated to reflect that registrations are open.
 
@@ -29,11 +29,11 @@ In the meantime, admins and moderators on your instance will receive an email an
 
 Instance admins and moderators can handle a new sign-up by either approving or rejecting it via the "accounts" -> "pending" section in the admin panel.
 
-![Admin settings panel open to "accounts" -> "pending", showing one account in a list.](../assets/signup-pending.png)
+![Admin settings panel open to "accounts" -> "pending", showing one account in a list.](../public/signup-pending.png)
 
 If you have no sign-ups, the list pictured above will be empty. If you have a pending account sign-up, however, you can click on it to open that account in the account details screen:
 
-![Details of a new pending account, giving options to approve or reject the sign-up.](../assets/signup-account.png)
+![Details of a new pending account, giving options to approve or reject the sign-up.](../public/signup-account.png)
 
 At the bottom, you will find actions that let you approve or reject the sign-up.
 

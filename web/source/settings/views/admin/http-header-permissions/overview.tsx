@@ -27,6 +27,7 @@ import { PermType } from "../../../lib/types/perm";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SerializedError } from "@reduxjs/toolkit";
 import HeaderPermCreateForm from "./create";
+import { useCapitalize } from "../../../lib/util";
 
 export default function HeaderPermsOverview() {
 	const [ location, setLocation ] = useLocation();
@@ -41,9 +42,7 @@ export default function HeaderPermsOverview() {
 	}, [params]);
 
 	// Uppercase first letter of given permType.
-	const permTypeUpper = useMemo(() => {
-		return permType.charAt(0).toUpperCase() + permType.slice(1); 
-	}, [permType]);
+	const permTypeUpper = useCapitalize(permType);
 	
 	// Fetch desired perms, skipping
 	// the ones we don't want.

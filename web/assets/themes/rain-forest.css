@@ -8,21 +8,21 @@
    v1.0 by xmgz at github */
 
 :root {
-/* color definitions */
---dgreen1: #003333;
---dgreen2: #196C41;
---dgreen3: #027C68;
---dgreen4: #009933;
---dblue1: #141E46;   /* very dark blue */
---typecolor: #F8F4EC;
---linkcolor: #c0f0c0; /* very soft lime green */
---sunny: #FCDC2A;
---lesssunny: #FF7431; /* papaya */
-/* wood/earth colors */
---codebg: #3A2722;  /* darker caoba */
---quotebg: #800000; /* maroon */
-/* water, post's date and stats. User stats */
---fg-reduced: #BBEBFF;
+  /* color definitions */
+  --dgreen1: #003333;
+  --dgreen2: #196C41;
+  --dgreen3: #027C68;
+  --dgreen4: #009933;
+  --dblue1: #141E46;   /* very dark blue */
+  --typecolor: #F8F4EC;
+  --linkcolor: #c0f0c0; /* very soft lime green */
+  --sunny: #FCDC2A;
+  --lesssunny: #FF7431; /* papaya */
+  /* wood/earth colors */
+  --codebg: #3A2722;  /* darker caoba */
+  --quotebg: #800000; /* maroon */
+  /* water, post's date and stats. User stats */
+  --fg-reduced: #BBEBFF;
 
   /* Restyle basic colors  */
   --blue1: var(--dgreen2);
@@ -43,12 +43,9 @@
   --button-bg: var(--lesssunny);
   --button-fg: var(--dblue1);
 
-
-
   /* Used around statuses + other items */
   --boxshadow: 0 0.4rem 0.7rem -0.1rem rgba(252,220,42,0.15); /* subtle status glow */
   --boxshadow-border: 0.07rem solid var(--lesssunny);  /* thin papaya border */
-
 }
 
 

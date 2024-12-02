@@ -33,7 +33,7 @@ When your instance encounters a mention or an announce of a status or account it
 
 It is possible to both block and allow the same domain, and the effect of combining these two things depends on which federation mode your instance is currently using.
 
-![A flow chart diagram showing how the two different federation modes treat incoming requests.](../assets/diagrams/federation_modes.png)
+![A flow chart diagram showing how the two different federation modes treat incoming requests.](../public/diagrams/federation_modes.png)
 
 ### In blocklist mode
 

@@ -516,17 +516,20 @@ func (d *Dereferencer) enrichStatus(
 		latestStatus.ID = status.ID
 	}
 
-	// Carry-over values and set fetch time.
-	latestStatus.UpdatedAt = status.UpdatedAt
+	// Set latest fetch time and carry-
+	// over some values from "old" status.
 	latestStatus.FetchedAt = time.Now()
+	latestStatus.UpdatedAt = status.UpdatedAt
 	latestStatus.Local = status.Local
+	latestStatus.PinnedAt = status.PinnedAt
 
 	// Carry-over approvals. Remote instances might not yet
 	// serve statuses with the `approved_by` field, but we
 	// might have marked a status as pre-approved on our side
 	// based on the author's inclusion in a followers/following
-	// collection. By carrying over previously-set values we
-	// can avoid marking such statuses as "pending" again.
+	// collection, or by providing pre-approval URI on the bare
+	// status passed to RefreshStatus. By carrying over previously
+	// set values we can avoid marking such statuses as "pending".
 	//
 	// If a remote has in the meantime retracted its approval,
 	// the next call to 'isPermittedStatus' will catch that.

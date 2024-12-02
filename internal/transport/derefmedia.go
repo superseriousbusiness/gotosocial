@@ -53,7 +53,7 @@ func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL, maxsz in
 	// Check media within size limit.
 	if rsp.ContentLength > maxsz {
 		_ = rsp.Body.Close()       // close early.
-		sz := bytesize.Size(maxsz) // nicer log format
+		sz := bytesize.Size(maxsz) //nolint:gosec
 		return nil, gtserror.Newf("media body exceeds max size %s", sz)
 	}
 

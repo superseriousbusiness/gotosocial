@@ -169,6 +169,7 @@ var Defaults = Configuration{
 		ClientMemRatio:                    0.1,
 		ConversationMemRatio:              1,
 		ConversationLastStatusIDsMemRatio: 2,
+		DomainPermissionDraftMemRation:    0.5,
 		EmojiMemRatio:                     3,
 		EmojiCategoryMemRatio:             0.1,
 		FilterMemRatio:                    0.5,

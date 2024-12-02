@@ -248,6 +248,45 @@ func (suite *NotificationsTestSuite) TestGetNotificationsIncludeOneType() {
 	}
 }
 
+// Test including an unknown notification type, it should be ignored.
+func (suite *NotificationsTestSuite) TestGetNotificationsIncludeUnknownType() {
+	testAccount := suite.testAccounts["local_account_1"]
+	testToken := suite.testTokens["local_account_1"]
+	testUser := suite.testUsers["local_account_1"]
+
+	suite.addMoreNotifications(testAccount)
+
+	maxID := ""
+	minID := ""
+	limit := 10
+	types := []string{"favourite", "something.weird"}
+	excludeTypes := []string(nil)
+	expectedHTTPStatus := http.StatusOK
+	expectedBody := ""
+
+	notifications, _, err := suite.getNotifications(
+		testAccount,
+		testToken,
+		testUser,
+		maxID,
+		minID,
+		limit,
+		types,
+		excludeTypes,
+		expectedHTTPStatus,
+		expectedBody,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// This should only include the fav notification.
+	suite.Len(notifications, 1)
+	for _, notification := range notifications {
+		suite.Equal("favourite", notification.Type)
+	}
+}
+
 func TestBookmarkTestSuite(t *testing.T) {
 	suite.Run(t, new(NotificationsTestSuite))
 }

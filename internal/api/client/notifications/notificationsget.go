@@ -18,14 +18,16 @@
 package notifications
 
 import (
-	"fmt"
+	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // NotificationsGETHandler swagger:operation GET /api/v1/notifications notifications
@@ -152,27 +154,23 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 		return
 	}
 
-	limit := 20
-	limitString := c.Query(LimitKey)
-	if limitString != "" {
-		i, err := strconv.ParseInt(limitString, 10, 32)
-		if err != nil {
-			err := fmt.Errorf("error parsing %s: %s", LimitKey, err)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-			return
-		}
-		limit = int(i)
+	page, errWithCode := paging.ParseIDPage(c,
+		1,  // min limit
+		80, // max limit
+		20, // no limit
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
 	}
 
+	ctx := c.Request.Context()
 	resp, errWithCode := m.processor.Timeline().NotificationsGet(
-		c.Request.Context(),
+		ctx,
 		authed,
-		c.Query(MaxIDKey),
-		c.Query(SinceIDKey),
-		c.Query(MinIDKey),
-		limit,
-		c.QueryArray(TypesKey),
-		c.QueryArray(ExcludeTypesKey),
+		page,
+		parseNotificationTypes(ctx, c.QueryArray(TypesKey)),        // Include types.
+		parseNotificationTypes(ctx, c.QueryArray(ExcludeTypesKey)), // Exclude types.
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -184,4 +182,29 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 	}
 
 	apiutil.JSON(c, http.StatusOK, resp.Items)
+}
+
+// parseNotificationTypes converts the given slice of string values
+// to gtsmodel notification types, logging + skipping unknown types.
+func parseNotificationTypes(
+	ctx context.Context,
+	values []string,
+) []gtsmodel.NotificationType {
+	if len(values) == 0 {
+		return nil
+	}
+
+	ntypes := make([]gtsmodel.NotificationType, 0, len(values))
+	for _, value := range values {
+		ntype := gtsmodel.ParseNotificationType(value)
+		if ntype == gtsmodel.NotificationUnknown {
+			// Type we don't know about (yet), log and ignore it.
+			log.Warnf(ctx, "ignoring unknown type %s", value)
+			continue
+		}
+
+		ntypes = append(ntypes, ntype)
+	}
+
+	return ntypes
 }

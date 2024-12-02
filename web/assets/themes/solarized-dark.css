@@ -1,6 +1,6 @@
 /*
-  theme-title: Solarized (dark)
-  theme-description: Solarized sloth (dark)
+  theme-title: Solarized dark
+  theme-description: Dark green and grey solarized theme with red trim
 */
 
 /*
@@ -29,57 +29,42 @@
 
 :root {
   /* Define solarized palette */
-  --base3:     #002b36;
-  --base2:     #073642;
-  --base1:     #586e75;
-  --base0:     #657b83;
-  --base00:    #839496;
-  --base01:    #93a1a1;
-  --base02:    #eee8d5;
-  --base03:    #fdf6e3;
-  --yellow:    #b58900;
-  --orange:    #cb4b16;
-  --red:       #dc322f;
-  --magenta:   #d33682;
-  --violet:    #6c71c4;
-  --blue:      #268bd2;
-  --cyan:      #2aa198;
-  --green:     #859900;
+  --base03:    #002b36; /* Background. */
+  --base02:    #073642; /* Background highlights. */
+  --base01:    #586e75; /* Comments / secondary color. */
+  --base0:     #839496; /* Body text / default code / primary content. */
+  --base1:     #93a1a1; /* Optional emphasized content. */
+  --red:       #dc322f; /* Trim. */
 
   /* Override orange trim */
   --orange2: var(--red);
 
   /* Restyle basic colors to use Solarized */
-  --white1: var(--base3);
-  --white2: var(--base2);
-  --blue1: var(--cyan);
-  --blue2: var(--base03);
-  --blue3: var(--base02);
+  --white1: var(--base03);
+  --white2: var(--base02);
+  --blue2: var(--base1);
+  --blue3: var(--base1);
 
   /* Basic page styling (background + foreground) */
-  --bg: var(--white1);
-  --bg-accent: var(--white2);
-  --fg: var(--base02);
-  --fg-reduced: var(--base01);
+  --bg: var(--base02);
+  --bg-accent: var(--base02);
+  --fg-reduced: var(--base0);
+  --fg: var(--base0);
 
-  /* Profile page styling (light) */
+  /* Profile page styling */
   --profile-bg: var(--white2);
 
-  /* Solarize buttons */
-  --button-bg: var(--blue2);
-  --button-fg: var(--white1);
-
   /* Solarize statuses */
-  --status-bg: var(--white1);
-  --status-focus-bg: var(--white1);
-  --status-info-bg: var(--white2);
-  --status-focus-info-bg: var(--white2);
+  --status-bg: var(--base03);
+  --status-focus-bg: var(--base03);
+  --status-info-bg: var(--base02);
+  --status-focus-info-bg: var(--base02);
 
   /* Used around statuses + other items */
-  --boxshadow-border: 0.1rem solid var(--base1);
+  --boxshadow-border: 0.15rem solid var(--base01);
 
-  --plyr-video-control-color: var(--fg-reduced);
-  --plyr-video-control-color-hover: var(--fg);
+  --plyr-video-control-color: var(--base1);
+  --plyr-video-control-color-hover: var(--base03);
 }
 
 @font-face {
@@ -95,6 +80,45 @@ html, body {
   scrollbar-color: var(--orange2) var(--white1) ;
 }
 
+/* Column headers */
+.col-header {
+  border: var(--boxshadow-border);
+  color: var(--base1);
+}
+
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Instance title color */
+.page-header a h1 {
+  color: var(--base1);
+}
+
+/* Header card */
+.profile .profile-header {
+  border: var(--boxshadow-border);
+  background: var(--base03);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  background: var(--base03);
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .accountstats {
+  border-bottom: var(--boxshadow-border);
+  color: var(--base0);
+}
+
+.profile .about-user .fields {
+  padding-top: 0;
+}
+
 /* Profile fields */
 .profile .about-user .fields .field {
   border-bottom: var(--boxshadow-border);
@@ -106,9 +130,11 @@ html, body {
 /* Status media */
 .status .media .media-wrapper {
   border: var(--boxshadow-border);
+  background: var(--base02);
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
-  color: var(--blue2);
+  color: var(--base1);
+  border: 0.2rem dashed var(--base1);
 }
 .status .media .media-wrapper details video.plyr-video {
   background: transparent;
@@ -116,32 +142,50 @@ html, body {
 
 /* Status polls */
 .status .text .poll {
-  background-color: var(--white2);
+  background-color: var(--base03);
+  border: var(--boxshadow-border);
 }
 .status .text .poll .poll-info {
-  background-color: var(--white1);
+  background-color: var(--base03);
 }
 
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
   background-color: black;
-  color: var(--base03);
+  color: #93a1a1;
 }
 
 /* Block quotes */
 blockquote {
-  background-color: var(--bg-accent);
-  color: var(--fg);
+  background-color: var(--base03);
+  color: var(--base0);
 }
 
-button,
-.button,
+button, .button,
 .status .text-spoiler > summary .button {
   font-family: 'Noto Sans Mono', monospace;
 }
 
+.button {
+  color: var(--base1);
+  background: var(--base02);
+  border: var(--boxshadow-border);
+}
+
+.button:hover {
+  color: var(--base0);
+  background: var(--base03);
+  border: var(--boxshadow-border);
+}
+
 /* Ensure role badge readable */
 .profile .profile-header .basic-info .namerole .role.admin {
-  color: var(--base03);
+  color: var(--base1);
+}
+
+/* Distinguish bot icon */
+.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
+  border: var(--boxshadow-border);
+  color: var(--base1);
 }

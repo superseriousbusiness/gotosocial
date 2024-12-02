@@ -206,6 +206,13 @@ definitions:
                 example: A cute drawing of a smiling sloth.
                 type: string
                 x-go-name: AvatarDescription
+            avatar_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's avatar image.
+                    Omitted if no avatar uploaded for this account (ie., default avatar).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: AvatarMediaID
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -277,6 +284,13 @@ definitions:
                 example: A sunlit field with purple flowers.
                 type: string
                 x-go-name: HeaderDescription
+            header_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's header image.
+                    Omitted if no header uploaded for this account (ie., default header).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: HeaderMediaID
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -296,8 +310,8 @@ definitions:
                 type: string
                 x-go-name: ID
             last_status_at:
-                description: When the account's most recent status was posted (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
+                description: When the account's most recent status was posted (ISO 8601 Date).
+                example: "2021-07-30"
                 type: string
                 x-go-name: LastStatusAt
             locked:
@@ -950,7 +964,12 @@ definitions:
             with "direct message" visibility.
         properties:
             accounts:
-                description: Participants in the conversation.
+                description: |-
+                    Participants in the conversation.
+
+                    If this is a conversation between no accounts (ie., a self-directed DM),
+                    this will include only the requesting account itself. Otherwise, it will
+                    include every other account in the conversation *except* the requester.
                 items:
                     $ref: '#/definitions/account'
                 type: array
@@ -1076,6 +1095,12 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: Obfuscate
+            permission_type:
+                description: |-
+                    Permission type of this entry (block, allow).
+                    Only set for domain permission drafts.
+                type: string
+                x-go-name: PermissionType
             private_comment:
                 description: Private comment for this permission entry, visible to this instance's admins only.
                 example: they are poopoo
@@ -2117,7 +2142,7 @@ definitions:
             bitrate:
                 description: Bitrate of the media in bits per second.
                 example: 1000000
-                format: int64
+                format: uint64
                 type: integer
                 x-go-name: Bitrate
             duration:
@@ -2214,6 +2239,13 @@ definitions:
                 example: A cute drawing of a smiling sloth.
                 type: string
                 x-go-name: AvatarDescription
+            avatar_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's avatar image.
+                    Omitted if no avatar uploaded for this account (ie., default avatar).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: AvatarMediaID
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -2285,6 +2317,13 @@ definitions:
                 example: A sunlit field with purple flowers.
                 type: string
                 x-go-name: HeaderDescription
+            header_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's header image.
+                    Omitted if no header uploaded for this account (ie., default header).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: HeaderMediaID
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -2304,8 +2343,8 @@ definitions:
                 type: string
                 x-go-name: ID
             last_status_at:
-                description: When the account's most recent status was posted (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
+                description: When the account's most recent status was posted (ISO 8601 Date).
+                example: "2021-07-30"
                 type: string
                 x-go-name: LastStatusAt
             locked:
@@ -4895,7 +4934,7 @@ paths:
                 - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance.
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   required: true
                   type: string
                 - description: A png or gif image of the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
@@ -5041,7 +5080,7 @@ paths:
                 - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. Works for the `copy` action type only.
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   type: string
                 - description: A new png or gif image to use for the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default. Works for LOCAL emojis only.
                   in: formData
@@ -5545,6 +5584,425 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Force expiry of cached public keys for all accounts on the given domain stored in your database.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts:
+        get:
+            description: |-
+                The drafts will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionDraftsGet
+            parameters:
+                - description: Show only drafts created by the given subscription ID.
+                  in: query
+                  name: subscription_id
+                  type: string
+                - description: Return only drafts that target the given domain.
+                  in: query
+                  name: domain
+                  type: string
+                - description: Filter on "block" or "allow" type drafts.
+                  in: query
+                  name: permission_type
+                  type: string
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission drafts.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain permission drafts.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftCreate
+            parameters:
+                - description: Domain to create the permission draft for.
+                  in: formData
+                  name: domain
+                  type: string
+                - description: Create a draft "allow" or a draft "block".
+                  in: formData
+                  name: permission_type
+                  type: string
+                - description: Obfuscate the name of the domain when serving it publicly. Eg., `example.org` becomes something like `ex***e.org`.
+                  in: formData
+                  name: obfuscate
+                  type: boolean
+                - description: Public comment about this domain permission. This will be displayed alongside the domain permission if you choose to share permissions.
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: Private comment about this domain permission. Will only be shown to other admins, so this is a useful way of internally keeping track of why a certain domain ended up permissioned.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission draft.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create a domain permission draft with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}:
+        get:
+            operationId: domainPermissionDraftGet
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission draft.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get domain permission draft with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}/accept:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftAccept
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: If a domain permission already exists with the same domain and permission type as the draft, overwrite the existing permission with fields from the draft.
+                  in: formData
+                  name: overwrite
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Accept a domain permission draft, turning it into an enforced domain permission.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}/remove:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftRemove
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: When removing the domain permission draft, also create a domain exclude entry for the target domain, so that drafts will not be created for this domain in the future.
+                  in: formData
+                  name: exclude_target
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The removed domain permission draft.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Remove a domain permission draft, optionally ignoring all future drafts targeting the given domain.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_excludes:
+        get:
+            description: |-
+                The excludes will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionExcludesGet
+            parameters:
+                - description: Return only excludes that target the given domain.
+                  in: query
+                  name: domain
+                  type: string
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission excludes.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain permission excludes.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            description: |-
+                Excluded domains (and their subdomains) will not be automatically blocked or allowed when a list of domain permissions is imported or subscribed to.
+
+                You can still manually create domain blocks or domain allows for excluded domains, and any new or existing domain blocks or domain allows for an excluded domain will still be enforced.
+            operationId: domainPermissionExcludeCreate
+            parameters:
+                - description: Domain to create the permission exclude for.
+                  in: formData
+                  name: domain
+                  type: string
+                - description: Private comment about this domain exclude.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission exclude.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create a domain permission exclude with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_excludes/{id}:
+        delete:
+            operationId: domainPermissionExcludeDelete
+            parameters:
+                - description: ID of the domain permission exclude.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The removed domain permission exclude.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Remove a domain permission exclude.
+            tags:
+                - admin
+        get:
+            operationId: domainPermissionExcludeGet
+            parameters:
+                - description: ID of the domain permission exclude.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission exclude.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get domain permission exclude with the given ID.
             tags:
                 - admin
     /api/v1/admin/email/test:
@@ -8950,7 +9408,7 @@ paths:
                     Providing this parameter will cause ScheduledStatus to be returned instead of Status.
                     Must be at least 5 minutes in the future.
 
-                    This feature isn't implemented yet.
+                    This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
                   in: formData
                   name: scheduled_at
                   type: string
@@ -9011,6 +9469,8 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+                "501":
+                    description: scheduled_at was set, but this feature is not yet implemented
             security:
                 - OAuth2 Bearer:
                     - write:statuses

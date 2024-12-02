@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build !moderncsqlite3
+//go:build !moderncsqlite3 && !nowasm
 
 package sqlite
 
@@ -112,7 +112,7 @@ func (c *sqliteConn) Close() (err error) {
 	raw := c.connIface.(sqlite3driver.Conn).Raw()
 
 	// see: https://www.sqlite.org/pragma.html#pragma_optimize
-	const onClose = "PRAGMA analysis_limit=1000; PRAGMA optimize;"
+	const onClose = "PRAGMA optimize;"
 	_ = raw.Exec(onClose)
 
 	// Finally, close.
@@ -198,6 +198,7 @@ type stmtIface interface {
 	driver.Stmt
 	driver.StmtExecContext
 	driver.StmtQueryContext
+	driver.NamedValueChecker
 }
 
 // RowsIface is the driver.Rows interface
@@ -207,4 +208,5 @@ type stmtIface interface {
 type rowsIface interface {
 	driver.Rows
 	driver.RowsColumnTypeDatabaseTypeName
+	driver.RowsColumnTypeNullable
 }

@@ -15,10 +15,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+//go:build !nowasm
+
 package ffmpeg
 
 import (
 	"context"
+	"errors"
+
+	"codeberg.org/gruf/go-ffmpreg/wasm"
 )
 
 // ffprobeRunner limits the number of
@@ -31,10 +36,25 @@ var ffprobeRunner runner
 // prepares the runner to only allow max given concurrent running instances.
 func InitFfprobe(ctx context.Context, max int) error {
 	ffprobeRunner.Init(max)
-	return compileFfprobe(ctx)
+	return initWASM(ctx)
 }
 
 // Ffprobe runs the given arguments with an instance of ffprobe.
 func Ffprobe(ctx context.Context, args Args) (uint32, error) {
-	return ffprobeRunner.Run(ctx, ffprobe, args)
+	return ffprobeRunner.Run(ctx, func() (uint32, error) {
+
+		// Load WASM rt and module.
+		ffmpreg := ffmpreg.Load()
+		if ffmpreg == nil {
+			return 0, errors.New("wasm not initialized")
+		}
+
+		// Call into ffprobe.
+		args.Name = "ffprobe"
+		return wasm.Run(ctx,
+			ffmpreg.run,
+			ffmpreg.mod,
+			args,
+		)
+	})
 }

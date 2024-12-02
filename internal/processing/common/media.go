@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -51,11 +52,18 @@ func (p *Processor) StoreLocalMedia(
 
 	// Immediately trigger write to storage.
 	attachment, err := processing.Load(ctx)
-	if err != nil {
-		const text = "error processing emoji"
+	switch {
+	case gtserror.LimitReached(err):
+		limit := config.GetMediaLocalMaxSize()
+		text := fmt.Sprintf("local media size limit reached: %s", limit)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, text)
+
+	case err != nil:
+		const text = "error processing media"
 		err := gtserror.Newf("error processing media: %w", err)
 		return nil, gtserror.NewErrorUnprocessableEntity(err, text)
-	} else if attachment.Type == gtsmodel.FileTypeUnknown {
+
+	case attachment.Type == gtsmodel.FileTypeUnknown:
 		text := fmt.Sprintf("could not process %s type media", attachment.File.ContentType)
 		return nil, gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
 	}
@@ -86,9 +94,15 @@ func (p *Processor) StoreLocalEmoji(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Immediately write to storage.
+	// Immediately trigger write to storage.
 	emoji, err := processing.Load(ctx)
-	if err != nil {
+	switch {
+	case gtserror.LimitReached(err):
+		limit := config.GetMediaEmojiLocalMaxSize()
+		text := fmt.Sprintf("local emoji size limit reached: %s", limit)
+		return nil, gtserror.NewErrorUnprocessableEntity(err, text)
+
+	case err != nil:
 		const text = "error processing emoji"
 		err := gtserror.Newf("error processing emoji %s: %w", shortcode, err)
 		return nil, gtserror.NewErrorUnprocessableEntity(err, text)

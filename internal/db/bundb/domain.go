@@ -20,6 +20,7 @@ package bundb
 import (
 	"context"
 	"net/url"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -108,6 +109,36 @@ func (d *domainDB) GetDomainAllowByID(ctx context.Context, id string) (*gtsmodel
 	}
 
 	return &allow, nil
+}
+
+func (d *domainDB) UpdateDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow, columns ...string) error {
+	// Normalize the domain as punycode
+	var err error
+	allow.Domain, err = util.Punify(allow.Domain)
+	if err != nil {
+		return err
+	}
+
+	// Ensure updated_at is set.
+	allow.UpdatedAt = time.Now()
+	if len(columns) != 0 {
+		columns = append(columns, "updated_at")
+	}
+
+	// Attempt to update domain allow.
+	if _, err := d.db.
+		NewUpdate().
+		Model(allow).
+		Column(columns...).
+		Where("? = ?", bun.Ident("domain_allow.id"), allow.ID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// Clear the domain allow cache (for later reload)
+	d.state.Caches.DB.DomainAllow.Clear()
+
+	return nil
 }
 
 func (d *domainDB) DeleteDomainAllow(ctx context.Context, domain string) error {
@@ -204,6 +235,36 @@ func (d *domainDB) GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel
 	}
 
 	return &block, nil
+}
+
+func (d *domainDB) UpdateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock, columns ...string) error {
+	// Normalize the domain as punycode
+	var err error
+	block.Domain, err = util.Punify(block.Domain)
+	if err != nil {
+		return err
+	}
+
+	// Ensure updated_at is set.
+	block.UpdatedAt = time.Now()
+	if len(columns) != 0 {
+		columns = append(columns, "updated_at")
+	}
+
+	// Attempt to update domain block.
+	if _, err := d.db.
+		NewUpdate().
+		Model(block).
+		Column(columns...).
+		Where("? = ?", bun.Ident("domain_block.id"), block.ID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	// Clear the domain block cache (for later reload)
+	d.state.Caches.DB.DomainBlock.Clear()
+
+	return nil
 }
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) error {

@@ -194,7 +194,8 @@ nav.menu-tree {
 		}
 	}
 
-	li.nested { /* any deeper nesting, just has indent */
+	/* Deeper nesting. */
+	li.nested {
 		a.title {
 			padding-left: 1rem;
 			font-weight: normal;
@@ -210,11 +211,35 @@ nav.menu-tree {
 				background: $settings-nav-bg-hover;
 			}
 		}
+		
+		&.active > a.title {
+			color: $fg-accent;
+			font-weight: bold;
+		}
 
-		&.active {
-			a.title {
-				color: $fg-accent;
-				font-weight: bold;
+		&.category {
+			& > a.title {
+				&::after {
+					content: "▶";
+					left: 0.8rem;
+					bottom: 0.1rem;
+					position: relative;
+				}
+			}
+
+			&.active {
+				& > a.title {
+					&::after {
+						content: "▼";
+						bottom: 0;
+					}
+
+					border-bottom: 0.15rem dotted $gray1;
+				}
+			}
+
+			li.nested > a.title {
+				padding-left: 2rem;
 			}
 		}
 	}
@@ -440,6 +465,11 @@ section.with-sidebar > form {
 .user-profile {
 	.profile {
 		max-width: 42rem;
+	}
+
+	.file-input-with-image-description {
+		max-width: 100%;
+		width: 100%;
 	}
 	
 	.overview {
@@ -1326,6 +1356,66 @@ button.tab-button {
 				vertical-align: middle;
 			}
 		}
+	}
+}
+
+.domain-permission-drafts-view,
+.domain-permission-excludes-view {
+	.domain-permission-draft,
+	.domain-permission-exclude {
+		display: flex;
+		flex-direction: column;
+		flex-wrap: nowrap;
+		gap: 0.5rem;
+		
+		&.block {
+			border-left: 0.3rem solid $error3;
+		}
+
+		&.allow {
+			border-left: 0.3rem solid $green1;
+		}
+
+		&:hover {
+			border-color: $fg-accent;
+		}
+
+		.info-list {
+			border: none;
+
+			.info-list-entry {
+				background: none;
+				padding: 0;
+			}
+		}
+
+		.action-buttons {
+			display: flex;
+			gap: 0.5rem;
+			align-items: center;
+
+			> .mutation-button
+			> button {
+				font-size: 1rem;
+				line-height: 1rem;
+			}
+		}
+	}
+}
+
+.domain-permission-draft-details,
+.domain-permission-exclude-details {
+	.info-list {
+		margin-top: 1rem;
+	}
+}
+
+.domain-permission-drafts-view,
+.domain-permission-draft-details {
+	dd.permission-type {
+		display: flex;
+		gap: 0.35rem;
+		align-items: center;
 	}
 }
 

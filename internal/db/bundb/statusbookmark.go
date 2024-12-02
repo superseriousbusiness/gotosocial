@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -95,7 +95,7 @@ func (s *statusBookmarkDB) GetStatusBookmarksByIDs(ctx context.Context, ids []st
 	// Reorder the bookmarks by their
 	// IDs to ensure in correct order.
 	getID := func(b *gtsmodel.StatusBookmark) string { return b.ID }
-	util.OrderBy(bookmarks, ids, getID)
+	xslices.OrderBy(bookmarks, ids, getID)
 
 	// Populate all loaded bookmarks, removing those we fail
 	// to populate (removes needing so many later nil checks).

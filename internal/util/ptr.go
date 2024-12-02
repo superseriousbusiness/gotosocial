@@ -17,6 +17,8 @@
 
 package util
 
+import "unsafe"
+
 // EqualPtrs returns whether the values contained within two comparable ptr types are equal.
 func EqualPtrs[T comparable](t1, t2 *T) bool {
 	switch {
@@ -58,4 +60,9 @@ func PtrOrValue[T any](t *T, value T) T {
 		return *t
 	}
 	return value
+}
+
+func IsNil(i interface{}) bool {
+	type eface struct{ _, data unsafe.Pointer }
+	return (*eface)(unsafe.Pointer(&i)).data == nil
 }

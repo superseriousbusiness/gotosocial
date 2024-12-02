@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
@@ -69,14 +68,14 @@ func (c *cmdMinifier) Minify(_ *M, w io.Writer, r io.Reader, _ map[string]string
 		if j := strings.Index(arg, "$in"); j != -1 {
 			var err error
 			ext := cmdArgExtension.FindString(arg[j+3:])
-			if in, err = ioutil.TempFile("", "minify-in-*"+ext); err != nil {
+			if in, err = os.CreateTemp("", "minify-in-*"+ext); err != nil {
 				return err
 			}
 			cmd.Args[i] = arg[:j] + in.Name() + arg[j+3+len(ext):]
 		} else if j := strings.Index(arg, "$out"); j != -1 {
 			var err error
 			ext := cmdArgExtension.FindString(arg[j+4:])
-			if out, err = ioutil.TempFile("", "minify-out-*"+ext); err != nil {
+			if out, err = os.CreateTemp("", "minify-out-*"+ext); err != nil {
 				return err
 			}
 			cmd.Args[i] = arg[:j] + out.Name() + arg[j+4+len(ext):]

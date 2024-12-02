@@ -174,7 +174,7 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 // get_one will fetch one indexed item under key.
 func (i *Index) get_one(key Key) *indexed_item {
 	// Get list at hash.
-	l, _ := i.data.Get(key.key)
+	l := i.data.Get(key.key)
 	if l == nil {
 		return nil
 	}
@@ -192,13 +192,18 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 	}
 
 	// Get list at hash.
-	l, _ := i.data.Get(key)
+	l := i.data.Get(key)
 	if l == nil {
 		return
 	}
 
-	// Iterate all entries in list.
-	l.rangefn(func(elem *list_elem) {
+	// Iterate the list.
+	for elem := l.head; //
+	elem != nil;        //
+	{
+		// Get next before
+		// any modification.
+		next := elem.next
 
 		// Extract element entry + item.
 		entry := (*index_entry)(elem.data)
@@ -206,18 +211,21 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 
 		// Pass to hook.
 		hook(item)
-	})
+
+		// Set next.
+		elem = next
+	}
 }
 
 // key uses hasher to generate Key{} from given raw parts.
 func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
+	buf.B = buf.B[:0]
 	if len(parts) != len(i.fields) {
 		panicf("incorrect number key parts: want=%d received=%d",
 			len(i.fields),
 			len(parts),
 		)
 	}
-	buf.B = buf.B[:0]
 	if !allow_zero(i.flags) {
 		for x, field := range i.fields {
 			before := len(buf.B)
@@ -237,11 +245,12 @@ func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
 }
 
 // append will append the given index entry to appropriate
-// doubly-linked-list in index hashmap. this handles case
-// of key collisions and overwriting 'unique' entries.
-func (i *Index) append(key string, item *indexed_item) {
+// doubly-linked-list in index hashmap. this handles case of
+// overwriting "unique" index entries, and removes from given
+// outer linked-list in the case that it is no longer indexed.
+func (i *Index) append(ll *list, key string, item *indexed_item) {
 	// Look for existing.
-	l, _ := i.data.Get(key)
+	l := i.data.Get(key)
 
 	if l == nil {
 
@@ -255,12 +264,21 @@ func (i *Index) append(key string, item *indexed_item) {
 		elem := l.head
 		l.remove(elem)
 
-		// Drop index from inner item.
+		// Drop index from inner item,
+		// catching the evicted item.
 		e := (*index_entry)(elem.data)
-		e.item.drop_index(e)
+		evicted := e.item
+		evicted.drop_index(e)
 
 		// Free unused entry.
 		free_index_entry(e)
+
+		if len(evicted.indexed) == 0 {
+			// Evicted item is not indexed,
+			// remove from outer linked list.
+			ll.remove(&evicted.elem)
+			free_indexed_item(evicted)
+		}
 	}
 
 	// Prepare new index entry.
@@ -283,7 +301,7 @@ func (i *Index) delete(key string, hook func(*indexed_item)) {
 	}
 
 	// Get list at hash.
-	l, _ := i.data.Get(key)
+	l := i.data.Get(key)
 	if l == nil {
 		return
 	}
@@ -291,11 +309,15 @@ func (i *Index) delete(key string, hook func(*indexed_item)) {
 	// Delete at hash.
 	i.data.Delete(key)
 
-	// Iterate entries in list.
-	for x := 0; x < l.len; x++ {
+	// Iterate the list.
+	for elem := l.head; //
+	elem != nil;        //
+	{
+		// Get next before
+		// any modification.
+		next := elem.next
 
-		// Pop list head.
-		elem := l.head
+		// Remove elem.
 		l.remove(elem)
 
 		// Extract element entry + item.
@@ -310,6 +332,9 @@ func (i *Index) delete(key string, hook func(*indexed_item)) {
 
 		// Pass to hook.
 		hook(item)
+
+		// Set next.
+		elem = next
 	}
 
 	// Release list.
@@ -319,7 +344,7 @@ func (i *Index) delete(key string, hook func(*indexed_item)) {
 // delete_entry deletes the given index entry.
 func (i *Index) delete_entry(entry *index_entry) {
 	// Get list at hash sum.
-	l, _ := i.data.Get(entry.key)
+	l := i.data.Get(entry.key)
 	if l == nil {
 		return
 	}
@@ -366,17 +391,21 @@ var index_entry_pool sync.Pool
 func new_index_entry() *index_entry {
 	v := index_entry_pool.Get()
 	if v == nil {
-		v = new(index_entry)
+		e := new(index_entry)
+		e.elem.data = unsafe.Pointer(e)
+		v = e
 	}
 	entry := v.(*index_entry)
-	ptr := unsafe.Pointer(entry)
-	entry.elem.data = ptr
 	return entry
 }
 
 // free_index_entry releases the index_entry.
 func free_index_entry(entry *index_entry) {
-	entry.elem.data = nil
+	if entry.elem.next != nil ||
+		entry.elem.prev != nil {
+		should_not_reach()
+		return
+	}
 	entry.key = ""
 	entry.index = nil
 	entry.item = nil

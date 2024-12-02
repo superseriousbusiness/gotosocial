@@ -428,7 +428,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(312453, attachment.File.FileSize)
-	suite.Equal(5648, attachment.Thumbnail.FileSize)
+	suite.Equal(5598, attachment.Thumbnail.FileSize)
 	suite.Equal("LgIYH}xtNsofxtfPW.j[_4axn+of", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
@@ -439,6 +439,71 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 	// ensure the files contain the expected data.
 	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/test-mp4-processed.mp4")
 	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/test-mp4-thumbnail.webp")
+}
+
+func (suite *ManagerTestSuite) TestAnimatedGifProcess() {
+	ctx := context.Background()
+
+	data := func(_ context.Context) (io.ReadCloser, error) {
+		// load bytes from a test image
+		b, err := os.ReadFile("./test/clock-original.gif")
+		if err != nil {
+			panic(err)
+		}
+		return io.NopCloser(bytes.NewBuffer(b)), nil
+	}
+
+	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
+
+	// process the media with no additional info provided
+	processing, err := suite.manager.CreateMedia(ctx,
+		accountID,
+		data,
+		media.AdditionalMediaInfo{},
+	)
+	suite.NoError(err)
+	suite.NotNil(processing)
+
+	// do a blocking call to fetch the attachment
+	attachment, err := processing.Load(ctx)
+	suite.NoError(err)
+	suite.NotNil(attachment)
+
+	// make sure it's got the stuff set on it that we expect
+	// the attachment ID and accountID we expect
+	suite.Equal(processing.ID(), attachment.ID)
+	suite.Equal(accountID, attachment.AccountID)
+
+	// file meta should be correctly derived from the image
+	suite.EqualValues(gtsmodel.Original{
+		Width:     528,
+		Height:    528,
+		Size:      278784,
+		Aspect:    1,
+		Duration:  util.Ptr(float32(8.58)),
+		Framerate: util.Ptr(float32(16)),
+		Bitrate:   util.Ptr(uint64(114092)),
+	}, attachment.FileMeta.Original)
+	suite.EqualValues(gtsmodel.Small{
+		Width:  512,
+		Height: 512,
+		Size:   262144,
+		Aspect: 1,
+	}, attachment.FileMeta.Small)
+	suite.Equal("image/gif", attachment.File.ContentType)
+	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
+	suite.Equal(122364, attachment.File.FileSize)
+	suite.Equal(12962, attachment.Thumbnail.FileSize)
+	suite.Equal("LmKUZkt700ofoffQofj[00WBj[WB", attachment.Blurhash)
+
+	// now make sure the attachment is in the database
+	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
+	suite.NoError(err)
+	suite.NotNil(dbAttachment)
+
+	// ensure the files contain the expected data.
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.File.Path, "./test/clock-processed.gif")
+	equalFiles(suite.T(), suite.state.Storage, dbAttachment.Thumbnail.Path, "./test/clock-thumbnail.webp")
 }
 
 func (suite *ManagerTestSuite) TestLongerMp4Process() {
@@ -488,8 +553,8 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(109569, attachment.File.FileSize)
-	suite.Equal(2976, attachment.Thumbnail.FileSize)
-	suite.Equal("LIQJfl_3IU?b~qM{ofayWBWVofRj", attachment.Blurhash)
+	suite.Equal(2958, attachment.Thumbnail.FileSize)
+	suite.Equal("LIQ9}}_3IU?b~qM{ofayWBWVofRj", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -548,8 +613,8 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 	suite.Equal("video/mp4", attachment.File.ContentType)
 	suite.Equal("image/webp", attachment.Thumbnail.ContentType)
 	suite.Equal(1409625, attachment.File.FileSize)
-	suite.Equal(14478, attachment.Thumbnail.FileSize)
-	suite.Equal("LLF$qyaeRO.9DgM_RPaetkV@WCMw", attachment.Blurhash)
+	suite.Equal(15056, attachment.Thumbnail.FileSize)
+	suite.Equal("LLF$nqafRO.9DgM_RPadtkV@WCMx", attachment.Blurhash)
 
 	// now make sure the attachment is in the database
 	dbAttachment, err := suite.db.GetAttachmentByID(ctx, attachment.ID)
@@ -599,7 +664,7 @@ func (suite *ManagerTestSuite) TestOpusProcess() {
 		Duration: util.Ptr(float32(122.10006)),
 		Bitrate:  util.Ptr(uint64(116426)),
 	}, attachment.FileMeta.Original)
-	suite.Equal("audio/ogg", attachment.File.ContentType)
+	suite.Equal("audio/opus", attachment.File.ContentType)
 	suite.Equal(1776956, attachment.File.FileSize)
 	suite.Empty(attachment.Blurhash)
 

@@ -24,7 +24,7 @@ import {
 	type DomainPerm,
 	type ImportDomainPermsParams,
 	type MappedDomainPerms,
-	isDomainPermInternalKey,
+	stripOnImport,
 } from "../../../types/domain-permission";
 import { listToKeyedObject } from "../../transforms";
 
@@ -83,7 +83,7 @@ function importEntriesProcessor(formData: ImportDomainPermsParams): (_entry: Dom
 		// Unset all internal processing keys
 		// and any undefined keys on this entry.
 		Object.entries(entry).forEach(([key, val]: [keyof DomainPerm, any]) => {			
-			if (val == undefined || isDomainPermInternalKey(key)) {
+			if (val == undefined || stripOnImport(key)) {
 				delete entry[key];
 			}
 		});

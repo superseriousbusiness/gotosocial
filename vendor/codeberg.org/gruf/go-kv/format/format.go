@@ -197,7 +197,8 @@ func (f format) AppendBytes(b []byte) {
 
 	// Quoted only if spaces/requires escaping
 	case f.Key():
-		f.AppendStringSafe(b2s(b))
+		s := byteutil.B2S(b)
+		f.AppendStringSafe(s)
 
 	// Append as separate ASCII quoted bytes in slice
 	case f.Verbose():
@@ -214,7 +215,8 @@ func (f format) AppendBytes(b []byte) {
 
 	// Quoted only if spaces/requires escaping
 	case f.Value():
-		f.AppendStringSafe(b2s(b))
+		s := byteutil.B2S(b)
+		f.AppendStringSafe(s)
 
 	// Append as raw bytes
 	default:

@@ -36,7 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-func (suite *FiltersTestSuite) postFilter(title *string, context *[]string, action *string, expiresIn *int, keywordsAttributesKeyword *[]string, keywordsAttributesWholeWord *[]bool, statusesAttributesStatusID *[]string, requestJson *string, expectedHTTPStatus int, expectedBody string) (*apimodel.FilterV2, error) {
+func (suite *FiltersTestSuite) postFilter(title *string, context *[]string, action *string, expiresIn *int, expiresInStr *string, keywordsAttributesWholeWord *[]bool, statusesAttributesStatusID *[]string, requestJson *string, expectedHTTPStatus int, expectedBody string, keywordsAttributesKeyword *[]string) (*apimodel.FilterV2, error) {
 	// instantiate recorder + test context
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
@@ -64,6 +64,8 @@ func (suite *FiltersTestSuite) postFilter(title *string, context *[]string, acti
 		}
 		if expiresIn != nil {
 			ctx.Request.Form["expires_in"] = []string{strconv.Itoa(*expiresIn)}
+		} else if expiresInStr != nil {
+			ctx.Request.Form["expires_in"] = []string{*expiresInStr}
 		}
 		if keywordsAttributesKeyword != nil {
 			ctx.Request.Form["keywords_attributes[][keyword]"] = *keywordsAttributesKeyword
@@ -130,7 +132,7 @@ func (suite *FiltersTestSuite) TestPostFilterFull() {
 	keywordsAttributesWholeWord := []bool{true, false}
 	// Checked in lexical order by status ID, so keep this sorted.
 	statusAttributesStatusID := []string{"01HEN2QRFA8H3C6QPN7RD4KSR6", "01HEWV37MHV8BAC8ANFGVRRM5D"}
-	filter, err := suite.postFilter(&title, &context, &action, &expiresIn, &keywordsAttributesKeyword, &keywordsAttributesWholeWord, &statusAttributesStatusID, nil, http.StatusOK, "")
+	filter, err := suite.postFilter(&title, &context, &action, &expiresIn, nil, &keywordsAttributesWholeWord, &statusAttributesStatusID, nil, http.StatusOK, "", &keywordsAttributesKeyword)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -197,7 +199,7 @@ func (suite *FiltersTestSuite) TestPostFilterFullJSON() {
 			}
 		]
 	}`
-	filter, err := suite.postFilter(nil, nil, nil, nil, nil, nil, nil, &requestJson, http.StatusOK, "")
+	filter, err := suite.postFilter(nil, nil, nil, nil, nil, nil, nil, &requestJson, http.StatusOK, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -245,7 +247,7 @@ func (suite *FiltersTestSuite) TestPostFilterMinimal() {
 
 	title := "GNU/Linux"
 	context := []string{"home"}
-	filter, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusOK, "")
+	filter, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusOK, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -267,7 +269,7 @@ func (suite *FiltersTestSuite) TestPostFilterMinimal() {
 func (suite *FiltersTestSuite) TestPostFilterEmptyTitle() {
 	title := ""
 	context := []string{"home"}
-	_, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -275,7 +277,7 @@ func (suite *FiltersTestSuite) TestPostFilterEmptyTitle() {
 
 func (suite *FiltersTestSuite) TestPostFilterMissingTitle() {
 	context := []string{"home"}
-	_, err := suite.postFilter(nil, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(nil, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -284,7 +286,7 @@ func (suite *FiltersTestSuite) TestPostFilterMissingTitle() {
 func (suite *FiltersTestSuite) TestPostFilterEmptyContext() {
 	title := "GNU/Linux"
 	context := []string{}
-	_, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, &context, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -292,7 +294,7 @@ func (suite *FiltersTestSuite) TestPostFilterEmptyContext() {
 
 func (suite *FiltersTestSuite) TestPostFilterMissingContext() {
 	title := "GNU/Linux"
-	_, err := suite.postFilter(&title, nil, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, nil, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -301,8 +303,37 @@ func (suite *FiltersTestSuite) TestPostFilterMissingContext() {
 // Creating another filter with the same title should fail.
 func (suite *FiltersTestSuite) TestPostFilterTitleConflict() {
 	title := suite.testFilters["local_account_1_filter_1"].Title
-	_, err := suite.postFilter(&title, nil, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.postFilter(&title, nil, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "", nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+}
+
+// postFilterWithExpiration creates a filter with optional expiration.
+func (suite *FiltersTestSuite) postFilterWithExpiration(title *string, expiresIn *int, expiresInStr *string, requestJson *string) *apimodel.FilterV2 {
+	context := []string{"home"}
+	filter, err := suite.postFilter(title, &context, nil, expiresIn, expiresInStr, nil, nil, requestJson, http.StatusOK, "", nil)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	return filter
+}
+
+// Regression test for https://github.com/superseriousbusiness/gotosocial/issues/3497
+func (suite *FiltersTestSuite) TestPostFilterWithEmptyStringExpiration() {
+	title := "Form Crimes"
+	expiresInStr := ""
+	filter := suite.postFilterWithExpiration(&title, nil, &expiresInStr, nil)
+	suite.Nil(filter.ExpiresAt)
+}
+
+// Regression test related to https://github.com/superseriousbusiness/gotosocial/issues/3497
+func (suite *FiltersTestSuite) TestPostFilterWithNullExpirationJSON() {
+	requestJson := `{
+		"title": "JSON Crimes",
+		"context": ["home"],
+		"expires_in": null
+	}`
+	filter := suite.postFilterWithExpiration(nil, nil, nil, &requestJson)
+	suite.Nil(filter.ExpiresAt)
 }

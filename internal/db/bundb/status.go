@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -76,7 +76,7 @@ func (s *statusDB) GetStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmo
 	// Reorder the statuses by their
 	// IDs to ensure in correct order.
 	getID := func(s *gtsmodel.Status) string { return s.ID }
-	util.OrderBy(statuses, ids, getID)
+	xslices.OrderBy(statuses, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

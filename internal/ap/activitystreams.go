@@ -77,6 +77,10 @@ const (
 	// See https://www.w3.org/TR/activitystreams-vocabulary/#microsyntaxes
 	// and https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tag
 	TagHashtag = "Hashtag"
+
+	// Not in the AS spec, just used internally to indicate
+	// that we don't *yet* know what type of Object something is.
+	ObjectUnknown = "Unknown"
 )
 
 // isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).

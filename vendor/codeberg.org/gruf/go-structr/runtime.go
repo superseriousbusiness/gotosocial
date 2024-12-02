@@ -2,7 +2,10 @@ package structr
 
 import (
 	"fmt"
+	"os"
 	"reflect"
+	"runtime"
+	"strings"
 	"unicode"
 	"unicode/utf8"
 	"unsafe"
@@ -182,7 +185,32 @@ func deref(p unsafe.Pointer, n uint) unsafe.Pointer {
 	return p
 }
 
+// eface_data returns the data ptr from an empty interface.
+func eface_data(a any) unsafe.Pointer {
+	type eface struct{ _, data unsafe.Pointer }
+	return (*eface)(unsafe.Pointer(&a)).data
+}
+
 // panicf provides a panic with string formatting.
 func panicf(format string, args ...any) {
 	panic(fmt.Sprintf(format, args...))
+}
+
+// should_not_reach can be called to indicated a
+// block of code should not be able to be reached,
+// else it prints callsite info with a BUG report.
+//
+//go:noinline
+func should_not_reach() {
+	pcs := make([]uintptr, 1)
+	_ = runtime.Callers(2, pcs)
+	fn := runtime.FuncForPC(pcs[0])
+	funcname := "go-structr" // by default use just our library name
+	if fn != nil {
+		funcname = fn.Name()
+		if i := strings.LastIndexByte(funcname, '/'); i != -1 {
+			funcname = funcname[i+1:]
+		}
+	}
+	os.Stderr.WriteString("BUG: assertion failed in " + funcname + "\n")
 }

@@ -19,15 +19,14 @@ package v1
 
 import (
 	"errors"
-	"fmt"
-	"strconv"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
-func validateNormalizeCreateUpdateFilter(form *model.FilterCreateUpdateRequestV1) error {
+func validateNormalizeCreateUpdateFilter(form *apimodel.FilterCreateUpdateRequestV1) error {
 	if err := validate.FilterKeyword(form.Phrase); err != nil {
 		return err
 	}
@@ -47,24 +46,16 @@ func validateNormalizeCreateUpdateFilter(form *model.FilterCreateUpdateRequestV1
 		return errors.New("irreversible aka server-side drop filters are not supported yet")
 	}
 
-	// Normalize filter expiry if necessary.
-	// If we parsed this as JSON, expires_in
-	// may be either a float64 or a string.
-	if ei := form.ExpiresInI; ei != nil {
-		switch e := ei.(type) {
-		case float64:
-			form.ExpiresIn = util.Ptr(int(e))
-
-		case string:
-			expiresIn, err := strconv.Atoi(e)
-			if err != nil {
-				return fmt.Errorf("could not parse expires_in value %s as integer: %w", e, err)
-			}
-
-			form.ExpiresIn = &expiresIn
-
-		default:
-			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
+	// If `expires_in` was provided
+	// as JSON, then normalize it.
+	if form.ExpiresInI.IsSpecified() {
+		var err error
+		form.ExpiresIn, err = apiutil.ParseNullableDuration(
+			form.ExpiresInI,
+			"expires_in",
+		)
+		if err != nil {
+			return err
 		}
 	}
 

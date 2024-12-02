@@ -247,6 +247,12 @@ func (p *Processor) GetVisibleAPIStatuses(
 			continue
 		}
 
+		if apiStatus == nil {
+			// Status was
+			// filtered out.
+			continue
+		}
+
 		// Append converted status to return slice.
 		apiStatuses = append(apiStatuses, *apiStatus)
 	}

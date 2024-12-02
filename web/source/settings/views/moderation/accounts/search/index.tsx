@@ -26,8 +26,8 @@ import { Select, TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useLocation, useSearch } from "wouter";
 import { AdminAccount } from "../../../../lib/types/account";
-import Username from "../../../../components/username";
-import isValidDomain from "is-valid-domain";
+import UsernameLozenge from "../../../../components/username-lozenge";
+import { formDomainValidator } from "../../../../lib/util/formvalidators";
 
 export function AccountSearchForm() {
 	const [ location, setLocation ] = useLocation();
@@ -45,28 +45,7 @@ export function AccountSearchForm() {
 		display_name: useTextInput("display_name", { defaultValue: urlQueryParams.get("display_name") ?? ""}),
 		by_domain: useTextInput("by_domain", {
 			defaultValue: urlQueryParams.get("by_domain") ?? "",
-			validator: (v: string) => {
-				if (v.length === 0) {
-					return "";
-				}
-
-				if (v[v.length-1] === ".") {
-					return "invalid domain";
-				}
-
-				const valid = isValidDomain(v, {
-					subdomain: true,
-					wildcard: false,
-					allowUnicode: true,
-					topLevel: false,
-				});
-
-				if (valid) {
-					return "";
-				}
-
-				return "invalid domain";
-			}
+			validator: formDomainValidator,
 		}),
 		email: useTextInput("email", { defaultValue: urlQueryParams.get("email") ?? ""}),
 		ip: useTextInput("ip", { defaultValue: urlQueryParams.get("ip") ?? ""}),
@@ -114,7 +93,7 @@ export function AccountSearchForm() {
 	function itemToEntry(account: AdminAccount): ReactNode {
 		const acc = account.account;
 		return (
-			<Username
+			<UsernameLozenge
 				key={acc.acct}
 				account={account}
 				linkTo={`/${account.id}`}

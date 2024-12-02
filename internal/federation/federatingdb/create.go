@@ -445,42 +445,106 @@ func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, re
 	LIKE HANDLERS
 */
 
-func (f *federatingDB) activityLike(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
+func (f *federatingDB) activityLike(
+	ctx context.Context,
+	asType vocab.Type,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+) error {
 	like, ok := asType.(vocab.ActivityStreamsLike)
 	if !ok {
-		return errors.New("activityLike: could not convert type to like")
+		err := gtserror.Newf("could not convert asType %T to ActivityStreamsLike", asType)
+		return gtserror.SetMalformed(err)
 	}
 
 	fave, err := f.converter.ASLikeToFave(ctx, like)
 	if err != nil {
-		return fmt.Errorf("activityLike: could not convert Like to fave: %w", err)
+		return gtserror.Newf("could not convert Like to fave: %w", err)
 	}
 
-	if fave.AccountID != requestingAccount.ID {
-		return fmt.Errorf(
-			"activityLike: requestingAccount %s is not Like actor account %s",
-			requestingAccount.URI, fave.Account.URI,
+	// Ensure requester not trying to
+	// Like on someone else's behalf.
+	if fave.AccountID != requestingAcct.ID {
+		text := fmt.Sprintf(
+			"requestingAcct %s is not Like actor account %s",
+			requestingAcct.URI, fave.Account.URI,
 		)
+		return gtserror.NewErrorForbidden(errors.New(text), text)
 	}
 
+	if !*fave.Status.Local {
+		// Only process likes of local statuses.
+		// TODO: process for remote statuses as well.
+		return nil
+	}
+
+	// Ensure valid Like target for requester.
+	policyResult, err := f.intFilter.StatusLikeable(ctx,
+		requestingAcct,
+		fave.Status,
+	)
+	if err != nil {
+		err := gtserror.Newf("error seeing if status %s is likeable: %w", fave.Status.ID, err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	if policyResult.Forbidden() {
+		const errText = "requester does not have permission to Like this status"
+		err := gtserror.New(errText)
+		return gtserror.NewErrorForbidden(err, errText)
+	}
+
+	// Derive pendingApproval
+	// and preapproved status.
+	var (
+		pendingApproval bool
+		preApproved     bool
+	)
+
+	switch {
+	case policyResult.WithApproval():
+		// Requester allowed to do
+		// this pending approval.
+		pendingApproval = true
+
+	case policyResult.MatchedOnCollection():
+		// Requester allowed to do this,
+		// but matched on collection.
+		// Preapprove Like and have the
+		// processor send out an Accept.
+		pendingApproval = true
+		preApproved = true
+
+	case policyResult.Permitted():
+		// Requester straight up
+		// permitted to do this,
+		// no need for Accept.
+		pendingApproval = false
+	}
+
+	// Set appropriate fields
+	// on fave and store it.
 	fave.ID = id.NewULID()
+	fave.PendingApproval = &pendingApproval
+	fave.PreApproved = preApproved
 
 	if err := f.state.DB.PutStatusFave(ctx, fave); err != nil {
 		if errors.Is(err, db.ErrAlreadyExists) {
-			// The Like already exists in the database, which
-			// means we've already handled side effects. We can
-			// just return nil here and be done with it.
+			// The fave already exists in the
+			// database, which means we've already
+			// handled side effects. We can just
+			// return nil here and be done with it.
 			return nil
 		}
-		return fmt.Errorf("activityLike: database error inserting fave: %w", err)
+		return gtserror.Newf("db error inserting fave: %w", err)
 	}
 
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APObjectType:   ap.ActivityLike,
 		APActivityType: ap.ActivityCreate,
 		GTSModel:       fave,
-		Receiving:      receivingAccount,
-		Requesting:     requestingAccount,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
 	})
 
 	return nil

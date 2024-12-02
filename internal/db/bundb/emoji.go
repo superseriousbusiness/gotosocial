@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -597,7 +597,7 @@ func (e *emojiDB) GetEmojisByIDs(ctx context.Context, ids []string) ([]*gtsmodel
 	// Reorder the emojis by their
 	// IDs to ensure in correct order.
 	getID := func(e *gtsmodel.Emoji) string { return e.ID }
-	util.OrderBy(emojis, ids, getID)
+	xslices.OrderBy(emojis, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -661,7 +661,7 @@ func (e *emojiDB) GetEmojiCategoriesByIDs(ctx context.Context, ids []string) ([]
 	// Reorder the categories by their
 	// IDs to ensure in correct order.
 	getID := func(c *gtsmodel.EmojiCategory) string { return c.ID }
-	util.OrderBy(categories, ids, getID)
+	xslices.OrderBy(categories, ids, getID)
 
 	return categories, nil
 }

@@ -27,6 +27,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -185,12 +186,23 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 // Fave a status that's pending approval by us.
 func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
 	var (
+		ctx          = context.Background()
 		targetStatus = suite.testStatuses["admin_account_status_5"]
 		app          = suite.testApplications["application_1"]
 		token        = suite.testTokens["local_account_2"]
 		user         = suite.testUsers["local_account_2"]
 		account      = suite.testAccounts["local_account_2"]
+		visFilter    = visibility.NewFilter(&suite.state)
 	)
+
+	// Check visibility of status to public before posting fave.
+	visible, err := visFilter.StatusVisible(ctx, nil, targetStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	if visible {
+		suite.FailNow("status should not be visible yet")
+	}
 
 	out, recorder := suite.postStatusFave(
 		targetStatus.ID,
@@ -268,30 +280,40 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
   "text": "Hi @1happyturtle, can I reply?",
   "uri": "http://localhost:8080/some/determinate/url",
   "url": "http://localhost:8080/some/determinate/url",
-  "visibility": "unlisted"
+  "visibility": "public"
 }`, out)
 
 	// Target status should no
 	// longer be pending approval.
 	dbStatus, err := suite.state.DB.GetStatusByID(
-		context.Background(),
+		ctx,
 		targetStatus.ID,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.False(*dbStatus.PendingApproval)
+	suite.NotEmpty(dbStatus.ApprovedByURI)
 
 	// There should be an Accept
 	// stored for the target status.
 	intReq, err := suite.state.DB.GetInteractionRequestByInteractionURI(
-		context.Background(), targetStatus.URI,
+		ctx, targetStatus.URI,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.NotZero(intReq.AcceptedAt)
 	suite.NotEmpty(intReq.URI)
+
+	// Check visibility of status to public after posting fave.
+	visible, err = visFilter.StatusVisible(ctx, nil, dbStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	if !visible {
+		suite.FailNow("status should be visible")
+	}
 }
 
 func TestStatusFaveTestSuite(t *testing.T) {

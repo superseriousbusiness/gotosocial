@@ -2,7 +2,7 @@
 
 RSS stands for [Really Simple Syndication](https://en.wikipedia.org/wiki/RSS). It's a very well established standard for sharing content on the web. You might recognize the jolly orange RSS logo from your favorite news websites and blogs:
 
-![The orange RSS icon](../assets/rss.svg)
+![The orange RSS icon](../public/rss.svg)
 
 If you like, you can configure your GoToSocial account to expose an RSS feed of your posts to the web. This allows people to get regular updates about your posts even when they don't have a Fediverse account. This is great when you're using GoToSocial to create longer-form, blog style posts, and you want anyone to be able to read them easily.
 

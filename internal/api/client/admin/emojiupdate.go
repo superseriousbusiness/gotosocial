@@ -85,7 +85,7 @@ import (
 //			The code to use for the emoji, which will be used by instance denizens to select it.
 //			This must be unique on the instance. Works for the `copy` action type only.
 //		type: string
-//		pattern: \w{2,30}
+//		pattern: \w{1,30}
 //	-
 //		name: image
 //		in: formData
@@ -208,8 +208,8 @@ func validateUpdateEmoji(form *apimodel.EmojiUpdateRequest) error {
 		}
 
 		if hasImage {
-			maxSize := config.GetMediaEmojiLocalMaxSize()
-			if form.Image.Size > int64(maxSize) {
+			maxSize := int64(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
+			if form.Image.Size > maxSize {
 				return fmt.Errorf("emoji image too large: image is %dKB but size limit for custom emojis is %dKB", form.Image.Size/1024, maxSize/1024)
 			}
 		}

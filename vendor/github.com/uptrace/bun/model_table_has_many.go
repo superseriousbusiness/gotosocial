@@ -24,7 +24,7 @@ var _ TableModel = (*hasManyModel)(nil)
 func newHasManyModel(j *relationJoin) *hasManyModel {
 	baseTable := j.BaseModel.Table()
 	joinModel := j.JoinModel.(*sliceTableModel)
-	baseValues := baseValues(joinModel, j.Relation.BaseFields)
+	baseValues := baseValues(joinModel, j.Relation.BasePKs)
 	if len(baseValues) == 0 {
 		return nil
 	}
@@ -51,7 +51,7 @@ func (m *hasManyModel) ScanRows(ctx context.Context, rows *sql.Rows) (int, error
 	dest := makeDest(m, len(columns))
 
 	var n int
-
+	m.structKey = make([]interface{}, len(m.rel.JoinPKs))
 	for rows.Next() {
 		if m.sliceOfPtr {
 			m.strct = reflect.New(m.table.Type).Elem()
@@ -59,9 +59,8 @@ func (m *hasManyModel) ScanRows(ctx context.Context, rows *sql.Rows) (int, error
 			m.strct.Set(m.table.ZeroValue)
 		}
 		m.structInited = false
-
 		m.scanIndex = 0
-		m.structKey = m.structKey[:0]
+
 		if err := rows.Scan(dest...); err != nil {
 			return 0, err
 		}
@@ -92,9 +91,9 @@ func (m *hasManyModel) Scan(src interface{}) error {
 		return err
 	}
 
-	for _, f := range m.rel.JoinFields {
-		if f.Name == field.Name {
-			m.structKey = append(m.structKey, field.Value(m.strct).Interface())
+	for i, f := range m.rel.JoinPKs {
+		if f.Name == column {
+			m.structKey[i] = indirectFieldValue(field.Value(m.strct))
 			break
 		}
 	}
@@ -103,6 +102,7 @@ func (m *hasManyModel) Scan(src interface{}) error {
 }
 
 func (m *hasManyModel) parkStruct() error {
+
 	baseValues, ok := m.baseValues[internal.NewMapKey(m.structKey)]
 	if !ok {
 		return fmt.Errorf(
@@ -143,7 +143,19 @@ func baseValues(model TableModel, fields []*schema.Field) map[internal.MapKey][]
 
 func modelKey(key []interface{}, strct reflect.Value, fields []*schema.Field) []interface{} {
 	for _, f := range fields {
-		key = append(key, f.Value(strct).Interface())
+		key = append(key, indirectFieldValue(f.Value(strct)))
 	}
 	return key
+}
+
+// indirectFieldValue return the field value dereferencing the pointer if necessary.
+// The value is then used as a map key.
+func indirectFieldValue(field reflect.Value) interface{} {
+	if field.Kind() != reflect.Ptr {
+		return field.Interface()
+	}
+	if field.IsNil() {
+		return nil
+	}
+	return field.Elem().Interface()
 }

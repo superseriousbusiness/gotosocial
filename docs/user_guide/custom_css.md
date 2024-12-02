@@ -14,7 +14,7 @@ This allows you to customize the appearance of your GoToSocial profile for users
 
 Here's a standard GoToSocial profile page:
 
-![A GoToSocial test profile page. The standard color scheme of grey, blue, and orange.](./../assets/cssstandard.png)
+![A GoToSocial test profile page. The standard color scheme of grey, blue, and orange.](./../public/cssstandard.png)
 
 Let's say we want the background color to be black instead of grey.
 
@@ -30,7 +30,7 @@ We then click on Save Profile Info.
 
 If we go back to our profile page and refresh the page, it now looks like this:
 
-![The same GoToSocial test profile page. The background is now black.](./../assets/cssblack.png)
+![The same GoToSocial test profile page. The background is now black.](./../public/cssblack.png)
 
 If we want to get really fancy, we can add an ombre effect to the background, by using the following CSS code instead:
 
@@ -42,7 +42,7 @@ If we want to get really fancy, we can add an ombre effect to the background, by
 
 After saving the css and refreshing the profile page, the profile now looks like this:
 
-![The same GoToSocial test profile page. The background now starts dark red and fades to purple further down the page.](./../assets/cssgradient.png)
+![The same GoToSocial test profile page. The background now starts dark red and fades to purple further down the page.](./../public/cssgradient.png)
 
 ## Accessibility
 

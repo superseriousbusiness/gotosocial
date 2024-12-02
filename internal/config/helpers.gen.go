@@ -1225,6 +1225,56 @@ func GetMediaEmojiRemoteMaxSize() bytesize.Size { return global.GetMediaEmojiRem
 // SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'MediaEmojiRemoteMaxSize' field
 func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMaxSize(v) }
 
+// GetMediaImageSizeHint safely fetches the Configuration value for state's 'MediaImageSizeHint' field
+func (st *ConfigState) GetMediaImageSizeHint() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.MediaImageSizeHint
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaImageSizeHint safely sets the Configuration value for state's 'MediaImageSizeHint' field
+func (st *ConfigState) SetMediaImageSizeHint(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaImageSizeHint = v
+	st.reloadToViper()
+}
+
+// MediaImageSizeHintFlag returns the flag name for the 'MediaImageSizeHint' field
+func MediaImageSizeHintFlag() string { return "media-image-size-hint" }
+
+// GetMediaImageSizeHint safely fetches the value for global configuration 'MediaImageSizeHint' field
+func GetMediaImageSizeHint() bytesize.Size { return global.GetMediaImageSizeHint() }
+
+// SetMediaImageSizeHint safely sets the value for global configuration 'MediaImageSizeHint' field
+func SetMediaImageSizeHint(v bytesize.Size) { global.SetMediaImageSizeHint(v) }
+
+// GetMediaVideoSizeHint safely fetches the Configuration value for state's 'MediaVideoSizeHint' field
+func (st *ConfigState) GetMediaVideoSizeHint() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.MediaVideoSizeHint
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaVideoSizeHint safely sets the Configuration value for state's 'MediaVideoSizeHint' field
+func (st *ConfigState) SetMediaVideoSizeHint(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.MediaVideoSizeHint = v
+	st.reloadToViper()
+}
+
+// MediaVideoSizeHintFlag returns the flag name for the 'MediaVideoSizeHint' field
+func MediaVideoSizeHintFlag() string { return "media-video-size-hint" }
+
+// GetMediaVideoSizeHint safely fetches the value for global configuration 'MediaVideoSizeHint' field
+func GetMediaVideoSizeHint() bytesize.Size { return global.GetMediaVideoSizeHint() }
+
+// SetMediaVideoSizeHint safely sets the value for global configuration 'MediaVideoSizeHint' field
+func SetMediaVideoSizeHint(v bytesize.Size) { global.SetMediaVideoSizeHint(v) }
+
 // GetMediaLocalMaxSize safely fetches the Configuration value for state's 'MediaLocalMaxSize' field
 func (st *ConfigState) GetMediaLocalMaxSize() (v bytesize.Size) {
 	st.mutex.RLock()
@@ -3104,6 +3154,37 @@ func GetCacheConversationLastStatusIDsMemRatio() float64 {
 // SetCacheConversationLastStatusIDsMemRatio safely sets the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
 func SetCacheConversationLastStatusIDsMemRatio(v float64) {
 	global.SetCacheConversationLastStatusIDsMemRatio(v)
+}
+
+// GetCacheDomainPermissionDraftMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
+func (st *ConfigState) GetCacheDomainPermissionDraftMemRation() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.DomainPermissionDraftMemRation
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheDomainPermissionDraftMemRation safely sets the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
+func (st *ConfigState) SetCacheDomainPermissionDraftMemRation(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.DomainPermissionDraftMemRation = v
+	st.reloadToViper()
+}
+
+// CacheDomainPermissionDraftMemRationFlag returns the flag name for the 'Cache.DomainPermissionDraftMemRation' field
+func CacheDomainPermissionDraftMemRationFlag() string {
+	return "cache-domain-permission-draft-mem-ratio"
+}
+
+// GetCacheDomainPermissionDraftMemRation safely fetches the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
+func GetCacheDomainPermissionDraftMemRation() float64 {
+	return global.GetCacheDomainPermissionDraftMemRation()
+}
+
+// SetCacheDomainPermissionDraftMemRation safely sets the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
+func SetCacheDomainPermissionDraftMemRation(v float64) {
+	global.SetCacheDomainPermissionDraftMemRation(v)
 }
 
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field

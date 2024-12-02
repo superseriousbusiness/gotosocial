@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -103,7 +103,7 @@ func (r *relationshipDB) GetFollowsByIDs(ctx context.Context, ids []string) ([]*
 	// Reorder the follows by their
 	// IDs to ensure in correct order.
 	getID := func(f *gtsmodel.Follow) string { return f.ID }
-	util.OrderBy(follows, ids, getID)
+	xslices.OrderBy(follows, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -376,7 +376,7 @@ func (r *relationshipDB) DeleteAccountFollows(ctx context.Context, accountID str
 	}
 
 	// Gather the follow IDs that were deleted for removing related list entries.
-	followIDs := util.Gather(nil, deleted, func(follow *gtsmodel.Follow) string {
+	followIDs := xslices.Gather(nil, deleted, func(follow *gtsmodel.Follow) string {
 		return follow.ID
 	})
 
