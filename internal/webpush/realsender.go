@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -56,6 +57,9 @@ func NewRealSender(httpClient *http.Client, state *state.State) Sender {
 // TTL is an arbitrary time to ask the Web Push server to store notifications
 // while waiting for the client to retrieve them.
 const TTL = 48 * time.Hour
+
+// responseBodyMaxLen limits how much of the Web Push server response we use for error messages.
+const responseBodyMaxLen = 1024
 
 func (r *realSender) Send(
 	ctx context.Context,
@@ -229,10 +233,22 @@ func (r *realSender) sendToSubscription(
 	if err != nil {
 		return gtserror.Newf("error sending Web Push notification: %w", err)
 	}
-	// We're not going to use the response body, but we need to close it so we don't leak the connection.
-	_ = resp.Body.Close()
+	defer func() {
+		_ = resp.Body.Close()
+	}()
+
+	// If there's an error, log the response.
 	if resp.StatusCode != http.StatusOK {
-		return gtserror.Newf("unexpected HTTP status received when sending Web Push notification: %s", resp.Status)
+		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, responseBodyMaxLen))
+		if err != nil {
+			return gtserror.Newf("error reading Web Push server response: %w", err)
+		}
+
+		return gtserror.Newf(
+			"unexpected HTTP status %s received when sending Web Push notification: %s",
+			resp.Status,
+			string(bodyBytes),
+		)
 	}
 
 	return nil
