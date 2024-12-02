@@ -2,7 +2,7 @@
 
 ## Where's the user interface?
 
-GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Semaphore](https://semaphore.social/) in the browser, [Tusky](https://tusky.app/) for Android and [Feditext](https://github.com/feditext/feditext) for iOS, iPadOS and macOS are the best-supported. Anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly through GoToSocial as well as the settings panel, but most interaction goes through the apps.
+GoToSocial is just a bare server for the most part and is designed to be used thru external applications. [Pinafore](https://pinafore.social/) in the browser, [Tusky](https://tusky.app/) for Android and [Feditext](https://github.com/feditext/feditext) for iOS, iPadOS and macOS are the best-supported. Anything that supports the Mastodon API should work, other than the features GoToSocial doesn't yet have. Permalinks and profile pages are served directly through GoToSocial as well as the settings panel, but most interaction goes through the apps.
 
 ## Why aren't my posts showing up on my profile page?
 
