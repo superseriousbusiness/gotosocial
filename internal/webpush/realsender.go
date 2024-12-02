@@ -27,6 +27,7 @@ import (
 
 	webpushgo "github.com/SherClockHolmes/webpush-go"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -225,6 +226,7 @@ func (r *realSender) sendToSubscription(
 		},
 		&webpushgo.Options{
 			HTTPClient:      r.httpClient,
+			Subscriber:      "https://" + config.GetHost(),
 			VAPIDPublicKey:  vapidKeyPair.Public,
 			VAPIDPrivateKey: vapidKeyPair.Private,
 			TTL:             int(TTL.Seconds()),
