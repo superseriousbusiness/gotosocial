@@ -1570,6 +1570,10 @@ definitions:
                 $ref: '#/definitions/instanceV1Configuration'
             contact_account:
                 $ref: '#/definitions/account'
+            custom_css:
+                description: Custom CSS for the instance.
+                type: string
+                x-go-name: CustomCSS
             debug:
                 description: Whether or not instance is running in DEBUG mode. Omitted if false.
                 type: boolean
@@ -1750,6 +1754,10 @@ definitions:
                 $ref: '#/definitions/instanceV2Configuration'
             contact:
                 $ref: '#/definitions/instanceV2Contact'
+            custom_css:
+                description: Instance Custom Css
+                type: string
+                x-go-name: CustomCSS
             debug:
                 description: Whether or not instance is running in DEBUG mode. Omitted if false.
                 type: boolean

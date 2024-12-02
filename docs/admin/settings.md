@@ -167,3 +167,11 @@ Links to the set contact account and/or email address will appear on the footer 
 The selected **contact user** must be an active (not suspended) admin and/or moderator on the instance.
 
 If you're on a single-user instance and you give admin privileges to your main account, you can just fill in your own username here; you don't need to make a separate admin account just for this.
+
+### Instance Custom CSS
+
+custom CSS allows you to further customize the way your instance looks when visited through a browser.
+
+This custom CSS will be applied to all pages of your instance. Users themes and CSS still take precedence over this customization.
+
+See the [Custom CSS](./custom_css.md) page for some tips on writing custom CSS for your instance.

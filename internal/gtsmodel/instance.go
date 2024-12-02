@@ -34,6 +34,7 @@ type Instance struct {
 	ShortDescriptionText   string       `bun:""`                                                            // Raw text version of short description (before parsing).
 	Description            string       `bun:""`                                                            // Longer description of this instance.
 	DescriptionText        string       `bun:""`                                                            // Raw text version of long description (before parsing).
+	CustomCSS              string       `bun:",nullzero"`                                                   // Custom CSS for the instance.
 	Terms                  string       `bun:""`                                                            // Terms and conditions of this instance.
 	TermsText              string       `bun:""`                                                            // Raw text version of terms (before parsing).
 	ContactEmail           string       `bun:""`                                                            // Contact email address for this instance
