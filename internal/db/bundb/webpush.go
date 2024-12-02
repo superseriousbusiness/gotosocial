@@ -42,11 +42,15 @@ func (w *webPushDB) GetVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair
 	}
 
 	// Look for previously generated keys in the database.
+	vapidKeyPair = &gtsmodel.VAPIDKeyPair{}
 	if err := w.db.NewSelect().
 		Model(vapidKeyPair).
 		Limit(1).
 		Scan(ctx); // nocollapse
-	err != nil && !errors.Is(err, db.ErrNoEntries) {
+	err != nil {
+		if errors.Is(err, db.ErrNoEntries) {
+			return nil, nil
+		}
 		return nil, err
 	}
 
