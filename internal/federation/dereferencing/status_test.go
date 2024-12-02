@@ -21,13 +21,19 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
+
+// instantFreshness is the shortest possible freshness window.
+var instantFreshness = util.Ptr(dereferencing.FreshnessWindow(1))
 
 type StatusTestSuite struct {
 	DereferencerStandardTestSuite
@@ -227,6 +233,370 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithNonMatchingURI() {
 	)
 	suite.Equal(err.Error(), fmt.Sprintf("enrichStatus: dereferenced status uri %s does not match %s", remoteURI, remoteAltURI))
 	suite.Nil(fetchedStatus)
+}
+
+func (suite *StatusTestSuite) TestDereferencerGetStatusUpdated() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// The local account we will be fetching statuses as.
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	// The test status in question that we will be dereferencing from "remote".
+	testURIStr := "https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"
+	testURI := testrig.URLMustParse(testURIStr)
+	testStatusable := suite.client.TestRemoteStatuses[testURIStr]
+
+	// Fetch the remote status first to load it into instance.
+	testStatus, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
+		fetchingAccount.Username,
+		testURI,
+	)
+	suite.Equal(testStatusable, statusable)
+	suite.NoError(err)
+
+	var (
+		editedContent        string
+		editedContentWarning string
+		editedLanguage       string
+		editedSensitive      bool
+		editedAttachmentIDs  []string
+		editedPollOptions    []string
+		editedPollVotes      []int
+		editedAt             time.Time
+	)
+
+	// Edit the "remote" status content.
+	suite.editStatusable(testStatusable,
+		editedContent,
+		editedContentWarning,
+		editedLanguage,
+		editedSensitive,
+		editedAttachmentIDs,
+		editedPollOptions,
+		editedPollVotes,
+		editedAt,
+	)
+
+	// Manually set fetched_at time to something
+	// in the past so we can refetch right now.
+	testStatus.FetchedAt = time.Time{}
+	err = suite.state.DB.UpdateStatus(ctx, testStatus, "fetched_at")
+	suite.NoError(err)
+
+	// Refetch the remote status to trigger dereferencing edited copy.
+	latest, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
+		fetchingAccount.Username,
+		testURI,
+	)
+	suite.NotNil(statusable)
+	suite.Equal(testStatusable, statusable)
+	suite.NoError(err)
+
+	// verify updated status details.
+	suite.verifyEditedStatusUpdate(
+
+		// latest status
+		// being tested.
+		latest,
+
+		// previous length of edits.
+		len(testStatus.EditIDs),
+
+		// expected current state.
+		&gtsmodel.StatusEdit{
+			Content:        editedContent,
+			ContentWarning: editedContentWarning,
+			Language:       editedLanguage,
+			Sensitive:      &editedSensitive,
+			AttachmentIDs:  editedAttachmentIDs,
+			PollOptions:    editedPollOptions,
+			PollVotes:      editedPollVotes,
+			CreatedAt:      editedAt,
+		},
+
+		// expected historic edit.
+		&gtsmodel.StatusEdit{
+			Content:        testStatus.Content,
+			ContentWarning: testStatus.ContentWarning,
+			Language:       testStatus.Language,
+			Sensitive:      testStatus.Sensitive,
+			AttachmentIDs:  testStatus.AttachmentIDs,
+			PollOptions: func() []string {
+				if testStatus.Poll != nil {
+					return testStatus.Poll.Options
+				}
+				return nil
+			}(),
+			PollVotes: func() []int {
+				if testStatus.Poll != nil {
+					return testStatus.Poll.Votes
+				}
+				return nil
+			}(),
+			CreatedAt: testStatus.CreatedAt,
+		},
+	)
+}
+
+func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// The local account we will be fetching statuses as.
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	// The test status in question that we will be dereferencing from "remote".
+	testURIStr := "https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"
+	testURI := testrig.URLMustParse(testURIStr)
+	testStatusable := suite.client.TestRemoteStatuses[testURIStr]
+
+	// Fetch the remote status first to load it into instance.
+	testStatus, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
+		fetchingAccount.Username,
+		testURI,
+	)
+	suite.Equal(testStatusable, statusable)
+	suite.NoError(err)
+
+	var (
+		editedContent        string
+		editedContentWarning string
+		editedLanguage       string
+		editedSensitive      bool
+		editedAttachmentIDs  []string
+		editedPollOptions    []string
+		editedPollVotes      []int
+		editedAt             time.Time
+	)
+
+	// Edit the "remote" status content.
+	suite.editStatusable(testStatusable,
+		editedContent,
+		editedContentWarning,
+		editedLanguage,
+		editedSensitive,
+		editedAttachmentIDs,
+		editedPollOptions,
+		editedPollVotes,
+		editedAt,
+	)
+
+	// Refresh the remote status to trigger dereferencing edited copy.
+	latest, statusable, err := suite.dereferencer.RefreshStatus(ctx,
+		fetchingAccount.Username,
+		testStatus,
+		nil,
+		instantFreshness,
+	)
+	suite.NotNil(statusable)
+	suite.NoError(err)
+
+	// verify updated status details.
+	suite.verifyEditedStatusUpdate(
+
+		// latest status
+		// being tested.
+		latest,
+
+		// previous length of edits.
+		len(testStatus.EditIDs),
+
+		// expected current state.
+		&gtsmodel.StatusEdit{
+			Content:        editedContent,
+			ContentWarning: editedContentWarning,
+			Language:       editedLanguage,
+			Sensitive:      &editedSensitive,
+			AttachmentIDs:  editedAttachmentIDs,
+			PollOptions:    editedPollOptions,
+			PollVotes:      editedPollVotes,
+			CreatedAt:      editedAt,
+		},
+
+		// expected historic edit.
+		&gtsmodel.StatusEdit{
+			Content:        testStatus.Content,
+			ContentWarning: testStatus.ContentWarning,
+			Language:       testStatus.Language,
+			Sensitive:      testStatus.Sensitive,
+			AttachmentIDs:  testStatus.AttachmentIDs,
+			PollOptions: func() []string {
+				if testStatus.Poll != nil {
+					return testStatus.Poll.Options
+				}
+				return nil
+			}(),
+			PollVotes: func() []int {
+				if testStatus.Poll != nil {
+					return testStatus.Poll.Votes
+				}
+				return nil
+			}(),
+			CreatedAt: testStatus.CreatedAt,
+		},
+	)
+}
+
+func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// The local account we will be fetching statuses as.
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	// The test status in question that we will be dereferencing from "remote".
+	testURIStr := "https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"
+	testURI := testrig.URLMustParse(testURIStr)
+	testStatusable := suite.client.TestRemoteStatuses[testURIStr]
+
+	// Fetch the remote status first to load it into instance.
+	testStatus, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
+		fetchingAccount.Username,
+		testURI,
+	)
+	suite.Equal(testStatusable, statusable)
+	suite.NoError(err)
+
+	var (
+		editedContent        string
+		editedContentWarning string
+		editedLanguage       string
+		editedSensitive      bool
+		editedAttachmentIDs  []string
+		editedPollOptions    []string
+		editedPollVotes      []int
+		editedAt             time.Time
+	)
+
+	// Edit the "remote" status content.
+	suite.editStatusable(testStatusable,
+		editedContent,
+		editedContentWarning,
+		editedLanguage,
+		editedSensitive,
+		editedAttachmentIDs,
+		editedPollOptions,
+		editedPollVotes,
+		editedAt,
+	)
+
+	// Refresh with a given statusable to updated to edited copy.
+	latest, statusable, err := suite.dereferencer.RefreshStatus(ctx,
+		fetchingAccount.Username,
+		testStatus,
+		testStatusable,
+		instantFreshness,
+	)
+	suite.Equal(testStatusable, statusable)
+	suite.NoError(err)
+
+	// verify updated status details.
+	suite.verifyEditedStatusUpdate(
+
+		// latest status
+		// being tested.
+		latest,
+
+		// previous length of edits.
+		len(testStatus.EditIDs),
+
+		// expected current state.
+		&gtsmodel.StatusEdit{
+			Content:        editedContent,
+			ContentWarning: editedContentWarning,
+			Language:       editedLanguage,
+			Sensitive:      &editedSensitive,
+			AttachmentIDs:  editedAttachmentIDs,
+			PollOptions:    editedPollOptions,
+			PollVotes:      editedPollVotes,
+			CreatedAt:      editedAt,
+		},
+
+		// expected historic edit.
+		&gtsmodel.StatusEdit{
+			Content:        testStatus.Content,
+			ContentWarning: testStatus.ContentWarning,
+			Language:       testStatus.Language,
+			Sensitive:      testStatus.Sensitive,
+			AttachmentIDs:  testStatus.AttachmentIDs,
+			PollOptions: func() []string {
+				if testStatus.Poll != nil {
+					return testStatus.Poll.Options
+				}
+				return nil
+			}(),
+			PollVotes: func() []int {
+				if testStatus.Poll != nil {
+					return testStatus.Poll.Votes
+				}
+				return nil
+			}(),
+			CreatedAt: testStatus.CreatedAt,
+		},
+	)
+}
+
+func (suite *StatusTestSuite) editStatusable(
+	statusable ap.Statusable,
+	content string,
+	contentWarning string,
+	language string,
+	sensitive bool,
+	attachmentIDs []string,
+	pollOptions []string,
+	pollVotes []int,
+	editedAt time.Time,
+) {
+	suite.Fail("TODO")
+}
+
+func (suite *StatusTestSuite) verifyEditedStatusUpdate(
+	status *gtsmodel.Status, // the status to check
+	previousEdits int, // number of previous edits
+	current *gtsmodel.StatusEdit, // expected current state
+	historic *gtsmodel.StatusEdit, // historic edit we expect to have
+) {
+	// don't use this func
+	// name in error msgs.
+	suite.T().Helper()
+
+	// Check we have expected number of edits.
+	suite.Len(status.Edits, previousEdits+1)
+	suite.Len(status.EditIDs, previousEdits+1)
+
+	// Check current state of status.
+	suite.Equal(current.Content, status.Content)
+	suite.Equal(current.ContentWarning, status.ContentWarning)
+	suite.Equal(current.Language, status.Language)
+	suite.Equal(*current.Sensitive, *status.Sensitive)
+	suite.Equal(current.AttachmentIDs, status.AttachmentIDs)
+	var pollOptions []string
+	var pollVotes []int
+	if status.Poll != nil {
+		pollOptions = status.Poll.Options
+		pollVotes = status.Poll.Votes
+	}
+	suite.Equal(current.PollOptions, pollOptions)
+	suite.Equal(current.PollVotes, pollVotes)
+	suite.Equal(current.CreatedAt, status.CreatedAt)
+
+	// Check the latest historic edit matches expected.
+	latestEdit := status.Edits[len(status.Edits)-1]
+	suite.Equal(historic.Content, latestEdit.Content)
+	suite.Equal(historic.ContentWarning, latestEdit.ContentWarning)
+	suite.Equal(historic.Language, latestEdit.Language)
+	suite.Equal(*historic.Sensitive, *latestEdit.Sensitive)
+	suite.Equal(historic.AttachmentIDs, latestEdit.AttachmentIDs)
+	suite.Equal(historic.PollOptions, latestEdit.PollOptions)
+	suite.Equal(historic.PollVotes, latestEdit.PollVotes)
+	suite.Equal(historic.CreatedAt, latestEdit.CreatedAt)
+
+	// The status should be updated at time of edit.
+	suite.Equal(historic.CreatedAt, status.UpdatedAt)
 }
 
 func TestStatusTestSuite(t *testing.T) {
