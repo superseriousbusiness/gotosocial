@@ -4980,7 +4980,7 @@ paths:
                 - description: 此表情的代码，将被实例居民用于选定对应表情。此代码在实例上必须是唯一的。
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   required: true
                   type: string
                 - description: 此表情的 png 或 gif 图像。动画 png 也可以！为了确保与其他 fedi 实现的兼容性，默认情况下表情大小限制为 50kb。
@@ -5130,7 +5130,7 @@ paths:
                 - description: 用于表情的代码，将被实例居民用于选定表情。此代码在实例上必须是唯一的。仅适用于 `copy` 操作类型。
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   type: string
                 - description: 此表情的新 png 或 gif 图像。动画 png 也可以！为了确保与其他 fedi 实现的兼容性，默认情况下表情大小限制为 50kb。仅适用于 **本站** 表情。
                   in: formData
@@ -5637,6 +5637,417 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: 吊销实例密钥
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts:
+        get:
+            description: |-
+                该端点将返回按时间倒序排序（最新优先），并带有连续 ID 的域名权限草案（ID 值越大，草稿越新）。可以通过返回的 Link 标头解析下一页与上一页查询。
+                
+                示例:
+                ```
+                <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionDraftsGet
+            parameters:
+                - description: 仅显示给定订阅 ID 创建的草案。
+                  in: query
+                  name: subscription_id
+                  type: string
+                - description: 仅显示针对特定域名的草案。
+                  in: query
+                  name: domain
+                  type: string
+                - description: 筛选“屏蔽”与“放行”类型的草案。
+                  in: query
+                  name: permission_type
+                  type: string
+                - description: 仅返回早于给定 max ID 的条目（用于向下分页）。具有对应 ID 的条目不会包含在响应中。
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 仅返回晚于给定 since ID 的条目（用于向上分页）。具有对应 ID 的条目不会包含在响应中。
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 仅返回相邻且晚于给定 min ID 的条目（用于向上分页）。具有对应 ID 的条目不会包含在响应中。
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: 要返回的条目数量。
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 域名权限草案。
+                    headers:
+                        Link:
+                            description: 下一查询与上一查询的链接。
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 查看域名权限草案。
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftCreate
+            parameters:
+                - description: 该草案要针对的域名。
+                  in: formData
+                  name: domain
+                  type: string
+                - description: 草案类型为“放行”或“屏蔽”。
+                  in: formData
+                  name: permission_type
+                  type: string
+                - description: 对外公开展示时混淆具体域名。例如：`example.org` 将变为类似 `ex***e.org` 的字符串。
+                  in: formData
+                  name: obfuscate
+                  type: boolean
+                - description: 对此域名权限的公开评注。若您选择分享此权限设定，此评注将与权限条目一起显示。
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: 对此域名权限的私人评注。仅显示给其他管理员，因此这是一个可用于记录为什么某个域名最终被添加此权限设定的有用的内部手段。
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 新创建的域名权限草案。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 使用给定参数创建一条域名权限草案。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}:
+        get:
+            operationId: domainPermissionDraftGet
+            parameters:
+                - description: 域名权限草案的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 域名权限草案。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 获取具有给定 ID 的域名权限草案。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}/accept:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftAccept
+            parameters:
+                - description: 域名权限草案的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: 若已经存在一条具有相同域名与权限设定类型的草案，使用新草案的字段覆盖现有权限设定。
+                  in: formData
+                  name: overwrite
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 新创建的域名权限草案。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 接受一条域名权限草案，将其转换为会得到强制执行的域名权限。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}/remove:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftRemove
+            parameters:
+                - description: 域名权限草案的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: 删除此域名权限草案时，为目标域名创建一个域名排除条目，以确保之后不会为此域名创建草案。
+                  in: formData
+                  name: exclude_target
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 被移除的域名权限草案。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 移除一条域名权限草案，可选择忽略所有之后的针对给定域名的草案。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_excludes:
+        get:
+            description: |-
+                返回按时间倒序排序（新创建的条目优先），并带有连续 ID 的域名权限排除条目（ID 值越大，排除条目越新）。可以通过返回的 Link 标头解析下一页与上一页查询。
+                示例：
+                ```
+                <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ```
+            operationId: domainPermissionExcludesGet
+            parameters:
+                - description: 仅返回针对给定域名的排除条目。
+                  in: query
+                  name: domain
+                  type: string
+                - description: 仅返回比给定 max ID 新的条目（用于向下分页）。具有对应 ID 的条目不会包含在响应中。
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 仅返回比给定 since ID 新的条目（用于向上分页）。具有对应 ID 的条目不会包含在响应中。
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 仅返回比给定 min ID 相邻且更新的条目（用于向上分页）。具有对应 ID 的条目不会包含在响应中。
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: 要返回的条目数量。
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 域名权限排除条目。
+                    headers:
+                        Link:
+                            description: 下一查询与上一查询的链接。
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 查看域名权限排除条目。
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            description: |-
+                被排除的域名（及其子域名）在导入或订阅域名权限列表时不会被自动屏蔽或放行。
+                您仍然可以为被排除的域名手动创建域名屏蔽条目或域名放行条目，被排除之后，与该域名关联的任何的已有或新创建的域名屏蔽条目或域名放行条目都将被继续执行。
+            operationId: domainPermissionExcludeCreate
+            parameters:
+                - description: 要创建权限排除的域名。
+                  in: formData
+                  name: domain
+                  type: string
+                - description: 对该域名排除条目的私密评论。
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 新创建的域名排除条目。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 使用给定参数创建一个域名权限排除条目。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_excludes/{id}:
+        delete:
+            operationId: domainPermissionExcludeDelete
+            parameters:
+                - description: 该域名权限排除条目的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 被移除的域名权限排除条目。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 移除一个域名权限排除条目。
+            tags:
+                - admin
+        get:
+            operationId: domainPermissionExcludeGet
+            parameters:
+                - description: 域名权限排除条目的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 域名权限排除条目。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 获取具有给定 ID 的域名权限排除。
             tags:
                 - admin
     /api/v1/admin/email/test:
