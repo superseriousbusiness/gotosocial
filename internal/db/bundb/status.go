@@ -406,12 +406,6 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 }
 
 func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) error {
-	status.UpdatedAt = time.Now()
-	if len(columns) > 0 {
-		// If we're updating by column, ensure "updated_at" is included.
-		columns = append(columns, "updated_at")
-	}
-
 	return s.state.Caches.DB.Status.Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
