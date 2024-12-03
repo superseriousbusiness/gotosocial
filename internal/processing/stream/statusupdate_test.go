@@ -54,6 +54,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	suite.Equal(`{
   "id": "01FVW7JHQFSFK166WWKR8CBA6M",
   "created_at": "2021-09-20T10:40:37.000Z",
+  "edited_at": null,
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
   "sensitive": false,

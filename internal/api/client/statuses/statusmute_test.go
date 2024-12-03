@@ -91,6 +91,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
 	suite.Equal(`{
   "id": "01F8MHAMCHF6Y650WCRSCP4WMY",
   "created_at": "2021-10-20T10:40:37.000Z",
+  "edited_at": null,
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
   "sensitive": true,
@@ -178,6 +179,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
 	suite.Equal(`{
   "id": "01F8MHAMCHF6Y650WCRSCP4WMY",
   "created_at": "2021-10-20T10:40:37.000Z",
+  "edited_at": null,
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
   "sensitive": true,

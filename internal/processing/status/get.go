@@ -67,7 +67,6 @@ func (p *Processor) Get(ctx context.Context, requestingAccount *gtsmodel.Account
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
-
 	return p.c.GetAPIStatus(ctx, requestingAccount, targetStatus)
 }
 
@@ -106,5 +105,6 @@ func (p *Processor) SourceGet(ctx context.Context, requestingAccount *gtsmodel.A
 		err = gtserror.Newf("error converting status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
 	return statusSource, nil
 }
