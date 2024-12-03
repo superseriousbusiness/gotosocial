@@ -142,6 +142,14 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
   "id": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40",
   "next": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
   "orderedItems": [
+	{
+      "actor": "http://localhost:8080/users/the_mighty_zork",
+      "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+      "id": "http://localhost:8080/users/the_mighty_zork/statuses/01JDPZC707CKDN8N4QVWM4Z1NR/activity#Create",
+      "object": "http://localhost:8080/users/the_mighty_zork/statuses/01JDPZC707CKDN8N4QVWM4Z1NR",
+      "to": "https://www.w3.org/ns/activitystreams#Public",
+      "type": "Create"
+    },
     {
       "actor": "http://localhost:8080/users/the_mighty_zork",
       "cc": "http://localhost:8080/users/the_mighty_zork/followers",
@@ -160,8 +168,8 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
     }
   ],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026min_id=01HH9KYNQPA416TNJ53NSATP40",
-  "totalItems": 8,
+  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026min_id=01JDPZC707CKDN8N4QVWM4Z1NR",
+  "totalItems": 9,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 
