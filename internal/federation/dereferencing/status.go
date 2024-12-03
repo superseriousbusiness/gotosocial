@@ -926,6 +926,15 @@ func (d *Dereferencer) updateStatus(
 	// any other changes in status content itself.
 	if pollChanged || statusChanged(existing, status) {
 
+		// We prefer to use provided 'upated_at', but ensure
+		// it fits chronologically with creation / last update.
+		if !status.UpdatedAt.After(status.CreatedAt) ||
+			!status.UpdatedAt.After(existing.UpdatedAt) {
+
+			// Else fallback to now as update time.
+			status.UpdatedAt = status.FetchedAt
+		}
+
 		// Status has been editted since last
 		// we saw it, take snapshot of existing.
 		var edit gtsmodel.StatusEdit
@@ -1009,7 +1018,7 @@ func (d *Dereferencer) updateStatusPoll(
 		// insert latest poll version into database.
 		return true, d.insertStatusPoll(ctx, status)
 
-	case pollUpdated(existing.Poll, status.Poll):
+	case pollStateUpdated(existing.Poll, status.Poll):
 		// Since we last saw it, the poll has updated!
 		// Whether that be stats, or close time.
 		poll := existing.Poll

@@ -58,9 +58,9 @@ func pollChanged(existing, latest *gtsmodel.Poll) bool {
 		!existing.ExpiresAt.Equal(latest.ExpiresAt)
 }
 
-// pollUpdated returns whether a poll has updated, i.e. if the
+// pollStateUpdated returns whether a poll has updated, i.e. if
 // vote counts have changed, or if it has expired / been closed.
-func pollUpdated(existing, latest *gtsmodel.Poll) bool {
+func pollStateUpdated(existing, latest *gtsmodel.Poll) bool {
 	return *existing.Voters != *latest.Voters ||
 		!slices.Equal(existing.Votes, latest.Votes) ||
 		!existing.ClosedAt.Equal(latest.ClosedAt)
@@ -74,8 +74,7 @@ func pollJustClosed(existing, latest *gtsmodel.Poll) bool {
 // statusChanged returns whether a status has changed in a way that
 // indicates that existing should be snapshotted for version history.
 func statusChanged(existing, latest *gtsmodel.Status) bool {
-	return !existing.UpdatedAt.Equal(latest.UpdatedAt) ||
-		existing.Content != latest.Content ||
+	return existing.Content != latest.Content ||
 		existing.ContentWarning != latest.ContentWarning ||
 		!slices.Equal(existing.AttachmentIDs, latest.AttachmentIDs)
 }
