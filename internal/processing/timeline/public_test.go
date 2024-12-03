@@ -102,8 +102,8 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 		requester           = suite.testAccounts["local_account_1"]
 		maxID               = ""
 		sinceID             = ""
-		minID               = "01F8MHAAY43M6RJ473VQFCVH36" // 1 before filteredStatus
-		limit               = 10
+		minID               = ""
+		limit               = 100
 		local               = false
 		filteredStatus      = suite.testStatuses["admin_account_status_2"]
 		filteredStatusFound = false
