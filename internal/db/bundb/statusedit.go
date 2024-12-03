@@ -151,8 +151,7 @@ func (s *statusEditDB) PutStatusEdit(ctx context.Context, edit *gtsmodel.StatusE
 func (s *statusEditDB) DeleteStatusEdits(ctx context.Context, ids []string) error {
 	// Gather necessary fields from
 	// deleted for cache invalidation.
-	var deleted []*gtsmodel.StatusEdit
-	deleted = make([]*gtsmodel.StatusEdit, 0, len(ids))
+	deleted := make([]*gtsmodel.StatusEdit, 0, len(ids))
 
 	// Delete all edits with IDs pertaining
 	// to given slice, returning status IDs.

@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -38,9 +37,6 @@ import (
 // util provides util functions used by both
 // the fromClientAPI and fromFediAPI functions.
 type utils struct {
-	// common processor logic
-	c *common.Processor
-
 	state     *state.State
 	media     *media.Processor
 	account   *account.Processor
