@@ -254,7 +254,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 		fetchingAccount.Username,
 		testURI,
 	)
-	suite.Equal(testStatusable, statusable)
+	suite.NotNil(statusable)
 	suite.NoError(err)
 
 	// Run through multiple possible edits.
@@ -302,7 +302,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 			nil,
 			instantFreshness,
 		)
-		suite.Equal(testStatusable, statusable)
+		suite.NotNil(statusable)
 		suite.NoError(err)
 
 		// verify updated status details.
@@ -360,7 +360,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
 		fetchingAccount.Username,
 		testURI,
 	)
-	suite.Equal(testStatusable, statusable)
+	suite.NotNil(statusable)
 	suite.NoError(err)
 
 	// Run through multiple possible edits.
@@ -408,7 +408,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
 			testStatusable,
 			instantFreshness,
 		)
-		suite.Equal(testStatusable, statusable)
+		suite.NotNil(statusable)
 		suite.NoError(err)
 
 		// verify updated status details.

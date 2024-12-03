@@ -937,6 +937,7 @@ func (d *Dereferencer) updateStatus(
 		edit.Sensitive = existing.Sensitive
 		edit.AttachmentIDs = existing.AttachmentIDs
 		edit.Attachments = existing.Attachments
+		edit.StatusID = status.ID
 
 		// Edit creation is last update time.
 		edit.CreatedAt = existing.UpdatedAt
