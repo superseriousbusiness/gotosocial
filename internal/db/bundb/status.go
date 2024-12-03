@@ -183,14 +183,10 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		errs gtserror.MultiError
 	)
 
-	// For sub-models we only want
-	// barebones versions of them.
-	ctx = gtscontext.SetBarebones(ctx)
-
 	if status.Account == nil {
 		// Status author is not set, fetch from database.
 		status.Account, err = s.state.DB.GetAccountByID(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.AccountID,
 		)
 		if err != nil {
@@ -202,7 +198,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.InReplyTo == nil {
 			// Status parent is not set, fetch from database.
 			status.InReplyTo, err = s.GetStatusByID(
-				ctx,
+				gtscontext.SetBarebones(ctx),
 				status.InReplyToID,
 			)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -213,7 +209,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.InReplyToAccount == nil {
 			// Status parent author is not set, fetch from database.
 			status.InReplyToAccount, err = s.state.DB.GetAccountByID(
-				ctx,
+				gtscontext.SetBarebones(ctx),
 				status.InReplyToAccountID,
 			)
 			if err != nil {
@@ -226,7 +222,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.BoostOf == nil {
 			// Status boost is not set, fetch from database.
 			status.BoostOf, err = s.GetStatusByID(
-				ctx,
+				gtscontext.SetBarebones(ctx),
 				status.BoostOfID,
 			)
 			if err != nil {
@@ -237,7 +233,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		if status.BoostOfAccount == nil {
 			// Status boost author is not set, fetch from database.
 			status.BoostOfAccount, err = s.state.DB.GetAccountByID(
-				ctx,
+				gtscontext.SetBarebones(ctx),
 				status.BoostOfAccountID,
 			)
 			if err != nil {
@@ -249,7 +245,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if status.PollID != "" && status.Poll == nil {
 		// Status poll is not set, fetch from database.
 		status.Poll, err = s.state.DB.GetPollByID(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.PollID,
 		)
 		if err != nil {
@@ -260,7 +256,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.AttachmentsPopulated() {
 		// Status attachments are out-of-date with IDs, repopulate.
 		status.Attachments, err = s.state.DB.GetAttachmentsByIDs(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.AttachmentIDs,
 		)
 		if err != nil {
@@ -271,7 +267,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.TagsPopulated() {
 		// Status tags are out-of-date with IDs, repopulate.
 		status.Tags, err = s.state.DB.GetTags(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.TagIDs,
 		)
 		if err != nil {
@@ -282,7 +278,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.MentionsPopulated() {
 		// Status mentions are out-of-date with IDs, repopulate.
 		status.Mentions, err = s.state.DB.GetMentions(
-			ctx,
+			ctx, // TODO: manually populate mentions for places expecting these populated
 			status.MentionIDs,
 		)
 		if err != nil {
@@ -293,7 +289,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.EmojisPopulated() {
 		// Status emojis are out-of-date with IDs, repopulate.
 		status.Emojis, err = s.state.DB.GetEmojisByIDs(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.EmojiIDs,
 		)
 		if err != nil {
@@ -304,7 +300,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.EditsPopulated() {
 		// Status edits are out-of-date with IDs, repopulate.
 		status.Edits, err = s.state.DB.GetStatusEditsByIDs(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.EditIDs,
 		)
 		if err != nil {
@@ -315,7 +311,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
 		// Populate the status' expected CreatedWithApplication (not always set).
 		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.CreatedWithApplicationID,
 		)
 		if err != nil {
