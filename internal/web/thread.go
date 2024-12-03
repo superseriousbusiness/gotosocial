@@ -124,6 +124,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 			cssFA,
 			cssStatus,
 			cssThread,
+			instanceCustomCSSPath,
 		}...,
 	)
 
@@ -131,7 +132,6 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 	if theme := targetAccount.Theme; theme != "" {
 		stylesheets = append(
 			stylesheets,
-			instanceCustomCSSPath,
 			themesPathPrefix+"/"+theme,
 		)
 	}
