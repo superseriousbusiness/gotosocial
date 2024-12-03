@@ -118,7 +118,6 @@ func (m *Manager) CreateMedia(
 		Header:     util.Ptr(false),
 		Cached:     util.Ptr(false),
 		CreatedAt:  now,
-		UpdatedAt:  now,
 	}
 
 	// Check if we were provided additional info

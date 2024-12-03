@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -365,14 +364,14 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 				}
 			}
 
-			// change the status ID of the media attachments to the new status
+			// change the status ID of the media
+			// attachments to the current status
 			for _, a := range status.Attachments {
 				a.StatusID = status.ID
-				a.UpdatedAt = time.Now()
 				if _, err := tx.
 					NewUpdate().
 					Model(a).
-					Column("status_id", "updated_at").
+					Column("status_id").
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
 					if !errors.Is(err, db.ErrAlreadyExists) {
@@ -399,7 +398,9 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 			}
 
 			// Finally, insert the status
-			_, err := tx.NewInsert().Model(status).Exec(ctx)
+			_, err := tx.NewInsert().
+				Model(status).
+				Exec(ctx)
 			return err
 		})
 	})
@@ -443,13 +444,14 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 				}
 			}
 
-			// change the status ID of the media attachments to the new status
+			// change the status ID of the media
+			// attachments to the current status.
 			for _, a := range status.Attachments {
 				a.StatusID = status.ID
-				a.UpdatedAt = time.Now()
 				if _, err := tx.
 					NewUpdate().
 					Model(a).
+					Column("status_id").
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
 					if !errors.Is(err, db.ErrAlreadyExists) {
@@ -476,8 +478,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 			}
 
 			// Finally, update the status
-			_, err := tx.
-				NewUpdate().
+			_, err := tx.NewUpdate().
 				Model(status).
 				Column(columns...).
 				Where("? = ?", bun.Ident("status.id"), status.ID).

@@ -718,7 +718,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-04T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-04T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -761,7 +760,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH7TDVANYKWVE8VVKFPJTJ.gif",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -808,7 +806,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01CDR64G398ADCHXK08WWTHEZ5.mp4",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeVideo,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -858,7 +855,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01F8MH8RMYQ6MSNY3JM2XT1CQ5.jpg",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -905,7 +901,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -952,7 +947,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -999,7 +993,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/attachment/original/01J2M20K6K9XQC4WSB961YJHV6.mp3",
 			RemoteURL: "",
 			CreatedAt: TimeMustParse("2024-01-10T11:24:00+02:00"),
-			UpdatedAt: TimeMustParse("2024-01-10T11:24:00+02:00"),
 			Type:      gtsmodel.FileTypeAudio,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -1049,7 +1042,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:         "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
 			RemoteURL:   "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
 			CreatedAt:   TimeMustParse("2024-11-01T10:01:00+02:00"),
-			UpdatedAt:   TimeMustParse("2024-11-01T10:01:00+02:00"),
 			Type:        gtsmodel.FileTypeUnknown,
 			FileMeta:    gtsmodel.FileMeta{},
 			AccountID:   "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -1068,7 +1060,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01F8MH5ZK5VRH73AKHQM6Y9VNX/attachment/original/01FVW7RXPQ8YJHTEXYPE7Q8ZY0.jpg",
 			RemoteURL: "http://fossbros-anonymous.io/attachments/original/13bbc3f8-2b5e-46ea-9531-40b4974d9912.jpg",
 			CreatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
-			UpdatedAt: TimeMustParse("2021-09-20T12:40:37+02:00"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -1114,7 +1105,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/062G5WYKY35KKD12EMSM3F8PJ8/header/original/01PFPMWK2FF0D9WMHEJHR07C3R.jpg",
 			RemoteURL: "http://fossbros-anonymous.io/attachments/small/a499f55b-2d1e-4acd-98d2-1ac2ba6d79b9.jpg",
 			CreatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
-			UpdatedAt: TimeMustParse("2022-06-09T13:12:00Z"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -1160,7 +1150,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:       "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7Y3C432WRSNS10EZM86SA5.jpg",
 			RemoteURL: "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7Y6G0EMCKST3Q0914WW0MS.jpg",
 			CreatedAt: TimeMustParse("2023-11-02T12:44:25+02:00"),
-			UpdatedAt: TimeMustParse("2023-11-02T12:44:25+02:00"),
 			Type:      gtsmodel.FileTypeImage,
 			FileMeta: gtsmodel.FileMeta{
 				Original: gtsmodel.Original{
@@ -1205,7 +1194,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:         "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE7ZFX9GKA5ZZVD4FACABSS9.svg",
 			RemoteURL:   "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg",
 			CreatedAt:   TimeMustParse("2023-11-02T12:44:25+02:00"),
-			UpdatedAt:   TimeMustParse("2023-11-02T12:44:25+02:00"),
 			Type:        gtsmodel.FileTypeUnknown,
 			FileMeta:    gtsmodel.FileMeta{},
 			AccountID:   "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -1224,7 +1212,6 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 			URL:         "http://localhost:8080/fileserver/01FHMQX3GAABWSM0S2VZEC2SWC/attachment/original/01HE88YG74PVAB81PX2XA9F3FG.mp3",
 			RemoteURL:   "http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3",
 			CreatedAt:   TimeMustParse("2023-11-02T12:44:25+02:00"),
-			UpdatedAt:   TimeMustParse("2023-11-02T12:44:25+02:00"),
 			Type:        gtsmodel.FileTypeUnknown,
 			FileMeta:    gtsmodel.FileMeta{},
 			AccountID:   "01FHMQX3GAABWSM0S2VZEC2SWC",

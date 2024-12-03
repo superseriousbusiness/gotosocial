@@ -505,7 +505,6 @@ func sizeofMedia() uintptr {
 		URL:               exampleURI,
 		RemoteURL:         exampleURI,
 		CreatedAt:         exampleTime,
-		UpdatedAt:         exampleTime,
 		Type:              gtsmodel.FileTypeImage,
 		AccountID:         exampleID,
 		Description:       exampleText,

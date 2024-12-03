@@ -19,7 +19,6 @@ package model
 
 import (
 	"io"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 )
@@ -30,8 +29,6 @@ type Content struct {
 	ContentType string
 	// ContentLength in bytes
 	ContentLength int64
-	// Time when the content was last updated.
-	ContentUpdated time.Time
 	// Actual content
 	Content io.ReadCloser
 	// Resource URL to forward to if the file can be fetched from the storage directly (e.g signed S3 URL)

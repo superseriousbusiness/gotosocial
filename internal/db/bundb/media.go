@@ -104,12 +104,6 @@ func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttach
 }
 
 func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment, columns ...string) error {
-	media.UpdatedAt = time.Now()
-	if len(columns) > 0 {
-		// If we're updating by column, ensure "updated_at" is included.
-		columns = append(columns, "updated_at")
-	}
-
 	return m.state.Caches.DB.Media.Store(media, func() error {
 		_, err := m.db.NewUpdate().
 			Model(media).

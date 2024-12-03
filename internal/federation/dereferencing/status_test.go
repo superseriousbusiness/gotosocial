@@ -267,7 +267,17 @@ func (suite *StatusTestSuite) TestDereferencerGetStatusUpdated() {
 		editedAt             time.Time
 	)
 
-	// Edit the "remote" status content.
+	// Perform any edits to the remote status.
+	editedContent = "updated status content!"
+	editedContentWarning = "CW: edited status content"
+	editedLanguage = testStatus.Language           // no change
+	editedSensitive = *testStatus.Sensitive        // no change
+	editedAttachmentIDs = testStatus.AttachmentIDs // no change
+	editedPollOptions = getPollOptions(testStatus) // no change
+	editedPollVotes = getPollVotes(testStatus)     // no change
+	editedAt = time.Now()
+
+	// Edit the "remote" statusable obj.
 	suite.editStatusable(testStatusable,
 		editedContent,
 		editedContentWarning,
@@ -323,19 +333,9 @@ func (suite *StatusTestSuite) TestDereferencerGetStatusUpdated() {
 			Language:       testStatus.Language,
 			Sensitive:      testStatus.Sensitive,
 			AttachmentIDs:  testStatus.AttachmentIDs,
-			PollOptions: func() []string {
-				if testStatus.Poll != nil {
-					return testStatus.Poll.Options
-				}
-				return nil
-			}(),
-			PollVotes: func() []int {
-				if testStatus.Poll != nil {
-					return testStatus.Poll.Votes
-				}
-				return nil
-			}(),
-			CreatedAt: testStatus.CreatedAt,
+			PollOptions:    getPollOptions(testStatus),
+			PollVotes:      getPollVotes(testStatus),
+			CreatedAt:      testStatus.CreatedAt,
 		},
 	)
 }
@@ -372,7 +372,17 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 		editedAt             time.Time
 	)
 
-	// Edit the "remote" status content.
+	// Perform any edits to the remote status.
+	editedContent = "updated status content!"
+	editedContentWarning = "CW: edited status content"
+	editedLanguage = testStatus.Language           // no change
+	editedSensitive = *testStatus.Sensitive        // no change
+	editedAttachmentIDs = testStatus.AttachmentIDs // no change
+	editedPollOptions = getPollOptions(testStatus) // no change
+	editedPollVotes = getPollVotes(testStatus)     // no change
+	editedAt = time.Now()
+
+	// Edit the "remote" statusable obj.
 	suite.editStatusable(testStatusable,
 		editedContent,
 		editedContentWarning,
@@ -423,19 +433,9 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 			Language:       testStatus.Language,
 			Sensitive:      testStatus.Sensitive,
 			AttachmentIDs:  testStatus.AttachmentIDs,
-			PollOptions: func() []string {
-				if testStatus.Poll != nil {
-					return testStatus.Poll.Options
-				}
-				return nil
-			}(),
-			PollVotes: func() []int {
-				if testStatus.Poll != nil {
-					return testStatus.Poll.Votes
-				}
-				return nil
-			}(),
-			CreatedAt: testStatus.CreatedAt,
+			PollOptions:    getPollOptions(testStatus),
+			PollVotes:      getPollVotes(testStatus),
+			CreatedAt:      testStatus.CreatedAt,
 		},
 	)
 }
@@ -472,7 +472,17 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
 		editedAt             time.Time
 	)
 
-	// Edit the "remote" status content.
+	// Perform any edits to the remote status.
+	editedContent = "updated status content!"
+	editedContentWarning = "CW: edited status content"
+	editedLanguage = testStatus.Language           // no change
+	editedSensitive = *testStatus.Sensitive        // no change
+	editedAttachmentIDs = testStatus.AttachmentIDs // no change
+	editedPollOptions = getPollOptions(testStatus) // no change
+	editedPollVotes = getPollVotes(testStatus)     // no change
+	editedAt = time.Now()
+
+	// Edit the "remote" statusable obj.
 	suite.editStatusable(testStatusable,
 		editedContent,
 		editedContentWarning,
@@ -523,23 +533,15 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
 			Language:       testStatus.Language,
 			Sensitive:      testStatus.Sensitive,
 			AttachmentIDs:  testStatus.AttachmentIDs,
-			PollOptions: func() []string {
-				if testStatus.Poll != nil {
-					return testStatus.Poll.Options
-				}
-				return nil
-			}(),
-			PollVotes: func() []int {
-				if testStatus.Poll != nil {
-					return testStatus.Poll.Votes
-				}
-				return nil
-			}(),
-			CreatedAt: testStatus.CreatedAt,
+			PollOptions:    getPollOptions(testStatus),
+			PollVotes:      getPollVotes(testStatus),
+			CreatedAt:      testStatus.CreatedAt,
 		},
 	)
 }
 
+// editStatusable updates the given statusable attributes.
+// note that this acts on the original object, no copying.
 func (suite *StatusTestSuite) editStatusable(
 	statusable ap.Statusable,
 	content string,
@@ -554,6 +556,10 @@ func (suite *StatusTestSuite) editStatusable(
 	suite.Fail("TODO")
 }
 
+// verifyEditedStatusUpdate verifies that a given status has
+// the expected number of historic edits, the 'current' status
+// attributes (encapsulated as an edit for minimized no. args),
+// and the last given 'historic' status edit attributes.
 func (suite *StatusTestSuite) verifyEditedStatusUpdate(
 	status *gtsmodel.Status, // the status to check
 	previousEdits int, // number of previous edits
@@ -574,14 +580,8 @@ func (suite *StatusTestSuite) verifyEditedStatusUpdate(
 	suite.Equal(current.Language, status.Language)
 	suite.Equal(*current.Sensitive, *status.Sensitive)
 	suite.Equal(current.AttachmentIDs, status.AttachmentIDs)
-	var pollOptions []string
-	var pollVotes []int
-	if status.Poll != nil {
-		pollOptions = status.Poll.Options
-		pollVotes = status.Poll.Votes
-	}
-	suite.Equal(current.PollOptions, pollOptions)
-	suite.Equal(current.PollVotes, pollVotes)
+	suite.Equal(current.PollOptions, getPollOptions(status))
+	suite.Equal(current.PollVotes, getPollVotes(status))
 	suite.Equal(current.CreatedAt, status.CreatedAt)
 
 	// Check the latest historic edit matches expected.
@@ -601,4 +601,20 @@ func (suite *StatusTestSuite) verifyEditedStatusUpdate(
 
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusTestSuite))
+}
+
+// getPollOptions extracts poll option strings from status (if poll is set).
+func getPollOptions(status *gtsmodel.Status) []string {
+	if status.Poll != nil {
+		return status.Poll.Options
+	}
+	return nil
+}
+
+// getPollVotes extracts poll vote counts from status (if poll is set).
+func getPollVotes(status *gtsmodel.Status) []int {
+	if status.Poll != nil {
+		return status.Poll.Votes
+	}
+	return nil
 }
