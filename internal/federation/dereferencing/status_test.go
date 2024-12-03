@@ -299,7 +299,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 		latest, statusable, err := suite.dereferencer.RefreshStatus(ctx,
 			fetchingAccount.Username,
 			testStatus,
-			nil,
+			nil, // NOTE: can provide testStatusable here to test as being received (not deref'd)
 			instantFreshness,
 		)
 		suite.NotNil(statusable)
@@ -308,118 +308,13 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 		// verify updated status details.
 		suite.verifyEditedStatusUpdate(
 
-			// latest status
-			// being tested.
-			latest,
-
-			// previous length of edits.
-			len(testStatus.EditIDs),
-
-			// expected current state.
-			&gtsmodel.StatusEdit{
-				Content:        testCase.editedContent,
-				ContentWarning: testCase.editedContentWarning,
-				Language:       testCase.editedLanguage,
-				Sensitive:      &testCase.editedSensitive,
-				AttachmentIDs:  testCase.editedAttachmentIDs,
-				PollOptions:    testCase.editedPollOptions,
-				PollVotes:      testCase.editedPollVotes,
-				CreatedAt:      testCase.editedAt,
-			},
-
-			// expected historic edit.
-			&gtsmodel.StatusEdit{
-				Content:        testStatus.Content,
-				ContentWarning: testStatus.ContentWarning,
-				Language:       testStatus.Language,
-				Sensitive:      testStatus.Sensitive,
-				AttachmentIDs:  testStatus.AttachmentIDs,
-				PollOptions:    getPollOptions(testStatus),
-				PollVotes:      getPollVotes(testStatus),
-				CreatedAt:      testStatus.CreatedAt,
-			},
-		)
-	}
-}
-
-func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
-	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
-	defer cncl()
-
-	// The local account we will be fetching statuses as.
-	fetchingAccount := suite.testAccounts["local_account_1"]
-
-	// The test status in question that we will be dereferencing from "remote".
-	testURIStr := "https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"
-	testURI := testrig.URLMustParse(testURIStr)
-	testStatusable := suite.client.TestRemoteStatuses[testURIStr]
-
-	// Fetch the remote status first to load it into instance.
-	testStatus, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
-		fetchingAccount.Username,
-		testURI,
-	)
-	suite.NotNil(statusable)
-	suite.NoError(err)
-
-	// Run through multiple possible edits.
-	for _, testCase := range []struct {
-		editedContent        string
-		editedContentWarning string
-		editedLanguage       string
-		editedSensitive      bool
-		editedAttachmentIDs  []string
-		editedPollOptions    []string
-		editedPollVotes      []int
-		editedAt             time.Time
-	}{
-		{
-			editedContent:        "updated status content!",
-			editedContentWarning: "CW: edited status content",
-			editedLanguage:       testStatus.Language,        // no change
-			editedSensitive:      *testStatus.Sensitive,      // no change
-			editedAttachmentIDs:  testStatus.AttachmentIDs,   // no change
-			editedPollOptions:    getPollOptions(testStatus), // no change
-			editedPollVotes:      getPollVotes(testStatus),   // no change
-			editedAt:             time.Now(),
-		},
-	} {
-		// Take a snapshot of current
-		// state of the test status.
-		testStatus = copyStatus(testStatus)
-
-		// Edit the "remote" statusable obj.
-		suite.editStatusable(testStatusable,
-			testCase.editedContent,
-			testCase.editedContentWarning,
-			testCase.editedLanguage,
-			testCase.editedSensitive,
-			testCase.editedAttachmentIDs,
-			testCase.editedPollOptions,
-			testCase.editedPollVotes,
-			testCase.editedAt,
-		)
-
-		// Refresh with a given statusable to updated to edited copy.
-		latest, statusable, err := suite.dereferencer.RefreshStatus(ctx,
-			fetchingAccount.Username,
+			// the original status
+			// before any changes.
 			testStatus,
-			testStatusable,
-			instantFreshness,
-		)
-		suite.NotNil(statusable)
-		suite.NoError(err)
-
-		// verify updated status details.
-		suite.verifyEditedStatusUpdate(
 
 			// latest status
 			// being tested.
 			latest,
-
-			// previous length of edits.
-			len(testStatus.EditIDs),
 
 			// expected current state.
 			&gtsmodel.StatusEdit{
@@ -430,7 +325,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
 				AttachmentIDs:  testCase.editedAttachmentIDs,
 				PollOptions:    testCase.editedPollOptions,
 				PollVotes:      testCase.editedPollVotes,
-				CreatedAt:      testCase.editedAt,
+				// createdAt never changes
 			},
 
 			// expected historic edit.
@@ -442,7 +337,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusReceivedUpdate() {
 				AttachmentIDs:  testStatus.AttachmentIDs,
 				PollOptions:    getPollOptions(testStatus),
 				PollVotes:      getPollVotes(testStatus),
-				CreatedAt:      testStatus.CreatedAt,
+				CreatedAt:      testStatus.UpdatedAt,
 			},
 		)
 	}
@@ -493,8 +388,8 @@ func (suite *StatusTestSuite) editStatusable(
 // attributes (encapsulated as an edit for minimized no. args),
 // and the last given 'historic' status edit attributes.
 func (suite *StatusTestSuite) verifyEditedStatusUpdate(
+	testStatus *gtsmodel.Status, // the original model
 	status *gtsmodel.Status, // the status to check
-	previousEdits int, // number of previous edits
 	current *gtsmodel.StatusEdit, // expected current state
 	historic *gtsmodel.StatusEdit, // historic edit we expect to have
 ) {
@@ -503,6 +398,7 @@ func (suite *StatusTestSuite) verifyEditedStatusUpdate(
 	suite.T().Helper()
 
 	// Check we have expected number of edits.
+	previousEdits := len(testStatus.Edits)
 	suite.Len(status.Edits, previousEdits+1)
 	suite.Len(status.EditIDs, previousEdits+1)
 
@@ -514,7 +410,6 @@ func (suite *StatusTestSuite) verifyEditedStatusUpdate(
 	suite.Equal(current.AttachmentIDs, status.AttachmentIDs)
 	suite.Equal(current.PollOptions, getPollOptions(status))
 	suite.Equal(current.PollVotes, getPollVotes(status))
-	suite.Equal(current.CreatedAt, status.CreatedAt)
 
 	// Check the latest historic edit matches expected.
 	latestEdit := status.Edits[len(status.Edits)-1]
@@ -527,8 +422,8 @@ func (suite *StatusTestSuite) verifyEditedStatusUpdate(
 	suite.Equal(historic.PollVotes, latestEdit.PollVotes)
 	suite.Equal(historic.CreatedAt, latestEdit.CreatedAt)
 
-	// The status should be updated at time of edit.
-	suite.Equal(historic.CreatedAt, status.UpdatedAt)
+	// The status creation date should never change.
+	suite.Equal(testStatus.CreatedAt, status.CreatedAt)
 }
 
 func TestStatusTestSuite(t *testing.T) {
