@@ -1341,8 +1341,8 @@ modernc.org/mathutil
 # modernc.org/memory v1.8.0
 ## explicit; go 1.18
 modernc.org/memory
-# modernc.org/sqlite v0.0.0-00010101000000-000000000000 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
-## explicit; go 1.20
+# modernc.org/sqlite v0.0.0-00010101000000-000000000000 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.34.2-concurrency-workaround
+## explicit; go 1.21
 modernc.org/sqlite
 modernc.org/sqlite/lib
 # modernc.org/strutil v1.2.0
@@ -1355,7 +1355,7 @@ modernc.org/token
 ## explicit; go 1.19
 mvdan.cc/xurls/v2
 # github.com/go-swagger/go-swagger => github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
-# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.33.1-concurrency-workaround
+# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.34.2-concurrency-workaround
 # go.opentelemetry.io/otel => go.opentelemetry.io/otel v1.29.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.29.0
 # go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp => go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.29.0
