@@ -444,7 +444,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		poll := streams.NewActivityStreamsQuestion()
 
 		// Add required status poll data to AS Question.
-		if err := c.addPollToAS(ctx, s.Poll, poll); err != nil {
+		if err := c.addPollToAS(s.Poll, poll); err != nil {
 			return nil, gtserror.Newf("error converting poll: %w", err)
 		}
 
@@ -708,7 +708,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	return status, nil
 }
 
-func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap.Pollable) error {
+func (c *Converter) addPollToAS(poll *gtsmodel.Poll, dst ap.Pollable) error {
 	var optionsProp interface {
 		// the minimum interface for appending AS Notes
 		// to an AS type options property of some kind.
