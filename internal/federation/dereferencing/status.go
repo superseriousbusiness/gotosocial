@@ -583,7 +583,8 @@ func (d *Dereferencer) enrichStatus(
 	return latestStatus, statusable, nil
 }
 
-// fetchStatusMentions ...
+// fetchStatusMentions populates the mentions on 'status', creating
+// new where needed, or using unchanged mentions from 'existing' status.
 func (d *Dereferencer) fetchStatusMentions(
 	ctx context.Context,
 	requestUser string,
@@ -777,7 +778,8 @@ func (d *Dereferencer) fetchStatusTags(
 	return nil
 }
 
-// fetchStatusAttachments ...
+// fetchStatusAttachments populates the attachments on 'status', creating new database
+// entries where needed and dereferencing it, or using unchanged from 'existing' status.
 func (d *Dereferencer) fetchStatusAttachments(
 	ctx context.Context,
 	requestUser string,
@@ -854,7 +856,8 @@ func (d *Dereferencer) fetchStatusAttachments(
 	return nil
 }
 
-// fetchStatusEmojis ...
+// fetchStatusEmojis populates the emojis on 'status', creating new database entries
+// where needed and dereferencing it, or using unchanged from 'existing' status.
 func (d *Dereferencer) fetchStatusEmojis(
 	ctx context.Context,
 	existing *gtsmodel.Status,
@@ -1047,7 +1050,8 @@ func (d *Dereferencer) updateStatusPoll(
 	}
 }
 
-// insertStatusPoll ...
+// insertStatusPoll inserts an assumed new poll attached to status into the database, this
+// also handles generating new ID for the poll and setting necessary fields on the status.
 func (d *Dereferencer) insertStatusPoll(ctx context.Context, status *gtsmodel.Status) error {
 	var err error
 
