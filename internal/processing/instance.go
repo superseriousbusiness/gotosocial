@@ -227,6 +227,17 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		columns = append(columns, []string{"description", "description_text"}...)
 	}
 
+	// validate & update site custom css if it's set on the form
+	if form.CustomCSS != nil {
+		customCSS := *form.CustomCSS
+		if err := validate.InstanceCustomCSS(customCSS); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+
+		instance.CustomCSS = text.SanitizeToPlaintext(customCSS)
+		columns = append(columns, []string{"custom_css"}...)
+	}
+
 	// Validate & update site
 	// terms if set on the form.
 	if form.Terms != nil {

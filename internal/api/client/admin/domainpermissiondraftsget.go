@@ -147,16 +147,12 @@ func (m *Module) DomainPermissionDraftsGETHandler(c *gin.Context) {
 		return
 	}
 
-	permType := c.Query(apiutil.DomainPermissionPermTypeKey)
-	switch permType {
-	case "", "block", "allow":
-		// No problem.
-
-	default:
-		// Invalid.
+	permTypeStr := c.Query(apiutil.DomainPermissionPermTypeKey)
+	permType := gtsmodel.ParseDomainPermissionType(permTypeStr)
+	if permType == gtsmodel.DomainPermissionUnknown {
 		text := fmt.Sprintf(
 			"permission_type %s not recognized, valid values are empty string, block, or allow",
-			permType,
+			permTypeStr,
 		)
 		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -173,7 +169,7 @@ func (m *Module) DomainPermissionDraftsGETHandler(c *gin.Context) {
 		c.Request.Context(),
 		c.Query(apiutil.DomainPermissionSubscriptionIDKey),
 		c.Query(apiutil.DomainPermissionDomainKey),
-		gtsmodel.NewDomainPermissionType(permType),
+		permType,
 		page,
 	)
 	if errWithCode != nil {

@@ -161,11 +161,14 @@ func init() {
 				return err
 			}
 
+			// Get the mapping of old enum string values to new integer values.
+			visibilityMapping := visibilityEnumMapping[oldmodel.Visibility]()
+
 			// For each status found in this way, update
 			// to new version of interaction policy.
 			for _, oldStatus := range oldStatuses {
 				// Start with default policy for this visibility.
-				v := gtsmodel.Visibility(oldStatus.Visibility)
+				v := visibilityMapping[oldStatus.Visibility]
 				policy := gtsmodel.DefaultInteractionPolicyFor(v)
 
 				if !*oldStatus.Likeable {

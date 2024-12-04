@@ -14,52 +14,52 @@ import (
 	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
-type vfsShmFile struct {
+type vfsShmParent struct {
 	*os.File
 	info os.FileInfo
 
-	refs int // +checklocks:vfsShmFilesMtx
+	refs int // +checklocks:vfsShmListMtx
 
 	lock [_SHM_NLOCK]int16 // +checklocks:Mutex
 	sync.Mutex
 }
 
 var (
-	// +checklocks:vfsShmFilesMtx
-	vfsShmFiles    []*vfsShmFile
-	vfsShmFilesMtx sync.Mutex
+	// +checklocks:vfsShmListMtx
+	vfsShmList    []*vfsShmParent
+	vfsShmListMtx sync.Mutex
 )
 
 type vfsShm struct {
-	*vfsShmFile
+	*vfsShmParent
 	path    string
 	lock    [_SHM_NLOCK]bool
 	regions []*util.MappedRegion
 }
 
 func (s *vfsShm) Close() error {
-	if s.vfsShmFile == nil {
+	if s.vfsShmParent == nil {
 		return nil
 	}
 
-	vfsShmFilesMtx.Lock()
-	defer vfsShmFilesMtx.Unlock()
+	vfsShmListMtx.Lock()
+	defer vfsShmListMtx.Unlock()
 
 	// Unlock everything.
 	s.shmLock(0, _SHM_NLOCK, _SHM_UNLOCK)
 
 	// Decrease reference count.
-	if s.vfsShmFile.refs > 0 {
-		s.vfsShmFile.refs--
-		s.vfsShmFile = nil
+	if s.vfsShmParent.refs > 0 {
+		s.vfsShmParent.refs--
+		s.vfsShmParent = nil
 		return nil
 	}
 
 	err := s.File.Close()
-	for i, g := range vfsShmFiles {
-		if g == s.vfsShmFile {
-			vfsShmFiles[i] = nil
-			s.vfsShmFile = nil
+	for i, g := range vfsShmList {
+		if g == s.vfsShmParent {
+			vfsShmList[i] = nil
+			s.vfsShmParent = nil
 			return err
 		}
 	}
@@ -67,7 +67,7 @@ func (s *vfsShm) Close() error {
 }
 
 func (s *vfsShm) shmOpen() _ErrorCode {
-	if s.vfsShmFile != nil {
+	if s.vfsShmParent != nil {
 		return _OK
 	}
 
@@ -85,13 +85,13 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 		return _IOERR_FSTAT
 	}
 
-	vfsShmFilesMtx.Lock()
-	defer vfsShmFilesMtx.Unlock()
+	vfsShmListMtx.Lock()
+	defer vfsShmListMtx.Unlock()
 
 	// Find a shared file, increase the reference count.
-	for _, g := range vfsShmFiles {
+	for _, g := range vfsShmList {
 		if g != nil && os.SameFile(fi, g.info) {
-			s.vfsShmFile = g
+			s.vfsShmParent = g
 			g.refs++
 			return _OK
 		}
@@ -107,18 +107,18 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 	}
 
 	// Add the new shared file.
-	s.vfsShmFile = &vfsShmFile{
+	s.vfsShmParent = &vfsShmParent{
 		File: f,
 		info: fi,
 	}
 	f = nil // Don't close the file.
-	for i, g := range vfsShmFiles {
+	for i, g := range vfsShmList {
 		if g == nil {
-			vfsShmFiles[i] = s.vfsShmFile
+			vfsShmList[i] = s.vfsShmParent
 			return _OK
 		}
 	}
-	vfsShmFiles = append(vfsShmFiles, s.vfsShmFile)
+	vfsShmList = append(vfsShmList, s.vfsShmParent)
 	return _OK
 }
 
@@ -157,57 +157,11 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 	s.Lock()
 	defer s.Unlock()
-
-	switch {
-	case flags&_SHM_UNLOCK != 0:
-		for i := offset; i < offset+n; i++ {
-			if s.lock[i] {
-				if s.vfsShmFile.lock[i] == 0 {
-					panic(util.AssertErr())
-				}
-				if s.vfsShmFile.lock[i] <= 0 {
-					s.vfsShmFile.lock[i] = 0
-				} else {
-					s.vfsShmFile.lock[i]--
-				}
-				s.lock[i] = false
-			}
-		}
-	case flags&_SHM_SHARED != 0:
-		for i := offset; i < offset+n; i++ {
-			if s.lock[i] {
-				panic(util.AssertErr())
-			}
-			if s.vfsShmFile.lock[i]+1 <= 0 {
-				return _BUSY
-			}
-		}
-		for i := offset; i < offset+n; i++ {
-			s.vfsShmFile.lock[i]++
-			s.lock[i] = true
-		}
-	case flags&_SHM_EXCLUSIVE != 0:
-		for i := offset; i < offset+n; i++ {
-			if s.lock[i] {
-				panic(util.AssertErr())
-			}
-			if s.vfsShmFile.lock[i] != 0 {
-				return _BUSY
-			}
-		}
-		for i := offset; i < offset+n; i++ {
-			s.vfsShmFile.lock[i] = -1
-			s.lock[i] = true
-		}
-	default:
-		panic(util.AssertErr())
-	}
-
-	return _OK
+	return s.shmMemLock(offset, n, flags)
 }
 
 func (s *vfsShm) shmUnmap(delete bool) {
-	if s.vfsShmFile == nil {
+	if s.vfsShmParent == nil {
 		return
 	}
 

@@ -113,7 +113,7 @@ The Mastodon API has become the de facto standard for client communication with 
 Though most apps that implement the Mastodon API should work, GoToSocial is tested and works reliably with beautiful apps like:
 
 * [Tusky](https://tusky.app/) for Android
-* [Semaphore](https://semaphore.social/) in the browser
+* [Pinafore](https://pinafore.social/) in the browser
 * [Feditext](https://github.com/feditext/feditext) (beta) on iOS, iPadOS and macOS
 
 If you've used Mastodon with a third-party app before, you'll find using GoToSocial a breeze.

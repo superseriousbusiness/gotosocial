@@ -25,6 +25,7 @@ export interface InstanceV1 {
     description_text?:       string;
     short_description:      string;
     short_description_text?: string;
+    custom_css:             string;
     email:                  string;
     version:                string;
     debug?:                 boolean;

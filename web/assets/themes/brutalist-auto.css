@@ -1,0 +1,10 @@
+/*
+  theme-title: Brutalist (auto)
+  theme-description: Official (Pseudo-)monochrome brutality theme that adapts to system preferences
+*/
+
+/* Default to brutalist theme */
+@import url("brutalist.css");
+
+@import url("brutalist.css") screen and (prefers-color-scheme: light);
+@import url("brutalist-dark.css") screen and (prefers-color-scheme: dark);

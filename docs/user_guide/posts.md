@@ -36,6 +36,9 @@ Direct posts are **not** accessible via a web URL on your GoToSocial instance.
 
 ### Mutuals-only
 
+!!! warning
+    Mutuals-only posts are not currently functional.
+
 Posts with a visibility of `mutuals_only` will only appear to the post author, and to *mutual follows* of the post author. In other words, they can only be seen by others if two conditions are met:
 
 1. The other account follows the post author.

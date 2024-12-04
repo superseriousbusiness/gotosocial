@@ -2,7 +2,6 @@ package buffer
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 var nullBuffer = []byte{0}
@@ -18,7 +17,7 @@ type Lexer struct {
 	restore func()
 }
 
-// NewLexer returns a new Lexer for a given io.Reader, and uses ioutil.ReadAll to read it into a byte slice.
+// NewLexer returns a new Lexer for a given io.Reader, and uses io.ReadAll to read it into a byte slice.
 // If the io.Reader implements Bytes, that is used instead.
 // It will append a NULL at the end of the buffer.
 func NewLexer(r io.Reader) *Lexer {
@@ -30,7 +29,7 @@ func NewLexer(r io.Reader) *Lexer {
 			b = buffer.Bytes()
 		} else {
 			var err error
-			b, err = ioutil.ReadAll(r)
+			b, err = io.ReadAll(r)
 			if err != nil {
 				return &Lexer{
 					buf: nullBuffer,

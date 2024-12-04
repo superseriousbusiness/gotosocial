@@ -53,6 +53,7 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 			cssProfile, // Used for rendering stub/fake profiles.
 			cssStatus,  // Used for rendering stub/fake statuses.
 			cssSettings,
+			instanceCustomCSSPath,
 		},
 		Javascript: []string{jsSettings},
 	}

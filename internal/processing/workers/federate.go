@@ -217,18 +217,23 @@ func (f *federate) CreatePollVote(ctx context.Context, poll *gtsmodel.Poll, vote
 		return err
 	}
 
-	// Convert vote to AS Create with vote choices as Objects.
-	create, err := f.converter.PollVoteToASCreate(ctx, vote)
+	// Convert vote to AS Creates with vote choices as Objects.
+	creates, err := f.converter.PollVoteToASCreates(ctx, vote)
 	if err != nil {
 		return gtserror.Newf("error converting to notes: %w", err)
 	}
 
-	// Send the Create via the Actor's outbox.
-	if _, err := f.FederatingActor().Send(ctx, outboxIRI, create); err != nil {
-		return gtserror.Newf("error sending Create activity via outbox %s: %w", outboxIRI, err)
+	var errs gtserror.MultiError
+
+	// Send each create activity.
+	actor := f.FederatingActor()
+	for _, create := range creates {
+		if _, err := actor.Send(ctx, outboxIRI, create); err != nil {
+			errs.Appendf("error sending Create activity via outbox %s: %w", outboxIRI, err)
+		}
 	}
 
-	return nil
+	return errs.Combine()
 }
 
 func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) error {

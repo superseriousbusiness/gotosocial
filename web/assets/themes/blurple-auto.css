@@ -1,0 +1,10 @@
+/*
+  theme-title: Blurple (auto)
+  theme-description: Official blurple theme that adapts to system preferences
+*/
+
+/* Default to dark theme */
+@import url("blurple-dark.css");
+
+@import url("blurple-light.css") screen and (prefers-color-scheme: light);
+@import url("blurple-dark.css") screen and (prefers-color-scheme: dark);

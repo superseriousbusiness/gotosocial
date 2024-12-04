@@ -17,7 +17,10 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // DomainPermission models a domain permission
 // entry -- block / allow / draft / exclude.
@@ -62,8 +65,8 @@ func (p DomainPermissionType) String() string {
 	}
 }
 
-func NewDomainPermissionType(in string) DomainPermissionType {
-	switch in {
+func ParseDomainPermissionType(in string) DomainPermissionType {
+	switch strings.ToLower(in) {
 	case "block":
 		return DomainPermissionBlock
 	case "allow":

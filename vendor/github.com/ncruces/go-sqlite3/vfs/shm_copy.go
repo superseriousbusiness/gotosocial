@@ -31,7 +31,10 @@ const (
 //
 // https://sqlite.org/walformat.html#the_wal_index_file_format
 
-func (s *vfsShm) shmAcquire() {
+func (s *vfsShm) shmAcquire(ptr *_ErrorCode) {
+	if ptr != nil && *ptr != _OK {
+		return
+	}
 	if len(s.ptrs) == 0 || shmUnmodified(s.shadow[0][:], s.shared[0][:]) {
 		return
 	}
@@ -69,7 +72,7 @@ func (s *vfsShm) shmRelease() {
 
 func (s *vfsShm) shmBarrier() {
 	s.Lock()
-	s.shmAcquire()
+	s.shmAcquire(nil)
 	s.shmRelease()
 	s.Unlock()
 }

@@ -109,17 +109,17 @@ func (v *jpegVisitor) writeSegment(s *jpegstructure.Segment) error {
 
 		sizeLen, found := markerLen[s.MarkerId]
 		if !found || sizeLen == 2 {
-			sizeLen = 2
-			l := uint16(len(s.Data) + sizeLen)
-
-			if err := binary.Write(w, binary.BigEndian, &l); err != nil {
+			l := uint16(len(s.Data) + 2)
+			b := make([]byte, 2)
+			binary.BigEndian.PutUint16(b, l)
+			if _, err := w.Write(b); err != nil {
 				return err
 			}
-
 		} else if sizeLen == 4 {
-			l := uint32(len(s.Data) + sizeLen)
-
-			if err := binary.Write(w, binary.BigEndian, &l); err != nil {
+			l := uint32(len(s.Data) + 4)
+			b := make([]byte, 4)
+			binary.BigEndian.PutUint32(b, l)
+			if _, err := w.Write(b); err != nil {
 				return err
 			}
 		} else if sizeLen != 0 {

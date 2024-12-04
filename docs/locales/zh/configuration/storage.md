@@ -1,5 +1,9 @@
 # 存储
 
+When configuring an object storage backend, the `storage-s3-endpoint` **must not** include the bucket name. That's what `s3-bucket-name` is for. Using subfolders in a bucket isn't currently supported.
+
+配置对象存储后端时，`storage-s3-endpoint` **不得** 包含存储桶名称。`s3-bucket-name`负责配置存储桶名称。目前不支持使用特定存储桶的子目录作为存储后端。
+
 ## 设置
 
 ```yaml

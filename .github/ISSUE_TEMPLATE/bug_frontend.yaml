@@ -1,6 +1,6 @@
 name: Frontend Bug Report
 description: Report an issue related to the web frontend
-title: "[bug] Issue Title"
+title: "[bug/frontend] Issue Title"
 labels: ["bug", "frontend"]
 assignees: []
 

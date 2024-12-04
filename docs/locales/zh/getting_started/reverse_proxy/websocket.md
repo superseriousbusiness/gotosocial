@@ -1,6 +1,6 @@
 # WebSocket
 
-GoToSocial 使用安全的 [WebSocket 协议](https://en.wikipedia.org/wiki/WebSocket)（即 `wss`）来通过客户端应用程序（如 Semaphore）实现贴文和通知的实时更新。
+GoToSocial 使用安全的 [WebSocket 协议](https://en.wikipedia.org/wiki/WebSocket)（即 `wss`）来通过客户端应用程序（如 Pinafore）实现贴文和通知的实时更新。
 
 为了使用此功能，你需要确保配置 GoToSocial 所在的代理允许 WebSocket 连接通过。
 
