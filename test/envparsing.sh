@@ -64,6 +64,7 @@ EXPECT=$(cat << "EOF"
         "sin-bin-status-mem-ratio": 0.5,
         "status-bookmark-ids-mem-ratio": 2,
         "status-bookmark-mem-ratio": 0.5,
+        "status-edit-mem-ratio": 2,
         "status-fave-ids-mem-ratio": 3,
         "status-fave-mem-ratio": 2,
         "status-mem-ratio": 5,
