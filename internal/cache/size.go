@@ -505,7 +505,6 @@ func sizeofMedia() uintptr {
 		URL:               exampleURI,
 		RemoteURL:         exampleURI,
 		CreatedAt:         exampleTime,
-		UpdatedAt:         exampleTime,
 		Type:              gtsmodel.FileTypeImage,
 		AccountID:         exampleID,
 		Description:       exampleText,
@@ -532,7 +531,6 @@ func sizeofMention() uintptr {
 		ID:               exampleURI,
 		StatusID:         exampleURI,
 		CreatedAt:        exampleTime,
-		UpdatedAt:        exampleTime,
 		OriginAccountID:  exampleURI,
 		OriginAccountURI: exampleURI,
 		TargetAccountID:  exampleID,
@@ -671,6 +669,23 @@ func sizeofStatusBookmark() uintptr {
 		Status:          nil,
 		CreatedAt:       exampleTime,
 		UpdatedAt:       exampleTime,
+	}))
+}
+
+func sizeofStatusEdit() uintptr {
+	return uintptr(size.Of(&gtsmodel.StatusEdit{
+		ID:             exampleID,
+		Content:        exampleText,
+		ContentWarning: exampleUsername, // similar length
+		Text:           exampleText,
+		Language:       "en",
+		Sensitive:      func() *bool { ok := false; return &ok }(),
+		AttachmentIDs:  []string{exampleID, exampleID, exampleID},
+		Attachments:    nil,
+		PollOptions:    []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+		PollVotes:      []int{69, 420, 1337, 1969},
+		StatusID:       exampleID,
+		CreatedAt:      exampleTime,
 	}))
 }
 

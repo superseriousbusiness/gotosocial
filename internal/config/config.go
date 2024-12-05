@@ -238,6 +238,7 @@ type CacheConfiguration struct {
 	StatusMemRatio                    float64       `name:"status-mem-ratio"`
 	StatusBookmarkMemRatio            float64       `name:"status-bookmark-mem-ratio"`
 	StatusBookmarkIDsMemRatio         float64       `name:"status-bookmark-ids-mem-ratio"`
+	StatusEditMemRatio                float64       `name:"status-edit-mem-ratio"`
 	StatusFaveMemRatio                float64       `name:"status-fave-mem-ratio"`
 	StatusFaveIDsMemRatio             float64       `name:"status-fave-ids-mem-ratio"`
 	TagMemRatio                       float64       `name:"tag-mem-ratio"`

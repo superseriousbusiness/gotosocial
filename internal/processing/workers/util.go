@@ -75,6 +75,21 @@ func (u *utils) wipeStatus(
 		}
 	}
 
+	// Before handling media, ensure
+	// historic edits are populated.
+	if !status.EditsPopulated() {
+		var err error
+
+		// Fetch all historical edits of status from database.
+		status.Edits, err = u.state.DB.GetStatusEditsByIDs(
+			gtscontext.SetBarebones(ctx),
+			status.EditIDs,
+		)
+		if err != nil {
+			errs.Appendf("error getting status edits from database: %w", err)
+		}
+	}
+
 	// Either delete all attachments for this status,
 	// or simply detach + clean them separately later.
 	//
@@ -83,17 +98,24 @@ func (u *utils) wipeStatus(
 	// status immediately (in case of delete + redraft).
 	if deleteAttachments {
 		// todo:u.state.DB.DeleteAttachmentsForStatus
-		for _, id := range status.AttachmentIDs {
+		for _, id := range status.AllAttachmentIDs() {
 			if err := u.media.Delete(ctx, id); err != nil {
 				errs.Appendf("error deleting media: %w", err)
 			}
 		}
 	} else {
 		// todo:u.state.DB.UnattachAttachmentsForStatus
-		for _, id := range status.AttachmentIDs {
+		for _, id := range status.AllAttachmentIDs() {
 			if _, err := u.media.Unattach(ctx, status.Account, id); err != nil {
 				errs.Appendf("error unattaching media: %w", err)
 			}
+		}
+	}
+
+	// Delete all historical edits of status.
+	if ids := status.EditIDs; len(ids) > 0 {
+		if err := u.state.DB.DeleteStatusEdits(ctx, ids); err != nil {
+			errs.Appendf("error deleting status edits: %w", err)
 		}
 	}
 
@@ -120,19 +142,20 @@ func (u *utils) wipeStatus(
 		errs.Appendf("error deleting status faves: %w", err)
 	}
 
-	if pollID := status.PollID; pollID != "" {
+	if id := status.PollID; id != "" {
 		// Delete this poll by ID from the database.
-		if err := u.state.DB.DeletePollByID(ctx, pollID); err != nil {
+		if err := u.state.DB.DeletePollByID(ctx, id); err != nil {
 			errs.Appendf("error deleting status poll: %w", err)
 		}
 
 		// Cancel any scheduled expiry task for poll.
-		_ = u.state.Workers.Scheduler.Cancel(pollID)
+		_ = u.state.Workers.Scheduler.Cancel(id)
 	}
 
 	// Get all boost of this status so that we can
 	// delete those boosts + remove them from timelines.
 	boosts, err := u.state.DB.GetStatusBoosts(
+
 		// We MUST set a barebones context here,
 		// as depending on where it came from the
 		// original BoostOf may already be gone.
@@ -537,11 +560,7 @@ func (u *utils) requestFave(
 	}
 
 	// Create + store new interaction request.
-	req, err = typeutils.StatusFaveToInteractionRequest(ctx, fave)
-	if err != nil {
-		return gtserror.Newf("error creating interaction request: %w", err)
-	}
-
+	req = typeutils.StatusFaveToInteractionRequest(fave)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
@@ -584,11 +603,7 @@ func (u *utils) requestReply(
 	}
 
 	// Create + store interaction request.
-	req, err = typeutils.StatusToInteractionRequest(ctx, reply)
-	if err != nil {
-		return gtserror.Newf("error creating interaction request: %w", err)
-	}
-
+	req = typeutils.StatusToInteractionRequest(reply)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
@@ -631,11 +646,7 @@ func (u *utils) requestAnnounce(
 	}
 
 	// Create + store interaction request.
-	req, err = typeutils.StatusToInteractionRequest(ctx, boost)
-	if err != nil {
-		return gtserror.Newf("error creating interaction request: %w", err)
-	}
-
+	req = typeutils.StatusToInteractionRequest(boost)
 	if err := u.state.DB.PutInteractionRequest(ctx, req); err != nil {
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}

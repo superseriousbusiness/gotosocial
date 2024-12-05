@@ -111,6 +111,13 @@ func (c *Converter) ASRepresentationToAccount(
 		acct.UpdatedAt = pub
 	}
 
+	// Extract updated time if possible, i.e. last edited.
+	if upd := ap.GetUpdated(accountable); !upd.IsZero() {
+		acct.UpdatedAt = upd
+	} else {
+		acct.UpdatedAt = acct.CreatedAt
+	}
+
 	// Extract a preferred name (display name), fallback to username.
 	if displayName := ap.ExtractName(accountable); displayName != "" {
 		acct.DisplayName = displayName
@@ -348,18 +355,25 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(statusable); !pub.IsZero() {
 		status.CreatedAt = pub
-		status.UpdatedAt = pub
 	} else {
 		log.Warnf(ctx, "unusable published property on %s", uri)
+	}
+
+	// status.Updated
+	//
+	// Extract updated time for status, defaults to Published.
+	if upd := ap.GetUpdated(statusable); !upd.IsZero() {
+		status.UpdatedAt = upd
+	} else {
+		status.UpdatedAt = status.CreatedAt
 	}
 
 	// status.AccountURI
 	// status.AccountID
 	// status.Account
 	//
-	// Account that created the status. Assume we have
-	// this in the db by the time this function is called,
-	// error if we don't.
+	// Account that created the status. Assume we have this
+	// in the db by the time this function is called, else error.
 	status.Account, err = c.getASAttributedToAccount(ctx,
 		status.URI,
 		statusable,

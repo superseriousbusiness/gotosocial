@@ -82,7 +82,7 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
   "@context": "https://www.w3.org/ns/activitystreams",
   "first": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40",
   "id": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "totalItems": 8,
+  "totalItems": 9,
   "type": "OrderedCollection"
 }`, dst.String())
 
@@ -145,6 +145,14 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
     {
       "actor": "http://localhost:8080/users/the_mighty_zork",
       "cc": "http://localhost:8080/users/the_mighty_zork/followers",
+      "id": "http://localhost:8080/users/the_mighty_zork/statuses/01JDPZC707CKDN8N4QVWM4Z1NR/activity#Create",
+      "object": "http://localhost:8080/users/the_mighty_zork/statuses/01JDPZC707CKDN8N4QVWM4Z1NR",
+      "to": "https://www.w3.org/ns/activitystreams#Public",
+      "type": "Create"
+    },
+    {
+      "actor": "http://localhost:8080/users/the_mighty_zork",
+      "cc": "http://localhost:8080/users/the_mighty_zork/followers",
       "id": "http://localhost:8080/users/the_mighty_zork/statuses/01HH9KYNQPA416TNJ53NSATP40/activity#Create",
       "object": "http://localhost:8080/users/the_mighty_zork/statuses/01HH9KYNQPA416TNJ53NSATP40",
       "to": "https://www.w3.org/ns/activitystreams#Public",
@@ -160,8 +168,8 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
     }
   ],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026min_id=01HH9KYNQPA416TNJ53NSATP40",
-  "totalItems": 8,
+  "prev": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40\u0026min_id=01JDPZC707CKDN8N4QVWM4Z1NR",
+  "totalItems": 9,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 
@@ -224,7 +232,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
   "id": "http://localhost:8080/users/the_mighty_zork/outbox?limit=40&max_id=01F8MHAMCHF6Y650WCRSCP4WMY",
   "orderedItems": [],
   "partOf": "http://localhost:8080/users/the_mighty_zork/outbox",
-  "totalItems": 8,
+  "totalItems": 9,
   "type": "OrderedCollectionPage"
 }`, dst.String())
 

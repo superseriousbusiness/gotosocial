@@ -59,11 +59,7 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 
 		// Put an interaction request
 		// in the DB for this reply.
-		req, err := typeutils.StatusToInteractionRequest(ctx, reply)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
+		req := typeutils.StatusToInteractionRequest(reply)
 		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -90,11 +86,7 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 
 		// Put an interaction request
 		// in the DB for this boost.
-		req, err := typeutils.StatusToInteractionRequest(ctx, boost)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
+		req := typeutils.StatusToInteractionRequest(boost)
 		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
 			suite.FailNow(err.Error())
 		}
@@ -121,11 +113,7 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 
 		// Put an interaction request
 		// in the DB for this fave.
-		req, err := typeutils.StatusFaveToInteractionRequest(ctx, fave)
-		if err != nil {
-			suite.FailNow(err.Error())
-		}
-
+		req := typeutils.StatusFaveToInteractionRequest(fave)
 		if err := suite.state.DB.PutInteractionRequest(ctx, req); err != nil {
 			suite.FailNow(err.Error())
 		}

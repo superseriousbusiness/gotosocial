@@ -105,6 +105,7 @@ func (c *Caches) Init() {
 	c.initStatus()
 	c.initStatusBookmark()
 	c.initStatusBookmarkIDs()
+	c.initStatusEdit()
 	c.initStatusFave()
 	c.initStatusFaveIDs()
 	c.initTag()

@@ -1399,17 +1399,13 @@ func (c *Converter) baseStatusToFrontend(
 	}
 
 	// Nullable fields.
-	if s.InReplyToID != "" {
-		apiStatus.InReplyToID = util.Ptr(s.InReplyToID)
+	if !s.UpdatedAt.Equal(s.CreatedAt) {
+		timestamp := util.FormatISO8601(s.UpdatedAt)
+		apiStatus.EditedAt = util.Ptr(timestamp)
 	}
-
-	if s.InReplyToAccountID != "" {
-		apiStatus.InReplyToAccountID = util.Ptr(s.InReplyToAccountID)
-	}
-
-	if s.Language != "" {
-		apiStatus.Language = util.Ptr(s.Language)
-	}
+	apiStatus.InReplyToID = util.PtrIf(s.InReplyToID)
+	apiStatus.InReplyToAccountID = util.PtrIf(s.InReplyToAccountID)
+	apiStatus.Language = util.PtrIf(s.Language)
 
 	if app := s.CreatedWithApplication; app != nil {
 		apiStatus.Application, err = c.AppToAPIAppPublic(ctx, app)

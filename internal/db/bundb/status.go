@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -181,7 +180,7 @@ func (s *statusDB) getStatus(ctx context.Context, lookup string, dbQuery func(*g
 func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) error {
 	var (
 		err  error
-		errs = gtserror.NewMultiError(9)
+		errs gtserror.MultiError
 	)
 
 	if status.Account == nil {
@@ -257,7 +256,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.AttachmentsPopulated() {
 		// Status attachments are out-of-date with IDs, repopulate.
 		status.Attachments, err = s.state.DB.GetAttachmentsByIDs(
-			ctx, // these are already barebones
+			gtscontext.SetBarebones(ctx),
 			status.AttachmentIDs,
 		)
 		if err != nil {
@@ -268,7 +267,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.TagsPopulated() {
 		// Status tags are out-of-date with IDs, repopulate.
 		status.Tags, err = s.state.DB.GetTags(
-			ctx,
+			gtscontext.SetBarebones(ctx),
 			status.TagIDs,
 		)
 		if err != nil {
@@ -279,7 +278,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.MentionsPopulated() {
 		// Status mentions are out-of-date with IDs, repopulate.
 		status.Mentions, err = s.state.DB.GetMentions(
-			ctx, // leave fully populated for now
+			ctx, // TODO: manually populate mentions for places expecting these populated
 			status.MentionIDs,
 		)
 		if err != nil {
@@ -290,7 +289,7 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	if !status.EmojisPopulated() {
 		// Status emojis are out-of-date with IDs, repopulate.
 		status.Emojis, err = s.state.DB.GetEmojisByIDs(
-			ctx, // these are already barebones
+			gtscontext.SetBarebones(ctx),
 			status.EmojiIDs,
 		)
 		if err != nil {
@@ -298,10 +297,21 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
+	if !status.EditsPopulated() {
+		// Status edits are out-of-date with IDs, repopulate.
+		status.Edits, err = s.state.DB.GetStatusEditsByIDs(
+			gtscontext.SetBarebones(ctx),
+			status.EditIDs,
+		)
+		if err != nil {
+			errs.Appendf("error populating status edits: %w", err)
+		}
+	}
+
 	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
 		// Populate the status' expected CreatedWithApplication (not always set).
 		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
-			ctx, // these are already barebones
+			gtscontext.SetBarebones(ctx),
 			status.CreatedWithApplicationID,
 		)
 		if err != nil {
@@ -350,14 +360,14 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 				}
 			}
 
-			// change the status ID of the media attachments to the new status
+			// change the status ID of the media
+			// attachments to the current status
 			for _, a := range status.Attachments {
 				a.StatusID = status.ID
-				a.UpdatedAt = time.Now()
 				if _, err := tx.
 					NewUpdate().
 					Model(a).
-					Column("status_id", "updated_at").
+					Column("status_id").
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
 					if !errors.Is(err, db.ErrAlreadyExists) {
@@ -384,19 +394,15 @@ func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error
 			}
 
 			// Finally, insert the status
-			_, err := tx.NewInsert().Model(status).Exec(ctx)
+			_, err := tx.NewInsert().
+				Model(status).
+				Exec(ctx)
 			return err
 		})
 	})
 }
 
 func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, columns ...string) error {
-	status.UpdatedAt = time.Now()
-	if len(columns) > 0 {
-		// If we're updating by column, ensure "updated_at" is included.
-		columns = append(columns, "updated_at")
-	}
-
 	return s.state.Caches.DB.Status.Store(status, func() error {
 		// It is safe to run this database transaction within cache.Store
 		// as the cache does not attempt a mutex lock until AFTER hook.
@@ -434,13 +440,14 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 				}
 			}
 
-			// change the status ID of the media attachments to the new status
+			// change the status ID of the media
+			// attachments to the current status.
 			for _, a := range status.Attachments {
 				a.StatusID = status.ID
-				a.UpdatedAt = time.Now()
 				if _, err := tx.
 					NewUpdate().
 					Model(a).
+					Column("status_id").
 					Where("? = ?", bun.Ident("media_attachment.id"), a.ID).
 					Exec(ctx); err != nil {
 					if !errors.Is(err, db.ErrAlreadyExists) {
@@ -467,8 +474,7 @@ func (s *statusDB) UpdateStatus(ctx context.Context, status *gtsmodel.Status, co
 			}
 
 			// Finally, update the status
-			_, err := tx.
-				NewUpdate().
+			_, err := tx.NewUpdate().
 				Model(status).
 				Column(columns...).
 				Where("? = ?", bun.Ident("status.id"), status.ID).

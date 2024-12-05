@@ -26,7 +26,6 @@ import (
 type MediaAttachment struct {
 	ID                string           `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt         time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt         time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	StatusID          string           `bun:"type:CHAR(26),nullzero"`                                      // ID of the status to which this is attached
 	URL               string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on *this* server
 	RemoteURL         string           `bun:",nullzero"`                                                   // Where can the attachment be retrieved on a remote server (empty for local media)

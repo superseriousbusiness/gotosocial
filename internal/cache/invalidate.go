@@ -273,6 +273,11 @@ func (c *Caches) OnInvalidateStatusBookmark(bookmark *gtsmodel.StatusBookmark) {
 	c.DB.StatusBookmarkIDs.Invalidate(bookmark.StatusID)
 }
 
+func (c *Caches) OnInvalidateStatusEdit(edit *gtsmodel.StatusEdit) {
+	// Invalidate cache of related status model.
+	c.DB.Status.Invalidate("ID", edit.StatusID)
+}
+
 func (c *Caches) OnInvalidateStatusFave(fave *gtsmodel.StatusFave) {
 	// Invalidate status fave ID list for this status.
 	c.DB.StatusFaveIDs.Invalidate(fave.StatusID)

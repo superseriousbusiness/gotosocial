@@ -87,7 +87,7 @@ func (d *Dereferencer) EnrichAnnounce(
 	boost.Federated = target.Federated
 
 	// Ensure this Announce is permitted by the Announcee.
-	permit, err := d.isPermittedStatus(ctx, requestUser, nil, boost)
+	permit, err := d.isPermittedStatus(ctx, requestUser, nil, boost, true)
 	if err != nil {
 		return nil, gtserror.Newf("error checking permitted status %s: %w", boost.URI, err)
 	}
@@ -99,10 +99,7 @@ func (d *Dereferencer) EnrichAnnounce(
 	}
 
 	// Generate an ID for the boost wrapper status.
-	boost.ID, err = id.NewULIDFromTime(boost.CreatedAt)
-	if err != nil {
-		return nil, gtserror.Newf("error generating id: %w", err)
-	}
+	boost.ID = id.NewULIDFromTime(boost.CreatedAt)
 
 	// Store the boost wrapper status in database.
 	switch err = d.state.DB.PutStatus(ctx, boost); {
