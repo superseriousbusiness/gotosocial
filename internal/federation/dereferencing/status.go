@@ -1188,8 +1188,8 @@ func (d *Dereferencer) handleStatusEdit(
 		cols = append(cols, "emojis") // i.e. EmojiIDs
 
 		// Emojis changed doesn't necessarily
-		// indicate an edit, it may just now
-		// actually be included in a thread.
+		// indicate an edit, it may just not have
+		// been previously populated properly.
 	}
 
 	if edited {
