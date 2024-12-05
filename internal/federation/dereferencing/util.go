@@ -21,6 +21,7 @@ import (
 	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // getEmojiByShortcodeDomain searches input slice
@@ -77,4 +78,16 @@ func statusChanged(existing, latest *gtsmodel.Status) bool {
 	return existing.Content != latest.Content ||
 		existing.ContentWarning != latest.ContentWarning ||
 		!slices.Equal(existing.AttachmentIDs, latest.AttachmentIDs)
+}
+
+// getAttachmentDescriptions returns a slice of the media attachment descriptions of input slice.
+func getAttachmentDescriptions(attachments []*gtsmodel.MediaAttachment) []string {
+	if len(attachments) == 0 {
+		return nil
+	}
+	return xslices.Gather(
+		nil,
+		attachments,
+		func(a *gtsmodel.MediaAttachment) string { return a.Description },
+	)
 }

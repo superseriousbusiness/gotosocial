@@ -19,8 +19,6 @@ package gtsmodel
 
 import (
 	"time"
-
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // StatusEdit represents a **historical** view of a Status
@@ -31,18 +29,18 @@ import (
 // of the origin server, they are a best-effort by receiver
 // to store version history. There is no AP history endpoint.
 type StatusEdit struct {
-	ID             string                      `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // ID of this item in the database.
-	Content        string                      `bun:""`                                                            // Content of status at time of edit; likely html-formatted but not guaranteed.
-	ContentWarning string                      `bun:",nullzero"`                                                   // Content warning of status at time of edit.
-	Text           string                      `bun:""`                                                            // Original status text, without formatting, at time of edit.
-	Language       string                      `bun:",nullzero"`                                                   // Status language at time of edit.
-	Sensitive      *bool                       `bun:",nullzero,notnull,default:false"`                             // Status sensitive flag at time of edit.
-	AttachmentIDs  []string                    `bun:"attachments,array"`                                           // Database IDs of media attachments associated with status at time of edit.
-	Attachments    []*gtsmodel.MediaAttachment `bun:"-"`                                                           // Media attachments relating to .AttachmentIDs field (not always populated).
-	PollOptions    []string                    `bun:",array"`                                                      // Poll options of status at time of edit, only set if status contains a poll.
-	PollVotes      []int                       `bun:",array"`                                                      // Poll vote count at time of status edit, only set if poll votes were reset.
-	StatusID       string                      `bun:"type:CHAR(26),nullzero,notnull"`                              // The originating status ID this is a historical edit of.
-	CreatedAt      time.Time                   `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation time of this version of the status content (according to receiving server).
+	ID                     string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // ID of this item in the database.
+	Content                string    `bun:""`                                                            // Content of status at time of edit; likely html-formatted but not guaranteed.
+	ContentWarning         string    `bun:",nullzero"`                                                   // Content warning of status at time of edit.
+	Text                   string    `bun:""`                                                            // Original status text, without formatting, at time of edit.
+	Language               string    `bun:",nullzero"`                                                   // Status language at time of edit.
+	Sensitive              *bool     `bun:",nullzero,notnull,default:false"`                             // Status sensitive flag at time of edit.
+	AttachmentIDs          []string  `bun:"attachments,array"`                                           // Database IDs of media attachments associated with status at time of edit.
+	AttachmentDescriptions []string  `bun:",array"`                                                      // Previous media descriptions of media attachments associated with status at time of edit.
+	PollOptions            []string  `bun:",array"`                                                      // Poll options of status at time of edit, only set if status contains a poll.
+	PollVotes              []int     `bun:",array"`                                                      // Poll vote count at time of status edit, only set if poll votes were reset.
+	StatusID               string    `bun:"type:CHAR(26),nullzero,notnull"`                              // The originating status ID this is a historical edit of.
+	CreatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation time of this version of the status content (according to receiving server).
 
 	// We don't bother having a *gtsmodel.Status model here
 	// as the StatusEdit is always just attached to a Status,
