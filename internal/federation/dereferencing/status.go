@@ -1211,10 +1211,17 @@ func (d *Dereferencer) handleStatusEdit(
 		edit.Text = existing.Text
 		edit.Language = existing.Language
 		edit.Sensitive = existing.Sensitive
-		edit.AttachmentIDs = existing.AttachmentIDs
-		edit.AttachmentDescriptions = getAttachmentDescriptions(existing.Attachments)
-		edit.Attachments = existing.Attachments
 		edit.StatusID = status.ID
+
+		// Copy existing attachments and descriptions.
+		edit.AttachmentIDs = existing.AttachmentIDs
+		edit.Attachments = existing.Attachments
+		if l := len(existing.Attachments); l > 0 {
+			edit.AttachmentDescriptions = make([]string, l)
+			for i, attach := range existing.Attachments {
+				edit.AttachmentDescriptions[i] = attach.Description
+			}
+		}
 
 		// Edit creation is last update time.
 		edit.CreatedAt = existing.UpdatedAt
