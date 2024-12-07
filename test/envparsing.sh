@@ -190,6 +190,7 @@ EXPECT=$(cat << "EOF"
     "tls-certificate-key": "",
     "tracing-enabled": false,
     "tracing-endpoint": "localhost:4317",
+    "tracing-headers": {},
     "tracing-insecure-transport": true,
     "tracing-transport": "grpc",
     "trusted-proxies": [
