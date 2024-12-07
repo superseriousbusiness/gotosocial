@@ -12,6 +12,9 @@ You'll need the files in [`example/tracing`][ext]. Once you have those you can r
 tracing-enabled: true
 tracing-transport: "grpc"
 tracing-endpoint: "localhost:4317"
+tracing-headers:
+  "Authorization": "Bearer super-secret-token"
+  "Dataset": "gotosocial"
 tracing-insecure-transport: true
 ```
 

@@ -140,10 +140,11 @@ type Configuration struct {
 	OIDCAllowedGroups    []string `name:"oidc-allowed-groups" usage:"Membership of one of the listed groups allows access to GtS. If this is empty, all groups are allowed."`
 	OIDCAdminGroups      []string `name:"oidc-admin-groups" usage:"Membership of one of the listed groups makes someone a GtS admin"`
 
-	TracingEnabled           bool   `name:"tracing-enabled" usage:"Enable OTLP Tracing"`
-	TracingTransport         string `name:"tracing-transport" usage:"grpc or http"`
-	TracingEndpoint          string `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'localhost:4318' for http"`
-	TracingInsecureTransport bool   `name:"tracing-insecure-transport" usage:"Disable TLS for the gRPC or HTTP transport protocol"`
+	TracingEnabled           bool              `name:"tracing-enabled" usage:"Enable OTLP Tracing"`
+	TracingTransport         string            `name:"tracing-transport" usage:"grpc or http"`
+	TracingEndpoint          string            `name:"tracing-endpoint" usage:"Endpoint of your trace collector. Eg., 'localhost:4317' for gRPC, 'localhost:4318' for http"`
+	TracingHeaders           map[string]string `name:"tracing-headers" usage:"Headers for your trace collector. Eg., 'Authorization: Bearer super-secret-token' for sending an 'Authorization' header"`
+	TracingInsecureTransport bool              `name:"tracing-insecure-transport" usage:"Disable TLS for the gRPC or HTTP transport protocol"`
 
 	MetricsEnabled      bool   `name:"metrics-enabled" usage:"Enable OpenTelemetry based metrics support."`
 	MetricsAuthEnabled  bool   `name:"metrics-auth-enabled" usage:"Enable HTTP Basic Authentication for Prometheus metrics endpoint"`

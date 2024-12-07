@@ -2191,6 +2191,22 @@ func (st *ConfigState) SetTracingEndpoint(v string) {
 	st.reloadToViper()
 }
 
+// GetTracingHeaders safely fetches the Configuration value for state's 'TracingHeaders' field
+func (st *ConfigState) GetTracingHeaders() (v map[string]string) {
+	st.mutex.RLock()
+	v = st.config.TracingHeaders
+	st.mutex.RUnlock()
+	return
+}
+
+// SetTracingEndpoint safely sets the Configuration value for state's 'TracingHeaders' field
+func (st *ConfigState) SetTracingHeaders(v map[string]string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingHeaders = v
+	st.reloadToViper()
+}
+
 // TracingEndpointFlag returns the flag name for the 'TracingEndpoint' field
 func TracingEndpointFlag() string { return "tracing-endpoint" }
 

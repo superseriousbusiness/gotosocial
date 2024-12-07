@@ -120,6 +120,7 @@ var Defaults = Configuration{
 	TracingEnabled:           false,
 	TracingTransport:         "grpc",
 	TracingEndpoint:          "",
+	TracingHeaders:           map[string]string{},
 	TracingInsecureTransport: false,
 
 	MetricsEnabled:     false,

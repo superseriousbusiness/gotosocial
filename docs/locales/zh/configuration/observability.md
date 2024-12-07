@@ -31,6 +31,11 @@ tracing-transport: "grpc"
 # 默认值: ""
 tracing-endpoint: ""
 
+# TODO
+# 示例: {"Authorization": "Bearer super-secret-token", "Dataset": "gotosocial"}
+# 默认值: {}
+tracing-headers: {}
+
 # 布尔值。禁用gRPC和HTTP传输协议的TLS。
 # 默认值: false
 tracing-insecure-transport: false

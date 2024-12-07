@@ -60,6 +60,7 @@ func Initialize() error {
 	case "grpc":
 		opts := []otlptracegrpc.Option{
 			otlptracegrpc.WithEndpoint(config.GetTracingEndpoint()),
+			otlptracegrpc.WithHeaders(config.NewState().GetTracingHeaders()),
 		}
 		if insecure {
 			opts = append(opts, otlptracegrpc.WithInsecure())
