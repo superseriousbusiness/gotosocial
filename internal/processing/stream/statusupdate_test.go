@@ -54,6 +54,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	suite.Equal(`{
   "id": "01FVW7JHQFSFK166WWKR8CBA6M",
   "created_at": "2021-09-20T10:40:37.000Z",
+  "edited_at": null,
   "in_reply_to_id": null,
   "in_reply_to_account_id": null,
   "sensitive": false,
@@ -90,8 +91,8 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
     "header_description": "Flat gray background (default header).",
     "followers_count": 0,
     "following_count": 0,
-    "statuses_count": 3,
-    "last_status_at": "2021-09-11",
+    "statuses_count": 4,
+    "last_status_at": "2024-11-01",
     "emojis": [],
     "fields": []
   },

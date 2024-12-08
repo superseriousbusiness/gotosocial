@@ -20,7 +20,6 @@ package media
 import (
 	"context"
 	"io"
-	"time"
 )
 
 type Size string
@@ -43,10 +42,6 @@ const (
 // AdditionalMediaInfo represents additional information that
 // should be added to attachment when processing a piece of media.
 type AdditionalMediaInfo struct {
-
-	// Time that this media was
-	// created; defaults to time.Now().
-	CreatedAt *time.Time
 
 	// ID of the status to which this
 	// media is attached; defaults to "".
@@ -92,10 +87,6 @@ type AdditionalEmojiInfo struct {
 	// ActivityPub URI of
 	// this remote emoji.
 	URI *string
-
-	// Time that this emoji was
-	// created; defaults to time.Now().
-	CreatedAt *time.Time
 
 	// Domain the emoji originated from. Blank
 	// for this instance's domain. Defaults to "".

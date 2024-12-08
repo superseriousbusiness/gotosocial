@@ -408,6 +408,25 @@ func SetPublished(with WithPublished, published time.Time) {
 	publishProp.Set(published)
 }
 
+// GetUpdated returns the time contained in the Updated property of 'with'.
+func GetUpdated(with WithUpdated) time.Time {
+	updateProp := with.GetActivityStreamsUpdated()
+	if updateProp == nil || !updateProp.IsXMLSchemaDateTime() {
+		return time.Time{}
+	}
+	return updateProp.Get()
+}
+
+// SetUpdated sets the given time on the Updated property of 'with'.
+func SetUpdated(with WithUpdated, updated time.Time) {
+	updateProp := with.GetActivityStreamsUpdated()
+	if updateProp == nil {
+		updateProp = streams.NewActivityStreamsUpdatedProperty()
+		with.SetActivityStreamsUpdated(updateProp)
+	}
+	updateProp.Set(updated)
+}
+
 // GetEndTime returns the time contained in the EndTime property of 'with'.
 func GetEndTime(with WithEndTime) time.Time {
 	endTimeProp := with.GetActivityStreamsEndTime()

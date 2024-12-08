@@ -93,11 +93,7 @@ func init() {
 			// For each currently pending status, check whether it's a reply or
 			// a boost, and insert a corresponding interaction request into the db.
 			for _, pendingStatus := range pendingStatuses {
-				req, err := typeutils.StatusToInteractionRequest(ctx, pendingStatus)
-				if err != nil {
-					return err
-				}
-
+				req := typeutils.StatusToInteractionRequest(pendingStatus)
 				if _, err := tx.
 					NewInsert().
 					Model(req).
@@ -125,10 +121,7 @@ func init() {
 			}
 
 			for _, pendingFave := range pendingFaves {
-				req, err := typeutils.StatusFaveToInteractionRequest(ctx, pendingFave)
-				if err != nil {
-					return err
-				}
+				req := typeutils.StatusFaveToInteractionRequest(pendingFave)
 
 				if _, err := tx.
 					NewInsert().

@@ -70,7 +70,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
 func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
 	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "the_mighty_zork")
 	suite.NoError(err)
-	suite.EqualValues(1704878640, lastModified.Unix())
+	suite.EqualValues(1730451600, lastModified.Unix())
 
 	feed, err := getFeed()
 	suite.NoError(err)
@@ -79,13 +79,23 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
     <title>Posts from @the_mighty_zork@localhost:8080</title>
     <link>http://localhost:8080/@the_mighty_zork</link>
     <description>Posts from @the_mighty_zork@localhost:8080</description>
-    <pubDate>Wed, 10 Jan 2024 09:24:00 +0000</pubDate>
-    <lastBuildDate>Wed, 10 Jan 2024 09:24:00 +0000</lastBuildDate>
+    <pubDate>Fri, 01 Nov 2024 09:00:00 +0000</pubDate>
+    <lastBuildDate>Fri, 01 Nov 2024 09:00:00 +0000</lastBuildDate>
     <image>
       <url>http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/small/01F8MH58A357CV5K7R7TJMSH6S.webp</url>
       <title>Avatar for @the_mighty_zork@localhost:8080</title>
       <link>http://localhost:8080/@the_mighty_zork</link>
     </image>
+    <item>
+      <title>edited status</title>
+      <link>http://localhost:8080/@the_mighty_zork/statuses/01JDPZC707CKDN8N4QVWM4Z1NR</link>
+      <description>@the_mighty_zork@localhost:8080 made a new post: &#34;this is the latest revision of the status, with a content-warning&#34;</description>
+      <content:encoded><![CDATA[<p>this is the latest revision of the status, with a content-warning</p>]]></content:encoded>
+      <author>@the_mighty_zork@localhost:8080</author>
+      <guid isPermaLink="true">http://localhost:8080/@the_mighty_zork/statuses/01JDPZC707CKDN8N4QVWM4Z1NR</guid>
+      <pubDate>Fri, 01 Nov 2024 09:00:00 +0000</pubDate>
+      <source>http://localhost:8080/@the_mighty_zork/feed.rss</source>
+    </item>
     <item>
       <title>HTML in post</title>
       <link>http://localhost:8080/@the_mighty_zork/statuses/01HH9KYNQPA416TNJ53NSATP40</link>

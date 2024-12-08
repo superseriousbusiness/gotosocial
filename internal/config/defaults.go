@@ -199,6 +199,7 @@ var Defaults = Configuration{
 		StatusMemRatio:                    5,
 		StatusBookmarkMemRatio:            0.5,
 		StatusBookmarkIDsMemRatio:         2,
+		StatusEditMemRatio:                2,
 		StatusFaveMemRatio:                2,
 		StatusFaveIDsMemRatio:             3,
 		TagMemRatio:                       2,

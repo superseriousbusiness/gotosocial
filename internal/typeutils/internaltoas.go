@@ -484,10 +484,9 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		status.SetActivityStreamsInReplyTo(inReplyToProp)
 	}
 
-	// published
-	publishedProp := streams.NewActivityStreamsPublishedProperty()
-	publishedProp.Set(s.CreatedAt)
-	status.SetActivityStreamsPublished(publishedProp)
+	// Set created / updated at properties.
+	ap.SetPublished(status, s.CreatedAt)
+	ap.SetUpdated(status, s.UpdatedAt)
 
 	// url
 	if s.URL != "" {

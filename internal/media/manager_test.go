@@ -109,7 +109,6 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 		emojiToUpdate,
 		data,
 		media.AdditionalEmojiInfo{
-			CreatedAt:      &emojiToUpdate.CreatedAt,
 			Domain:         &emojiToUpdate.Domain,
 			ImageRemoteURL: &newImageRemoteURL,
 		},

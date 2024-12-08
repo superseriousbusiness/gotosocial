@@ -15,35 +15,8 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package media_test
+package main
 
-import (
-	"context"
-	"testing"
+import "github.com/superseriousbusiness/gotosocial/internal/id"
 
-	"github.com/stretchr/testify/suite"
-)
-
-type UnattachTestSuite struct {
-	MediaStandardTestSuite
-}
-
-func (suite *UnattachTestSuite) TestUnattachMedia() {
-	ctx := context.Background()
-
-	testAttachment := suite.testAttachments["admin_account_status_1_attachment_1"]
-	testAccount := suite.testAccounts["admin_account"]
-	suite.NotEmpty(testAttachment.StatusID)
-
-	a, err := suite.mediaProcessor.Unattach(ctx, testAccount, testAttachment.ID)
-	suite.NoError(err)
-	suite.NotNil(a)
-
-	dbAttachment, errWithCode := suite.db.GetAttachmentByID(ctx, a.ID)
-	suite.NoError(errWithCode)
-	suite.Empty(dbAttachment.StatusID)
-}
-
-func TestUnattachTestSuite(t *testing.T) {
-	suite.Run(t, &UnattachTestSuite{})
-}
+func main() { println(id.NewULID()) }

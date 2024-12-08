@@ -118,15 +118,11 @@ func (m *Manager) CreateMedia(
 		Header:     util.Ptr(false),
 		Cached:     util.Ptr(false),
 		CreatedAt:  now,
-		UpdatedAt:  now,
 	}
 
 	// Check if we were provided additional info
 	// to add to the attachment, and overwrite
 	// some of the attachment fields if so.
-	if info.CreatedAt != nil {
-		attachment.CreatedAt = *info.CreatedAt
-	}
 	if info.StatusID != nil {
 		attachment.StatusID = *info.StatusID
 	}
@@ -371,9 +367,6 @@ func (m *Manager) createOrUpdateEmoji(
 	// and overwrite some of the emoji fields if so.
 	if info.URI != nil {
 		emoji.URI = *info.URI
-	}
-	if info.CreatedAt != nil {
-		emoji.CreatedAt = *info.CreatedAt
 	}
 	if info.Domain != nil {
 		emoji.Domain = *info.Domain

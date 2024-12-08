@@ -25,8 +25,11 @@ import (
 
 // IsActivityable returns whether AS vocab type name is acceptable as Activityable.
 func IsActivityable(typeName string) bool {
-	return isActivity(typeName) ||
-		isIntransitiveActivity(typeName)
+	return isActivity(typeName)
+	// See interfaces_test.go comment
+	// about intransitive activities:
+	//
+	// || isIntransitiveActivity(typeName)
 }
 
 // ToActivityable safely tries to cast vocab.Type as Activityable, also checking for expected AS type names.
@@ -184,6 +187,7 @@ type Accountable interface {
 	WithEndpoints
 	WithTag
 	WithPublished
+	WithUpdated
 }
 
 // Statusable represents the minimum activitypub interface for representing a 'status'.
@@ -196,6 +200,7 @@ type Statusable interface {
 	WithName
 	WithInReplyTo
 	WithPublished
+	WithUpdated
 	WithURL
 	WithAttributedTo
 	WithTo

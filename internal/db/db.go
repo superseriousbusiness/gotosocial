@@ -51,6 +51,7 @@ type DB interface {
 	SinBinStatus
 	Status
 	StatusBookmark
+	StatusEdit
 	StatusFave
 	Tag
 	Thread
