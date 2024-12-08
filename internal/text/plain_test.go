@@ -36,6 +36,8 @@ const (
 	moreComplexExpected        = "<p>Another test <span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span><br><br><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a><br><br>Text<br><br>:rainbow:</p>"
 	withUTF8Link               = "here's a link with utf-8 characters in it: https://example.org/söme_url"
 	withUTF8LinkExpected       = "<p>here's a link with utf-8 characters in it: <a href=\"https://example.org/s%C3%B6me_url\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://example.org/söme_url</a></p>"
+	withFunkyTags              = "#hashtag1 pee #hashtag2\u200Bpee #hashtag3|poo #hashtag4\uFEFFpoo"
+	withFunkyTagsExpected      = "<p><a href=\"http://localhost:8080/tags/hashtag1\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag1</span></a> pee <a href=\"http://localhost:8080/tags/hashtag2\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag2</span></a>\u200bpee <a href=\"http://localhost:8080/tags/hashtag3\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag3</span></a>|poo <a href=\"http://localhost:8080/tags/hashtag4\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag4</span></a>\ufeffpoo</p>"
 )
 
 type PlainTestSuite struct {
@@ -134,6 +136,17 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 	statusText = `#올빼미 hej`
 	tags = suite.FromPlain(statusText).Tags
 	suite.Equal("올빼미", tags[0].Name)
+}
+
+func (suite *PlainTestSuite) TestFunkyTags() {
+	formatted := suite.FromPlain(withFunkyTags)
+	suite.Equal(withFunkyTagsExpected, formatted.HTML)
+
+	tags := formatted.Tags
+	suite.Equal("hashtag1", tags[0].Name)
+	suite.Equal("hashtag2", tags[1].Name)
+	suite.Equal("hashtag3", tags[2].Name)
+	suite.Equal("hashtag4", tags[3].Name)
 }
 
 func (suite *PlainTestSuite) TestDeriveMultiple() {
