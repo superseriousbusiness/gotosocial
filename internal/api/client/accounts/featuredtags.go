@@ -28,7 +28,7 @@ import (
 
 // AccountFeaturedTagsGETHandler swagger:operation GET /api/v1/accounts/{id}/featured_tags accountsFeaturedTags
 //
-// Get an array of a user's featured tags.
+// Get an array of target account's featured tags.
 //
 // THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.
 //
@@ -38,6 +38,14 @@ import (
 //
 //	produces:
 //	- application/json
+//
+//	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: The id of the account.
+//		in: path
+//		required: true
 //
 //	security:
 //	- OAuth2 Bearer:
