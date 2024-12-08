@@ -2,7 +2,7 @@
 // GoToSocial
 // Copyright (C) GoToSocial Authors admin@gotosocial.org
 // SPDX-License-Identifier: AGPL-3.0-or-later
-//
+// 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
 // the Free Software Foundation, either version 3 of the License, or
@@ -2191,22 +2191,6 @@ func (st *ConfigState) SetTracingEndpoint(v string) {
 	st.reloadToViper()
 }
 
-// GetTracingHeaders safely fetches the Configuration value for state's 'TracingHeaders' field
-func (st *ConfigState) GetTracingHeaders() (v map[string]string) {
-	st.mutex.RLock()
-	v = st.config.TracingHeaders
-	st.mutex.RUnlock()
-	return
-}
-
-// SetTracingEndpoint safely sets the Configuration value for state's 'TracingHeaders' field
-func (st *ConfigState) SetTracingHeaders(v map[string]string) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.TracingHeaders = v
-	st.reloadToViper()
-}
-
 // TracingEndpointFlag returns the flag name for the 'TracingEndpoint' field
 func TracingEndpointFlag() string { return "tracing-endpoint" }
 
@@ -2215,6 +2199,31 @@ func GetTracingEndpoint() string { return global.GetTracingEndpoint() }
 
 // SetTracingEndpoint safely sets the value for global configuration 'TracingEndpoint' field
 func SetTracingEndpoint(v string) { global.SetTracingEndpoint(v) }
+
+// GetTracingHeaders safely fetches the Configuration value for state's 'TracingHeaders' field
+func (st *ConfigState) GetTracingHeaders() (v map[string]string) {
+	st.mutex.RLock()
+	v = st.config.TracingHeaders
+	st.mutex.RUnlock()
+	return
+}
+
+// SetTracingHeaders safely sets the Configuration value for state's 'TracingHeaders' field
+func (st *ConfigState) SetTracingHeaders(v map[string]string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingHeaders = v
+	st.reloadToViper()
+}
+
+// TracingHeadersFlag returns the flag name for the 'TracingHeaders' field
+func TracingHeadersFlag() string { return "tracing-headers" }
+
+// GetTracingHeaders safely fetches the value for global configuration 'TracingHeaders' field
+func GetTracingHeaders() map[string]string { return global.GetTracingHeaders() }
+
+// SetTracingHeaders safely sets the value for global configuration 'TracingHeaders' field
+func SetTracingHeaders(v map[string]string) { global.SetTracingHeaders(v) }
 
 // GetTracingInsecureTransport safely fetches the Configuration value for state's 'TracingInsecureTransport' field
 func (st *ConfigState) GetTracingInsecureTransport() (v bool) {
@@ -3158,19 +3167,13 @@ func (st *ConfigState) SetCacheConversationLastStatusIDsMemRatio(v float64) {
 }
 
 // CacheConversationLastStatusIDsMemRatioFlag returns the flag name for the 'Cache.ConversationLastStatusIDsMemRatio' field
-func CacheConversationLastStatusIDsMemRatioFlag() string {
-	return "cache-conversation-last-status-ids-mem-ratio"
-}
+func CacheConversationLastStatusIDsMemRatioFlag() string { return "cache-conversation-last-status-ids-mem-ratio" }
 
 // GetCacheConversationLastStatusIDsMemRatio safely fetches the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
-func GetCacheConversationLastStatusIDsMemRatio() float64 {
-	return global.GetCacheConversationLastStatusIDsMemRatio()
-}
+func GetCacheConversationLastStatusIDsMemRatio() float64 { return global.GetCacheConversationLastStatusIDsMemRatio() }
 
 // SetCacheConversationLastStatusIDsMemRatio safely sets the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
-func SetCacheConversationLastStatusIDsMemRatio(v float64) {
-	global.SetCacheConversationLastStatusIDsMemRatio(v)
-}
+func SetCacheConversationLastStatusIDsMemRatio(v float64) { global.SetCacheConversationLastStatusIDsMemRatio(v) }
 
 // GetCacheDomainPermissionDraftMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
 func (st *ConfigState) GetCacheDomainPermissionDraftMemRation() (v float64) {
@@ -3189,19 +3192,13 @@ func (st *ConfigState) SetCacheDomainPermissionDraftMemRation(v float64) {
 }
 
 // CacheDomainPermissionDraftMemRationFlag returns the flag name for the 'Cache.DomainPermissionDraftMemRation' field
-func CacheDomainPermissionDraftMemRationFlag() string {
-	return "cache-domain-permission-draft-mem-ratio"
-}
+func CacheDomainPermissionDraftMemRationFlag() string { return "cache-domain-permission-draft-mem-ratio" }
 
 // GetCacheDomainPermissionDraftMemRation safely fetches the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
-func GetCacheDomainPermissionDraftMemRation() float64 {
-	return global.GetCacheDomainPermissionDraftMemRation()
-}
+func GetCacheDomainPermissionDraftMemRation() float64 { return global.GetCacheDomainPermissionDraftMemRation() }
 
 // SetCacheDomainPermissionDraftMemRation safely sets the value for global configuration 'Cache.DomainPermissionDraftMemRation' field
-func SetCacheDomainPermissionDraftMemRation(v float64) {
-	global.SetCacheDomainPermissionDraftMemRation(v)
-}
+func SetCacheDomainPermissionDraftMemRation(v float64) { global.SetCacheDomainPermissionDraftMemRation(v) }
 
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
 func (st *ConfigState) GetCacheEmojiMemRatio() (v float64) {
@@ -4427,3 +4424,4 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
+
