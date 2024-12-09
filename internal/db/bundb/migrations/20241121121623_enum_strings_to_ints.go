@@ -22,6 +22,7 @@ import (
 
 	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241121121623_enum_strings_to_ints"
 	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 
 	"github.com/uptrace/bun"
@@ -68,7 +69,9 @@ func init() {
 
 			// Before making changes to the visibility col
 			// we must drop all indices that rely on it.
+			log.Info(ctx, "dropping old visibility indexes...")
 			for _, index := range visIndices {
+				log.Info(ctx, "dropping old index %s...", index.name)
 				if _, err := tx.NewDropIndex().
 					Index(index.name).
 					Exec(ctx); err != nil {
@@ -81,6 +84,7 @@ func init() {
 
 			// Convert all visibility tables.
 			for _, table := range visTables {
+				log.Info(ctx, "remapping %s.%s to save space, please wait...", table.Table, table.Column)
 				if err := convertEnums(ctx, tx, table.Table, table.Column,
 					visibilityMapping, table.Default); err != nil {
 					return err
@@ -88,7 +92,9 @@ func init() {
 			}
 
 			// Recreate the visibility indices.
+			log.Info(ctx, "creating new visibility indexes...")
 			for _, index := range visIndices {
+				log.Info(ctx, "creating new index %s...", index.name)
 				q := tx.NewCreateIndex().
 					Table("statuses").
 					Index(index.name).
@@ -105,6 +111,7 @@ func init() {
 			notificationMapping := notificationEnumMapping[old_gtsmodel.NotificationType]()
 
 			// Migrate over old notifications table column over to new column type.
+			log.Info(ctx, "remapping notifications.notification_type to save space, please wait...")
 			if err := convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
 				notificationMapping, nil); err != nil {
 				return err
