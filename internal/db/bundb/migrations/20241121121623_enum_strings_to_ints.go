@@ -84,7 +84,6 @@ func init() {
 
 			// Convert all visibility tables.
 			for _, table := range visTables {
-				log.Info(ctx, "remapping %s.%s to save space, please wait...", table.Table, table.Column)
 				if err := convertEnums(ctx, tx, table.Table, table.Column,
 					visibilityMapping, table.Default); err != nil {
 					return err
@@ -111,7 +110,6 @@ func init() {
 			notificationMapping := notificationEnumMapping[old_gtsmodel.NotificationType]()
 
 			// Migrate over old notifications table column over to new column type.
-			log.Info(ctx, "remapping notifications.notification_type to save space, please wait...")
 			if err := convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
 				notificationMapping, nil); err != nil {
 				return err
