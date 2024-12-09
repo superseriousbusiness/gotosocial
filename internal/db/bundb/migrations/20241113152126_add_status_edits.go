@@ -22,6 +22,7 @@ import (
 	"reflect"
 
 	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241113152126_add_status_edits"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 
 	"github.com/uptrace/bun"
 )
@@ -38,6 +39,7 @@ func init() {
 			}
 
 			// Add EditIDs column to Status table.
+			log.Info(ctx, "adding edits column to statuses table...")
 			_, err = tx.NewAddColumn().
 				Model((*gtsmodel.Status)(nil)).
 				ColumnExpr(colDef).

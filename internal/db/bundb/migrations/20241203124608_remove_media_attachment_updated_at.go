@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -37,6 +38,7 @@ func init() {
 			}
 
 			// Remove 'updated_at' column.
+			log.Info(ctx, "removing unused updated_at column from media attachments to save space, please wait...")
 			_, err = tx.NewDropColumn().
 				Model((*gtsmodel.MediaAttachment)(nil)).
 				Column("updated_at").
