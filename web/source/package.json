@@ -20,7 +20,7 @@
     "langs": "^2.0.0",
     "match-sorter": "^6.3.1",
     "modern-normalize": "^1.1.0",
-    "nanoid": "^4.0.0",
+    "nanoid": "^5.0.9",
     "object-to-formdata": "^4.4.2",
     "papaparse": "^5.3.2",
     "parse-link-header": "^2.0.0",
