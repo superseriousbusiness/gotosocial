@@ -1,4 +1,4 @@
-//go:build ((freebsd || openbsd || netbsd || dragonfly || illumos) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_dotlk || sqlite3_nosys)) || sqlite3_flock
+//go:build ((freebsd || openbsd || netbsd || dragonfly || illumos) && (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !sqlite3_dotlk) || sqlite3_flock
 
 package vfs
 
@@ -73,7 +73,7 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 
 	// Always open file read-write, as it will be shared.
 	f, err := os.OpenFile(s.path,
-		unix.O_RDWR|unix.O_CREAT|unix.O_NOFOLLOW, 0666)
+		os.O_RDWR|os.O_CREATE|_O_NOFOLLOW, 0666)
 	if err != nil {
 		return _CANTOPEN
 	}

@@ -10,7 +10,7 @@ as well as direct access to most of the [C SQLite API](https://sqlite.org/cintro
 
 It wraps a [Wasm](https://webassembly.org/) [build](embed/) of SQLite,
 and uses [wazero](https://wazero.io/) as the runtime.\
-Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ runtime dependencies.
+Go, wazero and [`x/sys`](https://pkg.go.dev/golang.org/x/sys) are the _only_ direct dependencies.
 
 ### Getting started
 

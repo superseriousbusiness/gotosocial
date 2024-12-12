@@ -1,4 +1,4 @@
-//go:build !(sqlite3_flock || sqlite3_nosys)
+//go:build !sqlite3_flock
 
 package vfs
 

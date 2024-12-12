@@ -1,9 +1,8 @@
-//go:build !(sqlite3_dotlk || sqlite3_nosys)
+//go:build !sqlite3_dotlk
 
 package vfs
 
 import (
-	"math/rand"
 	"os"
 	"time"
 
@@ -46,7 +45,7 @@ func osGetExclusiveLock(file *os.File, state *LockLevel) _ErrorCode {
 	osUnlock(file, _SHARED_FIRST, _SHARED_SIZE)
 
 	// Acquire the EXCLUSIVE lock.
-	rc := osWriteLock(file, _SHARED_FIRST, _SHARED_SIZE, time.Millisecond)
+	rc := osWriteLock(file, _SHARED_FIRST, _SHARED_SIZE, 0)
 
 	if rc != _OK {
 		// Reacquire the SHARED lock.
@@ -123,29 +122,40 @@ func osLock(file *os.File, flags, start, len uint32, timeout time.Duration, def 
 	var err error
 	switch {
 	case timeout == 0:
-		err = osLockEx(file, flags|windows.LOCKFILE_FAIL_IMMEDIATELY, start, len)
+		err = osLockEx(file, flags|windows.LOCKFILE_FAIL_IMMEDIATELY, start, len, 0)
 	case timeout < 0:
-		err = osLockEx(file, flags, start, len)
+		err = osLockEx(file, flags, start, len, 0)
 	default:
-		before := time.Now()
-		for {
-			err = osLockEx(file, flags|windows.LOCKFILE_FAIL_IMMEDIATELY, start, len)
-			if errno, _ := err.(windows.Errno); errno != windows.ERROR_LOCK_VIOLATION {
-				break
+		var event windows.Handle
+		event, err = windows.CreateEvent(nil, 1, 0, nil)
+		if err != nil {
+			break
+		}
+		defer windows.CloseHandle(event)
+
+		err = osLockEx(file, flags, start, len, event)
+		if err == windows.ERROR_IO_PENDING {
+			rc, serr := windows.WaitForSingleObject(event, uint32(timeout/time.Millisecond))
+			if rc == windows.WAIT_OBJECT_0 {
+				return _OK
 			}
-			if time.Since(before) > timeout {
-				break
+			if serr != nil {
+				err = serr
+			} else {
+				err = windows.Errno(rc)
 			}
-			const sleepIncrement = 1024*1024 - 1 // power of two, ~1ms
-			time.Sleep(time.Duration(rand.Int63() & sleepIncrement))
+			windows.CancelIo(windows.Handle(file.Fd()))
 		}
 	}
 	return osLockErrorCode(err, def)
 }
 
-func osLockEx(file *os.File, flags, start, len uint32) error {
+func osLockEx(file *os.File, flags, start, len uint32, event windows.Handle) error {
 	return windows.LockFileEx(windows.Handle(file.Fd()), flags,
-		0, len, 0, &windows.Overlapped{Offset: start})
+		0, len, 0, &windows.Overlapped{
+			Offset: start,
+			HEvent: event,
+		})
 }
 
 func osReadLock(file *os.File, start, len uint32, timeout time.Duration) _ErrorCode {
@@ -166,7 +176,8 @@ func osLockErrorCode(err error, def _ErrorCode) _ErrorCode {
 		case
 			windows.ERROR_LOCK_VIOLATION,
 			windows.ERROR_IO_PENDING,
-			windows.ERROR_OPERATION_ABORTED:
+			windows.ERROR_OPERATION_ABORTED,
+			windows.WAIT_TIMEOUT:
 			return _BUSY
 		}
 	}

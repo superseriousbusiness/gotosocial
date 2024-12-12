@@ -91,7 +91,6 @@ The implementation is compatible with SQLite's
 The VFS can be customized with a few build tags:
 - `sqlite3_flock` forces the use of BSD locks.
 - `sqlite3_dotlk` forces the use of dot-file locks.
-- `sqlite3_nosys` prevents importing [`x/sys`](https://pkg.go.dev/golang.org/x/sys).
 
 > [!IMPORTANT]
 > The default configuration of this package is compatible with the standard
