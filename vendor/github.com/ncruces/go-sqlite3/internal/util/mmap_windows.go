@@ -1,5 +1,3 @@
-//go:build !sqlite3_nosys
-
 package util
 
 import (

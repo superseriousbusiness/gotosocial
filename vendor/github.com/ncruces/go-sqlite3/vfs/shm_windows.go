@@ -1,4 +1,4 @@
-//go:build (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !(sqlite3_dotlk || sqlite3_nosys)
+//go:build (386 || arm || amd64 || arm64 || riscv64 || ppc64le) && !sqlite3_dotlk
 
 package vfs
 
@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/tetratelabs/wazero/api"
@@ -27,6 +28,7 @@ type vfsShm struct {
 	shadow   [][_WALINDEX_PGSZ]byte
 	ptrs     []uint32
 	stack    [1]uint64
+	fileLock bool
 	blocking bool
 	sync.Mutex
 }
@@ -46,11 +48,15 @@ func (s *vfsShm) Close() error {
 
 func (s *vfsShm) shmOpen() _ErrorCode {
 	if s.File == nil {
-		f, err := osutil.OpenFile(s.path, os.O_RDWR|os.O_CREATE, 0666)
+		f, err := osutil.OpenFile(s.path,
+			os.O_RDWR|os.O_CREATE|syscall.O_NONBLOCK, 0666)
 		if err != nil {
 			return _CANTOPEN
 		}
 		s.File = f
+	}
+	if s.fileLock {
+		return _OK
 	}
 
 	// Dead man's switch.
@@ -61,7 +67,9 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 			return _IOERR_SHMOPEN
 		}
 	}
-	return osReadLock(s.File, _SHM_DMS, 1, time.Millisecond)
+	rc := osReadLock(s.File, _SHM_DMS, 1, time.Millisecond)
+	s.fileLock = rc == _OK
+	return rc
 }
 
 func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (_ uint32, rc _ErrorCode) {
