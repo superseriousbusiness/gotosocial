@@ -103,10 +103,7 @@ func (m *Module) DomainPermissionSubscriptionsPreviewGETHandler(c *gin.Context) 
 
 	case "":
 		// Not set.
-		text := fmt.Sprintf(
-			"permission_type must be set, valid values are block or allow",
-			permType,
-		)
+		const text = "permission_type must be set, valid values are block or allow"
 		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
