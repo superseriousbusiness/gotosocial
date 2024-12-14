@@ -170,7 +170,8 @@ export const gtsApi = createApi({
 		"DefaultInteractionPolicies",
 		"InteractionRequest",
 		"DomainPermissionDraft",
-		"DomainPermissionExclude"
+		"DomainPermissionExclude",
+		"DomainPermissionSubscription"
 	],
 	endpoints: (build) => ({
 		instanceV1: build.query<InstanceV1, void>({

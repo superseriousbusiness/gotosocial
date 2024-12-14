@@ -1130,6 +1130,100 @@ definitions:
         type: object
         x-go-name: DomainPermission
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    domainPermissionSubscription:
+        properties:
+            adopt_orphans:
+                description: 'If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they''re "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription''s subscription ID value.'
+                example: false
+                type: boolean
+                x-go-name: AdoptOrphans
+            as_draft:
+                description: If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect. If false, domain permissions from this subscription will come into force immediately.
+                example: true
+                type: boolean
+                x-go-name: AsDraft
+            content_type:
+                description: MIME content type to use when parsing the permissions list.
+                example: text/csv
+                type: string
+                x-go-name: ContentType
+            count:
+                description: Count of domain permission entries discovered at URI on last (successful) fetch.
+                example: 53
+                format: uint64
+                readOnly: true
+                type: integer
+                x-go-name: Count
+            created_at:
+                description: Time at which the subscription was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            created_by:
+                description: ID of the account that created this subscription.
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: CreatedBy
+            error:
+                description: If most recent fetch attempt failed, this field will contain an error message related to the fetch attempt.
+                example: Oopsie doopsie, we made a fucky wucky.
+                readOnly: true
+                type: string
+                x-go-name: Error
+            fetch_password:
+                description: (Optional) password to set for basic auth when doing a fetch of URI.
+                example: admin123
+                type: string
+                x-go-name: FetchPassword
+            fetch_username:
+                description: (Optional) username to set for basic auth when doing a fetch of URI.
+                example: admin123
+                type: string
+                x-go-name: FetchUsername
+            fetched_at:
+                description: Time of the most recent fetch attempt (successful or otherwise) (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: FetchedAt
+            id:
+                description: The ID of the domain permission subscription.
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: ID
+            permission_type:
+                description: The type of domain permission subscription (allow, block).
+                example: block
+                type: string
+                x-go-name: PermissionType
+            priority:
+                description: Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority).
+                example: 100
+                format: uint8
+                type: integer
+                x-go-name: Priority
+            successfully_fetched_at:
+                description: Time of the most recent successful fetch (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: SuccessfullyFetchedAt
+            title:
+                description: Title of this subscription, as set by admin who created or updated it.
+                example: really cool list of neato pals
+                type: string
+                x-go-name: Title
+            uri:
+                description: URI to call in order to fetch the permissions list.
+                example: https://www.example.org/blocklists/list1.csv
+                type: string
+                x-go-name: URI
+        title: DomainPermissionSubscription represents an auto-refreshing subscription to a list of domain permissions (allows, blocks).
+        type: object
+        x-go-name: DomainPermissionSubscription
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
             category:
@@ -6048,6 +6142,335 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Get domain permission exclude with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions:
+        get:
+            description: |-
+                The subscriptions will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionSubscriptionsGet
+            parameters:
+                - description: Filter on "block" or "allow" type subscriptions.
+                  in: query
+                  name: permission_type
+                  type: string
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission subscriptions.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermissionSubscription'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain permission subscriptions.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionCreate
+            parameters:
+                - default: 0
+                  description: Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority). Higher priority subscriptions will overwrite permissions generated by lower priority subscriptions. When two subscriptions have the same `priority` value, priority is indeterminate, so it's recommended to always set this value manually.
+                  in: formData
+                  maximum: 255
+                  minimum: 0
+                  name: priority
+                  type: number
+                - description: Optional title for this subscription.
+                  in: formData
+                  name: title
+                  type: string
+                - description: Type of permissions to create by parsing the targeted file/list. One of "allow" or "block".
+                  in: formData
+                  name: permission_type
+                  required: true
+                  type: string
+                - default: true
+                  description: If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect. If false, domain permissions from this subscription will come into force immediately. Defaults to "true".
+                  in: formData
+                  name: as_draft
+                  type: boolean
+                - default: false
+                  description: 'If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they''re "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription''s subscription ID value and be managed by this subscription.'
+                  in: formData
+                  name: adopt_orphans
+                  type: boolean
+                - description: URI to call in order to fetch the permissions list.
+                  in: formData
+                  name: uri
+                  required: true
+                  type: string
+                - description: MIME content type to use when parsing the permissions list. One of "text/plain", "text/csv", and "application/json".
+                  in: formData
+                  name: content_type
+                  required: true
+                  type: string
+                - description: Optional basic auth username to provide when fetching given uri. If set, will be transmitted along with `fetch_password` when doing the fetch.
+                  in: formData
+                  name: fetch_username
+                  type: string
+                - description: Optional basic auth password to provide when fetching given uri. If set, will be transmitted along with `fetch_username` when doing the fetch.
+                  in: formData
+                  name: fetch_password
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create a domain permission subscription with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/${id}:
+        patch:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionUpdate
+            parameters:
+                - description: ID of the domain permission subscription.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority). Higher priority subscriptions will overwrite permissions generated by lower priority subscriptions. When two subscriptions have the same `priority` value, priority is indeterminate, so it's recommended to always set this value manually.
+                  in: formData
+                  maximum: 255
+                  minimum: 0
+                  name: priority
+                  type: number
+                - description: Optional title for this subscription.
+                  in: formData
+                  name: title
+                  type: string
+                - description: URI to call in order to fetch the permissions list.
+                  in: formData
+                  name: uri
+                  type: string
+                - default: true
+                  description: If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect. If false, domain permissions from this subscription will come into force immediately. Defaults to "true".
+                  in: formData
+                  name: as_draft
+                  type: boolean
+                - default: false
+                  description: 'If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they''re "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription''s subscription ID value and be managed by this subscription.'
+                  in: formData
+                  name: adopt_orphans
+                  type: boolean
+                - description: MIME content type to use when parsing the permissions list. One of "text/plain", "text/csv", and "application/json".
+                  in: formData
+                  name: content_type
+                  type: string
+                - description: Optional basic auth username to provide when fetching given uri. If set, will be transmitted along with `fetch_password` when doing the fetch.
+                  in: formData
+                  name: fetch_username
+                  type: string
+                - description: Optional basic auth password to provide when fetching given uri. If set, will be transmitted along with `fetch_username` when doing the fetch.
+                  in: formData
+                  name: fetch_password
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Update a domain permission subscription with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}:
+        get:
+            operationId: domainPermissionSubscriptionGet
+            parameters:
+                - description: ID of the domain permission subscription.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get domain permission subscription with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}/remove:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionRemove
+            parameters:
+                - description: ID of the domain permission subscription.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: true
+                  description: |-
+                    When removing the domain permission subscription, also remove children of this subscription, ie., domain permissions that are managed by this subscription. If false, then children will instead be orphaned but not removed.
+                    Note that removed permissions may end up being created again later by another domain permission subscription of lower priority than the removed subscription. Likewise, orphaned children may be later adopted by another subscription.
+                  in: formData
+                  name: remove_children
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The removed domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Remove a domain permission subscription.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/preview:
+        get:
+            description: This view allows you to see the order in which domain permissions will actually be fetched and created.
+            operationId: domainPermissionSubscriptionsPreviewGet
+            parameters:
+                - description: Filter on "block" or "allow" type subscriptions.
+                  in: query
+                  name: permission_type
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission subscriptions.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermissionSubscription'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View all domain permission subscriptions of the given permission type, in priority order (highest to lowest).
             tags:
                 - admin
     /api/v1/admin/email/test:

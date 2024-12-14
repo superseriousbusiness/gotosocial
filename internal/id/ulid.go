@@ -83,3 +83,12 @@ func NewRandomULID() (string, error) {
 	}
 	return newUlid.String(), nil
 }
+
+func TimeFromULID(id string) (time.Time, error) {
+	parsed, err := ulid.ParseStrict(id)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return ulid.Time(parsed.Time()), nil
+}

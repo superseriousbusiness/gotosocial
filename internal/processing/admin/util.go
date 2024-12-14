@@ -115,3 +115,19 @@ func (p *Processor) apiDomainPerm(
 
 	return apiDomainPerm, nil
 }
+
+// apiDomainPermSub is a cheeky shortcut for returning the
+// API version of the given domain permission subscription,
+// or an appropriate error if something goes wrong.
+func (p *Processor) apiDomainPermSub(
+	ctx context.Context,
+	domainPermSub *gtsmodel.DomainPermissionSubscription,
+) (*apimodel.DomainPermissionSubscription, gtserror.WithCode) {
+	apiDomainPermSub, err := p.converter.DomainPermSubToAPIDomainPermSub(ctx, domainPermSub)
+	if err != nil {
+		err := gtserror.NewfAt(3, "error converting domain permission subscription to api model: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return apiDomainPermSub, nil
+}

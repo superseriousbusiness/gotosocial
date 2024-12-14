@@ -30,18 +30,18 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// DomainPermissionDraftsGETHandler swagger:operation GET /api/v1/admin/domain_permission_drafts domainPermissionDraftsGet
+// DomainPermissionSubscriptionsGETHandler swagger:operation GET /api/v1/admin/domain_permission_subscriptions domainPermissionSubscriptionsGet
 //
-// View domain permission drafts.
+// View domain permission subscriptions.
 //
-// The drafts will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+// The subscriptions will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
 //
 // The next and previous queries can be parsed from the returned Link header.
 //
 // Example:
 //
 // ```
-// <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+// <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
 // ````
 //
 //	---
@@ -53,19 +53,9 @@ import (
 //
 //	parameters:
 //	-
-//		name: subscription_id
-//		type: string
-//		description: Show only drafts created by the given subscription ID.
-//		in: query
-//	-
-//		name: domain
-//		type: string
-//		description: Return only drafts that target the given domain.
-//		in: query
-//	-
 //		name: permission_type
 //		type: string
-//		description: Filter on "block" or "allow" type drafts.
+//		description: Filter on "block" or "allow" type subscriptions.
 //		in: query
 //	-
 //		name: max_id
@@ -103,11 +93,11 @@ import (
 //
 //	responses:
 //		'200':
-//			description: Domain permission drafts.
+//			description: Domain permission subscriptions.
 //			schema:
 //				type: array
 //				items:
-//					"$ref": "#/definitions/domainPermission"
+//					"$ref": "#/definitions/domainPermissionSubscription"
 //			headers:
 //				Link:
 //					type: string
@@ -124,7 +114,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) DomainPermissionDraftsGETHandler(c *gin.Context) {
+func (m *Module) DomainPermissionSubscriptionsGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -147,12 +137,16 @@ func (m *Module) DomainPermissionDraftsGETHandler(c *gin.Context) {
 		return
 	}
 
-	permTypeStr := c.Query(apiutil.DomainPermissionPermTypeKey)
-	permType := gtsmodel.ParseDomainPermissionType(permTypeStr)
-	if permTypeStr != "" && permType == gtsmodel.DomainPermissionUnknown {
+	permType := c.Query(apiutil.DomainPermissionPermTypeKey)
+	switch permType {
+	case "", "block", "allow":
+		// No problem.
+
+	default:
+		// Invalid.
 		text := fmt.Sprintf(
 			"permission_type %s not recognized, valid values are empty string, block, or allow",
-			permTypeStr,
+			permType,
 		)
 		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -165,11 +159,9 @@ func (m *Module) DomainPermissionDraftsGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Admin().DomainPermissionDraftsGet(
+	resp, errWithCode := m.processor.Admin().DomainPermissionSubscriptionsGet(
 		c.Request.Context(),
-		c.Query(apiutil.DomainPermissionSubscriptionIDKey),
-		c.Query(apiutil.DomainPermissionDomainKey),
-		permType,
+		gtsmodel.ParseDomainPermissionType(permType),
 		page,
 	)
 	if errWithCode != nil {

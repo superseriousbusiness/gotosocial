@@ -18,20 +18,19 @@
 package admin
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// DomainPermissionDraftsPOSTHandler swagger:operation POST /api/v1/admin/domain_permission_drafts domainPermissionDraftCreate
+// DomainPermissionSubscriptionRemovePOSTHandler swagger:operation POST /api/v1/admin/domain_permission_subscriptions/{id}/remove domainPermissionSubscriptionRemove
 //
-// Create a domain permission draft with the given parameters.
+// Remove a domain permission subscription.
 //
 //	---
 //	tags:
@@ -46,36 +45,26 @@ import (
 //
 //	parameters:
 //	-
-//		name: domain
-//		in: formData
-//		description: Domain to create the permission draft for.
+//		name: id
+//		required: true
+//		in: path
+//		description: ID of the domain permission subscription.
 //		type: string
 //	-
-//		name: permission_type
-//		in: formData
-//		description: Create a draft "allow" or a draft "block".
-//		type: string
-//	-
-//		name: obfuscate
+//		name: remove_children
 //		in: formData
 //		description: >-
-//			Obfuscate the name of the domain when serving it publicly.
-//			Eg., `example.org` becomes something like `ex***e.org`.
+//			When removing the domain permission subscription, also
+//			remove children of this subscription, ie., domain permissions
+//			that are managed by this subscription. If false, then children
+//			will instead be orphaned but not removed.
+//
+//			Note that removed permissions may end up being created again later
+//			by another domain permission subscription of lower priority than
+//			the removed subscription. Likewise, orphaned children may be later
+//			adopted by another subscription.
 //		type: boolean
-//	-
-//		name: public_comment
-//		in: formData
-//		description: >-
-//			Public comment about this domain permission.
-//			This will be displayed alongside the domain permission if you choose to share permissions.
-//		type: string
-//	-
-//		name: private_comment
-//		in: formData
-//		description: >-
-//			Private comment about this domain permission. Will only be shown to other admins, so this
-//			is a useful way of internally keeping track of why a certain domain ended up permissioned.
-//		type: string
+//		default: true
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -83,9 +72,9 @@ import (
 //
 //	responses:
 //		'200':
-//			description: The newly created domain permission draft.
+//			description: The removed domain permission subscription.
 //			schema:
-//				"$ref": "#/definitions/domainPermission"
+//				"$ref": "#/definitions/domainPermissionSubscription"
 //		'400':
 //			description: bad request
 //		'401':
@@ -98,7 +87,7 @@ import (
 //			description: conflict
 //		'500':
 //			description: internal server error
-func (m *Module) DomainPermissionDraftsPOSTHandler(c *gin.Context) {
+func (m *Module) DomainPermissionSubscriptionRemovePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -121,39 +110,34 @@ func (m *Module) DomainPermissionDraftsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// Parse + validate form.
-	form := new(apimodel.DomainPermissionRequest)
-	if err := c.ShouldBind(form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	if form.Domain == "" {
-		const errText = "domain must be set"
-		errWithCode := gtserror.NewErrorBadRequest(errors.New(errText), errText)
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	permType, errWithCode := parseDomainPermissionType(form.PermissionType)
+	id, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	permDraft, errWithCode := m.processor.Admin().DomainPermissionDraftCreate(
+	type RemoveForm struct {
+		RemoveChildren *bool `json:"remove_children" form:"remove_children"`
+	}
+
+	form := new(RemoveForm)
+	if err := c.ShouldBind(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	// Default removeChildren to true.
+	removeChildren := util.PtrOrValue(form.RemoveChildren, true)
+
+	permSub, errWithCode := m.processor.Admin().DomainPermissionSubscriptionRemove(
 		c.Request.Context(),
-		authed.Account,
-		form.Domain,
-		permType,
-		form.Obfuscate,
-		form.PublicComment,
-		form.PrivateComment,
+		id,
+		removeChildren,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	apiutil.JSON(c, http.StatusOK, permDraft)
+	apiutil.JSON(c, http.StatusOK, permSub)
 }

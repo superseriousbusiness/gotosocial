@@ -357,6 +357,26 @@ func sizeofDomainPermissionDraft() uintptr {
 	}))
 }
 
+func sizeofDomainPermissionSubscription() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainPermissionSubscription{
+		ID:                    exampleID,
+		Priority:              uint8(255),
+		Title:                 exampleTextSmall,
+		PermissionType:        gtsmodel.DomainPermissionBlock,
+		AsDraft:               util.Ptr(true),
+		CreatedByAccountID:    exampleID,
+		URI:                   exampleURI,
+		ContentType:           gtsmodel.DomainPermSubContentTypeCSV,
+		FetchUsername:         "username",
+		FetchPassword:         "password",
+		FetchedAt:             exampleTime,
+		SuccessfullyFetchedAt: exampleTime,
+		ETag:                  exampleID,
+		Error:                 exampleTextSmall,
+		Count:                 100,
+	}))
+}
+
 func sizeofEmoji() uintptr {
 	return uintptr(size.Of(&gtsmodel.Emoji{
 		ID:                     exampleID,

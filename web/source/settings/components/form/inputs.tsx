@@ -26,6 +26,7 @@ import type {
 
 import type {
 	FileFormInputHook,
+	NumberFormInputHook,
 	RadioFormInputHook,
 	TextFormInputHook,
 } from "../../lib/form/types";
@@ -44,6 +45,32 @@ export function TextInput({label, field, ...props}: TextInputProps) {
 
 	return (
 		<div className={`form-field text${field.valid ? "" : " invalid"}`}>
+			<label>
+				{label}
+				<input
+					onChange={onChange}
+					value={value}
+					ref={ref as RefObject<HTMLInputElement>}
+					{...props}
+				/>
+			</label>
+		</div>
+	);
+}
+
+export interface NumberInputProps extends React.DetailedHTMLProps<
+	React.InputHTMLAttributes<HTMLInputElement>,
+	HTMLInputElement
+> {
+	label?: ReactNode;
+	field: NumberFormInputHook;
+}
+
+export function NumberInput({label, field, ...props}: NumberInputProps) {
+	const { onChange, value, ref } = field;
+
+	return (
+		<div className={`form-field number${field.valid ? "" : " invalid"}`}>
 			<label>
 				{label}
 				<input
