@@ -95,5 +95,5 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiStatus)
+	apiutil.JSON(c, http.StatusOK, apiStatus)
 }

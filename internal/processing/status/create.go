@@ -19,29 +19,22 @@ package status
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // Create processes the given form to create a new status, returning the api model representation of that status if it's OK.
-//
-// Precondition: the form's fields should have already been validated and normalized by the caller.
+// Note this also handles validation of incoming form field data.
 func (p *Processor) Create(
 	ctx context.Context,
 	requester *gtsmodel.Account,
@@ -51,6 +44,16 @@ func (p *Processor) Create(
 	*apimodel.Status,
 	gtserror.WithCode,
 ) {
+	// Validate incoming form status content.
+	if errWithCode := validateStatusContent(
+		form.Status,
+		form.SpoilerText,
+		form.MediaIDs,
+		form.Poll,
+	); errWithCode != nil {
+		return nil, errWithCode
+	}
+
 	// Ensure account populated; we'll need settings.
 	if err := p.state.DB.PopulateAccount(ctx, requester); err != nil {
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
@@ -58,6 +61,30 @@ func (p *Processor) Create(
 
 	// Generate new ID for status.
 	statusID := id.NewULID()
+
+	// Process incoming status content fields.
+	content, errWithCode := p.processContent(ctx,
+		requester,
+		statusID,
+		string(form.ContentType),
+		form.Status,
+		form.SpoilerText,
+		form.Language,
+		form.Poll,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Process incoming status attachments.
+	media, errWithCode := p.processMedia(ctx,
+		requester.ID,
+		statusID,
+		form.MediaIDs,
+	)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
 
 	// Generate necessary URIs for username, to build status URIs.
 	accountURIs := uris.GenerateURIsForAccount(requester.Username)
@@ -78,15 +105,35 @@ func (p *Processor) Create(
 		ActivityStreamsType:      ap.ObjectNote,
 		Sensitive:                &form.Sensitive,
 		CreatedWithApplicationID: application.ID,
-		Text:                     form.Status,
+
+		// Set validated language.
+		Language: content.Language,
+
+		// Set formatted status content.
+		Content:        content.Content,
+		ContentWarning: content.ContentWarning,
+		Text:           form.Status, // raw
+
+		// Set gathered mentions.
+		MentionIDs: content.MentionIDs,
+		Mentions:   content.Mentions,
+
+		// Set gathered emojis.
+		EmojiIDs: content.EmojiIDs,
+		Emojis:   content.Emojis,
+
+		// Set gathered tags.
+		TagIDs: content.TagIDs,
+		Tags:   content.Tags,
+
+		// Set gathered media.
+		AttachmentIDs: form.MediaIDs,
+		Attachments:   media,
 
 		// Assume not pending approval; this may
 		// change when permissivity is checked.
 		PendingApproval: util.Ptr(false),
 	}
-
-	// Process any attached poll.
-	p.processPoll(status, form.Poll)
 
 	// Check + attach in-reply-to status.
 	if errWithCode := p.processInReplyTo(ctx,
@@ -101,10 +148,6 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if errWithCode := p.processMediaIDs(ctx, form, requester.ID, status); errWithCode != nil {
-		return nil, errWithCode
-	}
-
 	if err := p.processVisibility(ctx, form, requester.Settings.Privacy, status); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
 	}
@@ -115,36 +158,49 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if err := processLanguage(form, requester.Settings.Language, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+	if status.ContentWarning != "" && len(status.AttachmentIDs) > 0 {
+		// If a content-warning is set, and
+		// the status contains media, always
+		// set the status sensitive flag.
+		status.Sensitive = util.Ptr(true)
 	}
 
-	if err := p.processContent(ctx, p.parseMention, form, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if status.Poll != nil {
-		// Try to insert the new status poll in the database.
-		if err := p.state.DB.PutPoll(ctx, status.Poll); err != nil {
-			err := gtserror.Newf("error inserting poll in db: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
+	if form.Poll != nil {
+		// Process poll, inserting into database.
+		poll, errWithCode := p.processPoll(ctx,
+			statusID,
+			form.Poll,
+			now,
+		)
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
+
+		// Set poll and its ID
+		// on status before insert.
+		status.PollID = poll.ID
+		status.Poll = poll
+		poll.Status = status
+
+		// Update the status' ActivityPub type to Question.
+		status.ActivityStreamsType = ap.ActivityQuestion
 	}
 
-	// Insert this new status in the database.
+	// Insert this newly prepared status into the database.
 	if err := p.state.DB.PutStatus(ctx, status); err != nil {
+		err := gtserror.Newf("error inserting status in db: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	if status.Poll != nil && !status.Poll.ExpiresAt.IsZero() {
-		// Now that the status is inserted, and side effects queued,
-		// attempt to schedule an expiry handler for the status poll.
+		// Now that the status is inserted, attempt to
+		// schedule an expiry handler for the status poll.
 		if err := p.polls.ScheduleExpiry(ctx, status.Poll); err != nil {
 			log.Errorf(ctx, "error scheduling poll expiry: %v", err)
 		}
 	}
 
-	// send it back to the client API worker for async side-effects.
+	// Send it to the client API worker for async side-effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
@@ -170,43 +226,6 @@ func (p *Processor) Create(
 	}
 
 	return p.c.GetAPIStatus(ctx, requester, status)
-}
-
-func (p *Processor) processPoll(status *gtsmodel.Status, poll *apimodel.PollRequest) {
-	if poll == nil {
-		// No poll set.
-		// Nothing to do.
-		return
-	}
-
-	var expiresAt time.Time
-
-	// Now will have been set
-	// as the status creation.
-	now := status.CreatedAt
-
-	// Update the status AS type to "Question".
-	status.ActivityStreamsType = ap.ActivityQuestion
-
-	// Set an expiry time if one given.
-	if in := poll.ExpiresIn; in > 0 {
-		expiresIn := time.Duration(in)
-		expiresAt = now.Add(expiresIn * time.Second)
-	}
-
-	// Create new poll for status.
-	status.Poll = &gtsmodel.Poll{
-		ID:         id.NewULID(),
-		Multiple:   &poll.Multiple,
-		HideCounts: &poll.HideTotals,
-		Options:    poll.Options,
-		StatusID:   status.ID,
-		Status:     status,
-		ExpiresAt:  expiresAt,
-	}
-
-	// Set poll ID on the status.
-	status.PollID = status.Poll.ID
 }
 
 func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status, inReplyToID string) gtserror.WithCode {
@@ -332,53 +351,6 @@ func (p *Processor) processThreadID(ctx context.Context, status *gtsmodel.Status
 	return nil
 }
 
-func (p *Processor) processMediaIDs(ctx context.Context, form *apimodel.StatusCreateRequest, thisAccountID string, status *gtsmodel.Status) gtserror.WithCode {
-	if form.MediaIDs == nil {
-		return nil
-	}
-
-	// Get minimum allowed char descriptions.
-	minChars := config.GetMediaDescriptionMinChars()
-
-	attachments := []*gtsmodel.MediaAttachment{}
-	attachmentIDs := []string{}
-
-	for _, mediaID := range form.MediaIDs {
-		attachment, err := p.state.DB.GetAttachmentByID(ctx, mediaID)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err := gtserror.Newf("error fetching media from db: %w", err)
-			return gtserror.NewErrorInternalError(err)
-		}
-
-		if attachment == nil {
-			text := fmt.Sprintf("media %s not found", mediaID)
-			return gtserror.NewErrorBadRequest(errors.New(text), text)
-		}
-
-		if attachment.AccountID != thisAccountID {
-			text := fmt.Sprintf("media %s does not belong to account", mediaID)
-			return gtserror.NewErrorBadRequest(errors.New(text), text)
-		}
-
-		if attachment.StatusID != "" || attachment.ScheduledStatusID != "" {
-			text := fmt.Sprintf("media %s already attached to status", mediaID)
-			return gtserror.NewErrorBadRequest(errors.New(text), text)
-		}
-
-		if length := len([]rune(attachment.Description)); length < minChars {
-			text := fmt.Sprintf("media %s description too short, at least %d required", mediaID, minChars)
-			return gtserror.NewErrorBadRequest(errors.New(text), text)
-		}
-
-		attachments = append(attachments, attachment)
-		attachmentIDs = append(attachmentIDs, attachment.ID)
-	}
-
-	status.Attachments = attachments
-	status.AttachmentIDs = attachmentIDs
-	return nil
-}
-
 func (p *Processor) processVisibility(
 	ctx context.Context,
 	form *apimodel.StatusCreateRequest,
@@ -472,101 +444,5 @@ func processInteractionPolicy(
 	// policy will be stored as nil, which just means
 	// "fall back to global default policy". We avoid
 	// setting it explicitly to save space.
-	return nil
-}
-
-func processLanguage(form *apimodel.StatusCreateRequest, accountDefaultLanguage string, status *gtsmodel.Status) error {
-	if form.Language != "" {
-		status.Language = form.Language
-	} else {
-		status.Language = accountDefaultLanguage
-	}
-	if status.Language == "" {
-		return errors.New("no language given either in status create form or account default")
-	}
-	return nil
-}
-
-func (p *Processor) processContent(ctx context.Context, parseMention gtsmodel.ParseMentionFunc, form *apimodel.StatusCreateRequest, status *gtsmodel.Status) error {
-	if form.ContentType == "" {
-		// If content type wasn't specified, use the author's preferred content-type.
-		contentType := apimodel.StatusContentType(status.Account.Settings.StatusContentType)
-		form.ContentType = contentType
-	}
-
-	// format is the currently set text formatting
-	// function, according to the provided content-type.
-	var format text.FormatFunc
-
-	// formatInput is a shorthand function to format the given input string with the
-	// currently set 'formatFunc', passing in all required args and returning result.
-	formatInput := func(formatFunc text.FormatFunc, input string) *text.FormatResult {
-		return formatFunc(ctx, parseMention, status.AccountID, status.ID, input)
-	}
-
-	switch form.ContentType {
-	// None given / set,
-	// use default (plain).
-	case "":
-		fallthrough
-
-	// Format status according to text/plain.
-	case apimodel.StatusContentTypePlain:
-		format = p.formatter.FromPlain
-
-	// Format status according to text/markdown.
-	case apimodel.StatusContentTypeMarkdown:
-		format = p.formatter.FromMarkdown
-
-	// Unknown.
-	default:
-		return fmt.Errorf("invalid status format: %q", form.ContentType)
-	}
-
-	// Sanitize status text and format.
-	contentRes := formatInput(format, form.Status)
-
-	// Collect formatted results.
-	status.Content = contentRes.HTML
-	status.Mentions = append(status.Mentions, contentRes.Mentions...)
-	status.Emojis = append(status.Emojis, contentRes.Emojis...)
-	status.Tags = append(status.Tags, contentRes.Tags...)
-
-	// From here-on-out just use emoji-only
-	// plain-text formatting as the FormatFunc.
-	format = p.formatter.FromPlainEmojiOnly
-
-	// Sanitize content warning and format.
-	spoiler := text.SanitizeToPlaintext(form.SpoilerText)
-	warningRes := formatInput(format, spoiler)
-
-	// Collect formatted results.
-	status.ContentWarning = warningRes.HTML
-	status.Emojis = append(status.Emojis, warningRes.Emojis...)
-
-	if status.Poll != nil {
-		for i := range status.Poll.Options {
-			// Sanitize each option title name and format.
-			option := text.SanitizeToPlaintext(status.Poll.Options[i])
-			optionRes := formatInput(format, option)
-
-			// Collect each formatted result.
-			status.Poll.Options[i] = optionRes.HTML
-			status.Emojis = append(status.Emojis, optionRes.Emojis...)
-		}
-	}
-
-	// Gather all the database IDs from each of the gathered status mentions, tags, and emojis.
-	status.MentionIDs = xslices.Gather(nil, status.Mentions, func(mention *gtsmodel.Mention) string { return mention.ID })
-	status.TagIDs = xslices.Gather(nil, status.Tags, func(tag *gtsmodel.Tag) string { return tag.ID })
-	status.EmojiIDs = xslices.Gather(nil, status.Emojis, func(emoji *gtsmodel.Emoji) string { return emoji.ID })
-
-	if status.ContentWarning != "" && len(status.AttachmentIDs) > 0 {
-		// If a content-warning is set, and
-		// the status contains media, always
-		// set the status sensitive flag.
-		status.Sensitive = util.Ptr(true)
-	}
-
 	return nil
 }

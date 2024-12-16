@@ -1216,21 +1216,6 @@ func (c *Converter) StatusToWebStatus(
 	return webStatus, nil
 }
 
-// StatusToAPIStatusSource returns the *apimodel.StatusSource of the given status.
-// Callers should check beforehand whether a requester has permission to view the
-// source of the status, and ensure they're passing only a local status into this function.
-func (c *Converter) StatusToAPIStatusSource(ctx context.Context, s *gtsmodel.Status) (*apimodel.StatusSource, error) {
-	// TODO: remove this when edit support is added.
-	text := "**STATUS EDITS ARE NOT CURRENTLY SUPPORTED IN GOTOSOCIAL (coming in 2024)**\n" +
-		"You can review the original text of your status below, but you will not be able to submit this edit.\n\n---\n\n" + s.Text
-
-	return &apimodel.StatusSource{
-		ID:          s.ID,
-		Text:        text,
-		SpoilerText: s.ContentWarning,
-	}, nil
-}
-
 // statusToFrontend is a package internal function for
 // parsing a status into its initial frontend representation.
 //
@@ -1472,6 +1457,120 @@ func (c *Converter) baseStatusToFrontend(
 	return apiStatus, nil
 }
 
+// StatusToAPIEdits ...
+func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Status) ([]*apimodel.StatusEdit, error) {
+	var media map[string]*gtsmodel.MediaAttachment
+
+	// Gather attachments of status AND edits.
+	attachmentIDs := status.AllAttachmentIDs()
+	if len(attachmentIDs) > 0 {
+
+		// Fetch all of the gathered status attachments from the database.
+		attachments, err := c.state.DB.GetAttachmentsByIDs(ctx, attachmentIDs)
+		if err != nil {
+			return nil, gtserror.Newf("error getting attachments from db: %w", err)
+		}
+
+		// Generate a lookup map in 'media' of status attachments by their IDs.
+		media = util.KeyBy(attachments, func(m *gtsmodel.MediaAttachment) string {
+			return m.ID
+		})
+	}
+
+	// Convert the status author account to API model.
+	apiAccount, err := c.AccountToAPIAccountPublic(ctx,
+		status.Account,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("error converting account: %w", err)
+	}
+
+	// Convert status emojis to their API models.
+	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx,
+		nil,
+		status.EmojiIDs,
+	)
+	if err != nil {
+		return nil, gtserror.Newf("error converting emojis: %w", err)
+	}
+
+	// Iterate through status edits, starting at newest (highest index).
+	apiEdits := make([]*apimodel.StatusEdit, 0, len(status.Edits))
+	for i := len(status.Edits) - 1; i >= 0; i-- {
+		edit := status.Edits[i]
+
+		// Iterate through edit attachment IDs, getting model from 'media' lookup.
+		apiAttachments := make([]*apimodel.Attachment, 0, len(edit.AttachmentIDs))
+		for _, id := range edit.AttachmentIDs {
+			attachment, ok := media[id]
+			if !ok {
+				continue
+			}
+
+			// Convert each media attachment to frontend API model.
+			apiAttachment, err := c.AttachmentToAPIAttachment(ctx,
+				attachment,
+			)
+			if err != nil {
+				log.Error(ctx, "error converting attachment: %v", err)
+				continue
+			}
+
+			// Append converted media attachment to return slice.
+			apiAttachments = append(apiAttachments, &apiAttachment)
+		}
+
+		// If media descriptions are set, update API model descriptions.
+		if len(edit.AttachmentIDs) == len(edit.AttachmentDescriptions) {
+			var j int
+			for i, id := range edit.AttachmentIDs {
+				descr := edit.AttachmentDescriptions[i]
+				for ; j < len(apiAttachments); j++ {
+					if apiAttachments[j].ID == id {
+						apiAttachments[j].Description = &descr
+						break
+					}
+				}
+			}
+		}
+
+		// Attach status poll if set.
+		var apiPoll *apimodel.Poll
+		if len(edit.PollOptions) > 0 {
+			apiPoll = new(apimodel.Poll)
+
+			// Iterate through poll options and attach to API poll model.
+			apiPoll.Options = make([]apimodel.PollOption, len(edit.PollOptions))
+			for i, option := range edit.PollOptions {
+				apiPoll.Options[i] = apimodel.PollOption{
+					Title: option,
+				}
+			}
+
+			// If poll votes are attached, set vote counts.
+			if len(edit.PollVotes) == len(apiPoll.Options) {
+				for i, votes := range edit.PollVotes {
+					apiPoll.Options[i].VotesCount = &votes
+				}
+			}
+		}
+
+		// Append this status edit to the return slice.
+		apiEdits = append(apiEdits, &apimodel.StatusEdit{
+			CreatedAt:        util.FormatISO8601(edit.CreatedAt),
+			Content:          edit.Content,
+			SpoilerText:      edit.ContentWarning,
+			Sensitive:        util.PtrOrZero(edit.Sensitive),
+			Account:          apiAccount,
+			Poll:             apiPoll,
+			MediaAttachments: apiAttachments,
+			Emojis:           apiEmojis,
+		})
+	}
+
+	return apiEdits, nil
+}
+
 // VisToAPIVis converts a gts visibility into its api equivalent
 func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apimodel.Visibility {
 	switch m {
@@ -1488,7 +1587,7 @@ func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 }
 
 // InstanceRuleToAdminAPIRule converts a local instance rule into its api equivalent for serving at /api/v1/admin/instance/rules/:id
-func (c *Converter) InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
+func InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
 	return apimodel.InstanceRule{
 		ID:   r.ID,
 		Text: r.Text,
@@ -1496,18 +1595,16 @@ func (c *Converter) InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule
 }
 
 // InstanceRulesToAPIRules converts all local instance rules into their api equivalent for serving at /api/v1/instance/rules
-func (c *Converter) InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule {
+func InstanceRulesToAPIRules(r []gtsmodel.Rule) []apimodel.InstanceRule {
 	rules := make([]apimodel.InstanceRule, len(r))
-
 	for i, v := range r {
-		rules[i] = c.InstanceRuleToAPIRule(v)
+		rules[i] = InstanceRuleToAPIRule(v)
 	}
-
 	return rules
 }
 
 // InstanceRuleToAdminAPIRule converts a local instance rule into its api equivalent for serving at /api/v1/admin/instance/rules/:id
-func (c *Converter) InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule {
+func InstanceRuleToAdminAPIRule(r *gtsmodel.Rule) *apimodel.AdminInstanceRule {
 	return &apimodel.AdminInstanceRule{
 		ID:        r.ID,
 		CreatedAt: util.FormatISO8601(r.CreatedAt),
@@ -1540,7 +1637,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 		ApprovalRequired:     true,                               // approval always required
 		InvitesEnabled:       false,                              // todo: not supported yet
 		MaxTootChars:         uint(config.GetStatusesMaxChars()), // #nosec G115 -- Already validated.
-		Rules:                c.InstanceRulesToAPIRules(i.Rules),
+		Rules:                InstanceRulesToAPIRules(i.Rules),
 		Terms:                i.Terms,
 		TermsRaw:             i.TermsText,
 	}
@@ -1674,7 +1771,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		CustomCSS:       i.CustomCSS,
 		Usage:           apimodel.InstanceV2Usage{}, // todo: not implemented
 		Languages:       config.GetInstanceLanguages().TagStrs(),
-		Rules:           c.InstanceRulesToAPIRules(i.Rules),
+		Rules:           InstanceRulesToAPIRules(i.Rules),
 		Terms:           i.Terms,
 		TermsText:       i.TermsText,
 	}

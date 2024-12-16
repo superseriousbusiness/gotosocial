@@ -31,6 +31,47 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
+// GetOwnStatus ...
+func (p *Processor) GetOwnStatus(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	targetID string,
+) (
+	*gtsmodel.Status,
+	gtserror.WithCode,
+) {
+	target, err := p.state.DB.GetStatusByID(ctx, targetID)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting from db: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if target == nil {
+		const text = "target status not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
+	}
+
+	switch {
+	case target == nil:
+		const text = "target status not found"
+		return nil, gtserror.NewErrorNotFound(
+			errors.New(text),
+			text,
+		)
+
+	case target.AccountID != requester.ID:
+		return nil, gtserror.NewErrorNotFound(
+			errors.New("status does not belong to requester"),
+			"target status not found",
+		)
+	}
+
+	return target, nil
+}
+
 // GetTargetStatusBy fetches the target status with db load
 // function, given the authorized (or, nil) requester's
 // account. This returns an approprate gtserror.WithCode

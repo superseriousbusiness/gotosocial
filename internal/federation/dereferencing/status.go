@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // statusFresh returns true if the given status is still
@@ -1000,11 +1001,20 @@ func (d *Dereferencer) fetchStatusEmojis(
 	// Set latest emojis.
 	status.Emojis = emojis
 
-	// Iterate over and set changed emoji IDs.
+	// Extract IDs from latest slice of emojis.
 	status.EmojiIDs = make([]string, len(emojis))
 	for i, emoji := range emojis {
 		status.EmojiIDs[i] = emoji.ID
 	}
+
+	// Combine both old and new emojis, as statuses.emojis
+	// keeps track of emojis for both old and current edits.
+	status.EmojiIDs = append(status.EmojiIDs, existing.EmojiIDs...)
+	status.Emojis = append(status.Emojis, existing.Emojis...)
+	status.EmojiIDs = xslices.Deduplicate(status.EmojiIDs)
+	status.Emojis = xslices.DeduplicateFunc(status.Emojis,
+		func(e *gtsmodel.Emoji) string { return e.ID },
+	)
 
 	return true, nil
 }
@@ -1118,10 +1128,10 @@ func (d *Dereferencer) handleStatusEdit(
 	var edited bool
 
 	// Preallocate max slice length.
-	cols = make([]string, 0, 13)
+	cols = make([]string, 1, 13)
 
 	// Always update `fetched_at`.
-	cols = append(cols, "fetched_at")
+	cols[0] = "fetched_at"
 
 	// Check for edited status content.
 	if existing.Content != status.Content {
@@ -1230,7 +1240,8 @@ func (d *Dereferencer) handleStatusEdit(
 			// Poll only set if existing contained them.
 			edit.PollOptions = existing.Poll.Options
 
-			if !*existing.Poll.HideCounts || pollChanged {
+			if pollChanged || !*existing.Poll.HideCounts ||
+				!existing.Poll.ClosedAt.IsZero() {
 				// If the counts are allowed to be
 				// shown, or poll has changed, then
 				// include poll vote counts in edit.

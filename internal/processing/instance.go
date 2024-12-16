@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -133,7 +134,7 @@ func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRu
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	return p.converter.InstanceRulesToAPIRules(i.Rules), nil
+	return typeutils.InstanceRulesToAPIRules(i.Rules), nil
 }
 
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
