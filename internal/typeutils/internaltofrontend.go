@@ -1494,10 +1494,37 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		return nil, gtserror.Newf("error converting emojis: %w", err)
 	}
 
-	// Iterate through status edits, starting at newest (highest index).
-	apiEdits := make([]*apimodel.StatusEdit, 0, len(status.Edits))
-	for i := len(status.Edits) - 1; i >= 0; i-- {
-		edit := status.Edits[i]
+	var votes []int
+	var options []string
+
+	if status.Poll != nil {
+		// Extract status poll options.
+		options = status.Poll.Options
+
+		// Show votes only if closed / allowed.
+		if !status.Poll.ClosedAt.IsZero() ||
+			!*status.Poll.HideCounts {
+			votes = status.Poll.Votes
+		}
+	}
+
+	// Append status itself to final slot in the edits
+	// so we can add its revision using the below loop.
+	edits := append(status.Edits, &gtsmodel.StatusEdit{ //nolint:gocritic
+		Content:                status.Content,
+		ContentWarning:         status.ContentWarning,
+		Sensitive:              status.Sensitive,
+		PollOptions:            options,
+		PollVotes:              votes,
+		AttachmentIDs:          status.AttachmentIDs,
+		AttachmentDescriptions: nil, // no change from current
+		CreatedAt:              status.UpdatedAt,
+	})
+
+	// Iterate through status edits, starting at newest.
+	apiEdits := make([]*apimodel.StatusEdit, 0, len(edits))
+	for i := len(edits) - 1; i >= 0; i-- {
+		edit := edits[i]
 
 		// Iterate through edit attachment IDs, getting model from 'media' lookup.
 		apiAttachments := make([]*apimodel.Attachment, 0, len(edit.AttachmentIDs))
@@ -1564,7 +1591,7 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 			Account:          apiAccount,
 			Poll:             apiPoll,
 			MediaAttachments: apiAttachments,
-			Emojis:           apiEmojis,
+			Emojis:           apiEmojis, // todo
 		})
 	}
 
