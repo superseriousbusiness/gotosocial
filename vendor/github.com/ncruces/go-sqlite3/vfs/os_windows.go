@@ -45,6 +45,7 @@ func osGetExclusiveLock(file *os.File, state *LockLevel) _ErrorCode {
 	osUnlock(file, _SHARED_FIRST, _SHARED_SIZE)
 
 	// Acquire the EXCLUSIVE lock.
+	// Can't wait here, because the file is not OVERLAPPED.
 	rc := osWriteLock(file, _SHARED_FIRST, _SHARED_SIZE, 0)
 
 	if rc != _OK {
@@ -106,6 +107,27 @@ func osCheckReservedLock(file *os.File) (bool, _ErrorCode) {
 	return false, rc
 }
 
+func osReadLock(file *os.File, start, len uint32, timeout time.Duration) _ErrorCode {
+	return osLock(file, 0, start, len, timeout, _IOERR_RDLOCK)
+}
+
+func osWriteLock(file *os.File, start, len uint32, timeout time.Duration) _ErrorCode {
+	return osLock(file, windows.LOCKFILE_EXCLUSIVE_LOCK, start, len, timeout, _IOERR_LOCK)
+}
+
+func osLock(file *os.File, flags, start, len uint32, timeout time.Duration, def _ErrorCode) _ErrorCode {
+	var err error
+	switch {
+	case timeout == 0:
+		err = osLockEx(file, flags|windows.LOCKFILE_FAIL_IMMEDIATELY, start, len)
+	case timeout < 0:
+		err = osLockEx(file, flags, start, len)
+	default:
+		err = osLockExTimeout(file, flags, start, len, timeout)
+	}
+	return osLockErrorCode(err, def)
+}
+
 func osUnlock(file *os.File, start, len uint32) _ErrorCode {
 	err := windows.UnlockFileEx(windows.Handle(file.Fd()),
 		0, len, 0, &windows.Overlapped{Offset: start})
@@ -118,52 +140,40 @@ func osUnlock(file *os.File, start, len uint32) _ErrorCode {
 	return _OK
 }
 
-func osLock(file *os.File, flags, start, len uint32, timeout time.Duration, def _ErrorCode) _ErrorCode {
-	var err error
-	switch {
-	case timeout == 0:
-		err = osLockEx(file, flags|windows.LOCKFILE_FAIL_IMMEDIATELY, start, len, 0)
-	case timeout < 0:
-		err = osLockEx(file, flags, start, len, 0)
-	default:
-		var event windows.Handle
-		event, err = windows.CreateEvent(nil, 1, 0, nil)
-		if err != nil {
-			break
-		}
-		defer windows.CloseHandle(event)
-
-		err = osLockEx(file, flags, start, len, event)
-		if err == windows.ERROR_IO_PENDING {
-			rc, serr := windows.WaitForSingleObject(event, uint32(timeout/time.Millisecond))
-			if rc == windows.WAIT_OBJECT_0 {
-				return _OK
-			}
-			if serr != nil {
-				err = serr
-			} else {
-				err = windows.Errno(rc)
-			}
-			windows.CancelIo(windows.Handle(file.Fd()))
-		}
-	}
-	return osLockErrorCode(err, def)
-}
-
-func osLockEx(file *os.File, flags, start, len uint32, event windows.Handle) error {
+func osLockEx(file *os.File, flags, start, len uint32) error {
 	return windows.LockFileEx(windows.Handle(file.Fd()), flags,
-		0, len, 0, &windows.Overlapped{
-			Offset: start,
-			HEvent: event,
-		})
+		0, len, 0, &windows.Overlapped{Offset: start})
 }
 
-func osReadLock(file *os.File, start, len uint32, timeout time.Duration) _ErrorCode {
-	return osLock(file, 0, start, len, timeout, _IOERR_RDLOCK)
-}
+func osLockExTimeout(file *os.File, flags, start, len uint32, timeout time.Duration) error {
+	event, err := windows.CreateEvent(nil, 1, 0, nil)
+	if err != nil {
+		return err
+	}
+	defer windows.CloseHandle(event)
 
-func osWriteLock(file *os.File, start, len uint32, timeout time.Duration) _ErrorCode {
-	return osLock(file, windows.LOCKFILE_EXCLUSIVE_LOCK, start, len, timeout, _IOERR_LOCK)
+	fd := windows.Handle(file.Fd())
+	overlapped := &windows.Overlapped{
+		Offset: start,
+		HEvent: event,
+	}
+
+	err = windows.LockFileEx(fd, flags, 0, len, 0, overlapped)
+	if err != windows.ERROR_IO_PENDING {
+		return err
+	}
+
+	ms := (timeout + time.Millisecond - 1) / time.Millisecond
+	rc, err := windows.WaitForSingleObject(event, uint32(ms))
+	if rc == windows.WAIT_OBJECT_0 {
+		return nil
+	}
+	defer windows.CancelIoEx(fd, overlapped)
+
+	if err != nil {
+		return err
+	}
+	return windows.Errno(rc)
 }
 
 func osLockErrorCode(err error, def _ErrorCode) _ErrorCode {
@@ -175,8 +185,8 @@ func osLockErrorCode(err error, def _ErrorCode) _ErrorCode {
 		switch errno {
 		case
 			windows.ERROR_LOCK_VIOLATION,
-			windows.ERROR_IO_PENDING,
 			windows.ERROR_OPERATION_ABORTED,
+			windows.ERROR_IO_PENDING,
 			windows.WAIT_TIMEOUT:
 			return _BUSY
 		}
