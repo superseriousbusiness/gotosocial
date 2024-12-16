@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"math/rand"
 	"net/url"
 	"strings"
 	"time"
@@ -24,7 +25,6 @@ type Conn struct {
 	interrupt  context.Context
 	pending    *Stmt
 	stmts      []*Stmt
-	timer      *time.Timer
 	busy       func(context.Context, int) bool
 	log        func(xErrorCode, string)
 	collation  func(*Conn, string)
@@ -36,7 +36,9 @@ type Conn struct {
 	rollback   func()
 	arena      arena
 
-	handle uint32
+	busy1st time.Time
+	busylst time.Time
+	handle  uint32
 }
 
 // Open calls [OpenFlags] with [OPEN_READWRITE], [OPEN_CREATE] and [OPEN_URI].
@@ -389,38 +391,20 @@ func (c *Conn) BusyTimeout(timeout time.Duration) error {
 }
 
 func timeoutCallback(ctx context.Context, mod api.Module, count, tmout int32) (retry uint32) {
+	// https://fractaledmind.github.io/2024/04/15/sqlite-on-rails-the-how-and-why-of-optimal-performance/
 	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.interrupt.Err() == nil {
-		const delays = "\x01\x02\x05\x0a\x0f\x14\x19\x19\x19\x32\x32\x64"
-		const totals = "\x00\x01\x03\x08\x12\x21\x35\x4e\x67\x80\xb2\xe4"
-		const ndelay = int32(len(delays) - 1)
-
-		var delay, prior int32
-		if count <= ndelay {
-			delay = int32(delays[count])
-			prior = int32(totals[count])
-		} else {
-			delay = int32(delays[ndelay])
-			prior = int32(totals[ndelay]) + delay*(count-ndelay)
+		switch {
+		case count == 0:
+			c.busy1st = time.Now()
+		case time.Since(c.busy1st) >= time.Duration(tmout)*time.Millisecond:
+			return 0
 		}
-
-		if delay = min(delay, tmout-prior); delay > 0 {
-			delay := time.Duration(delay) * time.Millisecond
-			if c.interrupt.Done() == nil {
-				time.Sleep(delay)
-				return 1
-			}
-			if c.timer == nil {
-				c.timer = time.NewTimer(delay)
-			} else {
-				c.timer.Reset(delay)
-			}
-			select {
-			case <-c.interrupt.Done():
-				c.timer.Stop()
-			case <-c.timer.C:
-				return 1
-			}
+		if time.Since(c.busylst) < time.Millisecond {
+			const sleepIncrement = 2*1024*1024 - 1 // power of two, ~2ms
+			time.Sleep(time.Duration(rand.Int63() & sleepIncrement))
 		}
+		c.busylst = time.Now()
+		return 1
 	}
 	return 0
 }
