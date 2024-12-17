@@ -6,11 +6,11 @@ import (
 	"context"
 	"errors"
 	"io/fs"
-	"os"
 	"sync"
 
 	"github.com/tetratelabs/wazero/api"
 
+	"github.com/ncruces/go-sqlite3/internal/dotlk"
 	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
@@ -58,8 +58,7 @@ func (s *vfsShm) Close() error {
 		return nil
 	}
 
-	err := os.Remove(s.path)
-	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+	if err := dotlk.Unlock(s.path); err != nil {
 		return _IOERR_UNLOCK
 	}
 	delete(vfsShmList, s.path)
@@ -82,9 +81,8 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 		return _OK
 	}
 
-	// Create a directory on disk to ensure only this process
-	// uses this path to register a shared memory.
-	err := os.Mkdir(s.path, 0777)
+	// Dead man's switch.
+	err := dotlk.LockShm(s.path)
 	if errors.Is(err, fs.ErrExist) {
 		return _BUSY
 	}
