@@ -18,17 +18,106 @@
 package status_test
 
 import (
+	"context"
+	"net/http"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type StatusEditTestSuite struct {
 	StatusStandardTestSuite
 }
 
-func (suite *StatusEditTestSuite) TestEdit() {
-	suite.T().Fatal("TODO")
+func (suite *StatusEditTestSuite) TestSimpleEdit() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	status := suite.testStatuses["local_account_1_status_9"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	form := &apimodel.StatusEditRequest{
+		Status:          "<p>this is some edited status text!</p>",
+		SpoilerText:     "shhhhh",
+		Sensitive:       true,
+		Language:        "fr", // hoh hoh hoh
+		MediaIDs:        nil,
+		MediaAttributes: nil,
+		Poll:            nil,
+	}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NotNil(apiStatus)
+	suite.Nil(errWithCode)
+
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
+	suite.Equal(form.Sensitive, apiStatus.Sensitive)
+	suite.Equal(form.Language, *apiStatus.Language)
+	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+}
+
+func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	status := suite.testStatuses["remote_account_1_status_1"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	form := &apimodel.StatusEditRequest{}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.Nil(apiStatus)
+	suite.Equal(http.StatusNotFound, errWithCode.Code())
+	suite.Equal("status does not belong to requester", errWithCode.Error())
+	suite.Equal("Not Found: target status not found", errWithCode.Safe())
+}
+
+func (suite *StatusEditTestSuite) TestEditOthersStatus2() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	status := suite.testStatuses["local_account_2_status_1"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	form := &apimodel.StatusEditRequest{}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.Nil(apiStatus)
+	suite.Equal(http.StatusNotFound, errWithCode.Code())
+	suite.Equal("status does not belong to requester", errWithCode.Error())
+	suite.Equal("Not Found: target status not found", errWithCode.Safe())
 }
 
 func TestStatusEditTestSuite(t *testing.T) {
