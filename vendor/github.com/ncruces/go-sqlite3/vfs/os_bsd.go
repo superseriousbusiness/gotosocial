@@ -9,11 +9,11 @@ import (
 )
 
 func osGetSharedLock(file *os.File) _ErrorCode {
-	return osLock(file, unix.LOCK_SH|unix.LOCK_NB, _IOERR_RDLOCK)
+	return osFlock(file, unix.LOCK_SH|unix.LOCK_NB, _IOERR_RDLOCK)
 }
 
 func osGetReservedLock(file *os.File) _ErrorCode {
-	rc := osLock(file, unix.LOCK_EX|unix.LOCK_NB, _IOERR_LOCK)
+	rc := osFlock(file, unix.LOCK_EX|unix.LOCK_NB, _IOERR_LOCK)
 	if rc == _BUSY {
 		// The documentation states that a lock is upgraded by
 		// releasing the previous lock, then acquiring the new lock.
@@ -37,7 +37,7 @@ func osGetExclusiveLock(file *os.File, state *LockLevel) _ErrorCode {
 }
 
 func osDowngradeLock(file *os.File, _ LockLevel) _ErrorCode {
-	rc := osLock(file, unix.LOCK_SH|unix.LOCK_NB, _IOERR_RDLOCK)
+	rc := osFlock(file, unix.LOCK_SH|unix.LOCK_NB, _IOERR_RDLOCK)
 	if rc == _BUSY {
 		// The documentation states that a lock is downgraded by
 		// releasing the previous lock then acquiring the new lock.
@@ -66,7 +66,36 @@ func osCheckReservedLock(file *os.File) (bool, _ErrorCode) {
 	return lock == unix.F_WRLCK, rc
 }
 
-func osLock(file *os.File, how int, def _ErrorCode) _ErrorCode {
+func osFlock(file *os.File, how int, def _ErrorCode) _ErrorCode {
 	err := unix.Flock(int(file.Fd()), how)
 	return osLockErrorCode(err, def)
+}
+
+func osReadLock(file *os.File, start, len int64) _ErrorCode {
+	return osLock(file, unix.F_RDLCK, start, len, _IOERR_RDLOCK)
+}
+
+func osWriteLock(file *os.File, start, len int64) _ErrorCode {
+	return osLock(file, unix.F_WRLCK, start, len, _IOERR_LOCK)
+}
+
+func osLock(file *os.File, typ int16, start, len int64, def _ErrorCode) _ErrorCode {
+	err := unix.FcntlFlock(file.Fd(), unix.F_SETLK, &unix.Flock_t{
+		Type:  typ,
+		Start: start,
+		Len:   len,
+	})
+	return osLockErrorCode(err, def)
+}
+
+func osUnlock(file *os.File, start, len int64) _ErrorCode {
+	err := unix.FcntlFlock(file.Fd(), unix.F_SETLK, &unix.Flock_t{
+		Type:  unix.F_UNLCK,
+		Start: start,
+		Len:   len,
+	})
+	if err != nil {
+		return _IOERR_UNLOCK
+	}
+	return _OK
 }
