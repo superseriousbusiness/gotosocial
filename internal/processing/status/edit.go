@@ -249,7 +249,7 @@ func (p *Processor) Edit(
 	edit.Language = status.Language
 	edit.Sensitive = status.Sensitive
 	edit.StatusID = status.ID
-	edit.CreatedAt = now
+	edit.CreatedAt = status.UpdatedAt
 
 	// Copy existing media and descriptions.
 	edit.AttachmentIDs = status.AttachmentIDs

@@ -25,6 +25,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 type StatusEditTestSuite struct {
@@ -80,6 +81,71 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+}
+
+func (suite *StatusEditTestSuite) TestEditAddPoll() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	status := suite.testStatuses["local_account_1_status_9"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	form := &apimodel.StatusEditRequest{
+		Status:          "<p>this is some edited status text!</p>",
+		SpoilerText:     "",
+		Sensitive:       true,
+		Language:        "fr", // hoh hoh hoh
+		MediaIDs:        nil,
+		MediaAttributes: nil,
+		Poll: &apimodel.PollRequest{
+			Options:    []string{"yes", "no", "spiderman"},
+			ExpiresIn:  0,
+			Multiple:   true,
+			HideTotals: false,
+		},
+	}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NotNil(apiStatus)
+	suite.Nil(errWithCode)
+
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
+	suite.Equal(form.Sensitive, apiStatus.Sensitive)
+	suite.Equal(form.Language, *apiStatus.Language)
+	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotNil(apiStatus.Poll)
+	suite.Equal(form.Poll.Options, xslices.Gather(nil, apiStatus.Poll.Options, func(opt apimodel.PollOption) string {
+		return opt.Title
+	}))
+
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotNil(latestStatus.Poll)
+	suite.Equal(form.Poll.Options, latestStatus.Poll.Options)
+
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.Poll != nil, len(previousEdit.PollOptions) > 0)
 }
 
 func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
