@@ -1591,7 +1591,7 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 			Account:          apiAccount,
 			Poll:             apiPoll,
 			MediaAttachments: apiAttachments,
-			Emojis:           apiEmojis, // todo
+			Emojis:           apiEmojis, // same models used for whole status + all edits
 		})
 	}
 

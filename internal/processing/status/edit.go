@@ -60,6 +60,12 @@ func (p *Processor) Edit(
 		)
 	}
 
+	// We need the status populated including all historical edits.
+	if err := p.state.DB.PopulateStatusEdits(ctx, status); err != nil {
+		err := gtserror.Newf("error getting status edits from db: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	// Time of edit.
 	now := time.Now()
 
@@ -337,9 +343,14 @@ func (p *Processor) HistoryGet(ctx context.Context, requester *gtsmodel.Account,
 		return nil, errWithCode
 	}
 
+	if err := p.state.DB.PopulateStatusEdits(ctx, target); err != nil {
+		err := gtserror.Newf("error getting status edits from db: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
 	edits, err := p.converter.StatusToAPIEdits(ctx, target)
 	if err != nil {
-		err := gtserror.Newf("error converting status: %w", err)
+		err := gtserror.Newf("error converting status edits: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
