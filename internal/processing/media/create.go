@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-iotools"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -45,10 +46,9 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// Parse focus details from API form input.
-	focusX, focusY, err := parseFocus(form.Focus)
-	if err != nil {
-		text := fmt.Sprintf("could not parse focus value %s: %s", form.Focus, err)
-		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+	focusX, focusY, errWithCode := apiutil.ParseFocus(form.Focus)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	// Open multipart file reader.

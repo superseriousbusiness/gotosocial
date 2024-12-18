@@ -1197,6 +1197,13 @@ func (d *Dereferencer) handleStatusEdit(
 		// Attached emojis changed.
 		cols = append(cols, "emojis") // i.e. EmojiIDs
 
+		// We specifically store both *new* AND *old* edit
+		// revision emojis in the statuses.emojis column.
+		emojiByID := func(e *gtsmodel.Emoji) string { return e.ID }
+		status.Emojis = append(status.Emojis, existing.Emojis...)
+		status.Emojis = xslices.DeduplicateFunc(status.Emojis, emojiByID)
+		status.EmojiIDs = xslices.Gather(status.EmojiIDs[:0], status.Emojis, emojiByID)
+
 		// Emojis changed doesn't necessarily
 		// indicate an edit, it may just not have
 		// been previously populated properly.

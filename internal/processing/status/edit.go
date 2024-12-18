@@ -22,18 +22,18 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // Edit ...
@@ -222,10 +222,15 @@ func (p *Processor) Edit(
 		}
 
 		if !slices.Equal(status.EmojiIDs, content.EmojiIDs) {
+			// We specifically store both *new* AND *old* edit
+			// revision emojis in the statuses.emojis column.
+			emojiByID := func(e *gtsmodel.Emoji) string { return e.ID }
+			status.Emojis = append(status.Emojis, content.Emojis...)
+			status.Emojis = xslices.DeduplicateFunc(status.Emojis, emojiByID)
+			status.EmojiIDs = xslices.Gather(status.EmojiIDs[:0], status.Emojis, emojiByID)
+
 			// Update attached status emojis.
 			cols = append(cols, "emojis")
-			status.EmojiIDs = content.EmojiIDs
-			status.Emojis = content.Emojis
 		}
 	}
 
@@ -391,8 +396,8 @@ func (p *Processor) processMediaEdits(
 		}
 
 		if attr.Focus != "" {
-			// Parse provided media focus string request.
-			fx, fy, errWithCode := parseFocus(attr.Focus)
+			// Parse provided media focus parameters from string.
+			fx, fy, errWithCode := apiutil.ParseFocus(attr.Focus)
 			if errWithCode != nil {
 				return false, errWithCode
 			}
@@ -544,40 +549,27 @@ func (p *Processor) deletePoll(ctx context.Context, poll *gtsmodel.Poll) error {
 	return nil
 }
 
-func parseFocus(focus string) (focusx, focusy float32, errWithCode gtserror.WithCode) {
-	if focus == "" {
-		return
+func deduplicateEmojis(emojis []*gtsmodel.Emoji) ([]*gtsmodel.Emoji, []string) {
+	set := make(map[string]struct{}, len(emojis))
+
+	// Store returning emojis, and their IDs.
+	ret := make([]*gtsmodel.Emoji, 0, len(emojis))
+	ids := make([]string, 0, len(emojis))
+	for _, emoji := range emojis {
+		emoji := emoji // rescope
+
+		// Check if already in ID set.
+		if _, ok := set[emoji.ID]; ok {
+			continue
+		}
+
+		// Append emoji to slices.
+		ret = append(ret, emoji)
+		ids = append(ids, emoji.ID)
+
+		// Add emoji ID to set.
+		set[emoji.ID] = struct{}{}
 	}
-	spl := strings.Split(focus, ",")
-	if len(spl) != 2 {
-		const text = "missing comma separator"
-		errWithCode = gtserror.NewErrorBadRequest(
-			errors.New(text),
-			text,
-		)
-		return
-	}
-	xStr := spl[0]
-	yStr := spl[1]
-	fx, err := strconv.ParseFloat(xStr, 32)
-	if err != nil || fx > 1 || fx < -1 {
-		text := fmt.Sprintf("invalid x focus: %s", xStr)
-		errWithCode = gtserror.NewErrorBadRequest(
-			errors.New(text),
-			text,
-		)
-		return
-	}
-	fy, err := strconv.ParseFloat(yStr, 32)
-	if err != nil || fy > 1 || fy < -1 {
-		text := fmt.Sprintf("invalid y focus: %s", xStr)
-		errWithCode = gtserror.NewErrorBadRequest(
-			errors.New(text),
-			text,
-		)
-		return
-	}
-	focusx = float32(fx)
-	focusy = float32(fy)
-	return
+
+	return ret, ids
 }

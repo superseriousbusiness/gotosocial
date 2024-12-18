@@ -23,6 +23,7 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -52,9 +53,9 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 	}
 
 	if form.Focus != nil {
-		focusx, focusy, err := parseFocus(*form.Focus)
+		focusx, focusy, errWithCode := apiutil.ParseFocus(*form.Focus)
 		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err)
+			return nil, errWithCode
 		}
 		attachment.FileMeta.Focus.X = focusx
 		attachment.FileMeta.Focus.Y = focusy
