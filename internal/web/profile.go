@@ -142,7 +142,6 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 			cssStatus,
 			cssThread,
 			cssProfile,
-			instanceCustomCSSPath,
 		}...,
 	)
 
