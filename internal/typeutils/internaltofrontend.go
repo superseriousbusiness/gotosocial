@@ -1485,7 +1485,9 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		return nil, gtserror.Newf("error converting account: %w", err)
 	}
 
-	// Convert status emojis to their API models.
+	// Convert status emojis to their API models,
+	// this includes all status emojis both current
+	// and historic, so it gets passed to each edit.
 	apiEmojis, err := c.convertEmojisToAPIEmojis(ctx,
 		nil,
 		status.EmojiIDs,
