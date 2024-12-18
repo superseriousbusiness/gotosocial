@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
@@ -34,12 +35,15 @@ type StatusEditTestSuite struct {
 }
 
 func (suite *StatusEditTestSuite) TestSimpleEdit() {
+	// Create cancellable context to use for test.
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
+	// Get a local account to use as test requester.
 	requester := suite.testAccounts["local_account_1"]
 	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
 
+	// Get requester's existing status to perform an edit on.
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
@@ -55,7 +59,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
-	suite.Nil(errWithCode)
+	suite.NoError(errWithCode)
 
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
@@ -86,12 +90,15 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 }
 
 func (suite *StatusEditTestSuite) TestEditAddPoll() {
+	// Create cancellable context to use for test.
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
+	// Get a local account to use as test requester.
 	requester := suite.testAccounts["local_account_1"]
 	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
 
+	// Get requester's existing status to perform an edit on.
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
@@ -112,7 +119,7 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
-	suite.Nil(errWithCode)
+	suite.NoError(errWithCode)
 
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
@@ -153,12 +160,15 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 }
 
 func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
+	// Create cancellable context to use for test.
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
+	// Get a local account to use as test requester.
 	requester := suite.testAccounts["local_account_1"]
 	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
 
+	// Get requester's existing status to perform an edit on.
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
@@ -179,7 +189,7 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
-	suite.Nil(errWithCode)
+	suite.NoError(errWithCode)
 
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
@@ -219,16 +229,246 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	suite.Equal(status.Poll != nil, len(previousEdit.PollOptions) > 0)
 }
 
-func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
+func (suite *StatusEditTestSuite) TestEditMediaDescription() {
+	// Create cancellable context to use for test.
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
+	// Get a local account to use as test requester.
 	requester := suite.testAccounts["local_account_1"]
 	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
 
+	// Get requester's existing status to perform an edit on.
+	status := suite.testStatuses["local_account_1_status_4"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	// Prepare requesting form updating the
+	// attachment details of this media.
+	form := &apimodel.StatusEditRequest{
+		Status:      "<p>this is some edited status text!</p>",
+		SpoilerText: "this status is now missing media",
+		Sensitive:   true,
+		Language:    "en",
+		MediaIDs:    status.AttachmentIDs,
+		MediaAttributes: []apimodel.AttachmentAttributesRequest{
+			{ID: status.AttachmentIDs[0], Description: "hello world!"},
+			{ID: status.AttachmentIDs[1], Description: "media attachment numero two"},
+		},
+	}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NoError(errWithCode)
+
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
+	suite.Equal(form.Sensitive, apiStatus.Sensitive)
+	suite.Equal(form.Language, *apiStatus.Language)
+	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.Equal(form.MediaIDs, xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
+		return media.ID
+	}))
+	suite.Equal(
+		xslices.Gather(nil, form.MediaAttributes, func(attr apimodel.AttachmentAttributesRequest) string {
+			return attr.Description
+		}),
+		xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
+			return *media.Description
+		}),
+	)
+
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
+	suite.Equal(
+		xslices.Gather(nil, form.MediaAttributes, func(attr apimodel.AttachmentAttributesRequest) string {
+			return attr.Description
+		}),
+		xslices.Gather(nil, latestStatus.Attachments, func(media *gtsmodel.MediaAttachment) string {
+			return media.Description
+		}),
+	)
+
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	for _, edit := range latestStatus.Edits {
+		err = suite.state.DB.PopulateStatusEdit(ctx, edit)
+		suite.NoError(err)
+	}
+
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
+	suite.Equal(
+		xslices.Gather(nil, status.Attachments, func(media *gtsmodel.MediaAttachment) string {
+			return media.Description
+		}),
+		previousEdit.AttachmentDescriptions,
+	)
+}
+
+func (suite *StatusEditTestSuite) TestEditAddMedia() {
+	// Create cancellable context to use for test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Get a local account to use as test requester.
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	// Get some of requester's existing media, and unattach from existing status.
+	media1 := suite.testAttachments["local_account_1_status_4_attachment_1"]
+	media2 := suite.testAttachments["local_account_1_status_4_attachment_2"]
+	media1.StatusID, media2.StatusID = "", ""
+	suite.NoError(suite.state.DB.UpdateAttachment(ctx, media1, "status_id"))
+	suite.NoError(suite.state.DB.UpdateAttachment(ctx, media2, "status_id"))
+	media1, _ = suite.state.DB.GetAttachmentByID(ctx, media1.ID)
+	media2, _ = suite.state.DB.GetAttachmentByID(ctx, media2.ID)
+
+	// Get requester's existing status to perform an edit on.
+	status := suite.testStatuses["local_account_1_status_9"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	// Prepare request form adding existing
+	// media attachments in the edit of status.
+	form := &apimodel.StatusEditRequest{
+		Status:          "<p>this is some edited status text!</p>",
+		SpoilerText:     "this status now has media",
+		Sensitive:       true,
+		Language:        "en",
+		MediaIDs:        []string{media1.ID, media2.ID},
+		MediaAttributes: nil,
+	}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NotNil(apiStatus)
+	suite.NoError(errWithCode)
+
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
+	suite.Equal(form.Sensitive, apiStatus.Sensitive)
+	suite.Equal(form.Language, *apiStatus.Language)
+	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.Equal(form.MediaIDs, xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
+		return media.ID
+	}))
+
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
+
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
+}
+
+func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
+	// Create cancellable context to use for test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Get a local account to use as test requester.
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	// Get requester's existing status to perform an edit on.
+	status := suite.testStatuses["local_account_1_status_4"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	// Prepare request form unsetting this
+	// existing status' media attachments.
+	form := &apimodel.StatusEditRequest{
+		Status:          "<p>this is some edited status text!</p>",
+		SpoilerText:     "this status is now missing media",
+		Sensitive:       true,
+		Language:        "en",
+		MediaIDs:        nil,
+		MediaAttributes: nil,
+	}
+
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NotNil(apiStatus)
+	suite.NoError(errWithCode)
+
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
+	suite.Equal(form.Sensitive, apiStatus.Sensitive)
+	suite.Equal(form.Language, *apiStatus.Language)
+	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.Equal(form.MediaIDs, xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
+		return media.ID
+	}))
+
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
+
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
+}
+
+func (suite *StatusEditTestSuite) TestEditRemovePoll() {
+	suite.T().Skip("TODO")
+}
+
+func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
+	// Create cancellable context to use for test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Get a local account to use as test requester.
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	// Get remote accounts's status to attempt an edit on.
 	status := suite.testStatuses["remote_account_1_status_1"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
+	// Prepare an empty request form, this
+	// should be all we need to trigger it.
 	form := &apimodel.StatusEditRequest{}
 
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
@@ -239,15 +479,20 @@ func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
 }
 
 func (suite *StatusEditTestSuite) TestEditOthersStatus2() {
+	// Create cancellable context to use for test.
 	ctx, cncl := context.WithCancel(context.Background())
 	defer cncl()
 
+	// Get a local account to use as test requester.
 	requester := suite.testAccounts["local_account_1"]
 	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
 
+	// Get other local accounts's status to attempt edit on.
 	status := suite.testStatuses["local_account_2_status_1"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
+	// Prepare an empty request form, this
+	// should be all we need to trigger it.
 	form := &apimodel.StatusEditRequest{}
 
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
