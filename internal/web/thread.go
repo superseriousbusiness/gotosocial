@@ -124,7 +124,6 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 			cssFA,
 			cssStatus,
 			cssThread,
-			instanceCustomCSSPath,
 		}...,
 	)
 

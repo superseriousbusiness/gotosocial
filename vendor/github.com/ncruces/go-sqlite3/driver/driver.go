@@ -379,7 +379,7 @@ func (c *conn) PrepareContext(ctx context.Context, query string) (driver.Stmt, e
 	if err != nil {
 		return nil, err
 	}
-	if tail != "" {
+	if notWhitespace(tail) {
 		s.Close()
 		return nil, util.TailErr
 	}
