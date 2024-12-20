@@ -62,7 +62,7 @@ require (
 	github.com/miekg/dns v1.1.62
 	github.com/minio/minio-go/v7 v7.0.81
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ncruces/go-sqlite3 v0.21.2
+	github.com/ncruces/go-sqlite3 v0.21.3
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/spf13/cobra v1.8.1

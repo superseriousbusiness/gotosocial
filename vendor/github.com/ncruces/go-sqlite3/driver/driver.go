@@ -274,6 +274,7 @@ func (n *connector) Connect(ctx context.Context) (res driver.Conn, err error) {
 //	if err != nil {
 //		log.Fatal(err)
 //	}
+//	defer conn.Close()
 //
 //	err = conn.Raw(func(driverConn any) error {
 //		conn := driverConn.(driver.Conn)

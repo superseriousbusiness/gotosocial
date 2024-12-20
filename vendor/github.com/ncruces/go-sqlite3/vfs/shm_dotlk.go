@@ -18,7 +18,7 @@ type vfsShmParent struct {
 	shared [][_WALINDEX_PGSZ]byte
 	refs   int // +checklocks:vfsShmListMtx
 
-	lock [_SHM_NLOCK]int16 // +checklocks:Mutex
+	lock [_SHM_NLOCK]int8 // +checklocks:Mutex
 	sync.Mutex
 }
 

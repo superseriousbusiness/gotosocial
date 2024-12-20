@@ -20,12 +20,10 @@ const (
 )
 
 func (f *vfsFile) Lock(lock LockLevel) error {
-	// Argument check. SQLite never explicitly requests a pending lock.
-	if lock != LOCK_SHARED && lock != LOCK_RESERVED && lock != LOCK_EXCLUSIVE {
-		panic(util.AssertErr())
-	}
-
 	switch {
+	case lock != LOCK_SHARED && lock != LOCK_RESERVED && lock != LOCK_EXCLUSIVE:
+		// Argument check. SQLite never explicitly requests a pending lock.
+		panic(util.AssertErr())
 	case f.lock < LOCK_NONE || f.lock > LOCK_EXCLUSIVE:
 		// Connection state check.
 		panic(util.AssertErr())
@@ -87,13 +85,12 @@ func (f *vfsFile) Lock(lock LockLevel) error {
 }
 
 func (f *vfsFile) Unlock(lock LockLevel) error {
-	// Argument check.
-	if lock != LOCK_NONE && lock != LOCK_SHARED {
+	switch {
+	case lock != LOCK_NONE && lock != LOCK_SHARED:
+		// Argument check.
 		panic(util.AssertErr())
-	}
-
-	// Connection state check.
-	if f.lock < LOCK_NONE || f.lock > LOCK_EXCLUSIVE {
+	case f.lock < LOCK_NONE || f.lock > LOCK_EXCLUSIVE:
+		// Connection state check.
 		panic(util.AssertErr())
 	}
 
