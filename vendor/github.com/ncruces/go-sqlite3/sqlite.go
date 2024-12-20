@@ -265,10 +265,11 @@ func (a *arena) mark() (reset func()) {
 	ptrs := len(a.ptrs)
 	next := a.next
 	return func() {
-		for _, ptr := range a.ptrs[ptrs:] {
+		rest := a.ptrs[ptrs:]
+		for _, ptr := range a.ptrs[:ptrs] {
 			a.sqlt.free(ptr)
 		}
-		a.ptrs = a.ptrs[:ptrs]
+		a.ptrs = rest
 		a.next = next
 	}
 }
