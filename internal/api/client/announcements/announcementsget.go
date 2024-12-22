@@ -30,6 +30,13 @@ import (
 //
 // Get an array of currently active announcements.
 //
+//	---
+//	tags:
+//	- announcements
+//
+//	produces:
+//	- application/json
+//
 //	security:
 //	- OAuth2 Bearer:
 //		- read:announcements
