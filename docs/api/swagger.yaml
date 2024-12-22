@@ -6757,8 +6757,8 @@ paths:
                     schema:
                         items:
                             type: object
-                        type: array
                         maxItems: 0
+                        type: array
                 "400":
                     description: bad request
                 "401":

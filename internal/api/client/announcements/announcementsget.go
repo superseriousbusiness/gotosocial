@@ -30,6 +30,8 @@ import (
 //
 // Get an array of currently active announcements.
 //
+// THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.
+//
 //	---
 //	tags:
 //	- announcements
