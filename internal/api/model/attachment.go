@@ -61,7 +61,7 @@ type AttachmentAttributesRequest struct {
 
 	// The ID of the attachment.
 	// example: 01FC31DZT1AYWDZ8XTCRWRBYRK
-	ID string `json:"id"`
+	ID string `form:"id" json:"id"`
 
 	// Description of the media file.
 	// This will be used as alt-text for users of screenreaders etc.

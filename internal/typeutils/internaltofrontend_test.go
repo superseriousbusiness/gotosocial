@@ -3746,6 +3746,9 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
 	status, err := suite.state.DB.GetStatusByID(ctx, statusID)
 	suite.NoError(err)
 
+	err = suite.state.DB.PopulateStatusEdits(ctx, status)
+	suite.NoError(err)
+
 	apiEdits, err := suite.typeconverter.StatusToAPIEdits(ctx, status)
 	suite.NoError(err)
 

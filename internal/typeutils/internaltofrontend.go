@@ -1457,7 +1457,7 @@ func (c *Converter) baseStatusToFrontend(
 	return apiStatus, nil
 }
 
-// StatusToAPIEdits ...
+// StatusToAPIEdits converts a status and its historical edits (if any) to a slice of API model status edits.
 func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Status) ([]*apimodel.StatusEdit, error) {
 	var media map[string]*gtsmodel.MediaAttachment
 
