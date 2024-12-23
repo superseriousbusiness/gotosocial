@@ -553,28 +553,3 @@ func (p *Processor) deletePoll(ctx context.Context, poll *gtsmodel.Poll) error {
 
 	return nil
 }
-
-func deduplicateEmojis(emojis []*gtsmodel.Emoji) ([]*gtsmodel.Emoji, []string) {
-	set := make(map[string]struct{}, len(emojis))
-
-	// Store returning emojis, and their IDs.
-	ret := make([]*gtsmodel.Emoji, 0, len(emojis))
-	ids := make([]string, 0, len(emojis))
-	for _, emoji := range emojis {
-		emoji := emoji // rescope
-
-		// Check if already in ID set.
-		if _, ok := set[emoji.ID]; ok {
-			continue
-		}
-
-		// Append emoji to slices.
-		ret = append(ret, emoji)
-		ids = append(ids, emoji.ID)
-
-		// Add emoji ID to set.
-		set[emoji.ID] = struct{}{}
-	}
-
-	return ret, ids
-}
