@@ -31,7 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// GetOwnStatus ...
+// GetOwnStatus fetches the given status with ID,
+// and ensures that it belongs to given requester.
 func (p *Processor) GetOwnStatus(
 	ctx context.Context,
 	requester *gtsmodel.Account,
@@ -44,14 +45,6 @@ func (p *Processor) GetOwnStatus(
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("error getting from db: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	if target == nil {
-		const text = "target status not found"
-		return nil, gtserror.NewErrorNotFound(
-			errors.New(text),
-			text,
-		)
 	}
 
 	switch {

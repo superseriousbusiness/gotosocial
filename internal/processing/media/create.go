@@ -51,6 +51,18 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, errWithCode
 	}
 
+	// If description provided,
+	// process and validate it.
+	//
+	// This may not yet be set as it
+	// is often set on status post.
+	if form.Description != "" {
+		form.Description, errWithCode = processDescription(form.Description)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
+	}
+
 	// Open multipart file reader.
 	mpfile, err := form.File.Open()
 	if err != nil {
@@ -58,7 +70,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Wrap the multipart file reader to ensure is limited to max.
+	// Wrap multipart file reader to ensure is limited to max size.
 	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxszInt64)
 
 	// Create local media and write to instance storage.

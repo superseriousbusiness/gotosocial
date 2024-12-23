@@ -1,3 +1,20 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package status
 
 import (
@@ -17,6 +34,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
+// validateStatusContent will validate the common
+// content fields across status write endpoints against
+// current server configuration (e.g. max char counts).
 func validateStatusContent(
 	status string,
 	spoiler string,
@@ -69,6 +89,10 @@ func validateStatusContent(
 	return nil
 }
 
+// statusContent encompasses the set of common processed
+// status content fields from status write operations for
+// an easily returnable type, without needing to allocate
+// an entire gtsmodel.Status{} model.
 type statusContent struct {
 	Content        string
 	ContentWarning string
@@ -241,6 +265,10 @@ func (p *Processor) processMedia(
 		return nil, nil
 	}
 
+	// Get configured min/max supported descr chars.
+	minChars := config.GetMediaDescriptionMinChars()
+	maxChars := config.GetMediaDescriptionMaxChars()
+
 	// Pre-allocate slice of media attachments of expected length.
 	attachments := make([]*gtsmodel.MediaAttachment, len(mediaIDs))
 	for i, id := range mediaIDs {
@@ -263,6 +291,19 @@ func (p *Processor) processMedia(
 		if (media.StatusID != "" && media.StatusID != statusID) ||
 			(media.ScheduledStatusID != "" && media.ScheduledStatusID != statusID) {
 			text := fmt.Sprintf("media already attached to status: %s", id)
+			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+
+		// Check media description chars within range,
+		// this needs to be done here as lots of clients
+		// only update media description on status post.
+		switch chars := len([]rune(media.Description)); {
+		case chars < minChars:
+			text := fmt.Sprintf("media description less than min chars (%d)", minChars)
+			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+
+		case chars > maxChars:
+			text := fmt.Sprintf("media description exceeds max chars (%d)", maxChars)
 			return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
 		}
 
