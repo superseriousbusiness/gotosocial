@@ -54,7 +54,7 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	// Ensure account populated; we'll need settings.
+	// Ensure account populated; we'll need their settings.
 	if err := p.state.DB.PopulateAccount(ctx, requester); err != nil {
 		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
 	}

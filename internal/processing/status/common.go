@@ -198,6 +198,11 @@ func (p *Processor) processContent(
 		poll.Options = status.PollOptions
 	}
 
+	// We may have received multiple copies of the same emoji, deduplicate these first.
+	status.Emojis = xslices.DeduplicateFunc(status.Emojis, func(e *gtsmodel.Emoji) string {
+		return e.ID
+	})
+
 	// Gather up the IDs of mentions from parsed content.
 	status.MentionIDs = xslices.Gather(nil, status.Mentions,
 		func(m *gtsmodel.Mention) string {
