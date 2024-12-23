@@ -23,12 +23,15 @@ import "mime/multipart"
 //
 // swagger: ignore
 type AttachmentRequest struct {
+
 	// Media file.
 	File *multipart.FileHeader `form:"file" binding:"required"`
+
 	// Description of the media file. Optional.
 	// This will be used as alt-text for users of screenreaders etc.
 	// example: This is an image of some kittens, they are very cute and fluffy.
 	Description string `form:"description"`
+
 	// Focus of the media file. Optional.
 	// If present, it should be in the form of two comma-separated floats between -1 and 1.
 	// example: -0.5,0.565
@@ -39,14 +42,36 @@ type AttachmentRequest struct {
 //
 // swagger:ignore
 type AttachmentUpdateRequest struct {
+
 	// Description of the media file.
 	// This will be used as alt-text for users of screenreaders etc.
 	// allowEmptyValue: true
 	Description *string `form:"description" json:"description" xml:"description"`
+
 	// Focus of the media file.
 	// If present, it should be in the form of two comma-separated floats between -1 and 1.
 	// allowEmptyValue: true
 	Focus *string `form:"focus" json:"focus" xml:"focus"`
+}
+
+// AttachmentAttributesRequest models an edit request for attachment attributes.
+//
+// swagger:ignore
+type AttachmentAttributesRequest struct {
+
+	// The ID of the attachment.
+	// example: 01FC31DZT1AYWDZ8XTCRWRBYRK
+	ID string `form:"id" json:"id"`
+
+	// Description of the media file.
+	// This will be used as alt-text for users of screenreaders etc.
+	// allowEmptyValue: true
+	Description string `form:"description" json:"description"`
+
+	// Focus of the media file.
+	// If present, it should be in the form of two comma-separated floats between -1 and 1.
+	// allowEmptyValue: true
+	Focus string `form:"focus" json:"focus"`
 }
 
 // Attachment models a media attachment.

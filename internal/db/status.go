@@ -41,7 +41,11 @@ type Status interface {
 	GetStatusBoost(ctx context.Context, boostOfID string, byAccountID string) (*gtsmodel.Status, error)
 
 	// PopulateStatus ensures that all sub-models of a status are populated (e.g. mentions, attachments, etc).
+	// Except for edits, to fetch these please call PopulateStatusEdits() .
 	PopulateStatus(ctx context.Context, status *gtsmodel.Status) error
+
+	// PopulateStatusEdits ensures that status' edits are fully popualted.
+	PopulateStatusEdits(ctx context.Context, status *gtsmodel.Status) error
 
 	// PutStatus stores one status in the database.
 	PutStatus(ctx context.Context, status *gtsmodel.Status) error

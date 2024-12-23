@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -42,7 +43,7 @@ func (p *Processor) RulesGet(
 	apiRules := make([]*apimodel.AdminInstanceRule, len(rules))
 
 	for i := range rules {
-		apiRules[i] = p.converter.InstanceRuleToAdminAPIRule(&rules[i])
+		apiRules[i] = typeutils.InstanceRuleToAdminAPIRule(&rules[i])
 	}
 
 	return apiRules, nil
@@ -58,7 +59,7 @@ func (p *Processor) RuleGet(ctx context.Context, id string) (*apimodel.AdminInst
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.converter.InstanceRuleToAdminAPIRule(rule), nil
+	return typeutils.InstanceRuleToAdminAPIRule(rule), nil
 }
 
 // RuleCreate adds a new rule to the instance.
@@ -77,7 +78,7 @@ func (p *Processor) RuleCreate(ctx context.Context, form *apimodel.InstanceRuleC
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.converter.InstanceRuleToAdminAPIRule(rule), nil
+	return typeutils.InstanceRuleToAdminAPIRule(rule), nil
 }
 
 // RuleUpdate updates text for an existing rule.
@@ -99,7 +100,7 @@ func (p *Processor) RuleUpdate(ctx context.Context, id string, form *apimodel.In
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.converter.InstanceRuleToAdminAPIRule(updatedRule), nil
+	return typeutils.InstanceRuleToAdminAPIRule(updatedRule), nil
 }
 
 // RuleDelete deletes an existing rule.
@@ -120,5 +121,5 @@ func (p *Processor) RuleDelete(ctx context.Context, id string) (*apimodel.AdminI
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.converter.InstanceRuleToAdminAPIRule(deletedRule), nil
+	return typeutils.InstanceRuleToAdminAPIRule(deletedRule), nil
 }
