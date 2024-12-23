@@ -60,6 +60,11 @@ func (p *Processor) Edit(
 		)
 	}
 
+	// Ensure account populated; we'll need their settings.
+	if err := p.state.DB.PopulateAccount(ctx, requester); err != nil {
+		log.Errorf(ctx, "error(s) populating account, will continue: %s", err)
+	}
+
 	// We need the status populated including all historical edits.
 	if err := p.state.DB.PopulateStatusEdits(ctx, status); err != nil {
 		err := gtserror.Newf("error getting status edits from db: %w", err)
