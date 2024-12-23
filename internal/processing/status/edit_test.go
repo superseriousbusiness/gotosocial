@@ -47,6 +47,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
+	// Prepare a simple status edit.
 	form := &apimodel.StatusEditRequest{
 		Status:          "<p>this is some edited status text!</p>",
 		SpoilerText:     "shhhhh",
@@ -57,19 +58,23 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 		Poll:            nil,
 	}
 
+	// Pass the prepared form to the status processor to perform the edit.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
 	suite.NoError(errWithCode)
 
+	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
 	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
 
+	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
 
+	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
@@ -77,9 +82,11 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
 	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
 
+	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
 	suite.NoError(err)
 
+	// Check previous status edit matches original status content.
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
@@ -102,6 +109,7 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
+	// Prepare edit adding a status poll.
 	form := &apimodel.StatusEditRequest{
 		Status:          "<p>this is some edited status text!</p>",
 		SpoilerText:     "",
@@ -117,10 +125,12 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 		},
 	}
 
+	// Pass the prepared form to the status processor to perform the edit.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
 	suite.NoError(errWithCode)
 
+	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
@@ -131,9 +141,11 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 		return opt.Title
 	}))
 
+	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
 
+	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
@@ -143,12 +155,15 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	suite.NotNil(latestStatus.Poll)
 	suite.Equal(form.Poll.Options, latestStatus.Poll.Options)
 
+	// Ensure that a poll expiry handler was scheduled on status edit.
 	expiryWorker := suite.state.Workers.Scheduler.Cancel(latestStatus.PollID)
 	suite.Equal(form.Poll.ExpiresIn > 0, expiryWorker)
 
+	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
 	suite.NoError(err)
 
+	// Check previous status edit matches original status content.
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
@@ -172,6 +187,7 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
+	// Prepare edit adding an endless poll.
 	form := &apimodel.StatusEditRequest{
 		Status:          "<p>this is some edited status text!</p>",
 		SpoilerText:     "",
@@ -187,10 +203,12 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 		},
 	}
 
+	// Pass the prepared form to the status processor to perform the edit.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
 	suite.NoError(errWithCode)
 
+	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
@@ -201,9 +219,11 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 		return opt.Title
 	}))
 
+	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
 
+	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
@@ -213,12 +233,15 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	suite.NotNil(latestStatus.Poll)
 	suite.Equal(form.Poll.Options, latestStatus.Poll.Options)
 
+	// Ensure that a poll expiry handler was *not* scheduled on status edit.
 	expiryWorker := suite.state.Workers.Scheduler.Cancel(latestStatus.PollID)
 	suite.Equal(form.Poll.ExpiresIn > 0, expiryWorker)
 
+	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
 	suite.NoError(err)
 
+	// Check previous status edit matches original status content.
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
@@ -242,8 +265,7 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 	status := suite.testStatuses["local_account_1_status_4"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
-	// Prepare requesting form updating the
-	// attachment details of this media.
+	// Prepare edit changing media description.
 	form := &apimodel.StatusEditRequest{
 		Status:      "<p>this is some edited status text!</p>",
 		SpoilerText: "this status is now missing media",
@@ -256,9 +278,11 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 		},
 	}
 
+	// Pass the prepared form to the status processor to perform the edit.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NoError(errWithCode)
 
+	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
@@ -276,9 +300,11 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 		}),
 	)
 
+	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
 
+	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
@@ -295,14 +321,17 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 		}),
 	)
 
+	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
 	suite.NoError(err)
 
+	// Further populate edits to get attachments.
 	for _, edit := range latestStatus.Edits {
 		err = suite.state.DB.PopulateStatusEdit(ctx, edit)
 		suite.NoError(err)
 	}
 
+	// Check previous status edit matches original status content.
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
@@ -341,8 +370,7 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 	status := suite.testStatuses["local_account_1_status_9"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
-	// Prepare request form adding existing
-	// media attachments in the edit of status.
+	// Prepare edit addding status media.
 	form := &apimodel.StatusEditRequest{
 		Status:          "<p>this is some edited status text!</p>",
 		SpoilerText:     "this status now has media",
@@ -352,10 +380,12 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 		MediaAttributes: nil,
 	}
 
+	// Pass the prepared form to the status processor to perform the edit.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
 	suite.NoError(errWithCode)
 
+	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
@@ -365,9 +395,11 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 		return media.ID
 	}))
 
+	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
 
+	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
@@ -376,9 +408,11 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
 	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
 
+	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
 	suite.NoError(err)
 
+	// Check previous status edit matches original status content.
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
@@ -402,8 +436,7 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	status := suite.testStatuses["local_account_1_status_4"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
-	// Prepare request form unsetting this
-	// existing status' media attachments.
+	// Prepare edit removing status media.
 	form := &apimodel.StatusEditRequest{
 		Status:          "<p>this is some edited status text!</p>",
 		SpoilerText:     "this status is now missing media",
@@ -413,10 +446,12 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 		MediaAttributes: nil,
 	}
 
+	// Pass the prepared form to the status processor to perform the edit.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.NotNil(apiStatus)
 	suite.NoError(errWithCode)
 
+	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
@@ -426,9 +461,11 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 		return media.ID
 	}))
 
+	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
 
+	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
@@ -437,9 +474,11 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
 	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
 
+	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
 	suite.NoError(err)
 
+	// Check previous status edit matches original status content.
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
@@ -448,10 +487,6 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	suite.Equal(status.Language, previousEdit.Language)
 	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
 	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
-}
-
-func (suite *StatusEditTestSuite) TestEditRemovePoll() {
-	suite.T().Skip("TODO")
 }
 
 func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
@@ -471,6 +506,7 @@ func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
 	// should be all we need to trigger it.
 	form := &apimodel.StatusEditRequest{}
 
+	// Attempt to edit other remote account's status, this should return an error.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.Nil(apiStatus)
 	suite.Equal(http.StatusNotFound, errWithCode.Code())
@@ -495,6 +531,7 @@ func (suite *StatusEditTestSuite) TestEditOthersStatus2() {
 	// should be all we need to trigger it.
 	form := &apimodel.StatusEditRequest{}
 
+	// Attempt to edit other local account's status, this should return an error.
 	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
 	suite.Nil(apiStatus)
 	suite.Equal(http.StatusNotFound, errWithCode.Code())
