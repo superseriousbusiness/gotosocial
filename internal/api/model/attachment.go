@@ -54,7 +54,7 @@ type AttachmentUpdateRequest struct {
 	Focus *string `form:"focus" json:"focus" xml:"focus"`
 }
 
-// AttachmentAttributesRequest models an edit request for a attachment attributes.
+// AttachmentAttributesRequest models an edit request for attachment attributes.
 //
 // swagger:ignore
 type AttachmentAttributesRequest struct {

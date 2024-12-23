@@ -378,7 +378,7 @@ type StatusEditRequest struct {
 	// If provided, status becomes optional, and poll cannot be used.
 	MediaIDs []string `form:"media_ids[]" json:"media_ids"`
 
-	// ...
+	// Array of Attachment attributes to be updated in attached media.
 	MediaAttributes []AttachmentAttributesRequest `form:"media_attributes[]" json:"media_attributes"`
 
 	// Poll to include with this status.
