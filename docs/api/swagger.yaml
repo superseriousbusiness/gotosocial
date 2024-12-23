@@ -6745,6 +6745,34 @@ paths:
             summary: View instance rule with the given id.
             tags:
                 - admin
+    /api/v1/announcements:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: announcementsGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:announcements
+            summary: Get an array of currently active announcements.
+            tags:
+                - announcements
     /api/v1/apps:
         post:
             consumes:

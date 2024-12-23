@@ -23,6 +23,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/announcements"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/apps"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
@@ -66,6 +67,7 @@ type Client struct {
 
 	accounts            *accounts.Module            // api/v1/accounts, api/v1/profile
 	admin               *admin.Module               // api/v1/admin
+	announcements       *announcements.Module       // api/v1/announcements
 	apps                *apps.Module                // api/v1/apps
 	blocks              *blocks.Module              // api/v1/blocks
 	bookmarks           *bookmarks.Module           // api/v1/bookmarks
@@ -117,6 +119,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	h := apiGroup.Handle
 	c.accounts.Route(h)
 	c.admin.Route(h)
+	c.announcements.Route(h)
 	c.apps.Route(h)
 	c.blocks.Route(h)
 	c.bookmarks.Route(h)
@@ -156,6 +159,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 
 		accounts:            accounts.New(p),
 		admin:               admin.New(state, p),
+		announcements:       announcements.New(p),
 		apps:                apps.New(p),
 		blocks:              blocks.New(p),
 		bookmarks:           bookmarks.New(p),
