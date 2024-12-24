@@ -477,12 +477,6 @@ func (d *Dereferencer) enrichStatus(
 		)
 	}
 
-	// Ensure that status isn't trying to re-date itself.
-	if !latestStatus.CreatedAt.Equal(status.CreatedAt) {
-		err := gtserror.Newf("status %s 'published' changed", uri)
-		return nil, nil, gtserror.SetMalformed(err)
-	}
-
 	// Ensure the final parsed status URI or URL matches
 	// the input URI we fetched (or received) it as.
 	matches, err := util.URIMatches(uri,
@@ -510,6 +504,12 @@ func (d *Dereferencer) enrichStatus(
 		// Generate new status ID from the provided creation date.
 		latestStatus.ID = id.NewULIDFromTime(latestStatus.CreatedAt)
 	} else {
+
+		// Ensure that status isn't trying to re-date itself.
+		if !latestStatus.CreatedAt.Equal(status.CreatedAt) {
+			err := gtserror.Newf("status %s 'published' changed", uri)
+			return nil, nil, gtserror.SetMalformed(err)
+		}
 
 		// Reuse existing status ID.
 		latestStatus.ID = status.ID
