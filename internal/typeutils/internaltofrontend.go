@@ -1383,11 +1383,13 @@ func (c *Converter) baseStatusToFrontend(
 		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
-	// Nullable fields.
-	if !s.UpdatedAt.Equal(s.CreatedAt) {
+	// Only set edited_at if this is a non-boost-wrapper
+	// with an updated_at date different to creation date.
+	if !s.UpdatedAt.Equal(s.CreatedAt) && s.BoostOfID == "" {
 		timestamp := util.FormatISO8601(s.UpdatedAt)
 		apiStatus.EditedAt = util.Ptr(timestamp)
 	}
+
 	apiStatus.InReplyToID = util.PtrIf(s.InReplyToID)
 	apiStatus.InReplyToAccountID = util.PtrIf(s.InReplyToAccountID)
 	apiStatus.Language = util.PtrIf(s.Language)
