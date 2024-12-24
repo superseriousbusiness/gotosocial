@@ -1160,7 +1160,7 @@ func (d *Dereferencer) handleStatusEdit(
 	switch {
 	// We prefer to use provided 'upated_at', but ensure
 	// it fits chronologically with creation / last update.
-
+	//
 	// updated_at has jumped backward, safety check it.
 	case existing.UpdatedAt.Before(status.UpdatedAt):
 		cols = append(cols, "updated_at")
