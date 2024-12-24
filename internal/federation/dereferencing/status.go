@@ -477,6 +477,12 @@ func (d *Dereferencer) enrichStatus(
 		)
 	}
 
+	// Ensure that status isn't trying to re-date itself.
+	if !latestStatus.CreatedAt.Equal(status.CreatedAt) {
+		err := gtserror.Newf("status %s 'published' changed", uri)
+		return nil, nil, gtserror.SetMalformed(err)
+	}
+
 	// Ensure the final parsed status URI or URL matches
 	// the input URI we fetched (or received) it as.
 	matches, err := util.URIMatches(uri,
@@ -1157,25 +1163,6 @@ func (d *Dereferencer) handleStatusEdit(
 		edited = true
 	}
 
-	switch {
-	// We prefer to use provided 'upated_at', but ensure
-	// it fits chronologically with creation / last update.
-	//
-	// updated_at has jumped backward, safety check it.
-	case existing.UpdatedAt.Before(status.UpdatedAt):
-		cols = append(cols, "updated_at")
-
-		if existing.CreatedAt.After(status.UpdatedAt) {
-			// It's jumped behind creation date,
-			// at least match it to creation time.
-			status.UpdatedAt = existing.CreatedAt
-		}
-
-	// updated_at has jumped forward, this is fine.
-	case existing.UpdatedAt.After(status.UpdatedAt):
-		cols = append(cols, "updated_at")
-	}
-
 	if pollChanged {
 		// Attached poll was changed.
 		cols = append(cols, "poll_id")
@@ -1229,6 +1216,15 @@ func (d *Dereferencer) handleStatusEdit(
 	}
 
 	if edited {
+		// ensure that updated_at hasn't remained the same
+		// but an edit was received. manually intervene here.
+		if status.UpdatedAt.Equal(existing.UpdatedAt) ||
+			status.CreatedAt.Equal(status.UpdatedAt) {
+
+			// Simply use current fetching time.
+			status.UpdatedAt = status.FetchedAt
+		}
+
 		// Status has been editted since last
 		// we saw it, take snapshot of existing.
 		var edit gtsmodel.StatusEdit
@@ -1277,6 +1273,12 @@ func (d *Dereferencer) handleStatusEdit(
 
 		// Add edit to list of cols.
 		cols = append(cols, "edits")
+	}
+
+	if !existing.UpdatedAt.Equal(status.UpdatedAt) {
+		// Whether status edited or not,
+		// updated_at column has changed.
+		cols = append(cols, "updated_at")
 	}
 
 	return cols, nil

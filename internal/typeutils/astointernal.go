@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -357,15 +358,21 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		status.CreatedAt = pub
 	} else {
 		log.Warnf(ctx, "unusable published property on %s", uri)
+		status.CreatedAt = time.Now()
 	}
 
 	// status.Updated
 	//
-	// Extract updated time for status, defaults to Published.
-	if upd := ap.GetUpdated(statusable); !upd.IsZero() {
+	// Extract and validate update time for status. Defaults to published.
+	if upd := ap.GetUpdated(statusable); upd.After(status.CreatedAt) {
 		status.UpdatedAt = upd
-	} else {
+	} else if upd.IsZero() {
 		status.UpdatedAt = status.CreatedAt
+	} else {
+
+		// This is a malformed status that will likely break our systems.
+		err := gtserror.Newf("status %s 'updated' predates 'published'", uri)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	// status.AccountURI
