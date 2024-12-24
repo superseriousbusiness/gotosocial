@@ -297,17 +297,6 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
-	if !status.EditsPopulated() {
-		// Status edits are out-of-date with IDs, repopulate.
-		status.Edits, err = s.state.DB.GetStatusEditsByIDs(
-			gtscontext.SetBarebones(ctx),
-			status.EditIDs,
-		)
-		if err != nil {
-			errs.Appendf("error populating status edits: %w", err)
-		}
-	}
-
 	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
 		// Populate the status' expected CreatedWithApplication (not always set).
 		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
@@ -320,6 +309,23 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 	}
 
 	return errs.Combine()
+}
+
+func (s *statusDB) PopulateStatusEdits(ctx context.Context, status *gtsmodel.Status) error {
+	var err error
+
+	if !status.EditsPopulated() {
+		// Status edits are out-of-date with IDs, repopulate.
+		status.Edits, err = s.state.DB.GetStatusEditsByIDs(
+			gtscontext.SetBarebones(ctx),
+			status.EditIDs,
+		)
+		if err != nil {
+			return gtserror.Newf("error populating status edits: %w", err)
+		}
+	}
+
+	return nil
 }
 
 func (s *statusDB) PutStatus(ctx context.Context, status *gtsmodel.Status) error {

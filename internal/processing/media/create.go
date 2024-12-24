@@ -25,6 +25,7 @@ import (
 
 	"codeberg.org/gruf/go-iotools"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -45,10 +46,21 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	// Parse focus details from API form input.
-	focusX, focusY, err := parseFocus(form.Focus)
-	if err != nil {
-		text := fmt.Sprintf("could not parse focus value %s: %s", form.Focus, err)
-		return nil, gtserror.NewErrorBadRequest(errors.New(text), text)
+	focusX, focusY, errWithCode := apiutil.ParseFocus(form.Focus)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// If description provided,
+	// process and validate it.
+	//
+	// This may not yet be set as it
+	// is often set on status post.
+	if form.Description != "" {
+		form.Description, errWithCode = processDescription(form.Description)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
 	}
 
 	// Open multipart file reader.
@@ -58,7 +70,7 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Wrap the multipart file reader to ensure is limited to max.
+	// Wrap multipart file reader to ensure is limited to max size.
 	rc, _, _ := iotools.UpdateReadCloserLimit(mpfile, maxszInt64)
 
 	// Create local media and write to instance storage.

@@ -762,7 +762,7 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 		account,
 		apubAcc,
 
-		// Force refresh within 10s window.
+		// Force refresh within 5s window.
 		//
 		// Missing account updates could be
 		// detrimental to federation if they
@@ -917,8 +917,17 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		return gtserror.Newf("cannot cast %T -> *gtsmodel.Status", fMsg.GTSModel)
 	}
 
+	var freshness *dereferencing.FreshnessWindow
+
 	// Cast the updated ActivityPub statusable object .
 	apStatus, _ := fMsg.APObject.(ap.Statusable)
+
+	if apStatus != nil {
+		// If an AP object was provided, we
+		// allow very fast refreshes that likely
+		// indicate a status edit after post.
+		freshness = dereferencing.Freshest
+	}
 
 	// Fetch up-to-date attach status attachments, etc.
 	status, _, err := p.federate.RefreshStatus(
@@ -926,8 +935,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		fMsg.Receiving.Username,
 		existing,
 		apStatus,
-		// Force refresh within 5min window.
-		dereferencing.Fresh,
+		freshness,
 	)
 	if err != nil {
 		log.Errorf(ctx, "error refreshing status: %v", err)

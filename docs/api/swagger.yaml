@@ -7168,6 +7168,34 @@ paths:
             summary: View instance rule with the given id.
             tags:
                 - admin
+    /api/v1/announcements:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: announcementsGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:announcements
+            summary: Get an array of currently active announcements.
+            tags:
+                - announcements
     /api/v1/apps:
         post:
             consumes:
@@ -9943,6 +9971,112 @@ paths:
                 - OAuth2 Bearer:
                     - write:statuses
             summary: Create a new status using the given form field parameters.
+            tags:
+                - statuses
+        put:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+            operationId: statusEdit
+            parameters:
+                - description: |-
+                    Text content of the status.
+                    If media_ids is provided, this becomes optional.
+                    Attaching a poll is optional while status is provided.
+                  in: formData
+                  name: status
+                  type: string
+                  x-go-name: Status
+                - description: |-
+                    Array of Attachment ids to be attached as media.
+                    If provided, status becomes optional, and poll cannot be used.
+
+                    If the status is being submitted as a form, the key is 'media_ids[]',
+                    but if it's json or xml, the key is 'media_ids'.
+                  in: formData
+                  items:
+                    type: string
+                  name: media_ids
+                  type: array
+                  x-go-name: MediaIDs
+                - description: |-
+                    Array of possible poll answers.
+                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+                  in: formData
+                  items:
+                    type: string
+                  name: poll[options][]
+                  type: array
+                  x-go-name: PollOptions
+                - description: |-
+                    Duration the poll should be open, in seconds.
+                    If provided, media_ids cannot be used, and poll[options] must be provided.
+                  format: int64
+                  in: formData
+                  name: poll[expires_in]
+                  type: integer
+                  x-go-name: PollExpiresIn
+                - default: false
+                  description: Allow multiple choices on this poll.
+                  in: formData
+                  name: poll[multiple]
+                  type: boolean
+                  x-go-name: PollMultiple
+                - default: true
+                  description: Hide vote counts until the poll ends.
+                  in: formData
+                  name: poll[hide_totals]
+                  type: boolean
+                  x-go-name: PollHideTotals
+                - description: Status and attached media should be marked as sensitive.
+                  in: formData
+                  name: sensitive
+                  type: boolean
+                  x-go-name: Sensitive
+                - description: |-
+                    Text to be shown as a warning or subject before the actual content.
+                    Statuses are generally collapsed behind this field.
+                  in: formData
+                  name: spoiler_text
+                  type: string
+                  x-go-name: SpoilerText
+                - description: ISO 639 language code for this status.
+                  in: formData
+                  name: language
+                  type: string
+                  x-go-name: Language
+                - description: Content type to use when parsing this status.
+                  enum:
+                    - text/plain
+                    - text/markdown
+                  in: formData
+                  name: content_type
+                  type: string
+                  x-go-name: ContentType
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The latest status revision.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Edit an existing status using the given form field parameters.
             tags:
                 - statuses
     /api/v1/statuses/{id}:

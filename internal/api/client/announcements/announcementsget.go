@@ -15,10 +15,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package statuses
+package announcements
 
 import (
-	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -27,51 +26,40 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// StatusDELETEHandler swagger:operation DELETE /api/v1/statuses/{id} statusDelete
+// AnnouncementsGETHandler swagger:operation GET /api/v1/announcements announcementsGet
 //
-// Delete status with the given ID. The status must belong to you.
+// Get an array of currently active announcements.
 //
-// The deleted status will be returned in the response. The `text` field will contain the original text of the status as it was submitted.
-// This is useful when doing a 'delete and redraft' type operation.
+// THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.
 //
 //	---
 //	tags:
-//	- statuses
+//	- announcements
 //
 //	produces:
 //	- application/json
 //
-//	parameters:
-//	-
-//		name: id
-//		type: string
-//		description: Target status ID.
-//		in: path
-//		required: true
-//
 //	security:
 //	- OAuth2 Bearer:
-//		- write:statuses
+//		- read:announcements
 //
 //	responses:
 //		'200':
-//			description: "The status that was just deleted."
 //			schema:
-//				"$ref": "#/definitions/status"
+//				type: array
+//				items:
+//					type: object
+//				maxItems: 0
 //		'400':
 //			description: bad request
 //		'401':
 //			description: unauthorized
-//		'403':
-//			description: forbidden
-//		'404':
-//			description: not found
 //		'406':
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-func (m *Module) StatusDELETEHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+func (m *Module) AnnouncementsGETHandler(c *gin.Context) {
+	_, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
@@ -82,18 +70,5 @@ func (m *Module) StatusDELETEHandler(c *gin.Context) {
 		return
 	}
 
-	targetStatusID := c.Param(IDKey)
-	if targetStatusID == "" {
-		err := errors.New("no status id specified")
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
-	apiStatus, errWithCode := m.processor.Status().Delete(c.Request.Context(), authed.Account, targetStatusID)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	apiutil.JSON(c, http.StatusOK, apiStatus)
+	apiutil.JSON(c, http.StatusOK, apiutil.EmptyJSONArray)
 }

@@ -24,7 +24,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"github.com/go-playground/form/v4"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -32,29 +31,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// StatusCreatePOSTHandler swagger:operation POST /api/v1/statuses statusCreate
+// StatusEditPUTHandler swagger:operation PUT /api/v1/statuses statusEdit
 //
-// Create a new status using the given form field parameters.
+// Edit an existing status using the given form field parameters.
 //
 // The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
-//
-// The 'interaction_policy' field can be used to set an interaction policy for this status.
-//
-// If submitting using form data, use the following pattern to set an interaction policy:
-//
-// `interaction_policy[INTERACTION_TYPE][CONDITION][INDEX]=Value`
-//
-// For example: `interaction_policy[can_reply][always][0]=author`
-//
-// Using `curl` this might look something like:
-//
-// `curl -F 'interaction_policy[can_reply][always][0]=author' -F 'interaction_policy[can_reply][always][1]=followers' [... other form fields ...]`
-//
-// The JSON equivalent would be:
-//
-// `curl -H 'Content-Type: application/json' -d '{"interaction_policy":{"can_reply":{"always":["author","followers"]}} [... other json fields ...]}'`
-//
-// The server will perform some normalization on the submitted policy so that you can't submit something totally invalid.
 //
 //	---
 //	tags:
@@ -121,12 +102,6 @@ import (
 //		default: true
 //		in: formData
 //	-
-//		name: in_reply_to_id
-//		x-go-name: InReplyToID
-//		description: ID of the status being replied to, if status is a reply.
-//		type: string
-//		in: formData
-//	-
 //		name: sensitive
 //		x-go-name: Sensitive
 //		description: Status and attached media should be marked as sensitive.
@@ -138,47 +113,6 @@ import (
 //		description: |-
 //			Text to be shown as a warning or subject before the actual content.
 //			Statuses are generally collapsed behind this field.
-//		type: string
-//		in: formData
-//	-
-//		name: visibility
-//		x-go-name: Visibility
-//		description: Visibility of the posted status.
-//		type: string
-//		enum:
-//			- public
-//			- unlisted
-//			- private
-//			- mutuals_only
-//			- direct
-//		in: formData
-//	-
-//		name: local_only
-//		x-go-name: LocalOnly
-//		description: >-
-//			If set to true, this status will be "local only" and will NOT be federated beyond the local timeline(s).
-//			If set to false (default), this status will be federated to your followers beyond the local timeline(s).
-//		type: boolean
-//		in: formData
-//		default: false
-//	-
-//		name: federated
-//		x-go-name: Federated
-//		description: >-
-//			***DEPRECATED***. Included for back compat only. Only used if set and local_only is not yet.
-//			If set to true, this status will be federated beyond the local timeline(s).
-//			If set to false, this status will NOT be federated beyond the local timeline(s).
-//		in: formData
-//		type: boolean
-//	-
-//		name: scheduled_at
-//		x-go-name: ScheduledAt
-//		description: |-
-//			ISO 8601 Datetime at which to schedule a status.
-//			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-//			Must be at least 5 minutes in the future.
-//
-//			This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
 //		type: string
 //		in: formData
 //	-
@@ -196,36 +130,6 @@ import (
 //			- text/plain
 //			- text/markdown
 //		in: formData
-//	-
-//		name: interaction_policy[can_favourite][always][0]
-//		in: formData
-//		description: Nth entry for interaction_policy.can_favourite.always.
-//		type: string
-//	-
-//		name: interaction_policy[can_favourite][with_approval][0]
-//		in: formData
-//		description: Nth entry for interaction_policy.can_favourite.with_approval.
-//		type: string
-//	-
-//		name: interaction_policy[can_reply][always][0]
-//		in: formData
-//		description: Nth entry for interaction_policy.can_reply.always.
-//		type: string
-//	-
-//		name: interaction_policy[can_reply][with_approval][0]
-//		in: formData
-//		description: Nth entry for interaction_policy.can_reply.with_approval.
-//		type: string
-//	-
-//		name: interaction_policy[can_reblog][always][0]
-//		in: formData
-//		description: Nth entry for interaction_policy.can_reblog.always.
-//		type: string
-//	-
-//		name: interaction_policy[can_reblog][with_approval][0]
-//		in: formData
-//		description: Nth entry for interaction_policy.can_reblog.with_approval.
-//		type: string
 //
 //	produces:
 //	- application/json
@@ -236,7 +140,7 @@ import (
 //
 //	responses:
 //		'200':
-//			description: "The newly created status."
+//			description: "The latest status revision."
 //			schema:
 //				"$ref": "#/definitions/status"
 //		'400':
@@ -251,9 +155,7 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
-//		'501':
-//			description: scheduled_at was set, but this feature is not yet implemented
-func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
+func (m *Module) StatusEditPUTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -270,25 +172,16 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form, errWithCode := parseStatusCreateForm(c)
+	form, errWithCode := parseStatusEditForm(c)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	// DO NOT COMMIT THIS UNCOMMENTED, IT WILL CAUSE MASS CHAOS.
-	// this is being left in as an ode to kim's shitposting.
-	//
-	// user := authed.Account.DisplayName
-	// if user == "" {
-	// 	user = authed.Account.Username
-	// }
-	// form.Status += "\n\nsent from " + user + "'s iphone\n"
-
-	apiStatus, errWithCode := m.processor.Status().Create(
+	apiStatus, errWithCode := m.processor.Status().Edit(
 		c.Request.Context(),
 		authed.Account,
-		authed.Application,
+		c.Param(IDKey),
 		form,
 	)
 	if errWithCode != nil {
@@ -299,30 +192,8 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	apiutil.JSON(c, http.StatusOK, apiStatus)
 }
 
-// intPolicyFormBinding satisfies gin's binding.Binding interface.
-// Should only be used specifically for multipart/form-data MIME type.
-type intPolicyFormBinding struct{}
-
-func (i intPolicyFormBinding) Name() string {
-	return "InteractionPolicy"
-}
-
-func (intPolicyFormBinding) Bind(req *http.Request, obj any) error {
-	if err := req.ParseForm(); err != nil {
-		return err
-	}
-
-	// Change default namespace prefix and suffix to
-	// allow correct parsing of the field attributes.
-	decoder := form.NewDecoder()
-	decoder.SetNamespacePrefix("[")
-	decoder.SetNamespaceSuffix("]")
-
-	return decoder.Decode(obj, req.Form)
-}
-
-func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtserror.WithCode) {
-	form := new(apimodel.StatusCreateRequest)
+func parseStatusEditForm(c *gin.Context) (*apimodel.StatusEditRequest, gtserror.WithCode) {
+	form := new(apimodel.StatusEditRequest)
 
 	switch ct := c.ContentType(); ct {
 	case binding.MIMEJSON:
@@ -343,17 +214,6 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtser
 			)
 		}
 
-		// Now do custom binding.
-		intReqForm := new(apimodel.StatusInteractionPolicyForm)
-		if err := c.ShouldBindWith(intReqForm, intPolicyFormBinding{}); err != nil {
-			return nil, gtserror.NewErrorBadRequest(
-				err,
-				err.Error(),
-			)
-		}
-
-		form.InteractionPolicy = intReqForm.InteractionPolicy
-
 	case binding.MIMEMultipartPOSTForm:
 		// Bind with default form binding first.
 		if err := c.ShouldBindWith(form, binding.FormMultipart); err != nil {
@@ -363,33 +223,10 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtser
 			)
 		}
 
-		// Now do custom binding.
-		intReqForm := new(apimodel.StatusInteractionPolicyForm)
-		if err := c.ShouldBindWith(intReqForm, intPolicyFormBinding{}); err != nil {
-			return nil, gtserror.NewErrorBadRequest(
-				err,
-				err.Error(),
-			)
-		}
-
-		form.InteractionPolicy = intReqForm.InteractionPolicy
-
 	default:
 		text := fmt.Sprintf("content-type %s not supported for this endpoint; supported content-types are %s, %s, %s",
 			ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm)
 		return nil, gtserror.NewErrorNotAcceptable(errors.New(text), text)
-	}
-
-	// Check not scheduled status.
-	if form.ScheduledAt != "" {
-		const text = "scheduled_at is not yet implemented"
-		return nil, gtserror.NewErrorNotImplemented(errors.New(text), text)
-	}
-
-	// Check if the deprecated "federated" field was
-	// set in lieu of "local_only", and use it if so.
-	if form.LocalOnly == nil && form.Federated != nil { // nolint:staticcheck
-		form.LocalOnly = util.Ptr(!*form.Federated) // nolint:staticcheck
 	}
 
 	// Normalize poll expiry time if a poll was given.
@@ -408,4 +245,5 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtser
 	}
 
 	return form, nil
+
 }

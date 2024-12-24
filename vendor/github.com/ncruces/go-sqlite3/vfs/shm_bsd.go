@@ -22,7 +22,7 @@ type vfsShmParent struct {
 
 	refs int // +checklocks:vfsShmListMtx
 
-	lock [_SHM_NLOCK]int16 // +checklocks:Mutex
+	lock [_SHM_NLOCK]int8 // +checklocks:Mutex
 	sync.Mutex
 }
 
@@ -184,10 +184,22 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 		return rc
 	}
 
-	// Obtain/release the appropriate file lock.
+	// Obtain/release the appropriate file locks.
 	switch {
 	case flags&_SHM_UNLOCK != 0:
-		return osUnlock(s.File, _SHM_BASE+int64(offset), int64(n))
+		begin, end := offset, offset+n
+		for i := begin; i < end; i++ {
+			if s.vfsShmParent.lock[i] != 0 {
+				if i > begin {
+					rc |= osUnlock(s.File, _SHM_BASE+int64(begin), int64(i-begin))
+				}
+				begin = i + 1
+			}
+		}
+		if end > begin {
+			rc |= osUnlock(s.File, _SHM_BASE+int64(begin), int64(end-begin))
+		}
+		return rc
 	case flags&_SHM_SHARED != 0:
 		rc = osReadLock(s.File, _SHM_BASE+int64(offset), int64(n))
 	case flags&_SHM_EXCLUSIVE != 0:
@@ -196,7 +208,7 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 		panic(util.AssertErr())
 	}
 
-	// Release the local lock.
+	// Release the local lock we had acquired.
 	if rc != _OK {
 		s.shmMemLock(offset, n, flags^(_SHM_UNLOCK|_SHM_LOCK))
 	}

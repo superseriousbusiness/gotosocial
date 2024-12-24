@@ -110,7 +110,12 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 
 func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 	// Argument check.
-	if n <= 0 || offset < 0 || offset+n > _SHM_NLOCK {
+	switch {
+	case n <= 0:
+		panic(util.AssertErr())
+	case offset < 0 || offset+n > _SHM_NLOCK:
+		panic(util.AssertErr())
+	case n != 1 && flags&_SHM_EXCLUSIVE == 0:
 		panic(util.AssertErr())
 	}
 	switch flags {
@@ -121,9 +126,6 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 		_SHM_UNLOCK | _SHM_EXCLUSIVE:
 		//
 	default:
-		panic(util.AssertErr())
-	}
-	if n != 1 && flags&_SHM_EXCLUSIVE == 0 {
 		panic(util.AssertErr())
 	}
 
