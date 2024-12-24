@@ -364,7 +364,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// status.Updated
 	//
 	// Extract and validate update time for status. Defaults to published.
-	if upd := ap.GetUpdated(statusable); upd.After(status.CreatedAt) {
+	if upd := ap.GetUpdated(statusable); !upd.Before(status.CreatedAt) {
 		status.UpdatedAt = upd
 	} else if upd.IsZero() {
 		status.UpdatedAt = status.CreatedAt
