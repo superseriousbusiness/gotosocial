@@ -49,19 +49,44 @@ type WebPushSubscription struct {
 	// P256dh is a Base64-encoded Diffie-Hellman public key on the P-256 elliptic curve.
 	P256dh string `bun:",nullzero,notnull"`
 
-	// NotifyFollow and friends control which notifications are delivered to a given subscription.
-	// Corresponds to NotificationType and model.PushSubscriptionAlerts.
-	NotifyFollow           *bool `bun:",nullzero,notnull,default:false"`
-	NotifyFollowRequest    *bool `bun:",nullzero,notnull,default:false"`
-	NotifyFavourite        *bool `bun:",nullzero,notnull,default:false"`
-	NotifyMention          *bool `bun:",nullzero,notnull,default:false"`
-	NotifyReblog           *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPoll             *bool `bun:",nullzero,notnull,default:false"`
-	NotifyStatus           *bool `bun:",nullzero,notnull,default:false"`
-	NotifyUpdate           *bool `bun:",nullzero,notnull,default:false"`
-	NotifyAdminSignup      *bool `bun:",nullzero,notnull,default:false"`
-	NotifyAdminReport      *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPendingFavourite *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPendingReply     *bool `bun:",nullzero,notnull,default:false"`
-	NotifyPendingReblog    *bool `bun:",nullzero,notnull,default:false"`
+	// NotificationFlags controls which notifications are delivered to a given subscription.
+	// Corresponds to model.PushSubscriptionAlerts.
+	NotificationFlags WebPushSubscriptionNotificationFlags `bun:",notnull"`
+}
+
+// WebPushSubscriptionNotificationFlags is a bitfield representation of a set of NotificationType.
+type WebPushSubscriptionNotificationFlags int64
+
+// WebPushSubscriptionNotificationFlagsFromSlice packs a slice of NotificationType into a WebPushSubscriptionNotificationFlags.
+func WebPushSubscriptionNotificationFlagsFromSlice(notificationTypes []NotificationType) WebPushSubscriptionNotificationFlags {
+	var n WebPushSubscriptionNotificationFlags
+	for _, notificationType := range notificationTypes {
+		n.Set(notificationType, true)
+	}
+	return n
+}
+
+// ToSlice unpacks a WebPushSubscriptionNotificationFlags into a slice of NotificationType.
+func (n *WebPushSubscriptionNotificationFlags) ToSlice() []NotificationType {
+	notificationTypes := make([]NotificationType, 0, NotificationTypeNumValues)
+	for notificationType := NotificationUnknown; notificationType < NotificationTypeNumValues; notificationType++ {
+		if n.Get(notificationType) {
+			notificationTypes = append(notificationTypes, notificationType)
+		}
+	}
+	return notificationTypes
+}
+
+// Get tests to see if a given NotificationType is included in this set of flags.
+func (n *WebPushSubscriptionNotificationFlags) Get(notificationType NotificationType) bool {
+	return *n&(1<<notificationType) != 0
+}
+
+// Set adds or removes a given NotificationType to or from this set of flags.
+func (n *WebPushSubscriptionNotificationFlags) Set(notificationType NotificationType, value bool) {
+	if value {
+		*n |= 1 << notificationType
+	} else {
+		*n &= ^(1 << notificationType)
+	}
 }

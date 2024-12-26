@@ -48,26 +48,15 @@ func (p *Processor) CreateOrReplace(
 
 	// Insert a new one.
 	subscription := &gtsmodel.WebPushSubscription{
-		ID:                     id.NewULID(),
-		AccountID:              accountID,
-		TokenID:                tokenID,
-		Endpoint:               request.Subscription.Endpoint,
-		Auth:                   request.Subscription.Keys.Auth,
-		P256dh:                 request.Subscription.Keys.P256dh,
-		NotifyFollow:           &request.Data.Alerts.Follow,
-		NotifyFollowRequest:    &request.Data.Alerts.FollowRequest,
-		NotifyFavourite:        &request.Data.Alerts.Favourite,
-		NotifyMention:          &request.Data.Alerts.Mention,
-		NotifyReblog:           &request.Data.Alerts.Reblog,
-		NotifyPoll:             &request.Data.Alerts.Poll,
-		NotifyStatus:           &request.Data.Alerts.Status,
-		NotifyUpdate:           &request.Data.Alerts.Update,
-		NotifyAdminSignup:      &request.Data.Alerts.AdminSignup,
-		NotifyAdminReport:      &request.Data.Alerts.AdminReport,
-		NotifyPendingFavourite: &request.Data.Alerts.PendingFavourite,
-		NotifyPendingReply:     &request.Data.Alerts.PendingReply,
-		NotifyPendingReblog:    &request.Data.Alerts.PendingReblog,
+		ID:                id.NewULID(),
+		AccountID:         accountID,
+		TokenID:           tokenID,
+		Endpoint:          request.Subscription.Endpoint,
+		Auth:              request.Subscription.Keys.Auth,
+		P256dh:            request.Subscription.Keys.P256dh,
+		NotificationFlags: alertsToNotificationFlags(request.Data.Alerts),
 	}
+
 	if err := p.state.DB.PutWebPushSubscription(ctx, subscription); err != nil {
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf("couldn't create Web Push subscription for token ID %s: %w", tokenID, err),

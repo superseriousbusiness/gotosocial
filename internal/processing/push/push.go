@@ -64,3 +64,25 @@ func (p *Processor) apiSubscription(ctx context.Context, subscription *gtsmodel.
 
 	return apiSubscription, nil
 }
+
+// alertsToNotificationFlags turns the alerts section of a push subscription API request into a packed bitfield.
+func alertsToNotificationFlags(alerts *apimodel.WebPushSubscriptionAlerts) gtsmodel.WebPushSubscriptionNotificationFlags {
+	var n gtsmodel.WebPushSubscriptionNotificationFlags
+
+	n.Set(gtsmodel.NotificationFollow, alerts.Follow)
+	n.Set(gtsmodel.NotificationFollowRequest, alerts.FollowRequest)
+	n.Set(gtsmodel.NotificationFavourite, alerts.Favourite)
+	n.Set(gtsmodel.NotificationMention, alerts.Mention)
+	n.Set(gtsmodel.NotificationReblog, alerts.Reblog)
+	n.Set(gtsmodel.NotificationPoll, alerts.Poll)
+	n.Set(gtsmodel.NotificationStatus, alerts.Status)
+	// TODO: (Vyr) handle NotificationUpdate when edit patch is merged
+	//n.Set(gtsmodel.NotificationUpdate, alerts.Update)
+	n.Set(gtsmodel.NotificationAdminSignup, alerts.AdminSignup)
+	n.Set(gtsmodel.NotificationAdminReport, alerts.AdminReport)
+	n.Set(gtsmodel.NotificationPendingFave, alerts.PendingFavourite)
+	n.Set(gtsmodel.NotificationPendingReply, alerts.PendingReply)
+	n.Set(gtsmodel.NotificationPendingReblog, alerts.PendingReblog)
+
+	return n
+}

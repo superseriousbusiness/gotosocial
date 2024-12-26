@@ -49,35 +49,11 @@ func (p *Processor) Update(
 	}
 
 	// Update it.
-	subscription.NotifyFollow = &request.Data.Alerts.Follow
-	subscription.NotifyFollowRequest = &request.Data.Alerts.FollowRequest
-	subscription.NotifyFavourite = &request.Data.Alerts.Favourite
-	subscription.NotifyMention = &request.Data.Alerts.Mention
-	subscription.NotifyReblog = &request.Data.Alerts.Reblog
-	subscription.NotifyPoll = &request.Data.Alerts.Poll
-	subscription.NotifyStatus = &request.Data.Alerts.Status
-	subscription.NotifyUpdate = &request.Data.Alerts.Update
-	subscription.NotifyAdminSignup = &request.Data.Alerts.AdminSignup
-	subscription.NotifyAdminReport = &request.Data.Alerts.AdminReport
-	subscription.NotifyPendingFavourite = &request.Data.Alerts.PendingFavourite
-	subscription.NotifyPendingReply = &request.Data.Alerts.PendingReply
-	subscription.NotifyPendingReblog = &request.Data.Alerts.PendingReblog
+	subscription.NotificationFlags = alertsToNotificationFlags(request.Data.Alerts)
 	if err = p.state.DB.UpdateWebPushSubscription(
 		ctx,
 		subscription,
-		"notify_follow",
-		"notify_follow_request",
-		"notify_favourite",
-		"notify_mention",
-		"notify_reblog",
-		"notify_poll",
-		"notify_status",
-		"notify_update",
-		"notify_admin_signup",
-		"notify_admin_report",
-		"notify_pending_favourite",
-		"notify_pending_reply",
-		"notify_pending_reblog",
+		"notification_flags",
 	); err != nil {
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf("couldn't update Web Push subscription for token ID %s: %w", tokenID, err),

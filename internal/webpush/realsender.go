@@ -85,44 +85,9 @@ func (r *realSender) Send(
 	relevantSubscriptions := make([]*gtsmodel.WebPushSubscription, 0, len(subscriptions))
 	for _, subscription := range subscriptions {
 		// Check whether this subscription wants this type of notification.
-		notify := false
-		switch notification.NotificationType {
-		case gtsmodel.NotificationFollow:
-			notify = *subscription.NotifyFollow
-		case gtsmodel.NotificationFollowRequest:
-			notify = *subscription.NotifyFollowRequest
-		case gtsmodel.NotificationMention:
-			notify = *subscription.NotifyMention
-		case gtsmodel.NotificationReblog:
-			notify = *subscription.NotifyReblog
-		case gtsmodel.NotificationFavourite:
-			notify = *subscription.NotifyFavourite
-		case gtsmodel.NotificationPoll:
-			notify = *subscription.NotifyPoll
-		case gtsmodel.NotificationStatus:
-			notify = *subscription.NotifyStatus
-		case gtsmodel.NotificationAdminSignup:
-			notify = *subscription.NotifyAdminSignup
-		case gtsmodel.NotificationAdminReport:
-			notify = *subscription.NotifyAdminReport
-		case gtsmodel.NotificationPendingFave:
-			notify = *subscription.NotifyPendingFavourite
-		case gtsmodel.NotificationPendingReply:
-			notify = *subscription.NotifyPendingReply
-		case gtsmodel.NotificationPendingReblog:
-			notify = *subscription.NotifyPendingReblog
-		default:
-			log.Errorf(
-				ctx,
-				"notification type not supported by Web Push subscriptions: %v",
-				notification.NotificationType,
-			)
-			continue
+		if subscription.NotificationFlags.Get(notification.NotificationType) {
+			relevantSubscriptions = append(relevantSubscriptions, subscription)
 		}
-		if !notify {
-			continue
-		}
-		relevantSubscriptions = append(relevantSubscriptions, subscription)
 	}
 	if len(relevantSubscriptions) == 0 {
 		return nil
