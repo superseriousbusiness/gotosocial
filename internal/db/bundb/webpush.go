@@ -105,11 +105,6 @@ func (w *webPushDB) PutWebPushSubscription(ctx context.Context, subscription *gt
 }
 
 func (w *webPushDB) UpdateWebPushSubscription(ctx context.Context, subscription *gtsmodel.WebPushSubscription, columns ...string) error {
-	// If we're updating by column, ensure "updated_at" is included.
-	if len(columns) > 0 {
-		columns = append(columns, "updated_at")
-	}
-
 	// Update database.
 	result, err := w.db.
 		NewUpdate().

@@ -17,21 +17,11 @@
 
 package gtsmodel
 
-import (
-	"time"
-)
-
 // WebPushSubscription represents an access token's Web Push subscription.
 // There can be at most one per access token.
 type WebPushSubscription struct {
 	// ID of this subscription in the database.
 	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
-
-	// CreatedAt is the time this subscription was created.
-	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
-
-	// UpdatedAt is the time this subscription was last updated.
-	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
 
 	// AccountID of the local account that created this subscription.
 	AccountID string `bun:"type:CHAR(26),notnull,nullzero"`
