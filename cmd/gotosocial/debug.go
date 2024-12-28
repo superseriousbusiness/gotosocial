@@ -20,6 +20,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 	configaction "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/config"
+	rollbackaction "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/rollback"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
@@ -41,5 +42,17 @@ func debugCommands() *cobra.Command {
 	}
 	config.AddServerFlags(debugConfigCmd)
 	debugCmd.AddCommand(debugConfigCmd)
+
+	debugRollbackCmd := &cobra.Command{
+		Use:   "rollback",
+		Short: "roll back the last run database migration",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), rollbackaction.Rollback)
+		},
+	}
+
+	config.AddServerFlags(debugRollbackCmd)
+	debugCmd.AddCommand(debugRollbackCmd)
+
 	return debugCmd
 }
