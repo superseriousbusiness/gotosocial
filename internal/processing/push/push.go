@@ -76,8 +76,7 @@ func alertsToNotificationFlags(alerts *apimodel.WebPushSubscriptionAlerts) gtsmo
 	n.Set(gtsmodel.NotificationReblog, alerts.Reblog)
 	n.Set(gtsmodel.NotificationPoll, alerts.Poll)
 	n.Set(gtsmodel.NotificationStatus, alerts.Status)
-	// TODO: (Vyr) handle NotificationUpdate when edit patch is merged
-	//n.Set(gtsmodel.NotificationUpdate, alerts.Update)
+	n.Set(gtsmodel.NotificationUpdate, alerts.Update)
 	n.Set(gtsmodel.NotificationAdminSignup, alerts.AdminSignup)
 	n.Set(gtsmodel.NotificationAdminReport, alerts.AdminReport)
 	n.Set(gtsmodel.NotificationPendingFave, alerts.PendingFavourite)

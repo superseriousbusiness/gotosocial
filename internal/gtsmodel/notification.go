@@ -56,7 +56,8 @@ const (
 	NotificationPendingReply  NotificationType = 10 // NotificationPendingReply -- Someone has replied to a status of yours, which requires approval by you.
 	NotificationPendingReblog NotificationType = 11 // NotificationPendingReblog -- Someone has boosted a status of yours, which requires approval by you.
 	NotificationAdminReport   NotificationType = 12 // NotificationAdminReport -- someone has submitted a new report to the instance.
-	NotificationTypeNumValues NotificationType = 13 // NotificationTypeNumValues -- 1 + number of max notification type
+	NotificationUpdate        NotificationType = 13
+	NotificationTypeNumValues NotificationType = 14 // NotificationTypeNumValues -- 1 + number of max notification type
 )
 
 // String returns a stringified, frontend API compatible form of NotificationType.
@@ -86,6 +87,8 @@ func (t NotificationType) String() string {
 		return "pending.reblog"
 	case NotificationAdminReport:
 		return "admin.report"
+	case NotificationUpdate:
+		return "update"
 	default:
 		panic("invalid notification type")
 	}
@@ -118,6 +121,8 @@ func ParseNotificationType(in string) NotificationType {
 		return NotificationPendingReblog
 	case "admin.report":
 		return NotificationAdminReport
+	case "update":
+		return NotificationUpdate
 	default:
 		return NotificationUnknown
 	}

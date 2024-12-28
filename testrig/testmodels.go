@@ -3603,7 +3603,7 @@ func NewTestWebPushSubscriptions() map[string]*gtsmodel.WebPushSubscription {
 				gtsmodel.NotificationReblog,
 				gtsmodel.NotificationPoll,
 				gtsmodel.NotificationStatus,
-				// TODO: (Vyr) add NotificationUpdate when edit patch is merged
+				gtsmodel.NotificationUpdate,
 				gtsmodel.NotificationAdminSignup,
 				gtsmodel.NotificationAdminReport,
 				gtsmodel.NotificationPendingFave,

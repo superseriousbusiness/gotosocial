@@ -3019,7 +3019,7 @@ func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
 			Reblog:           subscription.NotificationFlags.Get(gtsmodel.NotificationReblog),
 			Poll:             subscription.NotificationFlags.Get(gtsmodel.NotificationPoll),
 			Status:           subscription.NotificationFlags.Get(gtsmodel.NotificationStatus),
-			Update:           false, // TODO: (Vyr) handle NotificationUpdate when edit patch is merged
+			Update:           subscription.NotificationFlags.Get(gtsmodel.NotificationUpdate),
 			AdminSignup:      subscription.NotificationFlags.Get(gtsmodel.NotificationAdminSignup),
 			AdminReport:      subscription.NotificationFlags.Get(gtsmodel.NotificationAdminReport),
 			PendingFavourite: subscription.NotificationFlags.Get(gtsmodel.NotificationPendingFave),
