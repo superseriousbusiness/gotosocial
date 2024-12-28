@@ -505,6 +505,12 @@ func (d *Dereferencer) enrichStatus(
 		latestStatus.ID = id.NewULIDFromTime(latestStatus.CreatedAt)
 	} else {
 
+		// Ensure that status isn't trying to re-date itself.
+		if !latestStatus.CreatedAt.Equal(status.CreatedAt) {
+			err := gtserror.Newf("status %s 'published' changed", uri)
+			return nil, nil, gtserror.SetMalformed(err)
+		}
+
 		// Reuse existing status ID.
 		latestStatus.ID = status.ID
 	}
@@ -1210,12 +1216,12 @@ func (d *Dereferencer) handleStatusEdit(
 	}
 
 	if edited {
-		// We prefer to use provided 'upated_at', but ensure
-		// it fits chronologically with creation / last update.
-		if !status.UpdatedAt.After(status.CreatedAt) ||
-			!status.UpdatedAt.After(existing.UpdatedAt) {
+		// ensure that updated_at hasn't remained the same
+		// but an edit was received. manually intervene here.
+		if status.UpdatedAt.Equal(existing.UpdatedAt) ||
+			status.CreatedAt.Equal(status.UpdatedAt) {
 
-			// Else fallback to now as update time.
+			// Simply use current fetching time.
 			status.UpdatedAt = status.FetchedAt
 		}
 
@@ -1265,8 +1271,14 @@ func (d *Dereferencer) handleStatusEdit(
 		status.EditIDs = append(status.EditIDs, edit.ID)
 		status.Edits = append(status.Edits, &edit)
 
-		// Add updated_at and edits to list of cols.
-		cols = append(cols, "updated_at", "edits")
+		// Add edit to list of cols.
+		cols = append(cols, "edits")
+	}
+
+	if !existing.UpdatedAt.Equal(status.UpdatedAt) {
+		// Whether status edited or not,
+		// updated_at column has changed.
+		cols = append(cols, "updated_at")
 	}
 
 	return cols, nil
