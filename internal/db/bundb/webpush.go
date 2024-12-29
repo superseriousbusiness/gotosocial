@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 
+	webpushgo "github.com/SherClockHolmes/webpush-go"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -35,6 +36,44 @@ type webPushDB struct {
 }
 
 func (w *webPushDB) GetVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error) {
+	var err error
+
+	vapidKeyPair, err := w.getVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if vapidKeyPair != nil {
+		return vapidKeyPair, nil
+	}
+
+	// If there aren't any, generate new ones.
+	vapidKeyPair = &gtsmodel.VAPIDKeyPair{}
+	if vapidKeyPair.Private, vapidKeyPair.Public, err = webpushgo.GenerateVAPIDKeys(); err != nil {
+		return nil, gtserror.Newf("error generating VAPID key pair: %w", err)
+	}
+
+	// Store the keys in the database.
+	if _, err = w.db.NewInsert().
+		Model(vapidKeyPair).
+		Exec(ctx); // nocollapse
+	err != nil {
+		if errors.Is(err, db.ErrAlreadyExists) {
+			// Multiple concurrent attempts to generate new keys, and this one didn't win.
+			// Get the results of the one that did.
+			return w.getVAPIDKeyPair(ctx)
+		}
+		return nil, err
+	}
+
+	// Cache the keys.
+	w.state.Caches.DB.VAPIDKeyPair.Store(vapidKeyPair)
+
+	return vapidKeyPair, nil
+}
+
+// getVAPIDKeyPair gets an existing VAPID key pair from cache or DB.
+// If there is no existing VAPID key pair, it returns nil, with no error.
+func (w *webPushDB) getVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error) {
 	// Look for cached keys.
 	vapidKeyPair := w.state.Caches.DB.VAPIDKeyPair.Load()
 	if vapidKeyPair != nil {
@@ -54,23 +93,20 @@ func (w *webPushDB) GetVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair
 		return nil, err
 	}
 
-	// Cache the keys.
-	w.state.Caches.DB.VAPIDKeyPair.Store(vapidKeyPair)
-
 	return vapidKeyPair, nil
 }
 
-func (w *webPushDB) PutVAPIDKeyPair(ctx context.Context, vapidKeyPair *gtsmodel.VAPIDKeyPair) error {
-	// Store the keys in the database.
-	if _, err := w.db.NewInsert().
-		Model(vapidKeyPair).
+func (w *webPushDB) DeleteVAPIDKeyPair(ctx context.Context) error {
+	// Delete any existing keys.
+	if _, err := w.db.NewTruncateTable().
+		Model((*gtsmodel.VAPIDKeyPair)(nil)).
 		Exec(ctx); // nocollapse
 	err != nil {
 		return err
 	}
 
-	// Cache the keys.
-	w.state.Caches.DB.VAPIDKeyPair.Store(vapidKeyPair)
+	// Clear the key cache.
+	w.state.Caches.DB.VAPIDKeyPair.Store(nil)
 
 	return nil
 }

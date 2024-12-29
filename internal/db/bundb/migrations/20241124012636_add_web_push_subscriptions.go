@@ -41,7 +41,7 @@ func init() {
 			} {
 				if _, err := tx.
 					NewCreateIndex().
-					Table("web_push_subscriptions").
+					Model(&gtsmodel.WebPushSubscription{}).
 					Index(index).
 					Column(columns...).
 					IfNotExists().

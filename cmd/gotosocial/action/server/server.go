@@ -52,7 +52,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"go.uber.org/automaxprocs/maxprocs"
-
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -252,19 +252,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Get or create a VAPID key pair.
-	vapidKeyPair, err := dbService.GetVAPIDKeyPair(ctx)
-	if err != nil {
-		return gtserror.Newf("error getting VAPID key pair: %w", err)
-	}
-	if vapidKeyPair == nil {
-		// Generate and store a new key pair.
-		vapidKeyPair = &gtsmodel.VAPIDKeyPair{}
-		if vapidKeyPair.Private, vapidKeyPair.Public, err = webpushgo.GenerateVAPIDKeys(); err != nil {
-			return gtserror.Newf("error generating VAPID key pair: %w", err)
-		}
-		if err := dbService.PutVAPIDKeyPair(ctx, vapidKeyPair); err != nil {
-			return gtserror.Newf("error putting VAPID key pair: %w", err)
-		}
+	if _, err := dbService.GetVAPIDKeyPair(ctx); err != nil {
+		return gtserror.Newf("error getting or creating VAPID key pair: %w", err)
 	}
 
 	// Create a Web Push notification sender.

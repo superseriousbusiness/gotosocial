@@ -26,12 +26,11 @@ import (
 // WebPush contains functions related to Web Push notifications.
 type WebPush interface {
 	// GetVAPIDKeyPair retrieves the server's existing VAPID key pair, if there is one.
-	// If there isn't, it returns nil.
+	// If there isn't one, it generates a new one, stores it, and returns that.
 	GetVAPIDKeyPair(ctx context.Context) (*gtsmodel.VAPIDKeyPair, error)
 
-	// PutVAPIDKeyPair stores the server's VAPID key pair.
-	// This should be called at most once, during server startup.
-	PutVAPIDKeyPair(ctx context.Context, vapidKeyPair *gtsmodel.VAPIDKeyPair) error
+	// DeleteVAPIDKeyPair deletes the server's VAPID key pair.
+	DeleteVAPIDKeyPair(ctx context.Context) error
 
 	// GetWebPushSubscriptionByTokenID retrieves an access token's Web Push subscription.
 	// There may not be one, in which case an error will be returned.
