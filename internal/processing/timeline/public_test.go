@@ -25,6 +25,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -46,10 +47,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGet() {
 	resp, errWithCode := suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 
@@ -79,10 +81,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
 	resp, errWithCode := suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 
@@ -133,10 +136,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	resp, errWithCode := suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 	suite.NoError(errWithCode)
@@ -161,10 +165,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	resp, errWithCode = suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 

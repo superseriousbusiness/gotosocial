@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -58,7 +59,13 @@ func (p *Processor) TagTimelineGet(
 		return nil, gtserror.NewErrorNotFound(err, err.Error())
 	}
 
-	statuses, err := p.state.DB.GetTagTimeline(ctx, tag.ID, maxID, sinceID, minID, limit)
+	page := paging.Page{
+		Min:   paging.EitherMinID(minID, sinceID),
+		Max:   paging.MaxID(maxID),
+		Limit: limit,
+	}
+
+	statuses, err := p.state.DB.GetTagTimeline(ctx, tag.ID, &page)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

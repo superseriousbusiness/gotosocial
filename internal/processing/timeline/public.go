@@ -20,151 +20,108 @@ package timeline
 import (
 	"context"
 	"errors"
+	"net/url"
+	"slices"
 	"strconv"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
+// PublicTimelineGet ...
 func (p *Processor) PublicTimelineGet(
 	ctx context.Context,
 	requester *gtsmodel.Account,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
+	page *paging.Page,
 	local bool,
-) (*apimodel.PageableResponse, gtserror.WithCode) {
-	const maxAttempts = 3
-	var (
-		nextMaxIDValue string
-		prevMinIDValue string
-		items          = make([]any, 0, limit)
-	)
+) (
+	*apimodel.PageableResponse,
+	gtserror.WithCode,
+) {
 
-	var filters []*gtsmodel.Filter
-	var compiledMutes *usermute.CompiledUserMuteList
-	if requester != nil {
-		var err error
-		filters, err = p.state.DB.GetFiltersForAccountID(ctx, requester.ID)
-		if err != nil {
-			err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requester.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	// Load timeline data.
+	return p.getTimeline(ctx,
 
-		mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requester.ID, nil)
-		if err != nil {
-			err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requester.ID, err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-		compiledMutes = usermute.NewCompiledUserMuteList(mutes)
-	}
+		// Auth'd
+		// account.
+		requester,
 
-	// Try a few times to select appropriate public
-	// statuses from the db, paging up or down to
-	// reattempt if nothing suitable is found.
-outer:
-	for attempts := 1; ; attempts++ {
-		// Select slightly more than the limit to try to avoid situations where
-		// we filter out all the entries, and have to make another db call.
-		// It's cheaper to select more in 1 query than it is to do multiple queries.
-		statuses, err := p.state.DB.GetPublicTimeline(ctx, maxID, sinceID, minID, limit+5, local)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = gtserror.Newf("db error getting statuses: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+		// Global public timeline cache.
+		&p.state.Caches.Timelines.Public,
 
-		count := len(statuses)
-		if count == 0 {
-			// Nothing relevant (left) in the db.
-			return util.EmptyPageableResponse(), nil
-		}
+		// Current
+		// page.
+		page,
 
-		// Page up from first status in slice
-		// (ie., one with the highest ID).
-		prevMinIDValue = statuses[0].ID
+		// Public timeline endpoint.
+		"/api/v1/timelines/public",
 
-	inner:
-		for _, s := range statuses {
-			// Push back the next page down ID to
-			// this status, regardless of whether
-			// we end up filtering it out or not.
-			nextMaxIDValue = s.ID
+		// Set local-only timeline page query flag.
+		url.Values{"local": {strconv.FormatBool(local)}},
 
-			timelineable, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
-			if err != nil {
-				log.Errorf(ctx, "error checking status visibility: %v", err)
-				continue inner
+		// Status filter context.
+		statusfilter.FilterContextPublic,
+
+		// Timeline cache load function, used to further hydrate cache where necessary.
+		func(page *paging.Page) (statuses []*gtsmodel.Status, next *paging.Page, err error) {
+
+			// Fetch the global public status timeline page.
+			statuses, err = p.state.DB.GetPublicTimeline(ctx,
+				page,
+			)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				return nil, nil, gtserror.Newf("error getting statuses: %w", err)
 			}
 
-			if !timelineable {
-				continue inner
+			if len(statuses) == 0 {
+				// No more to load.
+				return nil, nil, nil
 			}
 
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requester, statusfilter.FilterContextPublic, filters, compiledMutes)
-			if errors.Is(err, statusfilter.ErrHideStatus) {
-				continue
+			// Get the lowest and highest
+			// ID values, used for next pg.
+			lo := statuses[len(statuses)-1].ID
+			hi := statuses[0].ID
+
+			// Set next paging value.
+			page = page.Next(lo, hi)
+
+			for i := 0; i < len(statuses); {
+				// Get status at idx.
+				status := statuses[i]
+
+				// Check whether status should be show on public timeline.
+				visible, err := p.visFilter.StatusPublicTimelineable(ctx,
+					requester,
+					status,
+				)
+				if err != nil {
+					return nil, nil, gtserror.Newf("error checking visibility: %w", err)
+				}
+
+				if !visible {
+					// Status not visible to home timeline.
+					statuses = slices.Delete(statuses, i, i+1)
+					continue
+				}
+
+				// Iter.
+				i++
 			}
-			if err != nil {
-				log.Errorf(ctx, "error converting to api status: %v", err)
-				continue inner
-			}
 
-			// Looks good, add this.
-			items = append(items, apiStatus)
-
-			// We called the db with a little
-			// more than the desired limit.
-			//
-			// Ensure we don't return more
-			// than the caller asked for.
-			if len(items) == limit {
-				break outer
-			}
-		}
-
-		if len(items) != 0 {
-			// We've got some items left after
-			// filtering, happily break + return.
-			break
-		}
-
-		if attempts >= maxAttempts {
-			// We reached our attempts limit.
-			// Be nice + warn about it.
-			log.Warn(ctx, "reached max attempts to find items in public timeline")
-			break
-		}
-
-		// We filtered out all items before we
-		// found anything we could return, but
-		// we still have attempts left to try
-		// fetching again. Set paging params
-		// and allow loop to continue.
-		if minID != "" {
-			// Paging up.
-			minID = prevMinIDValue
-		} else {
-			// Paging down.
-			maxID = nextMaxIDValue
-		}
-	}
-
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:          items,
-		Path:           "/api/v1/timelines/public",
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
-		ExtraQueryParams: []string{
-			"local=" + strconv.FormatBool(local),
+			return
 		},
-	})
+
+		// Per-request filtering function.
+		func(s *gtsmodel.Status) bool {
+			if local {
+				return !*s.Local
+			}
+			return false
+		},
+	)
 }

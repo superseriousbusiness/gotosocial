@@ -559,6 +559,7 @@ func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string
 	if err := s.State.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
 		return err
 	}
+
 	s.Stream.Delete(ctx, statusID)
 	return nil
 }

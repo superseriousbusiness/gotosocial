@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Timeline contains functionality for retrieving home/public/faved etc timelines for an account.
@@ -28,13 +29,13 @@ type Timeline interface {
 	// GetHomeTimeline returns a slice of statuses from accounts that are followed by the given account id.
 	//
 	// Statuses should be returned in descending order of when they were created (newest first).
-	GetHomeTimeline(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
+	GetHomeTimeline(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// GetPublicTimeline fetches the account's PUBLIC timeline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
 	//
 	// Statuses should be returned in descending order of when they were created (newest first).
-	GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error)
+	GetPublicTimeline(ctx context.Context, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// GetFavedTimeline fetches the account's FAVED timeline -- ie., posts and replies that the requesting account has faved.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
@@ -47,9 +48,9 @@ type Timeline interface {
 
 	// GetListTimeline returns a slice of statuses from followed accounts collected within the list with the given listID.
 	// Statuses should be returned in descending order of when they were created (newest first).
-	GetListTimeline(ctx context.Context, listID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Status, error)
+	GetListTimeline(ctx context.Context, listID string, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// GetTagTimeline returns a slice of public-visibility statuses that use the given tagID.
 	// Statuses should be returned in descending order of when they were created (newest first).
-	GetTagTimeline(ctx context.Context, tagID string, maxID string, sinceID string, minID string, limit int) ([]*gtsmodel.Status, error)
+	GetTagTimeline(ctx context.Context, tagID string, page *paging.Page) ([]*gtsmodel.Status, error)
 }

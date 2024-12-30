@@ -682,23 +682,13 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg *messages.FromClientAP
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
 	}
 
-	// Remove blockee's statuses from blocker's timeline.
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.AccountID,
-		block.TargetAccountID,
-	); err != nil {
-		return gtserror.Newf("error wiping timeline items for block: %w", err)
-	}
+	// Remove blocker's statuses from blocker's timeline.
+	p.state.Caches.Timelines.Home.InvalidateFrom(block.AccountID, "AccountID", block.TargetAccountID)
+	p.state.Caches.Timelines.Home.InvalidateFrom(block.AccountID, "BoostOfAccountID", block.TargetAccountID)
 
-	// Remove blocker's statuses from blockee's timeline.
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.TargetAccountID,
-		block.AccountID,
-	); err != nil {
-		return gtserror.Newf("error wiping timeline items for block: %w", err)
-	}
+	// Remove blockee's statuses from blockee's timeline.
+	p.state.Caches.Timelines.Home.InvalidateFrom(block.TargetAccountID, "AccountID", block.AccountID)
+	p.state.Caches.Timelines.Home.InvalidateFrom(block.TargetAccountID, "BoostOfAccountID", block.AccountID)
 
 	// TODO: same with notifications?
 	// TODO: same with bookmarks?
