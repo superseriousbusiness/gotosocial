@@ -1354,6 +1354,7 @@ func (c *Caches) initStatus() {
 		s2.Mentions = nil
 		s2.Emojis = nil
 		s2.CreatedWithApplication = nil
+		s2.Edits = nil
 
 		return s2
 	}
