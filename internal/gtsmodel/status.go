@@ -281,7 +281,7 @@ func (s *Status) AllAttachmentIDs() []string {
 	}
 
 	// Get count of attachment IDs.
-	total += len(s.Attachments)
+	total += len(s.AttachmentIDs)
 	for _, edit := range s.Edits {
 		total += len(edit.AttachmentIDs)
 	}
