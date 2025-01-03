@@ -436,6 +436,10 @@ main {
 				display: flex;
 				flex-wrap: wrap;
 				column-gap: 1rem;
+
+				.edited-at {
+					font-style: italic;
+				}
 			}
 
 			.stats-item {
