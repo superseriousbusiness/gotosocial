@@ -215,7 +215,6 @@ func (m *Module) DomainPermissionSubscriptionPATCHHandler(c *gin.Context) {
 		}
 
 		contentType = &ct
-		fmt.Println(*contentType)
 	}
 
 	// Make sure at least one field is set,
