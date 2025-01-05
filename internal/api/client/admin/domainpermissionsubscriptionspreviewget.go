@@ -23,59 +23,32 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// DomainPermissionDraftsPOSTHandler swagger:operation POST /api/v1/admin/domain_permission_drafts domainPermissionDraftCreate
+// DomainPermissionSubscriptionsPreviewGETHandler swagger:operation GET /api/v1/admin/domain_permission_subscriptions/preview domainPermissionSubscriptionsPreviewGet
 //
-// Create a domain permission draft with the given parameters.
+// View all domain permission subscriptions of the given permission type, in priority order (highest to lowest).
+//
+// This view allows you to see the order in which domain permissions will actually be fetched and created.
 //
 //	---
 //	tags:
 //	- admin
-//
-//	consumes:
-//	- multipart/form-data
-//	- application/json
 //
 //	produces:
 //	- application/json
 //
 //	parameters:
 //	-
-//		name: domain
-//		in: formData
-//		description: Domain to create the permission draft for.
-//		type: string
-//	-
 //		name: permission_type
-//		in: formData
-//		description: Create a draft "allow" or a draft "block".
 //		type: string
-//	-
-//		name: obfuscate
-//		in: formData
-//		description: >-
-//			Obfuscate the name of the domain when serving it publicly.
-//			Eg., `example.org` becomes something like `ex***e.org`.
-//		type: boolean
-//	-
-//		name: public_comment
-//		in: formData
-//		description: >-
-//			Public comment about this domain permission.
-//			This will be displayed alongside the domain permission if you choose to share permissions.
-//		type: string
-//	-
-//		name: private_comment
-//		in: formData
-//		description: >-
-//			Private comment about this domain permission. Will only be shown to other admins, so this
-//			is a useful way of internally keeping track of why a certain domain ended up permissioned.
-//		type: string
+//		description: Filter on "block" or "allow" type subscriptions.
+//		in: query
+//		required: true
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -83,22 +56,24 @@ import (
 //
 //	responses:
 //		'200':
-//			description: The newly created domain permission draft.
+//			description: Domain permission subscriptions.
 //			schema:
-//				"$ref": "#/definitions/domainPermission"
+//				type: array
+//				items:
+//					"$ref": "#/definitions/domainPermissionSubscription"
 //		'400':
 //			description: bad request
 //		'401':
 //			description: unauthorized
 //		'403':
 //			description: forbidden
+//		'404':
+//			description: not found
 //		'406':
 //			description: not acceptable
-//		'409':
-//			description: conflict
 //		'500':
 //			description: internal server error
-func (m *Module) DomainPermissionDraftsPOSTHandler(c *gin.Context) {
+func (m *Module) DomainPermissionSubscriptionsPreviewGETHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
@@ -121,39 +96,37 @@ func (m *Module) DomainPermissionDraftsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	// Parse + validate form.
-	form := new(apimodel.DomainPermissionRequest)
-	if err := c.ShouldBind(form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
+	permType := c.Query(apiutil.DomainPermissionPermTypeKey)
+	switch permType {
+	case "block", "allow":
+		// No problem.
 
-	if form.Domain == "" {
-		const errText = "domain must be set"
-		errWithCode := gtserror.NewErrorBadRequest(errors.New(errText), errText)
+	case "":
+		// Not set.
+		const text = "permission_type must be set, valid values are block or allow"
+		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+
+	default:
+		// Invalid.
+		text := fmt.Sprintf(
+			"permission_type %s not recognized, valid values are block or allow",
+			permType,
+		)
+		errWithCode := gtserror.NewErrorBadRequest(errors.New(text), text)
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	permType, errWithCode := parseDomainPermissionType(form.PermissionType)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	permDraft, errWithCode := m.processor.Admin().DomainPermissionDraftCreate(
+	resp, errWithCode := m.processor.Admin().DomainPermissionSubscriptionsGetByPriority(
 		c.Request.Context(),
-		authed.Account,
-		form.Domain,
-		permType,
-		form.Obfuscate,
-		form.PublicComment,
-		form.PrivateComment,
+		gtsmodel.ParseDomainPermissionType(permType),
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	apiutil.JSON(c, http.StatusOK, permDraft)
+	apiutil.JSON(c, http.StatusOK, resp)
 }

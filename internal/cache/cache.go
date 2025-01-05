@@ -75,6 +75,7 @@ func (c *Caches) Init() {
 	c.initDomainAllow()
 	c.initDomainBlock()
 	c.initDomainPermissionDraft()
+	c.initDomainPermissionSubscription()
 	c.initDomainPermissionExclude()
 	c.initEmoji()
 	c.initEmojiCategory()

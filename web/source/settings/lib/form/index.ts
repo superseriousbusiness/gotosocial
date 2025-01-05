@@ -41,6 +41,7 @@ import type {
 	ChecklistInputHook,
 	FieldArrayInputHook,
 	ArrayInputHook,
+	NumberFormInputHook,
 } from "./types";
 
 function capitalizeFirst(str: string) {
@@ -102,11 +103,11 @@ function value<T>(name: string, initialValue: T) {
 		name,
 		Name: "", 
 		value: initialValue,
-		hasChanged: () => true, // always included
 	};
 }
 
 export const useTextInput = inputHook(text) as (_name: string, _opts?: HookOpts<string>) => TextFormInputHook;
+export const useNumberInput = inputHook(text) as (_name: string, _opts?: HookOpts<number>) => NumberFormInputHook;
 export const useFileInput = inputHook(file) as (_name: string, _opts?: HookOpts<File>) => FileFormInputHook;
 export const useBoolInput = inputHook(bool) as (_name: string, _opts?: HookOpts<boolean>) => BoolFormInputHook;
 export const useRadioInput = inputHook(radio) as (_name: string, _opts?: HookOpts<string>) => RadioFormInputHook;

@@ -20,6 +20,7 @@
 import typia from "typia";
 import { PermType } from "./perm";
 import { Links } from "parse-link-header";
+import { PermSubContentType } from "./permsubcontenttype";
 
 export const validateDomainPerms = typia.createValidate<DomainPerm[]>();
 
@@ -212,4 +213,157 @@ export interface DomainPermExcludeCreateParams {
 	 * internally keeping track of why a certain domain ended up permissioned.
 	 */
 	private_comment?: string;
+}
+
+/**
+ * API model of one domain permission susbcription.
+ */
+export interface DomainPermSub {
+	/**
+	 * The ID of the domain permission subscription.
+	 */
+	id: string;
+	/**
+	 * The priority of the domain permission subscription.
+	 */
+	priority: number;
+	/**
+	 *  Time at which the subscription was created (ISO 8601 Datetime).
+	 */
+	created_at: string;
+	/**
+	 * Title of this subscription, as set by admin who created or updated it.
+	 */
+	title: string;
+	/**
+	 * The type of domain permission subscription (allow, block).
+	 */
+	permission_type: PermType;
+	/**
+	 * If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect.
+	 * If false, domain permissions from this subscription will come into force immediately.
+	 */
+	as_draft: boolean;
+	/**
+	 * If true, this domain permission subscription will "adopt" domain permissions
+	 * which already exist on the instance, and which meet the following conditions:
+	 * 1) they have no subscription ID (ie., they're "orphaned") and 2) they are present
+	 * in the subscribed list. Such orphaned domain permissions will be given this
+	 * subscription's subscription ID value and be managed by this subscription.
+	 */
+	adopt_orphans: boolean;
+	/**
+	 * ID of the account that created this subscription.
+	 */
+	created_by: string;
+	/**
+	 * URI to call in order to fetch the permissions list.
+	 */
+	uri: string;
+	/**
+	 * MIME content type to use when parsing the permissions list.
+	 */
+	content_type: PermSubContentType;
+	/**
+	 * (Optional) username to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_username?: string;
+	/**
+	 * (Optional) password to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_password?: string;
+	/**
+	 * Time at which the most recent fetch was attempted (ISO 8601 Datetime).
+	 */
+	fetched_at?: string;
+	/**
+	 *  Time of the most recent successful fetch (ISO 8601 Datetime).
+	 */
+	successfully_fetched_at?: string;
+	/**
+	 * If most recent fetch attempt failed, this field will contain an error message related to the fetch attempt.
+	 */
+	error?: string;
+	/**
+	 * Count of domain permission entries discovered at URI on last (successful) fetch.
+	 */
+	count: number;
+}
+
+/**
+ * Parameters for GET to /api/v1/admin/domain_permission_subscriptions.
+ */
+export interface DomainPermSubSearchParams {
+	/**
+	 * Return only block or allow subscriptions.
+	 */
+	permission_type?: PermType;
+	/**
+	 * Return only items *OLDER* than the given max ID (for paging downwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	max_id?: string;
+	/**
+	 * Return only items *NEWER* than the given since ID.
+	 * The item with the specified ID will not be included in the response.
+	 */
+	since_id?: string;
+	/**
+	 * Return only items immediately *NEWER* than the given min ID (for paging upwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	min_id?: string;
+	/**
+	 * Number of items to return.
+	 */
+	limit?: number;
+}
+
+export interface DomainPermSubCreateUpdateParams {
+	/**
+	 * The priority of the domain permission subscription.
+	 */
+	priority?: number;
+	/**
+	 * Title of this subscription, as set by admin who created or updated it.
+	 */
+	title?: string;
+	/**
+	 * URI to call in order to fetch the permissions list.
+	 */
+	uri: string;
+	/**
+	 * MIME content type to use when parsing the permissions list.
+	 */
+	content_type: PermSubContentType;
+	/**
+	 * If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect.
+	 * If false, domain permissions from this subscription will come into force immediately.
+	 */
+	as_draft?: boolean;
+	/**
+	 * If true, this domain permission subscription will "adopt" domain permissions
+	 * which already exist on the instance, and which meet the following conditions:
+	 * 1) they have no subscription ID (ie., they're "orphaned") and 2) they are present
+	 * in the subscribed list. Such orphaned domain permissions will be given this
+	 * subscription's subscription ID value and be managed by this subscription.
+	 */
+	adopt_orphans?: boolean;
+	/**
+	 * (Optional) username to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_username?: string;
+	/**
+	 * (Optional) password to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_password?: string;
+	/**
+	 * The type of domain permission subscription to create or update (allow, block).
+	 */
+	permission_type: PermType;
+}
+
+export interface DomainPermSubSearchResp {
+	subs: DomainPermSub[];
+	links: Links | null;
 }

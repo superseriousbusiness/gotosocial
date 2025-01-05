@@ -35,6 +35,10 @@ import DomainPermissionDraftDetail from "./domain-permissions/drafts/detail";
 import DomainPermissionExcludeDetail from "./domain-permissions/excludes/detail";
 import DomainPermissionExcludesSearch from "./domain-permissions/excludes";
 import DomainPermissionExcludeNew from "./domain-permissions/excludes/new";
+import DomainPermissionSubscriptionsSearch from "./domain-permissions/subscriptions";
+import DomainPermissionSubscriptionNew from "./domain-permissions/subscriptions/new";
+import DomainPermissionSubscriptionDetail from "./domain-permissions/subscriptions/detail";
+import DomainPermissionSubscriptionsPreview from "./domain-permissions/subscriptions/preview";
 
 /*
 	EXPORTED COMPONENTS
@@ -151,6 +155,10 @@ function ModerationDomainPermsRouter() {
 						<Route path="/excludes/search" component={DomainPermissionExcludesSearch} />
 						<Route path="/excludes/new" component={DomainPermissionExcludeNew} />
 						<Route path="/excludes/:excludeId" component={DomainPermissionExcludeDetail} />
+						<Route path="/subscriptions/search" component={DomainPermissionSubscriptionsSearch} />
+						<Route path="/subscriptions/new" component={DomainPermissionSubscriptionNew} />
+						<Route path="/subscriptions/preview" component={DomainPermissionSubscriptionsPreview} />
+						<Route path="/subscriptions/:permSubId" component={DomainPermissionSubscriptionDetail} />
 						<Route path="/:permType" component={DomainPermissionsOverview} />
 						<Route path="/:permType/:domain" component={DomainPermDetail} />
 						<Route><Redirect to="/blocks"/></Route>

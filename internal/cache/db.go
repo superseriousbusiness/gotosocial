@@ -70,6 +70,9 @@ type DBCaches struct {
 	// DomainPermissionDraft provides access to the domain permission draft database cache.
 	DomainPermissionDraft StructCache[*gtsmodel.DomainPermissionDraft]
 
+	// DomainPermissionSubscription provides access to the domain permission subscription database cache.
+	DomainPermissionSubscription StructCache[*gtsmodel.DomainPermissionSubscription]
+
 	// DomainPermissionExclude provides access to the domain permission exclude database cache.
 	DomainPermissionExclude *domain.Cache
 
@@ -582,6 +585,37 @@ func (c *Caches) initDomainPermissionDraft() {
 			{Fields: "ID"},
 			{Fields: "Domain", Multiple: true},
 			{Fields: "SubscriptionID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initDomainPermissionSubscription() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofDomainPermissionSubscription(), // model in-mem size.
+		config.GetCacheDomainPermissionSubscriptionMemRation(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(d1 *gtsmodel.DomainPermissionSubscription) *gtsmodel.DomainPermissionSubscription {
+		d2 := new(gtsmodel.DomainPermissionSubscription)
+		*d2 = *d1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		d2.CreatedByAccount = nil
+
+		return d2
+	}
+
+	c.DB.DomainPermissionSubscription.Init(structr.CacheConfig[*gtsmodel.DomainPermissionSubscription]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "URI"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,

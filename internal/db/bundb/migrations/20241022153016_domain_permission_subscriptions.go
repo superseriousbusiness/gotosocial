@@ -20,50 +20,43 @@ package migrations
 import (
 	"context"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241022153016_domain_permission_draft_exclude"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241022153016_domain_permission_subscriptions"
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-
-			// Create `domain_permission_drafts`.
+			// Create `domain_permission_subscriptions`.
 			if _, err := tx.
 				NewCreateTable().
-				Model((*gtsmodel.DomainPermissionDraft)(nil)).
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			// Create `domain_permission_ignores`.
-			if _, err := tx.
-				NewCreateTable().
-				Model((*gtsmodel.DomainPermissionExclude)(nil)).
+				Model((*gtsmodel.DomainPermissionSubscription)(nil)).
 				IfNotExists().
 				Exec(ctx); err != nil {
 				return err
 			}
 
 			// Create indexes. Indices. Indie sexes.
-			for table, indexes := range map[string]map[string][]string{
-				"domain_permission_drafts": {
-					"domain_permission_drafts_domain_idx":          {"domain"},
-					"domain_permission_drafts_subscription_id_idx": {"subscription_id"},
-				},
-			} {
-				for index, columns := range indexes {
-					if _, err := tx.
-						NewCreateIndex().
-						Table(table).
-						Index(index).
-						Column(columns...).
-						IfNotExists().
-						Exec(ctx); err != nil {
-						return err
-					}
-				}
+			if _, err := tx.
+				NewCreateIndex().
+				Table("domain_permission_subscriptions").
+				// Filter on permission type.
+				Index("domain_permission_subscriptions_permission_type_idx").
+				Column("permission_type").
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Table("domain_permission_subscriptions").
+				// Sort by priority DESC.
+				Index("domain_permission_subscriptions_priority_order_idx").
+				ColumnExpr("? DESC", bun.Ident("priority")).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
 			}
 
 			return nil

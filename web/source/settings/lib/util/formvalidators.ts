@@ -46,3 +46,22 @@ export function formDomainValidator(domain: string): string {
 
 	return "invalid domain";
 }
+
+export function urlValidator(urlStr: string): string {
+	if (urlStr.length === 0) {
+		return "";
+	}
+
+	let url: URL;
+	try {
+		url = new URL(urlStr);
+	} catch (e) {
+		return e.message;
+	}
+
+	if (url.protocol !== "http:" && url.protocol !== "https:") {
+		return `invalid protocol, must be http or https`;
+	}
+
+	return formDomainValidator(url.host);
+}

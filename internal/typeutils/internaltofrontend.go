@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -2128,6 +2129,60 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	}
 
 	return domainPerm, nil
+}
+
+func (c *Converter) DomainPermSubToAPIDomainPermSub(
+	ctx context.Context,
+	d *gtsmodel.DomainPermissionSubscription,
+) (*apimodel.DomainPermissionSubscription, error) {
+	createdAt, err := id.TimeFromULID(d.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error converting id to time: %w", err)
+	}
+
+	// URI may be in Punycode,
+	// de-punify it just in case.
+	uri, err := util.DePunify(d.URI)
+	if err != nil {
+		return nil, gtserror.Newf("error de-punifying URI %s: %w", d.URI, err)
+	}
+
+	var (
+		fetchedAt             string
+		successfullyFetchedAt string
+	)
+
+	if !d.FetchedAt.IsZero() {
+		fetchedAt = util.FormatISO8601(d.FetchedAt)
+	}
+
+	if !d.SuccessfullyFetchedAt.IsZero() {
+		successfullyFetchedAt = util.FormatISO8601(d.SuccessfullyFetchedAt)
+	}
+
+	count, err := c.state.DB.CountDomainPermissionSubscriptionPerms(ctx, d.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error counting perm sub perms: %w", err)
+	}
+
+	return &apimodel.DomainPermissionSubscription{
+		ID:                    d.ID,
+		Priority:              d.Priority,
+		Title:                 d.Title,
+		PermissionType:        d.PermissionType.String(),
+		AsDraft:               *d.AsDraft,
+		AdoptOrphans:          *d.AdoptOrphans,
+		CreatedBy:             d.CreatedByAccountID,
+		CreatedAt:             util.FormatISO8601(createdAt),
+		URI:                   uri,
+		ContentType:           d.ContentType.String(),
+		FetchUsername:         d.FetchUsername,
+		FetchPassword:         d.FetchPassword,
+		FetchedAt:             fetchedAt,
+		SuccessfullyFetchedAt: successfullyFetchedAt,
+		Error:                 d.Error,
+		Count:                 uint64(count), // #nosec G115 -- Don't care about overflow here.
+	}, nil
 }
 
 // ReportToAPIReport converts a gts model report into an api model report, for serving at /api/v1/reports
