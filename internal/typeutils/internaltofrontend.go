@@ -2160,6 +2160,11 @@ func (c *Converter) DomainPermSubToAPIDomainPermSub(
 		successfullyFetchedAt = util.FormatISO8601(d.SuccessfullyFetchedAt)
 	}
 
+	count, err := c.state.DB.CountDomainPermissionSubscriptionPerms(ctx, d.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error counting perm sub perms: %w", err)
+	}
+
 	return &apimodel.DomainPermissionSubscription{
 		ID:                    d.ID,
 		Priority:              d.Priority,
@@ -2176,6 +2181,7 @@ func (c *Converter) DomainPermSubToAPIDomainPermSub(
 		FetchedAt:             fetchedAt,
 		SuccessfullyFetchedAt: successfullyFetchedAt,
 		Error:                 d.Error,
+		Count:                 uint64(count),
 	}, nil
 }
 

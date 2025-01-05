@@ -318,3 +318,37 @@ func (d *domainDB) DeleteDomainPermissionSubscription(
 
 	return nil
 }
+
+func (d *domainDB) CountDomainPermissionSubscriptionPerms(
+	ctx context.Context,
+	id string,
+) (int, error) {
+	permSubscription, err := d.GetDomainPermissionSubscriptionByID(
+		gtscontext.SetBarebones(ctx),
+		id,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	q := d.db.NewSelect()
+
+	if permSubscription.PermissionType == gtsmodel.DomainPermissionBlock {
+		q = q.TableExpr(
+			"? AS ?",
+			bun.Ident("domain_blocks"),
+			bun.Ident("perm"),
+		)
+	} else {
+		q = q.TableExpr(
+			"? AS ?",
+			bun.Ident("domain_allows"),
+			bun.Ident("perm"),
+		)
+	}
+
+	return q.
+		Column("perm.id").
+		Where("? = ?", bun.Ident("perm.subscription_id"), id).
+		Count(ctx)
+}

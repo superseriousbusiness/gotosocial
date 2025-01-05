@@ -35,5 +35,4 @@ type DomainPermissionSubscription struct {
 	SuccessfullyFetchedAt time.Time `bun:"type:timestamptz,nullzero"`
 	ETag                  string    `bun:"etag,nullzero"`
 	Error                 string    `bun:",nullzero"`
-	Count                 uint64    `bun:""`
 }

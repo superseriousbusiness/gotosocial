@@ -36,7 +36,6 @@ type DomainPermissionSubscription struct {
 	SuccessfullyFetchedAt time.Time                `bun:"type:timestamptz,nullzero"`                // Time when the domain permission list was last *successfuly* fetched, to be transmitted as If-Modified-Since header.
 	ETag                  string                   `bun:"etag,nullzero"`                            // Etag last received from the server (if any) on successful fetch.
 	Error                 string                   `bun:",nullzero"`                                // If latest fetch attempt errored, this field stores the error message. Cleared on latest successful fetch.
-	Count                 uint64                   `bun:""`                                         // Count of domain permission entries discovered at URI.
 }
 
 type DomainPermSubContentType enumType

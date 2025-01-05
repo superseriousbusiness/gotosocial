@@ -168,4 +168,8 @@ type Domain interface {
 
 	// DeleteDomainPermissionSubscription deletes one DomainPermissionSubscription with the given id.
 	DeleteDomainPermissionSubscription(ctx context.Context, id string) error
+
+	// CountDomainPermissionSubscriptionPerms counts the number of permissions
+	// currently managed by the domain permission subscription of the given ID.
+	CountDomainPermissionSubscriptionPerms(ctx context.Context, id string) (int, error)
 }
