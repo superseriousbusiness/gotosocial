@@ -2181,7 +2181,7 @@ func (c *Converter) DomainPermSubToAPIDomainPermSub(
 		FetchedAt:             fetchedAt,
 		SuccessfullyFetchedAt: successfullyFetchedAt,
 		Error:                 d.Error,
-		Count:                 uint64(count),
+		Count:                 uint64(count), // #nosec G115 -- Don't care about overflow here.
 	}, nil
 }
 
