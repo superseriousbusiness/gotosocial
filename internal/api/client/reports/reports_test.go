@@ -19,6 +19,7 @@ package reports_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/actions"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/reports"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -76,6 +77,7 @@ func (suite *ReportsStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.Actions = actions.New(suite.state.DB, &suite.state.Workers)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 

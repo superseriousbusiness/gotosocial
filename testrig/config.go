@@ -99,6 +99,8 @@ func testDefaults() config.Configuration {
 				TagStr: "en-gb",
 			},
 		},
+		InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,
+		InstanceSubscriptionsProcessEvery: 24 * time.Hour, // 1/day.
 
 		AccountsRegistrationOpen: true,
 		AccountsReasonRequired:   true,

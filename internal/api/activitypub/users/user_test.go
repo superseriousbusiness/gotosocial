@@ -20,6 +20,7 @@ package users_test
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/actions"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -84,6 +85,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.Actions = actions.New(suite.state.DB, &suite.state.Workers)
 	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(

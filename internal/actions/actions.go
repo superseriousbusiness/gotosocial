@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package admin
+package actions
 
 import (
 	"context"
@@ -23,11 +23,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/workers"
 )
 
 func errActionConflict(action *gtsmodel.AdminAction) gtserror.WithCode {
@@ -42,14 +43,33 @@ func errActionConflict(action *gtsmodel.AdminAction) gtserror.WithCode {
 }
 
 type Actions struct {
-	r     map[string]*gtsmodel.AdminAction
-	state *state.State
+	// Map of running actions.
+	running map[string]*gtsmodel.AdminAction
 
-	// Not embedded struct,
-	// to shield from access
-	// by outside packages.
+	// Lock for running admin actions.
+	//
+	// Not embedded struct, to shield
+	// from access by outside packages.
 	m sync.Mutex
+
+	// DB for storing, updating,
+	// deleting admin actions etc.
+	db db.DB
+
+	// Workers for queuing
+	// admin action side effects.
+	workers *workers.Workers
 }
+
+func New(db db.DB, workers *workers.Workers) *Actions {
+	return &Actions{
+		running: make(map[string]*gtsmodel.AdminAction),
+		db:      db,
+		workers: workers,
+	}
+}
+
+type AdminActionF func(context.Context) gtserror.MultiError
 
 // Run runs the given admin action by executing the supplied function.
 //
@@ -62,10 +82,10 @@ type Actions struct {
 // will be updated on the provided admin action in the database.
 func (a *Actions) Run(
 	ctx context.Context,
-	action *gtsmodel.AdminAction,
-	f func(context.Context) gtserror.MultiError,
+	adminAction *gtsmodel.AdminAction,
+	f AdminActionF,
 ) gtserror.WithCode {
-	actionKey := action.Key()
+	actionKey := adminAction.Key()
 
 	// LOCK THE MAP HERE, since we're
 	// going to do some operations on it.
@@ -73,7 +93,7 @@ func (a *Actions) Run(
 
 	// Bail if an action with
 	// this key is already running.
-	running, ok := a.r[actionKey]
+	running, ok := a.running[actionKey]
 	if ok {
 		a.m.Unlock()
 		return errActionConflict(running)
@@ -81,7 +101,7 @@ func (a *Actions) Run(
 
 	// Action with this key not
 	// yet running, create it.
-	if err := a.state.DB.PutAdminAction(ctx, action); err != nil {
+	if err := a.db.PutAdminAction(ctx, adminAction); err != nil {
 		err = gtserror.Newf("db error putting admin action %s: %w", actionKey, err)
 
 		// Don't store in map
@@ -92,7 +112,7 @@ func (a *Actions) Run(
 
 	// Action was inserted,
 	// store in map.
-	a.r[actionKey] = action
+	a.running[actionKey] = adminAction
 
 	// UNLOCK THE MAP HERE, since
 	// we're done modifying it for now.
@@ -104,22 +124,22 @@ func (a *Actions) Run(
 
 		// Run the thing and collect errors.
 		if errs := f(ctx); errs != nil {
-			action.Errors = make([]string, 0, len(errs))
+			adminAction.Errors = make([]string, 0, len(errs))
 			for _, err := range errs {
-				action.Errors = append(action.Errors, err.Error())
+				adminAction.Errors = append(adminAction.Errors, err.Error())
 			}
 		}
 
 		// Action is no longer running:
 		// remove from running map.
 		a.m.Lock()
-		delete(a.r, actionKey)
+		delete(a.running, actionKey)
 		a.m.Unlock()
 
 		// Mark as completed in the db,
 		// storing errors for later review.
-		action.CompletedAt = time.Now()
-		if err := a.state.DB.UpdateAdminAction(ctx, action, "completed_at", "errors"); err != nil {
+		adminAction.CompletedAt = time.Now()
+		if err := a.db.UpdateAdminAction(ctx, adminAction, "completed_at", "errors"); err != nil {
 			log.Errorf(ctx, "db error marking action %s as completed: %q", actionKey, err)
 		}
 	}()
@@ -135,8 +155,8 @@ func (a *Actions) GetRunning() []*gtsmodel.AdminAction {
 	defer a.m.Unlock()
 
 	// Assemble all currently running actions.
-	running := make([]*gtsmodel.AdminAction, 0, len(a.r))
-	for _, action := range a.r {
+	running := make([]*gtsmodel.AdminAction, 0, len(a.running))
+	for _, action := range a.running {
 		running = append(running, action)
 	}
 
@@ -166,5 +186,5 @@ func (a *Actions) TotalRunning() int {
 	a.m.Lock()
 	defer a.m.Unlock()
 
-	return len(a.r)
+	return len(a.running)
 }

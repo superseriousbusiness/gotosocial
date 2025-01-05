@@ -48,6 +48,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
@@ -180,6 +181,7 @@ func (p *Processor) Workers() *workers.Processor {
 // NewProcessor returns a new Processor.
 func NewProcessor(
 	cleaner *cleaner.Cleaner,
+	subscriptions *subscriptions.Subscriptions,
 	converter *typeutils.Converter,
 	federator *federation.Federator,
 	oauthServer oauth.Server,
@@ -210,7 +212,7 @@ func NewProcessor(
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
 	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
-	processor.admin = admin.New(&common, state, cleaner, federator, converter, mediaManager, federator.TransportController(), emailSender)
+	processor.admin = admin.New(&common, state, cleaner, subscriptions, federator, converter, mediaManager, federator.TransportController(), emailSender)
 	processor.conversations = conversations.New(state, converter, visFilter)
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)

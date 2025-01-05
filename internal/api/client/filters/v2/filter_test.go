@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/actions"
 	filtersV2 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -90,6 +91,7 @@ func (suite *FiltersTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.Actions = actions.New(suite.state.DB, &suite.state.Workers)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 

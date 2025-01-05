@@ -32,6 +32,7 @@ import (
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
+	"github.com/superseriousbusiness/gotosocial/internal/actions"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
@@ -44,6 +45,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"go.uber.org/automaxprocs/maxprocs"
@@ -164,6 +166,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Set DB on state.
 	state.DB = dbService
 
+	// Set Actions on state, providing workers to
+	// Actions as well for triggering side effects.
+	state.Actions = actions.New(dbService, &state.Workers)
+
 	// Ensure necessary database instance prerequisites exist.
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {
 		return fmt.Errorf("error creating instance account: %s", err)
@@ -283,15 +289,18 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Create background cleaner.
 	cleaner := cleaner.New(state)
 
-	// Now schedule background cleaning tasks.
-	if err := cleaner.ScheduleJobs(); err != nil {
-		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
-	}
+	// Create subscriptions fetcher.
+	subscriptions := subscriptions.New(
+		state,
+		transportController,
+		typeConverter,
+	)
 
 	// Create the processor using all the
 	// other services we've created so far.
 	process = processing.NewProcessor(
 		cleaner,
+		subscriptions,
 		typeConverter,
 		federator,
 		oauthServer,
@@ -301,6 +310,16 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		visFilter,
 		intFilter,
 	)
+
+	// Schedule background cleaning tasks.
+	if err := cleaner.ScheduleJobs(); err != nil {
+		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
+	}
+
+	// Schedule background subscriptions updating.
+	if err := subscriptions.ScheduleJobs(); err != nil {
+		return fmt.Errorf("error scheduling subscriptions jobs: %w", err)
+	}
 
 	// Initialize the specialized workers pools.
 	state.Workers.Client.Init(messages.ClientMsgIndices())

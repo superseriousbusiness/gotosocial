@@ -58,13 +58,15 @@ var Defaults = Configuration{
 	WebTemplateBaseDir: "./web/template/",
 	WebAssetBaseDir:    "./web/assets/",
 
-	InstanceFederationMode:         InstanceFederationModeDefault,
-	InstanceFederationSpamFilter:   false,
-	InstanceExposePeers:            false,
-	InstanceExposeSuspended:        false,
-	InstanceExposeSuspendedWeb:     false,
-	InstanceDeliverToSharedInboxes: true,
-	InstanceLanguages:              make(language.Languages, 0),
+	InstanceFederationMode:            InstanceFederationModeDefault,
+	InstanceFederationSpamFilter:      false,
+	InstanceExposePeers:               false,
+	InstanceExposeSuspended:           false,
+	InstanceExposeSuspendedWeb:        false,
+	InstanceDeliverToSharedInboxes:    true,
+	InstanceLanguages:                 make(language.Languages, 0),
+	InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,
+	InstanceSubscriptionsProcessEvery: 24 * time.Hour, // 1/day.
 
 	AccountsRegistrationOpen: false,
 	AccountsReasonRequired:   true,

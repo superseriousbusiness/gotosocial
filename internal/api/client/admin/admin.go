@@ -46,6 +46,7 @@ const (
 	DomainPermissionSubscriptionsPathWithID  = DomainPermissionSubscriptionsPath + "/:" + apiutil.IDKey
 	DomainPermissionSubscriptionsPreviewPath = DomainPermissionSubscriptionsPath + "/preview"
 	DomainPermissionSubscriptionRemovePath   = DomainPermissionSubscriptionsPathWithID + "/remove"
+	DomainPermissionSubscriptionTestPath     = DomainPermissionSubscriptionsPathWithID + "/test"
 	DomainKeysExpirePath                     = BasePath + "/domain_keys_expire"
 	HeaderAllowsPath                         = BasePath + "/header_allows"
 	HeaderAllowsPathWithID                   = HeaderAllowsPath + "/:" + apiutil.IDKey
@@ -129,6 +130,7 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, DomainPermissionSubscriptionsPathWithID, m.DomainPermissionSubscriptionGETHandler)
 	attachHandler(http.MethodPatch, DomainPermissionSubscriptionsPathWithID, m.DomainPermissionSubscriptionPATCHHandler)
 	attachHandler(http.MethodPost, DomainPermissionSubscriptionRemovePath, m.DomainPermissionSubscriptionRemovePOSTHandler)
+	attachHandler(http.MethodPost, DomainPermissionSubscriptionTestPath, m.DomainPermissionSubscriptionTestPOSTHandler)
 
 	// header filtering administration routes
 	attachHandler(http.MethodGet, HeaderAllowsPathWithID, m.HeaderFilterAllowGET)
