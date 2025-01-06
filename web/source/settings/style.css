@@ -1426,6 +1426,18 @@ button.tab-button {
 	}
 }
 
+.domain-permission-subscription-details {
+	> .list > .entries > .perm-preview {
+		gap: 0.5rem;
+	}
+
+	> .perm-issue > b > code {
+		background: $info-bg;
+		padding: 0;
+	}
+}
+
+
 .domain-permission-subscription-title {
 	font-size: 1.2rem;
 	font-weight: bold;
@@ -1451,7 +1463,8 @@ button.tab-button {
 	}
 }
 
-.domain-permission-subscription-remove {
+.domain-permission-subscription-remove,
+.domain-permission-subscription-test {
 	gap: 1rem;
 }
 

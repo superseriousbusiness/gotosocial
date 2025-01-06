@@ -20,11 +20,9 @@
 package testrig
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -160,16 +158,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.StandardStorageSetup(state.Storage, "./testrig/media")
 
 	// build backend handlers
-	transportController := testrig.NewTestTransportController(state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		r := io.NopCloser(bytes.NewReader([]byte{}))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-			Header: http.Header{
-				"Content-Type": req.Header.Values("Accept"),
-			},
-		}, nil
-	}, ""))
+	httpClient := testrig.NewMockHTTPClient(nil, "./testrig/media")
+	transportController := testrig.NewTestTransportController(state, httpClient)
 	mediaManager := testrig.NewTestMediaManager(state)
 	federator := testrig.NewTestFederator(state, transportController, mediaManager)
 

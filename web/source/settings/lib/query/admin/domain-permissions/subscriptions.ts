@@ -20,6 +20,7 @@
 import { gtsApi } from "../../gts-api";
 
 import type {
+	DomainPerm,
 	DomainPermSub,
 	DomainPermSubCreateUpdateParams,
 	DomainPermSubSearchParams,
@@ -120,6 +121,13 @@ const extended = gtsApi.injectEndpoints({
 				asForm: true,
 				body: { remove_children: remove_children },
 			}),
+		}),
+
+		testDomainPermissionSubscription: build.mutation<{ error: string } | DomainPerm[], string>({
+			query: (id) => ({
+				method: "POST",
+				url: `/api/v1/admin/domain_permission_subscriptions/${id}/test`,
+			}),
 		})
 	}),
 });
@@ -154,6 +162,11 @@ const useUpdateDomainPermissionSubscriptionMutation = extended.useUpdateDomainPe
  */
 const useRemoveDomainPermissionSubscriptionMutation = extended.useRemoveDomainPermissionSubscriptionMutation;
 
+/**
+ * Test a domain permission subscription to see if data can be fetched + parsed.
+ */
+const useTestDomainPermissionSubscriptionMutation = extended.useTestDomainPermissionSubscriptionMutation;
+
 export {
 	useLazySearchDomainPermissionSubscriptionsQuery,
 	useGetDomainPermissionSubscriptionQuery,
@@ -161,4 +174,5 @@ export {
 	useGetDomainPermissionSubscriptionsPreviewQuery,
 	useUpdateDomainPermissionSubscriptionMutation,
 	useRemoveDomainPermissionSubscriptionMutation,
+	useTestDomainPermissionSubscriptionMutation,
 };
