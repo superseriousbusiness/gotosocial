@@ -238,7 +238,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	// Call the URI, only force
 	// if we're doing a dry run.
 	resp, err := tsport.DereferenceDomainPermissions(
-		ctx, permSub, !dry,
+		ctx, permSub, dry,
 	)
 	if err != nil {
 		// Couldn't get this one,
