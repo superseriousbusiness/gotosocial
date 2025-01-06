@@ -68,7 +68,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
-	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 
 	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
@@ -80,7 +80,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
-	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 
 	// Populate all historical edits for this status.
 	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
@@ -93,7 +93,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
-	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 }
 
 func (suite *StatusEditTestSuite) TestEditAddPoll() {
@@ -135,7 +135,7 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
-	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 	suite.NotNil(apiStatus.Poll)
 	suite.Equal(form.Poll.Options, xslices.Gather(nil, apiStatus.Poll.Options, func(opt apimodel.PollOption) string {
 		return opt.Title
@@ -151,7 +151,7 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
-	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 	suite.NotNil(latestStatus.Poll)
 	suite.Equal(form.Poll.Options, latestStatus.Poll.Options)
 
@@ -170,7 +170,7 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
-	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 	suite.Equal(status.Poll != nil, len(previousEdit.PollOptions) > 0)
 }
 
@@ -213,7 +213,7 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
-	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 	suite.NotNil(apiStatus.Poll)
 	suite.Equal(form.Poll.Options, xslices.Gather(nil, apiStatus.Poll.Options, func(opt apimodel.PollOption) string {
 		return opt.Title
@@ -229,7 +229,7 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
-	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 	suite.NotNil(latestStatus.Poll)
 	suite.Equal(form.Poll.Options, latestStatus.Poll.Options)
 
@@ -248,7 +248,7 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
-	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 	suite.Equal(status.Poll != nil, len(previousEdit.PollOptions) > 0)
 }
 
@@ -287,7 +287,7 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
-	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 	suite.Equal(form.MediaIDs, xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
 		return media.ID
 	}))
@@ -310,7 +310,7 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
-	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
 	suite.Equal(
 		xslices.Gather(nil, form.MediaAttributes, func(attr apimodel.AttachmentAttributesRequest) string {
@@ -338,7 +338,7 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
-	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
 	suite.Equal(
 		xslices.Gather(nil, status.Attachments, func(media *gtsmodel.MediaAttachment) string {
@@ -390,7 +390,7 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
-	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 	suite.Equal(form.MediaIDs, xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
 		return media.ID
 	}))
@@ -405,7 +405,7 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
-	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
 
 	// Populate all historical edits for this status.
@@ -419,7 +419,7 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
-	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
 }
 
@@ -456,7 +456,7 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
-	suite.NotEqual(util.FormatISO8601(status.UpdatedAt), *apiStatus.EditedAt)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 	suite.Equal(form.MediaIDs, xslices.Gather(nil, apiStatus.MediaAttachments, func(media *apimodel.Attachment) string {
 		return media.ID
 	}))
@@ -471,7 +471,7 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
-	suite.NotEqual(status.UpdatedAt, latestStatus.UpdatedAt)
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 	suite.Equal(form.MediaIDs, latestStatus.AttachmentIDs)
 
 	// Populate all historical edits for this status.
@@ -485,7 +485,7 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
-	suite.Equal(status.UpdatedAt, previousEdit.CreatedAt)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 	suite.Equal(status.AttachmentIDs, previousEdit.AttachmentIDs)
 }
 

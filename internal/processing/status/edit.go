@@ -147,7 +147,7 @@ func (p *Processor) Edit(
 	// Track status columns we
 	// need to update in database.
 	cols := make([]string, 2, 13)
-	cols[0] = "updated_at"
+	cols[0] = "edited_at"
 	cols[1] = "edits"
 
 	if contentChanged {
@@ -259,7 +259,7 @@ func (p *Processor) Edit(
 	edit.Language = status.Language
 	edit.Sensitive = status.Sensitive
 	edit.StatusID = status.ID
-	edit.CreatedAt = status.UpdatedAt
+	edit.CreatedAt = status.UpdatedAt()
 
 	// Copy existing media and descriptions.
 	edit.AttachmentIDs = status.AttachmentIDs
@@ -302,7 +302,7 @@ func (p *Processor) Edit(
 	status.Sensitive = &form.Sensitive
 	status.AttachmentIDs = form.MediaIDs
 	status.Attachments = media
-	status.UpdatedAt = now
+	status.EditedAt = now
 
 	if poll != nil {
 		// Set relevent fields for latest with poll.

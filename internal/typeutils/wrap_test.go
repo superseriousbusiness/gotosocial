@@ -131,7 +131,6 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
     "tag": [],
     "to": "https://www.w3.org/ns/activitystreams#Public",
     "type": "Note",
-    "updated": "2021-10-20T12:40:37+02:00",
     "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY"
   },
   "published": "2021-10-20T12:40:37+02:00",

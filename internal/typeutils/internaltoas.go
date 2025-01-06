@@ -486,7 +486,9 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 
 	// Set created / updated at properties.
 	ap.SetPublished(status, s.CreatedAt)
-	ap.SetUpdated(status, s.UpdatedAt)
+	if at := s.EditedAt; !at.IsZero() {
+		ap.SetUpdated(status, at)
+	}
 
 	// url
 	if s.URL != "" {

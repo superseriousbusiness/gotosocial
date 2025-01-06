@@ -28,7 +28,7 @@ import (
 type Status struct {
 	ID                       string             `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	EditedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   //
 	FetchedAt                time.Time          `bun:"type:timestamptz,nullzero"`                                   // when was item (remote) last fetched.
 	PinnedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // Status was pinned by owning account at this time.
 	URI                      string             `bun:",unique,nullzero,notnull"`                                    // activitypub URI of this status
@@ -297,6 +297,15 @@ func (s *Status) AllAttachmentIDs() []string {
 
 	// Deduplicate these IDs in case of shared media.
 	return xslices.Deduplicate(attachmentIDs)
+}
+
+// UpdatedAt returns latest time this status
+// was updated, either EditedAt or CreatedAt.
+func (s *Status) UpdatedAt() time.Time {
+	if s.EditedAt.IsZero() {
+		return s.CreatedAt
+	}
+	return s.EditedAt
 }
 
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.

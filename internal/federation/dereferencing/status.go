@@ -656,6 +656,10 @@ func (d *Dereferencer) fetchStatusMentions(
 	err error,
 ) {
 
+	// Get most-recent modified time
+	// for use in new mention ULIDs.
+	updatedAt := status.UpdatedAt()
+
 	// Allocate new slice to take the yet-to-be created mention IDs.
 	status.MentionIDs = make([]string, len(status.Mentions))
 
@@ -691,10 +695,10 @@ func (d *Dereferencer) fetchStatusMentions(
 
 		// This mention didn't exist yet.
 		// Generate new ID according to latest update.
-		mention.ID = id.NewULIDFromTime(status.UpdatedAt)
+		mention.ID = id.NewULIDFromTime(updatedAt)
 
-		// Set known further mention details.
-		mention.CreatedAt = status.UpdatedAt
+		// Set further mention details.
+		mention.CreatedAt = updatedAt
 		mention.OriginAccount = status.Account
 		mention.OriginAccountID = status.AccountID
 		mention.OriginAccountURI = status.AccountURI
@@ -1097,7 +1101,7 @@ func (d *Dereferencer) insertStatusPoll(ctx context.Context, status *gtsmodel.St
 	var err error
 
 	// Generate new ID for poll from latest updated time.
-	status.Poll.ID = id.NewULIDFromTime(status.UpdatedAt)
+	status.Poll.ID = id.NewULIDFromTime(status.UpdatedAt())
 
 	// Update the status<->poll links.
 	status.PollID = status.Poll.ID
@@ -1216,19 +1220,10 @@ func (d *Dereferencer) handleStatusEdit(
 	}
 
 	if edited {
-		// ensure that updated_at hasn't remained the same
-		// but an edit was received. manually intervene here.
-		if status.UpdatedAt.Equal(existing.UpdatedAt) ||
-			status.CreatedAt.Equal(status.UpdatedAt) {
-
-			// Simply use current fetching time.
-			status.UpdatedAt = status.FetchedAt
-		}
-
 		// Status has been editted since last
 		// we saw it, take snapshot of existing.
 		var edit gtsmodel.StatusEdit
-		edit.ID = id.NewULIDFromTime(status.UpdatedAt)
+		edit.ID = id.NewULIDFromTime(status.EditedAt)
 		edit.Content = existing.Content
 		edit.ContentWarning = existing.ContentWarning
 		edit.Text = existing.Text
@@ -1246,8 +1241,8 @@ func (d *Dereferencer) handleStatusEdit(
 			}
 		}
 
-		// Edit creation is last update time.
-		edit.CreatedAt = existing.UpdatedAt
+		// Edit creation is last edit time.
+		edit.CreatedAt = existing.EditedAt
 
 		if existing.Poll != nil {
 			// Poll only set if existing contained them.
@@ -1275,10 +1270,10 @@ func (d *Dereferencer) handleStatusEdit(
 		cols = append(cols, "edits")
 	}
 
-	if !existing.UpdatedAt.Equal(status.UpdatedAt) {
+	if !existing.EditedAt.Equal(status.EditedAt) {
 		// Whether status edited or not,
-		// updated_at column has changed.
-		cols = append(cols, "updated_at")
+		// edited_at column has changed.
+		cols = append(cols, "edited_at")
 	}
 
 	return cols, nil
