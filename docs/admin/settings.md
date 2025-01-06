@@ -34,11 +34,11 @@ Clicking on the username of the reported account opens that account in the 'Acco
 
 You can use this section to search for an account and perform moderation actions on it.
 
-### Federation
+### Domain Permissions
 
 ![List of suspended instances, with a field to filter/add new blocks. Below is a link to the bulk import/export interface](../public/admin-settings-federation.png)
 
-In the federation section you can create, delete, and review explicit domain blocks and domain allows.
+In the domain permissions section you can create, delete, and review domain blocks, domain allows, drafts, excludes, and subscriptions.
 
 For more detail on federation settings, and specifically how domain allows and domain blocks work in combination, please see [the federation modes section](./federation_modes.md), and [the domain blocks section](./domain_blocks.md).
 
@@ -46,19 +46,98 @@ For more detail on federation settings, and specifically how domain allows and d
 
 You can enter a domain to suspend in the search field, which will filter the list to show you if you already have a block for it.
 
-Clicking 'suspend' gives you a form to add a public and/or private comment, and submit to add the block. Adding a suspension will suspend all the currently known accounts on the instance, and prevent any new interactions with any user on the blocked instance.
+Clicking 'suspend' gives you a form to add a public and/or private comment, and submit to add the block.
+
+Adding a domain block will suspend all currently known accounts from that domain, and prevent any new interactions with the blocked domain.
 
 #### Domain Allows
 
 The domain allows section works much like the domain blocks section, described above, only for explicit domain allows rather than domain blocks.
 
-#### Bulk import/export
+#### Import/export
 
-Through the link at the bottom of the Federation section (or going to `/settings/admin/federation/import-export`) you can do bulk import/export of blocklists and allowlists.
+In this section you can do bulk import/export of domain permissions in JSON, CSV, or plaintext formats.
 
 ![List of domains included in an import, providing ways to select some or all of them, change their domains, and update the use of subdomains.](../public/admin-settings-federation-import-export.png)
 
 Upon importing a list, either through the input field or from a file, you can review the entries in the list before importing a subset. You'll also be warned for entries that use subdomains, providing an easy way to change them to the main domain.
+
+#### Drafts
+
+In this section you can create, search through, accept, and reject domain permission drafts.
+
+Domain permission drafts are domain permissions that have been proposed (either via manual creation or as an entry from a subscribed block / allow list), but have not yet come into force.
+
+Until it is accepted, a domain permission draft will not have any effect on federation with the domain it targets. Upon acceptance, it will be converted into either a domain block or a domain allow, and start being enforced.
+
+#### Excludes
+
+In this section, you can create, search through, and remove domain permission excludes.
+
+Domain permission excludes prevent permissions for a domain (and all subdomains) from being automatically managed by domain permission subscriptions.
+
+For example, if you create an exclude entry for the domain `example.org`, then a blocklist or allowlist subscription will exclude entries for `example.org` and any of its subdomains (`sub.example.org`, `another.sub.example.org` etc.) when creating domain permission drafts and domain blocks/allows.
+
+This functionality allows you to manually manage permissions for excluded domains, in cases where you know you definitely do or don't want to federate with a given domain, no matter what entries are contained in a domain permission subscription.
+
+Note that by itself, creation of an exclude entry for a given domain does not affect federation with that domain at all, it is only useful in combination with permission subscriptions.
+
+#### Subscriptions
+
+In this section, you can create, search through, edit, test, and remove domain permission subscriptions.
+
+Domain permission subscriptions allow you to specify a URL at which a permission list is hosted. Every 24hrs at 11pm (by default), your instance will fetch and parse each subscribed list, and create domain permissions (or domain permission drafts) based on entries in the lists.
+
+##### Title
+
+You can optionally use the title field to set a title for the subscription, as a reminder for yourself and other admins.
+
+For example, you might subscribe to a list at `https://lists.example.org/baddies.csv` and set the title of the subscription to something that reflects the contents of that list, such as "Basic block list (worst of the worst)", or similar.
+
+##### Subscription Priority
+
+When you specify multiple domain permission subscriptions, they will be fetched and parsed in order of priority, from highest priority (255) to lowest priority (0).
+
+Permissions discovered on lists higher up in the priority ranking will override permissions on lists lower down in the priority ranking.
+
+For more information on priority, please see the separate [domain permission subscriptions](./domain_permission_subscriptions.md) document.
+
+##### Permission Type
+
+You can use this dropdown to select whether permissions discovered at the list URL should be created as domain blocks, or domain allows.
+
+##### Content Type
+
+You can use this dropdown to select the content type of the list at the subscribed URL.
+
+Use CSV for Mastodon-style permission lists, plain for plaintext lists of domain names, or JSON for json-exported lists.
+
+##### Basic Auth
+
+Check this box to provide a basic auth username and/or password credential for the subscribed list, which will be sent along with each request to fetch the list.
+
+##### Adopt Orphan Permissions
+
+If you check this box, then any existing domain permissions will become managed by this subscription in the following circumstances:
+
+1. They don't already have a subscription ID (ie., they're not managed by any domain permission subscription).
+2. They match a domain permission included in the list at the URL of this subscription.
+
+For more information on orphan permissions, please see the separate [domain permission subscriptions](./domain_permission_subscriptions.md) document.
+
+##### Create Permissions as Drafts
+
+With this box checked (default), any permissions created by this subscription will be created as **drafts** which require manual approval to come into force.
+
+It is recommended to leave this box checked unless you absolutely trust the subscribed list, to avoid inadvertent blocking or allowing of domains you'd rather not block or allow.
+
+##### Test a Subscription
+
+To test whether a subscription can be successfully parsed, first create the subscription, then in the detailed view for that subscription, click on the "Test" button.
+
+If your instance is able to fetch and parse permissions at the subscription URI, then you will see a list of these after clicking "Test". Otherwise, you will see an error message.
+
+![Screenshot of the detailed view of a subscription, with arrows pointing to the test section near the bottom.](../public/admin-settings-federation-subscription-test.png)
 
 ## Administration
 
