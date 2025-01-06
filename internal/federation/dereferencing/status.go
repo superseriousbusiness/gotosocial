@@ -520,8 +520,6 @@ func (d *Dereferencer) enrichStatus(
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 	latestStatus.PinnedAt = status.PinnedAt
-	latestStatus.EditIDs = status.EditIDs
-	latestStatus.Edits = status.Edits
 
 	// Carry-over approvals. Remote instances might not yet
 	// serve statuses with the `approved_by` field, but we
@@ -1142,6 +1140,10 @@ func (d *Dereferencer) handleStatusEdit(
 	err error,
 ) {
 	var edited bool
+
+	// Copy previous status edit columns.
+	status.EditIDs = existing.EditIDs
+	status.Edits = existing.Edits
 
 	// Preallocate max slice length.
 	cols = make([]string, 1, 13)
