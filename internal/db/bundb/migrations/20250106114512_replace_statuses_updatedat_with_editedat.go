@@ -78,7 +78,7 @@ func init() {
 			}
 
 			count, _ := res.RowsAffected()
-			log.Info(ctx, "updated %d statuses", count)
+			log.Infof(ctx, "updated %d statuses", count)
 
 			log.Info(ctx, "removing statuses.updated_at column...")
 			_, err = tx.NewDropColumn().Model((*oldmodel.Status)(nil)).
