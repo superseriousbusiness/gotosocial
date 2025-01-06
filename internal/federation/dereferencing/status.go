@@ -520,6 +520,8 @@ func (d *Dereferencer) enrichStatus(
 	latestStatus.FetchedAt = time.Now()
 	latestStatus.Local = status.Local
 	latestStatus.PinnedAt = status.PinnedAt
+	latestStatus.EditIDs = status.EditIDs
+	latestStatus.Edits = status.Edits
 
 	// Carry-over approvals. Remote instances might not yet
 	// serve statuses with the `approved_by` field, but we
