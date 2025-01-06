@@ -1100,8 +1100,12 @@ func (d *Dereferencer) handleStatusPoll(
 func (d *Dereferencer) insertStatusPoll(ctx context.Context, status *gtsmodel.Status) error {
 	var err error
 
-	// Generate new ID for poll from latest updated time.
-	status.Poll.ID = id.NewULIDFromTime(status.UpdatedAt())
+	// Get most-recent modified time
+	// which will be poll creation time.
+	createdAt := status.UpdatedAt()
+
+	// Generate new ID for poll from createdAt.
+	status.Poll.ID = id.NewULIDFromTime(createdAt)
 
 	// Update the status<->poll links.
 	status.PollID = status.Poll.ID
@@ -1220,16 +1224,21 @@ func (d *Dereferencer) handleStatusEdit(
 	}
 
 	if edited {
+		// Get previous-most-recent modified time,
+		// which will be this edit's creation time.
+		createdAt := existing.UpdatedAt()
+
 		// Status has been editted since last
 		// we saw it, take snapshot of existing.
 		var edit gtsmodel.StatusEdit
-		edit.ID = id.NewULIDFromTime(status.EditedAt)
+		edit.ID = id.NewULIDFromTime(createdAt)
 		edit.Content = existing.Content
 		edit.ContentWarning = existing.ContentWarning
 		edit.Text = existing.Text
 		edit.Language = existing.Language
 		edit.Sensitive = existing.Sensitive
 		edit.StatusID = status.ID
+		edit.CreatedAt = createdAt
 
 		// Copy existing attachments and descriptions.
 		edit.AttachmentIDs = existing.AttachmentIDs
@@ -1240,9 +1249,6 @@ func (d *Dereferencer) handleStatusEdit(
 				edit.AttachmentDescriptions[i] = attach.Description
 			}
 		}
-
-		// Edit creation is last edit time.
-		edit.CreatedAt = existing.EditedAt
 
 		if existing.Poll != nil {
 			// Poll only set if existing contained them.

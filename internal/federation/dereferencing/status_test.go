@@ -337,7 +337,7 @@ func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 				AttachmentIDs:  testStatus.AttachmentIDs,
 				PollOptions:    getPollOptions(testStatus),
 				PollVotes:      getPollVotes(testStatus),
-				CreatedAt:      testStatus.EditedAt,
+				CreatedAt:      testStatus.UpdatedAt(),
 			},
 		)
 	}
