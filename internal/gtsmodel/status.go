@@ -28,7 +28,7 @@ import (
 type Status struct {
 	ID                       string             `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	EditedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   //
+	EditedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // when this status was last edited (if set)
 	FetchedAt                time.Time          `bun:"type:timestamptz,nullzero"`                                   // when was item (remote) last fetched.
 	PinnedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // Status was pinned by owning account at this time.
 	URI                      string             `bun:",unique,nullzero,notnull"`                                    // activitypub URI of this status
