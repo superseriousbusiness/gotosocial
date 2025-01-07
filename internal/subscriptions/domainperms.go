@@ -600,9 +600,10 @@ func permsFromCSV(
 		// Instantiate the permission
 		// as either block or allow.
 		var perm gtsmodel.DomainPermission
-		if permType == gtsmodel.DomainPermissionBlock {
+		switch permType {
+		case gtsmodel.DomainPermissionBlock:
 			perm = &gtsmodel.DomainBlock{Domain: domain}
-		} else {
+		case gtsmodel.DomainPermissionAllow:
 			perm = &gtsmodel.DomainAllow{Domain: domain}
 		}
 
@@ -660,9 +661,10 @@ func permsFromJSON(
 		// Instantiate the permission
 		// as either block or allow.
 		var perm gtsmodel.DomainPermission
-		if permType == gtsmodel.DomainPermissionBlock {
+		switch permType {
+		case gtsmodel.DomainPermissionBlock:
 			perm = &gtsmodel.DomainBlock{Domain: domain}
-		} else {
+		case gtsmodel.DomainPermissionAllow:
 			perm = &gtsmodel.DomainAllow{Domain: domain}
 		}
 
@@ -711,9 +713,10 @@ func permsFromPlain(
 		// Instantiate the permission
 		// as either block or allow.
 		var perm gtsmodel.DomainPermission
-		if permType == gtsmodel.DomainPermissionBlock {
+		switch permType {
+		case gtsmodel.DomainPermissionBlock:
 			perm = &gtsmodel.DomainBlock{Domain: domain}
-		} else {
+		case gtsmodel.DomainPermissionAllow:
 			perm = &gtsmodel.DomainAllow{Domain: domain}
 		}
 
@@ -758,13 +761,16 @@ func (s *Subscriptions) existingCovered(
 	covered bool,
 	err error,
 ) {
-	// Check for existing permission of appropriate type.
+	// Check for existing perm
+	// of appropriate type.
 	var dbErr error
-	if permType == gtsmodel.DomainPermissionBlock {
+	switch permType {
+	case gtsmodel.DomainPermissionBlock:
 		existingPerm, dbErr = s.state.DB.GetDomainBlock(ctx, domain)
-	} else {
+	case gtsmodel.DomainPermissionAllow:
 		existingPerm, dbErr = s.state.DB.GetDomainAllow(ctx, domain)
 	}
+
 	if dbErr != nil && !errors.Is(dbErr, db.ErrNoEntries) {
 		// Real db error.
 		err = dbErr
