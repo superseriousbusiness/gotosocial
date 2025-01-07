@@ -142,6 +142,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 	permType gtsmodel.DomainPermissionType,
 ) {
 	log.Info(ctx, "start")
+	defer log.Info(ctx, "finished")
 
 	// Get permission subscriptions in priority order (highest -> lowest).
 	permSubs, err := s.state.DB.GetDomainPermissionSubscriptionsByPriority(ctx, permType)
@@ -194,8 +195,6 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 			return
 		}
 	}
-
-	log.Info(ctx, "finished")
 }
 
 // ProcessDomainPermissionSubscription processes one domain permission
