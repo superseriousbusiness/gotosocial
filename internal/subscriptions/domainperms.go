@@ -147,7 +147,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 	permSubs, err := s.state.DB.GetDomainPermissionSubscriptionsByPriority(ctx, permType)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		// Real db error.
-		log.Error(ctx, err)
+		log.Errorf(ctx, "db error getting domain perm subs by priority: %v", err)
 		return
 	}
 
@@ -161,7 +161,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 	// we can reuse this for each HTTP call.
 	tsport, err := s.transportController.NewTransportForUsername(ctx, "")
 	if err != nil {
-		log.Error(ctx, err)
+		log.Errorf(ctx, "error getting transport for instance account: %v", err)
 		return
 	}
 
@@ -179,7 +179,10 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 		)
 		if err != nil {
 			// Real db error.
-			log.Error(ctx, err)
+			log.Errorf(ctx,
+				"error processing domain permission subscription %s: %v",
+				permSub.URI, err,
+			)
 			return
 		}
 
@@ -187,7 +190,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 		err = s.state.DB.UpdateDomainPermissionSubscription(ctx, permSub)
 		if err != nil {
 			// Real db error.
-			log.Error(ctx, err)
+			log.Errorf(ctx, "db error updating domain perm sub: %v", err)
 			return
 		}
 	}
