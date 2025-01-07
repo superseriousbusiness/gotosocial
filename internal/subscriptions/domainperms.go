@@ -581,10 +581,10 @@ func (s *Subscriptions) permsFromCSV(
 		}
 
 		var (
-			domainRaw      = record[0]
-			severity       = record[1]
-			publicComment  = record[4]
-			obfuscate, err = strconv.ParseBool(record[5])
+			domainRaw     = record[0]
+			severity      = record[1]
+			publicComment = record[4]
+			obfuscateStr  = record[5]
 		)
 
 		if severity != "suspend" {
@@ -592,6 +592,7 @@ func (s *Subscriptions) permsFromCSV(
 			continue
 		}
 
+		obfuscate, err := strconv.ParseBool(obfuscateStr)
 		if err != nil {
 			l.Warnf("couldn't parse obfuscate field of record: %+v", record)
 			continue
