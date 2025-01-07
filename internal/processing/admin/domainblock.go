@@ -77,10 +77,10 @@ func (p *Processor) createDomainBlock(
 		Text:           domainBlock.PrivateComment,
 	}
 
-	if errWithCode := p.state.Actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
 		action,
-		p.state.Actions.DomainBlockF(action.ID, domainBlock),
+		p.state.AdminActions.DomainBlockF(action.ID, domainBlock),
 	); errWithCode != nil {
 		return nil, action.ID, errWithCode
 	}
@@ -133,10 +133,10 @@ func (p *Processor) deleteDomainBlock(
 		AccountID:      adminAcct.ID,
 	}
 
-	if errWithCode := p.state.Actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
 		action,
-		p.state.Actions.DomainUnblockF(action.ID, domainBlock),
+		p.state.AdminActions.DomainUnblockF(action.ID, domainBlock),
 	); errWithCode != nil {
 		return nil, action.ID, errWithCode
 	}

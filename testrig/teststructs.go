@@ -18,7 +18,7 @@
 package testrig
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/actions"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
@@ -60,7 +60,7 @@ func SetupTestStructs(
 
 	db := NewTestDB(&state)
 	state.DB = db
-	state.Actions = actions.New(db, &state.Workers)
+	state.AdminActions = admin.New(db, &state.Workers)
 
 	storage := NewInMemoryStorage()
 	state.Storage = storage

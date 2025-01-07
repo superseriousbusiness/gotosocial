@@ -19,7 +19,7 @@ package status_test
 
 import (
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/actions"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
@@ -85,7 +85,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.typeConverter = typeutils.NewConverter(&suite.state)
 	suite.state.DB = suite.db
-	suite.state.Actions = actions.New(suite.state.DB, &suite.state.Workers)
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 
 	suite.tc = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 	suite.storage = testrig.NewInMemoryStorage()

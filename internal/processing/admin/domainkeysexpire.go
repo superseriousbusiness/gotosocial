@@ -48,10 +48,10 @@ func (p *Processor) DomainKeysExpire(
 		AccountID:      adminAcct.ID,
 	}
 
-	if errWithCode := p.state.Actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
 		action,
-		p.state.Actions.DomainKeysExpireF(domain),
+		p.state.AdminActions.DomainKeysExpireF(domain),
 	); errWithCode != nil {
 		return action.ID, errWithCode
 	}

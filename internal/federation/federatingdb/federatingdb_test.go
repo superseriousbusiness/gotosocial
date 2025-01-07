@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/actions"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
@@ -92,7 +92,7 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 
 	suite.state.DB = suite.db
-	suite.state.Actions = actions.New(suite.state.DB, &suite.state.Workers)
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 }
 
 func (suite *FederatingDBTestSuite) TearDownTest() {

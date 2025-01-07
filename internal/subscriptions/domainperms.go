@@ -32,7 +32,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 
 	"github.com/miekg/dns"
-	"github.com/superseriousbusiness/gotosocial/internal/actions"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -434,7 +434,7 @@ func (s *Subscriptions) processDomainPermission(
 		var (
 			insertF func() error
 			action  *gtsmodel.AdminAction
-			actionF actions.AdminActionF
+			actionF admin.AdminActionF
 		)
 
 		if permSub.PermissionType == gtsmodel.DomainPermissionBlock {
@@ -458,7 +458,7 @@ func (s *Subscriptions) processDomainPermission(
 				Type:           gtsmodel.AdminActionSuspend,
 				AccountID:      permSub.CreatedByAccountID,
 			}
-			actionF = s.state.Actions.DomainBlockF(action.ID, domainBlock)
+			actionF = s.state.AdminActions.DomainBlockF(action.ID, domainBlock)
 
 		} else {
 			// Prepare to insert + process an allow.
@@ -481,7 +481,7 @@ func (s *Subscriptions) processDomainPermission(
 				Type:           gtsmodel.AdminActionUnsuspend,
 				AccountID:      permSub.CreatedByAccountID,
 			}
-			actionF = s.state.Actions.DomainAllowF(action.ID, domainAllow)
+			actionF = s.state.AdminActions.DomainAllowF(action.ID, domainAllow)
 		}
 
 		// Insert the new perm in the db.
@@ -493,7 +493,7 @@ func (s *Subscriptions) processDomainPermission(
 
 		// Run admin action to process
 		// side effects of permission.
-		err = s.state.Actions.Run(ctx, action, actionF)
+		err = s.state.AdminActions.Run(ctx, action, actionF)
 
 	case existingPerm.GetSubscriptionID() != "" || *permSub.AdoptOrphans:
 		// Perm exists but we should adopt/take

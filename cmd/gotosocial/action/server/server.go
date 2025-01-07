@@ -32,7 +32,7 @@ import (
 	"github.com/KimMachineGun/automemlimit/memlimit"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
-	"github.com/superseriousbusiness/gotosocial/internal/actions"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
@@ -168,7 +168,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Set Actions on state, providing workers to
 	// Actions as well for triggering side effects.
-	state.Actions = actions.New(dbService, &state.Workers)
+	state.AdminActions = admin.New(dbService, &state.Workers)
 
 	// Ensure necessary database instance prerequisites exist.
 	if err := dbService.CreateInstanceAccount(ctx); err != nil {

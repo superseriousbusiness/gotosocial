@@ -19,7 +19,7 @@ package state
 
 import (
 	"codeberg.org/gruf/go-mutexes"
-	"github.com/superseriousbusiness/gotosocial/internal/actions"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -68,7 +68,7 @@ type State struct {
 
 	// Struct to manage running admin
 	// actions (and locks thereupon).
-	Actions *actions.Actions
+	AdminActions *admin.Actions
 
 	// prevent pass-by-value.
 	_ nocopy

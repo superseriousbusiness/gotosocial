@@ -76,10 +76,10 @@ func (p *Processor) createDomainAllow(
 		AccountID:      adminAcct.ID,
 	}
 
-	if errWithCode := p.state.Actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
 		action,
-		p.state.Actions.DomainAllowF(action.ID, domainAllow),
+		p.state.AdminActions.DomainAllowF(action.ID, domainAllow),
 	); errWithCode != nil {
 		return nil, action.ID, errWithCode
 	}
@@ -132,10 +132,10 @@ func (p *Processor) deleteDomainAllow(
 		AccountID:      adminAcct.ID,
 	}
 
-	if errWithCode := p.state.Actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
 		action,
-		p.state.Actions.DomainUnallowF(action.ID, domainAllow),
+		p.state.AdminActions.DomainUnallowF(action.ID, domainAllow),
 	); errWithCode != nil {
 		return nil, action.ID, errWithCode
 	}

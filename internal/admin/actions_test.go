@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package actions_test
+package admin_test
 
 import (
 	"context"
@@ -75,7 +75,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 	key2 := action2.Key()
 	suite.Equal("account/01H90S1CXQ97J9625C5YBXZWGT", key2)
 
-	errWithCode := testStructs.State.Actions.Run(
+	errWithCode := testStructs.State.AdminActions.Run(
 		ctx,
 		action1,
 		func(ctx context.Context) gtserror.MultiError {
@@ -88,7 +88,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// While first action is sleeping, try to
 	// process another with the same key.
-	errWithCode = testStructs.State.Actions.Run(
+	errWithCode = testStructs.State.AdminActions.Run(
 		ctx,
 		action2,
 		func(ctx context.Context) gtserror.MultiError {
@@ -104,13 +104,13 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return testStructs.State.Actions.TotalRunning() == 0
+		return testStructs.State.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
 
 	// Try again.
-	errWithCode = testStructs.State.Actions.Run(
+	errWithCode = testStructs.State.AdminActions.Run(
 		ctx,
 		action2,
 		func(ctx context.Context) gtserror.MultiError {
@@ -121,7 +121,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return testStructs.State.Actions.TotalRunning() == 0
+		return testStructs.State.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
@@ -143,7 +143,7 @@ func (suite *ActionsTestSuite) TestActionWithErrors() {
 		AccountID:      "01H90S1ZZXP4N74H4A9RVW1MRP",
 	}
 
-	errWithCode := testStructs.State.Actions.Run(
+	errWithCode := testStructs.State.AdminActions.Run(
 		ctx,
 		action,
 		func(ctx context.Context) gtserror.MultiError {
@@ -158,7 +158,7 @@ func (suite *ActionsTestSuite) TestActionWithErrors() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return testStructs.State.Actions.TotalRunning() == 0
+		return testStructs.State.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
