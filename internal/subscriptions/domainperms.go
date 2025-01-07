@@ -18,6 +18,7 @@
 package subscriptions
 
 import (
+	"bufio"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -687,20 +688,24 @@ func permsFromPlain(
 	permType gtsmodel.DomainPermissionType,
 	body io.ReadCloser,
 ) ([]gtsmodel.DomainPermission, error) {
-	// Read body into memory as bytes.
-	b, err := io.ReadAll(body)
+	// Scan + split by line.
+	sc := bufio.NewScanner(body)
+
+	// Read into domains
+	// line by line.
+	var domains []string
+	for sc.Scan() {
+		domains = append(domains, sc.Text())
+	}
 
 	// Whatever happened, we're
 	// done with the body now.
 	body.Close()
 
 	// Check if error reading body.
-	if err != nil {
+	if err := sc.Err(); err != nil {
 		return nil, gtserror.NewfAt(3, "error decoding into plain: %w", err)
 	}
-
-	// Coerce to newline-separated list of domains.
-	domains := strings.Split(string(b), "\n")
 
 	// Convert raw domains to permissions.
 	perms := make([]gtsmodel.DomainPermission, 0, len(domains))
