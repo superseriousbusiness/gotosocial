@@ -168,15 +168,13 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 	for i, permSub := range permSubs {
 		// Higher priority permission subs = everything
 		// above this permission sub in the slice.
-		getHigherPrios := func() ([]*gtsmodel.DomainPermissionSubscription, error) {
-			return permSubs[:i], nil
-		}
+		higherPrios := permSubs[:i]
 
 		_, err := s.ProcessDomainPermissionSubscription(
 			ctx,
 			permSub,
 			tsport,
-			getHigherPrios,
+			higherPrios,
 			false, // Not dry. Wet, if you will.
 		)
 		if err != nil {
@@ -221,7 +219,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	ctx context.Context,
 	permSub *gtsmodel.DomainPermissionSubscription,
 	tsport transport.Transport,
-	getHigherPrios func() ([]*gtsmodel.DomainPermissionSubscription, error),
+	higherPrios []*gtsmodel.DomainPermissionSubscription,
 	dry bool,
 ) ([]gtsmodel.DomainPermission, error) {
 	l := log.
@@ -310,14 +308,6 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	permSub.SuccessfullyFetchedAt = permSub.FetchedAt
 	permSub.ETag = resp.ETag
 	permSub.Error = ""
-
-	// Need a list of higher priority subscriptions
-	// to ensure we don't create permissions wrongly.
-	higherPrios, err := getHigherPrios()
-	if err != nil {
-		// Proper db error.
-		return nil, err
-	}
 
 	// Keep track of which domain perms are
 	// created (or would be, if dry == true).

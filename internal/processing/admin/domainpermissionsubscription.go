@@ -322,17 +322,16 @@ func (p *Processor) DomainPermissionSubscriptionTest(
 		},
 	)
 
-	// Everything *before* the targeted subscription has a higher priority.
-	getHigherPrios := func() ([]*gtsmodel.DomainPermissionSubscription, error) {
-		return permSubs[:index], nil
-	}
-
 	// Get a transport for calling permSub.URI.
 	tsport, err := p.transport.NewTransportForUsername(ctx, acct.Username)
 	if err != nil {
 		err := gtserror.Newf("error getting transport: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	// Everything *before* the targeted
+	// subscription has a higher priority.
+	higherPrios := permSubs[:index]
 
 	// Call the permSub.URI and parse a list of perms from it.
 	// Any error returned here is a "real" one, not an error
@@ -341,7 +340,7 @@ func (p *Processor) DomainPermissionSubscriptionTest(
 		ctx,
 		permSub,
 		tsport,
-		getHigherPrios,
+		higherPrios,
 		true, // Dry run.
 	)
 	if err != nil {
