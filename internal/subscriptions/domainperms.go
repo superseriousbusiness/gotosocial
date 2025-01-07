@@ -272,15 +272,15 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 
 	// text/csv
 	case gtsmodel.DomainPermSubContentTypeCSV:
-		wantedPerms, err = s.permsFromCSV(l, permSub.PermissionType, resp.Body)
+		wantedPerms, err = permsFromCSV(l, permSub.PermissionType, resp.Body)
 
 	// application/json
 	case gtsmodel.DomainPermSubContentTypeJSON:
-		wantedPerms, err = s.permsFromJSON(l, permSub.PermissionType, resp.Body)
+		wantedPerms, err = permsFromJSON(l, permSub.PermissionType, resp.Body)
 
 	// text/plain
 	case gtsmodel.DomainPermSubContentTypePlain:
-		wantedPerms, err = s.permsFromPlain(l, permSub.PermissionType, resp.Body)
+		wantedPerms, err = permsFromPlain(l, permSub.PermissionType, resp.Body)
 	}
 
 	if err != nil {
@@ -516,7 +516,7 @@ func (s *Subscriptions) processDomainPermission(
 	return created, nil
 }
 
-func (s *Subscriptions) permsFromCSV(
+func permsFromCSV(
 	l log.Entry,
 	permType gtsmodel.DomainPermissionType,
 	body io.ReadCloser,
@@ -615,7 +615,7 @@ func (s *Subscriptions) permsFromCSV(
 	return perms, nil
 }
 
-func (s *Subscriptions) permsFromJSON(
+func permsFromJSON(
 	l log.Entry,
 	permType gtsmodel.DomainPermissionType,
 	body io.ReadCloser,
@@ -675,7 +675,7 @@ func (s *Subscriptions) permsFromJSON(
 	return perms, nil
 }
 
-func (s *Subscriptions) permsFromPlain(
+func permsFromPlain(
 	l log.Entry,
 	permType gtsmodel.DomainPermissionType,
 	body io.ReadCloser,
