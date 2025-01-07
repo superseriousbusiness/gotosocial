@@ -426,7 +426,7 @@ func (s *Subscriptions) processDomainPermission(
 		var (
 			insertF func() error
 			action  *gtsmodel.AdminAction
-			actionF admin.AdminActionF
+			actionF admin.ActionF
 		)
 
 		if permSub.PermissionType == gtsmodel.DomainPermissionBlock {

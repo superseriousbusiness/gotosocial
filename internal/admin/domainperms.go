@@ -38,7 +38,7 @@ import (
 func (a *Actions) DomainAllowF(
 	actionID string,
 	domainAllow *gtsmodel.DomainAllow,
-) AdminActionF {
+) ActionF {
 	return func(ctx context.Context) gtserror.MultiError {
 		l := log.
 			WithContext(ctx).
@@ -104,7 +104,7 @@ func (a *Actions) domainAllowSideEffects(
 func (a *Actions) DomainUnallowF(
 	actionID string,
 	domainAllow *gtsmodel.DomainAllow,
-) AdminActionF {
+) ActionF {
 	return func(ctx context.Context) gtserror.MultiError {
 		l := log.
 			WithContext(ctx).
@@ -169,7 +169,7 @@ func (a *Actions) domainUnallowSideEffects(
 func (a *Actions) DomainBlockF(
 	actionID string,
 	domainBlock *gtsmodel.DomainBlock,
-) AdminActionF {
+) ActionF {
 	return func(ctx context.Context) gtserror.MultiError {
 		l := log.
 			WithContext(ctx).
@@ -250,7 +250,7 @@ func (a *Actions) domainBlockSideEffects(
 func (a *Actions) DomainUnblockF(
 	actionID string,
 	domainBlock *gtsmodel.DomainBlock,
-) AdminActionF {
+) ActionF {
 	return func(ctx context.Context) gtserror.MultiError {
 		l := log.
 			WithContext(ctx).

@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-func (a *Actions) DomainKeysExpireF(domain string) AdminActionF {
+func (a *Actions) DomainKeysExpireF(domain string) ActionF {
 	return func(ctx context.Context) gtserror.MultiError {
 		var (
 			expiresAt = time.Now()

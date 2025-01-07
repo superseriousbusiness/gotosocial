@@ -69,7 +69,7 @@ func New(db db.DB, workers *workers.Workers) *Actions {
 	}
 }
 
-type AdminActionF func(context.Context) gtserror.MultiError
+type ActionF func(context.Context) gtserror.MultiError
 
 // Run runs the given admin action by executing the supplied function.
 //
@@ -83,7 +83,7 @@ type AdminActionF func(context.Context) gtserror.MultiError
 func (a *Actions) Run(
 	ctx context.Context,
 	adminAction *gtsmodel.AdminAction,
-	f AdminActionF,
+	f ActionF,
 ) gtserror.WithCode {
 	actionKey := adminAction.Key()
 
