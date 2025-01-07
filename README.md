@@ -225,10 +225,11 @@ Simply download the binary + assets (or Docker container), tweak your configurat
 
 ### Safety + security features
 
-- Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
-- Strict privacy enforcement for posts and strict blocking logic.
-- Import and export allow lists and deny lists. Subscribe to community-created block lists (think Ad blocker, but for federation!) (feature still in progress).
+- Strict privacy enforcement for posts, and strict blocking logic.
+- [Choose the visibility of posts on the web view of your profile](https://docs.gotosocial.org/en/latest/user_guide/settings/#visibility-level-of-posts-to-show-on-your-profile).
+- [Import, export](https://docs.gotosocial.org/en/latest/admin/settings/#importexport), and [subscribe](https://docs.gotosocial.org/en/latest/admin/domain_permission_subscriptions) to community-created domain allow and domain block lists.
 - HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
+- Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
 
 ### Various federation modes
 
