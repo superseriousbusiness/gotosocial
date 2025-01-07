@@ -472,7 +472,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypeCSV() {
 	suite.Zero(count)
 	suite.WithinDuration(time.Now(), permSub.FetchedAt, 1*time.Minute)
 	suite.Zero(permSub.SuccessfullyFetchedAt)
-	suite.Equal(`permsFromCSV: unexpected column headers in csv: [bumfaces.net]`, permSub.Error)
+	suite.Equal(`ProcessDomainPermissionSubscription: unexpected column headers in csv: [bumfaces.net]`, permSub.Error)
 }
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypePlain() {

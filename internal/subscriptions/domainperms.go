@@ -523,26 +523,15 @@ func permsFromCSV(
 	permType gtsmodel.DomainPermissionType,
 	body io.ReadCloser,
 ) ([]gtsmodel.DomainPermission, error) {
-	// Read body into memory as slice of CSV records.
-	records, err := csv.NewReader(body).ReadAll()
+	csvReader := csv.NewReader(body)
 
-	// Whatever happened, we're
-	// done with the body now.
-	body.Close()
-
-	// Check if error reading body.
+	// Read and validate column headers.
+	columnHeaders, err := csvReader.Read()
 	if err != nil {
-		return nil, gtserror.NewfAt(3, "error decoding into csv: %w", err)
+		body.Close()
+		return nil, gtserror.NewfAt(3, "error decoding csv column headers: %w", err)
 	}
 
-	// Make sure we actually
-	// have some records.
-	if len(records) == 0 {
-		return nil, nil
-	}
-
-	// Validate column headers.
-	columnHeaders := records[0]
 	if !slices.Equal(
 		columnHeaders,
 		[]string{
@@ -554,15 +543,29 @@ func permsFromCSV(
 			"#obfuscate",
 		},
 	) {
-		return nil, gtserror.Newf(
-			"unexpected column headers in csv: %+v",
-			columnHeaders,
-		)
+		body.Close()
+		err := gtserror.NewfAt(3, "unexpected column headers in csv: %+v", columnHeaders)
+		return nil, err
 	}
 
-	// Trim off column headers
-	// now they're validated.
-	records = records[1:]
+	// Read remaining CSV records.
+	records, err := csvReader.ReadAll()
+
+	// Totally done
+	// with body now.
+	body.Close()
+
+	// Check for decode error.
+	if err != nil {
+		err := gtserror.NewfAt(3, "error decoding body into csv: %w", err)
+		return nil, err
+	}
+
+	// Make sure we actually
+	// have some records.
+	if len(records) == 0 {
+		return nil, nil
+	}
 
 	// Convert records to permissions slice.
 	perms := make([]gtsmodel.DomainPermission, 0, len(records))
