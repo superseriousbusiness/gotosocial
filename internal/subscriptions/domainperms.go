@@ -60,7 +60,7 @@ func (s *Subscriptions) ScheduleJobs() error {
 
 	// Parse processFromStr as hh:mm.
 	// Resulting time will be on 1 Jan year zero.
-	cleanupFrom, err := time.Parse(hourMinute, processFromStr)
+	processFrom, err := time.Parse(hourMinute, processFromStr)
 	if err != nil {
 		return gtserror.Newf(
 			"error parsing '%s' in time format 'hh:mm': %w",
@@ -74,8 +74,8 @@ func (s *Subscriptions) ScheduleJobs() error {
 		now.Year(),
 		now.Month(),
 		now.Day(),
-		cleanupFrom.Hour(),
-		cleanupFrom.Minute(),
+		processFrom.Hour(),
+		processFrom.Minute(),
 		0,
 		0,
 		now.Location(),
@@ -116,7 +116,7 @@ func (s *Subscriptions) ScheduleJobs() error {
 	}
 
 	log.Infof(nil,
-		"scheduling instance subscriptions processing to run every %s, starting from %s; next clean will run at %s",
+		"scheduling instance subscriptions processing to run every %s, starting from %s; next processing will run at %s",
 		processEvery, processFromStr, firstProcessAt,
 	)
 
