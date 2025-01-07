@@ -1,0 +1,135 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package migrations
+
+import (
+	"context"
+	"slices"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
+	"github.com/uptrace/bun"
+)
+
+func init() {
+	up := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			var edits []*gtsmodel.StatusEdit
+
+			// Select all status edits that
+			// are not actually connected to
+			// the status they reference.
+			if err := tx.NewSelect().
+				Model(&edits).
+				Join("? AS ? ON ? = ?",
+					bun.Ident("statuses"),
+					bun.Ident("status"),
+					bun.Ident("status.id"),
+					bun.Ident("status_edit.status_id"),
+				).
+				Where("? NOT LIKE concat(?, ?, ?)",
+					bun.Ident("status.edits"),
+					bun.Ident("%"),
+					bun.Ident("status_edit.id"),
+					bun.Ident("%"),
+				).
+				Scan(ctx, &edits); err != nil {
+				return err
+			}
+
+			log.Infof(ctx, "relinking %d unlinked status edits", len(edits))
+
+			for _, edit := range edits {
+				var status gtsmodel.Status
+
+				// Select the list of edits
+				// CURRENTLY attached to the
+				// status that edit references.
+				if err := tx.NewSelect().
+					Model(&status).
+					Column("edits").
+					Where("? = ?",
+						bun.Ident("id"),
+						edit.StatusID,
+					).
+					Scan(ctx); err != nil {
+					return err
+				}
+
+				// Select only the ID and creation
+				// dates of all the other edits that
+				// are attached to referenced status.
+				if err := tx.NewSelect().
+					Model(&status.Edits).
+					Column("id", "created_at").
+					Where("? IN (?)",
+						bun.Ident("id"),
+						bun.In(status.EditIDs),
+					).
+					Scan(ctx); err != nil {
+					return err
+				}
+
+				// Append this unlinked edit to status' list
+				// of edits and then sort edits by creation.
+				status.Edits = append(status.Edits, edit)
+				slices.SortFunc(status.Edits, func(e1, e2 *gtsmodel.StatusEdit) int {
+					const k = -1 // oldest at 0th, newest at nth
+					switch c1, c2 := e1.CreatedAt, e2.CreatedAt; {
+					case c1.Before(c2):
+						return +k
+					case c2.Before(c1):
+						return -k
+					default:
+						return 0
+					}
+				})
+
+				// Extract the IDs from edits to update the status edit IDs.
+				editID := func(e *gtsmodel.StatusEdit) string { return e.ID }
+				status.EditIDs = xslices.Gather(nil, status.Edits, editID)
+
+				// Update the relevant status
+				// edit IDs column in database.
+				if _, err := tx.NewUpdate().
+					Model(&status).
+					Column("edits").
+					Where("? = ?",
+						bun.Ident("id"),
+						status.ID,
+					).
+					Exec(ctx); err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+	}
+
+	down := func(ctx context.Context, db *bun.DB) error {
+		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return nil
+		})
+	}
+
+	if err := Migrations.Register(up, down); err != nil {
+		panic(err)
+	}
+}
