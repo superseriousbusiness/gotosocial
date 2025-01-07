@@ -235,8 +235,8 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	// going to attempt this now.
 	permSub.FetchedAt = time.Now()
 
-	// Call the URI, only force
-	// if we're doing a dry run.
+	// Call the URI, and only skip
+	// cache if we're doing a dry run.
 	resp, err := tsport.DereferenceDomainPermissions(
 		ctx, permSub, dry,
 	)

@@ -44,7 +44,7 @@ type DereferenceDomainPermissionsResp struct {
 func (t *transport) DereferenceDomainPermissions(
 	ctx context.Context,
 	permSub *gtsmodel.DomainPermissionSubscription,
-	force bool,
+	skipCache bool,
 ) (*DereferenceDomainPermissionsResp, error) {
 	// Prepare new HTTP request to endpoint
 	req, err := http.NewRequestWithContext(ctx, "GET", permSub.URI, nil)
@@ -63,9 +63,9 @@ func (t *transport) DereferenceDomainPermissions(
 	req.Header.Add("Accept-Charset", "utf-8")
 	req.Header.Add("Accept", permSub.ContentType.String()+","+"*/*")
 
-	// If force is true, we want to skip setting Cache
+	// If skipCache is true, we want to skip setting Cache
 	// headers so that we definitely don't get a 304 back.
-	if !force {
+	if !skipCache {
 		// If we've successfully fetched this list
 		// before, set If-Modified-Since to last
 		// success to make the request conditional.
