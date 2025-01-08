@@ -37,7 +37,7 @@ func init() {
 			// the status they reference.
 			if err := tx.NewSelect().
 				Model(&edits).
-				Join("? AS ? ON ? = ?",
+				Join("JOIN ? AS ? ON ? = ?",
 					bun.Ident("statuses"),
 					bun.Ident("status"),
 					bun.Ident("status.id"),
@@ -47,6 +47,7 @@ func init() {
 					bun.Ident("status.edits"),
 					"%", bun.Ident("status_edit.id"), "%",
 				).
+				Column("id", "status_id", "created_at").
 				Scan(ctx, &edits); err != nil {
 				return err
 			}
