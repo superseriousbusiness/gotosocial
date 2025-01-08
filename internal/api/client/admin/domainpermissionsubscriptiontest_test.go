@@ -39,7 +39,7 @@ type DomainPermissionSubscriptionTestTestSuite struct {
 	AdminStandardTestSuite
 }
 
-func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubscriptionTest() {
+func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubscriptionTestCSV() {
 	var (
 		ctx         = context.Background()
 		testAccount = suite.testAccounts["admin_account"]
@@ -102,6 +102,85 @@ func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubs
   {
     "domain": "peepee.poopoo",
     "public_comment": "harassment"
+  },
+  {
+    "domain": "nothanks.com"
+  }
+]`, dst.String())
+
+	// No permissions should be created
+	// since this is a dry run / test.
+	blocked, err := suite.state.DB.AreDomainsBlocked(
+		ctx,
+		[]string{"bumfaces.net", "peepee.poopoo", "nothanks.com"},
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(blocked)
+}
+
+func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubscriptionTestText() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["admin_account"]
+		permSub     = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
+			Priority:           255,
+			Title:              "whatever!",
+			PermissionType:     gtsmodel.DomainPermissionBlock,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(true),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://lists.example.org/baddies.txt",
+			ContentType:        gtsmodel.DomainPermSubContentTypePlain,
+		}
+	)
+
+	// Create a subscription for a plaintext list of baddies.
+	err := suite.state.DB.PutDomainPermissionSubscription(ctx, permSub)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Prepare the request to the /test endpoint.
+	subPath := strings.ReplaceAll(
+		admin.DomainPermissionSubscriptionTestPath,
+		":id", permSub.ID,
+	)
+	path := "/api" + subPath
+	recorder := httptest.NewRecorder()
+	ginCtx := suite.newContext(recorder, http.MethodPost, nil, path, "application/json")
+	ginCtx.Params = gin.Params{
+		gin.Param{
+			Key:   apiutil.IDKey,
+			Value: permSub.ID,
+		},
+	}
+
+	// Trigger the handler.
+	suite.adminModule.DomainPermissionSubscriptionTestPOSTHandler(ginCtx)
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// Read the body back.
+	b, err := io.ReadAll(recorder.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	dst := new(bytes.Buffer)
+	if err := json.Indent(dst, b, "", "  "); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Ensure expected.
+	suite.Equal(`[
+  {
+    "domain": "bumfaces.net"
+  },
+  {
+    "domain": "peepee.poopoo"
   },
   {
     "domain": "nothanks.com"

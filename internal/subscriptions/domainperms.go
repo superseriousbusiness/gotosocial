@@ -345,6 +345,10 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 // processDomainPermission processes one wanted domain
 // permission discovered via a domain permission sub's URI.
 //
+// If dry == true, then the returned boolean indicates whether
+// the permission would actually be created. If dry == false,
+// the bool indicates whether the permission was created or adopted.
+//
 // Error will only be returned in case of an actual database
 // error, else the error will be logged and nil returned.
 func (s *Subscriptions) processDomainPermission(
@@ -355,22 +359,18 @@ func (s *Subscriptions) processDomainPermission(
 	higherPrios []*gtsmodel.DomainPermissionSubscription,
 	dry bool,
 ) (bool, error) {
-	// Set to true if domain permission
-	// actually (would be) created.
-	var created bool
-
 	// If domain is excluded from automatic
 	// permission creation, don't process it.
 	domain := wantedPerm.GetDomain()
 	excluded, err := s.state.DB.IsDomainPermissionExcluded(ctx, domain)
 	if err != nil {
 		// Proper db error.
-		return created, err
+		return false, err
 	}
 
 	if excluded {
 		l.Debug("domain is excluded, skipping")
-		return created, nil
+		return false, err
 	}
 
 	// Check if a permission already exists for
@@ -381,27 +381,27 @@ func (s *Subscriptions) processDomainPermission(
 	)
 	if err != nil {
 		// Proper db error.
-		return created, err
+		return false, err
 	}
 
 	if covered {
 		l.Debug("domain is covered by a higher-priority subscription, skipping")
-		return created, nil
+		return false, err
 	}
 
-	// At this point we know we
-	// should create the perm.
-	created = true
+	// True if a perm already exists.
+	// Note: != nil doesn't work because
+	// of Go interface idiosyncracies.
+	existing := !util.IsNil(existingPerm)
 
 	if dry {
-		// Don't do creation or side
-		// effects if we're dry running.
-		return created, nil
+		// If this is a dry run, return
+		// now without doing any DB changes.
+		return !existing, nil
 	}
 
 	// Handle perm creation differently depending
 	// on whether or not a perm already existed.
-	existing := !util.IsNil(existingPerm)
 	switch {
 
 	case !existing && *permSub.AsDraft:
@@ -512,11 +512,10 @@ func (s *Subscriptions) processDomainPermission(
 
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
 		// Proper db error.
-		return created, err
+		return false, err
 	}
 
-	created = true
-	return created, nil
+	return true, nil
 }
 
 func permsFromCSV(
@@ -533,19 +532,60 @@ func permsFromCSV(
 		return nil, gtserror.NewfAt(3, "error decoding csv column headers: %w", err)
 	}
 
-	if !slices.Equal(
-		columnHeaders,
-		[]string{
-			"#domain",
-			"#severity",
-			"#reject_media",
-			"#reject_reports",
-			"#public_comment",
-			"#obfuscate",
-		},
-	) {
+	var (
+		domainI        *int
+		severityI      *int
+		publicCommentI *int
+		obfuscateI     *int
+	)
+
+	for i, columnHeader := range columnHeaders {
+		// Remove leading # if present.
+		normal := strings.TrimLeft(columnHeader, "#")
+
+		// Find index of each column header we
+		// care about, ensuring no duplicates.
+		switch normal {
+
+		case "domain":
+			if domainI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate domain column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			domainI = &i
+
+		case "severity":
+			if severityI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate severity column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			severityI = &i
+
+		case "public_comment":
+			if publicCommentI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate public_comment column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			publicCommentI = &i
+
+		case "obfuscate":
+			if obfuscateI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate obfuscate column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			obfuscateI = &i
+		}
+	}
+
+	// Ensure we have at least a domain
+	// index, as that's the bare minimum.
+	if domainI == nil {
 		body.Close()
-		err := gtserror.NewfAt(3, "unexpected column headers in csv: %+v", columnHeaders)
+		err := gtserror.NewfAt(3, "no domain column header in csv: %+v", columnHeaders)
 		return nil, err
 	}
 
@@ -576,25 +616,19 @@ func permsFromCSV(
 			continue
 		}
 
-		var (
-			domainRaw     = record[0]
-			severity      = record[1]
-			publicComment = record[4]
-			obfuscateStr  = record[5]
-		)
-
-		if severity != "suspend" {
-			l.Warnf("skipping non-suspend record: %+v", record)
-			continue
-		}
-
-		obfuscate, err := strconv.ParseBool(obfuscateStr)
-		if err != nil {
-			l.Warnf("couldn't parse obfuscate field of record: %+v", record)
-			continue
+		// Skip records that specify severity
+		// that's not "suspend" (we don't support
+		// "silence" or "limit" or whatever yet).
+		if severityI != nil {
+			severity := record[*severityI]
+			if severity != "suspend" {
+				l.Warnf("skipping non-suspend record: %+v", record)
+				continue
+			}
 		}
 
 		// Normalize + validate domain.
+		domainRaw := record[*domainI]
 		domain, err := validateDomain(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
@@ -611,9 +645,21 @@ func permsFromCSV(
 			perm = &gtsmodel.DomainAllow{Domain: domain}
 		}
 
-		// Set remaining fields.
-		perm.SetPublicComment(publicComment)
-		perm.SetObfuscate(&obfuscate)
+		// Set remaining optional fields
+		// if they're present in the CSV.
+		if publicCommentI != nil {
+			perm.SetPublicComment(record[*publicCommentI])
+		}
+
+		if obfuscateI != nil {
+			obfuscate, err := strconv.ParseBool(record[*obfuscateI])
+			if err != nil {
+				l.Warnf("couldn't parse obfuscate field of record: %+v", record)
+				continue
+			}
+
+			perm.SetObfuscate(&obfuscate)
+		}
 
 		// We're done.
 		perms = append(perms, perm)

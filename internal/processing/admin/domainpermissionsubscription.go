@@ -272,6 +272,12 @@ func (p *Processor) DomainPermissionSubscriptionRemove(
 		return nil, gtserror.NewErrorNotFound(err, err.Error())
 	}
 
+	// Convert to API perm sub *before* doing the deletion.
+	apiPermSub, errWithCode := p.apiDomainPermSub(ctx, permSub)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
 	// TODO in next PR: if removeChildren, then remove all
 	// domain permissions that are children of this domain
 	// permission subscription. If not removeChildren, then
@@ -282,7 +288,7 @@ func (p *Processor) DomainPermissionSubscriptionRemove(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return p.apiDomainPermSub(ctx, permSub)
+	return apiPermSub, nil
 }
 
 func (p *Processor) DomainPermissionSubscriptionTest(
