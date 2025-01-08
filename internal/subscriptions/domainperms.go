@@ -389,16 +389,19 @@ func (s *Subscriptions) processDomainPermission(
 		return false, err
 	}
 
+	// True if a perm already exists.
+	// Note: != nil doesn't work because
+	// of Go interface idiosyncracies.
+	existing := !util.IsNil(existingPerm)
+
 	if dry {
 		// If this is a dry run, return
 		// now without doing any DB changes.
-		wouldBeCreated := !covered && existingPerm == nil
-		return wouldBeCreated, nil
+		return !existing, nil
 	}
 
 	// Handle perm creation differently depending
 	// on whether or not a perm already existed.
-	existing := !util.IsNil(existingPerm)
 	switch {
 
 	case !existing && *permSub.AsDraft:
