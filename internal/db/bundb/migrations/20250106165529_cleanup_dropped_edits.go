@@ -45,9 +45,7 @@ func init() {
 				).
 				Where("? NOT LIKE concat(?, ?, ?)",
 					bun.Ident("status.edits"),
-					bun.Ident("%"),
-					bun.Ident("status_edit.id"),
-					bun.Ident("%"),
+					"%", bun.Ident("status_edit.id"), "%",
 				).
 				Scan(ctx, &edits); err != nil {
 				return err
