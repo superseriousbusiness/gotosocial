@@ -19,6 +19,7 @@ package migrations
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -43,13 +44,13 @@ func init() {
 					bun.Ident("status.id"),
 					bun.Ident("status_edit.status_id"),
 				).
-				Where("? NOT LIKE concat(?, ?, ?)",
+				Where("CAST(? AS TEXT) NOT LIKE CONCAT(?, ?, ?)",
 					bun.Ident("status.edits"),
 					"%", bun.Ident("status_edit.id"), "%",
 				).
 				Column("id", "status_id", "created_at").
 				Scan(ctx, &edits); err != nil {
-				return err
+				return fmt.Errorf("error selecting unlinked edits: %w", err)
 			}
 
 			log.Infof(ctx, "relinking %d unlinked status edits", len(edits))
@@ -68,7 +69,7 @@ func init() {
 						edit.StatusID,
 					).
 					Scan(ctx); err != nil {
-					return err
+					return fmt.Errorf("error selecting status.edits: %w", err)
 				}
 
 				// Select only the ID and creation
@@ -82,12 +83,18 @@ func init() {
 						bun.In(status.EditIDs),
 					).
 					Scan(ctx); err != nil {
-					return err
+					return fmt.Errorf("error selecting other status edits: %w", err)
 				}
+
+				editID := func(e *gtsmodel.StatusEdit) string { return e.ID }
 
 				// Append this unlinked edit to status' list
 				// of edits and then sort edits by creation.
+				//
+				// On tiny off-chance we end up with dupes,
+				// we still deduplicate these status edits.
 				status.Edits = append(status.Edits, edit)
+				status.Edits = xslices.DeduplicateFunc(status.Edits, editID)
 				slices.SortFunc(status.Edits, func(e1, e2 *gtsmodel.StatusEdit) int {
 					const k = -1 // oldest at 0th, newest at nth
 					switch c1, c2 := e1.CreatedAt, e2.CreatedAt; {
@@ -101,7 +108,6 @@ func init() {
 				})
 
 				// Extract the IDs from edits to update the status edit IDs.
-				editID := func(e *gtsmodel.StatusEdit) string { return e.ID }
 				status.EditIDs = xslices.Gather(nil, status.Edits, editID)
 
 				// Update the relevant status
@@ -114,7 +120,7 @@ func init() {
 						status.ID,
 					).
 					Exec(ctx); err != nil {
-					return err
+					return fmt.Errorf("error updating status.edits: %w", err)
 				}
 			}
 
