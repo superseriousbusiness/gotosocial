@@ -117,7 +117,7 @@ func init() {
 					Column("edits").
 					Where("? = ?",
 						bun.Ident("id"),
-						status.ID,
+						edit.StatusID,
 					).
 					Exec(ctx); err != nil {
 					return fmt.Errorf("error updating status.edits: %w", err)
