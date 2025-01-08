@@ -533,19 +533,60 @@ func permsFromCSV(
 		return nil, gtserror.NewfAt(3, "error decoding csv column headers: %w", err)
 	}
 
-	if !slices.Equal(
-		columnHeaders,
-		[]string{
-			"#domain",
-			"#severity",
-			"#reject_media",
-			"#reject_reports",
-			"#public_comment",
-			"#obfuscate",
-		},
-	) {
+	var (
+		domainI        *int
+		severityI      *int
+		publicCommentI *int
+		obfuscateI     *int
+	)
+
+	for i, columnHeader := range columnHeaders {
+		// Remove leading # if present.
+		normal := strings.TrimLeft(columnHeader, "#")
+
+		// Find index of each column header we
+		// care about, ensuring no duplicates.
+		switch normal {
+
+		case "domain":
+			if domainI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate domain column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			domainI = &i
+
+		case "severity":
+			if severityI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate severity column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			severityI = &i
+
+		case "public_comment":
+			if publicCommentI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate public_comment column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			publicCommentI = &i
+
+		case "obfuscate":
+			if obfuscateI != nil {
+				body.Close()
+				err := gtserror.NewfAt(3, "duplicate obfuscate column header in csv: %+v", columnHeaders)
+				return nil, err
+			}
+			obfuscateI = &i
+		}
+	}
+
+	// Ensure we have at least a domain
+	// index, as that's the bare minimum.
+	if domainI == nil {
 		body.Close()
-		err := gtserror.NewfAt(3, "unexpected column headers in csv: %+v", columnHeaders)
+		err := gtserror.NewfAt(3, "no domain column header in csv: %+v", columnHeaders)
 		return nil, err
 	}
 
@@ -576,25 +617,19 @@ func permsFromCSV(
 			continue
 		}
 
-		var (
-			domainRaw     = record[0]
-			severity      = record[1]
-			publicComment = record[4]
-			obfuscateStr  = record[5]
-		)
-
-		if severity != "suspend" {
-			l.Warnf("skipping non-suspend record: %+v", record)
-			continue
-		}
-
-		obfuscate, err := strconv.ParseBool(obfuscateStr)
-		if err != nil {
-			l.Warnf("couldn't parse obfuscate field of record: %+v", record)
-			continue
+		// Skip records that specify severity
+		// that's not "suspend" (we don't support
+		// "silence" or "limit" or whatever yet).
+		if severityI != nil {
+			severity := record[*severityI]
+			if severity != "suspend" {
+				l.Warnf("skipping non-suspend record: %+v", record)
+				continue
+			}
 		}
 
 		// Normalize + validate domain.
+		domainRaw := record[*domainI]
 		domain, err := validateDomain(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
@@ -611,9 +646,21 @@ func permsFromCSV(
 			perm = &gtsmodel.DomainAllow{Domain: domain}
 		}
 
-		// Set remaining fields.
-		perm.SetPublicComment(publicComment)
-		perm.SetObfuscate(&obfuscate)
+		// Set remaining optional fields
+		// if they're present in the CSV.
+		if publicCommentI != nil {
+			perm.SetPublicComment(record[*publicCommentI])
+		}
+
+		if obfuscateI != nil {
+			obfuscate, err := strconv.ParseBool(record[*obfuscateI])
+			if err != nil {
+				l.Warnf("couldn't parse obfuscate field of record: %+v", record)
+				continue
+			}
+
+			perm.SetObfuscate(&obfuscate)
+		}
 
 		// We're done.
 		perms = append(perms, perm)

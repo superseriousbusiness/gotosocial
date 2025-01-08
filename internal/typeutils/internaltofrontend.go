@@ -2115,7 +2115,7 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	}
 
 	domainPerm.ID = d.GetID()
-	domainPerm.Obfuscate = *d.GetObfuscate()
+	domainPerm.Obfuscate = util.PtrOrZero(d.GetObfuscate())
 	domainPerm.PrivateComment = d.GetPrivateComment()
 	domainPerm.SubscriptionID = d.GetSubscriptionID()
 	domainPerm.CreatedBy = d.GetCreatedByAccountID()
