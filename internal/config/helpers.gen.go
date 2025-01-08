@@ -1000,6 +1000,62 @@ func GetInstanceLanguages() language.Languages { return global.GetInstanceLangua
 // SetInstanceLanguages safely sets the value for global configuration 'InstanceLanguages' field
 func SetInstanceLanguages(v language.Languages) { global.SetInstanceLanguages(v) }
 
+// GetInstanceSubscriptionsProcessFrom safely fetches the Configuration value for state's 'InstanceSubscriptionsProcessFrom' field
+func (st *ConfigState) GetInstanceSubscriptionsProcessFrom() (v string) {
+	st.mutex.RLock()
+	v = st.config.InstanceSubscriptionsProcessFrom
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceSubscriptionsProcessFrom safely sets the Configuration value for state's 'InstanceSubscriptionsProcessFrom' field
+func (st *ConfigState) SetInstanceSubscriptionsProcessFrom(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceSubscriptionsProcessFrom = v
+	st.reloadToViper()
+}
+
+// InstanceSubscriptionsProcessFromFlag returns the flag name for the 'InstanceSubscriptionsProcessFrom' field
+func InstanceSubscriptionsProcessFromFlag() string { return "instance-subscriptions-process-from" }
+
+// GetInstanceSubscriptionsProcessFrom safely fetches the value for global configuration 'InstanceSubscriptionsProcessFrom' field
+func GetInstanceSubscriptionsProcessFrom() string {
+	return global.GetInstanceSubscriptionsProcessFrom()
+}
+
+// SetInstanceSubscriptionsProcessFrom safely sets the value for global configuration 'InstanceSubscriptionsProcessFrom' field
+func SetInstanceSubscriptionsProcessFrom(v string) { global.SetInstanceSubscriptionsProcessFrom(v) }
+
+// GetInstanceSubscriptionsProcessEvery safely fetches the Configuration value for state's 'InstanceSubscriptionsProcessEvery' field
+func (st *ConfigState) GetInstanceSubscriptionsProcessEvery() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.InstanceSubscriptionsProcessEvery
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceSubscriptionsProcessEvery safely sets the Configuration value for state's 'InstanceSubscriptionsProcessEvery' field
+func (st *ConfigState) SetInstanceSubscriptionsProcessEvery(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceSubscriptionsProcessEvery = v
+	st.reloadToViper()
+}
+
+// InstanceSubscriptionsProcessEveryFlag returns the flag name for the 'InstanceSubscriptionsProcessEvery' field
+func InstanceSubscriptionsProcessEveryFlag() string { return "instance-subscriptions-process-every" }
+
+// GetInstanceSubscriptionsProcessEvery safely fetches the value for global configuration 'InstanceSubscriptionsProcessEvery' field
+func GetInstanceSubscriptionsProcessEvery() time.Duration {
+	return global.GetInstanceSubscriptionsProcessEvery()
+}
+
+// SetInstanceSubscriptionsProcessEvery safely sets the value for global configuration 'InstanceSubscriptionsProcessEvery' field
+func SetInstanceSubscriptionsProcessEvery(v time.Duration) {
+	global.SetInstanceSubscriptionsProcessEvery(v)
+}
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()

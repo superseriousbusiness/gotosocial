@@ -2,7 +2,7 @@
 
 GoToSocial supports 'blocking'/'suspending' domains that you don't want your instance to federate with. In our documentation, the two terms 'block' and 'suspend' are used interchangeably with regard to domains, because they mean the same thing: preventing your instance and the instance running on the target domain from communicating with one another, effectively cutting off federation between the two instances.
 
-You can view, create, and remove domain blocks and domain allows using the [instance admin panel](./settings.md#federation).
+You can view, create, and remove domain blocks and domain allows using the [instance admin panel](./settings.md#domain-permissions).
 
 This document focuses on what domain blocks actually *do* and what side effects are processed when you create a new domain block.
 

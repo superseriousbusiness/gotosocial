@@ -90,6 +90,8 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().Bool(InstanceExposeSuspendedWebFlag(), cfg.InstanceExposeSuspendedWeb, fieldtag("InstanceExposeSuspendedWeb", "usage"))
 		cmd.Flags().Bool(InstanceDeliverToSharedInboxesFlag(), cfg.InstanceDeliverToSharedInboxes, fieldtag("InstanceDeliverToSharedInboxes", "usage"))
 		cmd.Flags().StringSlice(InstanceLanguagesFlag(), cfg.InstanceLanguages.TagStrs(), fieldtag("InstanceLanguages", "usage"))
+		cmd.Flags().String(InstanceSubscriptionsProcessFromFlag(), cfg.InstanceSubscriptionsProcessFrom, fieldtag("InstanceSubscriptionsProcessFrom", "usage"))
+		cmd.Flags().Duration(InstanceSubscriptionsProcessEveryFlag(), cfg.InstanceSubscriptionsProcessEvery, fieldtag("InstanceSubscriptionsProcessEvery", "usage"))
 
 		// Accounts
 		cmd.Flags().Bool(AccountsRegistrationOpenFlag(), cfg.AccountsRegistrationOpen, fieldtag("AccountsRegistrationOpen", "usage"))

@@ -2119,7 +2119,9 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	domainPerm.PrivateComment = d.GetPrivateComment()
 	domainPerm.SubscriptionID = d.GetSubscriptionID()
 	domainPerm.CreatedBy = d.GetCreatedByAccountID()
-	domainPerm.CreatedAt = util.FormatISO8601(d.GetCreatedAt())
+	if createdAt := d.GetCreatedAt(); !createdAt.IsZero() {
+		domainPerm.CreatedAt = util.FormatISO8601(createdAt)
+	}
 
 	// If this is a draft, also add the permission type.
 	if _, ok := d.(*gtsmodel.DomainPermissionDraft); ok {

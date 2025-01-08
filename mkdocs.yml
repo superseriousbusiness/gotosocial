@@ -138,6 +138,7 @@ nav:
       - "admin/signups.md"
       - "admin/federation_modes.md"
       - "admin/domain_blocks.md"
+      - "admin/domain_permission_subscriptions.md"
       - "admin/request_filtering_modes.md"
       - "admin/robots.md"
       - "admin/cli.md"

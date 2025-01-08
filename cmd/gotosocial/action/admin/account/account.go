@@ -40,7 +40,8 @@ func initState(ctx context.Context) (*state.State, error) {
 	state.Caches.Init()
 	state.Caches.Start()
 
-	// Set the state DB connection
+	// Only set state DB connection.
+	// Don't need Actions or Workers for this (yet).
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return nil, fmt.Errorf("error creating dbConn: %w", err)

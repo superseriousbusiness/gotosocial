@@ -17,19 +17,20 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useState } from "react";
+import React, { ReactNode, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { useBaseUrl } from "../../../../lib/navigation/util";
 import BackButton from "../../../../components/back-button";
-import { useGetDomainPermissionSubscriptionQuery, useRemoveDomainPermissionSubscriptionMutation, useUpdateDomainPermissionSubscriptionMutation } from "../../../../lib/query/admin/domain-permissions/subscriptions";
+import { useGetDomainPermissionSubscriptionQuery, useRemoveDomainPermissionSubscriptionMutation, useTestDomainPermissionSubscriptionMutation, useUpdateDomainPermissionSubscriptionMutation } from "../../../../lib/query/admin/domain-permissions/subscriptions";
 import { useBoolInput, useNumberInput, useTextInput } from "../../../../lib/form";
 import FormWithData from "../../../../lib/form/form-with-data";
-import { DomainPermSub } from "../../../../lib/types/domain-permission";
+import { DomainPerm, DomainPermSub } from "../../../../lib/types/domain-permission";
 import MutationButton from "../../../../components/form/mutation-button";
 import { Checkbox, NumberInput, Select, TextInput } from "../../../../components/form/inputs";
 import useFormSubmit from "../../../../lib/form/submit";
 import UsernameLozenge from "../../../../components/username-lozenge";
 import { urlValidator } from "../../../../lib/util/formvalidators";
+import { PageableList } from "../../../../components/pageable-list";
 
 export default function DomainPermissionSubscriptionDetail() {
 	const params = useParams();
@@ -56,6 +57,7 @@ function DomainPermSubForm({ data: permSub }: { data: DomainPermSub }) {
 			<h1><BackButton to={backLocation} /> Domain Permission Subscription Detail</h1>
 			<DomainPermSubDetails permSub={permSub} />
 			<UpdateDomainPermSub permSub={permSub} />
+			<TestDomainPermSub permSub={permSub} />
 			<DeleteDomainPermSub permSub={permSub} backLocation={backLocation} />
 		</div>
 	);
@@ -380,5 +382,75 @@ function DeleteDomainPermSub({ permSub, backLocation }: { permSub: DomainPermSub
 				result={result}
 			/>
 		</form>
+	);
+}
+
+function TestDomainPermSub({ permSub }: { permSub: DomainPermSub }) {
+	const permType = permSub.permission_type;
+	if (!permType) {
+		throw "permission_type was undefined";
+	}
+	
+	const [ testSub, testRes ] = useTestDomainPermissionSubscriptionMutation();
+	const onSubmit = (e) => {
+		e.preventDefault();
+		testSub(permSub.id);
+	};
+
+	// Function to map an item to a list entry.
+	function itemToEntry(perm: DomainPerm): ReactNode {
+		return (
+			<span className="text-cutoff entry perm-preview">
+				<strong>{ perm.domain }</strong>
+				{ perm.public_comment && <>({ perm.public_comment })</> }
+			</span>
+		);
+	}
+
+	return (
+		<>
+			<form
+				className="domain-permission-subscription-test"
+				onSubmit={onSubmit}
+			>
+				<h2>Test Subscription</h2>
+				Click the "test" button to instruct your instance to do a test
+				fetch and parse of the {permType} list at the subscription URI.
+				<br/>
+				If the fetch is successful, you will see a list of {permType}s
+				(or {permType} drafts) that *would* be created by this subscription,
+				along with the public comment for each {permType} (if applicable).
+				<br/>
+				The test does not actually create those {permType}s in your database.
+				<MutationButton
+					disabled={false}
+					label={"Test"}
+					result={testRes}
+				/>
+			</form>
+			{ testRes.data && "error" in testRes.data
+				? <div className="info perm-issue">
+					<i className="fa fa-fw fa-exclamation-circle" aria-hidden="true"></i>
+					<b>
+						The following issue was encountered when doing a fetch + parse:
+						<br/><code>{ testRes.data.error }</code>
+						<br/>This may be due to a temporary outage at the remote URL,
+						or you may wish to check your subscription settings and test again.
+					</b>
+				</div>
+				: <>
+					{ testRes.data && `${testRes.data?.length} ${permType}s would be created by this subscription:`}
+					<PageableList
+						isLoading={testRes.isLoading}
+						isSuccess={testRes.isSuccess}
+						items={testRes.data}
+						itemToEntry={itemToEntry}
+						isError={testRes.isError}
+						error={testRes.error}
+						emptyMessage={<b>No entries!</b>}
+					/>
+				</>
+			}
+		</>
 	);
 }

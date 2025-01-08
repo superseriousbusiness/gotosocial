@@ -115,6 +115,8 @@ EXPECT=$(cat << "EOF"
         "nl",
         "en-GB"
     ],
+    "instance-subscriptions-process-every": 86400000000000,
+    "instance-subscriptions-process-from": "23:00",
     "landing-page-user": "admin",
     "letsencrypt-cert-dir": "/gotosocial/storage/certs",
     "letsencrypt-email-address": "",

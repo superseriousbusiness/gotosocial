@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -282,4 +283,90 @@ func (p *Processor) DomainPermissionSubscriptionRemove(
 	}
 
 	return p.apiDomainPermSub(ctx, permSub)
+}
+
+func (p *Processor) DomainPermissionSubscriptionTest(
+	ctx context.Context,
+	acct *gtsmodel.Account,
+	id string,
+) (any, gtserror.WithCode) {
+	permSub, err := p.state.DB.GetDomainPermissionSubscriptionByID(ctx, id)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error getting domain permission subscription %s: %w", id, err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if permSub == nil {
+		err := fmt.Errorf("domain permission subscription %s not found", id)
+		return nil, gtserror.NewErrorNotFound(err, err.Error())
+	}
+
+	// To process the test/dry-run correctly, we need to get
+	// all domain perm subs of this type with a *higher* priority,
+	// to know whether we ought to create permissions or not.
+	permSubs, err := p.state.DB.GetDomainPermissionSubscriptionsByPriority(
+		ctx,
+		permSub.PermissionType,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("db error: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Find the index of the targeted
+	// subscription in the slice.
+	index := slices.IndexFunc(
+		permSubs,
+		func(ps *gtsmodel.DomainPermissionSubscription) bool {
+			return ps.ID == permSub.ID
+		},
+	)
+
+	// Get a transport for calling permSub.URI.
+	tsport, err := p.transport.NewTransportForUsername(ctx, acct.Username)
+	if err != nil {
+		err := gtserror.Newf("error getting transport: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Everything *before* the targeted
+	// subscription has a higher priority.
+	higherPrios := permSubs[:index]
+
+	// Call the permSub.URI and parse a list of perms from it.
+	// Any error returned here is a "real" one, not an error
+	// from fetching / parsing the list.
+	createdPerms, err := p.subscriptions.ProcessDomainPermissionSubscription(
+		ctx,
+		permSub,
+		tsport,
+		higherPrios,
+		true, // Dry run.
+	)
+	if err != nil {
+		err := gtserror.Newf("error doing dry-run: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// If permSub has an error set on it now,
+	// we should return it to the caller.
+	if permSub.Error != "" {
+		return map[string]string{
+			"error": permSub.Error,
+		}, nil
+	}
+
+	// No error, so return the list of
+	// perms that would have been created.
+	apiPerms := make([]*apimodel.DomainPermission, 0, len(createdPerms))
+	for _, perm := range createdPerms {
+		apiPerm, errWithCode := p.apiDomainPerm(ctx, perm, false)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
+
+		apiPerms = append(apiPerms, apiPerm)
+	}
+
+	return apiPerms, nil
 }

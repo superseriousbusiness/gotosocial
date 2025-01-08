@@ -20,6 +20,7 @@ package dereferencing_test
 import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
@@ -77,6 +78,7 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.client = testrig.NewMockHTTPClient(nil, "../../../testrig/media")
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.state.Storage = suite.storage
 
 	visFilter := visibility.NewFilter(&suite.state)

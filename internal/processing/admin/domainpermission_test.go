@@ -186,7 +186,7 @@ func (suite *DomainBlockTestSuite) awaitAction(actionID string) {
 	ctx := context.Background()
 
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions().TotalRunning() == 0
+		return suite.state.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}

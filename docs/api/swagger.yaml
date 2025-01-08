@@ -6436,6 +6436,46 @@ paths:
             summary: Remove a domain permission subscription.
             tags:
                 - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}/test:
+        post:
+            description: |-
+                The response body will be a list of domain permissions that *would* be created by this subscription, OR an error message.
+
+                This is useful in cases where you want to check that your instance can actually fetch + parse a list.
+            operationId: domainPermissionSubscriptionTest
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Either an array of domain permissions, OR an error message of the form `{"error":"[ERROR MESSAGE HERE]"}` indicating why the list could not be fetched.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domain'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Test one domain permission subscription by making your instance fetch and parse it *without creating permissions*.
+            tags:
+                - admin
     /api/v1/admin/domain_permission_subscriptions/preview:
         get:
             description: This view allows you to see the order in which domain permissions will actually be fetched and created.

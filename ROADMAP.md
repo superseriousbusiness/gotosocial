@@ -71,7 +71,7 @@ These are provided in no specific order.
 - [x] **Filters v2** -- implement v2 of the filters API.
 - [x] **Mute accounts** -- mute accounts to prevent their posts showing up in your home timeline (optional: for limited period of time).
 - [x] **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
-- [ ] **Block + allow list subscriptions** -- allow instance admins to subscribe their instance to plaintext domain block/allow lists (much of the work for this is already in place).
+- [x] **Block + allow list subscriptions** -- allow instance admins to subscribe their instance to domain block/allow lists.
 - [x] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
 - [ ] **Oauth token management** -- create / view / invalidate OAuth tokens via the settings panel.
 - [ ] **Status EDIT support** -- edit statuses that you've created, without having to delete + redraft. Federate edits out properly.

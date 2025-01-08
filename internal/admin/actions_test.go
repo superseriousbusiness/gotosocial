@@ -32,12 +32,26 @@ import (
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
+const (
+	rMediaPath    = "../../testrig/media"
+	rTemplatePath = "../../web/template"
+)
+
 type ActionsTestSuite struct {
-	AdminStandardTestSuite
+	suite.Suite
+}
+
+func (suite *ActionsTestSuite) SetupSuite() {
+	testrig.InitTestConfig()
+	testrig.InitTestLog()
 }
 
 func (suite *ActionsTestSuite) TestActionOverlap() {
-	ctx := context.Background()
+	var (
+		testStructs = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		ctx         = context.Background()
+	)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	// Suspend account.
 	action1 := &gtsmodel.AdminAction{
@@ -61,7 +75,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 	key2 := action2.Key()
 	suite.Equal("account/01H90S1CXQ97J9625C5YBXZWGT", key2)
 
-	errWithCode := suite.adminProcessor.Actions().Run(
+	errWithCode := testStructs.State.AdminActions.Run(
 		ctx,
 		action1,
 		func(ctx context.Context) gtserror.MultiError {
@@ -74,7 +88,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// While first action is sleeping, try to
 	// process another with the same key.
-	errWithCode = suite.adminProcessor.Actions().Run(
+	errWithCode = testStructs.State.AdminActions.Run(
 		ctx,
 		action2,
 		func(ctx context.Context) gtserror.MultiError {
@@ -90,13 +104,13 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions().TotalRunning() == 0
+		return testStructs.State.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
 
 	// Try again.
-	errWithCode = suite.adminProcessor.Actions().Run(
+	errWithCode = testStructs.State.AdminActions.Run(
 		ctx,
 		action2,
 		func(ctx context.Context) gtserror.MultiError {
@@ -107,14 +121,18 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions().TotalRunning() == 0
+		return testStructs.State.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
 }
 
 func (suite *ActionsTestSuite) TestActionWithErrors() {
-	ctx := context.Background()
+	var (
+		testStructs = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		ctx         = context.Background()
+	)
+	defer testrig.TearDownTestStructs(testStructs)
 
 	// Suspend a domain.
 	action := &gtsmodel.AdminAction{
@@ -125,7 +143,7 @@ func (suite *ActionsTestSuite) TestActionWithErrors() {
 		AccountID:      "01H90S1ZZXP4N74H4A9RVW1MRP",
 	}
 
-	errWithCode := suite.adminProcessor.Actions().Run(
+	errWithCode := testStructs.State.AdminActions.Run(
 		ctx,
 		action,
 		func(ctx context.Context) gtserror.MultiError {
@@ -140,13 +158,13 @@ func (suite *ActionsTestSuite) TestActionWithErrors() {
 
 	// Wait for action to finish.
 	if !testrig.WaitFor(func() bool {
-		return suite.adminProcessor.Actions().TotalRunning() == 0
+		return testStructs.State.AdminActions.TotalRunning() == 0
 	}) {
 		suite.FailNow("timed out waiting for admin action(s) to finish")
 	}
 
 	// Get action from the db.
-	dbAction, err := suite.db.GetAdminAction(ctx, action.ID)
+	dbAction, err := testStructs.State.DB.GetAdminAction(ctx, action.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
