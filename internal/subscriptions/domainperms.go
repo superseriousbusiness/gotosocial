@@ -345,6 +345,10 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 // processDomainPermission processes one wanted domain
 // permission discovered via a domain permission sub's URI.
 //
+// If dry == true, then the returned boolean indicates whether
+// the permission would actually be created. If dry == false,
+// the bool indicates whether the permission was created or adopted.
+//
 // Error will only be returned in case of an actual database
 // error, else the error will be logged and nil returned.
 func (s *Subscriptions) processDomainPermission(
@@ -355,22 +359,18 @@ func (s *Subscriptions) processDomainPermission(
 	higherPrios []*gtsmodel.DomainPermissionSubscription,
 	dry bool,
 ) (bool, error) {
-	// Set to true if domain permission
-	// actually (would be) created.
-	var created bool
-
 	// If domain is excluded from automatic
 	// permission creation, don't process it.
 	domain := wantedPerm.GetDomain()
 	excluded, err := s.state.DB.IsDomainPermissionExcluded(ctx, domain)
 	if err != nil {
 		// Proper db error.
-		return created, err
+		return false, err
 	}
 
 	if excluded {
 		l.Debug("domain is excluded, skipping")
-		return created, nil
+		return false, err
 	}
 
 	// Check if a permission already exists for
@@ -381,22 +381,19 @@ func (s *Subscriptions) processDomainPermission(
 	)
 	if err != nil {
 		// Proper db error.
-		return created, err
+		return false, err
 	}
 
 	if covered {
 		l.Debug("domain is covered by a higher-priority subscription, skipping")
-		return created, nil
+		return false, err
 	}
 
-	// At this point we know we
-	// should create the perm.
-	created = true
-
 	if dry {
-		// Don't do creation or side
-		// effects if we're dry running.
-		return created, nil
+		// If this is a dry run, return
+		// now without doing any DB changes.
+		wouldBeCreated := !covered && existingPerm == nil
+		return wouldBeCreated, nil
 	}
 
 	// Handle perm creation differently depending
@@ -512,11 +509,10 @@ func (s *Subscriptions) processDomainPermission(
 
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
 		// Proper db error.
-		return created, err
+		return false, err
 	}
 
-	created = true
-	return created, nil
+	return true, nil
 }
 
 func permsFromCSV(
