@@ -657,7 +657,7 @@ func sizeofStatus() uintptr {
 		MentionIDs:               []string{},
 		EmojiIDs:                 []string{exampleID, exampleID, exampleID},
 		CreatedAt:                exampleTime,
-		UpdatedAt:                exampleTime,
+		EditedAt:                 exampleTime,
 		FetchedAt:                exampleTime,
 		Local:                    func() *bool { ok := false; return &ok }(),
 		AccountURI:               exampleURI,

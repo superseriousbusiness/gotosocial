@@ -55,7 +55,6 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	announceStatus.URI = "https://example.org/some-announce-uri"
 	announceStatus.BoostOfURI = boostedStatus.URI
 	announceStatus.CreatedAt = time.Now()
-	announceStatus.UpdatedAt = time.Now()
 	announceStatus.AccountID = boostingAccount.ID
 	announceStatus.AccountURI = boostingAccount.URI
 	announceStatus.Account = boostingAccount

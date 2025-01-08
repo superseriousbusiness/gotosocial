@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -158,17 +157,6 @@ func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...st
 
 	return p.state.Caches.DB.Poll.Store(poll, func() error {
 		return p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// Update the status' "updated_at" field.
-			if _, err := tx.NewUpdate().
-				Table("statuses").
-				Where("? = ?", bun.Ident("id"), poll.StatusID).
-				SetColumn("updated_at", "?", time.Now()).
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			// Finally, update poll
-			// columns in database.
 			_, err := tx.NewUpdate().
 				Model(poll).
 				Column(cols...).

@@ -997,7 +997,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 	// Key this status based on ID + last updated time,
 	// to ensure we always filter on latest version.
-	statusKey := s.ID + strconv.FormatInt(s.UpdatedAt.Unix(), 10)
+	statusKey := s.ID + strconv.FormatInt(s.UpdatedAt().Unix(), 10)
 
 	// Check if we have filterable fields cached for this status.
 	cache := c.state.Caches.StatusesFilterableFields
@@ -1384,10 +1384,8 @@ func (c *Converter) baseStatusToFrontend(
 		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
-	// Only set edited_at if this is a non-boost-wrapper
-	// with an updated_at date different to creation date.
-	if !s.UpdatedAt.Equal(s.CreatedAt) && s.BoostOfID == "" {
-		timestamp := util.FormatISO8601(s.UpdatedAt)
+	if at := s.EditedAt; !at.IsZero() {
+		timestamp := util.FormatISO8601(at)
 		apiStatus.EditedAt = util.Ptr(timestamp)
 	}
 
@@ -1522,8 +1520,8 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		PollOptions:            options,
 		PollVotes:              votes,
 		AttachmentIDs:          status.AttachmentIDs,
-		AttachmentDescriptions: nil, // no change from current
-		CreatedAt:              status.UpdatedAt,
+		AttachmentDescriptions: nil,                // no change from current
+		CreatedAt:              status.UpdatedAt(), // falls back to creation
 	})
 
 	// Iterate through status edits, starting at newest.

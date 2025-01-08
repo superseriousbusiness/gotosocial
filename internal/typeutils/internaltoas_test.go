@@ -499,7 +499,6 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
   "tag": [],
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
-  "updated": "2021-10-20T12:40:37+02:00",
   "url": "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY"
 }`, string(bytes))
 }
@@ -599,7 +598,6 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
   ],
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
-  "updated": "2021-10-20T11:36:45Z",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"
 }`, string(bytes))
 }
@@ -700,7 +698,6 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
   ],
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
-  "updated": "2021-10-20T11:36:45Z",
   "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R"
 }`, string(bytes))
 }
@@ -781,7 +778,6 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
   },
   "to": "https://www.w3.org/ns/activitystreams#Public",
   "type": "Note",
-  "updated": "2021-11-20T13:32:16Z",
   "url": "http://localhost:8080/@admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0"
 }`, string(bytes))
 }

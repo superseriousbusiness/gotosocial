@@ -97,7 +97,6 @@ func (p *Processor) Create(
 		URI:                      accountURIs.StatusesURI + "/" + statusID,
 		URL:                      accountURIs.StatusesURL + "/" + statusID,
 		CreatedAt:                now,
-		UpdatedAt:                now,
 		Local:                    util.Ptr(true),
 		Account:                  requester,
 		AccountID:                requester.ID,
