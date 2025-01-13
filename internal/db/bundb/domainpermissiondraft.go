@@ -168,8 +168,8 @@ func (d *domainDB) GetDomainPermissionDrafts(
 	if domain != "" {
 		var err error
 
-		// Normalize domain as punycode.
-		domain, err = util.Punify(domain)
+		// Normalize domain as punycode for lookup.
+		domain, err = util.Punify_(domain)
 		if err != nil {
 			return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)
 		}
@@ -234,22 +234,23 @@ func (d *domainDB) GetDomainPermissionDrafts(
 
 func (d *domainDB) PutDomainPermissionDraft(
 	ctx context.Context,
-	permDraft *gtsmodel.DomainPermissionDraft,
+	draft *gtsmodel.DomainPermissionDraft,
 ) error {
 	var err error
 
-	// Normalize the domain as punycode
-	permDraft.Domain, err = util.Punify(permDraft.Domain)
+	// Normalize the domain as punycode, note the extra
+	// validation step for domain name write operations.
+	draft.Domain, err = util.PunifyValidate(draft.Domain)
 	if err != nil {
-		return gtserror.Newf("error punifying domain %s: %w", permDraft.Domain, err)
+		return gtserror.Newf("error punifying domain %s: %w", draft.Domain, err)
 	}
 
 	return d.state.Caches.DB.DomainPermissionDraft.Store(
-		permDraft,
+		draft,
 		func() error {
 			_, err := d.db.
 				NewInsert().
-				Model(permDraft).
+				Model(draft).
 				Exec(ctx)
 			return err
 		},

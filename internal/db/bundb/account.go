@@ -137,9 +137,10 @@ func (a *accountDB) GetAccountByURL(ctx context.Context, url string) (*gtsmodel.
 
 func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, error) {
 	if domain != "" {
-		// Normalize the domain as punycode
 		var err error
-		domain, err = util.Punify(domain)
+
+		// Normalize the domain as punycode
+		domain, err = util.Punify_(domain)
 		if err != nil {
 			return nil, err
 		}
