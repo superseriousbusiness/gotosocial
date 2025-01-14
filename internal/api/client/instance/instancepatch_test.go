@@ -28,6 +28,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/instance"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -51,6 +52,7 @@ func (suite *InstancePatchTestSuite) instancePatch(fieldName string, fileName st
 	ctx := suite.newContext(recorder, http.MethodPatch, instance.InstanceInformationPathV1, requestBody.Bytes(), w.FormDataContentType(), true)
 
 	suite.instanceModule.InstanceUpdatePATCHHandler(ctx)
+	middleware.Logger(false)(ctx)
 
 	result := recorder.Result()
 	defer result.Body.Close()

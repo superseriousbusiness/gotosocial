@@ -158,8 +158,9 @@ func (i *instanceDB) CountInstanceDomains(ctx context.Context, domain string) (i
 }
 
 func (i *instanceDB) GetInstance(ctx context.Context, domain string) (*gtsmodel.Instance, error) {
-	// Normalize the domain as punycode
 	var err error
+
+	// Normalize the domain as punycode
 	domain, err = util.Punify(domain)
 	if err != nil {
 		return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)
@@ -265,8 +266,9 @@ func (i *instanceDB) PopulateInstance(ctx context.Context, instance *gtsmodel.In
 func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instance) error {
 	var err error
 
-	// Normalize the domain as punycode
-	instance.Domain, err = util.Punify(instance.Domain)
+	// Normalize the domain as punycode, note the extra
+	// validation step for domain name write operations.
+	instance.Domain, err = util.PunifySafely(instance.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", instance.Domain, err)
 	}
@@ -279,9 +281,11 @@ func (i *instanceDB) PutInstance(ctx context.Context, instance *gtsmodel.Instanc
 }
 
 func (i *instanceDB) UpdateInstance(ctx context.Context, instance *gtsmodel.Instance, columns ...string) error {
-	// Normalize the domain as punycode
 	var err error
-	instance.Domain, err = util.Punify(instance.Domain)
+
+	// Normalize the domain as punycode, note the extra
+	// validation step for domain name write operations.
+	instance.Domain, err = util.PunifySafely(instance.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", instance.Domain, err)
 	}
@@ -349,8 +353,9 @@ func (i *instanceDB) GetInstanceAccounts(ctx context.Context, domain string, max
 		limit = 0
 	}
 
-	// Normalize the domain as punycode.
 	var err error
+
+	// Normalize the domain as punycode
 	domain, err = util.Punify(domain)
 	if err != nil {
 		return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)

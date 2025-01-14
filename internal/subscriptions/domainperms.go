@@ -23,7 +23,6 @@ import (
 	"encoding/csv"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"slices"
 	"strconv"
@@ -32,7 +31,6 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 
-	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -629,7 +627,7 @@ func permsFromCSV(
 
 		// Normalize + validate domain.
 		domainRaw := record[*domainI]
-		domain, err := validateDomain(domainRaw)
+		domain, err := util.PunifySafely(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
 			continue
@@ -702,7 +700,7 @@ func permsFromJSON(
 
 		// Normalize + validate domain.
 		domainRaw := apiPerm.Domain.Domain
-		domain, err := validateDomain(domainRaw)
+		domain, err := util.PunifySafely(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
 			continue
@@ -757,8 +755,8 @@ func permsFromPlain(
 	perms := make([]gtsmodel.DomainPermission, 0, len(domains))
 	for _, domainRaw := range domains {
 
-		// Normalize + validate domain.
-		domain, err := validateDomain(domainRaw)
+		// Normalize + validate domain as ASCII.
+		domain, err := util.PunifySafely(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
 			continue
@@ -779,30 +777,6 @@ func permsFromPlain(
 	}
 
 	return perms, nil
-}
-
-func validateDomain(domain string) (string, error) {
-	// Basic validation.
-	if _, ok := dns.IsDomainName(domain); !ok {
-		err := fmt.Errorf("invalid domain name")
-		return "", err
-	}
-
-	// Convert to punycode.
-	domain, err := util.Punify(domain)
-	if err != nil {
-		err := fmt.Errorf("could not punify domain: %w", err)
-		return "", err
-	}
-
-	// Check for invalid characters
-	// after the punification process.
-	if strings.ContainsAny(domain, "*, \n") {
-		err := fmt.Errorf("invalid char(s) in domain")
-		return "", err
-	}
-
-	return domain, nil
 }
 
 func (s *Subscriptions) existingCovered(

@@ -37,11 +37,13 @@ func (d *domainDB) PutDomainPermissionExclude(
 	ctx context.Context,
 	exclude *gtsmodel.DomainPermissionExclude,
 ) error {
-	// Normalize the domain as punycode
 	var err error
-	exclude.Domain, err = util.Punify(exclude.Domain)
+
+	// Normalize the domain as punycode, note the extra
+	// validation step for domain name write operations.
+	exclude.Domain, err = util.PunifySafely(exclude.Domain)
 	if err != nil {
-		return err
+		return gtserror.Newf("error punifying domain %s: %w", exclude.Domain, err)
 	}
 
 	// Attempt to store domain perm exclude in DB
@@ -58,10 +60,10 @@ func (d *domainDB) PutDomainPermissionExclude(
 }
 
 func (d *domainDB) IsDomainPermissionExcluded(ctx context.Context, domain string) (bool, error) {
-	// Normalize the domain as punycode
+	// Normalize domain as punycode for lookup.
 	domain, err := util.Punify(domain)
 	if err != nil {
-		return false, err
+		return false, gtserror.Newf("error punifying domain %s: %w", domain, err)
 	}
 
 	// Func to scan list of all
@@ -177,7 +179,7 @@ func (d *domainDB) GetDomainPermissionExcludes(
 	if domain != "" {
 		var err error
 
-		// Normalize domain as punycode.
+		// Normalize domain as punycode for lookup.
 		domain, err = util.Punify(domain)
 		if err != nil {
 			return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)
