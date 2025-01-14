@@ -39,7 +39,7 @@ type domainDB struct {
 func (d *domainDB) CreateDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow) (err error) {
 	// Normalize the domain as punycode, note the extra
 	// validation step for domain name write operations.
-	allow.Domain, err = util.PunifyValidate(allow.Domain)
+	allow.Domain, err = util.PunifySafely(allow.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", allow.Domain, err)
 	}
@@ -59,7 +59,7 @@ func (d *domainDB) CreateDomainAllow(ctx context.Context, allow *gtsmodel.Domain
 
 func (d *domainDB) GetDomainAllow(ctx context.Context, domain string) (*gtsmodel.DomainAllow, error) {
 	// Normalize domain as punycode for lookup.
-	domain, err := util.Punify_(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)
 	}
@@ -114,7 +114,7 @@ func (d *domainDB) GetDomainAllowByID(ctx context.Context, id string) (*gtsmodel
 func (d *domainDB) UpdateDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow, columns ...string) (err error) {
 	// Normalize the domain as punycode, note the extra
 	// validation step for domain name write operations.
-	allow.Domain, err = util.PunifyValidate(allow.Domain)
+	allow.Domain, err = util.PunifySafely(allow.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", allow.Domain, err)
 	}
@@ -143,7 +143,7 @@ func (d *domainDB) UpdateDomainAllow(ctx context.Context, allow *gtsmodel.Domain
 
 func (d *domainDB) DeleteDomainAllow(ctx context.Context, domain string) error {
 	// Normalize domain as punycode for lookup.
-	domain, err := util.Punify_(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", domain, err)
 	}
@@ -167,7 +167,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 
 	// Normalize the domain as punycode, note the extra
 	// validation step for domain name write operations.
-	block.Domain, err = util.PunifyValidate(block.Domain)
+	block.Domain, err = util.PunifySafely(block.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", block.Domain, err)
 	}
@@ -187,7 +187,7 @@ func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 
 func (d *domainDB) GetDomainBlock(ctx context.Context, domain string) (*gtsmodel.DomainBlock, error) {
 	// Normalize domain as punycode for lookup.
-	domain, err := util.Punify_(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)
 	}
@@ -244,7 +244,7 @@ func (d *domainDB) UpdateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 
 	// Normalize the domain as punycode, note the extra
 	// validation step for domain name write operations.
-	block.Domain, err = util.PunifyValidate(block.Domain)
+	block.Domain, err = util.PunifySafely(block.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", block.Domain, err)
 	}
@@ -273,7 +273,7 @@ func (d *domainDB) UpdateDomainBlock(ctx context.Context, block *gtsmodel.Domain
 
 func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) error {
 	// Normalize domain as punycode for lookup.
-	domain, err := util.Punify_(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", domain, err)
 	}
@@ -294,7 +294,7 @@ func (d *domainDB) DeleteDomainBlock(ctx context.Context, domain string) error {
 
 func (d *domainDB) IsDomainBlocked(ctx context.Context, domain string) (bool, error) {
 	// Normalize domain as punycode for lookup.
-	domain, err := util.Punify_(domain)
+	domain, err := util.Punify(domain)
 	if err != nil {
 		return false, gtserror.Newf("error punifying domain %s: %w", domain, err)
 	}

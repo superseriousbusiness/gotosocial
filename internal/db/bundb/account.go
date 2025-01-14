@@ -140,7 +140,7 @@ func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username str
 		var err error
 
 		// Normalize the domain as punycode
-		domain, err = util.Punify_(domain)
+		domain, err = util.Punify(domain)
 		if err != nil {
 			return nil, err
 		}

@@ -76,7 +76,7 @@ func prepWebfingerReq(ctx context.Context, loc, domain, username string) (*http.
 func (t *transport) Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error) {
 	// Remotes seem to prefer having their punycode
 	// domain used in webfinger requests, so let's oblige.
-	punyDomain, err := util.Punify_(targetDomain)
+	punyDomain, err := util.Punify(targetDomain)
 	if err != nil {
 		return nil, gtserror.Newf("error punifying %s: %w", targetDomain, err)
 	}

@@ -169,7 +169,7 @@ func (d *domainDB) GetDomainPermissionDrafts(
 		var err error
 
 		// Normalize domain as punycode for lookup.
-		domain, err = util.Punify_(domain)
+		domain, err = util.Punify(domain)
 		if err != nil {
 			return nil, gtserror.Newf("error punifying domain %s: %w", domain, err)
 		}
@@ -240,7 +240,7 @@ func (d *domainDB) PutDomainPermissionDraft(
 
 	// Normalize the domain as punycode, note the extra
 	// validation step for domain name write operations.
-	draft.Domain, err = util.PunifyValidate(draft.Domain)
+	draft.Domain, err = util.PunifySafely(draft.Domain)
 	if err != nil {
 		return gtserror.Newf("error punifying domain %s: %w", draft.Domain, err)
 	}

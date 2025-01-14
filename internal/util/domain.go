@@ -31,15 +31,32 @@ var (
 	verifyProfile = *idna.Lookup
 )
 
-// PunifyValidate validates the provided domain name,
+// PunifySafely validates the provided domain name,
 // and converts unicode chars to ASCII, i.e. punified form.
-func PunifyValidate(domain string) (string, error) {
-	domain, err := verifyProfile.ToASCII(domain)
-	return strings.ToLower(domain), err
+func PunifySafely(domain string) (string, error) {
+	if i := strings.LastIndexByte(domain, ':'); i >= 0 {
+
+		// If there is a port included in domain, we
+		// strip it as colon is invalid in a hostname.
+		domain, port := domain[:i], domain[i:]
+		domain, err := verifyProfile.ToASCII(domain)
+		if err != nil {
+			return "", err
+		}
+
+		// Then rebuild with port after.
+		domain = strings.ToLower(domain)
+		return domain + port, nil
+	} else { //nolint:revive
+
+		// Otherwise we just punify domain as-is.
+		domain, err := verifyProfile.ToASCII(domain)
+		return strings.ToLower(domain), err
+	}
 }
 
-// Punify is a faster form of ValidatePunify() without validation.
-func Punify_(domain string) (string, error) {
+// Punify is a faster form of PunifySafely() without validation.
+func Punify(domain string) (string, error) {
 	domain, err := punifyProfile.ToASCII(domain)
 	return strings.ToLower(domain), err
 }
@@ -62,7 +79,7 @@ func URIMatches(expect *url.URL, uris ...*url.URL) (ok bool, err error) {
 	*punyURI = *expect
 
 	// Set punified expected URL host.
-	punyURI.Host, err = Punify_(expect.Host)
+	punyURI.Host, err = Punify(expect.Host)
 	if err != nil {
 		return false, err
 	}
@@ -76,7 +93,7 @@ func URIMatches(expect *url.URL, uris ...*url.URL) (ok bool, err error) {
 	// strings to check against.
 	for _, uri := range uris {
 		*punyURI = *uri
-		punyURI.Host, err = Punify_(uri.Host)
+		punyURI.Host, err = Punify(uri.Host)
 		if err != nil {
 			return false, err
 		}
@@ -91,12 +108,11 @@ func URIMatches(expect *url.URL, uris ...*url.URL) (ok bool, err error) {
 	return false, nil
 }
 
-// PunifyURIToStr returns a new copy of URI with the
-// 'host' part converted to punycode with DomainToASCII.
-// This can potentially be expensive doing extra domain
-// verification for storage, for simple checks prefer URIMatches().
+// PunifyURI returns a new copy of URI with the 'host'
+// part converted to punycode with PunifySafely().
+// For simple comparisons prefer the faster URIMatches().
 func PunifyURI(in *url.URL) (*url.URL, error) {
-	punyHost, err := PunifyValidate(in.Host)
+	punyHost, err := PunifySafely(in.Host)
 	if err != nil {
 		return nil, err
 	}
@@ -107,11 +123,10 @@ func PunifyURI(in *url.URL) (*url.URL, error) {
 }
 
 // PunifyURIToStr returns given URI serialized with the
-// 'host' part converted to punycode with DomainToASCII.
-// This can potentially be expensive doing extra domain
-// verification for storage, for simple checks prefer URIMatches().
+// 'host' part converted to punycode with PunifySafely().
+// For simple comparisons prefer the faster URIMatches().
 func PunifyURIToStr(in *url.URL) (string, error) {
-	punyHost, err := PunifyValidate(in.Host)
+	punyHost, err := PunifySafely(in.Host)
 	if err != nil {
 		return "", err
 	}

@@ -627,7 +627,7 @@ func permsFromCSV(
 
 		// Normalize + validate domain.
 		domainRaw := record[*domainI]
-		domain, err := util.PunifyValidate(domainRaw)
+		domain, err := util.PunifySafely(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
 			continue
@@ -700,7 +700,7 @@ func permsFromJSON(
 
 		// Normalize + validate domain.
 		domainRaw := apiPerm.Domain.Domain
-		domain, err := util.PunifyValidate(domainRaw)
+		domain, err := util.PunifySafely(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
 			continue
@@ -756,7 +756,7 @@ func permsFromPlain(
 	for _, domainRaw := range domains {
 
 		// Normalize + validate domain as ASCII.
-		domain, err := util.PunifyValidate(domainRaw)
+		domain, err := util.PunifySafely(domainRaw)
 		if err != nil {
 			l.Warnf("skipping invalid domain %s: %+v", domainRaw, err)
 			continue
