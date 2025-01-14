@@ -22,6 +22,7 @@ type InsertQuery struct {
 
 	ignore  bool
 	replace bool
+	comment string
 }
 
 var _ Query = (*InsertQuery)(nil)
@@ -164,6 +165,14 @@ func (q *InsertQuery) Replace() *InsertQuery {
 
 //------------------------------------------------------------------------------
 
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *InsertQuery) Comment(comment string) *InsertQuery {
+	q.comment = comment
+	return q
+}
+
+//------------------------------------------------------------------------------
+
 func (q *InsertQuery) Operation() string {
 	return "INSERT"
 }
@@ -172,6 +181,8 @@ func (q *InsertQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
 
 	fmter = formatterWithModel(fmter, q)
 
@@ -190,7 +201,7 @@ func (q *InsertQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 	}
 	b = append(b, "INTO "...)
 
-	if q.db.features.Has(feature.InsertTableAlias) && !q.on.IsZero() {
+	if q.db.HasFeature(feature.InsertTableAlias) && !q.on.IsZero() {
 		b, err = q.appendFirstTableWithAlias(fmter, b)
 	} else {
 		b, err = q.appendFirstTable(fmter, b)
@@ -385,9 +396,9 @@ func (q *InsertQuery) appendSliceValues(
 }
 
 func (q *InsertQuery) getFields() ([]*schema.Field, error) {
-	hasIdentity := q.db.features.Has(feature.Identity)
+	hasIdentity := q.db.HasFeature(feature.Identity)
 
-	if len(q.columns) > 0 || q.db.features.Has(feature.DefaultPlaceholder) && !hasIdentity {
+	if len(q.columns) > 0 || q.db.HasFeature(feature.DefaultPlaceholder) && !hasIdentity {
 		return q.baseQuery.getFields()
 	}
 
@@ -640,8 +651,8 @@ func (q *InsertQuery) afterInsertHook(ctx context.Context) error {
 }
 
 func (q *InsertQuery) tryLastInsertID(res sql.Result, dest []interface{}) error {
-	if q.db.features.Has(feature.Returning) ||
-		q.db.features.Has(feature.Output) ||
+	if q.db.HasFeature(feature.Returning) ||
+		q.db.HasFeature(feature.Output) ||
 		q.table == nil ||
 		len(q.table.PKs) != 1 ||
 		!q.table.PKs[0].AutoIncrement {
