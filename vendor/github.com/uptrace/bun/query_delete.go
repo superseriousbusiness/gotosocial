@@ -15,6 +15,8 @@ type DeleteQuery struct {
 	whereBaseQuery
 	orderLimitOffsetQuery
 	returningQuery
+
+	comment string
 }
 
 var _ Query = (*DeleteQuery)(nil)
@@ -174,6 +176,14 @@ func (q *DeleteQuery) Returning(query string, args ...interface{}) *DeleteQuery 
 
 //------------------------------------------------------------------------------
 
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *DeleteQuery) Comment(comment string) *DeleteQuery {
+	q.comment = comment
+	return q
+}
+
+//------------------------------------------------------------------------------
+
 func (q *DeleteQuery) Operation() string {
 	return "DELETE"
 }
@@ -182,6 +192,8 @@ func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
 
 	fmter = formatterWithModel(fmter, q)
 
@@ -201,7 +213,7 @@ func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 		return upd.AppendQuery(fmter, b)
 	}
 
-	withAlias := q.db.features.Has(feature.DeleteTableAlias)
+	withAlias := q.db.HasFeature(feature.DeleteTableAlias)
 
 	b, err = q.appendWith(fmter, b)
 	if err != nil {
