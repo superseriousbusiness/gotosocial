@@ -166,6 +166,7 @@ const (
 	PREPARE_PERSISTENT PrepareFlag = 0x01
 	PREPARE_NORMALIZE  PrepareFlag = 0x02
 	PREPARE_NO_VTAB    PrepareFlag = 0x04
+	PREPARE_DONT_LOG   PrepareFlag = 0x10
 )
 
 // FunctionFlag is a flag that can be passed to
@@ -219,6 +220,7 @@ const (
 	DBSTATUS_DEFERRED_FKS        DBStatus = 10
 	DBSTATUS_CACHE_USED_SHARED   DBStatus = 11
 	DBSTATUS_CACHE_SPILL         DBStatus = 12
+	// DBSTATUS_MAX              DBStatus = 12
 )
 
 // DBConfig are the available database connection configuration options.

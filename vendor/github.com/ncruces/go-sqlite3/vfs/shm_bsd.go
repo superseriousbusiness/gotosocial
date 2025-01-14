@@ -178,7 +178,7 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 	s.Lock()
 	defer s.Unlock()
 
-	// Check if we could obtain/release the lock locally.
+	// Check if we can obtain/release locks locally.
 	rc := s.shmMemLock(offset, n, flags)
 	if rc != _OK {
 		return rc
@@ -187,6 +187,8 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 	// Obtain/release the appropriate file locks.
 	switch {
 	case flags&_SHM_UNLOCK != 0:
+		// Relasing a shared lock decrements the counter,
+		// but may leave parts of the range still locked.
 		begin, end := offset, offset+n
 		for i := begin; i < end; i++ {
 			if s.vfsShmParent.lock[i] != 0 {
@@ -201,14 +203,22 @@ func (s *vfsShm) shmLock(offset, n int32, flags _ShmFlag) _ErrorCode {
 		}
 		return rc
 	case flags&_SHM_SHARED != 0:
-		rc = osReadLock(s.File, _SHM_BASE+int64(offset), int64(n))
+		// Acquiring a new shared lock on the file is only necessary
+		// if there was a new shared lock in the range.
+		for i := offset; i < offset+n; i++ {
+			if s.vfsShmParent.lock[i] == 1 {
+				rc = osReadLock(s.File, _SHM_BASE+int64(offset), int64(n))
+				break
+			}
+		}
 	case flags&_SHM_EXCLUSIVE != 0:
+		// Acquiring an exclusive lock on the file is always necessary.
 		rc = osWriteLock(s.File, _SHM_BASE+int64(offset), int64(n))
 	default:
 		panic(util.AssertErr())
 	}
 
-	// Release the local lock we had acquired.
+	// Release the local locks we had acquired.
 	if rc != _OK {
 		s.shmMemLock(offset, n, flags^(_SHM_UNLOCK|_SHM_LOCK))
 	}

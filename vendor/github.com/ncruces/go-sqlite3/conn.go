@@ -6,6 +6,7 @@ import (
 	"math"
 	"math/rand"
 	"net/url"
+	"runtime"
 	"strings"
 	"time"
 
@@ -67,7 +68,7 @@ func OpenFlags(filename string, flags OpenFlag) (*Conn, error) {
 	return newConn(context.Background(), filename, flags)
 }
 
-type connKey struct{}
+type connKey = util.ConnKey
 
 func newConn(ctx context.Context, filename string, flags OpenFlag) (res *Conn, _ error) {
 	err := ctx.Err()
@@ -375,8 +376,13 @@ func (c *Conn) checkInterrupt(handle uint32) {
 }
 
 func progressCallback(ctx context.Context, mod api.Module, _ uint32) (interrupt uint32) {
-	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.interrupt.Err() != nil {
-		interrupt = 1
+	if c, ok := ctx.Value(connKey{}).(*Conn); ok {
+		if c.interrupt.Done() != nil {
+			runtime.Gosched()
+		}
+		if c.interrupt.Err() != nil {
+			interrupt = 1
+		}
 	}
 	return interrupt
 }

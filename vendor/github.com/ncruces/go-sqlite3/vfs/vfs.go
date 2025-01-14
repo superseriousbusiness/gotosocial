@@ -255,10 +255,10 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 		}
 
 	case _FCNTL_PERSIST_WAL:
-		if file, ok := file.(FilePersistentWAL); ok {
+		if file, ok := file.(FilePersistWAL); ok {
 			if i := util.ReadUint32(mod, pArg); int32(i) >= 0 {
-				file.SetPersistentWAL(i != 0)
-			} else if file.PersistentWAL() {
+				file.SetPersistWAL(i != 0)
+			} else if file.PersistWAL() {
 				util.WriteUint32(mod, pArg, 1)
 			} else {
 				util.WriteUint32(mod, pArg, 0)
@@ -306,6 +306,16 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 	case _FCNTL_OVERWRITE:
 		if file, ok := file.(FileOverwrite); ok {
 			err := file.Overwrite()
+			return vfsErrorCode(err, _IOERR)
+		}
+
+	case _FCNTL_SYNC:
+		if file, ok := file.(FileSync); ok {
+			var name string
+			if pArg != 0 {
+				name = util.ReadString(mod, pArg, _MAX_PATHNAME)
+			}
+			err := file.SyncSuper(name)
 			return vfsErrorCode(err, _IOERR)
 		}
 
@@ -369,6 +379,20 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 			return ret
 		}
 
+	case _FCNTL_BUSYHANDLER:
+		if file, ok := file.(FileBusyHandler); ok {
+			arg := util.ReadUint64(mod, pArg)
+			fn := mod.ExportedFunction("sqlite3_invoke_busy_handler_go")
+			file.BusyHandler(func() bool {
+				stack := [...]uint64{arg}
+				if err := fn.CallWithStack(ctx, stack[:]); err != nil {
+					panic(err)
+				}
+				return uint32(stack[0]) != 0
+			})
+			return _OK
+		}
+
 	case _FCNTL_LOCK_TIMEOUT:
 		if file, ok := file.(FileSharedMemory); ok {
 			if shm, ok := file.SharedMemory().(blockingSharedMemory); ok {
@@ -376,12 +400,14 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 				return _OK
 			}
 		}
+
+	case _FCNTL_PDB:
+		if file, ok := file.(filePDB); ok {
+			file.SetDB(ctx.Value(util.ConnKey{}))
+			return _OK
+		}
 	}
 
-	// Consider also implementing these opcodes (in use by SQLite):
-	//  _FCNTL_BUSYHANDLER
-	//  _FCNTL_LAST_ERRNO
-	//  _FCNTL_SYNC
 	return _NOTFOUND
 }
 

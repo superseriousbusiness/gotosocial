@@ -9,7 +9,10 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-const _O_NOFOLLOW = unix.O_NOFOLLOW
+const (
+	_O_NOFOLLOW = unix.O_NOFOLLOW
+	canSyncDirs = true
+)
 
 func osAccess(path string, flags AccessFlag) error {
 	var access uint32 // unix.F_OK
