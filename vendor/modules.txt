@@ -938,14 +938,15 @@ github.com/ugorji/go/codec
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-# github.com/uptrace/bun v1.2.6
-## explicit; go 1.23
+# github.com/uptrace/bun v1.2.8
+## explicit; go 1.22.0
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
 github.com/uptrace/bun/dialect/feature
 github.com/uptrace/bun/dialect/sqltype
 github.com/uptrace/bun/extra/bunjson
 github.com/uptrace/bun/internal
+github.com/uptrace/bun/internal/ordered
 github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
@@ -954,8 +955,8 @@ github.com/uptrace/bun/schema
 # github.com/uptrace/bun/dialect/pgdialect v1.2.6
 ## explicit; go 1.23
 github.com/uptrace/bun/dialect/pgdialect
-# github.com/uptrace/bun/dialect/sqlitedialect v1.2.6
-## explicit; go 1.23
+# github.com/uptrace/bun/dialect/sqlitedialect v1.2.8
+## explicit; go 1.22.0
 github.com/uptrace/bun/dialect/sqlitedialect
 # github.com/uptrace/bun/extra/bunotel v1.2.6
 ## explicit; go 1.23
@@ -1146,7 +1147,7 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.28.0
+# golang.org/x/sys v0.29.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/unix

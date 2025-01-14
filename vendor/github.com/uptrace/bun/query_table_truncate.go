@@ -14,6 +14,7 @@ type TruncateTableQuery struct {
 	cascadeQuery
 
 	continueIdentity bool
+	comment          string
 }
 
 var _ Query = (*TruncateTableQuery)(nil)
@@ -81,6 +82,14 @@ func (q *TruncateTableQuery) Restrict() *TruncateTableQuery {
 
 //------------------------------------------------------------------------------
 
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *TruncateTableQuery) Comment(comment string) *TruncateTableQuery {
+	q.comment = comment
+	return q
+}
+
+//------------------------------------------------------------------------------
+
 func (q *TruncateTableQuery) Operation() string {
 	return "TRUNCATE TABLE"
 }
@@ -91,6 +100,8 @@ func (q *TruncateTableQuery) AppendQuery(
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
 
 	if !fmter.HasFeature(feature.TableTruncate) {
 		b = append(b, "DELETE FROM "...)
@@ -110,7 +121,7 @@ func (q *TruncateTableQuery) AppendQuery(
 		return nil, err
 	}
 
-	if q.db.features.Has(feature.TableIdentity) {
+	if q.db.HasFeature(feature.TableIdentity) {
 		if q.continueIdentity {
 			b = append(b, " CONTINUE IDENTITY"...)
 		} else {
