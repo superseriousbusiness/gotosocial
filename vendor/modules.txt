@@ -938,14 +938,15 @@ github.com/ugorji/go/codec
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-# github.com/uptrace/bun v1.2.6
-## explicit; go 1.23
+# github.com/uptrace/bun v1.2.8
+## explicit; go 1.22.0
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
 github.com/uptrace/bun/dialect/feature
 github.com/uptrace/bun/dialect/sqltype
 github.com/uptrace/bun/extra/bunjson
 github.com/uptrace/bun/internal
+github.com/uptrace/bun/internal/ordered
 github.com/uptrace/bun/internal/parser
 github.com/uptrace/bun/internal/tagparser
 github.com/uptrace/bun/migrate
@@ -957,8 +958,8 @@ github.com/uptrace/bun/dialect/pgdialect
 # github.com/uptrace/bun/dialect/sqlitedialect v1.2.6
 ## explicit; go 1.23
 github.com/uptrace/bun/dialect/sqlitedialect
-# github.com/uptrace/bun/extra/bunotel v1.2.6
-## explicit; go 1.23
+# github.com/uptrace/bun/extra/bunotel v1.2.8
+## explicit; go 1.22.0
 github.com/uptrace/bun/extra/bunotel
 # github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2
 ## explicit; go 1.22
@@ -998,7 +999,7 @@ go.mongodb.org/mongo-driver/bson/bsonrw
 go.mongodb.org/mongo-driver/bson/bsontype
 go.mongodb.org/mongo-driver/bson/primitive
 go.mongodb.org/mongo-driver/x/bsonx/bsoncore
-# go.opentelemetry.io/otel v1.32.0 => go.opentelemetry.io/otel v1.29.0
+# go.opentelemetry.io/otel v1.33.0 => go.opentelemetry.io/otel v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel
 go.opentelemetry.io/otel/attribute
@@ -1039,7 +1040,7 @@ go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp/internal/retry
 # go.opentelemetry.io/otel/exporters/prometheus v0.51.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/exporters/prometheus
-# go.opentelemetry.io/otel/metric v1.32.0 => go.opentelemetry.io/otel/metric v1.29.0
+# go.opentelemetry.io/otel/metric v1.33.0 => go.opentelemetry.io/otel/metric v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/metric
 go.opentelemetry.io/otel/metric/embedded
@@ -1060,7 +1061,7 @@ go.opentelemetry.io/otel/sdk/metric/internal/aggregate
 go.opentelemetry.io/otel/sdk/metric/internal/exemplar
 go.opentelemetry.io/otel/sdk/metric/internal/x
 go.opentelemetry.io/otel/sdk/metric/metricdata
-# go.opentelemetry.io/otel/trace v1.32.0 => go.opentelemetry.io/otel/trace v1.29.0
+# go.opentelemetry.io/otel/trace v1.33.0 => go.opentelemetry.io/otel/trace v1.29.0
 ## explicit; go 1.21
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
@@ -1146,7 +1147,7 @@ golang.org/x/oauth2/internal
 ## explicit; go 1.18
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.28.0
+# golang.org/x/sys v0.29.0
 ## explicit; go 1.18
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
