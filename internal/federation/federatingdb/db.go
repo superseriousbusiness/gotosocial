@@ -65,7 +65,7 @@ type federatingDB struct {
 
 	// tracks Activity IDs we have handled creates for,
 	// for use in the Exists() function during forwarding.
-	createdIDs simple.Cache[string, struct{}]
+	activityIDs simple.Cache[string, struct{}]
 }
 
 // New returns a DB that satisfies the pub.Database
@@ -84,6 +84,6 @@ func New(
 		intFilter:  intFilter,
 		spamFilter: spamFilter,
 	}
-	fdb.createdIDs.Init(0, 1000)
+	fdb.activityIDs.Init(0, 1000)
 	return &fdb
 }

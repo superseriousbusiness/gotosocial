@@ -65,7 +65,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 
 	// Cache entry for this create activity ID for later
 	// checks in the Exist() function if we see it again.
-	f.createdIDs.Set(ap.GetJSONLDId(asType).String(), struct{}{})
+	f.activityIDs.Set(ap.GetJSONLDId(asType).String(), struct{}{})
 
 	switch name := asType.GetTypeName(); name {
 	case ap.ActivityBlock:
