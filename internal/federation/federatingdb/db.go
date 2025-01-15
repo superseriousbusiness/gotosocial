@@ -84,6 +84,6 @@ func New(
 		intFilter:  intFilter,
 		spamFilter: spamFilter,
 	}
-	fdb.activityIDs.Init(0, 1000)
+	fdb.activityIDs.Init(0, 2048)
 	return &fdb
 }
