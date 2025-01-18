@@ -542,7 +542,7 @@ func getNotifyLockURI(
 ) string {
 	builder := strings.Builder{}
 	builder.WriteString("notification:?")
-	builder.WriteString("type=" + string(notificationType))
+	builder.WriteString("type=" + notificationType.String())
 	builder.WriteString("&target=" + targetAccount.URI)
 	builder.WriteString("&origin=" + originAccount.URI)
 	if statusID != "" {

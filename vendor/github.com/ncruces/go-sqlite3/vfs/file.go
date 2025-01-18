@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"syscall"
 
 	"github.com/ncruces/go-sqlite3/util/osutil"
@@ -19,28 +18,29 @@ func (vfsOS) FullPathname(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	fi, err := os.Lstat(path)
+	return path, testSymlinks(filepath.Dir(path))
+}
+
+func testSymlinks(path string) error {
+	p, err := filepath.EvalSymlinks(path)
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return path, nil
-		}
-		return "", err
+		return err
 	}
-	if fi.Mode()&fs.ModeSymlink != 0 {
-		err = _OK_SYMLINK
+	if p != path {
+		return _OK_SYMLINK
 	}
-	return path, err
+	return nil
 }
 
 func (vfsOS) Delete(path string, syncDir bool) error {
 	err := os.Remove(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		return _IOERR_DELETE_NOENT
+	}
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return _IOERR_DELETE_NOENT
-		}
 		return err
 	}
-	if runtime.GOOS != "windows" && syncDir {
+	if canSyncDirs && syncDir {
 		f, err := os.Open(filepath.Dir(path))
 		if err != nil {
 			return _OK
@@ -74,7 +74,7 @@ func (vfsOS) Open(name string, flags OpenFlag) (File, OpenFlag, error) {
 }
 
 func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error) {
-	var oflags int
+	oflags := _O_NOFOLLOW
 	if flags&OPEN_EXCLUSIVE != 0 {
 		oflags |= os.O_EXCL
 	}
@@ -119,9 +119,9 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 		File:     f,
 		psow:     true,
 		readOnly: flags&OPEN_READONLY != 0,
-		syncDir: runtime.GOOS != "windows" &&
-			flags&(OPEN_CREATE) != 0 &&
-			flags&(OPEN_MAIN_JOURNAL|OPEN_SUPER_JOURNAL|OPEN_WAL) != 0,
+		syncDir: canSyncDirs &&
+			flags&(OPEN_MAIN_JOURNAL|OPEN_SUPER_JOURNAL|OPEN_WAL) != 0 &&
+			flags&(OPEN_CREATE) != 0,
 		shm: NewSharedMemory(name.String()+"-shm", flags),
 	}
 	return &file, flags, nil
@@ -142,7 +142,7 @@ var (
 	_ FileLockState          = &vfsFile{}
 	_ FileHasMoved           = &vfsFile{}
 	_ FileSizeHint           = &vfsFile{}
-	_ FilePersistentWAL      = &vfsFile{}
+	_ FilePersistWAL         = &vfsFile{}
 	_ FilePowersafeOverwrite = &vfsFile{}
 )
 
@@ -150,6 +150,7 @@ func (f *vfsFile) Close() error {
 	if f.shm != nil {
 		f.shm.Close()
 	}
+	f.Unlock(LOCK_NONE)
 	return f.File.Close()
 }
 
@@ -161,7 +162,7 @@ func (f *vfsFile) Sync(flags SyncFlag) error {
 	if err != nil {
 		return err
 	}
-	if runtime.GOOS != "windows" && f.syncDir {
+	if canSyncDirs && f.syncDir {
 		f.syncDir = false
 		d, err := os.Open(filepath.Dir(f.File.Name()))
 		if err != nil {
@@ -185,7 +186,7 @@ func (f *vfsFile) SectorSize() int {
 }
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
-	var res DeviceCharacteristic
+	res := IOCAP_SUBPAGE_READ
 	if osBatchAtomic(f.File) {
 		res |= IOCAP_BATCH_ATOMIC
 	}
@@ -205,10 +206,10 @@ func (f *vfsFile) HasMoved() (bool, error) {
 		return false, err
 	}
 	pi, err := os.Stat(f.Name())
+	if errors.Is(err, fs.ErrNotExist) {
+		return true, nil
+	}
 	if err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			return true, nil
-		}
 		return false, err
 	}
 	return !os.SameFile(fi, pi), nil
@@ -216,6 +217,6 @@ func (f *vfsFile) HasMoved() (bool, error) {
 
 func (f *vfsFile) LockState() LockLevel            { return f.lock }
 func (f *vfsFile) PowersafeOverwrite() bool        { return f.psow }
-func (f *vfsFile) PersistentWAL() bool             { return f.keepWAL }
+func (f *vfsFile) PersistWAL() bool                { return f.keepWAL }
 func (f *vfsFile) SetPowersafeOverwrite(psow bool) { f.psow = psow }
-func (f *vfsFile) SetPersistentWAL(keepWAL bool)   { f.keepWAL = keepWAL }
+func (f *vfsFile) SetPersistWAL(keepWAL bool)      { f.keepWAL = keepWAL }

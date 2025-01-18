@@ -10,9 +10,8 @@ func (m *hashmap) init(cap int) {
 	m.n = cap
 }
 
-func (m *hashmap) Get(key string) (*list, bool) {
-	list, ok := m.m[key]
-	return list, ok
+func (m *hashmap) Get(key string) *list {
+	return m.m[key]
 }
 
 func (m *hashmap) Put(key string, list *list) {

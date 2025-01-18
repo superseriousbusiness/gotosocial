@@ -38,8 +38,34 @@ func isPermittedInHashtag(r rune) bool {
 // is a recognized break character for before
 // or after a #hashtag.
 func isHashtagBoundary(r rune) bool {
-	return unicode.IsSpace(r) ||
-		(unicode.IsPunct(r) && r != '_')
+	switch {
+
+	// Zero width space.
+	case r == '\u200B':
+		return true
+
+	// Zero width no-break space.
+	case r == '\uFEFF':
+		return true
+
+	// Pipe character sometimes
+	// used as workaround.
+	case r == '|':
+		return true
+
+	// Standard Unicode white space.
+	case unicode.IsSpace(r):
+		return true
+
+	// Non-underscore punctuation.
+	case unicode.IsPunct(r) && r != '_':
+		return true
+
+	// Not recognized
+	// hashtag boundary.
+	default:
+		return false
+	}
 }
 
 // isMentionBoundary returns true if rune r

@@ -13,6 +13,7 @@ type AddColumnQuery struct {
 	baseQuery
 
 	ifNotExists bool
+	comment     string
 }
 
 var _ Query = (*AddColumnQuery)(nil)
@@ -42,9 +43,12 @@ func (q *AddColumnQuery) Err(err error) *AddColumnQuery {
 	return q
 }
 
-func (q *AddColumnQuery) Apply(fn func(*AddColumnQuery) *AddColumnQuery) *AddColumnQuery {
-	if fn != nil {
-		return fn(q)
+// Apply calls each function in fns, passing the AddColumnQuery as an argument.
+func (q *AddColumnQuery) Apply(fns ...func(*AddColumnQuery) *AddColumnQuery) *AddColumnQuery {
+	for _, fn := range fns {
+		if fn != nil {
+			q = fn(q)
+		}
 	}
 	return q
 }
@@ -82,6 +86,14 @@ func (q *AddColumnQuery) IfNotExists() *AddColumnQuery {
 
 //------------------------------------------------------------------------------
 
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *AddColumnQuery) Comment(comment string) *AddColumnQuery {
+	q.comment = comment
+	return q
+}
+
+//------------------------------------------------------------------------------
+
 func (q *AddColumnQuery) Operation() string {
 	return "ADD COLUMN"
 }
@@ -90,6 +102,9 @@ func (q *AddColumnQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
+
 	if len(q.columns) != 1 {
 		return nil, fmt.Errorf("bun: AddColumnQuery requires exactly one column")
 	}

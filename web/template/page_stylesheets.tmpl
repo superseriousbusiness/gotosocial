@@ -32,10 +32,16 @@
 {{- range .stylesheets }}
 <link rel="preload" href="{{- . -}}" as="style">
 {{- end }}
+{{- if .instance.CustomCSS }}
+<link rel="preload" href="/custom.css" as="style">
+{{- end }}
 <link rel="stylesheet" href="/assets/dist/_colors.css">
 <link rel="stylesheet" href="/assets/dist/base.css">
 <link rel="stylesheet" href="/assets/dist/page.css">
 {{- range .stylesheets }}
 <link rel="stylesheet" href="{{- . -}}">
+{{- end }}
+{{- if .instance.CustomCSS }}
+<link rel="stylesheet" href="/custom.css">
 {{- end }}
 {{- end }}

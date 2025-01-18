@@ -22,32 +22,11 @@ import { TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
 import { useTextInput } from "../../../../lib/form";
 import { useInstanceKeysExpireMutation } from "../../../../lib/query/admin/actions";
-import isValidDomain from "is-valid-domain";
+import { formDomainValidator } from "../../../../lib/util/formvalidators";
 
 export default function ExpireRemote({}) {
 	const domainField = useTextInput("domain", {
-		validator: (v: string) => {
-			if (v.length === 0) {
-				return "";
-			}
-
-			if (v[v.length-1] === ".") {
-				return "invalid domain";
-			}
-
-			const valid = isValidDomain(v, {
-				subdomain: true,
-				wildcard: false,
-				allowUnicode: true,
-				topLevel: false,
-			});
-
-			if (valid) {
-				return "";
-			}
-
-			return "invalid domain";
-		}
+		validator: formDomainValidator,
 	});
 
 	const [expire, expireResult] = useInstanceKeysExpireMutation();

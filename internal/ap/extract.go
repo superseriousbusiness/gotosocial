@@ -1027,7 +1027,7 @@ func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmo
 	)
 
 	if len(to) == 0 && len(cc) == 0 {
-		return "", gtserror.Newf("message wasn't TO or CC anyone")
+		return 0, gtserror.Newf("message wasn't TO or CC anyone")
 	}
 
 	// Assume most restrictive visibility,

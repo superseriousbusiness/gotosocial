@@ -18,6 +18,7 @@
 package delivery_test
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"math/rand"
@@ -27,7 +28,6 @@ import (
 	"strings"
 	"testing"
 
-	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
@@ -176,9 +176,9 @@ func requiresBody(method string) bool {
 func (t *testrequest) Generate(addr string) *http.Request {
 	var body io.ReadCloser
 	if t.body != nil {
-		var b byteutil.ReadNopCloser
+		var b bytes.Reader
 		b.Reset(t.body)
-		body = &b
+		body = io.NopCloser(&b)
 	}
 	req, err := http.NewRequest(t.method, addr+t.uri, body)
 	if err != nil {

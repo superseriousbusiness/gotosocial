@@ -25,6 +25,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math"
 	"net/url"
 	"os"
 	"runtime"
@@ -48,6 +49,7 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqlitedialect"
 	"github.com/uptrace/bun/migrate"
+	"github.com/uptrace/bun/schema"
 )
 
 // DBService satisfies the DB interface
@@ -79,6 +81,7 @@ type DBService struct {
 	db.SinBinStatus
 	db.Status
 	db.StatusBookmark
+	db.StatusEdit
 	db.StatusFave
 	db.Tag
 	db.Thread
@@ -130,18 +133,18 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
-	var db *bun.DB
+	var sqldb *sql.DB
+	var dialect func() schema.Dialect
 	var err error
-	t := strings.ToLower(config.GetDbType())
 
-	switch t {
+	switch t := strings.ToLower(config.GetDbType()); t {
 	case "postgres":
-		db, err = pgConn(ctx)
+		sqldb, dialect, err = pgConn(ctx)
 		if err != nil {
 			return nil, err
 		}
 	case "sqlite":
-		db, err = sqliteConn(ctx)
+		sqldb, dialect, err = sqliteConn(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -149,33 +152,19 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		return nil, fmt.Errorf("database type %s not supported for bundb", t)
 	}
 
-	// Add database query hooks.
-	db.AddQueryHook(queryHook{})
-	if config.GetTracingEnabled() {
-		db.AddQueryHook(tracing.InstrumentBun())
-	}
-	if config.GetMetricsEnabled() {
-		db.AddQueryHook(metrics.InstrumentBun())
-	}
-
-	// table registration is needed for many-to-many, see:
-	// https://bun.uptrace.dev/orm/many-to-many-relation/
-	for _, t := range []interface{}{
-		&gtsmodel.AccountToEmoji{},
-		&gtsmodel.ConversationToStatus{},
-		&gtsmodel.StatusToEmoji{},
-		&gtsmodel.StatusToTag{},
-		&gtsmodel.ThreadToStatus{},
-	} {
-		db.RegisterModel(t)
-	}
-
-	// perform any pending database migrations: this includes
-	// the very first 'migration' on startup which just creates
-	// necessary tables
-	if err := doMigration(ctx, db); err != nil {
+	// perform any pending database migrations: this includes the first
+	// 'migration' on startup which just creates necessary db tables.
+	//
+	// Note this uses its own instance of bun.DB as bun will automatically
+	// store in-memory reflect type schema of any Go models passed to it,
+	// and we still maintain lots of old model versions in the migrations.
+	if err := doMigration(ctx, bunDB(sqldb, dialect)); err != nil {
 		return nil, fmt.Errorf("db migration error: %s", err)
 	}
+
+	// Wrap sql.DB as bun.DB type,
+	// adding any connection hooks.
+	db := bunDB(sqldb, dialect)
 
 	ps := &DBService{
 		Account: &accountDB{
@@ -284,6 +273,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 			db:    db,
 			state: state,
 		},
+		StatusEdit: &statusEditDB{
+			db:    db,
+			state: state,
+		},
 		StatusFave: &statusFaveDB{
 			db:    db,
 			state: state,
@@ -318,17 +311,47 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 	return ps, nil
 }
 
-func pgConn(ctx context.Context) (*bun.DB, error) {
+// bunDB returns a new bun.DB for given sql.DB connection pool and dialect
+// function. This can be used to apply any necessary opts / hooks as we
+// initialize a bun.DB object both before and after performing migrations.
+func bunDB(sqldb *sql.DB, dialect func() schema.Dialect) *bun.DB {
+	db := bun.NewDB(sqldb, dialect())
+
+	// Add our SQL connection hooks.
+	db.AddQueryHook(queryHook{})
+	if config.GetTracingEnabled() {
+		db.AddQueryHook(tracing.InstrumentBun())
+	}
+	if config.GetMetricsEnabled() {
+		db.AddQueryHook(metrics.InstrumentBun())
+	}
+
+	// table registration is needed for many-to-many, see:
+	// https://bun.uptrace.dev/orm/many-to-many-relation/
+	for _, t := range []interface{}{
+		&gtsmodel.AccountToEmoji{},
+		&gtsmodel.ConversationToStatus{},
+		&gtsmodel.StatusToEmoji{},
+		&gtsmodel.StatusToTag{},
+		&gtsmodel.ThreadToStatus{},
+	} {
+		db.RegisterModel(t)
+	}
+
+	return db
+}
+
+func pgConn(ctx context.Context) (*sql.DB, func() schema.Dialect, error) {
 	opts, err := deriveBunDBPGOptions() //nolint:contextcheck
 	if err != nil {
-		return nil, fmt.Errorf("could not create bundb postgres options: %w", err)
+		return nil, nil, fmt.Errorf("could not create bundb postgres options: %w", err)
 	}
 
 	cfg := stdlib.RegisterConnConfig(opts)
 
 	sqldb, err := sql.Open("pgx-gts", cfg)
 	if err != nil {
-		return nil, fmt.Errorf("could not open postgres db: %w", err)
+		return nil, nil, fmt.Errorf("could not open postgres db: %w", err)
 	}
 
 	// Tune db connections for postgres, see:
@@ -338,22 +361,20 @@ func pgConn(ctx context.Context) (*bun.DB, error) {
 	sqldb.SetMaxIdleConns(2)                  // assume default 2; if max idle is less than max open, it will be automatically adjusted
 	sqldb.SetConnMaxLifetime(5 * time.Minute) // fine to kill old connections
 
-	db := bun.NewDB(sqldb, pgdialect.New())
-
 	// ping to check the db is there and listening
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("postgres ping: %w", err)
+	if err := sqldb.PingContext(ctx); err != nil {
+		return nil, nil, fmt.Errorf("postgres ping: %w", err)
 	}
 
 	log.Info(ctx, "connected to POSTGRES database")
-	return db, nil
+	return sqldb, func() schema.Dialect { return pgdialect.New() }, nil
 }
 
-func sqliteConn(ctx context.Context) (*bun.DB, error) {
+func sqliteConn(ctx context.Context) (*sql.DB, func() schema.Dialect, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
-		return nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
+		return nil, nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
 	}
 
 	// Build SQLite connection address with prefs.
@@ -362,7 +383,7 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 	// Open new DB instance
 	sqldb, err := sql.Open("sqlite-gts", address)
 	if err != nil {
-		return nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
+		return nil, nil, fmt.Errorf("could not open sqlite db with address %s: %w", address, err)
 	}
 
 	// Tune db connections for sqlite, see:
@@ -378,16 +399,14 @@ func sqliteConn(ctx context.Context) (*bun.DB, error) {
 		sqldb.SetConnMaxLifetime(5 * time.Minute)
 	}
 
-	db := bun.NewDB(sqldb, sqlitedialect.New())
-
 	// ping to check the db is there and listening
-	if err := db.PingContext(ctx); err != nil {
-		return nil, fmt.Errorf("sqlite ping: %w", err)
+	if err := sqldb.PingContext(ctx); err != nil {
+		return nil, nil, fmt.Errorf("sqlite ping: %w", err)
 	}
 
 	log.Infof(ctx, "connected to SQLITE database with address %s", address)
 
-	return db, nil
+	return sqldb, func() schema.Dialect { return sqlitedialect.New() }, nil
 }
 
 /*
@@ -401,19 +420,30 @@ func maxOpenConns() int {
 	if multiplier < 1 {
 		return 1
 	}
+
+	// Specifically for SQLite databases with
+	// a journal mode of anything EXCEPT "wal",
+	// only 1 concurrent connection is supported.
+	if strings.ToLower(config.GetDbType()) == "sqlite" {
+		journalMode := config.GetDbSqliteJournalMode()
+		journalMode = strings.ToLower(journalMode)
+		if journalMode != "wal" {
+			return 1
+		}
+	}
+
 	return multiplier * runtime.GOMAXPROCS(0)
 }
 
 // deriveBunDBPGOptions takes an application config and returns either a ready-to-use set of options
 // with sensible defaults, or an error if it's not satisfied by the provided config.
 func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
-	url := config.GetDbPostgresConnectionString()
-
-	// if database URL is defined, ignore other DB related configuration fields
-	if url != "" {
-		cfg, err := pgx.ParseConfig(url)
-		return cfg, err
+	// If database URL is defined, ignore
+	// other DB-related configuration fields.
+	if url := config.GetDbPostgresConnectionString(); url != "" {
+		return pgx.ParseConfig(url)
 	}
+
 	// these are all optional, the db adapter figures out defaults
 	address := config.GetDbAddress()
 
@@ -477,7 +507,10 @@ func deriveBunDBPGOptions() (*pgx.ConnConfig, error) {
 		cfg.Host = address
 	}
 	if port := config.GetDbPort(); port > 0 {
-		cfg.Port = uint16(port)
+		if port > math.MaxUint16 {
+			return nil, errors.New("invalid port, must be in range 1-65535")
+		}
+		cfg.Port = uint16(port) // #nosec G115 -- Just validated above.
 	}
 	if u := config.GetDbUser(); u != "" {
 		cfg.User = u
@@ -502,15 +535,12 @@ func buildSQLiteAddress(addr string) (string, bool) {
 	//
 	// - SQLite by itself supports setting a subset of its configuration options
 	//   via URI query arguments in the connection. Namely `mode` and `cache`.
-	//   This is the same situation for the directly transpiled C->Go code in
-	//   modernc.org/sqlite, i.e. modernc.org/sqlite/lib, NOT the Go SQL driver.
+	//   This is the same situation for our supported SQLite implementations.
 	//
-	// - `modernc.org/sqlite` has a "shim" around it to allow the directly
-	//   transpiled C code to be usable with a more native Go API. This is in
-	//   the form of a `database/sql/driver.Driver{}` implementation that calls
-	//   through to the transpiled C code.
+	// - Both implementations have a "shim" around them in the form of a
+	//   `database/sql/driver.Driver{}` implementation.
 	//
-	// - The SQLite shim we interface with adds support for setting ANY of the
+	// - The SQLite shims we interface with add support for setting ANY of the
 	//   configuration options via query arguments, through using a special `_pragma`
 	//   query key that specifies SQLite PRAGMAs to set upon opening each connection.
 	//   As such you will see below that most config is set with the `_pragma` key.
@@ -536,12 +566,6 @@ func buildSQLiteAddress(addr string) (string, bool) {
 	//   reached. And for whatever reason (:shrug:) SQLite is very particular about
 	//   setting this BEFORE the `journal_mode` is set, otherwise you can end up
 	//   running into more of these `SQLITE_BUSY` return codes than you might expect.
-	//
-	// - One final thing (I promise!): `SQLITE_BUSY` is only handled by the internal
-	//   `busy_timeout` handler in the case that a data race occurs contending for
-	//  table locks. THERE ARE STILL OTHER SITUATIONS IN WHICH THIS MAY BE RETURNED!
-	//  As such, we use our wrapping DB{} and Tx{} types (in "db.go") which make use
-	//  of our own retry-busy handler.
 
 	// Drop anything fancy from DB address
 	addr = strings.Split(addr, "?")[0]       // drop any provided query strings

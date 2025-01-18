@@ -21,18 +21,15 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 	"github.com/go-playground/form/v4"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
 
 // StatusCreatePOSTHandler swagger:operation POST /api/v1/statuses statusCreate
@@ -181,7 +178,7 @@ import (
 //			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 //			Must be at least 5 minutes in the future.
 //
-//			This feature isn't implemented yet.
+//			This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
 //		type: string
 //		in: formData
 //	-
@@ -254,6 +251,8 @@ import (
 //			description: not acceptable
 //		'500':
 //			description: internal server error
+//		'501':
+//			description: scheduled_at was set, but this feature is not yet implemented
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	authed, err := oauth.Authed(c, true, true, true, true)
 	if err != nil {
@@ -271,9 +270,9 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	form, err := parseStatusCreateForm(c)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+	form, errWithCode := parseStatusCreateForm(c)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -286,11 +285,6 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 	// }
 	// form.Status += "\n\nsent from " + user + "'s iphone\n"
 
-	if err := validateNormalizeCreateStatus(form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
-	}
-
 	apiStatus, errWithCode := m.processor.Status().Create(
 		c.Request.Context(),
 		authed.Account,
@@ -302,7 +296,7 @@ func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, apiStatus)
+	apiutil.JSON(c, http.StatusOK, apiStatus)
 }
 
 // intPolicyFormBinding satisfies gin's binding.Binding interface.
@@ -327,93 +321,69 @@ func (intPolicyFormBinding) Bind(req *http.Request, obj any) error {
 	return decoder.Decode(obj, req.Form)
 }
 
-func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, error) {
+func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtserror.WithCode) {
 	form := new(apimodel.StatusCreateRequest)
 
 	switch ct := c.ContentType(); ct {
 	case binding.MIMEJSON:
 		// Just bind with default json binding.
 		if err := c.ShouldBindWith(form, binding.JSON); err != nil {
-			return nil, err
+			return nil, gtserror.NewErrorBadRequest(
+				err,
+				err.Error(),
+			)
 		}
 
 	case binding.MIMEPOSTForm:
 		// Bind with default form binding first.
 		if err := c.ShouldBindWith(form, binding.FormPost); err != nil {
-			return nil, err
+			return nil, gtserror.NewErrorBadRequest(
+				err,
+				err.Error(),
+			)
 		}
 
 		// Now do custom binding.
 		intReqForm := new(apimodel.StatusInteractionPolicyForm)
 		if err := c.ShouldBindWith(intReqForm, intPolicyFormBinding{}); err != nil {
-			return nil, err
+			return nil, gtserror.NewErrorBadRequest(
+				err,
+				err.Error(),
+			)
 		}
+
 		form.InteractionPolicy = intReqForm.InteractionPolicy
 
 	case binding.MIMEMultipartPOSTForm:
 		// Bind with default form binding first.
 		if err := c.ShouldBindWith(form, binding.FormMultipart); err != nil {
-			return nil, err
+			return nil, gtserror.NewErrorBadRequest(
+				err,
+				err.Error(),
+			)
 		}
 
 		// Now do custom binding.
 		intReqForm := new(apimodel.StatusInteractionPolicyForm)
 		if err := c.ShouldBindWith(intReqForm, intPolicyFormBinding{}); err != nil {
-			return nil, err
+			return nil, gtserror.NewErrorBadRequest(
+				err,
+				err.Error(),
+			)
 		}
+
 		form.InteractionPolicy = intReqForm.InteractionPolicy
 
 	default:
-		err := fmt.Errorf(
-			"content-type %s not supported for this endpoint; supported content-types are %s, %s, %s",
-			ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm,
-		)
-		return nil, err
+		text := fmt.Sprintf("content-type %s not supported for this endpoint; supported content-types are %s, %s, %s",
+			ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm)
+		return nil, gtserror.NewErrorNotAcceptable(errors.New(text), text)
 	}
 
-	return form, nil
-}
-
-// validateNormalizeCreateStatus checks the form
-// for disallowed combinations of attachments and
-// overlength inputs.
-//
-// Side effect: normalizes the post's language tag.
-func validateNormalizeCreateStatus(form *apimodel.StatusCreateRequest) error {
-	hasStatus := form.Status != ""
-	hasMedia := len(form.MediaIDs) != 0
-	hasPoll := form.Poll != nil
-
-	if !hasStatus && !hasMedia && !hasPoll {
-		return errors.New("no status, media, or poll provided")
-	}
-
-	if hasMedia && hasPoll {
-		return errors.New("can't post media + poll in same status")
-	}
-
-	maxChars := config.GetStatusesMaxChars()
-	if length := len([]rune(form.Status)) + len([]rune(form.SpoilerText)); length > maxChars {
-		return fmt.Errorf("status too long, %d characters provided (including spoiler/content warning) but limit is %d", length, maxChars)
-	}
-
-	maxMediaFiles := config.GetStatusesMediaMaxFiles()
-	if len(form.MediaIDs) > maxMediaFiles {
-		return fmt.Errorf("too many media files attached to status, %d attached but limit is %d", len(form.MediaIDs), maxMediaFiles)
-	}
-
-	if form.Poll != nil {
-		if err := validateNormalizeCreatePoll(form); err != nil {
-			return err
-		}
-	}
-
-	if form.Language != "" {
-		language, err := validate.Language(form.Language)
-		if err != nil {
-			return err
-		}
-		form.Language = language
+	// Check not scheduled status.
+	if form.ScheduledAt != "" {
+		const text = "scheduled_at is not yet implemented"
+		return nil, gtserror.NewErrorNotImplemented(errors.New(text), text)
 	}
 
 	// Check if the deprecated "federated" field was
@@ -422,47 +392,20 @@ func validateNormalizeCreateStatus(form *apimodel.StatusCreateRequest) error {
 		form.LocalOnly = util.Ptr(!*form.Federated) // nolint:staticcheck
 	}
 
-	return nil
-}
+	// Normalize poll expiry time if a poll was given.
+	if form.Poll != nil && form.Poll.ExpiresInI != nil {
 
-func validateNormalizeCreatePoll(form *apimodel.StatusCreateRequest) error {
-	maxPollOptions := config.GetStatusesPollMaxOptions()
-	maxPollChars := config.GetStatusesPollOptionMaxChars()
-
-	// Normalize poll expiry if necessary.
-	// If we parsed this as JSON, expires_in
-	// may be either a float64 or a string.
-	if ei := form.Poll.ExpiresInI; ei != nil {
-		switch e := ei.(type) {
-		case float64:
-			form.Poll.ExpiresIn = int(e)
-
-		case string:
-			expiresIn, err := strconv.Atoi(e)
-			if err != nil {
-				return fmt.Errorf("could not parse expires_in value %s as integer: %w", e, err)
-			}
-
-			form.Poll.ExpiresIn = expiresIn
-
-		default:
-			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
+		// If we parsed this as JSON, expires_in
+		// may be either a float64 or a string.
+		expiresIn, err := apiutil.ParseDuration(
+			form.Poll.ExpiresInI,
+			"expires_in",
+		)
+		if err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
+		form.Poll.ExpiresIn = util.PtrOrZero(expiresIn)
 	}
 
-	if len(form.Poll.Options) == 0 {
-		return errors.New("poll with no options")
-	}
-
-	if len(form.Poll.Options) > maxPollOptions {
-		return fmt.Errorf("too many poll options provided, %d provided but limit is %d", len(form.Poll.Options), maxPollOptions)
-	}
-
-	for _, p := range form.Poll.Options {
-		if length := len([]rune(p)); length > maxPollChars {
-			return fmt.Errorf("poll option too long, %d characters provided but limit is %d", length, maxPollChars)
-		}
-	}
-
-	return nil
+	return form, nil
 }

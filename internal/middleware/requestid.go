@@ -48,7 +48,7 @@ func NewRequestID() string {
 	b := make([]byte, 12)
 
 	// Get current time in milliseconds.
-	ms := uint64(time.Now().UnixMilli())
+	ms := uint64(time.Now().UnixMilli()) // #nosec G115 -- Pre-1970 clock?
 
 	// Store binary time data in byte buffer.
 	binary.LittleEndian.PutUint64(b[0:8], ms)

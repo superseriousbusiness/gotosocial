@@ -48,9 +48,15 @@ func (c *Caches) initVisibility() {
 			{Fields: "RequesterID", Multiple: true},
 			{Fields: "Type,RequesterID,ItemID"},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize: cap,
+		IgnoreErr: func(err error) bool {
+			// don't cache any errors,
+			// it gets a little too tricky
+			// otherwise with ensuring
+			// errors are cleared out
+			return true
+		},
+		Copy: copyF,
 	})
 }
 

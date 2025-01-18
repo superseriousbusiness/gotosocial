@@ -66,11 +66,7 @@
   --blue3: var(--ecks-pee-white);
 
   /* Basic page styling (background + foreground) */
-  --bg: radial-gradient(
-    circle closest-corner at 20% 20%,
-    var(--ecks-pee-lighter-blue),
-    var(--ecks-pee-light-blue)
-  );
+  --bg: var(--ecks-pee-light-blue);
   --bg-accent: var(--ecks-pee-blue);
   --fg: var(--ecks-pee-white);
   --fg-reduced: var(--ecks-pee-lightest-blue);
@@ -120,6 +116,15 @@
   font-style: italic;
   src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2) format('woff2');
   src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff) format('woff');
+}
+
+/* Main page background */
+body {
+  background: radial-gradient(
+    circle closest-corner at 20% 20%,
+    var(--ecks-pee-lighter-blue),
+    var(--ecks-pee-light-blue)
+  );
 }
 
 /* Scroll bar */

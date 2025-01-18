@@ -35,6 +35,8 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+var pingMsg = []byte("ping!")
+
 // StreamGETHandler swagger:operation GET /api/v1/streaming streamGet
 //
 // Initiate a websocket connection for live streaming of statuses and notifications.
@@ -389,40 +391,57 @@ func (m *Module) writeToWSConn(
 ) {
 	for {
 		// Wrap context with timeout to send a ping.
-		pingctx, cncl := context.WithTimeout(ctx, ping)
+		pingCtx, cncl := context.WithTimeout(ctx, ping)
 
-		// Block on receipt of msg.
-		msg, ok := stream.Recv(pingctx)
+		// Block and wait for
+		// one of the following:
+		//
+		// - receipt of msg
+		// - timeout of pingCtx
+		// - stream closed.
+		msg, haveMsg := stream.Recv(pingCtx)
 
-		// Check if cancel because ping.
-		pinged := (pingctx.Err() != nil)
+		// If ping context has timed
+		// out, we should send a ping.
+		//
+		// In any case cancel pingCtx
+		// as we're done with it.
+		shouldPing := (pingCtx.Err() != nil)
 		cncl()
 
 		switch {
-		case !ok && pinged:
-			// The ping context timed out!
-			l.Trace("writing websocket ping")
+		case !haveMsg && !shouldPing:
+			// We have no message and we shouldn't
+			// send a ping; this means the stream
+			// has been closed from the client's end,
+			// so there's nothing further to do here.
+			l.Trace("no message and we shouldn't ping, returning...")
+			return
 
-			// Wrapped context time-out, send a keep-alive "ping".
-			if err := wsConn.WriteControl(websocket.PingMessage, nil, time.Time{}); err != nil {
-				l.Debugf("error writing websocket ping: %v", err)
-				break
+		case haveMsg:
+			// We have a message to stream.
+			l.Tracef("writing websocket message: %+v", msg)
+
+			if err := wsConn.WriteJSON(msg); err != nil {
+				// If there's an error writing then drop the
+				// connection, as client may have disappeared
+				// suddenly; they can reconnect if necessary.
+				l.Debugf("error writing websocket message: %v", err)
+				return
 			}
 
-		case !ok:
-			// Stream was
-			// closed.
-			return
-		}
+		case shouldPing:
+			// We have no message but we do
+			// need to send a keep-alive ping.
+			l.Trace("writing websocket ping")
 
-		l.Trace("writing websocket message: %+v", msg)
-
-		// Received a new message from the processor.
-		if err := wsConn.WriteJSON(msg); err != nil {
-			l.Debugf("error writing websocket message: %v", err)
-			break
+			if err := wsConn.WriteControl(websocket.PingMessage, pingMsg, time.Time{}); err != nil {
+				// If there's an error writing then drop the
+				// connection, as client may have disappeared
+				// suddenly; they can reconnect if necessary.
+				l.Debugf("error writing websocket ping: %v", err)
+				return
+			}
 		}
 	}
-
-	l.Debug("finished websocket write")
 }

@@ -98,8 +98,3 @@ func isNil(i interface{}) bool {
 	type eface struct{ _type, data unsafe.Pointer }    //nolint
 	return (*(*eface)(unsafe.Pointer(&i))).data == nil //nolint
 }
-
-// b2s converts a byteslice to string without allocation.
-func b2s(b []byte) string {
-	return *(*string)(unsafe.Pointer(&b))
-}

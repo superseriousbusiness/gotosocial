@@ -21,13 +21,20 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
+
+// instantFreshness is the shortest possible freshness window.
+var instantFreshness = util.Ptr(dereferencing.FreshnessWindow(0))
 
 type StatusTestSuite struct {
 	DereferencerStandardTestSuite
@@ -229,6 +236,219 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithNonMatchingURI() {
 	suite.Nil(fetchedStatus)
 }
 
+func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
+	// Create a new context for this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// The local account we will be fetching statuses as.
+	fetchingAccount := suite.testAccounts["local_account_1"]
+
+	// The test status in question that we will be dereferencing from "remote".
+	testURIStr := "https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839"
+	testURI := testrig.URLMustParse(testURIStr)
+	testStatusable := suite.client.TestRemoteStatuses[testURIStr]
+
+	// Fetch the remote status first to load it into instance.
+	testStatus, statusable, err := suite.dereferencer.GetStatusByURI(ctx,
+		fetchingAccount.Username,
+		testURI,
+	)
+	suite.NotNil(statusable)
+	suite.NoError(err)
+
+	// Run through multiple possible edits.
+	for _, testCase := range []struct {
+		editedContent        string
+		editedContentWarning string
+		editedLanguage       string
+		editedSensitive      bool
+		editedAttachmentIDs  []string
+		editedPollOptions    []string
+		editedPollVotes      []int
+		editedAt             time.Time
+	}{
+		{
+			editedContent:        "updated status content!",
+			editedContentWarning: "CW: edited status content",
+			editedLanguage:       testStatus.Language,        // no change
+			editedSensitive:      *testStatus.Sensitive,      // no change
+			editedAttachmentIDs:  testStatus.AttachmentIDs,   // no change
+			editedPollOptions:    getPollOptions(testStatus), // no change
+			editedPollVotes:      getPollVotes(testStatus),   // no change
+			editedAt:             time.Now(),
+		},
+	} {
+		// Take a snapshot of current
+		// state of the test status.
+		testStatus = copyStatus(testStatus)
+
+		// Edit the "remote" statusable obj.
+		suite.editStatusable(testStatusable,
+			testCase.editedContent,
+			testCase.editedContentWarning,
+			testCase.editedLanguage,
+			testCase.editedSensitive,
+			testCase.editedAttachmentIDs,
+			testCase.editedPollOptions,
+			testCase.editedPollVotes,
+			testCase.editedAt,
+		)
+
+		// Refresh with a given statusable to updated to edited copy.
+		latest, statusable, err := suite.dereferencer.RefreshStatus(ctx,
+			fetchingAccount.Username,
+			testStatus,
+			nil, // NOTE: can provide testStatusable here to test as being received (not deref'd)
+			instantFreshness,
+		)
+		suite.NotNil(statusable)
+		suite.NoError(err)
+
+		// verify updated status details.
+		suite.verifyEditedStatusUpdate(
+
+			// the original status
+			// before any changes.
+			testStatus,
+
+			// latest status
+			// being tested.
+			latest,
+
+			// expected current state.
+			&gtsmodel.StatusEdit{
+				Content:        testCase.editedContent,
+				ContentWarning: testCase.editedContentWarning,
+				Language:       testCase.editedLanguage,
+				Sensitive:      &testCase.editedSensitive,
+				AttachmentIDs:  testCase.editedAttachmentIDs,
+				PollOptions:    testCase.editedPollOptions,
+				PollVotes:      testCase.editedPollVotes,
+				// createdAt never changes
+			},
+
+			// expected historic edit.
+			&gtsmodel.StatusEdit{
+				Content:        testStatus.Content,
+				ContentWarning: testStatus.ContentWarning,
+				Language:       testStatus.Language,
+				Sensitive:      testStatus.Sensitive,
+				AttachmentIDs:  testStatus.AttachmentIDs,
+				PollOptions:    getPollOptions(testStatus),
+				PollVotes:      getPollVotes(testStatus),
+				CreatedAt:      testStatus.UpdatedAt(),
+			},
+		)
+	}
+}
+
+// editStatusable updates the given statusable attributes.
+// note that this acts on the original object, no copying.
+func (suite *StatusTestSuite) editStatusable(
+	statusable ap.Statusable,
+	content string,
+	contentWarning string,
+	language string,
+	sensitive bool,
+	attachmentIDs []string, // TODO: this will require some thinking as to how ...
+	pollOptions []string, // TODO: this will require changing statusable type to question
+	pollVotes []int, // TODO: this will require changing statusable type to question
+	editedAt time.Time,
+) {
+	// simply reset all mentions / emojis / tags
+	statusable.SetActivityStreamsTag(nil)
+
+	// Update the statusable content property + language (if set).
+	contentProp := streams.NewActivityStreamsContentProperty()
+	statusable.SetActivityStreamsContent(contentProp)
+	contentProp.AppendXMLSchemaString(content)
+	if language != "" {
+		contentProp.AppendRDFLangString(map[string]string{
+			language: content,
+		})
+	}
+
+	// Update the statusable content-warning property.
+	summaryProp := streams.NewActivityStreamsSummaryProperty()
+	statusable.SetActivityStreamsSummary(summaryProp)
+	summaryProp.AppendXMLSchemaString(contentWarning)
+
+	// Update the statusable sensitive property.
+	sensitiveProp := streams.NewActivityStreamsSensitiveProperty()
+	statusable.SetActivityStreamsSensitive(sensitiveProp)
+	sensitiveProp.AppendXMLSchemaBoolean(sensitive)
+
+	// Update the statusable updated property.
+	ap.SetUpdated(statusable, editedAt)
+}
+
+// verifyEditedStatusUpdate verifies that a given status has
+// the expected number of historic edits, the 'current' status
+// attributes (encapsulated as an edit for minimized no. args),
+// and the last given 'historic' status edit attributes.
+func (suite *StatusTestSuite) verifyEditedStatusUpdate(
+	testStatus *gtsmodel.Status, // the original model
+	status *gtsmodel.Status, // the status to check
+	current *gtsmodel.StatusEdit, // expected current state
+	historic *gtsmodel.StatusEdit, // historic edit we expect to have
+) {
+	// don't use this func
+	// name in error msgs.
+	suite.T().Helper()
+
+	// Check we have expected number of edits.
+	previousEdits := len(testStatus.Edits)
+	suite.Len(status.Edits, previousEdits+1)
+	suite.Len(status.EditIDs, previousEdits+1)
+
+	// Check current state of status.
+	suite.Equal(current.Content, status.Content)
+	suite.Equal(current.ContentWarning, status.ContentWarning)
+	suite.Equal(current.Language, status.Language)
+	suite.Equal(*current.Sensitive, *status.Sensitive)
+	suite.Equal(current.AttachmentIDs, status.AttachmentIDs)
+	suite.Equal(current.PollOptions, getPollOptions(status))
+	suite.Equal(current.PollVotes, getPollVotes(status))
+
+	// Check the latest historic edit matches expected.
+	latestEdit := status.Edits[len(status.Edits)-1]
+	suite.Equal(historic.Content, latestEdit.Content)
+	suite.Equal(historic.ContentWarning, latestEdit.ContentWarning)
+	suite.Equal(historic.Language, latestEdit.Language)
+	suite.Equal(*historic.Sensitive, *latestEdit.Sensitive)
+	suite.Equal(historic.AttachmentIDs, latestEdit.AttachmentIDs)
+	suite.Equal(historic.PollOptions, latestEdit.PollOptions)
+	suite.Equal(historic.PollVotes, latestEdit.PollVotes)
+	suite.Equal(historic.CreatedAt, latestEdit.CreatedAt)
+
+	// The status creation date should never change.
+	suite.Equal(testStatus.CreatedAt, status.CreatedAt)
+}
+
 func TestStatusTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusTestSuite))
+}
+
+// copyStatus returns a copy of the given status model (not including sub-structs).
+func copyStatus(status *gtsmodel.Status) *gtsmodel.Status {
+	copy := new(gtsmodel.Status)
+	*copy = *status
+	return copy
+}
+
+// getPollOptions extracts poll option strings from status (if poll is set).
+func getPollOptions(status *gtsmodel.Status) []string {
+	if status.Poll != nil {
+		return status.Poll.Options
+	}
+	return nil
+}
+
+// getPollVotes extracts poll vote counts from status (if poll is set).
+func getPollVotes(status *gtsmodel.Status) []int {
+	if status.Poll != nil {
+		return status.Poll.Votes
+	}
+	return nil
 }

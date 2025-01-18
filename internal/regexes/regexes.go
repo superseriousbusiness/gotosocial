@@ -46,7 +46,7 @@ const (
 	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:)`                       // Non-capturing group that matches against a single valid domain character.
 	mentionName              = `^@(` + usernameGrp + `+)(?:@(` + domainGrp + `+))?$`     // Extract parts of one mention, maybe including domain.
 	mentionFinder            = `(?:^|\s)(@` + usernameGrp + `+(?:@` + domainGrp + `+)?)` // Extract all mentions from a text, each mention may include domain.
-	emojiShortcode           = `\w{2,30}`                                                // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
+	emojiShortcode           = `\w{1,30}`                                                // Pattern for emoji shortcodes. maximumEmojiShortcodeLength = 30
 	emojiFinder              = `(?:\b)?:(` + emojiShortcode + `):(?:\b)?`                // Extract all emoji shortcodes from a text.
 	emojiValidator           = `^` + emojiShortcode + `$`                                // Validate a single emoji shortcode.
 	usernameStrict           = `^[a-z0-9_]{1,64}$`                                       // Pattern for usernames on THIS instance. maximumUsernameLength = 64

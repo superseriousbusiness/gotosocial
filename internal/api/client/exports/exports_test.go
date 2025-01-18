@@ -229,7 +229,7 @@ Cool Ass Posters From This Instance,admin@localhost:8080
   "media_storage": "",
   "followers_count": 2,
   "following_count": 2,
-  "statuses_count": 8,
+  "statuses_count": 9,
   "lists_count": 1,
   "blocks_count": 0,
   "mutes_count": 0

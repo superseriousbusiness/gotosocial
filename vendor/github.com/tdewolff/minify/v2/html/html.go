@@ -199,7 +199,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 						} else if next.TokenType == html.TextToken && !parse.IsAllWhitespace(next.Data) {
 							// stop looking when text encountered
 							break
-						} else if next.TokenType == html.StartTagToken || next.TokenType == html.EndTagToken {
+						} else if next.TokenType == html.StartTagToken || next.TokenType == html.EndTagToken || next.TokenType == html.SvgToken || next.TokenType == html.MathToken {
 							if o.KeepWhitespace {
 								break
 							}
@@ -208,7 +208,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 								t.Data = t.Data[:len(t.Data)-1]
 								omitSpace = false
 								break
-							} else if next.TokenType == html.StartTagToken {
+							} else if next.TokenType == html.StartTagToken || next.TokenType == html.SvgToken || next.TokenType == html.MathToken {
 								break
 							}
 						}
@@ -309,7 +309,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 
 				// skip text in select and optgroup tags
 				if t.Hash == Option || t.Hash == Optgroup {
-					if next := tb.Peek(0); next.TokenType == html.TextToken {
+					if next := tb.Peek(0); next.TokenType == html.TextToken && !next.HasTemplate {
 						tb.Shift()
 					}
 				}

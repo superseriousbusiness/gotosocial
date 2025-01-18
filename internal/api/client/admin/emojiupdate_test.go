@@ -560,7 +560,7 @@ func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyEmptyShortcode() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: shortcode  did not pass validation, must be between 2 and 30 characters, letters, numbers, and underscores only"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: shortcode  did not pass validation, must be between 1 and 30 characters, letters, numbers, and underscores only"}`, string(b))
 }
 
 func (suite *EmojiUpdateTestSuite) TestEmojiUpdateCopyNoShortcode() {

@@ -1,8 +1,6 @@
 package driver
 
-import (
-	"time"
-)
+import "time"
 
 // Convert a string in [time.RFC3339Nano] format into a [time.Time]
 // if it roundtrips back to the same string.

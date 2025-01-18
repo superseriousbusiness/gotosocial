@@ -33,6 +33,8 @@ type InstanceSettingsUpdateRequest struct {
 	ShortDescription *string `form:"short_description" json:"short_description" xml:"short_description"`
 	// Longer description of the instance, max 5,000 chars. HTML formatting accepted.
 	Description *string `form:"description" json:"description" xml:"description"`
+	// Custom CSS for the instance.
+	CustomCSS *string `form:"custom_css" json:"custom_css,omitempty" xml:"custom_css"`
 	// Terms and conditions of the instance, max 5,000 chars. HTML formatting accepted.
 	Terms *string `form:"terms" json:"terms" xml:"terms"`
 	// Image to use as the instance thumbnail.

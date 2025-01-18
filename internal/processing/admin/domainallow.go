@@ -22,14 +22,11 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/gruf/go-kv"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
@@ -69,84 +66,30 @@ func (p *Processor) createDomainAllow(
 		}
 	}
 
-	actionID := id.NewULID()
+	// Run admin action to process
+	// side effects of allow.
+	action := &gtsmodel.AdminAction{
+		ID:             id.NewULID(),
+		TargetCategory: gtsmodel.AdminActionCategoryDomain,
+		TargetID:       domainAllow.Domain,
+		Type:           gtsmodel.AdminActionUnsuspend,
+		AccountID:      adminAcct.ID,
+	}
 
-	// Process domain allow side
-	// effects asynchronously.
-	if errWithCode := p.actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
-		&gtsmodel.AdminAction{
-			ID:             actionID,
-			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domain,
-			Type:           gtsmodel.AdminActionSuspend,
-			AccountID:      adminAcct.ID,
-			Text:           domainAllow.PrivateComment,
-		},
-		func(ctx context.Context) gtserror.MultiError {
-			// Log start + finish.
-			l := log.WithFields(kv.Fields{
-				{"domain", domain},
-				{"actionID", actionID},
-			}...).WithContext(ctx)
-
-			l.Info("processing domain allow side effects")
-			defer func() { l.Info("finished processing domain allow side effects") }()
-
-			return p.domainAllowSideEffects(ctx, domainAllow)
-		},
+		action,
+		p.state.AdminActions.DomainAllowF(action.ID, domainAllow),
 	); errWithCode != nil {
-		return nil, actionID, errWithCode
+		return nil, action.ID, errWithCode
 	}
 
 	apiDomainAllow, errWithCode := p.apiDomainPerm(ctx, domainAllow, false)
 	if errWithCode != nil {
-		return nil, actionID, errWithCode
+		return nil, action.ID, errWithCode
 	}
 
-	return apiDomainAllow, actionID, nil
-}
-
-func (p *Processor) domainAllowSideEffects(
-	ctx context.Context,
-	allow *gtsmodel.DomainAllow,
-) gtserror.MultiError {
-	if config.GetInstanceFederationMode() == config.InstanceFederationModeAllowlist {
-		// We're running in allowlist mode,
-		// so there are no side effects to
-		// process here.
-		return nil
-	}
-
-	// We're running in blocklist mode or
-	// some similar mode which necessitates
-	// domain allow side effects if a block
-	// was in place when the allow was created.
-	//
-	// So, check if there's a block.
-	block, err := p.state.DB.GetDomainBlock(ctx, allow.Domain)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs := gtserror.NewMultiError(1)
-		errs.Appendf("db error getting domain block %s: %w", allow.Domain, err)
-		return errs
-	}
-
-	if block == nil {
-		// No block?
-		// No problem!
-		return nil
-	}
-
-	// There was a block, over which the new
-	// allow ought to take precedence. To account
-	// for this, just run side effects as though
-	// the domain was being unblocked, while
-	// leaving the existing block in place.
-	//
-	// Any accounts that were suspended by
-	// the block will be unsuspended and be
-	// able to interact with the instance again.
-	return p.domainUnblockSideEffects(ctx, block)
+	return apiDomainAllow, action.ID, nil
 }
 
 func (p *Processor) deleteDomainAllow(
@@ -179,77 +122,23 @@ func (p *Processor) deleteDomainAllow(
 		return nil, "", gtserror.NewErrorInternalError(err)
 	}
 
-	actionID := id.NewULID()
+	// Run admin action to process
+	// side effects of unallow.
+	action := &gtsmodel.AdminAction{
+		ID:             id.NewULID(),
+		TargetCategory: gtsmodel.AdminActionCategoryDomain,
+		TargetID:       domainAllow.Domain,
+		Type:           gtsmodel.AdminActionUnsuspend,
+		AccountID:      adminAcct.ID,
+	}
 
-	// Process domain unallow side
-	// effects asynchronously.
-	if errWithCode := p.actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
-		&gtsmodel.AdminAction{
-			ID:             actionID,
-			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domainAllow.Domain,
-			Type:           gtsmodel.AdminActionUnsuspend,
-			AccountID:      adminAcct.ID,
-		},
-		func(ctx context.Context) gtserror.MultiError {
-			// Log start + finish.
-			l := log.WithFields(kv.Fields{
-				{"domain", domainAllow.Domain},
-				{"actionID", actionID},
-			}...).WithContext(ctx)
-
-			l.Info("processing domain unallow side effects")
-			defer func() { l.Info("finished processing domain unallow side effects") }()
-
-			return p.domainUnallowSideEffects(ctx, domainAllow)
-		},
+		action,
+		p.state.AdminActions.DomainUnallowF(action.ID, domainAllow),
 	); errWithCode != nil {
-		return nil, actionID, errWithCode
+		return nil, action.ID, errWithCode
 	}
 
-	return apiDomainAllow, actionID, nil
-}
-
-func (p *Processor) domainUnallowSideEffects(
-	ctx context.Context,
-	allow *gtsmodel.DomainAllow,
-) gtserror.MultiError {
-	if config.GetInstanceFederationMode() == config.InstanceFederationModeAllowlist {
-		// We're running in allowlist mode,
-		// so there are no side effects to
-		// process here.
-		return nil
-	}
-
-	// We're running in blocklist mode or
-	// some similar mode which necessitates
-	// domain allow side effects if a block
-	// was in place when the allow was removed.
-	//
-	// So, check if there's a block.
-	block, err := p.state.DB.GetDomainBlock(ctx, allow.Domain)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs := gtserror.NewMultiError(1)
-		errs.Appendf("db error getting domain block %s: %w", allow.Domain, err)
-		return errs
-	}
-
-	if block == nil {
-		// No block?
-		// No problem!
-		return nil
-	}
-
-	// There was a block, over which the previous
-	// allow was taking precedence. Now that the
-	// allow has been removed, we should put the
-	// side effects of the block back in place.
-	//
-	// To do this, process the block side effects
-	// again as though the block were freshly
-	// created. This will mark all accounts from
-	// the blocked domain as suspended, and clean
-	// up their follows/following, media, etc.
-	return p.domainBlockSideEffects(ctx, block)
+	return apiDomainAllow, action.ID, nil
 }

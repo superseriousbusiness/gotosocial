@@ -19,6 +19,7 @@ package status
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 
@@ -402,6 +403,10 @@ func (p *Processor) WebContextGet(
 		// We should mark the next **VISIBLE**
 		// reply as the first reply.
 		markNextVisibleAsFirstReply bool
+
+		// Map of statuses that didn't pass visi
+		// checks and won't be shown via the web.
+		hiddenStatuses = make(map[string]struct{})
 	)
 
 	for idx, status := range wholeThread {
@@ -427,11 +432,16 @@ func (p *Processor) WebContextGet(
 			}
 		}
 
-		// Ensure status is actually
-		// visible to just anyone, and
-		// hide / don't include it if not.
+		// Ensure status is actually visible to just
+		// anyone, and hide / don't include it if not.
+		//
+		// Include a check to see if the parent status
+		// is hidden; if so, we shouldn't show the child
+		// as it leads to weird-looking threading where
+		// a status seems to reply to nothing.
+		_, parentHidden := hiddenStatuses[status.InReplyToID]
 		v, err := p.visFilter.StatusVisible(ctx, nil, status)
-		if err != nil || !v {
+		if err != nil || !v || parentHidden {
 			if !inReplies {
 				// Main thread entry hidden.
 				wCtx.ThreadHidden++
@@ -439,12 +449,15 @@ func (p *Processor) WebContextGet(
 				// Reply hidden.
 				wCtx.ThreadRepliesHidden++
 			}
+
+			hiddenStatuses[status.ID] = struct{}{}
 			continue
 		}
 
 		// Prepare visible status to add to thread context.
 		webStatus, err := p.converter.StatusToWebStatus(ctx, status)
 		if err != nil {
+			hiddenStatuses[status.ID] = struct{}{}
 			continue
 		}
 
@@ -512,8 +525,16 @@ func (p *Processor) WebContextGet(
 		wCtx.ThreadLength = threadLength
 	}
 
-	// Jot down number of hidden posts so template doesn't have to do it.
+	// Jot down number of "main" thread entries shown.
 	wCtx.ThreadShown = wCtx.ThreadLength - wCtx.ThreadHidden
+
+	// If there's no posts visible in the
+	// "main" thread we shouldn't show replies
+	// via the web as that's just weird.
+	if wCtx.ThreadShown < 1 {
+		const text = "no statuses visible in main thread"
+		return nil, gtserror.NewErrorNotFound(errors.New(text))
+	}
 
 	// Mark the last "main" visible status.
 	wCtx.Statuses[wCtx.ThreadShown-1].ThreadLastMain = true
@@ -523,7 +544,7 @@ func (p *Processor) WebContextGet(
 	// part of the "main" thread.
 	wCtx.ThreadReplies = threadLength - wCtx.ThreadLength
 
-	// Jot down number of hidden replies so template doesn't have to do it.
+	// Jot down number of "replies" shown.
 	wCtx.ThreadRepliesShown = wCtx.ThreadReplies - wCtx.ThreadRepliesHidden
 
 	// Return the finished context.

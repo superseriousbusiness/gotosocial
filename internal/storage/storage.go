@@ -97,23 +97,39 @@ func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error)
 	return d.Storage.WriteBytes(ctx, key, value)
 }
 
-// PutStream writes the bytes from supplied reader at key in the storage
-func (d *Driver) PutStream(ctx context.Context, key string, r io.Reader) (int64, error) {
-	return d.Storage.WriteStream(ctx, key, r)
-}
-
-// PutFile moves the contents of file at path, to storage.Driver{} under given key.
-func (d *Driver) PutFile(ctx context.Context, key string, filepath string) (int64, error) {
+// PutFile moves the contents of file at path, to storage.Driver{} under given key (with content-type if supported).
+func (d *Driver) PutFile(ctx context.Context, key, filepath, contentType string) (int64, error) {
 	// Open file at path for reading.
 	file, err := os.Open(filepath)
 	if err != nil {
 		return 0, gtserror.Newf("error opening file %s: %w", filepath, err)
 	}
 
-	// Write the file data to storage under key. Note
-	// that for disk.DiskStorage{} this should end up
-	// being a highly optimized Linux sendfile syscall.
-	sz, err := d.Storage.WriteStream(ctx, key, file)
+	var sz int64
+
+	switch d := d.Storage.(type) {
+	case *s3.S3Storage:
+		var info minio.UploadInfo
+
+		// For S3 storage, write the file but specifically pass in the
+		// content-type as an extra option. This handles the case of media
+		// being served via CDN redirect (where we don't handle content-type).
+		info, err = d.PutObject(ctx, key, file, minio.PutObjectOptions{
+			ContentType: contentType,
+		})
+
+		// Get size from
+		// uploaded info.
+		sz = info.Size
+
+	default:
+		// Write the file data to storage under key. Note
+		// that for disk.DiskStorage{} this should end up
+		// being a highly optimized Linux sendfile syscall.
+		sz, err = d.WriteStream(ctx, key, file)
+	}
+
+	// Wrap write error.
 	if err != nil {
 		err = gtserror.Newf("error writing file %s: %w", key, err)
 	}
@@ -305,11 +321,7 @@ func NewS3Storage() (*Driver, error) {
 			Creds:  credentials.NewStaticV4(access, secret, ""),
 			Secure: secure,
 		},
-		GetOpts:      minio.GetObjectOptions{},
-		PutOpts:      minio.PutObjectOptions{},
 		PutChunkSize: 5 * 1024 * 1024, // 5MiB
-		StatOpts:     minio.StatObjectOptions{},
-		RemoveOpts:   minio.RemoveObjectOptions{},
 		ListSize:     200,
 	})
 	if err != nil {

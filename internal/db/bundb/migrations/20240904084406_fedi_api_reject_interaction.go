@@ -20,7 +20,7 @@ package migrations
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240904084406_fedi_api_reject_interaction"
 	"github.com/uptrace/bun"
 )
 

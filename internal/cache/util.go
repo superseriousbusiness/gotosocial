@@ -18,7 +18,6 @@
 package cache
 
 import (
-	"database/sql"
 	"errors"
 	"time"
 
@@ -42,7 +41,6 @@ func ignoreErrors(err error) bool {
 		// (until invalidation).
 		db.ErrNoEntries,
 		db.ErrAlreadyExists,
-		sql.ErrNoRows,
 	)
 }
 

@@ -22,7 +22,7 @@
   --blue3: var(--blurple3);
 
   /* Basic page styling (background + foreground) */
-  --bg: linear-gradient(var(--blurple7), black);
+  --bg: var(--blurple7);
   --bg-accent: var(--blurple6);
   --fg: var(--blurple1);
   --fg-reduced: var(--blurple2);
@@ -42,6 +42,11 @@
 
   /* Used around statuses + other items */
   --boxshadow-border: 0.08rem solid black;
+}
+
+/* Main page background */
+body {
+  background: linear-gradient(var(--blurple7), black);
 }
 
 /* Scroll bar */

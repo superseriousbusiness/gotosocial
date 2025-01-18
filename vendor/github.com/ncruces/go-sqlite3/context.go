@@ -89,6 +89,7 @@ func (ctx Context) ResultText(value string) {
 }
 
 // ResultRawText sets the text result of the function to a []byte.
+// Returning a nil slice is the same as calling [Context.ResultNull].
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultRawText(value []byte) {

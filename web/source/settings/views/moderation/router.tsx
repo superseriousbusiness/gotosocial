@@ -29,6 +29,16 @@ import DomainPermDetail from "./domain-permissions/detail";
 import AccountsSearch from "./accounts";
 import AccountsPending from "./accounts/pending";
 import AccountDetail from "./accounts/detail";
+import DomainPermissionDraftsSearch from "./domain-permissions/drafts";
+import DomainPermissionDraftNew from "./domain-permissions/drafts/new";
+import DomainPermissionDraftDetail from "./domain-permissions/drafts/detail";
+import DomainPermissionExcludeDetail from "./domain-permissions/excludes/detail";
+import DomainPermissionExcludesSearch from "./domain-permissions/excludes";
+import DomainPermissionExcludeNew from "./domain-permissions/excludes/new";
+import DomainPermissionSubscriptionsSearch from "./domain-permissions/subscriptions";
+import DomainPermissionSubscriptionNew from "./domain-permissions/subscriptions/new";
+import DomainPermissionSubscriptionDetail from "./domain-permissions/subscriptions/detail";
+import DomainPermissionSubscriptionsPreview from "./domain-permissions/subscriptions/preview";
 
 /*
 	EXPORTED COMPONENTS
@@ -139,6 +149,16 @@ function ModerationDomainPermsRouter() {
 					<Switch>
 						<Route path="/import-export" component={ImportExport} />
 						<Route path="/process" component={ImportExport} />
+						<Route path="/drafts/search" component={DomainPermissionDraftsSearch} />
+						<Route path="/drafts/new" component={DomainPermissionDraftNew} />
+						<Route path="/drafts/:permDraftId" component={DomainPermissionDraftDetail} />
+						<Route path="/excludes/search" component={DomainPermissionExcludesSearch} />
+						<Route path="/excludes/new" component={DomainPermissionExcludeNew} />
+						<Route path="/excludes/:excludeId" component={DomainPermissionExcludeDetail} />
+						<Route path="/subscriptions/search" component={DomainPermissionSubscriptionsSearch} />
+						<Route path="/subscriptions/new" component={DomainPermissionSubscriptionNew} />
+						<Route path="/subscriptions/preview" component={DomainPermissionSubscriptionsPreview} />
+						<Route path="/subscriptions/:permSubId" component={DomainPermissionSubscriptionDetail} />
 						<Route path="/:permType" component={DomainPermissionsOverview} />
 						<Route path="/:permType/:domain" component={DomainPermDetail} />
 						<Route><Redirect to="/blocks"/></Route>

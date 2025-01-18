@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useEffect, useMemo } from "react";
+import React, { useMemo } from "react";
 import { useLocation, useParams } from "wouter";
 import { PermType } from "../../../lib/types/perm";
 import { useDeleteHeaderAllowMutation, useDeleteHeaderBlockMutation, useGetHeaderAllowQuery, useGetHeaderBlockQuery } from "../../../lib/query/admin/http-header-permissions";
@@ -26,8 +26,7 @@ import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { SerializedError } from "@reduxjs/toolkit";
 import Loading from "../../../components/loading";
 import { Error } from "../../../components/error";
-import { useLazyGetAccountQuery } from "../../../lib/query/admin";
-import Username from "../../../components/username";
+import UsernameLozenge from "../../../components/username-lozenge";
 import { useBaseUrl } from "../../../lib/navigation/util";
 import BackButton from "../../../components/back-button";
 import MutationButton from "../../../components/form/mutation-button";
@@ -92,58 +91,19 @@ interface PermDeetsProps {
 function PermDeets({
 	permType,
 	data: perm,
-	isLoading: isLoadingPerm,
-	isFetching: isFetchingPerm,
-	isError: isErrorPerm,
-	error: errorPerm,
+	isLoading,
+	isFetching,
+	isError,
+	error,
 }: PermDeetsProps) {
 	const [ location ] = useLocation();
 	const baseUrl = useBaseUrl();
-	
-	// Once we've loaded the perm, trigger
-	// getting the account that created it.
-	const [ getAccount, getAccountRes ] = useLazyGetAccountQuery();
-	useEffect(() => {
-		if (!perm) {
-			return;
-		}
-		getAccount(perm.created_by, true);
-	}, [getAccount, perm]);
 
-	// Load the createdByAccount if possible,
-	// returning a username lozenge with
-	// a link to the account.
-	const createdByAccount = useMemo(() => {
-		const {
-			data: account,
-			isLoading: isLoadingAccount,
-			isFetching: isFetchingAccount,
-			isError: isErrorAccount,
-		} = getAccountRes;
-		
-		// Wait for query to finish, returning
-		// loading spinner in the meantime.
-		if (isLoadingAccount || isFetchingAccount || !perm) {
-			return <Loading />;
-		} else if (isErrorAccount || account === undefined) {
-			// Fall back to account ID.
-			return perm?.created_by;
-		}
-
-		return (
-			<Username
-				account={account}
-				linkTo={`~/settings/moderation/accounts/${account.id}`}
-				backLocation={`~${baseUrl}${location}`}
-			/>
-		);
-	}, [getAccountRes, perm, baseUrl, location]);
-
-	// Now wait til the perm itself is loaded.
-	if (isLoadingPerm || isFetchingPerm) {
+	// Wait til the perm itself is loaded.
+	if (isLoading || isFetching) {
 		return <Loading />;
-	} else if (isErrorPerm) {
-		return <Error error={errorPerm} />;
+	} else if (isError) {
+		return <Error error={error} />;
 	} else if (perm === undefined) {
 		throw "perm undefined";
 	}
@@ -172,7 +132,13 @@ function PermDeets({
 				</div>
 				<div className="info-list-entry">
 					<dt>Created By</dt>
-					<dd>{createdByAccount}</dd>
+					<dd>
+						<UsernameLozenge
+							account={perm.created_by}
+							linkTo={`~/settings/moderation/accounts/${perm.created_by}`}
+							backLocation={`~${baseUrl}${location}`}
+						/>
+					</dd>
 				</div>
 				<div className="info-list-entry">
 					<dt>Header Name</dt>

@@ -67,7 +67,7 @@ func (p *Processor) Update(
 		action = gtsmodel.FilterActionHide
 	}
 	expiresAt := time.Time{}
-	if form.ExpiresIn != nil {
+	if form.ExpiresIn != nil && *form.ExpiresIn != 0 {
 		expiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
 	}
 	contextHome := false

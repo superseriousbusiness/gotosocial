@@ -78,15 +78,17 @@ type Configuration struct {
 	WebTemplateBaseDir string `name:"web-template-base-dir" usage:"Basedir for html templating files for rendering pages and composing emails."`
 	WebAssetBaseDir    string `name:"web-asset-base-dir" usage:"Directory to serve static assets from, accessible at example.org/assets/"`
 
-	InstanceFederationMode         string             `name:"instance-federation-mode" usage:"Set instance federation mode."`
-	InstanceFederationSpamFilter   bool               `name:"instance-federation-spam-filter" usage:"Enable basic spam filter heuristics for messages coming from other instances, and drop messages identified as spam"`
-	InstanceExposePeers            bool               `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
-	InstanceExposeSuspended        bool               `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
-	InstanceExposeSuspendedWeb     bool               `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
-	InstanceExposePublicTimeline   bool               `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
-	InstanceDeliverToSharedInboxes bool               `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
-	InstanceInjectMastodonVersion  bool               `name:"instance-inject-mastodon-version" usage:"This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection"`
-	InstanceLanguages              language.Languages `name:"instance-languages" usage:"BCP47 language tags for the instance. Used to indicate the preferred languages of instance residents (in order from most-preferred to least-preferred)."`
+	InstanceFederationMode            string             `name:"instance-federation-mode" usage:"Set instance federation mode."`
+	InstanceFederationSpamFilter      bool               `name:"instance-federation-spam-filter" usage:"Enable basic spam filter heuristics for messages coming from other instances, and drop messages identified as spam"`
+	InstanceExposePeers               bool               `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
+	InstanceExposeSuspended           bool               `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
+	InstanceExposeSuspendedWeb        bool               `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
+	InstanceExposePublicTimeline      bool               `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
+	InstanceDeliverToSharedInboxes    bool               `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
+	InstanceInjectMastodonVersion     bool               `name:"instance-inject-mastodon-version" usage:"This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection"`
+	InstanceLanguages                 language.Languages `name:"instance-languages" usage:"BCP47 language tags for the instance. Used to indicate the preferred languages of instance residents (in order from most-preferred to least-preferred)."`
+	InstanceSubscriptionsProcessFrom  string             `name:"instance-subscriptions-process-from" usage:"Time of day from which to start running instance subscriptions processing jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
+	InstanceSubscriptionsProcessEvery time.Duration      `name:"instance-subscriptions-process-every" usage:"Period to elapse between instance subscriptions processing jobs, starting from instance-subscriptions-process-from."`
 
 	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
@@ -98,6 +100,8 @@ type Configuration struct {
 	MediaRemoteCacheDays     int           `name:"media-remote-cache-days" usage:"Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely."`
 	MediaEmojiLocalMaxSize   bytesize.Size `name:"media-emoji-local-max-size" usage:"Max size in bytes of emojis uploaded to this instance via the admin API."`
 	MediaEmojiRemoteMaxSize  bytesize.Size `name:"media-emoji-remote-max-size" usage:"Max size in bytes of emojis to download from other instances."`
+	MediaImageSizeHint       bytesize.Size `name:"media-image-size-hint" usage:"Size in bytes of max image size referred to on /api/v_/instance endpoints (else, local max size)"`
+	MediaVideoSizeHint       bytesize.Size `name:"media-video-size-hint" usage:"Size in bytes of max video size referred to on /api/v_/instance endpoints (else, local max size)"`
 	MediaLocalMaxSize        bytesize.Size `name:"media-local-max-size" usage:"Max size in bytes of media uploaded to this instance via API"`
 	MediaRemoteMaxSize       bytesize.Size `name:"media-remote-max-size" usage:"Max size in bytes of media to download from other instances"`
 	MediaCleanupFrom         string        `name:"media-cleanup-from" usage:"Time of day from which to start running media cleanup/prune jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
@@ -194,58 +198,61 @@ type HTTPClientConfiguration struct {
 }
 
 type CacheConfiguration struct {
-	MemoryTarget                      bytesize.Size `name:"memory-target"`
-	AccountMemRatio                   float64       `name:"account-mem-ratio"`
-	AccountNoteMemRatio               float64       `name:"account-note-mem-ratio"`
-	AccountSettingsMemRatio           float64       `name:"account-settings-mem-ratio"`
-	AccountStatsMemRatio              float64       `name:"account-stats-mem-ratio"`
-	ApplicationMemRatio               float64       `name:"application-mem-ratio"`
-	BlockMemRatio                     float64       `name:"block-mem-ratio"`
-	BlockIDsMemRatio                  float64       `name:"block-ids-mem-ratio"`
-	BoostOfIDsMemRatio                float64       `name:"boost-of-ids-mem-ratio"`
-	ClientMemRatio                    float64       `name:"client-mem-ratio"`
-	ConversationMemRatio              float64       `name:"conversation-mem-ratio"`
-	ConversationLastStatusIDsMemRatio float64       `name:"conversation-last-status-ids-mem-ratio"`
-	EmojiMemRatio                     float64       `name:"emoji-mem-ratio"`
-	EmojiCategoryMemRatio             float64       `name:"emoji-category-mem-ratio"`
-	FilterMemRatio                    float64       `name:"filter-mem-ratio"`
-	FilterKeywordMemRatio             float64       `name:"filter-keyword-mem-ratio"`
-	FilterStatusMemRatio              float64       `name:"filter-status-mem-ratio"`
-	FollowMemRatio                    float64       `name:"follow-mem-ratio"`
-	FollowIDsMemRatio                 float64       `name:"follow-ids-mem-ratio"`
-	FollowRequestMemRatio             float64       `name:"follow-request-mem-ratio"`
-	FollowRequestIDsMemRatio          float64       `name:"follow-request-ids-mem-ratio"`
-	FollowingTagIDsMemRatio           float64       `name:"following-tag-ids-mem-ratio"`
-	InReplyToIDsMemRatio              float64       `name:"in-reply-to-ids-mem-ratio"`
-	InstanceMemRatio                  float64       `name:"instance-mem-ratio"`
-	InteractionRequestMemRatio        float64       `name:"interaction-request-mem-ratio"`
-	ListMemRatio                      float64       `name:"list-mem-ratio"`
-	ListIDsMemRatio                   float64       `name:"list-ids-mem-ratio"`
-	ListedIDsMemRatio                 float64       `name:"listed-ids-mem-ratio"`
-	MarkerMemRatio                    float64       `name:"marker-mem-ratio"`
-	MediaMemRatio                     float64       `name:"media-mem-ratio"`
-	MentionMemRatio                   float64       `name:"mention-mem-ratio"`
-	MoveMemRatio                      float64       `name:"move-mem-ratio"`
-	NotificationMemRatio              float64       `name:"notification-mem-ratio"`
-	PollMemRatio                      float64       `name:"poll-mem-ratio"`
-	PollVoteMemRatio                  float64       `name:"poll-vote-mem-ratio"`
-	PollVoteIDsMemRatio               float64       `name:"poll-vote-ids-mem-ratio"`
-	ReportMemRatio                    float64       `name:"report-mem-ratio"`
-	SinBinStatusMemRatio              float64       `name:"sin-bin-status-mem-ratio"`
-	StatusMemRatio                    float64       `name:"status-mem-ratio"`
-	StatusBookmarkMemRatio            float64       `name:"status-bookmark-mem-ratio"`
-	StatusBookmarkIDsMemRatio         float64       `name:"status-bookmark-ids-mem-ratio"`
-	StatusFaveMemRatio                float64       `name:"status-fave-mem-ratio"`
-	StatusFaveIDsMemRatio             float64       `name:"status-fave-ids-mem-ratio"`
-	TagMemRatio                       float64       `name:"tag-mem-ratio"`
-	ThreadMuteMemRatio                float64       `name:"thread-mute-mem-ratio"`
-	TokenMemRatio                     float64       `name:"token-mem-ratio"`
-	TombstoneMemRatio                 float64       `name:"tombstone-mem-ratio"`
-	UserMemRatio                      float64       `name:"user-mem-ratio"`
-	UserMuteMemRatio                  float64       `name:"user-mute-mem-ratio"`
-	UserMuteIDsMemRatio               float64       `name:"user-mute-ids-mem-ratio"`
-	WebfingerMemRatio                 float64       `name:"webfinger-mem-ratio"`
-	VisibilityMemRatio                float64       `name:"visibility-mem-ratio"`
+	MemoryTarget                          bytesize.Size `name:"memory-target"`
+	AccountMemRatio                       float64       `name:"account-mem-ratio"`
+	AccountNoteMemRatio                   float64       `name:"account-note-mem-ratio"`
+	AccountSettingsMemRatio               float64       `name:"account-settings-mem-ratio"`
+	AccountStatsMemRatio                  float64       `name:"account-stats-mem-ratio"`
+	ApplicationMemRatio                   float64       `name:"application-mem-ratio"`
+	BlockMemRatio                         float64       `name:"block-mem-ratio"`
+	BlockIDsMemRatio                      float64       `name:"block-ids-mem-ratio"`
+	BoostOfIDsMemRatio                    float64       `name:"boost-of-ids-mem-ratio"`
+	ClientMemRatio                        float64       `name:"client-mem-ratio"`
+	ConversationMemRatio                  float64       `name:"conversation-mem-ratio"`
+	ConversationLastStatusIDsMemRatio     float64       `name:"conversation-last-status-ids-mem-ratio"`
+	DomainPermissionDraftMemRation        float64       `name:"domain-permission-draft-mem-ratio"`
+	DomainPermissionSubscriptionMemRation float64       `name:"domain-permission-subscription-mem-ratio"`
+	EmojiMemRatio                         float64       `name:"emoji-mem-ratio"`
+	EmojiCategoryMemRatio                 float64       `name:"emoji-category-mem-ratio"`
+	FilterMemRatio                        float64       `name:"filter-mem-ratio"`
+	FilterKeywordMemRatio                 float64       `name:"filter-keyword-mem-ratio"`
+	FilterStatusMemRatio                  float64       `name:"filter-status-mem-ratio"`
+	FollowMemRatio                        float64       `name:"follow-mem-ratio"`
+	FollowIDsMemRatio                     float64       `name:"follow-ids-mem-ratio"`
+	FollowRequestMemRatio                 float64       `name:"follow-request-mem-ratio"`
+	FollowRequestIDsMemRatio              float64       `name:"follow-request-ids-mem-ratio"`
+	FollowingTagIDsMemRatio               float64       `name:"following-tag-ids-mem-ratio"`
+	InReplyToIDsMemRatio                  float64       `name:"in-reply-to-ids-mem-ratio"`
+	InstanceMemRatio                      float64       `name:"instance-mem-ratio"`
+	InteractionRequestMemRatio            float64       `name:"interaction-request-mem-ratio"`
+	ListMemRatio                          float64       `name:"list-mem-ratio"`
+	ListIDsMemRatio                       float64       `name:"list-ids-mem-ratio"`
+	ListedIDsMemRatio                     float64       `name:"listed-ids-mem-ratio"`
+	MarkerMemRatio                        float64       `name:"marker-mem-ratio"`
+	MediaMemRatio                         float64       `name:"media-mem-ratio"`
+	MentionMemRatio                       float64       `name:"mention-mem-ratio"`
+	MoveMemRatio                          float64       `name:"move-mem-ratio"`
+	NotificationMemRatio                  float64       `name:"notification-mem-ratio"`
+	PollMemRatio                          float64       `name:"poll-mem-ratio"`
+	PollVoteMemRatio                      float64       `name:"poll-vote-mem-ratio"`
+	PollVoteIDsMemRatio                   float64       `name:"poll-vote-ids-mem-ratio"`
+	ReportMemRatio                        float64       `name:"report-mem-ratio"`
+	SinBinStatusMemRatio                  float64       `name:"sin-bin-status-mem-ratio"`
+	StatusMemRatio                        float64       `name:"status-mem-ratio"`
+	StatusBookmarkMemRatio                float64       `name:"status-bookmark-mem-ratio"`
+	StatusBookmarkIDsMemRatio             float64       `name:"status-bookmark-ids-mem-ratio"`
+	StatusEditMemRatio                    float64       `name:"status-edit-mem-ratio"`
+	StatusFaveMemRatio                    float64       `name:"status-fave-mem-ratio"`
+	StatusFaveIDsMemRatio                 float64       `name:"status-fave-ids-mem-ratio"`
+	TagMemRatio                           float64       `name:"tag-mem-ratio"`
+	ThreadMuteMemRatio                    float64       `name:"thread-mute-mem-ratio"`
+	TokenMemRatio                         float64       `name:"token-mem-ratio"`
+	TombstoneMemRatio                     float64       `name:"tombstone-mem-ratio"`
+	UserMemRatio                          float64       `name:"user-mem-ratio"`
+	UserMuteMemRatio                      float64       `name:"user-mute-mem-ratio"`
+	UserMuteIDsMemRatio                   float64       `name:"user-mute-ids-mem-ratio"`
+	WebfingerMemRatio                     float64       `name:"webfinger-mem-ratio"`
+	VisibilityMemRatio                    float64       `name:"visibility-mem-ratio"`
 }
 
 // MarshalMap will marshal current Configuration into a map structure (useful for JSON/TOML/YAML).

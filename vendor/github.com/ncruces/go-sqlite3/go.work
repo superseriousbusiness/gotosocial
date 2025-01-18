@@ -3,4 +3,5 @@ go 1.21
 use (
 	.
 	./gormlite
+	./embed/bcw2
 )

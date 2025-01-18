@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"net/http"
 
 	"codeberg.org/gruf/go-storage"
 	"codeberg.org/gruf/go-storage/internal"
@@ -34,12 +35,7 @@ func DefaultConfig() Config {
 // immutable default configuration.
 var defaultConfig = Config{
 	CoreOpts:     minio.Options{},
-	GetOpts:      minio.GetObjectOptions{},
-	PutOpts:      minio.PutObjectOptions{},
-	PutChunkOpts: minio.PutObjectPartOptions{},
 	PutChunkSize: 4 * 1024 * 1024, // 4MiB
-	StatOpts:     minio.StatObjectOptions{},
-	RemoveOpts:   minio.RemoveObjectOptions{},
 	ListSize:     200,
 }
 
@@ -50,30 +46,10 @@ type Config struct {
 	// passed during initialization.
 	CoreOpts minio.Options
 
-	// GetOpts are S3 client options
-	// passed during .Read___() calls.
-	GetOpts minio.GetObjectOptions
-
-	// PutOpts are S3 client options
-	// passed during .Write___() calls.
-	PutOpts minio.PutObjectOptions
-
 	// PutChunkSize is the chunk size (in bytes)
 	// to use when sending a byte stream reader
 	// of unknown size as a multi-part object.
 	PutChunkSize int64
-
-	// PutChunkOpts are S3 client options
-	// passed during chunked .Write___() calls.
-	PutChunkOpts minio.PutObjectPartOptions
-
-	// StatOpts are S3 client options
-	// passed during .Stat() calls.
-	StatOpts minio.StatObjectOptions
-
-	// RemoveOpts are S3 client options
-	// passed during .Remove() calls.
-	RemoveOpts minio.RemoveObjectOptions
 
 	// ListSize determines how many items
 	// to include in each list request, made
@@ -103,12 +79,8 @@ func getS3Config(cfg *Config) Config {
 
 	return Config{
 		CoreOpts:     cfg.CoreOpts,
-		GetOpts:      cfg.GetOpts,
-		PutOpts:      cfg.PutOpts,
 		PutChunkSize: cfg.PutChunkSize,
 		ListSize:     cfg.ListSize,
-		StatOpts:     cfg.StatOpts,
-		RemoveOpts:   cfg.RemoveOpts,
 	}
 }
 
@@ -183,36 +155,50 @@ func (st *S3Storage) ReadBytes(ctx context.Context, key string) ([]byte, error) 
 
 // ReadStream: implements Storage.ReadStream().
 func (st *S3Storage) ReadStream(ctx context.Context, key string) (io.ReadCloser, error) {
-	// Fetch object reader from S3 bucket
-	rc, _, _, err := st.client.GetObject(
+	rc, _, _, err := st.GetObject(ctx, key, minio.GetObjectOptions{})
+	return rc, err
+}
+
+// GetObject wraps minio.Core{}.GetObject() to handle wrapping with our own storage library error types.
+func (st *S3Storage) GetObject(ctx context.Context, key string, opts minio.GetObjectOptions) (io.ReadCloser, minio.ObjectInfo, http.Header, error) {
+
+	// Query bucket for object data and info.
+	rc, info, hdr, err := st.client.GetObject(
 		ctx,
 		st.bucket,
 		key,
-		st.config.GetOpts,
+		opts,
 	)
 	if err != nil {
 
 		if isNotFoundError(err) {
 			// Wrap not found errors as our not found type.
 			err = internal.WrapErr(err, storage.ErrNotFound)
-		} else if !isObjectNameError(err) {
+		} else if isObjectNameError(err) {
 			// Wrap object name errors as our invalid key type.
 			err = internal.WrapErr(err, storage.ErrInvalidKey)
 		}
 
-		return nil, transformS3Error(err)
 	}
-	return rc, nil
+
+	return rc, info, hdr, err
 }
 
 // WriteBytes: implements Storage.WriteBytes().
 func (st *S3Storage) WriteBytes(ctx context.Context, key string, value []byte) (int, error) {
-	n, err := st.WriteStream(ctx, key, bytes.NewReader(value))
-	return int(n), err
+	info, err := st.PutObject(ctx, key, bytes.NewReader(value), minio.PutObjectOptions{})
+	return int(info.Size), err
 }
 
 // WriteStream: implements Storage.WriteStream().
 func (st *S3Storage) WriteStream(ctx context.Context, key string, r io.Reader) (int64, error) {
+	info, err := st.PutObject(ctx, key, r, minio.PutObjectOptions{})
+	return info.Size, err
+}
+
+// PutObject wraps minio.Core{}.PutObject() to handle wrapping with our own storage library error types, and in the case of an io.Reader
+// that does not implement ReaderSize{}, it will instead handle upload by using minio.Core{}.NewMultipartUpload() in chunks of PutChunkSize.
+func (st *S3Storage) PutObject(ctx context.Context, key string, r io.Reader, opts minio.PutObjectOptions) (minio.UploadInfo, error) {
 	if rs, ok := r.(ReaderSize); ok {
 		// This reader supports providing us the size of
 		// the encompassed data, allowing us to perform
@@ -225,22 +211,21 @@ func (st *S3Storage) WriteStream(ctx context.Context, key string, r io.Reader) (
 			rs.Size(),
 			"",
 			"",
-			st.config.PutOpts,
+			opts,
 		)
 		if err != nil {
 
 			if isConflictError(err) {
 				// Wrap conflict errors as our already exists type.
 				err = internal.WrapErr(err, storage.ErrAlreadyExists)
-			} else if !isObjectNameError(err) {
+			} else if isObjectNameError(err) {
 				// Wrap object name errors as our invalid key type.
 				err = internal.WrapErr(err, storage.ErrInvalidKey)
 			}
 
-			return 0, err
 		}
 
-		return info.Size, nil
+		return info, err
 	}
 
 	// Start a new multipart upload to get ID.
@@ -248,24 +233,24 @@ func (st *S3Storage) WriteStream(ctx context.Context, key string, r io.Reader) (
 		ctx,
 		st.bucket,
 		key,
-		st.config.PutOpts,
+		opts,
 	)
 	if err != nil {
 
 		if isConflictError(err) {
 			// Wrap conflict errors as our already exists type.
 			err = internal.WrapErr(err, storage.ErrAlreadyExists)
-		} else if !isObjectNameError(err) {
+		} else if isObjectNameError(err) {
 			// Wrap object name errors as our invalid key type.
 			err = internal.WrapErr(err, storage.ErrInvalidKey)
 		}
 
-		return 0, transformS3Error(err)
+		return minio.UploadInfo{}, err
 	}
 
 	var (
-		index = int(1) // parts index
 		total = int64(0)
+		index = int(1) // parts index
 		parts []minio.CompletePart
 		chunk = make([]byte, st.config.PutChunkSize)
 		rbuf  = bytes.NewReader(nil)
@@ -296,7 +281,7 @@ loop:
 
 		// All other errors.
 		default:
-			return 0, err
+			return minio.UploadInfo{}, err
 		}
 
 		// Reset byte reader.
@@ -311,10 +296,13 @@ loop:
 			index,
 			rbuf,
 			int64(n),
-			st.config.PutChunkOpts,
+			minio.PutObjectPartOptions{
+				SSE:                  opts.ServerSideEncryption,
+				DisableContentSha256: opts.DisableContentSha256,
+			},
 		)
 		if err != nil {
-			return 0, err
+			return minio.UploadInfo{}, err
 		}
 
 		// Append completed part to slice.
@@ -327,101 +315,104 @@ loop:
 			ChecksumSHA256: pt.ChecksumSHA256,
 		})
 
+		// Update total.
+		total += int64(n)
+
 		// Iterate.
 		index++
-
-		// Update total size.
-		total += pt.Size
 	}
 
 	// Complete this multi-part upload operation
-	_, err = st.client.CompleteMultipartUpload(
+	info, err := st.client.CompleteMultipartUpload(
 		ctx,
 		st.bucket,
 		key,
 		uploadID,
 		parts,
-		st.config.PutOpts,
+		opts,
 	)
 	if err != nil {
-		return 0, err
+		return minio.UploadInfo{}, err
 	}
 
-	return total, nil
+	// Set correct size.
+	info.Size = total
+	return info, nil
 }
 
 // Stat: implements Storage.Stat().
 func (st *S3Storage) Stat(ctx context.Context, key string) (*storage.Entry, error) {
-	// Query object in S3 bucket.
-	stat, err := st.client.StatObject(
+	info, err := st.StatObject(ctx, key, minio.StatObjectOptions{})
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			err = nil // mask not-found errors
+		}
+		return nil, err
+	}
+	return &storage.Entry{
+		Key:  key,
+		Size: info.Size,
+	}, nil
+}
+
+// StatObject wraps minio.Core{}.StatObject() to handle wrapping with our own storage library error types.
+func (st *S3Storage) StatObject(ctx context.Context, key string, opts minio.StatObjectOptions) (minio.ObjectInfo, error) {
+
+	// Query bucket for object info.
+	info, err := st.client.StatObject(
 		ctx,
 		st.bucket,
 		key,
-		st.config.StatOpts,
+		opts,
 	)
 	if err != nil {
 
 		if isNotFoundError(err) {
-			// Ignore err return
-			// for not-found.
-			err = nil
-		} else if !isObjectNameError(err) {
+			// Wrap not found errors as our not found type.
+			err = internal.WrapErr(err, storage.ErrNotFound)
+		} else if isObjectNameError(err) {
 			// Wrap object name errors as our invalid key type.
 			err = internal.WrapErr(err, storage.ErrInvalidKey)
 		}
 
-		return nil, err
 	}
 
-	return &storage.Entry{
-		Key:  key,
-		Size: stat.Size,
-	}, nil
+	return info, err
 }
 
 // Remove: implements Storage.Remove().
 func (st *S3Storage) Remove(ctx context.Context, key string) error {
-	// Query object in S3 bucket.
-	_, err := st.client.StatObject(
-		ctx,
-		st.bucket,
-		key,
-		st.config.StatOpts,
-	)
+	_, err := st.StatObject(ctx, key, minio.StatObjectOptions{})
 	if err != nil {
-
-		if isNotFoundError(err) {
-			// Wrap not found errors as our not found type.
-			err = internal.WrapErr(err, storage.ErrNotFound)
-		} else if !isObjectNameError(err) {
-			// Wrap object name errors as our invalid key type.
-			err = internal.WrapErr(err, storage.ErrInvalidKey)
-		}
-
 		return err
 	}
+	return st.RemoveObject(ctx, key, minio.RemoveObjectOptions{})
+}
+
+// RemoveObject wraps minio.Core{}.RemoveObject() to handle wrapping with our own storage library error types.
+func (st *S3Storage) RemoveObject(ctx context.Context, key string, opts minio.RemoveObjectOptions) error {
 
 	// Remove object from S3 bucket
-	err = st.client.RemoveObject(
+	err := st.client.RemoveObject(
 		ctx,
 		st.bucket,
 		key,
-		st.config.RemoveOpts,
+		opts,
 	)
+
 	if err != nil {
 
 		if isNotFoundError(err) {
 			// Wrap not found errors as our not found type.
 			err = internal.WrapErr(err, storage.ErrNotFound)
-		} else if !isObjectNameError(err) {
+		} else if isObjectNameError(err) {
 			// Wrap object name errors as our invalid key type.
 			err = internal.WrapErr(err, storage.ErrInvalidKey)
 		}
 
-		return err
 	}
 
-	return nil
+	return err
 }
 
 // WalkKeys: implements Storage.WalkKeys().

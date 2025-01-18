@@ -2,7 +2,7 @@
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
 # stage 1: generate up-to-date swagger.yaml to put in the final container
-FROM --platform=${BUILDPLATFORM} golang:1.22-alpine AS swagger
+FROM --platform=${BUILDPLATFORM} golang:1.23-alpine AS swagger
 
 RUN \
     ### Installs goswagger for building swagger definitions inside this container
@@ -28,7 +28,7 @@ RUN yarn --cwd ./web/source install && \
     rm -rf ./web/source
 
 # stage 3: build the executor container
-FROM --platform=${TARGETPLATFORM} alpine:3.19.1 as executor
+FROM --platform=${TARGETPLATFORM} alpine:3.20 as executor
 
 # switch to non-root user:group for GtS
 USER 1000:1000
@@ -39,9 +39,10 @@ USER 1000:1000
 #
 # See https://docs.docker.com/engine/reference/builder/#workdir
 #
-# First make sure storage exists + is owned by 1000:1000, then go back
-# to just /gotosocial, where we'll run from
+# First make sure storage + cache exist and are owned by 1000:1000,
+# then go back to just /gotosocial, where we'll actually run from.
 WORKDIR "/gotosocial/storage"
+WORKDIR "/gotosocial/.cache"
 WORKDIR "/gotosocial"
 
 # copy the dist binary created by goreleaser or build.sh
@@ -51,5 +52,5 @@ COPY --chown=1000:1000 gotosocial /gotosocial/gotosocial
 COPY --chown=1000:1000 --from=bundler web /gotosocial/web
 COPY --chown=1000:1000 --from=swagger /go/src/github.com/superseriousbusiness/gotosocial/swagger.yaml web/assets/swagger.yaml
 
-VOLUME [ "/gotosocial/storage" ]
+VOLUME [ "/gotosocial/storage", "/gotosocial/.cache" ]
 ENTRYPOINT [ "/gotosocial/gotosocial", "server", "start" ]

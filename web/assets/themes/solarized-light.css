@@ -1,6 +1,6 @@
 /*
-  theme-title: Solarized (light)
-  theme-description: Solarized sloth (light)
+  theme-title: Solarized light
+  theme-description: Beige and grey solarized theme with orange trim
 */
 
 /*
@@ -29,45 +29,30 @@
 
 :root {
   /* Define solarized palette */
-  --base03:    #002b36;
-  --base02:    #073642;
-  --base01:    #586e75;
-  --base00:    #657b83;
-  --base0:     #839496;
-  --base1:     #93a1a1;
-  --base2:     #eee8d5;
-  --base3:     #fdf6e3;
-  --yellow:    #b58900;
-  --orange:    #cb4b16;
-  --red:       #dc322f;
-  --magenta:   #d33682;
-  --violet:    #6c71c4;
-  --blue:      #268bd2;
-  --cyan:      #2aa198;
-  --green:     #859900;
+  --base3:     #fdf6e3; /* Background. */
+  --base2:     #eee8d5; /* Background highlights. */
+  --base1:     #93a1a1; /* Comments / secondary color. */
+  --base00:    #657b83; /* Body text / default code / primary content. */
+  --base01:    #586e75; /* Optional emphasized content. */
+  --red:       #cb4b16; /* Trim. */
 
   /* Override orange trim */
-  --orange2: var(--orange);
+  --orange2: var(--red);
 
   /* Restyle basic colors to use Solarized */
   --white1: var(--base3);
   --white2: var(--base2);
-  --blue1: var(--cyan);
-  --blue2: var(--base03);
-  --blue3: var(--base02);
+  --blue2: var(--base00);
+  --blue3: var(--base01);
 
   /* Basic page styling (background + foreground) */
-  --bg: var(--white1);
-  --bg-accent: var(--white2);
-  --fg: var(--base02);
-  --fg-reduced: var(--base01);
+  --bg: var(--base2);
+  --bg-accent: var(--base3);
+  --fg-reduced: var(--base00);
+  --fg: var(--base01);
 
-  /* Profile page styling (light) */
+  /* Profile page styling */
   --profile-bg: var(--white2);
-
-  /* Solarize buttons */
-  --button-bg: var(--blue2);
-  --button-fg: var(--white1);
 
   /* Solarize statuses */
   --status-bg: var(--white1);
@@ -78,8 +63,8 @@
   /* Used around statuses + other items */
   --boxshadow-border: 0.1rem solid var(--base1);
 
-  --plyr-video-control-color: var(--fg-reduced);
-  --plyr-video-control-color-hover: var(--fg);
+  --plyr-video-control-color: var(--fg);
+  --plyr-video-control-color-hover: var(--fg-reduced);
 }
 
 @font-face {
@@ -95,6 +80,36 @@ html, body {
   scrollbar-color: var(--orange2) var(--white1) ;
 }
 
+/* Column headers */
+.col-header {
+  border: var(--boxshadow-border);
+  background: var(--base3);
+}
+
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Header card */
+.profile .profile-header {
+  border: var(--boxshadow-border);
+  background: var(--base3);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  background: var(--base3);
+  color: var(--base01);
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .accountstats {
+  border-bottom: var(--boxshadow-border);
+}
+
 /* Profile fields */
 .profile .about-user .fields .field {
   border-bottom: var(--boxshadow-border);
@@ -108,7 +123,8 @@ html, body {
   border: var(--boxshadow-border);
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
-  color: var(--blue2);
+  color: var(--base1);
+  border: 0.2rem dashed var(--base1);
 }
 .status .media .media-wrapper details video.plyr-video {
   background: transparent;
@@ -116,32 +132,60 @@ html, body {
 
 /* Status polls */
 .status .text .poll {
-  background-color: var(--white2);
+  background-color: var(--base3);
+  border: var(--boxshadow-border);
 }
 .status .text .poll .poll-info {
-  background-color: var(--white1);
+  background-color: var(--base3);
+  border: var(--boxshadow-border);
 }
 
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
   background-color: black;
-  color: var(--base3);
+  color: #93a1a1;
 }
 
 /* Block quotes */
 blockquote {
-  background-color: var(--bg-accent);
-  color: var(--fg);
+  background-color: var(--base3);
+  color: var(--base01);
 }
 
-button,
-.button,
+button, .button,
 .status .text-spoiler > summary .button {
   font-family: 'Noto Sans Mono', monospace;
 }
 
+.button {
+  color: var(--base01);
+  background: var(--base3);
+  border: var(--boxshadow-border);
+}
+
+.button:hover {
+  color: var(--base01);
+  background: var(--base2);
+  border: var(--boxshadow-border);
+}
+
 /* Ensure role badge readable */
 .profile .profile-header .basic-info .namerole .role.admin {
-  color: var(--base03);
+  background: var(--base3);
+  color: var(--base01);
+}
+
+/* Back + next links */
+.backnextlinks {
+  padding: 0.5rem;
+  background: var(--base3);
+  border: var(--boxshadow-border);
+  border-radius: var(--br);
+}
+
+.page-footer {
+  margin-top: 2rem;
+  background-color: var(--base3);
+  border-top: var(--boxshadow-border);
 }

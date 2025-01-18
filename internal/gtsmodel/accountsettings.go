@@ -26,7 +26,7 @@ type AccountSettings struct {
 	AccountID                      string             `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // AccountID that owns this settings.
 	CreatedAt                      time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
 	UpdatedAt                      time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item was last updated.
-	Privacy                        Visibility         `bun:",nullzero"`                                                   // Default post privacy for this account
+	Privacy                        Visibility         `bun:",nullzero,default:3"`                                         // Default post privacy for this account
 	Sensitive                      *bool              `bun:",nullzero,notnull,default:false"`                             // Set posts from this account to sensitive by default?
 	Language                       string             `bun:",nullzero,notnull,default:'en'"`                              // What language does this account post in?
 	StatusContentType              string             `bun:",nullzero"`                                                   // What is the default format for statuses posted by this account (only for local accounts).
@@ -35,7 +35,7 @@ type AccountSettings struct {
 	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
 	HideBoosts                     *bool              `bun:",nullzero,notnull,default:false"`                             // Hide boosts from this accounts profile page.
 	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
-	WebVisibility                  Visibility         `bun:",nullzero,notnull,default:public"`                            // Visibility level of statuses that visitors can view via the web profile.
+	WebVisibility                  Visibility         `bun:",nullzero,notnull,default:3"`                                 // Visibility level of statuses that visitors can view via the web profile.
 	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.
 	InteractionPolicyMutualsOnly   *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new mutuals only visibility statuses. If null, assume default policy.
 	InteractionPolicyFollowersOnly *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new followers only visibility statuses. If null, assume default policy.

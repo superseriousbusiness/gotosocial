@@ -175,6 +175,7 @@ func validateInstanceUpdate(form *apimodel.InstanceSettingsUpdateRequest) error 
 		form.ContactEmail == nil &&
 		form.ShortDescription == nil &&
 		form.Description == nil &&
+		form.CustomCSS == nil &&
 		form.Terms == nil &&
 		form.Avatar == nil &&
 		form.AvatarDescription == nil &&

@@ -1,4 +1,4 @@
-//go:build !(sqlite3_flock || sqlite3_nosys)
+//go:build !sqlite3_flock
 
 package vfs
 
@@ -56,16 +56,12 @@ func osAllocate(file *os.File, size int64) error {
 	return file.Truncate(size)
 }
 
-func osUnlock(file *os.File, start, len int64) _ErrorCode {
-	err := unix.FcntlFlock(file.Fd(), _F_OFD_SETLK, &unix.Flock_t{
-		Type:  unix.F_UNLCK,
-		Start: start,
-		Len:   len,
-	})
-	if err != nil {
-		return _IOERR_UNLOCK
-	}
-	return _OK
+func osReadLock(file *os.File, start, len int64, timeout time.Duration) _ErrorCode {
+	return osLock(file, unix.F_RDLCK, start, len, timeout, _IOERR_RDLOCK)
+}
+
+func osWriteLock(file *os.File, start, len int64, timeout time.Duration) _ErrorCode {
+	return osLock(file, unix.F_WRLCK, start, len, timeout, _IOERR_LOCK)
 }
 
 func osLock(file *os.File, typ int16, start, len int64, timeout time.Duration, def _ErrorCode) _ErrorCode {
@@ -88,10 +84,14 @@ func osLock(file *os.File, typ int16, start, len int64, timeout time.Duration, d
 	return osLockErrorCode(err, def)
 }
 
-func osReadLock(file *os.File, start, len int64, timeout time.Duration) _ErrorCode {
-	return osLock(file, unix.F_RDLCK, start, len, timeout, _IOERR_RDLOCK)
-}
-
-func osWriteLock(file *os.File, start, len int64, timeout time.Duration) _ErrorCode {
-	return osLock(file, unix.F_WRLCK, start, len, timeout, _IOERR_LOCK)
+func osUnlock(file *os.File, start, len int64) _ErrorCode {
+	err := unix.FcntlFlock(file.Fd(), _F_OFD_SETLK, &unix.Flock_t{
+		Type:  unix.F_UNLCK,
+		Start: start,
+		Len:   len,
+	})
+	if err != nil {
+		return _IOERR_UNLOCK
+	}
+	return _OK
 }

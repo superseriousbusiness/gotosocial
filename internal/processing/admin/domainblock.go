@@ -21,18 +21,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
-	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
@@ -72,149 +66,31 @@ func (p *Processor) createDomainBlock(
 		}
 	}
 
-	actionID := id.NewULID()
+	// Run admin action to process
+	// side effects of block.
+	action := &gtsmodel.AdminAction{
+		ID:             id.NewULID(),
+		TargetCategory: gtsmodel.AdminActionCategoryDomain,
+		TargetID:       domain,
+		Type:           gtsmodel.AdminActionSuspend,
+		AccountID:      adminAcct.ID,
+		Text:           domainBlock.PrivateComment,
+	}
 
-	// Process domain block side
-	// effects asynchronously.
-	if errWithCode := p.actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
-		&gtsmodel.AdminAction{
-			ID:             actionID,
-			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domain,
-			Type:           gtsmodel.AdminActionSuspend,
-			AccountID:      adminAcct.ID,
-			Text:           domainBlock.PrivateComment,
-		},
-		func(ctx context.Context) gtserror.MultiError {
-			// Log start + finish.
-			l := log.WithFields(kv.Fields{
-				{"domain", domain},
-				{"actionID", actionID},
-			}...).WithContext(ctx)
-
-			skip, err := p.skipBlockSideEffects(ctx, domain)
-			if err != nil {
-				return err
-			}
-			if skip != "" {
-				l.Infof("skipping domain block side effects: %s", skip)
-				return nil
-			}
-
-			l.Info("processing domain block side effects")
-			defer func() { l.Info("finished processing domain block side effects") }()
-
-			return p.domainBlockSideEffects(ctx, domainBlock)
-		},
+		action,
+		p.state.AdminActions.DomainBlockF(action.ID, domainBlock),
 	); errWithCode != nil {
-		return nil, actionID, errWithCode
+		return nil, action.ID, errWithCode
 	}
 
 	apiDomainBlock, errWithCode := p.apiDomainPerm(ctx, domainBlock, false)
 	if errWithCode != nil {
-		return nil, actionID, errWithCode
+		return nil, action.ID, errWithCode
 	}
 
-	return apiDomainBlock, actionID, nil
-}
-
-// skipBlockSideEffects checks if side effects of block creation
-// should be skipped for the given domain, taking account of
-// instance federation mode, and existence of any allows
-// which ought to "shield" this domain from being blocked.
-//
-// If the caller should skip, the returned string will be non-zero
-// and will be set to a reason why side effects should be skipped.
-//
-//   - blocklist mode + allow exists: "..." (skip)
-//   - blocklist mode + no allow:     ""    (don't skip)
-//   - allowlist mode + allow exists: ""    (don't skip)
-//   - allowlist mode + no allow:     ""    (don't skip)
-func (p *Processor) skipBlockSideEffects(
-	ctx context.Context,
-	domain string,
-) (string, gtserror.MultiError) {
-	var (
-		skip string // Assume "" (don't skip).
-		errs gtserror.MultiError
-	)
-
-	// Never skip block side effects in allowlist mode.
-	fediMode := config.GetInstanceFederationMode()
-	if fediMode == config.InstanceFederationModeAllowlist {
-		return skip, errs
-	}
-
-	// We know we're in blocklist mode.
-	//
-	// We want to skip domain block side
-	// effects if an allow is already
-	// in place which overrides the block.
-
-	// Check if an explicit allow exists for this domain.
-	domainAllow, err := p.state.DB.GetDomainAllow(ctx, domain)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("error getting domain allow: %w", err)
-		return skip, errs
-	}
-
-	if domainAllow != nil {
-		skip = "running in blocklist mode, and an explicit allow exists for this domain"
-		return skip, errs
-	}
-
-	return skip, errs
-}
-
-// domainBlockSideEffects processes the side effects of a domain block:
-//
-//  1. Strip most info away from the instance entry for the domain.
-//  2. Pass each account from the domain to the processor for deletion.
-//
-// It should be called asynchronously, since it can take a while when
-// there are many accounts present on the given domain.
-func (p *Processor) domainBlockSideEffects(
-	ctx context.Context,
-	block *gtsmodel.DomainBlock,
-) gtserror.MultiError {
-	var errs gtserror.MultiError
-
-	// If we have an instance entry for this domain,
-	// update it with the new block ID and clear all fields
-	instance, err := p.state.DB.GetInstance(ctx, block.Domain)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("db error getting instance %s: %w", block.Domain, err)
-		return errs
-	}
-
-	if instance != nil {
-		// We had an entry for this domain.
-		columns := stubbifyInstance(instance, block.ID)
-		if err := p.state.DB.UpdateInstance(ctx, instance, columns...); err != nil {
-			errs.Appendf("db error updating instance: %w", err)
-			return errs
-		}
-	}
-
-	// For each account that belongs to this domain,
-	// process an account delete message to remove
-	// that account's posts, media, etc.
-	if err := p.rangeDomainAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
-		if err := p.state.Workers.Client.Process(ctx, &messages.FromClientAPI{
-			APObjectType:   ap.ActorPerson,
-			APActivityType: ap.ActivityDelete,
-			GTSModel:       block,
-			Origin:         account,
-			Target:         account,
-		}); err != nil {
-			errs.Append(err)
-		}
-	}); err != nil {
-		errs.Appendf("db error ranging through accounts: %w", err)
-	}
-
-	return errs
+	return apiDomainBlock, action.ID, nil
 }
 
 func (p *Processor) deleteDomainBlock(
@@ -247,104 +123,23 @@ func (p *Processor) deleteDomainBlock(
 		return nil, "", gtserror.NewErrorInternalError(err)
 	}
 
-	actionID := id.NewULID()
+	// Run admin action to process
+	// side effects of unblock.
+	action := &gtsmodel.AdminAction{
+		ID:             id.NewULID(),
+		TargetCategory: gtsmodel.AdminActionCategoryDomain,
+		TargetID:       domainBlock.Domain,
+		Type:           gtsmodel.AdminActionUnsuspend,
+		AccountID:      adminAcct.ID,
+	}
 
-	// Process domain unblock side
-	// effects asynchronously.
-	if errWithCode := p.actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
-		&gtsmodel.AdminAction{
-			ID:             actionID,
-			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domainBlock.Domain,
-			Type:           gtsmodel.AdminActionUnsuspend,
-			AccountID:      adminAcct.ID,
-		},
-		func(ctx context.Context) gtserror.MultiError {
-			// Log start + finish.
-			l := log.WithFields(kv.Fields{
-				{"domain", domainBlock.Domain},
-				{"actionID", actionID},
-			}...).WithContext(ctx)
-
-			l.Info("processing domain unblock side effects")
-			defer func() { l.Info("finished processing domain unblock side effects") }()
-
-			return p.domainUnblockSideEffects(ctx, domainBlock)
-		},
+		action,
+		p.state.AdminActions.DomainUnblockF(action.ID, domainBlock),
 	); errWithCode != nil {
-		return nil, actionID, errWithCode
+		return nil, action.ID, errWithCode
 	}
 
-	return apiDomainBlock, actionID, nil
-}
-
-// domainUnblockSideEffects processes the side effects of undoing a
-// domain block:
-//
-//  1. Mark instance entry as no longer suspended.
-//  2. Mark each account from the domain as no longer suspended, if the
-//     suspension origin corresponds to the ID of the provided domain block.
-//
-// It should be called asynchronously, since it can take a while when
-// there are many accounts present on the given domain.
-func (p *Processor) domainUnblockSideEffects(
-	ctx context.Context,
-	block *gtsmodel.DomainBlock,
-) gtserror.MultiError {
-	var errs gtserror.MultiError
-
-	// Update instance entry for this domain, if we have it.
-	instance, err := p.state.DB.GetInstance(ctx, block.Domain)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		errs.Appendf("db error getting instance %s: %w", block.Domain, err)
-	}
-
-	if instance != nil {
-		// We had an entry, update it to signal
-		// that it's no longer suspended.
-		instance.SuspendedAt = time.Time{}
-		instance.DomainBlockID = ""
-		if err := p.state.DB.UpdateInstance(
-			ctx,
-			instance,
-			"suspended_at",
-			"domain_block_id",
-		); err != nil {
-			errs.Appendf("db error updating instance: %w", err)
-			return errs
-		}
-	}
-
-	// Unsuspend all accounts whose suspension origin was this domain block.
-	if err := p.rangeDomainAccounts(ctx, block.Domain, func(account *gtsmodel.Account) {
-		if account.SuspensionOrigin == "" || account.SuspendedAt.IsZero() {
-			// Account wasn't suspended, nothing to do.
-			return
-		}
-
-		if account.SuspensionOrigin != block.ID {
-			// Account was suspended, but not by
-			// this domain block, leave it alone.
-			return
-		}
-
-		// Account was suspended by this domain
-		// block, mark it as unsuspended.
-		account.SuspendedAt = time.Time{}
-		account.SuspensionOrigin = ""
-
-		if err := p.state.DB.UpdateAccount(
-			ctx,
-			account,
-			"suspended_at",
-			"suspension_origin",
-		); err != nil {
-			errs.Appendf("db error updating account %s: %w", account.Username, err)
-		}
-	}); err != nil {
-		errs.Appendf("db error ranging through accounts: %w", err)
-	}
-
-	return errs
+	return apiDomainBlock, action.ID, nil
 }

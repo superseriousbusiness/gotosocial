@@ -17,7 +17,7 @@ type ordered[K comparable, V any] struct {
 }
 
 // write_check panics if map is not in a safe-state to write to.
-func (m ordered[K, V]) write_check() {
+func (m *ordered[K, V]) write_check() {
 	if m.rnly {
 		panic("map write during read loop")
 	}
@@ -54,14 +54,16 @@ func (m *ordered[K, V]) Delete(key K) bool {
 
 // Range passes given function over the requested range of the map.
 func (m *ordered[K, V]) Range(start, length int, fn func(int, K, V)) {
+	// Nil check
+	if fn == nil {
+		panic("nil func")
+	}
+
 	// Disallow writes
 	m.rnly = true
 	defer func() {
 		m.rnly = false
 	}()
-
-	// Nil check
-	_ = fn
 
 	switch end := start + length; {
 	// No loop to iterate
@@ -104,14 +106,16 @@ func (m *ordered[K, V]) Range(start, length int, fn func(int, K, V)) {
 
 // RangeIf passes given function over the requested range of the map. Returns early on 'fn' -> false.
 func (m *ordered[K, V]) RangeIf(start, length int, fn func(int, K, V) bool) {
+	// Nil check
+	if fn == nil {
+		panic("nil func")
+	}
+
 	// Disallow writes
 	m.rnly = true
 	defer func() {
 		m.rnly = false
 	}()
-
-	// Nil check
-	_ = fn
 
 	switch end := start + length; {
 	// No loop to iterate
@@ -163,8 +167,8 @@ func (m *ordered[K, V]) Truncate(sz int, fn func(K, V)) {
 		panic("index out of bounds")
 	}
 
+	// Nil check
 	if fn == nil {
-		// move nil check out of loop
 		fn = func(K, V) {}
 	}
 

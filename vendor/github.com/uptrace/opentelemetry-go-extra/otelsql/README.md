@@ -2,8 +2,9 @@
 
 # database/sql instrumentation for OpenTelemetry Go
 
-[database/sql OpenTelemetry instrumentation](https://uptrace.dev/getinstrument/opentelemetry-database-sql.html)
-records database queries (including `Tx` and `Stmt` queries) and reports `DBStats` metrics.
+[OpenTelemetry database/sql](https://uptrace.dev/get/instrument/opentelemetry-database-sql.html)
+instrumentation records database queries (including `Tx` and `Stmt` queries) and reports `DBStats`
+metrics.
 
 ## Installation
 

@@ -75,7 +75,7 @@ const (
 		`)`
 	ipv6Addr         = `(?:` + ipv6AddrMinusEmpty + `|::)`
 	ipAddrMinusEmpty = `(?:` + ipv6AddrMinusEmpty + `|\b` + ipv4Addr + `\b)`
-	port             = `(?::[0-9]*)?`
+	port             = `(?::[0-9]+)?`
 )
 
 // AnyScheme can be passed to StrictMatchingScheme to match any possibly valid
@@ -89,8 +89,10 @@ var SchemesNoAuthority = []string{
 	`bitcoin`, // Bitcoin
 	`cid`,     // Content-ID
 	`file`,    // Files
+	`geo`,     // Geographic location
 	`magnet`,  // Torrent magnets
 	`mailto`,  // Mail
+	`matrix`,  // Matrix
 	`mid`,     // Message-ID
 	`sms`,     // SMS
 	`tel`,     // Telephone
@@ -163,7 +165,7 @@ func relaxedExp() string {
 
 	hostName := `(?:` + domain + `|\[` + ipv6Addr + `\]|\b` + ipv4Addr + `\b)`
 	webURL := hostName + port + `(?:/` + pathCont + `|/)?`
-	email := `[a-zA-Z0-9._%\-+]+@` + domain
+	email := `(?P<relaxedEmail>[a-zA-Z0-9._%\-+]+@` + domain + `)`
 	return strictExp() + `|` + webURL + `|` + email + `|` + ipv6AddrMinusEmpty
 }
 
@@ -178,7 +180,10 @@ func Strict() *regexp.Regexp {
 }
 
 // Relaxed produces a regexp that matches any URL matched by Strict, plus any
-// URL with no scheme or email address.
+// URL or email address with no scheme.
+//
+// Email addresses without a scheme match the `relaxedEmail` subexpression,
+// which can be used to filter them as needed.
 func Relaxed() *regexp.Regexp {
 	relaxedInit.Do(func() {
 		relaxedRe = regexp.MustCompile(relaxedExp())

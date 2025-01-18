@@ -23,7 +23,7 @@
   --orange2: var(--pink);
 
   /* Basic page styling (background + foreground) */
-  --bg: linear-gradient(var(--eggplant1), var(--pink), var(--orange), var(--yellow), var(--eggshell));
+  --bg: var(--eggshell);
   --bg-accent: var(--white2);
   --fg: var(--eggplant4);
   --fg-reduced: var(--eggplant3);
@@ -45,6 +45,17 @@
   --boxshadow-border: 0.08rem solid var(--orange);
 }
 
+/* Main page background */
+body {
+  background: linear-gradient(
+    var(--eggplant1),
+    var(--pink),
+    var(--orange),
+    var(--yellow),
+    var(--eggshell)
+  );
+}
+
 /* Scroll bar */
 html, body {
   scrollbar-color: var(--pink) var(--eggshell);
@@ -53,12 +64,6 @@ html, body {
 /* Instance title color */
 .page-header a h1 {
   color: var(--eggshell);
-}
-
-/* Role and bot badge backgrounds */
-.profile .profile-header .basic-info .namerole .role,
-.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
-  background: var(--eggshell);
 }
 
 /* Profile fields */

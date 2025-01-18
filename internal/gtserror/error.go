@@ -40,7 +40,21 @@ const (
 	notRelevantKey
 	spamKey
 	notPermittedKey
+	limitReachedKey
 )
+
+// LimitReached indicates that this error was caused by
+// some kind of limit being reached, e.g. media upload limit.
+func LimitReached(err error) bool {
+	_, ok := errors.Value(err, limitReachedKey).(struct{})
+	return ok
+}
+
+// SetLimitReached will wrap the given error to store a "limit reached"
+// flag, returning wrapped error. See LimitReached() for example use-cases.
+func SetLimitReached(err error) error {
+	return errors.WithValue(err, limitReachedKey, struct{}{})
+}
 
 // IsUnretrievable indicates that a call to retrieve a resource
 // (account, status, attachment, etc) could not be fulfilled, either

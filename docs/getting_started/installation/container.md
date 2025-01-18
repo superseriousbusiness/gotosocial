@@ -91,6 +91,32 @@ If you want to use [LetsEncrypt](../../configuration/tls.md) for TLS certificate
     
     For help translating variable names from the config.yaml file to environment variables, refer to the [configuration section](../../configuration/index.md#environment-variables).
 
+### Wazero Compilation Cache (optional)
+
+On startup, GoToSocial compiles embedded WebAssembly `ffmpeg` and `ffprobe` binaries into [Wazero](https://wazero.io/)-compatible modules, which are used for media processing without requiring any external dependencies.
+
+To speed up startup time of GoToSocial, you can cache the compiled modules between restarts so that GoToSocial doesn't have to compile them on every startup from scratch.
+
+If you'd like to do this in your Docker container, first create a `.cache` directory in your working folder to store the modules:
+
+```bash
+mkdir -p ~/gotosocial/.cache
+```
+
+Then, uncomment the second volume in the docker-compose.yaml file by removing the leading `#` symbol, so that instead of
+
+```yaml
+#- ~/gotosocial/.cache:/gotosocial/.cache
+```
+
+it reads
+
+```yaml
+- ~/gotosocial/.cache:/gotosocial/.cache
+```
+
+This will instruct Docker to mount the `~/gotosocial/.cache` directory at `/gotosocial/.cache` inside the Docker container.
+
 ## Start GoToSocial
 
 With those small changes out of the way, you can now start GoToSocial with the following command:

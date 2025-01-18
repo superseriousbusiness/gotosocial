@@ -87,7 +87,7 @@ func (w *Workers) Start() {
 	w.Dereference.Start(n)
 	log.Infof(nil, "started %d dereference workers", n)
 
-	n = 4 * maxprocs
+	n = maxprocs
 	w.Processing.Start(n)
 	log.Infof(nil, "started %d processing workers", n)
 }

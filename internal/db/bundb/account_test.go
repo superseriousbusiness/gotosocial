@@ -46,7 +46,7 @@ type AccountTestSuite struct {
 func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false)
 	suite.NoError(err)
-	suite.Len(statuses, 8)
+	suite.Len(statuses, 9)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
@@ -69,7 +69,7 @@ func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.Len(statuses, 2)
+	suite.Len(statuses, 3)
 
 	// try to get the last page (should be empty)
 	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
@@ -80,13 +80,13 @@ func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
-	suite.Len(statuses, 7)
+	suite.Len(statuses, 8)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
 	suite.NoError(err)
-	suite.Len(statuses, 3)
+	suite.Len(statuses, 4)
 }
 
 // populateTestStatus adds mandatory fields to a partially populated status.
@@ -106,7 +106,7 @@ func (suite *AccountTestSuite) populateTestStatus(testAccountKey string, status 
 	status.URI = fmt.Sprintf("http://localhost:8080/users/%s/statuses/%s", testAccount.Username, status.ID)
 	status.Local = util.Ptr(true)
 
-	if status.Visibility == "" {
+	if status.Visibility == 0 {
 		status.Visibility = gtsmodel.VisibilityDefault
 	}
 	if status.ActivityStreamsType == "" {
@@ -173,7 +173,7 @@ func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesExcludesSelfR
 	testAccount := suite.testAccounts["local_account_1"]
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), testAccount.ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
-	suite.Len(statuses, 8)
+	suite.Len(statuses, 9)
 	for _, status := range statuses {
 		if status.InReplyToID != "" && status.InReplyToAccountID != testAccount.ID {
 			suite.FailNowf("", "Status with ID %s is a non-self reply and should have been excluded", status.ID)

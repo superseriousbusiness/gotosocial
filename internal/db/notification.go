@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // Notification contains functions for creating and getting notifications.
@@ -29,7 +30,7 @@ type Notification interface {
 	//
 	// Returned notifications will be ordered ID descending (ie., highest/newest to lowest/oldest).
 	// If types is empty, *all* notification types will be included.
-	GetAccountNotifications(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int, types []string, excludeTypes []string) ([]*gtsmodel.Notification, error)
+	GetAccountNotifications(ctx context.Context, accountID string, page *paging.Page, types []gtsmodel.NotificationType, excludeTypes []gtsmodel.NotificationType) ([]*gtsmodel.Notification, error)
 
 	// GetNotificationByID returns one notification according to its id.
 	GetNotificationByID(ctx context.Context, id string) (*gtsmodel.Notification, error)
@@ -64,7 +65,7 @@ type Notification interface {
 	// originate from originAccountID will be deleted.
 	//
 	// At least one parameter must not be an empty string.
-	DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error
+	DeleteNotifications(ctx context.Context, types []gtsmodel.NotificationType, targetAccountID string, originAccountID string) error
 
 	// DeleteNotificationsForStatus deletes all notifications that relate to
 	// the given statusID. This function is useful when a status has been deleted,

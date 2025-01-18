@@ -68,6 +68,10 @@ type Account struct {
 	// Description of this account's avatar, for alt text.
 	// example: A cute drawing of a smiling sloth.
 	AvatarDescription string `json:"avatar_description,omitempty"`
+	// Database ID of the media attachment for this account's avatar image.
+	// Omitted if no avatar uploaded for this account (ie., default avatar).
+	// example: 01JAJ3XCD66K3T99JZESCR137W
+	AvatarMediaID string `json:"avatar_media_id,omitempty"`
 	// Web location of the account's header image.
 	// example: https://example.org/media/some_user/header/original/header.jpeg
 	Header string `json:"header"`
@@ -78,14 +82,18 @@ type Account struct {
 	// Description of this account's header, for alt text.
 	// example: A sunlit field with purple flowers.
 	HeaderDescription string `json:"header_description,omitempty"`
+	// Database ID of the media attachment for this account's header image.
+	// Omitted if no header uploaded for this account (ie., default header).
+	// example: 01JAJ3XCD66K3T99JZESCR137W
+	HeaderMediaID string `json:"header_media_id,omitempty"`
 	// Number of accounts following this account, according to our instance.
 	FollowersCount int `json:"followers_count"`
 	// Number of account's followed by this account, according to our instance.
 	FollowingCount int `json:"following_count"`
 	// Number of statuses posted by this account, according to our instance.
 	StatusesCount int `json:"statuses_count"`
-	// When the account's most recent status was posted (ISO 8601 Datetime).
-	// example: 2021-07-30T09:20:25+00:00
+	// When the account's most recent status was posted (ISO 8601 Date).
+	// example: 2021-07-30
 	LastStatusAt *string `json:"last_status_at"`
 	// Array of custom emojis used in this account's note or display name.
 	// Empty for blocked accounts.

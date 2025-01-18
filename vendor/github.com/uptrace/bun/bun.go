@@ -22,6 +22,10 @@ type (
 	AfterScanRowHook  = schema.AfterScanRowHook
 )
 
+func SafeQuery(query string, args ...interface{}) schema.QueryWithArgs {
+	return schema.SafeQuery(query, args)
+}
+
 type BeforeSelectHook interface {
 	BeforeSelect(ctx context.Context, query *SelectQuery) error
 }
@@ -70,7 +74,7 @@ type AfterDropTableHook interface {
 	AfterDropTable(ctx context.Context, query *DropTableQuery) error
 }
 
-// SetLogger overwriters default Bun logger.
+// SetLogger overwrites default Bun logger.
 func SetLogger(logger internal.Logging) {
 	internal.SetLogger(logger)
 }

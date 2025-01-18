@@ -18,7 +18,6 @@
 package media
 
 import (
-	"cmp"
 	"errors"
 	"fmt"
 	"io"
@@ -28,7 +27,7 @@ import (
 
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
-	"codeberg.org/gruf/go-mimetypes"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // file represents one file
@@ -86,12 +85,6 @@ func getExtension(path string) string {
 	return ""
 }
 
-// getMimeType returns a suitable mimetype for file extension.
-func getMimeType(ext string) string {
-	const defaultType = "application/octet-stream"
-	return cmp.Or(mimetypes.MimeTypes[ext], defaultType)
-}
-
 // drainToTmp drains data from given reader into a new temp file
 // and closes it, returning the path of the resulting temp file.
 //
@@ -143,8 +136,9 @@ func drainToTmp(rc io.ReadCloser) (string, error) {
 
 	// Check to see if limit was reached,
 	// (produces more useful error messages).
-	if lr != nil && !iotools.AtEOF(lr.R) {
-		return path, fmt.Errorf("reached read limit %s", bytesize.Size(limit))
+	if lr != nil && lr.N <= 0 {
+		err := fmt.Errorf("reached read limit %s", bytesize.Size(limit)) // #nosec G115 -- Just logging
+		return path, gtserror.SetLimitReached(err)
 	}
 
 	return path, nil

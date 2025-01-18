@@ -170,12 +170,6 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 	//
 	// Post the activity to the Actor's inbox and trigger side effects.
 	if err := f.sideEffectActor.PostInbox(ctx, inboxID, activity); err != nil {
-		// Check if a function in the federatingDB
-		// has returned an explicit errWithCode for us.
-		if errWithCode, ok := err.(gtserror.WithCode); ok {
-			return false, errWithCode
-		}
-
 		// Check if it's a bad request because the
 		// object or target props weren't populated,
 		// or we failed parsing activity details.
@@ -191,6 +185,12 @@ func (f *federatingActor) PostInboxScheme(ctx context.Context, w http.ResponseWr
 
 			const text = "malformed incoming activity"
 			return false, gtserror.NewErrorBadRequest(errors.New(text), text)
+		}
+
+		// Check if a function in the federatingDB
+		// has returned an explicit errWithCode for us.
+		if errWithCode, ok := err.(gtserror.WithCode); ok {
+			return false, errWithCode
 		}
 
 		// Default: there's been some real error.

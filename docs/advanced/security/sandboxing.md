@@ -24,7 +24,7 @@ $ sudo apparmor_parser -Kr /etc/apparmor.d/gotosocial
 ```
 
 !!! tip
-    If you're using SQLite, the AppArmor profile expects the database in `/gotosocial/db/` so you'll need to adjust your configuration paths or the policy accordingly.
+    The provided AppArmor example is just intended to get you started. It will still need to be edited depending on your exact setup; consult the comments in the example profile file for more information.
 
 With the policy installed, you'll need to configure your system to use it to constrain the permissions GoToSocial has.
 

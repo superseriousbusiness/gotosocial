@@ -177,9 +177,7 @@ func (p *Processor) getAttachmentContent(
 	}
 
 	// Start preparing API content model.
-	apiContent := &apimodel.Content{
-		ContentUpdated: attach.UpdatedAt,
-	}
+	apiContent := &apimodel.Content{}
 
 	// Retrieve appropriate
 	// size file from storage.

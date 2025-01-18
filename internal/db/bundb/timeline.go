@@ -123,13 +123,8 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
 
-		var err error
-
 		// don't return statuses more than 24hr in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
-		if err != nil {
-			return nil, err
-		}
+		maxID = id.NewULIDFromTime(time.Now().Add(future))
 	}
 
 	// return only statuses LOWER (ie., older) than maxID
@@ -223,13 +218,8 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
 
-		var err error
-
 		// don't return statuses more than 24hr in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
-		if err != nil {
-			return nil, err
-		}
+		maxID = id.NewULIDFromTime(time.Now().Add(future))
 	}
 
 	// return only statuses LOWER (ie., older) than maxID
@@ -409,13 +399,8 @@ func (t *timelineDB) GetListTimeline(
 	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
 
-		var err error
-
 		// don't return statuses more than 24hr in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
-		if err != nil {
-			return nil, err
-		}
+		maxID = id.NewULIDFromTime(time.Now().Add(future))
 	}
 
 	// return only statuses LOWER (ie., older) than maxID
@@ -508,13 +493,8 @@ func (t *timelineDB) GetTagTimeline(
 	if maxID == "" || maxID >= id.Highest {
 		const future = 24 * time.Hour
 
-		var err error
-
 		// don't return statuses more than 24hr in the future
-		maxID, err = id.NewULIDFromTime(time.Now().Add(future))
-		if err != nil {
-			return nil, err
-		}
+		maxID = id.NewULIDFromTime(time.Now().Add(future))
 	}
 
 	// return only statuses LOWER (ie., older) than maxID

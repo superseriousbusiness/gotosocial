@@ -13,6 +13,7 @@ const (
 	_MAX_FUNCTION_ARG = 100
 
 	ptrlen = 4
+	intlen = 4
 )
 
 // ErrorCode is a result code that [Error.Code] might return.
@@ -165,6 +166,7 @@ const (
 	PREPARE_PERSISTENT PrepareFlag = 0x01
 	PREPARE_NORMALIZE  PrepareFlag = 0x02
 	PREPARE_NO_VTAB    PrepareFlag = 0x04
+	PREPARE_DONT_LOG   PrepareFlag = 0x10
 )
 
 // FunctionFlag is a flag that can be passed to
@@ -177,6 +179,7 @@ const (
 	DETERMINISTIC FunctionFlag = 0x000000800
 	DIRECTONLY    FunctionFlag = 0x000080000
 	INNOCUOUS     FunctionFlag = 0x000200000
+	SELFORDER1    FunctionFlag = 0x002000000
 	// SUBTYPE        FunctionFlag = 0x000100000
 	// RESULT_SUBTYPE FunctionFlag = 0x001000000
 )
@@ -217,6 +220,7 @@ const (
 	DBSTATUS_DEFERRED_FKS        DBStatus = 10
 	DBSTATUS_CACHE_USED_SHARED   DBStatus = 11
 	DBSTATUS_CACHE_SPILL         DBStatus = 12
+	// DBSTATUS_MAX              DBStatus = 12
 )
 
 // DBConfig are the available database connection configuration options.
@@ -245,6 +249,7 @@ const (
 	DBCONFIG_TRUSTED_SCHEMA        DBConfig = 1017
 	DBCONFIG_STMT_SCANSTATUS       DBConfig = 1018
 	DBCONFIG_REVERSE_SCANORDER     DBConfig = 1019
+	// DBCONFIG_MAX                DBConfig = 1019
 )
 
 // FcntlOpcode are the available opcodes for [Conn.FileControl].

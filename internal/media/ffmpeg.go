@@ -78,22 +78,16 @@ func ffmpegGenerateWebpThumb(ctx context.Context, inpath, outpath string, width,
 		// (NOT as libwebp_anim).
 		"-codec:v", "libwebp",
 
-		// Select thumb from first 7 frames.
-		// (in particular <= 7 reduced memory usage, marginally)
-		// (thumb filter: https://ffmpeg.org/ffmpeg-filters.html#thumbnail)
-		"-filter:v", "thumbnail=n=7,"+
+		// Only one frame
+		"-frames:v", "1",
 
-			// Scale to dimensions
-			// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
-			"scale="+strconv.Itoa(width)+
-			":"+strconv.Itoa(height)+","+
+		// Scale to dimensions
+		// (scale filter: https://ffmpeg.org/ffmpeg-filters.html#scale)
+		"-filter:v", "scale="+strconv.Itoa(width)+":"+strconv.Itoa(height)+","+
 
 			// Attempt to use original pixel format
 			// (format filter: https://ffmpeg.org/ffmpeg-filters.html#format)
 			"format=pix_fmts="+pixfmt,
-
-		// Only one frame
-		"-frames:v", "1",
 
 		// Quality not specified,
 		// i.e. use default which
@@ -187,6 +181,10 @@ func ffmpeg(ctx context.Context, inpath string, outpath string, args ...string) 
 			}
 			fscfg = fscfg.WithFSMount(shared, path.Dir(inpath))
 
+			// Set anonymous module name.
+			modcfg = modcfg.WithName("")
+
+			// Update with prepared fs config.
 			return modcfg.WithFSConfig(fscfg)
 		},
 	})
@@ -253,6 +251,10 @@ func ffprobe(ctx context.Context, filepath string) (*result, error) {
 			}
 			fscfg = fscfg.WithFSMount(in, path.Dir(filepath))
 
+			// Set anonymous module name.
+			modcfg = modcfg.WithName("")
+
+			// Update with prepared fs config.
 			return modcfg.WithFSConfig(fscfg)
 		},
 	})
@@ -329,14 +331,14 @@ type videoStream struct {
 //
 // Note the checks for (len(res.video) > 0) may catch some audio files with embedded
 // album art as video, but i blame that on the hellscape that is media filetypes.
-//
-// TODO: we can update this code to also return a mimetype and avoid later parsing!
-func (res *result) GetFileType() (gtsmodel.FileType, string) {
+func (res *result) GetFileType() (gtsmodel.FileType, string, string) {
 	switch res.format {
 	case "mpeg":
-		return gtsmodel.FileTypeVideo, "mpeg"
+		return gtsmodel.FileTypeVideo,
+			"video/mpeg", "mpeg"
 	case "mjpeg":
-		return gtsmodel.FileTypeVideo, "mjpeg"
+		return gtsmodel.FileTypeVideo,
+			"video/x-motion-jpeg", "mjpeg"
 	case "mov,mp4,m4a,3gp,3g2,mj2":
 		switch {
 		case len(res.video) > 0:
@@ -344,73 +346,118 @@ func (res *result) GetFileType() (gtsmodel.FileType, string) {
 				res.duration <= 30 {
 				// Short, soundless
 				// video file aka gifv.
-				return gtsmodel.FileTypeGifv, "mp4"
+				return gtsmodel.FileTypeGifv,
+					"video/mp4", "mp4"
 			} else {
 				// Video file (with or without audio).
-				return gtsmodel.FileTypeVideo, "mp4"
+				return gtsmodel.FileTypeVideo,
+					"video/mp4", "mp4"
 			}
 		case len(res.audio) > 0 &&
 			res.audio[0].codec == "aac":
 			// m4a only supports [aac] audio.
-			return gtsmodel.FileTypeAudio, "m4a"
+			return gtsmodel.FileTypeAudio,
+				"audio/mp4", "m4a"
 		}
 	case "apng":
-		return gtsmodel.FileTypeImage, "apng"
+		return gtsmodel.FileTypeImage,
+			"image/apng", "apng"
 	case "png_pipe":
-		return gtsmodel.FileTypeImage, "png"
+		return gtsmodel.FileTypeImage,
+			"image/png", "png"
 	case "image2", "image2pipe", "jpeg_pipe":
-		return gtsmodel.FileTypeImage, "jpeg"
+		return gtsmodel.FileTypeImage,
+			"image/jpeg", "jpeg"
 	case "webp", "webp_pipe":
-		return gtsmodel.FileTypeImage, "webp"
+		return gtsmodel.FileTypeImage,
+			"image/webp", "webp"
 	case "gif":
-		return gtsmodel.FileTypeImage, "gif"
+		return gtsmodel.FileTypeImage,
+			"image/gif", "gif"
 	case "mp3":
 		if len(res.audio) > 0 {
 			switch res.audio[0].codec {
+			case "mp1":
+				return gtsmodel.FileTypeAudio,
+					"audio/mpeg", "mp1"
 			case "mp2":
-				return gtsmodel.FileTypeAudio, "mp2"
+				return gtsmodel.FileTypeAudio,
+					"audio/mpeg", "mp2"
 			case "mp3":
-				return gtsmodel.FileTypeAudio, "mp3"
+				return gtsmodel.FileTypeAudio,
+					"audio/mpeg", "mp3"
 			}
 		}
 	case "asf":
 		switch {
 		case len(res.video) > 0:
-			return gtsmodel.FileTypeVideo, "wmv"
+			return gtsmodel.FileTypeVideo,
+				"video/x-ms-wmv", "wmv"
 		case len(res.audio) > 0:
-			return gtsmodel.FileTypeAudio, "wma"
+			return gtsmodel.FileTypeAudio,
+				"audio/x-ms-wma", "wma"
 		}
 	case "ogg":
-		switch {
-		case len(res.video) > 0:
-			return gtsmodel.FileTypeVideo, "ogv"
-		case len(res.audio) > 0:
-			return gtsmodel.FileTypeAudio, "ogg"
+		if len(res.video) > 0 {
+			switch res.video[0].codec {
+			case "theora", "dirac": // daala, tarkin
+				return gtsmodel.FileTypeVideo,
+					"video/ogg", "ogv"
+			}
+		}
+		if len(res.audio) > 0 {
+			switch res.audio[0].codec {
+			case "opus", "libopus":
+				return gtsmodel.FileTypeAudio,
+					"audio/opus", "opus"
+			default:
+				return gtsmodel.FileTypeAudio,
+					"audio/ogg", "ogg"
+			}
 		}
 	case "matroska,webm":
 		switch {
 		case len(res.video) > 0:
+			var isWebm bool
+
 			switch res.video[0].codec {
 			case "vp8", "vp9", "av1":
-			default:
-				return gtsmodel.FileTypeVideo, "mkv"
-			}
-			if len(res.audio) > 0 {
-				switch res.audio[0].codec {
-				case "vorbis", "opus", "libopus":
-					// webm only supports [VP8/VP9/AV1]+[vorbis/opus]
-					return gtsmodel.FileTypeVideo, "webm"
+				if len(res.audio) > 0 {
+					switch res.audio[0].codec {
+					case "vorbis", "opus", "libopus":
+						// webm only supports [VP8/VP9/AV1] +
+						//                    [vorbis/opus]
+						isWebm = true
+					}
+				} else {
+					// no audio with correct
+					// video codec also fine.
+					isWebm = true
 				}
 			}
+
+			if isWebm {
+				// Check valid webm codec config.
+				return gtsmodel.FileTypeVideo,
+					"video/webm", "webm"
+			}
+
+			// All else falls under generic mkv.
+			return gtsmodel.FileTypeVideo,
+				"video/x-matroska", "mkv"
 		case len(res.audio) > 0:
-			return gtsmodel.FileTypeAudio, "mka"
+			return gtsmodel.FileTypeAudio,
+				"audio/x-matroska", "mka"
 		}
 	case "avi":
-		return gtsmodel.FileTypeVideo, "avi"
+		return gtsmodel.FileTypeVideo,
+			"video/x-msvideo", "avi"
 	case "flac":
-		return gtsmodel.FileTypeAudio, "flac"
+		return gtsmodel.FileTypeAudio,
+			"audio/flac", "flac"
 	}
-	return gtsmodel.FileTypeUnknown, res.format
+	return gtsmodel.FileTypeUnknown,
+		"", res.format
 }
 
 // ImageMeta extracts image metadata contained within ffprobe'd media result streams.
@@ -548,10 +595,10 @@ func (res *ffprobeResult) Process() (*result, error) {
 				if p := strings.SplitN(str, "/", 2); len(p) == 2 {
 					n, _ := strconv.ParseUint(p[0], 10, 32)
 					d, _ := strconv.ParseUint(p[1], 10, 32)
-					num, den = uint32(n), uint32(d)
+					num, den = uint32(n), uint32(d) // #nosec G115 -- ParseUint is configured to check
 				} else {
 					n, _ := strconv.ParseUint(p[0], 10, 32)
-					num = uint32(n)
+					num = uint32(n) // #nosec G115 -- ParseUint is configured to check
 				}
 
 				// Set final divised framerate.

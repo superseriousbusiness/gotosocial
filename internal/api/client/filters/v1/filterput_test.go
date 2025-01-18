@@ -42,6 +42,7 @@ func (suite *FiltersTestSuite) putFilter(
 	irreversible *bool,
 	wholeWord *bool,
 	expiresIn *int,
+	expiresInStr *string,
 	requestJson *string,
 	expectedHTTPStatus int,
 	expectedBody string,
@@ -76,6 +77,8 @@ func (suite *FiltersTestSuite) putFilter(
 		}
 		if expiresIn != nil {
 			ctx.Request.Form["expires_in"] = []string{strconv.Itoa(*expiresIn)}
+		} else if expiresInStr != nil {
+			ctx.Request.Form["expires_in"] = []string{*expiresInStr}
 		}
 	}
 
@@ -128,7 +131,7 @@ func (suite *FiltersTestSuite) TestPutFilterFull() {
 	irreversible := false
 	wholeWord := true
 	expiresIn := 86400
-	filter, err := suite.putFilter(id, &phrase, &context, &irreversible, &wholeWord, &expiresIn, nil, http.StatusOK, "")
+	filter, err := suite.putFilter(id, &phrase, &context, &irreversible, &wholeWord, &expiresIn, nil, nil, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -160,7 +163,7 @@ func (suite *FiltersTestSuite) TestPutFilterFullJSON() {
 		"whole_word": true,
 		"expires_in": 86400.1
 	}`
-	filter, err := suite.putFilter(id, nil, nil, nil, nil, nil, &requestJson, http.StatusOK, "")
+	filter, err := suite.putFilter(id, nil, nil, nil, nil, nil, nil, &requestJson, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -188,7 +191,7 @@ func (suite *FiltersTestSuite) TestPutFilterMinimal() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
 	context := []string{"home"}
-	filter, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, http.StatusOK, "")
+	filter, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusOK, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -210,7 +213,7 @@ func (suite *FiltersTestSuite) TestPutFilterEmptyPhrase() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := ""
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -219,7 +222,7 @@ func (suite *FiltersTestSuite) TestPutFilterEmptyPhrase() {
 func (suite *FiltersTestSuite) TestPutFilterMissingPhrase() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	context := []string{"home"}
-	_, err := suite.putFilter(id, nil, &context, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.putFilter(id, nil, &context, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -229,7 +232,7 @@ func (suite *FiltersTestSuite) TestPutFilterEmptyContext() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
 	context := []string{}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -238,7 +241,7 @@ func (suite *FiltersTestSuite) TestPutFilterEmptyContext() {
 func (suite *FiltersTestSuite) TestPutFilterMissingContext() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
-	_, err := suite.putFilter(id, &phrase, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.putFilter(id, &phrase, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -248,7 +251,7 @@ func (suite *FiltersTestSuite) TestPutFilterMissingContext() {
 func (suite *FiltersTestSuite) TestPutFilterTitleConflict() {
 	id := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"].ID
 	phrase := "metasyntactic variables"
-	_, err := suite.putFilter(id, &phrase, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
+	_, err := suite.putFilter(id, &phrase, nil, nil, nil, nil, nil, nil, http.StatusUnprocessableEntity, "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -258,7 +261,7 @@ func (suite *FiltersTestSuite) TestPutAnotherAccountsFilter() {
 	id := suite.testFilterKeywords["local_account_2_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -268,8 +271,60 @@ func (suite *FiltersTestSuite) TestPutNonexistentFilter() {
 	id := "not_even_a_real_ULID"
 	phrase := "GNU/Linux"
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+}
+
+// setFilterExpiration sets filter expiration.
+func (suite *FiltersTestSuite) setFilterExpiration(id string, phrase *string, expiresIn *int, expiresInStr *string, requestJson *string) *apimodel.FilterV1 {
+	context := []string{"home"}
+	filter, err := suite.putFilter(id, phrase, &context, nil, nil, expiresIn, expiresInStr, requestJson, http.StatusOK, "")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	return filter
+}
+
+// Regression test for https://github.com/superseriousbusiness/gotosocial/issues/3497
+func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateEmptyString() {
+	filterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	id := filterKeyword.ID
+	phrase := filterKeyword.Keyword
+
+	// Setup: set an expiration date for the filter.
+	expiresIn := 86400
+	filter := suite.setFilterExpiration(id, &phrase, &expiresIn, nil, nil)
+	if !suite.NotNil(filter.ExpiresAt) {
+		suite.FailNow("Test precondition failed")
+	}
+
+	// Unset the filter's expiration date by setting it to an empty string.
+	expiresInStr := ""
+	filter = suite.setFilterExpiration(id, &phrase, nil, &expiresInStr, nil)
+	suite.Nil(filter.ExpiresAt)
+}
+
+// Regression test related to https://github.com/superseriousbusiness/gotosocial/issues/3497
+func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateNullJSON() {
+	filterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
+	id := filterKeyword.ID
+	phrase := filterKeyword.Keyword
+
+	// Setup: set an expiration date for the filter.
+	expiresIn := 86400
+	filter := suite.setFilterExpiration(id, &phrase, &expiresIn, nil, nil)
+	if !suite.NotNil(filter.ExpiresAt) {
+		suite.FailNow("Test precondition failed")
+	}
+
+	// Unset the filter's expiration date by setting it to a null literal.
+	requestJson := `{
+		"phrase": "fnord",
+		"context": ["home"],
+		"expires_in": null
+	}`
+	filter = suite.setFilterExpiration(id, nil, nil, nil, &requestJson)
+	suite.Nil(filter.ExpiresAt)
 }

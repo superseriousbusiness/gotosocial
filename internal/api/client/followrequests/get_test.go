@@ -97,10 +97,11 @@ func (suite *GetTestSuite) TestGet() {
     "avatar_static": "",
     "header": "http://localhost:8080/assets/default_header.webp",
     "header_static": "http://localhost:8080/assets/default_header.webp",
+    "header_description": "Flat gray background (default header).",
     "followers_count": 0,
     "following_count": 0,
     "statuses_count": 1,
-    "last_status_at": "2023-11-02T10:44:25.000Z",
+    "last_status_at": "2023-11-02",
     "emojis": [],
     "fields": []
   }

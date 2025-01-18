@@ -132,7 +132,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	}
 
 	// Prepare stylesheets for profile.
-	stylesheets := make([]string, 0, 6)
+	stylesheets := make([]string, 0, 7)
 
 	// Basic profile stylesheets.
 	stylesheets = append(

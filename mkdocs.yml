@@ -4,6 +4,7 @@ theme:
   name: material
   language: en
   font: false
+  custom_dir: docs/overrides
   features:
     - header.autohide
     - content.code.copy
@@ -34,8 +35,17 @@ plugins:
       syntaxHighlightTheme: obsidian
   - include-markdown
 
+extra:
+  alternate:
+    - name: English
+      link: /en/ 
+      lang: en
+    - name: 中文
+      link: /zh-cn/
+      lang: zh
+
 extra_css:
-  - assets/css/colours.css
+  - public/css/colours.css
 
 markdown_extensions:
   - admonition
@@ -56,6 +66,9 @@ markdown_extensions:
   - pymdownx.tilde
   - pymdownx.tabbed:
       alternate_style: true
+
+exclude_docs: |
+  locales/**
 
 nav:
   - "Home": "index.md"
@@ -100,7 +113,7 @@ nav:
       - "configuration/advanced.md"
       - "configuration/observability.md"
   - "Advanced":
-    - "advanced/index.md"
+    - "Overview": "advanced/index.md"
     - "advanced/host-account-domain.md"
     - "advanced/outgoing-proxy.md"
     - "Caching":
@@ -116,12 +129,16 @@ nav:
     - "advanced/tracing.md"
     - "advanced/metrics.md"
     - "advanced/replicating-sqlite.md"
+    - "advanced/sqlite-networked-storage.md"
+    - "Advanced builds":
+      - "advanced/builds/nowasm.md"
 
   - "Admin":
       - "admin/settings.md"
       - "admin/signups.md"
       - "admin/federation_modes.md"
       - "admin/domain_blocks.md"
+      - "admin/domain_permission_subscriptions.md"
       - "admin/request_filtering_modes.md"
       - "admin/robots.md"
       - "admin/cli.md"

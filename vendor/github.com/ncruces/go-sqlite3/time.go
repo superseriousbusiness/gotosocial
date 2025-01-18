@@ -138,6 +138,9 @@ func (f TimeFormat) Encode(t time.Time) any {
 //
 // https://sqlite.org/lang_datefunc.html
 func (f TimeFormat) Decode(v any) (time.Time, error) {
+	if t, ok := v.(time.Time); ok {
+		return t, nil
+	}
 	switch f {
 	// Numeric formats.
 	case TimeFormatJulianDay:

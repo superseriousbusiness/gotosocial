@@ -100,6 +100,7 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
   "card": null,
   "content": "",
   "created_at": "right the hell just now babyee",
+  "edited_at": null,
   "emojis": [],
   "favourited": true,
   "favourites_count": 0,
@@ -145,6 +146,7 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
     "card": null,
     "content": "hello world! #welcome ! first post on the instance :rainbow: !",
     "created_at": "right the hell just now babyee",
+    "edited_at": null,
     "emojis": [
       {
         "category": "reactions",
@@ -280,6 +282,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
   "card": null,
   "content": "",
   "created_at": "right the hell just now babyee",
+  "edited_at": null,
   "emojis": [],
   "favourited": false,
   "favourites_count": 0,
@@ -329,6 +332,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
     "card": null,
     "content": "hi!",
     "created_at": "right the hell just now babyee",
+    "edited_at": null,
     "emojis": [],
     "favourited": false,
     "favourites_count": 0,
@@ -494,6 +498,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
   "card": null,
   "content": "",
   "created_at": "right the hell just now babyee",
+  "edited_at": null,
   "emojis": [],
   "favourited": false,
   "favourites_count": 0,
@@ -539,6 +544,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
     "card": null,
     "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p>",
     "created_at": "right the hell just now babyee",
+    "edited_at": null,
     "emojis": [],
     "favourited": false,
     "favourites_count": 0,
@@ -591,7 +597,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
     "text": "Hi @1happyturtle, can I reply?",
     "uri": "http://localhost:8080/some/determinate/url",
     "url": "http://localhost:8080/some/determinate/url",
-    "visibility": "unlisted"
+    "visibility": "public"
   },
   "reblogged": true,
   "reblogs_count": 0,
@@ -601,7 +607,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
   "tags": [],
   "uri": "http://localhost:8080/some/determinate/url",
   "url": "http://localhost:8080/some/determinate/url",
-  "visibility": "unlisted"
+  "visibility": "public"
 }`, out)
 
 	// Target status should no

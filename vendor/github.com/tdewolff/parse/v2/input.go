@@ -2,7 +2,6 @@ package parse
 
 import (
 	"io"
-	"io/ioutil"
 )
 
 var nullBuffer = []byte{0}
@@ -18,7 +17,7 @@ type Input struct {
 	restore func()
 }
 
-// NewInput returns a new Input for a given io.Input and uses ioutil.ReadAll to read it into a byte slice.
+// NewInput returns a new Input for a given io.Input and uses io.ReadAll to read it into a byte slice.
 // If the io.Input implements Bytes, that is used instead. It will append a NULL at the end of the buffer.
 func NewInput(r io.Reader) *Input {
 	var b []byte
@@ -29,7 +28,7 @@ func NewInput(r io.Reader) *Input {
 			b = buffer.Bytes()
 		} else {
 			var err error
-			b, err = ioutil.ReadAll(r)
+			b, err = io.ReadAll(r)
 			if err != nil {
 				return &Input{
 					buf: nullBuffer,

@@ -88,10 +88,18 @@ host: "localhost"
 # Default: ""
 account-domain: ""
 
-# String. Protocol to use for the server. Only change to http for local testing!
-# This should be the protocol part of the URI that your server is actually reachable on. So even if you're
-# running GoToSocial behind a reverse proxy that handles SSL certificates for you, instead of using built-in
-# letsencrypt, it should still be https.
+# String. Protocol over which the server is reachable from the outside world.
+#
+# ONLY CHANGE THIS TO HTTP FOR LOCAL TESTING! IN 99.99% OF CASES YOU SHOULD NOT CHANGE THIS!
+#
+# This should be the protocol part of the URI that your server is actually reachable on.
+# So even if you're running GoToSocial behind a reverse proxy that handles SSL certificates
+# for you, instead of using built-in letsencrypt, it should still be https, not http.
+#
+# Again, ONLY CHANGE THIS TO HTTP FOR LOCAL TESTING! If you set this to `http`, start your instance,
+# and then later change it to `https`, you will have already broken URI generation for any created
+# users on the instance. You should only touch this setting if you 100% know what you're doing.
+#
 # Options: ["http","https"]
 # Default: "https"
 protocol: "https"
@@ -463,6 +471,24 @@ accounts-custom-css-length: 10000
 # Default: 40MiB (41943040 bytes)
 media-local-max-size: 40MiB
 
+# Size. Size in bytes of max image size referred to on /api/v_/instance endpoints,
+# used by applications like Tusky to automatically scale locally uploaded media.
+#
+# Leaving this unset will default to media-local-max-size.
+#
+# Examples: [64, 500, 5MiB, 5MB, 50M]
+# Default: unset
+media-image-size-hint: 5MiB
+
+# Size. Size in bytes of max video size referred to on /api/v_/instance endpoints,
+# used by applications like Tusky to automatically scale locally uploaded media.
+#
+# Leaving this unset will default to media-local-max-size.
+#
+# Examples: [64, 4096, 4MiB, 4MB, 40M]
+# Default: unset
+media-video-size-hint: 40MiB
+
 # Size. Max size in bytes of media to download from other instances.
 #
 # Lowering this limit may cause your instance not to fetch post media.
@@ -817,6 +843,7 @@ oidc-admin-groups: []
 smtp-host: ""
 
 # Int. Port to use to connect to the smtp server.
+# In the majority of cases, you should use port 587.
 # Examples: []
 # Default: 0
 smtp-port: 0

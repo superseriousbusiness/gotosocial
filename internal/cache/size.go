@@ -342,6 +342,40 @@ func sizeofConversation() uintptr {
 	}))
 }
 
+func sizeofDomainPermissionDraft() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainPermissionDraft{
+		ID:                 exampleID,
+		CreatedAt:          exampleTime,
+		UpdatedAt:          exampleTime,
+		PermissionType:     gtsmodel.DomainPermissionBlock,
+		Domain:             "example.org",
+		CreatedByAccountID: exampleID,
+		PrivateComment:     exampleTextSmall,
+		PublicComment:      exampleTextSmall,
+		Obfuscate:          util.Ptr(false),
+		SubscriptionID:     exampleID,
+	}))
+}
+
+func sizeofDomainPermissionSubscription() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainPermissionSubscription{
+		ID:                    exampleID,
+		Priority:              uint8(255),
+		Title:                 exampleTextSmall,
+		PermissionType:        gtsmodel.DomainPermissionBlock,
+		AsDraft:               util.Ptr(true),
+		CreatedByAccountID:    exampleID,
+		URI:                   exampleURI,
+		ContentType:           gtsmodel.DomainPermSubContentTypeCSV,
+		FetchUsername:         "username",
+		FetchPassword:         "password",
+		FetchedAt:             exampleTime,
+		SuccessfullyFetchedAt: exampleTime,
+		ETag:                  exampleID,
+		Error:                 exampleTextSmall,
+	}))
+}
+
 func sizeofEmoji() uintptr {
 	return uintptr(size.Of(&gtsmodel.Emoji{
 		ID:                     exampleID,
@@ -490,7 +524,6 @@ func sizeofMedia() uintptr {
 		URL:               exampleURI,
 		RemoteURL:         exampleURI,
 		CreatedAt:         exampleTime,
-		UpdatedAt:         exampleTime,
 		Type:              gtsmodel.FileTypeImage,
 		AccountID:         exampleID,
 		Description:       exampleText,
@@ -517,7 +550,6 @@ func sizeofMention() uintptr {
 		ID:               exampleURI,
 		StatusID:         exampleURI,
 		CreatedAt:        exampleTime,
-		UpdatedAt:        exampleTime,
 		OriginAccountID:  exampleURI,
 		OriginAccountURI: exampleURI,
 		TargetAccountID:  exampleID,
@@ -625,7 +657,7 @@ func sizeofStatus() uintptr {
 		MentionIDs:               []string{},
 		EmojiIDs:                 []string{exampleID, exampleID, exampleID},
 		CreatedAt:                exampleTime,
-		UpdatedAt:                exampleTime,
+		EditedAt:                 exampleTime,
 		FetchedAt:                exampleTime,
 		Local:                    func() *bool { ok := false; return &ok }(),
 		AccountURI:               exampleURI,
@@ -656,6 +688,23 @@ func sizeofStatusBookmark() uintptr {
 		Status:          nil,
 		CreatedAt:       exampleTime,
 		UpdatedAt:       exampleTime,
+	}))
+}
+
+func sizeofStatusEdit() uintptr {
+	return uintptr(size.Of(&gtsmodel.StatusEdit{
+		ID:             exampleID,
+		Content:        exampleText,
+		ContentWarning: exampleUsername, // similar length
+		Text:           exampleText,
+		Language:       "en",
+		Sensitive:      func() *bool { ok := false; return &ok }(),
+		AttachmentIDs:  []string{exampleID, exampleID, exampleID},
+		Attachments:    nil,
+		PollOptions:    []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+		PollVotes:      []int{69, 420, 1337, 1969},
+		StatusID:       exampleID,
+		CreatedAt:      exampleTime,
 	}))
 }
 

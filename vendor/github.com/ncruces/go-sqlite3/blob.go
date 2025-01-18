@@ -31,7 +31,6 @@ var _ io.ReadWriteSeeker = &Blob{}
 //
 // https://sqlite.org/c3ref/blob_open.html
 func (c *Conn) OpenBlob(db, table, column string, row int64, write bool) (*Blob, error) {
-	c.checkInterrupt()
 	defer c.arena.mark()()
 	blobPtr := c.arena.new(ptrlen)
 	dbPtr := c.arena.string(db)
@@ -43,6 +42,7 @@ func (c *Conn) OpenBlob(db, table, column string, row int64, write bool) (*Blob,
 		flags = 1
 	}
 
+	c.checkInterrupt(c.handle)
 	r := c.call("sqlite3_blob_open", uint64(c.handle),
 		uint64(dbPtr), uint64(tablePtr), uint64(columnPtr),
 		uint64(row), flags, uint64(blobPtr))
@@ -253,6 +253,7 @@ func (b *Blob) Seek(offset int64, whence int) (int64, error) {
 //
 // https://sqlite.org/c3ref/blob_reopen.html
 func (b *Blob) Reopen(row int64) error {
+	b.c.checkInterrupt(b.c.handle)
 	err := b.c.error(b.c.call("sqlite3_blob_reopen", uint64(b.handle), uint64(row)))
 	b.bytes = int64(b.c.call("sqlite3_blob_bytes", uint64(b.handle)))
 	b.offset = 0

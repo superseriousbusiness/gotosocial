@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/mvdan.cc/xurls/v2.svg)](https://pkg.go.dev/mvdan.cc/xurls/v2)
 
-Extract urls from text using regular expressions. Requires Go 1.19 or later.
+Extract urls from text using regular expressions. Requires Go 1.22 or later.
 
 ```go
 import "mvdan.cc/xurls/v2"
@@ -18,8 +18,8 @@ func main() {
 }
 ```
 
-Since API is centered around [regexp.Regexp](https://golang.org/pkg/regexp/#Regexp),
-many other methods are available, such as finding the [byte indexes](https://golang.org/pkg/regexp/#Regexp.FindAllIndex)
+Since API is centered around [regexp.Regexp](https://pkg.go.dev/regexp#Regexp),
+many other methods are available, such as finding the [byte indexes](https://pkg.go.dev/regexp#Regexp.FindAllIndex)
 for all matches.
 
 The regular expressions are compiled when the API is first called.

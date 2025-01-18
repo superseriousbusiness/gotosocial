@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -91,7 +91,7 @@ func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.
 	// Reorder the mentions by their
 	// IDs to ensure in correct order.
 	getID := func(m *gtsmodel.Mention) string { return m.ID }
-	util.OrderBy(mentions, ids, getID)
+	xslices.OrderBy(mentions, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

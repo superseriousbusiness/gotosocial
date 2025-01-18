@@ -4,9 +4,9 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
-
-	"codeberg.org/gruf/go-atomics"
+	"unsafe"
 )
 
 // Job encapsulates logic for a scheduled job to be run according
@@ -14,7 +14,7 @@ import (
 // holding onto a next execution time safely in a concurrent environment.
 type Job struct {
 	id     uint64
-	next   atomics.Time
+	next   unsafe.Pointer // *time.Time
 	timing Timing
 	call   func(time.Time)
 	panic  func(interface{})
@@ -32,9 +32,6 @@ func NewJob(fn func(now time.Time)) *Job {
 		call:   fn,
 		panic:  func(i interface{}) { panic(i) },
 	}
-
-	// Init next time ptr
-	j.next.Store(zerotime)
 
 	return j
 }
@@ -99,14 +96,20 @@ func (job *Job) OnPanic(fn func(interface{})) *Job {
 
 // Next returns the next time this Job is expected to run.
 func (job *Job) Next() time.Time {
-	return job.next.Load()
+	return loadTime(&job.next)
 }
 
 // Run will execute this Job and pass through given now time.
 func (job *Job) Run(now time.Time) {
 	defer func() {
-		if r := recover(); r != nil {
+		switch r := recover(); {
+		case r == nil:
+			// no panic
+		case job != nil &&
+			job.panic != nil:
 			job.panic(r)
+		default:
+			panic(r)
 		}
 	}()
 	job.call(now)
@@ -120,10 +123,21 @@ func (job *Job) String() string {
 	buf.WriteString(strconv.FormatUint(job.id, 10))
 	buf.WriteByte(' ')
 	buf.WriteString("next=")
-	buf.WriteString(job.next.Load().Format(time.StampMicro))
+	buf.WriteString(loadTime(&job.next).Format(time.StampMicro))
 	buf.WriteByte(' ')
 	buf.WriteString("timing=")
 	buf.WriteString(reflect.TypeOf(job.timing).String())
 	buf.WriteByte('}')
 	return buf.String()
+}
+
+func loadTime(p *unsafe.Pointer) time.Time {
+	if p := atomic.LoadPointer(p); p != nil {
+		return *(*time.Time)(p)
+	}
+	return zerotime
+}
+
+func storeTime(p *unsafe.Pointer, t time.Time) {
+	atomic.StorePointer(p, unsafe.Pointer(&t))
 }

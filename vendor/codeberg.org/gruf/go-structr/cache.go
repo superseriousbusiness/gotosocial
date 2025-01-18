@@ -119,9 +119,9 @@ func (c *Cache[T]) Init(config CacheConfig[T]) {
 
 // Index selects index with given name from cache, else panics.
 func (c *Cache[T]) Index(name string) *Index {
-	for i := range c.indices {
-		if c.indices[i].name == name {
-			return &c.indices[i]
+	for i, idx := range c.indices {
+		if idx.name == name {
+			return &(c.indices[i])
 		}
 	}
 	panic("unknown index: " + name)
@@ -337,13 +337,16 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 		panic("not initialized")
 	}
 
-	for i := 0; i < len(keys); {
+	// Iterate keys and catch uncached.
+	toLoad := make([]Key, 0, len(keys))
+	for _, key := range keys {
+
 		// Value length before
 		// any below appends.
 		before := len(values)
 
 		// Concatenate all *values* from cached items.
-		index.get(keys[i].key, func(item *indexed_item) {
+		index.get(key.key, func(item *indexed_item) {
 			if value, ok := item.data.(T); ok {
 				// Append value COPY.
 				value = c.copy(value)
@@ -358,30 +361,22 @@ func (c *Cache[T]) Load(index *Index, keys []Key, load func([]Key) ([]T, error))
 
 		// Only if values changed did
 		// we actually find anything.
-		if len(values) != before {
-
-			// We found values at key,
-			// drop key from the slice.
-			copy(keys[i:], keys[i+1:])
-			keys = keys[:len(keys)-1]
-			continue
+		if len(values) == before {
+			toLoad = append(toLoad, key)
 		}
-
-		// Iter
-		i++
 	}
 
 	// Done with
 	// the lock.
 	unlock()
 
-	if len(keys) == 0 {
+	if len(toLoad) == 0 {
 		// We loaded everything!
 		return values, nil
 	}
 
-	// Load uncached values.
-	uncached, err := load(keys)
+	// Load uncached key values.
+	uncached, err := load(toLoad)
 	if err != nil {
 		return nil, err
 	}
@@ -515,8 +510,8 @@ func (c *Cache[T]) Trim(perc float64) {
 	}
 
 	// Compact index data stores.
-	for i := range c.indices {
-		c.indices[i].data.Compact()
+	for _, idx := range c.indices {
+		(&idx).data.Compact()
 	}
 
 	// Done with lock.
@@ -536,17 +531,17 @@ func (c *Cache[T]) Len() int {
 
 // Debug returns debug stats about cache.
 func (c *Cache[T]) Debug() map[string]any {
-	m := make(map[string]any)
+	m := make(map[string]any, 2)
 	c.mutex.Lock()
 	m["lru"] = c.lru.len
-	indices := make(map[string]any)
+	indices := make(map[string]any, len(c.indices))
 	m["indices"] = indices
-	for i := range c.indices {
+	for _, idx := range c.indices {
 		var n uint64
-		for _, l := range c.indices[i].data.m {
+		for _, l := range idx.data.m {
 			n += uint64(l.len)
 		}
-		indices[c.indices[i].name] = n
+		indices[idx.name] = n
 	}
 	c.mutex.Unlock()
 	return m
@@ -575,8 +570,9 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 	item.data = value
 
 	if index != nil {
-		// Append item to index.
-		index.append(key, item)
+		// Append item to index a key
+		// was already generated for.
+		index.append(&c.lru, key, item)
 	}
 
 	// Get ptr to value data.
@@ -587,7 +583,7 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 
 	for i := range c.indices {
 		// Get current index ptr.
-		idx := &(c.indices[i])
+		idx := (&c.indices[i])
 		if idx == index {
 
 			// Already stored under
@@ -607,8 +603,8 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 			continue
 		}
 
-		// Append item to index.
-		idx.append(key, item)
+		// Append item to this index.
+		idx.append(&c.lru, key, item)
 	}
 
 	// Add item to main lru list.
@@ -645,8 +641,9 @@ func (c *Cache[T]) store_error(index *Index, key string, err error) {
 	// Set error val.
 	item.data = err
 
-	// Append item to index.
-	index.append(key, item)
+	// Append item to index a key
+	// was already generated for.
+	index.append(&c.lru, key, item)
 
 	// Add item to main lru list.
 	c.lru.push_front(&item.elem)

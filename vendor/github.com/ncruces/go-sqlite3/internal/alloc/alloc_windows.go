@@ -1,5 +1,3 @@
-//go:build !sqlite3_nosys
-
 package alloc
 
 import (
@@ -11,7 +9,7 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-func Virtual(_, max uint64) experimental.LinearMemory {
+func NewMemory(_, max uint64) experimental.LinearMemory {
 	// Round up to the page size.
 	rnd := uint64(windows.Getpagesize() - 1)
 	max = (max + rnd) &^ rnd
@@ -56,7 +54,7 @@ func (m *virtualMemory) Reallocate(size uint64) []byte {
 		// Commit additional memory up to new bytes.
 		_, err := windows.VirtualAlloc(m.addr, uintptr(new), windows.MEM_COMMIT, windows.PAGE_READWRITE)
 		if err != nil {
-			panic(err)
+			return nil
 		}
 
 		// Update committed memory.

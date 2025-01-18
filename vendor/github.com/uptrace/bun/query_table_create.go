@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/feature"
 	"github.com/uptrace/bun/dialect/sqltype"
 	"github.com/uptrace/bun/internal"
@@ -31,6 +32,7 @@ type CreateTableQuery struct {
 	fks         []schema.QueryWithArgs
 	partitionBy schema.QueryWithArgs
 	tablespace  schema.QueryWithArgs
+	comment     string
 }
 
 var _ Query = (*CreateTableQuery)(nil)
@@ -128,6 +130,14 @@ func (q *CreateTableQuery) WithForeignKeys() *CreateTableQuery {
 	return q
 }
 
+//------------------------------------------------------------------------------
+
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *CreateTableQuery) Comment(comment string) *CreateTableQuery {
+	q.comment = comment
+	return q
+}
+
 // ------------------------------------------------------------------------------
 
 func (q *CreateTableQuery) Operation() string {
@@ -138,6 +148,9 @@ func (q *CreateTableQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []by
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
+
 	if q.table == nil {
 		return nil, errNilModel
 	}
@@ -165,7 +178,7 @@ func (q *CreateTableQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []by
 		b = append(b, field.SQLName...)
 		b = append(b, " "...)
 		b = q.appendSQLType(b, field)
-		if field.NotNull {
+		if field.NotNull && q.db.dialect.Name() != dialect.Oracle {
 			b = append(b, " NOT NULL"...)
 		}
 
@@ -246,7 +259,11 @@ func (q *CreateTableQuery) appendSQLType(b []byte, field *schema.Field) []byte {
 		return append(b, field.CreateTableSQLType...)
 	}
 
-	b = append(b, sqltype.VarChar...)
+	if q.db.dialect.Name() == dialect.Oracle {
+		b = append(b, "VARCHAR2"...)
+	} else {
+		b = append(b, sqltype.VarChar...)
+	}
 	b = append(b, "("...)
 	b = strconv.AppendInt(b, int64(q.varchar), 10)
 	b = append(b, ")"...)
@@ -297,9 +314,9 @@ func (q *CreateTableQuery) appendFKConstraintsRel(fmter schema.Formatter, b []by
 			b, err = q.appendFK(fmter, b, schema.QueryWithArgs{
 				Query: "(?) REFERENCES ? (?) ? ?",
 				Args: []interface{}{
-					Safe(appendColumns(nil, "", rel.BaseFields)),
+					Safe(appendColumns(nil, "", rel.BasePKs)),
 					rel.JoinTable.SQLName,
-					Safe(appendColumns(nil, "", rel.JoinFields)),
+					Safe(appendColumns(nil, "", rel.JoinPKs)),
 					Safe(rel.OnUpdate),
 					Safe(rel.OnDelete),
 				},

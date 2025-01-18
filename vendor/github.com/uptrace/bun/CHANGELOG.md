@@ -1,3 +1,160 @@
+## [1.2.8](https://github.com/uptrace/bun/compare/v1.2.7...v1.2.8) (2025-01-06)
+
+
+### Bug Fixes
+
+* comment string zero bytes filtering ([34dfd68](https://github.com/uptrace/bun/commit/34dfd684e371c24b9f59e9b13ef57660931f0bde))
+* get m2m table's structKey with driver.Valuer ([f107314](https://github.com/uptrace/bun/commit/f1073147dc73d01dcf8a6ee9252d354ff06a1062)), closes [#1100](https://github.com/uptrace/bun/issues/1100)
+* return error when use dest with has-many/many-to-many ([8296774](https://github.com/uptrace/bun/commit/829677486b502e6d5d2ae37814488ae9f2c7386e)), closes [#606](https://github.com/uptrace/bun/issues/606)
+* support scan float32 to float32/float64 ([a52e733](https://github.com/uptrace/bun/commit/a52e7339a93f84468878dcaffc42536faa44efae)), closes [#1087](https://github.com/uptrace/bun/issues/1087)
+
+
+### Features
+
+* add RelationWithOpts method to SelectQuery ([dd3ef52](https://github.com/uptrace/bun/commit/dd3ef522c8a9c656958b73ee5d546854fb7c6edf))
+* enhance debugging by adding query comments in headers ([1376d18](https://github.com/uptrace/bun/commit/1376d1870bfe3d89e3630203787f1e87c503d5df))
+* sort fields by struct ([5edb672](https://github.com/uptrace/bun/commit/5edb672e320be9b210f06d25c4f4b9e761c1c526)), closes [#1095](https://github.com/uptrace/bun/issues/1095)
+
+
+
+## [1.2.7](https://github.com/uptrace/bun/compare/v1.2.6...v1.2.7) (2025-01-01)
+
+
+### Bug Fixes
+
+* do not create new migrations if nothing to migrate ([5cc961d](https://github.com/uptrace/bun/commit/5cc961d6cc461ad3534728fc4d3cae12bf8b736e))
+* has many relation with driver.Valuer ([cb8c42c](https://github.com/uptrace/bun/commit/cb8c42cd3f65d95865c76a594abad815eea1df3c))
+* improve range type to support driver.Valuer and sql.Scanner ([856e12b](https://github.com/uptrace/bun/commit/856e12b0d37275a6aa247370f6a8231fd89ca3e7))
+* pass correct 'transactional' parameter ([ebdef1b](https://github.com/uptrace/bun/commit/ebdef1b0e9d33a5ca475ab4c2ec2fb44d11d4595))
+* **pgdialect:** remove unsigned integer conversion ([ab3c679](https://github.com/uptrace/bun/commit/ab3c679d529dd20d44e789dc6f1d89f9510bde0b)), closes [uptrace/bun#624](https://github.com/uptrace/bun/issues/624)
+* remove unused param on table.go and tables.go: canAddr ([d563e2d](https://github.com/uptrace/bun/commit/d563e2dbe95caeb0e00ad1b3e82283431747fe7b))
+* replace the link to docs repo in CONTRIBUTING.md ([e120096](https://github.com/uptrace/bun/commit/e12009662ae1ddefcc1337cc5e32e73d77c7def0))
+* trim surrounding '' in string literal in DEFAULT clause ([a0dff72](https://github.com/uptrace/bun/commit/a0dff72b6ab0ca24d00c96c923046200dd6112ed))
+
+
+### Features
+
+* add an ordered map to remove unnecessary dependencies ([9fea143](https://github.com/uptrace/bun/commit/9fea1437d8344d836670e802fd12d3476e8cad86))
+* support disable dialect's feature ([5343bd7](https://github.com/uptrace/bun/commit/5343bd7fc4ceda866a7d607388ebb7a89f7f5823))
+
+
+
+## [1.2.6](https://github.com/uptrace/bun/compare/v1.2.5...v1.2.6) (2024-11-20)
+
+
+### Bug Fixes
+
+* append IDENTITY to ADD COLUMN statement if needed ([694f873](https://github.com/uptrace/bun/commit/694f873d61ed8d2f09032ae0c0dbec4b71c3719e))
+* **ci:** prune stale should be executed at 3 AM every day ([0cedcb0](https://github.com/uptrace/bun/commit/0cedcb068229b63041a4f48de12bb767c8454048))
+* cleanup after testUniqueRenamedTable ([b1ae32e](https://github.com/uptrace/bun/commit/b1ae32e9e9f45ff2a66e50bfd13bedcf6653d874))
+* fix go.mod of oracledialect ([89e21ea](https://github.com/uptrace/bun/commit/89e21eab362c60511cca00890ae29551a2ba7c46))
+* has many relationship with multiple columns ([1664b2c](https://github.com/uptrace/bun/commit/1664b2c07a5f6cfd3b6730e5005373686e9830a6))
+* ignore case for type equivalence ([c3253a5](https://github.com/uptrace/bun/commit/c3253a5c59b078607db9e216ddc11afdef546e05))
+* implement DefaultSchema for Oracle dialect ([d08fa40](https://github.com/uptrace/bun/commit/d08fa40cc87d67296a83a77448ea511531fc8cdd))
+* **oracledialect:** add go.mod file so the dialect is released properly ([#1043](https://github.com/uptrace/bun/issues/1043)) ([1bb5597](https://github.com/uptrace/bun/commit/1bb5597f1a32f5d693101ef4a62e25d99f5b9db5))
+* **oracledialect:** update go.mod by go mod tidy to fix tests ([7f90a15](https://github.com/uptrace/bun/commit/7f90a15c51a2482dda94226dd13b913d6b470a29))
+* **pgdialect:** array value quoting ([892c416](https://github.com/uptrace/bun/commit/892c416272a8428c592896d65d3ad51a6f2356d8))
+* remove schema name from t.Name during bun-schema inspection ([31ed582](https://github.com/uptrace/bun/commit/31ed58254ad08143d88684672acd33ce044ea5a9))
+* rename column only if the name does not exist in 'target' ([fed6012](https://github.com/uptrace/bun/commit/fed6012d177e55b8320b31ef37fc02a0cbf0b9f5))
+* support embed with tag Unique ([3acd6dd](https://github.com/uptrace/bun/commit/3acd6dd8546118d7b867ca796a5e56311edad070))
+* update oracledialect/version.go in release.sh ([bcd070f](https://github.com/uptrace/bun/commit/bcd070f48a75d0092a5620261658c9c5994f0bf6))
+* update schema.Field names ([9b810de](https://github.com/uptrace/bun/commit/9b810dee4b1a721efb82c913099f39f52c44eb57))
+
+
+### Features
+
+* add and drop columns ([3fdd5b8](https://github.com/uptrace/bun/commit/3fdd5b8f635f849a74e78c665274609f75245b19))
+* add and drop IDENTITY ([dd83779](https://github.com/uptrace/bun/commit/dd837795c31490fd8816eec0e9833e79fafdda32))
+* add support type for net/netip.addr and net/netip.prefix ([#1028](https://github.com/uptrace/bun/issues/1028)) ([95c4a8e](https://github.com/uptrace/bun/commit/95c4a8ebd634e1e99114727a7b157eeeb9297ee9))
+* **automigrate:** detect renamed tables ([c03938f](https://github.com/uptrace/bun/commit/c03938ff5e9fa2f653e4c60668b1368357d2de10))
+* change column type ([3cfd8c6](https://github.com/uptrace/bun/commit/3cfd8c62125786aaf6f493acc5b39f4d3db3d628))
+* **ci:** support release on osx ([435510b](https://github.com/uptrace/bun/commit/435510b0a73b0d9e6d06e3e3c3f0fa4379e9ed8c))
+* create sql migrations and apply them ([1bf7cfd](https://github.com/uptrace/bun/commit/1bf7cfd067e0e26ae212b0f7421e5abc6f67fb4f))
+* create transactional migration files ([c3320f6](https://github.com/uptrace/bun/commit/c3320f624830dc2fe99af2c7cbe492b2a83f9e4a))
+* detect Create/Drop table ([408859f](https://github.com/uptrace/bun/commit/408859f07be38236b39a00909cdce55d49f6f824))
+* detect modified relations ([a918dc4](https://github.com/uptrace/bun/commit/a918dc472a33dd24c5fffd4d048bcf49f2e07a42))
+* detect renamed columns ([886d0a5](https://github.com/uptrace/bun/commit/886d0a5b18aba272f1c86af2a2cf68ce4c8879f2))
+* detect renamed tables ([8857bab](https://github.com/uptrace/bun/commit/8857bab54b94170d218633f3b210d379e4e51a21))
+* enhance Apply method to accept multiple functions ([7823f2f](https://github.com/uptrace/bun/commit/7823f2f24c814e104dc59475156255c7b3b26144))
+* implement fmt.Stringer queries ([5060e47](https://github.com/uptrace/bun/commit/5060e47db13451a982e48d0f14055a58ba60b472))
+* improve FK handling ([a822fc5](https://github.com/uptrace/bun/commit/a822fc5f8ae547b7cd41e1ca35609d519d78598b))
+* include target schema name in migration name ([ac8d221](https://github.com/uptrace/bun/commit/ac8d221e6443b469e794314c5fc189250fa542d5))
+* **mariadb:** support RETURNING clause in DELETE statement ([b8dec9d](https://github.com/uptrace/bun/commit/b8dec9d9a06124696bd5ee2abbf33f19087174b6))
+* migrate FKs ([4c1dfdb](https://github.com/uptrace/bun/commit/4c1dfdbe99c73d0c0f2d7b1f8b11adf30c6a41f7))
+* **mysql:** support ORDER BY and LIMIT clauses in UPDATE and DELETE statements ([de71bed](https://github.com/uptrace/bun/commit/de71bed9252980648269af85b7a51cbc464ce710))
+* support modifying primary keys ([a734629](https://github.com/uptrace/bun/commit/a734629fa285406038cbe4a50798626b5ac08539))
+* support UNIQUE constraints ([3c4d5d2](https://github.com/uptrace/bun/commit/3c4d5d2c47be4652fb9b5cf1c6bd7b6c0a437287))
+* use *bun.DB in MigratorDialect ([a8788bf](https://github.com/uptrace/bun/commit/a8788bf62cbcc954a08532c299c774262de7a81d))
+
+
+
+## [1.2.5](https://github.com/uptrace/bun/compare/v1.2.3...v1.2.5) (2024-10-26)
+
+
+### Bug Fixes
+
+* allow Limit() without Order() with MSSQL ([#1009](https://github.com/uptrace/bun/issues/1009)) ([1a46ddc](https://github.com/uptrace/bun/commit/1a46ddc0d3ca0bdc60ca8be5ad1886799d14c8b0))
+* copy bytes in mapModel.Scan ([#1030](https://github.com/uptrace/bun/issues/1030)) ([#1032](https://github.com/uptrace/bun/issues/1032)) ([39fda4e](https://github.com/uptrace/bun/commit/39fda4e3d341e59e4955f751cb354a939e57c1b1))
+* fix issue with has-many join and pointer fields ([#950](https://github.com/uptrace/bun/issues/950)) ([#983](https://github.com/uptrace/bun/issues/983)) ([cbc5177](https://github.com/uptrace/bun/commit/cbc517792ba6cdcef1828f3699d3d4dfe3c5e0eb))
+* restore explicit column: name override ([#984](https://github.com/uptrace/bun/issues/984)) ([169f258](https://github.com/uptrace/bun/commit/169f258a9460cad451f3025d2ef8df1bbd42a003))
+* return column option back ([#1036](https://github.com/uptrace/bun/issues/1036)) ([a3ccbea](https://github.com/uptrace/bun/commit/a3ccbeab39151d3eed6cb245fe15cfb5d71ba557))
+* sql.NullString mistaken as custom struct ([#1019](https://github.com/uptrace/bun/issues/1019)) ([87c77b8](https://github.com/uptrace/bun/commit/87c77b8911f2035b0ee8ea96356a2c7600b5b94d))
+* typos ([#1026](https://github.com/uptrace/bun/issues/1026)) ([760de7d](https://github.com/uptrace/bun/commit/760de7d0fad15dc761475670a4dde056aef9210d))
+
+
+### Features
+
+* add transaction isolation level support to pgdriver ([#1034](https://github.com/uptrace/bun/issues/1034)) ([3ef44ce](https://github.com/uptrace/bun/commit/3ef44ce1cdd969a21b76d6c803119cf12c375cb0))
+
+
+### Performance Improvements
+
+* refactor SelectQuery.ScanAndCount to optimize performance when there is no limit and offset ([#1035](https://github.com/uptrace/bun/issues/1035)) ([8638613](https://github.com/uptrace/bun/commit/86386135897485bbada6c50ec9a2743626111433))
+
+
+
+## [1.2.4](https://github.com/uptrace/bun/compare/v1.2.3...v1.2.4) (2024-10-26)
+
+
+### Bug Fixes
+
+* allow Limit() without Order() with MSSQL ([#1009](https://github.com/uptrace/bun/issues/1009)) ([1a46ddc](https://github.com/uptrace/bun/commit/1a46ddc0d3ca0bdc60ca8be5ad1886799d14c8b0))
+* copy bytes in mapModel.Scan ([#1030](https://github.com/uptrace/bun/issues/1030)) ([#1032](https://github.com/uptrace/bun/issues/1032)) ([39fda4e](https://github.com/uptrace/bun/commit/39fda4e3d341e59e4955f751cb354a939e57c1b1))
+* return column option back ([#1036](https://github.com/uptrace/bun/issues/1036)) ([a3ccbea](https://github.com/uptrace/bun/commit/a3ccbeab39151d3eed6cb245fe15cfb5d71ba557))
+* sql.NullString mistaken as custom struct ([#1019](https://github.com/uptrace/bun/issues/1019)) ([87c77b8](https://github.com/uptrace/bun/commit/87c77b8911f2035b0ee8ea96356a2c7600b5b94d))
+* typos ([#1026](https://github.com/uptrace/bun/issues/1026)) ([760de7d](https://github.com/uptrace/bun/commit/760de7d0fad15dc761475670a4dde056aef9210d))
+
+
+### Features
+
+* add transaction isolation level support to pgdriver ([#1034](https://github.com/uptrace/bun/issues/1034)) ([3ef44ce](https://github.com/uptrace/bun/commit/3ef44ce1cdd969a21b76d6c803119cf12c375cb0))
+
+
+### Performance Improvements
+
+* refactor SelectQuery.ScanAndCount to optimize performance when there is no limit and offset ([#1035](https://github.com/uptrace/bun/issues/1035)) ([8638613](https://github.com/uptrace/bun/commit/86386135897485bbada6c50ec9a2743626111433))
+
+
+
+## [1.2.3](https://github.com/uptrace/bun/compare/v1.2.2...v1.2.3) (2024-08-31)
+
+
+
+## [1.2.2](https://github.com/uptrace/bun/compare/v1.2.1...v1.2.2) (2024-08-29)
+
+
+### Bug Fixes
+
+* gracefully handle empty hstore in pgdialect ([#1010](https://github.com/uptrace/bun/issues/1010)) ([2f73d8a](https://github.com/uptrace/bun/commit/2f73d8a8e16c8718ebfc956036d9c9a01a0888bc))
+* number each unit test ([#974](https://github.com/uptrace/bun/issues/974)) ([b005dc2](https://github.com/uptrace/bun/commit/b005dc2a9034715c6f59dcfc8e76aa3b85df38ab))
+
+
+### Features
+
+* add ModelTableExpr to TruncateTableQuery ([#969](https://github.com/uptrace/bun/issues/969)) ([7bc330f](https://github.com/uptrace/bun/commit/7bc330f152cf0d9dc30956478e2731ea5816f012))
+
+
+
 ## [1.2.1](https://github.com/uptrace/bun/compare/v1.2.0...v1.2.1) (2024-04-02)
 
 
@@ -14,7 +171,7 @@
 
 ### Features
 
-* Allow overiding of Warn and Deprecated loggers ([#952](https://github.com/uptrace/bun/issues/952)) ([0e9d737](https://github.com/uptrace/bun/commit/0e9d737e4ca2deb86930237ee32a39cf3f7e8157))
+* Allow overriding of Warn and Deprecated loggers ([#952](https://github.com/uptrace/bun/issues/952)) ([0e9d737](https://github.com/uptrace/bun/commit/0e9d737e4ca2deb86930237ee32a39cf3f7e8157))
 * enable SNI ([#953](https://github.com/uptrace/bun/issues/953)) ([4071ffb](https://github.com/uptrace/bun/commit/4071ffb5bcb1b233cda239c92504d8139dcf1d2f))
 * **idb:** add NewMerge method to IDB ([#966](https://github.com/uptrace/bun/issues/966)) ([664e2f1](https://github.com/uptrace/bun/commit/664e2f154f1153d2a80cd062a5074f1692edaee7))
 
@@ -100,7 +257,7 @@
 
 ### Bug Fixes
 
-* add support for inserting values with unicode encoding for mssql dialect ([e98c6c0](https://github.com/uptrace/bun/commit/e98c6c0f033b553bea3bbc783aa56c2eaa17718f))
+* add support for inserting values with Unicode encoding for mssql dialect ([e98c6c0](https://github.com/uptrace/bun/commit/e98c6c0f033b553bea3bbc783aa56c2eaa17718f))
 * fix relation tag ([a3eedff](https://github.com/uptrace/bun/commit/a3eedff49700490d4998dcdcdc04f554d8f17166))
 
 
@@ -136,7 +293,7 @@
 
 ### Bug Fixes
 
-* addng dialect override for append-bool ([#695](https://github.com/uptrace/bun/issues/695)) ([338f2f0](https://github.com/uptrace/bun/commit/338f2f04105ad89e64530db86aeb387e2ad4789e))
+* adding dialect override for append-bool ([#695](https://github.com/uptrace/bun/issues/695)) ([338f2f0](https://github.com/uptrace/bun/commit/338f2f04105ad89e64530db86aeb387e2ad4789e))
 * don't call hooks twice for whereExists ([9057857](https://github.com/uptrace/bun/commit/90578578e717f248e4b6eb114c5b495fd8d4ed41))
 * don't lock migrations when running Migrate and Rollback ([69a7354](https://github.com/uptrace/bun/commit/69a7354d987ff2ed5338c9ef5f4ce320724299ab))
 * **query:** make WhereDeleted compatible with ForceDelete ([299c3fd](https://github.com/uptrace/bun/commit/299c3fd57866aaecd127a8f219c95332898475db)), closes [#673](https://github.com/uptrace/bun/issues/673)
@@ -304,7 +461,7 @@ recommended to upgrade to v1.0.24 before upgrading to v1.1.x.
 
 - append slice values
   ([4a65129](https://github.com/uptrace/bun/commit/4a651294fb0f1e73079553024810c3ead9777311))
-- check for nils when appeding driver.Value
+- check for nils when appending driver.Value
   ([7bb1640](https://github.com/uptrace/bun/commit/7bb1640a00fceca1e1075fe6544b9a4842ab2b26))
 - cleanup soft deletes for mssql
   ([e72e2c5](https://github.com/uptrace/bun/commit/e72e2c5d0a85f3d26c3fa22c7284c2de1dcfda8e))
@@ -323,7 +480,7 @@ recommended to upgrade to v1.0.24 before upgrading to v1.1.x.
 
 ### Deprecated
 
-In the comming v1.1.x release, Bun will stop automatically adding `,pk,autoincrement` options on
+In the coming v1.1.x release, Bun will stop automatically adding `,pk,autoincrement` options on
 `ID int64/int32` fields. This version (v1.0.23) only prints a warning when it encounters such
 fields, but the code will continue working as before.
 
@@ -441,7 +598,7 @@ In v1.1.x, such options as `,nopk` and `,allowzero` will not be necessary and wi
   ([693f1e1](https://github.com/uptrace/bun/commit/693f1e135999fc31cf83b99a2530a695b20f4e1b))
 - add model embedding via embed:prefix\_
   ([9a2cedc](https://github.com/uptrace/bun/commit/9a2cedc8b08fa8585d4bfced338bd0a40d736b1d))
-- change the default logoutput to stderr
+- change the default log output to stderr
   ([4bf5773](https://github.com/uptrace/bun/commit/4bf577382f19c64457cbf0d64490401450954654)),
   closes [#349](https://github.com/uptrace/bun/issues/349)
 

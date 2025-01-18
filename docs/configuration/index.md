@@ -126,3 +126,19 @@ This means in cases where you want to just try changing one thing, but don't wan
 Reasonable default values are provided for *most* of the configuration parameters, except in cases where a custom value is absolutely required.
 
 See the [example config file](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml) for the default values, or run `gotosocial --help`.
+
+## `GTS_WAZERO_COMPILATION_CACHE`
+
+On startup, GoToSocial compiles embedded WebAssembly `ffmpeg` and `ffprobe` binaries into [Wazero](https://wazero.io/)-compatible modules, which are used for media processing without requiring any external dependencies.
+
+To speed up startup time of GoToSocial, you can cache the compiled modules between restarts so that GoToSocial doesn't have to compile them on every startup from scratch.
+
+You can instruct GoToSocial on where to store the Wazero artifacts by setting the environment variable `GTS_WAZERO_COMPILATION_CACHE` to a directory, which will be used by GtS to store two smallish artifacts of ~50MiB or so each (~100MiB total).
+
+For an example of this in action, see the [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml), and the [gotosocial.service](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) example files.
+
+If you want to provide this value to GtS outside of systemd or Docker, you can do so in the following manner when starting up your GtS server:
+
+```bash
+GTS_WAZERO_COMPILATION_CACHE=~/gotosocial/.cache ./gotosocial --config-path ./config.yaml server start
+```

@@ -19,6 +19,7 @@ package testrig
 
 import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
+	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/spam"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -31,6 +32,7 @@ func NewTestFederatingDB(state *state.State) federatingdb.DB {
 		state,
 		typeutils.NewConverter(state),
 		visibility.NewFilter(state),
+		interaction.NewFilter(state),
 		spam.NewFilter(state),
 	)
 }

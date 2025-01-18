@@ -36,7 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // AccountToAS converts a gts model account into an activity streams person, suitable for federation
@@ -444,7 +444,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		poll := streams.NewActivityStreamsQuestion()
 
 		// Add required status poll data to AS Question.
-		if err := c.addPollToAS(ctx, s.Poll, poll); err != nil {
+		if err := c.addPollToAS(s.Poll, poll); err != nil {
 			return nil, gtserror.Newf("error converting poll: %w", err)
 		}
 
@@ -484,10 +484,11 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 		status.SetActivityStreamsInReplyTo(inReplyToProp)
 	}
 
-	// published
-	publishedProp := streams.NewActivityStreamsPublishedProperty()
-	publishedProp.Set(s.CreatedAt)
-	status.SetActivityStreamsPublished(publishedProp)
+	// Set created / updated at properties.
+	ap.SetPublished(status, s.CreatedAt)
+	if at := s.EditedAt; !at.IsZero() {
+		ap.SetUpdated(status, at)
+	}
 
 	// url
 	if s.URL != "" {
@@ -708,7 +709,7 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	return status, nil
 }
 
-func (c *Converter) addPollToAS(ctx context.Context, poll *gtsmodel.Poll, dst ap.Pollable) error {
+func (c *Converter) addPollToAS(poll *gtsmodel.Poll, dst ap.Pollable) error {
 	var optionsProp interface {
 		// the minimum interface for appending AS Notes
 		// to an AS type options property of some kind.
@@ -1701,10 +1702,14 @@ func (c *Converter) ReportToASFlag(ctx context.Context, r *gtsmodel.Report) (voc
 // PollVoteToASCreate converts a vote on a poll into a Create
 // activity, suitable for federation, with each choice in the
 // vote appended as a Note to the Create's Object field.
-func (c *Converter) PollVoteToASCreate(
+//
+// TODO: as soon as other AP server implementations support
+// the use of multiple objects in a single create, update this
+// to return just the one create event again.
+func (c *Converter) PollVoteToASCreates(
 	ctx context.Context,
 	vote *gtsmodel.PollVote,
-) (vocab.ActivityStreamsCreate, error) {
+) ([]vocab.ActivityStreamsCreate, error) {
 	if len(vote.Choices) == 0 {
 		panic("no vote.Choices")
 	}
@@ -1743,22 +1748,25 @@ func (c *Converter) PollVoteToASCreate(
 		return nil, gtserror.Newf("invalid account uri: %w", err)
 	}
 
-	// Allocate Create activity and address 'To' poll author.
-	create := streams.NewActivityStreamsCreate()
-	ap.AppendTo(create, pollAuthorIRI)
+	// Parse each choice to a Note and add it to the list of Creates.
+	creates := make([]vocab.ActivityStreamsCreate, len(vote.Choices))
+	for i, choice := range vote.Choices {
 
-	// Create ID formatted as: {$voterIRI}/activity#vote/{$statusIRI}.
-	id := author.URI + "/activity#vote/" + poll.Status.URI
-	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), id)
+		// Allocate Create activity and address 'To' poll author.
+		create := streams.NewActivityStreamsCreate()
+		ap.AppendTo(create, pollAuthorIRI)
 
-	// Set Create actor appropriately.
-	ap.AppendActorIRIs(create, authorIRI)
+		// Create ID formatted as: {$voterIRI}/activity#vote{$index}/{$statusIRI}.
+		createID := fmt.Sprintf("%s/activity#vote%d/%s", author.URI, i, poll.Status.URI)
+		ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(create), createID)
 
-	// Set publish time for activity.
-	ap.SetPublished(create, vote.CreatedAt)
+		// Set Create actor appropriately.
+		ap.AppendActorIRIs(create, authorIRI)
 
-	// Parse each choice to a Note and add it to the Create.
-	for _, choice := range vote.Choices {
+		// Set publish time for activity.
+		ap.SetPublished(create, vote.CreatedAt)
+
+		// Allocate new note to hold the vote.
 		note := streams.NewActivityStreamsNote()
 
 		// For AP IRI generate from author URI + poll ID + vote choice.
@@ -1775,11 +1783,14 @@ func (c *Converter) PollVoteToASCreate(
 		ap.AppendInReplyTo(note, statusIRI)
 		ap.AppendTo(note, pollAuthorIRI)
 
-		// Append this note as Create Object.
+		// Append this note to the Create Object.
 		appendStatusableToActivity(create, note, false)
+
+		// Set create in slice.
+		creates[i] = create
 	}
 
-	return create, nil
+	return creates, nil
 }
 
 // populateValuesForProp appends the given PolicyValues
@@ -1819,7 +1830,7 @@ func populateValuesForProp[T ap.WithIRI](
 	// Deduplicate the iri strings to
 	// make sure we're not parsing + adding
 	// the same string multiple times.
-	iriStrs = util.Deduplicate(iriStrs)
+	iriStrs = xslices.Deduplicate(iriStrs)
 
 	// Append them to the property.
 	for _, iriStr := range iriStrs {
@@ -2003,6 +2014,40 @@ func (c *Converter) InteractionReqToASAccept(
 	// of interaction URI.
 	ap.AppendTo(accept, toIRI)
 
+	// Whether or not we cc this Accept to
+	// followers and public depends on the
+	// type of interaction it Accepts.
+
+	var cc bool
+	switch req.InteractionType {
+
+	case gtsmodel.InteractionLike:
+		// Accept of Like doesn't get cc'd
+		// because it's not that important.
+
+	case gtsmodel.InteractionReply:
+		// Accept of reply gets cc'd.
+		cc = true
+
+	case gtsmodel.InteractionAnnounce:
+		// Accept of announce gets cc'd.
+		cc = true
+	}
+
+	if cc {
+		publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid public uri: %w", err)
+		}
+
+		followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid followers uri: %w", err)
+		}
+
+		ap.AppendCc(accept, publicIRI, followersIRI)
+	}
+
 	return accept, nil
 }
 
@@ -2048,6 +2093,40 @@ func (c *Converter) InteractionReqToASReject(
 	// Address to the owner
 	// of interaction URI.
 	ap.AppendTo(reject, toIRI)
+
+	// Whether or not we cc this Reject to
+	// followers and public depends on the
+	// type of interaction it Rejects.
+
+	var cc bool
+	switch req.InteractionType {
+
+	case gtsmodel.InteractionLike:
+		// Reject of Like doesn't get cc'd
+		// because it's not that important.
+
+	case gtsmodel.InteractionReply:
+		// Reject of reply gets cc'd.
+		cc = true
+
+	case gtsmodel.InteractionAnnounce:
+		// Reject of announce gets cc'd.
+		cc = true
+	}
+
+	if cc {
+		publicIRI, err := url.Parse(pub.PublicActivityPubIRI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid public uri: %w", err)
+		}
+
+		followersIRI, err := url.Parse(req.TargetAccount.FollowersURI)
+		if err != nil {
+			return nil, gtserror.Newf("invalid followers uri: %w", err)
+		}
+
+		ap.AppendCc(reject, publicIRI, followersIRI)
+	}
 
 	return reject, nil
 }

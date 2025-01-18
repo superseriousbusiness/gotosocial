@@ -41,3 +41,16 @@ export function UseOurInstanceAccount(account: AdminAccount): boolean {
 
 	return !account.domain && account.username == ourDomain;
 }
+
+/**
+ * Uppercase first letter of given string.
+ */
+export function useCapitalize(i?: string): string {
+	return useMemo(() => {
+		if (i === undefined) {
+			return "";
+		}
+		
+		return i.charAt(0).toUpperCase() + i.slice(1); 
+	}, [i]);
+}

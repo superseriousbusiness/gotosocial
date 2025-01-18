@@ -69,8 +69,11 @@ const (
 
 	/* Domain permission keys */
 
-	DomainPermissionExportKey = "export"
-	DomainPermissionImportKey = "import"
+	DomainPermissionExportKey         = "export"
+	DomainPermissionImportKey         = "import"
+	DomainPermissionSubscriptionIDKey = "subscription_id"
+	DomainPermissionPermTypeKey       = "permission_type"
+	DomainPermissionDomainKey         = "domain"
 
 	/* Admin query keys */
 

@@ -1104,46 +1104,58 @@ func (suite *InternalToASTestSuite) TestPinnedStatusesToASOneItem() {
 func (suite *InternalToASTestSuite) TestPollVoteToASCreate() {
 	vote := suite.testPollVotes["remote_account_1_status_2_poll_vote_local_account_1"]
 
-	create, err := suite.typeconverter.PollVoteToASCreate(context.Background(), vote)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
+	creates, err := suite.typeconverter.PollVoteToASCreates(context.Background(), vote)
+	suite.NoError(err)
+	suite.Len(creates, 2)
 
-	createI, err := ap.Serialize(create)
+	createI0, err := ap.Serialize(creates[0])
 	suite.NoError(err)
 
-	bytes, err := json.MarshalIndent(createI, "", "  ")
+	createI1, err := ap.Serialize(creates[1])
+	suite.NoError(err)
+
+	bytes0, err := json.MarshalIndent(createI0, "", "  ")
+	suite.NoError(err)
+
+	bytes1, err := json.MarshalIndent(createI1, "", "  ")
 	suite.NoError(err)
 
 	suite.Equal(`{
   "@context": "https://www.w3.org/ns/activitystreams",
   "actor": "http://localhost:8080/users/the_mighty_zork",
-  "id": "http://localhost:8080/users/the_mighty_zork/activity#vote/http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
-  "object": [
-    {
-      "attributedTo": "http://localhost:8080/users/the_mighty_zork",
-      "id": "http://localhost:8080/users/the_mighty_zork#01HEN2R65468ZG657C4ZPHJ4EX/votes/1",
-      "inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
-      "name": "tissues",
-      "to": "http://fossbros-anonymous.io/users/foss_satan",
-      "type": "Note"
-    },
-    {
-      "attributedTo": "http://localhost:8080/users/the_mighty_zork",
-      "id": "http://localhost:8080/users/the_mighty_zork#01HEN2R65468ZG657C4ZPHJ4EX/votes/2",
-      "inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
-      "name": "financial times",
-      "to": "http://fossbros-anonymous.io/users/foss_satan",
-      "type": "Note"
-    }
-  ],
+  "id": "http://localhost:8080/users/the_mighty_zork/activity#vote0/http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+  "object": {
+    "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+    "id": "http://localhost:8080/users/the_mighty_zork#01HEN2R65468ZG657C4ZPHJ4EX/votes/1",
+    "inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+    "name": "tissues",
+    "to": "http://fossbros-anonymous.io/users/foss_satan",
+    "type": "Note"
+  },
   "published": "2021-09-11T11:45:37+02:00",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Create"
-}`, string(bytes))
+}`, string(bytes0))
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "id": "http://localhost:8080/users/the_mighty_zork/activity#vote1/http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+  "object": {
+    "attributedTo": "http://localhost:8080/users/the_mighty_zork",
+    "id": "http://localhost:8080/users/the_mighty_zork#01HEN2R65468ZG657C4ZPHJ4EX/votes/2",
+    "inReplyTo": "http://fossbros-anonymous.io/users/foss_satan/statuses/01HEN2QRFA8H3C6QPN7RD4KSR6",
+    "name": "financial times",
+    "to": "http://fossbros-anonymous.io/users/foss_satan",
+    "type": "Note"
+  },
+  "published": "2021-09-11T11:45:37+02:00",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Create"
+}`, string(bytes1))
 }
 
-func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
+func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 	acceptingAccount := suite.testAccounts["local_account_1"]
 	interactingAccount := suite.testAccounts["remote_account_1"]
 
@@ -1156,6 +1168,55 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAccept() {
 		InteractingAccount:   interactingAccount,
 		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:      gtsmodel.InteractionAnnounce,
+		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+	}
+
+	accept, err := suite.typeconverter.InteractionReqToASAccept(
+		context.Background(),
+		req,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	i, err := ap.Serialize(accept)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	b, err := json.MarshalIndent(i, "", "  ")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal(`{
+  "@context": "https://www.w3.org/ns/activitystreams",
+  "actor": "http://localhost:8080/users/the_mighty_zork",
+  "cc": [
+    "https://www.w3.org/ns/activitystreams#Public",
+    "http://localhost:8080/users/the_mighty_zork/followers"
+  ],
+  "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+  "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "to": "http://fossbros-anonymous.io/users/foss_satan",
+  "type": "Accept"
+}`, string(b))
+}
+
+func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
+	acceptingAccount := suite.testAccounts["local_account_1"]
+	interactingAccount := suite.testAccounts["remote_account_1"]
+
+	req := &gtsmodel.InteractionRequest{
+		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		TargetAccountID:      acceptingAccount.ID,
+		TargetAccount:        acceptingAccount,
+		InteractingAccountID: interactingAccount.ID,
+		InteractingAccount:   interactingAccount,
+		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+		InteractionType:      gtsmodel.InteractionLike,
 		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}

@@ -39,6 +39,6 @@ If you wanted to see all GoToSocial traces, you could instead run:
 
 Once you select a trace, a second panel will open up visualising the span. You can drill down from there, by clicking into every sub-span to see what it was doing.
 
-![Grafana showing a trace for the /api/v1/instance endpoint](../assets/tracing.png)
+![Grafana showing a trace for the /api/v1/instance endpoint](../public/tracing.png)
 
 [traceql]: https://grafana.com/docs/tempo/latest/traceql/

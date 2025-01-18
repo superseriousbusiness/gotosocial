@@ -26,10 +26,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -130,7 +130,7 @@ func (n *notificationDB) GetNotificationsByIDs(ctx context.Context, ids []string
 	// Reorder the notifs by their
 	// IDs to ensure in correct order.
 	getID := func(n *gtsmodel.Notification) string { return n.ID }
-	util.OrderBy(notifs, ids, getID)
+	xslices.OrderBy(notifs, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -192,22 +192,19 @@ func (n *notificationDB) PopulateNotification(ctx context.Context, notif *gtsmod
 func (n *notificationDB) GetAccountNotifications(
 	ctx context.Context,
 	accountID string,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
-	types []string,
-	excludeTypes []string,
+	page *paging.Page,
+	types []gtsmodel.NotificationType,
+	excludeTypes []gtsmodel.NotificationType,
 ) ([]*gtsmodel.Notification, error) {
-	// Ensure reasonable
-	if limit < 0 {
-		limit = 0
-	}
-
-	// Make educated guess for slice size
 	var (
-		notifIDs    = make([]string, 0, limit)
-		frontToBack = true
+		// Get paging params.
+		minID = page.GetMin()
+		maxID = page.GetMax()
+		limit = page.GetLimit()
+		order = page.GetOrder()
+
+		// Make educated guess for slice size
+		notifIDs = make([]string, 0, limit)
 	)
 
 	q := n.db.
@@ -215,23 +212,14 @@ func (n *notificationDB) GetAccountNotifications(
 		TableExpr("? AS ?", bun.Ident("notifications"), bun.Ident("notification")).
 		Column("notification.id")
 
-	if maxID == "" {
-		maxID = id.Highest
-	}
-
-	// Return only notifs LOWER (ie., older) than maxID.
-	q = q.Where("? < ?", bun.Ident("notification.id"), maxID)
-
-	if sinceID != "" {
-		// Return only notifs HIGHER (ie., newer) than sinceID.
-		q = q.Where("? > ?", bun.Ident("notification.id"), sinceID)
+	if maxID != "" {
+		// Return only notifs LOWER (ie., older) than maxID.
+		q = q.Where("? < ?", bun.Ident("notification.id"), maxID)
 	}
 
 	if minID != "" {
 		// Return only notifs HIGHER (ie., newer) than minID.
 		q = q.Where("? > ?", bun.Ident("notification.id"), minID)
-
-		frontToBack = false // page up
 	}
 
 	if len(types) > 0 {
@@ -251,12 +239,12 @@ func (n *notificationDB) GetAccountNotifications(
 		q = q.Limit(limit)
 	}
 
-	if frontToBack {
-		// Page down.
-		q = q.Order("notification.id DESC")
-	} else {
+	if order == paging.OrderAscending {
 		// Page up.
 		q = q.Order("notification.id ASC")
+	} else {
+		// Page down.
+		q = q.Order("notification.id DESC")
 	}
 
 	if err := q.Scan(ctx, &notifIDs); err != nil {
@@ -269,11 +257,8 @@ func (n *notificationDB) GetAccountNotifications(
 
 	// If we're paging up, we still want notifications
 	// to be sorted by ID desc, so reverse ids slice.
-	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
-	if !frontToBack {
-		for l, r := 0, len(notifIDs)-1; l < r; l, r = l+1, r-1 {
-			notifIDs[l], notifIDs[r] = notifIDs[r], notifIDs[l]
-		}
+	if order == paging.OrderAscending {
+		slices.Reverse(notifIDs)
 	}
 
 	// Fetch notification models by their IDs.
@@ -303,7 +288,7 @@ func (n *notificationDB) DeleteNotificationByID(ctx context.Context, id string) 
 	return nil
 }
 
-func (n *notificationDB) DeleteNotifications(ctx context.Context, types []string, targetAccountID string, originAccountID string) error {
+func (n *notificationDB) DeleteNotifications(ctx context.Context, types []gtsmodel.NotificationType, targetAccountID string, originAccountID string) error {
 	if targetAccountID == "" && originAccountID == "" {
 		return gtserror.New("one of targetAccountID or originAccountID must be set")
 	}
