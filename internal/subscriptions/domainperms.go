@@ -486,26 +486,52 @@ func (s *Subscriptions) processDomainPermission(
 		// side effects of permission.
 		err = s.state.AdminActions.Run(ctx, action, actionF)
 
-	case existingPerm.GetSubscriptionID() != "" || *permSub.AdoptOrphans:
-		// Perm exists but we should adopt/take
-		// it by copying over desired fields.
-		existingPerm.SetCreatedByAccountID(wantedPerm.GetCreatedByAccountID())
-		existingPerm.SetCreatedByAccount(wantedPerm.GetCreatedByAccount())
-		existingPerm.SetSubscriptionID(permSub.ID)
-		existingPerm.SetObfuscate(wantedPerm.GetObfuscate())
-		existingPerm.SetPrivateComment(wantedPerm.GetPrivateComment())
-		existingPerm.SetPublicComment(wantedPerm.GetPublicComment())
-
-		switch p := existingPerm.(type) {
-		case *gtsmodel.DomainBlock:
-			err = s.state.DB.UpdateDomainBlock(ctx, p)
-		case *gtsmodel.DomainAllow:
-			err = s.state.DB.UpdateDomainAllow(ctx, p)
+	case existingPerm.IsOrphan():
+		// Perm already exists, but it's not managed
+		// by a subscription, ie., it's an orphan.
+		if !*permSub.AdoptOrphans {
+			l.Debug("permission exists as an orphan that we shouldn't adopt, skipping")
+			return false, nil
 		}
 
+		// Orphan is adoptable, so adopt
+		// it by rewriting some fields.
+		//
+		// TODO: preserve previous private
+		// + public comment in some way.
+		l.Debug("adopting orphan permission")
+		err = s.adoptPerm(
+			ctx,
+			existingPerm,
+			permSub,
+			wantedPerm.GetObfuscate(),
+			permSub.URI,
+			wantedPerm.GetPublicComment(),
+		)
+
+	case existingPerm.GetSubscriptionID() != permSub.ID:
+		// Perm already exists, and is managed
+		// by a lower-priority subscription.
+		// Take it for ourselves.
+		//
+		// TODO: preserve previous private
+		// + public comment in some way.
+		l.Debug("taking over permission from lower-priority subscription")
+		err = s.adoptPerm(
+			ctx,
+			existingPerm,
+			permSub,
+			wantedPerm.GetObfuscate(),
+			permSub.URI,
+			wantedPerm.GetPublicComment(),
+		)
+
 	default:
-		// Perm exists but we should leave it alone.
-		l.Debug("domain is covered by a higher-priority subscription, skipping")
+		// Perm exists and is managed by us.
+		//
+		// TODO: update public/private comment
+		// from latest version if it's changed.
+		l.Debug("permission already exists and is managed by this subscription, skipping")
 	}
 
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
@@ -828,4 +854,35 @@ func (s *Subscriptions) existingCovered(
 	)
 
 	return
+}
+
+func (s *Subscriptions) adoptPerm(
+	ctx context.Context,
+	perm gtsmodel.DomainPermission,
+	permSub *gtsmodel.DomainPermissionSubscription,
+	obfuscate *bool,
+	privateComment string,
+	publicComment string,
+) error {
+	// Set to our sub ID + this subs's
+	// account as we're managing it now.
+	perm.SetSubscriptionID(permSub.ID)
+	perm.SetCreatedByAccountID(permSub.CreatedByAccount.ID)
+	perm.SetCreatedByAccount(permSub.CreatedByAccount)
+
+	// Set new metadata on the perm.
+	perm.SetObfuscate(obfuscate)
+	perm.SetPrivateComment(privateComment)
+	perm.SetPublicComment(publicComment)
+
+	// Update the perm in the db.
+	var err error
+	switch p := perm.(type) {
+	case *gtsmodel.DomainBlock:
+		err = s.state.DB.UpdateDomainBlock(ctx, p)
+	case *gtsmodel.DomainAllow:
+		err = s.state.DB.UpdateDomainAllow(ctx, p)
+	}
+
+	return err
 }

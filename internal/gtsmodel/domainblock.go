@@ -104,3 +104,7 @@ func (d *DomainBlock) SetSubscriptionID(i string) {
 func (d *DomainBlock) GetType() DomainPermissionType {
 	return DomainPermissionBlock
 }
+
+func (d *DomainBlock) IsOrphan() bool {
+	return d.SubscriptionID == ""
+}

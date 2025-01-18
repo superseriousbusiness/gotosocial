@@ -43,6 +43,10 @@ type DomainPermission interface {
 	GetSubscriptionID() string
 	SetSubscriptionID(i string)
 	GetType() DomainPermissionType
+
+	// Return true if this DomainPermission
+	// does not have a subscription id set.
+	IsOrphan() bool
 }
 
 // Domain permission type.
