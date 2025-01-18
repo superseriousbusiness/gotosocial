@@ -317,7 +317,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	// Iterate through wantedPerms and
 	// create (or dry create) each one.
 	for _, wantedPerm := range wantedPerms {
-		l = l.WithField("domain", wantedPerm.GetDomain())
+		l := l.WithField("domain", wantedPerm.GetDomain())
 		created, err := s.processDomainPermission(
 			ctx, l,
 			wantedPerm,
@@ -532,6 +532,7 @@ func (s *Subscriptions) processDomainPermission(
 		// TODO: update public/private comment
 		// from latest version if it's changed.
 		l.Debug("permission already exists and is managed by this subscription, skipping")
+		return false, nil
 	}
 
 	if err != nil && !errors.Is(err, db.ErrAlreadyExists) {
