@@ -533,6 +533,138 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypePlain() {
 	suite.Equal(`fetch successful but parsed zero usable results`, permSub.Error)
 }
 
+func (suite *SubscriptionsTestSuite) TestAdoption() {
+	var (
+		ctx           = context.Background()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		testAccount   = suite.testAccounts["admin_account"]
+		subscriptions = subscriptions.New(
+			testStructs.State,
+			testStructs.TransportController,
+			testStructs.TypeConverter,
+		)
+
+		// A subscription for a plain list
+		// of baddies, which adopts orphans.
+		testSubscription = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
+			Priority:           255,
+			Title:              "whatever!",
+			PermissionType:     gtsmodel.DomainPermissionBlock,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(true),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://lists.example.org/baddies.txt",
+			ContentType:        gtsmodel.DomainPermSubContentTypePlain,
+		}
+
+		// A lower-priority subscription
+		// than the one we're testing.
+		existingSubscription = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JHX2ENFM8YGGR9Q9J5S66KSB",
+			Priority:           128,
+			Title:              "lower prio subscription",
+			PermissionType:     gtsmodel.DomainPermissionBlock,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(false),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://whatever.example.org/lowerprios.txt",
+			ContentType:        gtsmodel.DomainPermSubContentTypePlain,
+		}
+
+		// Orphan block which also exists
+		// on the list of testSubscription.
+		existingBlock1 = &gtsmodel.DomainBlock{
+			ID:                 "01JHX2V5WN250TKB6FQ1M3QE1H",
+			Domain:             "bumfaces.net",
+			CreatedByAccount:   testAccount,
+			CreatedByAccountID: testAccount.ID,
+		}
+
+		// Block managed by existingSubscription which
+		// also exists on the list of testSubscription.
+		existingBlock2 = &gtsmodel.DomainBlock{
+			ID:                 "01JHX3EZAYG3KKC56C1YTKBRK7",
+			Domain:             "peepee.poopoo",
+			CreatedByAccount:   testAccount,
+			CreatedByAccountID: testAccount.ID,
+			SubscriptionID:     existingSubscription.ID,
+		}
+
+		// Already existing block
+		// managed by testSubscription.
+		existingBlock3 = &gtsmodel.DomainBlock{
+			ID:                 "01JHX3N1AGYT72BR3TWDCZKYGE",
+			Domain:             "nothanks.com",
+			CreatedByAccount:   testAccount,
+			CreatedByAccountID: testAccount.ID,
+			SubscriptionID:     testSubscription.ID,
+		}
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Store test subscription.
+	if err := testStructs.State.DB.PutDomainPermissionSubscription(
+		ctx, testSubscription,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Store the lower-priority subscription.
+	if err := testStructs.State.DB.PutDomainPermissionSubscription(
+		ctx, existingSubscription,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Store the existing blocks.
+	for _, block := range []*gtsmodel.DomainBlock{
+		existingBlock1,
+		existingBlock2,
+		existingBlock3,
+	} {
+		if err := testStructs.State.DB.CreateDomainBlock(
+			ctx, block,
+		); err != nil {
+			suite.FailNow(err.Error())
+		}
+	}
+
+	// Process all subscriptions.
+	subscriptions.ProcessDomainPermissionSubscriptions(ctx, testSubscription.PermissionType)
+
+	var err error
+
+	// existingBlock1 should now be adopted by
+	// testSubscription, as it previously an orphan.
+	if existingBlock1, err = testStructs.State.DB.GetDomainBlockByID(
+		ctx, existingBlock1.ID,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(testSubscription.ID, existingBlock1.SubscriptionID)
+
+	// existingBlock2 should now be
+	// managed by testSubscription.
+	if existingBlock2, err = testStructs.State.DB.GetDomainBlockByID(
+		ctx, existingBlock2.ID,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(testSubscription.ID, existingBlock2.SubscriptionID)
+
+	// existingBlock3 should still be
+	// managed by testSubscription.
+	if existingBlock3, err = testStructs.State.DB.GetDomainBlockByID(
+		ctx, existingBlock3.ID,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(testSubscription.ID, existingBlock3.SubscriptionID)
+}
+
 func TestSubscriptionTestSuite(t *testing.T) {
 	suite.Run(t, new(SubscriptionsTestSuite))
 }

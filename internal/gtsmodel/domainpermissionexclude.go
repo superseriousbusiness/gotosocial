@@ -90,3 +90,4 @@ func (d *DomainPermissionExclude) SetObfuscate(_ *bool)          {}
 func (d *DomainPermissionExclude) GetSubscriptionID() string     { return "" }
 func (d *DomainPermissionExclude) SetSubscriptionID(_ string)    {}
 func (d *DomainPermissionExclude) GetType() DomainPermissionType { return DomainPermissionUnknown }
+func (d *DomainPermissionExclude) IsOrphan() bool                { return true }
