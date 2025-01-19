@@ -272,7 +272,7 @@ function UserProfileForm({ data: profile }: UserProfileFormProps) {
 			/>
 			<Checkbox
 				field={form.hideBoosts}
-				label="Hide boosts from your public page"
+				label="Hide boosts from your public page."
 			/>
 			<Checkbox
 				field={form.hideCollections}
