@@ -44,6 +44,7 @@ require (
 	codeberg.org/superseriousbusiness/exif-terminator v0.9.1
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.6.1
+	github.com/SherClockHolmes/webpush-go v1.3.0
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.12.0
 	github.com/gin-contrib/cors v1.7.3
@@ -65,7 +66,6 @@ require (
 	github.com/ncruces/go-sqlite3 v0.22.0
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.20.5
-	github.com/SherClockHolmes/webpush-go v1.3.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
