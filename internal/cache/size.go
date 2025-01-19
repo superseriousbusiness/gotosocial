@@ -372,6 +372,7 @@ func sizeofDomainPermissionSubscription() uintptr {
 		FetchedAt:             exampleTime,
 		SuccessfullyFetchedAt: exampleTime,
 		ETag:                  exampleID,
+		LastModified:          exampleTime,
 		Error:                 exampleTextSmall,
 	}))
 }

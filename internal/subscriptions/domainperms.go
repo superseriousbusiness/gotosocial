@@ -253,13 +253,9 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	// to indicate a successful fetch, and return.
 	if resp.Unmodified {
 		l.Debug("received 304 Not Modified from remote")
+		permSub.ETag = resp.ETag
+		permSub.LastModified = resp.LastModified
 		permSub.SuccessfullyFetchedAt = permSub.FetchedAt
-		if permSub.ETag == "" && resp.ETag != "" {
-			// We didn't have an ETag before but
-			// we have one now: probably the remote
-			// added ETag support in the meantime.
-			permSub.ETag = resp.ETag
-		}
 		return nil, nil
 	}
 
@@ -308,6 +304,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	// This can now be considered a successful fetch.
 	permSub.SuccessfullyFetchedAt = permSub.FetchedAt
 	permSub.ETag = resp.ETag
+	permSub.LastModified = resp.LastModified
 	permSub.Error = ""
 
 	// Keep track of which domain perms are

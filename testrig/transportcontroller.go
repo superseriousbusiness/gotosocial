@@ -446,18 +446,21 @@ func DomainPermissionSubscriptionResponse(req *http.Request) (
 ) {
 
 	const (
+		lastModified        = "Sat, 21 Sep 2024 22:00:00 GMT"
+		futureLastModified  = "Mon, 15 Jan 2300 22:00:00 GMT"
+		garbageLastModified = "I LIKE BIG BUTTS AND I CANNOT LIE"
+
 		csvResp = `#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate
 bumfaces.net,suspend,false,false,big jerks,false
 peepee.poopoo,suspend,false,false,harassment,false
 nothanks.com,suspend,false,false,,false`
-		csvRespETag = "bigbums6969"
+		csvRespETag = "\"bigbums6969\""
 
 		textResp = `bumfaces.net
 peepee.poopoo
 nothanks.com`
-		textRespETag = "this is a legit etag i swear"
-
-		jsonResp = `[
+		textRespETag = "\"this is a legit etag i swear\""
+		jsonResp     = `[
   {
     "domain": "bumfaces.net",
     "suspended_at": "2020-05-13T13:29:12.000Z",
@@ -473,12 +476,15 @@ nothanks.com`
     "suspended_at": "2020-05-13T13:29:12.000Z"
   }
 ]`
-		jsonRespETag = "don't modify me daddy"
+		jsonRespETag = "\"don't modify me daddy\""
 	)
 
 	switch req.URL.String() {
 	case "https://lists.example.org/baddies.csv":
-		extraHeaders = map[string]string{"ETag": csvRespETag}
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          csvRespETag,
+		}
 		if req.Header.Get("If-None-Match") == csvRespETag {
 			// Cached.
 			responseCode = http.StatusNotModified
@@ -490,7 +496,10 @@ nothanks.com`
 		responseContentLength = len(responseBytes)
 
 	case "https://lists.example.org/baddies.txt":
-		extraHeaders = map[string]string{"ETag": textRespETag}
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          textRespETag,
+		}
 		if req.Header.Get("If-None-Match") == textRespETag {
 			// Cached.
 			responseCode = http.StatusNotModified
@@ -502,13 +511,48 @@ nothanks.com`
 		responseContentLength = len(responseBytes)
 
 	case "https://lists.example.org/baddies.json":
-		extraHeaders = map[string]string{"ETag": jsonRespETag}
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          jsonRespETag,
+		}
 		if req.Header.Get("If-None-Match") == jsonRespETag {
 			// Cached.
 			responseCode = http.StatusNotModified
 		} else {
 			responseBytes = []byte(jsonResp)
 			responseContentType = applicationJSON
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/baddies.csv?future=true":
+		extraHeaders = map[string]string{
+			// Provide the future last modified value.
+			"Last-Modified": futureLastModified,
+			"ETag":          csvRespETag,
+		}
+		if req.Header.Get("If-None-Match") == csvRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(csvResp)
+			responseContentType = textCSV
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/baddies.csv?garbage=true":
+		extraHeaders = map[string]string{
+			// Provide the garbage last modified value.
+			"Last-Modified": garbageLastModified,
+			"ETag":          csvRespETag,
+		}
+		if req.Header.Get("If-None-Match") == csvRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(csvResp)
+			responseContentType = textCSV
 			responseCode = http.StatusOK
 		}
 		responseContentLength = len(responseBytes)

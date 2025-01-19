@@ -128,4 +128,14 @@ instance-deliver-to-shared-inboxes: true
 # Options: [true, false]
 # Default: false
 instance-inject-mastodon-version: false
+
+# String. 24hr time of day formatted as hh:mm.
+# Examples: ["14:30", "00:00", "04:00"]
+# Default: "23:00" (11pm).
+instance-subscriptions-process-from: "23:00"
+
+# Duration. Period between subscription updates.
+# Examples: ["24h", "72h", "12h"]
+# Default: "24h" (once per day).
+instance-subscriptions-process-every: "24h"
 ```

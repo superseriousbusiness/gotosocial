@@ -33,6 +33,7 @@ type DomainPermissionSubscription struct {
 	FetchPassword         string    `bun:",nullzero"`
 	FetchedAt             time.Time `bun:"type:timestamptz,nullzero"`
 	SuccessfullyFetchedAt time.Time `bun:"type:timestamptz,nullzero"`
+	LastModified          time.Time `bun:"type:timestamptz,nullzero"`
 	ETag                  string    `bun:"etag,nullzero"`
 	Error                 string    `bun:",nullzero"`
 }
