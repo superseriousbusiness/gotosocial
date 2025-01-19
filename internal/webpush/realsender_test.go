@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/webpush"
@@ -128,6 +129,11 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 
 	suite.processor = processing.NewProcessor(
 		cleaner.New(&suite.state),
+		subscriptions.New(
+			&suite.state,
+			suite.transportController,
+			suite.typeconverter,
+		),
 		suite.typeconverter,
 		suite.federator,
 		suite.oauthServer,

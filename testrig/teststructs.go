@@ -48,7 +48,7 @@ type TestStructs struct {
 	HTTPClient          *MockHTTPClient
 	TypeConverter       *typeutils.Converter
 	EmailSender         email.Sender
-	WebPushSender *webpush.MockSender
+	WebPushSender       *webpush.MockSender
 	TransportController transport.Controller
 }
 
@@ -121,7 +121,7 @@ func SetupTestStructs(
 		HTTPClient:          httpClient,
 		TypeConverter:       typeconverter,
 		EmailSender:         emailSender,
-		WebPushSender: webPushSender,
+		WebPushSender:       webPushSender,
 		TransportController: transportController,
 	}
 }

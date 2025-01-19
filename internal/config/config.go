@@ -252,8 +252,8 @@ type CacheConfiguration struct {
 	UserMuteMemRatio                      float64       `name:"user-mute-mem-ratio"`
 	UserMuteIDsMemRatio                   float64       `name:"user-mute-ids-mem-ratio"`
 	WebfingerMemRatio                     float64       `name:"webfinger-mem-ratio"`
-	WebPushSubscriptionMemRatio       float64       `name:"web-push-subscription-mem-ratio"`
-	WebPushSubscriptionIDsMemRatio    float64       `name:"web-push-subscription-ids-mem-ratio"`
+	WebPushSubscriptionMemRatio           float64       `name:"web-push-subscription-mem-ratio"`
+	WebPushSubscriptionIDsMemRatio        float64       `name:"web-push-subscription-ids-mem-ratio"`
 	VisibilityMemRatio                    float64       `name:"visibility-mem-ratio"`
 }
 
