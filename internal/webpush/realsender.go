@@ -218,13 +218,34 @@ func (r *realSender) sendToSubscription(
 		_ = resp.Body.Close()
 	}()
 
-	// If there's an error, log the response.
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		if resp.StatusCode >= 400 && resp.StatusCode <= 499 &&
+			resp.StatusCode != http.StatusRequestTimeout &&
+			resp.StatusCode != http.StatusTooManyRequests {
+			// We should not send any more notifications to this subscription. Try to delete it.
+			if err := r.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, subscription.TokenID); err != nil {
+				return gtserror.Newf(
+					"received HTTP status %s but failed to delete subscription: %s",
+					resp.Status,
+					err,
+				)
+			}
+			log.Infof(
+				ctx,
+				"Deleted Web Push subscription with token ID %s because push server sent HTTP status %s",
+				subscription.TokenID,
+				resp.Status,
+			)
+			return nil
+		}
+
+		// Otherwise, try to get the response body.
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, responseBodyMaxLen))
 		if err != nil {
 			return gtserror.Newf("error reading Web Push server response: %w", err)
 		}
 
+		// Log the error with its response body.
 		return gtserror.Newf(
 			"unexpected HTTP status %s received when sending Web Push notification: %s",
 			resp.Status,

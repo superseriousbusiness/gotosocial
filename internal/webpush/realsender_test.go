@@ -178,9 +178,12 @@ func (rc *notifyingReadCloser) Close() error {
 	return nil
 }
 
-func (suite *RealSenderStandardTestSuite) TestSendSuccess() {
-	// Set a timeout on the whole test. If it fails due to the timeout,
-	// the push notification was not sent for some reason.
+// Simulate sending a push notification with the suite's fake web client.
+func (suite *RealSenderStandardTestSuite) simulatePushNotification(
+	statusCode int,
+	expectDeletedSubscription bool,
+) error {
+	// Don't let the test run forever if the push notification was not sent for some reason.
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -193,17 +196,17 @@ func (suite *RealSenderStandardTestSuite) TestSendSuccess() {
 		bodyClosed: make(chan struct{}, 1),
 	}
 
-	// Simulate a successful response from the Web Push server.
+	// Simulate a response from the Web Push server.
 	suite.webPushHttpClientDo = func(request *http.Request) (*http.Response, error) {
 		return &http.Response{
-			Status:     "200 OK",
-			StatusCode: 200,
+			Status:     http.StatusText(statusCode),
+			StatusCode: statusCode,
 			Body:       rc,
 		}, nil
 	}
 
 	// Send the push notification.
-	suite.NoError(suite.webPushSender.Send(ctx, notification, nil, nil))
+	sendError := suite.webPushSender.Send(ctx, notification, nil, nil)
 
 	// Wait for it to be sent or for the context to time out.
 	bodyClosed := false
@@ -216,6 +219,42 @@ func (suite *RealSenderStandardTestSuite) TestSendSuccess() {
 	}
 	suite.True(bodyClosed)
 	suite.False(contextExpired)
+
+	// Look for the associated Web Push subscription. Some server responses should delete it.
+	subscription, err := suite.state.DB.GetWebPushSubscriptionByTokenID(
+		ctx,
+		suite.testWebPushSubscriptions["local_account_1_token_1"].TokenID,
+	)
+	if expectDeletedSubscription {
+		suite.ErrorIs(err, db.ErrNoEntries)
+	} else {
+		suite.NotNil(subscription)
+	}
+
+	return sendError
+}
+
+// Test a successful response to sending a push notification.
+func (suite *RealSenderStandardTestSuite) TestSendSuccess() {
+	suite.NoError(suite.simulatePushNotification(http.StatusOK, false))
+}
+
+// Test a rate-limiting response to sending a push notification.
+// This should not delete the subscription.
+func (suite *RealSenderStandardTestSuite) TestRateLimited() {
+	suite.NoError(suite.simulatePushNotification(http.StatusTooManyRequests, false))
+}
+
+// Test a non-special-cased client error response to sending a push notification.
+// This should delete the subscription.
+func (suite *RealSenderStandardTestSuite) TestClientError() {
+	suite.NoError(suite.simulatePushNotification(http.StatusBadRequest, true))
+}
+
+// Test a server error response to sending a push notification.
+// This should not delete the subscription.
+func (suite *RealSenderStandardTestSuite) TestServerError() {
+	suite.NoError(suite.simulatePushNotification(http.StatusInternalServerError, false))
 }
 
 func TestRealSenderStandardTestSuite(t *testing.T) {
