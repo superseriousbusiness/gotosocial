@@ -46,7 +46,7 @@ require (
 	github.com/KimMachineGun/automemlimit v0.6.1
 	github.com/buckket/go-blurhash v1.1.0
 	github.com/coreos/go-oidc/v3 v3.11.0
-	github.com/gin-contrib/cors v1.7.2
+	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-contrib/gzip v1.1.0
 	github.com/gin-contrib/sessions v1.0.2
 	github.com/gin-gonic/gin v1.10.0
