@@ -225,8 +225,7 @@ func validateNormalizeCreate(request *apimodel.WebPushSubscriptionCreateRequest)
 	if err != nil {
 		return errors.New("endpoint must be a valid URL")
 	}
-	// TODO: (Vyr) remove http option after testing
-	if endpointURL.Scheme != "https" && endpointURL.Scheme != "http" {
+	if endpointURL.Scheme != "https" {
 		return errors.New("endpoint must be an https:// URL")
 	}
 	if endpointURL.Host == "" {
