@@ -34,7 +34,8 @@ type DomainPermissionSubscription struct {
 	FetchPassword         string                   `bun:",nullzero"`                                // Password to send when doing a GET of URI using basic auth.
 	FetchedAt             time.Time                `bun:"type:timestamptz,nullzero"`                // Time when fetch of URI was last attempted.
 	SuccessfullyFetchedAt time.Time                `bun:"type:timestamptz,nullzero"`                // Time when the domain permission list was last *successfuly* fetched, to be transmitted as If-Modified-Since header.
-	ETag                  string                   `bun:"etag,nullzero"`                            // Etag last received from the server (if any) on successful fetch.
+	LastModified          time.Time                `bun:"type:timestamptz,nullzero"`                // "Last-Modified" time received from the server (if any) on last successful fetch. Used for HTTP request caching.
+	ETag                  string                   `bun:"etag,nullzero"`                            // "ETag" header last received from the server (if any) on last successful fetch. Used for HTTP request caching.
 	Error                 string                   `bun:",nullzero"`                                // If latest fetch attempt errored, this field stores the error message. Cleared on latest successful fetch.
 }
 

@@ -107,7 +107,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSV() {
 	}
 
 	// The just-fetched perm sub should
-	// have ETag and count etc set now.
+	// have cache meta and count etc set now.
 	permSub, err := testStructs.State.DB.GetDomainPermissionSubscriptionByID(
 		ctx, testSubscription.ID,
 	)
@@ -121,7 +121,8 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSV() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal("bigbums6969", permSub.ETag)
+	suite.Equal("\"bigbums6969\"", permSub.ETag)
+	suite.EqualValues(1726956000, permSub.LastModified.Unix())
 	suite.EqualValues(3, count)
 	suite.WithinDuration(time.Now(), permSub.FetchedAt, 1*time.Minute)
 	suite.WithinDuration(time.Now(), permSub.SuccessfullyFetchedAt, 1*time.Minute)
@@ -186,7 +187,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksJSON() {
 	}
 
 	// The just-fetched perm sub should
-	// have ETag and count etc set now.
+	// have cache meta and count etc set now.
 	permSub, err := testStructs.State.DB.GetDomainPermissionSubscriptionByID(
 		ctx, testSubscription.ID,
 	)
@@ -200,7 +201,8 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksJSON() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal("don't modify me daddy", permSub.ETag)
+	suite.Equal("\"don't modify me daddy\"", permSub.ETag)
+	suite.EqualValues(1726956000, permSub.LastModified.Unix())
 	suite.EqualValues(3, count)
 	suite.WithinDuration(time.Now(), permSub.FetchedAt, 1*time.Minute)
 	suite.WithinDuration(time.Now(), permSub.SuccessfullyFetchedAt, 1*time.Minute)
@@ -265,7 +267,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksPlain() {
 	}
 
 	// The just-fetched perm sub should
-	// have ETag and count etc set now.
+	// have cache meta and count etc set now.
 	permSub, err := testStructs.State.DB.GetDomainPermissionSubscriptionByID(
 		ctx, testSubscription.ID,
 	)
@@ -279,13 +281,14 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksPlain() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal("this is a legit etag i swear", permSub.ETag)
+	suite.Equal("\"this is a legit etag i swear\"", permSub.ETag)
+	suite.EqualValues(1726956000, permSub.LastModified.Unix())
 	suite.EqualValues(3, count)
 	suite.WithinDuration(time.Now(), permSub.FetchedAt, 1*time.Minute)
 	suite.WithinDuration(time.Now(), permSub.SuccessfullyFetchedAt, 1*time.Minute)
 }
 
-func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVETag() {
+func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVCaching() {
 	var (
 		ctx           = context.Background()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
@@ -297,7 +300,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVETag() {
 		)
 
 		// Create a subscription for a CSV list of baddies.
-		// Include the ETag so it gets sent with the request.
+		// Include ETag + LastModified so they get sent with the request.
 		testSubscription = &gtsmodel.DomainPermissionSubscription{
 			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
 			Priority:           255,
@@ -309,7 +312,8 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVETag() {
 			CreatedByAccount:   testAccount,
 			URI:                "https://lists.example.org/baddies.csv",
 			ContentType:        gtsmodel.DomainPermSubContentTypeCSV,
-			ETag:               "bigbums6969",
+			ETag:               "\"bigbums6969\"",
+			LastModified:       testrig.TimeMustParse("2024-09-21T22:00:00Z"),
 		}
 	)
 	defer testrig.TearDownTestStructs(testStructs)
@@ -339,7 +343,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVETag() {
 	}
 
 	// The just-fetched perm sub should
-	// have ETag and count etc set now.
+	// have cache meta and count etc set now.
 	permSub, err := testStructs.State.DB.GetDomainPermissionSubscriptionByID(
 		ctx, testSubscription.ID,
 	)
@@ -353,10 +357,155 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVETag() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Equal("bigbums6969", permSub.ETag)
+	suite.Equal("\"bigbums6969\"", permSub.ETag)
+	suite.EqualValues(1726956000, permSub.LastModified.Unix())
 	suite.Zero(count)
 	suite.WithinDuration(time.Now(), permSub.FetchedAt, 1*time.Minute)
 	suite.WithinDuration(time.Now(), permSub.SuccessfullyFetchedAt, 1*time.Minute)
+}
+
+func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVFutureLastModified() {
+	var (
+		ctx           = context.Background()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		testAccount   = suite.testAccounts["admin_account"]
+		subscriptions = subscriptions.New(
+			testStructs.State,
+			testStructs.TransportController,
+			testStructs.TypeConverter,
+		)
+
+		// Create a subscription for a CSV list of baddies.
+		// Request the future last modified value.
+		testSubscription = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
+			Priority:           255,
+			Title:              "whatever!",
+			PermissionType:     gtsmodel.DomainPermissionBlock,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(true),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://lists.example.org/baddies.csv?future=true",
+			ContentType:        gtsmodel.DomainPermSubContentTypeCSV,
+		}
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Store test subscription.
+	if err := testStructs.State.DB.PutDomainPermissionSubscription(
+		ctx, testSubscription,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process all subscriptions.
+	subscriptions.ProcessDomainPermissionSubscriptions(ctx, testSubscription.PermissionType)
+
+	// We should now have blocks for
+	// each domain on the subscribed list.
+	for _, domain := range []string{
+		"bumfaces.net",
+		"peepee.poopoo",
+		"nothanks.com",
+	} {
+		var (
+			perm gtsmodel.DomainPermission
+			err  error
+		)
+		if !testrig.WaitFor(func() bool {
+			perm, err = testStructs.State.DB.GetDomainBlock(ctx, domain)
+			return err == nil
+		}) {
+			suite.FailNowf("", "timed out waiting for domain %s", domain)
+		}
+
+		suite.Equal(testSubscription.ID, perm.GetSubscriptionID())
+	}
+
+	// The just-fetched perm sub should have ETag
+	// set now, but last modified should be thrown away.
+	permSub, err := testStructs.State.DB.GetDomainPermissionSubscriptionByID(
+		ctx, testSubscription.ID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("\"bigbums6969\"", permSub.ETag)
+	suite.Zero(permSub.LastModified)
+}
+
+func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVGarbageLastModified() {
+	var (
+		ctx           = context.Background()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		testAccount   = suite.testAccounts["admin_account"]
+		subscriptions = subscriptions.New(
+			testStructs.State,
+			testStructs.TransportController,
+			testStructs.TypeConverter,
+		)
+
+		// Create a subscription for a CSV list of baddies.
+		// Request the garbage last modified value.
+		testSubscription = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
+			Priority:           255,
+			Title:              "whatever!",
+			PermissionType:     gtsmodel.DomainPermissionBlock,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(true),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://lists.example.org/baddies.csv?garbage=true",
+			ContentType:        gtsmodel.DomainPermSubContentTypeCSV,
+		}
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Store test subscription.
+	if err := testStructs.State.DB.PutDomainPermissionSubscription(
+		ctx, testSubscription,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process all subscriptions.
+	subscriptions.ProcessDomainPermissionSubscriptions(ctx, testSubscription.PermissionType)
+
+	// We should now have blocks for
+	// each domain on the subscribed list.
+	for _, domain := range []string{
+		"bumfaces.net",
+		"peepee.poopoo",
+		"nothanks.com",
+	} {
+		var (
+			perm gtsmodel.DomainPermission
+			err  error
+		)
+		if !testrig.WaitFor(func() bool {
+			perm, err = testStructs.State.DB.GetDomainBlock(ctx, domain)
+			return err == nil
+		}) {
+			suite.FailNowf("", "timed out waiting for domain %s", domain)
+		}
+
+		suite.Equal(testSubscription.ID, perm.GetSubscriptionID())
+	}
+
+	// The just-fetched perm sub should have ETag
+	// set now, but last modified should be thrown away.
+	permSub, err := testStructs.State.DB.GetDomainPermissionSubscriptionByID(
+		ctx, testSubscription.ID,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.Equal("\"bigbums6969\"", permSub.ETag)
+	suite.Zero(permSub.LastModified)
 }
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocks404() {

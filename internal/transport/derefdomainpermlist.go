@@ -21,9 +21,11 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type DereferenceDomainPermissionsResp struct {
@@ -39,6 +41,10 @@ type DereferenceDomainPermissionsResp struct {
 	// May be set
 	// if 200 or 304.
 	ETag string
+
+	// May be set
+	// if 200 or 304.
+	LastModified time.Time
 }
 
 func (t *transport) DereferenceDomainPermissions(
@@ -60,27 +66,27 @@ func (t *transport) DereferenceDomainPermissions(
 	// Set relevant Accept headers.
 	// Allow fallback in case target doesn't
 	// negotiate content type correctly.
-	req.Header.Add("Accept-Charset", "utf-8")
-	req.Header.Add("Accept", permSub.ContentType.String()+","+"*/*")
+	req.Header.Set("Accept-Charset", "utf-8")
+	req.Header.Set("Accept", permSub.ContentType.String()+","+"*/*")
 
 	// If skipCache is true, we want to skip setting Cache
 	// headers so that we definitely don't get a 304 back.
 	if !skipCache {
-		// If we've successfully fetched this list
-		// before, set If-Modified-Since to last
-		// success to make the request conditional.
+		// If we've got a Last-Modified stored for this list,
+		// set If-Modified-Since to make the request conditional.
 		//
 		// See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/If-Modified-Since
-		if !permSub.SuccessfullyFetchedAt.IsZero() {
-			timeStr := permSub.SuccessfullyFetchedAt.Format(http.TimeFormat)
-			req.Header.Add("If-Modified-Since", timeStr)
+		if !permSub.LastModified.IsZero() {
+			// http.Time wants UTC.
+			lmUTC := permSub.LastModified.UTC()
+			req.Header.Set("If-Modified-Since", lmUTC.Format(http.TimeFormat))
 		}
 
 		// If we've got an ETag stored for this list, set
 		// If-None-Match to make the request conditional.
 		// See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag#caching_of_unchanged_resources.
-		if len(permSub.ETag) != 0 {
-			req.Header.Add("If-None-Match", permSub.ETag)
+		if permSub.ETag != "" {
+			req.Header.Set("If-None-Match", permSub.ETag)
 		}
 	}
 
@@ -99,11 +105,12 @@ func (t *transport) DereferenceDomainPermissions(
 		return nil, err
 	}
 
-	// Check already if we were given an ETag
-	// we can use, as ETag is often returned
-	// even on 304 Not Modified responses.
+	// Check already if we were given a valid ETag or
+	// Last-Modified we can use, as these cache headers
+	// are often returned even on Not Modified responses.
 	permsResp := &DereferenceDomainPermissionsResp{
-		ETag: rsp.Header.Get("Etag"),
+		ETag:         rsp.Header.Get("ETag"),
+		LastModified: validateLastModified(ctx, rsp.Header.Get("Last-Modified")),
 	}
 
 	if rsp.StatusCode == http.StatusNotModified {
@@ -118,4 +125,44 @@ func (t *transport) DereferenceDomainPermissions(
 	}
 
 	return permsResp, nil
+}
+
+// Validate Last-Modified to ensure it's not
+// garbagio, and not more than a minute in the
+// future (to allow for clock issues + rounding).
+func validateLastModified(
+	ctx context.Context,
+	lastModified string,
+) time.Time {
+	if lastModified == "" {
+		// Not set,
+		// no problem.
+		return time.Time{}
+	}
+
+	// Try to parse and see what we get.
+	switch lm, err := http.ParseTime(lastModified); {
+	case err != nil:
+		// No good,
+		// chuck it.
+		log.Debugf(ctx,
+			"discarding invalid Last-Modified header %s: %+v",
+			lastModified, err,
+		)
+		return time.Time{}
+
+	case lm.Unix() > time.Now().Add(1*time.Minute).Unix():
+		// In the future,
+		// chuck it.
+		log.Debugf(ctx,
+			"discarding in-the-future Last-Modified header %s",
+			lastModified,
+		)
+		return time.Time{}
+
+	default:
+		// It's fine,
+		// keep it.
+		return lm
+	}
 }

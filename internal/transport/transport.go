@@ -81,7 +81,7 @@ type Transport interface {
 	// DereferenceDomainPermissions dereferences the
 	// permissions list present at the given permSub's URI.
 	//
-	// If "force", then If-Modified-Since and If-None-Match
+	// If "skipCache", then If-Modified-Since and If-None-Match
 	// headers will *NOT* be sent with the outgoing request.
 	//
 	// If err == nil and Unmodified == false, then it's up
@@ -89,7 +89,7 @@ type Transport interface {
 	DereferenceDomainPermissions(
 		ctx context.Context,
 		permSub *gtsmodel.DomainPermissionSubscription,
-		force bool,
+		skipCache bool,
 	) (*DereferenceDomainPermissionsResp, error)
 
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
