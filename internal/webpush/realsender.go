@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	webpushgo "github.com/SherClockHolmes/webpush-go"
@@ -59,8 +60,12 @@ func NewRealSender(httpClient *http.Client, state *state.State) Sender {
 // while waiting for the client to retrieve them.
 const TTL = 48 * time.Hour
 
-// responseBodyMaxLen limits how much of the Web Push server response we use for error messages.
+// responseBodyMaxLen limits how much of the Web Push server response we read for error messages.
 const responseBodyMaxLen = 1024
+
+// bodyMaxLen is a polite maximum length for a Web Push notification's body text, in bytes.
+// Note that this isn't limited per se, but Web Push servers may reject anything with a total request body size over 4k.
+const bodyMaxLen = 3000
 
 func (r *realSender) Send(
 	ctx context.Context,
@@ -126,7 +131,7 @@ func (r *realSender) Send(
 				vapidKeyPair,
 				vapidSubjectEmail,
 				subscription,
-				notification.TargetAccount,
+				notification,
 				apiNotification,
 			); err != nil {
 				log.Errorf(
@@ -148,7 +153,7 @@ func (r *realSender) sendToSubscription(
 	vapidKeyPair *gtsmodel.VAPIDKeyPair,
 	vapidSubjectEmail string,
 	subscription *gtsmodel.WebPushSubscription,
-	targetAccount *gtsmodel.Account,
+	notification *gtsmodel.Notification,
 	apiNotification *apimodel.Notification,
 ) error {
 	// Get the associated access token.
@@ -162,7 +167,7 @@ func (r *realSender) sendToSubscription(
 		NotificationID:   apiNotification.ID,
 		NotificationType: apiNotification.Type,
 		Icon:             apiNotification.Account.Avatar,
-		PreferredLocale:  targetAccount.Settings.Language,
+		PreferredLocale:  notification.TargetAccount.Settings.Language,
 		AccessToken:      token.Access,
 	}
 
@@ -171,8 +176,45 @@ func (r *realSender) sendToSubscription(
 	if displayNameOrAcct == "" {
 		displayNameOrAcct = apiNotification.Account.Acct
 	}
-	// TODO: (Vyr) improve copy
-	pushNotification.Title = fmt.Sprintf("%s from %s", apiNotification.Type, displayNameOrAcct)
+	switch notification.NotificationType {
+	case gtsmodel.NotificationFollow:
+		pushNotification.Title = fmt.Sprintf("%s followed you", displayNameOrAcct)
+	case gtsmodel.NotificationFollowRequest:
+		pushNotification.Title = fmt.Sprintf("%s requested to follow you", displayNameOrAcct)
+	case gtsmodel.NotificationMention:
+		pushNotification.Title = fmt.Sprintf("%s mentioned you", displayNameOrAcct)
+	case gtsmodel.NotificationReblog:
+		pushNotification.Title = fmt.Sprintf("%s boosted your post", displayNameOrAcct)
+	case gtsmodel.NotificationFavourite:
+		pushNotification.Title = fmt.Sprintf("%s faved your post", displayNameOrAcct)
+	case gtsmodel.NotificationPoll:
+		if subscription.AccountID == notification.TargetAccountID {
+			pushNotification.Title = fmt.Sprintf("Your poll has ended")
+		} else {
+			pushNotification.Title = fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
+		}
+	case gtsmodel.NotificationStatus:
+		pushNotification.Title = fmt.Sprintf("%s posted", displayNameOrAcct)
+	case gtsmodel.NotificationAdminSignup:
+		pushNotification.Title = fmt.Sprintf("%s requested to sign up", displayNameOrAcct)
+	case gtsmodel.NotificationPendingFave:
+		pushNotification.Title = fmt.Sprintf("%s faved your post, which requires your approval", displayNameOrAcct)
+	case gtsmodel.NotificationPendingReply:
+		pushNotification.Title = fmt.Sprintf("%s mentioned you, which requires your approval", displayNameOrAcct)
+	case gtsmodel.NotificationPendingReblog:
+		pushNotification.Title = fmt.Sprintf("%s boosted your post, which requires your approval", displayNameOrAcct)
+	case gtsmodel.NotificationAdminReport:
+		pushNotification.Title = fmt.Sprintf("%s submitted a report", displayNameOrAcct)
+	case gtsmodel.NotificationUpdate:
+		pushNotification.Title = fmt.Sprintf("%s updated their post", displayNameOrAcct)
+	default:
+		log.Warnf(ctx, "Unknown notification type: %d", notification.NotificationType)
+		pushNotification.Title = fmt.Sprintf(
+			"%s did something (unknown notification type %d)",
+			displayNameOrAcct,
+			notification.NotificationType,
+		)
+	}
 
 	// Set the notification body.
 	if apiNotification.Status != nil {
@@ -184,7 +226,7 @@ func (r *realSender) sendToSubscription(
 	} else {
 		pushNotification.Body = text.SanitizeToPlaintext(apiNotification.Account.Note)
 	}
-	// TODO: (Vyr) trim this
+	pushNotification.Body = firstNBytesTrimSpace(pushNotification.Body, bodyMaxLen)
 
 	// Encode the push notification as JSON.
 	pushNotificationBytes, err := json.Marshal(pushNotification)
@@ -221,6 +263,7 @@ func (r *realSender) sendToSubscription(
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
 		if resp.StatusCode >= 400 && resp.StatusCode <= 499 &&
 			resp.StatusCode != http.StatusRequestTimeout &&
+			resp.StatusCode != http.StatusRequestEntityTooLarge &&
 			resp.StatusCode != http.StatusTooManyRequests {
 			// We should not send any more notifications to this subscription. Try to delete it.
 			if err := r.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, subscription.TokenID); err != nil {
@@ -254,6 +297,11 @@ func (r *realSender) sendToSubscription(
 	}
 
 	return nil
+}
+
+// firstNBytesTrimSpace returns the first N bytes of a string, trimming leading and trailing whitespace.
+func firstNBytesTrimSpace(s string, n int) string {
+	return strings.TrimSpace(text.FirstNBytesByWords(strings.TrimSpace(s), n))
 }
 
 // gtsHTTPClientRoundTripper helps wrap a GtS HTTP client back into a regular HTTP client,

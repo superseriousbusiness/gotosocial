@@ -597,6 +597,9 @@ github.com/quasoft/memstore
 # github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec
 ## explicit; go 1.12
 github.com/remyoudompheng/bigfft
+# github.com/rivo/uniseg v0.4.7
+## explicit; go 1.18
+github.com/rivo/uniseg
 # github.com/rogpeppe/go-internal v1.13.2-0.20241226121412-a5dc8ff20d0a
 ## explicit; go 1.22.0
 github.com/rogpeppe/go-internal/fmtsort

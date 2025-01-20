@@ -56,7 +56,7 @@ const (
 	NotificationPendingReply  NotificationType = 10 // NotificationPendingReply -- Someone has replied to a status of yours, which requires approval by you.
 	NotificationPendingReblog NotificationType = 11 // NotificationPendingReblog -- Someone has boosted a status of yours, which requires approval by you.
 	NotificationAdminReport   NotificationType = 12 // NotificationAdminReport -- someone has submitted a new report to the instance.
-	NotificationUpdate        NotificationType = 13
+	NotificationUpdate        NotificationType = 13 // NotificationUpdate -- someone has edited their status.
 	NotificationTypeNumValues NotificationType = 14 // NotificationTypeNumValues -- 1 + number of max notification type
 )
 

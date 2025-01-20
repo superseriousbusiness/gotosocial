@@ -168,7 +168,7 @@ type notifyingReadCloser struct {
 	bodyClosed chan struct{}
 }
 
-func (rc *notifyingReadCloser) Read(p []byte) (n int, err error) {
+func (rc *notifyingReadCloser) Read(_ []byte) (n int, err error) {
 	return 0, io.EOF
 }
 

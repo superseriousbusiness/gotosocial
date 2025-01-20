@@ -66,6 +66,7 @@ require (
 	github.com/ncruces/go-sqlite3 v0.22.0
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.20.5
+	github.com/rivo/uniseg v0.4.7
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
