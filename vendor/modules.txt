@@ -211,8 +211,8 @@ github.com/gabriel-vasile/mimetype
 github.com/gabriel-vasile/mimetype/internal/charset
 github.com/gabriel-vasile/mimetype/internal/json
 github.com/gabriel-vasile/mimetype/internal/magic
-# github.com/gin-contrib/cors v1.7.2
-## explicit; go 1.18
+# github.com/gin-contrib/cors v1.7.3
+## explicit; go 1.21.0
 github.com/gin-contrib/cors
 # github.com/gin-contrib/gzip v1.1.0
 ## explicit; go 1.21.0
