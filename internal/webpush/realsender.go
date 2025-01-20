@@ -189,7 +189,7 @@ func (r *realSender) sendToSubscription(
 		pushNotification.Title = fmt.Sprintf("%s faved your post", displayNameOrAcct)
 	case gtsmodel.NotificationPoll:
 		if subscription.AccountID == notification.TargetAccountID {
-			pushNotification.Title = fmt.Sprintf("Your poll has ended")
+			pushNotification.Title = "Your poll has ended"
 		} else {
 			pushNotification.Title = fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
 		}
