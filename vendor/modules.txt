@@ -653,7 +653,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.9.0-gts
+# github.com/superseriousbusiness/activity v1.9.0-gts.0.20250121090817-0ef92d24eba1
 ## explicit; go 1.21
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams

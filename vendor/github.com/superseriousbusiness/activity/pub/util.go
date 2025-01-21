@@ -385,19 +385,6 @@ func wrapInCreate(ctx context.Context, o vocab.Type, actor *url.URL) (c vocab.Ac
 	return
 }
 
-// filterURLs removes urls whose strings match the provided filter
-func filterURLs(u []*url.URL, fn func(s string) bool) []*url.URL {
-	i := 0
-	for i < len(u) {
-		if fn(u[i].String()) {
-			u = append(u[:i], u[i+1:]...)
-		} else {
-			i++
-		}
-	}
-	return u
-}
-
 const (
 	// PublicActivityPubIRI is the IRI that indicates an Activity is meant
 	// to be visible for general public consumption.
@@ -412,8 +399,28 @@ func IsPublic(s string) bool {
 	return s == PublicActivityPubIRI || s == publicJsonLD || s == publicJsonLDAS
 }
 
-// getInboxes extracts the 'inbox' IRIs from actor types.
-func getInboxes(t []vocab.Type) (u []*url.URL, err error) {
+// Derives an ID URI from the given IdProperty and, if it's not the
+// magic AP Public IRI, appends it to the actorsAndCollections slice.
+func appendToActorsAndCollectionsIRIs(
+	iter IdProperty,
+	actorsAndCollections []*url.URL,
+) ([]*url.URL, error) {
+	id, err := ToId(iter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ignore Public IRI as we
+	// can't deliver to it directly.
+	if !IsPublic(id.String()) {
+		actorsAndCollections = append(actorsAndCollections, id)
+	}
+
+	return actorsAndCollections, nil
+}
+
+// actorsToInboxIRIs extracts the 'inbox' IRIs from actor types.
+func actorsToInboxIRIs(t []vocab.Type) (u []*url.URL, err error) {
 	for _, elem := range t {
 		var iri *url.URL
 		iri, err = getInbox(elem)
@@ -436,32 +443,37 @@ func getInbox(t vocab.Type) (u *url.URL, err error) {
 	return ToId(inbox)
 }
 
-// dedupeIRIs will deduplicate final inbox IRIs. The ignore list is applied to
-// the final list.
-func dedupeIRIs(recipients, ignored []*url.URL) (out []*url.URL) {
-	ignoredMap := make(map[string]bool, len(ignored))
-	for _, elem := range ignored {
-		ignoredMap[elem.String()] = true
+// filterInboxIRIs will deduplicate the given inboxes
+// slice, while also leaving out any filtered IRIs.
+func filterInboxIRIs(
+	inboxes []*url.URL,
+	filtered ...*url.URL,
+) []*url.URL {
+	// Prepopulate the ignored map with each filtered IRI.
+	ignored := make(map[string]struct{}, len(filtered)+len(inboxes))
+	for _, filteredIRI := range filtered {
+		ignored[filteredIRI.String()] = struct{}{}
 	}
-	outMap := make(map[string]bool, len(recipients))
-	for _, k := range recipients {
-		kStr := k.String()
-		if !ignoredMap[kStr] && !outMap[kStr] {
-			out = append(out, k)
-			outMap[kStr] = true
-		}
-	}
-	return
-}
 
-// removeOne removes any occurrences of entry from a slice of entries.
-func removeOne(entries []*url.URL, entry *url.URL) (out []*url.URL) {
-	for _, e := range entries {
-		if e.String() != entry.String() {
-			out = append(out, e)
+	deduped := make([]*url.URL, 0, len(inboxes))
+	for _, inbox := range inboxes {
+		inboxStr := inbox.String()
+		_, ignore := ignored[inboxStr]
+		if ignore {
+			// We already included
+			// this URI in out, or
+			// we should ignore it.
+			continue
 		}
+
+		// Include this IRI in output, and
+		// add entry to the ignored map to
+		// ensure we don't include it again.
+		deduped = append(deduped, inbox)
+		ignored[inboxStr] = struct{}{}
 	}
-	return out
+
+	return deduped
 }
 
 // stripHiddenRecipients removes "bto" and "bcc" from the activity.
