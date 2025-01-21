@@ -208,7 +208,7 @@ func (r *realSender) sendToSubscription(
 	case resp.StatusCode == http.StatusRequestTimeout ||
 		resp.StatusCode == http.StatusRequestEntityTooLarge ||
 		resp.StatusCode == http.StatusTooManyRequests ||
-		resp.StatusCode == http.StatusServiceUnavailable:
+		(resp.StatusCode >= 500 && resp.StatusCode <= 599):
 
 		// Try to get the response body.
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, responseBodyMaxLen))
@@ -223,7 +223,7 @@ func (r *realSender) sendToSubscription(
 			string(bodyBytes),
 		)
 
-	// Some serious error that indicates auth problems.
+	// Some serious error that indicates auth problems, not a Web Push server, etc.
 	// We should not send any more notifications to this subscription. Try to delete it.
 	default:
 		err := r.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, subscription.TokenID)
