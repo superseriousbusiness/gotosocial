@@ -41,9 +41,8 @@ func (p *Processor) CreateOrReplace(
 
 	// Clear any previous subscription.
 	if err := p.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, tokenID); err != nil {
-		return nil, gtserror.NewErrorInternalError(
-			gtserror.Newf("couldn't delete Web Push subscription for token ID %s: %w", tokenID, err),
-		)
+		err := gtserror.Newf("couldn't delete Web Push subscription for token ID %s: %w", tokenID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Insert a new one.
@@ -58,9 +57,8 @@ func (p *Processor) CreateOrReplace(
 	}
 
 	if err := p.state.DB.PutWebPushSubscription(ctx, subscription); err != nil {
-		return nil, gtserror.NewErrorInternalError(
-			gtserror.Newf("couldn't create Web Push subscription for token ID %s: %w", tokenID, err),
-		)
+		err := gtserror.Newf("couldn't create Web Push subscription for token ID %s: %w", tokenID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return p.apiSubscription(ctx, subscription)

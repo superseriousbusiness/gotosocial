@@ -44,9 +44,8 @@ func New(state *state.State, converter *typeutils.Converter) Processor {
 func (p *Processor) getTokenID(ctx context.Context, accessToken string) (string, gtserror.WithCode) {
 	token, err := p.state.DB.GetTokenByAccess(ctx, accessToken)
 	if err != nil {
-		return "", gtserror.NewErrorInternalError(
-			gtserror.Newf("couldn't find token ID for access token: %w", err),
-		)
+		err := gtserror.Newf("couldn't find token ID for access token: %w", err)
+		return "", gtserror.NewErrorInternalError(err)
 	}
 
 	return token.ID, nil
@@ -57,9 +56,8 @@ func (p *Processor) getTokenID(ctx context.Context, accessToken string) (string,
 func (p *Processor) apiSubscription(ctx context.Context, subscription *gtsmodel.WebPushSubscription) (*apimodel.WebPushSubscription, gtserror.WithCode) {
 	apiSubscription, err := p.converter.WebPushSubscriptionToAPIWebPushSubscription(ctx, subscription)
 	if err != nil {
-		return nil, gtserror.NewErrorInternalError(
-			gtserror.Newf("error converting Web Push subscription %s to API representation: %w", subscription.ID, err),
-		)
+		err := gtserror.Newf("error converting Web Push subscription %s to API representation: %w", subscription.ID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	return apiSubscription, nil

@@ -31,9 +31,8 @@ func (p *Processor) Delete(ctx context.Context, accessToken string) gtserror.Wit
 	}
 
 	if err := p.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, tokenID); err != nil {
-		return gtserror.NewErrorInternalError(
-			gtserror.Newf("couldn't delete Web Push subscription for token ID %s: %w", tokenID, err),
-		)
+		err := gtserror.Newf("couldn't delete Web Push subscription for token ID %s: %w", tokenID, err)
+		return gtserror.NewErrorInternalError(err)
 	}
 
 	return nil

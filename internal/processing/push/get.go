@@ -35,12 +35,12 @@ func (p *Processor) Get(ctx context.Context, accessToken string) (*apimodel.WebP
 
 	subscription, err := p.state.DB.GetWebPushSubscriptionByTokenID(ctx, tokenID)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, gtserror.NewErrorInternalError(
-			gtserror.Newf("couldn't get Web Push subscription for token ID %s: %w", tokenID, err),
-		)
+		err := gtserror.Newf("couldn't get Web Push subscription for token ID %s: %w", tokenID, err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 	if subscription == nil {
-		return nil, gtserror.NewErrorNotFound(errors.New("no Web Push subscription exists for this access token"))
+		err := errors.New("no Web Push subscription exists for this access token")
+		return nil, gtserror.NewErrorNotFound(err)
 	}
 
 	return p.apiSubscription(ctx, subscription)
