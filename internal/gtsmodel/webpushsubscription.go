@@ -21,10 +21,10 @@ package gtsmodel
 // There can be at most one per access token.
 type WebPushSubscription struct {
 	// ID of this subscription in the database.
-	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+	ID string `bun:"type:CHAR(26),pk,nullzero"`
 
 	// AccountID of the local account that created this subscription.
-	AccountID string `bun:"type:CHAR(26),notnull,nullzero"`
+	AccountID string `bun:"type:CHAR(26),nullzero,notnull"`
 
 	// TokenID is the ID of the associated access token.
 	// There can be at most one subscription for any given access token,

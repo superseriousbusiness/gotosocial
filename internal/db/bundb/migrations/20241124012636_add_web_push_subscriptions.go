@@ -35,19 +35,14 @@ func init() {
 				return err
 			}
 
-			for index, columns := range map[string][]string{
-				"web_push_subscriptions_account_id_idx": {"account_id"},
-				"web_push_subscriptions_token_id_idx":   {"token_id"},
-			} {
-				if _, err := tx.
-					NewCreateIndex().
-					Model(&gtsmodel.WebPushSubscription{}).
-					Index(index).
-					Column(columns...).
-					IfNotExists().
-					Exec(ctx); err != nil {
-					return err
-				}
+			if _, err := tx.
+				NewCreateIndex().
+				Model(&gtsmodel.WebPushSubscription{}).
+				Index("web_push_subscriptions_account_id_idx").
+				Column("account_id").
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
 			}
 
 			return nil
