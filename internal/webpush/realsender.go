@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -56,17 +57,6 @@ func NewRealSender(httpClient *http.Client, state *state.State) Sender {
 	}
 }
 
-// TTL is an arbitrary time to ask the Web Push server to store notifications
-// while waiting for the client to retrieve them.
-const TTL = 48 * time.Hour
-
-// responseBodyMaxLen limits how much of the Web Push server response we read for error messages.
-const responseBodyMaxLen = 1024
-
-// bodyMaxLen is a polite maximum length for a Web Push notification's body text, in bytes.
-// Note that this isn't limited per se, but Web Push servers may reject anything with a total request body size over 4k.
-const bodyMaxLen = 3000
-
 func (r *realSender) Send(
 	ctx context.Context,
 	notification *gtsmodel.Notification,
@@ -82,18 +72,15 @@ func (r *realSender) Send(
 			err,
 		)
 	}
-	if len(subscriptions) == 0 {
-		return nil
-	}
 
 	// Subscriptions we're actually going to send to.
-	relevantSubscriptions := make([]*gtsmodel.WebPushSubscription, 0, len(subscriptions))
-	for _, subscription := range subscriptions {
-		// Check whether this subscription wants this type of notification.
-		if subscription.NotificationFlags.Get(notification.NotificationType) {
-			relevantSubscriptions = append(relevantSubscriptions, subscription)
-		}
-	}
+	relevantSubscriptions := slices.DeleteFunc(
+		subscriptions,
+		func(subscription *gtsmodel.WebPushSubscription) bool {
+			// Remove subscriptions that don't want this type of notification.
+			return !subscription.NotificationFlags.Get(notification.NotificationType)
+		},
+	)
 	if len(relevantSubscriptions) == 0 {
 		return nil
 	}
@@ -156,6 +143,15 @@ func (r *realSender) sendToSubscription(
 	notification *gtsmodel.Notification,
 	apiNotification *apimodel.Notification,
 ) error {
+	const (
+		// TTL is an arbitrary time to ask the Web Push server to store notifications
+		// while waiting for the client to retrieve them.
+		TTL = 48 * time.Hour
+
+		// responseBodyMaxLen limits how much of the Web Push server response we read for error messages.
+		responseBodyMaxLen = 1024
+	)
+
 	// Get the associated access token.
 	token, err := r.state.DB.GetTokenByID(ctx, subscription.TokenID)
 	if err != nil {
@@ -166,67 +162,12 @@ func (r *realSender) sendToSubscription(
 	pushNotification := &apimodel.WebPushNotification{
 		NotificationID:   apiNotification.ID,
 		NotificationType: apiNotification.Type,
+		Title:            formatNotificationTitle(ctx, subscription, notification, apiNotification),
+		Body:             formatNotificationBody(apiNotification),
 		Icon:             apiNotification.Account.Avatar,
 		PreferredLocale:  notification.TargetAccount.Settings.Language,
 		AccessToken:      token.Access,
 	}
-
-	// Set the notification title.
-	displayNameOrAcct := apiNotification.Account.DisplayName
-	if displayNameOrAcct == "" {
-		displayNameOrAcct = apiNotification.Account.Acct
-	}
-	switch notification.NotificationType {
-	case gtsmodel.NotificationFollow:
-		pushNotification.Title = fmt.Sprintf("%s followed you", displayNameOrAcct)
-	case gtsmodel.NotificationFollowRequest:
-		pushNotification.Title = fmt.Sprintf("%s requested to follow you", displayNameOrAcct)
-	case gtsmodel.NotificationMention:
-		pushNotification.Title = fmt.Sprintf("%s mentioned you", displayNameOrAcct)
-	case gtsmodel.NotificationReblog:
-		pushNotification.Title = fmt.Sprintf("%s boosted your post", displayNameOrAcct)
-	case gtsmodel.NotificationFavourite:
-		pushNotification.Title = fmt.Sprintf("%s faved your post", displayNameOrAcct)
-	case gtsmodel.NotificationPoll:
-		if subscription.AccountID == notification.TargetAccountID {
-			pushNotification.Title = "Your poll has ended"
-		} else {
-			pushNotification.Title = fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
-		}
-	case gtsmodel.NotificationStatus:
-		pushNotification.Title = fmt.Sprintf("%s posted", displayNameOrAcct)
-	case gtsmodel.NotificationAdminSignup:
-		pushNotification.Title = fmt.Sprintf("%s requested to sign up", displayNameOrAcct)
-	case gtsmodel.NotificationPendingFave:
-		pushNotification.Title = fmt.Sprintf("%s faved your post, which requires your approval", displayNameOrAcct)
-	case gtsmodel.NotificationPendingReply:
-		pushNotification.Title = fmt.Sprintf("%s mentioned you, which requires your approval", displayNameOrAcct)
-	case gtsmodel.NotificationPendingReblog:
-		pushNotification.Title = fmt.Sprintf("%s boosted your post, which requires your approval", displayNameOrAcct)
-	case gtsmodel.NotificationAdminReport:
-		pushNotification.Title = fmt.Sprintf("%s submitted a report", displayNameOrAcct)
-	case gtsmodel.NotificationUpdate:
-		pushNotification.Title = fmt.Sprintf("%s updated their post", displayNameOrAcct)
-	default:
-		log.Warnf(ctx, "Unknown notification type: %d", notification.NotificationType)
-		pushNotification.Title = fmt.Sprintf(
-			"%s did something (unknown notification type %d)",
-			displayNameOrAcct,
-			notification.NotificationType,
-		)
-	}
-
-	// Set the notification body.
-	if apiNotification.Status != nil {
-		if apiNotification.Status.SpoilerText != "" {
-			pushNotification.Body = apiNotification.Status.SpoilerText
-		} else {
-			pushNotification.Body = text.SanitizeToPlaintext(apiNotification.Status.Content)
-		}
-	} else {
-		pushNotification.Body = text.SanitizeToPlaintext(apiNotification.Account.Note)
-	}
-	pushNotification.Body = firstNBytesTrimSpace(pushNotification.Body, bodyMaxLen)
 
 	// Encode the push notification as JSON.
 	pushNotificationBytes, err := json.Marshal(pushNotification)
@@ -256,47 +197,125 @@ func (r *realSender) sendToSubscription(
 	if err != nil {
 		return gtserror.Newf("error sending Web Push notification: %w", err)
 	}
-	defer func() {
-		_ = resp.Body.Close()
-	}()
+	defer resp.Body.Close()
 
-	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		if resp.StatusCode >= 400 && resp.StatusCode <= 499 &&
-			resp.StatusCode != http.StatusRequestTimeout &&
-			resp.StatusCode != http.StatusRequestEntityTooLarge &&
-			resp.StatusCode != http.StatusTooManyRequests {
-			// We should not send any more notifications to this subscription. Try to delete it.
-			if err := r.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, subscription.TokenID); err != nil {
-				return gtserror.Newf(
-					"received HTTP status %s but failed to delete subscription: %s",
-					resp.Status,
-					err,
-				)
-			}
-			log.Infof(
-				ctx,
-				"Deleted Web Push subscription with token ID %s because push server sent HTTP status %s",
-				subscription.TokenID,
-				resp.Status,
-			)
-			return nil
-		}
+	switch {
+	// All good, delivered.
+	case resp.StatusCode >= 200 && resp.StatusCode <= 299:
+		return nil
 
-		// Otherwise, try to get the response body.
+	// Temporary outage or some other delivery issue.
+	case resp.StatusCode == http.StatusRequestTimeout ||
+		resp.StatusCode == http.StatusRequestEntityTooLarge ||
+		resp.StatusCode == http.StatusTooManyRequests ||
+		resp.StatusCode == http.StatusServiceUnavailable:
+
+		// Try to get the response body.
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, responseBodyMaxLen))
 		if err != nil {
 			return gtserror.Newf("error reading Web Push server response: %w", err)
 		}
 
-		// Log the error with its response body.
+		// Return the error with its response body.
 		return gtserror.Newf(
 			"unexpected HTTP status %s received when sending Web Push notification: %s",
 			resp.Status,
 			string(bodyBytes),
 		)
+
+	// Some serious error that indicates auth problems.
+	// We should not send any more notifications to this subscription. Try to delete it.
+	default:
+		err := r.state.DB.DeleteWebPushSubscriptionByTokenID(ctx, subscription.TokenID)
+		if err != nil {
+			return gtserror.Newf(
+				"received HTTP status %s but failed to delete subscription: %s",
+				resp.Status,
+				err,
+			)
+		}
+
+		log.Infof(
+			ctx,
+			"Deleted Web Push subscription with token ID %s because push server sent HTTP status %s",
+			subscription.TokenID, resp.Status,
+		)
+		return nil
+	}
+}
+
+// formatNotificationTitle creates a title for a Web Push notification from the notification type and account's name.
+func formatNotificationTitle(
+	ctx context.Context,
+	subscription *gtsmodel.WebPushSubscription,
+	notification *gtsmodel.Notification,
+	apiNotification *apimodel.Notification,
+) string {
+	displayNameOrAcct := apiNotification.Account.DisplayName
+	if displayNameOrAcct == "" {
+		displayNameOrAcct = apiNotification.Account.Acct
 	}
 
-	return nil
+	switch notification.NotificationType {
+	case gtsmodel.NotificationFollow:
+		return fmt.Sprintf("%s followed you", displayNameOrAcct)
+	case gtsmodel.NotificationFollowRequest:
+		return fmt.Sprintf("%s requested to follow you", displayNameOrAcct)
+	case gtsmodel.NotificationMention:
+		return fmt.Sprintf("%s mentioned you", displayNameOrAcct)
+	case gtsmodel.NotificationReblog:
+		return fmt.Sprintf("%s boosted your post", displayNameOrAcct)
+	case gtsmodel.NotificationFavourite:
+		return fmt.Sprintf("%s faved your post", displayNameOrAcct)
+	case gtsmodel.NotificationPoll:
+		if subscription.AccountID == notification.TargetAccountID {
+			return "Your poll has ended"
+		} else {
+			return fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
+		}
+	case gtsmodel.NotificationStatus:
+		return fmt.Sprintf("%s posted", displayNameOrAcct)
+	case gtsmodel.NotificationAdminSignup:
+		return fmt.Sprintf("%s requested to sign up", displayNameOrAcct)
+	case gtsmodel.NotificationPendingFave:
+		return fmt.Sprintf("%s faved your post, which requires your approval", displayNameOrAcct)
+	case gtsmodel.NotificationPendingReply:
+		return fmt.Sprintf("%s mentioned you, which requires your approval", displayNameOrAcct)
+	case gtsmodel.NotificationPendingReblog:
+		return fmt.Sprintf("%s boosted your post, which requires your approval", displayNameOrAcct)
+	case gtsmodel.NotificationAdminReport:
+		return fmt.Sprintf("%s submitted a report", displayNameOrAcct)
+	case gtsmodel.NotificationUpdate:
+		return fmt.Sprintf("%s updated their post", displayNameOrAcct)
+	default:
+		log.Warnf(ctx, "Unknown notification type: %d", notification.NotificationType)
+		return fmt.Sprintf(
+			"%s did something (unknown notification type %d)",
+			displayNameOrAcct,
+			notification.NotificationType,
+		)
+	}
+}
+
+// formatNotificationBody creates a body for a Web Push notification,
+// from the CW or beginning of the body text of the status, if there is one,
+// or the beginning of the bio text of the related account.
+func formatNotificationBody(apiNotification *apimodel.Notification) string {
+	// bodyMaxLen is a polite maximum length for a Web Push notification's body text, in bytes. Note that this isn't
+	// limited per se, but Web Push servers may reject anything with a total request body size over 4k.
+	const bodyMaxLen = 3000
+
+	var body string
+	if apiNotification.Status != nil {
+		if apiNotification.Status.SpoilerText != "" {
+			body = apiNotification.Status.SpoilerText
+		} else {
+			body = text.SanitizeToPlaintext(apiNotification.Status.Content)
+		}
+	} else {
+		body = text.SanitizeToPlaintext(apiNotification.Account.Note)
+	}
+	return firstNBytesTrimSpace(body, bodyMaxLen)
 }
 
 // firstNBytesTrimSpace returns the first N bytes of a string, trimming leading and trailing whitespace.
