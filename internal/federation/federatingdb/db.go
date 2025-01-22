@@ -21,6 +21,7 @@ import (
 	"context"
 	"net/url"
 
+	"codeberg.org/gruf/go-cache/v3/simple"
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
@@ -61,6 +62,10 @@ type federatingDB struct {
 	visFilter  *visibility.Filter
 	intFilter  *interaction.Filter
 	spamFilter *spam.Filter
+
+	// tracks Activity IDs we have handled creates for,
+	// for use in the Exists() function during forwarding.
+	activityIDs simple.Cache[string, struct{}]
 }
 
 // New returns a DB that satisfies the pub.Database
@@ -79,5 +84,6 @@ func New(
 		intFilter:  intFilter,
 		spamFilter: spamFilter,
 	}
+	fdb.activityIDs.Init(0, 2048)
 	return &fdb
 }

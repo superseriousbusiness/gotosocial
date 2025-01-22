@@ -33,7 +33,7 @@ import (
 var _ interface {
 	pub.CommonBehavior
 	pub.FederatingProtocol
-} = &Federator{}
+} = (*Federator)(nil)
 
 type Federator struct {
 	db                  db.DB
