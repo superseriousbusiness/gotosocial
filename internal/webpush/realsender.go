@@ -85,7 +85,7 @@ func (r *realSender) Send(
 		return nil
 	}
 
-	// Load VAPID keys into webpush-go options struct.
+	// Get VAPID keys.
 	vapidKeyPair, err := r.state.DB.GetVAPIDKeyPair(ctx)
 	if err != nil {
 		return gtserror.Newf("error getting VAPID key pair: %w", err)
@@ -103,8 +103,13 @@ func (r *realSender) Send(
 		vapidSubjectEmail = "admin@" + domain
 	}
 
+	// Get target account settings.
+	targetAccountSettings, err := r.state.DB.GetAccountSettings(ctx, notification.TargetAccountID)
+	if err != nil {
+		return gtserror.Newf("error getting settings for account %s: %w", notification.TargetAccountID, err)
+	}
+
 	// Get API representations of notification and accounts involved.
-	// This also loads the target account's settings.
 	apiNotification, err := r.tc.NotificationToAPINotification(ctx, notification, filters, mutes)
 	if err != nil {
 		return gtserror.Newf("error converting notification %s to API representation: %w", notification.ID, err)
@@ -117,6 +122,7 @@ func (r *realSender) Send(
 				ctx,
 				vapidKeyPair,
 				vapidSubjectEmail,
+				targetAccountSettings,
 				subscription,
 				notification,
 				apiNotification,
@@ -139,6 +145,7 @@ func (r *realSender) sendToSubscription(
 	ctx context.Context,
 	vapidKeyPair *gtsmodel.VAPIDKeyPair,
 	vapidSubjectEmail string,
+	targetAccountSettings *gtsmodel.AccountSettings,
 	subscription *gtsmodel.WebPushSubscription,
 	notification *gtsmodel.Notification,
 	apiNotification *apimodel.Notification,
@@ -165,7 +172,7 @@ func (r *realSender) sendToSubscription(
 		Title:            formatNotificationTitle(ctx, subscription, notification, apiNotification),
 		Body:             formatNotificationBody(apiNotification),
 		Icon:             apiNotification.Account.Avatar,
-		PreferredLocale:  notification.TargetAccount.Settings.Language,
+		PreferredLocale:  targetAccountSettings.Language,
 		AccessToken:      token.Access,
 	}
 
