@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"slices"
 
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -778,20 +777,30 @@ func (a *SideEffectActor) prepare(
 
 	// We now need to dereference the actor or collection
 	// IRIs to derive inboxes that we can POST requests to.
-	//
+	var (
+		inboxes       = make([]*url.URL, 0, len(actorsAndCollections))
+		derefdEntries = make(map[string]struct{}, len(actorsAndCollections))
+	)
+
 	// First check if the implemented database logic
 	// can return any of these inboxes without having
 	// to make remote dereference calls (much cheaper).
-	inboxesFromDB := []*url.URL{}
 	for _, actorOrCollection := range actorsAndCollections {
+		actorOrCollectionStr := actorOrCollection.String()
+		if _, derefd := derefdEntries[actorOrCollectionStr]; derefd {
+			// Ignore potential duplicates
+			// we've already derefd to inbox(es).
+			continue
+		}
+
 		// BEGIN LOCK
 		unlock, err := a.db.Lock(ctx, actorOrCollection)
 		if err != nil {
 			return nil, err
 		}
 
-		// Try to get inbox(es) for this actor or collection IRI.
-		inboxes, err := a.db.InboxesForIRI(ctx, actorOrCollection)
+		// Try to get inbox(es) for this actor or collection.
+		gotInboxes, err := a.db.InboxesForIRI(ctx, actorOrCollection)
 
 		// END LOCK
 		unlock()
@@ -800,20 +809,16 @@ func (a *SideEffectActor) prepare(
 			return nil, err
 		}
 
-		if len(inboxes) > 0 {
-			// We have a hit.
-			inboxesFromDB = append(inboxesFromDB, inboxes...)
-
-			// Since we found one or more inboxes for this iri,
-			// we should remove it from the list of actors and
-			// collections we still need to deref to inboxes.
-			actorsAndCollections = slices.DeleteFunc(
-				actorsAndCollections,
-				func(t *url.URL) bool {
-					return t.String() == actorOrCollection.String()
-				},
-			)
+		if len(gotInboxes) == 0 {
+			// No hit(s).
+			continue
 		}
+
+		// We have one or more hits.
+		inboxes = append(inboxes, gotInboxes...)
+
+		// Mark this actor or collection as deref'd.
+		derefdEntries[actorOrCollectionStr] = struct{}{}
 	}
 
 	// Now look for any remaining actors/collections
@@ -827,29 +832,32 @@ func (a *SideEffectActor) prepare(
 		return nil, err
 	}
 
-	// Fetch remaining actors, unpacking collection
-	// IRIs into Actor IRIs and then into Actor types.
+	// Make HTTP calls to unpack collection IRIs into
+	// Actor IRIs and then into Actor types, ignoring
+	// actors or collections we've already deref'd.
 	actorsFromRemote, err := a.resolveActors(
 		ctx,
 		t,
 		actorsAndCollections,
-		0,
-		a.s2s.MaxDeliveryRecursionDepth(ctx),
+		derefdEntries,
+		0, a.s2s.MaxDeliveryRecursionDepth(ctx),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	// Extract inbox IRI from each Actor type.
+	// Release no-longer-needed collections.
+	clear(derefdEntries)
+	clear(actorsAndCollections)
+
+	// Extract inbox IRI from each deref'd Actor (if any).
 	inboxesFromRemote, err := actorsToInboxIRIs(actorsFromRemote)
 	if err != nil {
 		return nil, err
 	}
 
-	// Combine db-discovered inboxes and deref-discovered
-	// inboxes to a final list of destination inboxes.
-	inboxes := []*url.URL{}
-	inboxes = append(inboxes, inboxesFromDB...)
+	// Combine db-discovered inboxes and remote-discovered
+	// inboxes into a final list of destination inboxes.
 	inboxes = append(inboxes, inboxesFromRemote...)
 
 	// POST FILTERING
@@ -919,37 +927,73 @@ func (a *SideEffectActor) prepare(
 // instances of actorObject. It attempts to apply recursively when it encounters
 // a target that is a Collection or OrderedCollection.
 //
+// Any IRI strings in the ignores map will be skipped (use this when
+// you've already dereferenced some of the actorAndCollectionIRIs).
+//
 // If maxDepth is zero or negative, then recursion is infinitely applied.
 //
 // If a recipient is a Collection or OrderedCollection, then the server MUST
 // dereference the collection, WITH the user's credentials.
 //
 // Note that this also applies to CollectionPage and OrderedCollectionPage.
-func (a *SideEffectActor) resolveActors(c context.Context, t Transport, r []*url.URL, depth, maxDepth int) (actors []vocab.Type, err error) {
+func (a *SideEffectActor) resolveActors(
+	ctx context.Context,
+	t Transport,
+	actorAndCollectionIRIs []*url.URL,
+	ignores map[string]struct{},
+	depth, maxDepth int,
+) ([]vocab.Type, error) {
 	if maxDepth > 0 && depth >= maxDepth {
-		return
+		// Hit our max depth.
+		return nil, nil
 	}
-	for _, u := range r {
-		var act vocab.Type
-		var more []*url.URL
-		// TODO: Determine if more logic is needed here for inaccessible
-		// collections owned by peer servers.
-		act, more, err = a.dereferenceForResolvingInboxes(c, t, u)
+
+	if len(actorAndCollectionIRIs) == 0 {
+		// Nothing to do.
+		return nil, nil
+	}
+
+	// Optimistically assume 1:1 mapping of IRIs to actors.
+	actors := make([]vocab.Type, 0, len(actorAndCollectionIRIs))
+	
+	// Deref each actorOrCollectionIRI if not ignored.
+	for _, actorOrCollectionIRI := range actorAndCollectionIRIs {
+		_, ignore := ignores[actorOrCollectionIRI.String()]
+		if ignore {
+			// Don't try to
+			// deref this one.
+			continue
+		}
+
+		// TODO: Determine if more logic is needed here for
+		// inaccessible collections owned by peer servers.
+		actor, more, err := a.dereferenceForResolvingInboxes(ctx, t, actorOrCollectionIRI)
 		if err != nil {
 			// Missing recipient -- skip.
 			continue
 		}
-		var recurActors []vocab.Type
-		recurActors, err = a.resolveActors(c, t, more, depth+1, maxDepth)
+
+		if actor != nil {
+			// Got a hit.
+			actors = append(actors, actor)
+		}
+
+		// If this was a collection, get more.
+		recurActors, err := a.resolveActors(
+			ctx,
+			t,
+			more,
+			ignores,
+			depth+1, maxDepth,
+		)
 		if err != nil {
-			return
+			return nil, err
 		}
-		if act != nil {
-			actors = append(actors, act)
-		}
+
 		actors = append(actors, recurActors...)
 	}
-	return
+
+	return actors, nil
 }
 
 // dereferenceForResolvingInboxes dereferences an IRI solely for finding an
