@@ -32,6 +32,13 @@ type WebPushSubscription struct {
 
 	// Which alerts should be delivered to the endpoint.
 	Alerts WebPushSubscriptionAlerts `json:"alerts"`
+
+	// Which accounts should generate notifications.
+	Policy WebPushNotificationPolicy `json:"policy"`
+
+	// Whether the subscription uses RFC or pre-RFC Web Push standards.
+	// For GotoSocial, this is always true.
+	Standard bool `json:"standard"`
 }
 
 // WebPushSubscriptionAlerts represents the specific events that this Web Push subscription will receive.
@@ -140,3 +147,11 @@ type WebPushSubscriptionRequestData struct {
 	// Alerts selects the specific events that this Web Push subscription will receive.
 	Alerts *WebPushSubscriptionAlerts `form:"-" json:"alerts"`
 }
+
+// WebPushNotificationPolicy names sets of accounts that can generate notifications.
+type WebPushNotificationPolicy string
+
+const (
+	// WebPushNotificationPolicyAll allows all accounts to send notifications to the subscribing user.
+	WebPushNotificationPolicyAll WebPushNotificationPolicy = "all"
+)

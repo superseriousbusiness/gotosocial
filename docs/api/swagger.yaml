@@ -186,6 +186,10 @@ definitions:
         title: TimelineMarker contains information about a user's progress through a specific timeline.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    WebPushNotificationPolicy:
+        title: WebPushNotificationPolicy names sets of accounts that can generate notifications.
+        type: string
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     account:
         description: The modelled account can be either a remote account, or one on this instance.
         properties:
@@ -3452,10 +3456,18 @@ definitions:
                 description: The id of the push subscription in the database.
                 type: string
                 x-go-name: ID
+            policy:
+                $ref: '#/definitions/WebPushNotificationPolicy'
             server_key:
                 description: The streaming server's VAPID public key.
                 type: string
                 x-go-name: ServerKey
+            standard:
+                description: |-
+                    Whether the subscription uses RFC or pre-RFC Web Push standards.
+                    For GotoSocial, this is always true.
+                type: boolean
+                x-go-name: Standard
         title: WebPushSubscription represents a subscription to a Web Push server.
         type: object
         x-go-name: WebPushSubscription

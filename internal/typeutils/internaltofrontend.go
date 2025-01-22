@@ -3026,5 +3026,7 @@ func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
 			PendingReply:     subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReply),
 			PendingReblog:    subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReblog),
 		},
+		Policy:   apimodel.WebPushNotificationPolicyAll,
+		Standard: true,
 	}, nil
 }
