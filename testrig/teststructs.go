@@ -29,7 +29,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 )
 
 // TestStructs encapsulates structs needed to
@@ -48,7 +47,7 @@ type TestStructs struct {
 	HTTPClient          *MockHTTPClient
 	TypeConverter       *typeutils.Converter
 	EmailSender         email.Sender
-	WebPushSender       *webpush.MockSender
+	WebPushSender       *WebPushMockSender
 	TransportController transport.Controller
 }
 
@@ -85,7 +84,7 @@ func SetupTestStructs(
 	federator := NewTestFederator(&state, transportController, mediaManager)
 	oauthServer := NewTestOauthServer(db)
 	emailSender := NewEmailSender(rTemplatePath, nil)
-	webPushSender := webpush.NewMockSender()
+	webPushSender := NewWebPushMockSender()
 
 	common := common.New(
 		&state,

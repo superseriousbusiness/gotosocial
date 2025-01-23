@@ -40,7 +40,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -99,7 +98,7 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		testrig.NewTestMediaManager(&suite.state),
 		&suite.state,
 		suite.emailSender,
-		webpush.NewNoopSender(),
+		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)

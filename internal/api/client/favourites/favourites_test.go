@@ -31,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -103,7 +102,7 @@ func (suite *FavouritesStandardTestSuite) SetupTest() {
 		&suite.state,
 		suite.federator,
 		suite.emailSender,
-		webpush.NewNoopSender(),
+		testrig.NewNoopWebPushSender(),
 		suite.mediaManager,
 	)
 	suite.favModule = favourites.New(suite.processor)

@@ -31,7 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -44,7 +43,7 @@ type PollsStandardTestSuite struct {
 	processor     *processing.Processor
 	emailSender   email.Sender
 	sentEmails    map[string]string
-	webPushSender *webpush.MockSender
+	webPushSender *testrig.WebPushMockSender
 	state         state.State
 
 	// standard suite models
@@ -97,7 +96,7 @@ func (suite *PollsStandardTestSuite) SetupTest() {
 		&suite.state,
 		suite.federator,
 		suite.emailSender,
-		webpush.NewNoopSender(),
+		testrig.NewNoopWebPushSender(),
 		suite.mediaManager,
 	)
 	suite.pollsModule = polls.New(suite.processor)

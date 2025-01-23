@@ -50,7 +50,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -165,7 +164,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	federator := testrig.NewTestFederator(state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
-	webPushSender := webpush.NewMockSender()
+	webPushSender := testrig.NewWebPushMockSender()
 	typeConverter := typeutils.NewConverter(state)
 	filter := visibility.NewFilter(state)
 

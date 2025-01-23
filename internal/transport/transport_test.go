@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -94,7 +93,7 @@ func (suite *TransportTestSuite) SetupTest() {
 		&suite.state,
 		suite.federator,
 		suite.emailSender,
-		webpush.NewNoopSender(),
+		testrig.NewNoopWebPushSender(),
 		suite.mediaManager,
 	)
 

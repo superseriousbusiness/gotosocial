@@ -36,7 +36,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -182,7 +181,7 @@ func (suite *FromClientAPITestSuite) checkStreamed(
 
 // checkWebPushed asserts that the target account got a single Web Push notification with a given type.
 func (suite *FromClientAPITestSuite) checkWebPushed(
-	sender *webpush.MockSender,
+	sender *testrig.WebPushMockSender,
 	accountID string,
 	notificationType gtsmodel.NotificationType,
 ) {
@@ -195,7 +194,7 @@ func (suite *FromClientAPITestSuite) checkWebPushed(
 
 // checkNotWebPushed asserts that the target account got no Web Push notifications.
 func (suite *FromClientAPITestSuite) checkNotWebPushed(
-	sender *webpush.MockSender,
+	sender *testrig.WebPushMockSender,
 	accountID string,
 ) {
 	pushedNotifications := sender.Sent[accountID]

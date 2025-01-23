@@ -36,7 +36,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -99,7 +98,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 		&suite.state,
 		suite.federator,
 		testrig.NewEmailSender("../../../../web/template/", nil),
-		webpush.NewNoopSender(),
+		testrig.NewNoopWebPushSender(),
 		suite.mediaManager,
 	)
 	suite.userModule = user.New(suite.processor)

@@ -15,24 +15,47 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package webpush
+package testrig
 
 import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 )
 
-// noopSender drops anything sent to it.
-// This should only be used in tests.
-type noopSender struct{}
-
-func NewNoopSender() Sender {
-	return &noopSender{}
+// WebPushMockSender collects a map of notifications sent to each account ID.
+type WebPushMockSender struct {
+	Sent map[string][]*gtsmodel.Notification
 }
 
-func (n *noopSender) Send(
+// NewWebPushMockSender creates a mock sender that can record sent Web Push notifications for test expectations.
+func NewWebPushMockSender() *WebPushMockSender {
+	return &WebPushMockSender{
+		Sent: map[string][]*gtsmodel.Notification{},
+	}
+}
+
+func (m *WebPushMockSender) Send(
+	ctx context.Context,
+	notification *gtsmodel.Notification,
+	filters []*gtsmodel.Filter,
+	mutes *usermute.CompiledUserMuteList,
+) error {
+	m.Sent[notification.TargetAccountID] = append(m.Sent[notification.TargetAccountID], notification)
+	return nil
+}
+
+// noopSender drops anything sent to it.
+type noopWebPushSender struct{}
+
+// NewNoopWebPushSender creates a no-op sender that does nothing.
+func NewNoopWebPushSender() webpush.Sender {
+	return &noopWebPushSender{}
+}
+
+func (n *noopWebPushSender) Send(
 	ctx context.Context,
 	notification *gtsmodel.Notification,
 	filters []*gtsmodel.Filter,

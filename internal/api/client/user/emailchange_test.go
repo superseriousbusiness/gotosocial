@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -45,7 +44,7 @@ func (suite *EmailChangeTestSuite) TestEmailChangePOST() {
 	storage := testrig.NewInMemoryStorage()
 	sentEmails := make(map[string]string)
 	emailSender := testrig.NewEmailSender("../../../../web/template/", sentEmails)
-	webPushSender := webpush.NewNoopSender()
+	webPushSender := testrig.NewNoopWebPushSender()
 	processor := testrig.NewTestProcessor(state, suite.federator, emailSender, webPushSender, suite.mediaManager)
 	testrig.StartWorkers(state, processor.Workers())
 	userModule := user.New(processor)
