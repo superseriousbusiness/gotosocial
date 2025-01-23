@@ -53,6 +53,12 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	idProp.SetIRI(profileIDURI)
 	person.SetJSONLDId(idProp)
 
+	// published
+	// The moment when the account was created.
+	publishedProp := streams.NewActivityStreamsPublishedProperty()
+	publishedProp.Set(a.CreatedAt)
+	person.SetActivityStreamsPublished(publishedProp)
+
 	// following
 	// The URI for retrieving a list of accounts this user is following
 	followingURI, err := url.Parse(a.FollowingURI)
