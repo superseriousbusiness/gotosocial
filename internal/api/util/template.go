@@ -18,6 +18,7 @@
 package util
 
 import (
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -63,6 +64,11 @@ type WebPage struct {
 // ogMeta, stylesheets, javascript, and any extra
 // properties will be provided to the template if
 // set, but can all be nil.
+//
+// TemplateWebPage also checks whether the requesting
+// clientIP is 127.0.0.1 or within a private IP range.
+// If so, it injects a suggestion into the page header
+// about setting trusted-proxies correctly.
 func TemplateWebPage(
 	c *gin.Context,
 	page WebPage,
@@ -74,12 +80,86 @@ func TemplateWebPage(
 		"javascript":  page.Javascript,
 	}
 
+	// Add extras to template object.
 	for k, v := range page.Extra {
 		obj[k] = v
 	}
 
+	// Inject trustedProxiesRec to template
+	// object (or noop if not necessary).
+	injectTrustedProxiesRec(c, obj)
+
 	templatePage(c, page.Template, http.StatusOK, obj)
 }
+
+func injectTrustedProxiesRec(
+	c *gin.Context,
+	obj map[string]any,
+) {
+	clientIP := c.ClientIP()
+	if clientIP == "127.0.0.1" {
+		// Suggest precise 127.0.0.1/32.
+		trustedProxiesRec := clientIP + "/32"
+		obj["trustedProxiesRec"] = trustedProxiesRec
+		return
+	}
+
+	// True if "X-Forwarded-For"
+	// or "X-Real-IP" were set.
+	var hasRemoteIPHeader bool
+	for _, k := range []string{
+		"X-Forwarded-For",
+		"X-Real-IP",
+	} {
+		if v := c.GetHeader(k); v != "" {
+			hasRemoteIPHeader = true
+			break
+		}
+	}
+
+	if !hasRemoteIPHeader {
+		// Upstream hasn't set a
+		// remote IP header, bail.
+		return
+	}
+
+	ip := net.ParseIP(clientIP)
+	if !ip.IsPrivate() {
+		// Upstream set a remote IP
+		// header but final clientIP
+		// isn't private, so upstream
+		// is probably already trusted.
+		// Don't inject suggestion.
+		return
+	}
+
+	// Private IP, guess if Docker.
+	if dockerSubnet.Contains(ip) {
+		// Suggest a CIDR that likely
+		// covers this Docker subnet,
+		// eg., 172.17.0.0 -> 172.17.255.255.
+		trustedProxiesRec := clientIP + "/16"
+		obj["trustedProxiesRec"] = trustedProxiesRec
+		return
+	}
+
+	// Private IP but we don't know
+	// what it is. Suggest precise CIDR.
+	trustedProxiesRec := clientIP + "/32"
+	obj["trustedProxiesRec"] = trustedProxiesRec
+	return
+}
+
+// dockerSubnet is a CIDR that lets one make hazy guesses
+// as to whether an address is within the ranges Docker
+// uses for subnets, ie., 172.16.0.0 -> 172.31.255.255.
+var dockerSubnet = func() *net.IPNet {
+	_, subnet, err := net.ParseCIDR("172.16.0.0/12")
+	if err != nil {
+		panic(err)
+	}
+	return subnet
+}()
 
 // templateErrorPage renders the given
 // HTTP code, error, and request ID
