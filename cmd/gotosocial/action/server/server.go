@@ -254,7 +254,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Create a Web Push notification sender.
-	webPushSender := webpush.NewSender(client, state)
+	webPushSender := webpush.NewSender(client, state, typeConverter)
 
 	// Initialize both home / list timelines.
 	state.Timelines.Home = timeline.NewManager(

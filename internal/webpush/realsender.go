@@ -44,16 +44,16 @@ import (
 type realSender struct {
 	httpClient *http.Client
 	state      *state.State
-	tc         *typeutils.Converter
+	converter  *typeutils.Converter
 }
 
 // NewRealSender creates a Sender from an http.Client instead of an httpclient.Client.
 // This should only be used by NewSender and in tests.
-func NewRealSender(httpClient *http.Client, state *state.State) Sender {
+func NewRealSender(httpClient *http.Client, state *state.State, converter *typeutils.Converter) Sender {
 	return &realSender{
 		httpClient: httpClient,
 		state:      state,
-		tc:         typeutils.NewConverter(state),
+		converter:  converter,
 	}
 }
 
@@ -110,7 +110,7 @@ func (r *realSender) Send(
 	}
 
 	// Get API representations of notification and accounts involved.
-	apiNotification, err := r.tc.NotificationToAPINotification(ctx, notification, filters, mutes)
+	apiNotification, err := r.converter.NotificationToAPINotification(ctx, notification, filters, mutes)
 	if err != nil {
 		return gtserror.Newf("error converting notification %s to API representation: %w", notification.ID, err)
 	}

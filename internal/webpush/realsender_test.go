@@ -125,6 +125,7 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 			Transport: suite,
 		},
 		&suite.state,
+		suite.typeconverter,
 	)
 
 	suite.processor = processing.NewProcessor(

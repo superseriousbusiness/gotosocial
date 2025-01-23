@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Sender can send Web Push notifications.
@@ -39,7 +40,7 @@ type Sender interface {
 }
 
 // NewSender creates a new sender from an HTTP client, DB, and worker pool.
-func NewSender(httpClient *httpclient.Client, state *state.State) Sender {
+func NewSender(httpClient *httpclient.Client, state *state.State, converter *typeutils.Converter) Sender {
 	return NewRealSender(
 		&http.Client{
 			Transport: &gtsHTTPClientRoundTripper{
@@ -48,5 +49,6 @@ func NewSender(httpClient *httpclient.Client, state *state.State) Sender {
 			// Other fields are already set on the http.Client inside the httpclient.Client.
 		},
 		state,
+		converter,
 	)
 }
