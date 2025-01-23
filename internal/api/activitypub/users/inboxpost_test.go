@@ -177,38 +177,6 @@ func (suite *InboxPostTestSuite) newUndo(
 	return undo
 }
 
-func (suite *InboxPostTestSuite) newUpdatePerson(person vocab.ActivityStreamsPerson, cc string, updateIRI string) vocab.ActivityStreamsUpdate {
-	// create an update
-	update := streams.NewActivityStreamsUpdate()
-
-	// set the appropriate actor on it
-	updateActor := streams.NewActivityStreamsActorProperty()
-	updateActor.AppendIRI(person.GetJSONLDId().Get())
-	update.SetActivityStreamsActor(updateActor)
-
-	// Set the person as the 'object' property.
-	updateObject := streams.NewActivityStreamsObjectProperty()
-	updateObject.AppendActivityStreamsPerson(person)
-	update.SetActivityStreamsObject(updateObject)
-
-	// Set the To of the update as public
-	updateTo := streams.NewActivityStreamsToProperty()
-	updateTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
-	update.SetActivityStreamsTo(updateTo)
-
-	// set the cc of the update to the receivingAccount
-	updateCC := streams.NewActivityStreamsCcProperty()
-	updateCC.AppendIRI(testrig.URLMustParse(cc))
-	update.SetActivityStreamsCc(updateCC)
-
-	// set some random-ass ID for the activity
-	updateID := streams.NewJSONLDIdProperty()
-	updateID.SetIRI(testrig.URLMustParse(updateIRI))
-	update.SetJSONLDId(updateID)
-
-	return update
-}
-
 func (suite *InboxPostTestSuite) newDelete(actorIRI string, objectIRI string, deleteIRI string) vocab.ActivityStreamsDelete {
 	// create a delete
 	delete := streams.NewActivityStreamsDelete()
@@ -225,7 +193,7 @@ func (suite *InboxPostTestSuite) newDelete(actorIRI string, objectIRI string, de
 
 	// Set the To of the delete as public
 	deleteTo := streams.NewActivityStreamsToProperty()
-	deleteTo.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	deleteTo.AppendIRI(ap.PublicURI())
 	delete.SetActivityStreamsTo(deleteTo)
 
 	// set some random-ass ID for the activity
@@ -329,7 +297,6 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	var (
 		requestingAccount  = new(gtsmodel.Account)
 		targetAccount      = suite.testAccounts["local_account_1"]
-		activityID         = "http://fossbros-anonymous.io/72cc96a3-f742-4daf-b9f5-3407667260c5"
 		updatedDisplayName = "updated display name!"
 	)
 
@@ -348,11 +315,19 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	requestingAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
 
 	// Create an update from the account.
-	asAccount, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	accountable, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	update := suite.newUpdatePerson(asAccount, targetAccount.URI, activityID)
+	update, err := suite.tc.WrapAccountableInUpdate(accountable)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Set the ID to something from fossbros anonymous.
+	idProp := streams.NewJSONLDIdProperty()
+	idProp.SetIRI(testrig.URLMustParse("https://fossbros-anonymous.io/updates/waaaaaaaaaaaaaaaaa"))
+	update.SetJSONLDId(idProp)
 
 	// Update.
 	suite.inboxPost(
@@ -540,17 +515,20 @@ func (suite *InboxPostTestSuite) TestPostFromBlockedAccount() {
 	var (
 		requestingAccount = suite.testAccounts["remote_account_1"]
 		targetAccount     = suite.testAccounts["local_account_2"]
-		activityID        = requestingAccount.URI + "/some-new-activity/01FG9C441MCTW3R2W117V2PQK3"
 	)
 
-	person, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	// Create an update from the account.
+	accountable, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	update, err := suite.tc.WrapAccountableInUpdate(accountable)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// Post an update from foss satan to turtle, who blocks him.
-	update := suite.newUpdatePerson(person, targetAccount.URI, activityID)
-
+	// Post an update from foss satan
+	// to turtle, who blocks him.
 	suite.inboxPost(
 		update,
 		requestingAccount,

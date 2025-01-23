@@ -1,5 +1,13 @@
 # Actors and Actor Properties
 
+## `Service` vs `Person` actors
+
+GoToSocial serves most accounts as the ActivityStreams `Person` type described [here](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person).
+
+Accounts that users have selected to mark as bot accounts, however, will use the `Service` type described [here](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-service).
+
+This type distinction can be used by remote servers to distinguish between bot accounts and "regular" user accounts.
+
 ## Inbox
 
 GoToSocial implements Inboxes for Actors following the ActivityPub specification [here](https://www.w3.org/TR/activitypub/#inbox).

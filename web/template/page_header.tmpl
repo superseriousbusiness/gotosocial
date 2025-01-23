@@ -17,6 +17,29 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
+{{- define "trustedProxiesRec" -}}
+{{- .with }}
+<div class="trusted-proxies-rec">
+    <p>
+        <strong>Warning!</strong> It looks like <code>trusted-proxies</code> is not set correctly in this instance's configuration.
+        This may cause rate-limiting issues and, by extension, federation issues.
+    </p>
+    <p>
+        If you are the instance admin, you should fix this by adding <code>{{- .trustedProxiesRec -}}</code> to your <code>trusted-proxies</code>.
+    </p>
+    <p>
+        For more information, see
+        <a
+            href="https://docs.gotosocial.org/en/latest/configuration/trusted_proxies/"
+            rel="nofollow noreferrer noopener"
+            target="_blank"
+        >
+            the documentation
+        </a>.
+    </p>
+</div> 
+{{- end -}}
+
 {{- define "thumbnailDescription" -}}
 {{- if .instance.ThumbnailDescription -}}
 {{- .instance.ThumbnailDescription -}}
@@ -56,6 +79,9 @@ Instance Logo
 {{- end -}}
 
 {{- with . }}
+{{- if .trustedProxiesRec }}
+{{- template "trustedProxiesRec" . }}
+{{- end }}
 <a aria-label="{{- .instance.Title -}}. Go to instance homepage" href="/" class="nounderline">
     <picture>
         {{- if .instance.ThumbnailStatic }}
