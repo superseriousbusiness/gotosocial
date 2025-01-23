@@ -2853,7 +2853,7 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 		"this is a public status, please forward it!",
 		"",
 		URLMustParse("http://example.org/users/Some_User"),
-		[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
+		[]*url.URL{ap.PublicURI()},
 		nil,
 		false,
 		[]vocab.ActivityStreamsMention{},
@@ -3207,7 +3207,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"this is a public status, please forward it!",
 			"",
 			URLMustParse("http://example.org/users/Some_User"),
-			[]*url.URL{URLMustParse(pub.PublicActivityPubIRI)},
+			[]*url.URL{ap.PublicURI()},
 			nil,
 			false,
 			[]vocab.ActivityStreamsMention{},
@@ -3228,7 +3228,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				URLMustParse(pub.PublicActivityPubIRI),
+				ap.PublicURI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3244,7 +3244,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				URLMustParse(pub.PublicActivityPubIRI),
+				ap.PublicURI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3265,7 +3265,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
 			[]*url.URL{
-				URLMustParse(pub.PublicActivityPubIRI),
+				ap.PublicURI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3286,7 +3286,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("https://turnip.farm/users/turniplover6969"),
 			[]*url.URL{
-				URLMustParse(pub.PublicActivityPubIRI),
+				ap.PublicURI(),
 			},
 			[]*url.URL{},
 			false,
@@ -3309,7 +3309,7 @@ func NewTestFediStatuses() map[string]vocab.ActivityStreamsNote {
 			"",
 			URLMustParse("http://fossbros-anonymous.io/users/foss_satan"),
 			[]*url.URL{
-				URLMustParse(pub.PublicActivityPubIRI),
+				ap.PublicURI(),
 			},
 			[]*url.URL{},
 			false,

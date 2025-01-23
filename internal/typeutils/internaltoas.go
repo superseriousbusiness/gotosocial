@@ -36,12 +36,24 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
-// AccountToAS converts a gts model account into an activity streams person, suitable for federation
-func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
-	person := streams.NewActivityStreamsPerson()
+// AccountToAS converts a gts model account
+// into an activity streams person or service.
+func (c *Converter) AccountToAS(
+	ctx context.Context,
+	a *gtsmodel.Account,
+) (ap.Accountable, error) {
+	// accountable is a service if this
+	// is a bot account, otherwise a person.
+	var accountable ap.Accountable
+	if util.PtrOrZero(a.Bot) {
+		accountable = streams.NewActivityStreamsService()
+	} else {
+		accountable = streams.NewActivityStreamsPerson()
+	}
 
 	// id should be the activitypub URI of this user
 	// something like https://example.org/users/example_user
@@ -51,13 +63,13 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	idProp := streams.NewJSONLDIdProperty()
 	idProp.SetIRI(profileIDURI)
-	person.SetJSONLDId(idProp)
+	accountable.SetJSONLDId(idProp)
 
 	// published
 	// The moment when the account was created.
 	publishedProp := streams.NewActivityStreamsPublishedProperty()
 	publishedProp.Set(a.CreatedAt)
-	person.SetActivityStreamsPublished(publishedProp)
+	accountable.SetActivityStreamsPublished(publishedProp)
 
 	// following
 	// The URI for retrieving a list of accounts this user is following
@@ -67,7 +79,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	followingProp := streams.NewActivityStreamsFollowingProperty()
 	followingProp.SetIRI(followingURI)
-	person.SetActivityStreamsFollowing(followingProp)
+	accountable.SetActivityStreamsFollowing(followingProp)
 
 	// followers
 	// The URI for retrieving a list of this user's followers
@@ -77,7 +89,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	followersProp := streams.NewActivityStreamsFollowersProperty()
 	followersProp.SetIRI(followersURI)
-	person.SetActivityStreamsFollowers(followersProp)
+	accountable.SetActivityStreamsFollowers(followersProp)
 
 	// inbox
 	// the activitypub inbox of this user for accepting messages
@@ -87,7 +99,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	inboxProp := streams.NewActivityStreamsInboxProperty()
 	inboxProp.SetIRI(inboxURI)
-	person.SetActivityStreamsInbox(inboxProp)
+	accountable.SetActivityStreamsInbox(inboxProp)
 
 	// shared inbox -- only add this if we know for sure it has one
 	if a.SharedInboxURI != nil && *a.SharedInboxURI != "" {
@@ -101,7 +113,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 		sharedInboxProp.SetIRI(sharedInboxURI)
 		endpoints.SetActivityStreamsSharedInbox(sharedInboxProp)
 		endpointsProp.AppendActivityStreamsEndpoints(endpoints)
-		person.SetActivityStreamsEndpoints(endpointsProp)
+		accountable.SetActivityStreamsEndpoints(endpointsProp)
 	}
 
 	// outbox
@@ -112,7 +124,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	outboxProp := streams.NewActivityStreamsOutboxProperty()
 	outboxProp.SetIRI(outboxURI)
-	person.SetActivityStreamsOutbox(outboxProp)
+	accountable.SetActivityStreamsOutbox(outboxProp)
 
 	// featured posts
 	// Pinned posts.
@@ -122,7 +134,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	featuredProp := streams.NewTootFeaturedProperty()
 	featuredProp.SetIRI(featuredURI)
-	person.SetTootFeatured(featuredProp)
+	accountable.SetTootFeatured(featuredProp)
 
 	// featuredTags
 	// NOT IMPLEMENTED
@@ -131,7 +143,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// Used for Webfinger lookup. Must be unique on the domain, and must correspond to a Webfinger acct: URI.
 	preferredUsernameProp := streams.NewActivityStreamsPreferredUsernameProperty()
 	preferredUsernameProp.SetXMLSchemaString(a.Username)
-	person.SetActivityStreamsPreferredUsername(preferredUsernameProp)
+	accountable.SetActivityStreamsPreferredUsername(preferredUsernameProp)
 
 	// name
 	// Used as profile display name.
@@ -141,14 +153,14 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	} else {
 		nameProp.AppendXMLSchemaString(a.Username)
 	}
-	person.SetActivityStreamsName(nameProp)
+	accountable.SetActivityStreamsName(nameProp)
 
 	// summary
 	// Used as profile bio.
 	if a.Note != "" {
 		summaryProp := streams.NewActivityStreamsSummaryProperty()
 		summaryProp.AppendXMLSchemaString(a.Note)
-		person.SetActivityStreamsSummary(summaryProp)
+		accountable.SetActivityStreamsSummary(summaryProp)
 	}
 
 	// url
@@ -159,19 +171,19 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	}
 	urlProp := streams.NewActivityStreamsUrlProperty()
 	urlProp.AppendIRI(profileURL)
-	person.SetActivityStreamsUrl(urlProp)
+	accountable.SetActivityStreamsUrl(urlProp)
 
 	// manuallyApprovesFollowers
 	// Will be shown as a locked account.
 	manuallyApprovesFollowersProp := streams.NewActivityStreamsManuallyApprovesFollowersProperty()
 	manuallyApprovesFollowersProp.Set(*a.Locked)
-	person.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
+	accountable.SetActivityStreamsManuallyApprovesFollowers(manuallyApprovesFollowersProp)
 
 	// discoverable
 	// Will be shown in the profile directory.
 	discoverableProp := streams.NewTootDiscoverableProperty()
 	discoverableProp.Set(*a.Discoverable)
-	person.SetTootDiscoverable(discoverableProp)
+	accountable.SetTootDiscoverable(discoverableProp)
 
 	// devices
 	// NOT IMPLEMENTED, probably won't implement
@@ -189,7 +201,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			alsoKnownAsURIs[i] = uri
 		}
 
-		ap.SetAlsoKnownAs(person, alsoKnownAsURIs)
+		ap.SetAlsoKnownAs(accountable, alsoKnownAsURIs)
 	}
 
 	// movedTo
@@ -200,7 +212,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			return nil, err
 		}
 
-		ap.SetMovedTo(person, movedTo)
+		ap.SetMovedTo(accountable, movedTo)
 	}
 
 	// publicKey
@@ -241,7 +253,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
 
 	// set the public key property on the Person
-	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
+	accountable.SetW3IDSecurityV1PublicKey(publicKeyProp)
 
 	// tags
 	tagProp := streams.NewActivityStreamsTagProperty()
@@ -269,7 +281,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 	// tag -- hashtags
 	// TODO
 
-	person.SetActivityStreamsTag(tagProp)
+	accountable.SetActivityStreamsTag(tagProp)
 
 	// attachment
 	// Used for profile fields.
@@ -290,7 +302,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			attachmentProp.AppendSchemaPropertyValue(propertyValue)
 		}
 
-		person.SetActivityStreamsAttachment(attachmentProp)
+		accountable.SetActivityStreamsAttachment(attachmentProp)
 	}
 
 	// endpoints
@@ -326,7 +338,7 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			iconImage.SetActivityStreamsUrl(avatarURLProperty)
 
 			iconProperty.AppendActivityStreamsImage(iconImage)
-			person.SetActivityStreamsIcon(iconProperty)
+			accountable.SetActivityStreamsIcon(iconProperty)
 		}
 	}
 
@@ -360,20 +372,32 @@ func (c *Converter) AccountToAS(ctx context.Context, a *gtsmodel.Account) (vocab
 			headerImage.SetActivityStreamsUrl(headerURLProperty)
 
 			headerProperty.AppendActivityStreamsImage(headerImage)
-			person.SetActivityStreamsImage(headerProperty)
+			accountable.SetActivityStreamsImage(headerProperty)
 		}
 	}
 
-	return person, nil
+	return accountable, nil
 }
 
-// AccountToASMinimal converts a gts model account into an activity streams person, suitable for federation.
+// AccountToASMinimal converts a gts model account
+// into an activity streams person or service.
 //
-// The returned account will just have the Type, Username, PublicKey, and ID properties set. This is
-// suitable for serving to requesters to whom we want to give as little information as possible because
-// we don't trust them (yet).
-func (c *Converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account) (vocab.ActivityStreamsPerson, error) {
-	person := streams.NewActivityStreamsPerson()
+// The returned account will just have the Type, Username,
+// PublicKey, and ID properties set. This is suitable for
+// serving to requesters to whom we want to give as little
+// information as possible because we don't trust them (yet).
+func (c *Converter) AccountToASMinimal(
+	ctx context.Context,
+	a *gtsmodel.Account,
+) (ap.Accountable, error) {
+	// accountable is a service if this
+	// is a bot account, otherwise a person.
+	var accountable ap.Accountable
+	if util.PtrOrZero(a.Bot) {
+		accountable = streams.NewActivityStreamsService()
+	} else {
+		accountable = streams.NewActivityStreamsPerson()
+	}
 
 	// id should be the activitypub URI of this user
 	// something like https://example.org/users/example_user
@@ -383,13 +407,13 @@ func (c *Converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account)
 	}
 	idProp := streams.NewJSONLDIdProperty()
 	idProp.SetIRI(profileIDURI)
-	person.SetJSONLDId(idProp)
+	accountable.SetJSONLDId(idProp)
 
 	// preferredUsername
 	// Used for Webfinger lookup. Must be unique on the domain, and must correspond to a Webfinger acct: URI.
 	preferredUsernameProp := streams.NewActivityStreamsPreferredUsernameProperty()
 	preferredUsernameProp.SetXMLSchemaString(a.Username)
-	person.SetActivityStreamsPreferredUsername(preferredUsernameProp)
+	accountable.SetActivityStreamsPreferredUsername(preferredUsernameProp)
 
 	// publicKey
 	// Required for signatures.
@@ -429,9 +453,9 @@ func (c *Converter) AccountToASMinimal(ctx context.Context, a *gtsmodel.Account)
 	publicKeyProp.AppendW3IDSecurityV1PublicKey(publicKey)
 
 	// set the public key property on the Person
-	person.SetW3IDSecurityV1PublicKey(publicKeyProp)
+	accountable.SetW3IDSecurityV1PublicKey(publicKeyProp)
 
-	return person, nil
+	return accountable, nil
 }
 
 // StatusToAS converts a gts model status into an ActivityStreams Statusable implementation, suitable for federation
