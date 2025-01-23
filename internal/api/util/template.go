@@ -147,7 +147,6 @@ func injectTrustedProxiesRec(
 	// what it is. Suggest precise CIDR.
 	trustedProxiesRec := clientIP + "/32"
 	obj["trustedProxiesRec"] = trustedProxiesRec
-	return
 }
 
 // dockerSubnet is a CIDR that lets one make hazy guesses
