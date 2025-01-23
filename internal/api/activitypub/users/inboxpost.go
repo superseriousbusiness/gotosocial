@@ -18,7 +18,6 @@
 package users
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,8 +33,6 @@ import (
 func (m *Module) InboxPOSTHandler(c *gin.Context) {
 	_, err := m.processor.Fedi().InboxPost(c.Request.Context(), c.Writer, c.Request)
 	if err != nil {
-		fmt.Printf("\n\n\n%+v\n\n\n", err)
-
 		errWithCode := errorsv2.AsV2[gtserror.WithCode](err)
 
 		if errWithCode == nil {
