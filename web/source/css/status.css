@@ -436,6 +436,10 @@ main {
 				display: flex;
 				flex-wrap: wrap;
 				column-gap: 1rem;
+
+				.edited-at {
+					font-style: italic;
+				}
 			}
 
 			.stats-item {
@@ -443,7 +447,7 @@ main {
 				gap: 0.4rem;
 			}
 
-			.stats-item:not(.published-at) {
+			.stats-item:not(.published-at):not(.edited-at) {
 				z-index: 1;
 				user-select: none;
 			}

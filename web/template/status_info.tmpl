@@ -26,6 +26,14 @@
                 <time datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>
             </dd>
         </div>
+        {{- if .EditedAt -}}
+        <div class="stats-item edited-at text-cutoff">
+            <dt class="sr-only">Edited</dt>
+            <dd>
+                (last edited <time datetime="{{- .EditedAt -}}">{{- .EditedAt | timestampPrecise -}}</time>)
+            </dd>
+        </div>
+        {{ end }}
         <div class="stats-grouping">
             <div class="stats-item" title="Replies">
                 <dt>
