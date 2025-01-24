@@ -95,6 +95,7 @@ func (suite *ExportsTestSuite) SetupTest() {
 		&suite.state,
 		federator,
 		testrig.NewEmailSender("../../../../web/template/", nil),
+		testrig.NewNoopWebPushSender(),
 		mediaManager,
 	)
 

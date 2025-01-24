@@ -92,6 +92,7 @@ func (suite *ImportTestSuite) SetupTest() {
 		&suite.state,
 		federator,
 		testrig.NewEmailSender("../../../../web/template/", nil),
+		testrig.NewNoopWebPushSender(),
 		mediaManager,
 	)
 	testrig.StartWorkers(&suite.state, processor.Workers())

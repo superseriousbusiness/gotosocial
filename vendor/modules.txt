@@ -84,6 +84,9 @@ github.com/Masterminds/semver/v3
 # github.com/Masterminds/sprig/v3 v3.2.3
 ## explicit; go 1.13
 github.com/Masterminds/sprig/v3
+# github.com/SherClockHolmes/webpush-go v1.3.0
+## explicit; go 1.13
+github.com/SherClockHolmes/webpush-go
 # github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 ## explicit; go 1.13
 github.com/asaskevich/govalidator
@@ -594,6 +597,9 @@ github.com/quasoft/memstore
 # github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec
 ## explicit; go 1.12
 github.com/remyoudompheng/bigfft
+# github.com/rivo/uniseg v0.4.7
+## explicit; go 1.18
+github.com/rivo/uniseg
 # github.com/rogpeppe/go-internal v1.13.2-0.20241226121412-a5dc8ff20d0a
 ## explicit; go 1.22.0
 github.com/rogpeppe/go-internal/fmtsort
@@ -1086,6 +1092,7 @@ golang.org/x/crypto/blowfish
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
+golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/pbkdf2

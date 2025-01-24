@@ -240,7 +240,7 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	notif := &gtsmodel.Notification{}
 	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
-	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
+	suite.Equal(gtsmodel.NotificationFavourite, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
@@ -313,7 +313,7 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 	notif := &gtsmodel.Notification{}
 	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
-	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
+	suite.Equal(gtsmodel.NotificationFavourite, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)

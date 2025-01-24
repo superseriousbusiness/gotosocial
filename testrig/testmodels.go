@@ -2585,7 +2585,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 	return map[string]*gtsmodel.Notification{
 		"local_account_1_like": {
 			ID:               "01F8Q0ANPTWW10DAKTX7BRPBJP",
-			NotificationType: gtsmodel.NotificationFave,
+			NotificationType: gtsmodel.NotificationFavourite,
 			CreatedAt:        TimeMustParse("2022-05-14T13:21:09+02:00"),
 			TargetAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
 			OriginAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -2594,7 +2594,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 		},
 		"local_account_2_like": {
 			ID:               "01GTS6PRPXJYZBPFFQ56PP0XR8",
-			NotificationType: gtsmodel.NotificationFave,
+			NotificationType: gtsmodel.NotificationFavourite,
 			CreatedAt:        TimeMustParse("2022-01-13T12:45:01+02:00"),
 			TargetAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			OriginAccountID:  "01F8MH5NBDF2MV7CTC4Q5128HF",
@@ -2603,7 +2603,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 		},
 		"new_signup": {
 			ID:               "01HTM9TETMB3YQCBKZ7KD4KV02",
-			NotificationType: gtsmodel.NotificationSignup,
+			NotificationType: gtsmodel.NotificationAdminSignup,
 			CreatedAt:        TimeMustParse("2022-06-04T13:12:00Z"),
 			TargetAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			OriginAccountID:  "01F8MH0BBE4FHXPH513MBVFHB0",
@@ -3584,6 +3584,34 @@ func NewTestFilterStatuses() map[string]*gtsmodel.FilterStatus {
 func NewTestUserMutes() map[string]*gtsmodel.UserMute {
 	// Not currently used.
 	return map[string]*gtsmodel.UserMute{}
+}
+
+func NewTestWebPushSubscriptions() map[string]*gtsmodel.WebPushSubscription {
+	return map[string]*gtsmodel.WebPushSubscription{
+		"local_account_1_token_1": {
+			ID:        "01G65Z755AFWAKHE12NY0CQ9FH",
+			AccountID: "01F8MH1H7YV1Z7D2C8K2730QBF",
+			TokenID:   "01F8MGTQW4DKTDF8SW5CT9HYGA",
+			Endpoint:  "https://example.test/push",
+			Auth:      "cgna/fzrYLDQyPf5hD7IsA==",
+			P256dh:    "BMYVItYVOX+AHBdtA62Q0i6c+F7MV2Gia3aoDr8mvHkuPBNIOuTLDfmFcnBqoZcQk6BtLcIONbxhHpy2R+mYIUY=",
+			NotificationFlags: gtsmodel.WebPushSubscriptionNotificationFlagsFromSlice([]gtsmodel.NotificationType{
+				gtsmodel.NotificationFollow,
+				gtsmodel.NotificationFollowRequest,
+				gtsmodel.NotificationFavourite,
+				gtsmodel.NotificationMention,
+				gtsmodel.NotificationReblog,
+				gtsmodel.NotificationPoll,
+				gtsmodel.NotificationStatus,
+				gtsmodel.NotificationUpdate,
+				gtsmodel.NotificationAdminSignup,
+				gtsmodel.NotificationAdminReport,
+				gtsmodel.NotificationPendingFave,
+				gtsmodel.NotificationPendingReply,
+				gtsmodel.NotificationPendingReblog,
+			}),
+		},
+	}
 }
 
 func NewTestInteractionRequests() map[string]*gtsmodel.InteractionRequest {

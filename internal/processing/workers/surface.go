@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 )
 
 // Surface wraps functions for 'surfacing' the result
@@ -38,5 +39,6 @@ type Surface struct {
 	Stream        *stream.Processor
 	VisFilter     *visibility.Filter
 	EmailSender   email.Sender
+	WebPushSender webpush.Sender
 	Conversations *conversations.Processor
 }

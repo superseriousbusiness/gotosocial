@@ -117,6 +117,8 @@ func (c *Caches) Init() {
 	c.initUserMute()
 	c.initUserMuteIDs()
 	c.initWebfinger()
+	c.initWebPushSubscription()
+	c.initWebPushSubscriptionIDs()
 	c.initVisibility()
 	c.initStatusesFilterableFields()
 }
