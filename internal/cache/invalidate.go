@@ -283,6 +283,11 @@ func (c *Caches) OnInvalidateStatusFave(fave *gtsmodel.StatusFave) {
 	c.DB.StatusFaveIDs.Invalidate(fave.StatusID)
 }
 
+func (c *Caches) OnInvalidateToken(token *gtsmodel.Token) {
+	// Invalidate token's push subscription.
+	c.DB.WebPushSubscription.Invalidate("ID", token.ID)
+}
+
 func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 	// Invalidate local account ID cached visibility.
 	c.Visibility.Invalidate("ItemID", user.AccountID)
@@ -295,4 +300,9 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 func (c *Caches) OnInvalidateUserMute(mute *gtsmodel.UserMute) {
 	// Invalidate source account's user mute lists.
 	c.DB.UserMuteIDs.Invalidate(mute.AccountID)
+}
+
+func (c *Caches) OnInvalidateWebPushSubscription(subscription *gtsmodel.WebPushSubscription) {
+	// Invalidate source account's Web Push subscription list.
+	c.DB.WebPushSubscriptionIDs.Invalidate(subscription.AccountID)
 }

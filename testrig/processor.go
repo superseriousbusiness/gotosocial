@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes.
@@ -37,6 +38,7 @@ func NewTestProcessor(
 	state *state.State,
 	federator *federation.Federator,
 	emailSender email.Sender,
+	webPushSender webpush.Sender,
 	mediaManager *media.Manager,
 ) *processing.Processor {
 
@@ -53,6 +55,7 @@ func NewTestProcessor(
 		mediaManager,
 		state,
 		emailSender,
+		webPushSender,
 		visibility.NewFilter(state),
 		interaction.NewFilter(state),
 	)

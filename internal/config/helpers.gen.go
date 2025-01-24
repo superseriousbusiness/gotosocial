@@ -4274,6 +4274,64 @@ func GetCacheWebfingerMemRatio() float64 { return global.GetCacheWebfingerMemRat
 // SetCacheWebfingerMemRatio safely sets the value for global configuration 'Cache.WebfingerMemRatio' field
 func SetCacheWebfingerMemRatio(v float64) { global.SetCacheWebfingerMemRatio(v) }
 
+// GetCacheWebPushSubscriptionMemRatio safely fetches the Configuration value for state's 'Cache.WebPushSubscriptionMemRatio' field
+func (st *ConfigState) GetCacheWebPushSubscriptionMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.WebPushSubscriptionMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheWebPushSubscriptionMemRatio safely sets the Configuration value for state's 'Cache.WebPushSubscriptionMemRatio' field
+func (st *ConfigState) SetCacheWebPushSubscriptionMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.WebPushSubscriptionMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheWebPushSubscriptionMemRatioFlag returns the flag name for the 'Cache.WebPushSubscriptionMemRatio' field
+func CacheWebPushSubscriptionMemRatioFlag() string { return "cache-web-push-subscription-mem-ratio" }
+
+// GetCacheWebPushSubscriptionMemRatio safely fetches the value for global configuration 'Cache.WebPushSubscriptionMemRatio' field
+func GetCacheWebPushSubscriptionMemRatio() float64 {
+	return global.GetCacheWebPushSubscriptionMemRatio()
+}
+
+// SetCacheWebPushSubscriptionMemRatio safely sets the value for global configuration 'Cache.WebPushSubscriptionMemRatio' field
+func SetCacheWebPushSubscriptionMemRatio(v float64) { global.SetCacheWebPushSubscriptionMemRatio(v) }
+
+// GetCacheWebPushSubscriptionIDsMemRatio safely fetches the Configuration value for state's 'Cache.WebPushSubscriptionIDsMemRatio' field
+func (st *ConfigState) GetCacheWebPushSubscriptionIDsMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.WebPushSubscriptionIDsMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheWebPushSubscriptionIDsMemRatio safely sets the Configuration value for state's 'Cache.WebPushSubscriptionIDsMemRatio' field
+func (st *ConfigState) SetCacheWebPushSubscriptionIDsMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.WebPushSubscriptionIDsMemRatio = v
+	st.reloadToViper()
+}
+
+// CacheWebPushSubscriptionIDsMemRatioFlag returns the flag name for the 'Cache.WebPushSubscriptionIDsMemRatio' field
+func CacheWebPushSubscriptionIDsMemRatioFlag() string {
+	return "cache-web-push-subscription-ids-mem-ratio"
+}
+
+// GetCacheWebPushSubscriptionIDsMemRatio safely fetches the value for global configuration 'Cache.WebPushSubscriptionIDsMemRatio' field
+func GetCacheWebPushSubscriptionIDsMemRatio() float64 {
+	return global.GetCacheWebPushSubscriptionIDsMemRatio()
+}
+
+// SetCacheWebPushSubscriptionIDsMemRatio safely sets the value for global configuration 'Cache.WebPushSubscriptionIDsMemRatio' field
+func SetCacheWebPushSubscriptionIDsMemRatio(v float64) {
+	global.SetCacheWebPushSubscriptionIDsMemRatio(v)
+}
+
 // GetCacheVisibilityMemRatio safely fetches the Configuration value for state's 'Cache.VisibilityMemRatio' field
 func (st *ConfigState) GetCacheVisibilityMemRatio() (v float64) {
 	st.mutex.RLock()

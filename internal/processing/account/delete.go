@@ -96,7 +96,7 @@ func (p *Processor) Delete(
 }
 
 // deleteUserAndTokensForAccount deletes the gtsmodel.User and
-// any OAuth tokens and applications for the given account.
+// any OAuth tokens, applications, and Web Push subscriptions for the given account.
 //
 // Callers to this function should already have checked that
 // this is a local account, or else it won't have a user associated
@@ -127,6 +127,10 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 		if err := p.state.DB.DeleteByID(ctx, t.ID, t); err != nil {
 			return gtserror.Newf("db error deleting token: %w", err)
 		}
+	}
+
+	if err := p.state.DB.DeleteWebPushSubscriptionsByAccountID(ctx, account.ID); err != nil {
+		return gtserror.Newf("db error deleting Web Push subscriptions: %w", err)
 	}
 
 	columns, err := stubbifyUser(user)

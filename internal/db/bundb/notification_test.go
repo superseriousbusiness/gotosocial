@@ -66,7 +66,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 
 		notif := &gtsmodel.Notification{
 			ID:               notifID,
-			NotificationType: gtsmodel.NotificationFave,
+			NotificationType: gtsmodel.NotificationFavourite,
 			CreatedAt:        time.Now(),
 			TargetAccountID:  targetAccountID,
 			OriginAccountID:  originAccountID,

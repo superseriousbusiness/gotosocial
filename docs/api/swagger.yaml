@@ -186,6 +186,10 @@ definitions:
         title: TimelineMarker contains information about a user's progress through a specific timeline.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    WebPushNotificationPolicy:
+        title: WebPushNotificationPolicy names sets of accounts that can generate notifications.
+        type: string
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     account:
         description: The modelled account can be either a remote account, or one on this instance.
         properties:
@@ -1946,6 +1950,8 @@ definitions:
                 $ref: '#/definitions/instanceV2ConfigurationTranslation'
             urls:
                 $ref: '#/definitions/instanceV2URLs'
+            vapid:
+                $ref: '#/definitions/instanceV2ConfigurationVAPID'
         title: Configured values and limits for this instance.
         type: object
         x-go-name: InstanceV2Configuration
@@ -1961,6 +1967,16 @@ definitions:
         title: Hints related to translation.
         type: object
         x-go-name: InstanceV2ConfigurationTranslation
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2ConfigurationVAPID:
+        properties:
+            public_key:
+                description: The instance's VAPID public key, Base64-encoded.
+                type: string
+                x-go-name: PublicKey
+        title: InstanceV2ConfigurationVAPID holds the instance's VAPID configuration.
+        type: object
+        x-go-name: InstanceV2ConfigurationVAPID
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2Contact:
         properties:
@@ -3380,6 +3396,139 @@ definitions:
         title: User models fields relevant to one user.
         type: object
         x-go-name: User
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushNotification:
+        description: |-
+            It does not contain an entire Notification, just the NotificationID and some preview information.
+            It is not used in the client API directly, but is included in the API doc for decoding Web Push notifications.
+        properties:
+            access_token:
+                description: |-
+                    AccessToken is the access token associated with the Web Push subscription.
+                    I don't know why this is sent, given that the client should know that already,
+                    but Feditext does use it.
+                type: string
+                x-go-name: AccessToken
+            body:
+                description: |-
+                    Body is a preview of the notification body,
+                    such as the first line of a status's CW or text,
+                    or the first line of an account bio.
+                type: string
+                x-go-name: Body
+            icon:
+                description: |-
+                    Icon is an image URL that can be displayed with the notification,
+                    normally the account's avatar.
+                type: string
+                x-go-name: Icon
+            notification_id:
+                description: NotificationID is the Notification.ID of the referenced Notification.
+                type: string
+                x-go-name: NotificationID
+            notification_type:
+                description: NotificationType is the Notification.Type of the referenced Notification.
+                type: string
+                x-go-name: NotificationType
+            preferred_locale:
+                description: PreferredLocale is a BCP 47 language tag for the receiving user's locale.
+                type: string
+                x-go-name: PreferredLocale
+            title:
+                description: |-
+                    Title is a title for the notification,
+                    generally describing an action taken by a user.
+                type: string
+                x-go-name: Title
+        title: WebPushNotification represents a notification summary delivered to the client by the Web Push server.
+        type: object
+        x-go-name: WebPushNotification
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushSubscription:
+        properties:
+            alerts:
+                $ref: '#/definitions/webPushSubscriptionAlerts'
+            endpoint:
+                description: Where push alerts will be sent to.
+                type: string
+                x-go-name: Endpoint
+            id:
+                description: The id of the push subscription in the database.
+                type: string
+                x-go-name: ID
+            policy:
+                $ref: '#/definitions/WebPushNotificationPolicy'
+            server_key:
+                description: The streaming server's VAPID public key.
+                type: string
+                x-go-name: ServerKey
+            standard:
+                description: |-
+                    Whether the subscription uses RFC or pre-RFC Web Push standards.
+                    For GotoSocial, this is always true.
+                type: boolean
+                x-go-name: Standard
+        title: WebPushSubscription represents a subscription to a Web Push server.
+        type: object
+        x-go-name: WebPushSubscription
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushSubscriptionAlerts:
+        properties:
+            admin.report:
+                description: Receive a push notification when a new report has been filed?
+                type: boolean
+                x-go-name: AdminReport
+            admin.sign_up:
+                description: Receive a push notification when a new user has signed up?
+                type: boolean
+                x-go-name: AdminSignup
+            favourite:
+                description: Receive a push notification when a status you created has been favourited by someone else?
+                type: boolean
+                x-go-name: Favourite
+            follow:
+                description: Receive a push notification when someone has followed you?
+                type: boolean
+                x-go-name: Follow
+            follow_request:
+                description: Receive a push notification when someone has requested to follow you?
+                type: boolean
+                x-go-name: FollowRequest
+            mention:
+                description: Receive a push notification when someone else has mentioned you in a status?
+                type: boolean
+                x-go-name: Mention
+            pending.favourite:
+                description: Receive a push notification when a fave is pending?
+                type: boolean
+                x-go-name: PendingFavourite
+            pending.reblog:
+                description: Receive a push notification when a boost is pending?
+                type: boolean
+                x-go-name: PendingReblog
+            pending.reply:
+                description: Receive a push notification when a reply is pending?
+                type: boolean
+                x-go-name: PendingReply
+            poll:
+                description: Receive a push notification when a poll you voted in or created has ended?
+                type: boolean
+                x-go-name: Poll
+            reblog:
+                description: Receive a push notification when a status you created has been boosted by someone else?
+                type: boolean
+                x-go-name: Reblog
+            status:
+                description: Receive a push notification when a subscribed account posts a status?
+                type: boolean
+                x-go-name: Status
+            update:
+                description: Receive a push notification when a status you interacted with has been edited?
+                type: boolean
+                x-go-name: Update
+        title: WebPushSubscriptionAlerts represents the specific events that this Web Push subscription will receive.
+        type: object
+        x-go-name: WebPushSubscriptionAlerts
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         description: See https://webfinger.net/
@@ -9642,6 +9791,259 @@ paths:
             summary: Delete the authenticated account's header.
             tags:
                 - accounts
+    /api/v1/push/subscription:
+        delete:
+            description: If there is no subscription, returns successfully anyway.
+            operationId: pushSubscriptionDelete
+            responses:
+                "200":
+                    description: Push subscription deleted, or did not exist.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Delete the Web Push subscription associated with the current auth token.
+            tags:
+                - push
+        get:
+            operationId: pushSubscriptionGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Web Push subscription for current access token.
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: This access token doesn't have an associated subscription.
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Get the push subscription for the current access token.
+            tags:
+                - push
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            operationId: pushSubscriptionPost
+            parameters:
+                - description: The URL to which Web Push notifications will be sent.
+                  in: formData
+                  minLength: 1
+                  name: subscription[endpoint]
+                  required: true
+                  type: string
+                - description: The auth secret, a Base64 encoded string of 16 bytes of random data.
+                  in: formData
+                  minLength: 1
+                  name: subscription[keys][auth]
+                  required: true
+                  type: string
+                - description: The user agent public key, a Base64 encoded string of a public key from an ECDH keypair using the prime256v1 curve.
+                  in: formData
+                  minLength: 1
+                  name: subscription[keys][p256dh]
+                  required: true
+                  type: string
+                - default: false
+                  description: Receive a push notification when someone has followed you?
+                  in: formData
+                  name: data[alerts][follow]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone has requested to follow you?
+                  in: formData
+                  name: data[alerts][follow_request]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been favourited by someone else?
+                  in: formData
+                  name: data[alerts][favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone else has mentioned you in a status?
+                  in: formData
+                  name: data[alerts][mention]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been boosted by someone else?
+                  in: formData
+                  name: data[alerts][reblog]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a poll you voted in or created has ended?
+                  in: formData
+                  name: data[alerts][poll]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a subscribed account posts a status?
+                  in: formData
+                  name: data[alerts][status]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you interacted with has been edited?
+                  in: formData
+                  name: data[alerts][update]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new user has signed up?
+                  in: formData
+                  name: data[alerts][admin.sign_up]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new report has been filed?
+                  in: formData
+                  name: data[alerts][admin.report]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a fave is pending?
+                  in: formData
+                  name: data[alerts][pending.favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a reply is pending?
+                  in: formData
+                  name: data[alerts][pending.reply]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a boost is pending?
+                  in: formData
+                  name: data[alerts][pending.reblog]
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Web Push subscription for current access token.
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Create a new Web Push subscription for the current access token, or replace the existing one.
+            tags:
+                - push
+        put:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: Only which notifications you receive can be updated.
+            operationId: pushSubscriptionPut
+            parameters:
+                - default: false
+                  description: Receive a push notification when someone has followed you?
+                  in: formData
+                  name: data[alerts][follow]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone has requested to follow you?
+                  in: formData
+                  name: data[alerts][follow_request]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been favourited by someone else?
+                  in: formData
+                  name: data[alerts][favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone else has mentioned you in a status?
+                  in: formData
+                  name: data[alerts][mention]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been boosted by someone else?
+                  in: formData
+                  name: data[alerts][reblog]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a poll you voted in or created has ended?
+                  in: formData
+                  name: data[alerts][poll]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a subscribed account posts a status?
+                  in: formData
+                  name: data[alerts][status]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you interacted with has been edited?
+                  in: formData
+                  name: data[alerts][update]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new user has signed up?
+                  in: formData
+                  name: data[alerts][admin.sign_up]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new report has been filed?
+                  in: formData
+                  name: data[alerts][admin.report]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a fave is pending?
+                  in: formData
+                  name: data[alerts][pending.favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a reply is pending?
+                  in: formData
+                  name: data[alerts][pending.reply]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a boost is pending?
+                  in: formData
+                  name: data[alerts][pending.reblog]
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Web Push subscription for current access token.
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: This access token doesn't have an associated subscription.
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Update the Web Push subscription for the current access token.
+            tags:
+                - push
     /api/v1/reports:
         get:
             description: |-

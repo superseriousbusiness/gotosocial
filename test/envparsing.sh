@@ -77,6 +77,8 @@ EXPECT=$(cat << "EOF"
         "user-mute-ids-mem-ratio": 3,
         "user-mute-mem-ratio": 2,
         "visibility-mem-ratio": 2,
+        "web-push-subscription-ids-mem-ratio": 1,
+        "web-push-subscription-mem-ratio": 1,
         "webfinger-mem-ratio": 0.1
     },
     "config-path": "internal/config/testdata/test.yaml",

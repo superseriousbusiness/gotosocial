@@ -48,6 +48,9 @@ type Application interface {
 	// GetAllTokens ...
 	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
 
+	// GetTokenByID ...
+	GetTokenByID(ctx context.Context, id string) (*gtsmodel.Token, error)
+
 	// GetTokenByCode ...
 	GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error)
 

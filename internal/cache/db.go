@@ -258,6 +258,15 @@ type DBCaches struct {
 
 	// UserMuteIDs provides access to the user mute IDs database cache.
 	UserMuteIDs SliceCache[string]
+
+	// VAPIDKeyPair caches the server's VAPID key pair.
+	VAPIDKeyPair atomic.Pointer[gtsmodel.VAPIDKeyPair]
+
+	// WebPushSubscription provides access to the gtsmodel WebPushSubscription database cache.
+	WebPushSubscription StructCache[*gtsmodel.WebPushSubscription]
+
+	// WebPushSubscriptionIDs provides access to the Web Push subscription IDs database cache.
+	WebPushSubscriptionIDs SliceCache[string]
 }
 
 // NOTE:
@@ -1579,9 +1588,10 @@ func (c *Caches) initToken() {
 			{Fields: "Refresh"},
 			{Fields: "ClientID", Multiple: true},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateToken,
 	})
 }
 
@@ -1690,4 +1700,41 @@ func (c *Caches) initUserMuteIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.DB.UserMuteIDs.Init(0, cap)
+}
+
+func (c *Caches) initWebPushSubscription() {
+	cap := calculateResultCacheMax(
+		sizeofWebPushSubscription(), // model in-mem size.
+		config.GetCacheWebPushSubscriptionMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.WebPushSubscription) *gtsmodel.WebPushSubscription {
+		s2 := new(gtsmodel.WebPushSubscription)
+		*s2 = *s1
+		return s2
+	}
+
+	c.DB.WebPushSubscription.Init(structr.CacheConfig[*gtsmodel.WebPushSubscription]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "TokenID"},
+			{Fields: "AccountID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Invalidate: c.OnInvalidateWebPushSubscription,
+		Copy:       copyF,
+	})
+}
+
+func (c *Caches) initWebPushSubscriptionIDs() {
+	cap := calculateSliceCacheMax(
+		config.GetCacheWebPushSubscriptionIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.WebPushSubscriptionIDs.Init(0, cap)
 }
