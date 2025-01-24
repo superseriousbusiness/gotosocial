@@ -41,14 +41,17 @@ type Sender interface {
 
 // NewSender creates a new sender from an HTTP client, DB, and worker pool.
 func NewSender(httpClient *httpclient.Client, state *state.State, converter *typeutils.Converter) Sender {
-	return NewRealSender(
-		&http.Client{
-			Transport: &gtsHTTPClientRoundTripper{
-				httpClient: httpClient,
-			},
-			// Other fields are already set on the http.Client inside the httpclient.Client.
+	return &realSender{
+		httpClient: &http.Client{
+			// Pass in our wrapped httpclient.Client{}
+			// type as http.Transport{} in order to take
+			// advantage of retries, SSF protection etc.
+			Transport: httpClient,
+
+			// Other http.Client{} fields are already
+			// set in embedded httpclient.Client{}.
 		},
-		state,
-		converter,
-	)
+		state:     state,
+		converter: converter,
+	}
 }

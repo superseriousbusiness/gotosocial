@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package webpush_test
+package webpush
 
 import (
 	"context"
@@ -40,7 +40,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -56,7 +55,7 @@ type RealSenderStandardTestSuite struct {
 	federator           *federation.Federator
 	oauthServer         oauth.Server
 	emailSender         email.Sender
-	webPushSender       webpush.Sender
+	webPushSender       Sender
 
 	// standard suite models
 	testTokens               map[string]*gtsmodel.Token
@@ -120,13 +119,13 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.webPushSender = webpush.NewRealSender(
+	suite.webPushSender = &realSender{
 		&http.Client{
 			Transport: suite,
 		},
 		&suite.state,
 		suite.typeconverter,
-	)
+	}
 
 	suite.processor = processing.NewProcessor(
 		cleaner.New(&suite.state),

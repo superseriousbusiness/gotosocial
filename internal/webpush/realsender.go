@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
@@ -45,16 +44,6 @@ type realSender struct {
 	httpClient *http.Client
 	state      *state.State
 	converter  *typeutils.Converter
-}
-
-// NewRealSender creates a Sender from an http.Client instead of an httpclient.Client.
-// This should only be used by NewSender and in tests.
-func NewRealSender(httpClient *http.Client, state *state.State, converter *typeutils.Converter) Sender {
-	return &realSender{
-		httpClient: httpClient,
-		state:      state,
-		converter:  converter,
-	}
 }
 
 func (r *realSender) Send(
@@ -328,14 +317,4 @@ func formatNotificationBody(apiNotification *apimodel.Notification) string {
 // firstNBytesTrimSpace returns the first N bytes of a string, trimming leading and trailing whitespace.
 func firstNBytesTrimSpace(s string, n int) string {
 	return strings.TrimSpace(text.FirstNBytesByWords(strings.TrimSpace(s), n))
-}
-
-// gtsHTTPClientRoundTripper helps wrap a GtS HTTP client back into a regular HTTP client,
-// so that webpush-go can use our IP filters, bad hosts list, and retries.
-type gtsHTTPClientRoundTripper struct {
-	httpClient *httpclient.Client
-}
-
-func (r *gtsHTTPClientRoundTripper) RoundTrip(request *http.Request) (*http.Response, error) {
-	return r.httpClient.Do(request)
 }
