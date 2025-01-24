@@ -39,7 +39,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-// realSender is the production Web Push sender, backed by an HTTP client, DB, and worker pool.
+// realSender is the production Web Push sender,
+// backed by an HTTP client, DB, and worker pool.
 type realSender struct {
 	httpClient *http.Client
 	state      *state.State
