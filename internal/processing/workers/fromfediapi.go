@@ -189,6 +189,14 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		if fMsg.APObjectType == ap.ActorPerson {
 			return p.fediAPI.MoveAccount(ctx, fMsg)
 		}
+
+	// UNDO SOMETHING
+	case ap.ActivityUndo:
+
+		// UNDO ANNOUNCE
+		if fMsg.APObjectType == ap.ActivityAnnounce {
+			return p.fediAPI.UndoAnnounce(ctx, fMsg)
+		}
 	}
 
 	return gtserror.Newf("unhandled: %s %s", fMsg.APActivityType, fMsg.APObjectType)
@@ -1156,6 +1164,37 @@ func (p *fediAPI) RejectAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 	); err != nil {
 		log.Errorf(ctx, "error wiping announce: %v", err)
 	}
+
+	return nil
+}
+
+func (p *fediAPI) UndoAnnounce(
+	ctx context.Context,
+	fMsg *messages.FromFediAPI,
+) error {
+	boost, ok := fMsg.GTSModel.(*gtsmodel.Status)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status", fMsg.GTSModel)
+	}
+
+	// Delete the boost wrapper itself.
+	if err := p.state.DB.DeleteStatusByID(ctx, boost.ID); err != nil {
+		return gtserror.Newf("db error deleting boost: %w", err)
+	}
+
+	// Update statuses count for the requesting account.
+	if err := p.utils.decrementStatusesCount(ctx, fMsg.Requesting, boost); err != nil {
+		log.Errorf(ctx, "error updating account stats: %v", err)
+	}
+
+	// Remove the boost wrapper from all timelines.
+	if err := p.surface.deleteStatusFromTimelines(ctx, boost.ID); err != nil {
+		log.Errorf(ctx, "error removing timelined boost: %v", err)
+	}
+
+	// Interaction counts changed on the boosted status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
 
 	return nil
 }
