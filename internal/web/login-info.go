@@ -50,13 +50,10 @@ func (m *Module) loginGETHandler(c *gin.Context) {
 	}
 
 	page := apiutil.WebPage{
-		Template:    "login.tmpl",
+		Template:    "login_info.tmpl",
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
-		Stylesheets: []string{cssLogin},
-		Extra: map[string]any{
-			"showStrap": false,
-		},
+		Stylesheets: []string{cssAbout, cssLoginInfo},
 	}
 
 	apiutil.TemplateWebPage(c, page)
