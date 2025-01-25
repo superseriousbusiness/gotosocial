@@ -72,7 +72,6 @@ func (f *ConversationFactory) NewTestStatus(localAccount *gtsmodel.Account, thre
 	status := &gtsmodel.Status{
 		ID:                  statusID,
 		CreatedAt:           createdAt,
-		UpdatedAt:           createdAt,
 		URI:                 "http://localhost:8080/users/" + localAccount.Username + "/statuses/" + statusID,
 		AccountID:           localAccount.ID,
 		AccountURI:          localAccount.URI,

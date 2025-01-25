@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -155,7 +155,7 @@ func (s *statusFaveDB) GetStatusFaves(ctx context.Context, statusID string) ([]*
 	// Reorder the statuses by their
 	// IDs to ensure in correct order.
 	getID := func(f *gtsmodel.StatusFave) string { return f.ID }
-	util.OrderBy(faves, faveIDs, getID)
+	xslices.OrderBy(faves, faveIDs, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -339,7 +339,7 @@ func (s *statusFaveDB) DeleteStatusFaves(ctx context.Context, targetAccountID st
 	}
 
 	// Deduplicate determined status IDs.
-	statusIDs = util.Deduplicate(statusIDs)
+	statusIDs = xslices.Deduplicate(statusIDs)
 
 	// Invalidate any cached status faves for this status ID.
 	s.state.Caches.DB.StatusFave.InvalidateIDs("ID", statusIDs)

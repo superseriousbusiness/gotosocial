@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -133,7 +134,7 @@ func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRu
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("db error fetching instance: %s", err))
 	}
 
-	return p.converter.InstanceRulesToAPIRules(i.Rules), nil
+	return typeutils.InstanceRulesToAPIRules(i.Rules), nil
 }
 
 func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSettingsUpdateRequest) (*apimodel.InstanceV1, gtserror.WithCode) {
@@ -225,6 +226,17 @@ func (p *Processor) InstancePatch(ctx context.Context, form *apimodel.InstanceSe
 		instance.DescriptionText = description
 		instance.Description = p.formatter.FromMarkdown(ctx, p.parseMentionFunc, instanceAcc.ID, "", description).HTML
 		columns = append(columns, []string{"description", "description_text"}...)
+	}
+
+	// validate & update site custom css if it's set on the form
+	if form.CustomCSS != nil {
+		customCSS := *form.CustomCSS
+		if err := validate.InstanceCustomCSS(customCSS); err != nil {
+			return nil, gtserror.NewErrorBadRequest(err, err.Error())
+		}
+
+		instance.CustomCSS = text.SanitizeToPlaintext(customCSS)
+		columns = append(columns, []string{"custom_css"}...)
 	}
 
 	// Validate & update site

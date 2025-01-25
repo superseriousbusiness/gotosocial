@@ -19,6 +19,7 @@ package fileserver_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/fileserver"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -74,8 +75,21 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	suite.state.Storage = suite.storage
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media")), suite.mediaManager)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.federator = testrig.NewTestFederator(
+		&suite.state,
+		testrig.NewTestTransportController(
+			&suite.state,
+			testrig.NewMockHTTPClient(nil, "../../../testrig/media"),
+		),
+		suite.mediaManager,
+	)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
+		suite.mediaManager,
+	)
 
 	suite.tc = typeutils.NewConverter(&suite.state)
 
@@ -98,6 +112,7 @@ func (suite *FileserverTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")

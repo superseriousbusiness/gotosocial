@@ -47,7 +47,7 @@ sudo systemctl stop gotosocial
 ```
 In your GoToSocial config turn off Lets Encrypt by setting `letsencrypt-enabled` to `false`.
 
-If you we running GoToSocial on port 443, change the `port` value back to the default `8080`.
+If you are running GoToSocial on port 443, change the `port` value back to the default `8080`.
 
 If the reverse proxy will be running on the same machine, set the `bind-address` to `"localhost"` so that the GoToSocial server is only accessible via loopback. Otherwise it may be possible to bypass your proxy by connecting to GoToSocial directly, which might be undesirable.
 
@@ -73,7 +73,7 @@ example.org {
 
 	# The actual proxy configuration to port 8080 (unless you've chosen another port number)
 	reverse_proxy * http://127.0.0.1:8080 {
-		# Flush immediatly, to prevent buffered response to the client
+		# Flush immediately, to prevent buffered response to the client
 		flush_interval -1
 	}
 }

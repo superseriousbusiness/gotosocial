@@ -20,13 +20,15 @@ package gtsmodel
 import (
 	"slices"
 	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local
 type Status struct {
 	ID                       string             `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt                time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
+	EditedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // when this status was last edited (if set)
 	FetchedAt                time.Time          `bun:"type:timestamptz,nullzero"`                                   // when was item (remote) last fetched.
 	PinnedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // Status was pinned by owning account at this time.
 	URI                      string             `bun:",unique,nullzero,notnull"`                                    // activitypub URI of this status
@@ -55,6 +57,8 @@ type Status struct {
 	BoostOf                  *Status            `bun:"-"`                                                           // status that corresponds to boostOfID
 	BoostOfAccount           *Account           `bun:"rel:belongs-to"`                                              // account that corresponds to boostOfAccountID
 	ThreadID                 string             `bun:"type:CHAR(26),nullzero"`                                      // id of the thread to which this status belongs; only set for remote statuses if a local account is involved at some point in the thread, otherwise null
+	EditIDs                  []string           `bun:"edits,array"`                                                 //
+	Edits                    []*StatusEdit      `bun:"-"`                                                           //
 	PollID                   string             `bun:"type:CHAR(26),nullzero"`                                      //
 	Poll                     *Poll              `bun:"-"`                                                           //
 	ContentWarning           string             `bun:",nullzero"`                                                   // cw string for this status
@@ -92,7 +96,8 @@ func (s *Status) GetBoostOfAccountID() string {
 	return s.BoostOfAccountID
 }
 
-// AttachmentsPopulated returns whether media attachments are populated according to current AttachmentIDs.
+// AttachmentsPopulated returns whether media attachments
+// are populated according to current AttachmentIDs.
 func (s *Status) AttachmentsPopulated() bool {
 	if len(s.AttachmentIDs) != len(s.Attachments) {
 		// this is the quickest indicator.
@@ -106,7 +111,8 @@ func (s *Status) AttachmentsPopulated() bool {
 	return true
 }
 
-// TagsPopulated returns whether tags are populated according to current TagIDs.
+// TagsPopulated returns whether tags are
+// populated according to current TagIDs.
 func (s *Status) TagsPopulated() bool {
 	if len(s.TagIDs) != len(s.Tags) {
 		// this is the quickest indicator.
@@ -120,7 +126,8 @@ func (s *Status) TagsPopulated() bool {
 	return true
 }
 
-// MentionsPopulated returns whether mentions are populated according to current MentionIDs.
+// MentionsPopulated returns whether mentions are
+// populated according to current MentionIDs.
 func (s *Status) MentionsPopulated() bool {
 	if len(s.MentionIDs) != len(s.Mentions) {
 		// this is the quickest indicator.
@@ -134,7 +141,8 @@ func (s *Status) MentionsPopulated() bool {
 	return true
 }
 
-// EmojisPopulated returns whether emojis are populated according to current EmojiIDs.
+// EmojisPopulated returns whether emojis are
+// populated according to current EmojiIDs.
 func (s *Status) EmojisPopulated() bool {
 	if len(s.EmojiIDs) != len(s.Emojis) {
 		// this is the quickest indicator.
@@ -142,6 +150,21 @@ func (s *Status) EmojisPopulated() bool {
 	}
 	for i, id := range s.EmojiIDs {
 		if s.Emojis[i].ID != id {
+			return false
+		}
+	}
+	return true
+}
+
+// EditsPopulated returns whether edits are
+// populated according to current EditIDs.
+func (s *Status) EditsPopulated() bool {
+	if len(s.EditIDs) != len(s.Edits) {
+		// this is quickest indicator.
+		return false
+	}
+	for i, id := range s.EditIDs {
+		if s.Edits[i].ID != id {
 			return false
 		}
 	}
@@ -247,6 +270,44 @@ func (s *Status) IsLocalOnly() bool {
 	return s.Federated == nil || !*s.Federated
 }
 
+// AllAttachmentIDs gathers ALL media attachment IDs from both the
+// receiving Status{}, and any historical Status{}.Edits. Note that
+// this function will panic if Status{}.Edits is not populated.
+func (s *Status) AllAttachmentIDs() []string {
+	var total int
+
+	if len(s.EditIDs) != len(s.Edits) {
+		panic("status edits not populated")
+	}
+
+	// Get count of attachment IDs.
+	total += len(s.AttachmentIDs)
+	for _, edit := range s.Edits {
+		total += len(edit.AttachmentIDs)
+	}
+
+	// Start gathering of all IDs with *current* attachment IDs.
+	attachmentIDs := make([]string, len(s.AttachmentIDs), total)
+	copy(attachmentIDs, s.AttachmentIDs)
+
+	// Append IDs of historical edits.
+	for _, edit := range s.Edits {
+		attachmentIDs = append(attachmentIDs, edit.AttachmentIDs...)
+	}
+
+	// Deduplicate these IDs in case of shared media.
+	return xslices.Deduplicate(attachmentIDs)
+}
+
+// UpdatedAt returns latest time this status
+// was updated, either EditedAt or CreatedAt.
+func (s *Status) UpdatedAt() time.Time {
+	if s.EditedAt.IsZero() {
+		return s.CreatedAt
+	}
+	return s.EditedAt
+}
+
 // StatusToTag is an intermediate struct to facilitate the many2many relationship between a status and one or more tags.
 type StatusToTag struct {
 	StatusID string  `bun:"type:CHAR(26),unique:statustag,nullzero,notnull"`
@@ -263,26 +324,57 @@ type StatusToEmoji struct {
 	Emoji    *Emoji  `bun:"rel:belongs-to"`
 }
 
-// Visibility represents the visibility granularity of a status.
-type Visibility string
+// Visibility represents the
+// visibility granularity of a status.
+type Visibility enumType
 
 const (
 	// VisibilityNone means nobody can see this.
 	// It's only used for web status visibility.
-	VisibilityNone Visibility = "none"
-	// VisibilityPublic means this status will be visible to everyone on all timelines.
-	VisibilityPublic Visibility = "public"
-	// VisibilityUnlocked means this status will be visible to everyone, but will only show on home timeline to followers, and in lists.
-	VisibilityUnlocked Visibility = "unlocked"
+	VisibilityNone Visibility = 1
+
+	// VisibilityPublic means this status will
+	// be visible to everyone on all timelines.
+	VisibilityPublic Visibility = 2
+
+	// VisibilityUnlocked means this status will be visible to everyone,
+	// but will only show on home timeline to followers, and in lists.
+	VisibilityUnlocked Visibility = 3
+
 	// VisibilityFollowersOnly means this status is viewable to followers only.
-	VisibilityFollowersOnly Visibility = "followers_only"
-	// VisibilityMutualsOnly means this status is visible to mutual followers only.
-	VisibilityMutualsOnly Visibility = "mutuals_only"
-	// VisibilityDirect means this status is visible only to mentioned recipients.
-	VisibilityDirect Visibility = "direct"
+	VisibilityFollowersOnly Visibility = 4
+
+	// VisibilityMutualsOnly means this status
+	// is visible to mutual followers only.
+	VisibilityMutualsOnly Visibility = 5
+
+	// VisibilityDirect means this status is
+	// visible only to mentioned recipients.
+	VisibilityDirect Visibility = 6
+
 	// VisibilityDefault is used when no other setting can be found.
 	VisibilityDefault Visibility = VisibilityUnlocked
 )
+
+// String returns a stringified, frontend API compatible form of Visibility.
+func (v Visibility) String() string {
+	switch v {
+	case VisibilityNone:
+		return "none"
+	case VisibilityPublic:
+		return "public"
+	case VisibilityUnlocked:
+		return "unlocked"
+	case VisibilityFollowersOnly:
+		return "followers_only"
+	case VisibilityMutualsOnly:
+		return "mutuals_only"
+	case VisibilityDirect:
+		return "direct"
+	default:
+		panic("invalid visibility")
+	}
+}
 
 // Content models the simple string content
 // of a status along with its ContentMap,

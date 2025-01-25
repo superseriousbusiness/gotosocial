@@ -27,7 +27,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 func (p *Processor) Alias(
@@ -137,8 +137,8 @@ func (p *Processor) Alias(
 	// Dedupe URIs + accounts, in case someone
 	// provided both an account URL and an
 	// account URI above, for the same account.
-	account.AlsoKnownAsURIs = util.Deduplicate(account.AlsoKnownAsURIs)
-	account.AlsoKnownAs = util.DeduplicateFunc(
+	account.AlsoKnownAsURIs = xslices.Deduplicate(account.AlsoKnownAsURIs)
+	account.AlsoKnownAs = xslices.DeduplicateFunc(
 		account.AlsoKnownAs,
 		func(a *gtsmodel.Account) string {
 			return a.URI

@@ -22,12 +22,8 @@ import (
 	"net/url"
 )
 
-// Exists returns true if the database has an entry for the specified
-// id. It may not be owned by this application instance.
-//
-// The library makes this call only after acquiring a lock first.
-//
-// Implementation note: this just straight up isn't implemented, and doesn't *really* need to be either.
+// Exists is an implementation of pub.Database{}.Exists(), optimized specifically for
+// the only usecase in which go-fed/activity/pub actually calls it. Do not use otherwise!
 func (f *federatingDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
-	return false, nil
+	return f.activityIDs.Has(id.String()), nil
 }

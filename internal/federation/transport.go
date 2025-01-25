@@ -49,7 +49,7 @@ import (
 // Note that the library will not maintain a long-lived pointer to the
 // returned Transport so that any private credentials are able to be
 // garbage collected.
-func (f *Federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, gofedAgent string) (pub.Transport, error) {
+func (f *Federator) NewTransport(ctx context.Context, actorBoxIRI *url.URL, _ string) (pub.Transport, error) {
 	var username string
 	var err error
 

@@ -30,7 +30,7 @@ export interface PageableListProps<T> {
 	items?: T[];
 	itemToEntry: (_item: T) => ReactNode;
 	isLoading: boolean;
-	isFetching: boolean;
+	isFetching?: boolean;
 	isError: boolean;
 	error: FetchBaseQueryError | SerializedError | undefined;
 	emptyMessage: ReactNode;

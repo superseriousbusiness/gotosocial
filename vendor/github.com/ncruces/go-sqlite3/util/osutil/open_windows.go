@@ -15,7 +15,7 @@ func OpenFile(name string, flag int, perm fs.FileMode) (*os.File, error) {
 	if name == "" {
 		return nil, &os.PathError{Op: "open", Path: name, Err: ENOENT}
 	}
-	r, e := syscallOpen(name, flag, uint32(perm.Perm()))
+	r, e := syscallOpen(name, flag|O_CLOEXEC, uint32(perm.Perm()))
 	if e != nil {
 		return nil, &os.PathError{Op: "open", Path: name, Err: e}
 	}
@@ -100,6 +100,9 @@ func syscallOpen(path string, mode int, perm uint32) (fd Handle, err error) {
 	if mode&O_SYNC != 0 {
 		const _FILE_FLAG_WRITE_THROUGH = 0x80000000
 		attrs |= _FILE_FLAG_WRITE_THROUGH
+	}
+	if mode&O_NONBLOCK != 0 {
+		attrs |= FILE_FLAG_OVERLAPPED
 	}
 	return CreateFile(pathp, access, sharemode, sa, createmode, attrs, 0)
 }

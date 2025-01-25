@@ -66,7 +66,7 @@ var (
 	// causing loads of dereferencing calls.
 	Fresh = util.Ptr(FreshnessWindow(5 * time.Minute))
 
-	// 10 seconds.
+	// 5 seconds.
 	//
 	// Freshest is useful when you want an
 	// immediately up to date model of something
@@ -74,7 +74,7 @@ var (
 	//
 	// Be careful using this one; it can cause
 	// lots of unnecessary traffic if used unwisely.
-	Freshest = util.Ptr(FreshnessWindow(10 * time.Second))
+	Freshest = util.Ptr(FreshnessWindow(5 * time.Second))
 )
 
 // Dereferencer wraps logic and functionality for doing dereferencing

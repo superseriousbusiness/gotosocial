@@ -3,6 +3,7 @@ package bun
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"time"
 
 	"github.com/uptrace/bun/dialect/feature"
@@ -12,7 +13,10 @@ import (
 
 type DeleteQuery struct {
 	whereBaseQuery
+	orderLimitOffsetQuery
 	returningQuery
+
+	comment string
 }
 
 var _ Query = (*DeleteQuery)(nil)
@@ -44,10 +48,12 @@ func (q *DeleteQuery) Err(err error) *DeleteQuery {
 	return q
 }
 
-// Apply calls the fn passing the DeleteQuery as an argument.
-func (q *DeleteQuery) Apply(fn func(*DeleteQuery) *DeleteQuery) *DeleteQuery {
-	if fn != nil {
-		return fn(q)
+// Apply calls each function in fns, passing the DeleteQuery as an argument.
+func (q *DeleteQuery) Apply(fns ...func(*DeleteQuery) *DeleteQuery) *DeleteQuery {
+	for _, fn := range fns {
+		if fn != nil {
+			q = fn(q)
+		}
 	}
 	return q
 }
@@ -120,8 +126,36 @@ func (q *DeleteQuery) WhereAllWithDeleted() *DeleteQuery {
 	return q
 }
 
+func (q *DeleteQuery) Order(orders ...string) *DeleteQuery {
+	if !q.hasFeature(feature.DeleteOrderLimit) {
+		q.err = errors.New("bun: order is not supported for current dialect")
+		return q
+	}
+	q.addOrder(orders...)
+	return q
+}
+
+func (q *DeleteQuery) OrderExpr(query string, args ...interface{}) *DeleteQuery {
+	if !q.hasFeature(feature.DeleteOrderLimit) {
+		q.err = errors.New("bun: order is not supported for current dialect")
+		return q
+	}
+	q.addOrderExpr(query, args...)
+	return q
+}
+
 func (q *DeleteQuery) ForceDelete() *DeleteQuery {
 	q.flags = q.flags.Set(forceDeleteFlag)
+	return q
+}
+
+// ------------------------------------------------------------------------------
+func (q *DeleteQuery) Limit(n int) *DeleteQuery {
+	if !q.hasFeature(feature.DeleteOrderLimit) {
+		q.err = errors.New("bun: limit is not supported for current dialect")
+		return q
+	}
+	q.setLimit(n)
 	return q
 }
 
@@ -131,7 +165,20 @@ func (q *DeleteQuery) ForceDelete() *DeleteQuery {
 //
 // To suppress the auto-generated RETURNING clause, use `Returning("NULL")`.
 func (q *DeleteQuery) Returning(query string, args ...interface{}) *DeleteQuery {
+	if !q.hasFeature(feature.DeleteReturning) {
+		q.err = errors.New("bun: returning is not supported for current dialect")
+		return q
+	}
+
 	q.addReturning(schema.SafeQuery(query, args))
+	return q
+}
+
+//------------------------------------------------------------------------------
+
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *DeleteQuery) Comment(comment string) *DeleteQuery {
+	q.comment = comment
 	return q
 }
 
@@ -145,6 +192,8 @@ func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
 
 	fmter = formatterWithModel(fmter, q)
 
@@ -164,7 +213,7 @@ func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 		return upd.AppendQuery(fmter, b)
 	}
 
-	withAlias := q.db.features.Has(feature.DeleteTableAlias)
+	withAlias := q.db.HasFeature(feature.DeleteTableAlias)
 
 	b, err = q.appendWith(fmter, b)
 	if err != nil {
@@ -203,7 +252,21 @@ func (q *DeleteQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 		return nil, err
 	}
 
-	if q.hasFeature(feature.Returning) && q.hasReturning() {
+	if q.hasMultiTables() && (len(q.order) > 0 || q.limit > 0) {
+		return nil, errors.New("bun: can't use ORDER or LIMIT with multiple tables")
+	}
+
+	b, err = q.appendOrder(fmter, b)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err = q.appendLimitOffset(fmter, b)
+	if err != nil {
+		return nil, err
+	}
+
+	if q.hasFeature(feature.DeleteReturning) && q.hasReturning() {
 		b = append(b, " RETURNING "...)
 		b, err = q.appendReturning(fmter, b)
 		if err != nil {
@@ -265,7 +328,7 @@ func (q *DeleteQuery) scanOrExec(
 		return nil, err
 	}
 
-	useScan := hasDest || (q.hasReturning() && q.hasFeature(feature.Returning|feature.Output))
+	useScan := hasDest || (q.hasReturning() && q.hasFeature(feature.DeleteReturning|feature.Output))
 	var model Model
 
 	if useScan {

@@ -47,13 +47,13 @@ func (suite *InstanceTestSuite) TestCountInstanceUsersRemote() {
 func (suite *InstanceTestSuite) TestCountInstanceStatuses() {
 	count, err := suite.db.CountInstanceStatuses(context.Background(), config.GetHost())
 	suite.NoError(err)
-	suite.Equal(20, count)
+	suite.Equal(21, count)
 }
 
 func (suite *InstanceTestSuite) TestCountInstanceStatusesRemote() {
 	count, err := suite.db.CountInstanceStatuses(context.Background(), "fossbros-anonymous.io")
 	suite.NoError(err)
-	suite.Equal(3, count)
+	suite.Equal(4, count)
 }
 
 func (suite *InstanceTestSuite) TestCountInstanceDomains() {

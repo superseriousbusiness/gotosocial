@@ -23,7 +23,6 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -72,7 +71,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 	}
 
 	// Auth passed, generate the proper AP representation.
-	person, err := p.converter.AccountToAS(ctx, receiver)
+	accountable, err := p.converter.AccountToAS(ctx, receiver)
 	if err != nil {
 		err := gtserror.Newf("error converting account: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -91,7 +90,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		// Instead, we end up in an 'I'll show you mine if you show me
 		// yours' situation, where we sort of agree to reveal each
 		// other's profiles at the same time.
-		return data(person)
+		return data(accountable)
 	}
 
 	// Get requester from auth.
@@ -107,13 +106,13 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		return nil, gtserror.NewErrorForbidden(errors.New(text))
 	}
 
-	return data(person)
+	return data(accountable)
 }
 
-func data(requestedPerson vocab.ActivityStreamsPerson) (interface{}, gtserror.WithCode) {
-	data, err := ap.Serialize(requestedPerson)
+func data(accountable ap.Accountable) (interface{}, gtserror.WithCode) {
+	data, err := ap.Serialize(accountable)
 	if err != nil {
-		err := gtserror.Newf("error serializing person: %w", err)
+		err := gtserror.Newf("error serializing accountable: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 

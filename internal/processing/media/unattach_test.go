@@ -20,7 +20,6 @@ package media_test
 import (
 	"context"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -42,8 +41,6 @@ func (suite *UnattachTestSuite) TestUnattachMedia() {
 
 	dbAttachment, errWithCode := suite.db.GetAttachmentByID(ctx, a.ID)
 	suite.NoError(errWithCode)
-
-	suite.WithinDuration(dbAttachment.UpdatedAt, time.Now(), 1*time.Minute)
 	suite.Empty(dbAttachment.StatusID)
 }
 

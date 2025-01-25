@@ -22,7 +22,9 @@ import (
 	"math/big"
 	"time"
 
+	"codeberg.org/gruf/go-kv"
 	"github.com/oklog/ulid"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (
@@ -45,13 +47,19 @@ func NewULID() string {
 	return ulid.String()
 }
 
-// NewULIDFromTime returns a new ULID string using the given time, or an error if something goes wrong.
-func NewULIDFromTime(t time.Time) (string, error) {
-	newUlid, err := ulid.New(ulid.Timestamp(t), rand.Reader)
-	if err != nil {
-		return "", err
+// NewULIDFromTime returns a new ULID string using
+// given time, or from current time on any error.
+func NewULIDFromTime(t time.Time) string {
+	ts := ulid.Timestamp(t)
+	if ts > ulid.MaxTime() {
+		log.WarnKVs(nil, kv.Fields{
+			{K: "caller", V: log.Caller(2)},
+			{K: "value", V: t},
+			{K: "msg", V: "invalid ulid time"},
+		}...)
+		ts = ulid.Now()
 	}
-	return newUlid.String(), nil
+	return ulid.MustNew(ts, rand.Reader).String()
 }
 
 // NewRandomULID returns a new ULID string using a random time in an ~80 year range around the current datetime, or an error if something goes wrong.
@@ -74,4 +82,13 @@ func NewRandomULID() (string, error) {
 		return "", err
 	}
 	return newUlid.String(), nil
+}
+
+func TimeFromULID(id string) (time.Time, error) {
+	parsed, err := ulid.ParseStrict(id)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return ulid.Time(parsed.Time()), nil
 }

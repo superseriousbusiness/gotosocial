@@ -29,6 +29,10 @@ type Status struct {
 	// The date when this status was created (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
+	// Timestamp of when the status was last edited (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	// nullable: true
+	EditedAt *string `json:"edited_at"`
 	// ID of the status being replied to.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	// nullable: true
@@ -193,36 +197,50 @@ type StatusReblogged struct {
 //
 // swagger:ignore
 type StatusCreateRequest struct {
+
 	// Text content of the status.
 	// If media_ids is provided, this becomes optional.
 	// Attaching a poll is optional while status is provided.
 	Status string `form:"status" json:"status"`
+
 	// Array of Attachment ids to be attached as media.
 	// If provided, status becomes optional, and poll cannot be used.
 	MediaIDs []string `form:"media_ids[]" json:"media_ids"`
+
 	// Poll to include with this status.
 	Poll *PollRequest `form:"poll" json:"poll"`
+
 	// ID of the status being replied to, if status is a reply.
 	InReplyToID string `form:"in_reply_to_id" json:"in_reply_to_id"`
+
 	// Status and attached media should be marked as sensitive.
 	Sensitive bool `form:"sensitive" json:"sensitive"`
+
 	// Text to be shown as a warning or subject before the actual content.
 	// Statuses are generally collapsed behind this field.
 	SpoilerText string `form:"spoiler_text" json:"spoiler_text"`
+
 	// Visibility of the posted status.
 	Visibility Visibility `form:"visibility" json:"visibility"`
-	// Set to "true" if this status should not be federated, ie. it should be a "local only" status.
+
+	// Set to "true" if this status should not be
+	// federated,ie. it should be a "local only" status.
 	LocalOnly *bool `form:"local_only" json:"local_only"`
+
 	// Deprecated: Only used if LocalOnly is not set.
 	Federated *bool `form:"federated" json:"federated"`
+
 	// ISO 8601 Datetime at which to schedule a status.
 	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
 	ScheduledAt string `form:"scheduled_at" json:"scheduled_at"`
+
 	// ISO 639 language code for this status.
 	Language string `form:"language" json:"language"`
+
 	// Content type to use when parsing this status.
 	ContentType StatusContentType `form:"content_type" json:"content_type"`
+
 	// Interaction policy to use for this status.
 	InteractionPolicy *InteractionPolicy `form:"-" json:"interaction_policy"`
 }
@@ -232,6 +250,7 @@ type StatusCreateRequest struct {
 //
 // swagger:ignore
 type StatusInteractionPolicyForm struct {
+
 	// Interaction policy to use for this status.
 	InteractionPolicy *InteractionPolicy `form:"interaction_policy" json:"-"`
 }
@@ -246,13 +265,18 @@ const (
 	// VisibilityNone is visible to nobody. This is only used for the visibility of web statuses.
 	VisibilityNone Visibility = "none"
 	// VisibilityPublic is visible to everyone, and will be available via the web even for nonauthenticated users.
+
 	VisibilityPublic Visibility = "public"
+
 	// VisibilityUnlisted is visible to everyone, but only on home timelines, lists, etc.
 	VisibilityUnlisted Visibility = "unlisted"
+
 	// VisibilityPrivate is visible only to followers of the account that posted the status.
 	VisibilityPrivate Visibility = "private"
+
 	// VisibilityMutualsOnly is visible only to mutual followers of the account that posted the status.
 	VisibilityMutualsOnly Visibility = "mutuals_only"
+
 	// VisibilityDirect is visible only to accounts tagged in the status. It is equivalent to a direct message.
 	VisibilityDirect Visibility = "direct"
 )
@@ -264,7 +288,8 @@ const (
 // swagger:type string
 type StatusContentType string
 
-// Content type to use when parsing submitted status into an html-formatted status
+// Content type to use when parsing submitted
+// status into an html-formatted status.
 const (
 	StatusContentTypePlain    StatusContentType = "text/plain"
 	StatusContentTypeMarkdown StatusContentType = "text/markdown"
@@ -276,11 +301,14 @@ const (
 //
 // swagger:model statusSource
 type StatusSource struct {
+
 	// ID of the status.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id"`
+
 	// Plain-text source of a status.
 	Text string `json:"text"`
+
 	// Plain-text version of spoiler text.
 	SpoilerText string `json:"spoiler_text"`
 }
@@ -290,27 +318,69 @@ type StatusSource struct {
 //
 // swagger:model statusEdit
 type StatusEdit struct {
+
 	// The content of this status at this revision.
 	// Should be HTML, but might also be plaintext in some cases.
 	// example: <p>Hey this is a status!</p>
 	Content string `json:"content"`
+
 	// Subject, summary, or content warning for the status at this revision.
 	// example: warning nsfw
 	SpoilerText string `json:"spoiler_text"`
+
 	// Status marked sensitive at this revision.
 	// example: false
 	Sensitive bool `json:"sensitive"`
+
 	// The date when this revision was created (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
+
 	// The account that authored this status.
 	Account *Account `json:"account"`
+
 	// The poll attached to the status at this revision.
 	// Note that edits changing the poll options will be collapsed together into one edit, since this action resets the poll.
 	// nullable: true
 	Poll *Poll `json:"poll"`
+
 	// Media that is attached to this status.
 	MediaAttachments []*Attachment `json:"media_attachments"`
+
 	// Custom emoji to be used when rendering status content.
 	Emojis []Emoji `json:"emojis"`
+}
+
+// StatusEditRequest models status edit parameters.
+//
+// swagger:ignore
+type StatusEditRequest struct {
+
+	// Text content of the status.
+	// If media_ids is provided, this becomes optional.
+	// Attaching a poll is optional while status is provided.
+	Status string `form:"status" json:"status"`
+
+	// Text to be shown as a warning or subject before the actual content.
+	// Statuses are generally collapsed behind this field.
+	SpoilerText string `form:"spoiler_text" json:"spoiler_text"`
+
+	// Content type to use when parsing this status.
+	ContentType StatusContentType `form:"content_type" json:"content_type"`
+
+	// Status and attached media should be marked as sensitive.
+	Sensitive bool `form:"sensitive" json:"sensitive"`
+
+	// ISO 639 language code for this status.
+	Language string `form:"language" json:"language"`
+
+	// Array of Attachment ids to be attached as media.
+	// If provided, status becomes optional, and poll cannot be used.
+	MediaIDs []string `form:"media_ids[]" json:"media_ids"`
+
+	// Array of Attachment attributes to be updated in attached media.
+	MediaAttributes []AttachmentAttributesRequest `form:"media_attributes[]" json:"media_attributes"`
+
+	// Poll to include with this status.
+	Poll *PollRequest `form:"poll" json:"poll"`
 }

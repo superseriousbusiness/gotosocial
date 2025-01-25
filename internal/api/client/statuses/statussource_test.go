@@ -91,7 +91,7 @@ func (suite *StatusSourceTestSuite) TestGetSource() {
 
 	suite.Equal(`{
   "id": "01F8MHAMCHF6Y650WCRSCP4WMY",
-  "text": "**STATUS EDITS ARE NOT CURRENTLY SUPPORTED IN GOTOSOCIAL (coming in 2024)**\nYou can review the original text of your status below, but you will not be able to submit this edit.\n\n---\n\nhello everyone!",
+  "text": "hello everyone!",
   "spoiler_text": "introduction post"
 }`, dst.String())
 }

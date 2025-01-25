@@ -224,7 +224,7 @@ func DefaultInteractionPolicyFor(v Visibility) *InteractionPolicy {
 	case VisibilityDirect:
 		return DefaultInteractionPolicyDirect()
 	default:
-		panic("visibility " + v + " not recognized")
+		panic("invalid visibility")
 	}
 }
 

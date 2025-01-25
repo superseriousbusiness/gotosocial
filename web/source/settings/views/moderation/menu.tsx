@@ -116,6 +116,62 @@ function ModerationDomainPermsMenu() {
 				itemUrl="import-export"
 				icon="fa-floppy-o"
 			/>
+			<MenuItem
+				name="Drafts"
+				itemUrl="drafts"
+				defaultChild="search"
+				icon="fa-pencil"
+			>
+				<MenuItem
+					name="Search"
+					itemUrl="search"
+					icon="fa-list"
+				/>
+				<MenuItem
+					name="New draft"
+					itemUrl="new"
+					icon="fa-plus"
+				/>
+			</MenuItem>
+			<MenuItem
+				name="Excludes"
+				itemUrl="excludes"
+				defaultChild="search"
+				icon="fa-minus-square"
+			>
+				<MenuItem
+					name="Search"
+					itemUrl="search"
+					icon="fa-list"
+				/>
+				<MenuItem
+					name="New exclude"
+					itemUrl="new"
+					icon="fa-plus"
+				/>
+			</MenuItem>
+			<MenuItem
+				name="Subscriptions"
+				itemUrl="subscriptions"
+				defaultChild="search"
+				icon="fa-cloud-download"
+			>
+				<MenuItem
+					name="Search"
+					itemUrl="search"
+					icon="fa-list"
+				/>
+				<MenuItem
+					name="New subscription"
+					itemUrl="new"
+					icon="fa-plus"
+				/>
+				<MenuItem
+					name="Preview"
+					itemUrl="preview"
+					icon="fa-eye"
+				/>
+			</MenuItem>
 		</MenuItem>
 	);
 }

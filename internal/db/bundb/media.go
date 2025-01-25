@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -78,7 +78,7 @@ func (m *mediaDB) GetAttachmentsByIDs(ctx context.Context, ids []string) ([]*gts
 	// Reorder the media by their
 	// IDs to ensure in correct order.
 	getID := func(m *gtsmodel.MediaAttachment) string { return m.ID }
-	util.OrderBy(media, ids, getID)
+	xslices.OrderBy(media, ids, getID)
 
 	return media, nil
 }
@@ -104,12 +104,6 @@ func (m *mediaDB) PutAttachment(ctx context.Context, media *gtsmodel.MediaAttach
 }
 
 func (m *mediaDB) UpdateAttachment(ctx context.Context, media *gtsmodel.MediaAttachment, columns ...string) error {
-	media.UpdatedAt = time.Now()
-	if len(columns) > 0 {
-		// If we're updating by column, ensure "updated_at" is included.
-		columns = append(columns, "updated_at")
-	}
-
 	return m.state.Caches.DB.Media.Store(media, func() error {
 		_, err := m.db.NewUpdate().
 			Model(media).

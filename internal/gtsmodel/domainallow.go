@@ -45,6 +45,10 @@ func (d *DomainAllow) GetUpdatedAt() time.Time {
 	return d.UpdatedAt
 }
 
+func (d *DomainAllow) SetUpdatedAt(i time.Time) {
+	d.UpdatedAt = i
+}
+
 func (d *DomainAllow) GetDomain() string {
 	return d.Domain
 }
@@ -53,26 +57,54 @@ func (d *DomainAllow) GetCreatedByAccountID() string {
 	return d.CreatedByAccountID
 }
 
+func (d *DomainAllow) SetCreatedByAccountID(i string) {
+	d.CreatedByAccountID = i
+}
+
 func (d *DomainAllow) GetCreatedByAccount() *Account {
 	return d.CreatedByAccount
+}
+
+func (d *DomainAllow) SetCreatedByAccount(i *Account) {
+	d.CreatedByAccount = i
 }
 
 func (d *DomainAllow) GetPrivateComment() string {
 	return d.PrivateComment
 }
 
+func (d *DomainAllow) SetPrivateComment(i string) {
+	d.PrivateComment = i
+}
+
 func (d *DomainAllow) GetPublicComment() string {
 	return d.PublicComment
+}
+
+func (d *DomainAllow) SetPublicComment(i string) {
+	d.PublicComment = i
 }
 
 func (d *DomainAllow) GetObfuscate() *bool {
 	return d.Obfuscate
 }
 
+func (d *DomainAllow) SetObfuscate(i *bool) {
+	d.Obfuscate = i
+}
+
 func (d *DomainAllow) GetSubscriptionID() string {
 	return d.SubscriptionID
 }
 
+func (d *DomainAllow) SetSubscriptionID(i string) {
+	d.SubscriptionID = i
+}
+
 func (d *DomainAllow) GetType() DomainPermissionType {
 	return DomainPermissionAllow
+}
+
+func (d *DomainAllow) IsOrphan() bool {
+	return d.SubscriptionID == ""
 }

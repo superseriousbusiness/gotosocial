@@ -24,7 +24,6 @@ import (
 	"io"
 
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -111,7 +110,7 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	// Anyone can like.
 	canLikeAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canLikeAlwaysProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	canLikeAlwaysProp.AppendIRI(ap.PublicURI())
 	canLike.SetGoToSocialAlways(canLikeAlwaysProp)
 
 	// Empty approvalRequired.
@@ -128,7 +127,7 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	// Anyone can reply.
 	canReplyAlwaysProp := streams.NewGoToSocialAlwaysProperty()
-	canReplyAlwaysProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	canReplyAlwaysProp.AppendIRI(ap.PublicURI())
 	canReply.SetGoToSocialAlways(canReplyAlwaysProp)
 
 	// Set empty approvalRequired.
@@ -151,7 +150,7 @@ func noteWithMentions1() vocab.ActivityStreamsNote {
 
 	// Public requires approval to announce.
 	canAnnounceApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
-	canAnnounceApprovalRequiredProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	canAnnounceApprovalRequiredProp.AppendIRI(ap.PublicURI())
 	canAnnounce.SetGoToSocialApprovalRequired(canAnnounceApprovalRequiredProp)
 
 	// Set canAnnounce on the policy.
@@ -266,7 +265,7 @@ func addressable1() ap.Addressable {
 	note := streams.NewActivityStreamsNote()
 
 	toProp := streams.NewActivityStreamsToProperty()
-	toProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	toProp.AppendIRI(ap.PublicURI())
 
 	note.SetActivityStreamsTo(toProp)
 
@@ -288,7 +287,7 @@ func addressable2() ap.Addressable {
 	note.SetActivityStreamsTo(toProp)
 
 	ccProp := streams.NewActivityStreamsCcProperty()
-	ccProp.AppendIRI(testrig.URLMustParse(pub.PublicActivityPubIRI))
+	ccProp.AppendIRI(ap.PublicURI())
 
 	note.SetActivityStreamsCc(ccProp)
 

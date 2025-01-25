@@ -15,6 +15,7 @@ import (
 
 type UpdateQuery struct {
 	whereBaseQuery
+	orderLimitOffsetQuery
 	returningQuery
 	customValueQuery
 	setQuery
@@ -22,6 +23,7 @@ type UpdateQuery struct {
 
 	joins    []joinQuery
 	omitZero bool
+	comment  string
 }
 
 var _ Query = (*UpdateQuery)(nil)
@@ -53,10 +55,12 @@ func (q *UpdateQuery) Err(err error) *UpdateQuery {
 	return q
 }
 
-// Apply calls the fn passing the SelectQuery as an argument.
-func (q *UpdateQuery) Apply(fn func(*UpdateQuery) *UpdateQuery) *UpdateQuery {
-	if fn != nil {
-		return fn(q)
+// Apply calls each function in fns, passing the UpdateQuery as an argument.
+func (q *UpdateQuery) Apply(fns ...func(*UpdateQuery) *UpdateQuery) *UpdateQuery {
+	for _, fn := range fns {
+		if fn != nil {
+			q = fn(q)
+		}
 	}
 	return q
 }
@@ -200,6 +204,34 @@ func (q *UpdateQuery) WhereAllWithDeleted() *UpdateQuery {
 	return q
 }
 
+// ------------------------------------------------------------------------------
+func (q *UpdateQuery) Order(orders ...string) *UpdateQuery {
+	if !q.hasFeature(feature.UpdateOrderLimit) {
+		q.err = errors.New("bun: order is not supported for current dialect")
+		return q
+	}
+	q.addOrder(orders...)
+	return q
+}
+
+func (q *UpdateQuery) OrderExpr(query string, args ...interface{}) *UpdateQuery {
+	if !q.hasFeature(feature.UpdateOrderLimit) {
+		q.err = errors.New("bun: order is not supported for current dialect")
+		return q
+	}
+	q.addOrderExpr(query, args...)
+	return q
+}
+
+func (q *UpdateQuery) Limit(n int) *UpdateQuery {
+	if !q.hasFeature(feature.UpdateOrderLimit) {
+		q.err = errors.New("bun: limit is not supported for current dialect")
+		return q
+	}
+	q.setLimit(n)
+	return q
+}
+
 //------------------------------------------------------------------------------
 
 // Returning adds a RETURNING clause to the query.
@@ -207,6 +239,14 @@ func (q *UpdateQuery) WhereAllWithDeleted() *UpdateQuery {
 // To suppress the auto-generated RETURNING clause, use `Returning("NULL")`.
 func (q *UpdateQuery) Returning(query string, args ...interface{}) *UpdateQuery {
 	q.addReturning(schema.SafeQuery(query, args))
+	return q
+}
+
+//------------------------------------------------------------------------------
+
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *UpdateQuery) Comment(comment string) *UpdateQuery {
+	q.comment = comment
 	return q
 }
 
@@ -220,6 +260,8 @@ func (q *UpdateQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 	if q.err != nil {
 		return nil, q.err
 	}
+
+	b = appendComment(b, q.comment)
 
 	fmter = formatterWithModel(fmter, q)
 
@@ -274,6 +316,16 @@ func (q *UpdateQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 	}
 
 	b, err = q.mustAppendWhere(fmter, b, q.hasTableAlias(fmter))
+	if err != nil {
+		return nil, err
+	}
+
+	b, err = q.appendOrder(fmter, b)
+	if err != nil {
+		return nil, err
+	}
+
+	b, err = q.appendLimitOffset(fmter, b)
 	if err != nil {
 		return nil, err
 	}

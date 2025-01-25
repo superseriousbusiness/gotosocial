@@ -29,7 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -113,7 +113,7 @@ func (i *interactionDB) GetInteractionRequestsByIDs(ctx context.Context, ids []s
 	// Reorder the requests by their
 	// IDs to ensure in correct order.
 	getID := func(r *gtsmodel.InteractionRequest) string { return r.ID }
-	util.OrderBy(requests, ids, getID)
+	xslices.OrderBy(requests, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -302,9 +302,9 @@ func (i *interactionDB) GetInteractionsRequestsForAcct(
 			bun.Ident("interaction_request"),
 		).
 		// Select only interaction requests that
-		// are neither accepted or rejected yet,
-		// ie., without an Accept or Reject URI.
-		Where("? IS NULL", bun.Ident("uri"))
+		// are neither accepted or rejected yet.
+		Where("? IS NULL", bun.Ident("accepted_at")).
+		Where("? IS NULL", bun.Ident("rejected_at"))
 
 	// Select interactions targeting status.
 	if statusID != "" {

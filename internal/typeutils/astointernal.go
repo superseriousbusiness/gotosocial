@@ -22,6 +22,7 @@ import (
 	"context"
 	"errors"
 	"net/url"
+	"time"
 
 	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -109,6 +110,13 @@ func (c *Converter) ASRepresentationToAccount(
 	if pub := ap.GetPublished(accountable); !pub.IsZero() {
 		acct.CreatedAt = pub
 		acct.UpdatedAt = pub
+	}
+
+	// Extract updated time if possible, i.e. last edited.
+	if upd := ap.GetUpdated(accountable); !upd.IsZero() {
+		acct.UpdatedAt = upd
+	} else {
+		acct.UpdatedAt = acct.CreatedAt
 	}
 
 	// Extract a preferred name (display name), fallback to username.
@@ -348,18 +356,29 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(statusable); !pub.IsZero() {
 		status.CreatedAt = pub
-		status.UpdatedAt = pub
 	} else {
 		log.Warnf(ctx, "unusable published property on %s", uri)
+		status.CreatedAt = time.Now()
+	}
+
+	// status.Edited
+	//
+	// Extract and validate update time for status. Defaults to none.
+	if upd := ap.GetUpdated(statusable); !upd.Before(status.CreatedAt) {
+		status.EditedAt = upd
+	} else if !upd.IsZero() {
+
+		// This is a malformed status that will likely break our systems.
+		err := gtserror.Newf("status %s 'updated' predates 'published'", uri)
+		return nil, gtserror.SetMalformed(err)
 	}
 
 	// status.AccountURI
 	// status.AccountID
 	// status.Account
 	//
-	// Account that created the status. Assume we have
-	// this in the db by the time this function is called,
-	// error if we don't.
+	// Account that created the status. Assume we have this
+	// in the db by the time this function is called, else error.
 	status.Account, err = c.getASAttributedToAccount(ctx,
 		status.URI,
 		statusable,
@@ -431,6 +450,10 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	if approvedByURI != nil {
 		status.ApprovedByURI = approvedByURI.String()
 	}
+
+	// Assume not pending approval; this may
+	// change when permissivity is checked.
+	status.PendingApproval = util.Ptr(false)
 
 	// status.Sensitive
 	sensitive := ap.ExtractSensitive(statusable)
@@ -531,6 +554,10 @@ func (c *Converter) ASLikeToFave(ctx context.Context, likeable ap.Likeable) (*gt
 		StatusID:        target.ID,
 		Status:          target,
 		URI:             uri,
+
+		// Assume not pending approval; this may
+		// change when permissivity is checked.
+		PendingApproval: util.Ptr(false),
 	}, nil
 }
 
@@ -620,9 +647,9 @@ func (c *Converter) ASAnnounceToStatus(
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(announceable); !pub.IsZero() {
 		boost.CreatedAt = pub
-		boost.UpdatedAt = pub
 	} else {
 		log.Warnf(ctx, "unusable published property on %s", uri)
+		boost.CreatedAt = time.Now()
 	}
 
 	// Extract and load the boost actor account,
@@ -655,6 +682,10 @@ func (c *Converter) ASAnnounceToStatus(
 	boost.TagIDs = make([]string, 0)
 	boost.MentionIDs = make([]string, 0)
 	boost.EmojiIDs = make([]string, 0)
+
+	// Assume not pending approval; this may
+	// change when permissivity is checked.
+	boost.PendingApproval = util.Ptr(false)
 
 	// Remaining fields on the boost will be
 	// taken from the target status; it's not

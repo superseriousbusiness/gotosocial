@@ -17,22 +17,36 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
-// DomainPermission models a domain
-// permission entry (block/allow).
+// DomainPermission models a domain permission
+// entry -- block / allow / draft / exclude.
 type DomainPermission interface {
 	GetID() string
 	GetCreatedAt() time.Time
 	GetUpdatedAt() time.Time
+	SetUpdatedAt(i time.Time)
 	GetDomain() string
 	GetCreatedByAccountID() string
+	SetCreatedByAccountID(i string)
 	GetCreatedByAccount() *Account
+	SetCreatedByAccount(i *Account)
 	GetPrivateComment() string
+	SetPrivateComment(i string)
 	GetPublicComment() string
+	SetPublicComment(i string)
 	GetObfuscate() *bool
+	SetObfuscate(i *bool)
 	GetSubscriptionID() string
+	SetSubscriptionID(i string)
 	GetType() DomainPermissionType
+
+	// Return true if this DomainPermission
+	// does not have a subscription id set.
+	IsOrphan() bool
 }
 
 // Domain permission type.
@@ -55,8 +69,8 @@ func (p DomainPermissionType) String() string {
 	}
 }
 
-func NewDomainPermissionType(in string) DomainPermissionType {
-	switch in {
+func ParseDomainPermissionType(in string) DomainPermissionType {
+	switch strings.ToLower(in) {
 	case "block":
 		return DomainPermissionBlock
 	case "allow":

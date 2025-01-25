@@ -197,8 +197,13 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 		return
 	}
 
-	// Iterate all entries in list.
-	l.rangefn(func(elem *list_elem) {
+	// Iterate the list.
+	for elem := l.head; //
+	elem != nil;        //
+	{
+		// Get next before
+		// any modification.
+		next := elem.next
 
 		// Extract element entry + item.
 		entry := (*index_entry)(elem.data)
@@ -206,18 +211,21 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 
 		// Pass to hook.
 		hook(item)
-	})
+
+		// Set next.
+		elem = next
+	}
 }
 
 // key uses hasher to generate Key{} from given raw parts.
 func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
+	buf.B = buf.B[:0]
 	if len(parts) != len(i.fields) {
 		panicf("incorrect number key parts: want=%d received=%d",
 			len(i.fields),
 			len(parts),
 		)
 	}
-	buf.B = buf.B[:0]
 	if !allow_zero(i.flags) {
 		for x, field := range i.fields {
 			before := len(buf.B)
@@ -301,8 +309,13 @@ func (i *Index) delete(key string, hook func(*indexed_item)) {
 	// Delete at hash.
 	i.data.Delete(key)
 
-	// Iterate entries in list.
-	l.rangefn(func(elem *list_elem) {
+	// Iterate the list.
+	for elem := l.head; //
+	elem != nil;        //
+	{
+		// Get next before
+		// any modification.
+		next := elem.next
 
 		// Remove elem.
 		l.remove(elem)
@@ -319,7 +332,10 @@ func (i *Index) delete(key string, hook func(*indexed_item)) {
 
 		// Pass to hook.
 		hook(item)
-	})
+
+		// Set next.
+		elem = next
+	}
 
 	// Release list.
 	free_list(l)
@@ -375,17 +391,21 @@ var index_entry_pool sync.Pool
 func new_index_entry() *index_entry {
 	v := index_entry_pool.Get()
 	if v == nil {
-		v = new(index_entry)
+		e := new(index_entry)
+		e.elem.data = unsafe.Pointer(e)
+		v = e
 	}
 	entry := v.(*index_entry)
-	ptr := unsafe.Pointer(entry)
-	entry.elem.data = ptr
 	return entry
 }
 
 // free_index_entry releases the index_entry.
 func free_index_entry(entry *index_entry) {
-	entry.elem.data = nil
+	if entry.elem.next != nil ||
+		entry.elem.prev != nil {
+		should_not_reach()
+		return
+	}
 	entry.key = ""
 	entry.index = nil
 	entry.item = nil

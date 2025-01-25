@@ -25,7 +25,7 @@ import { useValue, useTextInput } from "../../../lib/form";
 import useFormSubmit from "../../../lib/form/submit";
 import { TextArea } from "../../../components/form/inputs";
 import MutationButton from "../../../components/form/mutation-button";
-import Username from "../../../components/username";
+import UsernameLozenge from "../../../components/username-lozenge";
 import { useGetReportQuery, useResolveReportMutation } from "../../../lib/query/admin/reports";
 import { useBaseUrl } from "../../../lib/navigation/util";
 import { AdminReport } from "../../../lib/types/report";
@@ -99,7 +99,7 @@ function ReportBasicInfo({ report, baseUrl, location }: ReportSectionProps) {
 			<div className="info-list-entry">
 				<dt>Reported account</dt>
 				<dd>
-					<Username
+					<UsernameLozenge
 						account={target}
 						linkTo={`~/settings/moderation/accounts/${target.id}`}
 						backLocation={`~${baseUrl}${location}`}
@@ -110,7 +110,7 @@ function ReportBasicInfo({ report, baseUrl, location }: ReportSectionProps) {
 			<div className="info-list-entry">
 				<dt>Reported by</dt>
 				<dd>
-					<Username
+					<UsernameLozenge
 						account={from}
 						linkTo={`~/settings/moderation/accounts/${from.id}`}
 						backLocation={`~${baseUrl}${location}`}
@@ -173,7 +173,7 @@ function ReportHistory({ report, baseUrl, location }: ReportSectionProps) {
 				<div className="info-list-entry">
 					<dt>Handled by</dt>
 					<dd>
-						<Username
+						<UsernameLozenge
 							account={handled_by}
 							linkTo={`~/settings/moderation/accounts/${handled_by.id}`}
 							backLocation={`~${baseUrl}${location}`}

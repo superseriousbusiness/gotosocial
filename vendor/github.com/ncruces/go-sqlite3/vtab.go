@@ -4,8 +4,9 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // CreateModule registers a new virtual table module name.
@@ -57,9 +58,12 @@ func CreateModule[T VTab](db *Conn, name string, create, connect VTabConstructor
 		flags |= VTAB_SHADOWTABS
 	}
 
+	var modulePtr uint32
 	defer db.arena.mark()()
 	namePtr := db.arena.string(name)
-	modulePtr := util.AddHandle(db.ctx, module[T]{create, connect})
+	if connect != nil {
+		modulePtr = util.AddHandle(db.ctx, module[T]{create, connect})
+	}
 	r := db.call("sqlite3_create_module_go", uint64(db.handle),
 		uint64(namePtr), uint64(flags), uint64(modulePtr))
 	return db.error(r)
@@ -238,7 +242,7 @@ type VTabSavepointer interface {
 // A VTabCursor may optionally implement
 // [io.Closer] to free resources.
 //
-// http://sqlite.org/c3ref/vtab_cursor.html
+// https://sqlite.org/c3ref/vtab_cursor.html
 type VTabCursor interface {
 	// https://sqlite.org/vtab.html#xfilter
 	Filter(idxNum int, idxStr string, arg ...Value) error
@@ -352,8 +356,9 @@ func (idx *IndexInfo) load() {
 	idx.OrderBy = make([]IndexOrderBy, util.ReadUint32(mod, ptr+8))
 
 	constraintPtr := util.ReadUint32(mod, ptr+4)
+	constraint := idx.Constraint
 	for i := range idx.Constraint {
-		idx.Constraint[i] = IndexConstraint{
+		constraint[i] = IndexConstraint{
 			Column: int(int32(util.ReadUint32(mod, constraintPtr+0))),
 			Op:     IndexConstraintOp(util.ReadUint8(mod, constraintPtr+4)),
 			Usable: util.ReadUint8(mod, constraintPtr+5) != 0,
@@ -362,8 +367,9 @@ func (idx *IndexInfo) load() {
 	}
 
 	orderByPtr := util.ReadUint32(mod, ptr+12)
-	for i := range idx.OrderBy {
-		idx.OrderBy[i] = IndexOrderBy{
+	orderBy := idx.OrderBy
+	for i := range orderBy {
+		orderBy[i] = IndexOrderBy{
 			Column: int(int32(util.ReadUint32(mod, orderByPtr+0))),
 			Desc:   util.ReadUint8(mod, orderByPtr+4) != 0,
 		}

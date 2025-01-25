@@ -36,6 +36,9 @@ Direct posts are **not** accessible via a web URL on your GoToSocial instance.
 
 ### Mutuals-only
 
+!!! warning
+    Mutuals-only posts are not currently functional.
+
 Posts with a visibility of `mutuals_only` will only appear to the post author, and to *mutual follows* of the post author. In other words, they can only be seen by others if two conditions are met:
 
 1. The other account follows the post author.
@@ -281,6 +284,9 @@ Hashtags in GoToSocial are case-insensitive, so it doesn't matter if you use upp
 For accessibility reasons, it is considerate to use upper camel case when you're writing hashtags. In other words: capitalize the first letter of every word in the hashtag. So rather than writing `#thisisahashtag`, which is difficult to read visually, and difficult for screenreaders to read out loud, consider writing `#ThisIsAHashtag` instead.
 
 You can include as many hashtags as you like within a GoToSocial post, and each hashtag has a length limit of 100 characters.
+
+!!! tip
+    To end a hashtag, you can simply use a space, for example in the text `this #soup rules`, the hashtag is terminated by a space so `#soup` becomes the hashtag. However, you can also use a pipe character `|`, or the unicode characters `\u200B` (zero-width no-break space) or `\uFEFF` (zero-width space), to create "partial-word" hashtags. For example, with input text `this #so|up rules`, only the `#so` part becomes the hashtag. Likewise, with the input text `this #so​up rules`, which contains an invisible zero-width space after the o and before the u, only the `#so` part becomes the hashtag. See here for more information on zero-width spaces: https://en.wikipedia.org/wiki/Zero-width_space.
 
 ## Input Sanitization
 

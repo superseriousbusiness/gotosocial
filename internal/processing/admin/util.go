@@ -19,81 +19,41 @@ package admin
 
 import (
 	"context"
-	"errors"
-	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// stubbifyInstance renders the given instance as a stub,
-// removing most information from it and marking it as
-// suspended.
-//
-// For caller's convenience, this function returns the db
-// names of all columns that are updated by it.
-func stubbifyInstance(instance *gtsmodel.Instance, domainBlockID string) []string {
-	instance.Title = ""
-	instance.SuspendedAt = time.Now()
-	instance.DomainBlockID = domainBlockID
-	instance.ShortDescription = ""
-	instance.Description = ""
-	instance.Terms = ""
-	instance.ContactEmail = ""
-	instance.ContactAccountUsername = ""
-	instance.ContactAccountID = ""
-	instance.Version = ""
-
-	return []string{
-		"title",
-		"suspended_at",
-		"domain_block_id",
-		"short_description",
-		"description",
-		"terms",
-		"contact_email",
-		"contact_account_username",
-		"contact_account_id",
-		"version",
+// apiDomainPerm is a cheeky shortcut for returning
+// the API version of the given domain permission,
+// or an appropriate error if something goes wrong.
+func (p *Processor) apiDomainPerm(
+	ctx context.Context,
+	domainPermission gtsmodel.DomainPermission,
+	export bool,
+) (*apimodel.DomainPermission, gtserror.WithCode) {
+	apiDomainPerm, err := p.converter.DomainPermToAPIDomainPerm(ctx, domainPermission, export)
+	if err != nil {
+		err := gtserror.NewfAt(3, "error converting domain permission to api model: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	return apiDomainPerm, nil
 }
 
-// rangeDomainAccounts iterates through all accounts
-// originating from the given domain, and calls the
-// provided range function on each account.
-//
-// If an error is returned while selecting accounts,
-// the loop will stop and return the error.
-func (p *Processor) rangeDomainAccounts(
+// apiDomainPermSub is a cheeky shortcut for returning the
+// API version of the given domain permission subscription,
+// or an appropriate error if something goes wrong.
+func (p *Processor) apiDomainPermSub(
 	ctx context.Context,
-	domain string,
-	rangeF func(*gtsmodel.Account),
-) error {
-	var (
-		limit = 50   // Limit selection to avoid spiking mem/cpu.
-		maxID string // Start with empty string to select from top.
-	)
-
-	for {
-		// Get (next) page of accounts.
-		accounts, err := p.state.DB.GetInstanceAccounts(ctx, domain, maxID, limit)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			// Real db error.
-			return gtserror.Newf("db error getting instance accounts: %w", err)
-		}
-
-		if len(accounts) == 0 {
-			// No accounts left, we're done.
-			return nil
-		}
-
-		// Set next max ID for paging down.
-		maxID = accounts[len(accounts)-1].ID
-
-		// Call provided range function.
-		for _, account := range accounts {
-			rangeF(account)
-		}
+	domainPermSub *gtsmodel.DomainPermissionSubscription,
+) (*apimodel.DomainPermissionSubscription, gtserror.WithCode) {
+	apiDomainPermSub, err := p.converter.DomainPermSubToAPIDomainPermSub(ctx, domainPermSub)
+	if err != nil {
+		err := gtserror.NewfAt(3, "error converting domain permission subscription to api model: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
+
+	return apiDomainPermSub, nil
 }

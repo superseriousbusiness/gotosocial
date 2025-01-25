@@ -23,6 +23,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/announcements"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/apps"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/blocks"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/bookmarks"
@@ -46,6 +47,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/preferences"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/push"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/reports"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
@@ -66,6 +68,7 @@ type Client struct {
 
 	accounts            *accounts.Module            // api/v1/accounts, api/v1/profile
 	admin               *admin.Module               // api/v1/admin
+	announcements       *announcements.Module       // api/v1/announcements
 	apps                *apps.Module                // api/v1/apps
 	blocks              *blocks.Module              // api/v1/blocks
 	bookmarks           *bookmarks.Module           // api/v1/bookmarks
@@ -89,6 +92,7 @@ type Client struct {
 	notifications       *notifications.Module       // api/v1/notifications
 	polls               *polls.Module               // api/v1/polls
 	preferences         *preferences.Module         // api/v1/preferences
+	push                *push.Module                // api/v1/push
 	reports             *reports.Module             // api/v1/reports
 	search              *search.Module              // api/v1/search, api/v2/search
 	statuses            *statuses.Module            // api/v1/statuses
@@ -117,6 +121,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	h := apiGroup.Handle
 	c.accounts.Route(h)
 	c.admin.Route(h)
+	c.announcements.Route(h)
 	c.apps.Route(h)
 	c.blocks.Route(h)
 	c.bookmarks.Route(h)
@@ -140,6 +145,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.notifications.Route(h)
 	c.polls.Route(h)
 	c.preferences.Route(h)
+	c.push.Route(h)
 	c.reports.Route(h)
 	c.search.Route(h)
 	c.statuses.Route(h)
@@ -156,6 +162,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 
 		accounts:            accounts.New(p),
 		admin:               admin.New(state, p),
+		announcements:       announcements.New(p),
 		apps:                apps.New(p),
 		blocks:              blocks.New(p),
 		bookmarks:           bookmarks.New(p),
@@ -179,6 +186,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		notifications:       notifications.New(p),
 		polls:               polls.New(p),
 		preferences:         preferences.New(p),
+		push:                push.New(p),
 		reports:             reports.New(p),
 		search:              search.New(p),
 		statuses:            statuses.New(p),

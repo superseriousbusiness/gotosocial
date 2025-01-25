@@ -30,6 +30,7 @@ import type { MappedDomainPerms } from "../../../lib/types/domain-permission";
 import { NoArg } from "../../../lib/types/query";
 import { PermType } from "../../../lib/types/perm";
 import { useBaseUrl } from "../../../lib/navigation/util";
+import { useCapitalize } from "../../../lib/util";
 
 export default function DomainPermissionsOverview() {	
 	const baseUrl = useBaseUrl();
@@ -42,9 +43,7 @@ export default function DomainPermissionsOverview() {
 	const permType = params.permType.slice(0, -1) as PermType;
 
 	// Uppercase first letter of given permType.
-	const permTypeUpper = useMemo(() => {
-		return permType.charAt(0).toUpperCase() + permType.slice(1); 
-	}, [permType]);
+	const permTypeUpper = useCapitalize(permType);
 
 	// Fetch / wait for desired perms to load.
 	const { data: blocks, isLoading: isLoadingBlocks } = useDomainBlocksQuery(NoArg, { skip: permType !== "block" });

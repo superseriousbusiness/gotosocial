@@ -28,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )
@@ -109,7 +109,7 @@ func (r *relationshipDB) getMutesByIDs(ctx context.Context, ids []string) ([]*gt
 	// Reorder the mutes by their
 	// IDs to ensure in correct order.
 	getID := func(b *gtsmodel.UserMute) string { return b.ID }
-	util.OrderBy(mutes, ids, getID)
+	xslices.OrderBy(mutes, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

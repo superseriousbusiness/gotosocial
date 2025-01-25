@@ -186,6 +186,10 @@ definitions:
         title: TimelineMarker contains information about a user's progress through a specific timeline.
         type: object
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    WebPushNotificationPolicy:
+        title: WebPushNotificationPolicy names sets of accounts that can generate notifications.
+        type: string
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     account:
         description: The modelled account can be either a remote account, or one on this instance.
         properties:
@@ -206,6 +210,13 @@ definitions:
                 example: A cute drawing of a smiling sloth.
                 type: string
                 x-go-name: AvatarDescription
+            avatar_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's avatar image.
+                    Omitted if no avatar uploaded for this account (ie., default avatar).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: AvatarMediaID
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -277,6 +288,13 @@ definitions:
                 example: A sunlit field with purple flowers.
                 type: string
                 x-go-name: HeaderDescription
+            header_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's header image.
+                    Omitted if no header uploaded for this account (ie., default header).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: HeaderMediaID
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -296,8 +314,8 @@ definitions:
                 type: string
                 x-go-name: ID
             last_status_at:
-                description: When the account's most recent status was posted (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
+                description: When the account's most recent status was posted (ISO 8601 Date).
+                example: "2021-07-30"
                 type: string
                 x-go-name: LastStatusAt
             locked:
@@ -950,7 +968,12 @@ definitions:
             with "direct message" visibility.
         properties:
             accounts:
-                description: Participants in the conversation.
+                description: |-
+                    Participants in the conversation.
+
+                    If this is a conversation between no accounts (ie., a self-directed DM),
+                    this will include only the requesting account itself. Otherwise, it will
+                    include every other account in the conversation *except* the requester.
                 items:
                     $ref: '#/definitions/account'
                 type: array
@@ -1076,6 +1099,12 @@ definitions:
                 example: false
                 type: boolean
                 x-go-name: Obfuscate
+            permission_type:
+                description: |-
+                    Permission type of this entry (block, allow).
+                    Only set for domain permission drafts.
+                type: string
+                x-go-name: PermissionType
             private_comment:
                 description: Private comment for this permission entry, visible to this instance's admins only.
                 example: they are poopoo
@@ -1104,6 +1133,100 @@ definitions:
         title: DomainPermission represents a permission applied to one domain (explicit block/allow).
         type: object
         x-go-name: DomainPermission
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    domainPermissionSubscription:
+        properties:
+            adopt_orphans:
+                description: 'If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they''re "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription''s subscription ID value.'
+                example: false
+                type: boolean
+                x-go-name: AdoptOrphans
+            as_draft:
+                description: If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect. If false, domain permissions from this subscription will come into force immediately.
+                example: true
+                type: boolean
+                x-go-name: AsDraft
+            content_type:
+                description: MIME content type to use when parsing the permissions list.
+                example: text/csv
+                type: string
+                x-go-name: ContentType
+            count:
+                description: Count of domain permission entries discovered at URI on last (successful) fetch.
+                example: 53
+                format: uint64
+                readOnly: true
+                type: integer
+                x-go-name: Count
+            created_at:
+                description: Time at which the subscription was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            created_by:
+                description: ID of the account that created this subscription.
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: CreatedBy
+            error:
+                description: If most recent fetch attempt failed, this field will contain an error message related to the fetch attempt.
+                example: Oopsie doopsie, we made a fucky wucky.
+                readOnly: true
+                type: string
+                x-go-name: Error
+            fetch_password:
+                description: (Optional) password to set for basic auth when doing a fetch of URI.
+                example: admin123
+                type: string
+                x-go-name: FetchPassword
+            fetch_username:
+                description: (Optional) username to set for basic auth when doing a fetch of URI.
+                example: admin123
+                type: string
+                x-go-name: FetchUsername
+            fetched_at:
+                description: Time of the most recent fetch attempt (successful or otherwise) (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: FetchedAt
+            id:
+                description: The ID of the domain permission subscription.
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: ID
+            permission_type:
+                description: The type of domain permission subscription (allow, block).
+                example: block
+                type: string
+                x-go-name: PermissionType
+            priority:
+                description: Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority).
+                example: 100
+                format: uint8
+                type: integer
+                x-go-name: Priority
+            successfully_fetched_at:
+                description: Time of the most recent successful fetch (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: SuccessfullyFetchedAt
+            title:
+                description: Title of this subscription, as set by admin who created or updated it.
+                example: really cool list of neato pals
+                type: string
+                x-go-name: Title
+            uri:
+                description: URI to call in order to fetch the permissions list.
+                example: https://www.example.org/blocklists/list1.csv
+                type: string
+                x-go-name: URI
+        title: DomainPermissionSubscription represents an auto-refreshing subscription to a list of domain permissions (allows, blocks).
+        type: object
+        x-go-name: DomainPermissionSubscription
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
@@ -1545,6 +1668,10 @@ definitions:
                 $ref: '#/definitions/instanceV1Configuration'
             contact_account:
                 $ref: '#/definitions/account'
+            custom_css:
+                description: Custom CSS for the instance.
+                type: string
+                x-go-name: CustomCSS
             debug:
                 description: Whether or not instance is running in DEBUG mode. Omitted if false.
                 type: boolean
@@ -1725,6 +1852,10 @@ definitions:
                 $ref: '#/definitions/instanceV2Configuration'
             contact:
                 $ref: '#/definitions/instanceV2Contact'
+            custom_css:
+                description: Instance Custom Css
+                type: string
+                x-go-name: CustomCSS
             debug:
                 description: Whether or not instance is running in DEBUG mode. Omitted if false.
                 type: boolean
@@ -1819,6 +1950,8 @@ definitions:
                 $ref: '#/definitions/instanceV2ConfigurationTranslation'
             urls:
                 $ref: '#/definitions/instanceV2URLs'
+            vapid:
+                $ref: '#/definitions/instanceV2ConfigurationVAPID'
         title: Configured values and limits for this instance.
         type: object
         x-go-name: InstanceV2Configuration
@@ -1834,6 +1967,16 @@ definitions:
         title: Hints related to translation.
         type: object
         x-go-name: InstanceV2ConfigurationTranslation
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2ConfigurationVAPID:
+        properties:
+            public_key:
+                description: The instance's VAPID public key, Base64-encoded.
+                type: string
+                x-go-name: PublicKey
+        title: InstanceV2ConfigurationVAPID holds the instance's VAPID configuration.
+        type: object
+        x-go-name: InstanceV2ConfigurationVAPID
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2Contact:
         properties:
@@ -2109,7 +2252,7 @@ definitions:
             bitrate:
                 description: Bitrate of the media in bits per second.
                 example: 1000000
-                format: int64
+                format: uint64
                 type: integer
                 x-go-name: Bitrate
             duration:
@@ -2206,6 +2349,13 @@ definitions:
                 example: A cute drawing of a smiling sloth.
                 type: string
                 x-go-name: AvatarDescription
+            avatar_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's avatar image.
+                    Omitted if no avatar uploaded for this account (ie., default avatar).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: AvatarMediaID
             avatar_static:
                 description: |-
                     Web location of a static version of the account's avatar.
@@ -2277,6 +2427,13 @@ definitions:
                 example: A sunlit field with purple flowers.
                 type: string
                 x-go-name: HeaderDescription
+            header_media_id:
+                description: |-
+                    Database ID of the media attachment for this account's header image.
+                    Omitted if no header uploaded for this account (ie., default header).
+                example: 01JAJ3XCD66K3T99JZESCR137W
+                type: string
+                x-go-name: HeaderMediaID
             header_static:
                 description: |-
                     Web location of a static version of the account's header.
@@ -2296,8 +2453,8 @@ definitions:
                 type: string
                 x-go-name: ID
             last_status_at:
-                description: When the account's most recent status was posted (ISO 8601 Datetime).
-                example: "2021-07-30T09:20:25+00:00"
+                description: When the account's most recent status was posted (ISO 8601 Date).
+                example: "2021-07-30"
                 type: string
                 x-go-name: LastStatusAt
             locked:
@@ -2645,6 +2802,11 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: CreatedAt
+            edited_at:
+                description: Timestamp of when the status was last edited (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: EditedAt
             emojis:
                 description: Custom emoji to be used when rendering status content.
                 items:
@@ -2842,6 +3004,11 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: CreatedAt
+            edited_at:
+                description: Timestamp of when the status was last edited (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: EditedAt
             emojis:
                 description: Custom emoji to be used when rendering status content.
                 items:
@@ -3230,6 +3397,139 @@ definitions:
         type: object
         x-go-name: User
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushNotification:
+        description: |-
+            It does not contain an entire Notification, just the NotificationID and some preview information.
+            It is not used in the client API directly, but is included in the API doc for decoding Web Push notifications.
+        properties:
+            access_token:
+                description: |-
+                    AccessToken is the access token associated with the Web Push subscription.
+                    I don't know why this is sent, given that the client should know that already,
+                    but Feditext does use it.
+                type: string
+                x-go-name: AccessToken
+            body:
+                description: |-
+                    Body is a preview of the notification body,
+                    such as the first line of a status's CW or text,
+                    or the first line of an account bio.
+                type: string
+                x-go-name: Body
+            icon:
+                description: |-
+                    Icon is an image URL that can be displayed with the notification,
+                    normally the account's avatar.
+                type: string
+                x-go-name: Icon
+            notification_id:
+                description: NotificationID is the Notification.ID of the referenced Notification.
+                type: string
+                x-go-name: NotificationID
+            notification_type:
+                description: NotificationType is the Notification.Type of the referenced Notification.
+                type: string
+                x-go-name: NotificationType
+            preferred_locale:
+                description: PreferredLocale is a BCP 47 language tag for the receiving user's locale.
+                type: string
+                x-go-name: PreferredLocale
+            title:
+                description: |-
+                    Title is a title for the notification,
+                    generally describing an action taken by a user.
+                type: string
+                x-go-name: Title
+        title: WebPushNotification represents a notification summary delivered to the client by the Web Push server.
+        type: object
+        x-go-name: WebPushNotification
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushSubscription:
+        properties:
+            alerts:
+                $ref: '#/definitions/webPushSubscriptionAlerts'
+            endpoint:
+                description: Where push alerts will be sent to.
+                type: string
+                x-go-name: Endpoint
+            id:
+                description: The id of the push subscription in the database.
+                type: string
+                x-go-name: ID
+            policy:
+                $ref: '#/definitions/WebPushNotificationPolicy'
+            server_key:
+                description: The streaming server's VAPID public key.
+                type: string
+                x-go-name: ServerKey
+            standard:
+                description: |-
+                    Whether the subscription uses RFC or pre-RFC Web Push standards.
+                    For GotoSocial, this is always true.
+                type: boolean
+                x-go-name: Standard
+        title: WebPushSubscription represents a subscription to a Web Push server.
+        type: object
+        x-go-name: WebPushSubscription
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushSubscriptionAlerts:
+        properties:
+            admin.report:
+                description: Receive a push notification when a new report has been filed?
+                type: boolean
+                x-go-name: AdminReport
+            admin.sign_up:
+                description: Receive a push notification when a new user has signed up?
+                type: boolean
+                x-go-name: AdminSignup
+            favourite:
+                description: Receive a push notification when a status you created has been favourited by someone else?
+                type: boolean
+                x-go-name: Favourite
+            follow:
+                description: Receive a push notification when someone has followed you?
+                type: boolean
+                x-go-name: Follow
+            follow_request:
+                description: Receive a push notification when someone has requested to follow you?
+                type: boolean
+                x-go-name: FollowRequest
+            mention:
+                description: Receive a push notification when someone else has mentioned you in a status?
+                type: boolean
+                x-go-name: Mention
+            pending.favourite:
+                description: Receive a push notification when a fave is pending?
+                type: boolean
+                x-go-name: PendingFavourite
+            pending.reblog:
+                description: Receive a push notification when a boost is pending?
+                type: boolean
+                x-go-name: PendingReblog
+            pending.reply:
+                description: Receive a push notification when a reply is pending?
+                type: boolean
+                x-go-name: PendingReply
+            poll:
+                description: Receive a push notification when a poll you voted in or created has ended?
+                type: boolean
+                x-go-name: Poll
+            reblog:
+                description: Receive a push notification when a status you created has been boosted by someone else?
+                type: boolean
+                x-go-name: Reblog
+            status:
+                description: Receive a push notification when a subscribed account posts a status?
+                type: boolean
+                x-go-name: Status
+            update:
+                description: Receive a push notification when a status you interacted with has been edited?
+                type: boolean
+                x-go-name: Update
+        title: WebPushSubscriptionAlerts represents the specific events that this Web Push subscription will receive.
+        type: object
+        x-go-name: WebPushSubscriptionAlerts
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         description: See https://webfinger.net/
         properties:
@@ -3589,6 +3889,41 @@ paths:
                 - OAuth2 Bearer:
                     - write:blocks
             summary: Block account with id.
+            tags:
+                - accounts
+    /api/v1/accounts/{id}/featured_tags:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: accountsFeaturedTags
+            parameters:
+                - description: The id of the account.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Get an array of target account's featured tags.
             tags:
                 - accounts
     /api/v1/accounts/{id}/follow:
@@ -4887,7 +5222,7 @@ paths:
                 - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance.
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   required: true
                   type: string
                 - description: A png or gif image of the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default.
@@ -5033,7 +5368,7 @@ paths:
                 - description: The code to use for the emoji, which will be used by instance denizens to select it. This must be unique on the instance. Works for the `copy` action type only.
                   in: formData
                   name: shortcode
-                  pattern: \w{2,30}
+                  pattern: \w{1,30}
                   type: string
                 - description: A new png or gif image to use for the emoji. Animated pngs work too! To ensure compatibility with other fedi implementations, emoji size limit is 50kb by default. Works for LOCAL emojis only.
                   in: formData
@@ -5537,6 +5872,794 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Force expiry of cached public keys for all accounts on the given domain stored in your database.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts:
+        get:
+            description: |-
+                The drafts will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_drafts?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionDraftsGet
+            parameters:
+                - description: Show only drafts created by the given subscription ID.
+                  in: query
+                  name: subscription_id
+                  type: string
+                - description: Return only drafts that target the given domain.
+                  in: query
+                  name: domain
+                  type: string
+                - description: Filter on "block" or "allow" type drafts.
+                  in: query
+                  name: permission_type
+                  type: string
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission drafts.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain permission drafts.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftCreate
+            parameters:
+                - description: Domain to create the permission draft for.
+                  in: formData
+                  name: domain
+                  type: string
+                - description: Create a draft "allow" or a draft "block".
+                  in: formData
+                  name: permission_type
+                  type: string
+                - description: Obfuscate the name of the domain when serving it publicly. Eg., `example.org` becomes something like `ex***e.org`.
+                  in: formData
+                  name: obfuscate
+                  type: boolean
+                - description: Public comment about this domain permission. This will be displayed alongside the domain permission if you choose to share permissions.
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: Private comment about this domain permission. Will only be shown to other admins, so this is a useful way of internally keeping track of why a certain domain ended up permissioned.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission draft.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create a domain permission draft with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}:
+        get:
+            operationId: domainPermissionDraftGet
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission draft.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get domain permission draft with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}/accept:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftAccept
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: If a domain permission already exists with the same domain and permission type as the draft, overwrite the existing permission with fields from the draft.
+                  in: formData
+                  name: overwrite
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Accept a domain permission draft, turning it into an enforced domain permission.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_drafts/{id}/remove:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionDraftRemove
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: false
+                  description: When removing the domain permission draft, also create a domain exclude entry for the target domain, so that drafts will not be created for this domain in the future.
+                  in: formData
+                  name: exclude_target
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The removed domain permission draft.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Remove a domain permission draft, optionally ignoring all future drafts targeting the given domain.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_excludes:
+        get:
+            description: |-
+                The excludes will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionExcludesGet
+            parameters:
+                - description: Return only excludes that target the given domain.
+                  in: query
+                  name: domain
+                  type: string
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission excludes.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermission'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain permission excludes.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            description: |-
+                Excluded domains (and their subdomains) will not be automatically blocked or allowed when a list of domain permissions is imported or subscribed to.
+
+                You can still manually create domain blocks or domain allows for excluded domains, and any new or existing domain blocks or domain allows for an excluded domain will still be enforced.
+            operationId: domainPermissionExcludeCreate
+            parameters:
+                - description: Domain to create the permission exclude for.
+                  in: formData
+                  name: domain
+                  type: string
+                - description: Private comment about this domain exclude.
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission exclude.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create a domain permission exclude with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_excludes/{id}:
+        delete:
+            operationId: domainPermissionExcludeDelete
+            parameters:
+                - description: ID of the domain permission exclude.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The removed domain permission exclude.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Remove a domain permission exclude.
+            tags:
+                - admin
+        get:
+            operationId: domainPermissionExcludeGet
+            parameters:
+                - description: ID of the domain permission exclude.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission exclude.
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get domain permission exclude with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions:
+        get:
+            description: |-
+                The subscriptions will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionSubscriptionsGet
+            parameters:
+                - description: Filter on "block" or "allow" type subscriptions.
+                  in: query
+                  name: permission_type
+                  type: string
+                - description: Return only items *OLDER* than the given max ID (for paging downwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *NEWER* than the given since ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items immediately *NEWER* than the given min ID (for paging upwards). The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission subscriptions.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermissionSubscription'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View domain permission subscriptions.
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionCreate
+            parameters:
+                - default: 0
+                  description: Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority). Higher priority subscriptions will overwrite permissions generated by lower priority subscriptions. When two subscriptions have the same `priority` value, priority is indeterminate, so it's recommended to always set this value manually.
+                  in: formData
+                  maximum: 255
+                  minimum: 0
+                  name: priority
+                  type: number
+                - description: Optional title for this subscription.
+                  in: formData
+                  name: title
+                  type: string
+                - description: Type of permissions to create by parsing the targeted file/list. One of "allow" or "block".
+                  in: formData
+                  name: permission_type
+                  required: true
+                  type: string
+                - default: true
+                  description: If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect. If false, domain permissions from this subscription will come into force immediately. Defaults to "true".
+                  in: formData
+                  name: as_draft
+                  type: boolean
+                - default: false
+                  description: 'If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they''re "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription''s subscription ID value and be managed by this subscription.'
+                  in: formData
+                  name: adopt_orphans
+                  type: boolean
+                - description: URI to call in order to fetch the permissions list.
+                  in: formData
+                  name: uri
+                  required: true
+                  type: string
+                - description: MIME content type to use when parsing the permissions list. One of "text/plain", "text/csv", and "application/json".
+                  in: formData
+                  name: content_type
+                  required: true
+                  type: string
+                - description: Optional basic auth username to provide when fetching given uri. If set, will be transmitted along with `fetch_password` when doing the fetch.
+                  in: formData
+                  name: fetch_username
+                  type: string
+                - description: Optional basic auth password to provide when fetching given uri. If set, will be transmitted along with `fetch_username` when doing the fetch.
+                  in: formData
+                  name: fetch_password
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The newly created domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Create a domain permission subscription with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/${id}:
+        patch:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionUpdate
+            parameters:
+                - description: ID of the domain permission subscription.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority). Higher priority subscriptions will overwrite permissions generated by lower priority subscriptions. When two subscriptions have the same `priority` value, priority is indeterminate, so it's recommended to always set this value manually.
+                  in: formData
+                  maximum: 255
+                  minimum: 0
+                  name: priority
+                  type: number
+                - description: Optional title for this subscription.
+                  in: formData
+                  name: title
+                  type: string
+                - description: URI to call in order to fetch the permissions list.
+                  in: formData
+                  name: uri
+                  type: string
+                - default: true
+                  description: If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect. If false, domain permissions from this subscription will come into force immediately. Defaults to "true".
+                  in: formData
+                  name: as_draft
+                  type: boolean
+                - default: false
+                  description: 'If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they''re "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription''s subscription ID value and be managed by this subscription.'
+                  in: formData
+                  name: adopt_orphans
+                  type: boolean
+                - description: MIME content type to use when parsing the permissions list. One of "text/plain", "text/csv", and "application/json".
+                  in: formData
+                  name: content_type
+                  type: string
+                - description: Optional basic auth username to provide when fetching given uri. If set, will be transmitted along with `fetch_password` when doing the fetch.
+                  in: formData
+                  name: fetch_username
+                  type: string
+                - description: Optional basic auth password to provide when fetching given uri. If set, will be transmitted along with `fetch_username` when doing the fetch.
+                  in: formData
+                  name: fetch_password
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The updated domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Update a domain permission subscription with the given parameters.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}:
+        get:
+            operationId: domainPermissionSubscriptionGet
+            parameters:
+                - description: ID of the domain permission subscription.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Get domain permission subscription with the given ID.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}/remove:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionRemove
+            parameters:
+                - description: ID of the domain permission subscription.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: true
+                  description: |-
+                    When removing the domain permission subscription, also remove children of this subscription, ie., domain permissions that are managed by this subscription. If false, then children will instead be orphaned but not removed.
+                    Note that removed permissions may end up being created again later by another domain permission subscription of lower priority than the removed subscription. Likewise, orphaned children may be later adopted by another subscription.
+                  in: formData
+                  name: remove_children
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The removed domain permission subscription.
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Remove a domain permission subscription.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}/test:
+        post:
+            description: |-
+                The response body will be a list of domain permissions that *would* be created by this subscription, OR an error message.
+
+                This is useful in cases where you want to check that your instance can actually fetch + parse a list.
+            operationId: domainPermissionSubscriptionTest
+            parameters:
+                - description: ID of the domain permission draft.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Either an array of domain permissions, OR an error message of the form `{"error":"[ERROR MESSAGE HERE]"}` indicating why the list could not be fetched.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domain'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: Test one domain permission subscription by making your instance fetch and parse it *without creating permissions*.
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/preview:
+        get:
+            description: This view allows you to see the order in which domain permissions will actually be fetched and created.
+            operationId: domainPermissionSubscriptionsPreviewGet
+            parameters:
+                - description: Filter on "block" or "allow" type subscriptions.
+                  in: query
+                  name: permission_type
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Domain permission subscriptions.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermissionSubscription'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View all domain permission subscriptions of the given permission type, in priority order (highest to lowest).
             tags:
                 - admin
     /api/v1/admin/email/test:
@@ -6234,6 +7357,34 @@ paths:
             summary: View instance rule with the given id.
             tags:
                 - admin
+    /api/v1/announcements:
+        get:
+            description: 'THIS ENDPOINT IS CURRENTLY NOT FULLY IMPLEMENTED: it will always return an empty array.'
+            operationId: announcementsGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:announcements
+            summary: Get an array of currently active announcements.
+            tags:
+                - announcements
     /api/v1/apps:
         post:
             consumes:
@@ -8640,6 +9791,259 @@ paths:
             summary: Delete the authenticated account's header.
             tags:
                 - accounts
+    /api/v1/push/subscription:
+        delete:
+            description: If there is no subscription, returns successfully anyway.
+            operationId: pushSubscriptionDelete
+            responses:
+                "200":
+                    description: Push subscription deleted, or did not exist.
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Delete the Web Push subscription associated with the current auth token.
+            tags:
+                - push
+        get:
+            operationId: pushSubscriptionGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Web Push subscription for current access token.
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: This access token doesn't have an associated subscription.
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Get the push subscription for the current access token.
+            tags:
+                - push
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            operationId: pushSubscriptionPost
+            parameters:
+                - description: The URL to which Web Push notifications will be sent.
+                  in: formData
+                  minLength: 1
+                  name: subscription[endpoint]
+                  required: true
+                  type: string
+                - description: The auth secret, a Base64 encoded string of 16 bytes of random data.
+                  in: formData
+                  minLength: 1
+                  name: subscription[keys][auth]
+                  required: true
+                  type: string
+                - description: The user agent public key, a Base64 encoded string of a public key from an ECDH keypair using the prime256v1 curve.
+                  in: formData
+                  minLength: 1
+                  name: subscription[keys][p256dh]
+                  required: true
+                  type: string
+                - default: false
+                  description: Receive a push notification when someone has followed you?
+                  in: formData
+                  name: data[alerts][follow]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone has requested to follow you?
+                  in: formData
+                  name: data[alerts][follow_request]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been favourited by someone else?
+                  in: formData
+                  name: data[alerts][favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone else has mentioned you in a status?
+                  in: formData
+                  name: data[alerts][mention]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been boosted by someone else?
+                  in: formData
+                  name: data[alerts][reblog]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a poll you voted in or created has ended?
+                  in: formData
+                  name: data[alerts][poll]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a subscribed account posts a status?
+                  in: formData
+                  name: data[alerts][status]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you interacted with has been edited?
+                  in: formData
+                  name: data[alerts][update]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new user has signed up?
+                  in: formData
+                  name: data[alerts][admin.sign_up]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new report has been filed?
+                  in: formData
+                  name: data[alerts][admin.report]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a fave is pending?
+                  in: formData
+                  name: data[alerts][pending.favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a reply is pending?
+                  in: formData
+                  name: data[alerts][pending.reply]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a boost is pending?
+                  in: formData
+                  name: data[alerts][pending.reblog]
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Web Push subscription for current access token.
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Create a new Web Push subscription for the current access token, or replace the existing one.
+            tags:
+                - push
+        put:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: Only which notifications you receive can be updated.
+            operationId: pushSubscriptionPut
+            parameters:
+                - default: false
+                  description: Receive a push notification when someone has followed you?
+                  in: formData
+                  name: data[alerts][follow]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone has requested to follow you?
+                  in: formData
+                  name: data[alerts][follow_request]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been favourited by someone else?
+                  in: formData
+                  name: data[alerts][favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when someone else has mentioned you in a status?
+                  in: formData
+                  name: data[alerts][mention]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you created has been boosted by someone else?
+                  in: formData
+                  name: data[alerts][reblog]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a poll you voted in or created has ended?
+                  in: formData
+                  name: data[alerts][poll]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a subscribed account posts a status?
+                  in: formData
+                  name: data[alerts][status]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a status you interacted with has been edited?
+                  in: formData
+                  name: data[alerts][update]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new user has signed up?
+                  in: formData
+                  name: data[alerts][admin.sign_up]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a new report has been filed?
+                  in: formData
+                  name: data[alerts][admin.report]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a fave is pending?
+                  in: formData
+                  name: data[alerts][pending.favourite]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a reply is pending?
+                  in: formData
+                  name: data[alerts][pending.reply]
+                  type: boolean
+                - default: false
+                  description: Receive a push notification when a boost is pending?
+                  in: formData
+                  name: data[alerts][pending.reblog]
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Web Push subscription for current access token.
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: This access token doesn't have an associated subscription.
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: Update the Web Push subscription for the current access token.
+            tags:
+                - push
     /api/v1/reports:
         get:
             description: |-
@@ -8942,7 +10346,7 @@ paths:
                     Providing this parameter will cause ScheduledStatus to be returned instead of Status.
                     Must be at least 5 minutes in the future.
 
-                    This feature isn't implemented yet.
+                    This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
                   in: formData
                   name: scheduled_at
                   type: string
@@ -9003,10 +10407,118 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+                "501":
+                    description: scheduled_at was set, but this feature is not yet implemented
             security:
                 - OAuth2 Bearer:
                     - write:statuses
             summary: Create a new status using the given form field parameters.
+            tags:
+                - statuses
+        put:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+            operationId: statusEdit
+            parameters:
+                - description: |-
+                    Text content of the status.
+                    If media_ids is provided, this becomes optional.
+                    Attaching a poll is optional while status is provided.
+                  in: formData
+                  name: status
+                  type: string
+                  x-go-name: Status
+                - description: |-
+                    Array of Attachment ids to be attached as media.
+                    If provided, status becomes optional, and poll cannot be used.
+
+                    If the status is being submitted as a form, the key is 'media_ids[]',
+                    but if it's json or xml, the key is 'media_ids'.
+                  in: formData
+                  items:
+                    type: string
+                  name: media_ids
+                  type: array
+                  x-go-name: MediaIDs
+                - description: |-
+                    Array of possible poll answers.
+                    If provided, media_ids cannot be used, and poll[expires_in] must be provided.
+                  in: formData
+                  items:
+                    type: string
+                  name: poll[options][]
+                  type: array
+                  x-go-name: PollOptions
+                - description: |-
+                    Duration the poll should be open, in seconds.
+                    If provided, media_ids cannot be used, and poll[options] must be provided.
+                  format: int64
+                  in: formData
+                  name: poll[expires_in]
+                  type: integer
+                  x-go-name: PollExpiresIn
+                - default: false
+                  description: Allow multiple choices on this poll.
+                  in: formData
+                  name: poll[multiple]
+                  type: boolean
+                  x-go-name: PollMultiple
+                - default: true
+                  description: Hide vote counts until the poll ends.
+                  in: formData
+                  name: poll[hide_totals]
+                  type: boolean
+                  x-go-name: PollHideTotals
+                - description: Status and attached media should be marked as sensitive.
+                  in: formData
+                  name: sensitive
+                  type: boolean
+                  x-go-name: Sensitive
+                - description: |-
+                    Text to be shown as a warning or subject before the actual content.
+                    Statuses are generally collapsed behind this field.
+                  in: formData
+                  name: spoiler_text
+                  type: string
+                  x-go-name: SpoilerText
+                - description: ISO 639 language code for this status.
+                  in: formData
+                  name: language
+                  type: string
+                  x-go-name: Language
+                - description: Content type to use when parsing this status.
+                  enum:
+                    - text/plain
+                    - text/markdown
+                  in: formData
+                  name: content_type
+                  type: string
+                  x-go-name: ContentType
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The latest status revision.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Edit an existing status using the given form field parameters.
             tags:
                 - statuses
     /api/v1/statuses/{id}:

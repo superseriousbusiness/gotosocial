@@ -40,6 +40,7 @@ const (
 
 	BlockPath         = BasePathWithID + "/block"
 	DeletePath        = BasePath + "/delete"
+	FeaturedTagsPath  = BasePathWithID + "/featured_tags"
 	FollowersPath     = BasePathWithID + "/followers"
 	FollowingPath     = BasePathWithID + "/following"
 	FollowPath        = BasePathWithID + "/follow"
@@ -97,6 +98,9 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 
 	// get account's statuses
 	attachHandler(http.MethodGet, StatusesPath, m.AccountStatusesGETHandler)
+
+	// get account's featured tags
+	attachHandler(http.MethodGet, FeaturedTagsPath, m.AccountFeaturedTagsGETHandler)
 
 	// get following or followers
 	attachHandler(http.MethodGet, FollowersPath, m.AccountFollowersGETHandler)

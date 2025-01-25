@@ -55,3 +55,22 @@ func (m *Module) customCSSGETHandler(c *gin.Context) {
 	c.Header(cacheControlHeader, cacheControlNoCache)
 	c.Data(http.StatusOK, textCSSUTF8, []byte(customCSS))
 }
+
+func (m *Module) instanceCustomCSSGETHandler(c *gin.Context) {
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.TextCSS); err != nil {
+		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	instanceV1, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
+	if errWithCode != nil {
+		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	instanceCustomCSS := instanceV1.CustomCSS
+
+	c.Header(cacheControlHeader, cacheControlNoCache)
+	c.Data(http.StatusOK, textCSSUTF8, []byte(instanceCustomCSS))
+}

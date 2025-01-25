@@ -23,6 +23,8 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -47,17 +49,27 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 	var updatingColumns []string
 
 	if form.Description != nil {
-		attachment.Description = text.SanitizeToPlaintext(*form.Description)
+		// Sanitize and validate incoming description.
+		description, errWithCode := processDescription(
+			*form.Description,
+		)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
+
+		attachment.Description = description
 		updatingColumns = append(updatingColumns, "description")
 	}
 
 	if form.Focus != nil {
-		focusx, focusy, err := parseFocus(*form.Focus)
-		if err != nil {
-			return nil, gtserror.NewErrorBadRequest(err)
+		// Parse focus details from API form input.
+		focusX, focusY, errWithCode := apiutil.ParseFocus(*form.Focus)
+		if errWithCode != nil {
+			return nil, errWithCode
 		}
-		attachment.FileMeta.Focus.X = focusx
-		attachment.FileMeta.Focus.Y = focusy
+
+		attachment.FileMeta.Focus.X = focusX
+		attachment.FileMeta.Focus.Y = focusY
 		updatingColumns = append(updatingColumns, "focus_x", "focus_y")
 	}
 
@@ -71,4 +83,22 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 	}
 
 	return &a, nil
+}
+
+// processDescription will sanitize and valid description against server configuration.
+func processDescription(description string) (string, gtserror.WithCode) {
+	description = text.SanitizeToPlaintext(description)
+	chars := len([]rune(description))
+
+	if min := config.GetMediaDescriptionMinChars(); chars < min {
+		text := fmt.Sprintf("media description less than min chars (%d)", min)
+		return "", gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	if max := config.GetMediaDescriptionMaxChars(); chars > max {
+		text := fmt.Sprintf("media description exceeds max chars (%d)", max)
+		return "", gtserror.NewErrorBadRequest(errors.New(text), text)
+	}
+
+	return description, nil
 }

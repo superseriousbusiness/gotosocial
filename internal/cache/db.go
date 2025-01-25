@@ -67,6 +67,15 @@ type DBCaches struct {
 	// DomainBlock provides access to the domain block database cache.
 	DomainBlock *domain.Cache
 
+	// DomainPermissionDraft provides access to the domain permission draft database cache.
+	DomainPermissionDraft StructCache[*gtsmodel.DomainPermissionDraft]
+
+	// DomainPermissionSubscription provides access to the domain permission subscription database cache.
+	DomainPermissionSubscription StructCache[*gtsmodel.DomainPermissionSubscription]
+
+	// DomainPermissionExclude provides access to the domain permission exclude database cache.
+	DomainPermissionExclude *domain.Cache
+
 	// Emoji provides access to the gtsmodel Emoji database cache.
 	Emoji StructCache[*gtsmodel.Emoji]
 
@@ -220,6 +229,9 @@ type DBCaches struct {
 	// StatusBookmarkIDs provides access to the status bookmark IDs list database cache.
 	StatusBookmarkIDs SliceCache[string]
 
+	// StatusEdit provides access to the gtsmodel StatusEdit database cache.
+	StatusEdit StructCache[*gtsmodel.StatusEdit]
+
 	// StatusFave provides access to the gtsmodel StatusFave database cache.
 	StatusFave StructCache[*gtsmodel.StatusFave]
 
@@ -246,6 +258,15 @@ type DBCaches struct {
 
 	// UserMuteIDs provides access to the user mute IDs database cache.
 	UserMuteIDs SliceCache[string]
+
+	// VAPIDKeyPair caches the server's VAPID key pair.
+	VAPIDKeyPair atomic.Pointer[gtsmodel.VAPIDKeyPair]
+
+	// WebPushSubscription provides access to the gtsmodel WebPushSubscription database cache.
+	WebPushSubscription StructCache[*gtsmodel.WebPushSubscription]
+
+	// WebPushSubscriptionIDs provides access to the Web Push subscription IDs database cache.
+	WebPushSubscriptionIDs SliceCache[string]
 }
 
 // NOTE:
@@ -546,6 +567,73 @@ func (c *Caches) initDomainAllow() {
 
 func (c *Caches) initDomainBlock() {
 	c.DB.DomainBlock = new(domain.Cache)
+}
+
+func (c *Caches) initDomainPermissionDraft() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofDomainPermissionDraft(), // model in-mem size.
+		config.GetCacheDomainPermissionDraftMemRation(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(d1 *gtsmodel.DomainPermissionDraft) *gtsmodel.DomainPermissionDraft {
+		d2 := new(gtsmodel.DomainPermissionDraft)
+		*d2 = *d1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		d2.CreatedByAccount = nil
+
+		return d2
+	}
+
+	c.DB.DomainPermissionDraft.Init(structr.CacheConfig[*gtsmodel.DomainPermissionDraft]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "Domain", Multiple: true},
+			{Fields: "SubscriptionID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initDomainPermissionSubscription() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofDomainPermissionSubscription(), // model in-mem size.
+		config.GetCacheDomainPermissionSubscriptionMemRation(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(d1 *gtsmodel.DomainPermissionSubscription) *gtsmodel.DomainPermissionSubscription {
+		d2 := new(gtsmodel.DomainPermissionSubscription)
+		*d2 = *d1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		d2.CreatedByAccount = nil
+
+		return d2
+	}
+
+	c.DB.DomainPermissionSubscription.Init(structr.CacheConfig[*gtsmodel.DomainPermissionSubscription]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "URI"},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initDomainPermissionExclude() {
+	c.DB.DomainPermissionExclude = new(domain.Cache)
 }
 
 func (c *Caches) initEmoji() {
@@ -1275,6 +1363,7 @@ func (c *Caches) initStatus() {
 		s2.Mentions = nil
 		s2.Emojis = nil
 		s2.CreatedWithApplication = nil
+		s2.Edits = nil
 
 		return s2
 	}
@@ -1341,6 +1430,38 @@ func (c *Caches) initStatusBookmarkIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.DB.StatusBookmarkIDs.Init(0, cap)
+}
+
+func (c *Caches) initStatusEdit() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofStatusEdit(), // model in-mem size.
+		config.GetCacheStatusEditMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.StatusEdit) *gtsmodel.StatusEdit {
+		s2 := new(gtsmodel.StatusEdit)
+		*s2 = *s1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		s2.Attachments = nil
+
+		return s2
+	}
+
+	c.DB.StatusEdit.Init(structr.CacheConfig[*gtsmodel.StatusEdit]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "StatusID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateStatusEdit,
+	})
 }
 
 func (c *Caches) initStatusFave() {
@@ -1467,9 +1588,10 @@ func (c *Caches) initToken() {
 			{Fields: "Refresh"},
 			{Fields: "ClientID", Multiple: true},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateToken,
 	})
 }
 
@@ -1578,4 +1700,41 @@ func (c *Caches) initUserMuteIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.DB.UserMuteIDs.Init(0, cap)
+}
+
+func (c *Caches) initWebPushSubscription() {
+	cap := calculateResultCacheMax(
+		sizeofWebPushSubscription(), // model in-mem size.
+		config.GetCacheWebPushSubscriptionMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.WebPushSubscription) *gtsmodel.WebPushSubscription {
+		s2 := new(gtsmodel.WebPushSubscription)
+		*s2 = *s1
+		return s2
+	}
+
+	c.DB.WebPushSubscription.Init(structr.CacheConfig[*gtsmodel.WebPushSubscription]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "TokenID"},
+			{Fields: "AccountID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Invalidate: c.OnInvalidateWebPushSubscription,
+		Copy:       copyF,
+	})
+}
+
+func (c *Caches) initWebPushSubscriptionIDs() {
+	cap := calculateSliceCacheMax(
+		config.GetCacheWebPushSubscriptionIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.WebPushSubscriptionIDs.Init(0, cap)
 }

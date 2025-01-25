@@ -127,6 +127,8 @@ func setupList(ctx context.Context) (*list, error) {
 	state.Caches.Init()
 	state.Caches.Start()
 
+	// Only set state DB connection.
+	// Don't need Actions or Workers for this.
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return nil, fmt.Errorf("error creating dbservice: %w", err)

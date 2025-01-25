@@ -345,7 +345,7 @@ func (suite *ValidationTestSuite) TestValidateEmojiShortcode() {
 		},
 		{
 			shortcode: "p",
-			ok:        false,
+			ok:        true,
 		},
 		{
 			shortcode: "pp",
@@ -361,6 +361,10 @@ func (suite *ValidationTestSuite) TestValidateEmojiShortcode() {
 		},
 		{
 			shortcode: "_",
+			ok:        true,
+		},
+		{
+			shortcode: "",
 			ok:        false,
 		},
 		{

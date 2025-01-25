@@ -28,6 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -65,7 +66,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 
 		notif := &gtsmodel.Notification{
 			ID:               notifID,
-			NotificationType: gtsmodel.NotificationFave,
+			NotificationType: gtsmodel.NotificationFavourite,
 			CreatedAt:        time.Now(),
 			TargetAccountID:  targetAccountID,
 			OriginAccountID:  originAccountID,
@@ -92,10 +93,11 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithSpam() {
 	notifications, err := suite.db.GetAccountNotifications(
 		gtscontext.SetBarebones(context.Background()),
 		testAccount.ID,
-		id.Highest,
-		id.Lowest,
-		"",
-		20,
+		&paging.Page{
+			Min:   paging.EitherMinID("", id.Lowest),
+			Max:   paging.MaxID(id.Highest),
+			Limit: 20,
+		},
 		nil,
 		nil,
 	)
@@ -115,10 +117,11 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithoutSpam() {
 	notifications, err := suite.db.GetAccountNotifications(
 		gtscontext.SetBarebones(context.Background()),
 		testAccount.ID,
-		id.Highest,
-		id.Lowest,
-		"",
-		20,
+		&paging.Page{
+			Min:   paging.EitherMinID("", id.Lowest),
+			Max:   paging.MaxID(id.Highest),
+			Limit: 20,
+		},
 		nil,
 		nil,
 	)
@@ -140,10 +143,11 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	notifications, err := suite.db.GetAccountNotifications(
 		gtscontext.SetBarebones(context.Background()),
 		testAccount.ID,
-		id.Highest,
-		id.Lowest,
-		"",
-		20,
+		&paging.Page{
+			Min:   paging.EitherMinID("", id.Lowest),
+			Max:   paging.MaxID(id.Highest),
+			Limit: 20,
+		},
 		nil,
 		nil,
 	)
@@ -161,10 +165,11 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	notifications, err = suite.db.GetAccountNotifications(
 		gtscontext.SetBarebones(context.Background()),
 		testAccount.ID,
-		id.Highest,
-		id.Lowest,
-		"",
-		20,
+		&paging.Page{
+			Min:   paging.EitherMinID("", id.Lowest),
+			Max:   paging.MaxID(id.Highest),
+			Limit: 20,
+		},
 		nil,
 		nil,
 	)
@@ -183,10 +188,11 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	notifications, err := suite.db.GetAccountNotifications(
 		gtscontext.SetBarebones(context.Background()),
 		testAccount.ID,
-		id.Highest,
-		id.Lowest,
-		"",
-		20,
+		&paging.Page{
+			Min:   paging.EitherMinID("", id.Lowest),
+			Max:   paging.MaxID(id.Highest),
+			Limit: 20,
+		},
 		nil,
 		nil,
 	)

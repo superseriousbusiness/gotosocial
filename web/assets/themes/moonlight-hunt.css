@@ -1,0 +1,162 @@
+/*
+  theme-title: Moonlight Hunt
+  theme-description: Ominous dark blue / black with a tinge of blood red. You may think it all a mere bad dream.
+*/
+
+:root {
+  /* Define our palette */
+  --bleached-bone: #f3e3d4;
+  --void-blue: #0e131f;
+  --outer-space: #06080e;
+  --ghastly-blue: #88bebe;
+  --blood-red: #6c1619;
+  --bright-red: #f61a1ae6;
+  --feral-orange: #f78d17;
+
+  /* Restyle basic colors */
+  --white1: var(--void-blue);
+  --white2: var(--void-blue);
+  --orange2: var(--bright-red);
+  --blue1: var(--ghastly-blue);
+  --blue2: var(--ghastly-blue);
+  --blue3: var(--ghastly-blue);
+
+  /* Basic page styling (background + foreground) */
+  --bg: var(--void-blue);
+  --bg-accent: var(--void-blue);
+  --fg: var(--bleached-bone);
+  --fg-reduced: var(--bleached-bone);
+  --profile-bg: var(--void-blue); 
+
+  /* Buttons */
+  --bloodshot: linear-gradient(
+    var(--bright-red),
+    var(--blood-red),
+    var(--blood-red),
+    var(--bright-red)
+  );
+  --button-bg: var(--bloodshot);
+  --button-fg: var(--bleached-bone);
+
+  /* Statuses */
+  --status-bg: var(--void-blue);
+  --status-focus-bg: var(--void-blue);
+
+  /* Used around statuses + other items */
+  --ghastly-border: 0.1rem solid var(--ghastly-blue);
+  --boxshadow-border: var(--ghastly-border);
+}
+
+/* Main page background */
+body {
+  background: linear-gradient(
+    90deg,
+    var(--blood-red),
+    black 20%,
+    black 80%,
+    var(--blood-red)
+  );
+}
+
+/* Scroll bar */
+html, body {
+  scrollbar-color: var(--bright-red) var(--outer-space);
+  text-shadow: 1px 1px var(--blood-red);
+}
+
+/* Instance title color */
+.page-header a h1 {
+  color: var(--bleached-bone);
+}
+
+.profile .profile-header {
+  border: var(--ghastly-border);
+}
+
+.col-header {
+  border: var(--ghastly-border);
+  background: var(--outer-space);
+}
+
+.profile .about-user .col-header {
+  background: var(--void-blue);
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  border-left: var(--ghastly-border);
+  border-right: var(--ghastly-border);
+}
+.profile .about-user .accountstats {
+  border-bottom: var(--ghastly-border);
+  background: var(--outer-space);
+}
+
+/* Role and bot badge backgrounds */
+.profile .profile-header .basic-info .namerole .role,
+.profile .profile-header .basic-info .namerole .bot-username-wrapper .bot-legend-wrapper {
+  background: var(--outer-space);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: var(--ghastly-border);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--bleached-bone);
+}
+.status .media .media-wrapper details video.plyr-video {
+  background: var(--outer-space);
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--outer-space);
+  border: var(--ghastly-border);
+}
+.status .text .poll .poll-info {
+  background-color: var(--void-blue);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+  background-color: var(--outer-space);
+  color: var(--bleached-bone);
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--outer-space);
+  color: var(--bleached-bone);
+}
+
+/* Status info bars */
+.status .status-info,
+.status.expanded .status-info {
+  color: var(--ghastly-blue);
+  border-top: 0.1rem dotted var(--ghastly-blue);
+  background: var(--outer-space);
+}
+
+/* Make show more/less buttons more legible */
+.status .button {
+  border: 1px solid var(--feral-orange);
+}
+.status .button:hover {
+  border: 1px solid var(--bleached-bone);
+  background: var(--bloodshot);
+}
+
+/* Back + next links */
+.profile .statuses .backnextlinks a {
+  color: var(--bleached-bone);
+}
+
+.page-footer nav ul li a {
+  color: var(--bleached-bone);
+}

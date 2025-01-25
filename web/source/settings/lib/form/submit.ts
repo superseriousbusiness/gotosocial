@@ -34,8 +34,24 @@ import type {
 } from "./types";
 
 interface UseFormSubmitOptions {
+	/**
+	 * Include only changed fields when submitting the form.
+	 * If no fields have been changed, submit will be a noop.
+	 */
 	changedOnly: boolean;
+	/**
+	 * Optional function to run when the form has been sent
+	 * and a response has been returned from the server.
+	 */
 	onFinish?: ((_res: any) => void);
+	/**
+	 * Can be optionally used to modify the final mutation argument from the
+	 * gathered mutation data before it's passed into the trigger function.
+	 * 
+	 * Useful if the mutation trigger function takes not just a simple key/value
+	 * object but a more complicated object.
+	 */
+	customizeMutationArgs?: (_mutationData: { [k: string]: any }) => any;
 }
 
 /**
@@ -105,7 +121,7 @@ export default function useFormSubmit(
 		usedAction.current = action;
 
 		// Transform the hooked form into an object.
-		const {
+		let {
 			mutationData,
 			updatedFields,
 		} = getFormMutations(form, { changedOnly });
@@ -117,7 +133,12 @@ export default function useFormSubmit(
 			return;
 		}
 
+		// Final tweaks on the mutation
+		// argument before triggering it.
 		mutationData.action = action;
+		if (opts.customizeMutationArgs) {
+			mutationData = opts.customizeMutationArgs(mutationData);
+		}
 
 		try {
 			const res = await runMutation(mutationData);

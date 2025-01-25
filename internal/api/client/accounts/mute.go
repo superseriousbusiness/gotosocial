@@ -19,9 +19,7 @@ package accounts
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -140,25 +138,15 @@ func normalizeCreateUpdateMute(form *apimodel.UserMuteCreateUpdateRequest) error
 	// Apply defaults for missing fields.
 	form.Notifications = util.Ptr(util.PtrOrValue(form.Notifications, false))
 
-	// Normalize mute duration if necessary.
-	// If we parsed this as JSON, expires_in
-	// may be either a float64 or a string.
-	if ei := form.DurationI; ei != nil {
-		switch e := ei.(type) {
-		case float64:
-			form.Duration = util.Ptr(int(e))
-
-		case string:
-			duration, err := strconv.Atoi(e)
-			if err != nil {
-				return fmt.Errorf("could not parse duration value %s as integer: %w", e, err)
-			}
-
-			form.Duration = &duration
-
-		default:
-			return fmt.Errorf("could not parse expires_in type %T as integer", ei)
+	// Normalize duration if necessary.
+	if form.DurationI != nil {
+		// If we parsed this as JSON, duration
+		// may be either a float64 or a string.
+		duration, err := apiutil.ParseDuration(form.DurationI, "duration")
+		if err != nil {
+			return err
 		}
+		form.Duration = duration
 	}
 
 	// Interpret zero as indefinite duration.

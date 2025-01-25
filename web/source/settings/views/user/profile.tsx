@@ -45,6 +45,7 @@ import { useAccountThemesQuery } from "../../lib/query/user";
 import { useUpdateCredentialsMutation } from "../../lib/query/user";
 import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
 import { useInstanceV1Query } from "../../lib/query/gts-api";
+import { Account } from "../../lib/types/account";
 
 export default function UserProfile() {
 	return (
@@ -55,7 +56,11 @@ export default function UserProfile() {
 	);
 }
 
-function UserProfileForm({ data: profile }) {
+interface UserProfileFormProps {
+	data: Account;
+}
+
+function UserProfileForm({ data: profile }: UserProfileFormProps) {
 	/*
 		User profile update form keys
 		- bool bot
@@ -132,6 +137,9 @@ function UserProfileForm({ data: profile }) {
 		}
 	});
 
+	const noAvatarSet = !profile.avatar_media_id;
+	const noHeaderSet = !profile.header_media_id;
+
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
 			<h1>Profile</h1>
@@ -145,33 +153,37 @@ function UserProfileForm({ data: profile }) {
 					role={profile.role}
 				/>
 
-				<div className="file-input-with-image-description">
+				<fieldset className="file-input-with-image-description">
+					<legend>Header</legend>
 					<FileInput
-						label="Header"
+						label="Upload file"
 						field={form.header}
 						accept="image/png, image/jpeg, image/webp, image/gif"
 					/>
 					<TextInput
 						field={form.headerDescription}
-						label="Header image description"
+						label="Image description; only settable if not using default header"
 						placeholder="A green field with pink flowers."
 						autoCapitalize="sentences"
+						disabled={noHeaderSet && !form.header.value}
 					/>
-				</div>
+				</fieldset>
 				
-				<div className="file-input-with-image-description">
+				<fieldset className="file-input-with-image-description">
+					<legend>Avatar</legend>
 					<FileInput
-						label="Avatar (1:1 images look best)"
+						label="Upload file (1:1 images look best)"
 						field={form.avatar}
 						accept="image/png, image/jpeg, image/webp, image/gif"
 					/>
 					<TextInput
 						field={form.avatarDescription}
-						label="Avatar image description"
+						label="Image description; only settable if not using default avatar"
 						placeholder="A cute drawing of a smiling sloth."
 						autoCapitalize="sentences"
+						disabled={noAvatarSet && !form.avatar.value}
 					/>
-				</div>
+				</fieldset>
 
 				<div className="theme">
 					<div>

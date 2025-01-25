@@ -37,10 +37,7 @@ type TimelineTestSuite struct {
 
 func getFutureStatus() *gtsmodel.Status {
 	theDistantFuture := time.Now().Add(876600 * time.Hour)
-	id, err := id.NewULIDFromTime(theDistantFuture)
-	if err != nil {
-		panic(err)
-	}
+	id := id.NewULIDFromTime(theDistantFuture)
 
 	return &gtsmodel.Status{
 		ID:                       id,
@@ -53,7 +50,6 @@ func getFutureStatus() *gtsmodel.Status {
 		MentionIDs:               []string{},
 		EmojiIDs:                 []string{},
 		CreatedAt:                theDistantFuture,
-		UpdatedAt:                theDistantFuture,
 		Local:                    util.Ptr(true),
 		AccountURI:               "http://localhost:8080/users/admin",
 		AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
@@ -182,7 +178,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 9)
 
 	// Remove admin account from the exclusive list.
 	listEntry := suite.testListEntries["local_account_1_list_1_entry_2"]
@@ -196,7 +192,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-	suite.checkStatuses(s, id.Highest, id.Lowest, 12)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 13)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
@@ -228,7 +224,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 8)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 9)
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
@@ -281,8 +277,8 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 	}
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
-	suite.Equal("01J2M1HPFSS54S60Y0KYV23KJE", s[0].ID)
-	suite.Equal("01G36SF3V6Y6V5BF9P4R7PQG7G", s[len(s)-1].ID)
+	suite.Equal("01JDPZEZ77X1NX0TY9M10BK1HM", s[0].ID)
+	suite.Equal("01HEN2RZ8BG29Y5Z9VJC73HZW7", s[len(s)-1].ID)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
@@ -296,7 +292,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.checkStatuses(s, id.Highest, id.Lowest, 12)
+	suite.checkStatuses(s, id.Highest, id.Lowest, 13)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
@@ -311,8 +307,8 @@ func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
 	}
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, 5)
-	suite.Equal("01HEN2PRXT0TF4YDRA64FZZRN7", s[0].ID)
-	suite.Equal("01FF25D5Q0DH7CHD57CTRS6WK0", s[len(s)-1].ID)
+	suite.Equal("01JDPZEZ77X1NX0TY9M10BK1HM", s[0].ID)
+	suite.Equal("01FN3VJGFH10KR7S2PB0GFJZYG", s[len(s)-1].ID)
 }
 
 func (suite *TimelineTestSuite) TestGetListTimelineMinID() {

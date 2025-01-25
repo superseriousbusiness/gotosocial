@@ -19,6 +19,7 @@ package gtsmodel
 
 import (
 	"path"
+	"strings"
 	"time"
 )
 
@@ -46,8 +47,8 @@ func (c AdminActionCategory) String() string {
 	}
 }
 
-func NewAdminActionCategory(in string) AdminActionCategory {
-	switch in {
+func ParseAdminActionCategory(in string) AdminActionCategory {
+	switch strings.ToLower(in) {
 	case "account":
 		return AdminActionCategoryAccount
 	case "domain":
@@ -96,8 +97,8 @@ func (t AdminActionType) String() string {
 	}
 }
 
-func NewAdminActionType(in string) AdminActionType {
-	switch in {
+func ParseAdminActionType(in string) AdminActionType {
+	switch strings.ToLower(in) {
 	case "disable":
 		return AdminActionDisable
 	case "reenable":

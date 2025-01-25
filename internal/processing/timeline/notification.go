@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -31,26 +32,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (p *Processor) NotificationsGet(
 	ctx context.Context,
 	authed *oauth.Auth,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
-	types []string,
-	excludeTypes []string,
+	page *paging.Page,
+	types []gtsmodel.NotificationType,
+	excludeTypes []gtsmodel.NotificationType,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	notifs, err := p.state.DB.GetAccountNotifications(
 		ctx,
 		authed.Account.ID,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		page,
 		types,
 		excludeTypes,
 	)
@@ -78,22 +74,15 @@ func (p *Processor) NotificationsGet(
 	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
 	var (
-		items          = make([]interface{}, 0, count)
-		nextMaxIDValue string
-		prevMinIDValue string
+		items = make([]interface{}, 0, count)
+
+		// Get the lowest and highest
+		// ID values, used for paging.
+		lo = notifs[count-1].ID
+		hi = notifs[0].ID
 	)
 
-	for i, n := range notifs {
-		// Set next + prev values before filtering and API
-		// converting, so caller can still page properly.
-		if i == count-1 {
-			nextMaxIDValue = n.ID
-		}
-
-		if i == 0 {
-			prevMinIDValue = n.ID
-		}
-
+	for _, n := range notifs {
 		visible, err := p.notifVisible(ctx, n, authed.Account)
 		if err != nil {
 			log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %v", n.ID, err)
@@ -115,13 +104,22 @@ func (p *Processor) NotificationsGet(
 		items = append(items, item)
 	}
 
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:          items,
-		Path:           "api/v1/notifications",
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
-	})
+	// Build type query string.
+	query := make(url.Values)
+	for _, typ := range types {
+		query.Add("types[]", typ.String())
+	}
+	for _, typ := range excludeTypes {
+		query.Add("exclude_types[]", typ.String())
+	}
+
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v1/notifications",
+		Next:  page.Next(lo, hi),
+		Prev:  page.Prev(lo, hi),
+		Query: query,
+	}), nil
 }
 
 func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Account, targetNotifID string) (*apimodel.Notification, gtserror.WithCode) {
@@ -186,7 +184,7 @@ func (p *Processor) notifVisible(
 		// If this is a new local account sign-up,
 		// skip normal visibility checking because
 		// origin account won't be confirmed yet.
-		if n.NotificationType == gtsmodel.NotificationSignup {
+		if n.NotificationType == gtsmodel.NotificationAdminSignup {
 			return true, nil
 		}
 

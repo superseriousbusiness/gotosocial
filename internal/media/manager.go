@@ -39,8 +39,9 @@ var SupportedMIMETypes = []string{
 	"image/gif",  // .gif
 	"image/webp", // .webp
 
-	"audio/mp2", // .mp2
-	"audio/mp3", // .mp3
+	"audio/mp2",  // .mp2
+	"audio/mp3",  // .mp3
+	"audio/mpeg", // .mp1, .mp2, .mp3
 
 	"video/x-msvideo", // .avi
 
@@ -56,7 +57,7 @@ var SupportedMIMETypes = []string{
 	"video/ogg", // .ogv
 
 	// mpeg4 types
-	"audio/x-m4a",     // .m4a
+	"audio/mp4",       // .m4a
 	"video/mp4",       // .mp4
 	"video/quicktime", // .mov
 
@@ -118,15 +119,11 @@ func (m *Manager) CreateMedia(
 		Header:     util.Ptr(false),
 		Cached:     util.Ptr(false),
 		CreatedAt:  now,
-		UpdatedAt:  now,
 	}
 
 	// Check if we were provided additional info
 	// to add to the attachment, and overwrite
 	// some of the attachment fields if so.
-	if info.CreatedAt != nil {
-		attachment.CreatedAt = *info.CreatedAt
-	}
 	if info.StatusID != nil {
 		attachment.StatusID = *info.StatusID
 	}
@@ -371,9 +368,6 @@ func (m *Manager) createOrUpdateEmoji(
 	// and overwrite some of the emoji fields if so.
 	if info.URI != nil {
 		emoji.URI = *info.URI
-	}
-	if info.CreatedAt != nil {
-		emoji.CreatedAt = *info.CreatedAt
 	}
 	if info.Domain != nil {
 		emoji.Domain = *info.Domain

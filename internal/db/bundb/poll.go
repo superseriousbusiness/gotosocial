@@ -21,7 +21,6 @@ import (
 	"context"
 	"errors"
 	"slices"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -29,7 +28,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -88,12 +87,15 @@ func (p *pollDB) getPoll(ctx context.Context, lookup string, dbQuery func(*gtsmo
 func (p *pollDB) GetOpenPolls(ctx context.Context) ([]*gtsmodel.Poll, error) {
 	var pollIDs []string
 
-	// Select all polls with unset `closed_at` time.
+	// Select all polls with:
+	// - UNSET `closed_at`
+	// - SET   `expires_at`
 	if err := p.db.NewSelect().
 		Table("polls").
 		Column("polls.id").
 		Join("JOIN ? ON ? = ?", bun.Ident("statuses"), bun.Ident("polls.id"), bun.Ident("statuses.poll_id")).
 		Where("? = true", bun.Ident("statuses.local")).
+		Where("? IS NOT NULL", bun.Ident("polls.expires_at")).
 		Where("? IS NULL", bun.Ident("polls.closed_at")).
 		Scan(ctx, &pollIDs); err != nil {
 		return nil, err
@@ -155,17 +157,6 @@ func (p *pollDB) UpdatePoll(ctx context.Context, poll *gtsmodel.Poll, cols ...st
 
 	return p.state.Caches.DB.Poll.Store(poll, func() error {
 		return p.db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			// Update the status' "updated_at" field.
-			if _, err := tx.NewUpdate().
-				Table("statuses").
-				Where("? = ?", bun.Ident("id"), poll.StatusID).
-				SetColumn("updated_at", "?", time.Now()).
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			// Finally, update poll
-			// columns in database.
 			_, err := tx.NewUpdate().
 				Model(poll).
 				Column(cols...).
@@ -315,7 +306,7 @@ func (p *pollDB) GetPollVotes(ctx context.Context, pollID string) ([]*gtsmodel.P
 	// Reorder the poll votes by their
 	// IDs to ensure in correct order.
 	getID := func(v *gtsmodel.PollVote) string { return v.ID }
-	util.OrderBy(votes, voteIDs, getID)
+	xslices.OrderBy(votes, voteIDs, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.

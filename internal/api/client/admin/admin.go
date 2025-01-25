@@ -28,37 +28,48 @@ import (
 )
 
 const (
-	BasePath                = "/v1/admin"
-	EmojiPath               = BasePath + "/custom_emojis"
-	EmojiPathWithID         = EmojiPath + "/:" + apiutil.IDKey
-	EmojiCategoriesPath     = EmojiPath + "/categories"
-	DomainBlocksPath        = BasePath + "/domain_blocks"
-	DomainBlocksPathWithID  = DomainBlocksPath + "/:" + apiutil.IDKey
-	DomainAllowsPath        = BasePath + "/domain_allows"
-	DomainAllowsPathWithID  = DomainAllowsPath + "/:" + apiutil.IDKey
-	DomainKeysExpirePath    = BasePath + "/domain_keys_expire"
-	HeaderAllowsPath        = BasePath + "/header_allows"
-	HeaderAllowsPathWithID  = HeaderAllowsPath + "/:" + apiutil.IDKey
-	HeaderBlocksPath        = BasePath + "/header_blocks"
-	HeaderBlocksPathWithID  = HeaderBlocksPath + "/:" + apiutil.IDKey
-	AccountsV1Path          = BasePath + "/accounts"
-	AccountsV2Path          = "/v2/admin/accounts"
-	AccountsPathWithID      = AccountsV1Path + "/:" + apiutil.IDKey
-	AccountsActionPath      = AccountsPathWithID + "/action"
-	AccountsApprovePath     = AccountsPathWithID + "/approve"
-	AccountsRejectPath      = AccountsPathWithID + "/reject"
-	MediaCleanupPath        = BasePath + "/media_cleanup"
-	MediaRefetchPath        = BasePath + "/media_refetch"
-	ReportsPath             = BasePath + "/reports"
-	ReportsPathWithID       = ReportsPath + "/:" + apiutil.IDKey
-	ReportsResolvePath      = ReportsPathWithID + "/resolve"
-	EmailPath               = BasePath + "/email"
-	EmailTestPath           = EmailPath + "/test"
-	InstanceRulesPath       = BasePath + "/instance/rules"
-	InstanceRulesPathWithID = InstanceRulesPath + "/:" + apiutil.IDKey
-	DebugPath               = BasePath + "/debug"
-	DebugAPUrlPath          = DebugPath + "/apurl"
-	DebugClearCachesPath    = DebugPath + "/caches/clear"
+	BasePath                                 = "/v1/admin"
+	EmojiPath                                = BasePath + "/custom_emojis"
+	EmojiPathWithID                          = EmojiPath + "/:" + apiutil.IDKey
+	EmojiCategoriesPath                      = EmojiPath + "/categories"
+	DomainBlocksPath                         = BasePath + "/domain_blocks"
+	DomainBlocksPathWithID                   = DomainBlocksPath + "/:" + apiutil.IDKey
+	DomainAllowsPath                         = BasePath + "/domain_allows"
+	DomainAllowsPathWithID                   = DomainAllowsPath + "/:" + apiutil.IDKey
+	DomainPermissionDraftsPath               = BasePath + "/domain_permission_drafts"
+	DomainPermissionDraftsPathWithID         = DomainPermissionDraftsPath + "/:" + apiutil.IDKey
+	DomainPermissionDraftAcceptPath          = DomainPermissionDraftsPathWithID + "/accept"
+	DomainPermissionDraftRemovePath          = DomainPermissionDraftsPathWithID + "/remove"
+	DomainPermissionExcludesPath             = BasePath + "/domain_permission_excludes"
+	DomainPermissionExcludesPathWithID       = DomainPermissionExcludesPath + "/:" + apiutil.IDKey
+	DomainPermissionSubscriptionsPath        = BasePath + "/domain_permission_subscriptions"
+	DomainPermissionSubscriptionsPathWithID  = DomainPermissionSubscriptionsPath + "/:" + apiutil.IDKey
+	DomainPermissionSubscriptionsPreviewPath = DomainPermissionSubscriptionsPath + "/preview"
+	DomainPermissionSubscriptionRemovePath   = DomainPermissionSubscriptionsPathWithID + "/remove"
+	DomainPermissionSubscriptionTestPath     = DomainPermissionSubscriptionsPathWithID + "/test"
+	DomainKeysExpirePath                     = BasePath + "/domain_keys_expire"
+	HeaderAllowsPath                         = BasePath + "/header_allows"
+	HeaderAllowsPathWithID                   = HeaderAllowsPath + "/:" + apiutil.IDKey
+	HeaderBlocksPath                         = BasePath + "/header_blocks"
+	HeaderBlocksPathWithID                   = HeaderBlocksPath + "/:" + apiutil.IDKey
+	AccountsV1Path                           = BasePath + "/accounts"
+	AccountsV2Path                           = "/v2/admin/accounts"
+	AccountsPathWithID                       = AccountsV1Path + "/:" + apiutil.IDKey
+	AccountsActionPath                       = AccountsPathWithID + "/action"
+	AccountsApprovePath                      = AccountsPathWithID + "/approve"
+	AccountsRejectPath                       = AccountsPathWithID + "/reject"
+	MediaCleanupPath                         = BasePath + "/media_cleanup"
+	MediaRefetchPath                         = BasePath + "/media_refetch"
+	ReportsPath                              = BasePath + "/reports"
+	ReportsPathWithID                        = ReportsPath + "/:" + apiutil.IDKey
+	ReportsResolvePath                       = ReportsPathWithID + "/resolve"
+	EmailPath                                = BasePath + "/email"
+	EmailTestPath                            = EmailPath + "/test"
+	InstanceRulesPath                        = BasePath + "/instance/rules"
+	InstanceRulesPathWithID                  = InstanceRulesPath + "/:" + apiutil.IDKey
+	DebugPath                                = BasePath + "/debug"
+	DebugAPUrlPath                           = DebugPath + "/apurl"
+	DebugClearCachesPath                     = DebugPath + "/caches/clear"
 
 	FilterQueryKey        = "filter"
 	MaxShortcodeDomainKey = "max_shortcode_domain"
@@ -98,6 +109,28 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, DomainAllowsPath, m.DomainAllowsGETHandler)
 	attachHandler(http.MethodGet, DomainAllowsPathWithID, m.DomainAllowGETHandler)
 	attachHandler(http.MethodDelete, DomainAllowsPathWithID, m.DomainAllowDELETEHandler)
+
+	// domain permission draft stuff
+	attachHandler(http.MethodPost, DomainPermissionDraftsPath, m.DomainPermissionDraftsPOSTHandler)
+	attachHandler(http.MethodGet, DomainPermissionDraftsPath, m.DomainPermissionDraftsGETHandler)
+	attachHandler(http.MethodGet, DomainPermissionDraftsPathWithID, m.DomainPermissionDraftGETHandler)
+	attachHandler(http.MethodPost, DomainPermissionDraftAcceptPath, m.DomainPermissionDraftAcceptPOSTHandler)
+	attachHandler(http.MethodPost, DomainPermissionDraftRemovePath, m.DomainPermissionDraftRemovePOSTHandler)
+
+	// domain permission excludes stuff
+	attachHandler(http.MethodPost, DomainPermissionExcludesPath, m.DomainPermissionExcludesPOSTHandler)
+	attachHandler(http.MethodGet, DomainPermissionExcludesPath, m.DomainPermissionExcludesGETHandler)
+	attachHandler(http.MethodGet, DomainPermissionExcludesPathWithID, m.DomainPermissionExcludeGETHandler)
+	attachHandler(http.MethodDelete, DomainPermissionExcludesPathWithID, m.DomainPermissionExcludeDELETEHandler)
+
+	// domain permission subscriptions stuff
+	attachHandler(http.MethodPost, DomainPermissionSubscriptionsPath, m.DomainPermissionSubscriptionPOSTHandler)
+	attachHandler(http.MethodGet, DomainPermissionSubscriptionsPath, m.DomainPermissionSubscriptionsGETHandler)
+	attachHandler(http.MethodGet, DomainPermissionSubscriptionsPreviewPath, m.DomainPermissionSubscriptionsPreviewGETHandler)
+	attachHandler(http.MethodGet, DomainPermissionSubscriptionsPathWithID, m.DomainPermissionSubscriptionGETHandler)
+	attachHandler(http.MethodPatch, DomainPermissionSubscriptionsPathWithID, m.DomainPermissionSubscriptionPATCHHandler)
+	attachHandler(http.MethodPost, DomainPermissionSubscriptionRemovePath, m.DomainPermissionSubscriptionRemovePOSTHandler)
+	attachHandler(http.MethodPost, DomainPermissionSubscriptionTestPath, m.DomainPermissionSubscriptionTestPOSTHandler)
 
 	// header filtering administration routes
 	attachHandler(http.MethodGet, HeaderAllowsPathWithID, m.HeaderFilterAllowGET)

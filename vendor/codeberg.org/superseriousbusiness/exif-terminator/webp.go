@@ -25,17 +25,16 @@ import (
 )
 
 const (
-	riffHeaderSize = 4 * 3
+	riffHeader = "RIFF"
+	webpHeader = "WEBP"
+	exifFourcc = "EXIF"
+	xmpFourcc  = "XMP "
 )
 
 var (
-	riffHeader = [4]byte{'R', 'I', 'F', 'F'}
-	webpHeader = [4]byte{'W', 'E', 'B', 'P'}
-	exifFourcc = [4]byte{'E', 'X', 'I', 'F'}
-	xmpFourcc  = [4]byte{'X', 'M', 'P', ' '}
-
 	errNoRiffHeader = errors.New("no RIFF header")
 	errNoWebpHeader = errors.New("not a WEBP file")
+	errInvalidChunk = errors.New("invalid chunk")
 )
 
 type webpVisitor struct {
@@ -43,59 +42,68 @@ type webpVisitor struct {
 	doneHeader bool
 }
 
-func fourCC(b []byte) [4]byte {
-	return [4]byte{b[0], b[1], b[2], b[3]}
-}
-
 func (v *webpVisitor) split(data []byte, atEOF bool) (advance int, token []byte, err error) {
 	// parse/write the header first
 	if !v.doneHeader {
-		if len(data) < riffHeaderSize {
-			// need the full header
+
+		// const rifHeaderSize = 12
+		if len(data) < 12 {
+			if atEOF {
+				err = errNoRiffHeader
+			}
 			return
 		}
-		if fourCC(data) != riffHeader {
+
+		if string(data[:4]) != riffHeader {
 			err = errNoRiffHeader
 			return
 		}
-		if fourCC(data[8:]) != webpHeader {
+
+		if string(data[8:12]) != webpHeader {
 			err = errNoWebpHeader
 			return
 		}
-		if _, err = v.writer.Write(data[:riffHeaderSize]); err != nil {
+
+		if _, err = v.writer.Write(data[:12]); err != nil {
 			return
 		}
-		advance += riffHeaderSize
-		data = data[riffHeaderSize:]
+
+		advance += 12
+		data = data[12:]
 		v.doneHeader = true
 	}
 
-	// need enough for fourcc and size
-	if len(data) < 8 {
-		return
-	}
-	size := int64(binary.LittleEndian.Uint32(data[4:]))
-	if (size & 1) != 0 {
-		// odd chunk size - extra padding byte
-		size++
-	}
-	// wait until there is enough
-	if int64(len(data)-8) < size {
-		return
-	}
-
-	fourcc := fourCC(data)
-	rawChunkData := data[8 : 8+size]
-	if fourcc == exifFourcc || fourcc == xmpFourcc {
-		// replace exif/xmp with blank
-		rawChunkData = make([]byte, size)
-	}
-
-	if _, err = v.writer.Write(data[:8]); err == nil {
-		if _, err = v.writer.Write(rawChunkData); err == nil {
-			advance += 8 + int(size)
+	for {
+		// need enough for
+		// fourcc and size
+		if len(data) < 8 {
+			return
 		}
-	}
 
-	return
+		size := int64(binary.LittleEndian.Uint32(data[4:]))
+
+		if (size & 1) != 0 {
+			// odd chunk size:
+			// extra padding byte
+			size++
+		}
+
+		// wait until there is enough
+		if int64(len(data)) < 8+size {
+			return
+		}
+
+		// replace exif/xmp with blank
+		switch string(data[:4]) {
+		case exifFourcc, xmpFourcc:
+			clear(data[8 : 8+size])
+		}
+
+		if _, err = v.writer.Write(data[:8+size]); err != nil {
+			return
+		}
+
+		advance += 8 + int(size)
+		data = data[8+size:]
+	}
 }

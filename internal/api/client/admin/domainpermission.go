@@ -302,3 +302,45 @@ func (m *Module) getDomainPermissions(
 
 	apiutil.JSON(c, http.StatusOK, domainPerm)
 }
+
+// parseDomainPermissionType is a util function to parse i
+// to a DomainPermissionType, or return a suitable error.
+func parseDomainPermissionType(i string) (
+	permType gtsmodel.DomainPermissionType,
+	errWithCode gtserror.WithCode,
+) {
+	if i == "" {
+		const errText = "permission_type not set, must be one of block or allow"
+		errWithCode = gtserror.NewErrorBadRequest(errors.New(errText), errText)
+		return
+	}
+
+	permType = gtsmodel.ParseDomainPermissionType(i)
+	if permType == gtsmodel.DomainPermissionUnknown {
+		var errText = fmt.Sprintf("permission_type %s not recognized, must be one of block or allow", i)
+		errWithCode = gtserror.NewErrorBadRequest(errors.New(errText), errText)
+	}
+
+	return
+}
+
+// parseDomainPermSubContentType is a util function to parse i
+// to a DomainPermSubContentType, or return a suitable error.
+func parseDomainPermSubContentType(i string) (
+	contentType gtsmodel.DomainPermSubContentType,
+	errWithCode gtserror.WithCode,
+) {
+	if i == "" {
+		const errText = "content_type not set, must be one of text/csv, text/plain or application/json"
+		errWithCode = gtserror.NewErrorBadRequest(errors.New(errText), errText)
+		return
+	}
+
+	contentType = gtsmodel.NewDomainPermSubContentType(i)
+	if contentType == gtsmodel.DomainPermSubContentTypeUnknown {
+		var errText = fmt.Sprintf("content_type %s not recognized, must be one of text/csv, text/plain or application/json", i)
+		errWithCode = gtserror.NewErrorBadRequest(errors.New(errText), errText)
+	}
+
+	return
+}

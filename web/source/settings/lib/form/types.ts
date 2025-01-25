@@ -181,6 +181,13 @@ export interface TextFormInputHook extends FormInputHook<string>,
 	_withValidate,
 	_withRef {}
 
+export interface NumberFormInputHook extends FormInputHook<number>,
+	_withSetter<number>,
+	_withOnChange,
+	_withReset,
+	_withValidate,
+	_withRef {}
+
 export interface RadioFormInputHook extends FormInputHook<string>,
 	_withSetter<string>,
 	_withOnChange,

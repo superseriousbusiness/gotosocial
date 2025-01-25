@@ -40,17 +40,17 @@ type Caches struct {
 	// the block []headerfilter.Filter cache.
 	BlockHeaderFilters headerfilter.Cache
 
+	// TTL cache of statuses -> filterable text fields.
+	// To ensure up-to-date fields, cache is keyed as:
+	// `[status.ID][status.UpdatedAt.Unix()]`
+	StatusesFilterableFields *ttl.Cache[string, []string]
+
 	// Visibility provides access to the item visibility
 	// cache. (used by the visibility filter).
 	Visibility VisibilityCache
 
 	// Webfinger provides access to the webfinger URL cache.
 	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
-
-	// TTL cache of statuses -> filterable text fields.
-	// To ensure up-to-date fields, cache is keyed as:
-	// `[status.ID][status.UpdatedAt.Unix()]`
-	StatusesFilterableFields *ttl.Cache[string, []string]
 
 	// prevent pass-by-value.
 	_ nocopy
@@ -74,6 +74,9 @@ func (c *Caches) Init() {
 	c.initConversationLastStatusIDs()
 	c.initDomainAllow()
 	c.initDomainBlock()
+	c.initDomainPermissionDraft()
+	c.initDomainPermissionSubscription()
+	c.initDomainPermissionExclude()
 	c.initEmoji()
 	c.initEmojiCategory()
 	c.initFilter()
@@ -103,6 +106,7 @@ func (c *Caches) Init() {
 	c.initStatus()
 	c.initStatusBookmark()
 	c.initStatusBookmarkIDs()
+	c.initStatusEdit()
 	c.initStatusFave()
 	c.initStatusFaveIDs()
 	c.initTag()
@@ -113,6 +117,8 @@ func (c *Caches) Init() {
 	c.initUserMute()
 	c.initUserMuteIDs()
 	c.initWebfinger()
+	c.initWebPushSubscription()
+	c.initWebPushSubscriptionIDs()
 	c.initVisibility()
 	c.initStatusesFilterableFields()
 }
@@ -199,6 +205,15 @@ func (c *Caches) Sweep(threshold float64) {
 	c.Visibility.Trim(threshold)
 }
 
+func (c *Caches) initStatusesFilterableFields() {
+	c.StatusesFilterableFields = new(ttl.Cache[string, []string])
+	c.StatusesFilterableFields.Init(
+		0,
+		512,
+		1*time.Hour,
+	)
+}
+
 func (c *Caches) initWebfinger() {
 	// Calculate maximum cache size.
 	cap := calculateCacheMax(
@@ -213,14 +228,5 @@ func (c *Caches) initWebfinger() {
 		0,
 		cap,
 		24*time.Hour,
-	)
-}
-
-func (c *Caches) initStatusesFilterableFields() {
-	c.StatusesFilterableFields = new(ttl.Cache[string, []string])
-	c.StatusesFilterableFields.Init(
-		0,
-		512,
-		1*time.Hour,
 	)
 }

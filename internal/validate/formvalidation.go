@@ -189,12 +189,22 @@ func CustomCSS(customCSS string) error {
 	return nil
 }
 
+func InstanceCustomCSS(customCSS string) error {
+
+	maximumCustomCSSLength := config.GetAccountsCustomCSSLength()
+	if length := len([]rune(customCSS)); length > maximumCustomCSSLength {
+		return fmt.Errorf("custom_css must be less than %d characters, but submitted custom_css was %d characters", maximumCustomCSSLength, length)
+	}
+
+	return nil
+}
+
 // EmojiShortcode just runs the given shortcode through the regular expression
-// for emoji shortcodes, to figure out whether it's a valid shortcode, ie., 2-30 characters,
+// for emoji shortcodes, to figure out whether it's a valid shortcode, ie., 1-30 characters,
 // a-zA-Z, numbers, and underscores.
 func EmojiShortcode(shortcode string) error {
 	if !regexes.EmojiValidator.MatchString(shortcode) {
-		return fmt.Errorf("shortcode %s did not pass validation, must be between 2 and 30 characters, letters, numbers, and underscores only", shortcode)
+		return fmt.Errorf("shortcode %s did not pass validation, must be between 1 and 30 characters, letters, numbers, and underscores only", shortcode)
 	}
 	return nil
 }

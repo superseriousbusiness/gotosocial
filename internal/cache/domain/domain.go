@@ -220,7 +220,7 @@ func (n *node) getChild(part string) *node {
 
 	for i < j {
 		// avoid overflow when computing h
-		h := int(uint(i+j) >> 1)
+		h := int(uint(i+j) >> 1) // #nosec G115
 		// i ≤ h < j
 
 		if n.child[h].part < part {

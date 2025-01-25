@@ -19,6 +19,7 @@ package polls_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -35,14 +36,15 @@ import (
 
 type PollsStandardTestSuite struct {
 	suite.Suite
-	db           db.DB
-	storage      *storage.Driver
-	mediaManager *media.Manager
-	federator    *federation.Federator
-	processor    *processing.Processor
-	emailSender  email.Sender
-	sentEmails   map[string]string
-	state        state.State
+	db            db.DB
+	storage       *storage.Driver
+	mediaManager  *media.Manager
+	federator     *federation.Federator
+	processor     *processing.Processor
+	emailSender   email.Sender
+	sentEmails    map[string]string
+	webPushSender *testrig.WebPushMockSender
+	state         state.State
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
@@ -76,6 +78,7 @@ func (suite *PollsStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
@@ -89,7 +92,13 @@ func (suite *PollsStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", suite.sentEmails)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
+		suite.mediaManager,
+	)
 	suite.pollsModule = polls.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, nil)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

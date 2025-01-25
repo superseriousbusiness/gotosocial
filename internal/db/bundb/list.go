@@ -31,7 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -333,7 +333,7 @@ func (l *listDB) GetListsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.L
 	// Reorder the lists by their
 	// IDs to ensure in correct order.
 	getID := func(l *gtsmodel.List) string { return l.ID }
-	util.OrderBy(lists, ids, getID)
+	xslices.OrderBy(lists, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -387,12 +387,12 @@ func (l *listDB) PutListEntries(ctx context.Context, entries []*gtsmodel.ListEnt
 	}
 
 	// Collect unique list IDs from the provided list entries.
-	listIDs := util.Collate(entries, func(e *gtsmodel.ListEntry) string {
+	listIDs := xslices.Collate(entries, func(e *gtsmodel.ListEntry) string {
 		return e.ListID
 	})
 
 	// Collect unique follow IDs from the provided list entries.
-	followIDs := util.Collate(entries, func(e *gtsmodel.ListEntry) string {
+	followIDs := xslices.Collate(entries, func(e *gtsmodel.ListEntry) string {
 		return e.FollowID
 	})
 
@@ -441,7 +441,7 @@ func (l *listDB) DeleteAllListEntriesByFollows(ctx context.Context, followIDs ..
 	}
 
 	// Deduplicate IDs before invalidate.
-	listIDs = util.Deduplicate(listIDs)
+	listIDs = xslices.Deduplicate(listIDs)
 
 	// Invalidate all related list entry caches.
 	l.invalidateEntryCaches(ctx, listIDs, followIDs)

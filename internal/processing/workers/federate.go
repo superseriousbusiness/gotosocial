@@ -21,7 +21,6 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
@@ -93,11 +92,6 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 		return err
 	}
 
-	publicIRI, err := parseURI(pub.PublicActivityPubIRI)
-	if err != nil {
-		return err
-	}
-
 	// Create a new delete.
 	// todo: tc.AccountToASDelete
 	delete := streams.NewActivityStreamsDelete()
@@ -121,7 +115,7 @@ func (f *federate) DeleteAccount(ctx context.Context, account *gtsmodel.Account)
 
 	// Address the delete CC public.
 	deleteCC := streams.NewActivityStreamsCcProperty()
-	deleteCC.AppendIRI(publicIRI)
+	deleteCC.AppendIRI(ap.PublicURI())
 	delete.SetActivityStreamsCc(deleteCC)
 
 	// Send the Delete via the Actor's outbox.
@@ -217,18 +211,23 @@ func (f *federate) CreatePollVote(ctx context.Context, poll *gtsmodel.Poll, vote
 		return err
 	}
 
-	// Convert vote to AS Create with vote choices as Objects.
-	create, err := f.converter.PollVoteToASCreate(ctx, vote)
+	// Convert vote to AS Creates with vote choices as Objects.
+	creates, err := f.converter.PollVoteToASCreates(ctx, vote)
 	if err != nil {
 		return gtserror.Newf("error converting to notes: %w", err)
 	}
 
-	// Send the Create via the Actor's outbox.
-	if _, err := f.FederatingActor().Send(ctx, outboxIRI, create); err != nil {
-		return gtserror.Newf("error sending Create activity via outbox %s: %w", outboxIRI, err)
+	var errs gtserror.MultiError
+
+	// Send each create activity.
+	actor := f.FederatingActor()
+	for _, create := range creates {
+		if _, err := actor.Send(ctx, outboxIRI, create); err != nil {
+			errs.Appendf("error sending Create activity via outbox %s: %w", outboxIRI, err)
+		}
 	}
 
-	return nil
+	return errs.Combine()
 }
 
 func (f *federate) DeleteStatus(ctx context.Context, status *gtsmodel.Status) error {
@@ -872,14 +871,14 @@ func (f *federate) UpdateAccount(ctx context.Context, account *gtsmodel.Account)
 		return err
 	}
 
-	// Convert account to ActivityStreams Person.
-	person, err := f.converter.AccountToAS(ctx, account)
+	// Convert account to Accountable.
+	accountable, err := f.converter.AccountToAS(ctx, account)
 	if err != nil {
 		return gtserror.Newf("error converting account to Person: %w", err)
 	}
 
-	// Use ActivityStreams Person as Object of Update.
-	update, err := f.converter.WrapPersonInUpdate(person, account)
+	// Use Accountable as Object of Update.
+	update, err := f.converter.WrapAccountableInUpdate(accountable)
 	if err != nil {
 		return gtserror.Newf("error wrapping Person in Update: %w", err)
 	}
@@ -1084,11 +1083,6 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 		return err
 	}
 
-	publicIRI, err := parseURI(pub.PublicActivityPubIRI)
-	if err != nil {
-		return err
-	}
-
 	// Create a new move.
 	move := streams.NewActivityStreamsMove()
 
@@ -1110,7 +1104,7 @@ func (f *federate) MoveAccount(ctx context.Context, account *gtsmodel.Account) e
 	ap.AppendTo(move, followersIRI)
 
 	// Address the move CC public.
-	ap.AppendCc(move, publicIRI)
+	ap.AppendCc(move, ap.PublicURI())
 
 	// Send the Move via the Actor's outbox.
 	if _, err := f.FederatingActor().Send(

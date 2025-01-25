@@ -8,7 +8,7 @@ You will be prompted to log in with your email address and password after provid
 
 ## Profile
 
-![Screenshot of the profile section of the user settings interface, showing a preview of the avatar, header and display name, and providing form fields to change them](../assets/user-settings-profile-info.png)
+![Screenshot of the profile section of the user settings interface, showing a preview of the avatar, header and display name, and providing form fields to change them](../public/user-settings-profile-info.png)
 
 In the profile section you can change your display name, avatar and header images. You can also choose to enable manually approving follow requests, and opt-in to providing a public RSS feed of your posts.
 
@@ -78,11 +78,13 @@ Some examples:
 
 #### Visibility Level of Posts to Show on Your Profile
 
-Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web view of your profile, and served in your RSS feed (if you have enabled RSS).
+Using this dropdown, you can choose what visibility level(s) of posts should be shown on the public web views of your profile, of your statuses, and in your RSS feed (if you have enabled RSS).
 
-**By default, GoToSocial shows only Public visibility posts on the web view of your profile, not Unlisted.** You can adjust this setting to also show Unlisted visibility posts on your profile, which is similar to the default for other ActivityPub softwares like Mastodon etc.
+**By default, GoToSocial shows only Public visibility posts on its web views, not Unlisted.** You can adjust this setting to also show Unlisted visibility posts, which is similar to the default for other ActivityPub softwares like Mastodon etc.
 
-You can also choose to show no posts at all on the web view of your profile. This allows you to write posts without having to worry about scrapers, rubberneckers, and other nosy parkers visiting your web profile and looking at your posts.
+You can also choose to show no posts at all on GoToSocial's web views. This allows you to write posts without having to worry about scrapers, rubberneckers, and other nosy parkers visiting your web profile and looking at your posts.
+
+This setting only applies to the visibility of your own posts. Other user's Unlisted posts are never shown.
 
 This setting does not affect visibility of your posts over the ActivityPub protocol, so even if you choose to show no posts on your public web profile, others will be able to see your posts in their client if they follow you, and/or have your posts boosted onto their timeline, use a link to search a post of yours, etc.
 
@@ -182,7 +184,7 @@ This allows you to do things like:
 
 For example, the below image shows a policy for Public visibility posts that allows anyone to like or boost, but only allows followers, and people you follow, to reply.
 
-![Policy showing "Who can like" = "anyone", "Who can reply" = "followers" and "following", and "Who can boost" = "anyone".](../assets/user-settings-interaction-policy-1.png)
+![Policy showing "Who can like" = "anyone", "Who can reply" = "followers" and "following", and "Who can boost" = "anyone".](../public/user-settings-interaction-policy-1.png)
 
 Bear in mind that policies do not apply retroactively. Posts created after you've applied a default interaction policy will use that policy, but any post created before then will use whatever policy was the default when the post was created.
 
@@ -229,7 +231,7 @@ Please see the [migration document](./migration.md) for more information on movi
 
 In the export & import section, you can export data from your GoToSocial account, or import data into it.
 
-![The export/import page.](../assets/user-settings-export-import.png)
+![The export/import page.](../public/user-settings-export-import.png)
 
 ### Export
 

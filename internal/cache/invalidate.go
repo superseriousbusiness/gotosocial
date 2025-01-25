@@ -273,9 +273,19 @@ func (c *Caches) OnInvalidateStatusBookmark(bookmark *gtsmodel.StatusBookmark) {
 	c.DB.StatusBookmarkIDs.Invalidate(bookmark.StatusID)
 }
 
+func (c *Caches) OnInvalidateStatusEdit(edit *gtsmodel.StatusEdit) {
+	// Invalidate cache of related status model.
+	c.DB.Status.Invalidate("ID", edit.StatusID)
+}
+
 func (c *Caches) OnInvalidateStatusFave(fave *gtsmodel.StatusFave) {
 	// Invalidate status fave ID list for this status.
 	c.DB.StatusFaveIDs.Invalidate(fave.StatusID)
+}
+
+func (c *Caches) OnInvalidateToken(token *gtsmodel.Token) {
+	// Invalidate token's push subscription.
+	c.DB.WebPushSubscription.Invalidate("ID", token.ID)
 }
 
 func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
@@ -290,4 +300,9 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 func (c *Caches) OnInvalidateUserMute(mute *gtsmodel.UserMute) {
 	// Invalidate source account's user mute lists.
 	c.DB.UserMuteIDs.Invalidate(mute.AccountID)
+}
+
+func (c *Caches) OnInvalidateWebPushSubscription(subscription *gtsmodel.WebPushSubscription) {
+	// Invalidate source account's Web Push subscription list.
+	c.DB.WebPushSubscriptionIDs.Invalidate(subscription.AccountID)
 }

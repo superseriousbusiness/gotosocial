@@ -18,68 +18,45 @@
 package typeutils
 
 import (
-	"net/url"
-
-	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
-// WrapPersonInUpdate ...
-func (c *Converter) WrapPersonInUpdate(person vocab.ActivityStreamsPerson, originAccount *gtsmodel.Account) (vocab.ActivityStreamsUpdate, error) {
+// WrapAccountableInUpdate wraps the given accountable
+// in an Update activity with the accountable as the object.
+//
+// The Update will be addressed to Public and bcc followers.
+func (c *Converter) WrapAccountableInUpdate(accountable ap.Accountable) (vocab.ActivityStreamsUpdate, error) {
 	update := streams.NewActivityStreamsUpdate()
 
-	// set the actor
-	actorURI, err := url.Parse(originAccount.URI)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", originAccount.URI, err)
-	}
-	actorProp := streams.NewActivityStreamsActorProperty()
-	actorProp.AppendIRI(actorURI)
-	update.SetActivityStreamsActor(actorProp)
+	// Set actor IRI to this accountable's IRI.
+	ap.AppendActorIRIs(update, ap.GetJSONLDId(accountable))
 
-	// set the ID
-	newID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
+	// Set the update ID
+	updateURI := uris.GenerateURIForUpdate(ap.ExtractPreferredUsername(accountable), id.NewULID())
+	ap.MustSet(ap.SetJSONLDIdStr, ap.WithJSONLDId(update), updateURI)
 
-	idString := uris.GenerateURIForUpdate(originAccount.Username, newID)
-	idURI, err := url.Parse(idString)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", idString, err)
-	}
-	idProp := streams.NewJSONLDIdProperty()
-	idProp.SetIRI(idURI)
-	update.SetJSONLDId(idProp)
-
-	// set the person as the object here
+	// Set the accountable as the object of the update.
 	objectProp := streams.NewActivityStreamsObjectProperty()
-	objectProp.AppendActivityStreamsPerson(person)
+	switch t := accountable.(type) {
+	case vocab.ActivityStreamsPerson:
+		objectProp.AppendActivityStreamsPerson(t)
+	case vocab.ActivityStreamsService:
+		objectProp.AppendActivityStreamsService(t)
+	default:
+		log.Panicf(nil, "%T was neither person nor service", t)
+	}
 	update.SetActivityStreamsObject(objectProp)
 
-	// to should be public
-	toURI, err := url.Parse(pub.PublicActivityPubIRI)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", pub.PublicActivityPubIRI, err)
-	}
-	toProp := streams.NewActivityStreamsToProperty()
-	toProp.AppendIRI(toURI)
-	update.SetActivityStreamsTo(toProp)
+	// to should be public.
+	ap.AppendTo(update, ap.PublicURI())
 
-	// bcc followers
-	followersURI, err := url.Parse(originAccount.FollowersURI)
-	if err != nil {
-		return nil, gtserror.Newf("error parsing url %s: %w", originAccount.FollowersURI, err)
-	}
-	bccProp := streams.NewActivityStreamsBccProperty()
-	bccProp.AppendIRI(followersURI)
-	update.SetActivityStreamsBcc(bccProp)
+	// bcc should be followers.
+	ap.AppendBcc(update, ap.GetFollowers(accountable))
 
 	return update, nil
 }

@@ -119,7 +119,7 @@ export default function NewEmojiForm() {
 					label="Shortcode, must be unique among the instance's local emoji"
 					autoCapitalize="none"
 					spellCheck="false"
-					{...{pattern: "^\\w{2,30}$"}}
+					{...{pattern: "^\\w{1,30}$"}}
 				/>
 
 				<CategorySelect

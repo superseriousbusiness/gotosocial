@@ -1,4 +1,4 @@
-//go:build unix && !sqlite3_nosys
+//go:build unix
 
 package alloc
 
@@ -9,7 +9,7 @@ import (
 	"golang.org/x/sys/unix"
 )
 
-func Virtual(_, max uint64) experimental.LinearMemory {
+func NewMemory(_, max uint64) experimental.LinearMemory {
 	// Round up to the page size.
 	rnd := uint64(unix.Getpagesize() - 1)
 	max = (max + rnd) &^ rnd
@@ -47,7 +47,7 @@ func (m *mmappedMemory) Reallocate(size uint64) []byte {
 		// Commit additional memory up to new bytes.
 		err := unix.Mprotect(m.buf[com:new], unix.PROT_READ|unix.PROT_WRITE)
 		if err != nil {
-			panic(err)
+			return nil
 		}
 
 		// Update committed memory.

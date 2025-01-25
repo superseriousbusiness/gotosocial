@@ -158,14 +158,15 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 	if err != nil && !isUnsupportedTypeErr(err) {
 		return gtserror.Newf("ffprobe error: %w", err)
 	} else if result == nil {
-		log.Warn(ctx, "unsupported data type")
+		log.Warnf(ctx, "unsupported data type by ffprobe: %v", err)
 		return nil
 	}
 
 	var ext string
+	var fileType gtsmodel.FileType
 
-	// Get type from ffprobe format data.
-	fileType, ext := result.GetFileType()
+	// Get abstract file type, mimetype and ext from ffprobe data.
+	fileType, p.emoji.ImageContentType, ext = result.GetFileType()
 	if fileType != gtsmodel.FileTypeImage {
 		return gtserror.Newf("unsupported emoji filetype: %s (%s)", fileType, ext)
 	}
@@ -215,10 +216,6 @@ func (p *ProcessingEmoji) store(ctx context.Context) error {
 		pathID,
 		"png",
 	)
-
-	// Get mimetype for the file container
-	// type, falling back to generic data.
-	p.emoji.ImageContentType = getMimeType(ext)
 
 	// Set the known emoji static content type.
 	p.emoji.ImageStaticContentType = "image/png"

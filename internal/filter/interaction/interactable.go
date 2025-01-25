@@ -306,7 +306,7 @@ func (f *Filter) StatusBoostable(
 			status.InteractionPolicy.CanAnnounce,
 		)
 
-	// If status is local and has no policy set,
+	// If status has no policy set but it's local,
 	// check against the default policy for this
 	// visibility, as we're interaction-policy aware.
 	case *status.Local:
@@ -318,12 +318,20 @@ func (f *Filter) StatusBoostable(
 			policy.CanAnnounce,
 		)
 
-	// Otherwise, assume the status is from an
-	// instance that does not use / does not care
-	// about interaction policies, and just return OK.
-	default:
+	// Status is from an instance that does not use
+	// or does not care about interaction policies.
+	// We can boost it if it's unlisted or public.
+	case status.Visibility == gtsmodel.VisibilityPublic ||
+		status.Visibility == gtsmodel.VisibilityUnlocked:
 		return &gtsmodel.PolicyCheckResult{
 			Permission: gtsmodel.PolicyPermissionPermitted,
+		}, nil
+
+	// Not permitted by any of the
+	// above checks, so it's forbidden.
+	default:
+		return &gtsmodel.PolicyCheckResult{
+			Permission: gtsmodel.PolicyPermissionForbidden,
 		}, nil
 	}
 }

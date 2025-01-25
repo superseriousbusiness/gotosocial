@@ -20,7 +20,7 @@ You can find more detail on system requirements below, but in short you should a
 
 For a small instance (1-20 active users), GoToSocial will likely hover consistently between 250MB and 350MB of RAM usage once the internal caches are hydrated:
 
-![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](../assets/getting-started-memory-graph.png)
+![Grafana graph showing GoToSocial heap in use hovering around 250MB and spiking occasionally to 400MB-500MB.](../public/getting-started-memory-graph.png)
 
 In the graph above you can see that RAM usage spikes during periods of load. This happens, for example, when when a status gets boosted by someone with many followers, or when the embedded `ffmpeg` binary is decoding or reencoding media files into thumbnails (especially larger video files).
 

@@ -17,6 +17,22 @@
 
 package ap
 
+import (
+	"net/url"
+
+	"github.com/superseriousbusiness/activity/pub"
+)
+
+// PublicURI returns a fresh copy of the *url.URL version of the
+// magic ActivityPub URI https://www.w3.org/ns/activitystreams#Public
+func PublicURI() *url.URL {
+	publicURI, err := url.Parse(pub.PublicActivityPubIRI)
+	if err != nil {
+		panic(err)
+	}
+	return publicURI
+}
+
 // https://www.w3.org/TR/activitystreams-vocabulary
 const (
 	ActivityAccept          = "Accept"          // ActivityStreamsAccept https://www.w3.org/TR/activitystreams-vocabulary/#dfn-accept
@@ -77,6 +93,10 @@ const (
 	// See https://www.w3.org/TR/activitystreams-vocabulary/#microsyntaxes
 	// and https://www.w3.org/TR/activitystreams-vocabulary/#dfn-tag
 	TagHashtag = "Hashtag"
+
+	// Not in the AS spec, just used internally to indicate
+	// that we don't *yet* know what type of Object something is.
+	ObjectUnknown = "Unknown"
 )
 
 // isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).

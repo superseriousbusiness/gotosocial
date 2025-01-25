@@ -19,11 +19,13 @@
 
 import typia from "typia";
 import { PermType } from "./perm";
+import { Links } from "parse-link-header";
+import { PermSubContentType } from "./permsubcontenttype";
 
 export const validateDomainPerms = typia.createValidate<DomainPerm[]>();
 
 /**
- * A single domain permission entry (block or allow).
+ * A single domain permission entry (block, allow, draft, ignore).
  */
 export interface DomainPerm {
 	id?: string;
@@ -32,11 +34,14 @@ export interface DomainPerm {
 	private_comment?: string;
 	public_comment?: string;
 	created_at?: string;
+	created_by?: string;
+	subscription_id?: string;
 
-	// Internal processing keys; remove
-	// before serdes of domain perm.
+	// Keys that should be stripped before
+	// sending the domain permission (if imported).
+
+	permission_type?: PermType;
 	key?: string;
-	permType?: PermType;
 	suggest?: string;
 	valid?: boolean;
 	checked?: boolean;
@@ -53,9 +58,9 @@ export interface MappedDomainPerms {
 	[key: string]: DomainPerm;
 }
 
-const domainPermInternalKeys: Set<keyof DomainPerm> = new Set([
+const domainPermStripOnImport: Set<keyof DomainPerm> = new Set([
 	"key",
-	"permType",
+	"permission_type",
 	"suggest",
 	"valid",
 	"checked",
@@ -65,15 +70,14 @@ const domainPermInternalKeys: Set<keyof DomainPerm> = new Set([
 ]);
 
 /**
- * Returns true if provided DomainPerm Object key is
- * "internal"; ie., it's just for our use, and it shouldn't
- * be serialized to or deserialized from the GtS API.
+ * Returns true if provided DomainPerm Object key is one
+ * that should be stripped when importing a domain permission.
  * 
  * @param key 
  * @returns 
  */
-export function isDomainPermInternalKey(key: keyof DomainPerm) {
-	return domainPermInternalKeys.has(key);
+export function stripOnImport(key: keyof DomainPerm) {
+	return domainPermStripOnImport.has(key);
 }
 
 export interface ImportDomainPermsParams {
@@ -93,4 +97,273 @@ export interface ExportDomainPermsParams {
 	permType: PermType;
 	action: "export" | "export-file";
 	exportType: "json" | "csv" | "plain";
+}
+
+/**
+ * Parameters for GET to /api/v1/admin/domain_permission_drafts.
+ */
+export interface DomainPermDraftSearchParams {
+	/**
+	 * Show only drafts created by the given subscription ID.
+	 */
+	subscription_id?: string;
+	/**
+	 * Return only drafts that target the given domain.
+	 */
+	domain?: string;
+	/**
+	 * Filter on "block" or "allow" type drafts.
+	 */
+	permission_type?: PermType;
+	/**
+	 * Return only items *OLDER* than the given max ID (for paging downwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	max_id?: string;
+	/**
+	 * Return only items *NEWER* than the given since ID.
+	 * The item with the specified ID will not be included in the response.
+	 */
+	since_id?: string;
+	/**
+	 * Return only items immediately *NEWER* than the given min ID (for paging upwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	min_id?: string;
+	/**
+	 * Number of items to return.
+	 */
+	limit?: number;
+}
+
+export interface DomainPermDraftSearchResp {
+	drafts: DomainPerm[];
+	links: Links | null;
+}
+
+export interface DomainPermDraftCreateParams {
+	/**
+	 * Domain to create the permission draft for.
+	 */
+	domain: string;
+	/**
+	 * Create a draft "allow" or a draft "block".
+	 */
+	permission_type: PermType;
+	/**
+	 * Obfuscate the name of the domain when serving it publicly.
+	 * Eg., `example.org` becomes something like `ex***e.org`.
+	 */
+	obfuscate?: boolean;
+	/**
+	 * Public comment about this domain permission. This will be displayed
+	 * alongside the domain permission if you choose to share permissions.
+	 */
+	public_comment?: string;
+	/**
+	 * Private comment about this domain permission.
+	 * Will only be shown to other admins, so this is a useful way of
+	 * internally keeping track of why a certain domain ended up permissioned.
+	 */
+	private_comment?: string;
+}
+
+/**
+ * Parameters for GET to /api/v1/admin/domain_permission_excludes.
+ */
+export interface DomainPermExcludeSearchParams {
+	/**
+	 * Return only excludes that target the given domain.
+	 */
+	domain?: string;
+	/**
+	 * Return only items *OLDER* than the given max ID (for paging downwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	max_id?: string;
+	/**
+	 * Return only items *NEWER* than the given since ID.
+	 * The item with the specified ID will not be included in the response.
+	 */
+	since_id?: string;
+	/**
+	 * Return only items immediately *NEWER* than the given min ID (for paging upwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	min_id?: string;
+	/**
+	 * Number of items to return.
+	 */
+	limit?: number;
+}
+
+export interface DomainPermExcludeSearchResp {
+	excludes: DomainPerm[];
+	links: Links | null;
+}
+
+export interface DomainPermExcludeCreateParams {
+	/**
+	 * Domain to create the permission exclude for.
+	 */
+	domain: string;
+	/**
+	 * Private comment about this domain permission.
+	 * Will only be shown to other admins, so this is a useful way of
+	 * internally keeping track of why a certain domain ended up permissioned.
+	 */
+	private_comment?: string;
+}
+
+/**
+ * API model of one domain permission susbcription.
+ */
+export interface DomainPermSub {
+	/**
+	 * The ID of the domain permission subscription.
+	 */
+	id: string;
+	/**
+	 * The priority of the domain permission subscription.
+	 */
+	priority: number;
+	/**
+	 *  Time at which the subscription was created (ISO 8601 Datetime).
+	 */
+	created_at: string;
+	/**
+	 * Title of this subscription, as set by admin who created or updated it.
+	 */
+	title: string;
+	/**
+	 * The type of domain permission subscription (allow, block).
+	 */
+	permission_type: PermType;
+	/**
+	 * If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect.
+	 * If false, domain permissions from this subscription will come into force immediately.
+	 */
+	as_draft: boolean;
+	/**
+	 * If true, this domain permission subscription will "adopt" domain permissions
+	 * which already exist on the instance, and which meet the following conditions:
+	 * 1) they have no subscription ID (ie., they're "orphaned") and 2) they are present
+	 * in the subscribed list. Such orphaned domain permissions will be given this
+	 * subscription's subscription ID value and be managed by this subscription.
+	 */
+	adopt_orphans: boolean;
+	/**
+	 * ID of the account that created this subscription.
+	 */
+	created_by: string;
+	/**
+	 * URI to call in order to fetch the permissions list.
+	 */
+	uri: string;
+	/**
+	 * MIME content type to use when parsing the permissions list.
+	 */
+	content_type: PermSubContentType;
+	/**
+	 * (Optional) username to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_username?: string;
+	/**
+	 * (Optional) password to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_password?: string;
+	/**
+	 * Time at which the most recent fetch was attempted (ISO 8601 Datetime).
+	 */
+	fetched_at?: string;
+	/**
+	 *  Time of the most recent successful fetch (ISO 8601 Datetime).
+	 */
+	successfully_fetched_at?: string;
+	/**
+	 * If most recent fetch attempt failed, this field will contain an error message related to the fetch attempt.
+	 */
+	error?: string;
+	/**
+	 * Count of domain permission entries discovered at URI on last (successful) fetch.
+	 */
+	count: number;
+}
+
+/**
+ * Parameters for GET to /api/v1/admin/domain_permission_subscriptions.
+ */
+export interface DomainPermSubSearchParams {
+	/**
+	 * Return only block or allow subscriptions.
+	 */
+	permission_type?: PermType;
+	/**
+	 * Return only items *OLDER* than the given max ID (for paging downwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	max_id?: string;
+	/**
+	 * Return only items *NEWER* than the given since ID.
+	 * The item with the specified ID will not be included in the response.
+	 */
+	since_id?: string;
+	/**
+	 * Return only items immediately *NEWER* than the given min ID (for paging upwards).
+	 * The item with the specified ID will not be included in the response.
+	 */
+	min_id?: string;
+	/**
+	 * Number of items to return.
+	 */
+	limit?: number;
+}
+
+export interface DomainPermSubCreateUpdateParams {
+	/**
+	 * The priority of the domain permission subscription.
+	 */
+	priority?: number;
+	/**
+	 * Title of this subscription, as set by admin who created or updated it.
+	 */
+	title?: string;
+	/**
+	 * URI to call in order to fetch the permissions list.
+	 */
+	uri: string;
+	/**
+	 * MIME content type to use when parsing the permissions list.
+	 */
+	content_type: PermSubContentType;
+	/**
+	 * If true, domain permissions arising from this subscription will be created as drafts that must be approved by a moderator to take effect.
+	 * If false, domain permissions from this subscription will come into force immediately.
+	 */
+	as_draft?: boolean;
+	/**
+	 * If true, this domain permission subscription will "adopt" domain permissions
+	 * which already exist on the instance, and which meet the following conditions:
+	 * 1) they have no subscription ID (ie., they're "orphaned") and 2) they are present
+	 * in the subscribed list. Such orphaned domain permissions will be given this
+	 * subscription's subscription ID value and be managed by this subscription.
+	 */
+	adopt_orphans?: boolean;
+	/**
+	 * (Optional) username to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_username?: string;
+	/**
+	 * (Optional) password to set for basic auth when doing a fetch of URI.
+	 */
+	fetch_password?: string;
+	/**
+	 * The type of domain permission subscription to create or update (allow, block).
+	 */
+	permission_type: PermType;
+}
+
+export interface DomainPermSubSearchResp {
+	subs: DomainPermSub[];
+	links: Links | null;
 }

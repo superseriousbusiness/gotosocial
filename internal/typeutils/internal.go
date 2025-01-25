@@ -104,14 +104,8 @@ func (c *Converter) StatusToBoost(
 	return boost, nil
 }
 
-func StatusToInteractionRequest(
-	ctx context.Context,
-	status *gtsmodel.Status,
-) (*gtsmodel.InteractionRequest, error) {
-	reqID, err := id.NewULIDFromTime(status.CreatedAt)
-	if err != nil {
-		return nil, gtserror.Newf("error generating ID: %w", err)
-	}
+func StatusToInteractionRequest(status *gtsmodel.Status) *gtsmodel.InteractionRequest {
+	reqID := id.NewULIDFromTime(status.CreatedAt)
 
 	var (
 		targetID        string
@@ -154,17 +148,11 @@ func StatusToInteractionRequest(
 		InteractionType:      interactionType,
 		Reply:                reply,
 		Announce:             announce,
-	}, nil
+	}
 }
 
-func StatusFaveToInteractionRequest(
-	ctx context.Context,
-	fave *gtsmodel.StatusFave,
-) (*gtsmodel.InteractionRequest, error) {
-	reqID, err := id.NewULIDFromTime(fave.CreatedAt)
-	if err != nil {
-		return nil, gtserror.Newf("error generating ID: %w", err)
-	}
+func StatusFaveToInteractionRequest(fave *gtsmodel.StatusFave) *gtsmodel.InteractionRequest {
+	reqID := id.NewULIDFromTime(fave.CreatedAt)
 
 	return &gtsmodel.InteractionRequest{
 		ID:                   reqID,
@@ -178,7 +166,7 @@ func StatusFaveToInteractionRequest(
 		InteractionURI:       fave.URI,
 		InteractionType:      gtsmodel.InteractionLike,
 		Like:                 fave,
-	}, nil
+	}
 }
 
 func (c *Converter) StatusToSinBinStatus(

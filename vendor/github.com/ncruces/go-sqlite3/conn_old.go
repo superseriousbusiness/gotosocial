@@ -1,4 +1,4 @@
-//go:build !(go1.23 || goexperiment.rangefunc) || vet
+//go:build !go1.23
 
 package sqlite3
 

@@ -1,4 +1,5 @@
-// +build amd64,go1.16,!go1.23
+//go:build (amd64 && go1.17 && !go1.24) || (arm64 && go1.20 && !go1.24)
+// +build amd64,go1.17,!go1.24 arm64,go1.20,!go1.24
 
 /*
  * Copyright 2021 ByteDance Inc.
@@ -28,6 +29,8 @@ import (
     `github.com/bytedance/sonic/option`
     `github.com/bytedance/sonic/internal/rt`
 )
+
+const apiKind = UseSonicJSON
 
 type frozenConfig struct {
     Config
@@ -64,8 +67,14 @@ func (cfg Config) Froze() API {
     if cfg.NoEncoderNewline {
         api.encoderOpts |= encoder.NoEncoderNewline
     }
+    if cfg.EncodeNullForInfOrNan {
+        api.encoderOpts |= encoder.EncodeNullForInfOrNan
+    }
 
     // configure decoder options:
+    if cfg.NoValidateJSONSkip {
+        api.decoderOpts |= decoder.OptionNoValidateJSON
+    }
     if cfg.UseInt64 {
         api.decoderOpts |= decoder.OptionUseInt64
     }

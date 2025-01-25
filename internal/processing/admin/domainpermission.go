@@ -31,24 +31,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// apiDomainPerm is a cheeky shortcut for returning
-// the API version of the given domain permission
-// (*gtsmodel.DomainBlock or *gtsmodel.DomainAllow),
-// or an appropriate error if something goes wrong.
-func (p *Processor) apiDomainPerm(
-	ctx context.Context,
-	domainPermission gtsmodel.DomainPermission,
-	export bool,
-) (*apimodel.DomainPermission, gtserror.WithCode) {
-	apiDomainPerm, err := p.converter.DomainPermToAPIDomainPerm(ctx, domainPermission, export)
-	if err != nil {
-		err := gtserror.NewfAt(3, "error converting domain permission to api model: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	return apiDomainPerm, nil
-}
-
 // DomainPermissionCreate creates an instance-level permission
 // targeting the given domain, and then processes any side
 // effects of the permission creation.

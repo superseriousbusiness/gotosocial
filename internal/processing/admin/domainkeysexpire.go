@@ -19,7 +19,6 @@ package admin
 
 import (
 	"context"
-	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -39,47 +38,23 @@ func (p *Processor) DomainKeysExpire(
 	adminAcct *gtsmodel.Account,
 	domain string,
 ) (string, gtserror.WithCode) {
-	actionID := id.NewULID()
+	// Run admin action to process
+	// side effects of key expiry.
+	action := &gtsmodel.AdminAction{
+		ID:             id.NewULID(),
+		TargetCategory: gtsmodel.AdminActionCategoryDomain,
+		TargetID:       domain,
+		Type:           gtsmodel.AdminActionExpireKeys,
+		AccountID:      adminAcct.ID,
+	}
 
-	// Process key expiration asynchronously.
-	if errWithCode := p.actions.Run(
+	if errWithCode := p.state.AdminActions.Run(
 		ctx,
-		&gtsmodel.AdminAction{
-			ID:             actionID,
-			TargetCategory: gtsmodel.AdminActionCategoryDomain,
-			TargetID:       domain,
-			Type:           gtsmodel.AdminActionExpireKeys,
-			AccountID:      adminAcct.ID,
-		},
-		func(ctx context.Context) gtserror.MultiError {
-			return p.domainKeysExpireSideEffects(ctx, domain)
-		},
+		action,
+		p.state.AdminActions.DomainKeysExpireF(domain),
 	); errWithCode != nil {
-		return actionID, errWithCode
+		return action.ID, errWithCode
 	}
 
-	return actionID, nil
-}
-
-func (p *Processor) domainKeysExpireSideEffects(ctx context.Context, domain string) gtserror.MultiError {
-	var (
-		expiresAt = time.Now()
-		errs      gtserror.MultiError
-	)
-
-	// For each account on this domain, expire
-	// the public key and update the account.
-	if err := p.rangeDomainAccounts(ctx, domain, func(account *gtsmodel.Account) {
-		account.PublicKeyExpiresAt = expiresAt
-		if err := p.state.DB.UpdateAccount(ctx,
-			account,
-			"public_key_expires_at",
-		); err != nil {
-			errs.Appendf("db error updating account: %w", err)
-		}
-	}); err != nil {
-		errs.Appendf("db error ranging through accounts: %w", err)
-	}
-
-	return errs
+	return action.ID, nil
 }

@@ -37,6 +37,12 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
 		}),
+
+		domainPermissionDrafts: build.query<any, void>({
+			query: () => ({
+				url: `/api/v1/admin/domain_permission_drafts`
+			}),
+		}),
 	}),
 });
 

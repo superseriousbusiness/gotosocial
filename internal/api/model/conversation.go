@@ -27,6 +27,10 @@ type Conversation struct {
 	// Is the conversation currently marked as unread?
 	Unread bool `json:"unread"`
 	// Participants in the conversation.
+	//
+	// If this is a conversation between no accounts (ie., a self-directed DM),
+	// this will include only the requesting account itself. Otherwise, it will
+	// include every other account in the conversation *except* the requester.
 	Accounts []Account `json:"accounts"`
 	// The last status in the conversation. May be `null`.
 	LastStatus *Status `json:"last_status"`

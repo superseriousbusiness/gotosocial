@@ -1,9 +1,10 @@
-# SQL-first Golang ORM for PostgreSQL, MySQL, MSSQL, and SQLite
+# SQL-first Golang ORM for PostgreSQL, MySQL, MSSQL, SQLite and Oracle
 
 [![build workflow](https://github.com/uptrace/bun/actions/workflows/build.yml/badge.svg)](https://github.com/uptrace/bun/actions)
 [![PkgGoDev](https://pkg.go.dev/badge/github.com/uptrace/bun)](https://pkg.go.dev/github.com/uptrace/bun)
 [![Documentation](https://img.shields.io/badge/bun-documentation-informational)](https://bun.uptrace.dev/)
 [![Chat](https://discordapp.com/api/guilds/752070105847955518/widget.png)](https://discord.gg/rWtp5Aj)
+[![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20Bun%20Guru-006BFF)](https://gurubase.io/g/bun)
 
 > Bun is brought to you by :star: [**uptrace/uptrace**](https://github.com/uptrace/uptrace). Uptrace
 > is an open-source APM tool that supports distributed tracing, metrics, and logs. You can use it to
@@ -19,6 +20,7 @@
   [MySQL](https://bun.uptrace.dev/guide/drivers.html#mysql) (including MariaDB),
   [MSSQL](https://bun.uptrace.dev/guide/drivers.html#mssql),
   [SQLite](https://bun.uptrace.dev/guide/drivers.html#sqlite).
+  [Oracle](https://bun.uptrace.dev/guide/drivers.html#oracle).
 - [ORM-like](/example/basic/) experience using good old SQL. Bun supports structs, map, scalars, and
   slices of map/structs/scalars.
 - [Bulk inserts](https://bun.uptrace.dev/guide/query-insert.html).

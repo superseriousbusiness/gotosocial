@@ -97,11 +97,11 @@ func (d *Dereferencer) GetEmoji(
 			}
 
 			// Get maximum supported remote emoji size.
-			maxsz := config.GetMediaEmojiRemoteMaxSize()
+			maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
-				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				return tsport.DereferenceMedia(ctx, url, maxsz)
 			}
 
 			// Create new emoji with prepared info.
@@ -189,11 +189,11 @@ func (d *Dereferencer) RefreshEmoji(
 			}
 
 			// Get maximum supported remote emoji size.
-			maxsz := config.GetMediaEmojiRemoteMaxSize()
+			maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
-				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				return tsport.DereferenceMedia(ctx, url, maxsz)
 			}
 
 			// Update emoji with prepared info.
@@ -255,11 +255,11 @@ func (d *Dereferencer) RecacheEmoji(
 			}
 
 			// Get maximum supported remote emoji size.
-			maxsz := config.GetMediaEmojiRemoteMaxSize()
+			maxsz := int64(config.GetMediaEmojiRemoteMaxSize()) // #nosec G115 -- Already validated.
 
 			// Prepare data function to dereference remote emoji media.
 			data := func(context.Context) (io.ReadCloser, error) {
-				return tsport.DereferenceMedia(ctx, url, int64(maxsz))
+				return tsport.DereferenceMedia(ctx, url, maxsz)
 			}
 
 			// Recache emoji with prepared info.

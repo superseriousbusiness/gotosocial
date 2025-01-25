@@ -52,6 +52,7 @@ var testModels = []interface{}{
 	&gtsmodel.Status{},
 	&gtsmodel.StatusToEmoji{},
 	&gtsmodel.StatusToTag{},
+	&gtsmodel.StatusEdit{},
 	&gtsmodel.StatusFave{},
 	&gtsmodel.StatusBookmark{},
 	&gtsmodel.Tag{},
@@ -60,6 +61,8 @@ var testModels = []interface{}{
 	&gtsmodel.ThreadToStatus{},
 	&gtsmodel.User{},
 	&gtsmodel.UserMute{},
+	&gtsmodel.VAPIDKeyPair{},
+	&gtsmodel.WebPushSubscription{},
 	&gtsmodel.Emoji{},
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
@@ -101,7 +104,7 @@ func CreateTestTables(db db.DB) {
 	ctx := context.Background()
 	for _, m := range testModels {
 		if err := db.CreateTable(ctx, m); err != nil {
-			log.Panicf(nil, "error creating table for %+v: %s", m, err)
+			log.Panicf(ctx, "error creating table for %+v: %s", m, err)
 		}
 	}
 }
@@ -125,223 +128,229 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	for _, v := range NewTestTokens() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestClients() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestApplications() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestBlocks() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestReports() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestRules() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestDomainBlocks() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestInstances() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestUsers() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	if accounts == nil {
 		for _, v := range NewTestAccounts() {
 			if err := db.Put(ctx, v); err != nil {
-				log.Panic(nil, err)
+				log.Panic(ctx, err)
 			}
 		}
 	} else {
 		for _, v := range accounts {
 			if err := db.Put(ctx, v); err != nil {
-				log.Panic(nil, err)
+				log.Panic(ctx, err)
 			}
 		}
 	}
 
 	for _, v := range NewTestAccountSettings() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestAttachments() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestStatuses() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestEmojis() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestEmojiCategories() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestStatusToEmojis() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestTags() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestStatusToTags() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestMentions() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestFaves() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestFollows() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestLists() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestListEntries() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestNotifications() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestTombstones() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestBookmarks() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestAccountNotes() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestMarkers() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestThreads() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestThreadToStatus() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestPolls() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestPollVotes() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestFilters() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestFilterKeywords() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestFilterStatuses() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
 		}
 	}
 
 	for _, v := range NewTestUserMutes() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(ctx, err)
+		}
+	}
+
+	for _, v := range NewTestWebPushSubscriptions() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(nil, err)
 		}
@@ -349,19 +358,30 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	for _, v := range NewTestInteractionRequests() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(nil, err)
+			log.Panic(ctx, err)
+		}
+	}
+
+	for _, v := range NewTestStatusEdits() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(ctx, err)
 		}
 	}
 
 	if err := db.CreateInstanceAccount(ctx); err != nil {
-		log.Panic(nil, err)
+		log.Panic(ctx, err)
 	}
 
 	if err := db.CreateInstanceInstance(ctx); err != nil {
+		log.Panic(ctx, err)
+	}
+
+	// Generates and stores a VAPID key pair as a side effect.
+	if _, err := db.GetVAPIDKeyPair(ctx); err != nil {
 		log.Panic(nil, err)
 	}
 
-	log.Debug(nil, "testing db setup complete")
+	log.Debug(ctx, "testing db setup complete")
 }
 
 // StandardDBTeardown drops all the standard testing tables/models from the database to ensure it's clean for the next test.

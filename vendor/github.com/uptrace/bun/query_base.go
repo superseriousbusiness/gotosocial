@@ -6,8 +6,11 @@ import (
 	"database/sql/driver"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
+	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/feature"
 	"github.com/uptrace/bun/internal"
 	"github.com/uptrace/bun/schema"
@@ -198,7 +201,7 @@ func (q *baseQuery) beforeAppendModel(ctx context.Context, query Query) error {
 }
 
 func (q *baseQuery) hasFeature(feature feature.Feature) bool {
-	return q.db.features.Has(feature)
+	return q.db.HasFeature(feature)
 }
 
 //------------------------------------------------------------------------------
@@ -418,7 +421,11 @@ func (q *baseQuery) _appendTables(
 		} else {
 			b = fmter.AppendQuery(b, string(q.table.SQLNameForSelects))
 			if withAlias && q.table.SQLAlias != q.table.SQLNameForSelects {
-				b = append(b, " AS "...)
+				if q.db.dialect.Name() == dialect.Oracle {
+					b = append(b, ' ')
+				} else {
+					b = append(b, " AS "...)
+				}
 				b = append(b, q.table.SQLAlias...)
 			}
 		}
@@ -1345,5 +1352,115 @@ func (ih *idxHintsQuery) bufIndexHint(
 		}
 	}
 	b = append(b, ")"...)
+	return b, nil
+}
+
+//------------------------------------------------------------------------------
+
+type orderLimitOffsetQuery struct {
+	order []schema.QueryWithArgs
+
+	limit  int32
+	offset int32
+}
+
+func (q *orderLimitOffsetQuery) addOrder(orders ...string) {
+	for _, order := range orders {
+		if order == "" {
+			continue
+		}
+
+		index := strings.IndexByte(order, ' ')
+		if index == -1 {
+			q.order = append(q.order, schema.UnsafeIdent(order))
+			continue
+		}
+
+		field := order[:index]
+		sort := order[index+1:]
+
+		switch strings.ToUpper(sort) {
+		case "ASC", "DESC", "ASC NULLS FIRST", "DESC NULLS FIRST",
+			"ASC NULLS LAST", "DESC NULLS LAST":
+			q.order = append(q.order, schema.SafeQuery("? ?", []interface{}{
+				Ident(field),
+				Safe(sort),
+			}))
+		default:
+			q.order = append(q.order, schema.UnsafeIdent(order))
+		}
+	}
+
+}
+
+func (q *orderLimitOffsetQuery) addOrderExpr(query string, args ...interface{}) {
+	q.order = append(q.order, schema.SafeQuery(query, args))
+}
+
+func (q *orderLimitOffsetQuery) appendOrder(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if len(q.order) > 0 {
+		b = append(b, " ORDER BY "...)
+
+		for i, f := range q.order {
+			if i > 0 {
+				b = append(b, ", "...)
+			}
+			b, err = f.AppendQuery(fmter, b)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return b, nil
+	}
+
+	// MSSQL: allows Limit() without Order() as per https://stackoverflow.com/a/36156953
+	if q.limit > 0 && fmter.Dialect().Name() == dialect.MSSQL {
+		return append(b, " ORDER BY _temp_sort"...), nil
+	}
+
+	return b, nil
+}
+
+func (q *orderLimitOffsetQuery) setLimit(n int) {
+	q.limit = int32(n)
+}
+
+func (q *orderLimitOffsetQuery) setOffset(n int) {
+	q.offset = int32(n)
+}
+
+func (q *orderLimitOffsetQuery) appendLimitOffset(fmter schema.Formatter, b []byte) (_ []byte, err error) {
+	if fmter.Dialect().Features().Has(feature.OffsetFetch) {
+		if q.limit > 0 && q.offset > 0 {
+			b = append(b, " OFFSET "...)
+			b = strconv.AppendInt(b, int64(q.offset), 10)
+			b = append(b, " ROWS"...)
+
+			b = append(b, " FETCH NEXT "...)
+			b = strconv.AppendInt(b, int64(q.limit), 10)
+			b = append(b, " ROWS ONLY"...)
+		} else if q.limit > 0 {
+			b = append(b, " OFFSET 0 ROWS"...)
+
+			b = append(b, " FETCH NEXT "...)
+			b = strconv.AppendInt(b, int64(q.limit), 10)
+			b = append(b, " ROWS ONLY"...)
+		} else if q.offset > 0 {
+			b = append(b, " OFFSET "...)
+			b = strconv.AppendInt(b, int64(q.offset), 10)
+			b = append(b, " ROWS"...)
+		}
+	} else {
+		if q.limit > 0 {
+			b = append(b, " LIMIT "...)
+			b = strconv.AppendInt(b, int64(q.limit), 10)
+		}
+		if q.offset > 0 {
+			b = append(b, " OFFSET "...)
+			b = strconv.AppendInt(b, int64(q.offset), 10)
+		}
+	}
+
 	return b, nil
 }

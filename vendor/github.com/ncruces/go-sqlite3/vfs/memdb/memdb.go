@@ -62,11 +62,11 @@ func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, err
 }
 
 func (memVFS) Delete(name string, dirSync bool) error {
-	return sqlite3.IOERR_DELETE
+	return sqlite3.IOERR_DELETE_NOENT // used to delete journals
 }
 
 func (memVFS) Access(name string, flag vfs.AccessFlag) (bool, error) {
-	return false, nil
+	return false, nil // used to check for journals
 }
 
 func (memVFS) FullPathname(name string) (string, error) {
@@ -78,19 +78,15 @@ type memDB struct {
 
 	// +checklocks:dataMtx
 	data []*[sectorSize]byte
-
 	// +checklocks:dataMtx
 	size int64
 
-	// +checklocks:lockMtx
-	shared int32
-	// +checklocks:lockMtx
-	reserved bool
-	// +checklocks:lockMtx
-	pending bool
-
 	// +checklocks:memoryMtx
-	refs int
+	refs int32
+
+	shared   int32 // +checklocks:lockMtx
+	pending  bool  // +checklocks:lockMtx
+	reserved bool  // +checklocks:lockMtx
 
 	lockMtx sync.Mutex
 	dataMtx sync.RWMutex
@@ -253,11 +249,11 @@ func (m *memFile) Unlock(lock vfs.LockLevel) error {
 	m.lockMtx.Lock()
 	defer m.lockMtx.Unlock()
 
-	if m.pending && m.lock >= vfs.LOCK_PENDING {
-		m.pending = false
-	}
-	if m.reserved && m.lock >= vfs.LOCK_RESERVED {
+	if m.lock >= vfs.LOCK_RESERVED {
 		m.reserved = false
+	}
+	if m.lock >= vfs.LOCK_PENDING {
+		m.pending = false
 	}
 	if lock < vfs.LOCK_SHARED {
 		m.shared--

@@ -45,6 +45,7 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 		Stream:        testStructs.Processor.Stream(),
 		VisFilter:     visibility.NewFilter(testStructs.State),
 		EmailSender:   testStructs.EmailSender,
+		WebPushSender: testStructs.WebPushSender,
 		Conversations: testStructs.Processor.Conversations(),
 	}
 
@@ -89,7 +90,7 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 	notifs, err := testStructs.State.DB.GetAccountNotifications(
 		gtscontext.SetBarebones(ctx),
 		targetAccount.ID,
-		"", "", "", 0, nil, nil,
+		nil, nil, nil,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())

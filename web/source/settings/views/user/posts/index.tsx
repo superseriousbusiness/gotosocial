@@ -20,7 +20,7 @@
 import React from "react";
 import { useVerifyCredentialsQuery } from "../../../lib/query/oauth";
 import Loading from "../../../components/loading";
-import { Error } from "../../../components/error";
+import { Error as ErrorC } from "../../../components/error";
 import BasicSettings from "./basic-settings";
 import InteractionPolicySettings from "./interaction-policy-settings";
 
@@ -38,7 +38,11 @@ export default function PostSettings() {
 	}
 
 	if (isError) {
-		return <Error error={error} />;
+		return <ErrorC error={error} />;
+	}
+
+	if (!account) {
+		return <ErrorC error={new Error("account was undefined")} />;
 	}
 
 	return (

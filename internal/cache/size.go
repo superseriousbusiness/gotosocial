@@ -66,6 +66,14 @@ you'll make society more equitable for all if you're not careful! :hammer_sickle
 	// be a serialized string of almost any type, so we pick a
 	// nice serialized key size on the upper end of normal.
 	sizeofResultKey = 2 * sizeofIDStr
+
+	// exampleWebPushAuth is a Base64-encoded 16-byte random auth secret.
+	// This secret is consumed as Base64 by webpush-go.
+	exampleWebPushAuth = "ZVxqlt5fzVgmSz2aqiA2XQ=="
+
+	// exampleWebPushP256dh is a Base64-encoded DH P-256 public key.
+	// This secret is consumed as Base64 by webpush-go.
+	exampleWebPushP256dh = "OrpejO16gV97uBXew/T0I7YoUv/CX8fz0z4g8RrQ+edXJqQPjX3XVSo2P0HhcCpCOR1+Dzj5LFcK9jYNqX7SBg=="
 )
 
 var (
@@ -342,6 +350,41 @@ func sizeofConversation() uintptr {
 	}))
 }
 
+func sizeofDomainPermissionDraft() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainPermissionDraft{
+		ID:                 exampleID,
+		CreatedAt:          exampleTime,
+		UpdatedAt:          exampleTime,
+		PermissionType:     gtsmodel.DomainPermissionBlock,
+		Domain:             "example.org",
+		CreatedByAccountID: exampleID,
+		PrivateComment:     exampleTextSmall,
+		PublicComment:      exampleTextSmall,
+		Obfuscate:          util.Ptr(false),
+		SubscriptionID:     exampleID,
+	}))
+}
+
+func sizeofDomainPermissionSubscription() uintptr {
+	return uintptr(size.Of(&gtsmodel.DomainPermissionSubscription{
+		ID:                    exampleID,
+		Priority:              uint8(255),
+		Title:                 exampleTextSmall,
+		PermissionType:        gtsmodel.DomainPermissionBlock,
+		AsDraft:               util.Ptr(true),
+		CreatedByAccountID:    exampleID,
+		URI:                   exampleURI,
+		ContentType:           gtsmodel.DomainPermSubContentTypeCSV,
+		FetchUsername:         "username",
+		FetchPassword:         "password",
+		FetchedAt:             exampleTime,
+		SuccessfullyFetchedAt: exampleTime,
+		ETag:                  exampleID,
+		LastModified:          exampleTime,
+		Error:                 exampleTextSmall,
+	}))
+}
+
 func sizeofEmoji() uintptr {
 	return uintptr(size.Of(&gtsmodel.Emoji{
 		ID:                     exampleID,
@@ -490,7 +533,6 @@ func sizeofMedia() uintptr {
 		URL:               exampleURI,
 		RemoteURL:         exampleURI,
 		CreatedAt:         exampleTime,
-		UpdatedAt:         exampleTime,
 		Type:              gtsmodel.FileTypeImage,
 		AccountID:         exampleID,
 		Description:       exampleText,
@@ -517,7 +559,6 @@ func sizeofMention() uintptr {
 		ID:               exampleURI,
 		StatusID:         exampleURI,
 		CreatedAt:        exampleTime,
-		UpdatedAt:        exampleTime,
 		OriginAccountID:  exampleURI,
 		OriginAccountURI: exampleURI,
 		TargetAccountID:  exampleID,
@@ -543,7 +584,7 @@ func sizeofMove() uintptr {
 func sizeofNotification() uintptr {
 	return uintptr(size.Of(&gtsmodel.Notification{
 		ID:               exampleID,
-		NotificationType: gtsmodel.NotificationFave,
+		NotificationType: gtsmodel.NotificationFavourite,
 		CreatedAt:        exampleTime,
 		TargetAccountID:  exampleID,
 		OriginAccountID:  exampleID,
@@ -625,7 +666,7 @@ func sizeofStatus() uintptr {
 		MentionIDs:               []string{},
 		EmojiIDs:                 []string{exampleID, exampleID, exampleID},
 		CreatedAt:                exampleTime,
-		UpdatedAt:                exampleTime,
+		EditedAt:                 exampleTime,
 		FetchedAt:                exampleTime,
 		Local:                    func() *bool { ok := false; return &ok }(),
 		AccountURI:               exampleURI,
@@ -656,6 +697,23 @@ func sizeofStatusBookmark() uintptr {
 		Status:          nil,
 		CreatedAt:       exampleTime,
 		UpdatedAt:       exampleTime,
+	}))
+}
+
+func sizeofStatusEdit() uintptr {
+	return uintptr(size.Of(&gtsmodel.StatusEdit{
+		ID:             exampleID,
+		Content:        exampleText,
+		ContentWarning: exampleUsername, // similar length
+		Text:           exampleText,
+		Language:       "en",
+		Sensitive:      func() *bool { ok := false; return &ok }(),
+		AttachmentIDs:  []string{exampleID, exampleID, exampleID},
+		Attachments:    nil,
+		PollOptions:    []string{exampleTextSmall, exampleTextSmall, exampleTextSmall, exampleTextSmall},
+		PollVotes:      []int{69, 420, 1337, 1969},
+		StatusID:       exampleID,
+		CreatedAt:      exampleTime,
 	}))
 }
 
@@ -769,5 +827,13 @@ func sizeofUserMute() uintptr {
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
 		Notifications:   util.Ptr(false),
+	}))
+}
+
+func sizeofWebPushSubscription() uintptr {
+	return uintptr(size.Of(&gtsmodel.WebPushSubscription{
+		TokenID: exampleID,
+		Auth:    exampleWebPushAuth,
+		P256dh:  exampleWebPushP256dh,
 	}))
 }

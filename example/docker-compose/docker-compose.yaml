@@ -1,5 +1,3 @@
-version: "3.3"
-
 services:
   gotosocial:
     image: superseriousbusiness/gotosocial:latest
@@ -8,13 +6,23 @@ services:
     networks:
       - gotosocial
     environment:
+      # Change this to your actual host value.
       GTS_HOST: example.org
       GTS_DB_TYPE: sqlite
+      # Path in the GtS Docker container where
+      # the sqlite.db file will be stored.
       GTS_DB_ADDRESS: /gotosocial/storage/sqlite.db
+      # Change this to true if you're not running
+      # GoToSocial behind a reverse proxy.
       GTS_LETSENCRYPT_ENABLED: "false"
+      # Set your email address here if you
+      # want to receive letsencrypt notices.
       GTS_LETSENCRYPT_EMAIL_ADDRESS: ""
+      # Path in the GtS Docker container where the
+      # Wazero compilation cache will be stored.
+      GTS_WAZERO_COMPILATION_CACHE: /gotosocial/.cache
       ## For reverse proxy setups:
-      # GTS_TRUSTED_PROXIES: "172.x.x.x"
+      GTS_TRUSTED_PROXIES: "172.18.0.1/16"
       ## Set the timezone of your server:
       #TZ: UTC
     ports:
@@ -24,10 +32,19 @@ services:
       ## For reverse proxy setups:
       #- "127.0.0.1:8080:8080"
     volumes:
+      # Your data volume, for your
+      # sqlite.db file and media files.
       - ~/gotosocial/data:/gotosocial/storage
+      # OPTIONAL: To mount volume for the WAZERO
+      # compilation cache, for speedier restart
+      # times, uncomment the below line:
+      #- ~/gotosocial/.cache:/gotosocial/.cache
     restart: "always"
 
 networks:
   gotosocial:
     ipam:
       driver: default
+      config:
+        - subnet: "172.18.0.0/16"
+          gateway: "172.18.0.1"

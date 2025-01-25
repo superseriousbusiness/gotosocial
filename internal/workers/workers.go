@@ -54,6 +54,10 @@ type Workers struct {
 	// eg., import tasks, admin tasks.
 	Processing FnWorkerPool
 
+	// WebPush provides a worker pool for
+	// delivering Web Push notifications.
+	WebPush FnWorkerPool
+
 	// prevent pass-by-value.
 	_ nocopy
 }
@@ -90,6 +94,10 @@ func (w *Workers) Start() {
 	n = maxprocs
 	w.Processing.Start(n)
 	log.Infof(nil, "started %d processing workers", n)
+
+	n = maxprocs
+	w.WebPush.Start(n)
+	log.Infof(nil, "started %d Web Push workers", n)
 }
 
 // Stop will stop all of the contained
@@ -113,6 +121,9 @@ func (w *Workers) Stop() {
 
 	w.Processing.Stop()
 	log.Info(nil, "stopped processing workers")
+
+	w.WebPush.Stop()
+	log.Info(nil, "stopped WebPush workers")
 }
 
 // nocopy when embedded will signal linter to

@@ -53,7 +53,7 @@ To do this, you must first log in to the GoToSocial settings panel with your GoT
 
 From there, go to the "Migration" section, and look at the "Alias Account" subsection:
 
-![The Alias Account subsection, showing a filled-in account alias.](../assets/migration-aliasing.png)
+![The Alias Account subsection, showing a filled-in account alias.](../public/migration-aliasing.png)
 
 In the first free account alias box, enter the URL of the account you wish to move **from**. This indicates that the account you wish to move from belongs to you, ie., you are "also known as" the account.
 
@@ -65,7 +65,7 @@ Once you have created the account alias from your GoToSocial account, pointing b
 
 On Mastodon, the "Account migration" settings section looks something like this:
 
-![The Mastodon "Account migration" settings page.](../assets/migration-mastodon.png)
+![The Mastodon "Account migration" settings page.](../public/migration-mastodon.png)
 
 If you were moving to a GoToSocial account from a Mastodon account, you would fill in the "Handle of the new account" field with the `@[username]@[domain]` value of your GoToSocial account. For example, if your GoToSocial account has username "@someone" and it's on the instance "example.org", you would enter `@someone@example.org` here.
 

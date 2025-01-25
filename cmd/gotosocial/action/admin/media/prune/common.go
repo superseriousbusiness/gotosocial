@@ -45,10 +45,12 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	state.Caches.Start()
 
 	// Scheduler is required for the
-	// claner, but no other workers
+	// cleaner, but no other workers
 	// are needed for this CLI action.
 	state.Workers.StartScheduler()
 
+	// Set state DB connection.
+	// Don't need Actions for this.
 	dbService, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return nil, fmt.Errorf("error creating dbservice: %w", err)

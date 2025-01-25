@@ -22,7 +22,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
@@ -169,9 +169,19 @@ func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, er
 	// Reoroder the tokens by their
 	// IDs to ensure in correct order.
 	getID := func(t *gtsmodel.Token) string { return t.ID }
-	util.OrderBy(tokens, tokenIDs, getID)
+	xslices.OrderBy(tokens, tokenIDs, getID)
 
 	return tokens, nil
+}
+
+func (a *applicationDB) GetTokenByID(ctx context.Context, code string) (*gtsmodel.Token, error) {
+	return a.getTokenBy(
+		"ID",
+		func(t *gtsmodel.Token) error {
+			return a.db.NewSelect().Model(t).Where("? = ?", bun.Ident("id"), code).Scan(ctx)
+		},
+		code,
+	)
 }
 
 func (a *applicationDB) GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error) {

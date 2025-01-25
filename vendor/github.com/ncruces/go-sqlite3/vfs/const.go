@@ -51,6 +51,7 @@ const (
 	_IOERR_BEGIN_ATOMIC      _ErrorCode = util.IOERR_BEGIN_ATOMIC
 	_IOERR_COMMIT_ATOMIC     _ErrorCode = util.IOERR_COMMIT_ATOMIC
 	_IOERR_ROLLBACK_ATOMIC   _ErrorCode = util.IOERR_ROLLBACK_ATOMIC
+	_IOERR_DATA              _ErrorCode = util.IOERR_DATA
 	_BUSY_SNAPSHOT           _ErrorCode = util.BUSY_SNAPSHOT
 	_CANTOPEN_FULLPATH       _ErrorCode = util.CANTOPEN_FULLPATH
 	_CANTOPEN_ISDIR          _ErrorCode = util.CANTOPEN_ISDIR
@@ -176,6 +177,7 @@ const (
 	IOCAP_POWERSAFE_OVERWRITE   DeviceCharacteristic = 0x00001000
 	IOCAP_IMMUTABLE             DeviceCharacteristic = 0x00002000
 	IOCAP_BATCH_ATOMIC          DeviceCharacteristic = 0x00004000
+	IOCAP_SUBPAGE_READ          DeviceCharacteristic = 0x00008000
 )
 
 // https://sqlite.org/c3ref/c_fcntl_begin_atomic_write.html
@@ -223,6 +225,7 @@ const (
 	_FCNTL_EXTERNAL_READER       _FcntlOpcode = 40
 	_FCNTL_CKSM_FILE             _FcntlOpcode = 41
 	_FCNTL_RESET_CACHE           _FcntlOpcode = 42
+	_FCNTL_NULL_IO               _FcntlOpcode = 43
 )
 
 // https://sqlite.org/c3ref/c_shm_exclusive.html
@@ -233,4 +236,8 @@ const (
 	_SHM_LOCK      _ShmFlag = 2
 	_SHM_SHARED    _ShmFlag = 4
 	_SHM_EXCLUSIVE _ShmFlag = 8
+
+	_SHM_NLOCK = 8
+	_SHM_BASE  = 120
+	_SHM_DMS   = _SHM_BASE + _SHM_NLOCK
 )

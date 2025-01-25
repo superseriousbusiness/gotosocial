@@ -186,7 +186,7 @@ You'll need to put that file on your GoToSocial instance and make sure the file 
     For this to work reliably, you should ensure that the [storage-local-base-path](../configuration/storage.md) in your GoToSocial configuration uses an absolute path. Otherwise you'll have to tweak the paths yourself.
 
 ```sh
-$ gotosocial admin media list-attachments --local-only | \
+$ gotosocial --config-path /path/to/config.yaml admin media list-attachments --local-only | \
     /path/to/media-to-borg-patterns.py \
     <storage-local-base-path>
 ```
@@ -210,7 +210,7 @@ If you're running Borgmatic as a systemd service, you can [create a drop-in](htt
 
 ```ini
 [Service]
-ExecStartPre=/path/to/gotosocial admin media list-attachments --local-only | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
+ExecStartPre=/path/to/gotosocial --config-path /path/to/config.yaml admin media list-attachments --local-only | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
 ```
 
 Documentation that's good to review:

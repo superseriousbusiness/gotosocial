@@ -4,8 +4,9 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/ncruces/go-sqlite3/internal/util"
 	"github.com/tetratelabs/wazero/api"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
 )
 
 // Filename is used by SQLite to pass filenames

@@ -52,15 +52,15 @@ func emojiChanged(existing, latest *gtsmodel.Emoji) bool {
 
 // pollChanged returns whether a poll has changed in way that
 // indicates that this should be an entirely new poll. i.e. if
-// the available options have changed, or the expiry has increased.
+// the available options have changed, or the expiry has changed.
 func pollChanged(existing, latest *gtsmodel.Poll) bool {
 	return !slices.Equal(existing.Options, latest.Options) ||
 		!existing.ExpiresAt.Equal(latest.ExpiresAt)
 }
 
-// pollUpdated returns whether a poll has updated, i.e. if the
+// pollStateUpdated returns whether a poll has updated, i.e. if
 // vote counts have changed, or if it has expired / been closed.
-func pollUpdated(existing, latest *gtsmodel.Poll) bool {
+func pollStateUpdated(existing, latest *gtsmodel.Poll) bool {
 	return *existing.Voters != *latest.Voters ||
 		!slices.Equal(existing.Votes, latest.Votes) ||
 		!existing.ClosedAt.Equal(latest.ClosedAt)

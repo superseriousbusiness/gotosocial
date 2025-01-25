@@ -250,7 +250,7 @@ func (s *Surface) notifyFave(
 	// notify status author
 	// of fave by account.
 	if err := s.Notify(ctx,
-		gtsmodel.NotificationFave,
+		gtsmodel.NotificationFavourite,
 		fave.TargetAccount,
 		fave.Account,
 		fave.StatusID,
@@ -521,7 +521,7 @@ func (s *Surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) erro
 	var errs gtserror.MultiError
 	for _, mod := range modAccounts {
 		if err := s.Notify(ctx,
-			gtsmodel.NotificationSignup,
+			gtsmodel.NotificationAdminSignup,
 			mod,
 			newUser.Account,
 			"",
@@ -542,7 +542,7 @@ func getNotifyLockURI(
 ) string {
 	builder := strings.Builder{}
 	builder.WriteString("notification:?")
-	builder.WriteString("type=" + string(notificationType))
+	builder.WriteString("type=" + notificationType.String())
 	builder.WriteString("&target=" + targetAccount.URI)
 	builder.WriteString("&origin=" + originAccount.URI)
 	if statusID != "" {
@@ -646,6 +646,11 @@ func (s *Surface) Notify(
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
 	s.Stream.Notify(ctx, targetAccount, apiNotif)
+
+	// Send Web Push notification to the user.
+	if err = s.WebPushSender.Send(ctx, notif, filters, compiledMutes); err != nil {
+		return gtserror.Newf("error sending Web Push notifications: %w", err)
+	}
 
 	return nil
 }

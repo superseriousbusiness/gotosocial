@@ -17,7 +17,10 @@
 
 package gtsmodel
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.
 type Notification struct {
@@ -34,20 +37,93 @@ type Notification struct {
 	Read             *bool            `bun:",nullzero,notnull,default:false"`                             // Notification has been seen/read
 }
 
-// NotificationType describes the reason/type of this notification.
-type NotificationType string
+// NotificationType describes the
+// reason/type of this notification.
+type NotificationType enumType
 
-// Notification Types
 const (
-	NotificationFollow        NotificationType = "follow"            // NotificationFollow -- someone followed you
-	NotificationFollowRequest NotificationType = "follow_request"    // NotificationFollowRequest -- someone requested to follow you
-	NotificationMention       NotificationType = "mention"           // NotificationMention -- someone mentioned you in their status
-	NotificationReblog        NotificationType = "reblog"            // NotificationReblog -- someone boosted one of your statuses
-	NotificationFave          NotificationType = "favourite"         // NotificationFave -- someone faved/liked one of your statuses
-	NotificationPoll          NotificationType = "poll"              // NotificationPoll -- a poll you voted in or created has ended
-	NotificationStatus        NotificationType = "status"            // NotificationStatus -- someone you enabled notifications for has posted a status.
-	NotificationSignup        NotificationType = "admin.sign_up"     // NotificationSignup -- someone has submitted a new account sign-up to the instance.
-	NotificationPendingFave   NotificationType = "pending.favourite" // Someone has faved a status of yours, which requires approval by you.
-	NotificationPendingReply  NotificationType = "pending.reply"     // Someone has replied to a status of yours, which requires approval by you.
-	NotificationPendingReblog NotificationType = "pending.reblog"    // Someone has boosted a status of yours, which requires approval by you.
+	// Notification Types
+	NotificationUnknown       NotificationType = 0  // NotificationUnknown -- unknown notification type, error if this occurs
+	NotificationFollow        NotificationType = 1  // NotificationFollow -- someone followed you
+	NotificationFollowRequest NotificationType = 2  // NotificationFollowRequest -- someone requested to follow you
+	NotificationMention       NotificationType = 3  // NotificationMention -- someone mentioned you in their status
+	NotificationReblog        NotificationType = 4  // NotificationReblog -- someone boosted one of your statuses
+	NotificationFavourite     NotificationType = 5  // NotificationFavourite -- someone faved/liked one of your statuses
+	NotificationPoll          NotificationType = 6  // NotificationPoll -- a poll you voted in or created has ended
+	NotificationStatus        NotificationType = 7  // NotificationStatus -- someone you enabled notifications for has posted a status.
+	NotificationAdminSignup   NotificationType = 8  // NotificationAdminSignup -- someone has submitted a new account sign-up to the instance.
+	NotificationPendingFave   NotificationType = 9  // NotificationPendingFave -- Someone has faved a status of yours, which requires approval by you.
+	NotificationPendingReply  NotificationType = 10 // NotificationPendingReply -- Someone has replied to a status of yours, which requires approval by you.
+	NotificationPendingReblog NotificationType = 11 // NotificationPendingReblog -- Someone has boosted a status of yours, which requires approval by you.
+	NotificationAdminReport   NotificationType = 12 // NotificationAdminReport -- someone has submitted a new report to the instance.
+	NotificationUpdate        NotificationType = 13 // NotificationUpdate -- someone has edited their status.
+	NotificationTypeNumValues NotificationType = 14 // NotificationTypeNumValues -- 1 + number of max notification type
 )
+
+// String returns a stringified, frontend API compatible form of NotificationType.
+func (t NotificationType) String() string {
+	switch t {
+	case NotificationFollow:
+		return "follow"
+	case NotificationFollowRequest:
+		return "follow_request"
+	case NotificationMention:
+		return "mention"
+	case NotificationReblog:
+		return "reblog"
+	case NotificationFavourite:
+		return "favourite"
+	case NotificationPoll:
+		return "poll"
+	case NotificationStatus:
+		return "status"
+	case NotificationAdminSignup:
+		return "admin.sign_up"
+	case NotificationPendingFave:
+		return "pending.favourite"
+	case NotificationPendingReply:
+		return "pending.reply"
+	case NotificationPendingReblog:
+		return "pending.reblog"
+	case NotificationAdminReport:
+		return "admin.report"
+	case NotificationUpdate:
+		return "update"
+	default:
+		panic("invalid notification type")
+	}
+}
+
+// ParseNotificationType returns a notification type from the given value.
+func ParseNotificationType(in string) NotificationType {
+	switch strings.ToLower(in) {
+	case "follow":
+		return NotificationFollow
+	case "follow_request":
+		return NotificationFollowRequest
+	case "mention":
+		return NotificationMention
+	case "reblog":
+		return NotificationReblog
+	case "favourite":
+		return NotificationFavourite
+	case "poll":
+		return NotificationPoll
+	case "status":
+		return NotificationStatus
+	case "admin.sign_up":
+		return NotificationAdminSignup
+	case "pending.favourite":
+		return NotificationPendingFave
+	case "pending.reply":
+		return NotificationPendingReply
+	case "pending.reblog":
+		return NotificationPendingReblog
+	case "admin.report":
+		return NotificationAdminReport
+	case "update":
+		return NotificationUpdate
+	default:
+		return NotificationUnknown
+	}
+}

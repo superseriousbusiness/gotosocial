@@ -8,6 +8,18 @@ In order to make GoToSocial email sending work, you need an smtp-compatible mail
 
 To validate your configuration, you can use the "Administration -> Actions -> Email" section of the settings panel to send a test email.
 
+!!! warning
+    Pending an smtp library update, currently only email providers that work with STARTTLS will work with GoToSocial. STARTTLS is generally available over **port 587**.
+    
+    For more info, see:
+    
+    - [STARTTLS vs SSL vs TLS](https://mailtrap.io/blog/starttls-ssl-tls/)
+    - [Understanding Ports](https://www.mailgun.com/blog/email/which-smtp-port-understanding-ports-25-465-587/)
+    - [Port 587](https://www.mailgun.com/blog/deliverability/smtp-port-587/)
+
+!!! info
+    For safety reasons, the smtp library used by GoToSocial will refuse to send authentication credentials over an unencrypted connection, unless the mail provider is running on localhost.
+
 ## Settings
 
 The configuration options for smtp are as follows:
@@ -26,6 +38,7 @@ The configuration options for smtp are as follows:
 smtp-host: ""
 
 # Int. Port to use to connect to the smtp server.
+# In the majority of cases, you should use port 587.
 # Examples: []
 # Default: 0
 smtp-port: 0
@@ -63,27 +76,16 @@ smtp-disclose-recipients: false
 
 Note that if you don't set `Host`, then email sending via smtp will be disabled, and the other settings will be ignored. GoToSocial will still log (at trace level) emails that *would* have been sent if smtp was enabled.
 
-## Behavior
-
-### SSL
-
-GoToSocial requires your smtp server to present valid SSL certificates. Most of the big services like Mailgun do this anyway, but if you're running your own mail server without SSL for some reason, and you're trying to connect GoToSocial to it, it will not work.
-
-The exception to this requirement is if you're running your mail server (or bridge to a mail server) on `localhost`, in which case SSL certs are not required.
-
-### When are emails sent?
+## When are emails sent?
 
 Currently, emails are sent:
 
-- To the provided email address of a new user to request email confirmation when a new account is created via the API.
+- To the provided email address of a new user to request email confirmation when a new account is created via the sign up page or API.
+- To instance admins when a new account is created in this way.
 - To all active instance moderators + admins when a new moderation report is received. By default, recipients are Bcc'd, but you can change this behavior with the setting `smtp-disclose-recipients`.
 - To the creator of a report (on this instance) when the report is closed by a moderator.
 
-### Can I test if my SMTP configuration is correct?
-
-Yes, you can use the API to send a test email to yourself. Check the API documentation for the `/api/v1/admin/email/test` endpoint.
-
-### HTML versus Plaintext
+## HTML versus Plaintext
 
 Emails are sent in plaintext by default. At this point, there is no option to send emails in html, but this is something that might be added later if there's enough demand for it.
 
