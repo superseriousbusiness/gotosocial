@@ -20,14 +20,18 @@ package statuses_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -41,10 +45,11 @@ const (
 	statusMarkdown         = "# Title\n\n## Smaller title\n\nThis is a post written in [markdown](https://www.markdownguide.org/)\n\n<img src=\"https://d33wubrfki0l68.cloudfront.net/f1f475a6fda1c2c4be4cac04033db5c3293032b4/513a4/assets/images/markdown-mark-white.svg\"/>"
 )
 
-func (suite *StatusCreateTestSuite) postStatus(
+// Post a status.
+func (suite *StatusCreateTestSuite) postStatusCore(
 	formData map[string][]string,
 	jsonData string,
-) (string, *httptest.ResponseRecorder) {
+) *httptest.ResponseRecorder {
 	recorder := httptest.NewRecorder()
 	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
 	ctx.Set(oauth.SessionAuthorizedApplication, suite.testApplications["application_1"])
@@ -77,7 +82,40 @@ func (suite *StatusCreateTestSuite) postStatus(
 
 	// Trigger handler.
 	suite.statusModule.StatusCreatePOSTHandler(ctx)
+
+	return recorder
+}
+
+// Post a status and return the result as deterministic JSON.
+func (suite *StatusCreateTestSuite) postStatus(
+	formData map[string][]string,
+	jsonData string,
+) (string, *httptest.ResponseRecorder) {
+	recorder := suite.postStatusCore(formData, jsonData)
 	return suite.parseStatusResponse(recorder)
+}
+
+// Post a status and return the result as a non-deterministic API structure.
+func (suite *StatusCreateTestSuite) postStatusStruct(
+	formData map[string][]string,
+	jsonData string,
+) (*apimodel.Status, *httptest.ResponseRecorder) {
+	recorder := suite.postStatusCore(formData, jsonData)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	data, err := io.ReadAll(result.Body)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	apiStatus := apimodel.Status{}
+	if err := json.Unmarshal(data, &apiStatus); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	return &apiStatus, recorder
 }
 
 // Post a new status with some custom visibility settings
@@ -368,7 +406,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 }`, out)
 }
 
-func (suite *StatusCreateTestSuite) TestPostNewFutureScheduledStatus() {
+func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status":       {"this is a brand new status! #helloworld"},
 		"spoiler_text": {"hello hello"},
@@ -385,6 +423,94 @@ func (suite *StatusCreateTestSuite) TestPostNewFutureScheduledStatus() {
 	suite.Equal(`{
   "error": "Not Implemented: scheduled statuses are not yet supported"
 }`, out)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewBackfilledStatus() {
+	// A time in the past.
+	scheduledAtStr := "2020-10-04T15:32:02.018Z"
+	scheduledAt, err := time.Parse(time.RFC3339Nano, scheduledAtStr)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	status, recorder := suite.postStatusStruct(map[string][]string{
+		"status":       {"this is a recycled status from the past!"},
+		"scheduled_at": {scheduledAtStr},
+	}, "")
+
+	// Creating a status in the past should succeed.
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	// The status should be backdated.
+	createdAt, err := time.Parse(time.RFC3339Nano, status.CreatedAt)
+	if err != nil {
+		suite.FailNow(err.Error())
+		return
+	}
+	suite.Equal(scheduledAt, createdAt.UTC())
+
+	// The status's ULID should be backdated.
+	timeFromULID, err := id.TimeFromULID(status.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+		return
+	}
+	suite.Equal(scheduledAt, timeFromULID.UTC())
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewBackfilledStatusWithSelfMention() {
+	_, recorder := suite.postStatus(map[string][]string{
+		"status":       {"@the_mighty_zork this is a recycled mention from the past!"},
+		"scheduled_at": {"2020-10-04T15:32:02.018Z"},
+	}, "")
+
+	// Mentioning yourself is allowed in backfilled statuses.
+	suite.Equal(http.StatusOK, recorder.Code)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewBackfilledStatusWithMention() {
+	_, recorder := suite.postStatus(map[string][]string{
+		"status":       {"@admin this is a recycled mention from the past!"},
+		"scheduled_at": {"2020-10-04T15:32:02.018Z"},
+	}, "")
+
+	// Mentioning others is forbidden in backfilled statuses.
+	suite.Equal(http.StatusForbidden, recorder.Code)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewBackfilledStatusWithSelfReply() {
+	_, recorder := suite.postStatus(map[string][]string{
+		"status":         {"this is a recycled reply from the past!"},
+		"scheduled_at":   {"2020-10-04T15:32:02.018Z"},
+		"in_reply_to_id": {suite.testStatuses["local_account_1_status_1"].ID},
+	}, "")
+
+	// Replying to yourself is allowed in backfilled statuses.
+	suite.Equal(http.StatusOK, recorder.Code)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewBackfilledStatusWithReply() {
+	_, recorder := suite.postStatus(map[string][]string{
+		"status":         {"this is a recycled reply from the past!"},
+		"scheduled_at":   {"2020-10-04T15:32:02.018Z"},
+		"in_reply_to_id": {suite.testStatuses["admin_account_status_1"].ID},
+	}, "")
+
+	// Replying to others is forbidden in backfilled statuses.
+	suite.Equal(http.StatusForbidden, recorder.Code)
+}
+
+func (suite *StatusCreateTestSuite) TestPostNewBackfilledStatusWithPoll() {
+	_, recorder := suite.postStatus(map[string][]string{
+		"status":           {"this is a recycled poll from the past!"},
+		"scheduled_at":     {"2020-10-04T15:32:02.018Z"},
+		"poll[options][]":  {"first option", "second option"},
+		"poll[expires_in]": {"3600"},
+		"poll[multiple]":   {"true"},
+	}, "")
+
+	// Polls are forbidden in backfilled statuses.
+	suite.Equal(http.StatusForbidden, recorder.Code)
 }
 
 func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
