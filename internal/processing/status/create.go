@@ -107,7 +107,7 @@ func (p *Processor) Create(
 		if now.Before(scheduledAt) {
 			const errText = "scheduled statuses are not yet supported"
 			err := gtserror.New(errText)
-			return nil, gtserror.NewErrorBadRequest(err, errText)
+			return nil, gtserror.NewErrorNotImplemented(err, errText)
 		}
 
 		// If not scheduled into the future, this status is being backfilled.
@@ -168,7 +168,7 @@ func (p *Processor) Create(
 			if mention.TargetAccountID != requester.ID {
 				const errText = "statuses mentioning others can't be backfilled"
 				err := gtserror.New(errText)
-				return nil, gtserror.NewErrorBadRequest(err, errText)
+				return nil, gtserror.NewErrorForbidden(err, errText)
 			}
 		}
 	}
@@ -208,7 +208,7 @@ func (p *Processor) Create(
 		if backfill {
 			const errText = "statuses with polls can't be backfilled"
 			err := gtserror.New(errText)
-			return nil, gtserror.NewErrorBadRequest(err, errText)
+			return nil, gtserror.NewErrorForbidden(err, errText)
 		}
 
 		// Process poll, inserting into database.
@@ -356,7 +356,7 @@ func (p *Processor) processInReplyTo(
 	if backfill && requester.ID != inReplyTo.AccountID {
 		const errText = "replies to others can't be backfilled"
 		err := gtserror.New(errText)
-		return gtserror.NewErrorBadRequest(err, errText)
+		return gtserror.NewErrorForbidden(err, errText)
 	}
 
 	// Derive pendingApproval status.

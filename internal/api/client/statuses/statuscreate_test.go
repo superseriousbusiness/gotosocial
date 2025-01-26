@@ -368,7 +368,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 }`, out)
 }
 
-func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
+func (suite *StatusCreateTestSuite) TestPostNewFutureScheduledStatus() {
 	out, recorder := suite.postStatus(map[string][]string{
 		"status":       {"this is a brand new status! #helloworld"},
 		"spoiler_text": {"hello hello"},
@@ -383,7 +383,7 @@ func (suite *StatusCreateTestSuite) TestPostNewScheduledStatus() {
 
 	// We should have a helpful error message.
 	suite.Equal(`{
-  "error": "Not Implemented: scheduled_at is not yet implemented"
+  "error": "Not Implemented: scheduled statuses are not yet supported"
 }`, out)
 }
 
