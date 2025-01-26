@@ -179,11 +179,15 @@ import (
 //		x-go-name: ScheduledAt
 //		description: |-
 //			ISO 8601 Datetime at which to schedule a status.
-//			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-//			Must be at least 5 minutes in the future.
 //
-//			This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
+//			Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
+//			Must be at least 5 minutes in the future.
+//			This feature isn't implemented yet.
+//
+//			Providing this parameter with a *past* time will cause the status to be backdated,
+//			and will not push it to the user's followers. This is intended for importing old statuses.
 //		type: string
+//		format: date-time
 //		in: formData
 //	-
 //		name: language
@@ -382,12 +386,6 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtser
 		text := fmt.Sprintf("content-type %s not supported for this endpoint; supported content-types are %s, %s, %s",
 			ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm)
 		return nil, gtserror.NewErrorNotAcceptable(errors.New(text), text)
-	}
-
-	// Check not scheduled status.
-	if form.ScheduledAt != "" {
-		const text = "scheduled_at is not yet implemented"
-		return nil, gtserror.NewErrorNotImplemented(errors.New(text), text)
 	}
 
 	// Check if the deprecated "federated" field was

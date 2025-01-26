@@ -19,10 +19,13 @@ package status
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -92,11 +95,35 @@ func (p *Processor) Create(
 	// Get current time.
 	now := time.Now()
 
+	// Default to current time as creation time.
+	createdAt := now
+
+	// Handle backfilled/scheduled statuses.
+	backfill := false
+	if form.ScheduledAt != nil {
+		scheduledAt := *form.ScheduledAt
+
+		// Statuses may only be scheduled a minimum time into the future.
+		if now.Before(scheduledAt) {
+			const errText = "scheduled statuses are not yet supported"
+			err := gtserror.New(errText)
+			return nil, gtserror.NewErrorBadRequest(err, errText)
+		}
+
+		// If not scheduled into the future, this status is being backfilled.
+		backfill = true
+		createdAt = scheduledAt
+		var err error
+		if statusID, err = p.backfilledStatusID(ctx, createdAt); err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+	}
+
 	status := &gtsmodel.Status{
 		ID:                       statusID,
 		URI:                      accountURIs.StatusesURI + "/" + statusID,
 		URL:                      accountURIs.StatusesURL + "/" + statusID,
-		CreatedAt:                now,
+		CreatedAt:                createdAt,
 		Local:                    util.Ptr(true),
 		Account:                  requester,
 		AccountID:                requester.ID,
@@ -139,6 +166,7 @@ func (p *Processor) Create(
 		requester,
 		status,
 		form.InReplyToID,
+		backfill,
 	); errWithCode != nil {
 		return nil, errWithCode
 	}
@@ -165,11 +193,17 @@ func (p *Processor) Create(
 	}
 
 	if form.Poll != nil {
+		if backfill {
+			const errText = "posts with polls can't be backfilled"
+			err := gtserror.New(errText)
+			return nil, gtserror.NewErrorBadRequest(err, errText)
+		}
+
 		// Process poll, inserting into database.
 		poll, errWithCode := p.processPoll(ctx,
 			statusID,
 			form.Poll,
-			now,
+			createdAt,
 		)
 		if errWithCode != nil {
 			return nil, errWithCode
@@ -200,10 +234,14 @@ func (p *Processor) Create(
 	}
 
 	// Send it to the client API worker for async side-effects.
+	var model any = status
+	if backfill {
+		model = &gtsmodel.BackfillStatus{Status: status}
+	}
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
-		GTSModel:       status,
+		GTSModel:       model,
 		Origin:         requester,
 	})
 
@@ -227,7 +265,40 @@ func (p *Processor) Create(
 	return p.c.GetAPIStatus(ctx, requester, status)
 }
 
-func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Account, status *gtsmodel.Status, inReplyToID string) gtserror.WithCode {
+// backfilledStatusID tries to find an unused ULID for a backfilled status.
+func (p *Processor) backfilledStatusID(ctx context.Context, createdAt time.Time) (string, error) {
+	// backfilledStatusIDRetries should be more than enough attempts.
+	const backfilledStatusIDRetries = 100
+
+	for try := 0; try < backfilledStatusIDRetries; try++ {
+		var err error
+
+		// Generate a ULID based on the backfilled status's original creation time.
+		statusID := id.NewULIDFromTime(createdAt)
+
+		// Check for an existing status with that ID.
+		_, err = p.state.DB.GetStatusByID(gtscontext.SetBarebones(ctx), statusID)
+		if errors.Is(err, db.ErrNoEntries) {
+			// We found an unused one.
+			return statusID, nil
+		} else if err != nil {
+			err := gtserror.Newf("DB error checking if a status ID was in use: %w", err)
+			return "", err
+		}
+		// That status ID is in use. Try again.
+	}
+
+	err := gtserror.Newf("failed to find an unused ID after %d tries", backfilledStatusIDRetries)
+	return "", err
+}
+
+func (p *Processor) processInReplyTo(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	status *gtsmodel.Status,
+	inReplyToID string,
+	backfill bool,
+) gtserror.WithCode {
 	if inReplyToID == "" {
 		// Not a reply.
 		// Nothing to do.
@@ -267,6 +338,13 @@ func (p *Processor) processInReplyTo(ctx context.Context, requester *gtsmodel.Ac
 		const errText = "you do not have permission to reply to this status"
 		err := gtserror.New(errText)
 		return gtserror.NewErrorForbidden(err, errText)
+	}
+
+	// When backfilling, only self-replies are allowed.
+	if backfill && requester.ID != inReplyTo.AccountID {
+		const errText = "replies to others can't be backfilled"
+		err := gtserror.New(errText)
+		return gtserror.NewErrorBadRequest(err, errText)
 	}
 
 	// Derive pendingApproval status.
