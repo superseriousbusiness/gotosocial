@@ -441,7 +441,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithNotifi
 	)
 
 	// No notification should appear for the status.
-	if !testrig.WaitFor(func() bool {
+	if testrig.WaitFor(func() bool {
 		var err error
 		_, err = testStructs.State.DB.GetNotification(
 			ctx,
@@ -450,9 +450,9 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithNotifi
 			postingAccount.ID,
 			status.ID,
 		)
-		return errors.Is(err, db.ErrNoEntries)
+		return err == nil
 	}) {
-		suite.FailNow("timed out waiting for absence of status notification")
+		suite.FailNow("a status notification was created, but should not have been")
 	}
 
 	// There should be no message in the notification stream.
