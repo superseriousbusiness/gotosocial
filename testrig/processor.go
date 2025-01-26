@@ -26,21 +26,36 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 )
 
 // NewTestProcessor returns a Processor suitable for testing purposes.
 // The passed in state will have its worker functions set appropriately,
 // but the state will not be initialized.
-func NewTestProcessor(state *state.State, federator *federation.Federator, emailSender email.Sender, mediaManager *media.Manager) *processing.Processor {
+func NewTestProcessor(
+	state *state.State,
+	federator *federation.Federator,
+	emailSender email.Sender,
+	webPushSender webpush.Sender,
+	mediaManager *media.Manager,
+) *processing.Processor {
+
 	return processing.NewProcessor(
 		cleaner.New(state),
+		subscriptions.New(
+			state,
+			federator.TransportController(),
+			typeutils.NewConverter(state),
+		),
 		typeutils.NewConverter(state),
 		federator,
 		NewTestOauthServer(state.DB),
 		mediaManager,
 		state,
 		emailSender,
+		webPushSender,
 		visibility.NewFilter(state),
 		interaction.NewFilter(state),
 	)

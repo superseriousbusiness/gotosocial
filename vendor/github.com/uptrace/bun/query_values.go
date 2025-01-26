@@ -14,6 +14,7 @@ type ValuesQuery struct {
 	customValueQuery
 
 	withOrder bool
+	comment   string
 }
 
 var (
@@ -61,6 +62,12 @@ func (q *ValuesQuery) Value(column string, expr string, args ...interface{}) *Va
 
 func (q *ValuesQuery) WithOrder() *ValuesQuery {
 	q.withOrder = true
+	return q
+}
+
+// Comment adds a comment to the query, wrapped by /* ... */.
+func (q *ValuesQuery) Comment(comment string) *ValuesQuery {
+	q.comment = comment
 	return q
 }
 
@@ -121,6 +128,8 @@ func (q *ValuesQuery) AppendQuery(fmter schema.Formatter, b []byte) (_ []byte, e
 		return nil, errNilModel
 	}
 
+	b = appendComment(b, q.comment)
+
 	fmter = formatterWithModel(fmter, q)
 
 	if q.tableModel != nil {
@@ -145,7 +154,7 @@ func (q *ValuesQuery) appendQuery(
 	fields []*schema.Field,
 ) (_ []byte, err error) {
 	b = append(b, "VALUES "...)
-	if q.db.features.Has(feature.ValuesRow) {
+	if q.db.HasFeature(feature.ValuesRow) {
 		b = append(b, "ROW("...)
 	} else {
 		b = append(b, '(')
@@ -168,7 +177,7 @@ func (q *ValuesQuery) appendQuery(
 		for i := 0; i < sliceLen; i++ {
 			if i > 0 {
 				b = append(b, "), "...)
-				if q.db.features.Has(feature.ValuesRow) {
+				if q.db.HasFeature(feature.ValuesRow) {
 					b = append(b, "ROW("...)
 				} else {
 					b = append(b, '(')

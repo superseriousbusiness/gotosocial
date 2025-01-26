@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	//go:embed parse/sql3parse_table.wasm
+	//go:embed wasm/sql3parse_table.wasm
 	binary   []byte
 	once     sync.Once
 	runtime  wazero.Runtime

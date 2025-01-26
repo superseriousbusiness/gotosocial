@@ -20,11 +20,9 @@
 package testrig
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"os/signal"
@@ -47,6 +45,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -159,20 +158,13 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	testrig.StandardStorageSetup(state.Storage, "./testrig/media")
 
 	// build backend handlers
-	transportController := testrig.NewTestTransportController(state, testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
-		r := io.NopCloser(bytes.NewReader([]byte{}))
-		return &http.Response{
-			StatusCode: 200,
-			Body:       r,
-			Header: http.Header{
-				"Content-Type": req.Header.Values("Accept"),
-			},
-		}, nil
-	}, ""))
+	httpClient := testrig.NewMockHTTPClient(nil, "./testrig/media")
+	transportController := testrig.NewTestTransportController(state, httpClient)
 	mediaManager := testrig.NewTestMediaManager(state)
 	federator := testrig.NewTestFederator(state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
+	webPushSender := testrig.NewWebPushMockSender()
 	typeConverter := typeutils.NewConverter(state)
 	filter := visibility.NewFilter(state)
 
@@ -196,7 +188,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
-	processor := testrig.NewTestProcessor(state, federator, emailSender, mediaManager)
+	processor := testrig.NewTestProcessor(state, federator, emailSender, webPushSender, mediaManager)
 
 	// Initialize workers.
 	testrig.StartWorkers(state, processor.Workers())
@@ -314,9 +306,21 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Create background cleaner.
 	cleaner := cleaner.New(state)
 
-	// Now schedule background cleaning tasks.
+	// Schedule background cleaning tasks.
 	if err := cleaner.ScheduleJobs(); err != nil {
 		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
+	}
+
+	// Create subscriptions fetcher.
+	subscriptions := subscriptions.New(
+		state,
+		transportController,
+		typeConverter,
+	)
+
+	// Schedule background subscriptions updating.
+	if err := subscriptions.ScheduleJobs(); err != nil {
+		return fmt.Errorf("error scheduling subscriptions jobs: %w", err)
 	}
 
 	// Finally start the main http server!

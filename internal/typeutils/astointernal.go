@@ -361,14 +361,12 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		status.CreatedAt = time.Now()
 	}
 
-	// status.Updated
+	// status.Edited
 	//
-	// Extract and validate update time for status. Defaults to published.
+	// Extract and validate update time for status. Defaults to none.
 	if upd := ap.GetUpdated(statusable); !upd.Before(status.CreatedAt) {
-		status.UpdatedAt = upd
-	} else if upd.IsZero() {
-		status.UpdatedAt = status.CreatedAt
-	} else {
+		status.EditedAt = upd
+	} else if !upd.IsZero() {
 
 		// This is a malformed status that will likely break our systems.
 		err := gtserror.Newf("status %s 'updated' predates 'published'", uri)
@@ -649,9 +647,9 @@ func (c *Converter) ASAnnounceToStatus(
 	// zero-time will fall back to db defaults.
 	if pub := ap.GetPublished(announceable); !pub.IsZero() {
 		boost.CreatedAt = pub
-		boost.UpdatedAt = pub
 	} else {
 		log.Warnf(ctx, "unusable published property on %s", uri)
+		boost.CreatedAt = time.Now()
 	}
 
 	// Extract and load the boost actor account,

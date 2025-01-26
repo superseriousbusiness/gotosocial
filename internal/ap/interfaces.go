@@ -188,6 +188,7 @@ type Accountable interface {
 	WithTag
 	WithPublished
 	WithUpdated
+	WithImage
 }
 
 // Statusable represents the minimum activitypub interface for representing a 'status'.
@@ -439,6 +440,7 @@ type WithValue interface {
 // WithImage represents an activity with ActivityStreamsImageProperty
 type WithImage interface {
 	GetActivityStreamsImage() vocab.ActivityStreamsImageProperty
+	SetActivityStreamsImage(vocab.ActivityStreamsImageProperty)
 }
 
 // WithSummary represents an activity with ActivityStreamsSummaryProperty

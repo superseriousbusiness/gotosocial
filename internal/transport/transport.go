@@ -78,6 +78,20 @@ type Transport interface {
 	// DereferenceInstance dereferences remote instance information, first by checking /api/v1/instance, and then by checking /.well-known/nodeinfo.
 	DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error)
 
+	// DereferenceDomainPermissions dereferences the
+	// permissions list present at the given permSub's URI.
+	//
+	// If "skipCache", then If-Modified-Since and If-None-Match
+	// headers will *NOT* be sent with the outgoing request.
+	//
+	// If err == nil and Unmodified == false, then it's up
+	// to the caller to close the returned io.ReadCloser.
+	DereferenceDomainPermissions(
+		ctx context.Context,
+		permSub *gtsmodel.DomainPermissionSubscription,
+		skipCache bool,
+	) (*DereferenceDomainPermissionsResp, error)
+
 	// Finger performs a webfinger request with the given username and domain, and returns the bytes from the response body.
 	Finger(ctx context.Context, targetUsername string, targetDomain string) ([]byte, error)
 }

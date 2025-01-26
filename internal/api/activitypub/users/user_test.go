@@ -20,6 +20,7 @@ package users_test
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -84,6 +85,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
@@ -98,7 +100,13 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
 
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
+		suite.mediaManager,
+	)
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())
 
 	suite.userModule = users.New(suite.processor)

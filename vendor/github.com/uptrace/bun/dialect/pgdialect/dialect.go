@@ -3,7 +3,6 @@ package pgdialect
 import (
 	"database/sql"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/uptrace/bun"
@@ -34,7 +33,7 @@ var _ schema.Dialect = (*Dialect)(nil)
 var _ sqlschema.InspectorDialect = (*Dialect)(nil)
 var _ sqlschema.MigratorDialect = (*Dialect)(nil)
 
-func New() *Dialect {
+func New(opts ...DialectOption) *Dialect {
 	d := new(Dialect)
 	d.tables = schema.NewTables(d)
 	d.features = feature.CTE |
@@ -55,7 +54,20 @@ func New() *Dialect {
 		feature.GeneratedIdentity |
 		feature.CompositeIn |
 		feature.DeleteReturning
+
+	for _, opt := range opts {
+		opt(d)
+	}
+
 	return d
+}
+
+type DialectOption func(d *Dialect)
+
+func WithoutFeature(other feature.Feature) DialectOption {
+	return func(d *Dialect) {
+		d.features = d.features.Remove(other)
+	}
 }
 
 func (d *Dialect) Init(*sql.DB) {}
@@ -113,14 +125,6 @@ func (d *Dialect) onField(field *schema.Field) {
 
 func (d *Dialect) IdentQuote() byte {
 	return '"'
-}
-
-func (d *Dialect) AppendUint32(b []byte, n uint32) []byte {
-	return strconv.AppendInt(b, int64(int32(n)), 10)
-}
-
-func (d *Dialect) AppendUint64(b []byte, n uint64) []byte {
-	return strconv.AppendInt(b, int64(n), 10)
 }
 
 func (d *Dialect) AppendSequence(b []byte, _ *schema.Table, _ *schema.Field) []byte {

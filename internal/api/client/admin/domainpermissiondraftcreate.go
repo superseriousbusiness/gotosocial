@@ -26,7 +26,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -136,24 +135,8 @@ func (m *Module) DomainPermissionDraftsPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	var (
-		permType gtsmodel.DomainPermissionType
-		errText  string
-	)
-
-	switch pt := form.PermissionType; pt {
-	case "block":
-		permType = gtsmodel.DomainPermissionBlock
-	case "allow":
-		permType = gtsmodel.DomainPermissionAllow
-	case "":
-		errText = "permission_type not set, must be one of block or allow"
-	default:
-		errText = fmt.Sprintf("permission_type %s not recognized, must be one of block or allow", pt)
-	}
-
-	if errText != "" {
-		errWithCode := gtserror.NewErrorBadRequest(errors.New(errText), errText)
+	permType, errWithCode := parseDomainPermissionType(form.PermissionType)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

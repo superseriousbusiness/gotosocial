@@ -24,6 +24,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
@@ -72,6 +73,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
@@ -84,8 +86,21 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	)
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, testrig.NewEmailSender("../../../../web/template/", nil), suite.mediaManager)
+	suite.federator = testrig.NewTestFederator(
+		&suite.state,
+		testrig.NewTestTransportController(
+			&suite.state,
+			testrig.NewMockHTTPClient(nil, "../../../../testrig/media"),
+		),
+		suite.mediaManager,
+	)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		testrig.NewEmailSender("../../../../web/template/", nil),
+		testrig.NewNoopWebPushSender(),
+		suite.mediaManager,
+	)
 	suite.userModule = user.New(suite.processor)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StandardStorageSetup(suite.storage, "../../../../testrig/media")

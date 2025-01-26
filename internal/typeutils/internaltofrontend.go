@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
@@ -615,6 +616,11 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 }
 
 func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
+	}
+
 	return &apimodel.Application{
 		ID:           a.ID,
 		Name:         a.Name,
@@ -622,6 +628,7 @@ func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Applic
 		RedirectURI:  a.RedirectURI,
 		ClientID:     a.ClientID,
 		ClientSecret: a.ClientSecret,
+		VapidKey:     vapidKeyPair.Public,
 	}, nil
 }
 
@@ -996,7 +1003,7 @@ func (c *Converter) statusToAPIFilterResults(
 
 	// Key this status based on ID + last updated time,
 	// to ensure we always filter on latest version.
-	statusKey := s.ID + strconv.FormatInt(s.UpdatedAt.Unix(), 10)
+	statusKey := s.ID + strconv.FormatInt(s.UpdatedAt().Unix(), 10)
 
 	// Check if we have filterable fields cached for this status.
 	cache := c.state.Caches.StatusesFilterableFields
@@ -1383,10 +1390,8 @@ func (c *Converter) baseStatusToFrontend(
 		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
-	// Only set edited_at if this is a non-boost-wrapper
-	// with an updated_at date different to creation date.
-	if !s.UpdatedAt.Equal(s.CreatedAt) && s.BoostOfID == "" {
-		timestamp := util.FormatISO8601(s.UpdatedAt)
+	if at := s.EditedAt; !at.IsZero() {
+		timestamp := util.FormatISO8601(at)
 		apiStatus.EditedAt = util.Ptr(timestamp)
 	}
 
@@ -1521,8 +1526,8 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 		PollOptions:            options,
 		PollVotes:              votes,
 		AttachmentIDs:          status.AttachmentIDs,
-		AttachmentDescriptions: nil, // no change from current
-		CreatedAt:              status.UpdatedAt,
+		AttachmentDescriptions: nil,                // no change from current
+		CreatedAt:              status.UpdatedAt(), // falls back to creation
 	})
 
 	// Iterate through status edits, starting at newest.
@@ -1879,6 +1884,12 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
+	}
+	instance.Configuration.VAPID.PublicKey = vapidKeyPair.Public
+
 	// registrations
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
 	instance.Registrations.ApprovalRequired = true // always required
@@ -2116,11 +2127,13 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	}
 
 	domainPerm.ID = d.GetID()
-	domainPerm.Obfuscate = *d.GetObfuscate()
+	domainPerm.Obfuscate = util.PtrOrZero(d.GetObfuscate())
 	domainPerm.PrivateComment = d.GetPrivateComment()
 	domainPerm.SubscriptionID = d.GetSubscriptionID()
 	domainPerm.CreatedBy = d.GetCreatedByAccountID()
-	domainPerm.CreatedAt = util.FormatISO8601(d.GetCreatedAt())
+	if createdAt := d.GetCreatedAt(); !createdAt.IsZero() {
+		domainPerm.CreatedAt = util.FormatISO8601(createdAt)
+	}
 
 	// If this is a draft, also add the permission type.
 	if _, ok := d.(*gtsmodel.DomainPermissionDraft); ok {
@@ -2128,6 +2141,60 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	}
 
 	return domainPerm, nil
+}
+
+func (c *Converter) DomainPermSubToAPIDomainPermSub(
+	ctx context.Context,
+	d *gtsmodel.DomainPermissionSubscription,
+) (*apimodel.DomainPermissionSubscription, error) {
+	createdAt, err := id.TimeFromULID(d.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error converting id to time: %w", err)
+	}
+
+	// URI may be in Punycode,
+	// de-punify it just in case.
+	uri, err := util.DePunify(d.URI)
+	if err != nil {
+		return nil, gtserror.Newf("error de-punifying URI %s: %w", d.URI, err)
+	}
+
+	var (
+		fetchedAt             string
+		successfullyFetchedAt string
+	)
+
+	if !d.FetchedAt.IsZero() {
+		fetchedAt = util.FormatISO8601(d.FetchedAt)
+	}
+
+	if !d.SuccessfullyFetchedAt.IsZero() {
+		successfullyFetchedAt = util.FormatISO8601(d.SuccessfullyFetchedAt)
+	}
+
+	count, err := c.state.DB.CountDomainPermissionSubscriptionPerms(ctx, d.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error counting perm sub perms: %w", err)
+	}
+
+	return &apimodel.DomainPermissionSubscription{
+		ID:                    d.ID,
+		Priority:              d.Priority,
+		Title:                 d.Title,
+		PermissionType:        d.PermissionType.String(),
+		AsDraft:               *d.AsDraft,
+		AdoptOrphans:          *d.AdoptOrphans,
+		CreatedBy:             d.CreatedByAccountID,
+		CreatedAt:             util.FormatISO8601(createdAt),
+		URI:                   uri,
+		ContentType:           d.ContentType.String(),
+		FetchUsername:         d.FetchUsername,
+		FetchPassword:         d.FetchPassword,
+		FetchedAt:             fetchedAt,
+		SuccessfullyFetchedAt: successfullyFetchedAt,
+		Error:                 d.Error,
+		Count:                 uint64(count), // #nosec G115 -- Don't care about overflow here.
+	}, nil
 }
 
 // ReportToAPIReport converts a gts model report into an api model report, for serving at /api/v1/reports
@@ -2928,5 +2995,38 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		AcceptedAt: acceptedAt,
 		RejectedAt: rejectedAt,
 		URI:        req.URI,
+	}, nil
+}
+
+func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
+	ctx context.Context,
+	subscription *gtsmodel.WebPushSubscription,
+) (*apimodel.WebPushSubscription, error) {
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID key pair: %w", err)
+	}
+
+	return &apimodel.WebPushSubscription{
+		ID:        subscription.ID,
+		Endpoint:  subscription.Endpoint,
+		ServerKey: vapidKeyPair.Public,
+		Alerts: apimodel.WebPushSubscriptionAlerts{
+			Follow:           subscription.NotificationFlags.Get(gtsmodel.NotificationFollow),
+			FollowRequest:    subscription.NotificationFlags.Get(gtsmodel.NotificationFollowRequest),
+			Favourite:        subscription.NotificationFlags.Get(gtsmodel.NotificationFavourite),
+			Mention:          subscription.NotificationFlags.Get(gtsmodel.NotificationMention),
+			Reblog:           subscription.NotificationFlags.Get(gtsmodel.NotificationReblog),
+			Poll:             subscription.NotificationFlags.Get(gtsmodel.NotificationPoll),
+			Status:           subscription.NotificationFlags.Get(gtsmodel.NotificationStatus),
+			Update:           subscription.NotificationFlags.Get(gtsmodel.NotificationUpdate),
+			AdminSignup:      subscription.NotificationFlags.Get(gtsmodel.NotificationAdminSignup),
+			AdminReport:      subscription.NotificationFlags.Get(gtsmodel.NotificationAdminReport),
+			PendingFavourite: subscription.NotificationFlags.Get(gtsmodel.NotificationPendingFave),
+			PendingReply:     subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReply),
+			PendingReblog:    subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReblog),
+		},
+		Policy:   apimodel.WebPushNotificationPolicyAll,
+		Standard: true,
 	}, nil
 }

@@ -70,6 +70,9 @@ type DBCaches struct {
 	// DomainPermissionDraft provides access to the domain permission draft database cache.
 	DomainPermissionDraft StructCache[*gtsmodel.DomainPermissionDraft]
 
+	// DomainPermissionSubscription provides access to the domain permission subscription database cache.
+	DomainPermissionSubscription StructCache[*gtsmodel.DomainPermissionSubscription]
+
 	// DomainPermissionExclude provides access to the domain permission exclude database cache.
 	DomainPermissionExclude *domain.Cache
 
@@ -255,6 +258,15 @@ type DBCaches struct {
 
 	// UserMuteIDs provides access to the user mute IDs database cache.
 	UserMuteIDs SliceCache[string]
+
+	// VAPIDKeyPair caches the server's VAPID key pair.
+	VAPIDKeyPair atomic.Pointer[gtsmodel.VAPIDKeyPair]
+
+	// WebPushSubscription provides access to the gtsmodel WebPushSubscription database cache.
+	WebPushSubscription StructCache[*gtsmodel.WebPushSubscription]
+
+	// WebPushSubscriptionIDs provides access to the Web Push subscription IDs database cache.
+	WebPushSubscriptionIDs SliceCache[string]
 }
 
 // NOTE:
@@ -582,6 +594,37 @@ func (c *Caches) initDomainPermissionDraft() {
 			{Fields: "ID"},
 			{Fields: "Domain", Multiple: true},
 			{Fields: "SubscriptionID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initDomainPermissionSubscription() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofDomainPermissionSubscription(), // model in-mem size.
+		config.GetCacheDomainPermissionSubscriptionMemRation(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(d1 *gtsmodel.DomainPermissionSubscription) *gtsmodel.DomainPermissionSubscription {
+		d2 := new(gtsmodel.DomainPermissionSubscription)
+		*d2 = *d1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		d2.CreatedByAccount = nil
+
+		return d2
+	}
+
+	c.DB.DomainPermissionSubscription.Init(structr.CacheConfig[*gtsmodel.DomainPermissionSubscription]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "URI"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
@@ -1320,6 +1363,7 @@ func (c *Caches) initStatus() {
 		s2.Mentions = nil
 		s2.Emojis = nil
 		s2.CreatedWithApplication = nil
+		s2.Edits = nil
 
 		return s2
 	}
@@ -1544,9 +1588,10 @@ func (c *Caches) initToken() {
 			{Fields: "Refresh"},
 			{Fields: "ClientID", Multiple: true},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateToken,
 	})
 }
 
@@ -1655,4 +1700,41 @@ func (c *Caches) initUserMuteIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.DB.UserMuteIDs.Init(0, cap)
+}
+
+func (c *Caches) initWebPushSubscription() {
+	cap := calculateResultCacheMax(
+		sizeofWebPushSubscription(), // model in-mem size.
+		config.GetCacheWebPushSubscriptionMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(s1 *gtsmodel.WebPushSubscription) *gtsmodel.WebPushSubscription {
+		s2 := new(gtsmodel.WebPushSubscription)
+		*s2 = *s1
+		return s2
+	}
+
+	c.DB.WebPushSubscription.Init(structr.CacheConfig[*gtsmodel.WebPushSubscription]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
+			{Fields: "TokenID"},
+			{Fields: "AccountID", Multiple: true},
+		},
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Invalidate: c.OnInvalidateWebPushSubscription,
+		Copy:       copyF,
+	})
+}
+
+func (c *Caches) initWebPushSubscriptionIDs() {
+	cap := calculateSliceCacheMax(
+		config.GetCacheWebPushSubscriptionIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.WebPushSubscriptionIDs.Init(0, cap)
 }

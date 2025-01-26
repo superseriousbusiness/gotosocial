@@ -19,6 +19,7 @@ package webfinger_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -79,6 +80,7 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
@@ -92,7 +94,13 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
+		suite.mediaManager,
+	)
 	suite.webfingerModule = webfinger.New(suite.processor)
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

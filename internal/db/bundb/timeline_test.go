@@ -50,7 +50,6 @@ func getFutureStatus() *gtsmodel.Status {
 		MentionIDs:               []string{},
 		EmojiIDs:                 []string{},
 		CreatedAt:                theDistantFuture,
-		UpdatedAt:                theDistantFuture,
 		Local:                    util.Ptr(true),
 		AccountURI:               "http://localhost:8080/users/admin",
 		AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",

@@ -149,7 +149,7 @@ func (m *Module) DomainPermissionDraftsGETHandler(c *gin.Context) {
 
 	permTypeStr := c.Query(apiutil.DomainPermissionPermTypeKey)
 	permType := gtsmodel.ParseDomainPermissionType(permTypeStr)
-	if permType == gtsmodel.DomainPermissionUnknown {
+	if permTypeStr != "" && permType == gtsmodel.DomainPermissionUnknown {
 		text := fmt.Sprintf(
 			"permission_type %s not recognized, valid values are empty string, block, or allow",
 			permTypeStr,

@@ -52,12 +52,12 @@ func WithDecompressFn(decompressFn func(c *gin.Context)) Option {
 }
 
 // Using map for better lookup performance
-type ExcludedExtensions map[string]bool
+type ExcludedExtensions map[string]struct{}
 
 func NewExcludedExtensions(extensions []string) ExcludedExtensions {
 	res := make(ExcludedExtensions)
 	for _, e := range extensions {
-		res[e] = true
+		res[e] = struct{}{}
 	}
 	return res
 }

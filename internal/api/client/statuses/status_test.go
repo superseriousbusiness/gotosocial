@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -192,6 +193,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 
@@ -209,7 +211,13 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../../testrig/media")), suite.mediaManager)
 	suite.emailSender = testrig.NewEmailSender("../../../../web/template/", nil)
-	suite.processor = testrig.NewTestProcessor(&suite.state, suite.federator, suite.emailSender, suite.mediaManager)
+	suite.processor = testrig.NewTestProcessor(
+		&suite.state,
+		suite.federator,
+		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
+		suite.mediaManager,
+	)
 	suite.statusModule = statuses.New(suite.processor)
 
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())

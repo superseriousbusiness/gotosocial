@@ -1,8 +1,6 @@
 # General
 
-The top-level configuration for GoToSocial, including basic things like host, port, bind address and transport protocol.
-
-The only things you *really* need to set here are `host`, which should be the hostname where your instance is reachable, and probably `port`.
+The top-level configuration for GoToSocial, including basic things like host, port, bind address, and trusted-proxies.
 
 ## Settings
 

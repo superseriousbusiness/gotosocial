@@ -33,12 +33,12 @@ import (
 var Import action.GTSAction = func(ctx context.Context) error {
 	var state state.State
 
+	// Only set state DB connection.
+	// Don't need Actions or Workers for this.
 	dbConn, err := bundb.NewBunDBService(ctx, &state)
 	if err != nil {
 		return fmt.Errorf("error creating dbservice: %s", err)
 	}
-
-	// Set the state DB connection
 	state.DB = dbConn
 
 	importer := trans.NewImporter(dbConn)

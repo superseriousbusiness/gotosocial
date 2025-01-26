@@ -20,6 +20,7 @@ package typeutils_test
 import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -499,6 +500,7 @@ func (suite *TypeUtilsTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	storage := testrig.NewInMemoryStorage()
 	suite.state.Storage = storage
 
@@ -538,8 +540,9 @@ func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
 	mediaManager := testrig.NewTestMediaManager(&suite.state)
 	federator := testrig.NewTestFederator(&suite.state, transportController, mediaManager)
 	emailSender := testrig.NewEmailSender("../../web/template/", nil)
+	webPushSender := testrig.NewNoopWebPushSender()
 
-	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, mediaManager)
+	processor := testrig.NewTestProcessor(&suite.state, federator, emailSender, webPushSender, mediaManager)
 	testrig.StartWorkers(&suite.state, processor.Workers())
 
 	return processor

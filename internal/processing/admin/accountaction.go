@@ -68,7 +68,7 @@ func (p *Processor) accountActionSuspend(
 ) (string, gtserror.WithCode) {
 	actionID := id.NewULID()
 
-	errWithCode := p.actions.Run(
+	errWithCode := p.state.AdminActions.Run(
 		ctx,
 		&gtsmodel.AdminAction{
 			ID:             actionID,

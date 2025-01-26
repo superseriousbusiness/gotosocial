@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/activity/streams/vocab"
+	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -41,6 +42,8 @@ import (
 const (
 	applicationJSON         = "application/json"
 	applicationActivityJSON = "application/activity+json"
+	textCSV                 = "text/csv"
+	textPlain               = "text/plain"
 )
 
 // NewTestTransportController returns a test transport controller with the given http client.
@@ -79,7 +82,7 @@ type MockHTTPClient struct {
 // to customize how the client is mocked.
 //
 // Note that you should never ever make ACTUAL http calls with this thing.
-func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relativeMediaPath string, extraPeople ...vocab.ActivityStreamsPerson) *MockHTTPClient {
+func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relativeMediaPath string, extraPeople ...ap.Accountable) *MockHTTPClient {
 	mockHTTPClient := &MockHTTPClient{}
 
 	if do != nil {
@@ -101,6 +104,7 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseBytes         = []byte(`{"error":"404 not found"}`)
 			responseContentType   = applicationJSON
 			responseContentLength = len(responseBytes)
+			extraHeaders          = make(map[string]string, 0)
 			reqURLString          = req.URL.String()
 		)
 
@@ -124,11 +128,13 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseContentType = applicationJSON
 			responseContentLength = len(responseBytes)
 		} else if strings.Contains(reqURLString, ".well-known/webfinger") {
-			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = WebfingerResponse(req)
 		} else if strings.Contains(reqURLString, ".weird-webfinger-location/webfinger") {
-			responseCode, responseBytes, responseContentType, responseContentLength = WebfingerResponse(req)
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = WebfingerResponse(req)
 		} else if strings.Contains(reqURLString, ".well-known/host-meta") {
-			responseCode, responseBytes, responseContentType, responseContentLength = HostMetaResponse(req)
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = HostMetaResponse(req)
+		} else if strings.Contains(reqURLString, "lists.example.org") {
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = DomainPermissionSubscriptionResponse(req)
 		} else if note, ok := mockHTTPClient.TestRemoteStatuses[reqURLString]; ok {
 			// the request is for a note that we have stored
 			noteI, err := streams.Serialize(note)
@@ -239,14 +245,23 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 		}
 
 		log.Debugf(nil, "returning response %s", string(responseBytes))
+
 		reader := bytes.NewReader(responseBytes)
 		readCloser := io.NopCloser(reader)
+
+		header := http.Header{
+			"Content-Type": {responseContentType},
+		}
+		for k, v := range extraHeaders {
+			header.Add(k, v)
+		}
+
 		return &http.Response{
 			Request:       req,
 			StatusCode:    responseCode,
 			Body:          readCloser,
 			ContentLength: int64(responseContentLength),
-			Header:        http.Header{"Content-Type": {responseContentType}},
+			Header:        header,
 		}, nil
 	}
 
@@ -261,7 +276,13 @@ func (m *MockHTTPClient) DoSigned(req *http.Request, sign httpclient.SignFunc) (
 	return m.do(req)
 }
 
-func HostMetaResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
+func HostMetaResponse(req *http.Request) (
+	responseCode int,
+	responseBytes []byte,
+	responseContentType string,
+	responseContentLength int,
+	extraHeaders map[string]string,
+) {
 	var hm *apimodel.HostMeta
 
 	if req.URL.String() == "https://misconfigured-instance.com/.well-known/host-meta" {
@@ -297,7 +318,13 @@ func HostMetaResponse(req *http.Request) (responseCode int, responseBytes []byte
 	return
 }
 
-func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byte, responseContentType string, responseContentLength int) {
+func WebfingerResponse(req *http.Request) (
+	responseCode int,
+	responseBytes []byte,
+	responseContentType string,
+	responseContentLength int,
+	extraHeaders map[string]string,
+) {
 	var wfr *apimodel.WellKnownResponse
 
 	switch req.URL.String() {
@@ -408,5 +435,135 @@ func WebfingerResponse(req *http.Request) (responseCode int, responseBytes []byt
 	responseBytes = wfrJSON
 	responseContentType = applicationJSON
 	responseContentLength = len(wfrJSON)
+	return
+}
+
+func DomainPermissionSubscriptionResponse(req *http.Request) (
+	responseCode int,
+	responseBytes []byte,
+	responseContentType string,
+	responseContentLength int,
+	extraHeaders map[string]string,
+) {
+
+	const (
+		lastModified        = "Sat, 21 Sep 2024 22:00:00 GMT"
+		futureLastModified  = "Mon, 15 Jan 2300 22:00:00 GMT"
+		garbageLastModified = "I LIKE BIG BUTTS AND I CANNOT LIE"
+
+		csvResp = `#domain,#severity,#reject_media,#reject_reports,#public_comment,#obfuscate
+bumfaces.net,suspend,false,false,big jerks,false
+peepee.poopoo,suspend,false,false,harassment,false
+nothanks.com,suspend,false,false,,false`
+		csvRespETag = "\"bigbums6969\""
+
+		textResp = `bumfaces.net
+peepee.poopoo
+nothanks.com`
+		textRespETag = "\"this is a legit etag i swear\""
+		jsonResp     = `[
+  {
+    "domain": "bumfaces.net",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "public_comment": "big jerks"
+  },
+    {
+    "domain": "peepee.poopoo",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "public_comment": "harassment"
+  },
+    {
+    "domain": "nothanks.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z"
+  }
+]`
+		jsonRespETag = "\"don't modify me daddy\""
+	)
+
+	switch req.URL.String() {
+	case "https://lists.example.org/baddies.csv":
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          csvRespETag,
+		}
+		if req.Header.Get("If-None-Match") == csvRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(csvResp)
+			responseContentType = textCSV
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/baddies.txt":
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          textRespETag,
+		}
+		if req.Header.Get("If-None-Match") == textRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(textResp)
+			responseContentType = textPlain
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/baddies.json":
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          jsonRespETag,
+		}
+		if req.Header.Get("If-None-Match") == jsonRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(jsonResp)
+			responseContentType = applicationJSON
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/baddies.csv?future=true":
+		extraHeaders = map[string]string{
+			// Provide the future last modified value.
+			"Last-Modified": futureLastModified,
+			"ETag":          csvRespETag,
+		}
+		if req.Header.Get("If-None-Match") == csvRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(csvResp)
+			responseContentType = textCSV
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/baddies.csv?garbage=true":
+		extraHeaders = map[string]string{
+			// Provide the garbage last modified value.
+			"Last-Modified": garbageLastModified,
+			"ETag":          csvRespETag,
+		}
+		if req.Header.Get("If-None-Match") == csvRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(csvResp)
+			responseContentType = textCSV
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	default:
+		responseCode = http.StatusNotFound
+		responseBytes = []byte(`{"error":"not found"}`)
+		responseContentType = applicationJSON
+		responseContentLength = len(responseBytes)
+	}
+
 	return
 }

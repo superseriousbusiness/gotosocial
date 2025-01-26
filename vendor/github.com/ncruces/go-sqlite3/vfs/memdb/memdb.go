@@ -62,11 +62,11 @@ func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, err
 }
 
 func (memVFS) Delete(name string, dirSync bool) error {
-	return sqlite3.IOERR_DELETE
+	return sqlite3.IOERR_DELETE_NOENT // used to delete journals
 }
 
 func (memVFS) Access(name string, flag vfs.AccessFlag) (bool, error) {
-	return false, nil
+	return false, nil // used to check for journals
 }
 
 func (memVFS) FullPathname(name string) (string, error) {

@@ -242,7 +242,7 @@ type VTabSavepointer interface {
 // A VTabCursor may optionally implement
 // [io.Closer] to free resources.
 //
-// http://sqlite.org/c3ref/vtab_cursor.html
+// https://sqlite.org/c3ref/vtab_cursor.html
 type VTabCursor interface {
 	// https://sqlite.org/vtab.html#xfilter
 	Filter(idxNum int, idxStr string, arg ...Value) error

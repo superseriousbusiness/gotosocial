@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/messages"
 )
 
 func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
@@ -80,6 +81,18 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 		// UNDO BLOCK
 		case ap.ActivityBlock:
 			if err := f.undoBlock(
+				ctx,
+				receivingAcct,
+				requestingAcct,
+				undo,
+				asType,
+			); err != nil {
+				return err
+			}
+
+		// UNDO ANNOUNCE
+		case ap.ActivityAnnounce:
+			if err := f.undoAnnounce(
 				ctx,
 				receivingAcct,
 				requestingAcct,
@@ -321,5 +334,74 @@ func (f *federatingDB) undoBlock(
 	}
 
 	log.Debug(ctx, "Block undone")
+	return nil
+}
+
+func (f *federatingDB) undoAnnounce(
+	ctx context.Context,
+	receivingAcct *gtsmodel.Account,
+	requestingAcct *gtsmodel.Account,
+	undo vocab.ActivityStreamsUndo,
+	t vocab.Type,
+) error {
+	asAnnounce, ok := t.(vocab.ActivityStreamsAnnounce)
+	if !ok {
+		err := fmt.Errorf("%T not parseable as vocab.ActivityStreamsAnnounce", t)
+		return gtserror.SetMalformed(err)
+	}
+
+	// Make sure the Undo actor owns the
+	// Announce they're trying to undo.
+	if !sameActor(
+		undo.GetActivityStreamsActor(),
+		asAnnounce.GetActivityStreamsActor(),
+	) {
+		// Ignore this Activity.
+		return nil
+	}
+
+	// Convert AS Announce to *gtsmodel.Status,
+	// retrieving origin account + target status.
+	boost, isNew, err := f.converter.ASAnnounceToStatus(
+		// Use barebones as we don't
+		// need to populate attachments
+		// on boosted status, mentions, etc.
+		gtscontext.SetBarebones(ctx),
+		asAnnounce,
+	)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error converting AS Announce to boost: %w", err)
+		return err
+	}
+
+	if boost == nil {
+		// We were missing origin or
+		// target(s) for this Announce,
+		// so we cannot Undo anything.
+		return nil
+	}
+
+	if isNew {
+		// We hadn't seen this boost
+		// before anyway, so there's
+		// nothing to Undo.
+		return nil
+	}
+
+	// Ensure requester == announcer.
+	if boost.AccountID != requestingAcct.ID {
+		const text = "requestingAcct was not Block origin"
+		return gtserror.NewErrorForbidden(errors.New(text), text)
+	}
+
+	// Looks valid. Process side effects asynchronously.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityAnnounce,
+		APActivityType: ap.ActivityUndo,
+		GTSModel:       boost,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
 	return nil
 }

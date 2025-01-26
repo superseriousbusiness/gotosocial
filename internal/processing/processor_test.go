@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -34,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -102,6 +104,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
@@ -125,12 +128,14 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 
 	suite.processor = processing.NewProcessor(
 		cleaner.New(&suite.state),
+		subscriptions.New(&suite.state, suite.transportController, suite.typeconverter),
 		suite.typeconverter,
 		suite.federator,
 		suite.oauthServer,
 		suite.mediaManager,
 		&suite.state,
 		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)

@@ -6,7 +6,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"runtime"
 	"syscall"
 
 	"github.com/ncruces/go-sqlite3/util/osutil"
@@ -41,7 +40,7 @@ func (vfsOS) Delete(path string, syncDir bool) error {
 	if err != nil {
 		return err
 	}
-	if runtime.GOOS != "windows" && syncDir {
+	if canSyncDirs && syncDir {
 		f, err := os.Open(filepath.Dir(path))
 		if err != nil {
 			return _OK
@@ -120,9 +119,9 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 		File:     f,
 		psow:     true,
 		readOnly: flags&OPEN_READONLY != 0,
-		syncDir: runtime.GOOS != "windows" &&
-			flags&(OPEN_CREATE) != 0 &&
-			flags&(OPEN_MAIN_JOURNAL|OPEN_SUPER_JOURNAL|OPEN_WAL) != 0,
+		syncDir: canSyncDirs &&
+			flags&(OPEN_MAIN_JOURNAL|OPEN_SUPER_JOURNAL|OPEN_WAL) != 0 &&
+			flags&(OPEN_CREATE) != 0,
 		shm: NewSharedMemory(name.String()+"-shm", flags),
 	}
 	return &file, flags, nil
@@ -143,7 +142,7 @@ var (
 	_ FileLockState          = &vfsFile{}
 	_ FileHasMoved           = &vfsFile{}
 	_ FileSizeHint           = &vfsFile{}
-	_ FilePersistentWAL      = &vfsFile{}
+	_ FilePersistWAL         = &vfsFile{}
 	_ FilePowersafeOverwrite = &vfsFile{}
 )
 
@@ -163,7 +162,7 @@ func (f *vfsFile) Sync(flags SyncFlag) error {
 	if err != nil {
 		return err
 	}
-	if runtime.GOOS != "windows" && f.syncDir {
+	if canSyncDirs && f.syncDir {
 		f.syncDir = false
 		d, err := os.Open(filepath.Dir(f.File.Name()))
 		if err != nil {
@@ -218,6 +217,6 @@ func (f *vfsFile) HasMoved() (bool, error) {
 
 func (f *vfsFile) LockState() LockLevel            { return f.lock }
 func (f *vfsFile) PowersafeOverwrite() bool        { return f.psow }
-func (f *vfsFile) PersistentWAL() bool             { return f.keepWAL }
+func (f *vfsFile) PersistWAL() bool                { return f.keepWAL }
 func (f *vfsFile) SetPowersafeOverwrite(psow bool) { f.psow = psow }
-func (f *vfsFile) SetPersistentWAL(keepWAL bool)   { f.keepWAL = keepWAL }
+func (f *vfsFile) SetPersistWAL(keepWAL bool)      { f.keepWAL = keepWAL }

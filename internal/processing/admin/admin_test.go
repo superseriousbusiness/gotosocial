@@ -19,6 +19,7 @@ package admin_test
 
 import (
 	"github.com/stretchr/testify/suite"
+	adminactions "github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -33,6 +34,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -89,6 +91,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
+	suite.state.AdminActions = adminactions.New(suite.state.DB, &suite.state.Workers)
 	suite.tc = typeutils.NewConverter(&suite.state)
 
 	testrig.StartTimelines(
@@ -109,12 +112,14 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 
 	suite.processor = processing.NewProcessor(
 		cleaner.New(&suite.state),
+		subscriptions.New(&suite.state, suite.transportController, suite.tc),
 		suite.tc,
 		suite.federator,
 		suite.oauthServer,
 		suite.mediaManager,
 		&suite.state,
 		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)

@@ -75,12 +75,12 @@ func (suite *FederatorStandardTestSuite) SetupTest() {
 
 	// Ensure it's possible to deref
 	// main key of foss satan.
-	fossSatanPerson, err := suite.typeconverter.AccountToAS(context.Background(), suite.testAccounts["remote_account_1"])
+	fossSatanAS, err := suite.typeconverter.AccountToAS(context.Background(), suite.testAccounts["remote_account_1"])
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media", fossSatanPerson)
+	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media", fossSatanAS)
 	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
 	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()
 

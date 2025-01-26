@@ -41,3 +41,7 @@ We have guides available for the following servers:
 When using a reverse-proxy, special care must be taken to allow WebSockets to work too. This is necessary as many client applications use WebSockets to stream your timeline. WebSockets is not used as part of federation.
 
 Make sure you read the [WebSocket](websocket.md) documentation and configure your reverse proxy accordingly.
+
+## Trusted Proxies
+
+When using a reverse-proxy, you may run into issues with rate limiting and `trusted-proxies`. Check the [trusted proxies](../../configuration/trusted_proxies.md) documentation if you have any problems.

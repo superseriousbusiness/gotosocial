@@ -225,6 +225,7 @@ const (
 	_FCNTL_EXTERNAL_READER       _FcntlOpcode = 40
 	_FCNTL_CKSM_FILE             _FcntlOpcode = 41
 	_FCNTL_RESET_CACHE           _FcntlOpcode = 42
+	_FCNTL_NULL_IO               _FcntlOpcode = 43
 )
 
 // https://sqlite.org/c3ref/c_shm_exclusive.html

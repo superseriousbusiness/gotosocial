@@ -20,6 +20,7 @@ package workers_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"testing"
@@ -29,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
@@ -55,7 +57,6 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	announceStatus.URI = "https://example.org/some-announce-uri"
 	announceStatus.BoostOfURI = boostedStatus.URI
 	announceStatus.CreatedAt = time.Now()
-	announceStatus.UpdatedAt = time.Now()
 	announceStatus.AccountID = boostingAccount.ID
 	announceStatus.AccountURI = boostingAccount.URI
 	announceStatus.Account = boostingAccount
@@ -241,7 +242,7 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	notif := &gtsmodel.Notification{}
 	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
-	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
+	suite.Equal(gtsmodel.NotificationFavourite, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
@@ -314,7 +315,7 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 	notif := &gtsmodel.Notification{}
 	err = testStructs.State.DB.GetWhere(context.Background(), where, notif)
 	suite.NoError(err)
-	suite.Equal(gtsmodel.NotificationFave, notif.NotificationType)
+	suite.Equal(gtsmodel.NotificationFavourite, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
 	suite.Equal(fave.StatusID, notif.StatusID)
@@ -678,6 +679,60 @@ func (suite *FromFediAPITestSuite) TestMoveAccount() {
 
 	// Move should be marked as completed.
 	suite.WithinDuration(time.Now(), move.SucceededAt, 1*time.Minute)
+}
+
+func (suite *FromFediAPITestSuite) TestUndoAnnounce() {
+	var (
+		ctx            = context.Background()
+		testStructs    = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		requestingAcct = suite.testAccounts["remote_account_1"]
+		receivingAcct  = suite.testAccounts["local_account_1"]
+		boostedStatus  = suite.testStatuses["admin_account_status_1"]
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Have remote_account_1 boost admin_account.
+	boost, err := testStructs.TypeConverter.StatusToBoost(
+		ctx,
+		boostedStatus,
+		requestingAcct,
+		"",
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Set the boost URI + URL to
+	// fossbros-anonymous.io.
+	boost.URI = "https://fossbros-anonymous.io/users/foss_satan/" + boost.ID
+	boost.URL = boost.URI
+
+	// Store the boost.
+	if err := testStructs.State.DB.PutStatus(ctx, boost); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the Undo.
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+		APObjectType:   ap.ActivityAnnounce,
+		APActivityType: ap.ActivityUndo,
+		GTSModel:       boost,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+	suite.NoError(err)
+
+	// Wait for side effects to trigger:
+	// the boost should be deleted.
+	if !testrig.WaitFor(func() bool {
+		_, err := testStructs.State.DB.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			boost.ID,
+		)
+		return errors.Is(err, db.ErrNoEntries)
+	}) {
+		suite.FailNow("timed out waiting for boost to be removed")
+	}
 }
 
 func TestFromFederatorTestSuite(t *testing.T) {

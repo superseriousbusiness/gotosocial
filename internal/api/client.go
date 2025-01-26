@@ -47,6 +47,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/notifications"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/polls"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/preferences"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/push"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/reports"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/search"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/statuses"
@@ -91,6 +92,7 @@ type Client struct {
 	notifications       *notifications.Module       // api/v1/notifications
 	polls               *polls.Module               // api/v1/polls
 	preferences         *preferences.Module         // api/v1/preferences
+	push                *push.Module                // api/v1/push
 	reports             *reports.Module             // api/v1/reports
 	search              *search.Module              // api/v1/search, api/v2/search
 	statuses            *statuses.Module            // api/v1/statuses
@@ -143,6 +145,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.notifications.Route(h)
 	c.polls.Route(h)
 	c.preferences.Route(h)
+	c.push.Route(h)
 	c.reports.Route(h)
 	c.search.Route(h)
 	c.statuses.Route(h)
@@ -183,6 +186,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		notifications:       notifications.New(p),
 		polls:               polls.New(p),
 		preferences:         preferences.New(p),
+		push:                push.New(p),
 		reports:             reports.New(p),
 		search:              search.New(p),
 		statuses:            statuses.New(p),

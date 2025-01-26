@@ -1,5 +1,3 @@
-version: "3.3"
-
 services:
   gotosocial:
     image: superseriousbusiness/gotosocial:latest
@@ -24,7 +22,7 @@ services:
       # Wazero compilation cache will be stored.
       GTS_WAZERO_COMPILATION_CACHE: /gotosocial/.cache
       ## For reverse proxy setups:
-      # GTS_TRUSTED_PROXIES: "172.x.x.x"
+      GTS_TRUSTED_PROXIES: "172.18.0.1/16"
       ## Set the timezone of your server:
       #TZ: UTC
     ports:
@@ -47,3 +45,6 @@ networks:
   gotosocial:
     ipam:
       driver: default
+      config:
+        - subnet: "172.18.0.0/16"
+          gateway: "172.18.0.1"

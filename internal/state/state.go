@@ -19,6 +19,7 @@ package state
 
 import (
 	"codeberg.org/gruf/go-mutexes"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
@@ -61,8 +62,13 @@ type State struct {
 	// Storage provides access to the storage driver.
 	Storage *storage.Driver
 
-	// Workers provides access to this state's collection of worker pools.
+	// Workers provides access to this
+	// state's collection of worker pools.
 	Workers workers.Workers
+
+	// Struct to manage running admin
+	// actions (and locks thereupon).
+	AdminActions *admin.Actions
 
 	// prevent pass-by-value.
 	_ nocopy

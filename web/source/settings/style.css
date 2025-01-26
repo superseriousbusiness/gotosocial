@@ -1360,9 +1360,12 @@ button.tab-button {
 }
 
 .domain-permission-drafts-view,
-.domain-permission-excludes-view {
+.domain-permission-excludes-view,
+.domain-permission-subscriptions-view,
+.domain-permission-subscriptions-preview  {
 	.domain-permission-draft,
-	.domain-permission-exclude {
+	.domain-permission-exclude,
+	.domain-permission-subscription {
 		display: flex;
 		flex-direction: column;
 		flex-wrap: nowrap;
@@ -1404,19 +1407,65 @@ button.tab-button {
 }
 
 .domain-permission-draft-details,
-.domain-permission-exclude-details {
+.domain-permission-exclude-details,
+.domain-permission-subscription-details {
 	.info-list {
 		margin-top: 1rem;
 	}
 }
 
 .domain-permission-drafts-view,
-.domain-permission-draft-details {
+.domain-permission-draft-details,
+.domain-permission-subscriptions-view,
+.domain-permission-subscription-details,
+.domain-permission-subscriptions-preview {
 	dd.permission-type {
 		display: flex;
 		gap: 0.35rem;
 		align-items: center;
 	}
+}
+
+.domain-permission-subscription-details {
+	> .list > .entries > .perm-preview {
+		gap: 0.5rem;
+	}
+
+	> .perm-issue > b > code {
+		background: $info-bg;
+		padding: 0;
+	}
+}
+
+
+.domain-permission-subscription-title {
+	font-size: 1.2rem;
+	font-weight: bold;
+}
+
+.domain-permission-subscription-create,
+.domain-permission-subscription-update {
+	gap: 1rem;
+
+	.password-show-hide {
+		display: flex;
+		gap: 0.5rem;
+
+		.form-field.text {
+			flex: 1;
+		}
+
+		.password-show-hide-toggle {
+			font-size: 1rem;
+			line-height: 1.4rem;
+			align-self: flex-end;
+		}
+	}
+}
+
+.domain-permission-subscription-remove,
+.domain-permission-subscription-test {
+	gap: 1rem;
 }
 
 .instance-rules {

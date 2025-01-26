@@ -18,6 +18,7 @@
 package testrig
 
 import (
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
@@ -25,6 +26,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
+	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
@@ -38,12 +41,14 @@ import (
 // and worker queues, which was causing issues
 // when running all tests at once.
 type TestStructs struct {
-	State         *state.State
-	Common        *common.Processor
-	Processor     *processing.Processor
-	HTTPClient    *MockHTTPClient
-	TypeConverter *typeutils.Converter
-	EmailSender   email.Sender
+	State               *state.State
+	Common              *common.Processor
+	Processor           *processing.Processor
+	HTTPClient          *MockHTTPClient
+	TypeConverter       *typeutils.Converter
+	EmailSender         email.Sender
+	WebPushSender       *WebPushMockSender
+	TransportController transport.Controller
 }
 
 func SetupTestStructs(
@@ -56,6 +61,7 @@ func SetupTestStructs(
 
 	db := NewTestDB(&state)
 	state.DB = db
+	state.AdminActions = admin.New(db, &state.Workers)
 
 	storage := NewInMemoryStorage()
 	state.Storage = storage
@@ -78,6 +84,7 @@ func SetupTestStructs(
 	federator := NewTestFederator(&state, transportController, mediaManager)
 	oauthServer := NewTestOauthServer(db)
 	emailSender := NewEmailSender(rTemplatePath, nil)
+	webPushSender := NewWebPushMockSender()
 
 	common := common.New(
 		&state,
@@ -89,12 +96,14 @@ func SetupTestStructs(
 
 	processor := processing.NewProcessor(
 		cleaner.New(&state),
+		subscriptions.New(&state, transportController, typeconverter),
 		typeconverter,
 		federator,
 		oauthServer,
 		mediaManager,
 		&state,
 		emailSender,
+		webPushSender,
 		visFilter,
 		intFilter,
 	)
@@ -105,12 +114,14 @@ func SetupTestStructs(
 	StandardStorageSetup(storage, rMediaPath)
 
 	return &TestStructs{
-		State:         &state,
-		Common:        &common,
-		Processor:     processor,
-		HTTPClient:    httpClient,
-		TypeConverter: typeconverter,
-		EmailSender:   emailSender,
+		State:               &state,
+		Common:              &common,
+		Processor:           processor,
+		HTTPClient:          httpClient,
+		TypeConverter:       typeconverter,
+		EmailSender:         emailSender,
+		WebPushSender:       webPushSender,
+		TransportController: transportController,
 	}
 }
 
