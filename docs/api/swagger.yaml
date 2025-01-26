@@ -7954,14 +7954,14 @@ paths:
                     The contexts in which the filter should be applied.
 
                     Sample: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                        - home
+                        - notifications
+                        - public
+                        - thread
+                        - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -8108,14 +8108,14 @@ paths:
                     The contexts in which the filter should be applied.
 
                     Sample: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                        - home
+                        - notifications
+                        - public
+                        - thread
+                        - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -11835,14 +11835,14 @@ paths:
                     The contexts in which the filter should be applied.
 
                     Sample: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                        - home
+                        - notifications
+                        - public
+                        - thread
+                        - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -12029,14 +12029,14 @@ paths:
                     The contexts in which the filter should be applied.
 
                     Sample: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                        - home
+                        - notifications
+                        - public
+                        - thread
+                        - account
                     type: string
                   minItems: 1
                   name: context[]
