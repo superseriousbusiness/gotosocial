@@ -161,6 +161,18 @@ func (p *Processor) Create(
 		PendingApproval: util.Ptr(false),
 	}
 
+	if backfill {
+		log.Infof(ctx, "%d mentions", len(status.Mentions))
+		for _, mention := range status.Mentions {
+			log.Infof(ctx, "mention: target account ID = %s, requester ID = %s", mention.TargetAccountID, requester.ID)
+			if mention.TargetAccountID != requester.ID {
+				const errText = "statuses mentioning others can't be backfilled"
+				err := gtserror.New(errText)
+				return nil, gtserror.NewErrorBadRequest(err, errText)
+			}
+		}
+	}
+
 	// Check + attach in-reply-to status.
 	if errWithCode := p.processInReplyTo(ctx,
 		requester,
@@ -194,7 +206,7 @@ func (p *Processor) Create(
 
 	if form.Poll != nil {
 		if backfill {
-			const errText = "posts with polls can't be backfilled"
+			const errText = "statuses with polls can't be backfilled"
 			err := gtserror.New(errText)
 			return nil, gtserror.NewErrorBadRequest(err, errText)
 		}
