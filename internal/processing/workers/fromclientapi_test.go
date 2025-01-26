@@ -467,6 +467,63 @@ func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithNotifi
 	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
+// Backfilled statuses should not federate when created.
+func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithRemoteFollower() {
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["local_account_1"]
+		receivingAccount = suite.testAccounts["remote_account_1"]
+
+		// Local account posts a new top-level status.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Follow the local account from the remote account.
+	follow := &gtsmodel.Follow{
+		ID:              "01JJHW9RW28SC1NEPZ0WBJQ4ZK",
+		CreatedAt:       testrig.TimeMustParse("2022-05-14T13:21:09+02:00"),
+		UpdatedAt:       testrig.TimeMustParse("2022-05-14T13:21:09+02:00"),
+		AccountID:       receivingAccount.ID,
+		TargetAccountID: postingAccount.ID,
+		ShowReblogs:     util.Ptr(true),
+		URI:             "http://fossbros-anonymous.io/users/foss_satan/follow/01JJHWEVC7F8W2JDW1136K431K",
+		Notify:          util.Ptr(false),
+	}
+
+	if err := testStructs.State.DB.PutFollow(ctx, follow); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status as a backfill.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       &gtsmodel.BackfillStatus{Status: status},
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// No deliveries should be queued.
+	suite.Zero(testStructs.State.Workers.Delivery.Queue.Len())
+}
+
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 	defer testrig.TearDownTestStructs(testStructs)
