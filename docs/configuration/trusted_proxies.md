@@ -63,9 +63,17 @@ If you are using docker compose, your docker-compose.yaml file should look somet
 ################################
 ```
 
-Once you have made the necessary configuration changes, restart your instance and refresh the home page. If the message is gone, then the problem is resolved!
+Once you have made the necessary configuration changes, **restart your instance** and refresh the home page.
+
+If the message is gone, then the problem is resolved!
 
 If you still see the warning message but with a different suggested IP range to add to `trusted-proxies`, then follow the same steps as above again, including the new suggested IP range in your config in addition to the one you just added.
 
 !!! tip "Cloudflare IP Addresses"
     If you are running with a CDN/proxy such as Cloudflare in front of your GoToSocial instance (not recommended), then you may need to add one or more of the Cloudflare IP addresses to your `trusted-proxies` in order to have rate limiting work properly. You can find a list of Cloudflare IP addresses here: https://www.cloudflare.com/ips/
+
+## I can't seem to get `trusted-proxies` configured properly, can I just disable the warning?
+
+There are some situations where it's not practically possible to get `trusted-proxies` configured correctly to detect the real client IP of incoming requests For example, if you're running GoToSocial behind a home internet router that cannot inject an `X-Forwarded-For` header, then your suggested entry to add to `trusted-proxies` will look something like `192.168.x.x`, but adding this to `trusted-proxies` won't resolve the issue.
+
+If you've tried everything, then you can disable the warning message by just turning off rate limiting entirely, ie., by setting `advanced-rate-limit-requests` to 0 in your config.yaml, or setting the environment variable `GTS_ADVANCED_RATE_LIMIT_REQUESTS` to 0. Don't forget to **restart your instance** after changing this setting.
