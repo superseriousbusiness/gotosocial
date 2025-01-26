@@ -63,16 +63,16 @@ import (
 //			The contexts in which the filter should be applied.
 //
 //			Sample: home, public
-//		enum:
-//			- home
-//			- notifications
-//			- public
-//			- thread
-//			- account
 //		type: array
 //		items:
 //			type:
 //				string
+//			enum:
+//				- home
+//				- notifications
+//				- public
+//				- thread
+//				- account
 //		collectionFormat: multi
 //		minItems: 1
 //		uniqueItems: true
