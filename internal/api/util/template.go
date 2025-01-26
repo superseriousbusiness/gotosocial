@@ -23,6 +23,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // WebPage encapsulates variables for
@@ -96,6 +97,17 @@ func injectTrustedProxiesRec(
 	c *gin.Context,
 	obj map[string]any,
 ) {
+	if config.GetAdvancedRateLimitRequests() <= 0 {
+		// If rate limiting is disabled entirely
+		// there's no point in giving a trusted
+		// proxies rec, as proper clientIP is
+		// basically only used for rate limiting.
+		return
+	}
+
+	// clientIP = the client IP that gin
+	// derives based on x-forwarded-for
+	// and current trusted proxies.
 	clientIP := c.ClientIP()
 	if clientIP == "127.0.0.1" {
 		// Suggest precise 127.0.0.1/32.
@@ -119,7 +131,9 @@ func injectTrustedProxiesRec(
 
 	if !hasRemoteIPHeader {
 		// Upstream hasn't set a
-		// remote IP header, bail.
+		// remote IP header so we're
+		// probably not in a reverse
+		// proxy setup, bail.
 		return
 	}
 
