@@ -368,6 +368,105 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 	suite.checkWebPushed(testStructs.WebPushSender, receivingAccount.ID, gtsmodel.NotificationStatus)
 }
 
+// Even with notifications on for a user, backfilling a status should not notify or timeline it.
+func (suite *FromClientAPITestSuite) TestProcessCreateBackfilledStatusWithNotification() {
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["admin_account"]
+		receivingAccount = suite.testAccounts["local_account_1"]
+		testList         = suite.testLists["local_account_1_list_1"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			[]string{testList.ID},
+		)
+		homeStream  = streams[stream.TimelineHome]
+		listStream  = streams[stream.TimelineList+":"+testList.ID]
+		notifStream = streams[stream.TimelineNotifications]
+
+		// Admin account posts a new top-level status.
+		status = suite.newStatus(
+			ctx,
+			testStructs.State,
+			postingAccount,
+			gtsmodel.VisibilityPublic,
+			nil,
+			nil,
+			nil,
+			false,
+			nil,
+		)
+	)
+
+	// Update the follow from receiving account -> posting account so
+	// that receiving account wants notifs when posting account posts.
+	follow := new(gtsmodel.Follow)
+	*follow = *suite.testFollows["local_account_1_admin_account"]
+
+	follow.Notify = util.Ptr(true)
+	if err := testStructs.State.DB.UpdateFollow(ctx, follow); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the new status as a backfill.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityCreate,
+			GTSModel:       &gtsmodel.BackfillStatus{Status: status},
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// There should be no message in the home stream.
+	suite.checkStreamed(
+		homeStream,
+		false,
+		"",
+		"",
+	)
+
+	// There should be no message in the list stream.
+	suite.checkStreamed(
+		listStream,
+		false,
+		"",
+		"",
+	)
+
+	// No notification should appear for the status.
+	if !testrig.WaitFor(func() bool {
+		var err error
+		_, err = testStructs.State.DB.GetNotification(
+			ctx,
+			gtsmodel.NotificationStatus,
+			receivingAccount.ID,
+			postingAccount.ID,
+			status.ID,
+		)
+		return errors.Is(err, db.ErrNoEntries)
+	}) {
+		suite.FailNow("timed out waiting for absence of status notification")
+	}
+
+	// There should be no message in the notification stream.
+	suite.checkStreamed(
+		notifStream,
+		false,
+		"",
+		"",
+	)
+
+	// There should be no Web Push status notification.
+	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
+}
+
 func (suite *FromClientAPITestSuite) TestProcessCreateStatusReply() {
 	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 	defer testrig.TearDownTestStructs(testStructs)
