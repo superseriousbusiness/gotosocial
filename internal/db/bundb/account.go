@@ -899,15 +899,18 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 
 	if excludeReplies {
 		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			// We're excluding replies so...
 			return q.
-				// Do include self replies (threads), but
-				// don't include replies to other people.
-				Where("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID).
-				WhereOr("? IS NULL", bun.Ident("status.in_reply_to_uri"))
+				// 1. Include posts that don't reply to anything AND
+				Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
+				// 2. Include posts that reply to self AND don't
+				//    mention anyone (ie., self-reply threads).
+				WhereGroup(" OR ", func(q *bun.SelectQuery) *bun.SelectQuery {
+					q = q.Where("? = ?", bun.Ident("status.in_reply_to_account_id"), accountID)
+					q = whereArrayIsNullOrEmpty(q, bun.Ident("status.mentions"))
+					return q
+				})
 		})
-		// Don't include replies that mention other people:
-		// for example, an account's reply to its own reply to someone else.
-		q = whereArrayIsNullOrEmpty(q, bun.Ident("status.mentions"))
 	}
 
 	if excludeReblogs {
