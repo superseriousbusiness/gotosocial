@@ -71,7 +71,9 @@ image/webp
         {{- end }}
         <title>{{- template "instanceTitle" . -}}</title>
     </head>
-    <body class="page">
+    <body>
+        {{- include "login_button.tmpl" . | indent 3 }}
+        <div class="page">
         <header class="page-header">
             {{- include "page_header.tmpl" . | indent 3 }}
         </header>
@@ -81,5 +83,6 @@ image/webp
         <footer class="page-footer">
             {{- include "page_footer.tmpl" . | indent 3 }}
         </footer>
+        </div>
     </body>
 </html>

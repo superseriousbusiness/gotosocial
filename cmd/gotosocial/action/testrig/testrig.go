@@ -164,6 +164,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	federator := testrig.NewTestFederator(state, transportController, mediaManager)
 
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
+	webPushSender := testrig.NewWebPushMockSender()
 	typeConverter := typeutils.NewConverter(state)
 	filter := visibility.NewFilter(state)
 
@@ -187,7 +188,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error starting list timeline: %s", err)
 	}
 
-	processor := testrig.NewTestProcessor(state, federator, emailSender, mediaManager)
+	processor := testrig.NewTestProcessor(state, federator, emailSender, webPushSender, mediaManager)
 
 	// Initialize workers.
 	testrig.StartWorkers(state, processor.Workers())

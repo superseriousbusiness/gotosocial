@@ -19,7 +19,8 @@ package gtsmodel
 
 import "time"
 
-// Token is a translation of the gotosocial token with the ExpiresIn fields replaced with ExpiresAt.
+// Token is a translation of the gotosocial token
+// with the ExpiresIn fields replaced with ExpiresAt.
 type Token struct {
 	ID                  string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt           time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created

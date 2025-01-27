@@ -98,6 +98,7 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		testrig.NewTestMediaManager(&suite.state),
 		&suite.state,
 		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)

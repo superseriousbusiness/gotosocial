@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -2061,6 +2062,13 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
 	b, err := json.MarshalIndent(instance, "", "  ")
 	suite.NoError(err)
 
+	// The VAPID public key changes from run to run.
+	vapidKeyPair, err := suite.db.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	s := strings.Replace(string(b), vapidKeyPair.Public, "VAPID_PUBLIC_KEY_PLACEHOLDER", 1)
+
 	suite.Equal(`{
   "domain": "localhost:8080",
   "account_domain": "localhost:8080",
@@ -2140,6 +2148,9 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
     },
     "emojis": {
       "emoji_size_limit": 51200
+    },
+    "vapid": {
+      "public_key": "VAPID_PUBLIC_KEY_PLACEHOLDER"
     }
   },
   "registrations": {
@@ -2184,7 +2195,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
   "rules": [],
   "terms": "\u003cp\u003eThis is where a list of terms and conditions might go.\u003c/p\u003e\u003cp\u003eFor example:\u003c/p\u003e\u003cp\u003eIf you want to sign up on this instance, you oughta know that we:\u003c/p\u003e\u003col\u003e\u003cli\u003eWill sell your data to whoever offers.\u003c/li\u003e\u003cli\u003eSecure the server with password \u003ccode\u003epassword\u003c/code\u003e wherever possible.\u003c/li\u003e\u003c/ol\u003e",
   "terms_text": "This is where a list of terms and conditions might go.\n\nFor example:\n\nIf you want to sign up on this instance, you oughta know that we:\n\n1. Will sell your data to whoever offers.\n2. Secure the server with password `+"`"+`password`+"`"+` wherever possible."
-}`, string(b))
+}`, s)
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontend() {

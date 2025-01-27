@@ -36,39 +36,42 @@ type Application interface {
 	// DeleteApplicationByClientID deletes the application with corresponding client_id value from the database.
 	DeleteApplicationByClientID(ctx context.Context, clientID string) error
 
-	// GetClientByID ...
+	// GetClientByID fetches the application client from database with ID.
 	GetClientByID(ctx context.Context, id string) (*gtsmodel.Client, error)
 
-	// PutClient ...
+	// PutClient puts the given application client in the database.
 	PutClient(ctx context.Context, client *gtsmodel.Client) error
 
-	// DeleteClientByID ...
+	// DeleteClientByID deletes the application client from database with ID.
 	DeleteClientByID(ctx context.Context, id string) error
 
-	// GetAllTokens ...
+	// GetAllTokens fetches all client oauth tokens from database.
 	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
 
-	// GetTokenByCode ...
+	// GetTokenByID fetches the client oauth token from database with ID.
+	GetTokenByID(ctx context.Context, id string) (*gtsmodel.Token, error)
+
+	// GetTokenByCode fetches the client oauth token from database with code.
 	GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error)
 
-	// GetTokenByAccess ...
+	// GetTokenByAccess fetches the client oauth token from database with access code.
 	GetTokenByAccess(ctx context.Context, access string) (*gtsmodel.Token, error)
 
-	// GetTokenByRefresh ...
+	// GetTokenByRefresh fetches the client oauth token from database with refresh code.
 	GetTokenByRefresh(ctx context.Context, refresh string) (*gtsmodel.Token, error)
 
-	// PutToken ...
+	// PutToken puts given client oauth token in the database.
 	PutToken(ctx context.Context, token *gtsmodel.Token) error
 
-	// DeleteTokenByID ...
+	// DeleteTokenByID deletes client oauth token from database with ID.
 	DeleteTokenByID(ctx context.Context, id string) error
 
-	// DeleteTokenByCode ...
+	// DeleteTokenByCode deletes client oauth token from database with code.
 	DeleteTokenByCode(ctx context.Context, code string) error
 
-	// DeleteTokenByAccess ...
+	// DeleteTokenByAccess deletes client oauth token from database with access code.
 	DeleteTokenByAccess(ctx context.Context, access string) error
 
-	// DeleteTokenByRefresh ...
+	// DeleteTokenByRefresh deletes client oauth token from database with refresh code.
 	DeleteTokenByRefresh(ctx context.Context, refresh string) error
 }

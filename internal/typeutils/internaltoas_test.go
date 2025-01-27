@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -38,10 +39,10 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := ap.Serialize(asPerson)
+	ser, err := ap.Serialize(accountable)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -86,9 +87,76 @@ func (suite *InternalToASTestSuite) TestAccountToAS() {
     "owner": "http://localhost:8080/users/the_mighty_zork",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwXTcOAvM1Jiw5Ffpk0qn\nr0cwbNvFe/5zQ+Tp7tumK/ZnT37o7X0FUEXrxNi+dkhmeJ0gsaiN+JQGNUewvpSk\nPIAXKvi908aSfCGjs7bGlJCJCuDuL5d6m7hZnP9rt9fJc70GElPpG0jc9fXwlz7T\nlsPb2ecatmG05Y4jPwdC+oN4MNCv9yQzEvCVMzl76EJaM602kIHC1CISn0rDFmYd\n9rSN7XPlNJw1F6PbpJ/BWQ+pXHKw3OEwNTETAUNYiVGnZU+B7a7bZC9f6/aPbJuV\nt8Qmg+UnDvW1Y8gmfHnxaWG2f5TDBvCHmcYtucIZPLQD4trAozC4ryqlmCWQNKbt\n0wIDAQAB\n-----END PUBLIC KEY-----\n"
   },
+  "published": "2022-05-20T11:09:18Z",
   "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "tag": [],
   "type": "Person",
+  "url": "http://localhost:8080/@the_mighty_zork"
+}`, string(bytes))
+}
+
+func (suite *InternalToASTestSuite) TestAccountToASBot() {
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
+
+	// Update zork to be a bot.
+	testAccount.Bot = util.Ptr(true)
+	if err := suite.state.DB.UpdateAccount(context.Background(), testAccount); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	suite.NoError(err)
+
+	ser, err := ap.Serialize(accountable)
+	suite.NoError(err)
+
+	bytes, err := json.MarshalIndent(ser, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "@context": [
+    "https://w3id.org/security/v1",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "discoverable": "toot:discoverable",
+      "featured": {
+        "@id": "toot:featured",
+        "@type": "@id"
+      },
+      "manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
+  "discoverable": true,
+  "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
+  "followers": "http://localhost:8080/users/the_mighty_zork/followers",
+  "following": "http://localhost:8080/users/the_mighty_zork/following",
+  "icon": {
+    "mediaType": "image/jpeg",
+    "type": "Image",
+    "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg"
+  },
+  "id": "http://localhost:8080/users/the_mighty_zork",
+  "image": {
+    "mediaType": "image/jpeg",
+    "type": "Image",
+    "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
+  },
+  "inbox": "http://localhost:8080/users/the_mighty_zork/inbox",
+  "manuallyApprovesFollowers": false,
+  "name": "original zork (he/they)",
+  "outbox": "http://localhost:8080/users/the_mighty_zork/outbox",
+  "preferredUsername": "the_mighty_zork",
+  "publicKey": {
+    "id": "http://localhost:8080/users/the_mighty_zork/main-key",
+    "owner": "http://localhost:8080/users/the_mighty_zork",
+    "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwXTcOAvM1Jiw5Ffpk0qn\nr0cwbNvFe/5zQ+Tp7tumK/ZnT37o7X0FUEXrxNi+dkhmeJ0gsaiN+JQGNUewvpSk\nPIAXKvi908aSfCGjs7bGlJCJCuDuL5d6m7hZnP9rt9fJc70GElPpG0jc9fXwlz7T\nlsPb2ecatmG05Y4jPwdC+oN4MNCv9yQzEvCVMzl76EJaM602kIHC1CISn0rDFmYd\n9rSN7XPlNJw1F6PbpJ/BWQ+pXHKw3OEwNTETAUNYiVGnZU+B7a7bZC9f6/aPbJuV\nt8Qmg+UnDvW1Y8gmfHnxaWG2f5TDBvCHmcYtucIZPLQD4trAozC4ryqlmCWQNKbt\n0wIDAQAB\n-----END PUBLIC KEY-----\n"
+  },
+  "published": "2022-05-20T11:09:18Z",
+  "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
+  "tag": [],
+  "type": "Service",
   "url": "http://localhost:8080/@the_mighty_zork"
 }`, string(bytes))
 }
@@ -97,10 +165,10 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_2"]
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := ap.Serialize(asPerson)
+	ser, err := ap.Serialize(accountable)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -150,6 +218,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithFields() {
     "owner": "http://localhost:8080/users/1happyturtle",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTc6Jpg6LrRPhVQG4KLz\n2+YqEUUtZPd4YR+TKXuCnwEG9ZNGhgP046xa9h3EWzrZXaOhXvkUQgJuRqPrAcfN\nvc8jBHV2xrUeD8pu/MWKEabAsA/tgCv3nUC47HQ3/c12aHfYoPz3ufWsGGnrkhci\nv8PaveJ3LohO5vjCn1yZ00v6osMJMViEZvZQaazyE9A8FwraIexXabDpoy7tkHRg\nA1fvSkg4FeSG1XMcIz2NN7xyUuFACD+XkuOk7UqzRd4cjPUPLxiDwIsTlcgGOd3E\nUFMWVlPxSGjY2hIKa3lEHytaYK9IMYdSuyCsJshd3/yYC9LqxZY2KdlKJ80VOVyh\nyQIDAQAB\n-----END PUBLIC KEY-----\n"
   },
+  "published": "2022-06-04T13:12:00Z",
   "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
   "tag": [],
   "type": "Person",
@@ -174,10 +243,10 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
 		suite.FailNow(err.Error())
 	}
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := ap.Serialize(asPerson)
+	ser, err := ap.Serialize(accountable)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -231,6 +300,7 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
     "owner": "http://localhost:8080/users/the_mighty_zork",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwXTcOAvM1Jiw5Ffpk0qn\nr0cwbNvFe/5zQ+Tp7tumK/ZnT37o7X0FUEXrxNi+dkhmeJ0gsaiN+JQGNUewvpSk\nPIAXKvi908aSfCGjs7bGlJCJCuDuL5d6m7hZnP9rt9fJc70GElPpG0jc9fXwlz7T\nlsPb2ecatmG05Y4jPwdC+oN4MNCv9yQzEvCVMzl76EJaM602kIHC1CISn0rDFmYd\n9rSN7XPlNJw1F6PbpJ/BWQ+pXHKw3OEwNTETAUNYiVGnZU+B7a7bZC9f6/aPbJuV\nt8Qmg+UnDvW1Y8gmfHnxaWG2f5TDBvCHmcYtucIZPLQD4trAozC4ryqlmCWQNKbt\n0wIDAQAB\n-----END PUBLIC KEY-----\n"
   },
+  "published": "2022-05-20T11:09:18Z",
   "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "tag": [],
   "type": "Person",
@@ -243,10 +313,10 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
 	*testAccount = *suite.testAccounts["local_account_2"]
 	testAccount.Fields = testAccount.Fields[0:1] // Take only one field.
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := ap.Serialize(asPerson)
+	ser, err := ap.Serialize(accountable)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -292,6 +362,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithOneField() {
     "owner": "http://localhost:8080/users/1happyturtle",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtTc6Jpg6LrRPhVQG4KLz\n2+YqEUUtZPd4YR+TKXuCnwEG9ZNGhgP046xa9h3EWzrZXaOhXvkUQgJuRqPrAcfN\nvc8jBHV2xrUeD8pu/MWKEabAsA/tgCv3nUC47HQ3/c12aHfYoPz3ufWsGGnrkhci\nv8PaveJ3LohO5vjCn1yZ00v6osMJMViEZvZQaazyE9A8FwraIexXabDpoy7tkHRg\nA1fvSkg4FeSG1XMcIz2NN7xyUuFACD+XkuOk7UqzRd4cjPUPLxiDwIsTlcgGOd3E\nUFMWVlPxSGjY2hIKa3lEHytaYK9IMYdSuyCsJshd3/yYC9LqxZY2KdlKJ80VOVyh\nyQIDAQAB\n-----END PUBLIC KEY-----\n"
   },
+  "published": "2022-06-04T13:12:00Z",
   "summary": "\u003cp\u003ei post about things that concern me\u003c/p\u003e",
   "tag": [],
   "type": "Person",
@@ -304,10 +375,10 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
 	testAccount.Emojis = []*gtsmodel.Emoji{suite.testEmojis["rainbow"]}
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := ap.Serialize(asPerson)
+	ser, err := ap.Serialize(accountable)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -353,6 +424,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithEmoji() {
     "owner": "http://localhost:8080/users/the_mighty_zork",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwXTcOAvM1Jiw5Ffpk0qn\nr0cwbNvFe/5zQ+Tp7tumK/ZnT37o7X0FUEXrxNi+dkhmeJ0gsaiN+JQGNUewvpSk\nPIAXKvi908aSfCGjs7bGlJCJCuDuL5d6m7hZnP9rt9fJc70GElPpG0jc9fXwlz7T\nlsPb2ecatmG05Y4jPwdC+oN4MNCv9yQzEvCVMzl76EJaM602kIHC1CISn0rDFmYd\n9rSN7XPlNJw1F6PbpJ/BWQ+pXHKw3OEwNTETAUNYiVGnZU+B7a7bZC9f6/aPbJuV\nt8Qmg+UnDvW1Y8gmfHnxaWG2f5TDBvCHmcYtucIZPLQD4trAozC4ryqlmCWQNKbt\n0wIDAQAB\n-----END PUBLIC KEY-----\n"
   },
+  "published": "2022-05-20T11:09:18Z",
   "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "tag": {
     "icon": {
@@ -376,10 +448,10 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
 	sharedInbox := "http://localhost:8080/sharedInbox"
 	testAccount.SharedInboxURI = &sharedInbox
 
-	asPerson, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
 	suite.NoError(err)
 
-	ser, err := ap.Serialize(asPerson)
+	ser, err := ap.Serialize(accountable)
 	suite.NoError(err)
 
 	bytes, err := json.MarshalIndent(ser, "", "  ")
@@ -427,6 +499,7 @@ func (suite *InternalToASTestSuite) TestAccountToASWithSharedInbox() {
     "owner": "http://localhost:8080/users/the_mighty_zork",
     "publicKeyPem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwXTcOAvM1Jiw5Ffpk0qn\nr0cwbNvFe/5zQ+Tp7tumK/ZnT37o7X0FUEXrxNi+dkhmeJ0gsaiN+JQGNUewvpSk\nPIAXKvi908aSfCGjs7bGlJCJCuDuL5d6m7hZnP9rt9fJc70GElPpG0jc9fXwlz7T\nlsPb2ecatmG05Y4jPwdC+oN4MNCv9yQzEvCVMzl76EJaM602kIHC1CISn0rDFmYd\n9rSN7XPlNJw1F6PbpJ/BWQ+pXHKw3OEwNTETAUNYiVGnZU+B7a7bZC9f6/aPbJuV\nt8Qmg+UnDvW1Y8gmfHnxaWG2f5TDBvCHmcYtucIZPLQD4trAozC4ryqlmCWQNKbt\n0wIDAQAB\n-----END PUBLIC KEY-----\n"
   },
+  "published": "2022-05-20T11:09:18Z",
   "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "tag": [],
   "type": "Person",

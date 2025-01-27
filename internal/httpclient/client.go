@@ -178,6 +178,9 @@ func New(cfg Config) *Client {
 	return &c
 }
 
+// RoundTrip allows httpclient.Client{} to be used as an http.Transport{}, just calling Client{}.Do().
+func (c *Client) RoundTrip(r *http.Request) (rsp *http.Response, err error) { return c.Do(r) }
+
 // Do will essentially perform http.Client{}.Do() with retry-backoff functionality.
 func (c *Client) Do(r *http.Request) (rsp *http.Response, err error) {
 

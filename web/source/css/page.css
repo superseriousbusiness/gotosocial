@@ -42,7 +42,26 @@
 	padding: 1.5rem;
 	gap: 1rem;
 
-	a {
+	.trusted-proxies-rec {
+		color: $info-fg;
+		background: $info-bg;
+		max-width: fit-content;
+		padding-left: 1rem;
+		padding-right: 1rem;
+		border-radius: $br;
+		text-align: center;
+		align-self: center;
+
+		code {
+			background: $info-bg;
+		}
+
+		a {
+			color: $info-fg;
+		}
+	}
+
+	& > a {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 1rem;
@@ -115,4 +134,10 @@
 	.page-header {
 		text-align: center;
 	}
+}
+
+.login {
+	position: absolute;
+	top: 2vh;
+	right: 2vh;
 }

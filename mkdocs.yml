@@ -98,6 +98,7 @@ nav:
   - "Configuration":
       - "configuration/index.md"
       - "configuration/general.md"
+      - "configuration/trusted_proxies.md"
       - "configuration/database.md"
       - "configuration/web.md"
       - "configuration/instance.md"

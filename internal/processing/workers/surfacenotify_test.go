@@ -45,6 +45,7 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 		Stream:        testStructs.Processor.Stream(),
 		VisFilter:     visibility.NewFilter(testStructs.State),
 		EmailSender:   testStructs.EmailSender,
+		WebPushSender: testStructs.WebPushSender,
 		Conversations: testStructs.Processor.Conversations(),
 	}
 

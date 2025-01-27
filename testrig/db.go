@@ -61,6 +61,8 @@ var testModels = []interface{}{
 	&gtsmodel.ThreadToStatus{},
 	&gtsmodel.User{},
 	&gtsmodel.UserMute{},
+	&gtsmodel.VAPIDKeyPair{},
+	&gtsmodel.WebPushSubscription{},
 	&gtsmodel.Emoji{},
 	&gtsmodel.Instance{},
 	&gtsmodel.Notification{},
@@ -348,6 +350,12 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 		}
 	}
 
+	for _, v := range NewTestWebPushSubscriptions() {
+		if err := db.Put(ctx, v); err != nil {
+			log.Panic(nil, err)
+		}
+	}
+
 	for _, v := range NewTestInteractionRequests() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(ctx, err)
@@ -366,6 +374,11 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	if err := db.CreateInstanceInstance(ctx); err != nil {
 		log.Panic(ctx, err)
+	}
+
+	// Generates and stores a VAPID key pair as a side effect.
+	if _, err := db.GetVAPIDKeyPair(ctx); err != nil {
+		log.Panic(nil, err)
 	}
 
 	log.Debug(ctx, "testing db setup complete")

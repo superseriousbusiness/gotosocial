@@ -616,6 +616,11 @@ func (c *Converter) AccountToAdminAPIAccount(ctx context.Context, a *gtsmodel.Ac
 }
 
 func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Application) (*apimodel.Application, error) {
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
+	}
+
 	return &apimodel.Application{
 		ID:           a.ID,
 		Name:         a.Name,
@@ -623,6 +628,7 @@ func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Applic
 		RedirectURI:  a.RedirectURI,
 		ClientID:     a.ClientID,
 		ClientSecret: a.ClientSecret,
+		VapidKey:     vapidKeyPair.Public,
 	}, nil
 }
 
@@ -1878,6 +1884,12 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
+	}
+	instance.Configuration.VAPID.PublicKey = vapidKeyPair.Public
+
 	// registrations
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
 	instance.Registrations.ApprovalRequired = true // always required
@@ -2983,5 +2995,38 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		AcceptedAt: acceptedAt,
 		RejectedAt: rejectedAt,
 		URI:        req.URI,
+	}, nil
+}
+
+func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
+	ctx context.Context,
+	subscription *gtsmodel.WebPushSubscription,
+) (*apimodel.WebPushSubscription, error) {
+	vapidKeyPair, err := c.state.DB.GetVAPIDKeyPair(ctx)
+	if err != nil {
+		return nil, gtserror.Newf("error getting VAPID key pair: %w", err)
+	}
+
+	return &apimodel.WebPushSubscription{
+		ID:        subscription.ID,
+		Endpoint:  subscription.Endpoint,
+		ServerKey: vapidKeyPair.Public,
+		Alerts: apimodel.WebPushSubscriptionAlerts{
+			Follow:           subscription.NotificationFlags.Get(gtsmodel.NotificationFollow),
+			FollowRequest:    subscription.NotificationFlags.Get(gtsmodel.NotificationFollowRequest),
+			Favourite:        subscription.NotificationFlags.Get(gtsmodel.NotificationFavourite),
+			Mention:          subscription.NotificationFlags.Get(gtsmodel.NotificationMention),
+			Reblog:           subscription.NotificationFlags.Get(gtsmodel.NotificationReblog),
+			Poll:             subscription.NotificationFlags.Get(gtsmodel.NotificationPoll),
+			Status:           subscription.NotificationFlags.Get(gtsmodel.NotificationStatus),
+			Update:           subscription.NotificationFlags.Get(gtsmodel.NotificationUpdate),
+			AdminSignup:      subscription.NotificationFlags.Get(gtsmodel.NotificationAdminSignup),
+			AdminReport:      subscription.NotificationFlags.Get(gtsmodel.NotificationAdminReport),
+			PendingFavourite: subscription.NotificationFlags.Get(gtsmodel.NotificationPendingFave),
+			PendingReply:     subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReply),
+			PendingReblog:    subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReblog),
+		},
+		Policy:   apimodel.WebPushNotificationPolicyAll,
+		Standard: true,
 	}, nil
 }

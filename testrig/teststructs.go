@@ -47,6 +47,7 @@ type TestStructs struct {
 	HTTPClient          *MockHTTPClient
 	TypeConverter       *typeutils.Converter
 	EmailSender         email.Sender
+	WebPushSender       *WebPushMockSender
 	TransportController transport.Controller
 }
 
@@ -83,6 +84,7 @@ func SetupTestStructs(
 	federator := NewTestFederator(&state, transportController, mediaManager)
 	oauthServer := NewTestOauthServer(db)
 	emailSender := NewEmailSender(rTemplatePath, nil)
+	webPushSender := NewWebPushMockSender()
 
 	common := common.New(
 		&state,
@@ -101,6 +103,7 @@ func SetupTestStructs(
 		mediaManager,
 		&state,
 		emailSender,
+		webPushSender,
 		visFilter,
 		intFilter,
 	)
@@ -117,6 +120,7 @@ func SetupTestStructs(
 		HTTPClient:          httpClient,
 		TypeConverter:       typeconverter,
 		EmailSender:         emailSender,
+		WebPushSender:       webPushSender,
 		TransportController: transportController,
 	}
 }

@@ -135,6 +135,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 		suite.mediaManager,
 		&suite.state,
 		suite.emailSender,
+		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)

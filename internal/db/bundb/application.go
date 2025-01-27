@@ -174,6 +174,16 @@ func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, er
 	return tokens, nil
 }
 
+func (a *applicationDB) GetTokenByID(ctx context.Context, code string) (*gtsmodel.Token, error) {
+	return a.getTokenBy(
+		"ID",
+		func(t *gtsmodel.Token) error {
+			return a.db.NewSelect().Model(t).Where("? = ?", bun.Ident("id"), code).Scan(ctx)
+		},
+		code,
+	)
+}
+
 func (a *applicationDB) GetTokenByCode(ctx context.Context, code string) (*gtsmodel.Token, error) {
 	return a.getTokenBy(
 		"Code",

@@ -149,6 +149,21 @@ func newMapOfTable[K comparable, V any](minTableLen int) *mapOfTable[K, V] {
 	return t
 }
 
+// ToPlainMapOf returns a native map with a copy of xsync Map's
+// contents. The copied xsync Map should not be modified while
+// this call is made. If the copied Map is modified, the copying
+// behavior is the same as in the Range method.
+func ToPlainMapOf[K comparable, V any](m *MapOf[K, V]) map[K]V {
+	pm := make(map[K]V)
+	if m != nil {
+		m.Range(func(key K, value V) bool {
+			pm[key] = value
+			return true
+		})
+	}
+	return pm
+}
+
 // Load returns the value stored in the map for a key, or zero value
 // of type V if no value is present.
 // The ok result indicates whether value was found in the map.
@@ -237,6 +252,34 @@ func (m *MapOf[K, V]) LoadOrCompute(key K, valueFn func() V) (actual V, loaded b
 		key,
 		func(V, bool) (V, bool) {
 			return valueFn(), false
+		},
+		true,
+		false,
+	)
+}
+
+// LoadOrTryCompute returns the existing value for the key if present.
+// Otherwise, it tries to compute the value using the provided function
+// and, if success, returns the computed value. The loaded result is true
+// if the value was loaded, false if stored. If the compute attempt was
+// cancelled, a zero value of type V will be returned.
+//
+// This call locks a hash table bucket while the compute function
+// is executed. It means that modifications on other entries in
+// the bucket will be blocked until the valueFn executes. Consider
+// this when the function includes long-running operations.
+func (m *MapOf[K, V]) LoadOrTryCompute(
+	key K,
+	valueFn func() (newValue V, cancel bool),
+) (value V, loaded bool) {
+	return m.doCompute(
+		key,
+		func(V, bool) (V, bool) {
+			nv, c := valueFn()
+			if !c {
+				return nv, false
+			}
+			return nv, true // nv is ignored
 		},
 		true,
 		false,
@@ -390,11 +433,11 @@ func (m *MapOf[K, V]) doCompute(
 			if b.next == nil {
 				if emptyb != nil {
 					// Insertion into an existing bucket.
-					var zeroedV V
-					newValue, del := valueFn(zeroedV, false)
+					var zeroV V
+					newValue, del := valueFn(zeroV, false)
 					if del {
 						rootb.mu.Unlock()
-						return zeroedV, false
+						return zeroV, false
 					}
 					newe := new(entryOf[K, V])
 					newe.key = key
@@ -414,8 +457,8 @@ func (m *MapOf[K, V]) doCompute(
 					goto compute_attempt
 				}
 				// Insertion into a new bucket.
-				var zeroedV V
-				newValue, del := valueFn(zeroedV, false)
+				var zeroV V
+				newValue, del := valueFn(zeroV, false)
 				if del {
 					rootb.mu.Unlock()
 					return newValue, false

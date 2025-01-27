@@ -110,3 +110,22 @@ func zipContains(raw, sig []byte, msoCheck bool) bool {
 	}
 	return false
 }
+
+// APK matches an Android Package Archive.
+// The source of signatures is https://github.com/file/file/blob/1778642b8ba3d947a779a36fcd81f8e807220a19/magic/Magdir/archive#L1820-L1887
+func APK(raw []byte, _ uint32) bool {
+	apkSignatures := [][]byte{
+		[]byte("AndroidManifest.xml"),
+		[]byte("META-INF/com/android/build/gradle/app-metadata.properties"),
+		[]byte("classes.dex"),
+		[]byte("resources.arsc"),
+		[]byte("res/drawable"),
+	}
+	for _, sig := range apkSignatures {
+		if zipContains(raw, sig, false) {
+			return true
+		}
+	}
+
+	return false
+}
