@@ -84,7 +84,7 @@ github.com/Masterminds/semver/v3
 # github.com/Masterminds/sprig/v3 v3.2.3
 ## explicit; go 1.13
 github.com/Masterminds/sprig/v3
-# github.com/SherClockHolmes/webpush-go v1.3.0
+# github.com/SherClockHolmes/webpush-go v1.4.0
 ## explicit; go 1.13
 github.com/SherClockHolmes/webpush-go
 # github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
@@ -342,6 +342,9 @@ github.com/godbus/dbus/v5
 # github.com/golang-jwt/jwt v3.2.2+incompatible
 ## explicit
 github.com/golang-jwt/jwt
+# github.com/golang-jwt/jwt/v5 v5.2.1
+## explicit; go 1.18
+github.com/golang-jwt/jwt/v5
 # github.com/golang/geo v0.0.0-20200319012246-673a6f80352d
 ## explicit; go 1.12
 github.com/golang/geo/r1
