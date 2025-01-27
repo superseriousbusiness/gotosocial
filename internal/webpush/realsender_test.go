@@ -24,6 +24,9 @@ import (
 	"testing"
 	"time"
 
+	// for go:linkname
+	_ "unsafe"
+
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -120,7 +123,7 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.webPushSender = webpush.NewRealSender(
+	suite.webPushSender = newSenderWith(
 		&http.Client{
 			Transport: suite,
 		},
@@ -261,3 +264,6 @@ func (suite *RealSenderStandardTestSuite) TestServerError() {
 func TestRealSenderStandardTestSuite(t *testing.T) {
 	suite.Run(t, &RealSenderStandardTestSuite{})
 }
+
+//go:linkname newSenderWith github.com/superseriousbusiness/gotosocial/internal/webpush.newSenderWith
+func newSenderWith(*http.Client, *state.State, *typeutils.Converter) webpush.Sender
