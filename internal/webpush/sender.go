@@ -30,7 +30,9 @@ import (
 
 // Sender can send Web Push notifications.
 type Sender interface {
-	// Send queues up a notification for delivery to all of an account's Web Push subscriptions.
+
+	// Send queues up a notification for delivery to
+	// all of an account's Web Push subscriptions.
 	Send(
 		ctx context.Context,
 		notification *gtsmodel.Notification,
@@ -53,5 +55,14 @@ func NewSender(httpClient *httpclient.Client, state *state.State, converter *typ
 		},
 		state:     state,
 		converter: converter,
+	}
+}
+
+// an internal function purely existing for the webpush test package to link to and use a custom http.Client{}.
+func newSenderWith(client *http.Client, state *state.State, converter *typeutils.Converter) Sender {
+	return &realSender{
+		httpClient: client,
+		state:      state,
+		converter:  converter,
 	}
 }

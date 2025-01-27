@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package webpush
+package webpush_test
 
 import (
 	"context"
@@ -23,6 +23,9 @@ import (
 	"net/http"
 	"testing"
 	"time"
+
+	// for go:linkname
+	_ "unsafe"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
@@ -40,6 +43,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"github.com/superseriousbusiness/gotosocial/internal/webpush"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -55,7 +59,7 @@ type RealSenderStandardTestSuite struct {
 	federator           *federation.Federator
 	oauthServer         oauth.Server
 	emailSender         email.Sender
-	webPushSender       Sender
+	webPushSender       webpush.Sender
 
 	// standard suite models
 	testTokens               map[string]*gtsmodel.Token
@@ -119,13 +123,13 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
-	suite.webPushSender = &realSender{
+	suite.webPushSender = newSenderWith(
 		&http.Client{
 			Transport: suite,
 		},
 		&suite.state,
 		suite.typeconverter,
-	}
+	)
 
 	suite.processor = processing.NewProcessor(
 		cleaner.New(&suite.state),
@@ -260,3 +264,6 @@ func (suite *RealSenderStandardTestSuite) TestServerError() {
 func TestRealSenderStandardTestSuite(t *testing.T) {
 	suite.Run(t, &RealSenderStandardTestSuite{})
 }
+
+//go:linkname newSenderWith github.com/superseriousbusiness/gotosocial/internal/webpush.newSenderWith
+func newSenderWith(*http.Client, *state.State, *typeutils.Converter) webpush.Sender
