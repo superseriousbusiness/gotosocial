@@ -200,6 +200,21 @@ func newMapTable(minTableLen int) *mapTable {
 	return t
 }
 
+// ToPlainMap returns a native map with a copy of xsync Map's
+// contents. The copied xsync Map should not be modified while
+// this call is made. If the copied Map is modified, the copying
+// behavior is the same as in the Range method.
+func ToPlainMap(m *Map) map[string]interface{} {
+	pm := make(map[string]interface{})
+	if m != nil {
+		m.Range(func(key string, value interface{}) bool {
+			pm[key] = value
+			return true
+		})
+	}
+	return pm
+}
+
 // Load returns the value stored in the map for a key, or nil if no
 // value is present.
 // The ok result indicates whether value was found in the map.
@@ -275,6 +290,34 @@ func (m *Map) LoadAndStore(key string, value interface{}) (actual interface{}, l
 			return value, false
 		},
 		false,
+		false,
+	)
+}
+
+// LoadOrTryCompute returns the existing value for the key if present.
+// Otherwise, it tries to compute the value using the provided function
+// and, if success, returns the computed value. The loaded result is true
+// if the value was loaded, false if stored. If the compute attempt was
+// cancelled, a nil will be returned.
+//
+// This call locks a hash table bucket while the compute function
+// is executed. It means that modifications on other entries in
+// the bucket will be blocked until the valueFn executes. Consider
+// this when the function includes long-running operations.
+func (m *Map) LoadOrTryCompute(
+	key string,
+	valueFn func() (newValue interface{}, cancel bool),
+) (value interface{}, loaded bool) {
+	return m.doCompute(
+		key,
+		func(interface{}, bool) (interface{}, bool) {
+			nv, c := valueFn()
+			if !c {
+				return nv, false
+			}
+			return nil, true
+		},
+		true,
 		false,
 	)
 }
@@ -447,11 +490,11 @@ func (m *Map) doCompute(
 			if b.next == nil {
 				if emptyb != nil {
 					// Insertion into an existing bucket.
-					var zeroedV interface{}
-					newValue, del := valueFn(zeroedV, false)
+					var zeroV interface{}
+					newValue, del := valueFn(zeroV, false)
 					if del {
 						unlockBucket(&rootb.topHashMutex)
-						return zeroedV, false
+						return zeroV, false
 					}
 					// First we update the value, then the key.
 					// This is important for atomic snapshot states.
@@ -471,8 +514,8 @@ func (m *Map) doCompute(
 					goto compute_attempt
 				}
 				// Insertion into a new bucket.
-				var zeroedV interface{}
-				newValue, del := valueFn(zeroedV, false)
+				var zeroV interface{}
+				newValue, del := valueFn(zeroV, false)
 				if del {
 					unlockBucket(&rootb.topHashMutex)
 					return newValue, false
