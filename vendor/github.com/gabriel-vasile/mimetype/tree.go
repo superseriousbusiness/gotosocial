@@ -44,7 +44,11 @@ var (
 		"application/gzip-compressed", "application/x-gzip-compressed",
 		"gzip/document")
 	sevenZ = newMIME("application/x-7z-compressed", ".7z", magic.SevenZ)
-	zip    = newMIME("application/zip", ".zip", magic.Zip, xlsx, docx, pptx, epub, jar, odt, ods, odp, odg, odf, odc, sxc).
+	// APK must be checked before JAR because APK is a subset of JAR.
+	// This means APK should be a child of JAR detector, but in practice,
+	// the decisive signature for JAR might be located at the end of the file
+	// and not reachable because of library readLimit.
+	zip = newMIME("application/zip", ".zip", magic.Zip, xlsx, docx, pptx, epub, apk, jar, odt, ods, odp, odg, odf, odc, sxc).
 		alias("application/x-zip", "application/x-zip-compressed")
 	tar = newMIME("application/x-tar", ".tar", magic.Tar)
 	xar = newMIME("application/x-xar", ".xar", magic.Xar)
@@ -57,6 +61,7 @@ var (
 	pptx = newMIME("application/vnd.openxmlformats-officedocument.presentationml.presentation", ".pptx", magic.Pptx)
 	epub = newMIME("application/epub+zip", ".epub", magic.Epub)
 	jar  = newMIME("application/jar", ".jar", magic.Jar)
+	apk  = newMIME("application/vnd.android.package-archive", ".apk", magic.APK)
 	ole  = newMIME("application/x-ole-storage", "", magic.Ole, msi, aaf, msg, xls, pub, ppt, doc)
 	msi  = newMIME("application/x-ms-installer", ".msi", magic.Msi).
 		alias("application/x-windows-installer", "application/x-msi")
