@@ -170,8 +170,11 @@ func (suite *PlainTestSuite) TestDeriveMultiple() {
 func (suite *PlainTestSuite) TestZalgoHashtag() {
 	statusText := `yo who else loves #praying to #z̸͉̅a̸͚͋l̵͈̊g̸̫͌ỏ̷̪?`
 	f := suite.FromPlain(statusText)
-	suite.Len(f.Tags, 1)
-	suite.Equal("praying", f.Tags[0].Name)
+	if suite.Len(f.Tags, 2) {
+		suite.Equal("praying", f.Tags[0].Name)
+		// NFC doesn't do much for Zalgo text, but it's difficult to strip marks without affecting non-Latin text.
+		suite.Equal("z̸͉̅a̸͚͋l̵͈̊g̸̫͌ỏ̷̪", f.Tags[1].Name)
+	}
 }
 
 func TestPlainTestSuite(t *testing.T) {

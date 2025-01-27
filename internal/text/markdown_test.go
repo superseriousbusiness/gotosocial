@@ -50,6 +50,8 @@ const (
 	withInlineCode2Expected         = "<p><code>Nobody tells you about the &lt;/code>&lt;del>SECRET CODE&lt;/del>&lt;code>, do they?</code></p>"
 	withHashtag                     = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
 	withHashtagExpected             = "<h1>Title</h1><p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
+	withTamilHashtag                = "here's a simple status that uses a hashtag in Tamil #தமிழ்"
+	withTamilHashtagExpected        = "<p>here's a simple status that uses a hashtag in Tamil <a href=\"http://localhost:8080/tags/%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>தமிழ்</span></a></p>"
 	mdWithHTML                      = "# Title\n\nHere's a simple text in markdown.\n\nHere's a <a href=\"https://example.org\">link</a>.\n\nHere's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\">"
 	mdWithHTMLExpected              = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here's an image:</p>"
 	mdWithCheekyHTML                = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
@@ -119,6 +121,12 @@ func (suite *MarkdownTestSuite) TestParseWithInlineCode2() {
 func (suite *MarkdownTestSuite) TestParseWithHashtag() {
 	formatted := suite.FromMarkdown(withHashtag)
 	suite.Equal(withHashtagExpected, formatted.HTML)
+}
+
+// Regressiom test for https://github.com/superseriousbusiness/gotosocial/issues/3618
+func (suite *MarkdownTestSuite) TestParseWithTamilHashtag() {
+	formatted := suite.FromMarkdown(withTamilHashtag)
+	suite.Equal(withTamilHashtagExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithHTML() {
