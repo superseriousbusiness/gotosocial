@@ -25,6 +25,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/activity/streams"
+	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -115,8 +116,10 @@ func (suite *CreateTestSuite) TestCreateFlag1() {
 		suite.FailNow(err.Error())
 	}
 
+	flag := t.(vocab.ActivityStreamsFlag)
+
 	ctx := createTestContext(reportedAccount, reportingAccount)
-	if err := suite.federatingDB.Create(ctx, t); err != nil {
+	if err := suite.federatingDB.Flag(ctx, flag); err != nil {
 		suite.FailNow(err.Error())
 	}
 
