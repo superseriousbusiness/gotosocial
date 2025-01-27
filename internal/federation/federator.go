@@ -80,7 +80,15 @@ func NewFederator(
 		),
 
 		// prepared response to FederatingCallbacks()
-		wrapped: pub.FederatingWrappedCallbacks{},
+		wrapped: pub.FederatingWrappedCallbacks{
+
+			// OnFollow determines what action to take for this
+			// particular callback if a Follow Activity is handled.
+			//
+			// For our implementation, we always want to do nothing
+			// because we have internal logic for handling follows.
+			OnFollow: pub.OnFollowDoNothing,
+		},
 		callback: []any{
 			federatingDB.Like,
 			federatingDB.Block,
