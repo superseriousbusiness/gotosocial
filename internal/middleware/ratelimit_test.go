@@ -20,6 +20,7 @@ package middleware_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"net/netip"
 	"strconv"
 	"testing"
 	"time"
@@ -47,60 +48,37 @@ func (suite *RateLimitTestSuite) TestRateLimit() {
 
 	type rlTest struct {
 		limit        int
-		exceptions   []string
+		exceptions   []netip.Prefix
 		clientIP     string
-		shouldPanic  bool
 		shouldExcept bool
 	}
 
 	for _, test := range []rlTest{
 		{
 			limit:        10,
-			exceptions:   []string{},
+			exceptions:   nil,
 			clientIP:     "192.0.2.0",
-			shouldPanic:  false,
 			shouldExcept: false,
 		},
 		{
 			limit:        10,
-			exceptions:   []string{},
+			exceptions:   nil,
 			clientIP:     "192.0.2.0",
-			shouldPanic:  false,
 			shouldExcept: false,
 		},
 		{
 			limit:        10,
-			exceptions:   []string{"192.0.2.0/24"},
+			exceptions:   []netip.Prefix{netip.MustParsePrefix("192.0.2.0/24")},
 			clientIP:     "192.0.2.0",
-			shouldPanic:  false,
 			shouldExcept: true,
 		},
 		{
 			limit:        10,
-			exceptions:   []string{"192.0.2.0/32"},
+			exceptions:   []netip.Prefix{netip.MustParsePrefix("192.0.2.0/32")},
 			clientIP:     "192.0.2.1",
-			shouldPanic:  false,
-			shouldExcept: false,
-		},
-		{
-			limit:        10,
-			exceptions:   []string{"Ceci n'est pas une CIDR"},
-			clientIP:     "192.0.2.0",
-			shouldPanic:  true,
 			shouldExcept: false,
 		},
 	} {
-		if test.shouldPanic {
-			// Try to trigger panic.
-			suite.Panics(func() {
-				_ = middleware.RateLimit(
-					test.limit,
-					test.exceptions,
-				)
-			})
-			continue
-		}
-
 		rlMiddleware := middleware.RateLimit(
 			test.limit,
 			test.exceptions,

@@ -19,6 +19,7 @@
 package config
 
 import (
+	"net/netip"
 	"time"
 
 	"codeberg.org/gruf/go-bytesize"
@@ -2680,6 +2681,35 @@ func GetAdvancedRateLimitExceptions() []string { return global.GetAdvancedRateLi
 
 // SetAdvancedRateLimitExceptions safely sets the value for global configuration 'AdvancedRateLimitExceptions' field
 func SetAdvancedRateLimitExceptions(v []string) { global.SetAdvancedRateLimitExceptions(v) }
+
+// GetAdvancedRateLimitExceptionsParsed safely fetches the Configuration value for state's 'AdvancedRateLimitExceptionsParsed' field
+func (st *ConfigState) GetAdvancedRateLimitExceptionsParsed() (v []netip.Prefix) {
+	st.mutex.RLock()
+	v = st.config.AdvancedRateLimitExceptionsParsed
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedRateLimitExceptionsParsed safely sets the Configuration value for state's 'AdvancedRateLimitExceptionsParsed' field
+func (st *ConfigState) SetAdvancedRateLimitExceptionsParsed(v []netip.Prefix) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedRateLimitExceptionsParsed = v
+	st.reloadToViper()
+}
+
+// AdvancedRateLimitExceptionsParsedFlag returns the flag name for the 'AdvancedRateLimitExceptionsParsed' field
+func AdvancedRateLimitExceptionsParsedFlag() string { return "" }
+
+// GetAdvancedRateLimitExceptionsParsed safely fetches the value for global configuration 'AdvancedRateLimitExceptionsParsed' field
+func GetAdvancedRateLimitExceptionsParsed() []netip.Prefix {
+	return global.GetAdvancedRateLimitExceptionsParsed()
+}
+
+// SetAdvancedRateLimitExceptionsParsed safely sets the value for global configuration 'AdvancedRateLimitExceptionsParsed' field
+func SetAdvancedRateLimitExceptionsParsed(v []netip.Prefix) {
+	global.SetAdvancedRateLimitExceptionsParsed(v)
+}
 
 // GetAdvancedThrottlingMultiplier safely fetches the Configuration value for state's 'AdvancedThrottlingMultiplier' field
 func (st *ConfigState) GetAdvancedThrottlingMultiplier() (v int) {
