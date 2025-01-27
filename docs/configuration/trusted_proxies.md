@@ -129,7 +129,7 @@ Once you have made the necessary configuration changes, **restart your instance*
 
 If nothing else works, you can disable rate limiting entirely, which will also disable the `trusted-proxies` check and warning.
 
-!!! warnings
+!!! warning
     Turning off rate limiting entirely should be considered a last resort, as rate limiting helps protect your instance from spam and scrapers.
 
 To turn off rate limiting, set `advanced-rate-limit-requests` to 0 in your `config.yaml`.
