@@ -1,0 +1,114 @@
+/*
+	GoToSocial
+	Copyright (C) GoToSocial Authors admin@gotosocial.org
+	SPDX-License-Identifier: AGPL-3.0-or-later
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*
+	Reuse about styling, but rework it
+	to separate sections a bit more.
+*/
+.about {
+	padding: 0;
+	
+	background: initial;
+	box-shadow: initial;
+	border: initial;
+	border-radius: initial;
+
+	.about-section {
+		padding: 2rem;
+		background: $bg-accent;
+		box-shadow: $boxshadow;
+		border: $boxshadow-border;
+		border-radius: $br;
+
+		h3 {
+			margin-top: 0px;
+		}
+	}
+
+	& > .about-section.settings {
+		display: flex;
+		flex-direction: row;
+		gap: 1rem;
+		align-items: center;
+		justify-content: center;
+	
+		padding-top: 1rem;
+		padding-bottom: 1rem;
+	
+		p.settings-text {
+			margin-top: auto;
+			margin-bottom: auto;
+			flex: auto;
+		}
+	
+		.settings-button {
+			flex: auto;
+		}
+	}
+
+	& > .about-section.apps {
+		align-self: start;
+	
+		.applist {
+			margin: 0;
+			padding: 0;
+	
+			display: grid;
+			grid-template-columns: 1fr 1fr;
+			grid-gap: 0.5rem;
+			align-content: start;
+	
+			.applist-entry {
+				display: grid;
+				grid-template-columns: 25% 1fr;
+				grid-template-areas: "logo text";
+				gap: 1.5rem;
+				padding: 0.5rem;
+	
+				.applist-logo {
+					grid-area: logo;
+					align-self: center;
+					justify-self: center;
+					width: 100%;
+					object-fit: contain;
+					flex: 1 1 auto;
+				}
+	
+				.applist-logo.redraw {
+					fill: $fg;
+					stroke: $fg;
+				}
+	
+				.applist-text {
+					grid-area: text;
+					
+					a {
+						font-weight: bold;
+					}
+				}
+			}
+		}
+
+		@media screen and (max-width: 600px) {
+			.applist {
+				grid-template-columns: 1fr;
+			}
+		}
+	}
+}

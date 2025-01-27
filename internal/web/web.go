@@ -59,14 +59,15 @@ const (
 	eTagHeader            = "ETag"              // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
 	lastModifiedHeader    = "Last-Modified"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 
-	cssFA       = assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css"
-	cssAbout    = distPathPrefix + "/about.css"
-	cssIndex    = distPathPrefix + "/index.css"
-	cssStatus   = distPathPrefix + "/status.css"
-	cssThread   = distPathPrefix + "/thread.css"
-	cssProfile  = distPathPrefix + "/profile.css"
-	cssSettings = distPathPrefix + "/settings-style.css"
-	cssTag      = distPathPrefix + "/tag.css"
+	cssFA        = assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css"
+	cssAbout     = distPathPrefix + "/about.css"
+	cssIndex     = distPathPrefix + "/index.css"
+	cssLoginInfo = distPathPrefix + "/login-info.css"
+	cssStatus    = distPathPrefix + "/status.css"
+	cssThread    = distPathPrefix + "/thread.css"
+	cssProfile   = distPathPrefix + "/profile.css"
+	cssSettings  = distPathPrefix + "/settings-style.css"
+	cssTag       = distPathPrefix + "/tag.css"
 
 	jsFrontend = distPathPrefix + "/frontend.js" // Progressive enhancement frontend JS.
 	jsSettings = distPathPrefix + "/settings.js" // Settings panel React application.
@@ -121,6 +122,7 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodPost, confirmEmailPath, m.confirmEmailPOSTHandler)
 	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
 	r.AttachHandler(http.MethodGet, aboutPath, m.aboutGETHandler)
+	r.AttachHandler(http.MethodGet, loginPath, m.loginGETHandler)
 	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
 	r.AttachHandler(http.MethodGet, tagsPath, m.tagGETHandler)
 	r.AttachHandler(http.MethodGet, signupPath, m.signupGETHandler)

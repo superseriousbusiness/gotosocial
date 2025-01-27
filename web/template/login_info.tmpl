@@ -1,0 +1,157 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<main class="about">
+    <section role="region" class="about-section settings">
+        <p class="settings-text">
+            Looking to configure your profile and other settings?
+        </p>
+        <a
+            class="settings-button button with-icon"
+            href="/settings"
+            alt="Log in to the GoToSocial settings panel"
+            title="Log in to the GoToSocial settings panel"
+        >
+            Settings
+        </a>
+    </section>
+    <section role="region" class="about-section apps" aria-labelledby="apps">
+        <h3 id="apps">Client applications</h3>
+        <div class="about-section-contents">
+            <p>
+                Want to log in and start posting? 
+                Unlike other ActivityPub softwares, GoToSocial does not provide its own
+                webclient. Instead it implements the Mastodon client API, so you can use
+                a variety of third-party clients to log in to your account here:
+            </p>
+            <ul class="applist nodot" role="group">
+                <li class="applist-entry">
+                    <div class="applist-text">
+                        <p><strong>Pinafore</strong> is a web client designed for speed and simplicity.</p>
+                        <a
+                            href="https://pinafore.social/"
+                            rel="nofollow noreferrer noopener"
+                            target="_blank"
+                        >
+                            Use Pinafore
+                        </a>
+                    </div>
+                    <svg
+                        role="img"
+                        aria-labelledby="pinafore-title pinafore-desc"
+                        class="applist-logo redraw"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 10000 10000"
+                        width="100"
+                        height="100"
+                    >
+                        <title id="pinafore-title">The Pinafore logo</title>
+                        <desc id="pinafore-desc">A sailboat</desc>
+                        <path d="M9212 5993H5987V823c1053 667 2747 2177 3225 5170zM3100 2690A12240 12240 0 01939 6035h2161zm676 7210h2448a3067 3067 0 003067-3067H5052V627a527 527 0 00-1052 0v6206H709a3067 3067 0 003067 3067z"></path>
+                    </svg>
+                </li>
+                <li class="applist-entry">
+                    <div class="applist-text">
+                        <p><strong>Tusky</strong> is a lightweight mobile client for Android.</p>
+                        <a
+                            href="https://tusky.app"
+                            rel="nofollow noreferrer noopener"
+                            target="_blank"
+                        >
+                            Get Tusky
+                        </a>
+                    </div>
+                    <img
+                        class="applist-logo"
+                        src="/assets/tusky.svg"
+                        alt="The Tusky mascot, a cartoon elephant tooting happily"
+                        title="The Tusky mascot, a cartoon elephant tooting happily"
+                        width="100"
+                        height="100"
+                    />
+                </li>
+                <li class="applist-entry">
+                    <div class="applist-text">
+                        <p><strong>Feditext</strong> (beta) is a beautiful client for iOS, iPadOS and macOS.</p>
+                        <a
+                            href="https://github.com/feditext/feditext"
+                            rel="nofollow noreferrer noopener"
+                            target="_blank"
+                        >
+                            Get Feditext
+                        </a>
+                    </div>
+                    <img
+                        class="applist-logo"
+                        src="/assets/feditext.svg"
+                        alt="The Feditext logo, the characters 'ft' at a slight angle"
+                        title="The Feditext logo, the characters 'ft' at a slight angle"
+                        width="100"
+                        height="100"
+                    />
+                </li>
+                <li class="applist-entry">
+                    <div class="applist-text">
+                        <p>
+                            <strong>Masto-FE (🦥 flavour)</strong> is an (experimental!) client based on
+                            the Mastodon Glitch web frontend, with some small changes specific to GoToSocial.
+                        </p>
+                        <a
+                            href="https://masto-fe.superseriousbusiness.org"
+                            rel="nofollow noreferrer noopener"
+                            target="_blank"
+                        >
+                            Try Masto-FE (🦥 flavour)
+                        </a>
+                    </div>
+                    <img
+                        class="applist-logo"
+                        src="/assets/mastodon.svg"
+                        alt="The Mastodon logo, the character 'M' in a speech bubble"
+                        title="The Mastodon logo, the character 'M' in a speech bubble"
+                        width="100"
+                        height="100"
+                    />
+                </li>
+                <li class="applist-entry">
+                    <div class="applist-text">
+                        <p>Or try one of the <strong>Mastodon clients</strong> listed on the official Mastodon page.</p>
+                        <a
+                            href="https://joinmastodon.org/apps"
+                            rel="nofollow noreferrer noopener"
+                            target="_blank"
+                        >
+                            Browse Mastodon apps
+                        </a>
+                    </div>
+                    <img
+                        class="applist-logo"
+                        src="/assets/ellipsis.svg"
+                        alt="Three ellipses in a row, MIT license svgrepo.com"
+                        title="Three ellipses in a row, MIT license svgrepo.com"
+                        width="100"
+                        height="100"
+                    />
+                </li>
+            </ul>
+        </div>
+    </section>
+</main>
+{{- end }}

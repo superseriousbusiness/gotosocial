@@ -17,24 +17,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "shortDescription" -}}
-{{- if .instance.ShortDescription }}
-{{ .instance.ShortDescription | noescape }}
-{{- else }}
-<p>No short description has yet been set for this instance.</p>
-{{- end }}
-{{- end -}}
-
-{{- with . }}
-<main class="about">
-    <section class="about-section" role="region" aria-labelledby="about">
-        <h3 id="about">About this instance</h3>
-        <div class="about-section-contents">
-            {{- include "shortDescription" . | indent 3 }}
-            <a href="/about">See more details</a>
-        </div>
-    </section>
-    {{- include "index_what_is_this.tmpl" . | indent 1 }}
-    {{- include "index_register.tmpl" . | indent 1 }}
-</main>
+{{- if .showLoginButton }}
+<div class="login"><a href="/login" class="button with-icon">Log in</a></div>
 {{- end }}
