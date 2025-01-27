@@ -59,7 +59,7 @@ func NewSender(httpClient *httpclient.Client, state *state.State, converter *typ
 }
 
 // an internal function purely existing for the webpush test package to link to and use a custom http.Client{}.
-func newSenderWith(client *http.Client, state *state.State, converter *typeutils.Converter) Sender {
+func newSenderWith(client *http.Client, state *state.State, converter *typeutils.Converter) Sender { //nolint:unused
 	return &realSender{
 		httpClient: client,
 		state:      state,
