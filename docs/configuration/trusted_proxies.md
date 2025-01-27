@@ -27,17 +27,17 @@ Before (default config):
 
 ```yaml
 trusted-proxies:
-    - "127.0.0.1/32"
-    - "::1"
+  - "127.0.0.1/32"
+  - "::1"
 ```
 
 After (new config):
 
 ```yaml
 trusted-proxies:
-    - "172.17.0.1/16"
-    - "127.0.0.1/32"
-    - "::1"
+  - "172.17.0.1/16"
+  - "127.0.0.1/32"
+  - "::1"
 ```
 
 If you are using [environment variables](../configuration/index.md#environment-variables) to configure your instance, you can configure `trusted-proxies` by setting the environment variable `GTS_TRUSTED_PROXIES` to a comma-separated list of IP ranges, like so:
@@ -74,6 +74,98 @@ If you still see the warning message but with a different suggested IP range to 
 
 ## I can't seem to get `trusted-proxies` configured properly, can I just disable the warning?
 
-There are some situations where it's not practically possible to get `trusted-proxies` configured correctly to detect the real client IP of incoming requests For example, if you're running GoToSocial behind a home internet router that cannot inject an `X-Forwarded-For` header, then your suggested entry to add to `trusted-proxies` will look something like `192.168.x.x`, but adding this to `trusted-proxies` won't resolve the issue.
+There are some situations where it's not practically possible to get `trusted-proxies` configured correctly to detect the real client IP of incoming requests, or where the real client IP is accurate but still shows as being within a private network.
 
-If you've tried everything, then you can disable the warning message by just turning off rate limiting entirely, ie., by setting `advanced-rate-limit-requests` to 0 in your config.yaml, or setting the environment variable `GTS_ADVANCED_RATE_LIMIT_REQUESTS` to 0. Don't forget to **restart your instance** after changing this setting.
+For example, if you're running GoToSocial on your home network, behind a home internet router that cannot inject an `X-Forwarded-For` header, then your suggested entry to add to `trusted-proxies` will look something like `192.168.x.x`, but adding this to `trusted-proxies` won't resolve the issue.
+
+Another example: you're running GoToSocial on your home network, behind a home internet router, and you are accessing the web frontend from a device that's *also* on your home network, like your laptop or phone. In this case, your router may send you directly to your GoToSocial instance without your request ever leaving the network, and so GtS will correctly see *your* client IP address as a private network address, but *other* requests coming in from the wider internet will show their real remote client IP addresses. In this scenario, the `trusted-proxies` warning does not really apply.
+
+If you've tried editing your `trusted-proxies` setting, but you still see the warning, then it's likely that one of the above examples applies to you. You can proceed in one of two ways:
+
+### Add specific exception for your home network (preferred)
+
+If the suggested IP range in the `trusted-proxies` warning looks something like `192.168.x.x`, but you still see other client IPs in your GoToSocial logs that don't start with `192.168`, then try adding a rate limiting exception only for devices on your home network, while leaving rate limiting in place for outside IP addresses.
+
+For example, if your suggestion is something like `192.168.1.128/32`, then swap the `/32` for `/24` so that the range covers `192.168.1.0` -> `192.168.1.255`, and add this to the `advanced-rate-limit-exceptions` setting in your `config.yaml` file.
+
+Before (default config):
+
+```yaml
+advanced-rate-limit-exceptions: []
+```
+
+After (new config):
+
+```yaml
+advanced-rate-limit-exceptions:
+  - "192.168.1.128/24"
+```
+
+If you are using [environment variables](../configuration/index.md#environment-variables) to configure your instance, you can configure `advanced-rate-limit-exceptions` by setting the environment variable `GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS` to a comma-separated list of IP ranges, like so:
+
+```env
+GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS="192.168.1.128/24"
+```
+
+If you are using docker compose, your docker-compose.yaml file should look something like this after the change (note that yaml uses `: ` and not `=`):
+
+```yaml
+################################
+# BLAH BLAH OTHER CONFIG STUFF #
+################################
+    environment:
+      ############################
+      # BLAH BLAH OTHER ENV VARS #
+      ############################
+      GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS: "192.168.1.128/24"
+################################
+# BLAH BLAH OTHER CONFIG STUFF #
+################################
+```
+
+Once you have made the necessary configuration changes, **restart your instance** and refresh the home page.
+
+### Turn off rate limiting entirely (last resort)
+
+If nothing else works, you can disable rate limiting entirely, which will also disable the `trusted-proxies` check and warning.
+
+!!! warning
+    Turning off rate limiting entirely should be considered a last resort, as rate limiting helps protect your instance from spam and scrapers.
+
+To turn off rate limiting, set `advanced-rate-limit-requests` to 0 in your `config.yaml`.
+
+Before (default config):
+
+```yaml
+advanced-rate-limit-requests: 300
+```
+
+After (new config):
+
+```yaml
+advanced-rate-limit-requests: 0
+```
+
+If you are using [environment variables](../configuration/index.md#environment-variables) to configure your instance, you can configure `advanced-rate-limit-requests` by setting the environment variable `GTS_ADVANCED_RATE_LIMIT_REQUESTS` to 0, like so:
+
+```env
+GTS_ADVANCED_RATE_LIMIT_REQUESTS="0"
+```
+
+If you are using docker compose, your docker-compose.yaml file should look something like this after the change (note that yaml uses `: ` and not `=`):
+
+```yaml
+################################
+# BLAH BLAH OTHER CONFIG STUFF #
+################################
+    environment:
+      ############################
+      # BLAH BLAH OTHER ENV VARS #
+      ############################
+      GTS_ADVANCED_RATE_LIMIT_REQUESTS: "0"
+################################
+# BLAH BLAH OTHER CONFIG STUFF #
+################################
+```
+
+Once you have made the necessary configuration changes, **restart your instance** and refresh the home page.

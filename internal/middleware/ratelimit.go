@@ -48,7 +48,7 @@ const rateLimitPeriod = 5 * time.Minute
 //
 // If the config AdvancedRateLimitRequests value is <= 0, then a noop
 // handler will be returned, which performs no rate limiting.
-func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
+func RateLimit(limit int, except []netip.Prefix) gin.HandlerFunc {
 	if limit <= 0 {
 		// Rate limiting is disabled.
 		// Return noop middleware.
@@ -62,12 +62,6 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 			Limit:  int64(limit),
 		},
 	)
-
-	// Convert exceptions IP ranges into prefixes.
-	exceptPrefs := make([]netip.Prefix, len(exceptions))
-	for i, str := range exceptions {
-		exceptPrefs[i] = netip.MustParsePrefix(str)
-	}
 
 	// It's prettymuch impossible to effectively
 	// rate limit the immense IPv6 address space
@@ -88,7 +82,7 @@ func RateLimit(limit int, exceptions []string) gin.HandlerFunc {
 
 		// Check if this IP is exempt from rate
 		// limits and skip further checks if so.
-		for _, prefix := range exceptPrefs {
+		for _, prefix := range except {
 			if prefix.Contains(clientIP) {
 				c.Next()
 				return

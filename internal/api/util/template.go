@@ -18,12 +18,13 @@
 package util
 
 import (
-	"net"
 	"net/http"
+	"net/netip"
 
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // WebPage encapsulates variables for
@@ -137,7 +138,15 @@ func injectTrustedProxiesRec(
 		return
 	}
 
-	ip := net.ParseIP(clientIP)
+	ip, err := netip.ParseAddr(clientIP)
+	if err != nil {
+		log.Warnf(
+			c.Request.Context(),
+			"gin returned invalid clientIP %s: %v",
+			clientIP, err,
+		)
+	}
+
 	if !ip.IsPrivate() {
 		// Upstream set a remote IP
 		// header but final clientIP
@@ -147,8 +156,18 @@ func injectTrustedProxiesRec(
 		return
 	}
 
+	except := config.GetAdvancedRateLimitExceptionsParsed()
+	for _, prefix := range except {
+		if prefix.Contains(ip) {
+			// This ip is exempt from
+			// rate limiting, so don't
+			// inject the suggestion.
+			return
+		}
+	}
+
 	// Private IP, guess if Docker.
-	if dockerSubnet.Contains(ip) {
+	if DockerSubnet.Contains(ip) {
 		// Suggest a CIDR that likely
 		// covers this Docker subnet,
 		// eg., 172.17.0.0 -> 172.17.255.255.
@@ -163,16 +182,10 @@ func injectTrustedProxiesRec(
 	obj["trustedProxiesRec"] = trustedProxiesRec
 }
 
-// dockerSubnet is a CIDR that lets one make hazy guesses
+// DockerSubnet is a CIDR that lets one make hazy guesses
 // as to whether an address is within the ranges Docker
 // uses for subnets, ie., 172.16.0.0 -> 172.31.255.255.
-var dockerSubnet = func() *net.IPNet {
-	_, subnet, err := net.ParseCIDR("172.16.0.0/12")
-	if err != nil {
-		panic(err)
-	}
-	return subnet
-}()
+var DockerSubnet = netip.MustParsePrefix("172.16.0.0/12")
 
 // templateErrorPage renders the given
 // HTTP code, error, and request ID
