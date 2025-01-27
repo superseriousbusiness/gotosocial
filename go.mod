@@ -60,7 +60,7 @@ require (
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/k3a/html2text v1.2.1
 	github.com/microcosm-cc/bluemonday v1.0.27
-	github.com/miekg/dns v1.1.62
+	github.com/miekg/dns v1.1.63
 	github.com/minio/minio-go/v7 v7.0.81
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.22.0
