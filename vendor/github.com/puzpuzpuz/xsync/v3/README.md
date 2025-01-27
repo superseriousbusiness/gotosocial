@@ -80,7 +80,14 @@ m.Store(Point{42, 42}, 42)
 v, ok := m.Load(point{42, 42})
 ```
 
-Both maps use the built-in Golang's hash function which has DDOS protection. This means that each map instance gets its own seed number and the hash function uses that seed for hash code calculation. However, for smaller keys this hash function has some overhead. So, if you don't need DDOS protection, you may provide a custom hash function when creating a `MapOf`. For instance, Murmur3 finalizer does a decent job when it comes to integers:
+Apart from `Range` method available for map iteration, there are also `ToPlainMap`/`ToPlainMapOf` utility functions to convert a `Map`/`MapOf` to a built-in Go's `map`:
+```go
+m := xsync.NewMapOf[int, int]()
+m.Store(42, 42)
+pm := xsync.ToPlainMapOf(m)
+```
+
+Both `Map` and `MapOf` use the built-in Golang's hash function which has DDOS protection. This means that each map instance gets its own seed number and the hash function uses that seed for hash code calculation. However, for smaller keys this hash function has some overhead. So, if you don't need DDOS protection, you may provide a custom hash function when creating a `MapOf`. For instance, Murmur3 finalizer does a decent job when it comes to integers:
 
 ```go
 m := NewMapOfWithHasher[int, int](func(i int, _ uint64) uint64 {
@@ -93,28 +100,50 @@ m := NewMapOfWithHasher[int, int](func(i int, _ uint64) uint64 {
 
 When benchmarking concurrent maps, make sure to configure all of the competitors with the same hash function or, at least, take hash function performance into the consideration.
 
+### SPSCQueue
+
+A `SPSCQueue` is a bounded single-producer single-consumer concurrent queue. This means that not more than a single goroutine must be publishing items to the queue while not more than a single goroutine must be consuming those items.
+
+```go
+q := xsync.NewSPSCQueue(1024)
+// producer inserts an item into the queue
+// optimistic insertion attempt; doesn't block
+inserted := q.TryEnqueue("bar")
+// consumer obtains an item from the queue
+// optimistic obtain attempt; doesn't block
+item, ok := q.TryDequeue() // interface{} pointing to a string
+```
+
+`SPSCQueueOf[I]` is an implementation with parametrized item type. It is available for Go 1.19 or later.
+
+```go
+q := xsync.NewSPSCQueueOf[string](1024)
+inserted := q.TryEnqueue("foo")
+item, ok := q.TryDequeue() // string
+```
+
+The queue is based on the data structure from this [article](https://rigtorp.se/ringbuffer). The idea is to reduce the CPU cache coherency traffic by keeping cached copies of read and write indexes used by producer and consumer respectively.
+
 ### MPMCQueue
 
 A `MPMCQueue` is a bounded multi-producer multi-consumer concurrent queue.
 
 ```go
 q := xsync.NewMPMCQueue(1024)
-// producer inserts an item into the queue
-q.Enqueue("foo")
+// producer optimistically inserts an item into the queue
 // optimistic insertion attempt; doesn't block
 inserted := q.TryEnqueue("bar")
 // consumer obtains an item from the queue
-item := q.Dequeue() // interface{} pointing to a string
 // optimistic obtain attempt; doesn't block
-item, ok := q.TryDequeue()
+item, ok := q.TryDequeue() // interface{} pointing to a string
 ```
 
 `MPMCQueueOf[I]` is an implementation with parametrized item type. It is available for Go 1.19 or later.
 
 ```go
 q := xsync.NewMPMCQueueOf[string](1024)
-q.Enqueue("foo")
-item := q.Dequeue() // string
+inserted := q.TryEnqueue("foo")
+item, ok := q.TryDequeue() // string
 ```
 
 The queue is based on the algorithm from the [MPMCQueue](https://github.com/rigtorp/MPMCQueue) C++ library which in its turn references D.Vyukov's [MPMC queue](https://www.1024cores.net/home/lock-free-algorithms/queues/bounded-mpmc-queue). According to the following [classification](https://www.1024cores.net/home/lock-free-algorithms/queues), the queue is array-based, fails on overflow, provides causal FIFO, has blocking producers and consumers.
