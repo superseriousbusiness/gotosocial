@@ -180,6 +180,7 @@ func Validate() error {
 				"invalid entry %s in %s: %w",
 				rle, AdvancedRateLimitExceptionsFlag(), err,
 			)
+			continue
 		}
 		rlesParsed = append(rlesParsed, parsed)
 	}
