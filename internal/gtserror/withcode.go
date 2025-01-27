@@ -18,7 +18,7 @@
 package gtserror
 
 import (
-	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 )
@@ -53,25 +53,66 @@ type WithCode interface {
 }
 
 type withCode struct {
-	original error
-	safe     error
-	code     int
+	err  error
+	safe string
+	code int
 }
 
-func (e withCode) Unwrap() error {
-	return e.original
+func (e *withCode) Unwrap() error {
+	return e.err
 }
 
-func (e withCode) Error() string {
-	return e.original.Error()
+func (e *withCode) Error() string {
+	return e.err.Error()
 }
 
-func (e withCode) Safe() string {
-	return e.safe.Error()
+func (e *withCode) Safe() string {
+	return e.safe
 }
 
-func (e withCode) Code() int {
+func (e *withCode) Code() int {
 	return e.code
+}
+
+// NewWithCode returns a new gtserror.WithCode that implements the error interface
+// with given HTTP status code, providing status message of "${httpStatus}: ${msg}".
+func NewWithCode(code int, msg string) WithCode {
+	return &withCode{
+		err:  newAt(3, msg),
+		safe: http.StatusText(code) + ": " + msg,
+		code: code,
+	}
+}
+
+// NewfWithCode returns a new formatted gtserror.WithCode that implements the error interface
+// with given HTTP status code, provided formatted status message of "${httpStatus}: ${msg}".
+func NewfWithCode(code int, msgf string, args ...any) WithCode {
+	msg := fmt.Sprintf(msgf, args...)
+	return &withCode{
+		err:  newAt(3, msg),
+		safe: http.StatusText(code) + ": " + msg,
+		code: code,
+	}
+}
+
+// NewWithCodeSafe returns a new gtserror.WithCode wrapping error with given HTTP status
+// code, hiding error message externally, providing status message of "${httpStatus}: ${safe}".
+func NewWithCodeSafe(code int, err error, safe string) WithCode {
+	return &withCode{
+		err:  err,
+		safe: http.StatusText(code) + ": " + safe,
+		code: code,
+	}
+}
+
+// WrapWithCode returns a new gtserror.WithCode wrapping error with given HTTP
+// status code, hiding error message externally, providing standard status message.
+func WrapWithCode(code int, err error) WithCode {
+	return &withCode{
+		err:  err,
+		safe: http.StatusText(code),
+		code: code,
+	}
 }
 
 // NewErrorBadRequest returns an ErrorWithCode 400 with the given original error and optional help text.
@@ -80,10 +121,10 @@ func NewErrorBadRequest(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusBadRequest,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusBadRequest,
 	}
 }
 
@@ -93,10 +134,10 @@ func NewErrorUnauthorized(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusUnauthorized,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusUnauthorized,
 	}
 }
 
@@ -106,10 +147,10 @@ func NewErrorForbidden(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusForbidden,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusForbidden,
 	}
 }
 
@@ -119,10 +160,10 @@ func NewErrorNotFound(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusNotFound,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusNotFound,
 	}
 }
 
@@ -132,10 +173,10 @@ func NewErrorInternalError(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusInternalServerError,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusInternalServerError,
 	}
 }
 
@@ -145,10 +186,10 @@ func NewErrorConflict(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusConflict,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusConflict,
 	}
 }
 
@@ -158,10 +199,10 @@ func NewErrorNotAcceptable(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusNotAcceptable,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusNotAcceptable,
 	}
 }
 
@@ -171,10 +212,10 @@ func NewErrorUnprocessableEntity(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusUnprocessableEntity,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusUnprocessableEntity,
 	}
 }
 
@@ -184,10 +225,10 @@ func NewErrorGone(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusGone,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusGone,
 	}
 }
 
@@ -197,10 +238,10 @@ func NewErrorNotImplemented(original error, helpText ...string) WithCode {
 	if helpText != nil {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
-	return withCode{
-		original: original,
-		safe:     errors.New(safe),
-		code:     http.StatusNotImplemented,
+	return &withCode{
+		err:  original,
+		safe: safe,
+		code: http.StatusNotImplemented,
 	}
 }
 
@@ -208,10 +249,10 @@ func NewErrorNotImplemented(original error, helpText ...string) WithCode {
 // This error type should only be used when an http caller has already hung up their request.
 // See: https://en.wikipedia.org/wiki/List_of_HTTP_status_codes#nginx
 func NewErrorClientClosedRequest(original error) WithCode {
-	return withCode{
-		original: original,
-		safe:     errors.New(StatusTextClientClosedRequest),
-		code:     StatusClientClosedRequest,
+	return &withCode{
+		err:  original,
+		safe: StatusTextClientClosedRequest,
+		code: StatusClientClosedRequest,
 	}
 }
 
@@ -219,9 +260,9 @@ func NewErrorClientClosedRequest(original error) WithCode {
 // This error type should only be used when the server has decided to hang up a client
 // request after x amount of time, to avoid keeping extremely slow client requests open.
 func NewErrorRequestTimeout(original error) WithCode {
-	return withCode{
-		original: original,
-		safe:     errors.New(http.StatusText(http.StatusRequestTimeout)),
-		code:     http.StatusRequestTimeout,
+	return &withCode{
+		err:  original,
+		safe: http.StatusText(http.StatusRequestTimeout),
+		code: http.StatusRequestTimeout,
 	}
 }

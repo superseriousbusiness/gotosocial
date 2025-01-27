@@ -43,20 +43,24 @@ import (
 func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 	log.DebugKV(ctx, "update", serialize{asType})
 
+	// Mark activity as handled.
+	f.storeActivityID(asType)
+
+	// Extract relevant values from passed ctx.
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
 		return nil // Already processed.
 	}
 
-	requestingAcct := activityContext.requestingAcct
-	receivingAcct := activityContext.receivingAcct
+	requesting := activityContext.requestingAcct
+	receiving := activityContext.receivingAcct
 
 	if accountable, ok := ap.ToAccountable(asType); ok {
-		return f.updateAccountable(ctx, receivingAcct, requestingAcct, accountable)
+		return f.updateAccountable(ctx, receiving, requesting, accountable)
 	}
 
 	if statusable, ok := ap.ToStatusable(asType); ok {
-		return f.updateStatusable(ctx, receivingAcct, requestingAcct, statusable)
+		return f.updateStatusable(ctx, receiving, requesting, statusable)
 	}
 
 	log.Debugf(ctx, "unhandled object type: %T", asType)

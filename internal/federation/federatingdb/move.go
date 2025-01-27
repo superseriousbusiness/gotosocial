@@ -38,6 +38,9 @@ import (
 func (f *federatingDB) Move(ctx context.Context, move vocab.ActivityStreamsMove) error {
 	log.DebugKV(ctx, "move", serialize{move})
 
+	// Mark activity as handled.
+	f.storeActivityID(move)
+
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
 		// Already processed.
