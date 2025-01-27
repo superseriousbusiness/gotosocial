@@ -201,7 +201,6 @@ func SendNotificationWithContext(ctx context.Context, message []byte, s *Subscri
 	}
 
 	req.Header.Set("Content-Encoding", "aes128gcm")
-	req.Header.Set("Content-Length", strconv.Itoa(len(ciphertext)))
 	req.Header.Set("Content-Type", "application/octet-stream")
 	req.Header.Set("TTL", strconv.Itoa(options.TTL))
 

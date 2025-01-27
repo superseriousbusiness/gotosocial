@@ -5,12 +5,12 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"encoding/base64"
-	"fmt"
 	"math/big"
 	"net/url"
+	"strings"
 	"time"
 
-	"github.com/golang-jwt/jwt"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 // GenerateVAPIDKeys will create a private and public VAPID key pair
@@ -72,10 +72,15 @@ func getVAPIDAuthorizationHeader(
 		return "", err
 	}
 
+	// Unless subscriber is an HTTPS URL, assume an e-mail address
+	if !strings.HasPrefix(subscriber, "https:") {
+		subscriber = "mailto:" + subscriber
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
-		"aud": fmt.Sprintf("%s://%s", subURL.Scheme, subURL.Host),
-		"exp": expiration.Unix(),
-		"sub": fmt.Sprintf("mailto:%s", subscriber),
+		"aud": subURL.Scheme + "://" + subURL.Host,
+		"exp": time.Now().Add(time.Hour * 12).Unix(),
+		"sub": subscriber,
 	})
 
 	// Decode the VAPID private key
@@ -98,11 +103,7 @@ func getVAPIDAuthorizationHeader(
 		return "", err
 	}
 
-	return fmt.Sprintf(
-		"vapid t=%s, k=%s",
-		jwtString,
-		base64.RawURLEncoding.EncodeToString(pubKey),
-	), nil
+	return "vapid t=" + jwtString + ", k=" + base64.RawURLEncoding.EncodeToString(pubKey), nil
 }
 
 // Need to decode the vapid private key in multiple base64 formats
