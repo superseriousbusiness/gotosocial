@@ -480,7 +480,7 @@ func importMutesAsyncF(
 			}()
 		}
 
-		// Go through the blocks parsed from CSV
+		// Go through the mutes parsed from CSV
 		// file, and create / update each one.
 		for _, mute := range mutes {
 			var (
