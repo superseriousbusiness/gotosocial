@@ -20,24 +20,57 @@ var _ DelegateActor = &SideEffectActor{}
 // Note that when using the SideEffectActor with an application that good-faith
 // implements its required interfaces, the ActivityPub specification is
 // guaranteed to be correctly followed.
-//
-// When doing deliveries to remote servers via the s2s protocol, the side effect
-// actor will by default use the Serialize function from the streams package.
-// However, this can be overridden after the side effect actor is intantiated,
-// by setting the exposed Serialize function on the struct. For example:
-//
-//	a := NewSideEffectActor(...)
-//	a.Serialize = func(a vocab.Type) (m map[string]interface{}, e error) {
-//	  // Put your custom serializer logic here.
-//	}
-//
-// Note that you should only do this *immediately* after instantiating the side
-// effect actor -- never while your application is already running, as this will
-// likely cause race conditions or other problems! In most cases, you will never
-// need to change this; it's provided solely to allow easier customization by
-// applications.
 type SideEffectActor struct {
+	// When doing deliveries to remote servers via the s2s protocol, the side effect
+	// actor will by default use the Serialize function from the streams package.
+	// However, this can be overridden after the side effect actor is intantiated,
+	// by setting the exposed Serialize function on the struct. For example:
+	//
+	//	a := NewSideEffectActor(...)
+	//	a.Serialize = func(a vocab.Type) (m map[string]interface{}, e error) {
+	//	  // Put your custom serializer logic here.
+	//	}
+	//
+	// Note that you should only do this *immediately* after instantiating the side
+	// effect actor -- never while your application is already running, as this will
+	// likely cause race conditions or other problems! In most cases, you will never
+	// need to change this; it's provided solely to allow easier customization by
+	// applications.
 	Serialize func(a vocab.Type) (m map[string]interface{}, e error)
+
+	// When doing deliveries to remote servers via the s2s protocol, it may be desirable
+	// for implementations to be able to pre-sort recipients so that higher-priority
+	// recipients are higher up in the delivery queue, and lower-priority recipients
+	// are further down. This can be achieved by setting the DeliveryRecipientPreSort
+	// function on the side effect actor after it's instantiated. For example:
+	//
+	//	a := NewSideEffectActor(...)
+	//	a.DeliveryRecipientPreSort = func(actorAndCollectionIRIs []*url.URL) []*url.URL {
+	//	  // Put your sorting logic here.
+	//	}
+	//
+	// The actorAndCollectionIRIs parameter will be the initial list of IRIs derived by
+	// looking at the "to", "cc", "bto", "bcc", and "audience" properties of the activity
+	// being delivered, excluding the AP public IRI, and before dereferencing of inboxes.
+	// It may look something like this:
+	//
+	//	[
+	//		"https://example.org/users/someone/followers",     // <-- collection IRI
+	//		"https://another.example.org/users/someone_else",  // <-- actor IRI
+	//		"[...]"                                            // <-- etc
+	//	]
+	//
+	// In this case, implementers may wish to sort the slice so that the directly-addressed
+	// actor "https://another.example.org/users/someone_else" occurs at an earlier index in
+	// the slice than the followers collection "https://example.org/users/someone/followers",
+	// so that "@someone_else" receives the delivery first.
+	//
+	// Note that you should only do this *immediately* after instantiating the side
+	// effect actor -- never while your application is already running, as this will
+	// likely cause race conditions or other problems! It's also completely fine to not
+	// set this function at all -- in this case, no pre-sorting of recipients will be
+	// performed, and delivery will occur in a non-determinate order.
+	DeliveryRecipientPreSort func(actorAndCollectionIRIs []*url.URL) []*url.URL
 
 	common CommonBehavior
 	s2s    FederatingProtocol
@@ -652,163 +685,250 @@ func (a *SideEffectActor) hasInboxForwardingValues(c context.Context, inboxIRI *
 	return false, nil
 }
 
-// prepare takes a deliverableObject and returns a list of the proper recipient
-// target URIs. Additionally, the deliverableObject will have any hidden
-// hidden recipients ("bto" and "bcc") stripped from it.
+// prepare takes a deliverableObject and returns a list of the final
+// recipient inbox IRIs. Additionally, the deliverableObject will have
+// any hidden hidden recipients ("bto" and "bcc") stripped from it.
 //
 // Only call if both the social and federated protocol are supported.
-func (a *SideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activity Activity) (r []*url.URL, err error) {
-	// Get inboxes of recipients
+func (a *SideEffectActor) prepare(
+	ctx context.Context,
+	outboxIRI *url.URL,
+	activity Activity,
+) ([]*url.URL, error) {
+	// Iterate through to, bto, cc, bcc, and audience
+	// to extract a slice of addressee IRIs / IDs.
+	//
+	// The resulting slice might look something like:
+	//
+	//	[
+	//		"https://example.org/users/someone/followers",     // <-- collection IRI
+	//		"https://another.example.org/users/someone_else",  // <-- actor IRI
+	//		"[...]"                                            // <-- etc
+	//	]
+	var actorsAndCollections []*url.URL
 	if to := activity.GetActivityStreamsTo(); to != nil {
 		for iter := to.Begin(); iter != to.End(); iter = iter.Next() {
-			var val *url.URL
-			val, err = ToId(iter)
+			var err error
+			actorsAndCollections, err = appendToActorsAndCollectionsIRIs(
+				iter, actorsAndCollections,
+			)
 			if err != nil {
-				return
+				return nil, err
 			}
-			r = append(r, val)
 		}
 	}
+
 	if bto := activity.GetActivityStreamsBto(); bto != nil {
 		for iter := bto.Begin(); iter != bto.End(); iter = iter.Next() {
-			var val *url.URL
-			val, err = ToId(iter)
+			var err error
+			actorsAndCollections, err = appendToActorsAndCollectionsIRIs(
+				iter, actorsAndCollections,
+			)
 			if err != nil {
-				return
+				return nil, err
 			}
-			r = append(r, val)
 		}
 	}
+
 	if cc := activity.GetActivityStreamsCc(); cc != nil {
 		for iter := cc.Begin(); iter != cc.End(); iter = iter.Next() {
-			var val *url.URL
-			val, err = ToId(iter)
+			var err error
+			actorsAndCollections, err = appendToActorsAndCollectionsIRIs(
+				iter, actorsAndCollections,
+			)
 			if err != nil {
-				return
+				return nil, err
 			}
-			r = append(r, val)
 		}
 	}
+
 	if bcc := activity.GetActivityStreamsBcc(); bcc != nil {
 		for iter := bcc.Begin(); iter != bcc.End(); iter = iter.Next() {
-			var val *url.URL
-			val, err = ToId(iter)
+			var err error
+			actorsAndCollections, err = appendToActorsAndCollectionsIRIs(
+				iter, actorsAndCollections,
+			)
 			if err != nil {
-				return
+				return nil, err
 			}
-			r = append(r, val)
 		}
 	}
+
 	if audience := activity.GetActivityStreamsAudience(); audience != nil {
 		for iter := audience.Begin(); iter != audience.End(); iter = iter.Next() {
-			var val *url.URL
-			val, err = ToId(iter)
+			var err error
+			actorsAndCollections, err = appendToActorsAndCollectionsIRIs(
+				iter, actorsAndCollections,
+			)
 			if err != nil {
-				return
+				return nil, err
 			}
-			r = append(r, val)
 		}
 	}
-	// 1. When an object is being delivered to the originating actor's
-	//    followers, a server MAY reduce the number of receiving actors
-	//    delivered to by identifying all followers which share the same
-	//    sharedInbox who would otherwise be individual recipients and
-	//    instead deliver objects to said sharedInbox.
-	// 2. If an object is addressed to the Public special collection, a
-	//    server MAY deliver that object to all known sharedInbox endpoints
-	//    on the network.
-	r = filterURLs(r, IsPublic)
 
-	// first check if the implemented database logic can return any inboxes
-	// from our list of actor IRIs.
-	foundInboxesFromDB := []*url.URL{}
-	for _, actorIRI := range r {
-		// BEGIN LOCK
-		var unlock func()
-		unlock, err = a.db.Lock(c, actorIRI)
-		if err != nil {
-			return
+	// PRE-SORTING
+
+	// If the pre-delivery sort function is defined,
+	// call it now so that implementations can sort
+	// delivery order to their preferences.
+	if a.DeliveryRecipientPreSort != nil {
+		actorsAndCollections = a.DeliveryRecipientPreSort(actorsAndCollections)
+	}
+
+	// We now need to dereference the actor or collection
+	// IRIs to derive inboxes that we can POST requests to.
+	var (
+		inboxes       = make([]*url.URL, 0, len(actorsAndCollections))
+		derefdEntries = make(map[string]struct{}, len(actorsAndCollections))
+	)
+
+	// First check if the implemented database logic
+	// can return any of these inboxes without having
+	// to make remote dereference calls (much cheaper).
+	for _, actorOrCollection := range actorsAndCollections {
+		actorOrCollectionStr := actorOrCollection.String()
+		if _, derefd := derefdEntries[actorOrCollectionStr]; derefd {
+			// Ignore potential duplicates
+			// we've already derefd to inbox(es).
+			continue
 		}
 
-		inboxes, err := a.db.InboxesForIRI(c, actorIRI)
+		// BEGIN LOCK
+		unlock, err := a.db.Lock(ctx, actorOrCollection)
 		if err != nil {
-			// bail on error
-			unlock()
 			return nil, err
 		}
 
-		if len(inboxes) > 0 {
-			// we have a hit
-			foundInboxesFromDB = append(foundInboxesFromDB, inboxes...)
-
-			// if we found inboxes for this iri, we should remove it from
-			// the list of actors/iris we still need to dereference
-			r = removeOne(r, actorIRI)
-		}
+		// Try to get inbox(es) for this actor or collection.
+		gotInboxes, err := a.db.InboxesForIRI(ctx, actorOrCollection)
 
 		// END LOCK
 		unlock()
+
+		if err != nil {
+			return nil, err
+		}
+
+		if len(gotInboxes) == 0 {
+			// No hit(s).
+			continue
+		}
+
+		// We have one or more hits.
+		inboxes = append(inboxes, gotInboxes...)
+
+		// Mark this actor or collection as deref'd.
+		derefdEntries[actorOrCollectionStr] = struct{}{}
 	}
 
-	// look for any actors' inboxes that weren't already discovered above;
-	// find these by making dereference calls to remote instances
-	t, err := a.common.NewTransport(c, outboxIRI, goFedUserAgent())
-	if err != nil {
-		return nil, err
-	}
-	foundActorsFromRemote, err := a.resolveActors(c, t, r, 0, a.s2s.MaxDeliveryRecursionDepth(c))
-	if err != nil {
-		return nil, err
-	}
-	foundInboxesFromRemote, err := getInboxes(foundActorsFromRemote)
+	// Now look for any remaining actors/collections
+	// that weren't already dereferenced into inboxes
+	// with db calls; find these by making deref calls
+	// to remote instances.
+	//
+	// First get a transport to do the http calls.
+	t, err := a.common.NewTransport(ctx, outboxIRI, goFedUserAgent())
 	if err != nil {
 		return nil, err
 	}
 
-	// combine this list of dereferenced inbox IRIs with the inboxes we already
-	// found in the db, to make a complete list of target IRIs
-	targets := []*url.URL{}
-	targets = append(targets, foundInboxesFromDB...)
-	targets = append(targets, foundInboxesFromRemote...)
-
-	// Get inboxes of sender.
-	var unlock func()
-	unlock, err = a.db.Lock(c, outboxIRI)
-	if err != nil {
-		return
-	}
-	// WARNING: No deferring the Unlock
-	actorIRI, err := a.db.ActorForOutbox(c, outboxIRI)
-	unlock() // unlock after regardless
-	if err != nil {
-		return
-	}
-	// Get the inbox on the sender.
-	unlock, err = a.db.Lock(c, actorIRI)
+	// Make HTTP calls to unpack collection IRIs into
+	// Actor IRIs and then into Actor types, ignoring
+	// actors or collections we've already deref'd.
+	actorsFromRemote, err := a.resolveActors(
+		ctx,
+		t,
+		actorsAndCollections,
+		derefdEntries,
+		0, a.s2s.MaxDeliveryRecursionDepth(ctx),
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	// Release no-longer-needed collections.
+	clear(derefdEntries)
+	clear(actorsAndCollections)
+
+	// Extract inbox IRI from each deref'd Actor (if any).
+	inboxesFromRemote, err := actorsToInboxIRIs(actorsFromRemote)
+	if err != nil {
+		return nil, err
+	}
+
+	// Combine db-discovered inboxes and remote-discovered
+	// inboxes into a final list of destination inboxes.
+	inboxes = append(inboxes, inboxesFromRemote...)
+
+	// POST FILTERING
+
+	// Do a final pass of the inboxes to:
+	//
+	// 1. Deduplicate entries.
+	// 2. Ensure that the list of inboxes doesn't
+	// contain the inbox of whoever the outbox
+	// belongs to, no point delivering to oneself.
+	//
+	// To do this we first need to get the
+	// inbox IRI of this outbox's Actor.
+
 	// BEGIN LOCK
-	thisActor, err := a.db.Get(c, actorIRI)
+	unlock, err := a.db.Lock(ctx, outboxIRI)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the IRI of the Actor who owns this outbox.
+	outboxActorIRI, err := a.db.ActorForOutbox(ctx, outboxIRI)
+
+	// END LOCK
 	unlock()
-	// END LOCK -- Still need to handle err
+
 	if err != nil {
 		return nil, err
 	}
-	// Post-processing
-	var ignore *url.URL
-	ignore, err = getInbox(thisActor)
+
+	// BEGIN LOCK
+	unlock, err = a.db.Lock(ctx, outboxActorIRI)
 	if err != nil {
 		return nil, err
 	}
-	r = dedupeIRIs(targets, []*url.URL{ignore})
+
+	// Now get the Actor who owns this outbox.
+	outboxActor, err := a.db.Get(ctx, outboxActorIRI)
+
+	// END LOCK
+	unlock()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Extract the inbox IRI for the outbox Actor.
+	inboxOfOutboxActor, err := getInbox(outboxActor)
+	if err != nil {
+		return nil, err
+	}
+
+	// Deduplicate the final inboxes slice, and filter
+	// out of the inbox of this outbox actor (if present).
+	inboxes = filterInboxIRIs(inboxes, inboxOfOutboxActor)
+
+	// Now that we've derived inboxes to deliver
+	// the activity to, strip off any bto or bcc
+	// recipients, as per the AP spec requirements.
 	stripHiddenRecipients(activity)
-	return r, nil
+
+	// All done!
+	return inboxes, nil
 }
 
 // resolveActors takes a list of Actor id URIs and returns them as concrete
 // instances of actorObject. It attempts to apply recursively when it encounters
 // a target that is a Collection or OrderedCollection.
+//
+// Any IRI strings in the ignores map will be skipped (use this when
+// you've already dereferenced some of the actorAndCollectionIRIs).
 //
 // If maxDepth is zero or negative, then recursion is infinitely applied.
 //
@@ -816,31 +936,64 @@ func (a *SideEffectActor) prepare(c context.Context, outboxIRI *url.URL, activit
 // dereference the collection, WITH the user's credentials.
 //
 // Note that this also applies to CollectionPage and OrderedCollectionPage.
-func (a *SideEffectActor) resolveActors(c context.Context, t Transport, r []*url.URL, depth, maxDepth int) (actors []vocab.Type, err error) {
+func (a *SideEffectActor) resolveActors(
+	ctx context.Context,
+	t Transport,
+	actorAndCollectionIRIs []*url.URL,
+	ignores map[string]struct{},
+	depth, maxDepth int,
+) ([]vocab.Type, error) {
 	if maxDepth > 0 && depth >= maxDepth {
-		return
+		// Hit our max depth.
+		return nil, nil
 	}
-	for _, u := range r {
-		var act vocab.Type
-		var more []*url.URL
-		// TODO: Determine if more logic is needed here for inaccessible
-		// collections owned by peer servers.
-		act, more, err = a.dereferenceForResolvingInboxes(c, t, u)
+
+	if len(actorAndCollectionIRIs) == 0 {
+		// Nothing to do.
+		return nil, nil
+	}
+
+	// Optimistically assume 1:1 mapping of IRIs to actors.
+	actors := make([]vocab.Type, 0, len(actorAndCollectionIRIs))
+	
+	// Deref each actorOrCollectionIRI if not ignored.
+	for _, actorOrCollectionIRI := range actorAndCollectionIRIs {
+		_, ignore := ignores[actorOrCollectionIRI.String()]
+		if ignore {
+			// Don't try to
+			// deref this one.
+			continue
+		}
+
+		// TODO: Determine if more logic is needed here for
+		// inaccessible collections owned by peer servers.
+		actor, more, err := a.dereferenceForResolvingInboxes(ctx, t, actorOrCollectionIRI)
 		if err != nil {
 			// Missing recipient -- skip.
 			continue
 		}
-		var recurActors []vocab.Type
-		recurActors, err = a.resolveActors(c, t, more, depth+1, maxDepth)
+
+		if actor != nil {
+			// Got a hit.
+			actors = append(actors, actor)
+		}
+
+		// If this was a collection, get more.
+		recurActors, err := a.resolveActors(
+			ctx,
+			t,
+			more,
+			ignores,
+			depth+1, maxDepth,
+		)
 		if err != nil {
-			return
+			return nil, err
 		}
-		if act != nil {
-			actors = append(actors, act)
-		}
+
 		actors = append(actors, recurActors...)
 	}
-	return
+
+	return actors, nil
 }
 
 // dereferenceForResolvingInboxes dereferences an IRI solely for finding an

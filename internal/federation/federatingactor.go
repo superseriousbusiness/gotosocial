@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
@@ -30,9 +31,11 @@ import (
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 
 // federatingActor wraps the pub.FederatingActor
@@ -42,10 +45,63 @@ type federatingActor struct {
 	wrapped         pub.FederatingActor
 }
 
+func deliveryRecipientPreSort(actorAndCollectionIRIs []*url.URL) []*url.URL {
+	var (
+		thisHost       = config.GetHost()
+		thisAcctDomain = config.GetAccountDomain()
+	)
+
+	slices.SortFunc(
+		actorAndCollectionIRIs,
+		func(a *url.URL, b *url.URL) int {
+			// We want to sort by putting more specific actor URIs *before* collection URIs.
+			// Since the only collection URIs we ever address are our own followers URIs, we
+			// can just use host and regexes to identify these collections, and shove them
+			// to the back of the slice. This ensures that directly addressed (ie., mentioned)
+			// accounts get delivery-attempted *first*, and then delivery attempts move on to
+			// followers of the author. This should have the effect of making conversation
+			/// threads feel more snappy, as replies will be sent quicker to participants.
+			var (
+				aIsFollowers = (a.Host == thisHost || a.Host == thisAcctDomain) && uris.IsFollowersPath(a)
+				bIsFollowers = (b.Host == thisHost || b.Host == thisAcctDomain) && uris.IsFollowersPath(b)
+			)
+
+			switch {
+			case aIsFollowers == bIsFollowers:
+				// Both followers URIs or
+				// both not followers URIs,
+				// order doesn't matter.
+				return 0
+
+			case aIsFollowers:
+				// a is followers
+				// URI, b is not.
+				//
+				// Sort b before a.
+				return 1
+
+			default:
+				// b is followers
+				// URI, a is not.
+				//
+				// Sort a before b.
+				return -1
+			}
+		},
+	)
+
+	return actorAndCollectionIRIs
+}
+
 // newFederatingActor returns a federatingActor.
 func newFederatingActor(c pub.CommonBehavior, s2s pub.FederatingProtocol, db pub.Database, clock pub.Clock) pub.FederatingActor {
 	sideEffectActor := pub.NewSideEffectActor(c, s2s, nil, db, clock)
-	sideEffectActor.Serialize = ap.Serialize // hook in our own custom Serialize function
+
+	// Hook in our own custom Serialize function.
+	sideEffectActor.Serialize = ap.Serialize
+
+	// Hook in our own custom recipient pre-sort function.
+	sideEffectActor.DeliveryRecipientPreSort = deliveryRecipientPreSort
 
 	return &federatingActor{
 		sideEffectActor: sideEffectActor,
