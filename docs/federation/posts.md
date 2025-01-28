@@ -77,7 +77,7 @@ For example:
     "name": ":shocked_pikachu:",
     "type": "Emoji",
     "updated": "2022-11-17T11:36:05Z"
-  },
+  }
   [...]
 }`
 ```
