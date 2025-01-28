@@ -149,7 +149,7 @@ func (c *Converter) ASRepresentationToAccount(
 	}
 
 	// account emojis (used in bio, display name, fields)
-	acct.Emojis, err = ap.ExtractEmojis(accountable)
+	acct.Emojis, err = ap.ExtractEmojis(accountable, acct.Domain)
 	if err != nil {
 		log.Warnf(ctx, "error(s) extracting account emojis for %s: %v", uri, err)
 	}
@@ -325,7 +325,7 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// status.Emojis
 	//
 	// Custom emojis for later dereferencing.
-	if emojis, err := ap.ExtractEmojis(statusable); err != nil {
+	if emojis, err := ap.ExtractEmojis(statusable, uriObj.Host); err != nil {
 		log.Warnf(ctx, "error extracting emojis for %s: %v", uri, err)
 	} else {
 		status.Emojis = emojis
