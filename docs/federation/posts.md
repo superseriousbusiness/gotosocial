@@ -92,6 +92,9 @@ By default, GoToSocial sets a 50kb limit on the size of emoji images that can be
 
 GoToSocial can send and receive emoji images of the type `image/png`, `image/jpeg`, `image/gif`, and `image/webp`.
 
+!!! info
+    Note that the `tag` property can be either an array of objects, or a single object.
+
 ### `null` / empty `id` property
 
 Some server softwares like Akkoma include emojis as [anonymous objects](https://www.w3.org/TR/activitypub/#obj-id) on statuses. That is, they set the `id` property to the value `null` to indicate that the emoji cannot be dereferenced at any specific endpoint.
