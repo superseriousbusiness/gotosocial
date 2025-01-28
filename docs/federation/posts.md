@@ -88,6 +88,10 @@ The `updated` and `icon.url` properties of the emoji can be used by remote insta
 
 The `Emoji` can also be dereferenced at its `id` URI if necessary, so that remotes can check whether their cached version of the emoji metadata is up to date.
 
+By default, GoToSocial sets a 50kb limit on the size of emoji images that can be uploaded and sent out, and a 100kb limit on the size of emoji images that can be federated in, though both of these settings are configurable by users.
+
+GoToSocial can send and receive emoji images of the type `image/png`, `image/jpeg`, `image/gif`, and `image/webp`.
+
 ### `null` / empty `id` property
 
 Some server softwares like Akkoma include emojis as [anonymous objects](https://www.w3.org/TR/activitypub/#obj-id) on statuses. That is, they set the `id` property to the value `null` to indicate that the emoji cannot be dereferenced at any specific endpoint.
