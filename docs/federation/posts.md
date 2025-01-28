@@ -47,6 +47,60 @@ The `href` URL provided by GoToSocial in outgoing tags points to a web URL that 
 
 GoToSocial makes no guarantees whatsoever about what the content of the given `text/html` will be, and remote servers should not interpret the URL as a canonical ActivityPub ID/URI property. The `href` URL is provided merely as an endpoint which *might* contain more information about the given hashtag.
 
+## Emojis
+
+GoToSocial uses the `http://joinmastodon.org/ns#Emoji` type to allow users to add custom emoji to their posts.
+
+For example:
+
+```json
+{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Emoji": "toot:Emoji",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
+  "type": "Note",
+  "content": "<p>here's a stinky creature -> :shocked_pikachu:</p>",
+  [...],
+  "tag": {
+    "icon": {
+      "mediaType": "image/png",
+      "type": "Image",
+      "url": "https://example.org/fileserver/01BPSX2MKCRVMD4YN4D71G9CP5/emoji/original/01AZY1Y5YQD6TREB5W50HGTCSZ.png"
+    },
+    "id": "https://example.org/emoji/01AZY1Y5YQD6TREB5W50HGTCSZ",
+    "name": ":shocked_pikachu:",
+    "type": "Emoji",
+    "updated": "2022-11-17T11:36:05Z"
+  }
+  [...]
+}`
+```
+
+The text `:shocked_pikachu:` in the `content` of the above `Note` should be replaced by clients with a small (inline) version of the emoji image, when rendering the `Note` and displaying it to users.
+
+The `updated` and `icon.url` properties of the emoji can be used by remote instances to determine whether their representation of the GoToSocial emoji image is up to date.
+
+The `Emoji` can also be dereferenced at its `id` URI if necessary, so that remotes can check whether their cached version of the emoji metadata is up to date.
+
+By default, GoToSocial sets a 50kb limit on the size of emoji images that can be uploaded and sent out, and a 100kb limit on the size of emoji images that can be federated in, though both of these settings are configurable by users.
+
+GoToSocial can send and receive emoji images of the type `image/png`, `image/jpeg`, `image/gif`, and `image/webp`.
+
+!!! info
+    Note that the `tag` property can be either an array of objects, or a single object.
+
+### `null` / empty `id` property
+
+Some server softwares like Akkoma include emojis as [anonymous objects](https://www.w3.org/TR/activitypub/#obj-id) on statuses. That is, they set the `id` property to the value `null` to indicate that the emoji cannot be dereferenced at any specific endpoint.
+
+When receiving such emojis, GoToSocial will generate a dummy id for that emoji in its database in the form `https://[host]/dummy_emoji_path?shortcode=[shortcode]`, for example, `https://example.org/dummy_emoji_path?shortcode=shocked_pikachu`.
+
 ## Mentions
 
 GoToSocial users can Mention other users in their posts, using the common `@[username]@[domain]` format. For example, if a GoToSocial user wanted to mention user `someone` on instance `example.org`, they could do this by including `@someone@example.org` in their post somewhere.

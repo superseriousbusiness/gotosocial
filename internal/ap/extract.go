@@ -805,7 +805,7 @@ func extractHashtag(i Hashtaggable) (*gtsmodel.Tag, error) {
 // ExtractEmojis extracts a slice of minimal gtsmodel.Emojis
 // from a WithTag. If an entry in the WithTag is not an emoji,
 // it will be quietly ignored.
-func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
+func ExtractEmojis(i WithTag, host string) ([]*gtsmodel.Emoji, error) {
 	tagsProp := i.GetActivityStreamsTag()
 	if tagsProp == nil {
 		return nil, nil
@@ -827,7 +827,7 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 			continue
 		}
 
-		emoji, err := ExtractEmoji(tootEmoji)
+		emoji, err := ExtractEmoji(tootEmoji, host)
 		if err != nil {
 			return nil, err
 		}
@@ -844,41 +844,57 @@ func ExtractEmojis(i WithTag) ([]*gtsmodel.Emoji, error) {
 	return emojis, nil
 }
 
-// ExtractEmoji extracts a minimal gtsmodel.Emoji
-// from the given Emojiable.
-func ExtractEmoji(i Emojiable) (*gtsmodel.Emoji, error) {
-	// Use AP ID as emoji URI.
-	idProp := i.GetJSONLDId()
-	if idProp == nil || !idProp.IsIRI() {
-		return nil, gtserror.New("no id for emoji")
-	}
-	uri := idProp.GetIRI()
-
-	// Extract emoji last updated time (optional).
-	var updatedAt time.Time
-	updatedProp := i.GetActivityStreamsUpdated()
-	if updatedProp != nil && updatedProp.IsXMLSchemaDateTime() {
-		updatedAt = updatedProp.Get()
-	}
-
-	// Extract emoji name aka shortcode.
-	name := ExtractName(i)
+// ExtractEmoji extracts a minimal gtsmodel.Emoji from
+// the given Emojiable. The host (eg., "example.org")
+// of the emoji should be passed in as well, so that a
+// dummy URI for the emoji can be constructed in case
+// there's no id property or id property is null.
+//
+// https://github.com/superseriousbusiness/gotosocial/issues/3384)
+func ExtractEmoji(
+	e Emojiable,
+	host string,
+) (*gtsmodel.Emoji, error) {
+	// Extract emoji name,
+	// eg., ":some_emoji".
+	name := ExtractName(e)
 	if name == "" {
 		return nil, gtserror.New("name prop empty")
 	}
-	shortcode := strings.Trim(name, ":")
+	name = strings.TrimSpace(name)
 
-	// Extract emoji image URL from Icon property.
-	imageRemoteURL, err := ExtractIconURI(i)
+	// Derive shortcode from
+	// name, eg., "some_emoji".
+	shortcode := strings.Trim(name, ":")
+	shortcode = strings.TrimSpace(shortcode)
+
+	// Extract emoji image
+	// URL from Icon property.
+	imageRemoteURL, err := ExtractIconURI(e)
 	if err != nil {
 		return nil, gtserror.New("no url for emoji image")
 	}
 	imageRemoteURLStr := imageRemoteURL.String()
 
+	// Use AP ID as emoji URI, or fall
+	// back to dummy URI if not present.
+	uri := GetJSONLDId(e)
+	if uri == nil {
+		// No ID was set,
+		// construct dummy.
+		uri, err = url.Parse(
+			// eg., https://example.org/dummy_emoji_path?shortcode=some_emoji
+			"https://" + host + "/dummy_emoji_path?shortcode=" + url.QueryEscape(shortcode),
+		)
+		if err != nil {
+			return nil, gtserror.Newf("error constructing dummy path: %w", err)
+		}
+	}
+
 	return &gtsmodel.Emoji{
-		UpdatedAt:       updatedAt,
+		UpdatedAt:       GetUpdated(e),
 		Shortcode:       shortcode,
-		Domain:          uri.Host,
+		Domain:          host,
 		ImageRemoteURL:  imageRemoteURLStr,
 		URI:             uri.String(),
 		Disabled:        new(bool), // Assume false by default.
