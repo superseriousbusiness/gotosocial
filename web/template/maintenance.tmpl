@@ -1,0 +1,76 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="robots" content="noindex, nofollow">
+        <link rel="icon" href="/assets/logo.webp" type="image/webp">
+        <link rel="apple-touch-icon" href="/assets/logo.webp" type="image/webp">
+        <link rel="apple-touch-startup-image" href="/assets/logo.webp" type="image/webp">
+        <link rel="preload" href="/assets/dist/_colors.css" as="style">
+        <link rel="preload" href="/assets/dist/base.css" as="style">
+        <link rel="preload" href="/assets/dist/page.css" as="style">
+        <link rel="stylesheet" href="/assets/dist/_colors.css">
+        <link rel="stylesheet" href="/assets/dist/base.css">
+        <link rel="stylesheet" href="/assets/dist/page.css">
+        <title>{{- .host -}}</title>
+    </head>
+    <body>
+        <div class="page">
+        <header class="page-header">
+            <a aria-label="{{- .host -}}. Go to instance homepage" href="/" class="nounderline">
+                <picture>
+                    <img
+                        src="/assets/logo.webp"
+                        alt="A cartoon sloth smiling happily."
+                        title="A cartoon sloth smiling happily."
+                    />
+                </picture>
+                <h1>{{- .host -}}</h1>
+            </a>
+        </header>
+        <div class="page-content">
+            <p>This GoToSocial instance is currently down for maintenance, starting up, or running database migrations. Please wait.</p>
+            <p>If you are the admin of this instance, check your GoToSocial logs for more details, and make sure to <strong>not interrupt any running database migrations</strong>!</p>
+        </div>
+        <footer class="page-footer">
+            <nav>
+                <ul class="nodot">
+                    <li id="version">
+                        <a
+                            href="https://github.com/superseriousbusiness/gotosocial"
+                            class="nounderline"
+                            rel="nofollow noreferrer noopener"
+                            target="_blank"
+                        >
+                            <span aria-hidden="true">🦥</span>
+                            Source - GoToSocial
+                            <span aria-hidden="true">🦥</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </footer>
+        </div>
+    </body>
+</html>
