@@ -21,14 +21,11 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"path/filepath"
 
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -87,22 +84,22 @@ func New(db db.DB, processor *processing.Processor) *Module {
 	}
 }
 
-func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
-	// Group all static files from assets dir at /assets,
-	// so that they can use the same cache control middleware.
-	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
-	if err != nil {
-		log.Panicf(nil, "error getting absolute path of assets dir: %s", err)
-	}
-	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
-	assetsGroup := r.AttachGroup(assetsPathPrefix)
-	assetsGroup.Use(m.assetsCacheControlMiddleware(fs))
-	assetsGroup.Use(mi...)
-	assetsGroup.StaticFS("/", fs)
+// ETagCache implements withETagCache.
+func (m *Module) ETagCache() cache.Cache[string, eTagCacheEntry] {
+	return m.eTagCache
+}
 
-	// handlers that serve profiles and statuses should use the SignatureCheck
-	// middleware, so that requests with content-type application/activity+json
-	// can still be served
+// Route attaches the assets filesystem and profile,
+// status, and other web handlers to the router.
+func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
+	// Route static assets.
+	routeAssets(m, r, mi...)
+
+	// Route all other endpoints + handlers.
+	//
+	// Handlers that serve profiles and statuses should use
+	// the SignatureCheck middleware, so that requests with
+	// content-type application/activity+json can be served
 	profileGroup := r.AttachGroup(profileGroupPath)
 	profileGroup.Use(mi...)
 	profileGroup.Use(middleware.SignatureCheck(m.isURIBlocked), middleware.CacheControl(middleware.CacheControlConfig{
@@ -111,7 +108,7 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	profileGroup.Handle(http.MethodGet, "", m.profileGETHandler) // use empty path here since it's the base of the group
 	profileGroup.Handle(http.MethodGet, statusPath, m.threadGETHandler)
 
-	// Attach individual web handlers which require no specific middlewares
+	// Individual web handlers requiring no specific middlewares.
 	r.AttachHandler(http.MethodGet, "/", m.indexHandler) // front-page
 	r.AttachHandler(http.MethodGet, settingsPathPrefix, m.SettingsPanelHandler)
 	r.AttachHandler(http.MethodGet, settingsPanelGlob, m.SettingsPanelHandler)
@@ -128,7 +125,7 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	r.AttachHandler(http.MethodGet, signupPath, m.signupGETHandler)
 	r.AttachHandler(http.MethodPost, signupPath, m.signupPOSTHandler)
 
-	// Attach redirects from old endpoints to current ones for backwards compatibility
+	// Redirects from old endpoints to for back compat.
 	r.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
 	r.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
 	r.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, adminPanelPath) })

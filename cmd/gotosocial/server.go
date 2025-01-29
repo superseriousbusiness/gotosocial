@@ -41,5 +41,19 @@ func serverCommands() *cobra.Command {
 	}
 	config.AddServerFlags(serverStartCmd)
 	serverCmd.AddCommand(serverStartCmd)
+
+	serverMaintenanceCmd := &cobra.Command{
+		Use:   "maintenance",
+		Short: "start the gotosocial server in maintenance mode (returns 503 for almost all requests)",
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			return preRun(preRunArgs{cmd: cmd})
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return run(cmd.Context(), server.Maintenance)
+		},
+	}
+	config.AddServerFlags(serverMaintenanceCmd)
+	serverCmd.AddCommand(serverMaintenanceCmd)
+
 	return serverCmd
 }

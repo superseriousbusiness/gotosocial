@@ -29,6 +29,10 @@ import (
 	"codeberg.org/gruf/go-cache/v3"
 )
 
+type withETagCache interface {
+	ETagCache() cache.Cache[string, eTagCacheEntry]
+}
+
 func newETagCache() cache.TTLCache[string, eTagCacheEntry] {
 	eTagCache := cache.NewTTL[string, eTagCacheEntry](0, 1000, 0)
 	eTagCache.SetTTL(time.Hour, false)
