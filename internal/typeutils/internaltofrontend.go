@@ -2641,28 +2641,36 @@ func (c *Converter) FilterStatusToAPIFilterStatus(ctx context.Context, filterSta
 func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]apimodel.Emoji, error) {
 	var errs gtserror.MultiError
 
+	// GTS model attachments were not populated
 	if len(emojis) == 0 && len(emojiIDs) > 0 {
-		// GTS model attachments were not populated
-
 		var err error
 
 		// Fetch GTS models for emoji IDs
 		emojis, err = c.state.DB.GetEmojisByIDs(ctx, emojiIDs)
 		if err != nil {
-			errs.Appendf("error fetching emojis from database: %w", err)
+			return nil, gtserror.Newf("db error fetching emojis: %w", err)
 		}
 	}
 
-	// Preallocate expected frontend slice
+	// Preallocate expected frontend slice of emojis.
 	apiEmojis := make([]apimodel.Emoji, 0, len(emojis))
-
-	// Convert GTS models to frontend models
 	for _, emoji := range emojis {
+
+		// Skip adding emojis that are
+		// uncached, the empty URLs can
+		// cause issues with some clients.
+		if !*emoji.Cached {
+			continue
+		}
+
+		// Convert each to a frontend API model emoji.
 		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
 		if err != nil {
 			errs.Appendf("error converting emoji %s to api emoji: %w", emoji.ID, err)
 			continue
 		}
+
+		// Append converted emoji to return slice.
 		apiEmojis = append(apiEmojis, apiEmoji)
 	}
 
