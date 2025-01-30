@@ -8,7 +8,6 @@ We need to register a new application, which we can then use to request an OAuth
 
 ```bash
 curl \
-  -X POST \
   -H 'Content-Type:application/json' \
   -d '{
         "client_name": "your_app_name",
@@ -89,7 +88,6 @@ You can do this with another `POST` request that looks like the following:
 
 ```bash
 curl \
-  -X POST \
   -H 'Content-Type: application/json' \
   -d '{
         "redirect_uri": "urn:ietf:wg:oauth:2.0:oob",
