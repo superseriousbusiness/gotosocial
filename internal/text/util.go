@@ -20,15 +20,13 @@ package text
 import "unicode"
 
 func isPermittedInHashtag(r rune) bool {
-	return unicode.IsLetter(r) ||
-		unicode.IsNumber(r) ||
-		isPermittedIfNotEntireHashtag(r)
+	return unicode.IsLetter(r) || isPermittedIfNotEntireHashtag(r)
 }
 
 // isPermittedIfNotEntireHashtag is true for characters that may be in a hashtag
 // but are not allowed to be the only characters making up the hashtag.
 func isPermittedIfNotEntireHashtag(r rune) bool {
-	return unicode.IsMark(r) || r == '_'
+	return unicode.IsNumber(r) || unicode.IsMark(r) || r == '_'
 }
 
 // isHashtagBoundary returns true if rune r
