@@ -1161,6 +1161,7 @@ func (suite *InternalToFrontendTestSuite) TestHashtagAnywhereFilteredBoostToFron
 func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
+
 	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
 		{
 			AccountID:       requestingAccount.ID,
@@ -1168,6 +1169,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
 			Notifications:   util.Ptr(false),
 		},
 	})
+
 	_, err := suite.typeconverter.StatusToAPIStatus(
 		context.Background(),
 		testStatus,
@@ -1186,6 +1188,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
 	testStatus.InReplyToID = suite.testStatuses["local_account_2_status_1"].ID
 	testStatus.InReplyToAccountID = mutedAccount.ID
 	requestingAccount := suite.testAccounts["local_account_1"]
+
 	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
 		{
 			AccountID:       requestingAccount.ID,
@@ -1193,11 +1196,46 @@ func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
 			Notifications:   util.Ptr(false),
 		},
 	})
+
 	// Populate status so the converter has the account objects it needs for muting.
 	err := suite.db.PopulateStatus(context.Background(), testStatus)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// Convert the status to API format, which should fail.
+	_, err = suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextHome,
+		nil,
+		mutes,
+	)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
+func (suite *InternalToFrontendTestSuite) TestMutedBoostStatusToFrontend() {
+	mutedAccount := suite.testAccounts["local_account_2"]
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	testStatus.BoostOfID = suite.testStatuses["local_account_2_status_1"].ID
+	testStatus.BoostOfAccountID = mutedAccount.ID
+	requestingAccount := suite.testAccounts["local_account_1"]
+
+	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
+		{
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: mutedAccount.ID,
+			Notifications:   util.Ptr(false),
+		},
+	})
+
+	// Populate status so the converter has the account objects it needs for muting.
+	err := suite.db.PopulateStatus(context.Background(), testStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
 	// Convert the status to API format, which should fail.
 	_, err = suite.typeconverter.StatusToAPIStatus(
 		context.Background(),
