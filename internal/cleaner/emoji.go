@@ -104,13 +104,14 @@ func (e *Emoji) UncacheRemote(ctx context.Context, olderThan time.Time) (int, er
 			return total, gtserror.Newf("error getting remote emoji: %w", err)
 		}
 
-		// If no emojis / same group is returned, we reached the end.
+		// If no emojis / same group is
+		// returned, we reached the end.
 		if len(emojis) == 0 ||
 			olderThan.Equal(emojis[len(emojis)-1].CreatedAt) {
 			break
 		}
 
-		// Use last created-at as the next 'olderThan' value.
+		// Use last createdAt as next 'olderThan' value.
 		olderThan = emojis[len(emojis)-1].CreatedAt
 
 		for _, emoji := range emojis {
