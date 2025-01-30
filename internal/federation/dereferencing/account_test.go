@@ -18,11 +18,15 @@
 package dereferencing_test
 
 import (
+	"bytes"
 	"context"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
 	"testing"
 	"time"
@@ -33,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
@@ -212,6 +217,111 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 	suite.True(gtserror.IsUnretrievable(err))
 	suite.EqualError(err, db.ErrNoEntries.Error())
 	suite.Nil(fetchedAccount)
+}
+
+func (suite *AccountTestSuite) TestDereferenceLocalAccountByRedirect() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	// Convert the target account to ActivityStreams model for dereference.
+	targetAccountable, err := suite.converter.AccountToAS(ctx, targetAccount)
+	suite.NoError(err)
+	suite.NotNil(targetAccountable)
+
+	// Serialize to "raw" JSON map for response.
+	rawJSON, err := ap.Serialize(targetAccountable)
+	suite.NoError(err)
+
+	// Finally serialize to actual bytes.
+	json, err := json.Marshal(rawJSON)
+	suite.NoError(err)
+
+	// Replace test HTTP client with one that always returns the target account AS model.
+	suite.client = testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:        http.StatusText(http.StatusOK),
+			StatusCode:    http.StatusOK,
+			ContentLength: int64(len(json)),
+			Header:        http.Header{"Content-Type": {"application/activity+json"}},
+			Body:          io.NopCloser(bytes.NewReader(json)),
+			Request:       &http.Request{URL: testrig.URLMustParse(targetAccount.URI)},
+		}, nil
+	}, "")
+
+	// Update dereferencer to use new test HTTP client.
+	suite.dereferencer = dereferencing.NewDereferencer(
+		&suite.state,
+		suite.converter,
+		testrig.NewTestTransportController(&suite.state, suite.client),
+		suite.visFilter,
+		suite.intFilter,
+		suite.media,
+	)
+
+	// Use any old input test URI, this doesn't actually matter what it is.
+	uri := testrig.URLMustParse("https://this-will-be-redirected.butts/")
+
+	// Try dereference the test URI, since it correctly redirects to us it should return our account.
+	account, accountable, err := suite.dereferencer.GetAccountByURI(ctx, fetchingAccount.Username, uri)
+	suite.NoError(err)
+	suite.Nil(accountable)
+	suite.NotNil(account)
+	suite.Equal(targetAccount.ID, account.ID)
+}
+
+func (suite *AccountTestSuite) TestDereferenceMasqueradingLocalAccount() {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	fetchingAccount := suite.testAccounts["local_account_1"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	// Convert the target account to ActivityStreams model for dereference.
+	targetAccountable, err := suite.converter.AccountToAS(ctx, targetAccount)
+	suite.NoError(err)
+	suite.NotNil(targetAccountable)
+
+	// Serialize to "raw" JSON map for response.
+	rawJSON, err := ap.Serialize(targetAccountable)
+	suite.NoError(err)
+
+	// Finally serialize to actual bytes.
+	json, err := json.Marshal(rawJSON)
+	suite.NoError(err)
+
+	// Use any old input test URI, this doesn't actually matter what it is.
+	uri := testrig.URLMustParse("https://this-will-be-redirected.butts/")
+
+	// Replace test HTTP client with one that returns OUR account, but at their URI endpoint.
+	suite.client = testrig.NewMockHTTPClient(func(req *http.Request) (*http.Response, error) {
+		return &http.Response{
+			Status:        http.StatusText(http.StatusOK),
+			StatusCode:    http.StatusOK,
+			ContentLength: int64(len(json)),
+			Header:        http.Header{"Content-Type": {"application/activity+json"}},
+			Body:          io.NopCloser(bytes.NewReader(json)),
+			Request:       &http.Request{URL: uri},
+		}, nil
+	}, "")
+
+	// Update dereferencer to use new test HTTP client.
+	suite.dereferencer = dereferencing.NewDereferencer(
+		&suite.state,
+		suite.converter,
+		testrig.NewTestTransportController(&suite.state, suite.client),
+		suite.visFilter,
+		suite.intFilter,
+		suite.media,
+	)
+
+	// Try dereference the test URI, since it correctly redirects to us it should return our account.
+	account, accountable, err := suite.dereferencer.GetAccountByURI(ctx, fetchingAccount.Username, uri)
+	suite.NotNil(err)
+	suite.Nil(account)
+	suite.Nil(accountable)
 }
 
 func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithNonMatchingURI() {
