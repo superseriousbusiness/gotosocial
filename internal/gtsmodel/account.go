@@ -94,7 +94,6 @@ func (a *Account) UsernameDomain() string {
 
 // IsLocal returns whether account is a local user account.
 func (a *Account) IsLocal() bool {
-	// TODO: can we simplify this to just domain == ""?
 	return a.Domain == "" ||
 		a.Domain == config.GetHost() ||
 		a.Domain == config.GetAccountDomain()
