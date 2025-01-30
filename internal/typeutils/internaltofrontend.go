@@ -943,8 +943,8 @@ func (c *Converter) statusToAPIFilterResults(
 	// Both mutes and filters can expire.
 	now := time.Now()
 
-	// If requesting account mutes the author (taking boosts into account), hide it.
-	if (s.BoostOfAccountID != "" && mutes.Matches(s.AccountID, filterContext, now)) ||
+	// If requesting account mutes the author (taking boosts into account), hide the status.
+	if (s.BoostOfAccountID != "" && mutes.Matches(s.BoostOfAccountID, filterContext, now)) ||
 		mutes.Matches(s.AccountID, filterContext, now) {
 		return nil, statusfilter.ErrHideStatus
 	}
