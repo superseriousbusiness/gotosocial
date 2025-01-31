@@ -74,6 +74,13 @@ type InstanceV2 struct {
 	Terms string `json:"terms,omitempty"`
 	// Raw (unparsed) version of terms.
 	TermsText string `json:"terms_text,omitempty"`
+
+	// Random stats generated for the instance.
+	// Only used if `instance-stats-randomize` is true.
+	// Not serialized to the frontend.
+	//
+	// swagger:ignore
+	RandomStats `json:"-"`
 }
 
 // Usage data for this instance.

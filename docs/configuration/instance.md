@@ -138,4 +138,15 @@ instance-subscriptions-process-from: "23:00"
 # Examples: ["24h", "72h", "12h"]
 # Default: "24h" (once per day).
 instance-subscriptions-process-every: "24h"
+
+# Bool. Set this to true to randomize stats served at
+# the /api/v1|v2/instance and /nodeinfo/2.0 endpoints.
+#
+# This can be useful when you don't want bots to obtain
+# reliable information about the amount of users and
+# statuses on your instance.
+#
+# Options: [true, false]
+# Default: false
+instance-stats-randomize: false
 ```

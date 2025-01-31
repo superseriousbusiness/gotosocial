@@ -1745,6 +1745,12 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	stats["domain_count"] = util.Ptr(domainCount)
 	instance.Stats = stats
 
+	if config.GetInstanceStatsRandomize() {
+		// Whack some random stats on the instance
+		// to be injected by API handlers.
+		instance.RandomStats = c.RandomStats()
+	}
+
 	// thumbnail
 	iAccount, err := c.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
@@ -1819,6 +1825,12 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	if debug.DEBUG {
 		instance.Debug = util.Ptr(true)
+	}
+
+	if config.GetInstanceStatsRandomize() {
+		// Whack some random stats on the instance
+		// to be injected by API handlers.
+		instance.RandomStats = c.RandomStats()
 	}
 
 	// thumbnail

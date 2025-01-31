@@ -65,16 +65,30 @@ func (p *Processor) NodeInfoRelGet(ctx context.Context) (*apimodel.WellKnownResp
 
 // NodeInfoGet returns a node info struct in response to a node info request.
 func (p *Processor) NodeInfoGet(ctx context.Context) (*apimodel.Nodeinfo, gtserror.WithCode) {
-	host := config.GetHost()
+	var (
+		userCount int
+		postCount int
+		err       error
+	)
 
-	userCount, err := p.state.DB.CountInstanceUsers(ctx, host)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	if config.GetInstanceStatsRandomize() {
+		// Use randomized stats.
+		stats := p.converter.RandomStats()
+		userCount = int(stats.TotalUsers)
+		postCount = int(stats.Statuses)
+	} else {
+		// Count actual stats.
+		host := config.GetHost()
 
-	postCount, err := p.state.DB.CountInstanceStatuses(ctx, host)
-	if err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
+		userCount, err = p.state.DB.CountInstanceUsers(ctx, host)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		postCount, err = p.state.DB.CountInstanceStatuses(ctx, host)
+		if err != nil {
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	return &apimodel.Nodeinfo{
