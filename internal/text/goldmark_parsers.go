@@ -177,7 +177,7 @@ func (p *hashtagParser) Parse(
 			// Ignore initial '#'.
 			continue
 
-		case !isPlausiblyInHashtag(r) &&
+		case !isPermittedInHashtag(r) &&
 			!isHashtagBoundary(r):
 			// Weird non-boundary character
 			// in the hashtag. Don't trust it.

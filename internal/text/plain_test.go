@@ -118,20 +118,20 @@ func (suite *PlainTestSuite) TestDeriveHashtagsOK() {
 `
 
 	tags := suite.FromPlain(statusText).Tags
-	suite.Len(tags, 13)
-	suite.Equal("testing123", tags[0].Name)
-	suite.Equal("also", tags[1].Name)
-	suite.Equal("thisshouldwork", tags[2].Name)
-	suite.Equal("dupe", tags[3].Name)
-	suite.Equal("ThisShouldAlsoWork", tags[4].Name)
-	suite.Equal("this_should_not_be_split", tags[5].Name)
-	suite.Equal("111111", tags[6].Name)
-	suite.Equal("alimentación", tags[7].Name)
-	suite.Equal("saúde", tags[8].Name)
-	suite.Equal("lävistää", tags[9].Name)
-	suite.Equal("ö", tags[10].Name)
-	suite.Equal("네", tags[11].Name)
-	suite.Equal("ThisOneIsThirteyCharactersLong", tags[12].Name)
+	if suite.Len(tags, 12) {
+		suite.Equal("testing123", tags[0].Name)
+		suite.Equal("also", tags[1].Name)
+		suite.Equal("thisshouldwork", tags[2].Name)
+		suite.Equal("dupe", tags[3].Name)
+		suite.Equal("ThisShouldAlsoWork", tags[4].Name)
+		suite.Equal("this_should_not_be_split", tags[5].Name)
+		suite.Equal("alimentación", tags[6].Name)
+		suite.Equal("saúde", tags[7].Name)
+		suite.Equal("lävistää", tags[8].Name)
+		suite.Equal("ö", tags[9].Name)
+		suite.Equal("네", tags[10].Name)
+		suite.Equal("ThisOneIsThirteyCharactersLong", tags[11].Name)
+	}
 
 	statusText = `#올빼미 hej`
 	tags = suite.FromPlain(statusText).Tags
@@ -170,8 +170,17 @@ func (suite *PlainTestSuite) TestDeriveMultiple() {
 func (suite *PlainTestSuite) TestZalgoHashtag() {
 	statusText := `yo who else loves #praying to #z̸͉̅a̸͚͋l̵͈̊g̸̫͌ỏ̷̪?`
 	f := suite.FromPlain(statusText)
-	suite.Len(f.Tags, 1)
-	suite.Equal("praying", f.Tags[0].Name)
+	if suite.Len(f.Tags, 2) {
+		suite.Equal("praying", f.Tags[0].Name)
+		// NFC doesn't do much for Zalgo text, but it's difficult to strip marks without affecting non-Latin text.
+		suite.Equal("z̸͉̅a̸͚͋l̵͈̊g̸̫͌ỏ̷̪", f.Tags[1].Name)
+	}
+}
+
+func (suite *PlainTestSuite) TestNumbersAreNotHashtags() {
+	statusText := `yo who else thinks #19_98 is #1?`
+	f := suite.FromPlain(statusText)
+	suite.Len(f.Tags, 0)
 }
 
 func TestPlainTestSuite(t *testing.T) {

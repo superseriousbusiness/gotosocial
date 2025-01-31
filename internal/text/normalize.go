@@ -50,17 +50,16 @@ func NormalizeHashtag(text string) (string, bool) {
 
 	// Validate normalized result.
 	var (
-		notJustUnderscores = false
-		onlyPermittedChars = true
-		lengthOK           = true
+		atLeastOneRequiredChar = false
+		onlyPermittedChars     = true
+		lengthOK               = true
 	)
 
 	for i, r := range normalized {
-		if r != '_' {
-			// This isn't an underscore,
-			// so the whole hashtag isn't
-			// just underscores.
-			notJustUnderscores = true
+		if !isPermittedIfNotEntireHashtag(r) {
+			// This isn't an underscore, mark, etc,
+			// so the hashtag contains at least one
+			atLeastOneRequiredChar = true
 		}
 
 		if i >= maximumHashtagLength {
@@ -74,5 +73,5 @@ func NormalizeHashtag(text string) (string, bool) {
 		}
 	}
 
-	return normalized, (lengthOK && onlyPermittedChars && notJustUnderscores)
+	return normalized, lengthOK && onlyPermittedChars && atLeastOneRequiredChar
 }

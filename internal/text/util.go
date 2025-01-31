@@ -19,19 +19,14 @@ package text
 
 import "unicode"
 
-func isPlausiblyInHashtag(r rune) bool {
-	// Marks are allowed during parsing
-	// prior to normalization, but not after,
-	// since they may be combined into letters
-	// during normalization.
-	return unicode.IsMark(r) ||
-		isPermittedInHashtag(r)
+func isPermittedInHashtag(r rune) bool {
+	return unicode.IsLetter(r) || isPermittedIfNotEntireHashtag(r)
 }
 
-func isPermittedInHashtag(r rune) bool {
-	return unicode.IsLetter(r) ||
-		unicode.IsNumber(r) ||
-		r == '_'
+// isPermittedIfNotEntireHashtag is true for characters that may be in a hashtag
+// but are not allowed to be the only characters making up the hashtag.
+func isPermittedIfNotEntireHashtag(r rune) bool {
+	return unicode.IsNumber(r) || unicode.IsMark(r) || r == '_'
 }
 
 // isHashtagBoundary returns true if rune r
