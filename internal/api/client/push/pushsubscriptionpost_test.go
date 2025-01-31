@@ -44,6 +44,7 @@ func (suite *PushTestSuite) postSubscription(
 	p256dh *string,
 	alertsMention *bool,
 	alertsStatus *bool,
+	policy *string,
 	requestJson *string,
 	expectedHTTPStatus int,
 ) (*apimodel.WebPushSubscription, error) {
@@ -79,6 +80,9 @@ func (suite *PushTestSuite) postSubscription(
 		}
 		if alertsStatus != nil {
 			ctx.Request.Form["data[alerts][status]"] = []string{strconv.FormatBool(*alertsStatus)}
+		}
+		if policy != nil {
+			ctx.Request.Form["data[policy]"] = []string{*policy}
 		}
 	}
 
@@ -119,6 +123,7 @@ func (suite *PushTestSuite) TestPostSubscription() {
 	p256dh := "BMYVItYVOX+AHBdtA62Q0i6c+F7MV2Gia3aoDr8mvHkuPBNIOuTLDfmFcnBqoZcQk6BtLcIONbxhHpy2R+mYIUY="
 	alertsMention := true
 	alertsStatus := false
+	policy := "followed"
 	subscription, err := suite.postSubscription(
 		accountFixtureName,
 		tokenFixtureName,
@@ -127,6 +132,7 @@ func (suite *PushTestSuite) TestPostSubscription() {
 		&p256dh,
 		&alertsMention,
 		&alertsStatus,
+		&policy,
 		nil,
 		200,
 	)
@@ -138,6 +144,7 @@ func (suite *PushTestSuite) TestPostSubscription() {
 		suite.False(subscription.Alerts.Status)
 		// Omitted event types should default to off.
 		suite.False(subscription.Alerts.Favourite)
+		suite.Equal(apimodel.WebPushNotificationPolicyFollowed, subscription.Policy)
 	}
 }
 
@@ -159,6 +166,7 @@ func (suite *PushTestSuite) TestPostSubscriptionMinimal() {
 		nil,
 		nil,
 		nil,
+		nil,
 		200,
 	)
 	if suite.NoError(err) {
@@ -169,6 +177,8 @@ func (suite *PushTestSuite) TestPostSubscriptionMinimal() {
 		suite.False(subscription.Alerts.Mention)
 		suite.False(subscription.Alerts.Status)
 		suite.False(subscription.Alerts.Favourite)
+		// Policy should default to all.
+		suite.Equal(apimodel.WebPushNotificationPolicyAll, subscription.Policy)
 	}
 }
 
@@ -191,6 +201,7 @@ func (suite *PushTestSuite) TestPostInvalidSubscription() {
 		&p256dh,
 		&alertsMention,
 		&alertsStatus,
+		nil,
 		nil,
 		422,
 	)
@@ -215,12 +226,14 @@ func (suite *PushTestSuite) TestPostSubscriptionJSON() {
 			"alerts": {
 				"mention": true,
 				"status": false
-			}
+			},
+			"policy": "followed"
 		}
 	}`
 	subscription, err := suite.postSubscription(
 		accountFixtureName,
 		tokenFixtureName,
+		nil,
 		nil,
 		nil,
 		nil,
@@ -237,6 +250,7 @@ func (suite *PushTestSuite) TestPostSubscriptionJSON() {
 		suite.False(subscription.Alerts.Status)
 		// Omitted event types should default to off.
 		suite.False(subscription.Alerts.Favourite)
+		suite.Equal(apimodel.WebPushNotificationPolicyFollowed, subscription.Policy)
 	}
 }
 
@@ -263,6 +277,7 @@ func (suite *PushTestSuite) TestPostSubscriptionJSONMinimal() {
 		nil,
 		nil,
 		nil,
+		nil,
 		&requestJson,
 		200,
 	)
@@ -274,6 +289,8 @@ func (suite *PushTestSuite) TestPostSubscriptionJSONMinimal() {
 		suite.False(subscription.Alerts.Mention)
 		suite.False(subscription.Alerts.Status)
 		suite.False(subscription.Alerts.Favourite)
+		// Policy should default to all.
+		suite.Equal(apimodel.WebPushNotificationPolicyAll, subscription.Policy)
 	}
 }
 
@@ -306,6 +323,7 @@ func (suite *PushTestSuite) TestPostInvalidSubscriptionJSON() {
 		nil,
 		nil,
 		nil,
+		nil,
 		&requestJson,
 		422,
 	)
@@ -323,6 +341,7 @@ func (suite *PushTestSuite) TestPostExistingSubscription() {
 	p256dh := "BMYVItYVOX+AHBdtA62Q0i6c+F7MV2Gia3aoDr8mvHkuPBNIOuTLDfmFcnBqoZcQk6BtLcIONbxhHpy2R+mYIUY="
 	alertsMention := true
 	alertsStatus := false
+	policy := "followed"
 	subscription, err := suite.postSubscription(
 		accountFixtureName,
 		tokenFixtureName,
@@ -331,6 +350,7 @@ func (suite *PushTestSuite) TestPostExistingSubscription() {
 		&p256dh,
 		&alertsMention,
 		&alertsStatus,
+		&policy,
 		nil,
 		200,
 	)

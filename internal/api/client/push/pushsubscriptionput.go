@@ -25,6 +25,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // PushSubscriptionPUTHandler swagger:operation PUT /api/v1/push/subscription pushSubscriptionPut
@@ -122,6 +123,17 @@ import (
 //		type: boolean
 //		default: false
 //		description: Receive a push notification when a boost is pending?
+//	-
+//		name: data[policy]
+//		in: formData
+//		type: string
+//		enum:
+//			- all
+//			- followed
+//			- follower
+//			- none
+//		default: all
+//		description: Which accounts to receive push notifications from.
 //
 //	security:
 //	- OAuth2 Bearer:
@@ -181,7 +193,8 @@ func (m *Module) PushSubscriptionPUTHandler(c *gin.Context) {
 	apiutil.JSON(c, http.StatusOK, apiSubscription)
 }
 
-// validateNormalizeUpdate copies form fields to their canonical JSON equivalents.
+// validateNormalizeUpdate copies form fields to their canonical JSON equivalents
+// and sets defaults for fields that have them.
 func validateNormalizeUpdate(request *apimodel.WebPushSubscriptionUpdateRequest) error {
 	if request.Data == nil {
 		request.Data = &apimodel.WebPushSubscriptionRequestData{}
@@ -226,6 +239,13 @@ func validateNormalizeUpdate(request *apimodel.WebPushSubscriptionUpdateRequest)
 	}
 	if request.DataAlertsPendingReblog != nil {
 		request.Data.Alerts.Reblog = *request.DataAlertsPendingReblog
+	}
+
+	if request.DataPolicy != nil {
+		request.Data.Policy = request.DataPolicy
+	}
+	if request.Data.Policy == nil {
+		request.Data.Policy = util.Ptr(apimodel.WebPushNotificationPolicyAll)
 	}
 
 	return nil

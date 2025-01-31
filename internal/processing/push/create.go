@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // CreateOrReplace creates a Web Push subscription for the given access token,
@@ -54,6 +55,7 @@ func (p *Processor) CreateOrReplace(
 		Auth:              request.Subscription.Keys.Auth,
 		P256dh:            request.Subscription.Keys.P256dh,
 		NotificationFlags: alertsToNotificationFlags(request.Data.Alerts),
+		Policy:            typeutils.APIWebPushNotificationPolicyToWebPushNotificationPolicy(*request.Data.Policy),
 	}
 
 	if err := p.state.DB.PutWebPushSubscription(ctx, subscription); err != nil {

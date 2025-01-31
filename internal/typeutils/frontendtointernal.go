@@ -231,3 +231,17 @@ func APIInteractionPolicyToInteractionPolicy(
 		},
 	}, nil
 }
+
+func APIWebPushNotificationPolicyToWebPushNotificationPolicy(policy apimodel.WebPushNotificationPolicy) gtsmodel.WebPushNotificationPolicy {
+	switch policy {
+	case apimodel.WebPushNotificationPolicyAll:
+		return gtsmodel.WebPushNotificationPolicyAll
+	case apimodel.WebPushNotificationPolicyFollowed:
+		return gtsmodel.WebPushNotificationPolicyFollowed
+	case apimodel.WebPushNotificationPolicyFollower:
+		return gtsmodel.WebPushNotificationPolicyFollower
+	case apimodel.WebPushNotificationPolicyNone:
+		return gtsmodel.WebPushNotificationPolicyNone
+	}
+	return 0
+}

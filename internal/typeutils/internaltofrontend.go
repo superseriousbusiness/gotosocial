@@ -3019,6 +3019,20 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 	}, nil
 }
 
+func webPushNotificationPolicyToAPIWebPushNotificationPolicy(policy gtsmodel.WebPushNotificationPolicy) apimodel.WebPushNotificationPolicy {
+	switch policy {
+	case gtsmodel.WebPushNotificationPolicyAll:
+		return apimodel.WebPushNotificationPolicyAll
+	case gtsmodel.WebPushNotificationPolicyFollowed:
+		return apimodel.WebPushNotificationPolicyFollowed
+	case gtsmodel.WebPushNotificationPolicyFollower:
+		return apimodel.WebPushNotificationPolicyFollower
+	case gtsmodel.WebPushNotificationPolicyNone:
+		return apimodel.WebPushNotificationPolicyNone
+	}
+	return ""
+}
+
 func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
 	ctx context.Context,
 	subscription *gtsmodel.WebPushSubscription,
@@ -3047,7 +3061,7 @@ func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
 			PendingReply:     subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReply),
 			PendingReblog:    subscription.NotificationFlags.Get(gtsmodel.NotificationPendingReblog),
 		},
-		Policy:   apimodel.WebPushNotificationPolicyAll,
+		Policy:   webPushNotificationPolicyToAPIWebPushNotificationPolicy(subscription.Policy),
 		Standard: true,
 	}, nil
 }
