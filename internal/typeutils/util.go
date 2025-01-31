@@ -128,12 +128,14 @@ func misskeyReportInlineURLs(content string) []*url.URL {
 //
 // Example:
 //
-//	<hr>
-//	<p><i lang="en">ℹ️ Note from your.instance.com: 2 attachment(s) in this status were not downloaded. Treat the following external link(s) with care:</i></p>
-//	<ul>
-//	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
-//	   <li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
-//	</ul>
+//	<div class="gts-system-message gts-placeholder-attachments">
+//		<hr>
+//		<p><i lang="en">ℹ️ Note from your.instance.com: 2 attachment(s) in this status were not downloaded. Treat the following external link(s) with care:</i></p>
+//		<ul>
+//			<li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg" rel="nofollow noreferrer noopener" target="_blank">01HE7ZGJYTSYMXF927GF9353KR.svg</a> [SVG line art of a sloth, public domain]</li>
+//			<li><a href="http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3" rel="nofollow noreferrer noopener" target="_blank">01HE892Y8ZS68TQCNPX7J888P3.mp3</a> [Jolly salsa song, public domain.]</li>
+//		</ul>
+//	</div>
 func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Attachment) {
 
 	// Extract non-locally stored attachments into a
@@ -187,7 +189,7 @@ func placeholderAttachments(arr []*apimodel.Attachment) (string, []*apimodel.Att
 	}
 	note.WriteString(`</ul>`)
 
-	return text.SanitizeToHTML(note.String()), arr
+	return systemMessage("gts-placeholder-attachments", note.String()), arr
 }
 
 func (c *Converter) pendingReplyNote(
@@ -228,7 +230,27 @@ func (c *Converter) pendingReplyNote(
 	note.WriteString(`</a>.`)
 	note.WriteString(`</i></p>`)
 
-	return text.SanitizeToHTML(note.String()), nil
+	return systemMessage("gts-pending-reply", note.String()), nil
+}
+
+// systemMessage wraps a note with a div with semantic classes that aren't allowed through the sanitizer,
+// but may be emitted to the client as an addition to the status's actual content.
+// Clients may want to display these specially or suppress them in favor of their own UI.
+//
+// messageClass must be valid inside an HTML attribute and should be one or more classes starting with `gts-`.
+func systemMessage(
+	messageClass string,
+	unsanitizedNoteHTML string,
+) string {
+	var wrappedNote strings.Builder
+
+	wrappedNote.WriteString(`<div class="gts-system-message `)
+	wrappedNote.WriteString(messageClass)
+	wrappedNote.WriteString(`">`)
+	wrappedNote.WriteString(text.SanitizeToHTML(unsanitizedNoteHTML))
+	wrappedNote.WriteString(`</div>`)
+
+	return wrappedNote.String()
 }
 
 // ContentToContentLanguage tries to
