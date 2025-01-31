@@ -67,8 +67,7 @@ func (r *realSender) Send(
 	relevantSubscriptions := slices.DeleteFunc(
 		subscriptions,
 		func(subscription *gtsmodel.WebPushSubscription) bool {
-			// Remove subscriptions that don't want this type of notification.
-			return !subscription.NotificationFlags.Get(notification.NotificationType)
+			return r.shouldSkipSubscription(ctx, notification, subscription)
 		},
 	)
 	if len(relevantSubscriptions) == 0 {
@@ -115,6 +114,68 @@ func (r *realSender) Send(
 	}
 
 	return nil
+}
+
+// shouldSkipSubscription returns true if this subscription is not relevant to this notification.
+func (r *realSender) shouldSkipSubscription(
+	ctx context.Context,
+	notification *gtsmodel.Notification,
+	subscription *gtsmodel.WebPushSubscription,
+) bool {
+	// Remove subscriptions that don't want this type of notification.
+	if !subscription.NotificationFlags.Get(notification.NotificationType) {
+		return true
+	}
+
+	// Check against subscription's notification policy.
+	switch subscription.Policy {
+	case gtsmodel.WebPushNotificationPolicyAll:
+		// Allow notifications from any account.
+		return false
+
+	case gtsmodel.WebPushNotificationPolicyFollowed:
+		// Allow if the subscription account follows the notifying account.
+		isFollowing, err := r.state.DB.IsFollowing(ctx, subscription.AccountID, notification.OriginAccountID)
+		if err != nil {
+			log.Errorf(
+				ctx,
+				"error checking whether account %s follows account %s: %v",
+				subscription.AccountID,
+				notification.OriginAccountID,
+				err,
+			)
+			return true
+		}
+		return !isFollowing
+
+	case gtsmodel.WebPushNotificationPolicyFollower:
+		// Allow if the notifying account follows the subscription account.
+		isFollowing, err := r.state.DB.IsFollowing(ctx, notification.OriginAccountID, subscription.AccountID)
+		if err != nil {
+			log.Errorf(
+				ctx,
+				"error checking whether account %s follows account %s: %v",
+				notification.OriginAccountID,
+				subscription.AccountID,
+				err,
+			)
+			return true
+		}
+		return !isFollowing
+
+	case gtsmodel.WebPushNotificationPolicyNone:
+		// This subscription doesn't want any push notifications.
+		return true
+
+	default:
+		log.Errorf(
+			ctx,
+			"unknown Web Push notification policy for subscription with token ID %s: %d",
+			subscription.TokenID,
+			subscription.Policy,
+		)
+		return true
+	}
 }
 
 // sendToSubscription sends a notification to a single Web Push subscription.

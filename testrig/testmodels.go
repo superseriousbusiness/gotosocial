@@ -3610,7 +3610,7 @@ func NewTestWebPushSubscriptions() map[string]*gtsmodel.WebPushSubscription {
 				gtsmodel.NotificationPendingReply,
 				gtsmodel.NotificationPendingReblog,
 			}),
-			Policy: gtsmodel.WebPushNotificationPolicyAll,
+			Policy: gtsmodel.WebPushNotificationPolicyFollowed,
 		},
 	}
 }
