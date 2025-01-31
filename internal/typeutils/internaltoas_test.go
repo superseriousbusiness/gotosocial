@@ -1235,9 +1235,9 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-    StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
 		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
-    TargetAccountID:      acceptingAccount.ID,
+		TargetAccountID:      acceptingAccount.ID,
 		TargetAccount:        acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,
 		InteractingAccount:   interactingAccount,
