@@ -2021,7 +2021,19 @@ func (c *Converter) InteractionReqToASAccept(
 
 	objectIRI, err := url.Parse(req.InteractionURI)
 	if err != nil {
-		return nil, gtserror.Newf("invalid target uri: %w", err)
+		return nil, gtserror.Newf("invalid object uri: %w", err)
+	}
+
+	if req.Status == nil {
+		req.Status, err = c.state.DB.GetStatusByID(ctx, req.StatusID)
+		if err != nil {
+			return nil, gtserror.Newf("db error getting interaction req target status: %w", err)
+		}
+	}
+
+	targetIRI, err := url.Parse(req.Status.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid interaction req target status uri: %w", err)
 	}
 
 	toIRI, err := url.Parse(req.InteractingAccount.URI)
@@ -2039,6 +2051,10 @@ func (c *Converter) InteractionReqToASAccept(
 
 	// Object is the interaction URI.
 	ap.AppendObjectIRIs(accept, objectIRI)
+
+	// Target is the URI of the
+	// status being interacted with.
+	ap.AppendTargetIRIs(accept, targetIRI)
 
 	// Address to the owner
 	// of interaction URI.
@@ -2101,7 +2117,19 @@ func (c *Converter) InteractionReqToASReject(
 
 	objectIRI, err := url.Parse(req.InteractionURI)
 	if err != nil {
-		return nil, gtserror.Newf("invalid target uri: %w", err)
+		return nil, gtserror.Newf("invalid object uri: %w", err)
+	}
+
+	if req.Status == nil {
+		req.Status, err = c.state.DB.GetStatusByID(ctx, req.StatusID)
+		if err != nil {
+			return nil, gtserror.Newf("db error getting interaction req target status: %w", err)
+		}
+	}
+
+	targetIRI, err := url.Parse(req.Status.URI)
+	if err != nil {
+		return nil, gtserror.Newf("invalid interaction req target status uri: %w", err)
 	}
 
 	toIRI, err := url.Parse(req.InteractingAccount.URI)
@@ -2119,6 +2147,10 @@ func (c *Converter) InteractionReqToASReject(
 
 	// Object is the interaction URI.
 	ap.AppendObjectIRIs(reject, objectIRI)
+
+	// Target is the URI of the
+	// status being interacted with.
+	ap.AppendTargetIRIs(reject, targetIRI)
 
 	// Address to the owner
 	// of interaction URI.

@@ -48,6 +48,7 @@ const (
 type Router struct {
 	engine *gin.Engine
 	srv    *http.Server
+	leSrv  *http.Server
 }
 
 // New returns a new Router, which wraps
@@ -185,15 +186,38 @@ func (r *Router) Start() error {
 
 // Stop shuts down the router nicely.
 func (r *Router) Stop() error {
-	log.Infof(nil, "shutting down http router with %s grace period", shutdownTimeout)
-	timeout, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
-	defer cancel()
+	ctx := context.Background()
 
-	if err := r.srv.Shutdown(timeout); err != nil {
-		return fmt.Errorf("error shutting down http router: %s", err)
+	// Shut down "main" server.
+	if err := stopServer(ctx, r.srv, "http server"); err != nil {
+		return err
 	}
 
-	log.Info(nil, "http router closed connections and shut down gracefully")
+	// Shut down letsencrypt
+	// server if enabled.
+	if r.leSrv != nil {
+		if err := stopServer(ctx, r.leSrv, "letsencrypt http server"); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func stopServer(
+	ctx context.Context,
+	s *http.Server,
+	name string,
+) error {
+	timeout, cancel := context.WithTimeout(ctx, shutdownTimeout)
+	defer cancel()
+
+	log.Infof(nil, "shutting down %s with %s grace period", name, shutdownTimeout)
+	if err := s.Shutdown(timeout); err != nil {
+		return fmt.Errorf("error shutting down %s: %w", name, err)
+	}
+
+	log.Infof(ctx, "%s closed connections and shut down gracefully", name)
 	return nil
 }
 
@@ -228,8 +252,8 @@ func (r *Router) customTLS(
 // letsEncryptTLS modifies the router's underlying http
 // server to use LetsEncrypt via an ACME Autocert manager.
 //
-// It also starts a listener on the configured LetsEncrypt
-// port to validate LE requests.
+// It also sets r.leSrv and starts a listener on the
+// configured LetsEncrypt port to validate LE requests.
 func (r *Router) letsEncryptTLS() (func() error, error) {
 	acm := &autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
@@ -261,17 +285,18 @@ func (r *Router) letsEncryptTLS() (func() error, error) {
 	// Take our own copy of the HTTP server,
 	// and update it to serve LetsEncrypt
 	// requests via the autocert manager.
-	leSrv := (*r.srv) //nolint:govet
-	leSrv.Handler = acm.HTTPHandler(fallback)
-	leSrv.Addr = fmt.Sprintf("%s:%d",
+	r.leSrv = new(http.Server) //nolint:gosec
+	*r.leSrv = (*r.srv)        //nolint:govet
+	r.leSrv.Handler = acm.HTTPHandler(fallback)
+	r.leSrv.Addr = fmt.Sprintf("%s:%d",
 		config.GetBindAddress(),
 		config.GetLetsEncryptPort(),
 	)
 
 	go func() {
 		// Start the LetsEncrypt autocert manager HTTP server.
-		log.Infof(nil, "letsencrypt listening on %s", leSrv.Addr)
-		if err := leSrv.ListenAndServe(); err != nil &&
+		log.Infof(nil, "letsencrypt listening on %s", r.leSrv.Addr)
+		if err := r.leSrv.ListenAndServe(); err != nil &&
 			err != http.ErrServerClosed {
 			log.Panicf(nil, "letsencrypt: listen: %v", err)
 		}

@@ -18,10 +18,17 @@
 package typeutils
 
 import (
+	crand "crypto/rand"
+	"math/big"
+	"math/rand"
 	"sync"
+	"sync/atomic"
+	"time"
 
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -31,6 +38,7 @@ type Converter struct {
 	randAvatars    sync.Map
 	visFilter      *visibility.Filter
 	intFilter      *interaction.Filter
+	randStats      atomic.Pointer[apimodel.RandomStats]
 }
 
 func NewConverter(state *state.State) *Converter {
@@ -39,5 +47,55 @@ func NewConverter(state *state.State) *Converter {
 		defaultAvatars: populateDefaultAvatars(),
 		visFilter:      visibility.NewFilter(state),
 		intFilter:      interaction.NewFilter(state),
+	}
+}
+
+// RandomStats returns or generates
+// and returns random instance stats.
+func (c *Converter) RandomStats() apimodel.RandomStats {
+	now := time.Now()
+	stats := c.randStats.Load()
+	if stats != nil && time.Since(stats.Generated) < time.Hour {
+		// Random stats are still
+		// fresh (less than 1hr old),
+		// so return them as-is.
+		return *stats
+	}
+
+	// Generate new random stats.
+	newStats := genRandStats()
+	newStats.Generated = now
+	c.randStats.Store(&newStats)
+	return newStats
+}
+
+func genRandStats() apimodel.RandomStats {
+	const (
+		statusesMax = 10000000
+		usersMax    = 1000000
+	)
+
+	statusesB, err := crand.Int(crand.Reader, big.NewInt(statusesMax))
+	if err != nil {
+		// Only errs if something is buggered with the OS.
+		log.Panicf(nil, "error randomly generating statuses count: %v", err)
+	}
+
+	totalUsersB, err := crand.Int(crand.Reader, big.NewInt(usersMax))
+	if err != nil {
+		// Only errs if something is buggered with the OS.
+		log.Panicf(nil, "error randomly generating users count: %v", err)
+	}
+
+	// Monthly users should only ever
+	// be <= 100% of total users.
+	totalUsers := totalUsersB.Int64()
+	activeRatio := rand.Float64() //nolint
+	mau := int64(float64(totalUsers) * activeRatio)
+
+	return apimodel.RandomStats{
+		Statuses:           statusesB.Int64(),
+		TotalUsers:         totalUsers,
+		MonthlyActiveUsers: mau,
 	}
 }

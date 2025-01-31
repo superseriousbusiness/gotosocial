@@ -31,7 +31,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-// Account represents either a local or a remote fediverse account, gotosocial or otherwise (mastodon, pleroma, etc).
+// Account represents either a local or a remote fediverse
+// account, gotosocial or otherwise (mastodon, pleroma, etc).
 type Account struct {
 	ID                      string           `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
 	CreatedAt               time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created.
@@ -83,9 +84,19 @@ type Account struct {
 	Stats                   *AccountStats    `bun:"-"`                                                           // gtsmodel.AccountStats for this account.
 }
 
+// UsernameDomain returns account @username@domain (missing domain if local).
+func (a *Account) UsernameDomain() string {
+	if a.IsLocal() {
+		return "@" + a.Username
+	}
+	return "@" + a.Username + "@" + a.Domain
+}
+
 // IsLocal returns whether account is a local user account.
 func (a *Account) IsLocal() bool {
-	return a.Domain == "" || a.Domain == config.GetHost() || a.Domain == config.GetAccountDomain()
+	return a.Domain == "" ||
+		a.Domain == config.GetHost() ||
+		a.Domain == config.GetAccountDomain()
 }
 
 // IsRemote returns whether account is a remote user account.

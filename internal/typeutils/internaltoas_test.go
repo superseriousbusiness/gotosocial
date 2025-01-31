@@ -1235,7 +1235,9 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
-		TargetAccountID:      acceptingAccount.ID,
+    StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
+    TargetAccountID:      acceptingAccount.ID,
 		TargetAccount:        acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,
 		InteractingAccount:   interactingAccount,
@@ -1272,6 +1274,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
   ],
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
   "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "target": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Accept"
 }`, string(b))
@@ -1284,6 +1287,8 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
 	req := &gtsmodel.InteractionRequest{
 		ID:                   "01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		CreatedAt:            testrig.TimeMustParse("2022-06-09T13:12:00Z"),
+		StatusID:             "01JJYCVKCXB9JTQD1XW2KB8MT3",
+		Status:               &gtsmodel.Status{URI: "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3"},
 		TargetAccountID:      acceptingAccount.ID,
 		TargetAccount:        acceptingAccount,
 		InteractingAccountID: interactingAccount.ID,
@@ -1317,6 +1322,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
   "actor": "http://localhost:8080/users/the_mighty_zork",
   "id": "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
   "object": "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
+  "target": "http://localhost:8080/users/the_mighty_zork/statuses/01JJYCVKCXB9JTQD1XW2KB8MT3",
   "to": "http://fossbros-anonymous.io/users/foss_satan",
   "type": "Accept"
 }`, string(b))

@@ -118,6 +118,7 @@ EXPECT=$(cat << "EOF"
         "nl",
         "en-GB"
     ],
+    "instance-stats-randomize": true,
     "instance-subscriptions-process-every": 86400000000000,
     "instance-subscriptions-process-from": "23:00",
     "landing-page-user": "admin",
@@ -248,6 +249,7 @@ GTS_INSTANCE_FEDERATION_SPAM_FILTER=true \
 GTS_INSTANCE_DELIVER_TO_SHARED_INBOXES=false \
 GTS_INSTANCE_INJECT_MASTODON_VERSION=true \
 GTS_INSTANCE_LANGUAGES="nl,en-gb" \
+GTS_INSTANCE_STATS_RANDOMIZE=true \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \

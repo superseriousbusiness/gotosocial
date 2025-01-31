@@ -81,18 +81,6 @@ func (r *realSender) Send(
 		return gtserror.Newf("error getting VAPID key pair: %w", err)
 	}
 
-	// Get contact email for this instance, if available.
-	domain := config.GetHost()
-	instance, err := r.state.DB.GetInstance(ctx, domain)
-	if err != nil {
-		return gtserror.Newf("error getting current instance: %w", err)
-	}
-	vapidSubjectEmail := instance.ContactEmail
-	if vapidSubjectEmail == "" {
-		// Instance contact email not configured. Use a dummy address.
-		vapidSubjectEmail = "admin@" + domain
-	}
-
 	// Get target account settings.
 	targetAccountSettings, err := r.state.DB.GetAccountSettings(ctx, notification.TargetAccountID)
 	if err != nil {
@@ -111,7 +99,6 @@ func (r *realSender) Send(
 			if err := r.sendToSubscription(
 				ctx,
 				vapidKeyPair,
-				vapidSubjectEmail,
 				targetAccountSettings,
 				subscription,
 				notification,
@@ -134,7 +121,6 @@ func (r *realSender) Send(
 func (r *realSender) sendToSubscription(
 	ctx context.Context,
 	vapidKeyPair *gtsmodel.VAPIDKeyPair,
-	vapidSubjectEmail string,
 	targetAccountSettings *gtsmodel.AccountSettings,
 	subscription *gtsmodel.WebPushSubscription,
 	notification *gtsmodel.Notification,
@@ -185,7 +171,7 @@ func (r *realSender) sendToSubscription(
 		},
 		&webpushgo.Options{
 			HTTPClient:      r.httpClient,
-			Subscriber:      vapidSubjectEmail,
+			Subscriber:      "https://" + config.GetHost(),
 			VAPIDPublicKey:  vapidKeyPair.Public,
 			VAPIDPrivateKey: vapidKeyPair.Private,
 			TTL:             int(TTL.Seconds()),

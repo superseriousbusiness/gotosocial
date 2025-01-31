@@ -92,6 +92,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().StringSlice(InstanceLanguagesFlag(), cfg.InstanceLanguages.TagStrs(), fieldtag("InstanceLanguages", "usage"))
 		cmd.Flags().String(InstanceSubscriptionsProcessFromFlag(), cfg.InstanceSubscriptionsProcessFrom, fieldtag("InstanceSubscriptionsProcessFrom", "usage"))
 		cmd.Flags().Duration(InstanceSubscriptionsProcessEveryFlag(), cfg.InstanceSubscriptionsProcessEvery, fieldtag("InstanceSubscriptionsProcessEvery", "usage"))
+		cmd.Flags().Bool(InstanceStatsRandomizeFlag(), cfg.InstanceStatsRandomize, fieldtag("InstanceStatsRandomize", "usage"))
 
 		// Accounts
 		cmd.Flags().Bool(AccountsRegistrationOpenFlag(), cfg.AccountsRegistrationOpen, fieldtag("AccountsRegistrationOpen", "usage"))

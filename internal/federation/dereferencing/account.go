@@ -639,7 +639,16 @@ func (d *Dereferencer) enrichAccount(
 				return nil, nil, gtserror.Newf("db error getting account after redirects: %w", err)
 			}
 
-			if alreadyAcc != nil {
+			switch {
+			case alreadyAcc == nil:
+				// nothing to do
+
+			case alreadyAcc.IsLocal():
+				// Request eventually redirected to a
+				// local account. Return it as-is here.
+				return alreadyAcc, nil, nil
+
+			default:
 				// We had this account stored
 				// under discovered final URI.
 				//
@@ -718,12 +727,6 @@ func (d *Dereferencer) enrichAccount(
 		latestAcc.Username = cmp.Or(latestAcc.Username, accUsername)
 	}
 
-	if latestAcc.Domain == "" {
-		// Ensure we have a domain set by this point,
-		// otherwise it gets stored as a local user!
-		return nil, nil, gtserror.Newf("empty domain for %s", uri)
-	}
-
 	// Ensure the final parsed account URI matches
 	// the input URI we fetched (or received) it as.
 	if matches, err := util.URIMatches(
@@ -740,8 +743,14 @@ func (d *Dereferencer) enrichAccount(
 	} else if !matches {
 		return nil, nil, gtserror.Newf(
 			"account uri %s does not match %s",
-			latestAcc.URI, uri.String(),
+			latestAcc.URI, uri,
 		)
+	}
+
+	// Ensure this isn't a local account,
+	// or a remote masquerading as such!
+	if latestAcc.IsLocal() {
+		return nil, nil, gtserror.Newf("cannot dereference local account %s", uri)
 	}
 
 	// Get current time.

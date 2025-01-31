@@ -20,9 +20,7 @@ package federatingdb
 import (
 	"context"
 	"errors"
-	"fmt"
 
-	"github.com/miekg/dns"
 	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -49,115 +47,36 @@ import (
 func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 	log.DebugKV(ctx, "create", serialize{asType})
 
+	// Cache entry for this activity type's ID for later
+	// checks in the Exist() function if we see it again.
+	f.activityIDs.Set(ap.GetJSONLDId(asType).String(), struct{}{})
+
+	// Extract relevant values from passed ctx.
 	activityContext := getActivityContext(ctx)
 	if activityContext.internal {
 		return nil // Already processed.
 	}
 
-	requestingAcct := activityContext.requestingAcct
-	receivingAcct := activityContext.receivingAcct
+	requesting := activityContext.requestingAcct
+	receiving := activityContext.receivingAcct
 
-	if requestingAcct.IsMoving() {
+	if requesting.IsMoving() {
 		// A Moving account
 		// can't do this.
 		return nil
 	}
 
-	// Cache entry for this create activity ID for later
-	// checks in the Exist() function if we see it again.
-	f.activityIDs.Set(ap.GetJSONLDId(asType).String(), struct{}{})
-
-	switch name := asType.GetTypeName(); name {
-	case ap.ActivityBlock:
-		// BLOCK SOMETHING
-		return f.activityBlock(ctx, asType, receivingAcct, requestingAcct)
-	case ap.ActivityCreate:
-		// CREATE SOMETHING
-		return f.activityCreate(ctx, asType, receivingAcct, requestingAcct)
-	case ap.ActivityFollow:
-		// FOLLOW SOMETHING
-		return f.activityFollow(ctx, asType, receivingAcct, requestingAcct)
-	case ap.ActivityLike:
-		// LIKE SOMETHING
-		return f.activityLike(ctx, asType, receivingAcct, requestingAcct)
-	case ap.ActivityFlag:
-		// FLAG / REPORT SOMETHING
-		return f.activityFlag(ctx, asType, receivingAcct, requestingAcct)
-	default:
-		log.Debugf(ctx, "unhandled object type: %s", name)
-	}
-
-	return nil
-}
-
-/*
-	BLOCK HANDLERS
-*/
-
-func (f *federatingDB) activityBlock(ctx context.Context, asType vocab.Type, receiving *gtsmodel.Account, requesting *gtsmodel.Account) error {
-	blockable, ok := asType.(vocab.ActivityStreamsBlock)
+	// Cast to the expected types we handle in this func.
+	creatable, ok := asType.(vocab.ActivityStreamsCreate)
 	if !ok {
-		return errors.New("activityBlock: could not convert type to block")
-	}
-
-	block, err := f.converter.ASBlockToBlock(ctx, blockable)
-	if err != nil {
-		return fmt.Errorf("activityBlock: could not convert Block to gts model block")
-	}
-
-	if block.AccountID != requesting.ID {
-		return fmt.Errorf(
-			"activityBlock: requestingAccount %s is not Block actor account %s",
-			requesting.URI, block.Account.URI,
-		)
-	}
-
-	if block.TargetAccountID != receiving.ID {
-		return fmt.Errorf(
-			"activityBlock: inbox account %s is not Block object account %s",
-			receiving.URI, block.TargetAccount.URI,
-		)
-	}
-
-	block.ID = id.NewULID()
-
-	if err := f.state.DB.PutBlock(ctx, block); err != nil {
-		return fmt.Errorf("activityBlock: database error inserting block: %s", err)
-	}
-
-	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-		APObjectType:   ap.ActivityBlock,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       block,
-		Receiving:      receiving,
-		Requesting:     requesting,
-	})
-
-	return nil
-}
-
-/*
-	CREATE HANDLERS
-*/
-
-// activityCreate handles asType Create by checking
-// the Object entries of the Create and calling other
-// handlers as appropriate.
-func (f *federatingDB) activityCreate(
-	ctx context.Context,
-	asType vocab.Type,
-	receivingAccount *gtsmodel.Account,
-	requestingAccount *gtsmodel.Account,
-) error {
-	create, ok := asType.(vocab.ActivityStreamsCreate)
-	if !ok {
-		return gtserror.Newf("could not convert asType %T to ActivityStreamsCreate", asType)
+		log.Debugf(ctx, "unhandled object type: %s", asType.GetTypeName())
+		return nil
 	}
 
 	var errs gtserror.MultiError
 
 	// Extract objects from create activity.
-	objects := ap.ExtractObjects(create)
+	objects := ap.ExtractObjects(creatable)
 
 	// Extract PollOptionables (votes!) from objects slice.
 	optionables, objects := ap.ExtractPollOptionables(objects)
@@ -166,8 +85,8 @@ func (f *federatingDB) activityCreate(
 		// Handle provided poll vote(s) creation, this can
 		// be for single or multiple votes in the same poll.
 		err := f.createPollOptionables(ctx,
-			receivingAccount,
-			requestingAccount,
+			receiving,
+			requesting,
 			optionables,
 		)
 		if err != nil {
@@ -182,12 +101,12 @@ func (f *federatingDB) activityCreate(
 	for _, statusable := range statusables {
 		// Check if this is a forwarded object, i.e. did
 		// the account making the request also create this?
-		forwarded := !isSender(statusable, requestingAccount)
+		forwarded := !isSender(statusable, requesting)
 
 		// Handle create event for this statusable.
 		if err := f.createStatusable(ctx,
-			receivingAccount,
-			requestingAccount,
+			receiving,
+			requesting,
 			statusable,
 			forwarded,
 		); err != nil {
@@ -340,8 +259,7 @@ func (f *federatingDB) createStatusable(
 		//
 		// It does this to try to ensure thread completion, but
 		// we have our own thread fetching mechanism anyway.
-		log.Debugf(ctx,
-			"status %s is not relevant to receiver (%v); dropping it",
+		log.Debugf(ctx, "status %s is not relevant to receiver (%v); dropping it",
 			ap.GetJSONLDId(statusable), err,
 		)
 		return nil
@@ -351,8 +269,7 @@ func (f *federatingDB) createStatusable(
 		// gauge how much spam is being sent to them.
 		//
 		// TODO: add Prometheus metrics for this.
-		log.Infof(ctx,
-			"status %s looked like spam (%v); dropping it",
+		log.Infof(ctx, "status %s looked like spam (%v); dropping it",
 			ap.GetJSONLDId(statusable), err,
 		)
 		return nil
@@ -394,213 +311,6 @@ func (f *federatingDB) createStatusable(
 		APObject:       statusable,
 		Receiving:      receiver,
 		Requesting:     requester,
-	})
-
-	return nil
-}
-
-/*
-	FOLLOW HANDLERS
-*/
-
-func (f *federatingDB) activityFollow(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	follow, ok := asType.(vocab.ActivityStreamsFollow)
-	if !ok {
-		return errors.New("activityFollow: could not convert type to follow")
-	}
-
-	followRequest, err := f.converter.ASFollowToFollowRequest(ctx, follow)
-	if err != nil {
-		return fmt.Errorf("activityFollow: could not convert Follow to follow request: %s", err)
-	}
-
-	if followRequest.AccountID != requestingAccount.ID {
-		return fmt.Errorf(
-			"activityFollow: requestingAccount %s is not Follow actor account %s",
-			requestingAccount.URI, followRequest.Account.URI,
-		)
-	}
-
-	if followRequest.TargetAccountID != receivingAccount.ID {
-		return fmt.Errorf(
-			"activityFollow: inbox account %s is not Follow object account %s",
-			receivingAccount.URI, followRequest.TargetAccount.URI,
-		)
-	}
-
-	followRequest.ID = id.NewULID()
-
-	if err := f.state.DB.PutFollowRequest(ctx, followRequest); err != nil {
-		return fmt.Errorf("activityFollow: database error inserting follow request: %s", err)
-	}
-
-	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-		APObjectType:   ap.ActivityFollow,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       followRequest,
-		Receiving:      receivingAccount,
-		Requesting:     requestingAccount,
-	})
-
-	return nil
-}
-
-/*
-	LIKE HANDLERS
-*/
-
-func (f *federatingDB) activityLike(
-	ctx context.Context,
-	asType vocab.Type,
-	receivingAcct *gtsmodel.Account,
-	requestingAcct *gtsmodel.Account,
-) error {
-	like, ok := asType.(vocab.ActivityStreamsLike)
-	if !ok {
-		err := gtserror.Newf("could not convert asType %T to ActivityStreamsLike", asType)
-		return gtserror.SetMalformed(err)
-	}
-
-	fave, err := f.converter.ASLikeToFave(ctx, like)
-	if err != nil {
-		return gtserror.Newf("could not convert Like to fave: %w", err)
-	}
-
-	// Ensure requester not trying to
-	// Like on someone else's behalf.
-	if fave.AccountID != requestingAcct.ID {
-		text := fmt.Sprintf(
-			"requestingAcct %s is not Like actor account %s",
-			requestingAcct.URI, fave.Account.URI,
-		)
-		return gtserror.NewErrorForbidden(errors.New(text), text)
-	}
-
-	if !*fave.Status.Local {
-		// Only process likes of local statuses.
-		// TODO: process for remote statuses as well.
-		return nil
-	}
-
-	// Ensure valid Like target for requester.
-	policyResult, err := f.intFilter.StatusLikeable(ctx,
-		requestingAcct,
-		fave.Status,
-	)
-	if err != nil {
-		err := gtserror.Newf("error seeing if status %s is likeable: %w", fave.Status.ID, err)
-		return gtserror.NewErrorInternalError(err)
-	}
-
-	if policyResult.Forbidden() {
-		const errText = "requester does not have permission to Like this status"
-		err := gtserror.New(errText)
-		return gtserror.NewErrorForbidden(err, errText)
-	}
-
-	// Derive pendingApproval
-	// and preapproved status.
-	var (
-		pendingApproval bool
-		preApproved     bool
-	)
-
-	switch {
-	case policyResult.WithApproval():
-		// Requester allowed to do
-		// this pending approval.
-		pendingApproval = true
-
-	case policyResult.MatchedOnCollection():
-		// Requester allowed to do this,
-		// but matched on collection.
-		// Preapprove Like and have the
-		// processor send out an Accept.
-		pendingApproval = true
-		preApproved = true
-
-	case policyResult.Permitted():
-		// Requester straight up
-		// permitted to do this,
-		// no need for Accept.
-		pendingApproval = false
-	}
-
-	// Set appropriate fields
-	// on fave and store it.
-	fave.ID = id.NewULID()
-	fave.PendingApproval = &pendingApproval
-	fave.PreApproved = preApproved
-
-	if err := f.state.DB.PutStatusFave(ctx, fave); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			// The fave already exists in the
-			// database, which means we've already
-			// handled side effects. We can just
-			// return nil here and be done with it.
-			return nil
-		}
-		return gtserror.Newf("db error inserting fave: %w", err)
-	}
-
-	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-		APObjectType:   ap.ActivityLike,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       fave,
-		Receiving:      receivingAcct,
-		Requesting:     requestingAcct,
-	})
-
-	return nil
-}
-
-/*
-	FLAG HANDLERS
-*/
-
-func (f *federatingDB) activityFlag(ctx context.Context, asType vocab.Type, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) error {
-	flag, ok := asType.(vocab.ActivityStreamsFlag)
-	if !ok {
-		return errors.New("activityFlag: could not convert type to flag")
-	}
-
-	report, err := f.converter.ASFlagToReport(ctx, flag)
-	if err != nil {
-		return fmt.Errorf("activityFlag: could not convert Flag to report: %w", err)
-	}
-
-	// Requesting account must have at
-	// least two domains from the right
-	// in common with reporting account.
-	if dns.CompareDomainName(
-		requestingAccount.Domain,
-		report.Account.Domain,
-	) < 2 {
-		return fmt.Errorf(
-			"activityFlag: requesting account %s does not share a domain with Flag Actor account %s",
-			requestingAccount.URI, report.Account.URI,
-		)
-	}
-
-	if report.TargetAccountID != receivingAccount.ID {
-		return fmt.Errorf(
-			"activityFlag: inbox account %s is not Flag object account %s",
-			receivingAccount.URI, report.TargetAccount.URI,
-		)
-	}
-
-	report.ID = id.NewULID()
-
-	if err := f.state.DB.PutReport(ctx, report); err != nil {
-		return fmt.Errorf("activityFlag: database error inserting report: %w", err)
-	}
-
-	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
-		APObjectType:   ap.ActivityFlag,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       report,
-		Receiving:      receivingAccount,
-		Requesting:     requestingAccount,
 	})
 
 	return nil

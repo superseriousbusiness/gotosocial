@@ -456,39 +456,8 @@ func (f *Federator) FederatingCallbacks(ctx context.Context) (
 	other []any,
 	err error,
 ) {
-	wrapped = pub.FederatingWrappedCallbacks{
-		// OnFollow determines what action to take for this
-		// particular callback if a Follow Activity is handled.
-		//
-		// For our implementation, we always want to do nothing
-		// because we have internal logic for handling follows.
-		OnFollow: pub.OnFollowDoNothing,
-	}
-
-	// Override some default behaviors to trigger our own side effects.
-	other = []any{
-		func(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
-			return f.FederatingDB().Undo(ctx, undo)
-		},
-		func(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
-			return f.FederatingDB().Accept(ctx, accept)
-		},
-		func(ctx context.Context, reject vocab.ActivityStreamsReject) error {
-			return f.FederatingDB().Reject(ctx, reject)
-		},
-		func(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
-			return f.FederatingDB().Announce(ctx, announce)
-		},
-	}
-
-	// Define some of our own behaviors which are not
-	// overrides of the default pub.FederatingWrappedCallbacks.
-	other = append(other, []any{
-		func(ctx context.Context, move vocab.ActivityStreamsMove) error {
-			return f.FederatingDB().Move(ctx, move)
-		},
-	}...)
-
+	wrapped = f.wrapped
+	other = f.callback
 	return
 }
 

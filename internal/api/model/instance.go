@@ -17,7 +17,10 @@
 
 package model
 
-import "mime/multipart"
+import (
+	"mime/multipart"
+	"time"
+)
 
 // InstanceSettingsUpdateRequest models an instance update request.
 //
@@ -147,4 +150,12 @@ type InstanceConfigurationEmojis struct {
 	//
 	// example: 51200
 	EmojiSizeLimit int `json:"emoji_size_limit"`
+}
+
+// swagger:ignore
+type RandomStats struct {
+	Statuses           int64
+	TotalUsers         int64
+	MonthlyActiveUsers int64
+	Generated          time.Time
 }

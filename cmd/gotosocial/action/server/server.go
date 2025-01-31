@@ -69,6 +69,36 @@ import (
 	"go.uber.org/automaxprocs/maxprocs"
 )
 
+// Maintenance starts and creates a GoToSocial server
+// in maintenance mode (returns 503 for most requests).
+var Maintenance action.GTSAction = func(ctx context.Context) error {
+	route, err := router.New(ctx)
+	if err != nil {
+		return fmt.Errorf("error creating maintenance router: %w", err)
+	}
+
+	// Route maintenance handlers.
+	maintenance := web.NewMaintenance()
+	maintenance.Route(route)
+
+	// Start the maintenance router.
+	if err := route.Start(); err != nil {
+		return fmt.Errorf("error starting maintenance router: %w", err)
+	}
+
+	// Catch shutdown signals from the OS.
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	sig := <-sigs // block until signal received
+	log.Infof(ctx, "received signal %s, shutting down", sig)
+
+	if err := route.Stop(); err != nil {
+		log.Errorf(ctx, "error stopping router: %v", err)
+	}
+
+	return nil
+}
+
 // Start creates and starts a gotosocial server
 var Start action.GTSAction = func(ctx context.Context) error {
 	// Set GOMAXPROCS / GOMEMLIMIT
@@ -147,6 +177,23 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// Finally reached end of shutdown.
 		log.Info(ctx, "done! exiting...")
 	}()
+
+	// Create maintenance router.
+	var err error
+	route, err = router.New(ctx)
+	if err != nil {
+		return fmt.Errorf("error creating maintenance router: %w", err)
+	}
+
+	// Route maintenance handlers.
+	maintenance := web.NewMaintenance()
+	maintenance.Route(route)
+
+	// Start the maintenance router to handle reqs
+	// while the instance is starting up / migrating.
+	if err := route.Start(); err != nil {
+		return fmt.Errorf("error starting maintenance router: %w", err)
+	}
 
 	// Initialize tracing (noop if not enabled).
 	if err := tracing.Initialize(); err != nil {
@@ -359,9 +406,15 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		HTTP router initialization
 	*/
 
+	// Close down the maintenance router.
+	if err := route.Stop(); err != nil {
+		return fmt.Errorf("error stopping maintenance router: %w", err)
+	}
+
+	// Instantiate the main router.
 	route, err = router.New(ctx)
 	if err != nil {
-		return fmt.Errorf("error creating router: %s", err)
+		return fmt.Errorf("error creating main router: %s", err)
 	}
 
 	// Start preparing middleware stack.

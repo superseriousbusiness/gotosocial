@@ -943,8 +943,9 @@ func (c *Converter) statusToAPIFilterResults(
 	// Both mutes and filters can expire.
 	now := time.Now()
 
-	// If the requesting account mutes the account that created this status, hide the status.
-	if mutes.Matches(s.AccountID, filterContext, now) {
+	// If requesting account mutes the author (taking boosts into account), hide the status.
+	if (s.BoostOfAccountID != "" && mutes.Matches(s.BoostOfAccountID, filterContext, now)) ||
+		mutes.Matches(s.AccountID, filterContext, now) {
 		return nil, statusfilter.ErrHideStatus
 	}
 
@@ -1744,6 +1745,12 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	stats["domain_count"] = util.Ptr(domainCount)
 	instance.Stats = stats
 
+	if config.GetInstanceStatsRandomize() {
+		// Whack some random stats on the instance
+		// to be injected by API handlers.
+		instance.RandomStats = c.RandomStats()
+	}
+
 	// thumbnail
 	iAccount, err := c.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
@@ -1818,6 +1825,12 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	if debug.DEBUG {
 		instance.Debug = util.Ptr(true)
+	}
+
+	if config.GetInstanceStatsRandomize() {
+		// Whack some random stats on the instance
+		// to be injected by API handlers.
+		instance.RandomStats = c.RandomStats()
 	}
 
 	// thumbnail
@@ -2641,28 +2654,36 @@ func (c *Converter) FilterStatusToAPIFilterStatus(ctx context.Context, filterSta
 func (c *Converter) convertEmojisToAPIEmojis(ctx context.Context, emojis []*gtsmodel.Emoji, emojiIDs []string) ([]apimodel.Emoji, error) {
 	var errs gtserror.MultiError
 
+	// GTS model attachments were not populated
 	if len(emojis) == 0 && len(emojiIDs) > 0 {
-		// GTS model attachments were not populated
-
 		var err error
 
 		// Fetch GTS models for emoji IDs
 		emojis, err = c.state.DB.GetEmojisByIDs(ctx, emojiIDs)
 		if err != nil {
-			errs.Appendf("error fetching emojis from database: %w", err)
+			return nil, gtserror.Newf("db error fetching emojis: %w", err)
 		}
 	}
 
-	// Preallocate expected frontend slice
+	// Preallocate expected frontend slice of emojis.
 	apiEmojis := make([]apimodel.Emoji, 0, len(emojis))
-
-	// Convert GTS models to frontend models
 	for _, emoji := range emojis {
+
+		// Skip adding emojis that are
+		// uncached, the empty URLs can
+		// cause issues with some clients.
+		if !*emoji.Cached {
+			continue
+		}
+
+		// Convert each to a frontend API model emoji.
 		apiEmoji, err := c.EmojiToAPIEmoji(ctx, emoji)
 		if err != nil {
 			errs.Appendf("error converting emoji %s to api emoji: %w", emoji.ID, err)
 			continue
 		}
+
+		// Append converted emoji to return slice.
 		apiEmojis = append(apiEmojis, apiEmoji)
 	}
 

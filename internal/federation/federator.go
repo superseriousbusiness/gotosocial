@@ -36,14 +36,19 @@ var _ interface {
 } = (*Federator)(nil)
 
 type Federator struct {
-	db                  db.DB
-	federatingDB        federatingdb.DB
-	clock               pub.Clock
-	converter           *typeutils.Converter
-	transportController transport.Controller
-	mediaManager        *media.Manager
-	actor               pub.FederatingActor
+	db           db.DB
+	federatingDB federatingdb.DB
+	clock        pub.Clock
+	converter    *typeutils.Converter
+	transport    transport.Controller
+	mediaManager *media.Manager
+	actor        pub.FederatingActor
 	dereferencing.Dereferencer
+
+	// store result of FederatingCallbacks() ahead
+	// of time since it's called in every PostInbox().
+	wrapped  pub.FederatingWrappedCallbacks
+	callback []any
 }
 
 // NewFederator returns a new federator instance.
@@ -58,12 +63,13 @@ func NewFederator(
 ) *Federator {
 	clock := &Clock{}
 	f := &Federator{
-		db:                  state.DB,
-		federatingDB:        federatingDB,
-		clock:               clock,
-		converter:           converter,
-		transportController: transportController,
-		mediaManager:        mediaManager,
+		db:           state.DB,
+		federatingDB: federatingDB,
+		clock:        clock,
+		converter:    converter,
+		transport:    transportController,
+		mediaManager: mediaManager,
+
 		Dereferencer: dereferencing.NewDereferencer(
 			state,
 			converter,
@@ -72,6 +78,28 @@ func NewFederator(
 			intFilter,
 			mediaManager,
 		),
+
+		// prepared response to FederatingCallbacks()
+		wrapped: pub.FederatingWrappedCallbacks{
+
+			// OnFollow determines what action to take for this
+			// particular callback if a Follow Activity is handled.
+			//
+			// For our implementation, we always want to do nothing
+			// because we have internal logic for handling follows.
+			OnFollow: pub.OnFollowDoNothing,
+		},
+		callback: []any{
+			federatingDB.Like,
+			federatingDB.Block,
+			federatingDB.Follow,
+			federatingDB.Undo,
+			federatingDB.Accept,
+			federatingDB.Reject,
+			federatingDB.Announce,
+			federatingDB.Move,
+			federatingDB.Flag,
+		},
 	}
 	actor := newFederatingActor(f, f, federatingDB, clock)
 	f.actor = actor
@@ -90,5 +118,5 @@ func (f *Federator) FederatingDB() federatingdb.DB {
 
 // TransportController returns the underlying transport controller.
 func (f *Federator) TransportController() transport.Controller {
-	return f.transportController
+	return f.transport
 }

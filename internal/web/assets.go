@@ -21,10 +21,13 @@ import (
 	"fmt"
 	"net/http"
 	"path"
+	"path/filepath"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type fileSystem struct {
@@ -53,7 +56,11 @@ func (fs fileSystem) Open(path string) (http.File, error) {
 // getAssetFileInfo tries to fetch the ETag for the given filePath from the module's
 // assetsETagCache. If it can't be found there, it uses the provided http.FileSystem
 // to generate a new ETag to go in the cache, which it then returns.
-func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, error) {
+func getAssetETag(
+	wet withETagCache,
+	filePath string,
+	fs http.FileSystem,
+) (string, error) {
 	file, err := fs.Open(filePath)
 	if err != nil {
 		return "", fmt.Errorf("error opening %s: %s", filePath, err)
@@ -67,7 +74,8 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 
 	fileLastModified := fileInfo.ModTime()
 
-	if cachedETag, ok := m.eTagCache.Get(filePath); ok && !fileLastModified.After(cachedETag.lastModified) {
+	cache := wet.ETagCache()
+	if cachedETag, ok := cache.Get(filePath); ok && !fileLastModified.After(cachedETag.lastModified) {
 		// only return our cached etag if the file wasn't
 		// modified since last time, otherwise generate a
 		// new one; eat fresh!
@@ -80,7 +88,7 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 	}
 
 	// put new entry in cache before we return
-	m.eTagCache.Set(filePath, eTagCacheEntry{
+	cache.Set(filePath, eTagCacheEntry{
 		eTag:         eTag,
 		lastModified: fileLastModified,
 	})
@@ -99,7 +107,10 @@ func (m *Module) getAssetETag(filePath string, fs http.FileSystem) (string, erro
 //
 // todo: move this middleware out of the 'web' package and into the 'middleware'
 // package along with the other middlewares
-func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFunc {
+func assetsCacheControlMiddleware(
+	wet withETagCache,
+	fs http.FileSystem,
+) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Acquire context from gin request.
 		ctx := c.Request.Context()
@@ -118,7 +129,7 @@ func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFun
 		assetFilePath := strings.TrimPrefix(path.Clean(upath), assetsPathPrefix)
 
 		// either fetch etag from ttlcache or generate it
-		eTag, err := m.getAssetETag(assetFilePath, fs)
+		eTag, err := getAssetETag(wet, assetFilePath, fs)
 		if err != nil {
 			log.Errorf(ctx, "error getting ETag for %s: %s", assetFilePath, err)
 			return
@@ -136,4 +147,24 @@ func (m *Module) assetsCacheControlMiddleware(fs http.FileSystem) gin.HandlerFun
 
 		// else let the rest of the request be processed normally
 	}
+}
+
+// routeAssets attaches *just* the
+// assets filesystem to the given router.
+func routeAssets(
+	wet withETagCache,
+	r *router.Router,
+	mi ...gin.HandlerFunc,
+) {
+	// Group all static files from assets dir at /assets,
+	// so that they can use the same cache control middleware.
+	webAssetsAbsFilePath, err := filepath.Abs(config.GetWebAssetBaseDir())
+	if err != nil {
+		log.Panicf(nil, "error getting absolute path of assets dir: %s", err)
+	}
+	fs := fileSystem{http.Dir(webAssetsAbsFilePath)}
+	assetsGroup := r.AttachGroup(assetsPathPrefix)
+	assetsGroup.Use(assetsCacheControlMiddleware(wet, fs))
+	assetsGroup.Use(mi...)
+	assetsGroup.StaticFS("/", fs)
 }

@@ -1057,6 +1057,31 @@ func SetInstanceSubscriptionsProcessEvery(v time.Duration) {
 	global.SetInstanceSubscriptionsProcessEvery(v)
 }
 
+// GetInstanceStatsRandomize safely fetches the Configuration value for state's 'InstanceStatsRandomize' field
+func (st *ConfigState) GetInstanceStatsRandomize() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceStatsRandomize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceStatsRandomize safely sets the Configuration value for state's 'InstanceStatsRandomize' field
+func (st *ConfigState) SetInstanceStatsRandomize(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceStatsRandomize = v
+	st.reloadToViper()
+}
+
+// InstanceStatsRandomizeFlag returns the flag name for the 'InstanceStatsRandomize' field
+func InstanceStatsRandomizeFlag() string { return "instance-stats-randomize" }
+
+// GetInstanceStatsRandomize safely fetches the value for global configuration 'InstanceStatsRandomize' field
+func GetInstanceStatsRandomize() bool { return global.GetInstanceStatsRandomize() }
+
+// SetInstanceStatsRandomize safely sets the value for global configuration 'InstanceStatsRandomize' field
+func SetInstanceStatsRandomize(v bool) { global.SetInstanceStatsRandomize(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()
@@ -2699,7 +2724,7 @@ func (st *ConfigState) SetAdvancedRateLimitExceptionsParsed(v []netip.Prefix) {
 }
 
 // AdvancedRateLimitExceptionsParsedFlag returns the flag name for the 'AdvancedRateLimitExceptionsParsed' field
-func AdvancedRateLimitExceptionsParsedFlag() string { return "" }
+func AdvancedRateLimitExceptionsParsedFlag() string { return "advanced-rate-limit-exceptions-parsed" }
 
 // GetAdvancedRateLimitExceptionsParsed safely fetches the value for global configuration 'AdvancedRateLimitExceptionsParsed' field
 func GetAdvancedRateLimitExceptionsParsed() []netip.Prefix {

@@ -1161,6 +1161,7 @@ func (suite *InternalToFrontendTestSuite) TestHashtagAnywhereFilteredBoostToFron
 func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
+
 	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
 		{
 			AccountID:       requestingAccount.ID,
@@ -1168,6 +1169,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
 			Notifications:   util.Ptr(false),
 		},
 	})
+
 	_, err := suite.typeconverter.StatusToAPIStatus(
 		context.Background(),
 		testStatus,
@@ -1186,6 +1188,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
 	testStatus.InReplyToID = suite.testStatuses["local_account_2_status_1"].ID
 	testStatus.InReplyToAccountID = mutedAccount.ID
 	requestingAccount := suite.testAccounts["local_account_1"]
+
 	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
 		{
 			AccountID:       requestingAccount.ID,
@@ -1193,11 +1196,46 @@ func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
 			Notifications:   util.Ptr(false),
 		},
 	})
+
 	// Populate status so the converter has the account objects it needs for muting.
 	err := suite.db.PopulateStatus(context.Background(), testStatus)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
+
+	// Convert the status to API format, which should fail.
+	_, err = suite.typeconverter.StatusToAPIStatus(
+		context.Background(),
+		testStatus,
+		requestingAccount,
+		statusfilter.FilterContextHome,
+		nil,
+		mutes,
+	)
+	suite.ErrorIs(err, statusfilter.ErrHideStatus)
+}
+
+func (suite *InternalToFrontendTestSuite) TestMutedBoostStatusToFrontend() {
+	mutedAccount := suite.testAccounts["local_account_2"]
+	testStatus := suite.testStatuses["admin_account_status_1"]
+	testStatus.BoostOfID = suite.testStatuses["local_account_2_status_1"].ID
+	testStatus.BoostOfAccountID = mutedAccount.ID
+	requestingAccount := suite.testAccounts["local_account_1"]
+
+	mutes := usermute.NewCompiledUserMuteList([]*gtsmodel.UserMute{
+		{
+			AccountID:       requestingAccount.ID,
+			TargetAccountID: mutedAccount.ID,
+			Notifications:   util.Ptr(false),
+		},
+	})
+
+	// Populate status so the converter has the account objects it needs for muting.
+	err := suite.db.PopulateStatus(context.Background(), testStatus)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
 	// Convert the status to API format, which should fail.
 	_, err = suite.typeconverter.StatusToAPIStatus(
 		context.Background(),
@@ -1240,7 +1278,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status were not downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e",
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@admin\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003eadmin\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e here's some media for ya\u003c/p\u003e\u003cdiv class=\"gts-system-message gts-placeholder-attachments\"\u003e\u003chr\u003e\u003cp\u003e\u003ci lang=\"en\"\u003eℹ️ Note from localhost:8080: 2 attachments in this status were not downloaded. Treat the following external links with care:\u003c/i\u003e\u003c/p\u003e\u003cul\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE7ZGJYTSYMXF927GF9353KR.svg\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE7ZGJYTSYMXF927GF9353KR.svg\u003c/a\u003e [SVG line art of a sloth, public domain]\u003c/li\u003e\u003cli\u003e\u003ca href=\"http://example.org/fileserver/01HE7Y659ZWZ02JM4AWYJZ176Q/attachment/original/01HE892Y8ZS68TQCNPX7J888P3.mp3\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e01HE892Y8ZS68TQCNPX7J888P3.mp3\u003c/a\u003e [Jolly salsa song, public domain.]\u003c/li\u003e\u003c/ul\u003e\u003c/div\u003e",
   "reblog": null,
   "account": {
     "id": "01FHMQX3GAABWSM0S2VZEC2SWC",
@@ -1790,7 +1828,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p><hr><p><i lang=\"en\">ℹ️ Note from localhost:8080: This reply is pending your approval. You can quickly accept it by liking, boosting or replying to it. You can also accept or reject it at the following link: <a href=\"http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR\" rel=\"noreferrer noopener nofollow\" target=\"_blank\">http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR</a>.</i></p>",
+  "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p><div class=\"gts-system-message gts-pending-reply\"><hr><p><i lang=\"en\">ℹ️ Note from localhost:8080: This reply is pending your approval. You can quickly accept it by liking, boosting or replying to it. You can also accept or reject it at the following link: <a href=\"http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR\" rel=\"noreferrer noopener nofollow\" target=\"_blank\">http://localhost:8080/settings/user/interaction_requests/01J5QVXCCEATJYSXM9H6MZT4JR</a>.</i></p></div>",
   "reblog": null,
   "application": {
     "name": "superseriousbusiness",

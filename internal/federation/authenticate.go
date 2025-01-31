@@ -404,7 +404,8 @@ func (f *Federator) callForPubKey(
 	pubKeyID *url.URL,
 ) ([]byte, gtserror.WithCode) {
 	// Use a transport to dereference the remote.
-	trans, err := f.transportController.NewTransportForUsername(
+	trans, err := f.transport.NewTransportForUsername(
+
 		// We're on a hot path: don't retry if req fails.
 		gtscontext.SetFastFail(ctx),
 		requestedUsername,
