@@ -21,7 +21,9 @@ import (
 	"net/http"
 
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 
 	"github.com/gin-gonic/gin"
 )
@@ -58,6 +60,12 @@ func (m *Module) InstanceInformationGETHandlerV1(c *gin.Context) {
 		return
 	}
 
+	if config.GetInstanceStatsRandomize() {
+		// Replace actual stats with cached randomized ones.
+		instance.Stats["user_count"] = util.Ptr(int(instance.RandomStats.TotalUsers))
+		instance.Stats["status_count"] = util.Ptr(int(instance.RandomStats.Statuses))
+	}
+
 	apiutil.JSON(c, http.StatusOK, instance)
 }
 
@@ -91,6 +99,11 @@ func (m *Module) InstanceInformationGETHandlerV2(c *gin.Context) {
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
+	}
+
+	if config.GetInstanceStatsRandomize() {
+		// Replace actual stats with cached randomized ones.
+		instance.Usage.Users.ActiveMonth = int(instance.RandomStats.MonthlyActiveUsers)
 	}
 
 	apiutil.JSON(c, http.StatusOK, instance)
