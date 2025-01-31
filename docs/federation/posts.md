@@ -275,7 +275,7 @@ In the `interactionPolicy` object:
 
 And:
 
-- `always` is an array of ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who are permitted to create + distribute an interaction without necessarily having to wait for an `Accept` from the interactee's server (more on this below).
+- `always` is an array of ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who are permitted to create + distribute an interaction without manual approval from the interacted-with user.
 - `approvalRequired` is an array of ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who are permitted create + distribute an interaction, but **should wait for** an `Accept` before distributing an interaction.
 
 Valid URI entries in `always` and `approvalRequired` include:
