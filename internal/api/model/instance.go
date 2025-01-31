@@ -17,7 +17,10 @@
 
 package model
 
-import "mime/multipart"
+import (
+	"mime/multipart"
+	"time"
+)
 
 // InstanceSettingsUpdateRequest models an instance update request.
 //
@@ -154,4 +157,5 @@ type RandomStats struct {
 	Statuses           int64
 	TotalUsers         int64
 	MonthlyActiveUsers int64
+	Generated          time.Time
 }
