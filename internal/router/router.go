@@ -285,7 +285,8 @@ func (r *Router) letsEncryptTLS() (func() error, error) {
 	// Take our own copy of the HTTP server,
 	// and update it to serve LetsEncrypt
 	// requests via the autocert manager.
-	*r.leSrv = (*r.srv) //nolint:govet
+	r.leSrv = new(http.Server) //nolint:gosec
+	*r.leSrv = (*r.srv)        //nolint:govet
 	r.leSrv.Handler = acm.HTTPHandler(fallback)
 	r.leSrv.Addr = fmt.Sprintf("%s:%d",
 		config.GetBindAddress(),
