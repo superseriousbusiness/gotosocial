@@ -75,7 +75,7 @@ import (
 //		type: string
 //		in: formData
 //	-
-//		name: media_ids
+//		name: media_ids[]
 //		x-go-name: MediaIDs
 //		description: |-
 //			Array of Attachment ids to be attached as media.
@@ -87,6 +87,8 @@ import (
 //		items:
 //			type: string
 //		in: formData
+//		collectionFormat: multi
+//		uniqueItems: true
 //	-
 //		name: poll[options][]
 //		x-go-name: PollOptions
@@ -97,6 +99,8 @@ import (
 //		items:
 //			type: string
 //		in: formData
+//		collectionFormat: multi
+//		uniqueItems: true
 //	-
 //		name: poll[expires_in]
 //		x-go-name: PollExpiresIn
