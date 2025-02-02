@@ -10261,7 +10261,8 @@ paths:
                   name: status
                   type: string
                   x-go-name: Status
-                - description: |-
+                - collectionFormat: multi
+                  description: |-
                     Array of Attachment ids to be attached as media.
                     If provided, status becomes optional, and poll cannot be used.
 
@@ -10270,10 +10271,12 @@ paths:
                   in: formData
                   items:
                     type: string
-                  name: media_ids
+                  name: media_ids[]
                   type: array
+                  uniqueItems: true
                   x-go-name: MediaIDs
-                - description: |-
+                - collectionFormat: multi
+                  description: |-
                     Array of possible poll answers.
                     If provided, media_ids cannot be used, and poll[expires_in] must be provided.
                   in: formData
@@ -10281,6 +10284,7 @@ paths:
                     type: string
                   name: poll[options][]
                   type: array
+                  uniqueItems: true
                   x-go-name: PollOptions
                 - description: |-
                     Duration the poll should be open, in seconds.
