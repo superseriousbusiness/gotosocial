@@ -110,6 +110,7 @@ Disallow: /signup
 
 # Well-known endpoints.
 Disallow: /.well-known/
+Disallow: /nodeinfo/
 
 # Fileserver/media.
 Disallow: /fileserver/
