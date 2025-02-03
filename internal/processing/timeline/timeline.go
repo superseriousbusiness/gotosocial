@@ -139,7 +139,7 @@ func (p *Processor) getStatusTimeline(
 func (p *Processor) getTimeline(
 	ctx context.Context,
 	requester *gtsmodel.Account,
-	timeline *cache.TimelineCache[*gtsmodel.Status],
+	timeline *timeline.StatusTimeline,
 	page *paging.Page,
 	pgPath string, // timeline page path
 	pgQuery url.Values, // timeline query parameters

@@ -215,6 +215,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.UserMuteIDs.Trim(threshold)
 	c.Timelines.Home.Trim(threshold)
 	c.Timelines.List.Trim(threshold)
+	c.Timelines.Public.Trim(threshold)
 	c.Visibility.Trim(threshold)
 }
 
