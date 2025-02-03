@@ -19,7 +19,9 @@ package timeline
 
 import (
 	"context"
+	"maps"
 	"slices"
+	"sync/atomic"
 
 	"codeberg.org/gruf/go-structr"
 
@@ -30,23 +32,14 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// StatusMeta ...
+// StatusMeta contains minimum viable metadata
+// about a Status in order to cache a timeline.
 type StatusMeta struct {
-
-	// ID ...
-	ID string
-
-	// AccountID ...
-	AccountID string
-
-	// BoostOfID ...
-	BoostOfID string
-
-	// BoostOfAccountID ...
+	ID               string
+	AccountID        string
+	BoostOfID        string
 	BoostOfAccountID string
-
-	// Local ...
-	Local bool
+	Local            bool
 
 	// prepared contains prepared frontend API
 	// model for the referenced status. This may
@@ -64,6 +57,176 @@ type StatusMeta struct {
 	// was newly inserted into the timeline cache.
 	// for existing cache items this will be nil.
 	loaded *gtsmodel.Status
+}
+
+// StatusTimelines ...
+type StatusTimelines struct {
+	ptr atomic.Pointer[map[string]*StatusTimeline] // ronly except by CAS
+	cap int
+}
+
+// Init ...
+func (t *StatusTimelines) Init(cap int) { t.cap = cap }
+
+// MustGet ...
+func (t *StatusTimelines) MustGet(key string) *StatusTimeline {
+	var tt *StatusTimeline
+
+	for {
+		// Load current ptr.
+		cur := t.ptr.Load()
+
+		// Get timeline map to work on.
+		var m map[string]*StatusTimeline
+
+		if cur != nil {
+			// Look for existing
+			// timeline in cache.
+			tt = (*cur)[key]
+			if tt != nil {
+				return tt
+			}
+
+			// Get clone of current
+			// before modifications.
+			m = maps.Clone(*cur)
+		} else {
+			// Allocate new timeline map for below.
+			m = make(map[string]*StatusTimeline)
+		}
+
+		if tt == nil {
+			// Allocate new timeline.
+			tt = new(StatusTimeline)
+			tt.Init(t.cap)
+		}
+
+		// Store timeline
+		// in new map.
+		m[key] = tt
+
+		// Attempt to update the map ptr.
+		if !t.ptr.CompareAndSwap(cur, &m) {
+
+			// We failed the
+			// CAS, reloop.
+			continue
+		}
+
+		// Successfully inserted
+		// new timeline model.
+		return tt
+	}
+}
+
+// Delete ...
+func (t *StatusTimelines) Delete(key string) {
+	for {
+		// Load current ptr.
+		cur := t.ptr.Load()
+
+		// Check for empty map / not in map.
+		if cur == nil || (*cur)[key] == nil {
+			return
+		}
+
+		// Get clone of current
+		// before modifications.
+		m := maps.Clone(*cur)
+
+		// Delete ID.
+		delete(m, key)
+
+		// Attempt to update the map ptr.
+		if !t.ptr.CompareAndSwap(cur, &m) {
+
+			// We failed the
+			// CAS, reloop.
+			continue
+		}
+
+		// Successfully
+		// deleted ID.
+		return
+	}
+}
+
+// Insert ...
+func (t *StatusTimelines) Insert(statuses ...*gtsmodel.Status) {
+	meta := toStatusMeta(statuses)
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.cache.Insert(meta...)
+		}
+	}
+}
+
+// InsertInto ...
+func (t *StatusTimelines) InsertInto(key string, statuses ...*gtsmodel.Status) {
+	t.MustGet(key).Insert(statuses...)
+}
+
+// RemoveByStatusIDs ...
+func (t *StatusTimelines) RemoveByStatusIDs(statusIDs ...string) {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.RemoveByStatusIDs(statusIDs...)
+		}
+	}
+}
+
+// RemoveByAccountIDs ...
+func (t *StatusTimelines) RemoveByAccountIDs(accountIDs ...string) {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.RemoveByAccountIDs(accountIDs...)
+		}
+	}
+}
+
+// UnprepareByStatusIDs ...
+func (t *StatusTimelines) UnprepareByStatusIDs(statusIDs ...string) {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.UnprepareByStatusIDs(statusIDs...)
+		}
+	}
+}
+
+// UnprepareByAccountIDs ...
+func (t *StatusTimelines) UnprepareByAccountIDs(accountIDs ...string) {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.UnprepareByAccountIDs(accountIDs...)
+		}
+	}
+}
+
+// Trim ...
+func (t *StatusTimelines) Trim(threshold float64) {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.Trim(threshold)
+		}
+	}
+}
+
+// Clear ...
+func (t *StatusTimelines) Clear(key string) {
+	if p := t.ptr.Load(); p != nil {
+		if tt := (*p)[key]; tt != nil {
+			tt.Clear()
+		}
+	}
+}
+
+// ClearAll ...
+func (t *StatusTimelines) ClearAll() {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.Clear()
+		}
+	}
 }
 
 // StatusTimeline ...
@@ -242,10 +405,21 @@ func (t *StatusTimeline) Load(
 	return apiStatuses, nil
 }
 
+// Insert ...
+func (t *StatusTimeline) Insert(statuses ...*gtsmodel.Status) {
+	t.cache.Insert(toStatusMeta(statuses)...)
+}
+
 // RemoveByStatusID removes all cached timeline entries pertaining to
 // status ID, including those that may be a boost of the given status.
 func (t *StatusTimeline) RemoveByStatusIDs(statusIDs ...string) {
 	keys := make([]structr.Key, len(statusIDs))
+
+	// Nil check indices outside loops.
+	if t.idx_ID == nil ||
+		t.idx_BoostOfID == nil {
+		panic("indices are nil")
+	}
 
 	// Convert statusIDs to index keys.
 	for i, id := range statusIDs {
@@ -269,6 +443,12 @@ func (t *StatusTimeline) RemoveByStatusIDs(statusIDs ...string) {
 func (t *StatusTimeline) RemoveByAccountIDs(accountIDs ...string) {
 	keys := make([]structr.Key, len(accountIDs))
 
+	// Nil check indices outside loops.
+	if t.idx_AccountID == nil ||
+		t.idx_BoostOfAccountID == nil {
+		panic("indices are nil")
+	}
+
 	// Convert accountIDs to index keys.
 	for i, id := range accountIDs {
 		keys[i] = t.idx_AccountID.Key(id)
@@ -291,27 +471,31 @@ func (t *StatusTimeline) RemoveByAccountIDs(accountIDs ...string) {
 func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 	keys := make([]structr.Key, len(statusIDs))
 
+	// Nil check indices outside loops.
+	if t.idx_ID == nil ||
+		t.idx_BoostOfID == nil {
+		panic("indices are nil")
+	}
+
 	// Convert statusIDs to index keys.
 	for i, id := range statusIDs {
 		keys[i] = t.idx_ID.Key(id)
 	}
 
-	// TODO: replace below with for-range-function loop when Go1.23.
-	t.cache.RangeKeys(t.idx_ID, keys...)(func(meta *StatusMeta) bool {
+	// Unprepare all statuses stored under StatusMeta.ID.
+	for meta := range t.cache.RangeKeys(t.idx_ID, keys...) {
 		meta.prepared = nil
-		return true
-	})
+	}
 
 	// Convert statusIDs to index keys.
 	for i, id := range statusIDs {
 		keys[i] = t.idx_BoostOfID.Key(id)
 	}
 
-	// TODO: replace below with for-range-function loop when Go1.23.
-	t.cache.RangeKeys(t.idx_BoostOfID, keys...)(func(meta *StatusMeta) bool {
+	// Unprepare all statuses stored under StatusMeta.BoostOfID.
+	for meta := range t.cache.RangeKeys(t.idx_BoostOfID, keys...) {
 		meta.prepared = nil
-		return true
-	})
+	}
 }
 
 // UnprepareByAccountIDs removes cached frontend API models for all cached
@@ -319,27 +503,36 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	keys := make([]structr.Key, len(accountIDs))
 
+	// Nil check indices outside loops.
+	if t.idx_AccountID == nil ||
+		t.idx_BoostOfAccountID == nil {
+		panic("indices are nil")
+	}
+
 	// Convert accountIDs to index keys.
 	for i, id := range accountIDs {
 		keys[i] = t.idx_AccountID.Key(id)
 	}
 
-	// TODO: replace below with for-range-function loop when Go1.23.
-	t.cache.RangeKeys(t.idx_AccountID, keys...)(func(meta *StatusMeta) bool {
+	// Unprepare all statuses stored under StatusMeta.AccountID.
+	for meta := range t.cache.RangeKeys(t.idx_AccountID, keys...) {
 		meta.prepared = nil
-		return true
-	})
+	}
 
 	// Convert accountIDs to index keys.
 	for i, id := range accountIDs {
 		keys[i] = t.idx_BoostOfAccountID.Key(id)
 	}
 
-	// TODO: replace below with for-range-function loop when Go1.23.
-	t.cache.RangeKeys(t.idx_BoostOfAccountID, keys...)(func(meta *StatusMeta) bool {
+	// Unprepare all statuses stored under StatusMeta.BoostOfAccountID.
+	for meta := range t.cache.RangeKeys(t.idx_BoostOfAccountID, keys...) {
 		meta.prepared = nil
-		return true
-	})
+	}
+}
+
+// Trim ...
+func (t *StatusTimeline) Trim(threshold float64) {
+	panic("TODO")
 }
 
 // Clear will remove all cached entries from timeline.
