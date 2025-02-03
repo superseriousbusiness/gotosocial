@@ -23,8 +23,9 @@ GO_GCFLAGS=${GO_GCFLAGS-}
 # - debug:          enables /debug/pprof endpoint                                  (adds debug, at performance cost)
 # - debugenv:       enables /debug/pprof endpoint if DEBUG=1 env during runtime    (adds debug, at performance cost)
 # - moderncsqlite3: reverts to using the C-to-Go transpiled SQLite driver          (disables the WASM-based SQLite driver)
-# - nowasm:         [UNSUPPORTED] removes all WebAssembly from builds including 
-#                   ffmpeg, ffprobe and SQLite (instead falling back to modernc).
+#
+# - nowasmffmpeg: [UNSUPPORTED] removes WebAssembly ffmpeg, ffprobe, relying instead on host-installed ffmpeg, ffprobe binaries.
+# - nowasm:       [UNSUPPORTED] removes all WebAssembly from build. It is the same as passing "nowasmffmpeg, moderncsqlite3".
 log_exec env CGO_ENABLED=0 go build -trimpath -v \
                        -tags "${GO_BUILDTAGS}" \
                        -ldflags="${GO_LDFLAGS}" \
