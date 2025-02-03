@@ -116,33 +116,36 @@ func (f *Federator) PostInboxRequestBodyHook(ctx context.Context, r *http.Reques
 		otherIRIs = append(otherIRIs, ap.ExtractCcURIs(addressable)...)
 	}
 
-	// Now perform the same checks, but for the Object(s) of the Activity.
+	// Now perform the same checks, but
+	// for any Object(s) of the Activity.
 	objectProp := activity.GetActivityStreamsObject()
-	for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
-		if iter.IsIRI() {
-			otherIRIs = append(otherIRIs, iter.GetIRI())
-			continue
-		}
-
-		t := iter.GetType()
-		if t == nil {
-			continue
-		}
-
-		objectID, err := pub.GetId(t)
-		if err == nil {
-			otherIRIs = append(otherIRIs, objectID)
-		}
-
-		if replyToable, ok := t.(ap.ReplyToable); ok {
-			if inReplyToURI := ap.ExtractInReplyToURI(replyToable); inReplyToURI != nil {
-				otherIRIs = append(otherIRIs, inReplyToURI)
+	if objectProp != nil {
+		for iter := objectProp.Begin(); iter != objectProp.End(); iter = iter.Next() {
+			if iter.IsIRI() {
+				otherIRIs = append(otherIRIs, iter.GetIRI())
+				continue
 			}
-		}
 
-		if addressable, ok := t.(ap.Addressable); ok {
-			otherIRIs = append(otherIRIs, ap.ExtractToURIs(addressable)...)
-			otherIRIs = append(otherIRIs, ap.ExtractCcURIs(addressable)...)
+			t := iter.GetType()
+			if t == nil {
+				continue
+			}
+
+			objectID, err := pub.GetId(t)
+			if err == nil {
+				otherIRIs = append(otherIRIs, objectID)
+			}
+
+			if replyToable, ok := t.(ap.ReplyToable); ok {
+				if inReplyToURI := ap.ExtractInReplyToURI(replyToable); inReplyToURI != nil {
+					otherIRIs = append(otherIRIs, inReplyToURI)
+				}
+			}
+
+			if addressable, ok := t.(ap.Addressable); ok {
+				otherIRIs = append(otherIRIs, ap.ExtractToURIs(addressable)...)
+				otherIRIs = append(otherIRIs, ap.ExtractCcURIs(addressable)...)
+			}
 		}
 	}
 
