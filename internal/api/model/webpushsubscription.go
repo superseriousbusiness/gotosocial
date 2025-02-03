@@ -138,6 +138,8 @@ type WebPushSubscriptionUpdateRequest struct {
 	DataAlertsPendingFavourite *bool `form:"data[alerts][pending.favourite]" json:"-"`
 	DataAlertsPendingReply     *bool `form:"data[alerts][pending.reply]" json:"-"`
 	DataAlertsPendingReblog    *bool `form:"data[alerts][pending.reblog]" json:"-"`
+
+	DataPolicy *WebPushNotificationPolicy `form:"data[policy]" json:"-"`
 }
 
 // WebPushSubscriptionRequestData is the part of a Web Push subscription that can be changed after creation.
@@ -146,6 +148,9 @@ type WebPushSubscriptionUpdateRequest struct {
 type WebPushSubscriptionRequestData struct {
 	// Alerts selects the specific events that this Web Push subscription will receive.
 	Alerts *WebPushSubscriptionAlerts `form:"-" json:"alerts"`
+
+	// Policy selects which accounts will trigger Web Push notifications.
+	Policy *WebPushNotificationPolicy `form:"-" json:"policy"`
 }
 
 // WebPushNotificationPolicy names sets of accounts that can generate notifications.
@@ -154,4 +159,10 @@ type WebPushNotificationPolicy string
 const (
 	// WebPushNotificationPolicyAll allows all accounts to send notifications to the subscribing user.
 	WebPushNotificationPolicyAll WebPushNotificationPolicy = "all"
+	// WebPushNotificationPolicyFollowed allows accounts followed by the subscribing user to send notifications.
+	WebPushNotificationPolicyFollowed WebPushNotificationPolicy = "followed"
+	// WebPushNotificationPolicyFollower allows accounts following the subscribing user to send notifications.
+	WebPushNotificationPolicyFollower WebPushNotificationPolicy = "follower"
+	// WebPushNotificationPolicyNone doesn't allow any acounts to send notifications to the subscribing user.
+	WebPushNotificationPolicyNone WebPushNotificationPolicy = "none"
 )

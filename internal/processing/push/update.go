@@ -24,6 +24,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Update updates the Web Push subscription for the given access token.
@@ -50,10 +51,13 @@ func (p *Processor) Update(
 
 	// Update it.
 	subscription.NotificationFlags = alertsToNotificationFlags(request.Data.Alerts)
+	subscription.Policy = typeutils.APIWebPushNotificationPolicyToWebPushNotificationPolicy(*request.Data.Policy)
+
 	if err = p.state.DB.UpdateWebPushSubscription(
 		ctx,
 		subscription,
 		"notification_flags",
+		"policy",
 	); err != nil {
 		err := gtserror.Newf("couldn't update Web Push subscription for token ID %s: %w", tokenID, err)
 		return nil, gtserror.NewErrorInternalError(err)

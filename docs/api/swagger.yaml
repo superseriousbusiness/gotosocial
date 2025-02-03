@@ -9922,6 +9922,16 @@ paths:
                   in: formData
                   name: data[alerts][pending.reblog]
                   type: boolean
+                - default: all
+                  description: Which accounts to receive push notifications from.
+                  enum:
+                    - all
+                    - followed
+                    - follower
+                    - none
+                  in: formData
+                  name: data[policy]
+                  type: string
             produces:
                 - application/json
             responses:
@@ -10019,6 +10029,16 @@ paths:
                   in: formData
                   name: data[alerts][pending.reblog]
                   type: boolean
+                - default: all
+                  description: Which accounts to receive push notifications from.
+                  enum:
+                    - all
+                    - followed
+                    - follower
+                    - none
+                  in: formData
+                  name: data[policy]
+                  type: string
             produces:
                 - application/json
             responses:

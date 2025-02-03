@@ -39,12 +39,15 @@ type WebPushSubscription struct {
 	// P256dh is a Base64-encoded Diffie-Hellman public key on the P-256 elliptic curve.
 	P256dh string `bun:",nullzero,notnull"`
 
-	// NotificationFlags controls which notifications are delivered to a given subscription.
-	// Corresponds to model.PushSubscriptionAlerts.
+	// NotificationFlags controls which notifications are delivered to this subscription.
 	NotificationFlags WebPushSubscriptionNotificationFlags `bun:",notnull"`
+
+	// Policy controls which accounts are allowed to trigger notifications for this subscription.
+	Policy WebPushNotificationPolicy `bun:",nullzero,notnull,default:1"`
 }
 
 // WebPushSubscriptionNotificationFlags is a bitfield representation of a set of NotificationType.
+// Corresponds to apimodel.WebPushSubscriptionAlerts.
 type WebPushSubscriptionNotificationFlags int64
 
 // WebPushSubscriptionNotificationFlagsFromSlice packs a slice of NotificationType into a WebPushSubscriptionNotificationFlags.
@@ -80,3 +83,18 @@ func (n *WebPushSubscriptionNotificationFlags) Set(notificationType Notification
 		*n &= ^(1 << notificationType)
 	}
 }
+
+// WebPushNotificationPolicy represents the notification policy of a Web Push subscription.
+// Corresponds to apimodel.WebPushNotificationPolicy.
+type WebPushNotificationPolicy enumType
+
+const (
+	// WebPushNotificationPolicyAll allows all accounts to send notifications to the subscribing user.
+	WebPushNotificationPolicyAll WebPushNotificationPolicy = 1
+	// WebPushNotificationPolicyFollowed allows accounts followed by the subscribing user to send notifications.
+	WebPushNotificationPolicyFollowed WebPushNotificationPolicy = 2
+	// WebPushNotificationPolicyFollower allows accounts following the subscribing user to send notifications.
+	WebPushNotificationPolicyFollower WebPushNotificationPolicy = 3
+	// WebPushNotificationPolicyNone doesn't allow any accounts to send notifications to the subscribing user.
+	WebPushNotificationPolicyNone WebPushNotificationPolicy = 4
+)

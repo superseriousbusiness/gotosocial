@@ -147,6 +147,17 @@ import (
 //		type: boolean
 //		default: false
 //		description: Receive a push notification when a boost is pending?
+//	-
+//		name: data[policy]
+//		in: formData
+//		type: string
+//		enum:
+//			- all
+//			- followed
+//			- follower
+//			- none
+//		default: all
+//		description: Which accounts to receive push notifications from.
 //
 //	security:
 //	- OAuth2 Bearer:
