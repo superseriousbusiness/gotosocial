@@ -1,8 +1,8 @@
 release.sh
 dist
-benchmarks/*
-!benchmarks/*.go
-!benchmarks/sample_*
+_benchmarks/*
+!_benchmarks/*.go
+!_benchmarks/sample_*
 tests/*/fuzz-fuzz.zip
 tests/*/crashers
 tests/*/suppressions
