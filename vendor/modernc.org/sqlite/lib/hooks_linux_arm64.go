@@ -2,11 +2,12 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build !(linux && arm64)
-
 package sqlite3
 
 import (
+	"syscall"
+	"unsafe"
+
 	"modernc.org/libc"
 )
 
@@ -15,6 +16,15 @@ func X__ccgo_sqlite3_log(t *libc.TLS, iErrCode int32, zFormat uintptr, va uintpt
 	libc.X__ccgo_sqlite3_log(t, iErrCode, zFormat, va)
 }
 
+// https://gitlab.com/cznic/sqlite/-/issues/199
+//
+// We are currently stuck on libc@v1.55.3. Until that is resolved - fix the
+// problem at runtime.
 func PatchIssue199() {
-	// nop
+	p := unsafe.Pointer(&_aSyscall)
+	*(*uintptr)(unsafe.Add(p, 608)) = __ccgo_fp(_unixGetpagesizeIssue199)
+}
+
+func _unixGetpagesizeIssue199(tls *libc.TLS) (r int32) {
+	return int32(syscall.Getpagesize())
 }

@@ -55,6 +55,11 @@ const (
 	sqliteLockedSharedcache = sqlite3.SQLITE_LOCKED | (1 << 8)
 )
 
+// https://gitlab.com/cznic/sqlite/-/issues/199
+func init() {
+	sqlite3.PatchIssue199()
+}
+
 // Error represents sqlite library error code.
 type Error struct {
 	msg  string
