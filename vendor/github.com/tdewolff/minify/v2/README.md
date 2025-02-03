@@ -732,6 +732,6 @@ A typical example is HTML. Whitespace is significant in HTML, meaning that space
 Another example is JavaScript. Single or double quoted string literals may not contain newline characters but instead need to escape them as `\n`. These are two bytes instead of a single newline byte. Using template literals it is allowed to have literal newline characters and we can use that fact to shave-off one byte! The result is that the minified output contains newlines instead of escaped newline characters, which makes the final file size smaller. Of course, changing from single or double quotes to template literals depends on other factors as well, and this minifier makes a calculation whether the template literal results in a shorter file size or not before converting a string literal.
 
 ## License
-Released under the [MIT license](LICENSE.md).
+Released under the [MIT license](LICENSE).
 
 [1]: http://golang.org/ "Go Language"
