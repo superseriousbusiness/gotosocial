@@ -3,96 +3,30 @@
 
 package memlimit
 
-import (
-	"math"
-	"os"
-	"path/filepath"
-
-	"github.com/containerd/cgroups/v3"
-	"github.com/containerd/cgroups/v3/cgroup1"
-	"github.com/containerd/cgroups/v3/cgroup2"
-)
-
-const (
-	cgroupMountPoint = "/sys/fs/cgroup"
-)
-
-// FromCgroup returns the memory limit based on the cgroups version on this system.
+// FromCgroup retrieves the memory limit from the cgroup.
 func FromCgroup() (uint64, error) {
-	switch cgroups.Mode() {
-	case cgroups.Legacy:
-		return FromCgroupV1()
-	case cgroups.Hybrid:
-		return FromCgroupHybrid()
-	case cgroups.Unified:
-		return FromCgroupV2()
-	}
-	return 0, ErrNoCgroup
+	return fromCgroup(detectCgroupVersion)
 }
 
-// FromCgroupV1 returns the memory limit from the cgroup v1.
+// FromCgroupV1 retrieves the memory limit from the cgroup v1 controller.
+// After v1.0.0, this function could be removed and FromCgroup should be used instead.
 func FromCgroupV1() (uint64, error) {
-	cg, err := cgroup1.Load(cgroup1.RootPath, cgroup1.WithHiearchy(
-		cgroup1.SingleSubsystem(cgroup1.Default, cgroup1.Memory),
-	))
-	if err != nil {
-		return 0, err
-	}
-
-	metrics, err := cg.Stat(cgroup1.IgnoreNotExist)
-	if err != nil {
-		return 0, err
-	}
-
-	if limit := metrics.GetMemory().GetHierarchicalMemoryLimit(); limit != 0 && limit != getCgroupV1NoLimit() {
-		return limit, nil
-	}
-
-	return 0, ErrNoLimit
+	return fromCgroup(func(_ []mountInfo) (bool, bool) {
+		return true, false
+	})
 }
 
-func getCgroupV1NoLimit() uint64 {
-	ps := uint64(os.Getpagesize())
-	return math.MaxInt64 / ps * ps
-}
-
-// FromCgroupHybrid returns the memory limit from the cgroup v1 or v2.
-// It checks the cgroup v2 first, and if it fails, it falls back to cgroup v1.
+// FromCgroupHybrid retrieves the memory limit from the cgroup v2 and v1 controller sequentially,
+// basically, it is equivalent to FromCgroup.
+// After v1.0.0, this function could be removed and FromCgroup should be used instead.
 func FromCgroupHybrid() (uint64, error) {
-	limit, err := fromCgroupV2(filepath.Join(cgroupMountPoint, "unified"))
-	if err == nil {
-		return limit, nil
-	} else if err != ErrNoLimit {
-		return 0, err
-	}
-
-	return FromCgroupV1()
+	return FromCgroup()
 }
 
-// FromCgroupV2 returns the memory limit from the cgroup v2.
+// FromCgroupV2 retrieves the memory limit from the cgroup v2 controller.
+// After v1.0.0, this function could be removed and FromCgroup should be used instead.
 func FromCgroupV2() (uint64, error) {
-	return fromCgroupV2(cgroupMountPoint)
-}
-
-func fromCgroupV2(mountPoint string) (uint64, error) {
-	path, err := cgroup2.NestedGroupPath("")
-	if err != nil {
-		return 0, err
-	}
-
-	m, err := cgroup2.Load(path, cgroup2.WithMountpoint(mountPoint))
-	if err != nil {
-		return 0, err
-	}
-
-	stats, err := m.Stat()
-	if err != nil {
-		return 0, err
-	}
-
-	if limit := stats.GetMemory().GetUsageLimit(); limit != 0 && limit != math.MaxUint64 {
-		return limit, nil
-	}
-
-	return 0, ErrNoLimit
+	return fromCgroup(func(_ []mountInfo) (bool, bool) {
+		return false, true
+	})
 }
