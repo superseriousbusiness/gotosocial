@@ -18,20 +18,17 @@
 package cache
 
 import (
-	"codeberg.org/gruf/go-structr"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type TimelineCaches struct {
 
 	// Home ...
-	Home TimelinesCache[*gtsmodel.Status]
+	Home timeline.StatusTimelines
 
 	// List ...
-	List TimelinesCache[*gtsmodel.Status]
+	List timeline.StatusTimelines
 
 	// Public ...
 	Public timeline.StatusTimeline
@@ -42,16 +39,7 @@ func (c *Caches) initHomeTimelines() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.Timelines.Home.Init(structr.TimelineConfig[*gtsmodel.Status, string]{
-		PKey: "StatusID",
-		Indices: []structr.IndexConfig{
-			{Fields: "StatusID"},
-			{Fields: "AccountID"},
-			{Fields: "BoostOfStatusID"},
-			{Fields: "BoostOfAccountID"},
-		},
-		Copy: copyStatus,
-	}, cap)
+	c.Timelines.Home.Init(cap)
 }
 
 func (c *Caches) initListTimelines() {
@@ -59,16 +47,7 @@ func (c *Caches) initListTimelines() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	c.Timelines.List.Init(structr.TimelineConfig[*gtsmodel.Status, string]{
-		PKey: "StatusID",
-		Indices: []structr.IndexConfig{
-			{Fields: "StatusID"},
-			{Fields: "AccountID"},
-			{Fields: "BoostOfStatusID"},
-			{Fields: "BoostOfAccountID"},
-		},
-		Copy: copyStatus,
-	}, cap)
+	c.Timelines.List.Init(cap)
 }
 
 func (c *Caches) initPublicTimeline() {
@@ -77,55 +56,4 @@ func (c *Caches) initPublicTimeline() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.Timelines.Public.Init(cap)
-}
-
-type TimelineStatus struct {
-
-	// ID ...
-	ID string
-
-	// AccountID ...
-	AccountID string
-
-	// BoostOfID ...
-	BoostOfID string
-
-	// BoostOfAccountID ...
-	BoostOfAccountID string
-
-	// Local ...
-	Local bool
-
-	// Loaded is a temporary field that may be
-	// set for a newly loaded timeline status
-	// so that statuses don't need to be loaded
-	// from the database twice in succession.
-	//
-	// i.e. this will only be set if the status
-	// was newly inserted into the timeline cache.
-	// for existing cache items this will be nil.
-	Loaded *gtsmodel.Status
-
-	// Prepared contains prepared frontend API
-	// model for the referenced status. This may
-	// or may-not be nil depending on whether the
-	// status has been "unprepared" since the last
-	// call to "prepare" the frontend model.
-	Prepared *apimodel.Status
-}
-
-func (s *TimelineStatus) Copy() *TimelineStatus {
-	var prepared *apimodel.Status
-	if s.Prepared != nil {
-		prepared = new(apimodel.Status)
-		*prepared = *s.Prepared
-	}
-	return &TimelineStatus{
-		ID:               s.ID,
-		AccountID:        s.AccountID,
-		BoostOfID:        s.BoostOfID,
-		BoostOfAccountID: s.BoostOfAccountID,
-		Loaded:           nil, // NEVER set
-		Prepared:         prepared,
-	}
 }

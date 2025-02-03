@@ -176,7 +176,6 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 		return err
 	}
 
-	// Invalidate this entire list's timeline.
 	if err := l.state.Timelines.List.RemoveTimeline(ctx, list.ID); err != nil {
 		log.Errorf(ctx, "error invalidating list timeline: %q", err)
 	}
