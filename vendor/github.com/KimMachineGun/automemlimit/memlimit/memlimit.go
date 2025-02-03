@@ -8,6 +8,7 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+	"time"
 )
 
 const (
@@ -19,15 +20,14 @@ const (
 	defaultAUTOMEMLIMIT = 0.9
 )
 
-var (
-	// ErrNoLimit is returned when the memory limit is not set.
-	ErrNoLimit = errors.New("memory is not limited")
-)
+// ErrNoLimit is returned when the memory limit is not set.
+var ErrNoLimit = errors.New("memory is not limited")
 
 type config struct {
 	logger   *slog.Logger
 	ratio    float64
 	provider Provider
+	refresh  time.Duration
 }
 
 // Option is a function that configures the behavior of SetGoMemLimitWithOptions.
@@ -61,6 +61,19 @@ func WithLogger(logger *slog.Logger) Option {
 	}
 }
 
+// WithRefreshInterval configures the refresh interval for automemlimit.
+// If a refresh interval is greater than 0, automemlimit periodically fetches
+// the memory limit from the provider and reapplies it if it has changed.
+// If the provider returns an error, it logs the error and continues.
+// ErrNoLimit is treated as math.MaxInt64.
+//
+// Default: 0 (no refresh)
+func WithRefreshInterval(refresh time.Duration) Option {
+	return func(cfg *config) {
+		cfg.refresh = refresh
+	}
+}
+
 // WithEnv configures whether to use environment variables.
 //
 // Default: false
@@ -80,7 +93,7 @@ func memlimitLogger(logger *slog.Logger) *slog.Logger {
 // SetGoMemLimitWithOpts sets GOMEMLIMIT with options and environment variables.
 //
 // You can configure how much memory of the cgroup's memory limit to set as GOMEMLIMIT
-// through AUTOMEMLIMIT envrironment variable in the half-open range (0.0,1.0].
+// through AUTOMEMLIMIT environment variable in the half-open range (0.0,1.0].
 //
 // If AUTOMEMLIMIT is not set, it defaults to 0.9. (10% is the headroom for memory sources the Go runtime is unaware of.)
 // If GOMEMLIMIT is already set or AUTOMEMLIMIT=off, this function does nothing.
@@ -128,20 +141,9 @@ func SetGoMemLimitWithOpts(opts ...Option) (_ int64, _err error) {
 		cfg.provider = ApplyFallback(cfg.provider, FromSystem)
 	}
 
-	// capture the current GOMEMLIMIT for rollback in case of panic
+	// rollback to previous memory limit on panic
 	snapshot := debug.SetMemoryLimit(-1)
-	defer func() {
-		panicErr := recover()
-		if panicErr != nil {
-			if _err != nil {
-				cfg.logger.Error("failed to set GOMEMLIMIT", slog.Any("error", _err))
-			}
-			_err = fmt.Errorf("panic during setting the Go's memory limit, rolling back to previous limit %d: %v",
-				snapshot, panicErr,
-			)
-			debug.SetMemoryLimit(snapshot)
-		}
-	}()
+	defer rollbackOnPanic(cfg.logger, snapshot, &_err)
 
 	// check if GOMEMLIMIT is already set
 	if val, ok := os.LookupEnv(envGOMEMLIMIT); ok {
@@ -156,26 +158,89 @@ func SetGoMemLimitWithOpts(opts ...Option) (_ int64, _err error) {
 			cfg.logger.Info("AUTOMEMLIMIT is set to off, skipping")
 			return 0, nil
 		}
-		_ratio, err := strconv.ParseFloat(val, 64)
+		ratio, err = strconv.ParseFloat(val, 64)
 		if err != nil {
 			return 0, fmt.Errorf("cannot parse AUTOMEMLIMIT: %s", val)
 		}
-		ratio = _ratio
 	}
 
-	// set GOMEMLIMIT
-	limit, err := setGoMemLimit(ApplyRatio(cfg.provider, ratio))
+	// apply ratio to the provider
+	provider := capProvider(ApplyRatio(cfg.provider, ratio))
+
+	// set the memory limit and start refresh
+	limit, err := updateGoMemLimit(uint64(snapshot), provider, cfg.logger)
+	go refresh(provider, cfg.logger, cfg.refresh)
 	if err != nil {
 		if errors.Is(err, ErrNoLimit) {
 			cfg.logger.Info("memory is not limited, skipping")
+			// TODO: consider returning the snapshot
 			return 0, nil
 		}
 		return 0, fmt.Errorf("failed to set GOMEMLIMIT: %w", err)
 	}
 
-	cfg.logger.Info("GOMEMLIMIT is updated", slog.Int64(envGOMEMLIMIT, limit))
+	return int64(limit), nil
+}
 
-	return limit, nil
+// updateGoMemLimit updates the Go's memory limit, if it has changed.
+func updateGoMemLimit(currLimit uint64, provider Provider, logger *slog.Logger) (uint64, error) {
+	newLimit, err := provider()
+	if err != nil {
+		return 0, err
+	}
+
+	if newLimit == currLimit {
+		logger.Debug("GOMEMLIMIT is not changed, skipping", slog.Uint64(envGOMEMLIMIT, newLimit))
+		return newLimit, nil
+	}
+
+	debug.SetMemoryLimit(int64(newLimit))
+	logger.Info("GOMEMLIMIT is updated", slog.Uint64(envGOMEMLIMIT, newLimit), slog.Uint64("previous", currLimit))
+
+	return newLimit, nil
+}
+
+// refresh periodically fetches the memory limit from the provider and reapplies it if it has changed.
+// See more details in the documentation of WithRefreshInterval.
+func refresh(provider Provider, logger *slog.Logger, refresh time.Duration) {
+	if refresh == 0 {
+		return
+	}
+
+	provider = noErrNoLimitProvider(provider)
+
+	t := time.NewTicker(refresh)
+	for range t.C {
+		err := func() (_err error) {
+			snapshot := debug.SetMemoryLimit(-1)
+			defer rollbackOnPanic(logger, snapshot, &_err)
+
+			_, err := updateGoMemLimit(uint64(snapshot), provider, logger)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		}()
+		if err != nil {
+			logger.Error("failed to refresh GOMEMLIMIT", slog.Any("error", err))
+		}
+	}
+}
+
+// rollbackOnPanic rollbacks to the snapshot on panic.
+// Since it uses recover, it should be called in a deferred function.
+func rollbackOnPanic(logger *slog.Logger, snapshot int64, err *error) {
+	panicErr := recover()
+	if panicErr != nil {
+		if *err != nil {
+			logger.Error("failed to set GOMEMLIMIT", slog.Any("error", *err))
+		}
+		*err = fmt.Errorf("panic during setting the Go's memory limit, rolling back to previous limit %d: %v",
+			snapshot, panicErr,
+		)
+		debug.SetMemoryLimit(snapshot)
+	}
 }
 
 // SetGoMemLimitWithEnv sets GOMEMLIMIT with the value from the environment variables.
@@ -195,19 +260,24 @@ func SetGoMemLimitWithProvider(provider Provider, ratio float64) (int64, error) 
 	return SetGoMemLimitWithOpts(WithProvider(provider), WithRatio(ratio))
 }
 
-func setGoMemLimit(provider Provider) (int64, error) {
-	limit, err := provider()
-	if err != nil {
-		return 0, err
+func noErrNoLimitProvider(provider Provider) Provider {
+	return func() (uint64, error) {
+		limit, err := provider()
+		if errors.Is(err, ErrNoLimit) {
+			return math.MaxInt64, nil
+		}
+		return limit, err
 	}
-	capped := cappedU64ToI64(limit)
-	debug.SetMemoryLimit(capped)
-	return capped, nil
 }
 
-func cappedU64ToI64(limit uint64) int64 {
-	if limit > math.MaxInt64 {
-		return math.MaxInt64
+func capProvider(provider Provider) Provider {
+	return func() (uint64, error) {
+		limit, err := provider()
+		if err != nil {
+			return 0, err
+		} else if limit > math.MaxInt64 {
+			return math.MaxInt64, nil
+		}
+		return limit, nil
 	}
-	return int64(limit)
 }

@@ -16,6 +16,9 @@ func Limit(limit uint64) func() (uint64, error) {
 
 // ApplyRationA is a helper Provider function that applies the given ratio to the given provider.
 func ApplyRatio(provider Provider, ratio float64) Provider {
+	if ratio == 1 {
+		return provider
+	}
 	return func() (uint64, error) {
 		if ratio <= 0 || ratio > 1 {
 			return 0, fmt.Errorf("invalid ratio: %f, ratio should be in the range (0.0,1.0]", ratio)
