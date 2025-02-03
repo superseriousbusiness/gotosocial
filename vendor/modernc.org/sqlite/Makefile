@@ -37,8 +37,8 @@ build_all_targets:
 	GOOS=linux GOARCH=riscv64 go build -v ./...
 	GOOS=linux GOARCH=s390x go test -c -o /dev/null
 	GOOS=linux GOARCH=s390x go build -v ./...
-	GOOS=netbsd GOARCH=amd64 go test -c -o /dev/null
-	GOOS=netbsd GOARCH=amd64 go build -v ./...
+	# GOOS=netbsd GOARCH=amd64 go test -c -o /dev/null
+	# GOOS=netbsd GOARCH=amd64 go build -v ./...
 	GOOS=openbsd GOARCH=amd64 go test -c -o /dev/null
 	GOOS=openbsd GOARCH=amd64 go build -v ./...
 	GOOS=openbsd GOARCH=arm64 go test -c -o /dev/null
@@ -69,7 +69,10 @@ test:
 	go test -v -timeout 24h 2>&1 | tee log-test
 	
 vendor:
-	go run vendor_libsqlite3.go && make build_all_targets
+	cd vendor_libsqlite3 && go build -o ../vendor main.go
+	./vendor
+	rm -f vendor
+	make build_all_targets
 	make build_all_targets
 
 work:
