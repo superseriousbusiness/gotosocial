@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // AnnouncementsGETHandler swagger:operation GET /api/v1/announcements announcementsGet
@@ -59,7 +58,7 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) AnnouncementsGETHandler(c *gin.Context) {
-	_, err := oauth.Authed(c, true, true, true, true)
+	_, err := apiutil.TokenAuth(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return

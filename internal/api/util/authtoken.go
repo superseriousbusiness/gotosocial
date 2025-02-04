@@ -1,27 +1,12 @@
-// GoToSocial
-// Copyright (C) GoToSocial Authors admin@gotosocial.org
-// SPDX-License-Identifier: AGPL-3.0-or-later
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-//
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-package oauth
+package util
 
 import (
+	"errors"
+
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/errors"
 )
 
 // Auth wraps an authorized token, application, user, and account.
@@ -35,23 +20,29 @@ type Auth struct {
 	Account     *gtsmodel.Account
 }
 
-// Authed is a convenience function for returning an Authed struct from a gin context.
+// TokenAuth is a convenience function for returning an TokenAuth struct from a gin context.
 // In essence, it tries to extract a token, application, user, and account from the context,
 // and then sets them on a struct for convenience.
 //
-// If any are not present in the context, they will be set to nil on the returned Authed struct.
+// If any are not present in the context, they will be set to nil on the returned TokenAuth struct.
 //
 // If *ALL* are not present, then nil and an error will be returned.
 //
 // If something goes wrong during parsing, then nil and an error will be returned (consider this not authed).
-// Authed is like GetAuthed, but will fail if one of the requirements is not met.
-func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool, requireAccount bool) (*Auth, error) {
+// TokenAuth is like GetAuthed, but will fail if one of the requirements is not met.
+func TokenAuth(
+	c *gin.Context,
+	requireToken bool,
+	requireApp bool,
+	requireUser bool,
+	requireAccount bool,
+) (*Auth, error) {
 	ctx := c.Copy()
 	a := &Auth{}
 	var i interface{}
 	var ok bool
 
-	i, ok = ctx.Get(SessionAuthorizedToken)
+	i, ok = ctx.Get(oauth.SessionAuthorizedToken)
 	if ok {
 		parsed, ok := i.(oauth2.TokenInfo)
 		if !ok {
@@ -60,7 +51,7 @@ func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool
 		a.Token = parsed
 	}
 
-	i, ok = ctx.Get(SessionAuthorizedApplication)
+	i, ok = ctx.Get(oauth.SessionAuthorizedApplication)
 	if ok {
 		parsed, ok := i.(*gtsmodel.Application)
 		if !ok {
@@ -69,7 +60,7 @@ func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool
 		a.Application = parsed
 	}
 
-	i, ok = ctx.Get(SessionAuthorizedUser)
+	i, ok = ctx.Get(oauth.SessionAuthorizedUser)
 	if ok {
 		parsed, ok := i.(*gtsmodel.User)
 		if !ok {
@@ -78,7 +69,7 @@ func Authed(c *gin.Context, requireToken bool, requireApp bool, requireUser bool
 		a.User = parsed
 	}
 
-	i, ok = ctx.Get(SessionAuthorizedAccount)
+	i, ok = ctx.Get(oauth.SessionAuthorizedAccount)
 	if ok {
 		parsed, ok := i.(*gtsmodel.Account)
 		if !ok {

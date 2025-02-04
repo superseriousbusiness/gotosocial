@@ -27,6 +27,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -34,14 +35,13 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func (p *Processor) MoveSelf(
 	ctx context.Context,
-	authed *oauth.Auth,
+	authed *apiutil.Auth,
 	form *apimodel.AccountMoveRequest,
 ) gtserror.WithCode {
 	// Ensure valid MovedToURI.
