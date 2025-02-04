@@ -131,7 +131,7 @@ func (p *Processor) NodeInfoGet(ctx context.Context, schemaVersion string) (*api
 		Metadata: nodeInfoMetadata,
 	}
 
-	if schemaVersion == "2.0" {
+	if schemaVersion == "2.1" {
 		nodeInfo.Software.Repository = nodeInfoRepo
 		nodeInfo.Software.Homepage = nodeInfoHomepage
 	}
