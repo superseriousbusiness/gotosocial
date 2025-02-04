@@ -2282,6 +2282,31 @@ func GetTracingEndpoint() string { return global.GetTracingEndpoint() }
 // SetTracingEndpoint safely sets the value for global configuration 'TracingEndpoint' field
 func SetTracingEndpoint(v string) { global.SetTracingEndpoint(v) }
 
+// GetTracingHeaders safely fetches the Configuration value for state's 'TracingHeaders' field
+func (st *ConfigState) GetTracingHeaders() (v map[string]string) {
+	st.mutex.RLock()
+	v = st.config.TracingHeaders
+	st.mutex.RUnlock()
+	return
+}
+
+// SetTracingHeaders safely sets the Configuration value for state's 'TracingHeaders' field
+func (st *ConfigState) SetTracingHeaders(v map[string]string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.TracingHeaders = v
+	st.reloadToViper()
+}
+
+// TracingHeadersFlag returns the flag name for the 'TracingHeaders' field
+func TracingHeadersFlag() string { return "tracing-headers" }
+
+// GetTracingHeaders safely fetches the value for global configuration 'TracingHeaders' field
+func GetTracingHeaders() map[string]string { return global.GetTracingHeaders() }
+
+// SetTracingHeaders safely sets the value for global configuration 'TracingHeaders' field
+func SetTracingHeaders(v map[string]string) { global.SetTracingHeaders(v) }
+
 // GetTracingInsecureTransport safely fetches the Configuration value for state's 'TracingInsecureTransport' field
 func (st *ConfigState) GetTracingInsecureTransport() (v bool) {
 	st.mutex.RLock()

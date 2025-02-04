@@ -35,6 +35,13 @@ tracing-transport: "grpc"
 # Default: ""
 tracing-endpoint: ""
 
+# Map of strings. Additional headers to send to the trace ingester.
+# Additional HTTP or gRPC headers can be used for authentication or other additional
+# information for the tracing system.
+# Examples: {"Authorization": "Bearer super-secret-token", "Dataset": "gotosocial"}
+# Default: {}
+tracing-headers: {}
+
 # Bool. Disable TLS for the gRPC and HTTP transport protocols.
 # Default: false
 tracing-insecure-transport: false

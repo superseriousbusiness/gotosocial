@@ -12,6 +12,9 @@ GoToSocial 内置了基于 [OpenTelemetry][otel] 的追踪功能。虽然并没�
 tracing-enabled: true
 tracing-transport: "grpc"
 tracing-endpoint: "localhost:4317"
+tracing-headers:
+  "Authorization": "Bearer super-secret-token"
+  "Dataset": "gotosocial"
 tracing-insecure-transport: true
 ```
 
