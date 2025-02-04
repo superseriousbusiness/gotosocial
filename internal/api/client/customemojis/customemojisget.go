@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // CustomEmojisGETHandler swagger:operation GET /api/v1/custom_emojis customEmojisGet
@@ -55,7 +54,7 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) CustomEmojisGETHandler(c *gin.Context) {
-	if _, err := oauth.Authed(c, true, true, true, true); err != nil {
+	if _, err := apiutil.TokenAuth(c, true, true, true, true); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}

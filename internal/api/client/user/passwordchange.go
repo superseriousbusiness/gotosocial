@@ -26,7 +26,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 const OIDCPasswordHelp = "password change request cannot be processed by GoToSocial as this instance is running with OIDC enabled; you must change password using your OIDC provider"
@@ -70,7 +69,7 @@ const OIDCPasswordHelp = "password change request cannot be processed by GoToSoc
 //		'500':
 //			description: internal error
 func (m *Module) PasswordChangePOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+	authed, err := apiutil.TokenAuth(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return

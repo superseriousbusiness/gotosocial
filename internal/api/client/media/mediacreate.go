@@ -27,7 +27,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // MediaCreatePOSTHandler swagger:operation POST /api/{api_version}/media mediaCreate
@@ -102,7 +101,7 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	authed, err := oauth.Authed(c, true, true, true, true)
+	authed, err := apiutil.TokenAuth(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return

@@ -27,7 +27,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // InstanceUpdatePATCHHandler swagger:operation PATCH /api/v1/instance instanceUpdate
@@ -127,7 +126,7 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) InstanceUpdatePATCHHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+	authed, err := apiutil.TokenAuth(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return
