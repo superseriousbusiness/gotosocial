@@ -115,6 +115,19 @@ func Validate() error {
 		SetInstanceLanguages(parsedLangs)
 	}
 
+	// `instance-stats-mode` should be
+	// "", "zero", "serve", or "baffle"
+	switch statsMode := GetInstanceStatsMode(); statsMode {
+	case InstanceStatsModeDefault, InstanceStatsModeZero, InstanceStatsModeServe, InstanceStatsModeBaffle:
+		// No problem.
+
+	default:
+		errf(
+			"%s must be set to empty string, zero, serve, or baffle, provided value was %s",
+			InstanceFederationModeFlag(), statsMode,
+		)
+	}
+
 	// `web-assets-base-dir`.
 	webAssetsBaseDir := GetWebAssetBaseDir()
 	if webAssetsBaseDir == "" {

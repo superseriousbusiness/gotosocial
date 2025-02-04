@@ -36,9 +36,9 @@ func (w *NodeInfo) Route(r *router.Router, m ...gin.HandlerFunc) {
 	// attach middlewares appropriate for this group
 	nodeInfoGroup.Use(m...)
 	nodeInfoGroup.Use(
-		// Allow public cache for 2 minutes.
+		// Allow public cache for 24 hours.
 		middleware.CacheControl(middleware.CacheControlConfig{
-			Directives: []string{"public", "max-age=120"},
+			Directives: []string{"public", "max-age=86400"},
 			Vary:       []string{"Accept-Encoding"},
 		}),
 	)

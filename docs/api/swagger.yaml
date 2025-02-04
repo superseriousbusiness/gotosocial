@@ -77,10 +77,20 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoSoftware:
         properties:
+            homepage:
+                description: Homepage for the software. Omitted in version 2.0.
+                example: https://docs.gotosocial.org
+                type: string
+                x-go-name: Homepage
             name:
                 example: gotosocial
                 type: string
                 x-go-name: Name
+            repository:
+                description: Repository for the software. Omitted in version 2.0.
+                example: https://codeberg.org/superseriousbusiness/gotosocial
+                type: string
+                x-go-name: Repository
             version:
                 example: 0.1.2 1234567
                 type: string
@@ -90,6 +100,10 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsage:
         properties:
+            localComments:
+                format: int64
+                type: integer
+                x-go-name: LocalComments
             localPosts:
                 format: int64
                 type: integer
@@ -101,6 +115,14 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsers:
         properties:
+            activeHalfYear:
+                format: int64
+                type: integer
+                x-go-name: ActiveHalfYear
+            activeMonth:
+                format: int64
+                type: integer
+                x-go-name: ActiveMonth
             total:
                 format: int64
                 type: integer
@@ -12504,12 +12526,13 @@ paths:
             summary: Returns code 200 if GoToSocial is "live", ie., able to respond to HTTP requests.
             tags:
                 - health
-    /nodeinfo/2.0:
+    /nodeinfo/{schema_version}:
         get:
             description: 'See: https://nodeinfo.diaspora.software/schema.html'
             operationId: nodeInfoGet
             produces:
                 - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
+                - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.1#"
             responses:
                 "200":
                     description: ""

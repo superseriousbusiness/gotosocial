@@ -60,10 +60,21 @@ func (m *Module) InstanceInformationGETHandlerV1(c *gin.Context) {
 		return
 	}
 
-	if config.GetInstanceStatsRandomize() {
+	switch config.GetInstanceStatsMode() {
+
+	case config.InstanceStatsModeBaffle:
 		// Replace actual stats with cached randomized ones.
 		instance.Stats["user_count"] = util.Ptr(int(instance.RandomStats.TotalUsers))
 		instance.Stats["status_count"] = util.Ptr(int(instance.RandomStats.Statuses))
+
+	case config.InstanceStatsModeZero:
+		// Replace actual stats with zero.
+		instance.Stats["user_count"] = new(int)
+		instance.Stats["status_count"] = new(int)
+
+	default:
+		// serve or default.
+		// Leave stats alone.
 	}
 
 	apiutil.JSON(c, http.StatusOK, instance)
@@ -101,9 +112,19 @@ func (m *Module) InstanceInformationGETHandlerV2(c *gin.Context) {
 		return
 	}
 
-	if config.GetInstanceStatsRandomize() {
+	switch config.GetInstanceStatsMode() {
+
+	case config.InstanceStatsModeBaffle:
 		// Replace actual stats with cached randomized ones.
 		instance.Usage.Users.ActiveMonth = int(instance.RandomStats.MonthlyActiveUsers)
+
+	case config.InstanceStatsModeZero:
+		// Replace actual stats with zero.
+		instance.Usage.Users.ActiveMonth = 0
+
+	default:
+		// serve or default.
+		// Leave stats alone.
 	}
 
 	apiutil.JSON(c, http.StatusOK, instance)

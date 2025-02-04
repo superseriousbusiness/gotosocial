@@ -1057,30 +1057,30 @@ func SetInstanceSubscriptionsProcessEvery(v time.Duration) {
 	global.SetInstanceSubscriptionsProcessEvery(v)
 }
 
-// GetInstanceStatsRandomize safely fetches the Configuration value for state's 'InstanceStatsRandomize' field
-func (st *ConfigState) GetInstanceStatsRandomize() (v bool) {
+// GetInstanceStatsMode safely fetches the Configuration value for state's 'InstanceStatsMode' field
+func (st *ConfigState) GetInstanceStatsMode() (v string) {
 	st.mutex.RLock()
-	v = st.config.InstanceStatsRandomize
+	v = st.config.InstanceStatsMode
 	st.mutex.RUnlock()
 	return
 }
 
-// SetInstanceStatsRandomize safely sets the Configuration value for state's 'InstanceStatsRandomize' field
-func (st *ConfigState) SetInstanceStatsRandomize(v bool) {
+// SetInstanceStatsMode safely sets the Configuration value for state's 'InstanceStatsMode' field
+func (st *ConfigState) SetInstanceStatsMode(v string) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.InstanceStatsRandomize = v
+	st.config.InstanceStatsMode = v
 	st.reloadToViper()
 }
 
-// InstanceStatsRandomizeFlag returns the flag name for the 'InstanceStatsRandomize' field
-func InstanceStatsRandomizeFlag() string { return "instance-stats-randomize" }
+// InstanceStatsModeFlag returns the flag name for the 'InstanceStatsMode' field
+func InstanceStatsModeFlag() string { return "instance-stats-mode" }
 
-// GetInstanceStatsRandomize safely fetches the value for global configuration 'InstanceStatsRandomize' field
-func GetInstanceStatsRandomize() bool { return global.GetInstanceStatsRandomize() }
+// GetInstanceStatsMode safely fetches the value for global configuration 'InstanceStatsMode' field
+func GetInstanceStatsMode() string { return global.GetInstanceStatsMode() }
 
-// SetInstanceStatsRandomize safely sets the value for global configuration 'InstanceStatsRandomize' field
-func SetInstanceStatsRandomize(v bool) { global.SetInstanceStatsRandomize(v) }
+// SetInstanceStatsMode safely sets the value for global configuration 'InstanceStatsMode' field
+func SetInstanceStatsMode(v string) { global.SetInstanceStatsMode(v) }
 
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
