@@ -26,7 +26,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // AccountAvatarDELETEHandler swagger:operation DELETE /api/v1/profile/avatar accountAvatarDelete
@@ -102,7 +101,7 @@ func (m *Module) AccountHeaderDELETEHandler(c *gin.Context) {
 // accountDeleteProfileAttachment checks that an authenticated account is present and allowed to alter itself,
 // runs an attachment deletion processor method, and returns the updated account.
 func (m *Module) accountDeleteProfileAttachment(c *gin.Context, processDelete func(context.Context, *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode)) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+	authed, err := apiutil.TokenAuth(c, true, true, true, true)
 	if err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
 		return

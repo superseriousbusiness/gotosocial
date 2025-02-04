@@ -26,7 +26,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // PollVotePOSTHandler swagger:operation POST /api/v1/polls/{id}/votes pollVote
@@ -80,7 +79,7 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) PollVotePOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
+	authed, err := apiutil.TokenAuth(c, true, true, true, true)
 	if err != nil {
 		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
