@@ -25,9 +25,12 @@ import (
 )
 
 const (
-	NodeInfo2Version     = "2.0"
-	NodeInfo2Path        = "/" + NodeInfo2Version
-	NodeInfo2ContentType = "application/json; profile=\"http://nodeinfo.diaspora.software/ns/schema/" + NodeInfo2Version + "#\""
+	NodeInfo20            = "2.0"
+	NodeInfo20ContentType = "application/json; profile=\"http://nodeinfo.diaspora.software/ns/schema/" + NodeInfo20 + "#\""
+	NodeInfo21            = "2.1"
+	NodeInfo21ContentType = "application/json; profile=\"http://nodeinfo.diaspora.software/ns/schema/" + NodeInfo21 + "#\""
+	NodeInfoSchema        = "schema"
+	NodeInfoPath          = "/:" + NodeInfoSchema
 )
 
 type Module struct {
@@ -41,5 +44,5 @@ func New(processor *processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, NodeInfo2Path, m.NodeInfo2GETHandler)
+	attachHandler(http.MethodGet, NodeInfoPath, m.NodeInfo2GETHandler)
 }

@@ -70,6 +70,12 @@ type NodeInfoSoftware struct {
 	Name string `json:"name"`
 	// example: 0.1.2 1234567
 	Version string `json:"version"`
+	// Repository for the software. Omitted in version 2.0.
+	// example: https://codeberg.org/superseriousbusiness/gotosocial
+	Repository string `json:"repository,omitempty"`
+	// Homepage for the software. Omitted in version 2.0.
+	// example: https://docs.gotosocial.org
+	Homepage string `json:"homepage,omitempty"`
 }
 
 // NodeInfoServices represents inbound and outbound services that this node offers connections to.
@@ -80,13 +86,16 @@ type NodeInfoServices struct {
 
 // NodeInfoUsage represents usage information about this server, such as number of users.
 type NodeInfoUsage struct {
-	Users      NodeInfoUsers `json:"users"`
-	LocalPosts int           `json:"localPosts"`
+	Users         NodeInfoUsers `json:"users"`
+	LocalPosts    int           `json:"localPosts,omitempty"`
+	LocalComments int           `json:"localComments,omitempty"`
 }
 
 // NodeInfoUsers represents aggregate information about the users on the server.
 type NodeInfoUsers struct {
-	Total int `json:"total"`
+	Total          int `json:"total"`
+	ActiveHalfYear int `json:"activeHalfYear,omitempty"`
+	ActiveMonth    int `json:"activeMonth,omitempty"`
 }
 
 // HostMeta represents a hostmeta document.

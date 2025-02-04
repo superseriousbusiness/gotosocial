@@ -425,16 +425,38 @@ instance-subscriptions-process-from: "23:00"
 # Default: "24h" (once per day).
 instance-subscriptions-process-every: "24h"
 
-# Bool. Set this to true to randomize stats served at
-# the /api/v1|v2/instance and /nodeinfo/2.0 endpoints.
+# String. Allows you to customize if and how stats are served to
+# crawlers at the /api/v1|v2/instance and /nodeinfo endpoints.
 #
-# This can be useful when you don't want bots to obtain
-# reliable information about the amount of users and
-# statuses on your instance.
+# Note that no matter what you set below, the /api/v1|v2/instance
+# endpoints will not be allowed by robots.txt, as these are client
+# API endpoints.
 #
-# Options: [true, false]
-# Default: false
-instance-stats-randomize: false
+# "" / empty string (default mode): Serve accurate stats at instance
+# and nodeinfo endpoints, and DISALLOW crawlers from crawling
+# those endpoints in robots.txt. This mode is equivalent to politely
+# asking crawlers not to crawl, but there's no guarantee they will obey,
+# as unfortunately many crawlers don't even check robots.txt.
+#
+# "zero": Serve zeroed-out stats at instance and nodeinfo endpoints,
+# and DISALLOW crawlers from crawling those endpoints in robots.txt.
+# This mode prevents even ill-behaved crawlers from gathering stats
+# about your instance, as all gathered values will be 0. This is the
+# safest way of preserving your instance's privacy in terms of stats.
+#
+# "serve": Serve accurate stats at instance and nodeinfo endpoints,
+# and ALLOW crawlers to crawl those endpoints. This mode is useful
+# if you want to contribute to fediverse statistics collection projects.
+#
+# "baffle": Serve randomized, preposterous stats at instance and nodeinfo
+# endpoints, and DISALLOW crawlers from crawling those endpoints in robots.txt.
+# This mode can be useful to annoy crawlers that don't respect robots.txt.
+# Warning that this may draw the ire of crawler implementers who don't
+# respect robots.txt, and may therefore put a target on your instance.
+#
+# Options: ["", "zero", "serve", "baffle"]
+# Default: ""
+instance-stats-mode: ""
 
 ###########################
 ##### ACCOUNTS CONFIG #####

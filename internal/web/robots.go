@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 const (
@@ -90,8 +91,8 @@ Disallow: /
 
 # Well-known.dev crawler. Indexes stuff under /.well-known.
 # https://well-known.dev/about/
-User-agent: WellKnownBot     
-Disallow: /   
+User-agent: WellKnownBot
+Disallow: /
 
 # Rules for everything else.
 User-agent: *
@@ -108,10 +109,6 @@ Disallow: /wait_for_approval
 Disallow: /account_disabled
 Disallow: /signup
 
-# Well-known endpoints.
-Disallow: /.well-known/
-Disallow: /nodeinfo/
-
 # Fileserver/media.
 Disallow: /fileserver/
 
@@ -125,7 +122,17 @@ Disallow: /user
 Disallow: /settings/
 
 # Domain blocklist.
-Disallow: /about/suspended`
+Disallow: /about/suspended
+
+# Webfinger endpoint.
+Disallow: /.well-known/webfinger
+`
+
+	robotsTxtNoNodeInfo = robotsTxt + `
+# Disallow nodeinfo
+Disallow: /.well-known/nodeinfo
+Disallow: /nodeinfo/
+`
 )
 
 // robotsGETHandler returns a decent robots.txt that prevents crawling
@@ -134,5 +141,17 @@ Disallow: /about/suspended`
 // More granular robots meta tags are then applied for web pages
 // depending on user preferences (see internal/web).
 func (m *Module) robotsGETHandler(c *gin.Context) {
-	c.String(http.StatusOK, robotsTxt)
+	// Allow caching for 24 hrs.
+	// https://www.rfc-editor.org/rfc/rfc9309.html#section-2.4
+	c.Header("Cache-Control", "public, max-age=86400")
+
+	if config.GetInstanceStatsMode() == config.InstanceStatsModeServe {
+		// Serve robots.txt as-is
+		// without forbidding nodeinfo.
+		c.String(http.StatusOK, robotsTxt)
+		return
+	}
+
+	// Disallow scraping nodeinfo.
+	c.String(http.StatusOK, robotsTxtNoNodeInfo)
 }

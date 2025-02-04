@@ -18,6 +18,7 @@
 package nodeinfo
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
-// NodeInfo2GETHandler swagger:operation GET /nodeinfo/2.0 nodeInfoGet
+// NodeInfo2GETHandler swagger:operation GET /nodeinfo/{schema_version} nodeInfoGet
 //
 // Returns a compliant nodeinfo response to node info queries.
 //
@@ -35,8 +36,17 @@ import (
 //	tags:
 //	- nodeinfo
 //
+//	parameters:
+//	-
+//		name: schema_version
+//		type: string
+//		description: Schema version of nodeinfo to request. 2.0 and 2.1 are currently supported.
+//		in: path
+//		required: true
+//
 //	produces:
 //	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
+//	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.1#"
 //
 //	responses:
 //		'200':
@@ -48,7 +58,23 @@ func (m *Module) NodeInfo2GETHandler(c *gin.Context) {
 		return
 	}
 
-	nodeInfo, errWithCode := m.processor.Fedi().NodeInfoGet(c.Request.Context())
+	var (
+		contentType   string
+		schemaVersion = c.Param(NodeInfoSchema)
+	)
+
+	switch schemaVersion {
+	case NodeInfo20:
+		contentType = NodeInfo20ContentType
+	case NodeInfo21:
+		contentType = NodeInfo21ContentType
+	default:
+		const errText = "only nodeinfo 2.0 and 2.1 are supported"
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotFound(errors.New(errText), errText), m.processor.InstanceGetV1)
+		return
+	}
+
+	nodeInfo, errWithCode := m.processor.Fedi().NodeInfoGet(c.Request.Context(), schemaVersion)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
@@ -59,7 +85,7 @@ func (m *Module) NodeInfo2GETHandler(c *gin.Context) {
 		c.Writer,
 		c.Request,
 		http.StatusOK,
-		NodeInfo2ContentType,
+		contentType,
 		nodeInfo,
 	)
 }

@@ -1745,9 +1745,9 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	stats["domain_count"] = util.Ptr(domainCount)
 	instance.Stats = stats
 
-	if config.GetInstanceStatsRandomize() {
-		// Whack some random stats on the instance
-		// to be injected by API handlers.
+	if config.GetInstanceStatsMode() == config.InstanceStatsModeBaffle {
+		// Whack random stats on the instance to be used
+		// by handlers in internal/api/client/instance.
 		instance.RandomStats = c.RandomStats()
 	}
 
@@ -1827,9 +1827,9 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 		instance.Debug = util.Ptr(true)
 	}
 
-	if config.GetInstanceStatsRandomize() {
-		// Whack some random stats on the instance
-		// to be injected by API handlers.
+	if config.GetInstanceStatsMode() == config.InstanceStatsModeBaffle {
+		// Whack random stats on the instance to be used
+		// by handlers in internal/api/client/instance.
 		instance.RandomStats = c.RandomStats()
 	}
 
