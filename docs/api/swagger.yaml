@@ -12530,6 +12530,12 @@ paths:
         get:
             description: 'See: https://nodeinfo.diaspora.software/schema.html'
             operationId: nodeInfoGet
+            parameters:
+                - description: Schema version of nodeinfo to request. 2.0 and 2.1 are currently supported.
+                  in: path
+                  name: schema_version
+                  required: true
+                  type: string
             produces:
                 - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
                 - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.1#"

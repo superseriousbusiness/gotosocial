@@ -36,6 +36,14 @@ import (
 //	tags:
 //	- nodeinfo
 //
+//	parameters:
+//	-
+//		name: schema_version
+//		type: string
+//		description: Schema version of nodeinfo to request. 2.0 and 2.1 are currently supported.
+//		in: path
+//		required: true
+//
 //	produces:
 //	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
 //	- application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.1#"
