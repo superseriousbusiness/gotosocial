@@ -19,46 +19,34 @@ package api
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/nodeinfo"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/api/robots"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
-type NodeInfo struct {
-	nodeInfo *nodeinfo.Module
+type Robots struct {
+	robots *robots.Module
 }
 
-func (w *NodeInfo) Route(r *router.Router, m ...gin.HandlerFunc) {
-	// group nodeinfo endpoints together
-	nodeInfoGroup := r.AttachGroup("nodeinfo")
+func (rb *Robots) Route(r *router.Router, m ...gin.HandlerFunc) {
+	// Create a group so we can attach middlewares.
+	robotsGroup := r.AttachGroup("robots.txt")
 
-	// attach middlewares appropriate for this group
-	nodeInfoGroup.Use(m...)
-	nodeInfoGroup.Use(
-		// Allow public cache for 24 hours.
+	// Use passed-in middlewares.
+	robotsGroup.Use(m...)
+
+	// Allow caching for 24 hrs.
+	// https://www.rfc-editor.org/rfc/rfc9309.html#section-2.4
+	robotsGroup.Use(
 		middleware.CacheControl(middleware.CacheControlConfig{
 			Directives: []string{"public", "max-age=86400"},
 			Vary:       []string{"Accept-Encoding"},
 		}),
 	)
 
-	// If instance is configured to serve instance stats
-	// faithfully at nodeinfo, we should allow robots to
-	// crawl nodeinfo endpoints in a limited capacity.
-	// In all other cases, disallow everything.
-	if config.GetInstanceStatsMode() == config.InstanceStatsModeServe {
-		nodeInfoGroup.Use(middleware.RobotsHeaders("allowSome"))
-	} else {
-		nodeInfoGroup.Use(middleware.RobotsHeaders(""))
-	}
-
-	w.nodeInfo.Route(nodeInfoGroup.Handle)
+	rb.robots.Route(robotsGroup.Handle)
 }
 
-func NewNodeInfo(p *processing.Processor) *NodeInfo {
-	return &NodeInfo{
-		nodeInfo: nodeinfo.New(p),
-	}
+func NewRobots() *Robots {
+	return &Robots{}
 }

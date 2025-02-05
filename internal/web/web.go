@@ -95,8 +95,6 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	// Route static assets.
 	routeAssets(m, r, mi...)
 
-	// Route all other endpoints + handlers.
-	//
 	// Handlers that serve profiles and statuses should use
 	// the SignatureCheck middleware, so that requests with
 	// content-type application/activity+json can be served
@@ -108,24 +106,25 @@ func (m *Module) Route(r *router.Router, mi ...gin.HandlerFunc) {
 	profileGroup.Handle(http.MethodGet, "", m.profileGETHandler) // use empty path here since it's the base of the group
 	profileGroup.Handle(http.MethodGet, statusPath, m.threadGETHandler)
 
-	// Individual web handlers requiring no specific middlewares.
-	r.AttachHandler(http.MethodGet, "/", m.indexHandler) // front-page
-	r.AttachHandler(http.MethodGet, settingsPathPrefix, m.SettingsPanelHandler)
-	r.AttachHandler(http.MethodGet, settingsPanelGlob, m.SettingsPanelHandler)
-	r.AttachHandler(http.MethodGet, customCSSPath, m.customCSSGETHandler)
-	r.AttachHandler(http.MethodGet, instanceCustomCSSPath, m.instanceCustomCSSGETHandler)
-	r.AttachHandler(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
-	r.AttachHandler(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
-	r.AttachHandler(http.MethodPost, confirmEmailPath, m.confirmEmailPOSTHandler)
-	r.AttachHandler(http.MethodGet, robotsPath, m.robotsGETHandler)
-	r.AttachHandler(http.MethodGet, aboutPath, m.aboutGETHandler)
-	r.AttachHandler(http.MethodGet, loginPath, m.loginGETHandler)
-	r.AttachHandler(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
-	r.AttachHandler(http.MethodGet, tagsPath, m.tagGETHandler)
-	r.AttachHandler(http.MethodGet, signupPath, m.signupGETHandler)
-	r.AttachHandler(http.MethodPost, signupPath, m.signupPOSTHandler)
+	// Group for all other web handlers.
+	everythingElseGroup := r.AttachGroup("")
+	everythingElseGroup.Use(mi...)
+	everythingElseGroup.Handle(http.MethodGet, "/", m.indexHandler) // front-page
+	everythingElseGroup.Handle(http.MethodGet, settingsPathPrefix, m.SettingsPanelHandler)
+	everythingElseGroup.Handle(http.MethodGet, settingsPanelGlob, m.SettingsPanelHandler)
+	everythingElseGroup.Handle(http.MethodGet, customCSSPath, m.customCSSGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, instanceCustomCSSPath, m.instanceCustomCSSGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, rssFeedPath, m.rssFeedGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, confirmEmailPath, m.confirmEmailGETHandler)
+	everythingElseGroup.Handle(http.MethodPost, confirmEmailPath, m.confirmEmailPOSTHandler)
+	everythingElseGroup.Handle(http.MethodGet, aboutPath, m.aboutGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, loginPath, m.loginGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, domainBlockListPath, m.domainBlockListGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, tagsPath, m.tagGETHandler)
+	everythingElseGroup.Handle(http.MethodGet, signupPath, m.signupGETHandler)
+	everythingElseGroup.Handle(http.MethodPost, signupPath, m.signupPOSTHandler)
 
-	// Redirects from old endpoints to for back compat.
+	// Redirects from old endpoints for back compat.
 	r.AttachHandler(http.MethodGet, "/auth/edit", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
 	r.AttachHandler(http.MethodGet, "/user", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, userPanelPath) })
 	r.AttachHandler(http.MethodGet, "/admin", func(c *gin.Context) { c.Redirect(http.StatusMovedPermanently, adminPanelPath) })

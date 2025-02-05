@@ -417,7 +417,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error creating main router: %s", err)
 	}
 
-	// Start preparing middleware stack.
+	// Start preparing global middleware
+	// stack (used for every request).
 	middlewares := make([]gin.HandlerFunc, 1)
 
 	// RequestID middleware must run before tracing!
@@ -499,13 +500,14 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		metricsModule     = api.NewMetrics()                                                 // Metrics endpoints
 		healthModule      = api.NewHealth(dbService.Ready)                                   // Health check endpoints
 		fileserverModule  = api.NewFileserver(process)                                       // fileserver endpoints
+		robotsModule      = api.NewRobots()                                                  // robots.txt endpoint
 		wellKnownModule   = api.NewWellKnown(process)                                        // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(process)                                         // nodeinfo endpoint
 		activityPubModule = api.NewActivityPub(dbService, process)                           // ActivityPub endpoints
 		webModule         = web.New(dbService, process)                                      // web pages + user profiles + settings panels etc
 	)
 
-	// create required middleware
+	// Create per-route / per-grouping middlewares.
 	// rate limiting
 	rlLimit := config.GetAdvancedRateLimitRequests()
 	clLimit := middleware.RateLimit(rlLimit, config.GetAdvancedRateLimitExceptionsParsed())        // client api
@@ -518,9 +520,24 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	retryAfter := config.GetAdvancedThrottlingRetryAfter()
 	clThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // client api
 	s2sThrottle := middleware.Throttle(cpuMultiplier, retryAfter)
+
 	// server-to-server (AP)
 	fsThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // fileserver / web templates / emojis
 	pkThrottle := middleware.Throttle(cpuMultiplier, retryAfter) // throttle public key endpoint separately
+
+	// Robots http headers (x-robots-tag).
+	//
+	// robotsDisallowAll is used for client API + S2S endpoints
+	// that definitely should never be indexed by crawlers.
+	//
+	// robotsDisallowAIOnly is used for utility endpoints,
+	// fileserver, and for web endpoints that set their own
+	// additional robots directives in HTML meta tags.
+	//
+	// Other endpoints like .well-known and nodeinfo handle
+	// robots headers themselves based on configuration.
+	robotsDisallowAll := middleware.RobotsHeaders("")
+	robotsDisallowAIOnly := middleware.RobotsHeaders("aiOnly")
 
 	// Gzip middleware is applied to all endpoints except
 	// fileserver (compression too expensive for those),
@@ -531,17 +548,18 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// these should be routed in order;
 	// apply throttling *after* rate limiting
-	authModule.Route(route, clLimit, clThrottle, gzip)
-	clientModule.Route(route, clLimit, clThrottle, gzip)
-	metricsModule.Route(route, clLimit, clThrottle)
-	healthModule.Route(route, clLimit, clThrottle)
-	fileserverModule.Route(route, fsMainLimit, fsThrottle)
-	fileserverModule.RouteEmojis(route, instanceAccount.ID, fsEmojiLimit, fsThrottle)
+	authModule.Route(route, clLimit, clThrottle, robotsDisallowAll, gzip)
+	clientModule.Route(route, clLimit, clThrottle, robotsDisallowAll, gzip)
+	metricsModule.Route(route, clLimit, clThrottle, robotsDisallowAIOnly)
+	healthModule.Route(route, clLimit, clThrottle, robotsDisallowAIOnly)
+	fileserverModule.Route(route, fsMainLimit, fsThrottle, robotsDisallowAIOnly)
+	fileserverModule.RouteEmojis(route, instanceAccount.ID, fsEmojiLimit, fsThrottle, robotsDisallowAIOnly)
+	robotsModule.Route(route, fsMainLimit, fsThrottle, robotsDisallowAIOnly, gzip)
 	wellKnownModule.Route(route, gzip, s2sLimit, s2sThrottle)
 	nodeInfoModule.Route(route, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.Route(route, s2sLimit, s2sThrottle, gzip)
-	activityPubModule.RoutePublicKey(route, s2sLimit, pkThrottle, gzip)
-	webModule.Route(route, fsMainLimit, fsThrottle, gzip)
+	activityPubModule.Route(route, s2sLimit, s2sThrottle, robotsDisallowAll, gzip)
+	activityPubModule.RoutePublicKey(route, s2sLimit, pkThrottle, robotsDisallowAll, gzip)
+	webModule.Route(route, fsMainLimit, fsThrottle, robotsDisallowAIOnly, gzip)
 
 	// Finally start the main http server!
 	if err := route.Start(); err != nil {

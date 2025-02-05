@@ -284,6 +284,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		metricsModule     = api.NewMetrics()                                                  // Metrics endpoints
 		healthModule      = api.NewHealth(state.DB.Ready)                                     // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
+		robotsModule      = api.NewRobots()                                                   // robots.txt endpoint
 		wellKnownModule   = api.NewWellKnown(processor)                                       // .well-known endpoints
 		nodeInfoModule    = api.NewNodeInfo(processor)                                        // nodeinfo endpoint
 		activityPubModule = api.NewActivityPub(state.DB, processor)                           // ActivityPub endpoints
@@ -297,6 +298,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	healthModule.Route(route)
 	fileserverModule.Route(route)
 	fileserverModule.RouteEmojis(route, instanceAccount.ID)
+	robotsModule.Route(route)
 	wellKnownModule.Route(route)
 	nodeInfoModule.Route(route)
 	activityPubModule.Route(route)

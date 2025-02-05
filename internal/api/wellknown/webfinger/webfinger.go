@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
@@ -41,5 +42,6 @@ func New(processor *processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, WebfingerBasePath, m.WebfingerGETRequest)
+	// Attach handler, injecting robots http header middleware to disallow all.
+	attachHandler(http.MethodGet, WebfingerBasePath, middleware.RobotsHeaders(""), m.WebfingerGETRequest)
 }
