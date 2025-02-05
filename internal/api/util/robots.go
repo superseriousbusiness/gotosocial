@@ -15,19 +15,17 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package web
+package util
 
-import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-)
-
+// See:
+//
+//   - https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag#robotsmeta
+//   - https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Robots-Tag
+//   - https://www.rfc-editor.org/rfc/rfc9309.html
 const (
-	robotsPath          = "/robots.txt"
-	robotsMetaAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard" // https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag#robotsmeta
-	robotsTxt           = `# GoToSocial robots.txt -- to edit, see internal/web/robots.go
+	RobotsDirectivesDisallow  = "noindex, nofollow"
+	RobotsDirectivesAllowSome = "nofollow, noarchive, nositelinkssearchbox, max-image-preview:standard"
+	RobotsTxt                 = `# GoToSocial robots.txt -- to edit, see internal/api/util/robots.go
 # More info @ https://developers.google.com/search/docs/crawling-indexing/robots/intro
 
 # AI scrapers and the like.
@@ -127,31 +125,9 @@ Disallow: /about/suspended
 # Webfinger endpoint.
 Disallow: /.well-known/webfinger
 `
-
-	robotsTxtNoNodeInfo = robotsTxt + `
+	RobotsTxtDisallowNodeInfo = RobotsTxt + `
 # Disallow nodeinfo
 Disallow: /.well-known/nodeinfo
 Disallow: /nodeinfo/
 `
 )
-
-// robotsGETHandler returns a decent robots.txt that prevents crawling
-// the api, auth pages, settings pages, etc.
-//
-// More granular robots meta tags are then applied for web pages
-// depending on user preferences (see internal/web).
-func (m *Module) robotsGETHandler(c *gin.Context) {
-	// Allow caching for 24 hrs.
-	// https://www.rfc-editor.org/rfc/rfc9309.html#section-2.4
-	c.Header("Cache-Control", "public, max-age=86400")
-
-	if config.GetInstanceStatsMode() == config.InstanceStatsModeServe {
-		// Serve robots.txt as-is
-		// without forbidding nodeinfo.
-		c.String(http.StatusOK, robotsTxt)
-		return
-	}
-
-	// Disallow scraping nodeinfo.
-	c.String(http.StatusOK, robotsTxtNoNodeInfo)
-}

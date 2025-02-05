@@ -44,12 +44,5 @@ func ExtraHeaders() gin.HandlerFunc {
 		//
 		// See: https://github.com/patcg-individual-drafts/topics
 		c.Header("Permissions-Policy", "browsing-topics=()")
-
-		// Some AI scrapers respect the following tags to opt-out
-		// of their crawling and datasets.
-		c.Header("X-Robots-Tag", "noimageai")
-		// c.Header calls .Set(), but we want to emit the header
-		// twice, not override it.
-		c.Writer.Header().Add("X-Robots-Tag", "noai")
 	}
 }

@@ -103,7 +103,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	// index if account is discoverable.
 	var robotsMeta string
 	if targetAccount.Discoverable {
-		robotsMeta = robotsMetaAllowSome
+		robotsMeta = apiutil.RobotsDirectivesAllowSome
 	}
 
 	// We need to change our response slightly if the

@@ -21,6 +21,10 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
@@ -42,5 +46,57 @@ func New(processor *processing.Processor) *Module {
 }
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodGet, NodeInfoWellKnownPath, m.NodeInfoWellKnownGETHandler)
+	// If instance is configured to serve instance stats
+	// faithfully at nodeinfo, we should allow robots to
+	// crawl nodeinfo endpoints in a limited capacity.
+	// In all other cases, disallow everything.
+	var robots gin.HandlerFunc
+	if config.GetInstanceStatsMode() == config.InstanceStatsModeServe {
+		robots = middleware.RobotsHeaders("allowSome")
+	} else {
+		robots = middleware.RobotsHeaders("")
+	}
+
+	// Attach handler, injecting robots http header middleware.
+	attachHandler(http.MethodGet, NodeInfoWellKnownPath, robots, m.NodeInfoWellKnownGETHandler)
+}
+
+// NodeInfoWellKnownGETHandler swagger:operation GET /.well-known/nodeinfo nodeInfoWellKnownGet
+//
+// Returns a well-known response which redirects callers to `/nodeinfo/2.0`.
+//
+// eg. `{"links":[{"rel":"http://nodeinfo.diaspora.software/ns/schema/2.0","href":"http://example.org/nodeinfo/2.0"}]}`
+// See: https://nodeinfo.diaspora.software/protocol.html
+//
+//	---
+//	tags:
+//	- .well-known
+//
+//	produces:
+//	- application/json
+//
+//	responses:
+//		'200':
+//			schema:
+//				"$ref": "#/definitions/wellKnownResponse"
+func (m *Module) NodeInfoWellKnownGETHandler(c *gin.Context) {
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	resp, errWithCode := m.processor.Fedi().NodeInfoRelGet(c.Request.Context())
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	// Encode JSON HTTP response.
+	apiutil.EncodeJSONResponse(
+		c.Writer,
+		c.Request,
+		http.StatusOK,
+		apiutil.AppJSON,
+		resp,
+	)
 }
