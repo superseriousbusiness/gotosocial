@@ -41,25 +41,27 @@ func RobotsHeaders(mode string) gin.HandlerFunc {
 		noai = "noai, noimageai"
 	)
 
-	if mode == "aiOnly" {
-		// Just set ai headers and
-		// leave the other headers be.
+	switch mode {
+
+	// Just set ai headers and
+	// leave the other headers be.
+	case "aiOnly":
 		return func(c *gin.Context) {
 			c.Writer.Header().Set(key, noai)
 		}
-	}
 
-	if mode == "allowSome" {
-		// Allow some limited indexing.
+	// Allow some limited indexing.
+	case "allowSome":
 		return func(c *gin.Context) {
 			c.Writer.Header().Set(key, apiutil.RobotsDirectivesAllowSome)
 			c.Writer.Header().Add(key, noai)
 		}
-	}
 
 	// Disallow indexing via noindex, nofollow.
-	return func(c *gin.Context) {
-		c.Writer.Header().Set(key, apiutil.RobotsDirectivesDisallow)
-		c.Writer.Header().Add(key, noai)
+	default:
+		return func(c *gin.Context) {
+			c.Writer.Header().Set(key, apiutil.RobotsDirectivesDisallow)
+			c.Writer.Header().Add(key, noai)
+		}
 	}
 }
