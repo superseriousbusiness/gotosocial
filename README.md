@@ -278,8 +278,8 @@ This is the current status of support offered by GoToSocial for different platfo
 
 | OS      | Architecture            | Support level                             | Binary archive | Docker container |
 | ------- | ----------------------- | ----------------------------------------- | -------------- | ---------------- |
-| Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | Yes              |
-| Linux   | Armv8/ARM64  (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | Yes              |
+| Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit)</sup>            | Yes            | Yes              |
+| Linux   | Armv8/ARM64  (64-bit)   | 🟢 Full<sup>[1](#64-bit)</sup>            | Yes            | Yes              |
 | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
 | FreeBSD | Armv8/ARM64  (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
 | NetBSD  | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
