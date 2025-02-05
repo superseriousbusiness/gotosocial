@@ -301,7 +301,7 @@ Without these features, performance will suffer. In these situations, you may ha
 
 #### BSDs
 
-Mostly works, just (a few issues)[https://github.com/ncruces/go-sqlite3/wiki/Support-matrix] with WASM SQLite; check release notes carefully when installing on NetBSD or FreeBSD. If running with Postgres you should have no issues.
+Mostly works, just [a few things to keep in mind](https://github.com/ncruces/go-sqlite3/wiki/Support-matrix) with WASM SQLite; check release notes carefully when installing on NetBSD or FreeBSD. If running with Postgres you should have no issues.
 
 #### 32-bit
 
