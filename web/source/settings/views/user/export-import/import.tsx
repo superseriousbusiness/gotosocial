@@ -68,6 +68,7 @@ export default function Import() {
 						<option value="">- Select import type -</option>
 						<option value="following">Following list</option>
 						<option value="blocks">Blocked accounts list</option>
+						<option value="mutes">Muted accounts list</option>
 					</>
 				}>
 			</Select>
