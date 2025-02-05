@@ -276,19 +276,32 @@ Platforms that we don't officially support *may* still work, but we can't test o
 
 This is the current status of support offered by GoToSocial for different platforms (if something is unlisted it means we haven't checked yet so we don't know):
 
-| OS      | Architecture            | Support level                      | Binary archive | Docker container |
-| ------- | ----------------------- | ---------------------------------- | -------------- | ---------------- |
-| Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | Yes            | Yes              |
-| Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | Yes            | Yes              |
-| FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#freebsd)</sup>    | Yes            | No               |
-| Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
-| Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
-| Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[2](#32-bit)</sup>  | Yes            | Yes              |
-| OpenBSD | Any                     | 🔴 None<sup>[3](#openbsd)</sup>    | No             | No               |
+| OS      | Architecture            | Support level                             | Binary archive | Docker container |
+| ------- | ----------------------- | ----------------------------------------- | -------------- | ---------------- |
+| Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | Yes              |
+| Linux   | Armv8/ARM64  (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | Yes              |
+| FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
+| FreeBSD | Armv8/ARM64  (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
+| NetBSD  | x86-64/AMD64 (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
+| NetBSD  | Armv8/ARM64  (64-bit)   | 🟢 Full<sup>[1](#64-bit),[2](#bsds)</sup> | Yes            | No               |
+| Linux   | x86-32/i386 (32-bit)    | 🟡 Partial<sup>[3](#32-bit)</sup>         | Yes            | Yes              |
+| Linux   | Armv7/ARM32 (32-bit)    | 🟡 Partial<sup>[3](#32-bit)</sup>         | Yes            | Yes              |
+| Linux   | Armv6/ARM32 (32-bit)    | 🟡 Partial<sup>[3](#32-bit)</sup>         | Yes            | Yes              |
+| OpenBSD | Any                     | 🔴 None<sup>[4](#openbsd)</sup>           | No             | No               |
 
-#### FreeBSD
+#### 64-bit
 
-Mostly works, just a few issues with WASM SQLite; check release notes carefully when installing on FreeBSD. If running with Postgres you should have no issues.
+64-bit platforms require the following (now, very common) CPU features:
+
+- x86-64 require SSE4.1
+
+- Armv8 require ARM64 Large System Extensions
+
+Without these features, WASM SQLite and media decoding performance will suffer. In these situations, you may have some success building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
+
+#### BSDs
+
+Mostly works, just (a few issues)[https://github.com/ncruces/go-sqlite3/wiki/Support-matrix] with WASM SQLite; check release notes carefully when installing on NetBSD or FreeBSD. If running with Postgres you should have no issues.
 
 #### 32-bit
 
@@ -296,11 +309,11 @@ GtS doesn't work well on 32-bit systems like i386, or Armv6/v7, mainly due to pe
 
 We don't recommend running GtS on 32-bit, but you may have some success either turning off remote media processing altogether, or building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
 
-For more guidance, check release notes when trying to install on 32-bit. 
+For more guidance, check release notes when trying to install on 32-bit.
 
 #### OpenBSD
 
-Marked as unsupported due to performance issues (high memory usage when idle, crashes while processing media).
+Marked as unsupported due to performance issues (no WASM compiler, high memory usage when idle, crashes while processing media).
 
 While we don't support running GtS on OpenBSD, you may have some success building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
 
