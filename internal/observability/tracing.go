@@ -15,9 +15,9 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build !notracing
+//go:build !nootel
 
-package tracing
+package observability
 
 import (
 	"context"
@@ -25,8 +25,6 @@ import (
 
 	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/extra/bunotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
@@ -45,10 +43,10 @@ import (
 
 const (
 	tracerKey  = "gotosocial-server-tracer"
-	tracerName = "github.com/superseriousbusiness/gotosocial/internal/tracing"
+	tracerName = "github.com/superseriousbusiness/gotosocial/internal/observability"
 )
 
-func Initialize() error {
+func InitializeTracing() error {
 	if !config.GetTracingEnabled() {
 		return nil
 	}
@@ -119,7 +117,7 @@ func Initialize() error {
 // InstrumentGin is a middleware injecting tracing information based on the
 // otelgin implementation found at
 // https://github.com/open-telemetry/opentelemetry-go-contrib/blob/main/instrumentation/github.com/gin-gonic/gin/otelgin/gintrace.go
-func InstrumentGin() gin.HandlerFunc {
+func TracingMiddleware() gin.HandlerFunc {
 	provider := otel.GetTracerProvider()
 	tracer := provider.Tracer(
 		tracerName,
@@ -181,10 +179,4 @@ func InjectRequestID() gin.HandlerFunc {
 			span.SetAttributes(attribute.String("requestID", id))
 		}
 	}
-}
-
-func InstrumentBun() bun.QueryHook {
-	return bunotel.NewQueryHook(
-		bunotel.WithFormattedQueries(true),
-	)
 }

@@ -15,29 +15,32 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build notracing
+//go:build nootel
 
-package tracing
+package observability
 
 import (
-	"errors"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/uptrace/bun"
 )
 
-func Initialize() error {
-	if config.GetTracingEnabled() {
-		return errors.New("tracing was disabled at build time")
-	}
+func InitializeMetrics(db db.DB) error {
+	return nil
+}
+func InitializeTracing() error {
 	return nil
 }
 
-func InstrumentGin() gin.HandlerFunc {
-	return func(c *gin.Context) {}
+func MetricsMiddleware() gin.HandlerFunc {
+	return nil
 }
 
-func InstrumentBun() bun.QueryHook {
+func TracingMiddleware() gin.HandlerFunc {
+	return nil
+}
+
+func InstrumentBun(traces bool, metrics bool) bun.QueryHook {
 	return nil
 }

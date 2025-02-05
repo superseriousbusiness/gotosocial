@@ -38,8 +38,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/metrics"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"github.com/superseriousbusiness/gotosocial/internal/observability"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
@@ -47,7 +47,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/tracing"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -127,7 +126,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 	config.SetInstanceLanguages(parsedLangs)
 
-	if err := tracing.Initialize(); err != nil {
+	if err := observability.InitializeTracing(); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
@@ -195,7 +194,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	defer testrig.StopWorkers(state)
 
 	// Initialize metrics.
-	if err := metrics.Initialize(state.DB); err != nil {
+	if err := observability.InitializeMetrics(state.DB); err != nil {
 		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
@@ -213,11 +212,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		middleware.AddRequestID(config.GetRequestIDHeader()), // requestID middleware must run before tracing
 	}
 	if config.GetTracingEnabled() {
-		middlewares = append(middlewares, tracing.InstrumentGin())
+		middlewares = append(middlewares, observability.TracingMiddleware())
 	}
 
 	if config.GetMetricsEnabled() {
-		middlewares = append(middlewares, metrics.InstrumentGin())
+		middlewares = append(middlewares, observability.MetricsMiddleware())
 	}
 
 	middlewares = append(middlewares, []gin.HandlerFunc{

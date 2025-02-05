@@ -15,30 +15,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build nometrics
+//go:build !nootel
 
-package metrics
+package observability
 
 import (
-	"errors"
-
-	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/extra/bunotel"
+	metricnoop "go.opentelemetry.io/otel/metric/noop"
+	tracenoop "go.opentelemetry.io/otel/trace/noop"
 )
 
-func Initialize(db db.DB) error {
-	if config.GetMetricsEnabled() {
-		return errors.New("metrics was disabled at build time")
+func InstrumentBun(traces bool, metrics bool) bun.QueryHook {
+	opts := []bunotel.Option{
+		bunotel.WithFormattedQueries(true),
 	}
-	return nil
-}
-
-func InstrumentGin() gin.HandlerFunc {
-	return func(c *gin.Context) {}
-}
-
-func InstrumentBun() bun.QueryHook {
-	return nil
+	if !traces {
+		opts = append(opts, bunotel.WithTracerProvider(tracenoop.NewTracerProvider()))
+	}
+	if !metrics {
+		opts = append(opts, bunotel.WithMeterProvider(metricnoop.NewMeterProvider()))
+	}
+	return bunotel.NewQueryHook(
+		opts...,
+	)
 }
