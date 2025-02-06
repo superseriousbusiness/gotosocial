@@ -22,12 +22,14 @@ package ffmpeg
 import (
 	"context"
 	"os"
+	"runtime"
 	"sync/atomic"
 	"unsafe"
 
 	"codeberg.org/gruf/go-ffmpreg/embed"
 	"codeberg.org/gruf/go-ffmpreg/wasm"
 	"github.com/tetratelabs/wazero"
+	"golang.org/x/sys/cpu"
 )
 
 // ffmpreg is a concurrency-safe pointer
@@ -46,8 +48,17 @@ func initWASM(ctx context.Context) error {
 		return nil
 	}
 
-	// Create new runtime config.
-	cfg := wazero.NewRuntimeConfig()
+	var cfg wazero.RuntimeConfig
+
+	// Create new runtime config, taking bug into account:
+	// taking https://github.com/tetratelabs/wazero/pull/2365
+	//
+	// Thanks @ncruces (of go-sqlite3) for the fix!
+	if compilerSupported() {
+		cfg = wazero.NewRuntimeConfigCompiler()
+	} else {
+		cfg = wazero.NewRuntimeConfigInterpreter()
+	}
 
 	if dir := os.Getenv("GTS_WAZERO_COMPILATION_CACHE"); dir != "" {
 		// Use on-filesystem compilation cache given by env.
@@ -108,6 +119,26 @@ func initWASM(ctx context.Context) error {
 	})
 
 	return nil
+}
+
+func compilerSupported() bool {
+	switch runtime.GOOS {
+	case "linux", "android",
+		"windows", "darwin",
+		"freebsd", "netbsd", "dragonfly",
+		"solaris", "illumos":
+		break
+	default:
+		return false
+	}
+	switch runtime.GOARCH {
+	case "amd64":
+		return cpu.X86.HasSSE41
+	case "arm64":
+		return true
+	default:
+		return false
+	}
 }
 
 // isNil will safely check if 'v' is nil without
