@@ -39,6 +39,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAnnounce) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialAnnounceApproval) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsApplication) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsArrive) error:
@@ -99,6 +101,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLike) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialLikeApproval) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLink) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsListen) error:
@@ -140,6 +144,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsRelationship) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsRemove) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialReplyApproval) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsService) error:
 			// Do nothing, this callback has a correct signature.
@@ -307,6 +313,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsAnnounce) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == GoToSocialAlias+"AnnounceApproval" {
+			v, err := mgr.DeserializeAnnounceApprovalGoToSocial()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.GoToSocialAnnounceApproval) error); ok {
 					return fn(ctx, v)
 				}
 			}
@@ -641,6 +658,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 				}
 			}
 			return ErrNoCallbackMatch
+		} else if typeString == GoToSocialAlias+"LikeApproval" {
+			v, err := mgr.DeserializeLikeApprovalGoToSocial()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.GoToSocialLikeApproval) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
 		} else if typeString == ActivityStreamsAlias+"Link" {
 			v, err := mgr.DeserializeLinkActivityStreams()(m, aliasMap)
 			if err != nil {
@@ -868,6 +896,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsRemove) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == GoToSocialAlias+"ReplyApproval" {
+			v, err := mgr.DeserializeReplyApprovalGoToSocial()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.GoToSocialReplyApproval) error); ok {
 					return fn(ctx, v)
 				}
 			}

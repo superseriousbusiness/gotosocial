@@ -4,10 +4,11 @@ package vocab
 
 import "net/url"
 
-// URI/ID of an Approve Activity, which itself points towards the ID of the
-// Activity or Object to which this property is attached. The presence of this
-// property on an Activity or Object indicates that an interaction has been
-// Approve'd by the Actor whose Object this Activity or Object interacts with.
+// URI/ID of an Accept Activity or stamp, which itself points towards the ID of
+// the Activity or Object to which this property is attached. The presence of
+// this property on an Activity or Object indicates that an interaction has
+// been Approve'd by the Actor whose Object this Activity or Object interacts
+// with.
 type GoToSocialApprovedByProperty interface {
 	// Clear ensures no value of this property is set. Calling
 	// IsXMLSchemaAnyURI afterwards will return false.
