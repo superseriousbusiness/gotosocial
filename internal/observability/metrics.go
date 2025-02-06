@@ -15,24 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-//go:build !nometrics
+//go:build !nootel
 
-package metrics
+package observability
 
 import (
 	"context"
 	"errors"
 
-	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+
+	"github.com/gin-gonic/gin"
 	"github.com/technologize/otel-go-contrib/otelginmetrics"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/extra/bunotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	sdk "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/metric/exemplar"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
@@ -41,7 +41,7 @@ const (
 	serviceName = "GoToSocial"
 )
 
-func Initialize(db db.DB) error {
+func InitializeMetrics(db db.DB) error {
 	if !config.GetMetricsEnabled() {
 		return nil
 	}
@@ -66,6 +66,7 @@ func Initialize(db db.DB) error {
 	}
 
 	meterProvider := sdk.NewMeterProvider(
+		sdk.WithExemplarFilter(exemplar.AlwaysOffFilter),
 		sdk.WithResource(r),
 		sdk.WithReader(prometheusExporter),
 	)
@@ -127,12 +128,6 @@ func Initialize(db db.DB) error {
 	return nil
 }
 
-func InstrumentGin() gin.HandlerFunc {
+func MetricsMiddleware() gin.HandlerFunc {
 	return otelginmetrics.Middleware(serviceName)
-}
-
-func InstrumentBun() bun.QueryHook {
-	return bunotel.NewQueryHook(
-		bunotel.WithMeterProvider(otel.GetMeterProvider()),
-	)
 }

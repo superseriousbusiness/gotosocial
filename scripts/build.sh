@@ -17,8 +17,7 @@ GO_GCFLAGS=${GO_GCFLAGS-}
 # Available Go build tags, with explanation, followed by benefits of enabling it:
 # - kvformat:       enables prettier output of log fields                          (slightly better performance)
 # - timetzdata:     embed timezone database inside binary                          (allow setting local time inside Docker containers, at cost of 450KB)
-# - notracing:      disables compiling-in otel tracing support                     (reduced binary size, better performance)
-# - nometrics:      disables compiling-in otel metrics support                     (reduced binary size, better performance)
+# - nootel:         disables compiling-in otel support                             (reduced binary size)
 # - noerrcaller:    disables caller function prefix in errors                      (slightly better performance, at cost of err readability)
 # - debug:          enables /debug/pprof endpoint                                  (adds debug, at performance cost)
 # - debugenv:       enables /debug/pprof endpoint if DEBUG=1 env during runtime    (adds debug, at performance cost)
