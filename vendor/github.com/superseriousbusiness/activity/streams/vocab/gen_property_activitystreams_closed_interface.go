@@ -228,6 +228,18 @@ type ActivityStreamsClosedPropertyIterator interface {
 	// IsActivityStreamsView returns false, GetActivityStreamsView will
 	// return an arbitrary value.
 	GetActivityStreamsView() ActivityStreamsView
+	// GetGoToSocialAnnounceApproval returns the value of this property. When
+	// IsGoToSocialAnnounceApproval returns false,
+	// GetGoToSocialAnnounceApproval will return an arbitrary value.
+	GetGoToSocialAnnounceApproval() GoToSocialAnnounceApproval
+	// GetGoToSocialLikeApproval returns the value of this property. When
+	// IsGoToSocialLikeApproval returns false, GetGoToSocialLikeApproval
+	// will return an arbitrary value.
+	GetGoToSocialLikeApproval() GoToSocialLikeApproval
+	// GetGoToSocialReplyApproval returns the value of this property. When
+	// IsGoToSocialReplyApproval returns false, GetGoToSocialReplyApproval
+	// will return an arbitrary value.
+	GetGoToSocialReplyApproval() GoToSocialReplyApproval
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
@@ -491,6 +503,19 @@ type ActivityStreamsClosedPropertyIterator interface {
 	// "View". When true, use the GetActivityStreamsView and
 	// SetActivityStreamsView methods to access and set this property.
 	IsActivityStreamsView() bool
+	// IsGoToSocialAnnounceApproval returns true if this property has a type
+	// of "AnnounceApproval". When true, use the
+	// GetGoToSocialAnnounceApproval and SetGoToSocialAnnounceApproval
+	// methods to access and set this property.
+	IsGoToSocialAnnounceApproval() bool
+	// IsGoToSocialLikeApproval returns true if this property has a type of
+	// "LikeApproval". When true, use the GetGoToSocialLikeApproval and
+	// SetGoToSocialLikeApproval methods to access and set this property.
+	IsGoToSocialLikeApproval() bool
+	// IsGoToSocialReplyApproval returns true if this property has a type of
+	// "ReplyApproval". When true, use the GetGoToSocialReplyApproval and
+	// SetGoToSocialReplyApproval methods to access and set this property.
+	IsGoToSocialReplyApproval() bool
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
@@ -703,6 +728,15 @@ type ActivityStreamsClosedPropertyIterator interface {
 	// SetActivityStreamsView sets the value of this property. Calling
 	// IsActivityStreamsView afterwards returns true.
 	SetActivityStreamsView(v ActivityStreamsView)
+	// SetGoToSocialAnnounceApproval sets the value of this property. Calling
+	// IsGoToSocialAnnounceApproval afterwards returns true.
+	SetGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// SetGoToSocialLikeApproval sets the value of this property. Calling
+	// IsGoToSocialLikeApproval afterwards returns true.
+	SetGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// SetGoToSocialReplyApproval sets the value of this property. Calling
+	// IsGoToSocialReplyApproval afterwards returns true.
+	SetGoToSocialReplyApproval(v GoToSocialReplyApproval)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
@@ -954,6 +988,18 @@ type ActivityStreamsClosedProperty interface {
 	// the property "closed". Invalidates iterators that are traversing
 	// using Prev.
 	AppendActivityStreamsView(v ActivityStreamsView)
+	// AppendGoToSocialAnnounceApproval appends a AnnounceApproval value to
+	// the back of a list of the property "closed". Invalidates iterators
+	// that are traversing using Prev.
+	AppendGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// AppendGoToSocialLikeApproval appends a LikeApproval value to the back
+	// of a list of the property "closed". Invalidates iterators that are
+	// traversing using Prev.
+	AppendGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// AppendGoToSocialReplyApproval appends a ReplyApproval value to the back
+	// of a list of the property "closed". Invalidates iterators that are
+	// traversing using Prev.
+	AppendGoToSocialReplyApproval(v GoToSocialReplyApproval)
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "closed"
 	AppendIRI(v *url.URL)
@@ -1221,6 +1267,19 @@ type ActivityStreamsClosedProperty interface {
 	// for a property "closed". Existing elements at that index and higher
 	// are shifted back once. Invalidates all iterators.
 	InsertActivityStreamsView(idx int, v ActivityStreamsView)
+	// InsertGoToSocialAnnounceApproval inserts a AnnounceApproval value at
+	// the specified index for a property "closed". Existing elements at
+	// that index and higher are shifted back once. Invalidates all
+	// iterators.
+	InsertGoToSocialAnnounceApproval(idx int, v GoToSocialAnnounceApproval)
+	// InsertGoToSocialLikeApproval inserts a LikeApproval value at the
+	// specified index for a property "closed". Existing elements at that
+	// index and higher are shifted back once. Invalidates all iterators.
+	InsertGoToSocialLikeApproval(idx int, v GoToSocialLikeApproval)
+	// InsertGoToSocialReplyApproval inserts a ReplyApproval value at the
+	// specified index for a property "closed". Existing elements at that
+	// index and higher are shifted back once. Invalidates all iterators.
+	InsertGoToSocialReplyApproval(idx int, v GoToSocialReplyApproval)
 	// Insert inserts an IRI value at the specified index for a property
 	// "closed". Existing elements at that index and higher are shifted
 	// back once. Invalidates all iterators.
@@ -1443,6 +1502,16 @@ type ActivityStreamsClosedProperty interface {
 	// PrependActivityStreamsView prepends a View value to the front of a list
 	// of the property "closed". Invalidates all iterators.
 	PrependActivityStreamsView(v ActivityStreamsView)
+	// PrependGoToSocialAnnounceApproval prepends a AnnounceApproval value to
+	// the front of a list of the property "closed". Invalidates all
+	// iterators.
+	PrependGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// PrependGoToSocialLikeApproval prepends a LikeApproval value to the
+	// front of a list of the property "closed". Invalidates all iterators.
+	PrependGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// PrependGoToSocialReplyApproval prepends a ReplyApproval value to the
+	// front of a list of the property "closed". Invalidates all iterators.
+	PrependGoToSocialReplyApproval(v GoToSocialReplyApproval)
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "closed".
 	PrependIRI(v *url.URL)
@@ -1694,6 +1763,18 @@ type ActivityStreamsClosedProperty interface {
 	// for the property "closed". Panics if the index is out of bounds.
 	// Invalidates all iterators.
 	SetActivityStreamsView(idx int, v ActivityStreamsView)
+	// SetGoToSocialAnnounceApproval sets a AnnounceApproval value to be at
+	// the specified index for the property "closed". Panics if the index
+	// is out of bounds. Invalidates all iterators.
+	SetGoToSocialAnnounceApproval(idx int, v GoToSocialAnnounceApproval)
+	// SetGoToSocialLikeApproval sets a LikeApproval value to be at the
+	// specified index for the property "closed". Panics if the index is
+	// out of bounds. Invalidates all iterators.
+	SetGoToSocialLikeApproval(idx int, v GoToSocialLikeApproval)
+	// SetGoToSocialReplyApproval sets a ReplyApproval value to be at the
+	// specified index for the property "closed". Panics if the index is
+	// out of bounds. Invalidates all iterators.
+	SetGoToSocialReplyApproval(idx int, v GoToSocialReplyApproval)
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "closed". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)

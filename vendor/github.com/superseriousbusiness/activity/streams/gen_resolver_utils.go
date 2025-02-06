@@ -58,6 +58,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 	}, func(ctx context.Context, i vocab.ActivityStreamsAnnounce) error {
 		t = i
 		return nil
+	}, func(ctx context.Context, i vocab.GoToSocialAnnounceApproval) error {
+		t = i
+		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsApplication) error {
 		t = i
 		return nil
@@ -148,6 +151,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 	}, func(ctx context.Context, i vocab.ActivityStreamsLike) error {
 		t = i
 		return nil
+	}, func(ctx context.Context, i vocab.GoToSocialLikeApproval) error {
+		t = i
+		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsLink) error {
 		t = i
 		return nil
@@ -209,6 +215,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsRemove) error {
+		t = i
+		return nil
+	}, func(ctx context.Context, i vocab.GoToSocialReplyApproval) error {
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsService) error {

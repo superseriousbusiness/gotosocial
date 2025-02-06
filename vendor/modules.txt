@@ -628,7 +628,7 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/superseriousbusiness/activity v1.10.0-gts
+# github.com/superseriousbusiness/activity v1.10.0-gts.0.20250205160713-643136280d8f
 ## explicit; go 1.21
 github.com/superseriousbusiness/activity/pub
 github.com/superseriousbusiness/activity/streams
@@ -771,10 +771,13 @@ github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canann
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply
 github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval
+github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id
 github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type
 github.com/superseriousbusiness/activity/streams/impl/schema/property_value

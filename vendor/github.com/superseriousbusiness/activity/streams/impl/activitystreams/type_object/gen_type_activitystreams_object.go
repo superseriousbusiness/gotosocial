@@ -396,7 +396,7 @@ func ObjectIsDisjointWith(other vocab.Type) bool {
 // Object type. Note that it returns false if the types are the same; see the
 // "IsOrExtendsObject" variant instead.
 func ObjectIsExtendedBy(other vocab.Type) bool {
-	extensions := []string{"Accept", "Activity", "Add", "Announce", "Application", "Arrive", "Article", "Audio", "Block", "Collection", "CollectionPage", "Create", "Delete", "Dislike", "Document", "Emoji", "Event", "Flag", "Follow", "Group", "IdentityProof", "Ignore", "Image", "IntransitiveActivity", "Invite", "Join", "Leave", "Like", "Listen", "Move", "Note", "Offer", "OrderedCollection", "OrderedCollectionPage", "OrderedCollectionPage", "Organization", "Page", "Person", "Place", "Profile", "PropertyValue", "Question", "Read", "Reject", "Relationship", "Remove", "Service", "TentativeAccept", "TentativeReject", "Tombstone", "Travel", "Undo", "Update", "Video", "View"}
+	extensions := []string{"Accept", "Activity", "Add", "Announce", "AnnounceApproval", "Application", "Arrive", "Article", "Audio", "Block", "Collection", "CollectionPage", "Create", "Delete", "Dislike", "Document", "Emoji", "Event", "Flag", "Follow", "Group", "IdentityProof", "Ignore", "Image", "IntransitiveActivity", "Invite", "Join", "Leave", "Like", "LikeApproval", "Listen", "Move", "Note", "Offer", "OrderedCollection", "OrderedCollectionPage", "OrderedCollectionPage", "Organization", "Page", "Person", "Place", "Profile", "PropertyValue", "Question", "Read", "Reject", "Relationship", "Remove", "ReplyApproval", "Service", "TentativeAccept", "TentativeReject", "Tombstone", "Travel", "Undo", "Update", "Video", "View"}
 	for _, ext := range extensions {
 		if ext == other.GetTypeName() {
 			return true

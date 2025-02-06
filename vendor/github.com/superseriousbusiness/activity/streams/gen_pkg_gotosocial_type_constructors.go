@@ -3,12 +3,20 @@
 package streams
 
 import (
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	vocab "github.com/superseriousbusiness/activity/streams/vocab"
 )
+
+// NewGoToSocialAnnounceApproval creates a new GoToSocialAnnounceApproval
+func NewGoToSocialAnnounceApproval() vocab.GoToSocialAnnounceApproval {
+	return typeannounceapproval.NewGoToSocialAnnounceApproval()
+}
 
 // NewGoToSocialCanAnnounce creates a new GoToSocialCanAnnounce
 func NewGoToSocialCanAnnounce() vocab.GoToSocialCanAnnounce {
@@ -28,4 +36,14 @@ func NewGoToSocialCanReply() vocab.GoToSocialCanReply {
 // NewGoToSocialInteractionPolicy creates a new GoToSocialInteractionPolicy
 func NewGoToSocialInteractionPolicy() vocab.GoToSocialInteractionPolicy {
 	return typeinteractionpolicy.NewGoToSocialInteractionPolicy()
+}
+
+// NewGoToSocialLikeApproval creates a new GoToSocialLikeApproval
+func NewGoToSocialLikeApproval() vocab.GoToSocialLikeApproval {
+	return typelikeapproval.NewGoToSocialLikeApproval()
+}
+
+// NewGoToSocialReplyApproval creates a new GoToSocialReplyApproval
+func NewGoToSocialReplyApproval() vocab.GoToSocialReplyApproval {
+	return typereplyapproval.NewGoToSocialReplyApproval()
 }

@@ -3,12 +3,21 @@
 package streams
 
 import (
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	vocab "github.com/superseriousbusiness/activity/streams/vocab"
 )
+
+// GoToSocialAnnounceApprovalIsDisjointWith returns true if AnnounceApproval is
+// disjoint with the other's type.
+func GoToSocialAnnounceApprovalIsDisjointWith(other vocab.Type) bool {
+	return typeannounceapproval.AnnounceApprovalIsDisjointWith(other)
+}
 
 // GoToSocialCanAnnounceIsDisjointWith returns true if CanAnnounce is disjoint
 // with the other's type.
@@ -32,4 +41,16 @@ func GoToSocialCanReplyIsDisjointWith(other vocab.Type) bool {
 // disjoint with the other's type.
 func GoToSocialInteractionPolicyIsDisjointWith(other vocab.Type) bool {
 	return typeinteractionpolicy.InteractionPolicyIsDisjointWith(other)
+}
+
+// GoToSocialLikeApprovalIsDisjointWith returns true if LikeApproval is disjoint
+// with the other's type.
+func GoToSocialLikeApprovalIsDisjointWith(other vocab.Type) bool {
+	return typelikeapproval.LikeApprovalIsDisjointWith(other)
+}
+
+// GoToSocialReplyApprovalIsDisjointWith returns true if ReplyApproval is disjoint
+// with the other's type.
+func GoToSocialReplyApprovalIsDisjointWith(other vocab.Type) bool {
+	return typereplyapproval.ReplyApprovalIsDisjointWith(other)
 }
