@@ -37,6 +37,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsAnnounce) (bool, error):
 		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.GoToSocialAnnounceApproval) (bool, error):
+		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsApplication) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsArrive) (bool, error):
@@ -97,6 +99,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsLike) (bool, error):
 		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.GoToSocialLikeApproval) (bool, error):
+		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsLink) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsListen) (bool, error):
@@ -138,6 +142,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 	case func(context.Context, vocab.ActivityStreamsRelationship) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsRemove) (bool, error):
+		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.GoToSocialReplyApproval) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsService) (bool, error):
 		// Do nothing, this predicate has a correct signature.
@@ -212,6 +218,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Announce" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsAnnounce) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsAnnounce); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
+	} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "AnnounceApproval" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.GoToSocialAnnounceApproval) (bool, error)); ok {
+			if v, ok := o.(vocab.GoToSocialAnnounceApproval); ok {
 				predicatePasses, err = fn(ctx, v)
 			} else {
 				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -550,6 +567,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 		} else {
 			return false, ErrPredicateUnmatched
 		}
+	} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "LikeApproval" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.GoToSocialLikeApproval) (bool, error)); ok {
+			if v, ok := o.(vocab.GoToSocialLikeApproval); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Link" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsLink) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsLink); ok {
@@ -773,6 +801,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Remove" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsRemove) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsRemove); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
+	} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "ReplyApproval" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.GoToSocialReplyApproval) (bool, error)); ok {
+			if v, ok := o.(vocab.GoToSocialReplyApproval); ok {
 				predicatePasses, err = fn(ctx, v)
 			} else {
 				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.

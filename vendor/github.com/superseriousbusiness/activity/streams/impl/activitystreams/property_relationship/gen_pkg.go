@@ -25,6 +25,10 @@ type privateManager interface {
 	// for the "ActivityStreamsAnnounce" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeAnnounceActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAnnounce, error)
+	// DeserializeAnnounceApprovalGoToSocial returns the deserialization
+	// method for the "GoToSocialAnnounceApproval" non-functional property
+	// in the vocabulary "GoToSocial"
+	DeserializeAnnounceApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceApproval, error)
 	// DeserializeApplicationActivityStreams returns the deserialization
 	// method for the "ActivityStreamsApplication" non-functional property
 	// in the vocabulary "ActivityStreams"
@@ -120,6 +124,10 @@ type privateManager interface {
 	// the "ActivityStreamsLike" non-functional property in the vocabulary
 	// "ActivityStreams"
 	DeserializeLikeActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsLike, error)
+	// DeserializeLikeApprovalGoToSocial returns the deserialization method
+	// for the "GoToSocialLikeApproval" non-functional property in the
+	// vocabulary "GoToSocial"
+	DeserializeLikeApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialLikeApproval, error)
 	// DeserializeListenActivityStreams returns the deserialization method for
 	// the "ActivityStreamsListen" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -193,6 +201,10 @@ type privateManager interface {
 	// the "ActivityStreamsRemove" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeRemoveActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsRemove, error)
+	// DeserializeReplyApprovalGoToSocial returns the deserialization method
+	// for the "GoToSocialReplyApproval" non-functional property in the
+	// vocabulary "GoToSocial"
+	DeserializeReplyApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyApproval, error)
 	// DeserializeServiceActivityStreams returns the deserialization method
 	// for the "ActivityStreamsService" non-functional property in the
 	// vocabulary "ActivityStreams"

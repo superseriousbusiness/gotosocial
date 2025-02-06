@@ -3,12 +3,21 @@
 package streams
 
 import (
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	vocab "github.com/superseriousbusiness/activity/streams/vocab"
 )
+
+// IsOrExtendsGoToSocialAnnounceApproval returns true if the other provided type
+// is the AnnounceApproval type or extends from the AnnounceApproval type.
+func IsOrExtendsGoToSocialAnnounceApproval(other vocab.Type) bool {
+	return typeannounceapproval.IsOrExtendsAnnounceApproval(other)
+}
 
 // IsOrExtendsGoToSocialCanAnnounce returns true if the other provided type is the
 // CanAnnounce type or extends from the CanAnnounce type.
@@ -32,4 +41,16 @@ func IsOrExtendsGoToSocialCanReply(other vocab.Type) bool {
 // is the InteractionPolicy type or extends from the InteractionPolicy type.
 func IsOrExtendsGoToSocialInteractionPolicy(other vocab.Type) bool {
 	return typeinteractionpolicy.IsOrExtendsInteractionPolicy(other)
+}
+
+// IsOrExtendsGoToSocialLikeApproval returns true if the other provided type is
+// the LikeApproval type or extends from the LikeApproval type.
+func IsOrExtendsGoToSocialLikeApproval(other vocab.Type) bool {
+	return typelikeapproval.IsOrExtendsLikeApproval(other)
+}
+
+// IsOrExtendsGoToSocialReplyApproval returns true if the other provided type is
+// the ReplyApproval type or extends from the ReplyApproval type.
+func IsOrExtendsGoToSocialReplyApproval(other vocab.Type) bool {
+	return typereplyapproval.IsOrExtendsReplyApproval(other)
 }
