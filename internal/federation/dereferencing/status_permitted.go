@@ -119,10 +119,10 @@ func (d *Dereferencer) isPermittedReply(
 ) (bool, error) {
 
 	var (
-		replyURI     = reply.URI           // Definitely set.
-		inReplyToURI = reply.InReplyToURI  // Definitely set.
-		inReplyTo    = reply.InReplyTo     // Might not be set.
-		acceptIRI    = reply.ApprovedByURI // Might not be set.
+		replyURI      = reply.URI           // Definitely set.
+		inReplyToURI  = reply.InReplyToURI  // Definitely set.
+		inReplyTo     = reply.InReplyTo     // Might not be set.
+		approvedByURI = reply.ApprovedByURI // Might not be set.
 	)
 
 	// Check if we have a stored interaction request for parent status.
@@ -165,7 +165,7 @@ func (d *Dereferencer) isPermittedReply(
 	// If it was, and it doesn't now claim to
 	// be approved, then we should just reject it
 	// again, as nothing's changed since last time.
-	if thisRejected && acceptIRI == "" {
+	if thisRejected && approvedByURI == "" {
 
 		// Nothing changed,
 		// still rejected.
@@ -224,16 +224,16 @@ func (d *Dereferencer) isPermittedReply(
 
 	// If this reply claims to be approved,
 	// validate this by dereferencing the
-	// Accept and checking the return value.
+	// approval and checking the return value.
 	// No further checks are required.
-	if acceptIRI != "" {
-		return d.isPermittedByAcceptIRI(
+	if approvedByURI != "" {
+		return d.isPermittedByApprovedByIRI(
 			ctx,
 			requestUser,
 			reply,
 			inReplyTo,
 			thisReq,
-			acceptIRI,
+			approvedByURI,
 		)
 	}
 
@@ -269,7 +269,7 @@ func (d *Dereferencer) isPermittedReply(
 		// Reply is permitted and match was *not* made
 		// based on inclusion in a followers/following
 		// collection. Just permit the reply full stop
-		// as no approval / accept URI is necessary.
+		// as no approval URI is necessary.
 		return true, nil
 	}
 
@@ -285,7 +285,7 @@ func (d *Dereferencer) isPermittedReply(
 		// we can't verify the presence of a remote account
 		// in one of another remote account's collections.
 		//
-		// It's possible we'll get an Accept from the replied-
+		// It's possible we'll get an approval from the replied-
 		// to account later, and we can store this reply then.
 		return false, nil
 	}
@@ -385,30 +385,33 @@ func (d *Dereferencer) unpermittedByParent(
 	return nil
 }
 
-// isPermittedByAcceptIRI checks whether the given acceptIRI
-// permits the given reply to the given inReplyTo status.
-// If yes, then thisReq will be updated to reflect the
-// acceptance, if it's not nil.
-func (d *Dereferencer) isPermittedByAcceptIRI(
+// isPermittedByApprovedByIRI checks whether the given URI
+// can be dereferenced, and whether it returns either an
+// Accept activity or an approval object which permits the
+// given reply to the given inReplyTo status.
+//
+// If yes, then thisReq will be updated to
+// reflect the approval, if it's not nil.
+func (d *Dereferencer) isPermittedByApprovedByIRI(
 	ctx context.Context,
 	requestUser string,
 	reply *gtsmodel.Status,
 	inReplyTo *gtsmodel.Status,
 	thisReq *gtsmodel.InteractionRequest,
-	acceptIRI string,
+	approvedByIRI string,
 ) (bool, error) {
-	permitted, err := d.isValidAccept(
+	permitted, err := d.isValidApproval(
 		ctx,
 		requestUser,
-		acceptIRI,
+		approvedByIRI,
 		reply.URI,
 		inReplyTo.AccountURI,
 	)
 	if err != nil {
 		// Error dereferencing means we couldn't
-		// get the Accept right now or it wasn't
+		// get the approval right now or it wasn't
 		// valid, so we shouldn't store this status.
-		err := gtserror.Newf("undereferencable ApprovedByURI: %w", err)
+		err := gtserror.Newf("undereferencable approvedByURI: %w", err)
 		return false, err
 	}
 
@@ -418,12 +421,12 @@ func (d *Dereferencer) isPermittedByAcceptIRI(
 		return false, nil
 	}
 
-	// Reply is permitted by this Accept.
+	// Reply is permitted by this approval.
 	// If it was previously rejected or
 	// pending approval, clear that now.
 	reply.PendingApproval = util.Ptr(false)
 	if thisReq != nil {
-		thisReq.URI = acceptIRI
+		thisReq.URI = approvedByIRI
 		thisReq.AcceptedAt = time.Now()
 		thisReq.RejectedAt = time.Time{}
 		err := d.state.DB.UpdateInteractionRequest(
@@ -576,7 +579,7 @@ func (d *Dereferencer) isPermittedBoost(
 	// permitted but matched on a collection.
 	//
 	// Check if we can dereference
-	// an Accept that grants approval.
+	// an IRI that grants approval.
 
 	if status.ApprovedByURI == "" {
 		// Status doesn't claim to be approved.
@@ -602,9 +605,9 @@ func (d *Dereferencer) isPermittedBoost(
 	}
 
 	// Boost claims to be approved, check
-	// this by dereferencing the Accept and
-	// inspecting the return value.
-	permitted, err := d.isValidAccept(
+	// this by dereferencing the approvedBy
+	// and inspecting the return value.
+	permitted, err := d.isValidApproval(
 		ctx,
 		requestUser,
 		status.ApprovedByURI,
@@ -613,7 +616,7 @@ func (d *Dereferencer) isPermittedBoost(
 	)
 	if err != nil {
 		// Error dereferencing means we couldn't
-		// get the Accept right now or it wasn't
+		// get the approval right now or it wasn't
 		// valid, so we shouldn't store this status.
 		err := gtserror.Newf("undereferencable ApprovedByURI: %w", err)
 		return false, err
@@ -628,34 +631,34 @@ func (d *Dereferencer) isPermittedBoost(
 	return true, nil
 }
 
-// isValidAccept dereferences the activitystreams Accept at the
-// specified IRI, and checks the Accept for validity against the
-// provided expectedObject and expectedActor.
+// isValidApproval dereferences the activitystreams Accept or approval
+// at the specified IRI, and checks the Accept or approval for validity
+// against the provided expectedObject and expectedActor.
 //
 // Will return either (true, nil) if everything looked OK, an error
 // if something went wrong internally during deref, or (false, nil)
 // if the dereferenced Accept did not meet expectations.
-func (d *Dereferencer) isValidAccept(
+func (d *Dereferencer) isValidApproval(
 	ctx context.Context,
 	requestUser string,
-	acceptIRIStr string, // Eg., "https://example.org/users/someone/accepts/01J2736AWWJ3411CPR833F6D03"
+	approvedByIRIStr string, // Eg., "https://example.org/users/someone/accepts/01J2736AWWJ3411CPR833F6D03"
 	expectObjectURIStr string, // Eg., "https://some.instance.example.org/users/someone_else/statuses/01J27414TWV9F7DC39FN8ABB5R"
 	expectActorURIStr string, // Eg., "https://example.org/users/someone"
 ) (bool, error) {
 	l := log.
 		WithContext(ctx).
-		WithField("acceptIRI", acceptIRIStr)
+		WithField("approvedByIRI", approvedByIRIStr)
 
-	acceptIRI, err := url.Parse(acceptIRIStr)
+	approvedByIRI, err := url.Parse(approvedByIRIStr)
 	if err != nil {
 		// Real returnable error.
-		err := gtserror.Newf("error parsing acceptIRI: %w", err)
+		err := gtserror.Newf("error parsing approvedByIRI: %w", err)
 		return false, err
 	}
 
-	// Don't make calls to the Accept IRI
-	// if it's blocked, just return false.
-	blocked, err := d.state.DB.IsDomainBlocked(ctx, acceptIRI.Host)
+	// Don't make calls to the IRI if its
+	// domain is blocked, just return false.
+	blocked, err := d.state.DB.IsDomainBlocked(ctx, approvedByIRI.Host)
 	if err != nil {
 		// Real returnable error.
 		err := gtserror.Newf("error checking domain block: %w", err)
@@ -663,7 +666,7 @@ func (d *Dereferencer) isValidAccept(
 	}
 
 	if blocked {
-		l.Info("Accept host is blocked")
+		l.Info("approvedByIRI host is blocked")
 		return false, nil
 	}
 
@@ -677,9 +680,9 @@ func (d *Dereferencer) isValidAccept(
 	// Make the call to resolve into an Acceptable.
 	// Log any error encountered here but don't
 	// return it as it's not *our* error.
-	rsp, err := tsport.Dereference(ctx, acceptIRI)
+	rsp, err := tsport.Dereference(ctx, approvedByIRI)
 	if err != nil {
-		l.Errorf("error dereferencing Accept: %v", err)
+		l.Errorf("error dereferencing approvedByIRI: %v", err)
 		return false, nil
 	}
 
@@ -701,14 +704,14 @@ func (d *Dereferencer) isValidAccept(
 	// have changed (i.e. we followed some redirects).
 	rspURL := rsp.Request.URL
 	rspURLStr := rspURL.String()
-	if rspURLStr != acceptIRIStr {
+	if rspURLStr != approvedByIRIStr {
 		// If rspURLStr != acceptIRIStr, make sure final
 		// response URL is at least on the same host as
 		// what we expected (ie., we weren't redirected
 		// across domains), and make sure it's the same
 		// as the ID of the Accept we were returned.
 		switch {
-		case rspURL.Host != acceptIRI.Host:
+		case rspURL.Host != approvedByIRI.Host:
 			l.Errorf(
 				"final deref host %s did not match acceptIRI host",
 				rspURL.Host,
