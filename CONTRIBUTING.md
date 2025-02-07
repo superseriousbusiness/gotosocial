@@ -149,7 +149,7 @@ In case this post disappears, here are the steps (slightly modified):
 >
 > Add your fork as origin:
 >
-> `git remote add origin git@github.com/yourgithubname/gotosocial`
+> `git remote add origin git@github.com:yourgithubname/gotosocial`
 >
 
 Be sure to run `git fetch` before building the project for the first time.
