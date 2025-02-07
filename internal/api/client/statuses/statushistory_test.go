@@ -120,7 +120,8 @@ func (suite *StatusHistoryTestSuite) TestGetHistory() {
       "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [],
-      "enable_rss": true
+      "enable_rss": true,
+      "group": false
     },
     "poll": null,
     "media_attachments": [],

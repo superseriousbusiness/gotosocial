@@ -72,7 +72,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
   "last_status_at": "2024-11-01",
   "emojis": [],
   "fields": [],
-  "enable_rss": true
+  "enable_rss": true,
+  "group": false
 }`, string(b))
 }
 
@@ -178,8 +179,10 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
         "verified_at": null
       }
     ],
-    "hide_collections": true
-  }
+    "hide_collections": true,
+    "group": false
+  },
+  "group": false
 }`, string(b))
 }
 
@@ -230,7 +233,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
     }
   ],
   "fields": [],
-  "enable_rss": true
+  "enable_rss": true,
+  "group": false
 }`, string(b))
 }
 
@@ -279,7 +283,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
     }
   ],
   "fields": [],
-  "enable_rss": true
+  "enable_rss": true,
+  "group": false
 }`, string(b))
 }
 
@@ -333,7 +338,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
     "color": "",
     "permissions": "0",
     "highlighted": false
-  }
+  },
+  "group": false
 }`, string(b))
 }
 
@@ -370,7 +376,8 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendPublicPunycode() 
   "statuses_count": 0,
   "last_status_at": null,
   "emojis": [],
-  "fields": []
+  "fields": [],
+  "group": false
 }`, string(b))
 }
 
@@ -409,7 +416,8 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendPubl
   "statuses_count": 0,
   "last_status_at": null,
   "emojis": [],
-  "fields": []
+  "fields": [],
+  "group": false
 }`, string(b))
 }
 
@@ -448,7 +456,8 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
   "statuses_count": 0,
   "last_status_at": null,
   "emojis": [],
-  "fields": []
+  "fields": [],
+  "group": false
 }`, string(b))
 }
 
@@ -516,7 +525,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "media_attachments": [
     {
@@ -2644,10 +2654,10 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
           "name": "admin",
           "color": ""
         }
-      ]
+      ],
+      "group": false
     },
-    "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F",
-    "group": false
+    "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
   "statuses": [],
   "rules": [],
@@ -2727,10 +2737,10 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "verified_at": null
         }
       ],
-      "hide_collections": true
+      "hide_collections": true,
+      "group": false
     },
-    "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG",
-    "group": false
+    "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
   "target_account": {
     "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
@@ -3557,7 +3567,8 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
       "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [],
-      "enable_rss": true
+      "enable_rss": true,
+      "group": false
     }
   ],
   "last_status": {
@@ -3725,7 +3736,8 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
           "verified_at": null
         }
       ],
-      "hide_collections": true
+      "hide_collections": true,
+      "group": false
     }
   ],
   "last_status": {
