@@ -300,6 +300,11 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: FollowingCount
+            group:
+                description: Indicates that the account represents a Group actor.
+                format: boolean
+                type: boolean
+                x-go-name: Group
             header:
                 description: Web location of the account's header image.
                 example: https://example.org/media/some_user/header/original/header.jpeg
