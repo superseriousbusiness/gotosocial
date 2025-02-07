@@ -17,7 +17,11 @@
 
 package model
 
-import "github.com/superseriousbusiness/gotosocial/internal/language"
+import (
+	"time"
+
+	"github.com/superseriousbusiness/gotosocial/internal/language"
+)
 
 // Status models a status or post.
 //
@@ -231,9 +235,14 @@ type StatusCreateRequest struct {
 	Federated *bool `form:"federated" json:"federated"`
 
 	// ISO 8601 Datetime at which to schedule a status.
-	// Providing this parameter will cause ScheduledStatus to be returned instead of Status.
+	//
+	// Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
 	// Must be at least 5 minutes in the future.
-	ScheduledAt string `form:"scheduled_at" json:"scheduled_at"`
+	// This feature isn't implemented yet.
+	//
+	// Providing this parameter with a *past* time will cause the status to be backdated,
+	// and will not push it to the user's followers. This is intended for importing old statuses.
+	ScheduledAt *time.Time `form:"scheduled_at" json:"scheduled_at"`
 
 	// ISO 639 language code for this status.
 	Language string `form:"language" json:"language"`
