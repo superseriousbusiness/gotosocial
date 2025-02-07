@@ -63,11 +63,6 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	}
 	authorName := "@" + s.Account.Username + "@" + config.GetAccountDomain()
 
-	// Source -- The RSS channel that the item came from.
-	source := &feeds.Link{
-		Href: s.Account.URL + "/feed.rss",
-	}
-
 	// Description -- The item synopsis.
 	// example: Some of the most heated chatter at the Venice Film Festival this week was about the way that the arrival of the stars at the Palazzo del Cinema was being staged.
 	descriptionBuilder := strings.Builder{}
@@ -151,7 +146,6 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	return &feeds.Item{
 		Title:       title,
 		Link:        link,
-		Source:      source,
 		Description: description,
 		Id:          id,
 		IsPermaLink: "true",
