@@ -103,7 +103,8 @@ func (suite *GetTestSuite) TestGet() {
     "statuses_count": 1,
     "last_status_at": "2023-11-02",
     "emojis": [],
-    "fields": []
+    "fields": [],
+    "group": false
   }
 ]`, dst.String())
 }

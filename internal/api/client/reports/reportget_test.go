@@ -133,7 +133,8 @@ func (suite *ReportGetTestSuite) TestGetReport1() {
     "statuses_count": 4,
     "last_status_at": "2024-11-01",
     "emojis": [],
-    "fields": []
+    "fields": [],
+    "group": false
   }
 }`, string(b))
 }

@@ -94,7 +94,8 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
     "statuses_count": 4,
     "last_status_at": "2024-11-01",
     "emojis": [],
-    "fields": []
+    "fields": [],
+    "group": false
   },
   "media_attachments": [
     {

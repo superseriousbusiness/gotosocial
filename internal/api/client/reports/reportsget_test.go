@@ -159,7 +159,8 @@ func (suite *ReportsGetTestSuite) TestGetReports() {
       "statuses_count": 4,
       "last_status_at": "2024-11-01",
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   }
 ]`, string(b))
@@ -250,7 +251,8 @@ func (suite *ReportsGetTestSuite) TestGetReports4() {
       "statuses_count": 4,
       "last_status_at": "2024-11-01",
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   }
 ]`, string(b))
@@ -325,7 +327,8 @@ func (suite *ReportsGetTestSuite) TestGetReports6() {
       "statuses_count": 4,
       "last_status_at": "2024-11-01",
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   }
 ]`, string(b))
@@ -384,7 +387,8 @@ func (suite *ReportsGetTestSuite) TestGetReports7() {
       "statuses_count": 4,
       "last_status_at": "2024-11-01",
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   }
 ]`, string(b))
