@@ -25,8 +25,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
 	"slices"
+	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -114,7 +114,7 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 
 	// Ensure that we can fetch this endpoint
 	if robots := resp.Header.Values("X-Robots-Tag"); slices.Contains(robots, "noindex") {
-		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it");
+		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it")
 		return nil, gtserror.SetNotPermitted(err)
 	}
 
@@ -276,7 +276,7 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 
 	// Ensure that we can fetch this endpoint
 	if robots := resp.Header.Values("X-Robots-Tag"); slices.Contains(robots, "noindex") {
-		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it");
+		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it")
 		return nil, gtserror.SetNotPermitted(err)
 	}
 
@@ -339,7 +339,7 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 
 	// Ensure that we can fetch this endpoint
 	if robots := resp.Header.Values("X-Robots-Tag"); slices.Contains(robots, "noindex") {
-		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it");
+		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it")
 		return nil, gtserror.SetNotPermitted(err)
 	}
 
