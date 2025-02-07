@@ -26,6 +26,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"slices"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -109,6 +110,12 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	if ct := resp.Header.Get("Content-Type"); !apiutil.JSONContentType(ct) {
 		err := gtserror.Newf("non json response type: %s", ct)
 		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Ensure that we can fetch this endpoint
+	if robots := resp.Header.Values("X-Robots-Tag"); slices.Contains(robots, "noindex") {
+		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it");
+		return nil, gtserror.SetNotPermitted(err)
 	}
 
 	b, err := io.ReadAll(resp.Body)
@@ -267,6 +274,12 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 		return nil, gtserror.SetMalformed(err)
 	}
 
+	// Ensure that we can fetch this endpoint
+	if robots := resp.Header.Values("X-Robots-Tag"); slices.Contains(robots, "noindex") {
+		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it");
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
@@ -322,6 +335,12 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	if ct := resp.Header.Get("Content-Type"); !apiutil.NodeInfo2ContentType(ct) {
 		err := gtserror.Newf("non nodeinfo schema 2.0 response: %s", ct)
 		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Ensure that we can fetch this endpoint
+	if robots := resp.Header.Values("X-Robots-Tag"); slices.Contains(robots, "noindex") {
+		err := gtserror.Newf("can't fetch this endpoint: robots tags disallows it");
+		return nil, gtserror.SetNotPermitted(err)
 	}
 
 	b, err := io.ReadAll(resp.Body)
