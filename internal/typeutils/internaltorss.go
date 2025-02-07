@@ -54,8 +54,6 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 		Href: s.URL,
 	}
 
-	// Author -- Email address of the author of the item.
-	// example: oprah\@oxygen.net
 	if s.Account == nil {
 		a, err := c.state.DB.GetAccountByID(ctx, s.AccountID)
 		if err != nil {
@@ -64,9 +62,6 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 		s.Account = a
 	}
 	authorName := "@" + s.Account.Username + "@" + config.GetAccountDomain()
-	author := &feeds.Author{
-		Name: authorName,
-	}
 
 	// Source -- The RSS channel that the item came from.
 	source := &feeds.Link{
@@ -156,7 +151,6 @@ func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*f
 	return &feeds.Item{
 		Title:       title,
 		Link:        link,
-		Author:      author,
 		Source:      source,
 		Description: description,
 		Id:          id,
