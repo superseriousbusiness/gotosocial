@@ -126,6 +126,8 @@ type Account struct {
 	// If set, indicates that this account is currently inactive, and has migrated to the given account.
 	// Key/value omitted for accounts that haven't moved, and for suspended accounts.
 	Moved *Account `json:"moved,omitempty"`
+	// Account identifies as a Group actor.
+	Group bool `json:"group"`
 }
 
 // WebAccount is like Account, but with

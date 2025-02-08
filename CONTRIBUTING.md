@@ -149,7 +149,7 @@ In case this post disappears, here are the steps (slightly modified):
 >
 > Add your fork as origin:
 >
-> `git remote add origin git@github.com/yourgithubname/gotosocial`
+> `git remote add origin git@github.com:yourgithubname/gotosocial`
 >
 
 Be sure to run `git fetch` before building the project for the first time.
@@ -489,7 +489,7 @@ You can install go-swagger following the instructions [here](https://goswagger.i
 If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml` by running:
 
 ```bash
-swagger generate spec --scan-models --exclude-deps -o docs/api/swagger.yaml
+go run github.com/go-swagger/go-swagger/cmd/swagger generate spec --scan-models --exclude-deps --output docs/api/swagger.yaml
 ```
 
 ### CI/CD configuration

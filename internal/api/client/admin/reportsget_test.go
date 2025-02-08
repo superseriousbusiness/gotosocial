@@ -189,7 +189,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "statuses_count": 4,
         "last_status_at": "2024-11-01",
         "emojis": [],
-        "fields": []
+        "fields": [],
+        "group": false
       }
     },
     "target_account": {
@@ -247,7 +248,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "verified_at": null
           }
         ],
-        "hide_collections": true
+        "hide_collections": true,
+        "group": false
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -302,7 +304,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "name": "admin",
             "color": ""
           }
-        ]
+        ],
+        "group": false
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -357,7 +360,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "name": "admin",
             "color": ""
           }
-        ]
+        ],
+        "group": false
       },
       "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
     },
@@ -429,7 +433,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "verified_at": null
           }
         ],
-        "hide_collections": true
+        "hide_collections": true,
+        "group": false
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -476,7 +481,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "statuses_count": 4,
         "last_status_at": "2024-11-01",
         "emojis": [],
-        "fields": []
+        "fields": [],
+        "group": false
       }
     },
     "assigned_account": null,
@@ -525,7 +531,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
           "statuses_count": 4,
           "last_status_at": "2024-11-01",
           "emojis": [],
-          "fields": []
+          "fields": [],
+          "group": false
         },
         "media_attachments": [
           {
@@ -683,7 +690,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
             "verified_at": null
           }
         ],
-        "hide_collections": true
+        "hide_collections": true,
+        "group": false
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -730,7 +738,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "statuses_count": 4,
         "last_status_at": "2024-11-01",
         "emojis": [],
-        "fields": []
+        "fields": [],
+        "group": false
       }
     },
     "assigned_account": null,
@@ -779,7 +788,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
           "statuses_count": 4,
           "last_status_at": "2024-11-01",
           "emojis": [],
-          "fields": []
+          "fields": [],
+          "group": false
         },
         "media_attachments": [
           {
@@ -937,7 +947,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
             "verified_at": null
           }
         ],
-        "hide_collections": true
+        "hide_collections": true,
+        "group": false
       },
       "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
     },
@@ -984,7 +995,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "statuses_count": 4,
         "last_status_at": "2024-11-01",
         "emojis": [],
-        "fields": []
+        "fields": [],
+        "group": false
       }
     },
     "assigned_account": null,
@@ -1033,7 +1045,8 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
           "statuses_count": 4,
           "last_status_at": "2024-11-01",
           "emojis": [],
-          "fields": []
+          "fields": [],
+          "group": false
         },
         "media_attachments": [
           {

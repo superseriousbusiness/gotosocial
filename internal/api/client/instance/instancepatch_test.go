@@ -191,7 +191,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "max_toot_chars": 5000,
   "rules": [
@@ -333,7 +334,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "max_toot_chars": 5000,
   "rules": [
@@ -475,7 +477,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "max_toot_chars": 5000,
   "rules": [
@@ -668,7 +671,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "max_toot_chars": 5000,
   "rules": [
@@ -836,7 +840,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "max_toot_chars": 5000,
   "rules": [
@@ -1015,7 +1020,8 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
         "name": "admin",
         "color": ""
       }
-    ]
+    ],
+    "group": false
   },
   "max_toot_chars": 5000,
   "rules": [
