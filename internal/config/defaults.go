@@ -68,10 +68,12 @@ var Defaults = Configuration{
 	InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,
 	InstanceSubscriptionsProcessEvery: 24 * time.Hour, // 1/day.
 
-	AccountsRegistrationOpen: false,
-	AccountsReasonRequired:   true,
-	AccountsAllowCustomCSS:   false,
-	AccountsCustomCSSLength:  10000,
+	AccountsRegistrationOpen:         false,
+	AccountsReasonRequired:           true,
+	AccountsRegistrationDailyLimit:   10,
+	AccountsRegistrationBacklogLimit: 20,
+	AccountsAllowCustomCSS:           false,
+	AccountsCustomCSSLength:          10000,
 
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 1500,
