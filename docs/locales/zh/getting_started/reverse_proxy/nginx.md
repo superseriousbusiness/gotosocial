@@ -2,7 +2,7 @@
 
 要使用 NGINX 作为 GoToSocial 的反向代理，你需要在服务器上安装它。如果你打算让 NGINX 处理 TLS，你还需要[配置 TLS 证书](../../advanced/certificates.md)。
 
-!!! tip
+!!! tip "提示"
     通过在 `server` 块中包含 `http2 on;` 来启用 NGINX 的 HTTP/2。这样可以加快客户端的体验。请参阅 [ngx_http_v2_module 文档](https://nginx.org/en/docs/http/ngx_http_v2_module.html#example)。
 
 NGINX 已为[多个发行版打包](https://repology.org/project/nginx/versions)。你很可能可以使用发行版的包管理器来安装它。你也可以使用 Docker Hub 上发布的[官方 NGINX 镜像](https://hub.docker.com/_/nginx)通过容器运行 NGINX。
@@ -112,7 +112,7 @@ sudo systemctl restart nginx
 
 ## 设置 TLS
 
-!!! warning
+!!! warning "警告"
     我们有关于如何[配置 TLS 证书](../../advanced/certificates.md)的附加文档，还提供了有关不同发行版的附加内容和教程链接，值得一看。
 
 你现在可以运行 certbot，它将引导你完成启用 https 的步骤。
@@ -145,7 +145,7 @@ sudo systemctl start gotosocial
 
 如果你再次打开 NGINX 配置，你会发现 Certbot 添加了一些额外的行。
 
-!!! warning
+!!! warning "警告"
     根据你设置 Certbot 时选择的选项，以及使用的 NGINX 版本，可能会有所不同。
 
 ```nginx

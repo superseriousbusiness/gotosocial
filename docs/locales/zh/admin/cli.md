@@ -27,13 +27,13 @@ GoToSocial - 一个联邦制社交媒体服务器
 
 在 `可用命令` 下，可以看到标准的 `server` 命令。但是也有处理管理和调试的命令，这些将在本文档中进行解释。
 
-!!! Info "将全局配置传递给 CLI"
+!!! info "将全局配置传递给 CLI"
     
     对于所有这些命令，你仍然需要正确设置全局选项，以便 CLI 工具知道如何连接到你的数据库，以及使用哪个数据库、哪个主机和账户域等。
     
     你可以使用环境变量设置这些选项，通过 CLI 标志传递它们（例如，`gotosocial [commands] --host example.org`），或者只需将 CLI 工具指向你的配置文件（例如，`gotosocial --config-path ./config.yaml [commands]`）。
 
-!!! Info
+!!! info "附注"
     
     运行 CLI 命令时，你将会看到如下输出：
     
@@ -45,7 +45,7 @@ GoToSocial - 一个联邦制社交媒体服务器
     
     这是正常的，表示命令已按预期运行。
 
-!!! Warning "运行管理命令后重启 GtS"
+!!! warning "运行管理命令后重启 GtS"
     
     由于 GoToSocial 的内部缓存机制，你可能需要在运行某些命令后重启 GoToSocial，以使命令的效果“生效”。我们仍在寻找一种无需重启的方法。在此期间，需要在运行命令后重启的命令将在下文中突出显示。
 
@@ -86,7 +86,7 @@ gotosocial admin account create \
 
 此命令可用于确认你的实例上的用户+账户，允许他们登录并使用账户。
 
-!!! Info
+!!! info "附注"
     
     如果账户是使用 `admin account create` 创建的，则不必在账户上运行 `confirm`，它将已被确认。
 
@@ -113,7 +113,7 @@ gotosocial admin account confirm --username some_username --config-path config.y
 
 此命令可用于将用户提升为管理员。
 
-!!! Warning "需要重启服务器"
+!!! warning "需要重启服务器"
     
     为使更改生效，此命令需要在运行命令后重启 GoToSocial。
 
@@ -140,7 +140,7 @@ gotosocial admin account promote --username some_username --config-path config.y
 
 此命令可用于将用户从管理员降级为普通用户。
 
-!!! Warning "需要重启服务器"
+!!! warning "需要重启服务器"
     
     为使更改生效，此命令需要在运行命令后重启 GoToSocial。
 
@@ -167,7 +167,7 @@ gotosocial admin account demote --username some_username --config-path config.ya
 
 此命令可用于在你的实例上禁用一个账户：禁止其登录或执行任何操作，但不删除数据。
 
-!!! Warning "需要重启服务器"
+!!! warning "需要重启服务器"
     
     为使更改生效，此命令需要在运行命令后重启 GoToSocial。
 
@@ -194,7 +194,7 @@ gotosocial admin account disable --username some_username --config-path config.y
 
 此命令可用于重新启用你实例上的账户，撤销之前的 `disable` 命令。
 
-!!! Warning "需要重启服务器"
+!!! warning "需要重启服务器"
     
     为使更改生效，此命令需要在运行命令后重启 GoToSocial。
 
@@ -221,7 +221,7 @@ gotosocial admin account enable --username some_username --config-path config.ya
 
 此命令可用于为指定的本站账户设置新密码。
 
-!!! Warning "需要重启服务器"
+!!! warning "需要重启服务器"
     
     为使更改生效，此命令需要在运行命令后重启 GoToSocial。
 

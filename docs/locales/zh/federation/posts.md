@@ -47,6 +47,58 @@ GoToSocial 外发话题标签提供的 `href` URL 指向一个提供 `text/html`
 
 GoToSocial 对给定 `text/html` 的内容不做任何保证，外站不应该将 URL 解释为规范的 ActivityPub ID/URI 属性。`href` URL 仅作为可能包含该话题标签更多信息的一个端点。
 
+## 表情符号（Emoji）
+
+GoToSocial 使用 `http://joinmastodon.org/ns#Emoji` 类型，以允许用户在贴文中添加自定义表情符号。
+
+例如:
+
+```json
+{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "Emoji": "toot:Emoji",
+      "sensitive": "as:sensitive",
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
+  "type": "Note",
+  "content": "<p>这里有个臭烘烘的东西 -> :shocked_pikachu:</p>",
+  [...],
+  "tag": {
+    "icon": {
+      "mediaType": "image/png",
+      "type": "Image",
+      "url": "https://example.org/fileserver/01BPSX2MKCRVMD4YN4D71G9CP5/emoji/original/01AZY1Y5YQD6TREB5W50HGTCSZ.png"
+    },
+    "id": "https://example.org/emoji/01AZY1Y5YQD6TREB5W50HGTCSZ",
+    "name": ":shocked_pikachu:",
+    "type": "Emoji",
+    "updated": "2022-11-17T11:36:05Z"
+  }
+  [...]
+}
+```
+
+上述 `Note` 的 `content` 中的文本 `:shocked_pikachu:` 应当被客户端替换为表情符号图片的小型（内联）版本，在渲染 `Note` 时一并向用户展示。
+
+表情符号的 `updated` 和 `icon.url` 属性可被外站实例用于判断它们对 GoToSocial 表情符号图片的表示是否是最新版本。必要时也可以在其 `id` URI 间接引用 `Emoji`，以便外站对照检查它们缓存的表情符号元数据是否未最新版本。
+
+默认情况下，GoToSocial 对可以上传和发送的表情符号图片的大小设置了 50kb 的限制，并对可以联合并传入的表情符号图片大小设置了 100kb 的限制，但这两项设置都可由用户配置。
+
+GoToSocial 可以发送和接收类型为 `image/png`、`image/jpeg`、`image/gif` 和 `image/webp` 的表情符号图片。
+
+!!! info "附注"
+    请注意，`tag` 属性可以是对象的数组，也可以是单个对象。
+
+### `null` / 空 `id` 属性
+
+一些服务端软件，如 Akkoma，将表情符号包含为贴文中的[匿名对象](https://www.w3.org/TR/activitypub/#obj-id)。也就是说，它们将 `id` 属性设置为 `null`，以表明该表情符号不能在任何特定的端点被间接引用。
+
+在接收到这样的表情符号时，GoToSocial 会在数据库中为该表情符号生成一个伪 id，格式为 `https://[host]/dummy_emoji_path?shortcode=[shortcode]`，例如，`https://example.org/dummy_emoji_path?shortcode=shocked_pikachu`。
+
 ## 提及
 
 GoToSocial 用户可以在贴文中使用 `@[用户名]@[域名]` 格式提及其他用户。例如，如果一个 GoToSocial 用户想提及实例 `example.org` 上的用户 `someone`，可以在贴文中包含 `@someone@example.org`。
@@ -160,14 +212,14 @@ GoToSocial 在解析传入的 `Object` 时使用 `content` 和 `contentMap` 属�
 
 如果 `contentMap` 有多个条目，则无法确定贴文的意图内容和语言，因为映射顺序不可预测。在这种情况下，尝试从 GoToSocial 实例的[配置语言](../configuration/instance.md)中选择与其中一种语言匹配的语言和内容条目。如果无法通过这种方式匹配语言，则从 `contentMap` 中随机选择一个语言和内容条目作为“主要”语言和内容。
 
-!!! Note
+!!! note "注意"
     在上述所有情况下，如果推断的语言无法解析为有效的 BCP47 语言话题标签，则语言将回退为未知。
 
 ## 互动规则
 
 GoToSocial 使用 `interactionPolicy` 属性告知外站给定帖文允许的互动类型（有前提）。
 
-!!! danger
+!!! danger "危险"
     
     互动规则旨在限制用户贴文上用户不希望的回复和其他互动的有害影响（例如，“回复家(reply guys)” —— 不请自来地发表冒失回复的人）。
     
@@ -229,7 +281,7 @@ GoToSocial 使用 `interactionPolicy` 属性告知外站给定帖文允许的互
 
 ### 指定无人能进行的操作
 
-!!! note
+!!! note "注意"
     即使规则指定无人可互动，GoToSocial 仍做出默认假设。参见[默认假设](#默认假设)。
 
 空数组或缺少/空的键表示无人能进行此互动。

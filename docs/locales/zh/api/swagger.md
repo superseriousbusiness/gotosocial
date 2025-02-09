@@ -6,7 +6,7 @@ GoToSocial 使用 [go-swagger](https://github.com/go-swagger/go-swagger) 从代�
 
 大多数 GoToSocial API 端点需要用户级别的 OAuth 令牌。有关如何使用 OAuth 令牌进行 API 认证的指南，请参阅[认证文档](./authentication.md)。
 
-!!! tip
+!!! tip "提示"
     如果你想更多地使用该规范，还可以直接查看 [swagger.yaml](./swagger.yaml)，然后将其粘贴到 [Swagger Editor](https://editor.swagger.io/) 等工具中。这样你可以尝试自动生成不同语言的 GoToSocial API 客户端（不支持，但可以尝试），或者将文档转换为 JSON 或 OpenAPI v3 规范等。更多信息请参见[这里](https://swagger.io/tools/open-source/getting-started/)。
 
 !!! info "注意事项：上传文件"

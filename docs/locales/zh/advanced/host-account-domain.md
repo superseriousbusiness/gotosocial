@@ -2,7 +2,7 @@
 
 本指南解释了如何使用 `@me@example.org` 这样的用户名，但将 GoToSocial 实例本身运行在例如 `social.example.org` 这样的子域名的方法。这种部署布局的配置**必须**在第一次启动 GoToSocial 前完成。
 
-!!! danger
+!!! danger "警告"
     一旦与他人联合后就无法更改域名布局。服务器会因此产生混淆，而你需要说服每个与你联合的实例管理员修改其数据库来解决问题。同时，你还需要在本地重新生成数据库，创建一个新的实例账户和加密密钥对。
 
 ## 背景
@@ -49,7 +49,7 @@ host: social.example.org
 account-domain: example.org
 ```
 
-!!! info
+!!! info "附注"
     `host` 必须始终是运行 GoToSocial 实例的 DNS 名称。它不影响 GoToSocial 实例绑定的 IP 地址。该地址由 `bind-address` 控制。
 
 ## 反向代理
@@ -62,7 +62,7 @@ account-domain: example.org
 * `/.well-known/host-meta`
 * `/.well-known/nodeinfo`
 
-!!! tip
+!!! tip "提示"
     不要将 API 端点 `/api/...` 的请求从账户域代理或重定向到主机域。这会混淆某些客户端用来检测分域部署的启发式方法，导致登录流程中断及其他异常行为。
 
 ### nginx

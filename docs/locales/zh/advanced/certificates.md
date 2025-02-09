@@ -66,7 +66,7 @@ tls-certificate-key: "/path/to/private.key"
 
 这将禁用通过 Lets Encrypt 内置的证书配置，并指示 GoToSocial 在磁盘上找到证书。
 
-!!! tip
+!!! tip "提示"
     在续订证书后应重启 GoToSocial。它在这种情况下不会自动监测证书的更换。
 
 ### 使用反向代理
@@ -93,7 +93,7 @@ tls-certificate-key: ""
 * [Traefik](https://doc.traefik.io/traefik/https/tls/)
 * [Caddy](https://caddyserver.com/docs/caddyfile/directives/tls)
 
-!!! tip
+!!! tip "提示"
     在你的反向代理中配置 TLS 时，请确保你配置了一组较现代的兼容版本和加密套件。可以使用 [Mozilla SSL Configuration Generator](https://ssl-config.mozilla.org/) 的“中级”配置。
 
     检查你的反向代理文档，以了解在证书更改后是否需要重新加载或重启它。并非所有的反向代理都会自动检测到这一点。

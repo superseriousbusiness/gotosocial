@@ -11,7 +11,7 @@ GoToSocial 可以直接暴露到互联网上。不过，许多人更愿意使用
 * 如果你使用了 Lets Encrypt，在 GoToSocial 中禁用它。将 `letsencrypt-enabled` 设置为 `false`
 * 配置反向代理以处理 TLS 并将请求代理到 GoToSocial
 
-!!! warning
+!!! warning "警告"
     不要更改 `host` 配置选项的值。这必须保持为其他实例在互联网上看到的实际域名。相反，改变 `bind-address` 并更新 `port` 和 `trusted-proxies`。
 
 ### 容器
@@ -41,3 +41,7 @@ GoToSocial 可以直接暴露到互联网上。不过，许多人更愿意使用
 使用反向代理时，必须特别注意允许 WebSockets 正常工作。因为许多客户端应用程序使用 WebSockets 来流式传输你的时间线。WebSockets 不用于联合。
 
 请确保阅读 [WebSocket](websocket.md) 文档，并相应地配置你的反向代理。
+
+## 可信代理
+
+使用反向代理时，可能会遇到速率限制和 `trusted-proxies` 相关的问题。如有任何问题，请查阅[可信代理](../../configuration/trusted_proxies.md)文档。
