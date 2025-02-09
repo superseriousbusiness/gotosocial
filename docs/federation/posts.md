@@ -79,7 +79,7 @@ For example:
     "updated": "2022-11-17T11:36:05Z"
   }
   [...]
-}`
+}
 ```
 
 The text `:shocked_pikachu:` in the `content` of the above `Note` should be replaced by clients with a small (inline) version of the emoji image, when rendering the `Note` and displaying it to users.
