@@ -438,7 +438,7 @@ main {
 				column-gap: 1rem;
 
 				.edited-at {
-					font-style: italic;
+					font-size: smaller;
 				}
 			}
 
