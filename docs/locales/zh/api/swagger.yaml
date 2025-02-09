@@ -3622,7 +3622,7 @@ info:
         name: AGPL3
         url: https://www.gnu.org/licenses/agpl-3.0.zh-cn.html
     title: GoToSocial Swagger 文档
-    version: 0.17.2-SNAPSHOT-8a93300a
+    version: 0.18.0-SNAPSHOT-e10de846
 paths:
     /.well-known/host-meta:
         get:
