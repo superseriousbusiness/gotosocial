@@ -192,6 +192,11 @@ func (r *realSender) sendToSubscription(
 		// while waiting for the client to retrieve them.
 		TTL = 48 * time.Hour
 
+		// recordSize limits how big our notifications can be once padding is applied.
+		// To be polite to applications that need to relay them over services like APNS,
+		// which has a max message size of 4 kB, we set this comfortably smaller.
+		recordSize = 2048
+
 		// responseBodyMaxLen limits how much of the Web Push server response we read for error messages.
 		responseBodyMaxLen = 1024
 	)
@@ -232,6 +237,7 @@ func (r *realSender) sendToSubscription(
 		},
 		&webpushgo.Options{
 			HTTPClient:      r.httpClient,
+			RecordSize:      recordSize,
 			Subscriber:      "https://" + config.GetHost(),
 			VAPIDPublicKey:  vapidKeyPair.Public,
 			VAPIDPrivateKey: vapidKeyPair.Private,
@@ -346,8 +352,9 @@ func formatNotificationTitle(
 // or the beginning of the bio text of the related account.
 func formatNotificationBody(apiNotification *apimodel.Notification) string {
 	// bodyMaxLen is a polite maximum length for a Web Push notification's body text, in bytes. Note that this isn't
-	// limited per se, but Web Push servers may reject anything with a total request body size over 4k.
-	const bodyMaxLen = 3000
+	// limited per se, but Web Push servers may reject anything with a total request body size over 4k,
+	// and we set a lower max size above for compatibility with mobile push systems.
+	const bodyMaxLen = 1500
 
 	var body string
 	if apiNotification.Status != nil {
