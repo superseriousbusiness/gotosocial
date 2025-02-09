@@ -34,6 +34,9 @@
   /* dark blues */
   --gray2: #29485A; /* black forest blue */
   --gray4: #2B3246; /* vintage dark blue */
+  /* enforce dark mode style */
+  --white1: #fafaff;
+  --white2: #b3b5c6;
   /*  statuses */
   --status-bg: var(--dgreen1);
   --status-focus-bg: var(--dgreen1);
@@ -85,6 +88,12 @@ box-shadow: none; /* no "glow" for buttons */
 }
 .profile .about-user .fields .field:first-child {
   border-top: 0.1rem solid var(--sunny);
+}
+
+/* RSS icon */
+.profile .statuses .rss-icon .fa {
+  background: linear-gradient(to right, var(--gray2) 100%, transparent 0) no-repeat center center;
+  background-size: 1.2rem 1.4rem;
 }
 
 /* Block quotes */

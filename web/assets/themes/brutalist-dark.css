@@ -63,6 +63,13 @@ html, body {
 .profile .profile-header .basic-info .avatar-image-wrapper {
   border: var(--single-border);
 }
+
+.profile .statuses .rss-icon .fa {
+  /* enforce dark mode style */
+  background: linear-gradient(to right, var(--almost-black) 100%, transparent 0) no-repeat center center;
+  background-size: 1.2rem 1.4rem;
+}
+
 .status .status-header > address > a .avatar {
   border: var(--single-border);
 }

@@ -17,6 +17,10 @@
   --blue1: var(--acid-green-dark);
   --blue2: var(--acid-green-light);
   --blue3: var(--acid-green);
+
+  /* enforce dark mode style */
+  --white1: #fafaff;
+  --white2: #b3b5c6;
 }
 
 /* Main page background */
