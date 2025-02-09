@@ -23,6 +23,10 @@
   --blue2: var(--blurple5);
   --blue3: var(--blurple6);
 
+  /* Use hardcoded grey as gray get restyled in light mode */
+  --gray1: #2a2b2f;
+  --gray2: #35363b;
+
   /* Basic page styling (background + foreground) */
   --bg: var(--blurple1);
   --bg-accent: var(--white2);
