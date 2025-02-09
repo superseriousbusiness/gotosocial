@@ -103,6 +103,7 @@ function value<T>(name: string, initialValue: T) {
 		name,
 		Name: "", 
 		value: initialValue,
+		hasChanged: () => true,
 	};
 }
 

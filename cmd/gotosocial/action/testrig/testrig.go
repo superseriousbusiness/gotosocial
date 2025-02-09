@@ -30,6 +30,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
+	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/api"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
@@ -132,6 +133,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize caches and database
 	state.DB = testrig.NewTestDB(state)
+
+	// Set Actions on state, providing workers to
+	// Actions as well for triggering side effects.
+	state.AdminActions = admin.New(state.DB, &state.Workers)
 
 	// New test db inits caches so we don't need to do
 	// that twice, we can just start the initialized caches.
