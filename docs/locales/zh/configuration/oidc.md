@@ -10,7 +10,7 @@ GoToSocial 支持 [OpenID Connect](https://openid.net/connect/)，这是一种�
 - 你希望将用户、账户、密码等的管理委托给外部服务，以简化管理。
 - 你已经在外部系统中有很多用户，不想在 GoToSocial 中手动重新创建他们。
 
-!!! tip
+!!! tip "提示"
     如果用户尚不存在，且你的 IdP 没有返回非空的 `email` 作为 claims 的一部分，登录将会失败。这个 email 需要在此实例中是唯一的。尽管我们使用 `sub` claim 将外部身份与 GtS 用户关联，但创建用户时需要一个与之关联的 email。
 
 ## 设置

@@ -48,7 +48,7 @@ sudo systemctl restart gotosocial.service
 
 ### 使用 mod_md 启用 TLS
 
-!!! note
+!!! note "注意"
     `mod_md` 自 Apache 2.4.30 开始可用，仍被视为实验性的。实际上，它在实践中表现良好，是最便捷的方法。
 
 现在我们将配置 Apache HTTP 服务器来处理 GoToSocial 请求。
@@ -166,7 +166,7 @@ sudo systemctl restart apache2
 
 ### 使用外部管理证书启用 TLS
 
-!!! note
+!!! note "注意"
     我们有关于如何[配置 TLS 证书](../../advanced/certificates.md)的额外文档，其中还提供了不同发行版的其他内容和教程链接，可能值得查看。
 
 如果你更喜欢手动设置或使用不同服务（如 Certbot）来管理 SSL，可以为你的 Apache HTTP 服务器使用更简单的设置。

@@ -33,7 +33,7 @@ cd /gotosocial
 
 现在，下载与你运行的操作系统和架构相对应的最新 GoToSocial 发行版压缩包。
 
-!!! tip
+!!! tip "提示"
     你可以在[这里](https://github.com/superseriousbusiness/gotosocial/releases)找到按发布时间排列的发布列表，最新的发行版位于最上面。
 
 例如，下载适用于 64 位 Linux 的版本：
@@ -52,7 +52,7 @@ tar -xzf gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 
 这将在你的当前目录放置 `gotosocial` 二进制文件，以及包含网页前端资源的 `web` 文件夹和包含示例配置文件的 `example` 文件夹。
 
-!!! danger
+!!! danger "危险"
     如果你想使用基于当前主分支代码的 GoToSocial 快照构建，可以从[这里](https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots)下载最近的二进制 .tar.gz 文件（基于提交哈希）。仅在你很清楚自己的操作时使用，否则请使用稳定版。
 
 ## 编辑配置文件

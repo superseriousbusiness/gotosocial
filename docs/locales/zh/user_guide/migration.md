@@ -6,10 +6,10 @@ GoToSocial 支持使用 `Move` 活动进行账号迁移。
 
 迁移是软件无关的，因此你可以将账号迁移到其它软件或从任何支持 `Move` 活动的软件发起迁移，无论具体的软件是什么。例如，你可以将 GoToSocial 账号迁移到 Mastodon 账号，将 Mastodon 账号迁移到 GoToSocial 账号，将 GoToSocial 账号迁移到或从 Akkoma、Misskey、GoToSocial 等。
 
-!!! tip
+!!! tip "提示"
     根据目标账号所在软件的不同，目标账号的 URI（用于别名和迁移）应该类似于 `https://mastodon.example.org/users/account_you_are_moving_to`。如果你不确定使用哪种格式，请咨询你要迁移或设置别名的实例管理员。
 
-!!! warning
+!!! warning "警告"
     GoToSocial 要求 7 天的账号迁移冷却期，以防止过度切换实例（以及潜在的屏蔽规避风险）。
     
     如果任何一个发起新迁移尝试的账号在最近七天内已迁移，GoToSocial 将拒绝进行迁移，直到上一次迁移过去七天位置。
@@ -71,8 +71,8 @@ GoToSocial 支持使用 `Move` 活动进行账号迁移。
 
 一旦触发从其他账号到 GoToSocial 账号的迁移，你唯一需要做的就是在新（GoToSocial）账号上接受来自旧账号粉丝的关注请求。
 
-!!! tip
+!!! tip "提示"
     为了省去麻烦，可以考虑在触发迁移前将 GoToSocial 账号设置为不需要批准新的关注请求。迁移完成后再开启关注请求审核。否则，你将需要手动批准每个从旧账号迁移的粉丝。
 
-!!! tip
+!!! tip "提示"
     迁移账号后，可能需要将之前账号的关注列表导入 GoToSocial 账号。[在此查看](./settings.md#import)如何通过设置面板完成此操作的详细信息。

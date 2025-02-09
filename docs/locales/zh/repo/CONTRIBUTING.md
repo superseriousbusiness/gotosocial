@@ -148,7 +148,7 @@ Golang 的一个特点是，它所依赖的源代码管理路径与 `go.mod` 中
 >
 > 把你的派生分支添加为 origin：
 >
-> `git remote add origin git@github.com/yourgithubname/gotosocial`
+> `git remote add origin git@github.com:yourgithubname/gotosocial`
 >
 
 在第一次构建项目之前，一定要运行 `git fetch`。
@@ -488,7 +488,7 @@ GoToSocial 使用 [go-swagger](https://goswagger.io) 根据代码注释生成 Sw
 如果你更改了任何 API 路径上的 Swagger 注释，可以通过运行以下命令在 `./docs/api/swagger.yaml` 生成一个新的 Swagger 文件：
 
 ```bash
-swagger generate spec --scan-models --exclude-deps -o docs/api/swagger.yaml
+go run github.com/go-swagger/go-swagger/cmd/swagger generate spec --scan-models --exclude-deps --output docs/api/swagger.yaml
 ```
 
 ### CI/CD 配置

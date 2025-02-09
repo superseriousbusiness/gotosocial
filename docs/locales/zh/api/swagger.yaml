@@ -81,10 +81,20 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoSoftware:
         properties:
+            homepage:
+                description: 该软件的主页，此字段在版本 2.0 中被省略。
+                example: https://docs.gotosocial.org/zh-cn/
+                type: string
+                x-go-name: Homepage
             name:
                 example: gotosocial
                 type: string
                 x-go-name: Name
+            repository:
+                description: 该软件的存储库，此字段在版本 2.0 中被省略。
+                example: https://codeberg.org/superseriousbusiness/gotosocial
+                type: string
+                x-go-name: Repository
             version:
                 example: 0.1.2 1234567
                 type: string
@@ -95,6 +105,10 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsage:
         properties:
+            localComments:
+                format: int64
+                type: integer
+                x-go-name: LocalComments
             localPosts:
                 format: int64
                 type: integer
@@ -107,6 +121,14 @@ definitions:
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsers:
         properties:
+            activeHalfYear:
+                format: int64
+                type: integer
+                x-go-name: ActiveHalfYear
+            activeMonth:
+                format: int64
+                type: integer
+                x-go-name: ActiveMonth
             total:
                 format: int64
                 type: integer
@@ -192,6 +214,10 @@ definitions:
         title: TimelineMarker
         description: TimelineMarker 包含有关用户在特定时间线上的阅读进度的信息。
         type: object
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    WebPushNotificationPolicy:
+        description: WebPushNotificationPolicy 包含可以生成通知的帐户集合。
+        type: string
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     account:
         description: Account 是一个 Fediverse 账户的抽象模型。被抽象的账户可以是本站账户，也可以是外站账户。
@@ -281,6 +307,10 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: FollowingCount
+            group:
+                description: 该账户被标记为 Group 类型的行为体。
+                type: boolean
+                x-go-name: Group
             header:
                 description: 该账户的资料卡横幅背景图片的网络地址。
                 example: https://example.org/media/some_user/header/original/header.jpeg
@@ -1131,6 +1161,101 @@ definitions:
         type: object
         x-go-name: DomainPermission
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    domainPermissionSubscription:
+        properties:
+            adopt_orphans:
+                description: '若为 true，则此域名权限订阅将“接管”实例上已存在的、符合以下条件的域名权限： 1）它们没有关联的订阅 ID（即，它们是“孤立”的）， 2）它们存在于订阅列表中。这些孤立的域名权限条目将被关联到此订阅的订阅 ID，并由此订阅管理。'
+                example: false
+                type: boolean
+                x-go-name: AdoptOrphans
+            as_draft:
+                description: 若为 true，则此域名权限订阅将创建为草稿，须由管理员批准后才能生效。若为 false，此域名权限订阅将立即生效。
+                example: true
+                type: boolean
+                x-go-name: AsDraft
+            content_type:
+                description: 解析权限列表时采用的 MIME 内容类型。
+                example: text/csv
+                type: string
+                x-go-name: ContentType
+            count:
+                description: 上次（成功）获取时在订阅地址上发现的域名权限条目数量。
+                example: 53
+                format: uint64
+                readOnly: true
+                type: integer
+                x-go-name: Count
+            created_at:
+                description: 订阅创建的时间（ISO 8601 Datetime）。
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            created_by:
+                description: 创建此订阅的帐户的 ID。
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: CreatedBy
+            error:
+                description: 如果最近的获取尝试失败，此字段将包含与获取尝试相关的错误消息。
+                example: Oopsie doopsie, we made a fucky wucky.
+                readOnly: true
+                type: string
+                x-go-name: Error
+            fetch_password:
+                description: （可选）更新订阅时进行基本身份验证（Basic Auth）的密码。
+                example: admin123
+                type: string
+                x-go-name: FetchPassword
+            fetch_username:
+                description: （可选）更新订阅时进行基本身份验证（Basic Auth）的用户名。
+                example: admin123
+                type: string
+                x-go-name: FetchUsername
+            fetched_at:
+                description: 上次更新订阅（不论是否成功）的时间（ISO 8601 Datetime）。
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: FetchedAt
+            id:
+                description: 域名权限订阅的 ID。
+                example: 01FBW21XJA09XYX51KV5JVBW0F
+                readOnly: true
+                type: string
+                x-go-name: ID
+            permission_type:
+                description: 域名权限订阅的类型（允许， 阻止）。
+                example: block
+                type: string
+                x-go-name: PermissionType
+            priority:
+                description: 域名权限订阅的优先级（0-255， 数字越大， 优先级越高）。
+                example: 100
+                format: uint8
+                type: integer
+                x-go-name: Priority
+            successfully_fetched_at:
+                description: 上次成功更新订阅的时间（ISO 8601 Datetime）。
+                example: "2021-07-30T09:20:25+00:00"
+                readOnly: true
+                type: string
+                x-go-name: SuccessfullyFetchedAt
+            title:
+                description: 域名权限订阅的标题。由管理员在创建或更新时设置。
+                example: really cool list of neato pals
+                type: string
+                x-go-name: Title
+            uri:
+                description: 域名权限订阅的 URI， 用于从中获取域名权限条目列表。
+                example: https://www.example.org/blocklists/list1.csv
+                type: string
+                x-go-name: URI
+        title: DomainPermissionSubscription
+        description: DomainPermissionSubscription （域名权限订阅）表示一个可以自动更新的域名权限列表订阅（类型可以为允许或阻止）
+        type: object
+        x-go-name: DomainPermissionSubscription
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
             category:
@@ -1580,6 +1705,10 @@ definitions:
                 $ref: '#/definitions/instanceV1Configuration'
             contact_account:
                 $ref: '#/definitions/account'
+            custom_css:
+                description: 此实例的自定义 CSS。
+                type: string
+                x-go-name: CustomCSS
             debug:
                 description: 此实例是否在 DEBUG 模式下运行。如果为 false，则省略。
                 type: boolean
@@ -1761,6 +1890,10 @@ definitions:
                 $ref: '#/definitions/instanceV2Configuration'
             contact:
                 $ref: '#/definitions/instanceV2Contact'
+            custom_css:
+                description: 此实例的自定义 CSS。
+                type: string
+                x-go-name: CustomCSS
             debug:
                 description: 此实例是否在 DEBUG 模式下运行。如果为 false，则省略。
                 type: boolean
@@ -1856,6 +1989,8 @@ definitions:
                 $ref: '#/definitions/instanceV2ConfigurationTranslation'
             urls:
                 $ref: '#/definitions/instanceV2URLs'
+            vapid:
+                $ref: '#/definitions/instanceV2ConfigurationVAPID'
         title: InstanceV2Configuration
         description: 此实例的配置值和限制。
         type: object
@@ -1873,6 +2008,16 @@ definitions:
         description: 关于翻译功能的提示。
         type: object
         x-go-name: InstanceV2ConfigurationTranslation
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    instanceV2ConfigurationVAPID:
+        properties:
+            public_key:
+                description: The instance's VAPID public key, Base64-encoded.
+                type: string
+                x-go-name: PublicKey
+        title: InstanceV2ConfigurationVAPID 存储实例的 VAPID 配置信息。
+        type: object
+        x-go-name: InstanceV2ConfigurationVAPID
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     instanceV2Contact:
         properties:
@@ -2324,6 +2469,10 @@ definitions:
                 format: int64
                 type: integer
                 x-go-name: FollowingCount
+            group:
+                description: 该账户被标记为 Group 类型的行为体。
+                type: boolean
+                x-go-name: Group
             header:
                 description: 账户资料卡横幅背景图的 Web 地址。
                 example: https://example.org/media/some_user/header/original/header.jpeg
@@ -2714,6 +2863,11 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: CreatedAt
+            edited_at:
+                description: 此贴文上次被编辑的时间 (ISO 8601 Datetime)。
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: EditedAt
             emojis:
                 description: 此贴文内容中使用的自定义表情符号。
                 items:
@@ -2908,6 +3062,11 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: CreatedAt
+            edited_at:
+                description: 此贴文上次被编辑的时间 (ISO 8601 Datetime)。
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: EditedAt
             emojis:
                 description: 渲染此贴文时使用的自定义表情符号。
                 items:
@@ -3296,6 +3455,141 @@ definitions:
         type: object
         x-go-name: User
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushNotification:
+        description: |-
+            WebPushNotification 表示 Web 推送服务器传递给客户端的通知摘要。
+            它不包含完整的通知，仅包含通知 ID 和一些预览信息。
+            它并不直接用于客户端 API，而是包含在 API 文档中，用于解码 Web 推送通知。
+        properties:
+            access_token:
+                description: |-
+                    AccessToken 是与 Web 推送订阅关联的访问令牌。
+                    尚不清楚为何要发送此令牌，因为客户端理应已知晓，但 Feditext 确实使用了它。
+                type: string
+                x-go-name: AccessToken
+            body:
+                description: |-
+                    Body 是通知正文的预览,
+                    例如状态的内容警告或文本的第一行,
+                    或帐户的简介的第一行。
+                type: string
+                x-go-name: Body
+            icon:
+                description: |-
+                    Icon 是通知中显示的图像的 URL,
+                    通常是帐户的头像。
+                type: string
+                x-go-name: Icon
+            notification_id:
+                description: NotificationID 是所引用的通知的 Notification.ID。
+                type: string
+                x-go-name: NotificationID
+            notification_type:
+                description: NotificationType 是所引用的通知的 Notification.Type。
+                type: string
+                x-go-name: NotificationType
+            preferred_locale:
+                description: PreferredLocale 是接收通知的用户的语言标签（BCP 47 标签）。
+                type: string
+                x-go-name: PreferredLocale
+            title:
+                description: |-
+                    Title 是通知的标题,
+                    通常是用户执行的动作的描述。
+                type: string
+                x-go-name: Title
+        title: WebPushNotification
+        type: object
+        x-go-name: WebPushNotification
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushSubscription:
+        properties:
+            alerts:
+                $ref: '#/definitions/webPushSubscriptionAlerts'
+            endpoint:
+                description: 通知将被推送到的端点。
+                type: string
+                x-go-name: Endpoint
+            id:
+                description: 数据库中推送订阅的 ID。
+                type: string
+                x-go-name: ID
+            policy:
+                $ref: '#/definitions/WebPushNotificationPolicy'
+            server_key:
+                description: 此实例的 VAPID 公钥。
+                type: string
+                x-go-name: ServerKey
+            standard:
+                description: |-
+                    是否使用 RFC 或预 RFC Web 推送标准。
+                    对于 GotoSocial，这将总是为真。
+                type: boolean
+                x-go-name: Standard
+        title: WebPushSubscription
+        description: WebPushSubscription 表示对 Web 推送服务器的订阅。
+        type: object
+        x-go-name: WebPushSubscription
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    webPushSubscriptionAlerts:
+        properties:
+            admin.report:
+                description: 是否在收到新的举报时接收推送通知？ 
+                type: boolean
+                x-go-name: AdminReport
+            admin.sign_up:
+                description: 是否在有新用户注册时接收推送通知？ 
+                type: boolean
+                x-go-name: AdminSignup
+            favourite:
+                description: 是否在某条贴文被其他人点赞时接收推送通知？
+                type: boolean
+                x-go-name: Favourite
+            follow:
+                description: 是否在有人关注你时接收推送通知？
+                type: boolean
+                x-go-name: Follow
+            follow_request:
+                description: 是否在有人向你发出关注请求时接收推送通知？
+                type: boolean
+                x-go-name: FollowRequest
+            mention:
+                description: 是否在有人在贴文中提及你时接收推送通知？ 
+                type: boolean
+                x-go-name: Mention
+            pending.favourite:
+                description: 是否在有点赞待处理时接收推送通知？ 
+                type: boolean
+                x-go-name: PendingFavourite
+            pending.reblog:
+                description: 是否在有转发待处理时接收推送通知？ 
+                type: boolean
+                x-go-name: PendingReblog
+            pending.reply:
+                description: 是否在有回复待处理时接收推送通知？ 
+                type: boolean
+                x-go-name: PendingReply
+            poll:
+                description: 是否在你参与或创建的投票结束时接收推送通知？
+                type: boolean
+                x-go-name: Poll
+            reblog:
+                description: 是否在你创建的贴文被别人转发时接收推送通知？
+                type: boolean
+                x-go-name: Reblog
+            status:
+                description: 是否在你订阅的某个账户发帖时接收推送通知？
+                type: boolean
+                x-go-name: Status
+            update:
+                description: 是否在你互动过的贴文被编辑时接收推送通知？
+                type: boolean
+                x-go-name: Update
+        title: WebPushSubscriptionAlerts
+        description: WebPushSubscriptionAlerts 代表此 Web 推送订阅将接收的具体事件。
+        type: object
+        x-go-name: WebPushSubscriptionAlerts
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         properties:
             aliases:
@@ -3328,7 +3622,7 @@ info:
         name: AGPL3
         url: https://www.gnu.org/licenses/agpl-3.0.zh-cn.html
     title: GoToSocial Swagger 文档
-    version: 0.17.2-SNAPSHOT-8a93300a
+    version: 0.18.0-SNAPSHOT-e10de846
 paths:
     /.well-known/host-meta:
         get:
@@ -3658,6 +3952,41 @@ paths:
                     - write:blocks
             summary: 屏蔽帐户
             description: 屏蔽具有给定 ID 的帐户。
+            tags:
+                - accounts
+    /api/v1/accounts/{id}/featured_tags:
+        get:
+            operationId: accountsFeaturedTags
+            parameters:
+                - description: 目标账户的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: 获取账户精选话题标签
+            description: 以数组的形式获取目标帐户的精选话题标签。此端点目前尚未完全实现：它将始终返回一个空数组。
             tags:
                 - accounts
     /api/v1/accounts/{id}/follow:
@@ -5850,7 +6179,7 @@ paths:
                   required: true
                   type: string
                 - default: false
-                  description: 删除此域名权限草案时，为目标域名创建一个域名排除条目，以确保之后不会为此域名创建草案。
+                  description: 删除此域名权限草案时，为目标域名创建一个域名例外条目，以确保之后不会为此域名创建草案。
                   in: formData
                   name: exclude_target
                   type: boolean
@@ -5882,14 +6211,14 @@ paths:
     /api/v1/admin/domain_permission_excludes:
         get:
             description: |-
-                返回按时间倒序排序（新创建的条目优先），并带有连续 ID 的域名权限排除条目（ID 值越大，排除条目越新）。可以通过返回的 Link 标头解析下一页与上一页查询。
+                返回按时间倒序排序（新创建的条目优先），并带有连续 ID 的域名权限例外条目（ID 值越大，例外条目越新）。可以通过返回的 Link 标头解析下一页与上一页查询。
                 示例：
                 ```
                 <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_excludes?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
                 ```
             operationId: domainPermissionExcludesGet
             parameters:
-                - description: 仅返回针对给定域名的排除条目。
+                - description: 仅返回针对给定域名的例外条目。
                   in: query
                   name: domain
                   type: string
@@ -5916,7 +6245,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: 域名权限排除条目。
+                    description: 域名权限例外条目。
                     headers:
                         Link:
                             description: 下一查询与上一查询的链接。
@@ -5940,7 +6269,7 @@ paths:
             security:
                 - OAuth2 Bearer:
                     - admin
-            summary: 查看域名权限排除条目。
+            summary: 查看域名权限例外条目。
             tags:
                 - admin
         post:
@@ -5948,15 +6277,15 @@ paths:
                 - multipart/form-data
                 - application/json
             description: |-
-                被排除的域名（及其子域名）在导入或订阅域名权限列表时不会被自动屏蔽或放行。
-                您仍然可以为被排除的域名手动创建域名屏蔽条目或域名放行条目，被排除之后，与该域名关联的任何的已有或新创建的域名屏蔽条目或域名放行条目都将被继续执行。
+                被设为例外的域名（及其子域名）在导入或订阅域名权限列表时不会被自动阻止或允许。
+                您仍然可以为被设为例外的域名手动创建域名阻止条目或域名允许条目，被设为例外之后，与该域名关联的任何的已有或新创建的域名阻止条目或域名允许条目都将被继续执行。
             operationId: domainPermissionExcludeCreate
             parameters:
-                - description: 要创建权限排除的域名。
+                - description: 要创建的权限例外条目的目标域名。
                   in: formData
                   name: domain
                   type: string
-                - description: 对该域名排除条目的私密评论。
+                - description: 对该域名例外条目的私密评论。
                   in: formData
                   name: private_comment
                   type: string
@@ -5964,7 +6293,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: 新创建的域名排除条目。
+                    description: 新创建的域名例外条目。
                     schema:
                         $ref: '#/definitions/domainPermission'
                 "400":
@@ -5982,14 +6311,14 @@ paths:
             security:
                 - OAuth2 Bearer:
                     - admin
-            summary: 使用给定参数创建一个域名权限排除条目。
+            summary: 使用给定参数创建一个域名权限例外条目。
             tags:
                 - admin
     /api/v1/admin/domain_permission_excludes/{id}:
         delete:
             operationId: domainPermissionExcludeDelete
             parameters:
-                - description: 该域名权限排除条目的 ID。
+                - description: 该域名权限例外条目的 ID。
                   in: path
                   name: id
                   required: true
@@ -5998,7 +6327,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: 被移除的域名权限排除条目。
+                    description: 被移除的域名权限例外条目。
                     schema:
                         $ref: '#/definitions/domainPermission'
                 "400":
@@ -6016,13 +6345,13 @@ paths:
             security:
                 - OAuth2 Bearer:
                     - admin
-            summary: 移除一个域名权限排除条目。
+            summary: 移除一个域名权限例外条目。
             tags:
                 - admin
         get:
             operationId: domainPermissionExcludeGet
             parameters:
-                - description: 域名权限排除条目的 ID。
+                - description: 域名权限例外条目的 ID。
                   in: path
                   name: id
                   required: true
@@ -6031,7 +6360,7 @@ paths:
                 - application/json
             responses:
                 "200":
-                    description: 域名权限排除条目。
+                    description: 域名权限例外条目。
                     schema:
                         $ref: '#/definitions/domainPermission'
                 "401":
@@ -6047,7 +6376,378 @@ paths:
             security:
                 - OAuth2 Bearer:
                     - admin
-            summary: 获取具有给定 ID 的域名权限排除。
+            summary: 获取具有给定 ID 的域名权限例外条目。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions:
+        get:
+            description: |-
+                订阅将按时间倒序返回（最新的订阅在前），并带有连续的 ID （值越大代表订阅越新）。
+                可以通过返回的 Link 标头解析下一页与上一页查询。
+                示例：
+                ```
+                <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/admin/domain_permission_subscriptions?limit=20&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: domainPermissionSubscriptionsGet
+            parameters:
+                - description: 筛选类型为“阻止”或“允许”的订阅。
+                  in: query
+                  name: permission_type
+                  type: string
+                - description: 仅返回 ID 小于给定的最大 ID 的条目（用于向下分页）。具有对应 ID 的条目不会包含在结果中。
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 仅返回 ID 大于给定的最小 ID 的条目（用于向上分页）。具有对应 ID 的条目不会包含在结果中。
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 仅返回 ID 比指定最小 ID 相邻且*更新* 的条目（用于向上分页）。具有对应 ID 的条目不会包含在结果中。
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: 要返回的条目数量。
+                  in: query
+                  maximum: 100
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 域名权限订阅列表。
+                    headers:
+                        Link:
+                            description: 下一查询与上一查询的链接
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermissionSubscription'
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 查看域名权限订阅列表
+            tags:
+                - admin
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionCreate
+            parameters:
+                - default: 0
+                  description: 此订阅相对于其他同类型的订阅的优先级。取值范围为 0-255 （数值越高，优先级越高）。优先级较高的订阅将会覆盖优先级较低的订阅生成的权限。当两个订阅的`priority`（优先级）值相同时，优先级无法确定，因此建议始终手动设置此值。
+                  in: formData
+                  maximum: 255
+                  minimum: 0
+                  name: priority
+                  type: number
+                - description: 此订阅的标题（可选）
+                  in: formData
+                  name: title
+                  type: string
+                - description: 解析订阅列表/订阅目标文件时要创建的域名权限类型。需要为 "allow" 或 "block"。
+                  in: formData
+                  name: permission_type
+                  required: true
+                  type: string
+                - default: true
+                  description: 如果为 true，此订阅产生的域名权限条目将以草稿形式创建，须管理员批准后才能生效。如果为 false，此订阅下的域名权限条目将立即生效。默认为 true。
+                  in: formData
+                  name: as_draft
+                  type: boolean
+                - default: false
+                  description: '若为 true，则此域名权限订阅将“接管”实例上已存在的、符合以下条件的域名权限： 1）它们没有关联的订阅 ID（即，它们是“孤立”的）， 2）它们存在于订阅列表中。这些孤立的域名权限条目将被关联到此订阅的订阅 ID，并由此订阅管理。'
+                  in: formData
+                  name: adopt_orphans
+                  type: boolean
+                - description: 此订阅要获取的权限列表的 URI。
+                  in: formData
+                  name: uri
+                  required: true
+                  type: string
+                - description: 此订阅要使用的 MIME 内容类型。可以为 "text/plain"、"text/csv" 或 "application/json"。
+                  in: formData
+                  name: content_type
+                  required: true
+                  type: string
+                - description: 可选的基本身份验证（Basic Auth）用户名，用于获取指定 URI。如果设置，则在获取时会与 `fetch_password` 一起传输。
+                  in: formData
+                  name: fetch_username
+                  type: string
+                - description: 可选的基本身份验证（Basic Auth）密码，用于获取指定 URI。如果设置，则在获取时会与 `fetch_username` 一起传输。
+                  in: formData
+                  name: fetch_password
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 新创建的域名权限订阅。
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 创建域名权限订阅
+            description: 使用给定参数创建一个新的域名权限订阅。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/${id}:
+        patch:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionUpdate
+            parameters:
+                - description: 域名权限订阅的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: 此订阅相对于其他同类型的订阅的优先级。取值范围为 0-255 （数值越高，优先级越高）。优先级较高的订阅将会覆盖优先级较低的订阅生成的权限。当两个订阅的`priority`（优先级）值相同时，优先级无法确定，因此建议始终手动设置此值。
+                  in: formData
+                  maximum: 255
+                  minimum: 0
+                  name: priority
+                  type: number
+                - description: 此订阅的标题（可选）。
+                  in: formData
+                  name: title
+                  type: string
+                - description: 此订阅要获取的域名权限列表的 URI。
+                  in: formData
+                  name: uri
+                  type: string
+                - default: true
+                  description: 如果为 true，此订阅产生的域名权限条目将以草稿形式创建，须管理员批准后才能生效。如果为 false，此订阅下的域名权限条目将立即生效。默认为 true。
+                  in: formData
+                  name: as_draft
+                  type: boolean
+                - default: false
+                  description: '若为 true，则此域名权限订阅将“接管”实例上已存在的、符合以下条件的域名权限： 1）它们没有关联的订阅 ID（即，它们是“孤立”的）， 2）它们存在于订阅列表中。这些孤立的域名权限条目将被关联到此订阅的订阅 ID，并由此订阅管理。'
+                  in: formData
+                  name: adopt_orphans
+                  type: boolean
+                - description: 此订阅要使用的 MIME 内容类型。可以为 "text/plain"、"text/csv" 或 "application/json"。
+                  in: formData
+                  name: content_type
+                  type: string
+                - description: 可选的基本身份验证（Basic Auth）用户名，用于获取指定 URI。如果设置，则在获取时会与 `fetch_password` 一起传输。
+                  in: formData
+                  name: fetch_username
+                  type: string
+                - description: 可选的基本身份验证（Basic Auth）密码，用于获取指定 URI。如果设置，则在获取时会与 `fetch_username` 一起传输。
+                  in: formData
+                  name: fetch_password
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 更新后的域名权限订阅。
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 更新域名权限订阅
+            description: 使用给定参数更新一个域名权限订阅。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}:
+        get:
+            operationId: domainPermissionSubscriptionGet
+            parameters:
+                - description: 域名权限订阅的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 要获取的域名权限订阅。
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 获取指定域名权限订阅
+            description: 获取具有给定 ID 的单个域名权限订阅。
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}/remove:
+        post:
+            consumes:
+                - multipart/form-data
+                - application/json
+            operationId: domainPermissionSubscriptionRemove
+            parameters:
+                - description: 域名权限订阅的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - default: true
+                  description: |-
+                    移除域名权限订阅时，也应移除此订阅的子条目，即由该订阅管理的域名权限。如果为否，则子条目将成为孤立条目，但不会被移除。
+                    请注意，已被移除的权限条目可能稍后会被另一个优先级低于已移除订阅的域名权限订阅重新创建。同样地，孤立子项也可能稍后被另一个订阅接收。
+                  in: formData
+                  name: remove_children
+                  type: boolean
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 被移除的域名权限订阅。
+                    schema:
+                        $ref: '#/definitions/domainPermissionSubscription'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 删除单个域名权限订阅
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/{id}/test:
+        post:
+            description: |-
+                让你的实例获取并解析域名权限订阅列表，来测试单个域名权限订阅，*无需实际创建权限*。
+
+                响应体将为一个该订阅*将会*创建的域权限列表，或是一条错误消息。
+
+                这在你需要检查你的实例是否能够实际获取和解析列表的情况下非常有用。
+            operationId: domainPermissionSubscriptionTest
+            parameters:
+                - description: 该域名权限订阅草稿的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 一个域名权限条目的数组，或一个说明为何无法获取该列表的，形如 `{"error":"[错误信息]"}` 的错误消息。
+                    schema:
+                        items:
+                            $ref: '#/definitions/domain'
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 测试单个域名权限订阅
+            tags:
+                - admin
+    /api/v1/admin/domain_permission_subscriptions/preview:
+        get:
+            description: 查看给定权限类型的全部域名权限订阅，按优先级顺序排列（从高到低）。此视图可显示实际被获取和创建的域名权限订阅的顺序。
+            operationId: domainPermissionSubscriptionsPreviewGet
+            parameters:
+                - description: 筛选类型为 "block" 或 "allow" 的订阅。
+                  in: query
+                  name: permission_type
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 域名权限订阅列表。
+                    schema:
+                        items:
+                            $ref: '#/definitions/domainPermissionSubscription'
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: 预览全部域名权限订阅
             tags:
                 - admin
     /api/v1/admin/email/test:
@@ -6762,6 +7462,34 @@ paths:
             description: 查看具有给定 ID 的实例规则。
             tags:
                 - admin
+    /api/v1/announcements:
+        get:
+            operationId: announcementsGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    schema:
+                        items:
+                            type: object
+                        maxItems: 0
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - read:announcements
+            summary: 获取公告
+            description: '以数组形式获取当前生效的公告。此端点目前尚未完全实现：它将无条件返回一个空数组。'
+            tags:
+                - announcements
     /api/v1/apps:
         post:
             consumes:
@@ -7345,14 +8073,14 @@ paths:
                     此过滤规则要应用的上下文。
 
                     示例: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                        - home
+                        - notifications
+                        - public
+                        - thread
+                        - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -7502,14 +8230,14 @@ paths:
                     此过滤规则要应用的上下文。
 
                     示例: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                        - home
+                        - notifications
+                        - public
+                        - thread
+                        - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -9209,6 +9937,281 @@ paths:
             summary: 删除横幅背景
             tags:
                 - accounts
+    /api/v1/push/subscription:
+        delete:
+            operationId: pushSubscriptionDelete
+            responses:
+                "200":
+                    description: 被删除的通知订阅，或不存在。
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: 删除 Web 推送订阅
+            description: 删除当前访问令牌关联的网页推送订阅。即使没有订阅，也会返回成功。
+            tags:
+                - push
+        get:
+            operationId: pushSubscriptionGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 当前访问令牌的 Web 推送订阅。
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "404":
+                    description: 当前访问令牌没有已关联的订阅。
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: 获取 Web 推送订阅
+            description: 获取当前访问令牌关联的 Web 推送订阅。
+            tags:
+                - push
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            operationId: pushSubscriptionPost
+            parameters:
+                - description: Web 推送订阅将要发往的端点。
+                  in: formData
+                  minLength: 1
+                  name: subscription[endpoint]
+                  required: true
+                  type: string
+                - description: 身份验证密钥,一个Base64编码的16字节随机数据字符串。
+                  in: formData
+                  minLength: 1
+                  name: subscription[keys][auth]
+                  required: true
+                  type: string
+                - description: 用户代理公钥，一个使用 prime256v1 曲线生成的 ECDH 密钥对的公钥的Base64编码字符串。
+                  in: formData
+                  minLength: 1
+                  name: subscription[keys][p256dh]
+                  required: true
+                  type: string
+                - default: false
+                  description: 是否在有人关注你时接收推送通知？
+                  in: formData
+                  name: data[alerts][follow]
+                  type: boolean
+                - default: false
+                  description: 是否在有人向你发送关注请求时接收推送通知？
+                  in: formData
+                  name: data[alerts][follow_request]
+                  type: boolean
+                - default: false
+                  description: 是否在有人点赞你创建的贴文时接收推送通知？
+                  in: formData
+                  name: data[alerts][favourite]
+                  type: boolean
+                - default: false
+                  description: 是否在有人在贴文中提及你时接收推送通知？
+                  in: formData
+                  name: data[alerts][mention]
+                  type: boolean
+                - default: false
+                  description: 是否在有人转发你创建的贴文时接收推送通知？
+                  in: formData
+                  name: data[alerts][reblog]
+                  type: boolean
+                - default: false
+                  description: 是否在你参与或创建的投票结束时接收通知？
+                  in: formData
+                  name: data[alerts][poll]
+                  type: boolean
+                - default: false
+                  description: 是否在你订阅的某个账户发帖时接收推送通知？
+                  in: formData
+                  name: data[alerts][status]
+                  type: boolean
+                - default: false
+                  description: 是否在你互动过的贴文被编辑时接收推送通知？
+                  in: formData
+                  name: data[alerts][update]
+                  type: boolean
+                - default: false
+                  description: 是否在有新用户注册时接收推送通知？
+                  in: formData
+                  name: data[alerts][admin.sign_up]
+                  type: boolean
+                - default: false
+                  description: 是否在有人提交新的举报时接收推送通知？
+                  in: formData
+                  name: data[alerts][admin.report]
+                  type: boolean
+                - default: false
+                  description: 是否在有新的点赞待处理时接收推送通知？
+                  in: formData
+                  name: data[alerts][pending.favourite]
+                  type: boolean
+                - default: false
+                  description: 是否在有新的回复待处理时接收推送通知？
+                  in: formData
+                  name: data[alerts][pending.reply]
+                  type: boolean
+                - default: false
+                  description: 是否在有新的转发待处理时接收推送通知？
+                  in: formData
+                  name: data[alerts][pending.reblog]
+                  type: boolean
+                - default: all
+                  description: 接收推送通知的账号范围。
+                  enum:
+                    - all
+                    - followed
+                    - follower
+                    - none
+                  in: formData
+                  name: data[policy]
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 当前访问令牌关联的 Web 推送订阅。
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: 创建 Web 推送订阅
+            description: 使用当前访问令牌创建新的 Web 推送订阅，或替换现有订阅。
+            tags:
+                - push
+        put:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            operationId: pushSubscriptionPut
+            parameters:
+                - default: false
+                  description: 是否在有人关注你时接收推送通知？
+                  in: formData
+                  name: data[alerts][follow]
+                  type: boolean
+                - default: false
+                  description: 是否在有人请求关注你时接收推送通知？
+                  in: formData
+                  name: data[alerts][follow_request]
+                  type: boolean
+                - default: false
+                  description: 是否在有人点赞你创建的贴文时接收推送通知？
+                  in: formData
+                  name: data[alerts][favourite]
+                  type: boolean
+                - default: false
+                  description: 是否在有人在贴文中提及你时接收推送通知？
+                  in: formData
+                  name: data[alerts][mention]
+                  type: boolean
+                - default: false
+                  description: 是否在有人转发你创建的贴文时接收推送通知？
+                  in: formData
+                  name: data[alerts][reblog]
+                  type: boolean
+                - default: false
+                  description: 是否在你参与或发起的投票结束时接收推送通知？
+                  in: formData
+                  name: data[alerts][poll]
+                  type: boolean
+                - default: false
+                  description: 是否在你订阅的账号发帖时接收推送通知？
+                  in: formData
+                  name: data[alerts][status]
+                  type: boolean
+                - default: false
+                  description: 是否在你互动过的贴文被编辑时接收推送通知？
+                  in: formData
+                  name: data[alerts][update]
+                  type: boolean
+                - default: false
+                  description: 是否在有新用户注册时接收推送通知？
+                  in: formData
+                  name: data[alerts][admin.sign_up]
+                  type: boolean
+                - default: false
+                  description: 是否在有新举报被提交时接收推送通知？
+                  in: formData
+                  name: data[alerts][admin.report]
+                  type: boolean
+                - default: false
+                  description: 是否在有新点赞待处理时接收推送通知？
+                  in: formData
+                  name: data[alerts][pending.favourite]
+                  type: boolean
+                - default: false
+                  description: 是否在有新回复待处理时接收推送通知？
+                  in: formData
+                  name: data[alerts][pending.reply]
+                  type: boolean
+                - default: false
+                  description: 是否在有新转发待处理时接收推送通知？
+                  in: formData
+                  name: data[alerts][pending.reblog]
+                  type: boolean
+                - default: all
+                  description: 接收推送通知的账号范围。
+                  enum:
+                    - all
+                    - followed
+                    - follower
+                    - none
+                  in: formData
+                  name: data[policy]
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 当前访问令牌关联的 Web 推送订阅。
+                    schema:
+                        $ref: '#/definitions/webPushSubscription'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - push
+            summary: 更新 Web 推送订阅
+            description: 更新当前访问令牌关联的 Web 推送订阅。仅更新要接收的通知范围。
+            tags:
+                - push
     /api/v1/reports:
         get:
             description: |-
@@ -9431,7 +10434,8 @@ paths:
                   name: status
                   type: string
                   x-go-name: Status
-                - description: |-
+                - collectionFormat: multi
+                  description: |-
                     要附加的媒体附件 ID 数组。
                     如果提供了 media_ids，status 将变为可选，poll 不能使用。
 
@@ -9439,10 +10443,12 @@ paths:
                   in: formData
                   items:
                     type: string
-                  name: media_ids
+                  name: media_ids[]
                   type: array
+                  uniqueItems: true
                   x-go-name: MediaIDs
-                - description: |-
+                - collectionFormat: multi
+                  description: |-
                     投票选项的数组。
                     如果提供了投票选项，media_ids 将不能使用，poll[expires_in] 必须提供。
                   in: formData
@@ -9450,6 +10456,7 @@ paths:
                     type: string
                   name: poll[options][]
                   type: array
+                  uniqueItems: true
                   x-go-name: PollOptions
                 - description: |-
                     投票的开放时长，单位为秒。
@@ -9582,6 +10589,111 @@ paths:
                 - OAuth2 Bearer:
                     - write:statuses
             summary: 创建新贴文
+            tags:
+                - statuses
+        put:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            operationId: statusEdit
+            parameters:
+                - description: |-
+                    贴文的文本内容。
+                    如果提供了 media_ids，此项变为可选。
+                    如果提供了文本内容，则投票（poll）也变为可选。
+                  in: formData
+                  name: status
+                  type: string
+                  x-go-name: Status
+                - description: |-
+                    要附加的媒体附件 ID 数组。
+                    如果提供了 media_ids，status 将变为可选，poll 不能使用。
+
+                    如果贴文以表单形式提交，应使用的键为 'media_ids[]'，但如果是 JSON 或 XML，则键为 'media_ids'。
+                  in: formData
+                  items:
+                    type: string
+                  name: media_ids
+                  type: array
+                  x-go-name: MediaIDs
+                - description: |-
+                    投票选项的数组。
+                    如果提供了投票选项，media_ids 将不能使用，poll[expires_in] 必须提供。
+                  in: formData
+                  items:
+                    type: string
+                  name: poll[options][]
+                  type: array
+                  x-go-name: PollOptions
+                - description: |-
+                    投票的开放时长，单位为秒。
+                    如果提供了此项，media_ids 不能使用，poll[options] 必须提供。
+                  format: int64
+                  in: formData
+                  name: poll[expires_in]
+                  type: integer
+                  x-go-name: PollExpiresIn
+                - default: false
+                  description: 在此投票上允许多选。
+                  in: formData
+                  name: poll[multiple]
+                  type: boolean
+                  x-go-name: PollMultiple
+                - default: true
+                  description: 在投票结束前隐藏投票计数。
+                  in: formData
+                  name: poll[hide_totals]
+                  type: boolean
+                  x-go-name: PollHideTotals
+                - description: 贴文和媒体附件应被标记为敏感。
+                  in: formData
+                  name: sensitive
+                  type: boolean
+                  x-go-name: Sensitive
+                - description: |-
+                    在贴文内容之前显示的警告或主题文本。
+                    贴文通常被折叠在此字段后。
+                  in: formData
+                  name: spoiler_text
+                  type: string
+                  x-go-name: SpoilerText
+                - description: 此贴文的 ISO 639 语言代码。
+                  in: formData
+                  name: language
+                  type: string
+                  x-go-name: Language
+                - description: 解析此贴文时使用的内容类型。
+                  enum:
+                    - text/plain
+                    - text/markdown
+                  in: formData
+                  name: content_type
+                  type: string
+                  x-go-name: ContentType
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 此贴文的最新版本。
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: 编辑贴文
+            description: 按给定的表单参数编辑某条现有贴文。如果 content-type 为 'application/json'，则参数也可以在请求体中以 JSON 形式给出。
             tags:
                 - statuses
     /api/v1/statuses/{id}:
@@ -10929,14 +12041,14 @@ paths:
                     此过滤规则要应用的上下文。
 
                     示例: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                      - home
+                      - notifications
+                      - public
+                      - thread
+                      - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -11125,14 +12237,14 @@ paths:
                     此过滤规则要应用的上下文。
 
                     示例: home, public
-                  enum:
-                    - home
-                    - notifications
-                    - public
-                    - thread
-                    - account
                   in: formData
                   items:
+                    enum:
+                      - home
+                      - notifications
+                      - public
+                      - thread
+                      - account
                     type: string
                   minItems: 1
                   name: context[]
@@ -11587,12 +12699,19 @@ paths:
             description: 若 GoToSocial 服务“在线” (即能够响应HTTP请求)，则返回 200 状态码。
             tags:
                 - health
-    /nodeinfo/2.0:
+    /nodeinfo/{schema_version}:
         get:
             description: '对 nodeinfo 查询返回符合规范的 nodeinfo 响应。参见: https://nodeinfo.diaspora.software/schema.html'
             operationId: nodeInfoGet
+            parameters:
+                - description: 请求的 nodeinfo 规范版本。目前支持 2.0 和 2.1。
+                  in: path
+                  name: schema_version
+                  required: true
+                  type: string
             produces:
                 - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.0#"
+                - application/json; profile="http://nodeinfo.diaspora.software/ns/schema/2.1#"
             responses:
                 "200":
                     description: ""
