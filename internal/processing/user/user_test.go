@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/user"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -34,9 +35,11 @@ type UserStandardTestSuite struct {
 	emailSender email.Sender
 	db          db.DB
 	state       state.State
+	oauthServer oauth.Server
 
-	testUsers map[string]*gtsmodel.User
-
+	testApps   map[string]*gtsmodel.Application
+	testTokens map[string]*gtsmodel.Token
+	testUsers  map[string]*gtsmodel.User
 	sentEmails map[string]string
 
 	user user.Processor
@@ -51,9 +54,12 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
 	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
+	suite.oauthServer = testrig.NewTestOauthServer(suite.state.DB)
 
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
+	suite.testApps = testrig.NewTestApplications()
+	suite.testTokens = testrig.NewTestTokens()
 	suite.testUsers = testrig.NewTestUsers()
 
 	suite.user = user.New(&suite.state, typeutils.NewConverter(&suite.state), testrig.NewTestOauthServer(suite.db), suite.emailSender)
