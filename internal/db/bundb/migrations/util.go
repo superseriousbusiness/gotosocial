@@ -35,11 +35,6 @@ import (
 	"github.com/uptrace/bun/schema"
 )
 
-// formatQuery formats given query + args according to given bun dialect, useful for debug logging.
-func formatQuery(d schema.Dialect, query string, args ...any) string {
-	return schema.NewFormatter(d).FormatQuery(query, args...)
-}
-
 // convertEnums performs a transaction that converts
 // a table's column of our old-style enums (strings) to
 // more performant and space-saving integer types.
