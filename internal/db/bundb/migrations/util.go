@@ -82,26 +82,31 @@ func convertEnums[OldType ~string, NewType ~int16](
 		return gtserror.Newf("error selecting total count: %w", err)
 	}
 
-	var updated int
+	var args []any
+	var qbuf byteutil.Buffer
+
+	// Prepare a singular UPDATE statement using
+	// SET $newColumn = (CASE $column WHEN $old THEN $new ... END)
+	qbuf.B = append(qbuf.B, "UPDATE ? SET ? = (CASE ? "...)
+	args = append(args, bun.Ident(table))
+	args = append(args, bun.Ident(newColumn))
+	args = append(args, bun.Ident(column))
 	for old, new := range mapping {
+		qbuf.B = append(qbuf.B, "WHEN ? THEN ? "...)
+		args = append(args, old, new)
+	}
+	qbuf.B = append(qbuf.B, "ELSE ? END)"...)
+	args = append(args, *defaultValue)
 
-		// Update old to new values.
-		res, err := tx.NewUpdate().
-			Table(table).
-			Where("? = ?", bun.Ident(column), old).
-			Set("? = ?", bun.Ident(newColumn), new).
-			Exec(ctx)
-		if err != nil {
-			return gtserror.Newf("error updating old column values: %w", err)
-		}
-
-		// Count number items updated.
-		n, _ := res.RowsAffected()
-		updated += int(n)
+	// Execute the prepared raw query with arguments.
+	res, err := tx.NewRaw(qbuf.String(), args...).Exec(ctx)
+	if err != nil {
+		return gtserror.Newf("error updating old column values: %w", err)
 	}
 
-	// Check total updated.
-	if total != updated {
+	// Count number items updated.
+	updated, _ := res.RowsAffected()
+	if total != int(updated) {
 		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
 	}
 
