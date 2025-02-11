@@ -42,7 +42,7 @@
                     placeholder="Please enter your desired username"
                     pattern="^[a-z0-9_]{1,64}$"
                     title="lowercase a-z, numbers, and underscores; max 64 characters"
-                    value="{{- .preferredUsername -}}"
+                    value="{{- .suggestedUsername -}}"
                 >
             </div>
             <input type="hidden" name="name" value="{{- .name -}}">
