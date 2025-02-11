@@ -35,7 +35,7 @@ import (
 	"github.com/uptrace/bun/schema"
 )
 
-// formatQuery formats given query + args according to given bun dialect, using for debug logging.
+// formatQuery formats given query + args according to given bun dialect, useful for debug logging.
 func formatQuery(d schema.Dialect, query string, args ...any) string {
 	return schema.NewFormatter(d).FormatQuery(query, args...)
 }
