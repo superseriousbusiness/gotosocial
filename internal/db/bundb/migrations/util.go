@@ -87,15 +87,15 @@ func convertEnums[OldType ~string, NewType ~int16](
 
 	// Prepare a singular UPDATE statement using
 	// SET $newColumn = (CASE $column WHEN $old THEN $new ... END)
-	qbuf.WriteString("UPDATE ? SET ? = (CASE ? ")
+	qbuf.B = append(qbuf.B, "UPDATE ? SET ? = (CASE ? "...)
 	args = append(args, bun.Ident(table))
 	args = append(args, bun.Ident(newColumn))
 	args = append(args, bun.Ident(column))
 	for old, new := range mapping {
-		qbuf.WriteString("WHEN ? THEN ? ")
+		qbuf.B = append(qbuf.B, "WHEN ? THEN ? "...)
 		args = append(args, old, new)
 	}
-	qbuf.WriteString("ELSE ? END)")
+	qbuf.B = append(qbuf.B, "ELSE ? END)"...)
 	args = append(args, *defaultValue)
 
 	// Execute the prepared raw query with arguments.
