@@ -412,6 +412,8 @@ github.com/jackc/puddle/v2/internal/genstack
 # github.com/jessevdk/go-flags v1.5.0
 ## explicit; go 1.15
 github.com/jessevdk/go-flags
+# github.com/jimsmart/grobotstxt v1.0.3
+## explicit; go 1.14
 # github.com/jinzhu/inflection v1.0.0
 ## explicit
 github.com/jinzhu/inflection
@@ -831,6 +833,9 @@ github.com/tdewolff/parse/v2/strconv
 # github.com/technologize/otel-go-contrib v1.1.1
 ## explicit; go 1.17
 github.com/technologize/otel-go-contrib/otelginmetrics
+# github.com/temoto/robotstxt v1.1.2
+## explicit; go 1.11
+github.com/temoto/robotstxt
 # github.com/tetratelabs/wazero v1.8.2
 ## explicit; go 1.21
 github.com/tetratelabs/wazero

@@ -133,6 +133,12 @@ func NewMockHTTPClient(do func(req *http.Request) (*http.Response, error), relat
 			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = WebfingerResponse(req)
 		} else if strings.Contains(reqURLString, ".well-known/host-meta") {
 			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = HostMetaResponse(req)
+		} else if strings.Contains(reqURLString, ".well-known/nodeinfo") {
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = WellKnownNodeInfoResponse(req)
+		} else if strings.Contains(reqURLString, "/robots.txt") {
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = RobotsTxtResponse(req)
+		} else if strings.Contains(reqURLString, "/nodeinfo/2.1") {
+			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = NodeInfoResponse(req)
 		} else if strings.Contains(reqURLString, "lists.example.org") {
 			responseCode, responseBytes, responseContentType, responseContentLength, extraHeaders = DomainPermissionSubscriptionResponse(req)
 		} else if note, ok := mockHTTPClient.TestRemoteStatuses[reqURLString]; ok {
@@ -315,6 +321,162 @@ func HostMetaResponse(req *http.Request) (
 	responseBytes = hmXML
 	responseContentType = "application/xml"
 	responseContentLength = len(hmXML)
+	return
+}
+
+func WellKnownNodeInfoResponse(req *http.Request) (
+	responseCode int,
+	responseBytes []byte,
+	responseContentType string,
+	responseContentLength int,
+	extraHeaders map[string]string,
+) {
+	var wkr *apimodel.WellKnownResponse
+
+	switch req.URL.String() {
+	case "https://fossbros-anonymous.io/.well-known/nodeinfo":
+		wkr = &apimodel.WellKnownResponse{
+			Links: []apimodel.Link{
+				{
+					Rel:  "http://nodeinfo.diaspora.software/ns/schema/2.1",
+					Href: "https://fossbros-anonymous.io/nodeinfo/2.1",
+				},
+			},
+		}
+	case "https://furtive-nerds.example.org/.well-known/nodeinfo":
+		wkr = &apimodel.WellKnownResponse{
+			Links: []apimodel.Link{
+				{
+					Rel:  "http://nodeinfo.diaspora.software/ns/schema/2.1",
+					Href: "https://furtive-nerds.example.org/nodeinfo/2.1",
+				},
+			},
+		}
+	case "https://really.furtive-nerds.example.org/.well-known/nodeinfo":
+		wkr = &apimodel.WellKnownResponse{
+			Links: []apimodel.Link{
+				{
+					Rel:  "http://nodeinfo.diaspora.software/ns/schema/2.1",
+					Href: "https://really.furtive-nerds.example.org/nodeinfo/2.1",
+				},
+			},
+		}
+		extraHeaders = map[string]string{"X-Robots-Tag": "noindex,nofollow"}
+	default:
+		log.Debugf(nil, "nodeinfo response not available for %s", req.URL)
+		responseCode = http.StatusNotFound
+		responseBytes = []byte(``)
+		responseContentType = "application/json"
+		responseContentLength = len(responseBytes)
+		return
+	}
+
+	niJSON, err := json.Marshal(wkr)
+	if err != nil {
+		panic(err)
+	}
+	responseCode = http.StatusOK
+	responseBytes = niJSON
+	responseContentType = "application/json"
+	responseContentLength = len(niJSON)
+
+	return
+}
+
+func NodeInfoResponse(req *http.Request) (
+	responseCode int,
+	responseBytes []byte,
+	responseContentType string,
+	responseContentLength int,
+	extraHeaders map[string]string,
+) {
+	var ni *apimodel.Nodeinfo
+
+	switch req.URL.String() {
+	case "https://fossbros-anonymous.io/nodeinfo/2.1":
+		ni = &apimodel.Nodeinfo{
+			Version: "2.1",
+			Software: apimodel.NodeInfoSoftware{
+				Name:       "Hellsoft",
+				Version:    "6.6.6",
+				Repository: "https://forge.hellsoft.fossbros-anonymous.io",
+				Homepage:   "https://hellsoft.fossbros-anonymous.io",
+			},
+			Protocols: []string{"activitypub"},
+		}
+	case "https://furtive-nerds.example.org/nodeinfo/2.1":
+		ni = &apimodel.Nodeinfo{
+			Version: "2.1",
+			Software: apimodel.NodeInfoSoftware{
+				Name:       "GoToSocial",
+				Version:    "1.3.1.2",
+				Repository: "https://github.com/superseriousbusiness/gotosocial",
+				Homepage:   "https://docs.gotosocial.org",
+			},
+			Protocols: []string{"activitypub"},
+		}
+	case "https://really.furtive-nerds.example.org/nodeinfo/2.1":
+		ni = &apimodel.Nodeinfo{
+			Version: "2.1",
+			Software: apimodel.NodeInfoSoftware{
+				Name:       "GoToSocial",
+				Version:    "1.3.1.2",
+				Repository: "https://github.com/superseriousbusiness/gotosocial",
+				Homepage:   "https://docs.gotosocial.org",
+			},
+			Protocols: []string{"activitypub"},
+		}
+	default:
+		log.Debugf(nil, "nodeinfo response not available for %s", req.URL)
+		responseCode = http.StatusNotFound
+		responseBytes = []byte(``)
+		responseContentType = "application/json"
+		responseContentLength = len(responseBytes)
+		return
+	}
+
+	niJSON, err := json.Marshal(ni)
+	if err != nil {
+		panic(err)
+	}
+	responseCode = http.StatusOK
+	responseBytes = niJSON
+	responseContentType = "application/json"
+	responseContentLength = len(niJSON)
+
+	return
+}
+
+func RobotsTxtResponse(req *http.Request) (
+	responseCode int,
+	responseBytes []byte,
+	responseContentType string,
+	responseContentLength int,
+	extraHeaders map[string]string,
+) {
+	var robots string
+
+	switch req.URL.String() {
+	case "https://furtive-nerds.example.org/robots.txt":
+		// Disallow nodeinfo.
+		robots = "User-agent: *\nDisallow: /nodeinfo"
+	case "https://robotic.furtive-nerds.example.org/robots.txt":
+		// Disallow everything.
+		robots = "User-agent: *\nDisallow: /"
+	default:
+		log.Debugf(nil, "robots response not available for %s", req.URL)
+		responseCode = http.StatusNotFound
+		responseBytes = []byte(``)
+		responseContentType = "text/plain"
+		responseContentLength = len(responseBytes)
+		return
+	}
+
+	responseCode = http.StatusOK
+	responseBytes = []byte(robots)
+	responseContentType = "text/plain"
+	responseContentLength = len(responseBytes)
+
 	return
 }
 
