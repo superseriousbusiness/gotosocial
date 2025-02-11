@@ -19,20 +19,20 @@ package dereferencing
 
 import (
 	"context"
-	"fmt"
 	"net/url"
 
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 func (d *Dereferencer) GetRemoteInstance(ctx context.Context, username string, remoteInstanceURI *url.URL) (*gtsmodel.Instance, error) {
 	if blocked, err := d.state.DB.IsDomainBlocked(ctx, remoteInstanceURI.Host); blocked || err != nil {
-		return nil, fmt.Errorf("GetRemoteInstance: domain %s is blocked", remoteInstanceURI.Host)
+		return nil, gtserror.Newf("domain %s is blocked", remoteInstanceURI.Host)
 	}
 
 	transport, err := d.transportController.NewTransportForUsername(ctx, username)
 	if err != nil {
-		return nil, fmt.Errorf("transport err: %s", err)
+		return nil, gtserror.Newf("transport err: %w", err)
 	}
 
 	return transport.DereferenceInstance(ctx, remoteInstanceURI)

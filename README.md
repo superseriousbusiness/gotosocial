@@ -43,7 +43,8 @@ Here's a screenshot of the instance landing page! Check out the project's [offic
 - [Known Issues](#known-issues)
 - [Installing GoToSocial](#installing-gotosocial)
   - [Supported Platforms](#supported-platforms)
-    - [FreeBSD](#freebsd)
+    - [64-bit](#64-bit)
+    - [BSDs](#bsds)
     - [32-bit](#32-bit)
     - [OpenBSD](#openbsd)
   - [Stable Releases](#stable-releases)
@@ -434,6 +435,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [superseriousbusiness/exif-terminator](https://codeberg.org/superseriousbusiness/exif-terminator); EXIF data removal. [GNU AGPL v3 LICENSE](https://spdx.org/licenses/AGPL-3.0-or-later.html).
   - [superseriousbusiness/httpsig](https://github.com/superseriousbusiness/httpsig) forked from [go-fed/httpsig](https://github.com/go-fed/httpsig); secure HTTP signature library. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
   - [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) forked from [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2); OAuth server framework and token handling. [MIT License](https://spdx.org/licenses/MIT.html).
+- [temoto/robotstxt](https://github.com/temoto/robotstxt); robots.txt parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [tdewolff/minify](https://github.com/tdewolff/minify); HTML minification for Markdown-submitted posts. [MIT License](https://spdx.org/licenses/MIT.html).
 - [uber-go/automaxprocs](https://github.com/uber-go/automaxprocs); GOMAXPROCS automation. [MIT License](https://spdx.org/licenses/MIT.html).
 - [ulule/limiter](https://github.com/ulule/limiter); http rate limit middleware. [MIT License](https://spdx.org/licenses/MIT.html).
