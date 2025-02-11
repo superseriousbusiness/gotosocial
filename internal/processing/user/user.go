@@ -41,6 +41,7 @@ func New(
 	return Processor{
 		state:       state,
 		converter:   converter,
+		oauthServer: oauthServer,
 		emailSender: emailSender,
 	}
 }

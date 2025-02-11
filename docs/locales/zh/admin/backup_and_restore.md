@@ -134,14 +134,14 @@ GoToSocial CLI 工具还提供了从实例备份和恢复数据的命令，这�
 * 备份是加密的。
 * 内置工具可以列出快照并从中恢复。
 
-!!! tip
+!!! tip "提示"
     [Rsync.net](https://rsync.net/)、[BorgBase](https://www.borgbase.com/) 和 [Hetzner Storage](https://www.hetzner.com/storage/storage-box) 提供了可用于备份的经济实惠的存储。Rsync.net 有一种专门为 Borg 设计的备份产品，比他们的常规存储产品便宜得多。如果你只想使用 Borg 管理的备份，请在[此处注册](https://www.rsync.net/products/borg.html)。
 
 #### Borgmatic
 
 [Borgmatic](https://torsion.org/borgmatic/) 是一个帮助使用 [Borg](https://www.borgbackup.org/) 进行备份的工具。它通过使用 YAML 的声明性配置文件驱动。BorgBase、Rsync.net 和 Hetzner 都支持 Borg。
 
-!!! warning
+!!! warning "警告"
     初始化 Borg 仓库时，确保使用强加密密钥进行设置，并将密钥安全地存放在某处。否则将无法在将来解密备份。ArchWiki 上关于 Borgmatic 的条目解释了如何安全地将你的加密密钥传递给 Borgmatic，而不在配置文件中以明文形式存储它。
 
 如何使用 Borgmatic 备份数据库有其[单独的文档页面](https://torsion.org/borgmatic/docs/how-to/backup-your-databases/)，你应当在备份前查看一下。对于使用 SQLite 的 GoToSocial，Borgmatic 的简单 `config.yaml` 如下：
@@ -182,11 +182,11 @@ hooks:
 
 您需要将该文件放在您的 GoToSocial 实例上，并确保该文件是可执行的。它需要 Python 3，安装 Borg 和 Borgmatic 后您应该已经具备。它仅依赖于 Python 标准库。
 
-!!! note
+!!! note "注意"
     为了确保可靠运行，您应确保 GoToSocial 配置中的 [storage-local-base-path](../configuration/storage.md) 使用的是绝对路径。否则您将需要自己调整路径。
 
 ```sh
-$ gotosocial admin media list-attachments --local-only | \
+$ gotosocial --config-path /path/to/config.yaml admin media list-attachments --local-only | \
     /path/to/media-to-borg-patterns.py \
     <storage-local-base-path>
 ```
@@ -199,7 +199,7 @@ R <storage-local-base-path>
 - <storage-local-base-path>/*
 ```
 
-!!! tip
+!!! tip "提示"
     你可以通过向 `media-to-borg-patterns.py` 传递 `--help` 来查看帮助。通过将文件位置作为脚本的最后一个参数，也可以将输出直接写入文件。
 
 给定这组模式，Borg 将从 `<storage-local-base-path>` 开始寻找文件。任何匹配路径前缀 `pp:` 的都会被包括进去。其他的则会匹配最后一个模式，从存档中排除。
@@ -211,7 +211,7 @@ R <storage-local-base-path>
 
 ```ini
 [Service]
-ExecStartPre=/path/to/gotosocial admin media list-attachments --local-only | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
+ExecStartPre=/path/to/gotosocial --config-path /path/to/config.yaml admin media list-attachments --local-only | /path/to/media-to-borg-patterns.py <storage-local-base-path> /etc/borgmatic/gotosocial_patterns
 ```
 
 建议查看的文档：

@@ -47,6 +47,7 @@ nav:
   - "配置":
       - "configuration/index.md"
       - "configuration/general.md"
+      - "configuration/trusted_proxies.md"
       - "configuration/database.md"
       - "configuration/web.md"
       - "configuration/instance.md"
@@ -87,6 +88,7 @@ nav:
       - "admin/signups.md"
       - "admin/federation_modes.md"
       - "admin/domain_blocks.md"
+      - "admin/domain_permission_subscriptions.md"
       - "admin/request_filtering_modes.md"
       - "admin/robots.md"
       - "admin/cli.md"

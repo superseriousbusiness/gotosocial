@@ -114,7 +114,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
           "verified_at": null
         }
       ],
-      "hide_collections": true
+      "hide_collections": true,
+      "group": false
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -169,7 +170,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
           "name": "admin",
           "color": ""
         }
-      ]
+      ],
+      "group": false
     },
     "created_by_application_id": "01F8MGXQRHYF5QPMTMXP78QC2F"
   },
@@ -216,7 +218,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 0,
       "last_status_at": null,
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   },
   {
@@ -266,7 +269,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "last_status_at": "2024-11-01",
       "emojis": [],
       "fields": [],
-      "enable_rss": true
+      "enable_rss": true,
+      "group": false
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -313,7 +317,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 0,
       "last_status_at": null,
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     },
     "created_by_application_id": "01F8MGY43H3N2C8EWPR2FPYEXG"
   },
@@ -360,7 +365,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 1,
       "last_status_at": "2023-11-02",
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   },
   {
@@ -406,7 +412,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 4,
       "last_status_at": "2024-11-01",
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   },
   {
@@ -453,7 +460,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 0,
       "last_status_at": null,
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   },
   {
@@ -499,7 +507,8 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "statuses_count": 0,
       "last_status_at": null,
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   }
 ]`, dst.String())
@@ -584,7 +593,8 @@ func (suite *AccountsGetTestSuite) TestAccountsMinID() {
       "statuses_count": 0,
       "last_status_at": null,
       "emojis": [],
-      "fields": []
+      "fields": [],
+      "group": false
     }
   }
 ]`, dst.String())

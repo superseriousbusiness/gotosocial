@@ -1,5 +1,13 @@
 # 行为体与行为体属性
 
+## `Service` 与 `Person` 行为体
+
+GoToSocial 将大多数账号视为[此处](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person)描述的 ActivityStreams `Person` 类型。
+
+然而，被用户标记为机器人的账号将使用[此处](https://www.w3.org/TR/activitystreams-vocabulary/#dfn-service)描述的 `Service` 类型。
+
+这种类型的区分可供外站实例区分机器人账号和“普通”用户账号。
+
 ## 收件箱
 
 GoToSocial 按照 [ActivityPub 规范](https://www.w3.org/TR/activitypub/#inbox)，为行为体实现了收件箱。

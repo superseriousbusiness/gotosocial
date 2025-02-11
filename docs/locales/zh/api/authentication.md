@@ -25,7 +25,7 @@ curl \
 - `write`
 - `admin`
 
-!!! warning
+!!! warning "警告"
     GoToSocial 目前不支持范围授权令牌，因此在此过程中获得的任何令牌都可以代表你执行所有操作，包括如果你的账户具有管理员权限时的管理员操作。然而，始终以最低权限授予你的应用是一个好习惯。例如，如果你的应用不会发布贴文，请使用 scope=read。
 
     本着这种精神，上述示例使用了`read`，这意味着当未来支持范围令牌时，应用将仅限于执行`read`操作。
@@ -44,7 +44,7 @@ curl \
 }
 ```
 
-!!! tip
+!!! tip "提示"
     确保将 `client_id` 和 `client_secret` 的值保存到某个位置，以便在需要时参考。
 
 ## 授权你的应用代表你操作
@@ -57,7 +57,7 @@ curl \
 https://example.org/oauth/authorize?client_id=YOUR_CLIENT_ID&redirect_uri=urn:ietf:wg:oauth:2.0:oob&response_type=code&scope=read
 ```
 
-!!! tip
+!!! tip "提示"
     如果你在注册应用时使用了不同的范围，在上面的 URL 中将 `scope=read` 替换为你注册时使用的加号分隔的范围列表。例如，如果你注册你的应用时使用了 `scopes` 值 `read write`，那么你应该将上面的 `scope=read` 改为 `scope=read+write`。
 
 将 URL 粘贴到浏览器后，你会被引导到实例的登录表单，提示你输入邮箱地址和密码以将应用连接到你的账户。

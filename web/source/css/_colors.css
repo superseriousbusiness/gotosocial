@@ -24,6 +24,8 @@
 
 /* Color definitions */
 
+/* Dark mode - default */
+
 /* Foreground */
 $white1: #fafaff; /* default text color, contrast >= 5.0 with all $grays */
 $white2: #b3b5c6; /* less important text, can be used with $gray1 (6.8), $gray2 (5.5), $gray3 (4.9), $gray4 (4.5) */
@@ -94,7 +96,7 @@ $no-img-desc-fg: $gray1;
 
 $bg-sensitive: $gray1;
 
-$boxshadow: 0 0.4rem 1rem -0.1rem rgba(0,0,0,0.15);
+$boxshadow: 0 0.4rem 1rem -0.1rem rgba(0, 0, 0, 0.15);
 $boxshadow-border: 0.08rem solid $gray1;
 
 $avatar-border: $orange2;
@@ -130,3 +132,40 @@ $plyr-video-controls-background: $bg-accent;
 $plyr-badge-text-color: $fg;
 $plyr-badge-border-radius: $br;
 $plyr-video-progress-buffered-background: $gray8;
+
+/* Light mode */
+
+$white: #fafaff; /* we still use white for something */
+
+@media (prefers-color-scheme: light) {
+	:root {
+		$white1: #000000; /* default text color, contrast >= 5.0 with all $grays */
+		$white2: #59595F; /* less important text, can be used with $gray1 (8.5) ~ $gray5 (5.0) */
+
+		/* Background shades, contrast >= 5.0 with $white1 (#000000) */
+		$gray1: #ffffff;
+		$gray2: #f6f6f6;
+		$gray3: #ededed;
+		$gray4: #e4e4e4;
+		$gray5: #dbdbdb;
+		$gray6: #d2d2d2;
+		$gray7: #c9c9c9;
+		$gray8: #c0c0c0;
+
+		$orange1: #c75300; /* Used for non-text accent colors, can be used as background: $gray1 for text color (contrast 4.5)*/
+		$orange2: #bd4f00; /* hover/selected accent to $orange1, can be used with $gray1 (5.7), $gray2 (4.5) */
+
+		$blue1: #247cb3; /* lighter blue for smaller elements (borders), can only be used with $gray1 (4.5) */
+		$blue2: #166ba0; /* all-round accent color, can be used with $gray1 (5.7), $gray2 (5.3), $gray3 (4.9), $gray4 (4.5) */
+		$blue3: #106193; /* hover/selected accent to $blue2, can be used with $gray1 (6.6), $gray2 (6.1), $gray3 (5.6), $gray4 (5.2), $gray5 (4.8) */
+
+		$error1: #ffc1c1; /* Error border/foreground text, can be used with $error2 (5.0), $white1 (13.6), $white2 (4.5) */
+		$error2: #aa0000; /* Error background text, can be used with $error1 (5.0), $gray1 (7.7), $gray2 (7.1), $gray3 (6.62) */
+		$error3: #d93636; /* Error button background text, can be used with $white1 (4.53) */
+		$error-link: #abd4ff; /* Error link text, can be used with $error2 (5.56) */
+
+		$green1: #367400;
+
+		$info-bg: $blue1;
+	}
+}

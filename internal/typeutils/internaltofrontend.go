@@ -388,6 +388,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		EnableRSS:         enableRSS,
 		HideCollections:   hideCollections,
 		Roles:             roles,
+		Group:             false,
 	}
 
 	// Bodge default avatar + header in,

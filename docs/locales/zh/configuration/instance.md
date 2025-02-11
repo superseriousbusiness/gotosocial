@@ -112,4 +112,47 @@ instance-deliver-to-shared-inboxes: true
 # 选项: [true, false]
 # 默认值: false
 instance-inject-mastodon-version: false
+
+# 字符串。hh:mm 格式的 24 小时制时间。
+# 示例： ["14:30", "00:00", "04:00"]
+# 默认值： "23:00" （晚上11点）。
+instance-subscriptions-process-from: "23:00"
+
+
+# 时间间隔。表示更新订阅的周期。
+# 示例：["24h", "72h", "12h"]
+# 默认值： "24h"（每天一次）。
+instance-subscriptions-process-every: "24h"
+
+# 字符串。允许你自定义是否以及如何在 /api/v1|v2/instance
+# 和 /nodeinfo 端点向爬虫提供统计数据。
+#
+# 请注意，无论你在这里进行何种设置，/api/v1|v2/instance
+# 端点都不会被 robots.txt 允许抓取，因为这些是客户端
+# API端点。
+#
+# "" / 空字符串（默认模式）: 在 instance 和 nodeinfo 端点提供准确的统计数据，
+# 并在 robots.txt 中禁止爬虫抓取这些端点。这种模式相当于礼貌地
+# 要求爬虫不抓取，但不能保证它们会遵从这些规则，
+# 因为遗憾的是，许多爬虫甚至不会检查robots.txt。
+#
+# "zero": 在 instance 和 nodeinfo 端点提供全为零的统计数据，
+# 并在 robots.txt 中禁止爬虫抓取这些端点。
+# 这种模式阻止行为不端的爬虫收集有关您的实例的统计数据,
+# 因为所有收集的值都将为0。这（在统计数据方面）
+# 是保护您的实例隐私的最安全方法。
+#
+# "serve": 在 instance 和 nodeinfo 端点提供准确的统计数据,
+# 并允许爬虫抓取这些端点。如果您希望为
+# 联邦宇宙统计信息收集项目做贡献，此模式将非常有用。
+#
+# "baffle": 在 instance 和 nodeinfo 端点提供随机且荒谬的统计数据,
+# 并在 robots.txt 中禁止爬虫抓取这些端点。
+# 这种模式可以用于使不尊重 robots.txt 的爬虫感到困惑。
+# 警告，此做法可能会引起不尊重 robots.txt 的爬虫开发者的怨恨，
+# 因此可能会给您的实例带来风险。
+#
+# 选项: ["", "zero", "serve", "baffle"]
+# 默认: ""
+instance-stats-mode: ""
 ```
