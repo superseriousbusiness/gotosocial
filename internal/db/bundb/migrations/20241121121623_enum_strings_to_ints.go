@@ -71,7 +71,7 @@ func init() {
 			// we must drop all indices that rely on it.
 			log.Info(ctx, "dropping old visibility indexes...")
 			for _, index := range visIndices {
-				log.Info(ctx, "dropping old index %s...", index.name)
+				log.Infof(ctx, "dropping old index %s...", index.name)
 				if _, err := tx.NewDropIndex().
 					Index(index.name).
 					Exec(ctx); err != nil {
@@ -93,7 +93,7 @@ func init() {
 			// Recreate the visibility indices.
 			log.Info(ctx, "creating new visibility indexes...")
 			for _, index := range visIndices {
-				log.Info(ctx, "creating new index %s...", index.name)
+				log.Infof(ctx, "creating new index %s...", index.name)
 				q := tx.NewCreateIndex().
 					Table("statuses").
 					Index(index.name).
