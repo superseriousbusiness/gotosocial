@@ -145,12 +145,18 @@ func (m *Module) CallbackGETHandler(c *gin.Context) {
 			return
 		}
 
+		// Since we require lowercase usernames at this point, lowercase the one
+		// from the claims and use this to autofill the form with a suggestion.
+		//
+		// Pending https://github.com/superseriousbusiness/gotosocial/issues/1813
+		suggestedUsername := strings.ToLower(claims.PreferredUsername)
+
 		page := apiutil.WebPage{
 			Template: "finalize.tmpl",
 			Instance: instance,
 			Extra: map[string]any{
 				"name":              claims.Name,
-				"preferredUsername": claims.PreferredUsername,
+				"suggestedUsername": suggestedUsername,
 			},
 		}
 
