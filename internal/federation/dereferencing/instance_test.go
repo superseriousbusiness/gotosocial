@@ -50,7 +50,7 @@ func (suite *InstanceTestSuite) TestDerefInstance() {
 			//
 			// Debug-level logs should show something like:
 			//
-			//   - "can't fetch /nodeinfo/2.1: robots.txt disallows it" 
+			//   - "can't fetch /nodeinfo/2.1: robots.txt disallows it"
 			instanceIRI:      testrig.URLMustParse("https://furtive-nerds.example.org"),
 			expectedSoftware: "",
 		},
@@ -60,7 +60,7 @@ func (suite *InstanceTestSuite) TestDerefInstance() {
 			//
 			// Debug-level logs should show something like:
 			//
-			//   - "can't fetch api/v1/instance: robots.txt disallows it" 
+			//   - "can't fetch api/v1/instance: robots.txt disallows it"
 			//   - "can't fetch .well-known/nodeinfo: robots.txt disallows it"
 			instanceIRI:      testrig.URLMustParse("https://robotic.furtive-nerds.example.org"),
 			expectedSoftware: "",
@@ -71,7 +71,7 @@ func (suite *InstanceTestSuite) TestDerefInstance() {
 			//
 			// Debug-level logs should show something like:
 			//
-			//   - "can't use fetched .well-known/nodeinfo: robots tags disallows it" 
+			//   - "can't use fetched .well-known/nodeinfo: robots tags disallows it"
 			instanceIRI:      testrig.URLMustParse("https://really.furtive-nerds.example.org"),
 			expectedSoftware: "",
 		},

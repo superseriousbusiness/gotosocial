@@ -10397,10 +10397,14 @@ paths:
                   x-go-name: Federated
                 - description: |-
                     ISO 8601 Datetime at which to schedule a status.
-                    Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-                    Must be at least 5 minutes in the future.
 
-                    This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
+                    Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
+                    Must be at least 5 minutes in the future.
+                    This feature isn't implemented yet.
+
+                    Providing this parameter with a *past* time will cause the status to be backdated,
+                    and will not push it to the user's followers. This is intended for importing old statuses.
+                  format: date-time
                   in: formData
                   name: scheduled_at
                   type: string

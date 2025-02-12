@@ -1082,6 +1082,31 @@ func GetInstanceStatsMode() string { return global.GetInstanceStatsMode() }
 // SetInstanceStatsMode safely sets the value for global configuration 'InstanceStatsMode' field
 func SetInstanceStatsMode(v string) { global.SetInstanceStatsMode(v) }
 
+// GetInstanceAllowBackdatingStatuses safely fetches the Configuration value for state's 'InstanceAllowBackdatingStatuses' field
+func (st *ConfigState) GetInstanceAllowBackdatingStatuses() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceAllowBackdatingStatuses
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceAllowBackdatingStatuses safely sets the Configuration value for state's 'InstanceAllowBackdatingStatuses' field
+func (st *ConfigState) SetInstanceAllowBackdatingStatuses(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceAllowBackdatingStatuses = v
+	st.reloadToViper()
+}
+
+// InstanceAllowBackdatingStatusesFlag returns the flag name for the 'InstanceAllowBackdatingStatuses' field
+func InstanceAllowBackdatingStatusesFlag() string { return "instance-allow-backdating-statuses" }
+
+// GetInstanceAllowBackdatingStatuses safely fetches the value for global configuration 'InstanceAllowBackdatingStatuses' field
+func GetInstanceAllowBackdatingStatuses() bool { return global.GetInstanceAllowBackdatingStatuses() }
+
+// SetInstanceAllowBackdatingStatuses safely sets the value for global configuration 'InstanceAllowBackdatingStatuses' field
+func SetInstanceAllowBackdatingStatuses(v bool) { global.SetInstanceAllowBackdatingStatuses(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()

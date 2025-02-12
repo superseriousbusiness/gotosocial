@@ -93,6 +93,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		cmd.Flags().String(InstanceSubscriptionsProcessFromFlag(), cfg.InstanceSubscriptionsProcessFrom, fieldtag("InstanceSubscriptionsProcessFrom", "usage"))
 		cmd.Flags().Duration(InstanceSubscriptionsProcessEveryFlag(), cfg.InstanceSubscriptionsProcessEvery, fieldtag("InstanceSubscriptionsProcessEvery", "usage"))
 		cmd.Flags().String(InstanceStatsModeFlag(), cfg.InstanceStatsMode, fieldtag("InstanceStatsMode", "usage"))
+		cmd.Flags().Bool(InstanceAllowBackdatingStatusesFlag(), cfg.InstanceAllowBackdatingStatuses, fieldtag("InstanceAllowBackdatingStatuses", "usage"))
 
 		// Accounts
 		cmd.Flags().Bool(AccountsRegistrationOpenFlag(), cfg.AccountsRegistrationOpen, fieldtag("AccountsRegistrationOpen", "usage"))
