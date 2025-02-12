@@ -91,6 +91,7 @@ type Configuration struct {
 	InstanceSubscriptionsProcessFrom  string             `name:"instance-subscriptions-process-from" usage:"Time of day from which to start running instance subscriptions processing jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
 	InstanceSubscriptionsProcessEvery time.Duration      `name:"instance-subscriptions-process-every" usage:"Period to elapse between instance subscriptions processing jobs, starting from instance-subscriptions-process-from."`
 	InstanceStatsMode                 string             `name:"instance-stats-mode" usage:"Allows you to customize the way stats are served to crawlers: one of '', 'serve', 'zero', 'baffle'. Home page stats remain unchanged."`
+	InstanceAllowBackdatingStatuses   bool               `name:"instance-allow-backdating-statuses" usage:"Allow local accounts to backdate statuses using the scheduled_at param to /api/v1/statuses"`
 
 	AccountsRegistrationOpen         bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
 	AccountsReasonRequired           bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`

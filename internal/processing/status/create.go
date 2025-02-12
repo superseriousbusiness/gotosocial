@@ -24,6 +24,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -111,6 +112,25 @@ func (p *Processor) Create(
 		}
 
 		// If not scheduled into the future, this status is being backfilled.
+		if !config.GetInstanceAllowBackdatingStatuses() {
+			const errText = "backdating statuses has been disabled on this instance"
+			err := gtserror.New(errText)
+			return nil, gtserror.NewErrorForbidden(err)
+		}
+
+		// Statuses can't be backdated to or before the UNIX epoch
+		// since this would prevent generating a ULID.
+		// If backdated even further to the Go epoch,
+		// this would also cause issues with time.Time.IsZero() checks
+		// that normally signify an absent optional time,
+		// but this check covers both cases.
+		if scheduledAt.Compare(time.UnixMilli(0)) <= 0 {
+			const errText = "statuses can't be backdated to or before the UNIX epoch"
+			err := gtserror.New(errText)
+			return nil, gtserror.NewErrorNotAcceptable(err, errText)
+		}
+
+		// Allow the backfill and generate an appropriate ID for the creation time.
 		backfill = true
 		createdAt = scheduledAt
 		var err error

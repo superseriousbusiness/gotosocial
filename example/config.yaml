@@ -458,6 +458,19 @@ instance-subscriptions-process-every: "24h"
 # Default: ""
 instance-stats-mode: ""
 
+# Bool. This flag controls whether local accounts may backdate statuses
+# using past dates with the scheduled_at param to /api/v1/statuses.
+# This flag does not affect scheduling posts in the future
+# (which is currently not implemented anyway),
+# nor can it prevent remote accounts from backdating their own statuses.
+#
+# If true, all local accounts may backdate statuses.
+# If false, status backdating will be disabled and an error will be returned if it's used.
+#
+# Options: [true, false]
+# Default: true
+instance-allow-backdating-statuses: true
+
 ###########################
 ##### ACCOUNTS CONFIG #####
 ###########################

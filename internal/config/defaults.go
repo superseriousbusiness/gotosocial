@@ -67,6 +67,7 @@ var Defaults = Configuration{
 	InstanceLanguages:                 make(language.Languages, 0),
 	InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,
 	InstanceSubscriptionsProcessEvery: 24 * time.Hour, // 1/day.
+	InstanceAllowBackdatingStatuses:   true,
 
 	AccountsRegistrationOpen:         false,
 	AccountsReasonRequired:           true,

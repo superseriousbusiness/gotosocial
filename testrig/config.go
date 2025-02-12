@@ -101,6 +101,7 @@ func testDefaults() config.Configuration {
 		},
 		InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,
 		InstanceSubscriptionsProcessEvery: 24 * time.Hour, // 1/day.
+		InstanceAllowBackdatingStatuses:   true,
 
 		AccountsRegistrationOpen:         true,
 		AccountsReasonRequired:           true,

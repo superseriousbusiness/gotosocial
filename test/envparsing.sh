@@ -108,6 +108,7 @@ EXPECT=$(cat << "EOF"
         "timeout": 30000000000,
         "tls-insecure-skip-verify": false
     },
+    "instance-allow-backdating-statuses": true,
     "instance-deliver-to-shared-inboxes": false,
     "instance-expose-peers": true,
     "instance-expose-public-timeline": true,
