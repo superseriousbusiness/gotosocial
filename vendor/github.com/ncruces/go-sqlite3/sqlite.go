@@ -3,7 +3,6 @@ package sqlite3
 
 import (
 	"context"
-	"math"
 	"math/bits"
 	"os"
 	"sync"
@@ -58,8 +57,8 @@ func compileSQLite() {
 		} else {
 			cfg = cfg.WithMemoryLimitPages(4096) // 256MB
 		}
+		cfg = cfg.WithCoreFeatures(api.CoreFeaturesV2)
 	}
-	cfg = cfg.WithCoreFeatures(api.CoreFeaturesV2)
 
 	instance.runtime = wazero.NewRuntimeWithConfig(ctx, cfg)
 
@@ -94,7 +93,7 @@ type sqlite struct {
 		id   [32]*byte
 		mask uint32
 	}
-	stack [9]uint64
+	stack [9]stk_t
 }
 
 func instantiateSQLite() (sqlt *sqlite, err error) {
@@ -120,7 +119,7 @@ func (sqlt *sqlite) close() error {
 	return sqlt.mod.Close(sqlt.ctx)
 }
 
-func (sqlt *sqlite) error(rc uint64, handle uint32, sql ...string) error {
+func (sqlt *sqlite) error(rc res_t, handle ptr_t, sql ...string) error {
 	if rc == _OK {
 		return nil
 	}
@@ -131,18 +130,18 @@ func (sqlt *sqlite) error(rc uint64, handle uint32, sql ...string) error {
 		panic(util.OOMErr)
 	}
 
-	if r := sqlt.call("sqlite3_errstr", rc); r != 0 {
-		err.str = util.ReadString(sqlt.mod, uint32(r), _MAX_NAME)
+	if ptr := ptr_t(sqlt.call("sqlite3_errstr", stk_t(rc))); ptr != 0 {
+		err.str = util.ReadString(sqlt.mod, ptr, _MAX_NAME)
 	}
 
 	if handle != 0 {
-		if r := sqlt.call("sqlite3_errmsg", uint64(handle)); r != 0 {
-			err.msg = util.ReadString(sqlt.mod, uint32(r), _MAX_LENGTH)
+		if ptr := ptr_t(sqlt.call("sqlite3_errmsg", stk_t(handle))); ptr != 0 {
+			err.msg = util.ReadString(sqlt.mod, ptr, _MAX_LENGTH)
 		}
 
 		if len(sql) != 0 {
-			if r := sqlt.call("sqlite3_error_offset", uint64(handle)); r != math.MaxUint32 {
-				err.sql = sql[0][r:]
+			if i := int32(sqlt.call("sqlite3_error_offset", stk_t(handle))); i != -1 {
+				err.sql = sql[0][i:]
 			}
 		}
 	}
@@ -182,7 +181,7 @@ func (sqlt *sqlite) putfn(name string, fn api.Function) {
 	}
 }
 
-func (sqlt *sqlite) call(name string, params ...uint64) uint64 {
+func (sqlt *sqlite) call(name string, params ...stk_t) stk_t {
 	copy(sqlt.stack[:], params)
 	fn := sqlt.getfn(name)
 	err := fn.CallWithStack(sqlt.ctx, sqlt.stack[:])
@@ -190,33 +189,33 @@ func (sqlt *sqlite) call(name string, params ...uint64) uint64 {
 		panic(err)
 	}
 	sqlt.putfn(name, fn)
-	return sqlt.stack[0]
+	return stk_t(sqlt.stack[0])
 }
 
-func (sqlt *sqlite) free(ptr uint32) {
+func (sqlt *sqlite) free(ptr ptr_t) {
 	if ptr == 0 {
 		return
 	}
-	sqlt.call("sqlite3_free", uint64(ptr))
+	sqlt.call("sqlite3_free", stk_t(ptr))
 }
 
-func (sqlt *sqlite) new(size uint64) uint32 {
-	ptr := uint32(sqlt.call("sqlite3_malloc64", size))
+func (sqlt *sqlite) new(size int64) ptr_t {
+	ptr := ptr_t(sqlt.call("sqlite3_malloc64", stk_t(size)))
 	if ptr == 0 && size != 0 {
 		panic(util.OOMErr)
 	}
 	return ptr
 }
 
-func (sqlt *sqlite) realloc(ptr uint32, size uint64) uint32 {
-	ptr = uint32(sqlt.call("sqlite3_realloc64", uint64(ptr), size))
+func (sqlt *sqlite) realloc(ptr ptr_t, size int64) ptr_t {
+	ptr = ptr_t(sqlt.call("sqlite3_realloc64", stk_t(ptr), stk_t(size)))
 	if ptr == 0 && size != 0 {
 		panic(util.OOMErr)
 	}
 	return ptr
 }
 
-func (sqlt *sqlite) newBytes(b []byte) uint32 {
+func (sqlt *sqlite) newBytes(b []byte) ptr_t {
 	if (*[0]byte)(b) == nil {
 		return 0
 	}
@@ -224,33 +223,31 @@ func (sqlt *sqlite) newBytes(b []byte) uint32 {
 	if size == 0 {
 		size = 1
 	}
-	ptr := sqlt.new(uint64(size))
+	ptr := sqlt.new(int64(size))
 	util.WriteBytes(sqlt.mod, ptr, b)
 	return ptr
 }
 
-func (sqlt *sqlite) newString(s string) uint32 {
-	ptr := sqlt.new(uint64(len(s) + 1))
+func (sqlt *sqlite) newString(s string) ptr_t {
+	ptr := sqlt.new(int64(len(s)) + 1)
 	util.WriteString(sqlt.mod, ptr, s)
 	return ptr
 }
 
-func (sqlt *sqlite) newArena(size uint64) arena {
-	// Ensure the arena's size is a multiple of 8.
-	size = (size + 7) &^ 7
+const arenaSize = 4096
+
+func (sqlt *sqlite) newArena() arena {
 	return arena{
 		sqlt: sqlt,
-		size: uint32(size),
-		base: sqlt.new(size),
+		base: sqlt.new(arenaSize),
 	}
 }
 
 type arena struct {
 	sqlt *sqlite
-	ptrs []uint32
-	base uint32
-	next uint32
-	size uint32
+	ptrs []ptr_t
+	base ptr_t
+	next int32
 }
 
 func (a *arena) free() {
@@ -277,34 +274,34 @@ func (a *arena) mark() (reset func()) {
 	}
 }
 
-func (a *arena) new(size uint64) uint32 {
+func (a *arena) new(size int64) ptr_t {
 	// Align the next address, to 4 or 8 bytes.
 	if size&7 != 0 {
 		a.next = (a.next + 3) &^ 3
 	} else {
 		a.next = (a.next + 7) &^ 7
 	}
-	if size <= uint64(a.size-a.next) {
-		ptr := a.base + a.next
-		a.next += uint32(size)
-		return ptr
+	if size <= arenaSize-int64(a.next) {
+		ptr := a.base + ptr_t(a.next)
+		a.next += int32(size)
+		return ptr_t(ptr)
 	}
 	ptr := a.sqlt.new(size)
 	a.ptrs = append(a.ptrs, ptr)
-	return ptr
+	return ptr_t(ptr)
 }
 
-func (a *arena) bytes(b []byte) uint32 {
+func (a *arena) bytes(b []byte) ptr_t {
 	if (*[0]byte)(b) == nil {
 		return 0
 	}
-	ptr := a.new(uint64(len(b)))
+	ptr := a.new(int64(len(b)))
 	util.WriteBytes(a.sqlt.mod, ptr, b)
 	return ptr
 }
 
-func (a *arena) string(s string) uint32 {
-	ptr := a.new(uint64(len(s) + 1))
+func (a *arena) string(s string) ptr_t {
+	ptr := a.new(int64(len(s)) + 1)
 	util.WriteString(a.sqlt.mod, ptr, s)
 	return ptr
 }

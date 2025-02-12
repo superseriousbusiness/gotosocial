@@ -10,8 +10,10 @@ import (
 	"github.com/ncruces/go-sqlite3/vfs"
 )
 
-// Must be a multiple of 64K (the largest page size).
 const sectorSize = 65536
+
+// Ensure sectorSize is a multiple of 64K (the largest page size).
+var _ [0]struct{} = [sectorSize & 65535]struct{}{}
 
 type memVFS struct{}
 

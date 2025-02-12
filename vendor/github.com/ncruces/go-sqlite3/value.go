@@ -14,27 +14,27 @@ import (
 // https://sqlite.org/c3ref/value.html
 type Value struct {
 	c      *Conn
-	handle uint32
+	handle ptr_t
 	unprot bool
 	copied bool
 }
 
-func (v Value) protected() uint64 {
+func (v Value) protected() stk_t {
 	if v.unprot {
 		panic(util.ValueErr)
 	}
-	return uint64(v.handle)
+	return stk_t(v.handle)
 }
 
 // Dup makes a copy of the SQL value and returns a pointer to that copy.
 //
 // https://sqlite.org/c3ref/value_dup.html
 func (v Value) Dup() *Value {
-	r := v.c.call("sqlite3_value_dup", uint64(v.handle))
+	ptr := ptr_t(v.c.call("sqlite3_value_dup", stk_t(v.handle)))
 	return &Value{
 		c:      v.c,
 		copied: true,
-		handle: uint32(r),
+		handle: ptr,
 	}
 }
 
@@ -45,7 +45,7 @@ func (dup *Value) Close() error {
 	if !dup.copied {
 		panic(util.ValueErr)
 	}
-	dup.c.call("sqlite3_value_free", uint64(dup.handle))
+	dup.c.call("sqlite3_value_free", stk_t(dup.handle))
 	dup.handle = 0
 	return nil
 }
@@ -54,16 +54,14 @@ func (dup *Value) Close() error {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Type() Datatype {
-	r := v.c.call("sqlite3_value_type", v.protected())
-	return Datatype(r)
+	return Datatype(v.c.call("sqlite3_value_type", v.protected()))
 }
 
 // Type returns the numeric datatype of the value.
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) NumericType() Datatype {
-	r := v.c.call("sqlite3_value_numeric_type", v.protected())
-	return Datatype(r)
+	return Datatype(v.c.call("sqlite3_value_numeric_type", v.protected()))
 }
 
 // Bool returns the value as a bool.
@@ -87,16 +85,15 @@ func (v Value) Int() int {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Int64() int64 {
-	r := v.c.call("sqlite3_value_int64", v.protected())
-	return int64(r)
+	return int64(v.c.call("sqlite3_value_int64", v.protected()))
 }
 
 // Float returns the value as a float64.
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) Float() float64 {
-	r := v.c.call("sqlite3_value_double", v.protected())
-	return math.Float64frombits(r)
+	f := uint64(v.c.call("sqlite3_value_double", v.protected()))
+	return math.Float64frombits(f)
 }
 
 // Time returns the value as a [time.Time].
@@ -141,8 +138,8 @@ func (v Value) Blob(buf []byte) []byte {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) RawText() []byte {
-	r := v.c.call("sqlite3_value_text", v.protected())
-	return v.rawBytes(uint32(r))
+	ptr := ptr_t(v.c.call("sqlite3_value_text", v.protected()))
+	return v.rawBytes(ptr)
 }
 
 // RawBlob returns the value as a []byte.
@@ -151,24 +148,24 @@ func (v Value) RawText() []byte {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) RawBlob() []byte {
-	r := v.c.call("sqlite3_value_blob", v.protected())
-	return v.rawBytes(uint32(r))
+	ptr := ptr_t(v.c.call("sqlite3_value_blob", v.protected()))
+	return v.rawBytes(ptr)
 }
 
-func (v Value) rawBytes(ptr uint32) []byte {
+func (v Value) rawBytes(ptr ptr_t) []byte {
 	if ptr == 0 {
 		return nil
 	}
 
-	r := v.c.call("sqlite3_value_bytes", v.protected())
-	return util.View(v.c.mod, ptr, r)
+	n := int32(v.c.call("sqlite3_value_bytes", v.protected()))
+	return util.View(v.c.mod, ptr, int64(n))
 }
 
 // Pointer gets the pointer associated with this value,
 // or nil if it has no associated pointer.
 func (v Value) Pointer() any {
-	r := v.c.call("sqlite3_value_pointer_go", v.protected())
-	return util.GetHandle(v.c.ctx, uint32(r))
+	ptr := ptr_t(v.c.call("sqlite3_value_pointer_go", v.protected()))
+	return util.GetHandle(v.c.ctx, ptr)
 }
 
 // JSON parses a JSON-encoded value
@@ -185,7 +182,7 @@ func (v Value) JSON(ptr any) error {
 	case INTEGER:
 		data = strconv.AppendInt(nil, v.Int64(), 10)
 	case FLOAT:
-		data = strconv.AppendFloat(nil, v.Float(), 'g', -1, 64)
+		data = util.AppendNumber(nil, v.Float())
 	default:
 		panic(util.AssertErr())
 	}
@@ -197,16 +194,16 @@ func (v Value) JSON(ptr any) error {
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) NoChange() bool {
-	r := v.c.call("sqlite3_value_nochange", v.protected())
-	return r != 0
+	b := int32(v.c.call("sqlite3_value_nochange", v.protected()))
+	return b != 0
 }
 
 // FromBind returns true if value originated from a bound parameter.
 //
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) FromBind() bool {
-	r := v.c.call("sqlite3_value_frombind", v.protected())
-	return r != 0
+	b := int32(v.c.call("sqlite3_value_frombind", v.protected()))
+	return b != 0
 }
 
 // InFirst returns the first element
@@ -216,13 +213,13 @@ func (v Value) FromBind() bool {
 func (v Value) InFirst() (Value, error) {
 	defer v.c.arena.mark()()
 	valPtr := v.c.arena.new(ptrlen)
-	r := v.c.call("sqlite3_vtab_in_first", uint64(v.handle), uint64(valPtr))
-	if err := v.c.error(r); err != nil {
+	rc := res_t(v.c.call("sqlite3_vtab_in_first", stk_t(v.handle), stk_t(valPtr)))
+	if err := v.c.error(rc); err != nil {
 		return Value{}, err
 	}
 	return Value{
 		c:      v.c,
-		handle: util.ReadUint32(v.c.mod, valPtr),
+		handle: util.Read32[ptr_t](v.c.mod, valPtr),
 	}, nil
 }
 
@@ -233,12 +230,12 @@ func (v Value) InFirst() (Value, error) {
 func (v Value) InNext() (Value, error) {
 	defer v.c.arena.mark()()
 	valPtr := v.c.arena.new(ptrlen)
-	r := v.c.call("sqlite3_vtab_in_next", uint64(v.handle), uint64(valPtr))
-	if err := v.c.error(r); err != nil {
+	rc := res_t(v.c.call("sqlite3_vtab_in_next", stk_t(v.handle), stk_t(valPtr)))
+	if err := v.c.error(rc); err != nil {
 		return Value{}, err
 	}
 	return Value{
 		c:      v.c,
-		handle: util.ReadUint32(v.c.mod, valPtr),
+		handle: util.Read32[ptr_t](v.c.mod, valPtr),
 	}, nil
 }

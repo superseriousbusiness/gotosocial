@@ -8,7 +8,12 @@ const (
 	_MAX_PATHNAME        = 1024
 	_DEFAULT_SECTOR_SIZE = 4096
 
-	ptrlen = 4
+	ptrlen = util.PtrLen
+)
+
+type (
+	stk_t = util.Stk_t
+	ptr_t = util.Ptr_t
 )
 
 // https://sqlite.org/rescode.html
