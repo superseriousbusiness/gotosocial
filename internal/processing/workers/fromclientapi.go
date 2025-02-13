@@ -682,13 +682,8 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg *messages.FromClientAP
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
 	}
 
-	// Remove blocker's statuses from blocker's timeline.
-	p.state.Caches.Timelines.Home.InvalidateFrom(block.AccountID, "AccountID", block.TargetAccountID)
-	p.state.Caches.Timelines.Home.InvalidateFrom(block.AccountID, "BoostOfAccountID", block.TargetAccountID)
-
-	// Remove blockee's statuses from blockee's timeline.
-	p.state.Caches.Timelines.Home.InvalidateFrom(block.TargetAccountID, "AccountID", block.AccountID)
-	p.state.Caches.Timelines.Home.InvalidateFrom(block.TargetAccountID, "BoostOfAccountID", block.AccountID)
+	// Perform any necessary timeline invalidation.
+	p.surface.invalidateTimelinesForBlock(ctx, block)
 
 	// TODO: same with notifications?
 	// TODO: same with bookmarks?

@@ -87,7 +87,7 @@ func (l *listDB) getList(ctx context.Context, lookup string, dbQuery func(*gtsmo
 }
 
 func (l *listDB) GetListsByAccountID(ctx context.Context, accountID string) ([]*gtsmodel.List, error) {
-	listIDs, err := l.getListIDsByAccountID(ctx, accountID)
+	listIDs, err := l.GetListIDsByAccountID(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +95,7 @@ func (l *listDB) GetListsByAccountID(ctx context.Context, accountID string) ([]*
 }
 
 func (l *listDB) CountListsByAccountID(ctx context.Context, accountID string) (int, error) {
-	listIDs, err := l.getListIDsByAccountID(ctx, accountID)
+	listIDs, err := l.GetListIDsByAccountID(ctx, accountID)
 	return len(listIDs), err
 }
 
@@ -176,9 +176,8 @@ func (l *listDB) UpdateList(ctx context.Context, list *gtsmodel.List, columns ..
 		return err
 	}
 
-	if err := l.state.Timelines.List.RemoveTimeline(ctx, list.ID); err != nil {
-		log.Errorf(ctx, "error invalidating list timeline: %q", err)
-	}
+	// Clear cached timeline associated with list ID.
+	l.state.Caches.Timelines.List.Clear(list.ID)
 
 	return nil
 }
@@ -220,10 +219,13 @@ func (l *listDB) DeleteListByID(ctx context.Context, id string) error {
 	// Invalidate all related entry caches for this list.
 	l.invalidateEntryCaches(ctx, []string{id}, followIDs)
 
+	// Delete the cached timeline of list.
+	l.state.Caches.Timelines.List.Delete(id)
+
 	return nil
 }
 
-func (l *listDB) getListIDsByAccountID(ctx context.Context, accountID string) ([]string, error) {
+func (l *listDB) GetListIDsByAccountID(ctx context.Context, accountID string) ([]string, error) {
 	return l.state.Caches.DB.ListIDs.Load("a"+accountID, func() ([]string, error) {
 		var listIDs []string
 
@@ -460,10 +462,8 @@ func (l *listDB) invalidateEntryCaches(ctx context.Context, listIDs, followIDs [
 			"f"+listID,
 		)
 
-		// Invalidate the timeline for the list this entry belongs to.
-		if err := l.state.Timelines.List.RemoveTimeline(ctx, listID); err != nil {
-			log.Errorf(ctx, "error invalidating list timeline: %q", err)
-		}
+		// Invalidate list timeline cache by ID.
+		l.state.Caches.Timelines.List.Clear(listID)
 	}
 
 	// Invalidate ListedID slice cache entries.

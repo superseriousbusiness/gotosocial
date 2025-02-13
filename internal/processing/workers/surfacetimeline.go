@@ -553,13 +553,8 @@ func (s *Surface) tagFollowersForStatus(
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
 func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) error {
-	if err := s.State.Timelines.Home.WipeItemFromAllTimelines(ctx, statusID); err != nil {
-		return err
-	}
-	if err := s.State.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
-		return err
-	}
-
+	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
 	s.Stream.Delete(ctx, statusID)
 	return nil
 }
@@ -569,19 +564,8 @@ func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string
 // stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
 // both for the status itself, and for any boosts of the status.
 func (s *Surface) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
-	if err := s.State.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		log.
-			WithContext(ctx).
-			WithField("statusID", statusID).
-			Errorf("error unpreparing status from home timelines: %v", err)
-	}
-
-	if err := s.State.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		log.
-			WithContext(ctx).
-			WithField("statusID", statusID).
-			Errorf("error unpreparing status from list timelines: %v", err)
-	}
+	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
+	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
 }
 
 // timelineStatusUpdate looks up HOME and LIST timelines of accounts
@@ -859,4 +843,58 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 		}
 	}
 	return errs.Combine()
+}
+
+// invalidateTimelinesForBlock ...
+func (s *Surface) invalidateTimelinesForBlock(ctx context.Context, block *gtsmodel.Block) {
+
+	// Check if origin is local account,
+	// i.e. has status timeline caches.
+	if block.Account.IsLocal() {
+
+		// Remove target's statuses
+		// from origin's home timeline.
+		s.State.Caches.Timelines.Home.
+			MustGet(block.AccountID).
+			RemoveByAccountIDs(block.TargetAccountID)
+
+		// Get the IDs of any lists created by origin account.
+		listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, block.AccountID)
+		if err != nil {
+			log.Errorf(ctx, "error getting account's list IDs for %s: %v", block.URI, err)
+		}
+
+		// Remove target's statuses from
+		// any of origin's list timelines.
+		for _, listID := range listIDs {
+			s.State.Caches.Timelines.List.
+				MustGet(listID).
+				RemoveByAccountIDs(block.TargetAccountID)
+		}
+	}
+
+	// Check if target is local account,
+	// i.e. has status timeline caches.
+	if block.TargetAccount.IsLocal() {
+
+		// Remove origin's statuses
+		// from target's home timeline.
+		s.State.Caches.Timelines.Home.
+			MustGet(block.TargetAccountID).
+			RemoveByAccountIDs(block.AccountID)
+
+		// Get the IDs of any lists created by target account.
+		listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, block.TargetAccountID)
+		if err != nil {
+			log.Errorf(ctx, "error getting target account's list IDs for %s: %v", block.URI, err)
+		}
+
+		// Remove origin's statuses from
+		// any of target's list timelines.
+		for _, listID := range listIDs {
+			s.State.Caches.Timelines.List.
+				MustGet(listID).
+				RemoveByAccountIDs(block.AccountID)
+		}
+	}
 }
