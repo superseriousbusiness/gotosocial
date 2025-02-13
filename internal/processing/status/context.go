@@ -442,6 +442,33 @@ func (p *Processor) WebContextGet(
 		_, parentHidden := hiddenStatuses[status.InReplyToID]
 		v, err := p.visFilter.StatusVisible(ctx, nil, status)
 		if err != nil || !v || parentHidden {
+			// If this is the main status whose
+			// context we're looking for, and it's
+			// not visible for whatever reason, we
+			// should just return a 404 here, as we
+			// can't meaningfully render the thread.
+			if status.ID == targetStatusID {
+				var thisErr error
+				switch {
+				case err != nil:
+					thisErr = gtserror.Newf("error checking visibility of target status: %w", err)
+
+				case !v:
+					const errText = "target status not visible"
+					thisErr = gtserror.New(errText)
+
+				case parentHidden:
+					const errText = "target status parent is hidden"
+					thisErr = gtserror.New(errText)
+				}
+
+				return nil, gtserror.NewErrorNotFound(thisErr)
+			}
+
+			// This isn't the main status whose
+			// context we're looking for, just
+			// your standard not-visible status,
+			// so add it to the count + map.
 			if !inReplies {
 				// Main thread entry hidden.
 				wCtx.ThreadHidden++
