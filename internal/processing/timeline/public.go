@@ -19,13 +19,9 @@ package timeline
 
 import (
 	"context"
-	"errors"
 	"net/url"
-	"slices"
-	"strconv"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -42,9 +38,7 @@ func (p *Processor) PublicTimelineGet(
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
 ) {
-
-	// Load timeline data.
-	return p.getTimeline(ctx,
+	return p.getStatusTimeline(ctx,
 
 		// Auth'd
 		// account.
@@ -60,68 +54,42 @@ func (p *Processor) PublicTimelineGet(
 		// Public timeline endpoint.
 		"/api/v1/timelines/public",
 
-		// Set local-only timeline page query flag.
-		url.Values{"local": {strconv.FormatBool(local)}},
+		// Set local-only timeline
+		// page query flag, (this map
+		// later gets copied before
+		// any further usage).
+		func() url.Values {
+			if local {
+				return localOnlyTrue
+			}
+			return localOnlyFalse
+		}(),
 
 		// Status filter context.
 		statusfilter.FilterContextPublic,
 
-		// Timeline cache load function, used to further hydrate cache where necessary.
-		func(page *paging.Page) (statuses []*gtsmodel.Status, next *paging.Page, err error) {
-
-			// Fetch the global public status timeline page.
-			statuses, err = p.state.DB.GetPublicTimeline(ctx,
-				page,
-			)
-			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return nil, nil, gtserror.Newf("error getting statuses: %w", err)
-			}
-
-			if len(statuses) == 0 {
-				// No more to load.
-				return nil, nil, nil
-			}
-
-			// Get the lowest and highest
-			// ID values, used for next pg.
-			lo := statuses[len(statuses)-1].ID
-			hi := statuses[0].ID
-
-			// Set next paging value.
-			page = page.Next(lo, hi)
-
-			for i := 0; i < len(statuses); {
-				// Get status at idx.
-				status := statuses[i]
-
-				// Check whether status should be show on public timeline.
-				visible, err := p.visFilter.StatusPublicTimelineable(ctx,
-					requester,
-					status,
-				)
-				if err != nil {
-					return nil, nil, gtserror.Newf("error checking visibility: %w", err)
-				}
-
-				if !visible {
-					// Status not visible to home timeline.
-					statuses = slices.Delete(statuses, i, i+1)
-					continue
-				}
-
-				// Iter.
-				i++
-			}
-
-			return
+		// Database load function.
+		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
+			return p.state.DB.GetPublicTimeline(ctx, pg)
 		},
 
-		// Per-request filtering function.
-		func(s *gtsmodel.Status) bool {
-			if local {
-				return !*s.Local
+		// Pre-filtering function,
+		// i.e. filter before caching.
+		nil,
+
+		// Post-filtering function,
+		// i.e. filter after caching.
+		func(s *gtsmodel.Status) (bool, error) {
+
+			// Remove any non-local statuses
+			// if requester wants local-only.
+			if local && !*s.Local {
+				return true, nil
 			}
-			return false
+
+			// Check the visibility of passed status to requesting user.
+			ok, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
+			return !ok, err
 		},
 	)
 }

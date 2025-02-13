@@ -20,7 +20,6 @@ package timeline
 import (
 	"context"
 	"errors"
-	"slices"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -65,21 +64,21 @@ func (p *Processor) ListTimelineGet(
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	// Load timeline data.
-	return p.getTimeline(ctx,
+	// Fetch status timeline for list.
+	return p.getStatusTimeline(ctx,
 
 		// Auth'd
 		// account.
 		requester,
 
-		// List timeline cache for list with ID.
-		p.state.Caches.Timelines.List.Get(listID),
+		// Per-account home timeline cache.
+		p.state.Caches.Timelines.List.MustGet(requester.ID),
 
 		// Current
 		// page.
 		page,
 
-		// List timeline endpoint.
+		// List timeline ID's endpoint.
 		"/api/v1/timelines/list/"+listID,
 
 		// No page
@@ -89,59 +88,22 @@ func (p *Processor) ListTimelineGet(
 		// Status filter context.
 		statusfilter.FilterContextHome,
 
-		// Timeline cache load function, used to further hydrate cache where necessary.
-		func(page *paging.Page) (statuses []*gtsmodel.Status, next *paging.Page, err error) {
-
-			// Fetch requesting account's list timeline page.
-			statuses, err = p.state.DB.GetListTimeline(ctx,
-				listID,
-				page,
-			)
-			if err != nil && !errors.Is(err, db.ErrNoEntries) {
-				return nil, nil, gtserror.Newf("error getting statuses: %w", err)
-			}
-
-			if len(statuses) == 0 {
-				// No more to load.
-				return nil, nil, nil
-			}
-
-			// Get the lowest and highest
-			// ID values, used for next pg.
-			lo := statuses[len(statuses)-1].ID
-			hi := statuses[0].ID
-
-			// Set next paging value.
-			page = page.Next(lo, hi)
-
-			for i := 0; i < len(statuses); {
-				// Get status at idx.
-				status := statuses[i]
-
-				// Check whether status should be show on home timeline.
-				visible, err := p.visFilter.StatusHomeTimelineable(ctx,
-					requester,
-					status,
-				)
-				if err != nil {
-					return nil, nil, gtserror.Newf("error checking visibility: %w", err)
-				}
-
-				if !visible {
-					// Status not visible to home timeline.
-					statuses = slices.Delete(statuses, i, i+1)
-					continue
-				}
-
-				// Iter.
-				i++
-			}
-
-			return
+		// Database load function.
+		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
+			return p.state.DB.GetListTimeline(ctx, requester.ID, pg)
 		},
 
-		// No furthering
-		// filter function.
+		// Pre-filtering function,
+		// i.e. filter before caching.
+		func(s *gtsmodel.Status) (bool, error) {
+
+			// Check the visibility of passed status to requesting user.
+			ok, err := p.visFilter.StatusHomeTimelineable(ctx, requester, s)
+			return !ok, err
+		},
+
+		// Post-filtering function,
+		// i.e. filter after caching.
 		nil,
 	)
 }

@@ -701,53 +701,19 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg *messages.FromFediAPI) e
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", fMsg.GTSModel)
 	}
 
-	// Remove each account's posts from the other's timelines.
-	//
-	// First home timelines.
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.AccountID,
-		block.TargetAccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from block -> target's home timeline: %v", err)
-	}
-
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.TargetAccountID,
-		block.AccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from target -> block's home timeline: %v", err)
-	}
-
-	// Now list timelines.
-	if err := p.state.Timelines.List.WipeItemsFromAccountID(
-		ctx,
-		block.AccountID,
-		block.TargetAccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from block -> target's list timeline(s): %v", err)
-	}
-
-	if err := p.state.Timelines.List.WipeItemsFromAccountID(
-		ctx,
-		block.TargetAccountID,
-		block.AccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from target -> block's list timeline(s): %v", err)
-	}
+	// Perform any necessary timeline invalidation.
+	p.surface.invalidateTimelinesForBlock(ctx, block)
 
 	// Remove any follows that existed between blocker + blockee.
-	if err := p.state.DB.DeleteFollow(
-		ctx,
+	// (note this handles removing any necessary list entries).
+	if err := p.state.DB.DeleteFollow(ctx,
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
 		log.Errorf(ctx, "error deleting follow from block -> target: %v", err)
 	}
 
-	if err := p.state.DB.DeleteFollow(
-		ctx,
+	if err := p.state.DB.DeleteFollow(ctx,
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
@@ -755,16 +721,14 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg *messages.FromFediAPI) e
 	}
 
 	// Remove any follow requests that existed between blocker + blockee.
-	if err := p.state.DB.DeleteFollowRequest(
-		ctx,
+	if err := p.state.DB.DeleteFollowRequest(ctx,
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
 		log.Errorf(ctx, "error deleting follow request from block -> target: %v", err)
 	}
 
-	if err := p.state.DB.DeleteFollowRequest(
-		ctx,
+	if err := p.state.DB.DeleteFollowRequest(ctx,
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
