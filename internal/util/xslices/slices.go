@@ -21,6 +21,16 @@ import (
 	"slices"
 )
 
+// ToAny converts a slice of any input type
+// to the abstrace empty interface slice type.
+func ToAny[T any](in []T) []any {
+	out := make([]any, len(in))
+	for i, v := range in {
+		out[i] = v
+	}
+	return out
+}
+
 // GrowJust increases slice capacity to guarantee
 // extra room 'size', where in the case that it does
 // need to allocate more it ONLY allocates 'size' extra.
