@@ -137,20 +137,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// Noop on unstarted workers.
 		state.Workers.Stop()
 
-		if state.Timelines.Home != nil {
-			// Home timeline mgr was setup, ensure it gets stopped.
-			if err := state.Timelines.Home.Stop(); err != nil {
-				log.Errorf(ctx, "error stopping home timeline: %v", err)
-			}
-		}
-
-		if state.Timelines.List != nil {
-			// List timeline mgr was setup, ensure it gets stopped.
-			if err := state.Timelines.List.Stop(); err != nil {
-				log.Errorf(ctx, "error stopping list timeline: %v", err)
-			}
-		}
-
 		if process != nil {
 			const timeout = time.Minute
 
