@@ -186,14 +186,14 @@ func (f *vfsFile) SectorSize() int {
 }
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
-	res := IOCAP_SUBPAGE_READ
+	ret := IOCAP_SUBPAGE_READ
 	if osBatchAtomic(f.File) {
-		res |= IOCAP_BATCH_ATOMIC
+		ret |= IOCAP_BATCH_ATOMIC
 	}
 	if f.psow {
-		res |= IOCAP_POWERSAFE_OVERWRITE
+		ret |= IOCAP_POWERSAFE_OVERWRITE
 	}
-	return res
+	return ret
 }
 
 func (f *vfsFile) SizeHint(size int64) error {

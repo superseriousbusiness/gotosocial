@@ -26,8 +26,8 @@ type vfsShm struct {
 	regions  []*util.MappedRegion
 	shared   [][]byte
 	shadow   [][_WALINDEX_PGSZ]byte
-	ptrs     []uint32
-	stack    [1]uint64
+	ptrs     []ptr_t
+	stack    [1]stk_t
 	fileLock bool
 	blocking bool
 	sync.Mutex
@@ -72,7 +72,7 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 	return rc
 }
 
-func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (_ uint32, rc _ErrorCode) {
+func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (_ ptr_t, rc _ErrorCode) {
 	// Ensure size is a multiple of the OS page size.
 	if size != _WALINDEX_PGSZ || (windows.Getpagesize()-1)&_WALINDEX_PGSZ != 0 {
 		return 0, _IOERR_SHMMAP
@@ -119,15 +119,15 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 
 	// Allocate local memory.
 	for int(id) >= len(s.ptrs) {
-		s.stack[0] = uint64(size)
+		s.stack[0] = stk_t(size)
 		if err := s.alloc.CallWithStack(ctx, s.stack[:]); err != nil {
 			panic(err)
 		}
 		if s.stack[0] == 0 {
 			panic(util.OOMErr)
 		}
-		clear(util.View(s.mod, uint32(s.stack[0]), _WALINDEX_PGSZ))
-		s.ptrs = append(s.ptrs, uint32(s.stack[0]))
+		clear(util.View(s.mod, ptr_t(s.stack[0]), _WALINDEX_PGSZ))
+		s.ptrs = append(s.ptrs, ptr_t(s.stack[0]))
 	}
 
 	s.shadow[0][4] = 1
@@ -168,7 +168,7 @@ func (s *vfsShm) shmUnmap(delete bool) {
 
 	// Free local memory.
 	for _, p := range s.ptrs {
-		s.stack[0] = uint64(p)
+		s.stack[0] = stk_t(p)
 		if err := s.free.CallWithStack(context.Background(), s.stack[:]); err != nil {
 			panic(err)
 		}

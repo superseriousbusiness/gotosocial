@@ -35,8 +35,8 @@ type vfsShm struct {
 	free   api.Function
 	path   string
 	shadow [][_WALINDEX_PGSZ]byte
-	ptrs   []uint32
-	stack  [1]uint64
+	ptrs   []ptr_t
+	stack  [1]stk_t
 	lock   [_SHM_NLOCK]bool
 }
 
@@ -96,7 +96,7 @@ func (s *vfsShm) shmOpen() _ErrorCode {
 	return _OK
 }
 
-func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (uint32, _ErrorCode) {
+func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, extend bool) (ptr_t, _ErrorCode) {
 	if size != _WALINDEX_PGSZ {
 		return 0, _IOERR_SHMMAP
 	}
@@ -128,15 +128,15 @@ func (s *vfsShm) shmMap(ctx context.Context, mod api.Module, id, size int32, ext
 
 	// Allocate local memory.
 	for int(id) >= len(s.ptrs) {
-		s.stack[0] = uint64(size)
+		s.stack[0] = stk_t(size)
 		if err := s.alloc.CallWithStack(ctx, s.stack[:]); err != nil {
 			panic(err)
 		}
 		if s.stack[0] == 0 {
 			panic(util.OOMErr)
 		}
-		clear(util.View(s.mod, uint32(s.stack[0]), _WALINDEX_PGSZ))
-		s.ptrs = append(s.ptrs, uint32(s.stack[0]))
+		clear(util.View(s.mod, ptr_t(s.stack[0]), _WALINDEX_PGSZ))
+		s.ptrs = append(s.ptrs, ptr_t(s.stack[0]))
 	}
 
 	s.shadow[0][4] = 1
@@ -168,7 +168,7 @@ func (s *vfsShm) shmUnmap(delete bool) {
 	defer s.Unlock()
 
 	for _, p := range s.ptrs {
-		s.stack[0] = uint64(p)
+		s.stack[0] = stk_t(p)
 		if err := s.free.CallWithStack(context.Background(), s.stack[:]); err != nil {
 			panic(err)
 		}
