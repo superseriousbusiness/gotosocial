@@ -32,8 +32,8 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-			// Visibility type indices.
-			var visIndices = []struct {
+			// Status visibility type indices.
+			var statusVisIndices = []struct {
 				name  string
 				cols  []string
 				order string
@@ -66,10 +66,9 @@ func init() {
 					Table:  "statuses",
 					Column: "visibility",
 					IndexCleanupCallback: func(ctx context.Context, tx bun.Tx) error {
-						// After new column has been
-						// created and populated, drop
-						// indices relying on old column.
-						for _, index := range visIndices {
+						// After new column has been created and
+						// populated, drop indices relying on old column.
+						for _, index := range statusVisIndices {
 							log.Infof(ctx, "dropping old index %s...", index.name)
 							if _, err := tx.NewDropIndex().
 								Index(index.name).
@@ -107,7 +106,7 @@ func init() {
 
 			// Recreate the visibility indices.
 			log.Info(ctx, "creating new visibility indexes...")
-			for _, index := range visIndices {
+			for _, index := range statusVisIndices {
 				log.Infof(ctx, "creating new index %s...", index.name)
 				q := tx.NewCreateIndex().
 					Table("statuses").
