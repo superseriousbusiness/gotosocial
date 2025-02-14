@@ -32,20 +32,8 @@ func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
-			// Tables with visibility types.
-			var visTables = []struct {
-				Table   string
-				Column  string
-				Default *new_gtsmodel.Visibility
-			}{
-				{Table: "statuses", Column: "visibility"},
-				{Table: "sin_bin_statuses", Column: "visibility"},
-				{Table: "account_settings", Column: "privacy", Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
-				{Table: "account_settings", Column: "web_visibility", Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
-			}
-
-			// Visibility type indices.
-			var visIndices = []struct {
+			// Status visibility type indices.
+			var statusVisIndices = []struct {
 				name  string
 				cols  []string
 				order string
@@ -67,16 +55,42 @@ func init() {
 				},
 			}
 
-			// Before making changes to the visibility col
-			// we must drop all indices that rely on it.
-			log.Info(ctx, "dropping old visibility indexes...")
-			for _, index := range visIndices {
-				log.Infof(ctx, "dropping old index %s...", index.name)
-				if _, err := tx.NewDropIndex().
-					Index(index.name).
-					Exec(ctx); err != nil {
-					return err
-				}
+			// Tables with visibility types.
+			var visTables = []struct {
+				Table                string
+				Column               string
+				Default              *new_gtsmodel.Visibility
+				IndexCleanupCallback func(ctx context.Context, tx bun.Tx) error
+			}{
+				{
+					Table:  "statuses",
+					Column: "visibility",
+					IndexCleanupCallback: func(ctx context.Context, tx bun.Tx) error {
+						// After new column has been created and
+						// populated, drop indices relying on old column.
+						for _, index := range statusVisIndices {
+							log.Infof(ctx, "dropping old index %s...", index.name)
+							if _, err := tx.NewDropIndex().
+								Index(index.name).
+								Exec(ctx); err != nil {
+								return err
+							}
+						}
+						return nil
+					},
+				},
+				{
+					Table:  "sin_bin_statuses",
+					Column: "visibility",
+				},
+				{
+					Table:   "account_settings",
+					Column:  "privacy",
+					Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+				{
+					Table:   "account_settings",
+					Column:  "web_visibility",
+					Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
 			}
 
 			// Get the mapping of old enum string values to new integer values.
@@ -85,14 +99,14 @@ func init() {
 			// Convert all visibility tables.
 			for _, table := range visTables {
 				if err := convertEnums(ctx, tx, table.Table, table.Column,
-					visibilityMapping, table.Default); err != nil {
+					visibilityMapping, table.Default, table.IndexCleanupCallback); err != nil {
 					return err
 				}
 			}
 
 			// Recreate the visibility indices.
 			log.Info(ctx, "creating new visibility indexes...")
-			for _, index := range visIndices {
+			for _, index := range statusVisIndices {
 				log.Infof(ctx, "creating new index %s...", index.name)
 				q := tx.NewCreateIndex().
 					Table("statuses").
@@ -111,7 +125,7 @@ func init() {
 
 			// Migrate over old notifications table column over to new column type.
 			if err := convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
-				notificationMapping, nil); err != nil {
+				notificationMapping, nil, nil); err != nil {
 				return err
 			}
 
