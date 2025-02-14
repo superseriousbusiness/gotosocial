@@ -30,107 +30,110 @@ import (
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Status visibility type indices.
+		var statusVisIndices = []struct {
+			name  string
+			cols  []string
+			order string
+		}{
+			{
+				name:  "statuses_visibility_idx",
+				cols:  []string{"visibility"},
+				order: "",
+			},
+			{
+				name:  "statuses_profile_web_view_idx",
+				cols:  []string{"account_id", "visibility"},
+				order: "id DESC",
+			},
+			{
+				name:  "statuses_public_timeline_idx",
+				cols:  []string{"visibility"},
+				order: "id DESC",
+			},
+		}
 
-			// Status visibility type indices.
-			var statusVisIndices = []struct {
-				name  string
-				cols  []string
-				order string
-			}{
-				{
-					name:  "statuses_visibility_idx",
-					cols:  []string{"visibility"},
-					order: "",
-				},
-				{
-					name:  "statuses_profile_web_view_idx",
-					cols:  []string{"account_id", "visibility"},
-					order: "id DESC",
-				},
-				{
-					name:  "statuses_public_timeline_idx",
-					cols:  []string{"visibility"},
-					order: "id DESC",
-				},
-			}
-
-			// Tables with visibility types.
-			var visTables = []struct {
-				Table                string
-				Column               string
-				Default              *new_gtsmodel.Visibility
-				IndexCleanupCallback func(ctx context.Context, tx bun.Tx) error
-			}{
-				{
-					Table:  "statuses",
-					Column: "visibility",
-					IndexCleanupCallback: func(ctx context.Context, tx bun.Tx) error {
-						// After new column has been created and
-						// populated, drop indices relying on old column.
-						for _, index := range statusVisIndices {
-							log.Infof(ctx, "dropping old index %s...", index.name)
-							if _, err := tx.NewDropIndex().
-								Index(index.name).
-								Exec(ctx); err != nil {
-								return err
-							}
+		// Tables with visibility types.
+		var visTables = []struct {
+			Table                string
+			Column               string
+			Default              *new_gtsmodel.Visibility
+			IndexCleanupCallback func(ctx context.Context, tx bun.Tx) error
+		}{
+			{
+				Table:  "statuses",
+				Column: "visibility",
+				IndexCleanupCallback: func(ctx context.Context, tx bun.Tx) error {
+					// After new column has been created and
+					// populated, drop indices relying on old column.
+					for _, index := range statusVisIndices {
+						log.Infof(ctx, "dropping old index %s...", index.name)
+						if _, err := tx.NewDropIndex().
+							Index(index.name).
+							Exec(ctx); err != nil {
+							return err
 						}
-						return nil
-					},
+					}
+					return nil
 				},
-				{
-					Table:  "sin_bin_statuses",
-					Column: "visibility",
-				},
-				{
-					Table:   "account_settings",
-					Column:  "privacy",
-					Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
-				{
-					Table:   "account_settings",
-					Column:  "web_visibility",
-					Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
-			}
+			},
+			{
+				Table:  "sin_bin_statuses",
+				Column: "visibility",
+			},
+			{
+				Table:   "account_settings",
+				Column:  "privacy",
+				Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+			{
+				Table:   "account_settings",
+				Column:  "web_visibility",
+				Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+		}
 
-			// Get the mapping of old enum string values to new integer values.
-			visibilityMapping := visibilityEnumMapping[old_gtsmodel.Visibility]()
+		// Get the mapping of old enum string values to new integer values.
+		visibilityMapping := visibilityEnumMapping[old_gtsmodel.Visibility]()
 
-			// Convert all visibility tables.
-			for _, table := range visTables {
-				if err := convertEnums(ctx, tx, table.Table, table.Column,
-					visibilityMapping, table.Default, table.IndexCleanupCallback); err != nil {
-					return err
-				}
-			}
+		// Convert all visibility tables.
+		for _, table := range visTables {
 
-			// Recreate the visibility indices.
-			log.Info(ctx, "creating new visibility indexes...")
-			for _, index := range statusVisIndices {
-				log.Infof(ctx, "creating new index %s...", index.name)
-				q := tx.NewCreateIndex().
-					Table("statuses").
-					Index(index.name).
-					Column(index.cols...)
-				if index.order != "" {
-					q = q.ColumnExpr(index.order)
-				}
-				if _, err := q.Exec(ctx); err != nil {
-					return err
-				}
-			}
-
-			// Get the mapping of old enum string values to the new integer value types.
-			notificationMapping := notificationEnumMapping[old_gtsmodel.NotificationType]()
-
-			// Migrate over old notifications table column over to new column type.
-			if err := convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
-				notificationMapping, nil, nil); err != nil {
+			// Perform each enum table conversion within its own transaction.
+			if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+				return convertEnums(ctx, tx, table.Table, table.Column,
+					visibilityMapping, table.Default, table.IndexCleanupCallback)
+			}); err != nil {
 				return err
 			}
+		}
 
-			return nil
-		})
+		// Recreate the visibility indices.
+		log.Info(ctx, "creating new visibility indexes...")
+		for _, index := range statusVisIndices {
+			log.Infof(ctx, "creating new index %s...", index.name)
+			q := db.NewCreateIndex().
+				Table("statuses").
+				Index(index.name).
+				Column(index.cols...)
+			if index.order != "" {
+				q = q.ColumnExpr(index.order)
+			}
+			if _, err := q.Exec(ctx); err != nil {
+				return err
+			}
+		}
+
+		// Get the mapping of old enum string values to the new integer value types.
+		notificationMapping := notificationEnumMapping[old_gtsmodel.NotificationType]()
+
+		// Migrate over old notifications table column to new type in tx.
+		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
+				notificationMapping, nil, nil)
+		}); err != nil {
+			return err
+		}
+
+		return nil
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
