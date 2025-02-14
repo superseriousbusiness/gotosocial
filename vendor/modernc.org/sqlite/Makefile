@@ -56,17 +56,16 @@ clean:
 	go clean
 
 edit:
-	@touch log
 	@if [ -f "Session.vim" ]; then gvim -S & else gvim -p Makefile go.mod builder.json all_test.go vendor_libsqlite3.go & fi
 
 editor:
-	gofmt -l -s -w . 2>&1 | tee log-editor
-	go test -c -o /dev/null 2>&1 | tee -a log-editor
-	go build -v  -o /dev/null ./... 2>&1 | tee -a log-editor
+	gofmt -l -s -w .
+	go test -c -o /dev/null
+	go build -v  -o /dev/null ./...
 	go build -o /dev/null vendor_libsqlite3.go
 
 test:
-	go test -v -timeout 24h 2>&1 | tee log-test
+	go test -v -timeout 24h
 	
 vendor:
 	cd vendor_libsqlite3 && go build -o ../vendor main.go
