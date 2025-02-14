@@ -112,10 +112,6 @@ func convertEnums[OldType ~string, NewType ~int16](
 	// in number of rows.
 	const batchsz = 5000
 
-	// Prepare storage slice for each
-	// returned batch of column values.
-	vals := make([]string, 0, batchsz)
-
 	// Stores highest batch value
 	// used in iterate queries,
 	// starting at highest possible.
@@ -125,46 +121,58 @@ func convertEnums[OldType ~string, NewType ~int16](
 	var updated int
 
 	for {
-		// Reset values.
-		vals = vals[:0]
+		// Limit to batchsz
+		// items at once.
+		batchQ := tx.
+			NewSelect().
+			Table(table).
+			Column(batchByColumn).
+			Where("? < ?", bun.Ident(batchByColumn), highest).
+			OrderExpr("? DESC", bun.Ident(batchByColumn)).
+			Limit(batchsz)
 
-		// SELECT next batch of column values to iteratively update since embedding
-		// it in the below UPDATE statement with RETURNING guarantees no return order.
-		if err := tx.NewRaw("SELECT ? FROM ? WHERE ? < ? ORDER BY ? DESC LIMIT ?",
-			bun.Ident(batchByColumn),
-			bun.Ident(table),
-			bun.Ident(batchByColumn),
-			highest,
-			bun.Ident(batchByColumn),
-			batchsz,
-		).Scan(ctx, &vals); err != nil {
-			return gtserror.Newf("error selecting batch: %w", err)
-		}
-
-		// Check if at end.
-		if len(vals) == 0 {
-			break
-		}
-
-		// Finalize UPDATE to operate on batch.
+		// Finalize UPDATE to operate on this batch only.
 		qStr := baseQStr + " WHERE ? IN (?)"
-		args := append(slices.Clone(baseArgs), bun.Ident(batchByColumn))
-		args = append(args, bun.In(vals))
+		args := append(
+			slices.Clone(baseArgs),
+			bun.Ident(batchByColumn),
+			batchQ,
+		)
 
 		// Execute the prepared raw query with arguments.
-		_, err := tx.NewRaw(qStr, args...).Exec(ctx)
+		res, err := tx.NewRaw(qStr, args...).Exec(ctx)
 		if err != nil {
 			return gtserror.Newf("error updating old column values: %w", err)
 		}
 
-		// Update the count.
-		updated += len(vals)
+		// Check how many items we updated.
+		thisUpdated, err := res.RowsAffected()
+		if err != nil {
+			return gtserror.Newf("error counting affected rows: %w", err)
+		}
 
-		log.Infof(ctx, "updated %d of %d %s (up to %s)",
+		if thisUpdated == 0 {
+			// Nothing updated
+			// means we're done.
+			break
+		}
+
+		// Update the overall count.
+		updated += int(thisUpdated)
+
+		// Log helpful message to admin.
+		log.Infof(ctx, "migrated %d of %d %s (up to %s)",
 			updated, total, table, highest)
 
-		// Get next highest.
-		highest = vals[0]
+		// Get next highest
+		// id for next batch.
+		if err := tx.
+			NewSelect().
+			With("batch_query", batchQ).
+			ColumnExpr("min(?) FROM ?", bun.Ident(batchByColumn), bun.Ident("batch_query")).
+			Scan(ctx, &highest); err != nil {
+			return gtserror.Newf("error selecting next highest: %w", err)
+		}
 	}
 
 	if total != int(updated) {
