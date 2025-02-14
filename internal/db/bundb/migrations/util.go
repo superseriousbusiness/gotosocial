@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -89,7 +90,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 	var qbuf byteutil.Buffer
 
 	// Prepare a singular UPDATE statement using
-	// SET $newColumn = (CASE $column WHEN $old THEN $new ... END)
+	// SET $newColumn = (CASE $column WHEN $old THEN $new ... END).
 	qbuf.B = append(qbuf.B, "UPDATE ? SET ? = (CASE ? "...)
 	args = append(args, bun.Ident(table))
 	args = append(args, bun.Ident(newColumn))
@@ -100,56 +101,75 @@ func convertEnums[OldType ~string, NewType ~int16](
 	}
 	qbuf.B = append(qbuf.B, "ELSE ? END)"...)
 	args = append(args, *defaultValue)
-	qbuf.B = append(qbuf.B, " WHERE ? IN (?)"...)
-	args = append(args, bun.Ident(batchByColumn))
-	baseQ := qbuf.String()
 
-	var (
-		nextHighest = id.Highest
-		updated     int64
-	)
+	// Serialize it here to be
+	// used as the base for each
+	// set of batch queries below.
+	baseQStr := string(qbuf.B)
+	baseArgs := args
+
+	// Query batch size
+	// in number of rows.
+	const batchsz = 5000
+
+	// Prepare storage slice for each
+	// returned batch of column values.
+	vals := make([]string, 0, batchsz)
+
+	// Stores highest batch value
+	// used in iterate queries,
+	// starting at highest possible.
+	highest := id.Highest
+
+	// Total updated rows.
+	var updated int
 
 	for {
-		batchQ := tx.NewRaw(
-			"SELECT ? FROM ? WHERE ? < ? ORDER BY ? DESC LIMIT ?",
+		// Reset values.
+		vals = vals[:0]
+
+		// SELECT next batch of column values to iteratively update since embedding
+		// it in the below UPDATE statement with RETURNING guarantees no return order.
+		if err := tx.NewRaw("SELECT ? FROM ? WHERE ? < ? ORDER BY ? DESC LIMIT ?",
 			bun.Ident(batchByColumn),
 			bun.Ident(table),
 			bun.Ident(batchByColumn),
-			nextHighest,
+			highest,
 			bun.Ident(batchByColumn),
-			5000,
-		)
+			batchsz,
+		).Scan(ctx, &vals); err != nil {
+			return gtserror.Newf("error selecting batch: %w", err)
+		}
 
-		q := baseQ + " RETURNING ?"
-		qArgs := append(args, batchQ) // nolint:gocritic
-		qArgs = append(qArgs, bun.Ident(batchByColumn))
+		// Check if at end.
+		if len(vals) == 0 {
+			break
+		}
+
+		// Finalize UPDATE to operate on batch.
+		qStr := baseQStr + " WHERE ? IN (?)"
+		args := append(slices.Clone(baseArgs), bun.Ident(batchByColumn))
+		args = append(args, bun.In(vals))
 
 		// Execute the prepared raw query with arguments.
-		var ids []string
-		res, err := tx.NewRaw(q, qArgs...).Exec(ctx, &ids)
+		_, err := tx.NewRaw(qStr, args...).Exec(ctx)
 		if err != nil {
 			return gtserror.Newf("error updating old column values: %w", err)
 		}
 
-		// Count number items updated.
-		thisUpdated, _ := res.RowsAffected()
-		if thisUpdated == 0 {
-			break
-		}
+		// Update the count.
+		updated += len(vals)
 
-		updated += thisUpdated
-		highestID := ids[0]
-		lowestID := ids[len(ids)-1]
-		log.Infof(ctx,
-			"updated %d of %d %s (just done from %s to %s)",
-			updated, total, table, highestID, lowestID,
-		)
+		log.Infof(ctx, "updated %d of %d %s (up to %s)",
+			updated, total, table, highest)
 
-		nextHighest = lowestID
+		// Get next highest.
+		highest = vals[0]
 	}
 
 	if total != int(updated) {
-		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
+		// Return error here in order to rollback the whole transaction.
+		return fmt.Errorf("total=%d does not match updated=%d", total, updated)
 	}
 
 	// Run index cleanup callback if set.
