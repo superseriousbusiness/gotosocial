@@ -45,6 +45,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 	column string,
 	mapping map[OldType]NewType,
 	defaultValue *NewType,
+	indexCleanupCallback func(context.Context, bun.Tx) error,
 ) error {
 	if len(mapping) == 0 {
 		return errors.New("empty mapping")
@@ -108,6 +109,13 @@ func convertEnums[OldType ~string, NewType ~int16](
 	updated, _ := res.RowsAffected()
 	if total != int(updated) {
 		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
+	}
+
+	// Run index cleanup callback if set.
+	if indexCleanupCallback != nil {
+		if err := indexCleanupCallback(ctx, tx); err != nil {
+			return gtserror.Newf("error running index cleanup callback: %w", err)
+		}
 	}
 
 	// Drop the old column from table.
