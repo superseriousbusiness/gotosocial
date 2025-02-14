@@ -59,6 +59,7 @@ func init() {
 			Column               string
 			Default              *new_gtsmodel.Visibility
 			IndexCleanupCallback func(ctx context.Context, tx bun.Tx) error
+			BatchByColumn        string
 		}{
 			{
 				Table:  "statuses",
@@ -76,19 +77,26 @@ func init() {
 					}
 					return nil
 				},
+				BatchByColumn: "id",
 			},
 			{
-				Table:  "sin_bin_statuses",
-				Column: "visibility",
+				Table:         "sin_bin_statuses",
+				Column:        "visibility",
+				BatchByColumn: "id",
 			},
 			{
-				Table:   "account_settings",
-				Column:  "privacy",
-				Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+				Table:         "account_settings",
+				Column:        "privacy",
+				Default:       util.Ptr(new_gtsmodel.VisibilityDefault),
+				BatchByColumn: "account_id",
+			},
+
 			{
-				Table:   "account_settings",
-				Column:  "web_visibility",
-				Default: util.Ptr(new_gtsmodel.VisibilityDefault)},
+				Table:         "account_settings",
+				Column:        "web_visibility",
+				Default:       util.Ptr(new_gtsmodel.VisibilityDefault),
+				BatchByColumn: "account_id",
+			},
 		}
 
 		// Get the mapping of old enum string values to new integer values.
@@ -100,7 +108,7 @@ func init() {
 			// Perform each enum table conversion within its own transaction.
 			if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 				return convertEnums(ctx, tx, table.Table, table.Column,
-					visibilityMapping, table.Default, table.IndexCleanupCallback)
+					visibilityMapping, table.Default, table.IndexCleanupCallback, table.BatchByColumn)
 			}); err != nil {
 				return err
 			}
@@ -128,7 +136,7 @@ func init() {
 		// Migrate over old notifications table column to new type in tx.
 		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			return convertEnums(ctx, tx, "notifications", "notification_type", //nolint:revive
-				notificationMapping, nil, nil)
+				notificationMapping, nil, nil, "id")
 		}); err != nil {
 			return err
 		}

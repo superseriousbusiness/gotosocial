@@ -27,6 +27,7 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -46,6 +47,7 @@ func convertEnums[OldType ~string, NewType ~int16](
 	mapping map[OldType]NewType,
 	defaultValue *NewType,
 	indexCleanupCallback func(context.Context, bun.Tx) error,
+	batchByColumn string,
 ) error {
 	if len(mapping) == 0 {
 		return errors.New("empty mapping")
@@ -98,15 +100,54 @@ func convertEnums[OldType ~string, NewType ~int16](
 	}
 	qbuf.B = append(qbuf.B, "ELSE ? END)"...)
 	args = append(args, *defaultValue)
+	qbuf.B = append(qbuf.B, " WHERE ? IN (?)"...)
+	args = append(args, bun.Ident(batchByColumn))
+	baseQ := qbuf.String()
 
-	// Execute the prepared raw query with arguments.
-	res, err := tx.NewRaw(qbuf.String(), args...).Exec(ctx)
-	if err != nil {
-		return gtserror.Newf("error updating old column values: %w", err)
+	var (
+		nextHighest = id.Highest
+		updated     int64
+	)
+
+	for {
+		batchQ := tx.NewRaw(
+			"SELECT ? FROM ? WHERE ? < ? ORDER BY ? DESC LIMIT ?",
+			bun.Ident(batchByColumn),
+			bun.Ident(table),
+			bun.Ident(batchByColumn),
+			nextHighest,
+			bun.Ident(batchByColumn),
+			5000,
+		)
+
+		q := baseQ + " RETURNING ?"
+		qArgs := append(args, batchQ) // nolint:gocritic
+		qArgs = append(qArgs, bun.Ident(batchByColumn))
+
+		// Execute the prepared raw query with arguments.
+		var ids []string
+		res, err := tx.NewRaw(q, qArgs...).Exec(ctx, &ids)
+		if err != nil {
+			return gtserror.Newf("error updating old column values: %w", err)
+		}
+
+		// Count number items updated.
+		thisUpdated, _ := res.RowsAffected()
+		if thisUpdated == 0 {
+			break
+		}
+
+		updated += thisUpdated
+		highestID := ids[0]
+		lowestID := ids[len(ids)-1]
+		log.Infof(ctx,
+			"updated %d of %d %s (just done from %s to %s)",
+			updated, total, table, highestID, lowestID,
+		)
+
+		nextHighest = lowestID
 	}
 
-	// Count number items updated.
-	updated, _ := res.RowsAffected()
 	if total != int(updated) {
 		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
 	}
