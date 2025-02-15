@@ -43,6 +43,16 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
     <pubDate>Wed, 20 Oct 2021 10:41:37 +0000</pubDate>
     <lastBuildDate>Wed, 20 Oct 2021 10:41:37 +0000</lastBuildDate>
     <item>
+      <title>introduction post</title>
+      <link>http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY</link>
+      <description>@the_mighty_zork@localhost:8080 made a new post: &#34;hello everyone!&#34;</description>
+      <content:encoded><![CDATA[hello everyone!]]></content:encoded>
+      <author>@the_mighty_zork@localhost:8080</author>
+      <guid isPermaLink="true">http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY</guid>
+      <pubDate>Wed, 20 Oct 2021 10:40:37 +0000</pubDate>
+      <source>http://localhost:8080/@the_mighty_zork/feed.rss</source>
+    </item>
+    <item>
       <title>open to see some puppies</title>
       <link>http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37</link>
       <description>@admin@localhost:8080 made a new post: &#34;🐕🐕🐕🐕🐕&#34;</description>
