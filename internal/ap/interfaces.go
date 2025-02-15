@@ -128,21 +128,40 @@ func ToPollOptionable(t vocab.Type) (PollOptionable, bool) {
 }
 
 // IsAccept returns whether AS vocab type name
-// is something that can be cast to Accept.
+// is something that can be cast to Acceptable.
 func IsAcceptable(typeName string) bool {
 	return typeName == ActivityAccept
 }
 
-// ToAcceptable safely tries to cast vocab.Type as vocab.ActivityStreamsAccept.
-//
-// TODO: Add additional "Accept" types here, eg., "ApproveReply" from
-// https://codeberg.org/fediverse/fep/src/branch/main/fep/5624/fep-5624.md
-func ToAcceptable(t vocab.Type) (vocab.ActivityStreamsAccept, bool) {
+// ToAcceptable safely tries to cast vocab.Type as Acceptable.
+func ToAcceptable(t vocab.Type) (Acceptable, bool) {
 	acceptable, ok := t.(vocab.ActivityStreamsAccept)
 	if !ok || !IsAcceptable(t.GetTypeName()) {
 		return nil, false
 	}
 	return acceptable, true
+}
+
+// IsApprovable returns whether AS vocab type name
+// is something that can be cast to Approvable.
+func IsApprovable(typeName string) bool {
+	switch typeName {
+	case ObjectLikeApproval,
+		ObjectReplyApproval,
+		ObjectAnnounceApproval:
+		return true
+	default:
+		return false
+	}
+}
+
+// ToAcceptable safely tries to cast vocab.Type as Approvable.
+func ToApprovable(t vocab.Type) (Approvable, bool) {
+	approvable, ok := t.(Approvable)
+	if !ok || !IsApprovable(t.GetTypeName()) {
+		return nil, false
+	}
+	return approvable, true
 }
 
 // Activityable represents the minimum activitypub interface for representing an 'activity'.
@@ -247,6 +266,19 @@ type PollOptionable interface {
 // interface for representing an Accept.
 type Acceptable interface {
 	Activityable
+
+	WithTarget
+	WithResult
+}
+
+// Approvable represents the minimum activitypub interface
+// for a LikeApproval, ReplyApproval, or AnnounceApproval.
+type Approvable interface {
+	vocab.Type
+
+	WithAttributedTo
+	WithObject
+	WithTarget
 }
 
 // Attachmentable represents the minimum activitypub interface for representing a 'mediaAttachment'. (see: IsAttachmentable).
@@ -707,4 +739,10 @@ type WithPolicyRules interface {
 type WithApprovedBy interface {
 	GetGoToSocialApprovedBy() vocab.GoToSocialApprovedByProperty
 	SetGoToSocialApprovedBy(vocab.GoToSocialApprovedByProperty)
+}
+
+// WithVotersCount represents an activity or object the result property.
+type WithResult interface {
+	GetActivityStreamsResult() vocab.ActivityStreamsResultProperty
+	SetActivityStreamsResult(vocab.ActivityStreamsResultProperty)
 }
