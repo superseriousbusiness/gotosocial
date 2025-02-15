@@ -261,15 +261,17 @@ func (p *clientAPI) CreateUser(ctx context.Context, cMsg *messages.FromClientAPI
 
 func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientAPI) error {
 	var status *gtsmodel.Status
-	backfill := false
-	if backfillStatus, ok := cMsg.GTSModel.(*gtsmodel.BackfillStatus); ok {
-		status = backfillStatus.Status
+	var backfill bool
+
+	// Check passed client message model type.
+	switch model := cMsg.GTSModel.(type) {
+	case *gtsmodel.Status:
+		status = model
+	case *gtsmodel.BackfillStatus:
+		status = model.Status
 		backfill = true
-	} else {
-		status, ok = cMsg.GTSModel.(*gtsmodel.Status)
-		if !ok {
-			return gtserror.Newf("%T not parseable as *gtsmodel.Status or *gtsmodel.BackfillStatus", cMsg.GTSModel)
-		}
+	default:
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status or *gtsmodel.BackfillStatus", cMsg.GTSModel)
 	}
 
 	// If pending approval is true then status must
@@ -351,7 +353,12 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
+	// We specifically do not timeline
+	// or notify for backfilled statuses,
+	// as these are more for archival than
+	// newly posted content for user feeds.
 	if !backfill {
+
 		if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 			log.Errorf(ctx, "error timelining and notifying status: %v", err)
 		}

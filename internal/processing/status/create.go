@@ -96,7 +96,8 @@ func (p *Processor) Create(
 	// Get current time.
 	now := time.Now()
 
-	// Default to current time as creation time.
+	// Default to current
+	// time as creation time.
 	createdAt := now
 
 	// Handle backfilled/scheduled statuses.
@@ -104,18 +105,17 @@ func (p *Processor) Create(
 	if form.ScheduledAt != nil {
 		scheduledAt := *form.ScheduledAt
 
-		// Statuses may only be scheduled a minimum time into the future.
+		// Statuses may only be scheduled
+		// a minimum time into the future.
 		if now.Before(scheduledAt) {
 			const errText = "scheduled statuses are not yet supported"
-			err := gtserror.New(errText)
-			return nil, gtserror.NewErrorNotImplemented(err, errText)
+			return nil, gtserror.NewErrorNotImplemented(gtserror.New(errText), errText)
 		}
 
 		// If not scheduled into the future, this status is being backfilled.
 		if !config.GetInstanceAllowBackdatingStatuses() {
 			const errText = "backdating statuses has been disabled on this instance"
-			err := gtserror.New(errText)
-			return nil, gtserror.NewErrorForbidden(err)
+			return nil, gtserror.NewErrorForbidden(gtserror.New(errText), errText)
 		}
 
 		// Statuses can't be backdated to or before the UNIX epoch
@@ -126,14 +126,18 @@ func (p *Processor) Create(
 		// but this check covers both cases.
 		if scheduledAt.Compare(time.UnixMilli(0)) <= 0 {
 			const errText = "statuses can't be backdated to or before the UNIX epoch"
-			err := gtserror.New(errText)
-			return nil, gtserror.NewErrorNotAcceptable(err, errText)
+			return nil, gtserror.NewErrorNotAcceptable(gtserror.New(errText), errText)
 		}
 
-		// Allow the backfill and generate an appropriate ID for the creation time.
-		backfill = true
-		createdAt = scheduledAt
 		var err error
+
+		// This is a backfill.
+		backfill = true
+
+		// Update to backfill date.
+		createdAt = scheduledAt
+
+		// Generate an appropriate, (and unique!), ID for the creation time.
 		if statusID, err = p.backfilledStatusID(ctx, createdAt); err != nil {
 			return nil, gtserror.NewErrorInternalError(err)
 		}
@@ -182,13 +186,12 @@ func (p *Processor) Create(
 	}
 
 	if backfill {
-		log.Infof(ctx, "%d mentions", len(status.Mentions))
+		// Ensure backfilled status contains no
+		// mentions to anyone other than author.
 		for _, mention := range status.Mentions {
-			log.Infof(ctx, "mention: target account ID = %s, requester ID = %s", mention.TargetAccountID, requester.ID)
 			if mention.TargetAccountID != requester.ID {
 				const errText = "statuses mentioning others can't be backfilled"
-				err := gtserror.New(errText)
-				return nil, gtserror.NewErrorForbidden(err, errText)
+				return nil, gtserror.NewErrorForbidden(gtserror.New(errText), errText)
 			}
 		}
 	}
@@ -227,8 +230,7 @@ func (p *Processor) Create(
 	if form.Poll != nil {
 		if backfill {
 			const errText = "statuses with polls can't be backfilled"
-			err := gtserror.New(errText)
-			return nil, gtserror.NewErrorForbidden(err, errText)
+			return nil, gtserror.NewErrorForbidden(gtserror.New(errText), errText)
 		}
 
 		// Process poll, inserting into database.
@@ -265,11 +267,14 @@ func (p *Processor) Create(
 		}
 	}
 
-	// Send it to the client API worker for async side-effects.
 	var model any = status
 	if backfill {
+		// We specifically wrap backfilled statuses in
+		// a different type to signal to worker process.
 		model = &gtsmodel.BackfillStatus{Status: status}
 	}
+
+	// Send it to the client API worker for async side-effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,
 		APActivityType: ap.ActivityCreate,
@@ -299,29 +304,38 @@ func (p *Processor) Create(
 
 // backfilledStatusID tries to find an unused ULID for a backfilled status.
 func (p *Processor) backfilledStatusID(ctx context.Context, createdAt time.Time) (string, error) {
-	// backfilledStatusIDRetries should be more than enough attempts.
-	const backfilledStatusIDRetries = 100
 
+	// Any fetching of statuses here is
+	// only to check availability of ID,
+	// no need for any attached models.
+	ctx = gtscontext.SetBarebones(ctx)
+
+	// backfilledStatusIDRetries should
+	// be more than enough attempts.
+	const backfilledStatusIDRetries = 100
 	for try := 0; try < backfilledStatusIDRetries; try++ {
 		var err error
 
-		// Generate a ULID based on the backfilled status's original creation time.
+		// Generate a ULID based on the backfilled
+		// status's original creation time.
 		statusID := id.NewULIDFromTime(createdAt)
 
 		// Check for an existing status with that ID.
-		_, err = p.state.DB.GetStatusByID(gtscontext.SetBarebones(ctx), statusID)
-		if errors.Is(err, db.ErrNoEntries) {
-			// We found an unused one.
-			return statusID, nil
-		} else if err != nil {
-			err := gtserror.Newf("DB error checking if a status ID was in use: %w", err)
-			return "", err
+		status, err := p.state.DB.GetStatusByID(ctx, statusID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return "", gtserror.Newf("DB error checking if a status ID was in use: %w", err)
 		}
-		// That status ID is in use. Try again.
+
+		if status == nil {
+			// We found a free ID!
+			return statusID, nil
+		}
+
+		// That status ID is
+		// in use. Try again.
 	}
 
-	err := gtserror.Newf("failed to find an unused ID after %d tries", backfilledStatusIDRetries)
-	return "", err
+	return "", gtserror.Newf("failed to find an unused ID after %d tries", backfilledStatusIDRetries)
 }
 
 func (p *Processor) processInReplyTo(
