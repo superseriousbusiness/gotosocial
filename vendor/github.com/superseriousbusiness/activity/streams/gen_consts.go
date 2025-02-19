@@ -14,6 +14,9 @@ var ActivityStreamsAddName string = "Add"
 // ActivityStreamsAnnounceName is the string literal of the name for the Announce type in the ActivityStreams vocabulary.
 var ActivityStreamsAnnounceName string = "Announce"
 
+// GoToSocialAnnounceApprovalName is the string literal of the name for the AnnounceApproval type in the GoToSocial vocabulary.
+var GoToSocialAnnounceApprovalName string = "AnnounceApproval"
+
 // ActivityStreamsApplicationName is the string literal of the name for the Application type in the ActivityStreams vocabulary.
 var ActivityStreamsApplicationName string = "Application"
 
@@ -104,6 +107,9 @@ var ActivityStreamsLeaveName string = "Leave"
 // ActivityStreamsLikeName is the string literal of the name for the Like type in the ActivityStreams vocabulary.
 var ActivityStreamsLikeName string = "Like"
 
+// GoToSocialLikeApprovalName is the string literal of the name for the LikeApproval type in the GoToSocial vocabulary.
+var GoToSocialLikeApprovalName string = "LikeApproval"
+
 // ActivityStreamsLinkName is the string literal of the name for the Link type in the ActivityStreams vocabulary.
 var ActivityStreamsLinkName string = "Link"
 
@@ -166,6 +172,9 @@ var ActivityStreamsRelationshipName string = "Relationship"
 
 // ActivityStreamsRemoveName is the string literal of the name for the Remove type in the ActivityStreams vocabulary.
 var ActivityStreamsRemoveName string = "Remove"
+
+// GoToSocialReplyApprovalName is the string literal of the name for the ReplyApproval type in the GoToSocial vocabulary.
+var GoToSocialReplyApprovalName string = "ReplyApproval"
 
 // ActivityStreamsServiceName is the string literal of the name for the Service type in the ActivityStreams vocabulary.
 var ActivityStreamsServiceName string = "Service"

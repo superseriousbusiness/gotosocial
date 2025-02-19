@@ -247,6 +247,18 @@ type ActivityStreamsSourceProperty interface {
 	// IsActivityStreamsView returns false, GetActivityStreamsView will
 	// return an arbitrary value.
 	GetActivityStreamsView() ActivityStreamsView
+	// GetGoToSocialAnnounceApproval returns the value of this property. When
+	// IsGoToSocialAnnounceApproval returns false,
+	// GetGoToSocialAnnounceApproval will return an arbitrary value.
+	GetGoToSocialAnnounceApproval() GoToSocialAnnounceApproval
+	// GetGoToSocialLikeApproval returns the value of this property. When
+	// IsGoToSocialLikeApproval returns false, GetGoToSocialLikeApproval
+	// will return an arbitrary value.
+	GetGoToSocialLikeApproval() GoToSocialLikeApproval
+	// GetGoToSocialReplyApproval returns the value of this property. When
+	// IsGoToSocialReplyApproval returns false, GetGoToSocialReplyApproval
+	// will return an arbitrary value.
+	GetGoToSocialReplyApproval() GoToSocialReplyApproval
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
@@ -502,6 +514,19 @@ type ActivityStreamsSourceProperty interface {
 	// "View". When true, use the GetActivityStreamsView and
 	// SetActivityStreamsView methods to access and set this property.
 	IsActivityStreamsView() bool
+	// IsGoToSocialAnnounceApproval returns true if this property has a type
+	// of "AnnounceApproval". When true, use the
+	// GetGoToSocialAnnounceApproval and SetGoToSocialAnnounceApproval
+	// methods to access and set this property.
+	IsGoToSocialAnnounceApproval() bool
+	// IsGoToSocialLikeApproval returns true if this property has a type of
+	// "LikeApproval". When true, use the GetGoToSocialLikeApproval and
+	// SetGoToSocialLikeApproval methods to access and set this property.
+	IsGoToSocialLikeApproval() bool
+	// IsGoToSocialReplyApproval returns true if this property has a type of
+	// "ReplyApproval". When true, use the GetGoToSocialReplyApproval and
+	// SetGoToSocialReplyApproval methods to access and set this property.
+	IsGoToSocialReplyApproval() bool
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
@@ -707,6 +732,15 @@ type ActivityStreamsSourceProperty interface {
 	// SetActivityStreamsView sets the value of this property. Calling
 	// IsActivityStreamsView afterwards returns true.
 	SetActivityStreamsView(v ActivityStreamsView)
+	// SetGoToSocialAnnounceApproval sets the value of this property. Calling
+	// IsGoToSocialAnnounceApproval afterwards returns true.
+	SetGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// SetGoToSocialLikeApproval sets the value of this property. Calling
+	// IsGoToSocialLikeApproval afterwards returns true.
+	SetGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// SetGoToSocialReplyApproval sets the value of this property. Calling
+	// IsGoToSocialReplyApproval afterwards returns true.
+	SetGoToSocialReplyApproval(v GoToSocialReplyApproval)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)

@@ -844,16 +844,16 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 		return gtserror.Newf("%T not parseable as *url.URL", fMsg.APObject)
 	}
 
-	acceptIRI := fMsg.APIRI
-	if acceptIRI == nil {
-		return gtserror.New("acceptIRI was nil")
+	approvedByURI := fMsg.APIRI
+	if approvedByURI == nil {
+		return gtserror.New("approvedByURI was nil")
 	}
 
 	// Assume we're accepting a status; create a
 	// barebones status for dereferencing purposes.
 	bareStatus := &gtsmodel.Status{
 		URI:           objectIRI.String(),
-		ApprovedByURI: acceptIRI.String(),
+		ApprovedByURI: approvedByURI.String(),
 	}
 
 	// Call RefreshStatus() to process the provided
@@ -872,7 +872,7 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 	}
 
 	// No error means it was indeed a remote status, and the
-	// given acceptIRI permitted it. Timeline and notify it.
+	// given approvedByURI permitted it. Timeline and notify it.
 	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}

@@ -142,10 +142,13 @@ import (
 	propertycanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike"
 	propertycanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply"
 	propertyinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy"
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	propertyid "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_id"
 	propertytype "github.com/superseriousbusiness/activity/streams/impl/jsonld/property_type"
 	propertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/property_value"
@@ -282,6 +285,19 @@ func (this Manager) DeserializeAlwaysPropertyGoToSocial() func(map[string]interf
 func (this Manager) DeserializeAnnounceActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAnnounce, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsAnnounce, error) {
 		i, err := typeannounce.DeserializeAnnounce(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeAnnounceApprovalGoToSocial returns the deserialization method for
+// the "GoToSocialAnnounceApproval" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeAnnounceApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceApproval, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialAnnounceApproval, error) {
+		i, err := typeannounceapproval.DeserializeAnnounceApproval(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1216,6 +1232,19 @@ func (this Manager) DeserializeLikeActivityStreams() func(map[string]interface{}
 	}
 }
 
+// DeserializeLikeApprovalGoToSocial returns the deserialization method for the
+// "GoToSocialLikeApproval" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeLikeApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialLikeApproval, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialLikeApproval, error) {
+		i, err := typelikeapproval.DeserializeLikeApproval(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
 // DeserializeLikedPropertyActivityStreams returns the deserialization method for
 // the "ActivityStreamsLikedProperty" non-functional property in the
 // vocabulary "ActivityStreams"
@@ -1820,6 +1849,19 @@ func (this Manager) DeserializeRemoveActivityStreams() func(map[string]interface
 func (this Manager) DeserializeRepliesPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsRepliesProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsRepliesProperty, error) {
 		i, err := propertyreplies.DeserializeRepliesProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeReplyApprovalGoToSocial returns the deserialization method for the
+// "GoToSocialReplyApproval" non-functional property in the vocabulary
+// "GoToSocial"
+func (this Manager) DeserializeReplyApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyApproval, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialReplyApproval, error) {
+		i, err := typereplyapproval.DeserializeReplyApproval(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

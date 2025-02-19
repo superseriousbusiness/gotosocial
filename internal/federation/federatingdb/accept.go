@@ -20,6 +20,7 @@ package federatingdb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 
 	"github.com/superseriousbusiness/activity/streams/vocab"
@@ -62,8 +63,8 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 		return nil
 	}
 
-	activityID := ap.GetJSONLDId(accept)
-	if activityID == nil {
+	acceptID := ap.GetJSONLDId(accept)
+	if acceptID == nil {
 		// We need an ID.
 		const text = "Accept had no id property"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)
@@ -87,15 +88,58 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	// handling the ones we know how to handle.
 	for _, object := range ap.ExtractObjects(accept) {
 		if asType := object.GetType(); asType != nil {
-
 			// Check and handle any vocab.Type objects.
-			switch name := asType.GetTypeName(); name {
+			switch name := asType.GetTypeName(); {
 
 			// ACCEPT FOLLOW
-			case ap.ActivityFollow:
+			case name == ap.ActivityFollow:
 				if err := f.acceptFollowType(
 					ctx,
 					asType,
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
+
+			// ACCEPT TYPE-HINTED LIKE
+			//
+			// ie., a Like with just `id`
+			// and `type` properties set.
+			case name == ap.ActivityLike:
+				objIRI := ap.GetJSONLDId(asType)
+				if objIRI == nil {
+					log.Debugf(ctx, "could not retrieve id of inlined Accept object %s", name)
+					continue
+				}
+
+				if err := f.acceptLikeIRI(
+					ctx,
+					acceptID,
+					accept,
+					objIRI.String(),
+					receivingAcct,
+					requestingAcct,
+				); err != nil {
+					return err
+				}
+
+			// ACCEPT TYPE-HINTED REPLY OR ANNOUNCE.
+			//
+			// ie., a statusable or Announce with
+			// just `id` and `type` properties set.
+			case name == ap.ActivityAnnounce || ap.IsStatusable(name):
+				objIRI := ap.GetJSONLDId(asType)
+				if objIRI == nil {
+					log.Debugf(ctx, "could not retrieve id of inlined Accept object %s", name)
+					continue
+				}
+
+				if err := f.acceptOtherIRI(
+					ctx,
+					acceptID,
+					accept,
+					objIRI,
 					receivingAcct,
 					requestingAcct,
 				); err != nil {
@@ -127,7 +171,8 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			case uris.IsLikePath(objIRI):
 				if err := f.acceptLikeIRI(
 					ctx,
-					activityID.String(),
+					acceptID,
+					accept,
 					objIRI.String(),
 					receivingAcct,
 					requestingAcct,
@@ -135,14 +180,15 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 					return err
 				}
 
-			// ACCEPT OTHER (reply? boost?)
+			// ACCEPT OTHER (reply? announce?)
 			//
 			// Don't check on IsStatusesPath
 			// as this may be a remote status.
 			default:
 				if err := f.acceptOtherIRI(
 					ctx,
-					activityID,
+					acceptID,
+					accept,
 					objIRI,
 					receivingAcct,
 					requestingAcct,
@@ -292,7 +338,8 @@ func (f *federatingDB) acceptFollowIRI(
 
 func (f *federatingDB) acceptOtherIRI(
 	ctx context.Context,
-	activityID *url.URL,
+	acceptID *url.URL,
+	accept vocab.ActivityStreamsAccept,
 	objectIRI *url.URL,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
@@ -309,7 +356,8 @@ func (f *federatingDB) acceptOtherIRI(
 		// objectIRI, proceed to accept it.
 		return f.acceptStoredStatus(
 			ctx,
-			activityID,
+			acceptID,
+			accept,
 			status,
 			receivingAcct,
 			requestingAcct,
@@ -348,13 +396,21 @@ func (f *federatingDB) acceptOtherIRI(
 	// This may be a reply, or it may be a boost,
 	// we can't know yet without dereferencing it,
 	// but let the processor worry about that.
+	//
+	// TODO: do something with type hinting here.
 	apObjectType := ap.ObjectUnknown
+
+	// Extract appropriate approvedByURI from the Accept.
+	approvedByURI, err := approvedByURI(acceptID, accept)
+	if err != nil {
+		return gtserror.NewErrorForbidden(err, err.Error())
+	}
 
 	// Pass to the processor and let them handle side effects.
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APObjectType:   apObjectType,
 		APActivityType: ap.ActivityAccept,
-		APIRI:          activityID,
+		APIRI:          approvedByURI,
 		APObject:       objectIRI,
 		Receiving:      receivingAcct,
 		Requesting:     requestingAcct,
@@ -365,7 +421,8 @@ func (f *federatingDB) acceptOtherIRI(
 
 func (f *federatingDB) acceptStoredStatus(
 	ctx context.Context,
-	activityID *url.URL,
+	acceptID *url.URL,
+	accept vocab.ActivityStreamsAccept,
 	status *gtsmodel.Status,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
@@ -391,9 +448,15 @@ func (f *federatingDB) acceptStoredStatus(
 		return gtserror.NewErrorForbidden(errors.New(text), text)
 	}
 
-	// Mark the status as approved by this Accept URI.
+	// Extract appropriate approvedByURI from the Accept.
+	approvedByURI, err := approvedByURI(acceptID, accept)
+	if err != nil {
+		return gtserror.NewErrorForbidden(err, err.Error())
+	}
+
+	// Mark the status as approved by this URI.
 	status.PendingApproval = util.Ptr(false)
-	status.ApprovedByURI = activityID.String()
+	status.ApprovedByURI = approvedByURI.String()
 	if err := f.state.DB.UpdateStatus(
 		ctx,
 		status,
@@ -428,7 +491,8 @@ func (f *federatingDB) acceptStoredStatus(
 
 func (f *federatingDB) acceptLikeIRI(
 	ctx context.Context,
-	activityID string,
+	acceptID *url.URL,
+	accept vocab.ActivityStreamsAccept,
 	objectIRI string,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
@@ -482,9 +546,15 @@ func (f *federatingDB) acceptLikeIRI(
 		return gtserror.NewErrorForbidden(errors.New(text), text)
 	}
 
-	// Mark the fave as approved by this Accept URI.
+	// Extract appropriate approvedByURI from the Accept.
+	approvedByURI, err := approvedByURI(acceptID, accept)
+	if err != nil {
+		return gtserror.NewErrorForbidden(err, err.Error())
+	}
+
+	// Mark the fave as approved by this URI.
 	fave.PendingApproval = util.Ptr(false)
-	fave.ApprovedByURI = activityID
+	fave.ApprovedByURI = approvedByURI.String()
 	if err := f.state.DB.UpdateStatusFave(
 		ctx,
 		fave,
@@ -506,4 +576,73 @@ func (f *federatingDB) acceptLikeIRI(
 	})
 
 	return nil
+}
+
+// approvedByURI extracts the appropriate *url.URL
+// to use as an interaction's approvedBy value by
+// checking to see if the Accept has a result URL set.
+// If that result URL exists, is an IRI (not a type),
+// and is on the same host as the Accept ID, then the
+// result URI will be returned. In all other cases,
+// the Accept ID is returned unchanged.
+//
+// Error is only returned if the result URI is set
+// but the host differs from the Accept ID host.
+//
+// TODO: This function should be updated at some point
+// to check for inlined result type, and see if type is
+// a LikeApproval, ReplyApproval, or AnnounceApproval,
+// and check the attributedTo, object, and target of
+// the approval as well. But this'll do for now.
+func approvedByURI(
+	acceptID *url.URL,
+	accept vocab.ActivityStreamsAccept,
+) (*url.URL, error) {
+	// Check if the Accept has a `result` property
+	// set on it (which should be an approval).
+	resultProp := accept.GetActivityStreamsResult()
+	if resultProp == nil {
+		// No result,
+		// use AcceptID.
+		return acceptID, nil
+	}
+
+	if resultProp.Len() != 1 {
+		// Result was unexpected
+		// length, can't use this.
+		return acceptID, nil
+	}
+
+	result := resultProp.At(0)
+	if result == nil {
+		// Result entry
+		// was nil, huh!
+		return acceptID, nil
+	}
+
+	if !result.IsIRI() {
+		// Can't handle
+		// inlined yet.
+		return acceptID, nil
+	}
+
+	resultIRI := result.GetIRI()
+	if resultIRI == nil {
+		// Result entry
+		// was nil, huh!
+		return acceptID, nil
+	}
+
+	if resultIRI.Host != acceptID.Host {
+		// What the boobs is this?
+		err := fmt.Errorf(
+			"host of result %s differed from host of Accept %s",
+			resultIRI, accept,
+		)
+		return nil, err
+	}
+
+	// Use the result IRI we've been
+	// given instead of the acceptID.
+	return resultIRI, nil
 }
