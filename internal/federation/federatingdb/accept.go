@@ -401,11 +401,17 @@ func (f *federatingDB) acceptOtherIRI(
 	// TODO: do something with type hinting here.
 	apObjectType := ap.ObjectUnknown
 
+	// Extract appropriate approvedByURI from the Accept.
+	approvedByURI, err := approvedByURI(acceptID, accept)
+	if err != nil {
+		return gtserror.NewErrorForbidden(err, err.Error())
+	}
+
 	// Pass to the processor and let them handle side effects.
 	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
 		APObjectType:   apObjectType,
 		APActivityType: ap.ActivityAccept,
-		APIRI:          acceptID,
+		APIRI:          approvedByURI,
 		APObject:       objectIRI,
 		Receiving:      receivingAcct,
 		Requesting:     requestingAcct,
