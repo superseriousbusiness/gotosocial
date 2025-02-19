@@ -60,8 +60,8 @@ func (p *Poll) Closed() bool {
 		time.Now().After(p.ClosedAt)
 }
 
-// IncrementVotes increments Poll vote and voter counts for given choices.
-func (p *Poll) IncrementVotes(choices []int) {
+// IncrementVotes increments Poll vote counts for given choices, and voters if 'isNew' is set.
+func (p *Poll) IncrementVotes(choices []int, isNew bool) {
 	if len(choices) == 0 {
 		return
 	}
@@ -69,11 +69,13 @@ func (p *Poll) IncrementVotes(choices []int) {
 	for _, choice := range choices {
 		p.Votes[choice]++
 	}
-	(*p.Voters)++
+	if isNew {
+		(*p.Voters)++
+	}
 }
 
-// DecrementVotes decrements Poll vote and voter counts for given choices.
-func (p *Poll) DecrementVotes(choices []int) {
+// DecrementVotes decrements Poll vote counts for given choices, and voters if 'withVoter' is set.
+func (p *Poll) DecrementVotes(choices []int, withVoter bool) {
 	if len(choices) == 0 {
 		return
 	}
@@ -83,7 +85,8 @@ func (p *Poll) DecrementVotes(choices []int) {
 			p.Votes[choice]--
 		}
 	}
-	if (*p.Voters) != 0 {
+	if (*p.Voters) != 0 &&
+		withVoter {
 		(*p.Voters)--
 	}
 }
