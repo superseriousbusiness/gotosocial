@@ -198,48 +198,12 @@ func ResolveCollectionPage(ctx context.Context, body io.ReadCloser) (CollectionP
 	return ToCollectionPageIterator(t)
 }
 
-// ResolveAcceptable tries to resolve the given reader
-// into an ActivityStreams Acceptable representation.
-func ResolveAcceptable(
-	ctx context.Context,
-	body io.ReadCloser,
-) (Acceptable, error) {
-	// Get "raw" map
-	// destination.
-	raw := getMap()
-	// Release.
-	defer putMap(raw)
-
-	// Decode data as JSON into 'raw' map
-	// and get the resolved AS vocab.Type.
-	// (this handles close of given body).
-	t, err := decodeType(ctx, body, raw)
-	if err != nil {
-		return nil, gtserror.SetWrongType(err)
-	}
-
-	// Attempt to cast as acceptable.
-	acceptable, ok := ToAcceptable(t)
-	if !ok {
-		err := gtserror.Newf("cannot resolve vocab type %T as acceptable", t)
-		return nil, gtserror.SetWrongType(err)
-	}
-
-	return acceptable, nil
-}
-
 // emptydest is an empty JSON decode
 // destination useful for "noop" decodes
 // to check underlying reader is empty.
 var emptydest = &struct{}{}
 
-// decodeType tries to read and parse the data
-// at provided io.ReadCloser as a JSON ActivityPub
-// type, failing if not parseable as JSON or not
-// resolveable as one of our known AS types.
-//
-// NOTE: this function handles closing
-// given body when it is finished with.
+// decodeType is the package-internal version of DecodeType.
 //
 // The given map pointer will also be populated with
 // the 'raw' JSON data, for further processing.
@@ -283,4 +247,24 @@ func decodeType(
 	}
 
 	return t, nil
+}
+
+// DecodeType tries to read and parse the data
+// at provided io.ReadCloser as a JSON ActivityPub
+// type, failing if not parseable as JSON or not
+// resolveable as one of our known AS types.
+//
+// NOTE: this function handles closing
+// given body when it is finished with.
+func DecodeType(
+	ctx context.Context,
+	body io.ReadCloser,
+) (vocab.Type, error) {
+	// Get "raw" map
+	// destination.
+	raw := getMap()
+	// Release.
+	defer putMap(raw)
+
+	return decodeType(ctx, body, raw)
 }

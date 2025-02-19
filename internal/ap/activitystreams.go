@@ -97,6 +97,11 @@ const (
 	// Not in the AS spec, just used internally to indicate
 	// that we don't *yet* know what type of Object something is.
 	ObjectUnknown = "Unknown"
+
+	// Extensions and unofficial additions.
+	ObjectLikeApproval     = "LikeApproval"
+	ObjectReplyApproval    = "ReplyApproval"
+	ObjectAnnounceApproval = "AnnounceApproval"
 )
 
 // isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).
