@@ -128,8 +128,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 			//
 			// ie., a statusable or Announce with
 			// just `id` and `type` properties set.
-			case name == ap.ActivityAnnounce,
-				ap.IsStatusable(name):
+			case name == ap.ActivityAnnounce || ap.IsStatusable(name):
 				objIRI := ap.GetJSONLDId(asType)
 				if objIRI == nil {
 					log.Debugf(ctx, "could not retrieve id of inlined Accept object %s", name)
