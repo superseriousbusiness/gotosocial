@@ -236,6 +236,14 @@ func templatePage(
 	obj map[string]any,
 ) {
 	const pageTmpl = "page.tmpl"
+
+	// Render given template inside the page.
 	obj["pageContent"] = template
+
+	// Inject specific page class by replacing
+	// ".tmpl" with "-page", so "index.tmpl" for
+	// example gets class "page index-page".
+	obj["pageClass"] = template[0:len(template)-5] + "-page"
+
 	c.HTML(code, pageTmpl, obj)
 }
