@@ -77,7 +77,7 @@ func (m *Module) confirmEmailGETHandler(c *gin.Context) {
 	// Serve page where user can click button
 	// to POST confirmation to same endpoint.
 	page := apiutil.WebPage{
-		Template: "confirm_email.tmpl",
+		Template: "confirm-email.tmpl",
 		Instance: instance,
 		Extra: map[string]any{
 			"email":    email,
@@ -127,7 +127,7 @@ func (m *Module) confirmEmailPOSTHandler(c *gin.Context) {
 	// Serve page informing user that their
 	// email address is now confirmed.
 	page := apiutil.WebPage{
-		Template: "confirmed_email.tmpl",
+		Template: "confirmed-email.tmpl",
 		Instance: instance,
 		Extra: map[string]any{
 			"email":    user.Email,
