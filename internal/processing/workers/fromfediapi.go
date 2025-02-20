@@ -124,6 +124,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		// UPDATE ACCOUNT
 		case ap.ActorPerson:
 			return p.fediAPI.UpdateAccount(ctx, fMsg)
+
+		// UPDATE QUESTION
+		case ap.ActivityQuestion:
+			return p.fediAPI.UpdatePollVote(ctx, fMsg)
 		}
 
 	// ACCEPT SOMETHING
@@ -355,7 +359,8 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 		return gtserror.Newf("cannot cast %T -> *gtsmodel.PollVote", fMsg.GTSModel)
 	}
 
-	// Insert the new poll vote in the database.
+	// Insert the new poll vote in the database, note this
+	// will handle updating votes on the poll model itself.
 	if err := p.state.DB.PutPollVote(ctx, vote); err != nil {
 		return gtserror.Newf("error inserting poll vote in db: %w", err)
 	}
@@ -376,9 +381,9 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 	status.Poll = vote.Poll
 
 	if *status.Local {
-		// Before federating it, increment the
-		// poll vote counts on our local copy.
-		status.Poll.IncrementVotes(vote.Choices)
+		// Before federating it, increment the poll vote
+		// and voter counts, *only on our local copy*.
+		status.Poll.IncrementVotes(vote.Choices, true)
 
 		// These were poll votes in a local status, we need to
 		// federate the updated status model with latest vote counts.
@@ -387,8 +392,43 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 		}
 	}
 
-	// Interaction counts changed on the source status, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+	// Interaction counts changed, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+
+	return nil
+}
+
+func (p *fediAPI) UpdatePollVote(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	// Cast poll vote type from the worker message.
+	vote, ok := fMsg.GTSModel.(*gtsmodel.PollVote)
+	if !ok {
+		return gtserror.Newf("cannot cast %T -> *gtsmodel.PollVote", fMsg.GTSModel)
+	}
+
+	// Update poll vote model (specifically only choices) in the database.
+	if err := p.state.DB.UpdatePollVote(ctx, vote, "choices"); err != nil {
+		return gtserror.Newf("error updating poll vote in db: %w", err)
+	}
+
+	// Update the vote counts on the poll model itself. These will have
+	// been updated by message pusher as we can't know which were new.
+	if err := p.state.DB.UpdatePoll(ctx, vote.Poll, "votes"); err != nil {
+		return gtserror.Newf("error updating poll in db: %w", err)
+	}
+
+	// Get the origin status.
+	status := vote.Poll.Status
+
+	if *status.Local {
+		// These were poll votes in a local status, we need to
+		// federate the updated status model with latest vote counts.
+		if err := p.federate.UpdateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating status update: %v", err)
+		}
+	}
+
+	// Interaction counts changed, uncache from timelines.
+	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil
 }
