@@ -272,7 +272,7 @@ Likewise, when enforcing received interaction policies, GoToSocial will **ALWAYS
 
 Here's some examples of what interaction policies allow users to do.
 
-### Example 1 - Limiting scope of a conversation
+### 1. Limiting scope of a conversation
 
 In this example, the user `@the_mighty_zork` wants to begin a conversation with the users `@booblover6969` and `@hodor`.
 
@@ -316,7 +316,7 @@ This can be achieved with the following `interactionPolicy`, which is attached t
 }
 ```
 
-### Example 2 - Long solo thread
+### 2. Long solo thread
 
 In this example, the user `@the_mighty_zork` wants to write a long solo thread.
 
@@ -348,7 +348,7 @@ This can be achieved by setting the following `interactionPolicy` on every post 
 
 Here, anyone is allowed to like or boost, but nobody is permitted to reply (except `@the_mighty_zork` themself).
 
-### Example 3 - Completely open
+### 3. Completely open
 
 In this example, `@the_mighty_zork` wants to write a completely open post that can be replied to, boosted, or liked by anyone who can see it:
 
@@ -454,7 +454,7 @@ In this scenario, the author of the post being interacted with never sends back 
 
 #### Acceptance
 
-In this scenario, the author of the post being interacted with sends back an `Accept` `Activity` with the interaction URI/ID as the `object` property, and a dereferenceable URI of an approval object as the `result` property (see [Approval Objects](#approval-types)).
+In this scenario, the author of the post being interacted with sends back an `Accept` `Activity` with the interaction URI/ID as the `object` property, and a dereferenceable URI of an approval object as the `result` property (see [Approval Objects](#approval-objects)).
 
 For example, the following json object `Accept`s the attempt of `@someone@somewhere.else.example.org` to reply to a post by `@post_author@example.org`:
 
@@ -481,12 +481,30 @@ At this point, `somewhere.else.example.org` should once again send out the inter
 1. This time, include the `result` URI/ID from the `accept` in the `approvedBy` field of the post contained in the `Create` (see [`approvedBy`](#approvedby)).
 2. This time, distribute the interaction to **all** of the recipients targed by `to`, `cc`, etc.
 
-!!! Note
+!!! note
     While it is not strictly necessary, in the above example, actor `https://example.org/users/post_author` addresses the `Accept` activity not just to the interacting actor `https://somewhere.else.example.org/users/someone`, but to their followers collection as well (and, implicitly, to the public). This allows followers of `https://example.org/users/post_author` on other servers to also mark the interaction as accepted, and to show the interaction alongside the interacted-with post, without having to dereference + verify the URI in `approvedBy`.
 
 ### Approval Objects
 
 An approval is an extension of a basic ActivityStreams Object, with the type `LikeApproval`, `ReplyApproval`, or `AnnounceApproval`. Each type corresponds to the type of interaction that the particular approval approves.
+
+`LikeApproval`:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://gotosocial.org/ns"
+  ],
+  "attributedTo": "https://example.org/users/post_author",
+  "id": "https://example.org/users/post_author/approvals/01J0K2YXP9QCT5BE1JWQSAM3B6",
+  "object": "https://somewhere.else.example.org/users/someone/likes/01JMPKG79EAH0NB04BHEM9D20N",
+  "target": "https://example.org/users/post_author/statuses/01JJYV141Y5M4S65SC1XCP65NT",
+  "type": "LikeApproval"
+}
+```
+
+`ReplyApproval`:
 
 ```json
 {
@@ -502,11 +520,30 @@ An approval is an extension of a basic ActivityStreams Object, with the type `Li
 }
 ```
 
+`AnnounceApproval`:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://gotosocial.org/ns"
+  ],
+  "attributedTo": "https://example.org/users/post_author",
+  "id": "https://example.org/users/post_author/approvals/01J0K2YXP9QCT5BE1JWQSAM3B6",
+  "object": "https://somewhere.else.example.org/users/someone/boosts/01JMPKG79EAH0NB04BHEM9D20N",
+  "target": "https://example.org/users/post_author/statuses/01JJYV141Y5M4S65SC1XCP65NT",
+  "type": "AnnounceApproval"
+}
+```
+
 In an approval object:
 
-- `attributedTo` should be the URI/ID of the `Actor` who `Accept`ed an interaction.
-- `object` should be the URI/ID of the interacting `Like`, `Announce`, or post-like `Object`.
-- `target`, if included, should be the URI/ID of the post that was interacted with.
+- `attributedTo`: should be the `Actor` who `Accept`ed an interaction, ie., the *interactee*.
+- `object`: should be the *interacting* `Like`, `Announce`, or post-like `Object`.
+- `target` (optional): if included, should be the post-like `Object` that was *interacted with*.
+
+!!! info "Approval objects should be dereferenceable"
+    As a consequence of the validation mechanism (see [Validating `approvedBy`](#validating-approvedby)), instances should make sure that they serve a valid ActivityPub response to dereferences of approval object URIs. If they do not, they inadvertently risk restricting the ability of remote instances to distribute their posts.
 
 ### `approvedBy`
 
@@ -514,9 +551,9 @@ In an approval object:
 
 The presence of `approvedBy` signals that the author of the post targeted by the `Activity` or replied-to by the `Object` has approved/accepted the interaction, and it can now be distributed to its intended audience.
 
-The value of `approvedBy` should be the `result` URI/ID that was sent along in an `Accept` from the interactee.
+The value of `approvedBy` should be the `result` URI/ID that was sent along in an `Accept` from the interactee, which points towards a dereferenceable approval object.
 
-For example, the following `Announce` `Activity` indicates, by the presence of `approvedBy`, that it has been `Accept`ed by `@post_author@example.org`:
+For example, the following `Announce` `Activity` claims, by the presence of `approvedBy`, that it has been `Accept`ed by `@post_author@example.org`:
 
 ```json
 {
@@ -539,29 +576,29 @@ For example, the following `Announce` `Activity` indicates, by the presence of `
 When receiving an `Activity` or a post-like `Object` with an `approvedBy` value attached to it, remote instances should:
 
 1. Validate that the host/domain of the `approvedBy` URI is equal to the host/domain of the author of the post being interacted with.
-2. Dereference the `approvedBy` URI/ID to get the approval object (see [Approval Objects](#approval-types)).
-3. 
+2. Dereference the `approvedBy` URI/ID to get the approval object (see [Approval Objects](#approval-objects)).
+3. Check the type of the approval to ensure it's the correct one, eg., an `Announce` should have an `approvedBy` URI/ID set on it that points to an `AnnounceApproval`, not a `ReplyApproval` or a `LikeApproval`.
+4. Check that the approval has an `attributedTo` value equal to the URI/ID of the actor being interacted with.
+5. Check that the approval has an `object` value equal to the `id` of the interaction `Activity` or `Object`.
 
-They should then validate that the approval has -- at minimum -- an `object` value equal to the `id` of the interaction `Activity` or `Object`, and an `actor` value equal to the author of the post being interacted with.
+If the approval cannot be dereferenced, or does not pass validity checks, the interaction should be considered invalid and dropped.
 
-Moreover, they should .
-
-If the `Accept` cannot be dereferenced, or does not pass validity checks, the interaction should be considered invalid and dropped.
-
-!!! info "`Accepts` should be dereferenceable"
-    As a consequence of the validation mechanism, instances should make sure that they serve a valid ActivityPub response to dereferences of `Accept` URIs that pertain to an `interactionPolicy`. If they do not, they inadvertently risk restricting the ability of remote instances to distribute their posts.
+!!! warning
+    Versions 0.17.x and 0.18.x of GoToSocial did not include a `result` pointing towards an approval type. Instead, the URI/ID of the `Accept` was sent in the `approvedBy` field. 
+    
+    Version 0.18.x of GoToSocial is partially forward-compatible with approval types, since it can validate approval using either a dereferenced `Accept` or a dereferenced approval type, while still sending out an `Accept` URI itself in the `approvedBy` field.
+    
+    Versions of GoToSocial from 0.19.x upwards will send out an `approvedBy` pointing to an approval type, as described in this document, not an `Accept`.
 
 ### Validating presence in a Followers / Following collection
 
-If an `Actor` interacting with an `object` (via `Like`, `inReplyTo`, or `Announce`) is permitted to do that interaction based on their presence in a `Followers` or `Following` collection in the `always` field of an interaction policy, then their server **should still wait** for an `Accept` to be received from the server of the target actor, before distributing the interaction more widely with the `approvedBy` property set to the URI of the `Accept`.
+If an `Actor` interacting with an `object` (via `Like`, `inReplyTo`, or `Announce`) is permitted to do that interaction based on their presence in a `Followers` or `Following` collection in the `always` field of an interaction policy, then their server **should still wait** for an `Accept` to be received from the server of the target actor, before distributing the interaction more widely with the `approvedBy` property set to the URI/ID of the approval.
 
-This is to prevent scenarios where third servers have to somehow verify the presence of the interacting `Actor` in the `Followers` or `Following` collection of the `Actor` being interacted with. It is simpler to allow the target server to do that verification, and to trust that their `Accept` implicitly agrees that the interacting `Actor` is present in the relevant collection.
+This is to prevent scenarios where third servers have to somehow verify the presence of the interacting `Actor` in the `Followers` or `Following` collection of the `Actor` being interacted with. It is simpler to allow the target server to do that verification, and to trust that their approval implicitly agrees that the interacting `Actor` is present in the relevant collection.
 
 Likewise, when receiving an interaction from an `Actor` whose permission to interact matches with one of the `Following` or `Followers` collections in the `always` property, the server of the interacted-with `Actor` should ensure that they *always* send out an `Accept` as soon as possible, so that the interacting `Actor` server can send out the `Activity` with the proper proof of acceptance.
 
 This process should bypass the normal "pending approval" stage whereby the server of the `Actor` being interacted with notifies them of the pending interaction, and waits for them to accept or reject, since there is no point notifying an `Actor` of a pending approval that they have already explicitly agreed to. In the GoToSocial codebase in particular, this is called "preapproval".
-
-
 
 ### Optional behaviors
 
@@ -569,7 +606,7 @@ This section describes optional behaviors that implementers *may* use when sendi
 
 #### Always send out `Accept`s
 
-Implementers may wish to *always* send out an `Accept` to remote interacters, even when the interaction is implicitly or explicitly permitted by their presence in the `always` array. When receiving such an `Accept`, implementations may still want to validate the `Accept`, and, if valid, update their representation of the interaction to include an `approvedBy` URI pointing at that `Accept`. This may be useful later on when handling revocations.
+Implementers may wish to *always* send out an `Accept` to remote interacters, even when the interaction is implicitly or explicitly permitted by their presence in the `always` array. When receiving such an `Accept`, implementations may still want to update their representation of the interaction to include an `approvedBy` URI pointing at an approval. This may be useful later on when handling revocations (TODO).
 
 #### Type hinting: inline `object` property on `Accept` and `Reject`
 
@@ -590,6 +627,7 @@ If desired, implementers may partially expand/inline the `object` property of an
     "id": "https://somewhere.else.example.org/users/someone/statuses/01J17XY2VXGMNNPH1XR7BG2524",
     [...]
   },
+  "result": "https://example.org/users/post_author/approvals/01JMPS01E54DG9JCF2ZK3JDMXE",
   "type": "Accept"
 }
 ```
@@ -612,6 +650,7 @@ For example, the following json object `Accept`s the attempt of `@someone@somewh
   "id": "https://example.org/users/post_author/activities/reject/01J0K2YXP9QCT5BE1JWQSAM3B6",
   "object": "https://somewhere.else.example.org/users/someone/statuses/01J17XY2VXGMNNPH1XR7BG2524",
   "target": "https://example.org/users/post_author/statuses/01JJYV141Y5M4S65SC1XCP65NT",
+  "result": "https://example.org/users/post_author/approvals/01JMPS01E54DG9JCF2ZK3JDMXE",
   "type": "Accept"
 }
 ```
@@ -634,6 +673,7 @@ If desired, the `target` property can also be partially expanded/inlined to type
     "id": "https://example.org/users/post_author/statuses/01JJYV141Y5M4S65SC1XCP65NT"
     [ ... ]
   },
+  "result": "https://example.org/users/post_author/approvals/01JMPS01E54DG9JCF2ZK3JDMXE",
   "type": "Accept"
 }
 ```
