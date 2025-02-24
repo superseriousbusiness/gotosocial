@@ -39,6 +39,12 @@ const (
 func (c *Converter) StatusToRSSItem(ctx context.Context, s *gtsmodel.Status) (*feeds.Item, error) {
 	// see https://cyber.harvard.edu/rss/rss.html
 
+	// If status is a boost,
+	// display the boost instead.
+	if s.BoostOf != nil {
+		s = s.BoostOf
+	}
+
 	// Title -- The title of the item.
 	// example: Venice Film Festival Tries to Quit Sinking
 	var title string
