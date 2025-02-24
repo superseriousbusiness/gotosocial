@@ -130,4 +130,9 @@ Disallow: /.well-known/webfinger
 Disallow: /.well-known/nodeinfo
 Disallow: /nodeinfo/
 `
+
+	// MD5 hash of basic robots.txt.
+	RobotsTxtETag = `ce6729aacbb16fae3628210c04b462b7`
+	// MD5 hash of robots.txt with NodeInfo disallowed.
+	RobotsTxtDisallowNodeInfoETag = `a1e4ce6342978bc8d6c3e3dfab07cab4`
 )
