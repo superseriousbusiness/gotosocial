@@ -553,3 +553,96 @@ func (c *Converter) CSVToBlocks(
 
 	return blocks, nil
 }
+
+// CSVToMutes converts a slice of CSV records
+// to a slice of barebones *gtsmodel.UserMute's,
+// ready for further processing.
+//
+// Only TargetAccount.Username, TargetAccount.Domain,
+// and Notifications will be set on each mute.
+//
+// The CSV format does not hold expiration data, so
+// all imported mutes will be permanent, possibly
+// overwriting existing temporary mutes.
+func (c *Converter) CSVToMutes(
+	ctx context.Context,
+	records [][]string,
+) ([]*gtsmodel.UserMute, error) {
+	// We need to know our own domain for this.
+	// Try account domain, fall back to host.
+	var (
+		thisHost          = config.GetHost()
+		thisAccountDomain = config.GetAccountDomain()
+		mutes             = make([]*gtsmodel.UserMute, 0, len(records)-1)
+	)
+
+	for _, record := range records {
+		recordLen := len(record)
+
+		// Older versions of this Masto CSV
+		// schema may not include "Hide notifications",
+		// so be lenient here in what we accept.
+		if recordLen == 0 ||
+			recordLen > 2 {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		// "Account address"
+		namestring := record[0]
+		if namestring == "" {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		if namestring == "Account address" {
+			// CSV header row,
+			// skip this one.
+			continue
+		}
+
+		// Prepend with "@"
+		// if not included.
+		if namestring[0] != '@' {
+			namestring = "@" + namestring
+		}
+
+		username, domain, err := util.ExtractNamestringParts(namestring)
+		if err != nil {
+			// Badly formatted,
+			// skip this one.
+			continue
+		}
+
+		if domain == thisHost || domain == thisAccountDomain {
+			// Clear the domain,
+			// since it's ours.
+			domain = ""
+		}
+
+		// "Hide notifications"
+		var hideNotifications *bool
+		if recordLen > 1 {
+			b, err := strconv.ParseBool(record[1])
+			if err != nil {
+				// Badly formatted,
+				// skip this one.
+				continue
+			}
+			hideNotifications = &b
+		}
+
+		// Looks good, whack it in the slice.
+		mutes = append(mutes, &gtsmodel.UserMute{
+			TargetAccount: &gtsmodel.Account{
+				Username: username,
+				Domain:   domain,
+			},
+			Notifications: hideNotifications,
+		})
+	}
+
+	return mutes, nil
+}

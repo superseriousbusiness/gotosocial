@@ -25,6 +25,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -39,6 +40,7 @@ const (
 var types = []string{
 	"following",
 	"blocks",
+	"mutes",
 }
 
 var modes = []string{
@@ -94,6 +96,8 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 //
 //			- `following` - accounts to follow.
 //			- `blocks` - accounts to block.
+//			- `mutes` - accounts to mute.
+//
 //		type: string
 //		required: true
 //	-

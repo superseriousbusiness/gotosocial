@@ -266,3 +266,6 @@ Both merge and overwrite operations are idempotent, which basically means that d
 
 !!! info
     For a variety of reasons, it will not always be possible to recreate every entry in an uploaded CSV file via importing. For example, say you are trying to import a CSV of follows containing `example_account`, but `example_account`'s instance has gone offline, or their instance blocks yours, or your instance blocks theirs, etc. In this case, the follow of `example_account` would not be created.
+
+!!! warning
+    The CSV format for mutes does not contain expiration data, so temporary mutes are exported (and imported) as permanent mutes.
