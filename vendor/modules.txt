@@ -466,8 +466,6 @@ github.com/microcosm-cc/bluemonday/css
 # github.com/miekg/dns v1.1.63
 ## explicit; go 1.19
 github.com/miekg/dns
-# github.com/minio/crc64nvme v1.0.0
-## explicit; go 1.22
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
@@ -1058,8 +1056,8 @@ go.uber.org/multierr
 # golang.org/x/arch v0.13.0
 ## explicit; go 1.18
 golang.org/x/arch/x86/x86asm
-# golang.org/x/crypto v0.33.0
-## explicit; go 1.20
+# golang.org/x/crypto v0.34.0
+## explicit; go 1.23.0
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
 golang.org/x/crypto/argon2
