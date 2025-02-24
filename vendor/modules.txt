@@ -466,8 +466,6 @@ github.com/microcosm-cc/bluemonday/css
 # github.com/miekg/dns v1.1.63
 ## explicit; go 1.19
 github.com/miekg/dns
-# github.com/minio/crc64nvme v1.0.0
-## explicit; go 1.22
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
@@ -559,7 +557,7 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/puzpuzpuz/xsync/v3 v3.5.0
+# github.com/puzpuzpuz/xsync/v3 v3.5.1
 ## explicit; go 1.18
 github.com/puzpuzpuz/xsync/v3
 # github.com/quasoft/memstore v0.0.0-20191010062613-2bce066d2b0b
@@ -912,7 +910,7 @@ github.com/ugorji/go/codec
 github.com/ulule/limiter/v3
 github.com/ulule/limiter/v3/drivers/store/common
 github.com/ulule/limiter/v3/drivers/store/memory
-# github.com/uptrace/bun v1.2.9
+# github.com/uptrace/bun v1.2.10
 ## explicit; go 1.22.0
 github.com/uptrace/bun
 github.com/uptrace/bun/dialect
