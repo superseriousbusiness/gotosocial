@@ -114,7 +114,7 @@ func (q *InsertQuery) ExcludeColumn(columns ...string) *InsertQuery {
 // Value overwrites model value for the column.
 func (q *InsertQuery) Value(column string, expr string, args ...interface{}) *InsertQuery {
 	if q.table == nil {
-		q.err = errNilModel
+		q.setErr(errNilModel)
 		return q
 	}
 	q.addValue(q.table, column, expr, args)
@@ -585,6 +585,9 @@ func (q *InsertQuery) scanOrExec(
 	if err := q.beforeAppendModel(ctx, q); err != nil {
 		return nil, err
 	}
+
+	// if a comment is propagated via the context, use it
+	setCommentFromContext(ctx, q)
 
 	// Generate the query before checking hasReturning.
 	queryBytes, err := q.AppendQuery(q.db.fmter, q.db.makeQueryBytes())
