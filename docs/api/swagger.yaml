@@ -6990,6 +6990,34 @@ paths:
             tags:
                 - admin
     /api/v1/admin/instance/rules:
+        get:
+            description: The rules will be returned in order (sorted by Order ascending).
+            operationId: adminsRuleGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: An array with all the rules for the local instance.
+                    schema:
+                        items:
+                            $ref: '#/definitions/instanceRule'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View instance rules, with IDs.
+            tags:
+                - admin
         post:
             consumes:
                 - multipart/form-data
@@ -7060,6 +7088,37 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Delete an existing instance rule.
+            tags:
+                - admin
+        get:
+            operationId: adminRuleGet
+            parameters:
+                - description: The id of the rule.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested rule.
+                    schema:
+                        $ref: '#/definitions/instanceRule'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin
+            summary: View instance rule with the given id.
             tags:
                 - admin
         patch:
@@ -7324,67 +7383,6 @@ paths:
                 - OAuth2 Bearer:
                     - admin
             summary: Mark a report as resolved.
-            tags:
-                - admin
-    /api/v1/admin/rules:
-        get:
-            description: The rules will be returned in order (sorted by Order ascending).
-            operationId: adminsRuleGet
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: An array with all the rules for the local instance.
-                    schema:
-                        items:
-                            $ref: '#/definitions/instanceRule'
-                        type: array
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - admin
-            summary: View instance rules, with IDs.
-            tags:
-                - admin
-    /api/v1/admin/rules/{id}:
-        get:
-            operationId: adminRuleGet
-            parameters:
-                - description: The id of the rule.
-                  in: path
-                  name: id
-                  required: true
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: The requested rule.
-                    schema:
-                        $ref: '#/definitions/instanceRule'
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - admin
-            summary: View instance rule with the given id.
             tags:
                 - admin
     /api/v1/announcements:
