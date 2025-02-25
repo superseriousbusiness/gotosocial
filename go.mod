@@ -61,7 +61,7 @@ require (
 	github.com/tdewolff/minify/v2 v2.21.3
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/temoto/robotstxt v1.1.2
-	github.com/tetratelabs/wazero v1.8.2
+	github.com/tetratelabs/wazero v1.9.0
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
 	github.com/uptrace/bun v1.2.9
