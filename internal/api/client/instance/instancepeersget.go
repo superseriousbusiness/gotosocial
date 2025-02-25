@@ -58,6 +58,9 @@ import (
 //		required: false
 //		default: "open"
 //
+//	security:
+//	- OAuth2 Bearer: []
+//
 //	responses:
 //		'200':
 //			description: >-
@@ -98,9 +101,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) InstancePeersGETHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, false, false, false, false)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

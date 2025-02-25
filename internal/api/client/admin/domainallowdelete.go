@@ -43,7 +43,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write:domain_allows
 //
 //	responses:
 //		'200':

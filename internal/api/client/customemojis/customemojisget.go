@@ -37,8 +37,7 @@ import (
 //	- application/json
 //
 //	security:
-//	- OAuth2 Bearer:
-//		- read:custom_emojis
+//	- OAuth2 Bearer: []
 //
 //	responses:
 //		'200':
@@ -54,8 +53,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) CustomEmojisGETHandler(c *gin.Context) {
-	if _, err := apiutil.TokenAuth(c, true, true, true, true); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	_, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

@@ -40,7 +40,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:notifications
+//		- write:notifications
 //
 //	responses:
 //		'200':
@@ -57,9 +57,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) NotificationsClearPOSTHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteNotifications,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -68,7 +71,7 @@ func (m *Module) NotificationsClearPOSTHandler(c *gin.Context) {
 		return
 	}
 
-	errWithCode := m.processor.Timeline().NotificationsClear(c.Request.Context(), authed)
+	errWithCode = m.processor.Timeline().NotificationsClear(c.Request.Context(), authed)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

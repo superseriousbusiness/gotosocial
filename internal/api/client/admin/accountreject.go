@@ -69,7 +69,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write:accounts
 //
 //	responses:
 //		'200':
@@ -89,9 +89,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) AccountRejectPOSTHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminWriteAccounts,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

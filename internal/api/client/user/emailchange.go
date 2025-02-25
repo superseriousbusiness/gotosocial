@@ -45,7 +45,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- write:user
+//		- write:accounts
 //
 //	responses:
 //		'202':
@@ -65,9 +65,12 @@ import (
 //		'500':
 //			description: internal error
 func (m *Module) EmailChangePOSTHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteAccounts,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

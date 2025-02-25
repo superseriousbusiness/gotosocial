@@ -59,9 +59,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) FeaturedTagsGETHandler(c *gin.Context) {
-	_, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	_, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeReadAccounts,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

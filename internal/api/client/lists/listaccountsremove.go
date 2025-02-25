@@ -81,9 +81,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) ListAccountsDELETEHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteLists,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -107,7 +110,7 @@ func (m *Module) ListAccountsDELETEHandler(c *gin.Context) {
 	// parsing in order to be compatible with Mastodon's client API conventions.
 	oldMethod := c.Request.Method
 	c.Request.Method = "POST"
-	err = c.ShouldBind(form)
+	err := c.ShouldBind(form)
 	c.Request.Method = oldMethod
 
 	if err != nil {

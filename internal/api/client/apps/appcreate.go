@@ -73,9 +73,11 @@ const (
 //		'500':
 //			description: internal server error
 func (m *Module) AppsPOSTHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, false, false, false, false)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		false, false, false, false,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
