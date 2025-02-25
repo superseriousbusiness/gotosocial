@@ -94,7 +94,7 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		subscriptions.New(&suite.state, suite.federator.TransportController(), suite.tc),
 		suite.tc,
 		suite.federator,
-		testrig.NewTestOauthServer(suite.db),
+		testrig.NewTestOauthServer(&suite.state),
 		testrig.NewTestMediaManager(&suite.state),
 		&suite.state,
 		suite.emailSender,

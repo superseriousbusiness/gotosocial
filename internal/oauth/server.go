@@ -24,9 +24,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/oauth2/v4"
 	oautherr "github.com/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/oauth2/v4/manage"
@@ -75,9 +75,9 @@ type s struct {
 }
 
 // New returns a new oauth server that implements the Server interface
-func New(ctx context.Context, database db.DB) Server {
-	ts := newTokenStore(ctx, database)
-	cs := NewClientStore(database)
+func New(ctx context.Context, state *state.State) Server {
+	ts := newTokenStore(ctx, state)
+	cs := NewClientStore(state)
 
 	manager := manage.NewDefaultManager()
 	manager.MapTokenStorage(ts)

@@ -100,7 +100,7 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	)
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.fileServer = fileserver.New(suite.processor)

@@ -20,11 +20,11 @@ package testrig
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // NewTestOauthServer returns an oauth server with the given db
-func NewTestOauthServer(db db.DB) oauth.Server {
-	return oauth.New(context.Background(), db)
+func NewTestOauthServer(state *state.State) oauth.Server {
+	return oauth.New(context.Background(), state)
 }

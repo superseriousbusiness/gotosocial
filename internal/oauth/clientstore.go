@@ -20,26 +20,23 @@ package oauth
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
 type clientStore struct {
-	db db.DB
+	state *state.State
 }
 
 // NewClientStore returns an implementation of the oauth2 ClientStore interface, using the given db as a storage backend.
-func NewClientStore(db db.DB) oauth2.ClientStore {
-	pts := &clientStore{
-		db: db,
-	}
-	return pts
+func NewClientStore(state *state.State) oauth2.ClientStore {
+	return &clientStore{state: state}
 }
 
 func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
-	client, err := cs.db.GetClientByID(ctx, clientID)
+	client, err := cs.state.DB.GetClientByID(ctx, clientID)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +49,7 @@ func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.Cli
 }
 
 func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
-	return cs.db.PutClient(ctx, &gtsmodel.Client{
+	return cs.state.DB.PutClient(ctx, &gtsmodel.Client{
 		ID:     cli.GetID(),
 		Secret: cli.GetSecret(),
 		Domain: cli.GetDomain(),
@@ -61,5 +58,5 @@ func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo
 }
 
 func (cs *clientStore) Delete(ctx context.Context, id string) error {
-	return cs.db.DeleteClientByID(ctx, id)
+	return cs.state.DB.DeleteClientByID(ctx, id)
 }

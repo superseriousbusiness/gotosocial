@@ -752,8 +752,7 @@ func sizeofThreadMute() uintptr {
 func sizeofToken() uintptr {
 	return uintptr(size.Of(&gtsmodel.Token{
 		ID:                  exampleID,
-		CreatedAt:           exampleTime,
-		UpdatedAt:           exampleTime,
+		LastUsed:            exampleTime,
 		ClientID:            exampleID,
 		UserID:              exampleID,
 		RedirectURI:         exampleURI,

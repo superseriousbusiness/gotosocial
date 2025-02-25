@@ -66,7 +66,7 @@ func (suite *PgClientStoreTestSuite) TearDownTest() {
 
 func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
 	// set a new client in the store
-	cs := oauth.NewClientStore(suite.db)
+	cs := oauth.NewClientStore(&suite.state)
 	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -84,7 +84,7 @@ func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
 
 func (suite *PgClientStoreTestSuite) TestClientSetAndDelete() {
 	// set a new client in the store
-	cs := oauth.NewClientStore(suite.db)
+	cs := oauth.NewClientStore(&suite.state)
 	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
 		suite.FailNow(err.Error())
 	}

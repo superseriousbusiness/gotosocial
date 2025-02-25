@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type Application interface {
@@ -48,6 +49,9 @@ type Application interface {
 	// GetAllTokens fetches all client oauth tokens from database.
 	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
 
+	// GetTokens allows paging through a user's tokens.
+	GetTokens(ctx context.Context, userID string, page *paging.Page) ([]*gtsmodel.Token, error)
+
 	// GetTokenByID fetches the client oauth token from database with ID.
 	GetTokenByID(ctx context.Context, id string) (*gtsmodel.Token, error)
 
@@ -62,6 +66,9 @@ type Application interface {
 
 	// PutToken puts given client oauth token in the database.
 	PutToken(ctx context.Context, token *gtsmodel.Token) error
+
+	// UpdateToken updates the given token. Update all columns if no specific columns given.
+	UpdateToken(ctx context.Context, token *gtsmodel.Token, columns ...string) error
 
 	// DeleteTokenByID deletes client oauth token from database with ID.
 	DeleteTokenByID(ctx context.Context, id string) error

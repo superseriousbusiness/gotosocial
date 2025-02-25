@@ -103,7 +103,7 @@ func (suite *AdminStandardTestSuite) SetupTest() {
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 
 	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)

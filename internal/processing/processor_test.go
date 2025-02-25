@@ -124,7 +124,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.transportController = testrig.NewTestTransportController(&suite.state, suite.httpClient)
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
 	suite.processor = processing.NewProcessor(
