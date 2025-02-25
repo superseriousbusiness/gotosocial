@@ -23,7 +23,7 @@ export function DomainPermissionExcludeHelpText() {
 	return (
 		<>
 			Domain permission excludes prevent permissions for a domain (and all
-			subdomains) from being auomatically managed by domain permission subscriptions.
+			subdomains) from being automatically managed by domain permission subscriptions.
 			<br/>
 			For example, if you create an exclude entry for <code>example.org</code>, then
 			a blocklist or allowlist subscription will <em>exclude</em> entries for <code>example.org</code>
