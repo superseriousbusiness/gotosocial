@@ -544,7 +544,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch5() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Forbidden: user is not an admin so cannot update instance settings"}`, string(b))
+	suite.Equal(`{"error":"Forbidden: token has insufficient scope permission"}`, string(b))
 }
 
 func (suite *InstancePatchTestSuite) TestInstancePatch6() {
