@@ -24,7 +24,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // DomainPermissionExcludeDELETEHandler swagger:operation DELETE /api/v1/admin/domain_permission_excludes/{id} domainPermissionExcludeDelete
@@ -48,7 +47,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write
 //
 //	responses:
 //		'200':
@@ -68,9 +67,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) DomainPermissionExcludeDELETEHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminWrite,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

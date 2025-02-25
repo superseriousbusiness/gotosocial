@@ -28,7 +28,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	streampkg "github.com/superseriousbusiness/gotosocial/internal/stream"
 
 	"github.com/gin-gonic/gin"
@@ -187,9 +186,8 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 
 		// No explicit token was provided:
 		// try regular oauth as a last resort.
-		authed, err := oauth.Authed(c, true, true, true, true)
-		if err != nil {
-			errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+		authed, errWithCode := apiutil.TokenAuth(c, true, true, true, true)
+		if errWithCode != nil {
 			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 			return
 		}

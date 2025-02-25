@@ -25,7 +25,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // AccountRelationshipsGETHandler swagger:operation GET /api/v1/accounts/relationships accountRelationships
@@ -73,9 +72,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeReadAccounts,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -89,7 +91,7 @@ func (m *Module) AccountRelationshipsGETHandler(c *gin.Context) {
 		// check fallback -- let's be generous and see if maybe it's just set as 'id'?
 		id := c.Query("id")
 		if id == "" {
-			err = errors.New("no account id(s) specified in query")
+			err := errors.New("no account id(s) specified in query")
 			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 			return
 		}

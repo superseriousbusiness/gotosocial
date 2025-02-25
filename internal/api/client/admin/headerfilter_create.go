@@ -42,7 +42,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write
 //
 //	responses:
 //		'200':
@@ -82,7 +82,7 @@ func (m *Module) HeaderFilterAllowPOST(c *gin.Context) {
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write
 //
 //	responses:
 //		'200':

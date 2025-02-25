@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // ReportGETHandler swagger:operation GET /api/v1/reports/{id} reportGet
@@ -47,7 +46,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:reports
+//		- read:accounts
 //
 //	responses:
 //		'200':
@@ -65,9 +64,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) ReportGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeReadAccounts,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

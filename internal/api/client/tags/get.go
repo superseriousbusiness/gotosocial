@@ -22,8 +22,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // TagGETHandler swagger:operation GET /api/v1/tags/{tag_name} getTag
@@ -40,8 +38,7 @@ import (
 //	- application/json
 //
 //	security:
-//	- OAuth2 Bearer:
-//		- read:follows
+//	- OAuth2 Bearer: []
 //
 //	parameters:
 //	-
@@ -67,9 +64,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) TagGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

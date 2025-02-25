@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // PollGETHandler swagger:operation GET /api/v1/polls/{id} poll
@@ -67,9 +66,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) PollGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeReadStatuses,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

@@ -39,7 +39,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write
 //
 //	responses:
 //		'202':
@@ -76,7 +76,7 @@ func (m *Module) HeaderFilterAllowDELETE(c *gin.Context) {
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:write
 //
 //	responses:
 //		'202':

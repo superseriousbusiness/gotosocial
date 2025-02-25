@@ -23,15 +23,15 @@ import (
 	"fmt"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-func (p *Processor) FavedTimelineGet(ctx context.Context, authed *oauth.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
+func (p *Processor) FavedTimelineGet(ctx context.Context, authed *apiutil.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.state.DB.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = fmt.Errorf("FavedTimelineGet: db error getting statuses: %w", err)

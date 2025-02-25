@@ -24,7 +24,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // PublicTimelineGETHandler swagger:operation GET /api/v1/timelines/public publicTimeline
@@ -108,19 +107,25 @@ import (
 //		'400':
 //			description: bad request
 func (m *Module) PublicTimelineGETHandler(c *gin.Context) {
-	var authed *oauth.Auth
-	var err error
-
+	var (
+		authed      *apiutil.Auth
+		errWithCode gtserror.WithCode
+	)
 	if config.GetInstanceExposePublicTimeline() {
 		// If the public timeline is allowed to be exposed, still check if we
 		// can extract various authentication properties, but don't require them.
-		authed, err = oauth.Authed(c, false, false, false, false)
+		authed, errWithCode = apiutil.TokenAuth(c,
+			false, false, false, false,
+		)
 	} else {
-		authed, err = oauth.Authed(c, true, true, true, true)
+		authed, errWithCode = apiutil.TokenAuth(c,
+			true, true, true, true,
+			apiutil.ScopeReadStatuses,
+		)
 	}
 
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

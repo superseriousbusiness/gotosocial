@@ -19,8 +19,12 @@ package stream
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"slices"
+	"strings"
 
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -56,6 +60,23 @@ func (p *Processor) Authorize(ctx context.Context, accessToken string) (*gtsmode
 			return nil, gtserror.NewErrorUnauthorized(err)
 		}
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Ensure read scope.
+	//
+	// TODO: make this more granular
+	// depending on stream type.
+	hasScopes := strings.Split(ti.GetScope(), " ")
+	scopeOK := slices.ContainsFunc(
+		hasScopes,
+		func(hasScope string) bool {
+			return apiutil.Scope(hasScope).Permits(apiutil.ScopeRead)
+		},
+	)
+
+	if !scopeOK {
+		const errText = "token has insufficient scope permission"
+		return nil, gtserror.NewErrorForbidden(errors.New(errText), errText)
 	}
 
 	return acct, nil

@@ -23,7 +23,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // InteractionRequestAuthorizePOSTHandler swagger:operation POST /api/v1/interaction_requests/{id}/authorize authorizeInteractionRequest
@@ -66,9 +65,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) InteractionRequestAuthorizePOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteStatuses,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
