@@ -92,28 +92,12 @@ const (
 // Permits returns true if the
 // scope permits the wanted scope.
 func (has Scope) Permits(wanted Scope) bool {
-	switch {
-
-	// Exact match.
-	case has == wanted:
+	if has == wanted {
+		// Exact match.
 		return true
-
-	// Check if we have a parent scope
-	// of what's wanted, eg., we have
-	// "admin", we want "admin:read".
-	case has == ScopeRead:
-		return strings.HasPrefix(string(wanted), string(ScopeRead))
-	case has == ScopeWrite:
-		return strings.HasPrefix(string(wanted), string(ScopeWrite))
-	case has == ScopeAdmin:
-		return strings.HasPrefix(string(wanted), string(ScopeAdmin))
-	case has == ScopeAdminRead:
-		return strings.HasPrefix(string(wanted), string(ScopeAdminRead))
-	case has == ScopeAdminWrite:
-		return strings.HasPrefix(string(wanted), string(ScopeAdminWrite))
-
-	// No match.
-	default:
-		return false
 	}
+
+	// Check if we have a parent scope of what's wanted,
+	// eg., we have scope "admin", we want "admin:read".
+	return strings.HasPrefix(string(wanted), string(has))
 }
