@@ -17,7 +17,9 @@
 
 package util
 
-import "strings"
+import (
+	"strings"
+)
 
 type Scope string
 
