@@ -45,6 +45,10 @@ import (
 //		in: path
 //		required: true
 //
+//	security:
+//	- OAuth2 Bearer:
+//		- admin:read
+//
 //	responses:
 //		'200':
 //			description: A single emoji.
@@ -63,9 +67,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) EmojiGETHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminRead,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

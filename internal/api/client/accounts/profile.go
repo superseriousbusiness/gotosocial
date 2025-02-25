@@ -101,9 +101,12 @@ func (m *Module) AccountHeaderDELETEHandler(c *gin.Context) {
 // accountDeleteProfileAttachment checks that an authenticated account is present and allowed to alter itself,
 // runs an attachment deletion processor method, and returns the updated account.
 func (m *Module) accountDeleteProfileAttachment(c *gin.Context, processDelete func(context.Context, *gtsmodel.Account) (*apimodel.Account, gtserror.WithCode)) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteAccounts,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

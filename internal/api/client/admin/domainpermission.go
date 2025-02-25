@@ -62,9 +62,20 @@ func (m *Module) createDomainPermissions(
 	single singleDomainPermCreate,
 	multi multiDomainPermCreate,
 ) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	// Scope differs based on permType.
+	var requireScope apiutil.Scope
+	if permType == gtsmodel.DomainPermissionBlock {
+		requireScope = apiutil.ScopeAdminWriteDomainBlocks
+	} else {
+		requireScope = apiutil.ScopeAdminWriteDomainAllows
+	}
+
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		requireScope,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -97,6 +108,7 @@ func (m *Module) createDomainPermissions(
 		return
 	}
 
+	var err error
 	if importing && form.Domains.Size == 0 {
 		err = errors.New("import was specified but list of domains is empty")
 	} else if !importing && form.Domain == "" {
@@ -170,9 +182,20 @@ func (m *Module) deleteDomainPermission(
 	c *gin.Context,
 	permType gtsmodel.DomainPermissionType, // block/allow
 ) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	// Scope differs based on permType.
+	var requireScope apiutil.Scope
+	if permType == gtsmodel.DomainPermissionBlock {
+		requireScope = apiutil.ScopeAdminWriteDomainBlocks
+	} else {
+		requireScope = apiutil.ScopeAdminWriteDomainAllows
+	}
+
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		requireScope,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -217,9 +240,20 @@ func (m *Module) getDomainPermission(
 	c *gin.Context,
 	permType gtsmodel.DomainPermissionType,
 ) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	// Scope differs based on permType.
+	var requireScope apiutil.Scope
+	if permType == gtsmodel.DomainPermissionBlock {
+		requireScope = apiutil.ScopeAdminReadDomainBlocks
+	} else {
+		requireScope = apiutil.ScopeAdminReadDomainAllows
+	}
+
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		requireScope,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -265,9 +299,20 @@ func (m *Module) getDomainPermissions(
 	c *gin.Context,
 	permType gtsmodel.DomainPermissionType,
 ) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	// Scope differs based on permType.
+	var requireScope apiutil.Scope
+	if permType == gtsmodel.DomainPermissionBlock {
+		requireScope = apiutil.ScopeAdminReadDomainBlocks
+	} else {
+		requireScope = apiutil.ScopeAdminReadDomainAllows
+	}
+
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		requireScope,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

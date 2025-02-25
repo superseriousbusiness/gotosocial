@@ -108,7 +108,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:accounts
+//		- read:statuses
 //
 //	responses:
 //		'200':
@@ -133,9 +133,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) AccountStatusesGETHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeReadStatuses,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

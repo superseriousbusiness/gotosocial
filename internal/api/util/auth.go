@@ -2,8 +2,11 @@ package util
 
 import (
 	"errors"
+	"slices"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/oauth2/v4"
@@ -36,17 +39,21 @@ func TokenAuth(
 	requireApp bool,
 	requireUser bool,
 	requireAccount bool,
-) (*Auth, error) {
-	ctx := c.Copy()
-	a := &Auth{}
-	var i interface{}
-	var ok bool
+	requireScope ...Scope,
+) (*Auth, gtserror.WithCode) {
+	var (
+		ctx = c.Copy()
+		a   = &Auth{}
+		i   interface{}
+		ok  bool
+	)
 
 	i, ok = ctx.Get(oauth.SessionAuthorizedToken)
 	if ok {
 		parsed, ok := i.(oauth2.TokenInfo)
 		if !ok {
-			return nil, errors.New("could not parse token from session context")
+			const errText = "could not parse token from session context"
+			return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 		}
 		a.Token = parsed
 	}
@@ -55,7 +62,8 @@ func TokenAuth(
 	if ok {
 		parsed, ok := i.(*gtsmodel.Application)
 		if !ok {
-			return nil, errors.New("could not parse application from session context")
+			const errText = "could not parse application from session context"
+			return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 		}
 		a.Application = parsed
 	}
@@ -64,7 +72,8 @@ func TokenAuth(
 	if ok {
 		parsed, ok := i.(*gtsmodel.User)
 		if !ok {
-			return nil, errors.New("could not parse user from session context")
+			const errText = "could not parse user from session context"
+			return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 		}
 		a.User = parsed
 	}
@@ -73,25 +82,53 @@ func TokenAuth(
 	if ok {
 		parsed, ok := i.(*gtsmodel.Account)
 		if !ok {
-			return nil, errors.New("could not parse account from session context")
+			const errText = "could not parse account from session context"
+			return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 		}
 		a.Account = parsed
 	}
 
 	if requireToken && a.Token == nil {
-		return nil, errors.New("token not supplied")
+		const errText = "token not supplied"
+		return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 	}
 
 	if requireApp && a.Application == nil {
-		return nil, errors.New("application not supplied")
+		const errText = "application not supplied"
+		return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 	}
 
 	if requireUser && a.User == nil {
-		return nil, errors.New("user not supplied or not authorized")
+		const errText = "user not supplied or not authorized"
+		return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
 	}
 
 	if requireAccount && a.Account == nil {
-		return nil, errors.New("account not supplied or not authorized")
+		const errText = "account not supplied or not authorized"
+		return nil, gtserror.NewErrorUnauthorized(errors.New(errText), errText)
+	}
+
+	if len(requireScope) != 0 {
+		// We need to match one of the
+		// required scopes, check if we can.
+		hasScopes := strings.Split(a.Token.GetScope(), " ")
+		scopeOK := slices.ContainsFunc(
+			hasScopes,
+			func(hasScope string) bool {
+				for _, requiredScope := range requireScope {
+					if Scope(hasScope).Permits(requiredScope) {
+						// Got it.
+						return true
+					}
+				}
+				return false
+			},
+		)
+
+		if !scopeOK {
+			const errText = "token has insufficient scope permission"
+			return nil, gtserror.NewErrorForbidden(errors.New(errText), errText)
+		}
 	}
 
 	return a, nil

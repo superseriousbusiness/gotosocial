@@ -31,7 +31,7 @@ export default function Login({ }) {
 		instance: useTextInput("instance", {
 			defaultValue: window.location.origin
 		}),
-		scopes: useValue("scopes", "user admin"),
+		scopes: useValue("scopes", "read write admin"),
 	};
 
 	const [formSubmit, result] = useFormSubmit(form, useAuthorizeFlowMutation(), { 

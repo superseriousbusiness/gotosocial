@@ -65,9 +65,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) InteractionRequestRejectPOSTHandler(c *gin.Context) {
-	authed, err := apiutil.TokenAuth(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteStatuses,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
