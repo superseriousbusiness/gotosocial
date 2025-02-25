@@ -466,8 +466,6 @@ github.com/microcosm-cc/bluemonday/css
 # github.com/miekg/dns v1.1.63
 ## explicit; go 1.19
 github.com/miekg/dns
-# github.com/minio/crc64nvme v1.0.0
-## explicit; go 1.22
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
 github.com/minio/md5-simd
@@ -839,8 +837,8 @@ github.com/technologize/otel-go-contrib/otelginmetrics
 # github.com/temoto/robotstxt v1.1.2
 ## explicit; go 1.11
 github.com/temoto/robotstxt
-# github.com/tetratelabs/wazero v1.8.2
-## explicit; go 1.21
+# github.com/tetratelabs/wazero v1.9.0
+## explicit; go 1.22.0
 github.com/tetratelabs/wazero
 github.com/tetratelabs/wazero/api
 github.com/tetratelabs/wazero/experimental
