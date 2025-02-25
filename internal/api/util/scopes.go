@@ -93,6 +93,14 @@ const (
 // scope permits the wanted scope.
 func (has Scope) Permits(wanted Scope) bool {
 	switch {
+
+	// Exact match.
+	case has == wanted:
+		return true
+
+	// Check if we have a parent scope
+	// of what's wanted, eg., we have
+	// "admin", we want "admin:read".
 	case has == ScopeRead:
 		return strings.HasPrefix(string(wanted), string(ScopeRead))
 	case has == ScopeWrite:
@@ -103,7 +111,9 @@ func (has Scope) Permits(wanted Scope) bool {
 		return strings.HasPrefix(string(wanted), string(ScopeAdminRead))
 	case has == ScopeAdminWrite:
 		return strings.HasPrefix(string(wanted), string(ScopeAdminWrite))
+
+	// No match.
 	default:
-		return has == wanted
+		return false
 	}
 }
