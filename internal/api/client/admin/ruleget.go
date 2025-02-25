@@ -27,7 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// RuleGETHandler swagger:operation GET /api/v1/admin/rules/{id} adminRuleGet
+// RuleGETHandler swagger:operation GET /api/v1/admin/instance/rules/{id} adminRuleGet
 //
 // View instance rule with the given id.
 //
