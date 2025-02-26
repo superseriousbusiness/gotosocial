@@ -23,10 +23,10 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -64,7 +64,7 @@ func (suite *HomeTestSuite) TestHomeTimelineGetHideFiltered() {
 	var (
 		ctx                 = context.Background()
 		requester           = suite.testAccounts["local_account_1"]
-		authed              = &oauth.Auth{Account: requester}
+		authed              = &apiutil.Auth{Account: requester}
 		maxID               = ""
 		sinceID             = ""
 		minID               = "01F8MHAAY43M6RJ473VQFCVH36" // 1 before filteredStatus

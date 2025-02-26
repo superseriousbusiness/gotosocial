@@ -95,7 +95,7 @@ func (suite *PushTestSuite) TestGetSubscription() {
 func (suite *PushTestSuite) TestGetMissingSubscription() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	_, err := suite.getSubscription(accountFixtureName, tokenFixtureName, 404)
 	suite.NoError(err)

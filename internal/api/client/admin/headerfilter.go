@@ -27,14 +27,15 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // getHeaderFilter is a gin handler function that returns details of an HTTP header filter with provided ID, using given get function.
 func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, string) (*apimodel.HeaderFilter, gtserror.WithCode)) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminRead,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -69,9 +70,11 @@ func (m *Module) getHeaderFilter(c *gin.Context, get func(context.Context, strin
 
 // getHeaderFilters is a gin handler function that returns details of all HTTP header filters using given get function.
 func (m *Module) getHeaderFilters(c *gin.Context, get func(context.Context) ([]*apimodel.HeaderFilter, gtserror.WithCode)) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminRead,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -100,9 +103,11 @@ func (m *Module) getHeaderFilters(c *gin.Context, get func(context.Context) ([]*
 
 // createHeaderFilter is a gin handler function that creates a HTTP header filter entry using provided form data, passing to given create function.
 func (m *Module) createHeaderFilter(c *gin.Context, create func(context.Context, *gtsmodel.Account, *apimodel.HeaderFilterRequest) (*apimodel.HeaderFilter, gtserror.WithCode)) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminWrite,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
@@ -148,9 +153,11 @@ func (m *Module) createHeaderFilter(c *gin.Context, create func(context.Context,
 
 // deleteHeaderFilter is a gin handler function that deletes an HTTP header filter with provided ID, using given delete function.
 func (m *Module) deleteHeaderFilter(c *gin.Context, delete func(context.Context, string) gtserror.WithCode) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		errWithCode := gtserror.NewErrorUnauthorized(err, err.Error())
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeAdminWrite,
+	)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}

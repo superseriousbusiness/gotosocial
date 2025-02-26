@@ -4331,7 +4331,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:accounts
+                    - read:statuses
             summary: See statuses posted by the requested account.
             tags:
                 - accounts
@@ -5004,7 +5004,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:accounts
             summary: View + page through known accounts according to given filters.
             tags:
                 - admin
@@ -5038,7 +5038,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:accounts
             summary: View one account.
             tags:
                 - admin
@@ -5083,7 +5083,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:accounts
             summary: Perform an admin action on an account.
             tags:
                 - admin
@@ -5117,7 +5117,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:accounts
             summary: Approve pending account.
             tags:
                 - admin
@@ -5163,7 +5163,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:accounts
             summary: Reject pending account.
             tags:
                 - admin
@@ -5241,6 +5241,9 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:read
             summary: View local and remote emojis available to / known by this instance.
             tags:
                 - admin
@@ -5287,7 +5290,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Upload and create a new instance emoji.
             tags:
                 - admin
@@ -5327,7 +5330,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Delete a **local** emoji with the given ID from the instance.
             tags:
                 - admin
@@ -5358,6 +5361,9 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:read
             summary: Get the admin view of a single emoji.
             tags:
                 - admin
@@ -5429,7 +5435,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Perform admin action on a local or remote emoji known to this instance.
             tags:
                 - admin
@@ -5457,6 +5463,9 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - admin:read
             summary: Get a list of existing emoji categories.
             tags:
                 - admin
@@ -5489,7 +5498,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Perform a GET to the specified ActivityPub URL and return detailed debugging information.
             tags:
                 - debug
@@ -5514,7 +5523,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Sweep/clear all in-memory caches.
             tags:
                 - debug
@@ -5549,7 +5558,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:domain_allows
             summary: View all domain allows currently in place.
             tags:
                 - admin
@@ -5612,7 +5621,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:domain_allows
             summary: Create one or more domain allows, from a string or a file.
             tags:
                 - admin
@@ -5648,7 +5657,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:domain_allows
             summary: Delete domain allow with the given ID.
             tags:
                 - admin
@@ -5681,7 +5690,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:domain_allows
             summary: View domain allow with the given ID.
             tags:
                 - admin
@@ -5716,7 +5725,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:domain_blocks
             summary: View all domain blocks currently in place.
             tags:
                 - admin
@@ -5779,7 +5788,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:domain_blocks
             summary: Create one or more domain blocks, from a string or a file.
             tags:
                 - admin
@@ -5815,7 +5824,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:domain_blocks
             summary: Delete domain block with the given ID.
             tags:
                 - admin
@@ -5848,7 +5857,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:domain_blocks
             summary: View domain block with the given ID.
             tags:
                 - admin
@@ -5900,7 +5909,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Force expiry of cached public keys for all accounts on the given domain stored in your database.
             tags:
                 - admin
@@ -5976,7 +5985,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: View domain permission drafts.
             tags:
                 - admin
@@ -6027,7 +6036,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Create a domain permission draft with the given parameters.
             tags:
                 - admin
@@ -6059,7 +6068,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: Get domain permission draft with the given ID.
             tags:
                 - admin
@@ -6101,7 +6110,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Accept a domain permission draft, turning it into an enforced domain permission.
             tags:
                 - admin
@@ -6143,7 +6152,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Remove a domain permission draft, optionally ignoring all future drafts targeting the given domain.
             tags:
                 - admin
@@ -6211,7 +6220,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: View domain permission excludes.
             tags:
                 - admin
@@ -6254,7 +6263,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Create a domain permission exclude with the given parameters.
             tags:
                 - admin
@@ -6288,7 +6297,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Remove a domain permission exclude.
             tags:
                 - admin
@@ -6319,7 +6328,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: Get domain permission exclude with the given ID.
             tags:
                 - admin
@@ -6387,7 +6396,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: View domain permission subscriptions.
             tags:
                 - admin
@@ -6462,7 +6471,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Create a domain permission subscription with the given parameters.
             tags:
                 - admin
@@ -6535,7 +6544,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Update a domain permission subscription with the given parameters.
             tags:
                 - admin
@@ -6567,7 +6576,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: Get domain permission subscription with the given ID.
             tags:
                 - admin
@@ -6611,7 +6620,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Remove a domain permission subscription.
             tags:
                 - admin
@@ -6651,7 +6660,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Test one domain permission subscription by making your instance fetch and parse it *without creating permissions*.
             tags:
                 - admin
@@ -6688,7 +6697,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: View all domain permission subscriptions of the given permission type, in priority order (highest to lowest).
             tags:
                 - admin
@@ -6733,7 +6742,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Send a generic test email to a specified email address.
             tags:
                 - admin
@@ -6802,7 +6811,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Create new "allow" HTTP request header filter.
             tags:
                 - admin
@@ -6830,7 +6839,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Delete the "allow" header filter with the given ID.
             tags:
                 - admin
@@ -6859,7 +6868,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: Get "allow" header filter with the given ID.
             tags:
                 - admin
@@ -6928,7 +6937,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Create new "block" HTTP request header filter.
             tags:
                 - admin
@@ -6956,7 +6965,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Delete the "block" header filter with the given ID.
             tags:
                 - admin
@@ -6985,7 +6994,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: Get "block" header filter with the given ID.
             tags:
                 - admin
@@ -7014,7 +7023,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: View instance rules, with IDs.
             tags:
                 - admin
@@ -7050,7 +7059,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Create a new instance rule.
             tags:
                 - admin
@@ -7086,7 +7095,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Delete an existing instance rule.
             tags:
                 - admin
@@ -7117,7 +7126,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read
             summary: View instance rule with the given id.
             tags:
                 - admin
@@ -7159,7 +7168,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Update an existing instance rule.
             tags:
                 - admin
@@ -7199,7 +7208,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Clean up remote media older than the specified number of days.
             tags:
                 - admin
@@ -7233,7 +7242,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Refetch media specified in the database but missing from storage.
             tags:
                 - admin
@@ -7307,7 +7316,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:reports
             summary: View user moderation reports.
             tags:
                 - admin
@@ -7339,7 +7348,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:reports
             summary: View user moderation report with the given id.
             tags:
                 - admin
@@ -7381,7 +7390,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write:reports
             summary: Mark a report as resolved.
             tags:
                 - admin
@@ -7408,8 +7417,7 @@ paths:
                 "500":
                     description: internal server error
             security:
-                - OAuth2 Bearer:
-                    - read:announcements
+                - OAuth2 Bearer: []
             summary: Get an array of currently active announcements.
             tags:
                 - announcements
@@ -7723,8 +7731,7 @@ paths:
                 "500":
                     description: internal server error
             security:
-                - OAuth2 Bearer:
-                    - read:custom_emojis
+                - OAuth2 Bearer: []
             summary: Get an array of custom emojis available on the instance.
             tags:
                 - custom_emojis
@@ -7764,7 +7771,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:follows
+                    - read:accounts
             summary: Export a CSV file of accounts that follow you.
             tags:
                 - import-export
@@ -7846,7 +7853,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:account
+                    - read:accounts
             summary: Returns informational stats on the number of items that can be exported for requesting account.
             tags:
                 - import-export
@@ -8423,7 +8430,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - write:accounts
+                    - write
             summary: Upload some CSV-formatted data to your account.
             tags:
                 - import-export
@@ -8517,7 +8524,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:write
             summary: Update your instance information and/or upload a new avatar/header for the instance.
             tags:
                 - instance
@@ -8569,6 +8576,8 @@ paths:
                     description: not acceptable
                 "500":
                     description: internal server error
+            security:
+                - OAuth2 Bearer: []
             tags:
                 - instance
     /api/v1/instance/rules:
@@ -9643,7 +9652,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:notifications
+                    - write:notifications
             summary: Clear/delete all notifications for currently authorized user.
             tags:
                 - notifications
@@ -10158,7 +10167,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:reports
+                    - read:accounts
             summary: See reports created by the requesting account.
             tags:
                 - reports
@@ -10270,7 +10279,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - read:reports
+                    - read:accounts
             summary: Get one report with the given id.
             tags:
                 - reports
@@ -10677,7 +10686,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - write:statuses
+                    - write:bookmarks
             summary: Bookmark status with the given ID.
             tags:
                 - statuses
@@ -11035,7 +11044,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - write:statuses
+                    - write:bookmarks
             summary: Unbookmark status with the given ID.
             tags:
                 - statuses
@@ -11069,7 +11078,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - write:statuses
+                    - write:favourites
             summary: Unstar/unlike/unfavourite the given status.
             tags:
                 - statuses
@@ -11313,8 +11322,7 @@ paths:
                 "500":
                     description: internal server error
             security:
-                - OAuth2 Bearer:
-                    - read:follows
+                - OAuth2 Bearer: []
             summary: Get details for a hashtag, including whether you currently follow it.
             tags:
                 - tags
@@ -11642,7 +11650,7 @@ paths:
                     description: internal error
             security:
                 - OAuth2 Bearer:
-                    - read:user
+                    - read:accounts
             summary: Get your own user model.
             tags:
                 - user
@@ -11687,7 +11695,7 @@ paths:
                     description: internal error
             security:
                 - OAuth2 Bearer:
-                    - write:user
+                    - write:accounts
             summary: Request changing the email address of authenticated user.
             tags:
                 - user
@@ -11736,7 +11744,7 @@ paths:
                     description: internal error
             security:
                 - OAuth2 Bearer:
-                    - write:user
+                    - write:accounts
             summary: Change the password of authenticated user.
             tags:
                 - user
@@ -11837,7 +11845,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - admin
+                    - admin:read:accounts
             summary: View + page through known accounts according to given filters.
             tags:
                 - admin
@@ -12724,32 +12732,44 @@ securityDefinitions:
         flow: accessCode
         scopes:
             admin: grants admin access to everything
-            admin:accounts: grants admin access to accounts
+            admin:read: grants admin read access to everything
+            admin:read:accounts: grants admin read access to accounts
+            admin:read:domain_allows: grants admin read access to domain_allows
+            admin:read:domain_blocks: grants admin read access to domain_blocks
+            admin:read:reports: grants admin read access to reports
+            admin:write: grants admin write access to everything
+            admin:write:accounts: grants write read access to accounts
+            admin:write:domain_allows: grants admin write access to domain_allows
+            admin:write:domain_blocks: grants write read access to domain_blocks
+            admin:write:reports: grants admin write access to reports
+            profile: grants read access to verify_credentials
+            push: grants read/write access to push
             read: grants read access to everything
             read:accounts: grants read access to accounts
-            read:blocks: grant read access to blocks
-            read:custom_emojis: grant read access to custom_emojis
-            read:favourites: grant read access to favourites
-            read:filters: grant read access to filters
-            read:follows: grant read access to follows
-            read:lists: grant read access to lists
-            read:media: grant read access to media
-            read:mutes: grant read access to mutes
+            read:blocks: grants read access to blocks
+            read:bookmarks: grants read access to bookmarks
+            read:favourites: grants read access to accounts
+            read:filters: grants read access to filters
+            read:follows: grants read access to follows
+            read:lists: grants read access to lists
+            read:mutes: grants read access to mutes
             read:notifications: grants read access to notifications
-            read:search: grant read access to searches
+            read:search: grants read access to search
             read:statuses: grants read access to statuses
-            read:streaming: grants read access to streaming api
-            read:user: grants read access to user-level info
             write: grants write access to everything
             write:accounts: grants write access to accounts
             write:blocks: grants write access to blocks
+            write:bookmarks: grants write access to bookmarks
+            write:conversations: grants write access to conversations
+            write:favourites: grants write access to favourites
             write:filters: grants write access to filters
             write:follows: grants write access to follows
             write:lists: grants write access to lists
             write:media: grants write access to media
             write:mutes: grants write access to mutes
+            write:notifications: grants write access to notifications
+            write:reports: grants write access to reports
             write:statuses: grants write access to statuses
-            write:user: grants write access to user-level info
         tokenUrl: https://example.org/oauth/token
         type: oauth2
 swagger: "2.0"

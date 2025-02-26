@@ -29,7 +29,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // PushSubscriptionPOSTHandler swagger:operation POST /api/v1/push/subscription pushSubscriptionPost
@@ -181,9 +180,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) PushSubscriptionPOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopePush,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

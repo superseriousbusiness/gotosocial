@@ -25,7 +25,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // MarkersPOSTHandler swagger:operation POST /api/v1/markers markersPost
@@ -72,9 +71,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MarkersPOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteStatuses,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

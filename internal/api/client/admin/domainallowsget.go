@@ -47,7 +47,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:read:domain_allows
 //
 //	responses:
 //		'200':

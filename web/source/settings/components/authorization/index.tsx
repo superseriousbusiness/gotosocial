@@ -58,13 +58,9 @@ export function Authorization({ App }) {
 			</div>
 		);
 	} else if (error !== undefined) {
-		if ("status" in error && error.status === 401) {
-			// 401 unauthorized was received.
-			// That means the token or app we
-			// were using is no longer valid,
-			// so just log the user out.
-			logoutQuery(NoArg);
-		}
+		// Something went wrong,
+		// log the user out.
+		logoutQuery(NoArg);
 
 		content = (
 			<div>
