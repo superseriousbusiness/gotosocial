@@ -269,11 +269,9 @@ func parseMountInfoLine(line string) (mountInfo, error) {
 		return mountInfo{}, fmt.Errorf("invalid separator")
 	}
 
-	fields1 := strings.Split(fieldss[0], " ")
+	fields1 := strings.SplitN(fieldss[0], " ", 7)
 	if len(fields1) < 6 {
 		return mountInfo{}, fmt.Errorf("not enough fields before separator: %v", fields1)
-	} else if len(fields1) > 7 {
-		return mountInfo{}, fmt.Errorf("too many fields before separator: %v", fields1)
 	} else if len(fields1) == 6 {
 		fields1 = append(fields1, "")
 	}
