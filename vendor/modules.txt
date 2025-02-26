@@ -72,7 +72,7 @@ codeberg.org/superseriousbusiness/exif-terminator
 # github.com/DmitriyVTitov/size v1.5.0
 ## explicit; go 1.14
 github.com/DmitriyVTitov/size
-# github.com/KimMachineGun/automemlimit v0.7.0
+# github.com/KimMachineGun/automemlimit v0.7.1
 ## explicit; go 1.22.0
 github.com/KimMachineGun/automemlimit/memlimit
 # github.com/Masterminds/goutils v1.1.1
