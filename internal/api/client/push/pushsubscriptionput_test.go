@@ -170,7 +170,7 @@ func (suite *PushTestSuite) TestPutSubscriptionJSON() {
 func (suite *PushTestSuite) TestPutMissingSubscription() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	alertsMention := true
 	alertsStatus := false

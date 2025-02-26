@@ -102,7 +102,7 @@ import (
 //			description: internal server error
 func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 	authed, errWithCode := apiutil.TokenAuth(c,
-		true, true, true, true,
+		false, false, false, false,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

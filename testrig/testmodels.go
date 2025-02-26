@@ -56,6 +56,16 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 			AccessCreateAt:  TimeMustParse("2022-06-10T15:22:08Z"),
 			AccessExpiresAt: TimeMustParse("2050-01-01T15:22:08Z"),
 		},
+		"local_account_1_push_only": {
+			ID:              "01JN0X2D9GJTZQ5KYPYFWN16QW",
+			ClientID:        "01F8MGV8AC3NGSJW0FE8W1BV70",
+			UserID:          "01F8MGVGPHQ2D3P3X0454H54Z5",
+			RedirectURI:     "http://localhost:8080",
+			Scope:           "push",
+			Access:          "01JN0X49RYKMP6G9X0HJAP317101JN0X49RYKMP6G9X0HJAP",
+			AccessCreateAt:  TimeMustParse("2022-06-10T15:22:08Z"),
+			AccessExpiresAt: TimeMustParse("2050-01-01T15:22:08Z"),
+		},
 		"local_account_1_client_application_token": {
 			ID:              "01P9SVWS9J3SPHZQ3KCMBEN70N",
 			ClientID:        "01F8MGV8AC3NGSJW0FE8W1BV70",

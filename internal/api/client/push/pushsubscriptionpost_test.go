@@ -116,7 +116,7 @@ func (suite *PushTestSuite) postSubscription(
 func (suite *PushTestSuite) TestPostSubscription() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	endpoint := "https://example.test/push"
 	auth := "cgna/fzrYLDQyPf5hD7IsA=="
@@ -152,7 +152,7 @@ func (suite *PushTestSuite) TestPostSubscription() {
 func (suite *PushTestSuite) TestPostSubscriptionMinimal() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	endpoint := "https://example.test/push"
 	auth := "cgna/fzrYLDQyPf5hD7IsA=="
@@ -186,7 +186,7 @@ func (suite *PushTestSuite) TestPostSubscriptionMinimal() {
 func (suite *PushTestSuite) TestPostInvalidSubscription() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	// No endpoint.
 	auth := "cgna/fzrYLDQyPf5hD7IsA=="
@@ -212,7 +212,7 @@ func (suite *PushTestSuite) TestPostInvalidSubscription() {
 func (suite *PushTestSuite) TestPostSubscriptionJSON() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	requestJson := `{
 		"subscription": {
@@ -258,7 +258,7 @@ func (suite *PushTestSuite) TestPostSubscriptionJSON() {
 func (suite *PushTestSuite) TestPostSubscriptionJSONMinimal() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	requestJson := `{
 		"subscription": {
@@ -298,7 +298,7 @@ func (suite *PushTestSuite) TestPostSubscriptionJSONMinimal() {
 func (suite *PushTestSuite) TestPostInvalidSubscriptionJSON() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	// No endpoint.
 	requestJson := `{
