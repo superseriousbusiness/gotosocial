@@ -25,7 +25,7 @@ In order for the move to be successful:
 
 Moving your account will send a message out from your current account, to your current followers, indicating that they should follow the target account instead. Depending on the server software used by your followers, they may then automatically send a follow (request) to the target account, and unfollow your current account.
 
-Currently, **only your followers will be carried over to the new account**. Other things like your following list, statuses, media, bookmarks, faves, blocks, etc, will not be carried over.
+Currently, **only your followers will be carried over to the new account**. Other things like your following list, media, bookmarks, faves, blocks, etc, will not be carried over. You may [import your posts](./importing_posts.md) as a separate operation.
 
 Once your account has moved, the web view of your current (now old) account will show a notice that you have moved, and to where.
 
