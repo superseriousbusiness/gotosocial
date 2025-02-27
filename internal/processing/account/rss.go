@@ -84,15 +84,20 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		// Assemble author namestring once only.
 		author := "@" + account.Username + "@" + config.GetAccountDomain()
 
+		// We set this here and pass it to rssImageForAccount() because the W3C
+		// validator complains that the image title should have the same value
+		// as the channel title.
+		channelTitle := "Posts from " + author
+
 		// Derive image/thumbnail for this account (may be nil).
-		image, errWithCode := p.rssImageForAccount(ctx, account, author)
+		image, errWithCode := p.rssImageForAccount(ctx, account, channelTitle)
 		if errWithCode != nil {
 			return "", errWithCode
 		}
 
 		feed := &feeds.Feed{
-			Title:       "Posts from " + author,
-			Description: "Posts from " + author,
+			Title:       channelTitle,
+			Description: channelTitle,
 			Link:        &feeds.Link{Href: account.URL},
 			Image:       image,
 		}
@@ -137,7 +142,7 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 	}, lastPostAt, nil
 }
 
-func (p *Processor) rssImageForAccount(ctx context.Context, account *gtsmodel.Account, author string) (*feeds.Image, gtserror.WithCode) {
+func (p *Processor) rssImageForAccount(ctx context.Context, account *gtsmodel.Account, channelTitle string) (*feeds.Image, gtserror.WithCode) {
 	if account.AvatarMediaAttachmentID == "" {
 		// No image, no problem!
 		return nil, nil
@@ -159,9 +164,11 @@ func (p *Processor) rssImageForAccount(ctx context.Context, account *gtsmodel.Ac
 		}
 	}
 
+	// Note: W3C validator complains that the image title should have the same value
+	// as the channel title.
 	return &feeds.Image{
 		Url:   account.AvatarMediaAttachment.Thumbnail.URL,
-		Title: "Avatar for " + author,
+		Title: channelTitle,
 		Link:  account.URL,
 	}, nil
 }
