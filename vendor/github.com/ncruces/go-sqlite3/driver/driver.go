@@ -201,7 +201,7 @@ func (n *connector) Driver() driver.Driver {
 	return &SQLite{}
 }
 
-func (n *connector) Connect(ctx context.Context) (res driver.Conn, err error) {
+func (n *connector) Connect(ctx context.Context) (ret driver.Conn, err error) {
 	c := &conn{
 		txLock:  n.txLock,
 		tmRead:  n.tmRead,
@@ -213,7 +213,7 @@ func (n *connector) Connect(ctx context.Context) (res driver.Conn, err error) {
 		return nil, err
 	}
 	defer func() {
-		if res == nil {
+		if ret == nil {
 			c.Close()
 		}
 	}()
@@ -466,8 +466,9 @@ func (s *stmt) ExecContext(ctx context.Context, args []driver.NamedValue) (drive
 	old := s.Stmt.Conn().SetInterrupt(ctx)
 	defer s.Stmt.Conn().SetInterrupt(old)
 
-	err = s.Stmt.Exec()
-	s.Stmt.ClearBindings()
+	err = errors.Join(
+		s.Stmt.Exec(),
+		s.Stmt.ClearBindings())
 	if err != nil {
 		return nil, err
 	}
@@ -604,8 +605,9 @@ var (
 )
 
 func (r *rows) Close() error {
-	r.Stmt.ClearBindings()
-	return r.Stmt.Reset()
+	return errors.Join(
+		r.Stmt.Reset(),
+		r.Stmt.ClearBindings())
 }
 
 func (r *rows) Columns() []string {
@@ -718,19 +720,19 @@ func (r *rows) ColumnTypeScanType(index int) (typ reflect.Type) {
 
 	switch scan {
 	case _INT:
-		return reflect.TypeOf(int64(0))
+		return reflect.TypeFor[int64]()
 	case _REAL:
-		return reflect.TypeOf(float64(0))
+		return reflect.TypeFor[float64]()
 	case _TEXT:
-		return reflect.TypeOf("")
+		return reflect.TypeFor[string]()
 	case _BLOB:
-		return reflect.TypeOf([]byte{})
+		return reflect.TypeFor[[]byte]()
 	case _BOOL:
-		return reflect.TypeOf(false)
+		return reflect.TypeFor[bool]()
 	case _TIME:
-		return reflect.TypeOf(time.Time{})
+		return reflect.TypeFor[time.Time]()
 	default:
-		return reflect.TypeOf((*any)(nil)).Elem()
+		return reflect.TypeFor[any]()
 	}
 }
 

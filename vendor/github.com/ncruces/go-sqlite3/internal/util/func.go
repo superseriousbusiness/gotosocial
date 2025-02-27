@@ -7,9 +7,6 @@ import (
 	"github.com/tetratelabs/wazero/api"
 )
 
-type i32 interface{ ~int32 | ~uint32 }
-type i64 interface{ ~int64 | ~uint64 }
-
 type funcVI[T0 i32] func(context.Context, api.Module, T0)
 
 func (fn funcVI[T0]) Call(ctx context.Context, mod api.Module, stack []uint64) {

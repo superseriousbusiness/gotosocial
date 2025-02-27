@@ -36,6 +36,8 @@ const (
 	TextHTML          = `text/html`
 	TextCSS           = `text/css`
 	TextCSV           = `text/csv`
+	TextPlain         = `text/plain`
+	UTF8              = `utf-8`
 )
 
 // JSONContentType returns whether is application/json(;charset=utf-8)? content-type.
@@ -72,6 +74,14 @@ func XMLXRDContentType(ct string) bool {
 		p[0] == AppXML ||
 		p[0] == appXMLText ||
 		p[0] == AppXMLXRD
+}
+
+// TextPlainContentType returns whether is text/plain(;charset=utf-8)? content-type.
+func TextPlainContentType(ct string) bool {
+	p := splitContentType(ct)
+	p, ok := isUTF8ContentType(p)
+	return ok && len(p) == 1 &&
+		p[0] == TextPlain
 }
 
 // ASContentType returns whether is valid ActivityStreams content-types:
@@ -118,7 +128,7 @@ func NodeInfo2ContentType(ct string) bool {
 // type parts list, removes it and returns whether is utf-8.
 func isUTF8ContentType(p []string) ([]string, bool) {
 	const charset = "charset="
-	const charsetUTF8 = charset + "utf-8"
+	const charsetUTF8 = charset + UTF8
 	for i, part := range p {
 
 		// Only handle charset slice parts.

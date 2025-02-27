@@ -22,6 +22,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
@@ -66,7 +67,7 @@ type ProcessingStandardTestSuite struct {
 	testStatuses     map[string]*gtsmodel.Status
 	testTags         map[string]*gtsmodel.Tag
 	testMentions     map[string]*gtsmodel.Mention
-	testAutheds      map[string]*oauth.Auth
+	testAutheds      map[string]*apiutil.Auth
 	testBlocks       map[string]*gtsmodel.Block
 	testActivities   map[string]testrig.ActivityWithSignature
 	testLists        map[string]*gtsmodel.List
@@ -85,7 +86,7 @@ func (suite *ProcessingStandardTestSuite) SetupSuite() {
 	suite.testStatuses = testrig.NewTestStatuses()
 	suite.testTags = testrig.NewTestTags()
 	suite.testMentions = testrig.NewTestMentions()
-	suite.testAutheds = map[string]*oauth.Auth{
+	suite.testAutheds = map[string]*apiutil.Auth{
 		"local_account_1": {
 			Application: suite.testApplications["local_account_1"],
 			User:        suite.testUsers["local_account_1"],

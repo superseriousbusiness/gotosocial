@@ -28,7 +28,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -179,11 +178,15 @@ import (
 //		x-go-name: ScheduledAt
 //		description: |-
 //			ISO 8601 Datetime at which to schedule a status.
-//			Providing this parameter will cause ScheduledStatus to be returned instead of Status.
-//			Must be at least 5 minutes in the future.
 //
-//			This feature isn't implemented yet; attemping to set it will return 501 Not Implemented.
+//			Providing this parameter with a *future* time will cause ScheduledStatus to be returned instead of Status.
+//			Must be at least 5 minutes in the future.
+//			This feature isn't implemented yet.
+//
+//			Providing this parameter with a *past* time will cause the status to be backdated,
+//			and will not push it to the user's followers. This is intended for importing old statuses.
 //		type: string
+//		format: date-time
 //		in: formData
 //	-
 //		name: language
@@ -258,9 +261,12 @@ import (
 //		'501':
 //			description: scheduled_at was set, but this feature is not yet implemented
 func (m *Module) StatusCreatePOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteStatuses,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -382,12 +388,6 @@ func parseStatusCreateForm(c *gin.Context) (*apimodel.StatusCreateRequest, gtser
 		text := fmt.Sprintf("content-type %s not supported for this endpoint; supported content-types are %s, %s, %s",
 			ct, binding.MIMEJSON, binding.MIMEPOSTForm, binding.MIMEMultipartPOSTForm)
 		return nil, gtserror.NewErrorNotAcceptable(errors.New(text), text)
-	}
-
-	// Check not scheduled status.
-	if form.ScheduledAt != "" {
-		const text = "scheduled_at is not yet implemented"
-		return nil, gtserror.NewErrorNotImplemented(errors.New(text), text)
 	}
 
 	// Check if the deprecated "federated" field was

@@ -8,6 +8,8 @@ EXPECT=$(cat << "EOF"
     "accounts-allow-custom-css": true,
     "accounts-custom-css-length": 5000,
     "accounts-reason-required": false,
+    "accounts-registration-backlog-limit": 100,
+    "accounts-registration-daily-limit": 50,
     "accounts-registration-open": true,
     "advanced-cookies-samesite": "strict",
     "advanced-csp-extra-uris": [],
@@ -106,6 +108,7 @@ EXPECT=$(cat << "EOF"
         "timeout": 30000000000,
         "tls-insecure-skip-verify": false
     },
+    "instance-allow-backdating-statuses": true,
     "instance-deliver-to-shared-inboxes": false,
     "instance-expose-peers": true,
     "instance-expose-public-timeline": true,
@@ -252,6 +255,8 @@ GTS_INSTANCE_LANGUAGES="nl,en-gb" \
 GTS_INSTANCE_STATS_MODE="baffle" \
 GTS_ACCOUNTS_ALLOW_CUSTOM_CSS=true \
 GTS_ACCOUNTS_CUSTOM_CSS_LENGTH=5000 \
+GTS_ACCOUNTS_REGISTRATION_BACKLOG_LIMIT=100 \
+GTS_ACCOUNTS_REGISTRATION_DAILY_LIMIT=50 \
 GTS_ACCOUNTS_REGISTRATION_OPEN=true \
 GTS_ACCOUNTS_REASON_REQUIRED=false \
 GTS_MEDIA_DESCRIPTION_MIN_CHARS=69 \

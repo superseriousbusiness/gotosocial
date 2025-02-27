@@ -25,6 +25,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
@@ -35,18 +36,29 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"github.com/temoto/robotstxt"
 )
 
 func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gtsmodel.Instance, error) {
+	// Try to fetch robots.txt to check
+	// if we're allowed to try endpoints:
+	//
+	//   - /api/v1/instance
+	//   - /.well-known/nodeinfo
+	//   - /nodeinfo/2.0|2.1 endpoints
+	robotsTxt, err := t.DereferenceRobots(ctx, iri.Scheme, iri.Host)
+	if err != nil {
+		log.Debugf(ctx, "couldn't fetch robots.txt from %s: %v", iri.Host, err)
+	}
+
 	var i *gtsmodel.Instance
-	var err error
 
 	// First try to dereference using /api/v1/instance.
 	// This will provide the most complete picture of an instance, and avoid unnecessary api calls.
 	//
 	// This will only work with Mastodon-api compatible instances: Mastodon, some Pleroma instances, GoToSocial.
 	log.Debugf(ctx, "trying to dereference instance %s by /api/v1/instance", iri.Host)
-	i, err = dereferenceByAPIV1Instance(ctx, t, iri)
+	i, err = t.dereferenceByAPIV1Instance(ctx, iri, robotsTxt)
 	if err == nil {
 		log.Debugf(ctx, "successfully dereferenced instance using /api/v1/instance")
 		return i, nil
@@ -56,7 +68,7 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 	// If that doesn't work, try to dereference using /.well-known/nodeinfo.
 	// This will involve two API calls and return less info overall, but should be more widely compatible.
 	log.Debugf(ctx, "trying to dereference instance %s by /.well-known/nodeinfo", iri.Host)
-	i, err = dereferenceByNodeInfo(ctx, t, iri)
+	i, err = t.dereferenceByNodeInfo(ctx, iri, robotsTxt)
 	if err == nil {
 		log.Debugf(ctx, "successfully dereferenced instance using /.well-known/nodeinfo")
 		return i, nil
@@ -77,11 +89,23 @@ func (t *transport) DereferenceInstance(ctx context.Context, iri *url.URL) (*gts
 	}, nil
 }
 
-func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
+func (t *transport) dereferenceByAPIV1Instance(
+	ctx context.Context,
+	iri *url.URL,
+	robotsTxt *robotstxt.RobotsData,
+) (*gtsmodel.Instance, error) {
+	const path = "api/v1/instance"
+
+	// Bail if we're not allowed to fetch this endpoint.
+	if robotsTxt != nil && !robotsTxt.TestAgent("/"+path, t.controller.userAgent) {
+		err := gtserror.Newf("can't fetch %s: robots.txt disallows it", path)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
 		Host:   iri.Host,
-		Path:   "api/v1/instance",
+		Path:   path,
 	}
 
 	// Build IRI just once
@@ -105,6 +129,18 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 		return nil, gtserror.NewFromResponse(resp)
 	}
 
+	// Ensure that we can use data returned from this endpoint.
+	robots := resp.Header.Values("X-Robots-Tag")
+	if slices.ContainsFunc(
+		robots,
+		func(key string) bool {
+			return strings.Contains(key, "noindex")
+		},
+	) {
+		err := gtserror.Newf("can't use fetched %s: robots tags disallows it", path)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
 	// Ensure that the incoming request content-type is expected.
 	if ct := resp.Header.Get("Content-Type"); !apiutil.JSONContentType(ct) {
 		err := gtserror.Newf("non json response type: %s", ct)
@@ -118,7 +154,8 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 		return nil, errors.New("response bytes was len 0")
 	}
 
-	// try to parse the returned bytes directly into an Instance model
+	// Try to parse the returned bytes
+	// directly into an Instance model.
 	apiResp := &apimodel.InstanceV1{}
 	if err := json.Unmarshal(b, apiResp); err != nil {
 		return nil, err
@@ -149,24 +186,32 @@ func dereferenceByAPIV1Instance(ctx context.Context, t *transport, iri *url.URL)
 	return i, nil
 }
 
-func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsmodel.Instance, error) {
-	niIRI, err := callNodeInfoWellKnown(c, t, iri)
+func (t *transport) dereferenceByNodeInfo(
+	ctx context.Context,
+	iri *url.URL,
+	robotsTxt *robotstxt.RobotsData,
+) (*gtsmodel.Instance, error) {
+	// Retrieve the nodeinfo IRI from .well-known/nodeinfo.
+	niIRI, err := t.callNodeInfoWellKnown(ctx, iri, robotsTxt)
 	if err != nil {
-		return nil, fmt.Errorf("dereferenceByNodeInfo: error during initial call to well-known nodeinfo: %s", err)
+		return nil, gtserror.Newf("error during initial call to .well-known: %w", err)
 	}
 
-	ni, err := callNodeInfo(c, t, niIRI)
+	// Use the returned nodeinfo IRI to make a followup call.
+	ni, err := t.callNodeInfo(ctx, niIRI, robotsTxt)
 	if err != nil {
-		return nil, fmt.Errorf("dereferenceByNodeInfo: error doing second call to nodeinfo uri %s: %s", niIRI.String(), err)
+		return nil, gtserror.Newf("error during call to %s: %w", niIRI.String(), err)
 	}
 
-	// we got a response of some kind! take what we can from it...
+	// We got a response of some kind!
+	//
+	// Start building out the bare minimum
+	// instance model, we'll add to it if we can.
 	id, err := id.NewRandomULID()
 	if err != nil {
-		return nil, fmt.Errorf("dereferenceByNodeInfo: error creating new id for instance %s: %s", iri.Host, err)
+		return nil, gtserror.Newf("error creating new id for instance %s: %w", iri.Host, err)
 	}
 
-	// this is the bare minimum instance we'll return, and we'll add more stuff to it if we can
 	i := &gtsmodel.Instance{
 		ID:     id,
 		Domain: iri.Host,
@@ -234,11 +279,23 @@ func dereferenceByNodeInfo(c context.Context, t *transport, iri *url.URL) (*gtsm
 	return i, nil
 }
 
-func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*url.URL, error) {
+func (t *transport) callNodeInfoWellKnown(
+	ctx context.Context,
+	iri *url.URL,
+	robotsTxt *robotstxt.RobotsData,
+) (*url.URL, error) {
+	const path = ".well-known/nodeinfo"
+
+	// Bail if we're not allowed to fetch this endpoint.
+	if robotsTxt != nil && !robotsTxt.TestAgent("/"+path, t.controller.userAgent) {
+		err := gtserror.Newf("can't fetch %s: robots.txt disallows it", path)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
 	cleanIRI := &url.URL{
 		Scheme: iri.Scheme,
 		Host:   iri.Host,
-		Path:   ".well-known/nodeinfo",
+		Path:   path,
 	}
 
 	// Build IRI just once
@@ -261,7 +318,19 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 		return nil, gtserror.NewFromResponse(resp)
 	}
 
-	// Ensure that the incoming request content-type is expected.
+	// Ensure that we can use data returned from this endpoint.
+	robots := resp.Header.Values("X-Robots-Tag")
+	if slices.ContainsFunc(
+		robots,
+		func(key string) bool {
+			return strings.Contains(key, "noindex")
+		},
+	) {
+		err := gtserror.Newf("can't use fetched %s: robots tags disallows it", path)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
+	// Ensure that the returned content-type is expected.
 	if ct := resp.Header.Get("Content-Type"); !apiutil.JSONContentType(ct) {
 		err := gtserror.Newf("non json response type: %s", ct)
 		return nil, gtserror.SetMalformed(err)
@@ -279,7 +348,8 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 		return nil, gtserror.Newf("could not unmarshal server response as WellKnownResponse: %w", err)
 	}
 
-	// look through the links for the first one that matches the nodeinfo schema, this is what we need
+	// Look through the links for the first one that
+	// matches nodeinfo schema, this is what we need.
 	var nodeinfoHref *url.URL
 	for _, l := range wellKnownResp.Links {
 		if l.Href == "" || !strings.HasPrefix(l.Rel, "http://nodeinfo.diaspora.software/ns/schema/2") {
@@ -297,7 +367,23 @@ func callNodeInfoWellKnown(ctx context.Context, t *transport, iri *url.URL) (*ur
 	return nodeinfoHref, nil
 }
 
-func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.Nodeinfo, error) {
+func (t *transport) callNodeInfo(
+	ctx context.Context,
+	iri *url.URL,
+	robotsTxt *robotstxt.RobotsData,
+) (*apimodel.Nodeinfo, error) {
+	// Normalize robots.txt test path.
+	testPath := iri.Path
+	if !strings.HasPrefix(testPath, "/") {
+		testPath = "/" + testPath
+	}
+
+	// Bail if we're not allowed to fetch this endpoint.
+	if robotsTxt != nil && !robotsTxt.TestAgent(testPath, t.controller.userAgent) {
+		err := gtserror.Newf("can't fetch %s: robots.txt disallows it", testPath)
+		return nil, gtserror.SetNotPermitted(err)
+	}
+
 	// Build IRI just once
 	iriStr := iri.String()
 
@@ -322,6 +408,18 @@ func callNodeInfo(ctx context.Context, t *transport, iri *url.URL) (*apimodel.No
 	if ct := resp.Header.Get("Content-Type"); !apiutil.NodeInfo2ContentType(ct) {
 		err := gtserror.Newf("non nodeinfo schema 2.0 response: %s", ct)
 		return nil, gtserror.SetMalformed(err)
+	}
+
+	// Ensure that we can use data returned from this endpoint.
+	robots := resp.Header.Values("X-Robots-Tag")
+	if slices.ContainsFunc(
+		robots,
+		func(key string) bool {
+			return strings.Contains(key, "noindex")
+		},
+	) {
+		err := gtserror.Newf("can't use fetched %s: robots tags disallows it", iri.Path)
+		return nil, gtserror.SetNotPermitted(err)
 	}
 
 	b, err := io.ReadAll(resp.Body)

@@ -37,7 +37,7 @@ import "github.com/gin-gonic/gin"
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:read
 //
 //	responses:
 //		'200':
@@ -76,7 +76,7 @@ func (m *Module) HeaderFilterAllowGET(c *gin.Context) {
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- admin
+//		- admin:read
 //
 //	responses:
 //		'200':

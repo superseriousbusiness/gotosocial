@@ -142,10 +142,13 @@ import (
 	propertycanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike"
 	propertycanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply"
 	propertyinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy"
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	propertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/property_value"
 	typepropertyvalue "github.com/superseriousbusiness/activity/streams/impl/schema/type_propertyvalue"
 	propertyblurhash "github.com/superseriousbusiness/activity/streams/impl/toot/property_blurhash"
@@ -315,10 +318,13 @@ func init() {
 	propertycanlike.SetManager(mgr)
 	propertycanreply.SetManager(mgr)
 	propertyinteractionpolicy.SetManager(mgr)
+	typeannounceapproval.SetManager(mgr)
 	typecanannounce.SetManager(mgr)
 	typecanlike.SetManager(mgr)
 	typecanreply.SetManager(mgr)
 	typeinteractionpolicy.SetManager(mgr)
+	typelikeapproval.SetManager(mgr)
+	typereplyapproval.SetManager(mgr)
 	propertyvalue.SetManager(mgr)
 	typepropertyvalue.SetManager(mgr)
 	propertyblurhash.SetManager(mgr)
@@ -389,10 +395,13 @@ func init() {
 	typeupdate.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typevideo.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeview.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typeannounceapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanannounce.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanlike.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanreply.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeinteractionpolicy.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typelikeapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typereplyapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typepropertyvalue.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeemoji.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typehashtag.SetTypePropertyConstructor(NewJSONLDTypeProperty)

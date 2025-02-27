@@ -260,9 +260,18 @@ func (p *clientAPI) CreateUser(ctx context.Context, cMsg *messages.FromClientAPI
 }
 
 func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientAPI) error {
-	status, ok := cMsg.GTSModel.(*gtsmodel.Status)
-	if !ok {
-		return gtserror.Newf("%T not parseable as *gtsmodel.Status", cMsg.GTSModel)
+	var status *gtsmodel.Status
+	var backfill bool
+
+	// Check passed client message model type.
+	switch model := cMsg.GTSModel.(type) {
+	case *gtsmodel.Status:
+		status = model
+	case *gtsmodel.BackfillStatus:
+		status = model.Status
+		backfill = true
+	default:
+		return gtserror.Newf("%T not parseable as *gtsmodel.Status or *gtsmodel.BackfillStatus", cMsg.GTSModel)
 	}
 
 	// If pending approval is true then status must
@@ -344,12 +353,19 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
-	if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
-		log.Errorf(ctx, "error timelining and notifying status: %v", err)
-	}
+	// We specifically do not timeline
+	// or notify for backfilled statuses,
+	// as these are more for archival than
+	// newly posted content for user feeds.
+	if !backfill {
 
-	if err := p.federate.CreateStatus(ctx, status); err != nil {
-		log.Errorf(ctx, "error federating status: %v", err)
+		if err := p.surface.timelineAndNotifyStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error timelining and notifying status: %v", err)
+		}
+
+		if err := p.federate.CreateStatus(ctx, status); err != nil {
+			log.Errorf(ctx, "error federating status: %v", err)
+		}
 	}
 
 	if status.InReplyToID != "" {

@@ -24,7 +24,6 @@ import (
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
 // MediaGETHandler swagger:operation GET /api/v1/media/{id} mediaGet
@@ -74,9 +73,14 @@ func (m *Module) MediaGETHandler(c *gin.Context) {
 		return
 	}
 
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		// This takes write even
+		// though it's a read.
+		apiutil.ScopeWriteMedia,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

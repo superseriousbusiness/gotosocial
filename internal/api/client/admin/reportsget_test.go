@@ -1149,7 +1149,7 @@ func (suite *ReportsGetTestSuite) TestReportsGetNotAdmin() {
 	testToken := suite.testTokens["local_account_1"]
 	testUser := suite.testUsers["local_account_1"]
 
-	reports, _, err := suite.getReports(testAccount, testToken, testUser, http.StatusForbidden, `{"error":"Forbidden: user 01F8MGVGPHQ2D3P3X0454H54Z5 not an admin"}`, nil, "", "", "", "", "", 20)
+	reports, _, err := suite.getReports(testAccount, testToken, testUser, http.StatusForbidden, `{"error":"Forbidden: token has insufficient scope permission"}`, nil, "", "", "", "", "", 20)
 	suite.NoError(err)
 	suite.Empty(reports)
 }

@@ -101,11 +101,14 @@ func testDefaults() config.Configuration {
 		},
 		InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,
 		InstanceSubscriptionsProcessEvery: 24 * time.Hour, // 1/day.
+		InstanceAllowBackdatingStatuses:   true,
 
-		AccountsRegistrationOpen: true,
-		AccountsReasonRequired:   true,
-		AccountsAllowCustomCSS:   true,
-		AccountsCustomCSSLength:  10000,
+		AccountsRegistrationOpen:         true,
+		AccountsReasonRequired:           true,
+		AccountsRegistrationDailyLimit:   10,
+		AccountsRegistrationBacklogLimit: 20,
+		AccountsAllowCustomCSS:           true,
+		AccountsCustomCSSLength:          10000,
 
 		MediaDescriptionMinChars: 0,
 		MediaDescriptionMaxChars: 500,

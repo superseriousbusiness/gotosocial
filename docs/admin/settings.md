@@ -253,4 +253,4 @@ custom CSS allows you to further customize the way your instance looks when visi
 
 This custom CSS will be applied to all pages of your instance. Users themes and CSS still take precedence over this customization.
 
-See the [Custom CSS](./custom_css.md) page for some tips on writing custom CSS for your instance.
+See the [Custom CSS](../user_guide/custom_css.md) page for some tips on writing custom CSS for your instance.

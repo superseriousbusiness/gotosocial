@@ -102,14 +102,14 @@ func (c cksmFile) Pragma(name string, value string) (string, error) {
 }
 
 func (c cksmFile) DeviceCharacteristics() DeviceCharacteristic {
-	res := c.File.DeviceCharacteristics()
+	ret := c.File.DeviceCharacteristics()
 	if c.verifyCksm {
-		res &^= IOCAP_SUBPAGE_READ
+		ret &^= IOCAP_SUBPAGE_READ
 	}
-	return res
+	return ret
 }
 
-func (c cksmFile) fileControl(ctx context.Context, mod api.Module, op _FcntlOpcode, pArg uint32) _ErrorCode {
+func (c cksmFile) fileControl(ctx context.Context, mod api.Module, op _FcntlOpcode, pArg ptr_t) _ErrorCode {
 	switch op {
 	case _FCNTL_CKPT_START:
 		c.inCkpt = true

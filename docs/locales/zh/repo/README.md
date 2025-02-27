@@ -17,7 +17,7 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
 
 要从源代码构建，请查看 [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
 
-这是实例首页的截图！
+这是实例首页的截图！你也可以看一看本项目在 GoToSocial 上的官方账号: [https://gts.superseriousbusiness.org/@gotosocial](https://gts.superseriousbusiness.org/@gotosocial)。
 
 ![GoToSocial 实例 goblin.technology 的首页截图。它展示了实例的基本信息，如用户数和贴文数等。](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/instancesplash.png)
 <!--overview-end-->
@@ -126,7 +126,7 @@ GoToSocial 提供公开、不列出/悄悄公开、仅粉丝和私信（最好�
 
 ### 回复控制
 
-GoToSocial 允许你通过 [互动规则](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#default-interaction-policies) 选择谁可以回复你的贴文。你可以选择允许任何人回复贴文，仅允许朋友回复，等等。
+GoToSocial 允许你通过 [互动规则](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#默认互动规则) 选择谁可以回复你的贴文。你可以选择允许任何人回复贴文，仅允许朋友回复，等等。
 
 ![互动规则设置](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/user-settings-interaction-policy-1.png)
 
@@ -146,7 +146,7 @@ GoToSocial 允许你选择将个人资料暴露为 RSS 订阅源，这样人们�
 
 ### 主题与自定义 CSS
 
-用户可以为他们的账户页 [选择多种有趣的主题](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#select-theme)，或甚至编写自己的 [自定义 CSS](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#custom-css)。
+用户可以为他们的账户页 [选择多种有趣的主题](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#选择主题)，或甚至编写自己的 [自定义 CSS](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#自定义-CSS)。
 
 管理员也可以轻松地为用户 [添加自定义主题](https://docs.gotosocial.org/zh-cn/latest/admin/themes/) 供用户选择。
 
@@ -225,10 +225,11 @@ GoToSocial 仅需约 250-350MiB 的 RAM，并且只要求极少的 CPU 频率，
 
 ### 隐私+安全功能
 
-- 内置 [Let's Encrypt](https://letsencrypt.org/) 的自动使用 HTTPS 支持。
-- 严格执行贴文可见性和屏蔽逻辑。
-- 导入与导出允许联合实例列表和拒绝联合实例列表。订阅社区创建的屏蔽列表（类似于用于实例间联合的广告拦截器！）（功能仍在进行中）。
+- 严格执行贴文隐私保护与屏蔽逻辑。
+- [支持配置通过网页访问账户时的贴文的可见范围](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#个人资料上显示的贴文可见性级别)。
+- [导入/导出](https://docs.gotosocial.org/zh-cn/latest/admin/settings/#导入导出) 社区创建的域名允许和域名阻止列表，并[订阅](https://docs.gotosocial.org/zh-cn/latest/admin/domain_permission_subscriptions)这些列表。
 - HTTP 签名认证：GoToSocial 在发送和接收消息时要求 [HTTP 签名](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12)，以确保消息不能被篡改，身份不能被伪造。
+- 内置 [Let's Encrypt](https://letsencrypt.org/) 的自动使用 HTTPS 支持。
 
 ### 多种联合模式
 

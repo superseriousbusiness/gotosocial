@@ -1082,6 +1082,31 @@ func GetInstanceStatsMode() string { return global.GetInstanceStatsMode() }
 // SetInstanceStatsMode safely sets the value for global configuration 'InstanceStatsMode' field
 func SetInstanceStatsMode(v string) { global.SetInstanceStatsMode(v) }
 
+// GetInstanceAllowBackdatingStatuses safely fetches the Configuration value for state's 'InstanceAllowBackdatingStatuses' field
+func (st *ConfigState) GetInstanceAllowBackdatingStatuses() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceAllowBackdatingStatuses
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceAllowBackdatingStatuses safely sets the Configuration value for state's 'InstanceAllowBackdatingStatuses' field
+func (st *ConfigState) SetInstanceAllowBackdatingStatuses(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceAllowBackdatingStatuses = v
+	st.reloadToViper()
+}
+
+// InstanceAllowBackdatingStatusesFlag returns the flag name for the 'InstanceAllowBackdatingStatuses' field
+func InstanceAllowBackdatingStatusesFlag() string { return "instance-allow-backdating-statuses" }
+
+// GetInstanceAllowBackdatingStatuses safely fetches the value for global configuration 'InstanceAllowBackdatingStatuses' field
+func GetInstanceAllowBackdatingStatuses() bool { return global.GetInstanceAllowBackdatingStatuses() }
+
+// SetInstanceAllowBackdatingStatuses safely sets the value for global configuration 'InstanceAllowBackdatingStatuses' field
+func SetInstanceAllowBackdatingStatuses(v bool) { global.SetInstanceAllowBackdatingStatuses(v) }
+
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()
@@ -1131,6 +1156,56 @@ func GetAccountsReasonRequired() bool { return global.GetAccountsReasonRequired(
 
 // SetAccountsReasonRequired safely sets the value for global configuration 'AccountsReasonRequired' field
 func SetAccountsReasonRequired(v bool) { global.SetAccountsReasonRequired(v) }
+
+// GetAccountsRegistrationDailyLimit safely fetches the Configuration value for state's 'AccountsRegistrationDailyLimit' field
+func (st *ConfigState) GetAccountsRegistrationDailyLimit() (v int) {
+	st.mutex.RLock()
+	v = st.config.AccountsRegistrationDailyLimit
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAccountsRegistrationDailyLimit safely sets the Configuration value for state's 'AccountsRegistrationDailyLimit' field
+func (st *ConfigState) SetAccountsRegistrationDailyLimit(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsRegistrationDailyLimit = v
+	st.reloadToViper()
+}
+
+// AccountsRegistrationDailyLimitFlag returns the flag name for the 'AccountsRegistrationDailyLimit' field
+func AccountsRegistrationDailyLimitFlag() string { return "accounts-registration-daily-limit" }
+
+// GetAccountsRegistrationDailyLimit safely fetches the value for global configuration 'AccountsRegistrationDailyLimit' field
+func GetAccountsRegistrationDailyLimit() int { return global.GetAccountsRegistrationDailyLimit() }
+
+// SetAccountsRegistrationDailyLimit safely sets the value for global configuration 'AccountsRegistrationDailyLimit' field
+func SetAccountsRegistrationDailyLimit(v int) { global.SetAccountsRegistrationDailyLimit(v) }
+
+// GetAccountsRegistrationBacklogLimit safely fetches the Configuration value for state's 'AccountsRegistrationBacklogLimit' field
+func (st *ConfigState) GetAccountsRegistrationBacklogLimit() (v int) {
+	st.mutex.RLock()
+	v = st.config.AccountsRegistrationBacklogLimit
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAccountsRegistrationBacklogLimit safely sets the Configuration value for state's 'AccountsRegistrationBacklogLimit' field
+func (st *ConfigState) SetAccountsRegistrationBacklogLimit(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsRegistrationBacklogLimit = v
+	st.reloadToViper()
+}
+
+// AccountsRegistrationBacklogLimitFlag returns the flag name for the 'AccountsRegistrationBacklogLimit' field
+func AccountsRegistrationBacklogLimitFlag() string { return "accounts-registration-backlog-limit" }
+
+// GetAccountsRegistrationBacklogLimit safely fetches the value for global configuration 'AccountsRegistrationBacklogLimit' field
+func GetAccountsRegistrationBacklogLimit() int { return global.GetAccountsRegistrationBacklogLimit() }
+
+// SetAccountsRegistrationBacklogLimit safely sets the value for global configuration 'AccountsRegistrationBacklogLimit' field
+func SetAccountsRegistrationBacklogLimit(v int) { global.SetAccountsRegistrationBacklogLimit(v) }
 
 // GetAccountsAllowCustomCSS safely fetches the Configuration value for state's 'AccountsAllowCustomCSS' field
 func (st *ConfigState) GetAccountsAllowCustomCSS() (v bool) {

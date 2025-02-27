@@ -3,12 +3,21 @@
 package streams
 
 import (
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	vocab "github.com/superseriousbusiness/activity/streams/vocab"
 )
+
+// GoToSocialGoToSocialAnnounceApprovalExtends returns true if AnnounceApproval
+// extends from the other's type.
+func GoToSocialGoToSocialAnnounceApprovalExtends(other vocab.Type) bool {
+	return typeannounceapproval.GoToSocialAnnounceApprovalExtends(other)
+}
 
 // GoToSocialGoToSocialCanAnnounceExtends returns true if CanAnnounce extends from
 // the other's type.
@@ -32,4 +41,16 @@ func GoToSocialGoToSocialCanReplyExtends(other vocab.Type) bool {
 // extends from the other's type.
 func GoToSocialGoToSocialInteractionPolicyExtends(other vocab.Type) bool {
 	return typeinteractionpolicy.GoToSocialInteractionPolicyExtends(other)
+}
+
+// GoToSocialGoToSocialLikeApprovalExtends returns true if LikeApproval extends
+// from the other's type.
+func GoToSocialGoToSocialLikeApprovalExtends(other vocab.Type) bool {
+	return typelikeapproval.GoToSocialLikeApprovalExtends(other)
+}
+
+// GoToSocialGoToSocialReplyApprovalExtends returns true if ReplyApproval extends
+// from the other's type.
+func GoToSocialGoToSocialReplyApprovalExtends(other vocab.Type) bool {
+	return typereplyapproval.GoToSocialReplyApprovalExtends(other)
 }

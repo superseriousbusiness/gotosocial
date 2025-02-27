@@ -25,7 +25,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 
 	"github.com/gin-gonic/gin"
 )
@@ -58,6 +57,9 @@ import (
 //		in: query
 //		required: false
 //		default: "open"
+//
+//	security:
+//	- OAuth2 Bearer: []
 //
 //	responses:
 //		'200':
@@ -99,9 +101,11 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) InstancePeersGETHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, false, false, false, false)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		false, false, false, false,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 

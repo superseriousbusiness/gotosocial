@@ -76,7 +76,7 @@ func (suite *PushTestSuite) TestDeleteSubscription() {
 func (suite *PushTestSuite) TestDeleteMissingSubscription() {
 	accountFixtureName := "local_account_1"
 	// This token should not have a subscription.
-	tokenFixtureName := "local_account_1_user_authorization_token"
+	tokenFixtureName := "local_account_1_push_only"
 
 	err := suite.deleteSubscription(accountFixtureName, tokenFixtureName, 200)
 	suite.NoError(err)

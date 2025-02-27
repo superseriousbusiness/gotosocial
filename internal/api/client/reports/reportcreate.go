@@ -26,7 +26,6 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 )
 
@@ -66,9 +65,12 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) ReportPOSTHandler(c *gin.Context) {
-	authed, err := oauth.Authed(c, true, true, true, true)
-	if err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		apiutil.ScopeWriteReports,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
@@ -89,19 +91,19 @@ func (m *Module) ReportPOSTHandler(c *gin.Context) {
 	}
 
 	if form.AccountID == "" {
-		err = errors.New("account_id must be set")
+		err := errors.New("account_id must be set")
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if !regexes.ULID.MatchString(form.AccountID) {
-		err = errors.New("account_id was not valid")
+		err := errors.New("account_id was not valid")
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
 	if length := len([]rune(form.Comment)); length > 1000 {
-		err = fmt.Errorf("comment length must be no more than 1000 chars, provided comment was %d chars", length)
+		err := fmt.Errorf("comment length must be no more than 1000 chars, provided comment was %d chars", length)
 		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}

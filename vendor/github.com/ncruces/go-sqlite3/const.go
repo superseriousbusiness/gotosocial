@@ -1,6 +1,10 @@
 package sqlite3
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/ncruces/go-sqlite3/internal/util"
+)
 
 const (
 	_OK   = 0   /* Successful result */
@@ -12,8 +16,14 @@ const (
 	_MAX_SQL_LENGTH   = 1e9
 	_MAX_FUNCTION_ARG = 100
 
-	ptrlen = 4
-	intlen = 4
+	ptrlen = util.PtrLen
+	intlen = util.IntLen
+)
+
+type (
+	stk_t = util.Stk_t
+	ptr_t = util.Ptr_t
+	res_t = util.Res_t
 )
 
 // ErrorCode is a result code that [Error.Code] might return.

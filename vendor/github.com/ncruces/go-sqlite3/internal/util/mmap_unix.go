@@ -25,9 +25,9 @@ func (s *mmapState) new(ctx context.Context, mod api.Module, size int32) *Mapped
 
 	// Allocate page aligned memmory.
 	alloc := mod.ExportedFunction("aligned_alloc")
-	stack := [...]uint64{
-		uint64(unix.Getpagesize()),
-		uint64(size),
+	stack := [...]Stk_t{
+		Stk_t(unix.Getpagesize()),
+		Stk_t(size),
 	}
 	if err := alloc.CallWithStack(ctx, stack[:]); err != nil {
 		panic(err)
@@ -37,20 +37,20 @@ func (s *mmapState) new(ctx context.Context, mod api.Module, size int32) *Mapped
 	}
 
 	// Save the newly allocated region.
-	ptr := uint32(stack[0])
-	buf := View(mod, ptr, uint64(size))
-	res := &MappedRegion{
+	ptr := Ptr_t(stack[0])
+	buf := View(mod, ptr, int64(size))
+	ret := &MappedRegion{
 		Ptr:  ptr,
 		size: size,
 		addr: unsafe.Pointer(&buf[0]),
 	}
-	s.regions = append(s.regions, res)
-	return res
+	s.regions = append(s.regions, ret)
+	return ret
 }
 
 type MappedRegion struct {
 	addr unsafe.Pointer
-	Ptr  uint32
+	Ptr  Ptr_t
 	size int32
 	used bool
 }

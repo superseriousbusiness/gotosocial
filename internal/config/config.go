@@ -91,11 +91,14 @@ type Configuration struct {
 	InstanceSubscriptionsProcessFrom  string             `name:"instance-subscriptions-process-from" usage:"Time of day from which to start running instance subscriptions processing jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
 	InstanceSubscriptionsProcessEvery time.Duration      `name:"instance-subscriptions-process-every" usage:"Period to elapse between instance subscriptions processing jobs, starting from instance-subscriptions-process-from."`
 	InstanceStatsMode                 string             `name:"instance-stats-mode" usage:"Allows you to customize the way stats are served to crawlers: one of '', 'serve', 'zero', 'baffle'. Home page stats remain unchanged."`
+	InstanceAllowBackdatingStatuses   bool               `name:"instance-allow-backdating-statuses" usage:"Allow local accounts to backdate statuses using the scheduled_at param to /api/v1/statuses"`
 
-	AccountsRegistrationOpen bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
-	AccountsReasonRequired   bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
-	AccountsAllowCustomCSS   bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
-	AccountsCustomCSSLength  int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
+	AccountsRegistrationOpen         bool `name:"accounts-registration-open" usage:"Allow anyone to submit an account signup request. If false, server will be invite-only."`
+	AccountsReasonRequired           bool `name:"accounts-reason-required" usage:"Do new account signups require a reason to be submitted on registration?"`
+	AccountsRegistrationDailyLimit   int  `name:"accounts-registration-daily-limit" usage:"Limit amount of approved account sign-ups allowed per 24hrs before registration is closed. 0 or less = no limit."`
+	AccountsRegistrationBacklogLimit int  `name:"accounts-registration-backlog-limit" usage:"Limit how big the 'accounts pending approval' queue can grow before registration is closed. 0 or less = no limit."`
+	AccountsAllowCustomCSS           bool `name:"accounts-allow-custom-css" usage:"Allow accounts to enable custom CSS for their profile pages and statuses."`
+	AccountsCustomCSSLength          int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
 
 	MediaDescriptionMinChars int           `name:"media-description-min-chars" usage:"Min required chars for an image description"`
 	MediaDescriptionMaxChars int           `name:"media-description-max-chars" usage:"Max permitted chars for an image description"`

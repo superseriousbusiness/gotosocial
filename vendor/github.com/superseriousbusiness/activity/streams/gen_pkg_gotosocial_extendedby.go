@@ -3,12 +3,22 @@
 package streams
 
 import (
+	typeannounceapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
 	typecanannounce "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
 	typecanreply "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
+	typelikeapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typereplyapproval "github.com/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
 	vocab "github.com/superseriousbusiness/activity/streams/vocab"
 )
+
+// GoToSocialAnnounceApprovalIsExtendedBy returns true if the other's type extends
+// from AnnounceApproval. Note that it returns false if the types are the
+// same; see the "IsOrExtends" variant instead.
+func GoToSocialAnnounceApprovalIsExtendedBy(other vocab.Type) bool {
+	return typeannounceapproval.AnnounceApprovalIsExtendedBy(other)
+}
 
 // GoToSocialCanAnnounceIsExtendedBy returns true if the other's type extends from
 // CanAnnounce. Note that it returns false if the types are the same; see the
@@ -36,4 +46,18 @@ func GoToSocialCanReplyIsExtendedBy(other vocab.Type) bool {
 // the same; see the "IsOrExtends" variant instead.
 func GoToSocialInteractionPolicyIsExtendedBy(other vocab.Type) bool {
 	return typeinteractionpolicy.InteractionPolicyIsExtendedBy(other)
+}
+
+// GoToSocialLikeApprovalIsExtendedBy returns true if the other's type extends
+// from LikeApproval. Note that it returns false if the types are the same;
+// see the "IsOrExtends" variant instead.
+func GoToSocialLikeApprovalIsExtendedBy(other vocab.Type) bool {
+	return typelikeapproval.LikeApprovalIsExtendedBy(other)
+}
+
+// GoToSocialReplyApprovalIsExtendedBy returns true if the other's type extends
+// from ReplyApproval. Note that it returns false if the types are the same;
+// see the "IsOrExtends" variant instead.
+func GoToSocialReplyApprovalIsExtendedBy(other vocab.Type) bool {
+	return typereplyapproval.ReplyApprovalIsExtendedBy(other)
 }

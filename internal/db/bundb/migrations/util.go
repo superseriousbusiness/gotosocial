@@ -22,11 +22,13 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strconv"
 	"strings"
 
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -45,6 +47,8 @@ func convertEnums[OldType ~string, NewType ~int16](
 	column string,
 	mapping map[OldType]NewType,
 	defaultValue *NewType,
+	indexCleanupCallback func(context.Context, bun.Tx) error,
+	batchByColumn string,
 ) error {
 	if len(mapping) == 0 {
 		return errors.New("empty mapping")
@@ -82,27 +86,105 @@ func convertEnums[OldType ~string, NewType ~int16](
 		return gtserror.Newf("error selecting total count: %w", err)
 	}
 
-	var updated int
-	for old, new := range mapping {
+	var args []any
+	var qbuf byteutil.Buffer
 
-		// Update old to new values.
-		res, err := tx.NewUpdate().
+	// Prepare a singular UPDATE statement using
+	// SET $newColumn = (CASE $column WHEN $old THEN $new ... END).
+	qbuf.B = append(qbuf.B, "UPDATE ? SET ? = (CASE ? "...)
+	args = append(args, bun.Ident(table))
+	args = append(args, bun.Ident(newColumn))
+	args = append(args, bun.Ident(column))
+	for old, new := range mapping {
+		qbuf.B = append(qbuf.B, "WHEN ? THEN ? "...)
+		args = append(args, old, new)
+	}
+	qbuf.B = append(qbuf.B, "ELSE ? END)"...)
+	args = append(args, *defaultValue)
+
+	// Serialize it here to be
+	// used as the base for each
+	// set of batch queries below.
+	baseQStr := string(qbuf.B)
+	baseArgs := args
+
+	// Query batch size
+	// in number of rows.
+	const batchsz = 5000
+
+	// Stores highest batch value
+	// used in iterate queries,
+	// starting at highest possible.
+	highest := id.Highest
+
+	// Total updated rows.
+	var updated int
+
+	for {
+		// Limit to batchsz
+		// items at once.
+		batchQ := tx.
+			NewSelect().
 			Table(table).
-			Where("? = ?", bun.Ident(column), old).
-			Set("? = ?", bun.Ident(newColumn), new).
-			Exec(ctx)
+			Column(batchByColumn).
+			Where("? < ?", bun.Ident(batchByColumn), highest).
+			OrderExpr("? DESC", bun.Ident(batchByColumn)).
+			Limit(batchsz)
+
+		// Finalize UPDATE to operate on this batch only.
+		qStr := baseQStr + " WHERE ? IN (?)"
+		args := append(
+			slices.Clone(baseArgs),
+			bun.Ident(batchByColumn),
+			batchQ,
+		)
+
+		// Execute the prepared raw query with arguments.
+		res, err := tx.NewRaw(qStr, args...).Exec(ctx)
 		if err != nil {
 			return gtserror.Newf("error updating old column values: %w", err)
 		}
 
-		// Count number items updated.
-		n, _ := res.RowsAffected()
-		updated += int(n)
+		// Check how many items we updated.
+		thisUpdated, err := res.RowsAffected()
+		if err != nil {
+			return gtserror.Newf("error counting affected rows: %w", err)
+		}
+
+		if thisUpdated == 0 {
+			// Nothing updated
+			// means we're done.
+			break
+		}
+
+		// Update the overall count.
+		updated += int(thisUpdated)
+
+		// Log helpful message to admin.
+		log.Infof(ctx, "migrated %d of %d %s (up to %s)",
+			updated, total, table, highest)
+
+		// Get next highest
+		// id for next batch.
+		if err := tx.
+			NewSelect().
+			With("batch_query", batchQ).
+			ColumnExpr("min(?) FROM ?", bun.Ident(batchByColumn), bun.Ident("batch_query")).
+			Scan(ctx, &highest); err != nil {
+			return gtserror.Newf("error selecting next highest: %w", err)
+		}
 	}
 
-	// Check total updated.
-	if total != updated {
-		log.Warnf(ctx, "total=%d does not match updated=%d", total, updated)
+	if total != int(updated) {
+		// Return error here in order to rollback the whole transaction.
+		return fmt.Errorf("total=%d does not match updated=%d", total, updated)
+	}
+
+	// Run index cleanup callback if set.
+	if indexCleanupCallback != nil {
+		if err := indexCleanupCallback(ctx, tx); err != nil {
+			return gtserror.Newf("error running index cleanup callback: %w", err)
+		}
 	}
 
 	// Drop the old column from table.

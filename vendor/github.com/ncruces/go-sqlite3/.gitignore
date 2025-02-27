@@ -5,6 +5,9 @@
 *.so
 *.dylib
 
+# Go workspace
+go.work*
+
 # Test binary, built with `go test -c`
 *.test
 

@@ -46,11 +46,13 @@ If you **reject** the sign-up, you may wish to inform the applicant that their s
 
 ## Sign-Up Limits
 
-To avoid sign-up backlogs overwhelming admins and moderators, GoToSocial limits the sign-up pending backlog to 20 accounts. Once there are 20 accounts pending in the backlog waiting to be handled by an admin or moderator, new sign-ups will not be accepted via the form.
+By default, to avoid sign-up backlogs overwhelming admins and moderators, GoToSocial limits the sign-up pending backlog to 20 accounts. Once there are 20 accounts pending in the backlog waiting to be handled by an admin or moderator, new sign-ups will not be accepted via the form.
 
-New sign-ups will also not be accepted via the form if 10 or more new account sign-ups have been approved in the last 24 hours, to avoid instances rapidly expanding beyond the capabilities of moderators.
+By default, new sign-ups will also not be accepted via the form if 10 or more new account sign-ups have been approved in the last 24 hours, to avoid instances rapidly expanding beyond the capabilities of moderators.
 
 In both cases, applicants will be shown an error message explaining why they could not submit the form, and inviting them to try again later.
+
+The limit of sign-ups per day, and the backlog size, can be configured or disabled altogether with the variables `accounts-registration-daily-limit` and `accounts-registration-backlog-limit`. See the [accounts config section](../configuration/accounts.md) for more info.
 
 To combat spam accounts, GoToSocial account sign-ups **always** require manual approval by an administrator, and applicants must **always** confirm their email address before they are able to log in and post.
 

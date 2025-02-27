@@ -93,7 +93,7 @@ func (p *Processor) PollVote(ctx context.Context, requester *gtsmodel.Account, p
 	// Before enqueuing it, increment the poll
 	// vote counts on the copy attached to the
 	// PollVote (that we also later return).
-	poll.IncrementVotes(choices)
+	poll.IncrementVotes(choices, true)
 
 	// Enqueue worker task to handle side-effects of user poll vote(s).
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
