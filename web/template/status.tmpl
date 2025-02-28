@@ -19,7 +19,7 @@
 
 {{- define "statusContent" -}}
 {{- with .Content }}
-<div class="content" lang="{{- $.LanguageTag.TagStr -}}">
+<div class="content e-content" lang="{{- $.LanguageTag.TagStr -}}">
     {{ noescape . | emojify $.Emojis }}
 </div>
 {{- end }}
@@ -38,7 +38,7 @@
     {{- if .SpoilerText }}
     <details class="text-spoiler">
         <summary>
-            <span class="spoiler-text" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
+            <span class="spoiler-text p-summary" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
             <span class="button" role="button" tabindex="0">Toggle visibility</span>
         </summary>
         <div class="text">
@@ -70,7 +70,7 @@
 {{- if .Local }}
 <a
     href="{{- .URL -}}"
-    class="status-link"
+    class="status-link u-url"
     data-nosnippet
     title="Open thread at this post"
 >
@@ -79,7 +79,7 @@
 {{- else }}
 <a
     href="{{- .URL -}}"
-    class="status-link"
+    class="status-link u-url"
     data-nosnippet
     rel="nofollow noreferrer noopener" target="_blank"
     title="Open remote post (opens in a new window)"
