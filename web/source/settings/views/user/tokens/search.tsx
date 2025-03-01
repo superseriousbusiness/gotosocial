@@ -125,8 +125,42 @@ interface TokenInfoListEntryProps {
 }
 
 function TokenInfoListEntry({ tokenInfo }: TokenInfoListEntryProps) {
-	const created = new Date(tokenInfo.created_at).toLocaleString();
-	const lastUsed = tokenInfo.last_used ? new Date(tokenInfo.last_used).toDateString(): "unknown/never";
+	const appWebsite = useMemo(() => {
+		if (!tokenInfo.application.website) {
+			return "";
+		}
+
+		try {
+			// Try to parse nicely and return link.
+			const websiteURL = new URL(tokenInfo.application.website);
+			const websiteURLStr = websiteURL.toString();
+			return (
+				<a
+					href={websiteURLStr}
+					target="_blank"
+					rel="nofollow noreferrer noopener"
+				>{websiteURLStr}</a>
+			);
+		} catch {
+			// Fall back to returning string.
+			return tokenInfo.application.website;
+		}
+	}, [tokenInfo.application.website]);
+	
+	const created = useMemo(() => {
+		const createdAt = new Date(tokenInfo.created_at);
+		return <time dateTime={tokenInfo.created_at}>{createdAt.toDateString()}</time>;
+	}, [tokenInfo.created_at]);
+
+	const lastUsed = useMemo(() => {
+		if (!tokenInfo.last_used) {
+			return "unknown/never";
+		}
+
+		const lastUsed = new Date(tokenInfo.last_used);
+		return <time dateTime={tokenInfo.last_used}>{lastUsed.toDateString()}</time>;
+	}, [tokenInfo.last_used]);
+
 	const [ invalidate, invalidateResult ] = useInvalidateTokenMutation();
 
 	return (
@@ -140,22 +174,22 @@ function TokenInfoListEntry({ tokenInfo }: TokenInfoListEntryProps) {
 					<dt>App name:</dt>
 					<dd className="text-cutoff">{tokenInfo.application.name}</dd>
 				</div>
-				{ tokenInfo.application.website && 
+				{ appWebsite && 
 					<div className="info-list-entry">
 						<dt>App website:</dt>
-						<dd className="text-cutoff">{tokenInfo.application.website}</dd>
+						<dd className="text-cutoff">{appWebsite}</dd>
 					</div>
 				}
 				<div className="info-list-entry">
-					<dt>Token scope:</dt>
+					<dt>Scope:</dt>
 					<dd className="text-cutoff monospace">{tokenInfo.scope}</dd>
 				</div>
 				<div className="info-list-entry">
-					<dt>Token created at:</dt>
+					<dt>Created:</dt>
 					<dd className="text-cutoff">{created}</dd>
 				</div>
 				<div className="info-list-entry">
-					<dt>Token last used:</dt>
+					<dt>Last used:</dt>
 					<dd className="text-cutoff">{lastUsed}</dd>
 				</div>
 			</dl>

@@ -24,14 +24,22 @@ export default function Tokens() {
 	return (
 		<div className="tokens-view">
 			<div className="form-section-docs">
-				<h1>App Tokens</h1>
+				<h1>Access Tokens</h1>
 				<p>
 					On this page you can search through access tokens owned by applications that you have authorized to access your account and/or perform actions on your behalf.
 					<br/>You can invalidate a token by clicking on the invalidate button under a token. This will remove the token from the database.
 					<br/>The application that was authorized to access your account with that token will then no longer be authorized to do so, and you will need to log out and log in again with that application.
-					<br/>In cases where you've logged into an application multiple times, or logged in with multiple devices or browsers, you may see multiple tokens for one application. This is normal!
+					<br/>In cases where you've logged in with an application multiple times, or logged in with multiple devices or browsers, you may see multiple tokens with the same application name. This is normal!
 					<br/>That said, feel free to invalidate old tokens that are never used, it's good security practice and it's fun to click the big red button.
 				</p>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#access-tokens"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about access tokens (opens in a new tab)
+				</a>
 			</div>
 			<TokensSearchForm />
 		</div>

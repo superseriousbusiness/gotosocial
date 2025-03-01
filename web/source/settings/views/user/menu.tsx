@@ -64,7 +64,7 @@ export default function UserMenu() {
 				icon="fa-floppy-o"
 			/>
 			<MenuItem
-				name="App Tokens"
+				name="Access Tokens"
 				itemUrl="tokens"
 				icon="fa-certificate"
 			/>
