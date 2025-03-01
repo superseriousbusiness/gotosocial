@@ -54,6 +54,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/streaming"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/tags"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/timelines"
+	"github.com/superseriousbusiness/gotosocial/internal/api/client/tokens"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
@@ -99,6 +100,7 @@ type Client struct {
 	streaming           *streaming.Module           // api/v1/streaming
 	tags                *tags.Module                // api/v1/tags
 	timelines           *timelines.Module           // api/v1/timelines
+	tokens              *tokens.Module              // api/v1/tokens
 	user                *user.Module                // api/v1/user
 }
 
@@ -152,6 +154,7 @@ func (c *Client) Route(r *router.Router, m ...gin.HandlerFunc) {
 	c.streaming.Route(h)
 	c.tags.Route(h)
 	c.timelines.Route(h)
+	c.tokens.Route(h)
 	c.user.Route(h)
 }
 
@@ -193,6 +196,7 @@ func NewClient(state *state.State, p *processing.Processor) *Client {
 		streaming:           streaming.New(p, time.Second*30, 4096),
 		tags:                tags.New(p),
 		timelines:           timelines.New(p),
+		tokens:              tokens.New(p),
 		user:                user.New(p),
 	}
 }

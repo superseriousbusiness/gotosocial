@@ -63,6 +63,11 @@ export default function UserMenu() {
 				itemUrl="export-import"
 				icon="fa-floppy-o"
 			/>
+			<MenuItem
+				name="App Tokens"
+				itemUrl="tokens"
+				icon="fa-certificate"
+			/>
 		</MenuItem>
 	);
 }
