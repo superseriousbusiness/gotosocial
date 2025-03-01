@@ -55,6 +55,14 @@ func (p *Processor) ImportData(
 			overwrite,
 		)
 
+	case "mutes":
+		return p.importMutes(
+			ctx,
+			requester,
+			data,
+			overwrite,
+		)
+
 	default:
 		const text = "import type not yet supported"
 		return gtserror.NewErrorUnprocessableEntity(errors.New(text), text)
@@ -372,6 +380,153 @@ func importBlocksAsyncF(
 				targetAcct.ID,
 			); errWithCode != nil {
 				log.Errorf(ctx, "could not block account: %v", errWithCode.Unwrap())
+				continue
+			}
+		}
+	}
+}
+
+func (p *Processor) importMutes(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	mutesData *multipart.FileHeader,
+	overwrite bool,
+) gtserror.WithCode {
+	file, err := mutesData.Open()
+	if err != nil {
+		err := fmt.Errorf("error opening mutes data file: %w", err)
+		return gtserror.NewErrorBadRequest(err, err.Error())
+	}
+	defer file.Close()
+
+	// Parse records out of the file.
+	records, err := csv.NewReader(file).ReadAll()
+	if err != nil {
+		err := fmt.Errorf("error reading mutes data file: %w", err)
+		return gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	// Convert the records into a slice of barebones mutes.
+	//
+	// Only TargetAccount.Username, TargetAccount.Domain,
+	// and Notifications will be set on each mute.
+	mutes, err := p.converter.CSVToMutes(ctx, records)
+	if err != nil {
+		err := fmt.Errorf("error converting records to mutes: %w", err)
+		return gtserror.NewErrorBadRequest(err, err.Error())
+	}
+
+	// Do remaining processing of this import asynchronously.
+	f := importMutesAsyncF(p, requester, mutes, overwrite)
+	p.state.Workers.Processing.Queue.Push(f)
+
+	return nil
+}
+
+func importMutesAsyncF(
+	p *Processor,
+	requester *gtsmodel.Account,
+	mutes []*gtsmodel.UserMute,
+	overwrite bool,
+) func(context.Context) {
+	return func(ctx context.Context) {
+		// Map used to store wanted
+		// mute targets (if overwriting).
+		var wantedMutes map[string]struct{}
+
+		if overwrite {
+			// If we're overwriting, we need to get current
+			// mutes owned by requester *before* making any
+			// changes, so that we can remove unwanted mutes
+			// after we've created new ones.
+			var (
+				prevMutes []*gtsmodel.UserMute
+				err       error
+			)
+
+			prevMutes, err = p.state.DB.GetAccountMutes(ctx, requester.ID, nil)
+			if err != nil {
+				log.Errorf(ctx, "db error getting mutes: %v", err)
+				return
+			}
+
+			// Initialize new mutes map.
+			wantedMutes = make(map[string]struct{}, len(mutes))
+
+			// Once we've created (or tried to create)
+			// the required mutes, go through previous
+			// mutes and remove unwanted ones.
+			defer func() {
+				for _, prev := range prevMutes {
+					username := prev.TargetAccount.Username
+					domain := prev.TargetAccount.Domain
+
+					_, wanted := wantedMutes[username+"@"+domain]
+					if wanted {
+						// Leave this
+						// one alone.
+						continue
+					}
+
+					if _, errWithCode := p.MuteRemove(
+						ctx,
+						requester,
+						prev.TargetAccountID,
+					); errWithCode != nil {
+						log.Errorf(ctx, "could not unmute account: %v", errWithCode.Unwrap())
+						continue
+					}
+				}
+			}()
+		}
+
+		// Go through the mutes parsed from CSV
+		// file, and create / update each one.
+		for _, mute := range mutes {
+			var (
+				// Username of the target.
+				username = mute.TargetAccount.Username
+
+				// Domain of the target.
+				// Empty for our domain.
+				domain = mute.TargetAccount.Domain
+			)
+
+			if overwrite {
+				// We'll be overwriting, so store
+				// this new mute in our handy map.
+				wantedMutes[username+"@"+domain] = struct{}{}
+			}
+
+			// Get the target account, dereferencing it if necessary.
+			targetAcct, _, err := p.federator.Dereferencer.GetAccountByUsernameDomain(
+				ctx,
+				// Provide empty request user to use the
+				// instance account to deref the account.
+				//
+				// It's pointless to make lots of calls
+				// to a remote from an account that's about
+				// to mute that account.
+				"",
+				username,
+				domain,
+			)
+			if err != nil {
+				log.Errorf(ctx, "could not retrieve account: %v", err)
+				continue
+			}
+
+			// Use the processor's MuteCreate function
+			// to create or update the mute. This takes
+			// account of existing mutes, and also sends
+			// the mute to the FromClientAPI processor.
+			if _, errWithCode := p.MuteCreate(
+				ctx,
+				requester,
+				targetAcct.ID,
+				&apimodel.UserMuteCreateUpdateRequest{Notifications: mute.Notifications},
+			); errWithCode != nil {
+				log.Errorf(ctx, "could not mute account: %v", errWithCode.Unwrap())
 				continue
 			}
 		}

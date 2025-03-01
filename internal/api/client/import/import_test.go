@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
 	importdata "github.com/superseriousbusiness/gotosocial/internal/api/client/import"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -204,6 +205,97 @@ admin@localhost:8080,true
 	}) {
 		suite.FailNow("timed out waiting for zork to follow req turtle")
 	}
+}
+
+func (suite *ImportTestSuite) TestImportMutes() {
+	var (
+		ctx         = context.Background()
+		testAccount = suite.testAccounts["local_account_1"]
+	)
+
+	// Clear existing mutes from Zork.
+	if err := suite.state.DB.DeleteAccountMutes(ctx, testAccount.ID); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Have zork mute turtle, admin and remote fossbro.
+	data := `Account address,Hide notifications
+admin@localhost:8080,true
+unknown@localhost:8080,true
+1happyturtle@localhost:8080,false
+foss_satan@fossbros-anonymous.io,true
+`
+
+	// Trigger the import handler.
+	suite.TriggerHandler(data, "mutes", "merge")
+
+	// Wait for mutes to be applied
+	if !testrig.WaitFor(func() bool {
+		mutes, err := suite.state.DB.GetAccountMutes(ctx, testAccount.ID, nil)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		for _, m := range mutes {
+			switch m.TargetAccount.ID {
+			case suite.testAccounts["remote_account_1"].ID:
+				if *m.Notifications != true {
+					suite.FailNow("expected notifications from fossbro to be muted")
+				}
+			case suite.testAccounts["admin_account"].ID:
+				if *m.Notifications != true {
+					suite.FailNow("expected notifications from admin to be muted")
+				}
+			case suite.testAccounts["local_account_2"].ID:
+				if *m.Notifications != false {
+					suite.FailNow("expected notifications from turtle to NOT be muted")
+				}
+			default:
+				suite.FailNow("unexpected muted account", m.TargetAccount)
+			}
+		}
+		return len(mutes) == 3
+	}) {
+		suite.FailNow("timed out waiting for mutes to apply")
+	}
+
+	// Import again in overwrite mode:
+	//   - remote fossbro is unmuted, admin and turtle are kept
+	//   - Notification hiding is reversed to confirm mutes are modified
+	data = `Account address,Hide notifications
+admin@localhost:8080,false
+1happyturtle@localhost:8080,true
+`
+
+	// Trigger the import handler.
+	suite.TriggerHandler(data, "mutes", "overwrite")
+
+	// Wait for mutes to be applied
+	if !testrig.WaitFor(func() bool {
+		mutes, err := suite.state.DB.GetAccountMutes(ctx, testAccount.ID, nil)
+		if err != nil {
+			suite.FailNow(err.Error())
+		}
+		for _, m := range mutes {
+			switch m.TargetAccount.ID {
+			case suite.testAccounts["remote_account_1"].ID:
+				suite.FailNow("fossbro is still muted")
+			case suite.testAccounts["admin_account"].ID:
+				if *m.Notifications != false {
+					suite.FailNow("expected notifications from admin to be NOT muted")
+				}
+			case suite.testAccounts["local_account_2"].ID:
+				if *m.Notifications != true {
+					suite.FailNow("expected notifications from turtle to be muted")
+				}
+			default:
+				suite.FailNow("unexpected muted account", m.TargetAccount)
+			}
+		}
+		return len(mutes) == 2
+	}) {
+		suite.FailNow("timed out waiting for import to apply")
+	}
+
 }
 
 func TestImportTestSuite(t *testing.T) {
