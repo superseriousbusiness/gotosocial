@@ -81,6 +81,7 @@ nav:
       - "user_guide/password_management.md"
       - "user_guide/rss.md"
       - "user_guide/migration.md"
+      - "user_guide/importing_posts.md"
   - "Getting Started":
       - "getting_started/index.md"
       - "getting_started/releases.md"
