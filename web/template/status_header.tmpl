@@ -18,18 +18,20 @@
 */ -}}
 
 {{- with .Account }}
-<address>
+<address class="p-author h-card">
     {{- if $.Local }}
     <a
         href="{{- .URL -}}"
         rel="author"
         title="Open profile"
+        class="u-url u-uid"
     >
     {{- else }}
     <a
         href="{{- .URL -}}"
         rel="author nofollow noreferrer noopener" target="_blank"
         title="Open remote profile (opens in a new window)"
+        class="u-url u-uid"
     >
     {{- end }}
         <picture
@@ -47,10 +49,11 @@
                 src="{{- .Avatar -}}"
                 alt="Avatar for {{ .Username -}}"
                 title="Avatar for {{ .Username -}}"
+                class="u-photo"
             >
         </picture>
         <div class="author-strap">
-            <span class="displayname text-cutoff">
+            <span class="displayname text-cutoff p-name">
                 {{- if .DisplayName -}}
                 {{- emojify .Emojis (escape .DisplayName) -}}
                 {{- else -}}
@@ -58,7 +61,7 @@
                 {{- end -}}
             </span>
             <span class="sr-only">,</span>
-            <span class="username text-cutoff">@{{- .Acct -}}</span>
+            <span class="username text-cutoff p-nickname">@{{- .Acct -}}</span>
         </div>
         <span class="sr-only">(open profile)</span>
     </a>

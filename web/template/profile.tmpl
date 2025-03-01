@@ -106,7 +106,7 @@
             />
             {{- end }}
             <img
-                class="avatar"
+                class="avatar u-photo"
                 src="{{- .account.Avatar -}}"
                 alt="{{- template "avatarAlt" . -}}"
                 title="{{- template "avatarAlt" . -}}"
@@ -120,7 +120,7 @@
 {{- end -}}
 
 {{- with . }}
-<main class="profile">
+<main class="profile h-card">
     <h2 class="sr-only">Profile for {{ .account.Username -}}</h2>
     <section class="profile-header" role="region" aria-label="Basic info">
         {{- if .account.Moved }}
@@ -148,7 +148,7 @@
             {{- end }}
             <dl class="namerole">
                 <dt class="sr-only">Display name</dt>
-                <dd class="displayname text-cutoff">
+                <dd class="displayname text-cutoff p-name">
                     {{- if .account.DisplayName -}}
                     {{- emojify .account.Emojis (escape .account.DisplayName) -}}
                     {{- else -}}
@@ -171,7 +171,7 @@
                     </dd>
                     {{- end }}
                     <dt class="sr-only">Username</dt>
-                    <dd class="username text-cutoff">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
+                    <dd class="username text-cutoff p-nickname">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
                 </div>
                 {{- if .account.Roles }}
                 <dt class="sr-only">Role</dt>
@@ -180,6 +180,7 @@
                 {{- end }}
                 {{- end }}
             </dl>
+            <a class="u-url u-uid" rel="me" href="/@{{- .account.Username -}}" class="hidden"></a>
         </div>
     </section>
     <div class="column-split">
@@ -191,7 +192,7 @@
             {{- include "profile_fields.tmpl" . | indent 3 }}
             {{- end }}
             <h4 class="sr-only">Bio</h4>
-            <div class="bio">
+            <div class="bio p-note">
                 {{- if .account.Note }}
                 {{ emojify .account.Emojis (noescape .account.Note) }}
                 {{- else }}
@@ -212,15 +213,15 @@
         </section>
         <div class="statuses-wrapper" role="region" aria-label="Posts by {{ .account.Username -}}">
             {{- if .pinned_statuses }}
-            <section class="pinned statuses" aria-labelledby="pinned">
+            <section class="pinned statuses h-feed" aria-labelledby="pinned">
                 <div class="col-header">
-                    <h3 id="pinned">Pinned posts</h3>
+                    <h3 class="p-name" id="pinned">Pinned posts</h3>
                     <a href="#recent">jump to recent</a>
                 </div>
                 <div class="thread">
                     {{- range .pinned_statuses }}
                     <article
-                        class="status expanded"
+                        class="status expanded h-entry"
                         {{- includeAttr "status_attributes.tmpl" . | indentAttr 6  }}
                     >
                         {{- include "status.tmpl" . | indent 6 }}
@@ -229,9 +230,9 @@
                 </div>
             </section>
             {{- end }}
-            <section class="recent statuses" aria-labelledby="recent">
+            <section class="recent statuses h-feed" aria-labelledby="recent">
                 <div class="col-header">
-                    <h3 id="recent" tabindex="-1">Recent posts</h3>
+                    <h3 id="recent p-name" tabindex="-1">Recent posts</h3>
                     {{- if .rssFeed }}
                     <a href="{{- .rssFeed -}}" class="rss-icon" aria-label="RSS feed">
                         <i class="fa fa-rss-square" aria-hidden="true"></i>
@@ -244,7 +245,7 @@
                     {{- else }}
                     {{- range .statuses }}
                     <article
-                        class="status expanded"
+                        class="status expanded h-entry"
                         {{- includeAttr "status_attributes.tmpl" . | indentAttr 6  }}
                     >
                         {{- include "status.tmpl" . | indent 6 }}
