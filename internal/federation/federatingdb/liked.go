@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"codeberg.org/superseriousbusiness/activity/streams"
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 )
 
 // Liked obtains the Liked Collection for an actor with the

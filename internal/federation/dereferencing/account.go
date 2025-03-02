@@ -24,7 +24,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/superseriousbusiness/activity/pub"
+	"codeberg.org/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"

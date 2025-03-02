@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/http"
 
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 	"github.com/miekg/dns"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/id"

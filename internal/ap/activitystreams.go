@@ -20,7 +20,7 @@ package ap
 import (
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/pub"
+	"codeberg.org/superseriousbusiness/activity/pub"
 )
 
 // PublicURI returns a fresh copy of the *url.URL version of the

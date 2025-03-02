@@ -21,8 +21,8 @@ import (
 	"net/url"
 	"testing"
 
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 	"github.com/stretchr/testify/assert"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
