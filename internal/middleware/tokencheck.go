@@ -20,11 +20,11 @@ package middleware
 import (
 	"net/http"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // TokenCheck returns a new gin middleware for validating oauth tokens in requests.

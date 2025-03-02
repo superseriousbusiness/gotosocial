@@ -31,6 +31,7 @@ require (
 	codeberg.org/superseriousbusiness/activity v1.12.0-gts
 	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
+	codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -59,7 +60,6 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
-	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.21.3
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/temoto/robotstxt v1.1.2
@@ -84,7 +84,7 @@ require (
 	golang.org/x/crypto v0.34.0
 	golang.org/x/image v0.24.0
 	golang.org/x/net v0.35.0
-	golang.org/x/oauth2 v0.26.0
+	golang.org/x/oauth2 v0.27.0
 	golang.org/x/sys v0.30.0
 	golang.org/x/text v0.22.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
@@ -163,7 +163,7 @@ require (
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.11 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.9 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect

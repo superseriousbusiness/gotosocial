@@ -17,7 +17,7 @@
 
 package oauth
 
-import "github.com/superseriousbusiness/oauth2/v4/errors"
+import "codeberg.org/superseriousbusiness/oauth2/v4/errors"
 
 // ErrInvalidRequest is an oauth spec compliant 'invalid_request' error.
 var ErrInvalidRequest = errors.New("invalid_request")

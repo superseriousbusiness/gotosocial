@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 )
 
 // SetTokenType token type

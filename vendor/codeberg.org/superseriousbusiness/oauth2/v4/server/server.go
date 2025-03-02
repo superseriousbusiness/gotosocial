@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/errors"
+	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4/errors"
 )
 
 // NewDefaultServer create a default authorization server

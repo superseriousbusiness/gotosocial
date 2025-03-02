@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/errors"
+	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4/errors"
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
 )

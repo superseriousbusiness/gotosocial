@@ -420,7 +420,7 @@ GoToSocial 使用以下开源库、框架和工具，在此声明并致谢 💕
   - [superseriousbusiness/activity](https://codeberg.org/superseriousbusiness/activity) 从 [go-fed/activity](https://github.com/go-fed/activity) 派生; Golang ActivityPub/ActivityStreams 库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
   - [superseriousbusiness/exif-terminator](https://codeberg.org/superseriousbusiness/exif-terminator); EXIF 数据擦除。 [GNU AGPL v3 许可证](https://spdx.org/licenses/AGPL-3.0-or-later.html)。
   - [superseriousbusiness/httpsig](https://codeberg.org/superseriousbusiness/httpsig) 从 [go-fed/httpsig](https://github.com/go-fed/httpsig) 派生; 安全 HTTP 签名库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
-  - [superseriousbusiness/oauth2](https://github.com/superseriousbusiness/oauth2) 从 [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2) 派生; OAuth 服务器框架和令牌处理。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
+  - [superseriousbusiness/oauth2](https://codeberg.org/superseriousbusiness/oauth2) 从 [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2) 派生; OAuth 服务器框架和令牌处理。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [tdewolff/minify](https://github.com/tdewolff/minify); Markdown 帖文的 HTML 压缩。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [uber-go/automaxprocs](https://github.com/uber-go/automaxprocs); GOMAXPROCS 自动化。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [ulule/limiter](https://github.com/ulule/limiter); http 流量限制中间件。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
