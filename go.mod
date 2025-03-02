@@ -29,7 +29,7 @@ require (
 	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.8.11
 	codeberg.org/superseriousbusiness/activity v1.12.0-gts
-	codeberg.org/superseriousbusiness/exif-terminator v0.9.1
+	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.1
@@ -97,6 +97,8 @@ require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-mangler v1.4.1 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
+	codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB // indirect
+	codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
@@ -197,8 +199,6 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
-	github.com/superseriousbusiness/go-jpeg-image-structure/v2 v2.0.0-20220321154430-d89a106fdabe // indirect
-	github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB // indirect
 	github.com/tdewolff/parse/v2 v2.7.19 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect
 	github.com/toqueteos/webbrowser v1.2.0 // indirect
