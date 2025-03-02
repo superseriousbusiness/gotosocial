@@ -20,7 +20,7 @@ package ap
 import (
 	"net/url"
 
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 )
 
 // IsActivityable returns whether AS vocab type name is acceptable as Activityable.

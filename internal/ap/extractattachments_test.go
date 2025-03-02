@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"testing"
 
+	"codeberg.org/superseriousbusiness/activity/streams"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 

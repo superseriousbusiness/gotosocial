@@ -21,7 +21,7 @@ import (
 	"net/url"
 	"sync"
 
-	"github.com/superseriousbusiness/activity/streams/vocab"
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 )
 
 const mapmax = 256

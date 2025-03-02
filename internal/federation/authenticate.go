@@ -29,9 +29,9 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-kv"
+	"codeberg.org/superseriousbusiness/activity/streams"
+	typepublickey "codeberg.org/superseriousbusiness/activity/streams/impl/w3idsecurityv1/type_publickey"
 	"codeberg.org/superseriousbusiness/httpsig"
-	"github.com/superseriousbusiness/activity/streams"
-	typepublickey "github.com/superseriousbusiness/activity/streams/impl/w3idsecurityv1/type_publickey"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
