@@ -68,7 +68,6 @@ var testModels = []interface{}{
 	&gtsmodel.Notification{},
 	&gtsmodel.RouterSession{},
 	&gtsmodel.Token{},
-	&gtsmodel.Client{},
 	&gtsmodel.EmojiCategory{},
 	&gtsmodel.Tombstone{},
 	&gtsmodel.Report{},
@@ -127,12 +126,6 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	ctx := context.Background()
 
 	for _, v := range NewTestTokens() {
-		if err := db.Put(ctx, v); err != nil {
-			log.Panic(ctx, err)
-		}
-	}
-
-	for _, v := range NewTestClients() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(ctx, err)
 		}

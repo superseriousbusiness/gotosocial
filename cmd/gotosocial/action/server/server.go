@@ -260,7 +260,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Build handlers used in later initializations.
 	mediaManager := media.NewManager(state)
-	oauthServer := oauth.New(ctx, dbService)
+	oauthServer := oauth.New(ctx, state, apiutil.GetClientScopeHandler(ctx, state))
 	typeConverter := typeutils.NewConverter(state)
 	visFilter := visibility.NewFilter(state)
 	intFilter := interaction.NewFilter(state)

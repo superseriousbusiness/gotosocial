@@ -70,6 +70,7 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 			ID:              "01P9SVWS9J3SPHZQ3KCMBEN70N",
 			ClientID:        "01F8MGV8AC3NGSJW0FE8W1BV70",
 			RedirectURI:     "http://localhost:8080",
+			Scope:           "read write push",
 			Access:          "ZTK1MWMWZDGTMGMXOS0ZY2UXLWI5ZWETMWEZYZZIYTLHMZI4",
 			AccessCreateAt:  TimeMustParse("2022-06-10T15:22:08Z"),
 			AccessExpiresAt: TimeMustParse("2050-01-01T15:22:08Z"),
@@ -79,6 +80,7 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 			ClientID:      "01F8MGV8AC3NGSJW0FE8W1BV70",
 			UserID:        "01F8MGVGPHQ2D3P3X0454H54Z5",
 			RedirectURI:   "http://localhost:8080",
+			Scope:         "read write push",
 			Code:          "ZJYYMZQ0MTQTZTU1NC0ZNJK4LWE2ZWITYTM1MDHHOTAXNJHL",
 			CodeCreateAt:  TimeMustParse("2022-06-10T15:22:08Z"),
 			CodeExpiresAt: TimeMustParse("2050-01-01T15:22:08Z"),
@@ -107,37 +109,6 @@ func NewTestTokens() map[string]*gtsmodel.Token {
 	return tokens
 }
 
-// NewTestClients returns a map of Clients keyed according to which account they are used by.
-func NewTestClients() map[string]*gtsmodel.Client {
-	clients := map[string]*gtsmodel.Client{
-		"instance_application": {
-			ID:     "01AY6P665V14JJR0AFVRT7311Y",
-			Secret: "baedee87-6d00-4cf5-87b9-4d78ee58ef01",
-			Domain: "http://localhost:8080",
-			UserID: "",
-		},
-		"admin_account": {
-			ID:     "01F8MGWSJCND9BWBD4WGJXBM93",
-			Secret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a",
-			Domain: "http://localhost:8080",
-			UserID: "01F8MGWYWKVKS3VS8DV1AMYPGE", // admin_account
-		},
-		"local_account_1": {
-			ID:     "01F8MGV8AC3NGSJW0FE8W1BV70",
-			Secret: "c3724c74-dc3b-41b2-a108-0ea3d8399830",
-			Domain: "http://localhost:8080",
-			UserID: "01F8MGVGPHQ2D3P3X0454H54Z5", // local_account_1
-		},
-		"local_account_2": {
-			ID:     "01F8MGW47HN8ZXNHNZ7E47CDMQ",
-			Secret: "8f5603a5-c721-46cd-8f1b-2e368f51379f",
-			Domain: "http://localhost:8080",
-			UserID: "01F8MH1VYJAE00TVVGMM5JNJ8X", // local_account_2
-		},
-	}
-	return clients
-}
-
 // NewTestApplications returns a map of applications keyed to which number application they are.
 func NewTestApplications() map[string]*gtsmodel.Application {
 	apps := map[string]*gtsmodel.Application{
@@ -145,7 +116,7 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ID:           "01HT5P2YHDMPAAD500NDAY8JW1",
 			Name:         "localhost:8080 instance application",
 			Website:      "http://localhost:8080",
-			RedirectURI:  "http://localhost:8080",
+			RedirectURIs: []string{"http://localhost:8080"},
 			ClientID:     "01AY6P665V14JJR0AFVRT7311Y", // instance account ID
 			ClientSecret: "baedee87-6d00-4cf5-87b9-4d78ee58ef01",
 			Scopes:       "write:accounts",
@@ -154,28 +125,28 @@ func NewTestApplications() map[string]*gtsmodel.Application {
 			ID:           "01F8MGXQRHYF5QPMTMXP78QC2F",
 			Name:         "superseriousbusiness",
 			Website:      "https://superserious.business",
-			RedirectURI:  "http://localhost:8080",
+			RedirectURIs: []string{"http://localhost:8080"},
 			ClientID:     "01F8MGWSJCND9BWBD4WGJXBM93",           // admin client
 			ClientSecret: "dda8e835-2c9c-4bd2-9b8b-77c2e26d7a7a", // admin client
-			Scopes:       "read write follow push",
+			Scopes:       "read write push",
 		},
 		"application_1": {
 			ID:           "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Name:         "really cool gts application",
 			Website:      "https://reallycool.app",
-			RedirectURI:  "http://localhost:8080",
+			RedirectURIs: []string{"http://localhost:8080"},
 			ClientID:     "01F8MGV8AC3NGSJW0FE8W1BV70",           // client_1
 			ClientSecret: "c3724c74-dc3b-41b2-a108-0ea3d8399830", // client_1
-			Scopes:       "read write follow push",
+			Scopes:       "read write push",
 		},
 		"application_2": {
 			ID:           "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Name:         "kindaweird",
 			Website:      "https://kindaweird.app",
-			RedirectURI:  "http://localhost:8080",
+			RedirectURIs: []string{"http://localhost:8080"},
 			ClientID:     "01F8MGW47HN8ZXNHNZ7E47CDMQ",           // client_2
 			ClientSecret: "8f5603a5-c721-46cd-8f1b-2e368f51379f", // client_2
-			Scopes:       "read write follow push",
+			Scopes:       "read write push",
 		},
 	}
 	return apps

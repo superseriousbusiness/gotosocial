@@ -341,6 +341,7 @@ func (a *adminDB) CreateInstanceApplication(ctx context.Context) error {
 	// instance account's ID so this is an easy check.
 	instanceAcct, err := a.state.DB.GetInstanceAccount(ctx, "")
 	if err != nil {
+		err := gtserror.Newf("db error getting instance account: %w", err)
 		return err
 	}
 
@@ -369,18 +370,14 @@ func (a *adminDB) CreateInstanceApplication(ctx context.Context) error {
 
 	clientID := instanceAcct.ID
 	clientSecret := uuid.NewString()
-	appID, err := id.NewRandomULID()
-	if err != nil {
-		return err
-	}
 
 	// Generate the application
 	// to put in the database.
 	app := &gtsmodel.Application{
-		ID:           appID,
+		ID:           id.NewULID(),
 		Name:         host + " instance application",
 		Website:      url,
-		RedirectURI:  url,
+		RedirectURIs: []string{url},
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
 		Scopes:       "write:accounts",
@@ -388,19 +385,11 @@ func (a *adminDB) CreateInstanceApplication(ctx context.Context) error {
 
 	// Store it.
 	if err := a.state.DB.PutApplication(ctx, app); err != nil {
+		err := gtserror.Newf("db error storing instance application: %w", err)
 		return err
 	}
 
-	// Model an oauth client
-	// from the application.
-	oc := &gtsmodel.Client{
-		ID:     clientID,
-		Secret: clientSecret,
-		Domain: url,
-	}
-
-	// Store it.
-	return a.state.DB.PutClient(ctx, oc)
+	return nil
 }
 
 func (a *adminDB) GetInstanceApplication(ctx context.Context) (*gtsmodel.Application, error) {
