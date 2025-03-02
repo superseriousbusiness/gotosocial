@@ -28,13 +28,13 @@ import (
 	"testing"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
+	"codeberg.org/superseriousbusiness/httpsig"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/testrig"
-	"github.com/superseriousbusiness/httpsig"
 )
 
 type FederatingProtocolTestSuite struct {

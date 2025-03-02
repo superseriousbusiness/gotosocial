@@ -27,11 +27,11 @@ import (
 	"sync"
 	"time"
 
+	"codeberg.org/superseriousbusiness/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
-	"github.com/superseriousbusiness/httpsig"
 )
 
 // Transport implements the pub.Transport interface with some additional functionality for fetching remote media.

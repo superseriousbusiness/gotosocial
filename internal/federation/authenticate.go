@@ -31,6 +31,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/superseriousbusiness/activity/streams"
 	typepublickey "codeberg.org/superseriousbusiness/activity/streams/impl/w3idsecurityv1/type_publickey"
+	"codeberg.org/superseriousbusiness/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -38,7 +39,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/httpsig"
 )
 
 var (
