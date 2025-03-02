@@ -10,7 +10,7 @@ type Client interface {
 
 func New(id string, secret string, domain string, userID string) Client {
 	return &simpleClient{
-		id: id,
+		id:     id,
 		secret: secret,
 		domain: domain,
 		userID: userID,

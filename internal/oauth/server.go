@@ -24,13 +24,13 @@ import (
 	"net/http"
 	"strings"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
+	oautherr "codeberg.org/superseriousbusiness/oauth2/v4/errors"
+	"codeberg.org/superseriousbusiness/oauth2/v4/manage"
+	"codeberg.org/superseriousbusiness/oauth2/v4/server"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/oauth2/v4"
-	oautherr "github.com/superseriousbusiness/oauth2/v4/errors"
-	"github.com/superseriousbusiness/oauth2/v4/manage"
-	"github.com/superseriousbusiness/oauth2/v4/server"
 )
 
 const (

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 )
 
 // Config configuration parameters

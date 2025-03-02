@@ -21,13 +21,13 @@ import (
 	"context"
 	"testing"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4/models"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/testrig"
-	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
 type PgClientStoreTestSuite struct {

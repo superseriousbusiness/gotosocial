@@ -6,8 +6,8 @@ import (
 	"encoding/base64"
 	"strings"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 	"github.com/google/uuid"
-	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // NewAuthorizeGenerate create to generate the authorize code instance

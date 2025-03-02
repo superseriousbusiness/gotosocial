@@ -22,11 +22,11 @@ import (
 	"slices"
 	"strings"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // Auth wraps an authorized token, application, user, and account.

@@ -20,10 +20,10 @@ package oauth
 import (
 	"context"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4/models"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
 type clientStore struct {

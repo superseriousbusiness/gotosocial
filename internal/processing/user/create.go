@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -29,7 +30,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // Create processes the given form for creating a new user+account.

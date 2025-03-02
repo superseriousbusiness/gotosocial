@@ -22,12 +22,12 @@ import (
 	"errors"
 	"time"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4/models"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/oauth2/v4"
-	"github.com/superseriousbusiness/oauth2/v4/models"
 )
 
 // tokenStore is an implementation of oauth2.TokenStore, which uses our db interface as a storage backend.
@@ -90,7 +90,7 @@ func (ts *tokenStore) sweep(ctx context.Context) error {
 }
 
 // Create creates and store the new token information.
-// For the original implementation, see https://github.com/superseriousbusiness/oauth2/blob/master/store/token.go#L34
+// For the original implementation, see https://codeberg.org/superseriousbusiness/oauth2/blob/master/store/token.go#L34
 func (ts *tokenStore) Create(ctx context.Context, info oauth2.TokenInfo) error {
 	t, ok := info.(*models.Token)
 	if !ok {

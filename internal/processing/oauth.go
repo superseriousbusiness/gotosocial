@@ -20,8 +20,8 @@ package processing
 import (
 	"net/http"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 func (p *Processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode {

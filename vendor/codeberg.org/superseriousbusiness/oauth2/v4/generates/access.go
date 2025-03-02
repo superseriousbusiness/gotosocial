@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"codeberg.org/superseriousbusiness/oauth2/v4"
 	"github.com/google/uuid"
-	"github.com/superseriousbusiness/oauth2/v4"
 )
 
 // NewAccessGenerate create to generate the access token instance
