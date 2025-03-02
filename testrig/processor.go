@@ -51,7 +51,7 @@ func NewTestProcessor(
 		),
 		typeutils.NewConverter(state),
 		federator,
-		NewTestOauthServer(state.DB),
+		NewTestOauthServer(state),
 		mediaManager,
 		state,
 		emailSender,

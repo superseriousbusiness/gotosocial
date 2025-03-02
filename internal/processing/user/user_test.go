@@ -54,7 +54,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
 	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.state.DB)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 
 	suite.sentEmails = make(map[string]string)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", suite.sentEmails)
@@ -62,7 +62,7 @@ func (suite *UserStandardTestSuite) SetupTest() {
 	suite.testTokens = testrig.NewTestTokens()
 	suite.testUsers = testrig.NewTestUsers()
 
-	suite.user = user.New(&suite.state, typeutils.NewConverter(&suite.state), testrig.NewTestOauthServer(suite.db), suite.emailSender)
+	suite.user = user.New(&suite.state, typeutils.NewConverter(&suite.state), testrig.NewTestOauthServer(&suite.state), suite.emailSender)
 
 	testrig.StandardDBSetup(suite.db, nil)
 }

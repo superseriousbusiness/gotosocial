@@ -843,6 +843,19 @@ definitions:
                 example: https://example.org/callback?some=query
                 type: string
                 x-go-name: RedirectURI
+            redirect_uris:
+                description: Post-authorization redirect URIs for the application (OAuth2).
+                example: '[https://example.org/callback?some=query]'
+                items:
+                    type: string
+                type: array
+                x-go-name: RedirectURIs
+            scopes:
+                description: OAuth scopes for this application.
+                items:
+                    type: string
+                type: array
+                x-go-name: Scopes
             vapid_key:
                 description: Push API key for this application.
                 type: string
@@ -7442,16 +7455,17 @@ paths:
                   type: string
                   x-go-name: ClientName
                 - description: |-
-                    Where the user should be redirected after authorization.
+                    Single redirect URI or newline-separated list of redirect URIs (optional).
 
                     To display the authorization code to the user instead of redirecting to a web page, use `urn:ietf:wg:oauth:2.0:oob` in this parameter.
+
+                    If no redirect URIs are provided, defaults to `urn:ietf:wg:oauth:2.0:oob`.
                   in: formData
                   name: redirect_uris
-                  required: true
                   type: string
                   x-go-name: RedirectURIs
                 - description: |-
-                    Space separated list of scopes.
+                    Space separated list of scopes (optional).
 
                     If no scopes are provided, defaults to `read`.
                   in: formData

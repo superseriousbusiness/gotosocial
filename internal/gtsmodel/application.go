@@ -17,18 +17,39 @@
 
 package gtsmodel
 
-import "time"
+import "strings"
 
-// Application represents an application that can perform actions on behalf of a user.
-// It is used to authorize tokens etc, and is associated with an oauth client id in the database.
+// Application represents an application that
+// can perform actions on behalf of a user.
+//
+// It is equivalent to an OAuth client.
 type Application struct {
-	ID           string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt    time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt    time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Name         string    `bun:",notnull"`                                                    // name of the application given when it was created (eg., 'tusky')
-	Website      string    `bun:",nullzero"`                                                   // website for the application given when it was created (eg., 'https://tusky.app')
-	RedirectURI  string    `bun:",nullzero,notnull"`                                           // redirect uri requested by the application for oauth2 flow
-	ClientID     string    `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the associated oauth client entity in the db
-	ClientSecret string    `bun:",nullzero,notnull"`                                           // secret of the associated oauth client entity in the db
-	Scopes       string    `bun:",notnull"`                                                    // scopes requested when this app was created
+	ID              string   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
+	Name            string   `bun:",notnull"`                                 // name of the application given when it was created (eg., 'tusky')
+	Website         string   `bun:",nullzero"`                                // website for the application given when it was created (eg., 'https://tusky.app')
+	RedirectURIs    []string `bun:"redirect_uris,array"`                      // redirect uris requested by the application for oauth2 flow
+	ClientID        string   `bun:"type:CHAR(26),nullzero,notnull"`           // id of the associated oauth client entity in the db
+	ClientSecret    string   `bun:",nullzero,notnull"`                        // secret of the associated oauth client entity in the db
+	Scopes          string   `bun:",notnull"`                                 // scopes requested when this app was created
+	ManagedByUserID string   `bun:"type:CHAR(26),nullzero"`                   // id of the user that manages this application, if it was created through the settings panel
+}
+
+// Implements oauth2.ClientInfo.
+func (a *Application) GetID() string {
+	return a.ClientID
+}
+
+// Implements oauth2.ClientInfo.
+func (a *Application) GetSecret() string {
+	return a.ClientSecret
+}
+
+// Implements oauth2.ClientInfo.
+func (a *Application) GetDomain() string {
+	return strings.Join(a.RedirectURIs, "\n")
+}
+
+// Implements oauth2.ClientInfo.
+func (a *Application) GetUserID() string {
+	return a.ManagedByUserID
 }

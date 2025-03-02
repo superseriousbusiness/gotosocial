@@ -20,7 +20,7 @@ package auth_test
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"testing"
 	"time"
@@ -47,21 +47,21 @@ func (suite *TokenTestSuite) TestPOSTTokenEmptyForm() {
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"invalid_request","error_description":"Bad Request: grant_type was not set in the token request form, but must be set to authorization_code or client_credentials: client_id was not set in the token request form: client_secret was not set in the token request form: redirect_uri was not set in the token request form"}`, string(b))
 }
 
 func (suite *TokenTestSuite) TestRetrieveClientCredentialsOK() {
-	testClient := suite.testClients["local_account_1"]
+	testApp := suite.testApplications["application_1"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		nil,
 		map[string][]string{
 			"grant_type":    {"client_credentials"},
-			"client_id":     {testClient.ID},
-			"client_secret": {testClient.Secret},
+			"client_id":     {testApp.ClientID},
+			"client_secret": {testApp.ClientSecret},
 			"redirect_uri":  {"http://localhost:8080"},
 		})
 	if err != nil {
@@ -79,7 +79,7 @@ func (suite *TokenTestSuite) TestRetrieveClientCredentialsOK() {
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	t := &apimodel.Token{}
@@ -98,16 +98,81 @@ func (suite *TokenTestSuite) TestRetrieveClientCredentialsOK() {
 	suite.NotNil(dbToken)
 }
 
+func (suite *TokenTestSuite) TestRetrieveClientCredentialsBadScope() {
+	testApp := suite.testApplications["application_1"]
+
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		nil,
+		map[string][]string{
+			"grant_type":    {"client_credentials"},
+			"client_id":     {testApp.ClientID},
+			"client_secret": {testApp.ClientSecret},
+			"redirect_uri":  {"http://localhost:8080"},
+			"scope":         {"admin"},
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	ctx, recorder := suite.newContext(http.MethodPost, "oauth/token", bodyBytes, w.FormDataContentType())
+	ctx.Request.Header.Set("accept", "application/json")
+
+	suite.authModule.TokenPOSTHandler(ctx)
+
+	suite.Equal(http.StatusForbidden, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"invalid_scope","error_description":"Forbidden: requested scope admin was not covered by client scope: If you arrived at this error during a sign in/oauth flow, please try clearing your session cookies and signing in again; if problems persist, make sure you're using the correct credentials"}`, string(b))
+}
+
+func (suite *TokenTestSuite) TestRetrieveClientCredentialsDifferentRedirectURI() {
+	testApp := suite.testApplications["application_1"]
+
+	requestBody, w, err := testrig.CreateMultipartFormData(
+		nil,
+		map[string][]string{
+			"grant_type":    {"client_credentials"},
+			"client_id":     {testApp.ClientID},
+			"client_secret": {testApp.ClientSecret},
+			"redirect_uri":  {"http://somewhere.else.example.org"},
+		})
+	if err != nil {
+		panic(err)
+	}
+	bodyBytes := requestBody.Bytes()
+
+	ctx, recorder := suite.newContext(http.MethodPost, "oauth/token", bodyBytes, w.FormDataContentType())
+	ctx.Request.Header.Set("accept", "application/json")
+
+	suite.authModule.TokenPOSTHandler(ctx)
+
+	suite.Equal(http.StatusForbidden, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	suite.Equal(`{"error":"invalid redirect uri","error_description":"Forbidden: requested redirect URI http://somewhere.else.example.org was not covered by client redirect URIs: If you arrived at this error during a sign in/oauth flow, please try clearing your session cookies and signing in again; if problems persist, make sure you're using the correct credentials"}`, string(b))
+}
+
 func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeOK() {
-	testClient := suite.testClients["local_account_1"]
+	testApp := suite.testApplications["application_1"]
 	testUserAuthorizationToken := suite.testTokens["local_account_1_user_authorization_token"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		nil,
 		map[string][]string{
 			"grant_type":    {"authorization_code"},
-			"client_id":     {testClient.ID},
-			"client_secret": {testClient.Secret},
+			"client_id":     {testApp.ClientID},
+			"client_secret": {testApp.ClientSecret},
 			"redirect_uri":  {"http://localhost:8080"},
 			"code":          {testUserAuthorizationToken.Code},
 		})
@@ -126,7 +191,7 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeOK() {
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	t := &apimodel.Token{}
@@ -145,14 +210,14 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeOK() {
 }
 
 func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeNoCode() {
-	testClient := suite.testClients["local_account_1"]
+	testApp := suite.testApplications["application_1"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		nil,
 		map[string][]string{
 			"grant_type":    {"authorization_code"},
-			"client_id":     {testClient.ID},
-			"client_secret": {testClient.Secret},
+			"client_id":     {testApp.ClientID},
+			"client_secret": {testApp.ClientSecret},
 			"redirect_uri":  {"http://localhost:8080"},
 		})
 	if err != nil {
@@ -170,21 +235,21 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeNoCode() {
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"invalid_request","error_description":"Bad Request: code was not set in the token request form, but must be set since grant_type is authorization_code"}`, string(b))
 }
 
 func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeWrongGrantType() {
-	testClient := suite.testClients["local_account_1"]
+	testApplication := suite.testApplications["application_1"]
 
 	requestBody, w, err := testrig.CreateMultipartFormData(
 		nil,
 		map[string][]string{
 			"grant_type":    {"client_credentials"},
-			"client_id":     {testClient.ID},
-			"client_secret": {testClient.Secret},
+			"client_id":     {testApplication.ClientID},
+			"client_secret": {testApplication.ClientSecret},
 			"redirect_uri":  {"http://localhost:8080"},
 			"code":          {"peepeepoopoo"},
 		})
@@ -203,7 +268,7 @@ func (suite *TokenTestSuite) TestRetrieveAuthorizationCodeWrongGrantType() {
 	result := recorder.Result()
 	defer result.Body.Close()
 
-	b, err := ioutil.ReadAll(result.Body)
+	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
 	suite.Equal(`{"error":"invalid_request","error_description":"Bad Request: a code was provided in the token request form, but grant_type was not set to authorization_code"}`, string(b))

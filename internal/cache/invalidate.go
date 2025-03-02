@@ -62,8 +62,7 @@ func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
 }
 
 func (c *Caches) OnInvalidateApplication(app *gtsmodel.Application) {
-	// Invalidate cached client of this application.
-	c.DB.Client.Invalidate("ID", app.ClientID)
+	// TODO: invalidate tokens?
 }
 
 func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
@@ -77,11 +76,6 @@ func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
 
 	// Invalidate source account's block lists.
 	c.DB.BlockIDs.Invalidate(block.AccountID)
-}
-
-func (c *Caches) OnInvalidateClient(client *gtsmodel.Client) {
-	// Invalidate any tokens under this client.
-	c.DB.Token.Invalidate("ClientID", client.ID)
 }
 
 func (c *Caches) OnInvalidateConversation(conversation *gtsmodel.Conversation) {

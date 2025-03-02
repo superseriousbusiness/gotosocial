@@ -93,11 +93,29 @@ const (
 // scope permits the wanted scope.
 func (has Scope) Permits(wanted Scope) bool {
 	if has == wanted {
-		// Exact match.
+		// Exact match on either a
+		// top-level or granular scope.
 		return true
 	}
 
-	// Check if we have a parent scope of what's wanted,
-	// eg., we have scope "admin", we want "admin:read".
-	return strings.HasPrefix(string(wanted), string(has))
+	// Ensure we have a
+	// known top-level scope.
+	switch has {
+
+	case ScopeProfile,
+		ScopePush,
+		ScopeRead,
+		ScopeWrite,
+		ScopeAdmin,
+		ScopeAdminRead,
+		ScopeAdminWrite:
+		// Check if top-level includes wanted,
+		// eg., have "admin", want "admin:read".
+		return strings.HasPrefix(string(wanted), string(has)+":")
+
+	default:
+		// Unknown top-level scope,
+		// can't permit anything.
+		return false
+	}
 }

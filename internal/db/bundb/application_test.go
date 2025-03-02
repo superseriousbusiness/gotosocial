@@ -22,7 +22,6 @@ import (
 	"errors"
 	"reflect"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -45,12 +44,6 @@ func (suite *ApplicationTestSuite) TestGetApplicationBy() {
 
 	// isEqual checks if 2 application models are equal.
 	isEqual := func(a1, a2 gtsmodel.Application) bool {
-		// Clear database-set fields.
-		a1.CreatedAt = time.Time{}
-		a2.CreatedAt = time.Time{}
-		a1.UpdatedAt = time.Time{}
-		a2.UpdatedAt = time.Time{}
-
 		return reflect.DeepEqual(a1, a2)
 	}
 
