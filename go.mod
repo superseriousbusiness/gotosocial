@@ -29,6 +29,7 @@ require (
 	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.8.11
 	codeberg.org/superseriousbusiness/exif-terminator v0.9.1
+	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -58,7 +59,6 @@ require (
 	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.10.0
 	github.com/superseriousbusiness/activity v1.11.0-gts
-	github.com/superseriousbusiness/httpsig v1.2.0-SSB
 	github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8
 	github.com/tdewolff/minify/v2 v2.21.3
 	github.com/technologize/otel-go-contrib v1.1.1

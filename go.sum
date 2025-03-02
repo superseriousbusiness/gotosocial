@@ -74,6 +74,8 @@ codeberg.org/gruf/go-structr v0.8.11 h1:I3cQCHpK3fQSXWaaUfksAJRN4+efULiuF11Oi/m8
 codeberg.org/gruf/go-structr v0.8.11/go.mod h1:zkoXVrAnKosh8VFAsbP/Hhs8FmLBjbVVy5w/Ngm8ApM=
 codeberg.org/superseriousbusiness/exif-terminator v0.9.1 h1:8Pss29AVuvljHAYLnZUyoqJp/8IN1cD3Jz30bJbxme8=
 codeberg.org/superseriousbusiness/exif-terminator v0.9.1/go.mod h1:gCWKduudUWFzsnixoMzu0FYVdxHWG+AbXnZ50DqxsUE=
+codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB h1:0a2fQSgMZA3/k+zjb2Ot+kwzpWFHOVEGQR2t49NhglA=
+codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB/go.mod h1:mkfkHGdE2SCbNBHySjJZSDr3LHtwZb1Yjgc6GYPwAQM=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
@@ -528,8 +530,6 @@ github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB h1:8psprYSK
 github.com/superseriousbusiness/go-png-image-structure/v2 v2.0.1-SSB/go.mod h1:ymKGfy9kg4dIdraeZRAdobMS/flzLk3VcRPLpEWOAXg=
 github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix h1:CXcjArOyxBPFgsNAu4As+RK9BwOUEG1LL7ja4g7iax0=
 github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix/go.mod h1:WSigRRWEig8zV6t6Sm8Y+EmUjlzA/HoaZJ5edupq7po=
-github.com/superseriousbusiness/httpsig v1.2.0-SSB h1:BinBGKbf2LSuVT5+MuH0XynHN9f0XVshx2CTDtkaWj0=
-github.com/superseriousbusiness/httpsig v1.2.0-SSB/go.mod h1:+rxfATjFaDoDIVaJOTSP0gj6UrbicaYPEptvCLC9F28=
 github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8 h1:nTIhuP157oOFcscuoK1kCme1xTeGIzztSw70lX9NrDQ=
 github.com/superseriousbusiness/oauth2/v4 v4.3.2-SSB.0.20230227143000-f4900831d6c8/go.mod h1:uYC/W92oVRJ49Vh1GcvTqpeFqHi+Ovrl2sMllQWRAEo=
 github.com/tdewolff/minify/v2 v2.21.3 h1:KmhKNGrN/dGcvb2WDdB5yA49bo37s+hcD8RiF+lioV8=

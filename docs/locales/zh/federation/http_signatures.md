@@ -6,7 +6,7 @@ GoToSocial 也会为其向其他服务器发送的所有 `GET` 和 `POST` 请求
 
 这种行为与 Mastodon 的 [AUTHORIZED_FETCH / "安全模式"](https://docs.joinmastodon.org/admin/config/#authorized_fetch) 等效。
 
-GoToSocial 使用 [superseriousbusiness/httpsig](https://github.com/superseriousbusiness/httpsig) 库（从 go-fed 派生）来为发出的请求签名，并解析和验证传入请求的签名。该库严格遵循 [Cavage HTTP Signature RFC](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12)，这是其他实现（如 Mastodon、Pixelfed、Akkoma/Pleroma 等）使用的同一份 RFC。（此 RFC 后来被 [httpbis HTTP Signature RFC](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-message-signatures) 取代，但尚未广泛实施。）
+GoToSocial 使用 [superseriousbusiness/httpsig](https://codeberg.org/superseriousbusiness/httpsig) 库（从 go-fed 派生）来为发出的请求签名，并解析和验证传入请求的签名。该库严格遵循 [Cavage HTTP Signature RFC](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12)，这是其他实现（如 Mastodon、Pixelfed、Akkoma/Pleroma 等）使用的同一份 RFC。（此 RFC 后来被 [httpbis HTTP Signature RFC](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-message-signatures) 取代，但尚未广泛实施。）
 
 ## 查询参数
 

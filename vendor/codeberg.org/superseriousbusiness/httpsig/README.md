@@ -4,7 +4,7 @@
 
 > HTTP Signatures made simple
 
-`go get github.com/superseriousbusiness/httpsig`
+`go get codeberg.org/superseriousbusiness/httpsig`
 
 Implementation of [HTTP Signatures](https://tools.ietf.org/html/draft-cavage-http-signatures).
 
@@ -21,7 +21,7 @@ signing of hash schemes. Its goals are:
 
 ## How to use
 
-`import "github.com/superseriousbusiness/httpsig"`
+`import "codeberg.org/superseriousbusiness/httpsig"`
 
 ### Signing
 

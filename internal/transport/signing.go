@@ -18,7 +18,7 @@
 package transport
 
 import (
-	"github.com/superseriousbusiness/httpsig"
+	"codeberg.org/superseriousbusiness/httpsig"
 )
 
 var (
