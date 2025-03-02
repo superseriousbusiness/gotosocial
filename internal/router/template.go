@@ -26,7 +26,6 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
-	"time"
 	"unsafe"
 
 	"github.com/gin-gonic/gin"
@@ -128,7 +127,6 @@ var funcMap = template.FuncMap{
 	"oddOrEven":        oddOrEven,
 	"subtract":         subtract,
 	"timestampPrecise": timestampPrecise,
-	"timestamp":        timestamp,
 	"timestampVague":   timestampVague,
 	"visibilityIcon":   visibilityIcon,
 }
@@ -173,29 +171,6 @@ const (
 	monthYear    = "Jan, 2006"
 	badTimestamp = "bad timestamp"
 )
-
-func timestamp(stamp string) string {
-	t, err := util.ParseISO8601(stamp)
-	if err != nil {
-		log.Errorf(nil, "error parsing timestamp %s: %s", stamp, err)
-		return badTimestamp
-	}
-
-	t = t.Local()
-
-	tYear, tMonth, tDay := t.Date()
-	now := time.Now()
-	currentYear, currentMonth, currentDay := now.Date()
-
-	switch {
-	case tYear == currentYear && tMonth == currentMonth && tDay == currentDay:
-		return "Today, " + t.Format(justTime)
-	case tYear == currentYear:
-		return t.Format(dateTime)
-	default:
-		return t.Format(dateYear)
-	}
-}
 
 func timestampPrecise(stamp string) string {
 	t, err := util.ParseISO8601(stamp)
