@@ -23,14 +23,14 @@
         <div class="stats-item published-at text-cutoff">
             <dt class="sr-only">Published</dt>
             <dd>
-                <time class="dt-published" datetime="{{- .CreatedAt -}}">{{- .CreatedAt -}}</time>
+                <time class="dt-published" datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>
             </dd>
         </div>
         {{- if .EditedAt -}}
         <div class="stats-item edited-at text-cutoff">
             <dt class="sr-only">Edited</dt>
             <dd>
-                (edited <time class="dt-updated" datetime="{{- .EditedAt -}}">{{- .EditedAt -}}</time>)
+                (edited <time class="dt-updated" datetime="{{- .EditedAt -}}">{{- .EditedAt | timestampPrecise -}}</time>)
             </dd>
         </div>
         {{ end }}
