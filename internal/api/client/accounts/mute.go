@@ -112,9 +112,11 @@ func (m *Module) AccountMutePOSTHandler(c *gin.Context) {
 	}
 
 	form := &apimodel.UserMuteCreateUpdateRequest{}
-	if err := c.ShouldBind(form); err != nil {
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
-		return
+	if c.Request.ContentLength > 0 {
+		if err := c.ShouldBind(form); err != nil {
+			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+			return
+		}
 	}
 
 	if err := normalizeCreateUpdateMute(form); err != nil {
