@@ -626,10 +626,12 @@ func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Applic
 		ID:           a.ID,
 		Name:         a.Name,
 		Website:      a.Website,
-		RedirectURI:  a.RedirectURI,
+		RedirectURI:  strings.Join(a.RedirectURIs, "\n"),
+		RedirectURIs: a.RedirectURIs,
 		ClientID:     a.ClientID,
 		ClientSecret: a.ClientSecret,
 		VapidKey:     vapidKeyPair.Public,
+		Scopes:       strings.Split(a.Scopes, " "),
 	}, nil
 }
 
@@ -3064,5 +3066,41 @@ func (c *Converter) WebPushSubscriptionToAPIWebPushSubscription(
 		},
 		Policy:   webPushNotificationPolicyToAPIWebPushNotificationPolicy(subscription.Policy),
 		Standard: true,
+	}, nil
+}
+
+func (c *Converter) TokenToAPITokenInfo(
+	ctx context.Context,
+	token *gtsmodel.Token,
+) (*apimodel.TokenInfo, error) {
+	createdAt, err := id.TimeFromULID(token.ID)
+	if err != nil {
+		err := gtserror.Newf("error parsing time from token id: %w", err)
+		return nil, err
+	}
+
+	var lastUsed string
+	if !token.LastUsed.IsZero() {
+		lastUsed = util.FormatISO8601(token.LastUsed)
+	}
+
+	application, err := c.state.DB.GetApplicationByClientID(ctx, token.ClientID)
+	if err != nil {
+		err := gtserror.Newf("db error getting application with client id %s: %w", token.ClientID, err)
+		return nil, err
+	}
+
+	apiApplication, err := c.AppToAPIAppPublic(ctx, application)
+	if err != nil {
+		err := gtserror.Newf("error converting application to api application: %w", err)
+		return nil, err
+	}
+
+	return &apimodel.TokenInfo{
+		ID:          token.ID,
+		CreatedAt:   util.FormatISO8601(createdAt),
+		LastUsed:    lastUsed,
+		Scope:       token.Scope,
+		Application: apiApplication,
 	}, nil
 }

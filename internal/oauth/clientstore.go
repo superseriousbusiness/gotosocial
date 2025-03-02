@@ -21,45 +21,29 @@ import (
 	"context"
 
 	"codeberg.org/superseriousbusiness/oauth2/v4"
-	"codeberg.org/superseriousbusiness/oauth2/v4/models"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 type clientStore struct {
-	db db.DB
+	state *state.State
 }
 
-// NewClientStore returns an implementation of the oauth2 ClientStore interface, using the given db as a storage backend.
-func NewClientStore(db db.DB) oauth2.ClientStore {
-	pts := &clientStore{
-		db: db,
-	}
-	return pts
+// NewClientStore returns a minimal implementation of
+// oauth2.ClientStore interface, using state as storage.
+//
+// Only GetByID is implemented, Set and Delete are stubs.
+func NewClientStore(state *state.State) oauth2.ClientStore {
+	return &clientStore{state: state}
 }
 
 func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.ClientInfo, error) {
-	client, err := cs.db.GetClientByID(ctx, clientID)
-	if err != nil {
-		return nil, err
-	}
-	return models.New(
-		client.ID,
-		client.Secret,
-		client.Domain,
-		client.UserID,
-	), nil
+	return cs.state.DB.GetApplicationByClientID(ctx, clientID)
 }
 
-func (cs *clientStore) Set(ctx context.Context, id string, cli oauth2.ClientInfo) error {
-	return cs.db.PutClient(ctx, &gtsmodel.Client{
-		ID:     cli.GetID(),
-		Secret: cli.GetSecret(),
-		Domain: cli.GetDomain(),
-		UserID: cli.GetUserID(),
-	})
+func (cs *clientStore) Set(_ context.Context, _ string, _ oauth2.ClientInfo) error {
+	return nil
 }
 
-func (cs *clientStore) Delete(ctx context.Context, id string) error {
-	return cs.db.DeleteClientByID(ctx, id)
+func (cs *clientStore) Delete(_ context.Context, _ string) error {
+	return nil
 }

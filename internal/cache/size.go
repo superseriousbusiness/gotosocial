@@ -302,15 +302,14 @@ func sizeofAccountStats() uintptr {
 
 func sizeofApplication() uintptr {
 	return uintptr(size.Of(&gtsmodel.Application{
-		ID:           exampleID,
-		CreatedAt:    exampleTime,
-		UpdatedAt:    exampleTime,
-		Name:         exampleUsername,
-		Website:      exampleURI,
-		RedirectURI:  exampleURI,
-		ClientID:     exampleID,
-		ClientSecret: exampleID,
-		Scopes:       exampleTextSmall,
+		ID:              exampleID,
+		Name:            exampleUsername,
+		Website:         exampleURI,
+		RedirectURIs:    []string{exampleURI},
+		ClientID:        exampleID,
+		ClientSecret:    exampleID,
+		Scopes:          exampleTextSmall,
+		ManagedByUserID: exampleID,
 	}))
 }
 
@@ -322,17 +321,6 @@ func sizeofBlock() uintptr {
 		URI:             exampleURI,
 		AccountID:       exampleID,
 		TargetAccountID: exampleID,
-	}))
-}
-
-func sizeofClient() uintptr {
-	return uintptr(size.Of(&gtsmodel.Client{
-		ID:        exampleID,
-		CreatedAt: exampleTime,
-		UpdatedAt: exampleTime,
-		Secret:    exampleID,
-		Domain:    exampleURI,
-		UserID:    exampleID,
 	}))
 }
 
@@ -752,8 +740,7 @@ func sizeofThreadMute() uintptr {
 func sizeofToken() uintptr {
 	return uintptr(size.Of(&gtsmodel.Token{
 		ID:                  exampleID,
-		CreatedAt:           exampleTime,
-		UpdatedAt:           exampleTime,
+		LastUsed:            exampleTime,
 		ClientID:            exampleID,
 		UserID:              exampleID,
 		RedirectURI:         exampleURI,

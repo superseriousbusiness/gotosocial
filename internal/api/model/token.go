@@ -33,3 +33,25 @@ type Token struct {
 	// example: 1627644520
 	CreatedAt int64 `json:"created_at"`
 }
+
+// TokenInfo represents metadata about one user-level access token.
+// The actual access token itself will never be sent via the API.
+//
+// swagger:model tokenInfo
+type TokenInfo struct {
+	// Database ID of this token.
+	// example: 01JMW7QBAZYZ8T8H73PCEX12XG
+	ID string `json:"id"`
+	// When the token was created (ISO 8601 Datetime).
+	// example: 2021-07-30T09:20:25+00:00
+	CreatedAt string `json:"created_at"`
+	// Approximate time (accurate to within an hour) when the token was last used (ISO 8601 Datetime).
+	// Omitted if token has never been used, or it is not known when it was last used (eg., it was last used before tracking "last_used" became a thing).
+	// example: 2021-07-30T09:20:25+00:00
+	LastUsed string `json:"last_used,omitempty"`
+	// OAuth scopes granted by the token, space-separated.
+	// example: read write admin
+	Scope string `json:"scope"`
+	// Application used to create this token.
+	Application *Application `json:"application"`
+}

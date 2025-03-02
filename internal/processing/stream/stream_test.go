@@ -52,7 +52,7 @@ func (suite *StreamTestSuite) SetupTest() {
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
 	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 	suite.streamProcessor = stream.New(&suite.state, suite.oauthServer)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

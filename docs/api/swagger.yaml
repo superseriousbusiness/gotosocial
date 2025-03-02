@@ -843,6 +843,19 @@ definitions:
                 example: https://example.org/callback?some=query
                 type: string
                 x-go-name: RedirectURI
+            redirect_uris:
+                description: Post-authorization redirect URIs for the application (OAuth2).
+                example: '[https://example.org/callback?some=query]'
+                items:
+                    type: string
+                type: array
+                x-go-name: RedirectURIs
+            scopes:
+                description: OAuth scopes for this application.
+                items:
+                    type: string
+                type: array
+                x-go-name: Scopes
             vapid_key:
                 description: Push API key for this application.
                 type: string
@@ -3355,6 +3368,37 @@ definitions:
                 x-go-name: Descendants
         type: object
         x-go-name: ThreadContext
+        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+    tokenInfo:
+        description: The actual access token itself will never be sent via the API.
+        properties:
+            application:
+                $ref: '#/definitions/application'
+            created_at:
+                description: When the token was created (ISO 8601 Datetime).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
+            id:
+                description: Database ID of this token.
+                example: 01JMW7QBAZYZ8T8H73PCEX12XG
+                type: string
+                x-go-name: ID
+            last_used:
+                description: |-
+                    Approximate time (accurate to within an hour) when the token was last used (ISO 8601 Datetime).
+                    Omitted if token has never been used, or it is not known when it was last used (eg., it was last used before tracking "last_used" became a thing).
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: LastUsed
+            scope:
+                description: OAuth scopes granted by the token, space-separated.
+                example: read write admin
+                type: string
+                x-go-name: Scope
+        title: TokenInfo represents metadata about one user-level access token.
+        type: object
+        x-go-name: TokenInfo
         x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
     user:
         properties:
@@ -7442,16 +7486,17 @@ paths:
                   type: string
                   x-go-name: ClientName
                 - description: |-
-                    Where the user should be redirected after authorization.
+                    Single redirect URI or newline-separated list of redirect URIs (optional).
 
                     To display the authorization code to the user instead of redirecting to a web page, use `urn:ietf:wg:oauth:2.0:oob` in this parameter.
+
+                    If no redirect URIs are provided, defaults to `urn:ietf:wg:oauth:2.0:oob`.
                   in: formData
                   name: redirect_uris
-                  required: true
                   type: string
                   x-go-name: RedirectURIs
                 - description: |-
-                    Space separated list of scopes.
+                    Space separated list of scopes (optional).
 
                     If no scopes are provided, defaults to `read`.
                   in: formData
@@ -11628,6 +11673,124 @@ paths:
             summary: See public statuses that use the given hashtag (case insensitive).
             tags:
                 - timelines
+    /api/v1/tokens:
+        get:
+            description: |-
+                The items will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
+
+                The returned Link header can be used to generate the previous and next queries when paging up or down.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/tokens?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/tokens?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+                ````
+            operationId: tokensInfoGet
+            parameters:
+                - description: Return only items *OLDER* than the given max status ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *newer* than the given since status ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items *immediately newer* than the given since status ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Array of token info entries.
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/tokenInfo'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: See info about tokens created for/by your account.
+            tags:
+                - tokens
+    /api/v1/tokens/{id}:
+        get:
+            operationId: tokenInfoGet
+            parameters:
+                - description: The id of the requested token.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested token.
+                    schema:
+                        $ref: '#/definitions/tokenInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Get information about a single token.
+            tags:
+                - tokens
+    /api/v1/tokens/{id}/invalidate:
+        post:
+            operationId: tokenInvalidatePost
+            parameters:
+                - description: The id of the target token.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: Info about the invalidated token.
+                    schema:
+                        $ref: '#/definitions/tokenInfo'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Invalidate the target token, removing it from the database and making it unusable.
+            tags:
+                - tokens
     /api/v1/user:
         get:
             operationId: getUser

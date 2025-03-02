@@ -113,11 +113,6 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 	}
 
 	for _, t := range tokens {
-		// Delete any OAuth clients associated with this token.
-		if err := p.state.DB.DeleteByID(ctx, t.ClientID, &[]*gtsmodel.Client{}); err != nil {
-			return gtserror.Newf("db error deleting client: %w", err)
-		}
-
 		// Delete any OAuth applications associated with this token.
 		if err := p.state.DB.DeleteApplicationByClientID(ctx, t.ClientID); err != nil {
 			return gtserror.Newf("db error deleting application: %w", err)

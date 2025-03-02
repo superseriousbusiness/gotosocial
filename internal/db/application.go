@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type Application interface {
@@ -36,17 +37,11 @@ type Application interface {
 	// DeleteApplicationByClientID deletes the application with corresponding client_id value from the database.
 	DeleteApplicationByClientID(ctx context.Context, clientID string) error
 
-	// GetClientByID fetches the application client from database with ID.
-	GetClientByID(ctx context.Context, id string) (*gtsmodel.Client, error)
-
-	// PutClient puts the given application client in the database.
-	PutClient(ctx context.Context, client *gtsmodel.Client) error
-
-	// DeleteClientByID deletes the application client from database with ID.
-	DeleteClientByID(ctx context.Context, id string) error
-
 	// GetAllTokens fetches all client oauth tokens from database.
 	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
+
+	// GetAccessTokens allows paging through a user's access (ie., user-level) tokens.
+	GetAccessTokens(ctx context.Context, userID string, page *paging.Page) ([]*gtsmodel.Token, error)
 
 	// GetTokenByID fetches the client oauth token from database with ID.
 	GetTokenByID(ctx context.Context, id string) (*gtsmodel.Token, error)
@@ -62,6 +57,9 @@ type Application interface {
 
 	// PutToken puts given client oauth token in the database.
 	PutToken(ctx context.Context, token *gtsmodel.Token) error
+
+	// UpdateToken updates the given token. Update all columns if no specific columns given.
+	UpdateToken(ctx context.Context, token *gtsmodel.Token, columns ...string) error
 
 	// DeleteTokenByID deletes client oauth token from database with ID.
 	DeleteTokenByID(ctx context.Context, id string) error
