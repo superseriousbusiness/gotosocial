@@ -40,9 +40,9 @@
             Poll&nbsp;
             {{- end -}}
             {{- if .Poll.Expired -}}
-            closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt -}}</time>
+            closed <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
             {{- else if .Poll.ExpiresAt -}}
-            open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt -}}</time>
+            open until <time datetime="{{- .Poll.ExpiresAt -}}">{{- .Poll.ExpiresAt | timestampPrecise -}}</time>
             {{- else -}}
             open forever
             {{- end -}}
