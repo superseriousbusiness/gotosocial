@@ -248,12 +248,30 @@ func (c *Chunk) Bytes() ([]byte, error) {
 	if len(c.Data) != int(c.Length) {
 		return nil, errors.New("length of data not correct")
 	}
-	b := make([]byte, 0, 4+4+c.Length+4)
-	b = binary.BigEndian.AppendUint32(b, c.Length)
-	b = append(b, c.Type...)
-	b = append(b, c.Data...)
-	b = binary.BigEndian.AppendUint32(b, c.Crc)
-	return b, nil
+
+	preallocated := make([]byte, 0, 4+4+c.Length+4)
+	b := bytes.NewBuffer(preallocated)
+
+	err := binary.Write(b, binary.BigEndian, c.Length)
+	if err != nil {
+		return nil, err
+	}
+
+	if _, err := b.Write([]byte(c.Type)); err != nil {
+		return nil, err
+	}
+
+	if c.Data != nil {
+		if _, err := b.Write(c.Data); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := binary.Write(b, binary.BigEndian, c.Crc); err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
 
 // Write encodes and writes the bytes for this chunk.
@@ -262,37 +280,23 @@ func (c *Chunk) WriteTo(w io.Writer) (int, error) {
 		return 0, errors.New("length of data not correct")
 	}
 
-	var n int
-
-	b := make([]byte, 4) // uint32 buf
-
-	binary.BigEndian.PutUint32(b, c.Length)
-	if nn, err := w.Write(b); err != nil {
-		return n + nn, err
+	if err := binary.Write(w, binary.BigEndian, c.Length); err != nil {
+		return 0, err
 	}
 
-	n += len(b)
-
-	if nn, err := io.WriteString(w, c.Type); err != nil {
-		return n + nn, err
+	if _, err := w.Write([]byte(c.Type)); err != nil {
+		return 0, err
 	}
 
-	n += len(c.Type)
-
-	if nn, err := w.Write(c.Data); err != nil {
-		return n + nn, err
+	if _, err := w.Write(c.Data); err != nil {
+		return 0, err
 	}
 
-	n += len(c.Data)
-
-	binary.BigEndian.PutUint32(b, c.Crc)
-	if nn, err := w.Write(b); err != nil {
-		return n + nn, err
+	if err := binary.Write(w, binary.BigEndian, c.Crc); err != nil {
+		return 0, err
 	}
 
-	n += len(b)
-
-	return n, nil
+	return 4 + len(c.Type) + len(c.Data) + 4, nil
 }
 
 // readHeader verifies that the PNG header bytes appear next.
