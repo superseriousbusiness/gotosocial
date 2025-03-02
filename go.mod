@@ -5,7 +5,7 @@ go 1.23.0
 toolchain go1.23.3
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
-replace github.com/go-swagger/go-swagger => github.com/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
+replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
 
 // Replace modernc/sqlite with our version that fixes the concurrency INTERRUPT issue
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.35.0-concurrency-workaround
