@@ -18,7 +18,7 @@
 */ -}}
 
 {{- define "ariaLabel" -}}
-@{{ .Account.Acct -}}, {{ timestamp .CreatedAt -}}
+@{{ .Account.Acct -}}, {{ .CreatedAt | timestampPrecise -}}
 {{- if .LanguageTag -}}
     , language {{ .LanguageTag.DisplayStr -}}
 {{- end -}}

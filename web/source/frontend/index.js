@@ -185,16 +185,19 @@ Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
 Array.from(document.getElementsByTagName('time')).forEach(timeTag => {
 	const datetime = timeTag.getAttribute('datetime');
 	const currentText = timeTag.textContent.trim();
-	// Only format if current text contains precise time
+	// Only format if current text contains precise time.
 	if (currentText.match(/\d{2}:\d{2}/)) {
 		const date = new Date(datetime);
-		timeTag.textContent = date.toLocaleString(undefined, {
-			year: 'numeric',
-			month: 'short',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		});
+		timeTag.textContent = date.toLocaleString(
+			undefined,
+			{
+				year: 'numeric',
+				month: 'short',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+				hour12: false
+			},
+		);
 	}
 });
