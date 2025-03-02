@@ -20,8 +20,8 @@ package ap_test
 import (
 	"testing"
 
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )

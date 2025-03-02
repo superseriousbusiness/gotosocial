@@ -25,10 +25,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"codeberg.org/superseriousbusiness/activity/streams"
+	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
-	"github.com/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )

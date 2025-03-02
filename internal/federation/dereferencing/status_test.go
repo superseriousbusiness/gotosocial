@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"codeberg.org/superseriousbusiness/activity/streams"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
