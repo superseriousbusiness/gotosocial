@@ -18,15 +18,21 @@
 package util
 
 import (
+	"context"
 	"errors"
 	"slices"
 	"strings"
 
 	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4/server"
 	"github.com/gin-gonic/gin"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // Auth wraps an authorized token, application, user, and account.
@@ -149,4 +155,52 @@ func TokenAuth(
 	}
 
 	return a, nil
+}
+
+// GetClientScopeHandler returns a handler for testing scope on a TokenGenerateRequest.
+func GetClientScopeHandler(ctx context.Context, state *state.State) server.ClientScopeHandler {
+	return func(tgr *oauth2.TokenGenerateRequest) (allowed bool, err error) {
+		application, err := state.DB.GetApplicationByClientID(
+			gtscontext.SetBarebones(ctx),
+			tgr.ClientID,
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			log.Errorf(ctx, "database error getting application: %v", err)
+			return false, err
+		}
+
+		if application == nil {
+			err := gtserror.Newf("no application found with client id %s", tgr.ClientID)
+			return false, err
+		}
+
+		// Normalize scope.
+		if strings.TrimSpace(tgr.Scope) == "" {
+			tgr.Scope = "read"
+		}
+
+		// Make sure requested scopes are all
+		// within scopes permitted by application.
+		hasScopes := strings.Split(application.Scopes, " ")
+		wantsScopes := strings.Split(tgr.Scope, " ")
+		for _, wantsScope := range wantsScopes {
+			thisOK := slices.ContainsFunc(
+				hasScopes,
+				func(hasScope string) bool {
+					has := Scope(hasScope)
+					wants := Scope(wantsScope)
+					return has.Permits(wants)
+				},
+			)
+
+			if !thisOK {
+				// Requested unpermitted
+				// scope for this app.
+				return false, nil
+			}
+		}
+
+		// All OK.
+		return true, nil
+	}
 }

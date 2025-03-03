@@ -21,93 +21,58 @@ import (
 	"context"
 	"testing"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4/models"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
-type PgClientStoreTestSuite struct {
+type ClientStoreTestSuite struct {
 	suite.Suite
 	db               db.DB
 	state            state.State
-	testClientID     string
-	testClientSecret string
-	testClientDomain string
-	testClientUserID string
+	testApplications map[string]*gtsmodel.Application
 }
 
-// SetupSuite sets some variables on the suite that we can use as consts (more or less) throughout
-func (suite *PgClientStoreTestSuite) SetupSuite() {
-	suite.testClientID = "01FCVB74EW6YBYAEY7QG9CQQF6"
-	suite.testClientSecret = "4cc87402-259b-4a35-9485-2c8bf54f3763"
-	suite.testClientDomain = "https://example.org"
-	suite.testClientUserID = "01FEGYXKVCDB731QF9MVFXA4F5"
+func (suite *ClientStoreTestSuite) SetupSuite() {
+	suite.testApplications = testrig.NewTestApplications()
 }
 
-// SetupTest creates a postgres connection and creates the oauth_clients table before each test
-func (suite *PgClientStoreTestSuite) SetupTest() {
+func (suite *ClientStoreTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.InitTestLog()
 	testrig.InitTestConfig()
+	testrig.InitTestLog()
 	suite.db = testrig.NewTestDB(&suite.state)
 	suite.state.DB = suite.db
 	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	testrig.StandardDBSetup(suite.db, nil)
 }
 
-// TearDownTest drops the oauth_clients table and closes the pg connection after each test
-func (suite *PgClientStoreTestSuite) TearDownTest() {
+func (suite *ClientStoreTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
 }
 
-func (suite *PgClientStoreTestSuite) TestClientStoreSetAndGet() {
-	// set a new client in the store
-	cs := oauth.NewClientStore(suite.db)
-	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
-		suite.FailNow(err.Error())
-	}
+func (suite *ClientStoreTestSuite) TestClientStoreGet() {
+	testApp := suite.testApplications["application_1"]
+	cs := oauth.NewClientStore(&suite.state)
 
-	// fetch that client from the store
-	client, err := cs.GetByID(context.Background(), suite.testClientID)
+	// Fetch clientInfo from the store.
+	clientInfo, err := cs.GetByID(context.Background(), testApp.ClientID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	// check that the values are the same
-	suite.NotNil(client)
-	suite.EqualValues(models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID), client)
+	// Check expected values.
+	suite.NotNil(clientInfo)
+	suite.Equal(testApp.ClientID, clientInfo.GetID())
+	suite.Equal(testApp.ClientSecret, clientInfo.GetSecret())
+	suite.Equal(testApp.RedirectURIs[0], clientInfo.GetDomain())
+	suite.Equal(testApp.ManagedByUserID, clientInfo.GetUserID())
 }
 
-func (suite *PgClientStoreTestSuite) TestClientSetAndDelete() {
-	// set a new client in the store
-	cs := oauth.NewClientStore(suite.db)
-	if err := cs.Set(context.Background(), suite.testClientID, models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID)); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// fetch the client from the store
-	client, err := cs.GetByID(context.Background(), suite.testClientID)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// check that the values are the same
-	suite.NotNil(client)
-	suite.EqualValues(models.New(suite.testClientID, suite.testClientSecret, suite.testClientDomain, suite.testClientUserID), client)
-	if err := cs.Delete(context.Background(), suite.testClientID); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	// try to get the deleted client; we should get an error
-	deletedClient, err := cs.GetByID(context.Background(), suite.testClientID)
-	suite.Assert().Nil(deletedClient)
-	suite.Assert().EqualValues(db.ErrNoEntries, err)
-}
-
-func TestPgClientStoreTestSuite(t *testing.T) {
-	suite.Run(t, new(PgClientStoreTestSuite))
+func TestClientStoreTestSuite(t *testing.T) {
+	suite.Run(t, new(ClientStoreTestSuite))
 }

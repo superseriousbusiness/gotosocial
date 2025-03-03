@@ -58,7 +58,6 @@ type ProcessingStandardTestSuite struct {
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
-	testClients      map[string]*gtsmodel.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
@@ -77,7 +76,6 @@ type ProcessingStandardTestSuite struct {
 
 func (suite *ProcessingStandardTestSuite) SetupSuite() {
 	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
@@ -124,7 +122,7 @@ func (suite *ProcessingStandardTestSuite) SetupTest() {
 	suite.transportController = testrig.NewTestTransportController(&suite.state, suite.httpClient)
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 	suite.emailSender = testrig.NewEmailSender("../../web/template/", nil)
 
 	suite.processor = processing.NewProcessor(

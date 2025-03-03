@@ -89,6 +89,16 @@ func TestScopes(t *testing.T) {
 			WantsScope: util.ScopeWrite,
 			Expect:     false,
 		},
+		{
+			HasScope:   util.ScopeProfile,
+			WantsScope: util.ScopePush,
+			Expect:     false,
+		},
+		{
+			HasScope:   util.Scope("p"),
+			WantsScope: util.ScopePush,
+			Expect:     false,
+		},
 	} {
 		res := test.HasScope.Permits(test.WantsScope)
 		if res != test.Expect {

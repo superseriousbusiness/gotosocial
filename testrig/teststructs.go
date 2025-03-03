@@ -82,7 +82,7 @@ func SetupTestStructs(
 	transportController := NewTestTransportController(&state, httpClient)
 	mediaManager := NewTestMediaManager(&state)
 	federator := NewTestFederator(&state, transportController, mediaManager)
-	oauthServer := NewTestOauthServer(db)
+	oauthServer := NewTestOauthServer(&state)
 	emailSender := NewEmailSender(rTemplatePath, nil)
 	webPushSender := NewWebPushMockSender()
 

@@ -52,9 +52,6 @@ type DBCaches struct {
 	// BoostOfIDs provides access to the boost of IDs list database cache.
 	BoostOfIDs SliceCache[string]
 
-	// Client provides access to the gtsmodel Client database cache.
-	Client StructCache[*gtsmodel.Client]
-
 	// Conversation provides access to the gtsmodel Conversation database cache.
 	Conversation StructCache[*gtsmodel.Conversation]
 
@@ -487,32 +484,6 @@ func (c *Caches) initBoostOfIDs() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.DB.BoostOfIDs.Init(0, cap)
-}
-
-func (c *Caches) initClient() {
-	// Calculate maximum cache size.
-	cap := calculateResultCacheMax(
-		sizeofClient(), // model in-mem size.
-		config.GetCacheClientMemRatio(),
-	)
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	copyF := func(c1 *gtsmodel.Client) *gtsmodel.Client {
-		c2 := new(gtsmodel.Client)
-		*c2 = *c1
-		return c2
-	}
-
-	c.DB.Client.Init(structr.CacheConfig[*gtsmodel.Client]{
-		Indices: []structr.IndexConfig{
-			{Fields: "ID"},
-		},
-		MaxSize:    cap,
-		IgnoreErr:  ignoreErrors,
-		Copy:       copyF,
-		Invalidate: c.OnInvalidateClient,
-	})
 }
 
 func (c *Caches) initConversation() {

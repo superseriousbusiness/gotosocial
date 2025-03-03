@@ -51,7 +51,6 @@ type FileserverTestSuite struct {
 
 	// standard suite models
 	testTokens       map[string]*gtsmodel.Token
-	testClients      map[string]*gtsmodel.Client
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
@@ -100,7 +99,7 @@ func (suite *FileserverTestSuite) SetupSuite() {
 	)
 
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)
-	suite.oauthServer = testrig.NewTestOauthServer(suite.db)
+	suite.oauthServer = testrig.NewTestOauthServer(&suite.state)
 	suite.emailSender = testrig.NewEmailSender("../../../web/template/", nil)
 
 	suite.fileServer = fileserver.New(suite.processor)
@@ -118,7 +117,6 @@ func (suite *FileserverTestSuite) SetupTest() {
 	testrig.StandardStorageSetup(suite.storage, "../../../testrig/media")
 
 	suite.testTokens = testrig.NewTestTokens()
-	suite.testClients = testrig.NewTestClients()
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
