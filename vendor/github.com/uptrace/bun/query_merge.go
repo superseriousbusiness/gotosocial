@@ -30,7 +30,7 @@ func NewMergeQuery(db *DB) *MergeQuery {
 		},
 	}
 	if q.db.dialect.Name() != dialect.MSSQL && q.db.dialect.Name() != dialect.PG {
-		q.err = errors.New("bun: merge not supported for current dialect")
+		q.setErr(errors.New("bun: merge not supported for current dialect"))
 	}
 	return q
 }
@@ -242,6 +242,9 @@ func (q *MergeQuery) scanOrExec(
 	if err := q.beforeAppendModel(ctx, q); err != nil {
 		return nil, err
 	}
+
+	// if a comment is propagated via the context, use it
+	setCommentFromContext(ctx, q)
 
 	// Generate the query before checking hasReturning.
 	queryBytes, err := q.AppendQuery(q.db.fmter, q.db.makeQueryBytes())

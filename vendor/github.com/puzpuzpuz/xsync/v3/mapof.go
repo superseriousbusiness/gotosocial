@@ -239,9 +239,9 @@ func (m *MapOf[K, V]) LoadAndStore(key K, value V) (actual V, loaded bool) {
 }
 
 // LoadOrCompute returns the existing value for the key if present.
-// Otherwise, it computes the value using the provided function and
-// returns the computed value. The loaded result is true if the value
-// was loaded, false if stored.
+// Otherwise, it computes the value using the provided function, and
+// then stores and returns the computed value. The loaded result is
+// true if the value was loaded, false if computed.
 //
 // This call locks a hash table bucket while the compute function
 // is executed. It means that modifications on other entries in
@@ -260,9 +260,10 @@ func (m *MapOf[K, V]) LoadOrCompute(key K, valueFn func() V) (actual V, loaded b
 
 // LoadOrTryCompute returns the existing value for the key if present.
 // Otherwise, it tries to compute the value using the provided function
-// and, if success, returns the computed value. The loaded result is true
-// if the value was loaded, false if stored. If the compute attempt was
-// cancelled, a zero value of type V will be returned.
+// and, if successful, stores and returns the computed value. The loaded
+// result is true if the value was loaded, or false if computed (whether
+// successfully or not). If the compute attempt was cancelled (due to an
+// error, for example), a zero value of type V will be returned.
 //
 // This call locks a hash table bucket while the compute function
 // is executed. It means that modifications on other entries in
