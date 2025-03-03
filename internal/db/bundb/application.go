@@ -199,18 +199,15 @@ func (a *applicationDB) PutToken(ctx context.Context, token *gtsmodel.Token) err
 }
 
 func (a *applicationDB) UpdateToken(ctx context.Context, token *gtsmodel.Token, columns ...string) error {
-	_, err := a.db.
-		NewUpdate().
-		Model(token).
-		Column(columns...).
-		Where("? = ?", bun.Ident("id"), token.ID).
-		Exec(ctx)
-	if err != nil {
+	return a.state.Caches.DB.Token.Store(token, func() error {
+		_, err := a.db.
+			NewUpdate().
+			Model(token).
+			Column(columns...).
+			Where("? = ?", bun.Ident("id"), token.ID).
+			Exec(ctx)
 		return err
-	}
-
-	a.state.Caches.DB.Token.Invalidate("ID", token.ID)
-	return nil
+	})
 }
 
 func (a *applicationDB) DeleteTokenByID(ctx context.Context, id string) error {
