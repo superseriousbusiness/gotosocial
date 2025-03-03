@@ -269,3 +269,21 @@ Both merge and overwrite operations are idempotent, which basically means that d
 
 !!! warning
     The CSV format for mutes does not contain expiration data, so temporary mutes are exported (and imported) as permanent mutes.
+
+## Access Tokens
+
+In the access tokens section, you can review and invalidate [OAuth access tokens](https://www.oauth.com/oauth2-servers/access-tokens/) owned by applications that you have authorized to access your account and/or perform actions on your behalf.
+
+![The access tokens page.](../public/user-settings-access-tokens.png)
+
+In cases where you've logged in with an application multiple times, or logged in with multiple devices or browsers, you may see multiple tokens with the same application name. This is normal! For example, say you have logged in with Pinafore on both your phone and your laptop browser, you will see two different tokens owned by Pinafore.
+
+You can invalidate a token by clicking on the "Invalidate token" button under a token. This will remove the token from the database. The application that was authorized to access your account with that token will then no longer be authorized to do so, and you will need to log out and/or log in again with that application.
+
+Logging out of an application does not necessarily remove the token from the GoToSocial database, so old tokens may linger from applications you used a long time ago. So, feel free to invalidate tokens that have never been used, or haven't been used in a long time; it's good security practice to keep only the tokens that you need, and it's fun to click the big red button.
+
+!!! danger
+    If you see any tokens from applications that you do not recognize, or do not remember authorizing to access your account, then you should invalidate them, and consider changing your password as soon as possible.
+
+!!! note
+    Token "Last used" time is approximate and may be off by an hour in either direction.
