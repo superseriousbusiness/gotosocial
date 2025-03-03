@@ -303,6 +303,7 @@ func (p *Processor) Edit(
 	status.Content = content.Content
 	status.ContentWarning = content.ContentWarning
 	status.Text = form.Status
+	status.ContentType = typeutils.APIContentTypeToContentType(form.ContentType)
 	status.Language = content.Language
 	status.Sensitive = &form.Sensitive
 	status.AttachmentIDs = form.MediaIDs

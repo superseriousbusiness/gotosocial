@@ -170,13 +170,11 @@ func (p *Processor) Create(
 		// Set validated language.
 		Language: content.Language,
 
-		// Set resolved content type.
-		ContentType: typeutils.APIContentTypeToContentType(contentType),
-
 		// Set formatted status content.
 		Content:        content.Content,
 		ContentWarning: content.ContentWarning,
 		Text:           form.Status, // raw
+		ContentType:    typeutils.APIContentTypeToContentType(contentType),
 
 		// Set gathered mentions.
 		MentionIDs: content.MentionIDs,

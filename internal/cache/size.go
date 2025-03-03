@@ -649,6 +649,7 @@ func sizeofStatus() uintptr {
 		URL:                      exampleURI,
 		Content:                  exampleText,
 		Text:                     exampleText,
+		ContentType:              gtsmodel.StatusContentTypePlain,
 		AttachmentIDs:            []string{exampleID, exampleID, exampleID},
 		TagIDs:                   []string{exampleID, exampleID, exampleID},
 		MentionIDs:               []string{},

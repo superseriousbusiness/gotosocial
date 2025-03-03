@@ -1239,6 +1239,7 @@ func (d *Dereferencer) handleStatusEdit(
 		edit.Content = existing.Content
 		edit.ContentWarning = existing.ContentWarning
 		edit.Text = existing.Text
+		edit.ContentType = existing.ContentType
 		edit.Language = existing.Language
 		edit.Sensitive = existing.Sensitive
 		edit.StatusID = status.ID
