@@ -66,11 +66,22 @@ func (p *Processor) Create(
 	// Generate new ID for status.
 	statusID := id.NewULID()
 
+	// Process incoming content type
+	contentType := form.ContentType
+	if contentType == "" {
+		// If not set in the form, use the user's default
+		contentType = apimodel.StatusContentType(requester.Settings.StatusContentType)
+		if contentType == "" {
+			// ??? use the global default value
+			contentType = apimodel.StatusContentTypeDefault
+		}
+	}
+
 	// Process incoming status content fields.
 	content, errWithCode := p.processContent(ctx,
 		requester,
 		statusID,
-		string(form.ContentType),
+		contentType,
 		form.Status,
 		form.SpoilerText,
 		form.Language,
@@ -158,6 +169,9 @@ func (p *Processor) Create(
 
 		// Set validated language.
 		Language: content.Language,
+
+		// Set resolved content type.
+		ContentType: typeutils.APIContentTypeToContentType(contentType),
 
 		// Set formatted status content.
 		Content:        content.Content,

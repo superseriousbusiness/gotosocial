@@ -56,5 +56,6 @@ func (p *Processor) SourceGet(ctx context.Context, requester *gtsmodel.Account, 
 		ID:          status.ID,
 		Text:        status.Text,
 		SpoilerText: status.ContentWarning,
+		ContentType: p.converter.ContentTypeToAPIContentType(ctx, status.ContentType),
 	}, nil
 }

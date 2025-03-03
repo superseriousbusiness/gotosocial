@@ -33,6 +33,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
@@ -84,11 +85,14 @@ func (p *Processor) Edit(
 		return nil, errWithCode
 	}
 
+	// Process incoming content type and update as needed
+	p.processContentType(ctx, form, status, requester.Settings.StatusContentType)
+
 	// Process incoming status edit content fields.
 	content, errWithCode := p.processContent(ctx,
 		requester,
 		statusID,
-		string(form.ContentType),
+		form.ContentType,
 		form.Status,
 		form.SpoilerText,
 		form.Language,
@@ -256,6 +260,7 @@ func (p *Processor) Edit(
 	edit.Content = status.Content
 	edit.ContentWarning = status.ContentWarning
 	edit.Text = status.Text
+	edit.ContentType = status.ContentType
 	edit.Language = status.Language
 	edit.Sensitive = status.Sensitive
 	edit.StatusID = status.ID
@@ -340,6 +345,38 @@ func (p *Processor) Edit(
 
 	// Return an API model of the updated status.
 	return p.c.GetAPIStatus(ctx, requester, status)
+}
+
+// Updates the content type of the status
+func (p *Processor) processContentType(
+	ctx context.Context,
+	form *apimodel.StatusEditRequest,
+	status *gtsmodel.Status,
+	accountDefaultContentType string,
+) {
+	switch {
+	// Content type set on form, update the status with the new value.
+	case form.ContentType != "":
+		status.ContentType = typeutils.APIContentTypeToContentType(form.ContentType)
+
+	// No content type on the form, get the status's current content type and
+	// set it back on the form for later use.
+	case status.ContentType != 0:
+		form.ContentType = p.converter.ContentTypeToAPIContentType(ctx, status.ContentType)
+
+	// Old statuses may not have a saved content type; update the status to the
+	// user's preference and set this back on the form for later use.
+	case accountDefaultContentType != "":
+		// TODO: is this conversion from string to StatusContentType safe
+		status.ContentType = typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
+		form.ContentType = apimodel.StatusContentType(accountDefaultContentType)
+
+	// uhh.. Fall back to global default, set
+	// this back on the form for later use.
+	default:
+		status.ContentType = gtsmodel.StatusContentTypeDefault
+		form.ContentType = apimodel.StatusContentTypeDefault
+	}
 }
 
 // HistoryGet gets edit history for the target status, taking account of privacy settings and blocks etc.

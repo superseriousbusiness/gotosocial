@@ -110,7 +110,7 @@ func (p *Processor) processContent(
 	ctx context.Context,
 	author *gtsmodel.Account,
 	statusID string,
-	contentType string,
+	contentType apimodel.StatusContentType,
 	content string,
 	contentWarning string,
 	language string,
@@ -146,20 +146,14 @@ func (p *Processor) processContent(
 	// function, according to the provided content-type.
 	var format text.FormatFunc
 
-	if contentType == "" {
-		// If content type wasn't specified, use
-		// the author's preferred content-type.
-		contentType = author.Settings.StatusContentType
-	}
-
 	switch contentType {
 
 	// Format status according to text/plain.
-	case "", string(apimodel.StatusContentTypePlain):
+	case apimodel.StatusContentTypePlain:
 		format = p.formatter.FromPlain
 
 	// Format status according to text/markdown.
-	case string(apimodel.StatusContentTypeMarkdown):
+	case apimodel.StatusContentTypeMarkdown:
 		format = p.formatter.FromMarkdown
 
 	// Unknown.
