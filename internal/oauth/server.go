@@ -186,13 +186,9 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 	// from serialization so that clients don't
 	// interpret the token as already expired.
 	if expiresInI, ok := data["expires_in"]; ok {
-		expiresIn, ok := expiresInI.(int64)
-		if !ok {
-			log.Panicf(ctx, "could not cast expires_in %T as int64", expiresInI)
-			return nil, nil
-		}
-
-		if expiresIn <= 0 {
+		// This will panic if expiresIn is
+		// not an int64, which is what we want.
+		if expiresInI.(int64) <= 0 {
 			delete(data, "expires_in")
 		}
 	}
@@ -275,13 +271,9 @@ func (s *s) HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtser
 			return gtserror.NewErrorUnauthorized(err, HelpfulAdvice)
 		}
 
-		app, ok := client.(*gtsmodel.Application)
-		if !ok {
-			log.Panicf(ctx, "could not cast %T to *gtsmodel.Application", client)
-			return nil
-		}
-
-		req.RedirectURI = app.RedirectURIs[0]
+		// This will panic if client is not a
+		// *gtsmodel.Application, which is what we want.
+		req.RedirectURI = client.(*gtsmodel.Application).RedirectURIs[0]
 	}
 
 	uri, err := s.server.GetRedirectURI(req, s.server.GetAuthorizeData(req.ResponseType, ti))
