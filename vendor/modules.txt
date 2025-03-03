@@ -1332,7 +1332,7 @@ modernc.org/mathutil
 # modernc.org/memory v1.8.2
 ## explicit; go 1.21
 modernc.org/memory
-# modernc.org/sqlite v0.0.0-00010101000000-000000000000 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.35.0-concurrency-workaround
+# modernc.org/sqlite v0.0.0-00010101000000-000000000000 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.36.0-concurrency-workaround
 ## explicit; go 1.21
 modernc.org/sqlite
 modernc.org/sqlite/lib
@@ -1340,4 +1340,4 @@ modernc.org/sqlite/lib
 ## explicit; go 1.22.0
 mvdan.cc/xurls/v2
 # github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
-# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.35.0-concurrency-workaround
+# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.36.0-concurrency-workaround
