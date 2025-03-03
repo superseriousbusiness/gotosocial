@@ -388,21 +388,6 @@ const (
 	StatusContentTypeDefault                    = StatusContentTypePlain
 )
 
-// String returns the actual MIME string corresponding to a content type.
-// NOMERGE: is this actually necessary? i copied this because Visibility has it
-// but it kinda seems like it's only used as part of the preferences stuff. do i
-// need to touch that for this
-func (v StatusContentType) String() string {
-	switch v {
-	case StatusContentTypePlain:
-		return "text/plain"
-	case StatusContentTypeMarkdown:
-		return "text/markdown"
-	default:
-		panic("invalid status content type")
-	}
-}
-
 // Content models the simple string content
 // of a status along with its ContentMap,
 // which contains content entries keyed by
