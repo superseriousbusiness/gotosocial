@@ -34,22 +34,22 @@ func init() {
 		// To make update queries faster,
 		// create an index on statuses
 		// that we'll drop when we're done.
-		log.Info(ctx, "creating temporary index statuses_local_created_with_application_id_idx, please wait...")
+		log.Info(ctx, "creating temporary index statuses_created_with_application_id_idx, please wait...")
 		if _, err := db.
 			NewCreateIndex().
 			Table("statuses").
-			Index("statuses_local_created_with_application_id_idx").
-			Column("local", "created_with_application_id").
+			Index("statuses_created_with_application_id_idx").
+			Column("created_with_application_id").
 			IfNotExists().
 			Exec(ctx); err != nil {
 			return err
 		}
 
 		defer func() {
-			log.Info(ctx, "cleaning up temporary index statuses_local_created_with_application_id_idx, please wait...")
+			log.Info(ctx, "cleaning up temporary index statuses_created_with_application_id_idx, please wait...")
 			if _, err := db.
 				NewDropIndex().
-				Index("statuses_local_created_with_application_id_idx").
+				Index("statuses_created_with_application_id_idx").
 				IfExists().
 				Exec(ctx); err != nil {
 				panic(err)
@@ -131,7 +131,6 @@ func init() {
 						NewUpdate().
 						Table("statuses").
 						Set("? = ?", bun.Ident("created_with_application_id"), newAppID).
-						Where("? = ?", bun.Ident("local"), true).
 						Where("? = ?", bun.Ident("created_with_application_id"), oldApp.ID).
 						Exec(ctx); err != nil {
 						return err
