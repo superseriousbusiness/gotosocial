@@ -293,8 +293,7 @@ const (
 // StatusContentType is the content type with which to parse the submitted status.
 // Can be either text/plain or text/markdown. Empty will default to text/plain.
 //
-// swagger:enum statusContentType
-// swagger:type string
+// swagger:enum StatusContentType
 type StatusContentType string
 
 // Content type to use when parsing submitted

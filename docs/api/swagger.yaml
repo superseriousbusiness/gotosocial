@@ -2993,6 +2993,19 @@ definitions:
                 example: <p>Hey this is a status!</p>
                 type: string
                 x-go-name: Content
+            content_type:
+                description: |-
+                    Content type that was used to parse this revision's text.
+                    text/plain StatusContentTypePlain
+                    text/markdown StatusContentTypeMarkdown
+                enum:
+                    - text/plain
+                    - text/markdown
+                type: string
+                x-go-enum-desc: |-
+                    text/plain StatusContentTypePlain
+                    text/markdown StatusContentTypeMarkdown
+                x-go-name: ContentType
             created_at:
                 description: The date when this revision was created (ISO 8601 Datetime).
                 example: "2021-07-30T09:20:25+00:00"
@@ -3186,6 +3199,19 @@ definitions:
             StatusSource represents the source text of a
             status as submitted to the API when it was created.
         properties:
+            content_type:
+                description: |-
+                    Content type that was used to parse the text.
+                    text/plain StatusContentTypePlain
+                    text/markdown StatusContentTypeMarkdown
+                enum:
+                    - text/plain
+                    - text/markdown
+                type: string
+                x-go-enum-desc: |-
+                    text/plain StatusContentTypePlain
+                    text/markdown StatusContentTypeMarkdown
+                x-go-name: ContentType
             id:
                 description: ID of the status.
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
