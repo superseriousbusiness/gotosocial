@@ -20,8 +20,8 @@ package testrig
 import (
 	"context"
 
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
+	"github.com/superseriousbusiness/gotosocial/internal/oauth/handlers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -31,6 +31,11 @@ func NewTestOauthServer(state *state.State) oauth.Server {
 	return oauth.New(
 		ctx,
 		state,
-		apiutil.GetClientScopeHandler(ctx, state),
+		handlers.GetValidateURIHandler(ctx),
+		handlers.GetClientScopeHandler(ctx, state),
+		handlers.GetAuthorizeScopeHandler(),
+		handlers.GetInternalErrorHandler(ctx),
+		handlers.GetResponseErrorHandler(ctx),
+		handlers.GetUserAuthorizationHandler(),
 	)
 }

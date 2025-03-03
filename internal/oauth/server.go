@@ -22,8 +22,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/url"
-	"slices"
 	"strings"
 
 	"codeberg.org/superseriousbusiness/oauth2/v4"
@@ -65,7 +63,8 @@ const (
 	HelpfulAdviceGrant = "If you arrived at this error during a sign in/oauth flow, your client is trying to use an unsupported OAuth grant type. Supported grant types are: authorization_code, client_credentials; please reach out to developer of your client"
 )
 
-// Server wraps some oauth2 server functions in an interface, exposing only what is needed
+// Server wraps some oauth2 server functions
+// in an interface, exposing only what is needed.
 type Server interface {
 	HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode)
 	HandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode
@@ -74,7 +73,8 @@ type Server interface {
 	LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error)
 }
 
-// s fulfils the Server interface using the underlying oauth2 server
+// s fulfils the Server interface
+// using the underlying oauth2 server.
 type s struct {
 	server *server.Server
 }
@@ -83,111 +83,66 @@ type s struct {
 func New(
 	ctx context.Context,
 	state *state.State,
+	validateURIHandler manage.ValidateURIHandler,
 	clientScopeHandler server.ClientScopeHandler,
+	authorizeScopeHandler server.AuthorizeScopeHandler,
+	internalErrorHandler server.InternalErrorHandler,
+	responseErrorHandler server.ResponseErrorHandler,
+	userAuthorizationHandler server.UserAuthorizationHandler,
 ) Server {
 	ts := newTokenStore(ctx, state)
 	cs := NewClientStore(state)
 
+	// Set up OAuth2 manager.
 	manager := manage.NewDefaultManager()
+	manager.SetValidateURIHandler(validateURIHandler)
 	manager.MapTokenStorage(ts)
 	manager.MapClientStorage(cs)
-	manager.SetAuthorizeCodeTokenCfg(&manage.Config{
-		// Following the Mastodon API,
-		// access tokens don't expire.
-		AccessTokenExp: 0,
-		// Don't use refresh tokens.
-		IsGenerateRefresh: false,
-	})
+	manager.SetAuthorizeCodeTokenCfg(
+		&manage.Config{
+			// Following the Mastodon API,
+			// access tokens don't expire.
+			AccessTokenExp: 0,
+			// Don't use refresh tokens.
+			IsGenerateRefresh: false,
+		},
+	)
 
-	manager.SetValidateURIHandler(func(hasRedirectList, wantsRedirect string) error {
-		wantsRedirectURI, err := url.Parse(wantsRedirect)
-		if err != nil {
-			return err
-		}
-
-		// Redirect URIs are given to us as
-		// a list of URIs, newline-separated.
-		//
-		// Ensure that one of them matches
-		// requested redirectURI.
-		hasRedirects := strings.Split(hasRedirectList, "\n")
-
-		if slices.ContainsFunc(
-			hasRedirects,
-			func(hasRedirect string) bool {
-				hasRedirectURI, err := url.Parse(hasRedirect)
-				if err != nil {
-					log.Errorf(nil, "error parsing hasRedirect: %v", err)
-					return false
-				}
-
-				// Want an exact match.
-				// See: https://www.oauth.com/oauth2-servers/redirect-uris/redirect-uri-validation/
-				return wantsRedirectURI.String() == hasRedirectURI.String()
+	// Set up OAuth2 server.
+	srv := server.NewServer(
+		&server.Config{
+			TokenType: "Bearer",
+			// Must follow the spec.
+			AllowGetAccessRequest: false,
+			// Support only the non-implicit flow.
+			AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
+			// Allow:
+			// - Authorization Code (for first & third parties)
+			// - Client Credentials (for applications)
+			AllowedGrantTypes: []oauth2.GrantType{
+				oauth2.AuthorizationCode,
+				oauth2.ClientCredentials,
 			},
-		) {
-			return nil
-		}
-
-		return oautherr.ErrInvalidRedirectURI
-	})
-
-	sc := &server.Config{
-		TokenType: "Bearer",
-		// Must follow the spec.
-		AllowGetAccessRequest: false,
-		// Support only the non-implicit flow.
-		AllowedResponseTypes: []oauth2.ResponseType{oauth2.Code},
-		// Allow:
-		// - Authorization Code (for first & third parties)
-		// - Client Credentials (for applications)
-		AllowedGrantTypes: []oauth2.GrantType{
-			oauth2.AuthorizationCode,
-			oauth2.ClientCredentials,
+			AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
+				oauth2.CodeChallengePlain,
+				oauth2.CodeChallengeS256,
+			},
 		},
-		AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
-			oauth2.CodeChallengePlain,
-			oauth2.CodeChallengeS256,
-		},
-	}
-
-	srv := server.NewServer(sc, manager)
-
-	srv.SetAuthorizeScopeHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
-		// Use provided scope or
-		// fall back to default "read".
-		scope := r.FormValue("scope")
-		if strings.TrimSpace(scope) == "" {
-			scope = "read"
-		}
-		return scope, nil
-	})
-
+		manager,
+	)
+	srv.SetAuthorizeScopeHandler(authorizeScopeHandler)
 	srv.SetClientScopeHandler(clientScopeHandler)
-
-	srv.SetInternalErrorHandler(func(err error) *oautherr.Response {
-		log.Errorf(nil, "internal oauth error: %s", err)
-		return nil
-	})
-
-	srv.SetResponseErrorHandler(func(re *oautherr.Response) {
-		log.Errorf(nil, "internal response error: %s", re.Error)
-	})
-
-	srv.SetUserAuthorizationHandler(func(w http.ResponseWriter, r *http.Request) (string, error) {
-		userID := r.FormValue("userid")
-		if userID == "" {
-			return "", errors.New("userid was empty")
-		}
-		return userID, nil
-	})
-
+	srv.SetInternalErrorHandler(internalErrorHandler)
+	srv.SetResponseErrorHandler(responseErrorHandler)
+	srv.SetUserAuthorizationHandler(userAuthorizationHandler)
 	srv.SetClientInfoHandler(server.ClientFormHandler)
 
 	return &s{srv}
 }
 
-// HandleTokenRequest wraps the oauth2 library's HandleTokenRequest function
+// HandleTokenRequest wraps the oauth2 library's HandleTokenRequest function,
+// providing some custom error handling (with more informative messages),
+// and a slightly different token serialization format.
 func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserror.WithCode) {
 	ctx := r.Context()
 
@@ -201,19 +156,23 @@ func (s *s) HandleTokenRequest(r *http.Request) (map[string]interface{}, gtserro
 		return nil, gtserror.NewErrorBadRequest(err, help, adv)
 	}
 
+	// Get access token + do our own nicer error handling.
 	ti, err := s.server.GetAccessToken(ctx, gt, tgr)
 	switch {
 	case err == nil:
 		// No problem.
 		break
+
 	case errors.Is(err, oautherr.ErrInvalidScope):
 		help := fmt.Sprintf("requested scope %s was not covered by client scope", tgr.Scope)
 		return nil, gtserror.NewErrorForbidden(err, help, HelpfulAdvice)
+
 	case errors.Is(err, oautherr.ErrInvalidRedirectURI):
 		help := fmt.Sprintf("requested redirect URI %s was not covered by client redirect URIs", tgr.RedirectURI)
 		return nil, gtserror.NewErrorForbidden(err, help, HelpfulAdvice)
+
 	default:
-		help := fmt.Sprintf("could not get access token: %s", err)
+		help := fmt.Sprintf("could not get access token: %v", err)
 		return nil, gtserror.NewErrorBadRequest(err, help, HelpfulAdvice)
 	}
 
