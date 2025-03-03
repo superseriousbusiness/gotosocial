@@ -134,19 +134,23 @@ func (d *Dereferencer) RefreshEmoji(
 	*gtsmodel.Emoji,
 	error,
 ) {
-	// Check emoji is up-to-date
-	// with provided extra info.
-	switch {
-	case info.URI != nil &&
-		*info.URI != emoji.URI:
+	// Check uri up-to-date.
+	if info.URI != nil &&
+		*info.URI != emoji.URI {
 		emoji.URI = *info.URI
 		force = true
-	case info.ImageRemoteURL != nil &&
-		*info.ImageRemoteURL != emoji.ImageRemoteURL:
+	}
+
+	// Check image remote URL up-to-date.
+	if info.ImageRemoteURL != nil &&
+		*info.ImageRemoteURL != emoji.ImageRemoteURL {
 		emoji.ImageRemoteURL = *info.ImageRemoteURL
 		force = true
-	case info.ImageStaticRemoteURL != nil &&
-		*info.ImageStaticRemoteURL != emoji.ImageStaticRemoteURL:
+	}
+
+	// Check image static remote URL up-to-date.
+	if info.ImageStaticRemoteURL != nil &&
+		*info.ImageStaticRemoteURL != emoji.ImageStaticRemoteURL {
 		emoji.ImageStaticRemoteURL = *info.ImageStaticRemoteURL
 		force = true
 	}
