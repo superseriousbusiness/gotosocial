@@ -128,7 +128,6 @@ func (d *Dereferencer) RefreshMedia(
 	// Check emoji is up-to-date
 	// with provided extra info.
 	switch {
-	case force:
 	case info.Blurhash != nil &&
 		*info.Blurhash != attach.Blurhash:
 		attach.Blurhash = *info.Blurhash
