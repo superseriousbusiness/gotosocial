@@ -23,11 +23,39 @@ import (
 	oldmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	newmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250224105654_token_app_client_refactor"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
+		log.Info(ctx, "migrating applications to new model")
+
+		// To make update queries faster,
+		// create an index on statuses
+		// that we'll drop when we're done.
+		log.Info(ctx, "creating temporary index statuses_local_created_with_application_id_idx, please wait...")
+		if _, err := db.
+			NewCreateIndex().
+			Table("statuses").
+			Index("statuses_local_created_with_application_id_idx").
+			Column("local", "created_with_application_id").
+			IfNotExists().
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		defer func() {
+			log.Info(ctx, "cleaning up temporary index statuses_local_created_with_application_id_idx, please wait...")
+			if _, err := db.
+				NewDropIndex().
+				Index("statuses_local_created_with_application_id_idx").
+				IfExists().
+				Exec(ctx); err != nil {
+				panic(err)
+			}
+		}()
+
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
 			// Drop unused clients table.
@@ -89,10 +117,13 @@ func init() {
 			}
 
 			if len(oldApps) != 0 {
+
 				// Convert all the old model applications into new ones.
 				newApps := make([]*newmodel.Application, 0, len(oldApps))
 				for _, oldApp := range oldApps {
 					newAppID := id.NewULIDFromTime(oldApp.CreatedAt)
+
+					log.Info(ctx, "migrating application %s (%s) to new model...", oldApp.Name, oldApp.ID)
 
 					// Update application ID on any
 					// statuses that used this app.
@@ -100,6 +131,7 @@ func init() {
 						NewUpdate().
 						Table("statuses").
 						Set("? = ?", bun.Ident("created_with_application_id"), newAppID).
+						Where("? = ?", bun.Ident("local"), true).
 						Where("? = ?", bun.Ident("created_with_application_id"), oldApp.ID).
 						Exec(ctx); err != nil {
 						return err
