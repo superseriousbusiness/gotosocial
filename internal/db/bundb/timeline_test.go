@@ -45,6 +45,7 @@ func getFutureStatus() *gtsmodel.Status {
 		URL:                      "http://localhost:8080/@admin/statuses/" + id,
 		Content:                  "it's the future, wooooooooooooooooooooooooooooooooo",
 		Text:                     "it's the future, wooooooooooooooooooooooooooooooooo",
+		ContentType:              gtsmodel.StatusContentTypePlain,
 		AttachmentIDs:            []string{},
 		TagIDs:                   []string{},
 		MentionIDs:               []string{},

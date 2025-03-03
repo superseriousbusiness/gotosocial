@@ -90,6 +90,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentType, previousEdit.ContentType)
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
