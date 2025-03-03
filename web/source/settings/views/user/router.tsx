@@ -28,6 +28,7 @@ import EmailPassword from "./emailpassword";
 import ExportImport from "./export-import";
 import InteractionRequests from "./interactions";
 import InteractionRequestDetail from "./interactions/detail";
+import Tokens from "./tokens";
 
 /**
  * - /settings/user/profile
@@ -35,6 +36,7 @@ import InteractionRequestDetail from "./interactions/detail";
  * - /settings/user/emailpassword
  * - /settings/user/migration
  * - /settings/user/export-import
+ * - /settings/user/tokens
  * - /settings/users/interaction_requests
  */
 export default function UserRouter() {
@@ -52,6 +54,7 @@ export default function UserRouter() {
 						<Route path="/emailpassword" component={EmailPassword} />
 						<Route path="/migration" component={UserMigration} />
 						<Route path="/export-import" component={ExportImport} />
+						<Route path="/tokens" component={Tokens} />
 						<InteractionRequestsRouter />
 						<Route><Redirect to="/profile" /></Route>
 					</Switch>
