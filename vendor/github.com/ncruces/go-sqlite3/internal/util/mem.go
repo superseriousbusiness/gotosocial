@@ -26,9 +26,6 @@ func View(mod api.Module, ptr Ptr_t, size int64) []byte {
 	if ptr == 0 {
 		panic(NilErr)
 	}
-	if size == 0 {
-		return nil
-	}
 	if uint64(size) > math.MaxUint32 {
 		panic(RangeErr)
 	}
@@ -108,6 +105,18 @@ func ReadFloat64(mod api.Module, ptr Ptr_t) float64 {
 
 func WriteFloat64(mod api.Module, ptr Ptr_t, v float64) {
 	Write64(mod, ptr, math.Float64bits(v))
+}
+
+func ReadBool(mod api.Module, ptr Ptr_t) bool {
+	return Read32[int32](mod, ptr) != 0
+}
+
+func WriteBool(mod api.Module, ptr Ptr_t, v bool) {
+	var i int32
+	if v {
+		i = 1
+	}
+	Write32(mod, ptr, i)
 }
 
 func ReadString(mod api.Module, ptr Ptr_t, maxlen int64) string {

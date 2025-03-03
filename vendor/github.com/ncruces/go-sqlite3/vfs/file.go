@@ -88,10 +88,13 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 		oflags |= os.O_RDWR
 	}
 
+	isCreate := flags&(OPEN_CREATE) != 0
+	isJournl := flags&(OPEN_MAIN_JOURNAL|OPEN_SUPER_JOURNAL|OPEN_WAL) != 0
+
 	var err error
 	var f *os.File
 	if name == nil {
-		f, err = os.CreateTemp("", "*.db")
+		f, err = os.CreateTemp(os.Getenv("SQLITE_TMPDIR"), "*.db")
 	} else {
 		f, err = osutil.OpenFile(name.String(), oflags, 0666)
 	}
@@ -101,6 +104,10 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 		}
 		if errors.Is(err, syscall.EISDIR) {
 			return nil, flags, _CANTOPEN_ISDIR
+		}
+		if isCreate && isJournl && errors.Is(err, fs.ErrPermission) &&
+			osAccess(name.String(), ACCESS_EXISTS) != nil {
+			return nil, flags, _READONLY_DIRECTORY
 		}
 		return nil, flags, err
 	}
@@ -119,10 +126,8 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 		File:     f,
 		psow:     true,
 		readOnly: flags&OPEN_READONLY != 0,
-		syncDir: canSyncDirs &&
-			flags&(OPEN_MAIN_JOURNAL|OPEN_SUPER_JOURNAL|OPEN_WAL) != 0 &&
-			flags&(OPEN_CREATE) != 0,
-		shm: NewSharedMemory(name.String()+"-shm", flags),
+		syncDir:  canSyncDirs && isCreate && isJournl,
+		shm:      NewSharedMemory(name.String()+"-shm", flags),
 	}
 	return &file, flags, nil
 }
@@ -152,6 +157,14 @@ func (f *vfsFile) Close() error {
 	}
 	f.Unlock(LOCK_NONE)
 	return f.File.Close()
+}
+
+func (f *vfsFile) ReadAt(p []byte, off int64) (n int, err error) {
+	return osReadAt(f.File, p, off)
+}
+
+func (f *vfsFile) WriteAt(p []byte, off int64) (n int, err error) {
+	return osWriteAt(f.File, p, off)
 }
 
 func (f *vfsFile) Sync(flags SyncFlag) error {

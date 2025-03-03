@@ -98,7 +98,7 @@ Also, post there if you used this driver for something interesting
 ([_"Show and tell"_](https://github.com/ncruces/go-sqlite3/discussions/categories/show-and-tell)),
 have an [idea](https://github.com/ncruces/go-sqlite3/discussions/categories/ideas)…
 
-The [Issue](https://github.com/ncruces/go-sqlite3/issues) tracker is for bugs we want fixed,
+The [Issue](https://github.com/ncruces/go-sqlite3/issues) tracker is for bugs,
 and features we're working on, planning to work on, or asking for help with.
 
 ### Alternatives

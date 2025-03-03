@@ -5,9 +5,6 @@
 *.so
 *.dylib
 
-# Go workspace
-go.work*
-
 # Test binary, built with `go test -c`
 *.test
 
@@ -17,3 +14,10 @@ go.work*
 # Dependency directories (remove the comment below to include it)
 # vendor/
 tools
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env

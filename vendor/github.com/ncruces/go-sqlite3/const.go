@@ -259,7 +259,10 @@ const (
 	DBCONFIG_TRUSTED_SCHEMA        DBConfig = 1017
 	DBCONFIG_STMT_SCANSTATUS       DBConfig = 1018
 	DBCONFIG_REVERSE_SCANORDER     DBConfig = 1019
-	// DBCONFIG_MAX                DBConfig = 1019
+	DBCONFIG_ENABLE_ATTACH_CREATE  DBConfig = 1020
+	DBCONFIG_ENABLE_ATTACH_WRITE   DBConfig = 1021
+	DBCONFIG_ENABLE_COMMENTS       DBConfig = 1022
+	// DBCONFIG_MAX                DBConfig = 1022
 )
 
 // FcntlOpcode are the available opcodes for [Conn.FileControl].

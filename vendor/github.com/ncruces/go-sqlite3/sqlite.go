@@ -47,11 +47,7 @@ func compileSQLite() {
 	ctx := context.Background()
 	cfg := RuntimeConfig
 	if cfg == nil {
-		if util.CompilerSupported() {
-			cfg = wazero.NewRuntimeConfigCompiler()
-		} else {
-			cfg = wazero.NewRuntimeConfigInterpreter()
-		}
+		cfg = wazero.NewRuntimeConfig()
 		if bits.UintSize < 64 {
 			cfg = cfg.WithMemoryLimitPages(512) // 32MB
 		} else {
@@ -321,8 +317,7 @@ func exportCallbacks(env wazero.HostModuleBuilder) wazero.HostModuleBuilder {
 	util.ExportFuncVI(env, "go_destroy", destroyCallback)
 	util.ExportFuncVIIII(env, "go_func", funcCallback)
 	util.ExportFuncVIIIII(env, "go_step", stepCallback)
-	util.ExportFuncVIII(env, "go_final", finalCallback)
-	util.ExportFuncVII(env, "go_value", valueCallback)
+	util.ExportFuncVIIII(env, "go_value", valueCallback)
 	util.ExportFuncVIIII(env, "go_inverse", inverseCallback)
 	util.ExportFuncVIIII(env, "go_collation_needed", collationCallback)
 	util.ExportFuncIIIIII(env, "go_compare", compareCallback)

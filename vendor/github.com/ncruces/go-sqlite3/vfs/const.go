@@ -31,6 +31,7 @@ const (
 	_READONLY                _ErrorCode = util.READONLY
 	_IOERR                   _ErrorCode = util.IOERR
 	_NOTFOUND                _ErrorCode = util.NOTFOUND
+	_FULL                    _ErrorCode = util.FULL
 	_CANTOPEN                _ErrorCode = util.CANTOPEN
 	_IOERR_READ              _ErrorCode = util.IOERR_READ
 	_IOERR_SHORT_READ        _ErrorCode = util.IOERR_SHORT_READ
@@ -57,10 +58,12 @@ const (
 	_IOERR_COMMIT_ATOMIC     _ErrorCode = util.IOERR_COMMIT_ATOMIC
 	_IOERR_ROLLBACK_ATOMIC   _ErrorCode = util.IOERR_ROLLBACK_ATOMIC
 	_IOERR_DATA              _ErrorCode = util.IOERR_DATA
+	_IOERR_CORRUPTFS         _ErrorCode = util.IOERR_CORRUPTFS
 	_BUSY_SNAPSHOT           _ErrorCode = util.BUSY_SNAPSHOT
 	_CANTOPEN_FULLPATH       _ErrorCode = util.CANTOPEN_FULLPATH
 	_CANTOPEN_ISDIR          _ErrorCode = util.CANTOPEN_ISDIR
 	_READONLY_CANTINIT       _ErrorCode = util.READONLY_CANTINIT
+	_READONLY_DIRECTORY      _ErrorCode = util.READONLY_DIRECTORY
 	_OK_SYMLINK              _ErrorCode = util.OK_SYMLINK
 )
 
