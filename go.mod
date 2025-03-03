@@ -53,7 +53,7 @@ require (
 	github.com/miekg/dns v1.1.63
 	github.com/minio/minio-go/v7 v7.0.85
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ncruces/go-sqlite3 v0.23.0
+	github.com/ncruces/go-sqlite3 v0.24.0
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.20.5
 	github.com/rivo/uniseg v0.4.7
@@ -81,7 +81,7 @@ require (
 	go.opentelemetry.io/otel/sdk/metric v1.34.0
 	go.opentelemetry.io/otel/trace v1.34.0
 	go.uber.org/automaxprocs v1.6.0
-	golang.org/x/crypto v0.34.0
+	golang.org/x/crypto v0.35.0
 	golang.org/x/image v0.24.0
 	golang.org/x/net v0.35.0
 	golang.org/x/oauth2 v0.27.0

@@ -45,7 +45,7 @@ func (c *Conn) Config(op DBConfig, arg ...bool) (bool, error) {
 
 	rc := res_t(c.call("sqlite3_db_config", stk_t(c.handle),
 		stk_t(op), stk_t(argsPtr)))
-	return util.Read32[uint32](c.mod, argsPtr) != 0, c.error(rc)
+	return util.ReadBool(c.mod, argsPtr), c.error(rc)
 }
 
 // ConfigLog sets up the error logging callback for the connection.
@@ -116,7 +116,7 @@ func (c *Conn) FileControl(schema string, op FcntlOpcode, arg ...any) (any, erro
 		rc = res_t(c.call("sqlite3_file_control",
 			stk_t(c.handle), stk_t(schemaPtr),
 			stk_t(op), stk_t(ptr)))
-		ret = util.Read32[uint32](c.mod, ptr) != 0
+		ret = util.ReadBool(c.mod, ptr)
 
 	case FCNTL_CHUNK_SIZE:
 		util.Write32(c.mod, ptr, int32(arg[0].(int)))
