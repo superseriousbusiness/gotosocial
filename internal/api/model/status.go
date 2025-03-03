@@ -320,6 +320,9 @@ type StatusSource struct {
 
 	// Plain-text version of spoiler text.
 	SpoilerText string `json:"spoiler_text"`
+
+	// Content type that was used to parse the text.
+	ContentType StatusContentType `json:"content_type"`
 }
 
 // StatusEdit represents one historical revision of a status, containing
@@ -358,6 +361,9 @@ type StatusEdit struct {
 
 	// Custom emoji to be used when rendering status content.
 	Emojis []Emoji `json:"emojis"`
+
+	// Content type that was used to parse this revision's text.
+	ContentType StatusContentType `json:"content_type"`
 }
 
 // StatusEditRequest models status edit parameters.
