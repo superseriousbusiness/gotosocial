@@ -207,6 +207,8 @@ func (ts *tokenStore) getUpdateToken(
 	if now := time.Now(); now.Sub(wasLastUsed) > 1*time.Hour {
 		token.LastUsed = now
 		if err := ts.state.DB.UpdateToken(ctx, token, "last_used"); err != nil {
+			// Unlock on error.
+			unlock()
 			err := gtserror.Newf("error updating last_used on token: %w", err)
 			return nil, err
 		}
