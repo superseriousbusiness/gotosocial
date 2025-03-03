@@ -368,7 +368,6 @@ func (p *Processor) processContentType(
 	// Old statuses may not have a saved content type; update the status to the
 	// user's preference and set this back on the form for later use.
 	case accountDefaultContentType != "":
-		// TODO: is this conversion from string to StatusContentType safe
 		status.ContentType = typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
 		form.ContentType = apimodel.StatusContentType(accountDefaultContentType)
 

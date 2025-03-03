@@ -35,6 +35,7 @@ type StatusEdit struct {
 	Content                string                      `bun:""`                                                            // Content of status at time of edit; likely html-formatted but not guaranteed.
 	ContentWarning         string                      `bun:",nullzero"`                                                   // Content warning of status at time of edit.
 	Text                   string                      `bun:""`                                                            // Original status text, without formatting, at time of edit.
+	ContentType            StatusContentType           `bun:",nullzero"`                                                   // Content type used to process the original text of the status.
 	Language               string                      `bun:",nullzero"`                                                   // Status language at time of edit.
 	Sensitive              *bool                       `bun:",nullzero,notnull,default:false"`                             // Status sensitive flag at time of edit.
 	AttachmentIDs          []string                    `bun:"attachments,array"`                                           // Database IDs of media attachments associated with status at time of edit.
@@ -44,7 +45,6 @@ type StatusEdit struct {
 	PollVotes              []int                       `bun:",array"`                                                      // Poll vote count at time of status edit, only set if poll votes were reset.
 	StatusID               string                      `bun:"type:CHAR(26),nullzero,notnull"`                              // The originating status ID this is a historical edit of.
 	CreatedAt              time.Time                   `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation time of this version of the status content (according to receiving server).
-	ContentType            StatusContentType           `bun:",nullzero"`                                                   // TODO
 	// We don't bother having a *gtsmodel.Status model here
 	// as the StatusEdit is always just attached to a Status,
 	// so it doesn't need a self-reference back to it.

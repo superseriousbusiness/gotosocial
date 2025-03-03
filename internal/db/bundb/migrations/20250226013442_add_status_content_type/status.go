@@ -68,12 +68,12 @@ type Status struct {
 	CreatedWithApplication   *gtsmodel.Application       `bun:"rel:belongs-to"`                                              // application corresponding to createdWithApplicationID
 	ActivityStreamsType      string                      `bun:",nullzero,notnull"`                                           // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string                      `bun:""`                                                            // Original text of the status without formatting
+	ContentType              StatusContentType           `bun:",nullzero"`                                                   // Content type used to process the original text of the status
 	Federated                *bool                       `bun:",notnull"`                                                    // This status will be federated beyond the local timeline(s)
 	InteractionPolicy        *gtsmodel.InteractionPolicy `bun:""`                                                            // InteractionPolicy for this status. If null then the default InteractionPolicy should be assumed for this status's Visibility. Always null for boost wrappers.
 	PendingApproval          *bool                       `bun:",nullzero,notnull,default:false"`                             // If true then status is a reply or boost wrapper that must be Approved by the reply-ee or boost-ee before being fully distributed.
 	PreApproved              bool                        `bun:"-"`                                                           // If true, then status is a reply to or boost wrapper of a status on our instance, has permission to do the interaction, and an Accept should be sent out for it immediately. Field not stored in the DB.
 	ApprovedByURI            string                      `bun:",nullzero"`                                                   // URI of an Accept Activity that approves the Announce or Create Activity that this status was/will be attached to.
-	ContentType              StatusContentType           `bun:",nullzero"`                                                   // TODO
 }
 
 type enumType int16
