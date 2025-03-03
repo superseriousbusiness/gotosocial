@@ -125,20 +125,23 @@ func (d *Dereferencer) RefreshMedia(
 		return attach, nil
 	}
 
-	// Check emoji is up-to-date
-	// with provided extra info.
-	switch {
-	case force:
-	case info.Blurhash != nil &&
-		*info.Blurhash != attach.Blurhash:
+	// Check blurhash up-to-date.
+	if info.Blurhash != nil &&
+		*info.Blurhash != attach.Blurhash {
 		attach.Blurhash = *info.Blurhash
 		force = true
-	case info.Description != nil &&
-		*info.Description != attach.Description:
+	}
+
+	// Check description up-to-date.
+	if info.Description != nil &&
+		*info.Description != attach.Description {
 		attach.Description = *info.Description
 		force = true
-	case info.RemoteURL != nil &&
-		*info.RemoteURL != attach.RemoteURL:
+	}
+
+	// Check remote URL up-to-date.
+	if info.RemoteURL != nil &&
+		*info.RemoteURL != attach.RemoteURL {
 		attach.RemoteURL = *info.RemoteURL
 		force = true
 	}
@@ -214,10 +217,10 @@ func (d *Dereferencer) updateAttachment(
 	)
 }
 
-// processingEmojiSafely provides concurrency-safe processing of
-// an emoji with given shortcode+domain. if a copy of the emoji is
+// processingMediaSafely provides concurrency-safe processing of
+// a media with given remote URL string. if a copy of the media is
 // not already being processed, the given 'process' callback will
-// be used to generate new *media.ProcessingEmoji{} instance.
+// be used to generate new *media.ProcessingMedia{} instance.
 func (d *Dereferencer) processMediaSafeley(
 	ctx context.Context,
 	remoteURL string,
