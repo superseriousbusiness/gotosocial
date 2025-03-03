@@ -44,6 +44,16 @@ func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {
 	return 0
 }
 
+func APIContentTypeToContentType(m apimodel.StatusContentType) gtsmodel.StatusContentType {
+	switch m {
+	case apimodel.StatusContentTypePlain:
+		return gtsmodel.StatusContentTypePlain
+	case apimodel.StatusContentTypeMarkdown:
+		return gtsmodel.StatusContentTypeMarkdown
+	}
+	return 0
+}
+
 func APIMarkerNameToMarkerName(m apimodel.MarkerName) gtsmodel.MarkerName {
 	switch m {
 	case apimodel.MarkerNameHome:

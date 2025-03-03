@@ -1626,6 +1626,17 @@ func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 	return ""
 }
 
+// Converts a gts status content type into its api equivalent
+func (c *Converter) ContentTypeToAPIContentType(ctx context.Context, m gtsmodel.StatusContentType) apimodel.StatusContentType {
+	switch m {
+	case gtsmodel.StatusContentTypePlain:
+		return apimodel.StatusContentTypePlain
+	case gtsmodel.StatusContentTypeMarkdown:
+		return apimodel.StatusContentTypeMarkdown
+	}
+	return ""
+}
+
 // InstanceRuleToAdminAPIRule converts a local instance rule into its api equivalent for serving at /api/v1/admin/instance/rules/:id
 func InstanceRuleToAPIRule(r gtsmodel.Rule) apimodel.InstanceRule {
 	return apimodel.InstanceRule{
