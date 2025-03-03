@@ -92,8 +92,22 @@ func init() {
 				// Convert all the old model applications into new ones.
 				newApps := make([]*newmodel.Application, 0, len(oldApps))
 				for _, oldApp := range oldApps {
+					newAppID := id.NewULIDFromTime(oldApp.CreatedAt)
+
+					// Update application ID on any
+					// statuses that used this app.
+					if _, err := tx.
+						NewUpdate().
+						Table("statuses").
+						Set("? = ?", bun.Ident("created_with_application_id"), newAppID).
+						Where("? = ?", bun.Ident("created_with_application_id"), oldApp.ID).
+						Exec(ctx); err != nil {
+						return err
+					}
+
+					// Add the new app to the slice for insertion.
 					newApps = append(newApps, &newmodel.Application{
-						ID:           id.NewULIDFromTime(oldApp.CreatedAt),
+						ID:           newAppID,
 						Name:         oldApp.Name,
 						Website:      oldApp.Website,
 						RedirectURIs: []string{oldApp.RedirectURI},
