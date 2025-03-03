@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"codeberg.org/superseriousbusiness/oauth2/v4/errors"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
@@ -41,9 +42,9 @@ func (cs *clientStore) GetByID(ctx context.Context, clientID string) (oauth2.Cli
 }
 
 func (cs *clientStore) Set(_ context.Context, _ string, _ oauth2.ClientInfo) error {
-	return nil
+	return errors.New("func oauth2.ClientStore.Set not implemented")
 }
 
 func (cs *clientStore) Delete(_ context.Context, _ string) error {
-	return nil
+	return errors.New("func oauth2.ClientStore.Delete not implemented")
 }
