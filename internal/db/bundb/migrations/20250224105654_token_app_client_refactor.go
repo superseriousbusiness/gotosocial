@@ -23,11 +23,14 @@ import (
 	oldmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	newmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250224105654_token_app_client_refactor"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
+		log.Info(ctx, "migrating applications to new model, this may take a bit of time, please wait and do not interrupt!")
+
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
 			// Drop unused clients table.
@@ -88,12 +91,32 @@ func init() {
 				return err
 			}
 
-			if len(oldApps) != 0 {
+			appsCount := len(oldApps)
+			if appsCount != 0 {
+
 				// Convert all the old model applications into new ones.
-				newApps := make([]*newmodel.Application, 0, len(oldApps))
-				for _, oldApp := range oldApps {
+				newApps := make([]*newmodel.Application, 0, appsCount)
+				for i, oldApp := range oldApps {
+					log.Infof(ctx, "preparing to migrate application %s (%s) to new model...", oldApp.Name, oldApp.ID)
+
+					// Update application ID on any
+					// statuses that used this app.
+					newAppID := id.NewULIDFromTime(oldApp.CreatedAt)
+					if _, err := tx.
+						NewUpdate().
+						Table("statuses").
+						Set("? = ?", bun.Ident("created_with_application_id"), newAppID).
+						// Only local statuses have created_with_application_id set,
+						// and we have an index on "local", so use this to narrow down.
+						Where("? = ?", bun.Ident("local"), true).
+						Where("? = ?", bun.Ident("created_with_application_id"), oldApp.ID).
+						Exec(ctx); err != nil {
+						return err
+					}
+
+					// Add the new app to the slice for insertion.
 					newApps = append(newApps, &newmodel.Application{
-						ID:           id.NewULIDFromTime(oldApp.CreatedAt),
+						ID:           newAppID,
 						Name:         oldApp.Name,
 						Website:      oldApp.Website,
 						RedirectURIs: []string{oldApp.RedirectURI},
@@ -101,6 +124,8 @@ func init() {
 						ClientSecret: oldApp.ClientSecret,
 						Scopes:       oldApp.Scopes,
 					})
+
+					log.Infof(ctx, "prepared %d of %d new model applications", i+1, appsCount)
 				}
 
 				// Whack all the new apps in
