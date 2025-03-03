@@ -58,13 +58,8 @@ func vfsFind(ctx context.Context, mod api.Module, zVfsName ptr_t) uint32 {
 }
 
 func vfsLocaltime(ctx context.Context, mod api.Module, pTm ptr_t, t int64) _ErrorCode {
-	tm := time.Unix(t, 0)
-	var isdst int32
-	if tm.IsDST() {
-		isdst = 1
-	}
-
 	const size = 32 / 8
+	tm := time.Unix(t, 0)
 	// https://pubs.opengroup.org/onlinepubs/7908799/xsh/time.h.html
 	util.Write32(mod, pTm+0*size, int32(tm.Second()))
 	util.Write32(mod, pTm+1*size, int32(tm.Minute()))
@@ -74,7 +69,7 @@ func vfsLocaltime(ctx context.Context, mod api.Module, pTm ptr_t, t int64) _Erro
 	util.Write32(mod, pTm+5*size, int32(tm.Year()-1900))
 	util.Write32(mod, pTm+6*size, int32(tm.Weekday()-time.Sunday))
 	util.Write32(mod, pTm+7*size, int32(tm.YearDay()-1))
-	util.Write32(mod, pTm+8*size, isdst)
+	util.WriteBool(mod, pTm+8*size, tm.IsDST())
 	return _OK
 }
 
@@ -123,11 +118,7 @@ func vfsAccess(ctx context.Context, mod api.Module, pVfs, zPath ptr_t, flags Acc
 	path := util.ReadString(mod, zPath, _MAX_PATHNAME)
 
 	ok, err := vfs.Access(path, flags)
-	var res int32
-	if ok {
-		res = 1
-	}
-	util.Write32(mod, pResOut, res)
+	util.WriteBool(mod, pResOut, ok)
 	return vfsErrorCode(err, _IOERR_ACCESS)
 }
 
@@ -151,9 +142,8 @@ func vfsOpen(ctx context.Context, mod api.Module, pVfs, zPath, pFile ptr_t, flag
 			file.SetPowersafeOverwrite(b)
 		}
 	}
-	if file, ok := file.(FileSharedMemory); ok &&
-		pOutVFS != 0 && file.SharedMemory() != nil {
-		util.Write32(mod, pOutVFS, int32(1))
+	if file, ok := file.(FileSharedMemory); ok && pOutVFS != 0 {
+		util.WriteBool(mod, pOutVFS, file.SharedMemory() != nil)
 	}
 	if pOutFlags != 0 {
 		util.Write32(mod, pOutFlags, flags)
@@ -225,12 +215,7 @@ func vfsUnlock(ctx context.Context, mod api.Module, pFile ptr_t, eLock LockLevel
 func vfsCheckReservedLock(ctx context.Context, mod api.Module, pFile, pResOut ptr_t) _ErrorCode {
 	file := vfsFileGet(ctx, mod, pFile).(File)
 	locked, err := file.CheckReservedLock()
-
-	var res int32
-	if locked {
-		res = 1
-	}
-	util.Write32(mod, pResOut, res)
+	util.WriteBool(mod, pResOut, locked)
 	return vfsErrorCode(err, _IOERR_CHECKRESERVEDLOCK)
 }
 
@@ -254,24 +239,20 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 
 	case _FCNTL_PERSIST_WAL:
 		if file, ok := file.(FilePersistWAL); ok {
-			if i := util.Read32[int32](mod, pArg); i >= 0 {
-				file.SetPersistWAL(i != 0)
-			} else if file.PersistWAL() {
-				util.Write32(mod, pArg, int32(1))
+			if i := util.Read32[int32](mod, pArg); i < 0 {
+				util.WriteBool(mod, pArg, file.PersistWAL())
 			} else {
-				util.Write32(mod, pArg, int32(0))
+				file.SetPersistWAL(i != 0)
 			}
 			return _OK
 		}
 
 	case _FCNTL_POWERSAFE_OVERWRITE:
 		if file, ok := file.(FilePowersafeOverwrite); ok {
-			if i := util.Read32[int32](mod, pArg); i >= 0 {
-				file.SetPowersafeOverwrite(i != 0)
-			} else if file.PowersafeOverwrite() {
-				util.Write32(mod, pArg, int32(1))
+			if i := util.Read32[int32](mod, pArg); i < 0 {
+				util.WriteBool(mod, pArg, file.PowersafeOverwrite())
 			} else {
-				util.Write32(mod, pArg, int32(0))
+				file.SetPowersafeOverwrite(i != 0)
 			}
 			return _OK
 		}
@@ -293,11 +274,7 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 	case _FCNTL_HAS_MOVED:
 		if file, ok := file.(FileHasMoved); ok {
 			moved, err := file.HasMoved()
-			var val uint32
-			if moved {
-				val = 1
-			}
-			util.Write32(mod, pArg, val)
+			util.WriteBool(mod, pArg, moved)
 			return vfsErrorCode(err, _IOERR_FSTAT)
 		}
 
@@ -394,7 +371,7 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 	case _FCNTL_LOCK_TIMEOUT:
 		if file, ok := file.(FileSharedMemory); ok {
 			if shm, ok := file.SharedMemory().(blockingSharedMemory); ok {
-				shm.shmEnableBlocking(util.Read32[uint32](mod, pArg) != 0)
+				shm.shmEnableBlocking(util.ReadBool(mod, pArg))
 				return _OK
 			}
 		}

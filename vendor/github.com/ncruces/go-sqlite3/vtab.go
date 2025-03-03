@@ -399,10 +399,10 @@ func (idx *IndexInfo) save() {
 	util.Write32(mod, ptr+20, int32(idx.IdxNum))
 	if idx.IdxStr != "" {
 		util.Write32(mod, ptr+24, idx.c.newString(idx.IdxStr))
-		util.Write32(mod, ptr+28, int32(1)) // needToFreeIdxStr
+		util.WriteBool(mod, ptr+28, true) // needToFreeIdxStr
 	}
 	if idx.OrderByConsumed {
-		util.Write32(mod, ptr+32, int32(1))
+		util.WriteBool(mod, ptr+32, true)
 	}
 	util.WriteFloat64(mod, ptr+40, idx.EstimatedCost)
 	util.Write64(mod, ptr+48, idx.EstimatedRows)
