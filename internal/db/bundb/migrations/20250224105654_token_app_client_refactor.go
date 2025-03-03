@@ -40,6 +40,7 @@ func init() {
 			Table("statuses").
 			Index("statuses_created_with_application_id_idx").
 			Column("created_with_application_id").
+			Where("? = ?", bun.Ident("local"), true).
 			IfNotExists().
 			Exec(ctx); err != nil {
 			return err
