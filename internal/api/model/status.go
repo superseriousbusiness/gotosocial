@@ -360,9 +360,6 @@ type StatusEdit struct {
 
 	// Custom emoji to be used when rendering status content.
 	Emojis []Emoji `json:"emojis"`
-
-	// Content type that was used to parse this revision's text.
-	ContentType StatusContentType `json:"content_type"`
 }
 
 // StatusEditRequest models status edit parameters.
