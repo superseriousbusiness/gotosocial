@@ -74,6 +74,7 @@ type Status struct {
 	PendingApproval          *bool              `bun:",nullzero,notnull,default:false"`                             // If true then status is a reply or boost wrapper that must be Approved by the reply-ee or boost-ee before being fully distributed.
 	PreApproved              bool               `bun:"-"`                                                           // If true, then status is a reply to or boost wrapper of a status on our instance, has permission to do the interaction, and an Accept should be sent out for it immediately. Field not stored in the DB.
 	ApprovedByURI            string             `bun:",nullzero"`                                                   // URI of an Accept Activity that approves the Announce or Create Activity that this status was/will be attached to.
+	ContentType              StatusContentType  `bun:",nullzero"`                                                   // TODO
 }
 
 // GetID implements timeline.Timelineable{}.
@@ -373,6 +374,32 @@ func (v Visibility) String() string {
 		return "direct"
 	default:
 		panic("invalid visibility")
+	}
+}
+
+// StatusContentType is the content type with which a status's text is
+// parsed. Can be either plain or markdown. Empty will default to plain.
+type StatusContentType enumType
+
+const (
+	// The "unset"
+	StatusContentTypePlain    StatusContentType = 1
+	StatusContentTypeMarkdown StatusContentType = 2
+	StatusContentTypeDefault                    = StatusContentTypePlain
+)
+
+// String returns the actual MIME string corresponding to a content type.
+// NOMERGE: is this actually necessary? i copied this because Visibility has it
+// but it kinda seems like it's only used as part of the preferences stuff. do i
+// need to touch that for this
+func (v StatusContentType) String() string {
+	switch v {
+	case StatusContentTypePlain:
+		return "text/plain"
+	case StatusContentTypeMarkdown:
+		return "text/markdown"
+	default:
+		panic("invalid status content type")
 	}
 }
 
