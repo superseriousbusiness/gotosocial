@@ -97,41 +97,6 @@ func (a *applicationDB) DeleteApplicationByClientID(ctx context.Context, clientI
 	return nil
 }
 
-func (a *applicationDB) GetClientByID(ctx context.Context, id string) (*gtsmodel.Client, error) {
-	return a.state.Caches.DB.Client.LoadOne("ID", func() (*gtsmodel.Client, error) {
-		var client gtsmodel.Client
-
-		if err := a.db.NewSelect().
-			Model(&client).
-			Where("? = ?", bun.Ident("id"), id).
-			Scan(ctx); err != nil {
-			return nil, err
-		}
-
-		return &client, nil
-	}, id)
-}
-
-func (a *applicationDB) PutClient(ctx context.Context, client *gtsmodel.Client) error {
-	return a.state.Caches.DB.Client.Store(client, func() error {
-		_, err := a.db.NewInsert().Model(client).Exec(ctx)
-		return err
-	})
-}
-
-func (a *applicationDB) DeleteClientByID(ctx context.Context, id string) error {
-	_, err := a.db.NewDelete().
-		Table("clients").
-		Where("? = ?", bun.Ident("id"), id).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	a.state.Caches.DB.Client.Invalidate("ID", id)
-	return nil
-}
-
 func (a *applicationDB) GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error) {
 	var tokenIDs []string
 
@@ -229,6 +194,18 @@ func (a *applicationDB) getTokenBy(lookup string, dbQuery func(*gtsmodel.Token) 
 func (a *applicationDB) PutToken(ctx context.Context, token *gtsmodel.Token) error {
 	return a.state.Caches.DB.Token.Store(token, func() error {
 		_, err := a.db.NewInsert().Model(token).Exec(ctx)
+		return err
+	})
+}
+
+func (a *applicationDB) UpdateToken(ctx context.Context, token *gtsmodel.Token, columns ...string) error {
+	return a.state.Caches.DB.Token.Store(token, func() error {
+		_, err := a.db.
+			NewUpdate().
+			Model(token).
+			Column(columns...).
+			Where("? = ?", bun.Ident("id"), token.ID).
+			Exec(ctx)
 		return err
 	})
 }

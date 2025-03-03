@@ -15,6 +15,15 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package oauth_test
+package gtsmodel
 
-// TODO: write tests
+type Application struct {
+	ID              string   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+	Name            string   `bun:",notnull"`
+	Website         string   `bun:",nullzero"`
+	RedirectURIs    []string `bun:"redirect_uris,array"`
+	ClientID        string   `bun:"type:CHAR(26),nullzero,notnull"`
+	ClientSecret    string   `bun:",nullzero,notnull"`
+	Scopes          string   `bun:",notnull"`
+	ManagedByUserID string   `bun:"type:CHAR(26),nullzero"`
+}

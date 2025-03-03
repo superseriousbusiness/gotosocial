@@ -33,12 +33,17 @@ type Application struct {
 	// Post-authorization redirect URI for the application (OAuth2).
 	// example: https://example.org/callback?some=query
 	RedirectURI string `json:"redirect_uri,omitempty"`
+	// Post-authorization redirect URIs for the application (OAuth2).
+	// example: [https://example.org/callback?some=query]
+	RedirectURIs []string `json:"redirect_uris,omitempty"`
 	// Client ID associated with this application.
 	ClientID string `json:"client_id,omitempty"`
 	// Client secret associated with this application.
 	ClientSecret string `json:"client_secret,omitempty"`
 	// Push API key for this application.
 	VapidKey string `json:"vapid_key,omitempty"`
+	// OAuth scopes for this application.
+	Scopes []string `json:"scopes,omitempty"`
 }
 
 // ApplicationCreateRequest models app create parameters.
@@ -50,14 +55,15 @@ type ApplicationCreateRequest struct {
 	// in: formData
 	// required: true
 	ClientName string `form:"client_name" json:"client_name" xml:"client_name" binding:"required"`
-	// Where the user should be redirected after authorization.
+	// Single redirect URI or newline-separated list of redirect URIs (optional).
 	//
 	// To display the authorization code to the user instead of redirecting to a web page, use `urn:ietf:wg:oauth:2.0:oob` in this parameter.
 	//
+	// If no redirect URIs are provided, defaults to `urn:ietf:wg:oauth:2.0:oob`.
+	//
 	// in: formData
-	// required: true
-	RedirectURIs string `form:"redirect_uris" json:"redirect_uris" xml:"redirect_uris" binding:"required"`
-	// Space separated list of scopes.
+	RedirectURIs string `form:"redirect_uris" json:"redirect_uris" xml:"redirect_uris"`
+	// Space separated list of scopes (optional).
 	//
 	// If no scopes are provided, defaults to `read`.
 	//
