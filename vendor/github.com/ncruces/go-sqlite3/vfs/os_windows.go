@@ -9,6 +9,23 @@ import (
 	"golang.org/x/sys/windows"
 )
 
+func osReadAt(file *os.File, p []byte, off int64) (int, error) {
+	return file.ReadAt(p, off)
+}
+
+func osWriteAt(file *os.File, p []byte, off int64) (int, error) {
+	n, err := file.WriteAt(p, off)
+	if errno, ok := err.(windows.Errno); ok {
+		switch errno {
+		case
+			windows.ERROR_HANDLE_DISK_FULL,
+			windows.ERROR_DISK_FULL:
+			return n, _FULL
+		}
+	}
+	return n, err
+}
+
 func osGetSharedLock(file *os.File) _ErrorCode {
 	// Acquire the PENDING lock temporarily before acquiring a new SHARED lock.
 	rc := osReadLock(file, _PENDING_BYTE, 1, 0)

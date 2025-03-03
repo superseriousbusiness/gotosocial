@@ -3,6 +3,7 @@ package sqlite3
 import (
 	"context"
 	"fmt"
+	"iter"
 	"math"
 	"math/rand"
 	"net/url"
@@ -492,9 +493,9 @@ func (c *Conn) TableColumnMetadata(schema, table, column string) (declType, coll
 		if ptr := util.Read32[ptr_t](c.mod, collSeqPtr); ptr != 0 {
 			collSeq = util.ReadString(c.mod, ptr, _MAX_NAME)
 		}
-		notNull = util.Read32[uint32](c.mod, notNullPtr) != 0
-		autoInc = util.Read32[uint32](c.mod, autoIncPtr) != 0
-		primaryKey = util.Read32[uint32](c.mod, primaryKeyPtr) != 0
+		notNull = util.ReadBool(c.mod, notNullPtr)
+		autoInc = util.ReadBool(c.mod, autoIncPtr)
+		primaryKey = util.ReadBool(c.mod, primaryKeyPtr)
 	}
 	return
 }
@@ -503,10 +504,16 @@ func (c *Conn) error(rc res_t, sql ...string) error {
 	return c.sqlite.error(rc, c.handle, sql...)
 }
 
-func (c *Conn) stmtsIter(yield func(*Stmt) bool) {
-	for _, s := range c.stmts {
-		if !yield(s) {
-			break
+// Stmts returns an iterator for the prepared statements
+// associated with the database connection.
+//
+// https://sqlite.org/c3ref/next_stmt.html
+func (c *Conn) Stmts() iter.Seq[*Stmt] {
+	return func(yield func(*Stmt) bool) {
+		for _, s := range c.stmts {
+			if !yield(s) {
+				break
+			}
 		}
 	}
 }

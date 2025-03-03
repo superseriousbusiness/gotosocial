@@ -47,11 +47,12 @@ type cksmFlags struct {
 
 func (c cksmFile) ReadAt(p []byte, off int64) (n int, err error) {
 	n, err = c.File.ReadAt(p, off)
+	p = p[:n]
 
 	// SQLite is reading the header of a database file.
 	if c.isDB && off == 0 && len(p) >= 100 &&
 		bytes.HasPrefix(p, []byte("SQLite format 3\000")) {
-		c.init(p)
+		c.init((*[100]byte)(p))
 	}
 
 	// Verify checksums.
@@ -69,7 +70,7 @@ func (c cksmFile) WriteAt(p []byte, off int64) (n int, err error) {
 	// SQLite is writing the first page of a database file.
 	if c.isDB && off == 0 && len(p) >= 100 &&
 		bytes.HasPrefix(p, []byte("SQLite format 3\000")) {
-		c.init(p)
+		c.init((*[100]byte)(p))
 	}
 
 	// Compute checksums.
@@ -122,11 +123,15 @@ func (c cksmFile) fileControl(ctx context.Context, mod api.Module, op _FcntlOpco
 	return vfsFileControlImpl(ctx, mod, c.File, op, pArg)
 }
 
-func (f *cksmFlags) init(header []byte) {
+func (f *cksmFlags) init(header *[100]byte) {
 	f.pageSize = 256 * int(binary.LittleEndian.Uint16(header[16:18]))
 	if r := header[20] == 8; r != f.computeCksm {
 		f.computeCksm = r
 		f.verifyCksm = r
+	}
+	if !sql3util.ValidPageSize(f.pageSize) {
+		f.computeCksm = false
+		f.verifyCksm = false
 	}
 }
 

@@ -25,6 +25,28 @@ func osAccess(path string, flags AccessFlag) error {
 	return unix.Access(path, access)
 }
 
+func osReadAt(file *os.File, p []byte, off int64) (int, error) {
+	n, err := file.ReadAt(p, off)
+	if errno, ok := err.(unix.Errno); ok {
+		switch errno {
+		case
+			unix.ERANGE,
+			unix.EIO,
+			unix.ENXIO:
+			return n, _IOERR_CORRUPTFS
+		}
+	}
+	return n, err
+}
+
+func osWriteAt(file *os.File, p []byte, off int64) (int, error) {
+	n, err := file.WriteAt(p, off)
+	if errno, ok := err.(unix.Errno); ok && errno == unix.ENOSPC {
+		return n, _FULL
+	}
+	return n, err
+}
+
 func osSetMode(file *os.File, modeof string) error {
 	fi, err := os.Stat(modeof)
 	if err != nil {
