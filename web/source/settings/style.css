@@ -1468,6 +1468,33 @@ button.tab-button {
 	gap: 1rem;
 }
 
+.tokens-view {
+	.token-info {
+		.info-list {
+			border: none;
+			width: 100%;
+	
+			.info-list-entry {
+				background: none;
+				padding: 0;
+			}
+
+			> .info-list-entry > .monospace {
+				font-size: large;
+			}
+		}
+	
+		.action-buttons {
+			margin-top: 0.5rem;
+			> .mutation-button
+			> button {
+				font-size: 1rem;
+				line-height: 1rem;
+			}
+		}
+	}
+}
+
 .instance-rules {
 	list-style-position: inside;
 	margin: 0;
