@@ -133,7 +133,8 @@ func compilerSupported() bool {
 	}
 	switch runtime.GOARCH {
 	case "amd64":
-		return cpu.X86.HasSSE41
+		return cpu.X86.HasSSE41 ||
+			os.Getenv("GTS_WAZERO_FORCE_COMPILER") != ""
 	case "arm64":
 		return true
 	default:
