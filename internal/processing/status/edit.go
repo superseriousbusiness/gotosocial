@@ -86,7 +86,7 @@ func (p *Processor) Edit(
 	}
 
 	// Process incoming content type
-	contentType := p.processContentType(ctx, form, status, requester.Settings.StatusContentType)
+	contentType := processContentType(form, status, requester.Settings.StatusContentType)
 
 	// Process incoming status edit content fields.
 	content, errWithCode := p.processContent(ctx,
@@ -349,8 +349,7 @@ func (p *Processor) Edit(
 }
 
 // Returns the new content type of the status when applying an edit.
-func (p *Processor) processContentType(
-	ctx context.Context,
+func processContentType(
 	form *apimodel.StatusEditRequest,
 	status *gtsmodel.Status,
 	accountDefaultContentType string,
