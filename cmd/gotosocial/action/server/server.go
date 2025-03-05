@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/netip"
 	"os"
 	"os/signal"
 	"runtime"
@@ -117,8 +118,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	)
 
 	defer func() {
-		// Stop caches with
-		// background tasks.
+		// Stop any started caches.
+		//
+		// Noop if never started.
 		state.Caches.Stop()
 
 		if route != nil {
@@ -133,6 +135,8 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// Stop any currently running
 		// worker processes / scheduled
 		// tasks from being executed.
+		//
+		// Noop on unstarted workers.
 		state.Workers.Stop()
 
 		if state.Timelines.Home != nil {
@@ -202,7 +206,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize caches
 	state.Caches.Init()
-	state.Caches.Start()
+	if err := state.Caches.Start(); err != nil {
+		return fmt.Errorf("error starting caches: %w", err)
+	}
 
 	// Open connection to the database now caches started.
 	dbService, err := bundb.NewBunDBService(ctx, state)
@@ -240,10 +246,17 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error opening storage backend: %w", err)
 	}
 
+	// Parse http client allow
+	// and block range exceptions.
+	ranges, err := parseClientRanges()
+	if err != nil {
+		return err
+	}
+
 	// Prepare wrapped httpclient with config.
 	client := httpclient.New(httpclient.Config{
-		AllowRanges:           config.MustParseIPPrefixes(config.GetHTTPClientAllowIPs()),
-		BlockRanges:           config.MustParseIPPrefixes(config.GetHTTPClientBlockIPs()),
+		AllowRanges:           ranges.allow,
+		BlockRanges:           ranges.block,
 		Timeout:               config.GetHTTPClientTimeout(),
 		TLSInsecureSkipVerify: config.GetHTTPClientTLSInsecureSkipVerify(),
 	})
@@ -616,4 +629,45 @@ func compileWASM(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func parseClientRanges() (
+	*struct {
+		allow []netip.Prefix
+		block []netip.Prefix
+	},
+	error,
+) {
+	parseF := func(ips []string, ranges []netip.Prefix, flag string) error {
+		for i, ip := range ips {
+			p, err := netip.ParsePrefix(ip)
+			if err != nil {
+				return fmt.Errorf("error parsing %s value %s: %w", flag, ip, err)
+			}
+			ranges[i] = p
+		}
+		return nil
+	}
+
+	allowIPs := config.GetHTTPClientAllowIPs()
+	allowRanges := make([]netip.Prefix, len(allowIPs))
+	allowFlag := config.HTTPClientAllowIPsFlag()
+	if err := parseF(allowIPs, allowRanges, allowFlag); err != nil {
+		return nil, err
+	}
+
+	blockIPs := config.GetHTTPClientBlockIPs()
+	blockRanges := make([]netip.Prefix, len(blockIPs))
+	blockFlag := config.HTTPClientBlockIPsFlag()
+	if err := parseF(blockIPs, blockRanges, blockFlag); err != nil {
+		return nil, err
+	}
+
+	return &struct {
+		allow []netip.Prefix
+		block []netip.Prefix
+	}{
+		allow: allowRanges,
+		block: blockRanges,
+	}, nil
 }

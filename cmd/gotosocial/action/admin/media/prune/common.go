@@ -42,7 +42,9 @@ func setupPrune(ctx context.Context) (*prune, error) {
 	var state state.State
 
 	state.Caches.Init()
-	state.Caches.Start()
+	if err := state.Caches.Start(); err != nil {
+		return nil, fmt.Errorf("error starting caches: %w", err)
+	}
 
 	// Scheduler is required for the
 	// cleaner, but no other workers
