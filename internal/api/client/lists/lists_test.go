@@ -78,7 +78,9 @@ func (suite *ListsStandardTestSuite) SetupSuite() {
 
 func (suite *ListsStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	suite.state.Caches.Start()
+	if err := suite.state.Caches.Start(); err != nil {
+		panic("error starting caches: " + err.Error())
+	}
 	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()

@@ -24,11 +24,11 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"net/netip"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/queue"
 	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
@@ -44,11 +44,8 @@ func TestDeliveryWorkerPool(t *testing.T) {
 
 func testDeliveryWorkerPool(t *testing.T, sz int, input []*testrequest) {
 	wp := new(delivery.WorkerPool)
-	wp.Init(httpclient.New(httpclient.Config{
-		AllowRanges: config.MustParseIPPrefixes([]string{
-			"127.0.0.0/8",
-		}),
-	}))
+	allowLocal := []netip.Prefix{netip.MustParsePrefix("127.0.0.0/8")}
+	wp.Init(httpclient.New(httpclient.Config{AllowRanges: allowLocal}))
 	wp.Start(sz)
 	defer wp.Stop()
 	test(t, &wp.Queue, input)
