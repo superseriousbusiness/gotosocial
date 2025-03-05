@@ -263,15 +263,9 @@ func (suite *StatusCreateTestSuite) TestProcessNoContentTypeUsesDefault() {
 
 	suite.Equal("<p>poopoo peepee</p>", apiStatus.Content)
 
-	// content type isn't actually returned when creating a
-	// status, so we have to fetch from the database to check
-	createdStatus, err := suite.state.DB.GetStatusByID(ctx, apiStatus.ID)
-	suite.NoError(err)
-
-	// Check created status against requester's default content type
-	// setting (the test accounts don't actually have settings on them,
-	// so instead we check that the global default content type is used)
-	suite.Equal(gtsmodel.StatusContentTypeDefault, createdStatus.ContentType)
+	// the test accounts don't have settings, so we're comparing to
+	// the global default value instead of the requester's default
+	suite.Equal(apimodel.StatusContentTypeDefault, apiStatus.ContentType)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

@@ -195,6 +195,11 @@ func (suite *StatusEditTestSuite) TestEditOnStatusWithNoContentType() {
 	suite.Equal(form.Status, apiStatus.Text)
 	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
 
+	// Check response against requester's default content type setting
+	// (the test accounts don't actually have settings on them, so
+	// instead we check that the global default content type is used)
+	suite.Equal(apimodel.StatusContentTypeDefault, apiStatus.ContentType)
+
 	// Fetched the latest version of edited status from the database.
 	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
 	suite.NoError(err)
@@ -206,9 +211,8 @@ func (suite *StatusEditTestSuite) TestEditOnStatusWithNoContentType() {
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
 	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
 
-	// Check latest status against requester's default content type
-	// setting (the test accounts don't actually have settings on them,
-	// so instead we check that the global default content type is used)
+	// Check latest status against requester's default content
+	// type (again, actually just checking for the global default)
 	suite.Equal(gtsmodel.StatusContentTypeDefault, latestStatus.ContentType)
 
 	// Populate all historical edits for this status.
