@@ -578,6 +578,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   "card": null,
   "poll": null,
   "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
       "always": [
@@ -758,6 +759,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
   "card": null,
   "poll": null,
   "text": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+  "content_type": "text/plain",
   "filtered": [
     {
       "filter": {
@@ -943,6 +945,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
     "card": null,
     "poll": null,
     "text": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+    "content_type": "text/plain",
     "filtered": [
       {
         "filter": {
@@ -1676,6 +1679,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   "card": null,
   "poll": null,
   "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
       "always": [
@@ -1774,6 +1778,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
   "card": null,
   "poll": null,
   "text": "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+  "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
       "always": [
@@ -1897,6 +1902,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
   "card": null,
   "poll": null,
   "text": "Hi @1happyturtle, can I reply?",
+  "content_type": "text/markdown",
   "interaction_policy": {
     "can_favourite": {
       "always": [
@@ -3375,6 +3381,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
     "card": null,
     "poll": null,
     "text": "🐢 i don't mind people sharing and liking this one but I want to moderate replies to it 🐢",
+    "content_type": "text/plain",
     "interaction_policy": {
       "can_favourite": {
         "always": [
@@ -3473,6 +3480,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
     "card": null,
     "poll": null,
     "text": "Hi @1happyturtle, can I reply?",
+    "content_type": "text/markdown",
     "interaction_policy": {
       "can_favourite": {
         "always": [
@@ -3632,6 +3640,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
     "card": null,
     "poll": null,
     "text": "hello everyone!",
+    "content_type": "text/plain",
     "interaction_policy": {
       "can_favourite": {
         "always": [
@@ -3801,6 +3810,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
     "card": null,
     "poll": null,
     "text": "hello everyone!",
+    "content_type": "text/plain",
     "interaction_policy": {
       "can_favourite": {
         "always": [
