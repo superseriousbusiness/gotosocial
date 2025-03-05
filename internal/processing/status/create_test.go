@@ -238,6 +238,42 @@ func (suite *StatusCreateTestSuite) TestProcessReplyToUnthreadedRemoteStatus() {
 	suite.NotEmpty(dbStatus.ThreadID)
 }
 
+func (suite *StatusCreateTestSuite) TestProcessNoContentTypeUsesDefault() {
+	ctx := context.Background()
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      "poopoo peepee",
+		SpoilerText: "",
+		MediaIDs:    []string{},
+		Poll:        nil,
+		InReplyToID: "",
+		Sensitive:   false,
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		ScheduledAt: nil,
+		Language:    "en",
+		ContentType: "",
+	}
+
+	apiStatus, errWithCode := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(errWithCode)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("<p>poopoo peepee</p>", apiStatus.Content)
+
+	// content type isn't actually returned when creating a
+	// status, so we have to fetch from the database to check
+	createdStatus, err := suite.state.DB.GetStatusByID(ctx, apiStatus.ID)
+	suite.NoError(err)
+
+	// Check created status against requester's default content type
+	// setting (the test accounts don't actually have settings on them,
+	// so instead we check that the global default content type is used)
+	suite.Equal(gtsmodel.StatusContentTypeDefault, createdStatus.ContentType)
+}
+
 func TestStatusCreateTestSuite(t *testing.T) {
 	suite.Run(t, new(StatusCreateTestSuite))
 }
