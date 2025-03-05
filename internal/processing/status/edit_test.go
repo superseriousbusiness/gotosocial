@@ -26,6 +26,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
@@ -90,6 +91,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentType, previousEdit.ContentType)
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
 	suite.Equal(status.Language, previousEdit.Language)
@@ -128,6 +130,7 @@ func (suite *StatusEditTestSuite) TestEditChangeContentType() {
 
 	// Check response against input form data.
 	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.ContentType, apiStatus.ContentType)
 	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
 	suite.Equal(form.Sensitive, apiStatus.Sensitive)
 	suite.Equal(form.Language, *apiStatus.Language)
@@ -139,8 +142,8 @@ func (suite *StatusEditTestSuite) TestEditChangeContentType() {
 
 	// Check latest status against input form data.
 	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(typeutils.APIContentTypeToContentType(form.ContentType), latestStatus.ContentType)
 	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
-	suite.Equal(gtsmodel.StatusContentTypeMarkdown, latestStatus.ContentType)
 	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
 	suite.Equal(form.Language, latestStatus.Language)
 	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
