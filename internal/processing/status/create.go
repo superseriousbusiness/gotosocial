@@ -81,7 +81,7 @@ func (p *Processor) Create(
 	content, errWithCode := p.processContent(ctx,
 		requester,
 		statusID,
-		contentType,
+		typeutils.APIContentTypeToContentType(contentType),
 		form.Status,
 		form.SpoilerText,
 		form.Language,

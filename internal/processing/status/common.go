@@ -110,7 +110,7 @@ func (p *Processor) processContent(
 	ctx context.Context,
 	author *gtsmodel.Account,
 	statusID string,
-	contentType apimodel.StatusContentType,
+	contentType gtsmodel.StatusContentType,
 	content string,
 	contentWarning string,
 	language string,
@@ -149,11 +149,11 @@ func (p *Processor) processContent(
 	switch contentType {
 
 	// Format status according to text/plain.
-	case apimodel.StatusContentTypePlain:
+	case gtsmodel.StatusContentTypePlain:
 		format = p.formatter.FromPlain
 
 	// Format status according to text/markdown.
-	case apimodel.StatusContentTypeMarkdown:
+	case gtsmodel.StatusContentTypeMarkdown:
 		format = p.formatter.FromMarkdown
 
 	// Unknown.

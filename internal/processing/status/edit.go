@@ -85,14 +85,14 @@ func (p *Processor) Edit(
 		return nil, errWithCode
 	}
 
-	// Process incoming content type and update as needed
-	p.processContentType(ctx, form, status, requester.Settings.StatusContentType)
+	// Process incoming content type
+	contentType := p.processContentType(ctx, form, status, requester.Settings.StatusContentType)
 
 	// Process incoming status edit content fields.
 	content, errWithCode := p.processContent(ctx,
 		requester,
 		statusID,
-		form.ContentType,
+		contentType,
 		form.Status,
 		form.SpoilerText,
 		form.Language,
@@ -303,7 +303,7 @@ func (p *Processor) Edit(
 	status.Content = content.Content
 	status.ContentWarning = content.ContentWarning
 	status.Text = form.Status
-	status.ContentType = typeutils.APIContentTypeToContentType(form.ContentType)
+	status.ContentType = contentType
 	status.Language = content.Language
 	status.Sensitive = &form.Sensitive
 	status.AttachmentIDs = form.MediaIDs
@@ -348,34 +348,30 @@ func (p *Processor) Edit(
 	return p.c.GetAPIStatus(ctx, requester, status)
 }
 
-// Updates the content type of the status
+// Returns the new content type of the status when applying an edit.
 func (p *Processor) processContentType(
 	ctx context.Context,
 	form *apimodel.StatusEditRequest,
 	status *gtsmodel.Status,
 	accountDefaultContentType string,
-) {
+) gtsmodel.StatusContentType {
 	switch {
-	// Content type set on form, update the status with the new value.
+	// Content type set on form, return the new value.
 	case form.ContentType != "":
-		status.ContentType = typeutils.APIContentTypeToContentType(form.ContentType)
+		return typeutils.APIContentTypeToContentType(form.ContentType)
 
-	// No content type on the form, get the status's current content type and
-	// set it back on the form for later use.
+	// No content type on the form, return the status's current content type.
 	case status.ContentType != 0:
-		form.ContentType = p.converter.ContentTypeToAPIContentType(ctx, status.ContentType)
+		return status.ContentType
 
-	// Old statuses may not have a saved content type; update the status to the
-	// user's preference and set this back on the form for later use.
+	// Old statuses may not have a saved content type;
+	// return the user's default content type preference.
 	case accountDefaultContentType != "":
-		status.ContentType = typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
-		form.ContentType = apimodel.StatusContentType(accountDefaultContentType)
+		return typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
 
-	// uhh.. Fall back to global default, set
-	// this back on the form for later use.
+	// uhh.. Fall back to global default.
 	default:
-		status.ContentType = gtsmodel.StatusContentTypeDefault
-		form.ContentType = apimodel.StatusContentTypeDefault
+		return gtsmodel.StatusContentTypeDefault
 	}
 }
 
