@@ -90,6 +90,70 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
 	suite.Equal(status.Content, previousEdit.Content)
 	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
+}
+
+func (suite *StatusEditTestSuite) TestEditChangeContentType() {
+	// Create cancellable context to use for test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Get a local account to use as test requester.
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	// Get requester's existing plain text status to perform an edit on.
+	status := suite.testStatuses["local_account_1_status_6"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	// Prepare edit with a Markdown body.
+	form := &apimodel.StatusEditRequest{
+		Status:          "ooh the status is *fancy* now!",
+		ContentType:     apimodel.StatusContentTypeMarkdown,
+		SpoilerText:     "shhhhh",
+		Sensitive:       true,
+		Language:        "fr", // hoh hoh hoh
+		MediaIDs:        nil,
+		MediaAttributes: nil,
+		Poll:            nil,
+	}
+
+	// Pass the prepared form to the status processor to perform the edit.
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NotNil(apiStatus)
+	suite.NoError(errWithCode)
+
+	// Check response against input form data.
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.Equal(form.SpoilerText, apiStatus.SpoilerText)
+	suite.Equal(form.Sensitive, apiStatus.Sensitive)
+	suite.Equal(form.Language, *apiStatus.Language)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
+
+	// Fetched the latest version of edited status from the database.
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	// Check latest status against input form data.
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.SpoilerText, latestStatus.ContentWarning)
+	suite.Equal(gtsmodel.StatusContentTypeMarkdown, latestStatus.ContentType)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
+
+	// Populate all historical edits for this status.
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	// Check previous status edit matches original status content.
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
 	suite.Equal(status.ContentType, previousEdit.ContentType)
 	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
 	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
