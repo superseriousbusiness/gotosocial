@@ -19,11 +19,9 @@ package cache
 
 import (
 	"errors"
-	"time"
 
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 // SentinelError is an error that can be returned and checked against to indicate a non-permanent
@@ -51,19 +49,3 @@ type nocopy struct{}
 func (*nocopy) Lock() {}
 
 func (*nocopy) Unlock() {}
-
-// tryUntil will attempt to call 'do' for 'count' attempts, before panicking with 'msg'.
-func tryUntil(msg string, count int, do func() bool) {
-	for i := 0; i < count; i++ {
-		if do() {
-			// success.
-			return
-		}
-
-		// Sleep for a little before retry (a bcakoff).
-		time.Sleep(time.Millisecond * 1 << (i + 1))
-	}
-
-	// panic on total failure as this shouldn't happen.
-	log.Panicf(nil, "failed %s after %d tries", msg, count)
-}

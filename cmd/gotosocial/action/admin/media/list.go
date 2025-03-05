@@ -125,7 +125,9 @@ func setupList(ctx context.Context) (*list, error) {
 	}
 
 	state.Caches.Init()
-	state.Caches.Start()
+	if err := state.Caches.Start(); err != nil {
+		return nil, fmt.Errorf("error starting caches: %w", err)
+	}
 
 	// Only set state DB connection.
 	// Don't need Actions or Workers for this.

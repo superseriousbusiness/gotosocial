@@ -118,11 +118,10 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	)
 
 	defer func() {
-		if state.Caches.Inited() {
-			// We reached a point where caches
-			// were initialized. Stop them.
-			state.Caches.Stop()
-		}
+		// Stop any started caches.
+		//
+		// Noop if never started.
+		state.Caches.Stop()
 
 		if route != nil {
 			// We reached a point where the API router
@@ -207,7 +206,9 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Initialize caches
 	state.Caches.Init()
-	state.Caches.Start()
+	if err := state.Caches.Start(); err != nil {
+		return fmt.Errorf("error starting caches: %w", err)
+	}
 
 	// Open connection to the database now caches started.
 	dbService, err := bundb.NewBunDBService(ctx, state)
