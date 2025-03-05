@@ -1559,6 +1559,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			URL:                      "http://localhost:8080/@the_mighty_zork/statuses/01F8MHAYFKS4KMXF8K5Y1C0KRN",
 			Content:                  "this is a Public local-only post that shouldn't federate, but it's still boostable, replyable, and likeable. also it has no stored content type",
 			Text:                     "this is a Public local-only post that shouldn't federate, but it's still boostable, replyable, and likeable. also it has no stored content type",
+			ContentType:              0,
 			CreatedAt:                TimeMustParse("2021-10-20T12:40:37+02:00"),
 			EditedAt:                 time.Time{},
 			Local:                    util.Ptr(true),
