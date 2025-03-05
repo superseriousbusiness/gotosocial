@@ -1391,6 +1391,7 @@ func (c *Converter) baseStatusToFrontend(
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
 		Text:               s.Text,
+		ContentType:        c.ContentTypeToAPIContentType(ctx, s.ContentType),
 		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
