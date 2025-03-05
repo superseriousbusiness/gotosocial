@@ -161,6 +161,71 @@ func (suite *StatusEditTestSuite) TestEditChangeContentType() {
 	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
 }
 
+func (suite *StatusEditTestSuite) TestEditOnStatusWithNoContentType() {
+	// Create cancellable context to use for test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Get a local account to use as test requester.
+	requester := suite.testAccounts["local_account_1"]
+	requester, _ = suite.state.DB.GetAccountByID(ctx, requester.ID)
+
+	// Get requester's existing status, which has no
+	// stored content type, to perform an edit on.
+	status := suite.testStatuses["local_account_1_status_10"]
+	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
+
+	// Prepare edit without setting a new content type.
+	form := &apimodel.StatusEditRequest{
+		Status:          "how will this text be parsed? it is a mystery",
+		SpoilerText:     "shhhhh",
+		Sensitive:       true,
+		Language:        "fr", // hoh hoh hoh
+		MediaIDs:        nil,
+		MediaAttributes: nil,
+		Poll:            nil,
+	}
+
+	// Pass the prepared form to the status processor to perform the edit.
+	apiStatus, errWithCode := suite.status.Edit(ctx, requester, status.ID, form)
+	suite.NotNil(apiStatus)
+	suite.NoError(errWithCode)
+
+	// Check response against input form data.
+	suite.Equal(form.Status, apiStatus.Text)
+	suite.NotEqual(util.FormatISO8601(status.EditedAt), *apiStatus.EditedAt)
+
+	// Fetched the latest version of edited status from the database.
+	latestStatus, err := suite.state.DB.GetStatusByID(ctx, status.ID)
+	suite.NoError(err)
+
+	// Check latest status against input form data
+	suite.Equal(form.Status, latestStatus.Text)
+	suite.Equal(form.Sensitive, *latestStatus.Sensitive)
+	suite.Equal(form.Language, latestStatus.Language)
+	suite.Equal(len(status.EditIDs)+1, len(latestStatus.EditIDs))
+	suite.NotEqual(status.UpdatedAt(), latestStatus.UpdatedAt())
+
+	// Check latest status against requester's default content type
+	// setting (the test accounts don't actually have settings on them,
+	// so instead we check that the global default content type is used)
+	suite.Equal(gtsmodel.StatusContentTypeDefault, latestStatus.ContentType)
+
+	// Populate all historical edits for this status.
+	err = suite.state.DB.PopulateStatusEdits(ctx, latestStatus)
+	suite.NoError(err)
+
+	// Check previous status edit matches original status content.
+	previousEdit := latestStatus.Edits[len(latestStatus.Edits)-1]
+	suite.Equal(status.Content, previousEdit.Content)
+	suite.Equal(status.Text, previousEdit.Text)
+	suite.Equal(status.ContentType, previousEdit.ContentType)
+	suite.Equal(status.ContentWarning, previousEdit.ContentWarning)
+	suite.Equal(*status.Sensitive, *previousEdit.Sensitive)
+	suite.Equal(status.Language, previousEdit.Language)
+	suite.Equal(status.UpdatedAt(), previousEdit.CreatedAt)
+}
+
 func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	// Create cancellable context to use for test.
 	ctx, cncl := context.WithCancel(context.Background())
