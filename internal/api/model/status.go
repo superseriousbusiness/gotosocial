@@ -326,7 +326,7 @@ type StatusSource struct {
 	SpoilerText string `json:"spoiler_text"`
 
 	// Content type that was used to parse the text.
-	ContentType StatusContentType `json:"content_type"`
+	ContentType StatusContentType `json:"content_type,omitempty"`
 }
 
 // StatusEdit represents one historical revision of a status, containing
