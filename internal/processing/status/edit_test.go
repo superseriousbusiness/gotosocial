@@ -172,7 +172,7 @@ func (suite *StatusEditTestSuite) TestEditOnStatusWithNoContentType() {
 
 	// Get requester's existing status, which has no
 	// stored content type, to perform an edit on.
-	status := suite.testStatuses["local_account_1_status_10"]
+	status := suite.testStatuses["local_account_1_status_2"]
 	status, _ = suite.state.DB.GetStatusByID(ctx, status.ID)
 
 	// Prepare edit without setting a new content type.
