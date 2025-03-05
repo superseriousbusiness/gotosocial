@@ -41,6 +41,7 @@ type StatusEdit struct {
 	PollVotes              []int              `bun:",array"`                                                      // Poll vote count at time of status edit, only set if poll votes were reset.
 	StatusID               string             `bun:"type:CHAR(26),nullzero,notnull"`                              // The originating status ID this is a historical edit of.
 	CreatedAt              time.Time          `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // The creation time of this version of the status content (according to receiving server).
+
 	// We don't bother having a *gtsmodel.Status model here
 	// as the StatusEdit is always just attached to a Status,
 	// so it doesn't need a self-reference back to it.

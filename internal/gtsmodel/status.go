@@ -382,7 +382,6 @@ func (v Visibility) String() string {
 type StatusContentType enumType
 
 const (
-	// The "unset"
 	StatusContentTypePlain    StatusContentType = 1
 	StatusContentTypeMarkdown StatusContentType = 2
 	StatusContentTypeDefault                    = StatusContentTypePlain
