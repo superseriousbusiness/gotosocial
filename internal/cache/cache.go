@@ -136,6 +136,13 @@ func (c *Caches) Start() {
 	})
 }
 
+// Inited returns true if the
+// caches have been initialized.
+func (c *Caches) Inited() bool {
+	// Use nilness of *ttl.Cache pointers as heuristic.
+	return c.Webfinger != nil && c.StatusesFilterableFields != nil
+}
+
 // Stop will stop any caches that require a background
 // routine, which usually means any kind of TTL caches.
 func (c *Caches) Stop() {
