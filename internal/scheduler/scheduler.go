@@ -44,11 +44,6 @@ func (sch *Scheduler) Start() bool {
 	return false
 }
 
-// Started returns true if the scheduler has been started.
-func (sch *Scheduler) Started() bool {
-	return sch.ts != nil
-}
-
 // Stop attempts to stop scheduler, cancelling
 // all running tasks. Returns false if not running.
 func (sch *Scheduler) Stop() bool {
