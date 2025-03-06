@@ -33,7 +33,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
@@ -85,7 +84,7 @@ func (p *Processor) Edit(
 		return nil, errWithCode
 	}
 
-	// Process incoming content type
+	// Process incoming content type.
 	contentType := processContentType(form.ContentType, status, requester.Settings.StatusContentType)
 
 	// Process incoming status edit content fields.
@@ -346,34 +345,6 @@ func (p *Processor) Edit(
 
 	// Return an API model of the updated status.
 	return p.c.GetAPIStatus(ctx, requester, status)
-}
-
-// Returns the final content type to use when creating or editing a status.
-func processContentType(
-	requestContentType apimodel.StatusContentType,
-	existingStatus *gtsmodel.Status,
-	accountDefaultContentType string,
-) gtsmodel.StatusContentType {
-	switch {
-	// Content type set in the request, return the new value.
-	case requestContentType != "":
-		return typeutils.APIContentTypeToContentType(requestContentType)
-
-	// No content type in the request, return the existing
-	// status's current content type if we know of one.
-	case existingStatus != nil && existingStatus.ContentType != 0:
-		return existingStatus.ContentType
-
-	// We aren't editing an existing status, or if we are
-	// it's an old one that doesn't have a saved content
-	// type. Use the user's default content type setting.
-	case accountDefaultContentType != "":
-		return typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
-
-	// uhh.. Fall back to global default.
-	default:
-		return gtsmodel.StatusContentTypeDefault
-	}
 }
 
 // HistoryGet gets edit history for the target status, taking account of privacy settings and blocks etc.

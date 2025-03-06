@@ -66,22 +66,14 @@ func (p *Processor) Create(
 	// Generate new ID for status.
 	statusID := id.NewULID()
 
-	// Process incoming content type
-	contentType := form.ContentType
-	if contentType == "" {
-		// If not set in the form, use the user's default
-		contentType = apimodel.StatusContentType(requester.Settings.StatusContentType)
-		if contentType == "" {
-			// ??? use the global default value
-			contentType = apimodel.StatusContentTypeDefault
-		}
-	}
+	// Process incoming content type.
+	contentType := processContentType(form.ContentType, nil, requester.Settings.StatusContentType)
 
 	// Process incoming status content fields.
 	content, errWithCode := p.processContent(ctx,
 		requester,
 		statusID,
-		typeutils.APIContentTypeToContentType(contentType),
+		contentType,
 		form.Status,
 		form.SpoilerText,
 		form.Language,
@@ -174,7 +166,7 @@ func (p *Processor) Create(
 		Content:        content.Content,
 		ContentWarning: content.ContentWarning,
 		Text:           form.Status, // raw
-		ContentType:    typeutils.APIContentTypeToContentType(contentType),
+		ContentType:    contentType,
 
 		// Set gathered mentions.
 		MentionIDs: content.MentionIDs,

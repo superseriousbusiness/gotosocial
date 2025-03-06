@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 	"github.com/superseriousbusiness/gotosocial/internal/validate"
 )
@@ -104,6 +105,34 @@ type statusContent struct {
 	Emojis         []*gtsmodel.Emoji
 	TagIDs         []string
 	Tags           []*gtsmodel.Tag
+}
+
+// Returns the final content type to use when creating or editing a status.
+func processContentType(
+	requestContentType apimodel.StatusContentType,
+	existingStatus *gtsmodel.Status,
+	accountDefaultContentType string,
+) gtsmodel.StatusContentType {
+	switch {
+	// Content type set in the request, return the new value.
+	case requestContentType != "":
+		return typeutils.APIContentTypeToContentType(requestContentType)
+
+	// No content type in the request, return the existing
+	// status's current content type if we know of one.
+	case existingStatus != nil && existingStatus.ContentType != 0:
+		return existingStatus.ContentType
+
+	// We aren't editing an existing status, or if we are
+	// it's an old one that doesn't have a saved content
+	// type. Use the user's default content type setting.
+	case accountDefaultContentType != "":
+		return typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
+
+	// uhh.. Fall back to global default.
+	default:
+		return gtsmodel.StatusContentTypeDefault
+	}
 }
 
 func (p *Processor) processContent(
