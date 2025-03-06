@@ -43,7 +43,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
     <pubDate>Wed, 20 Oct 2021 10:41:37 +0000</pubDate>
     <lastBuildDate>Wed, 20 Oct 2021 10:41:37 +0000</lastBuildDate>
     <item>
-      <title>open to see some <strong>puppies</strong></title>
+      <title>open to see some &lt;strong&gt;puppies&lt;/strong&gt;</title>
       <link>http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37</link>
       <description>@admin@localhost:8080 made a new post: &#34;🐕🐕🐕🐕🐕&#34;</description>
       <content:encoded><![CDATA[<p>🐕🐕🐕🐕🐕</p>]]></content:encoded>
