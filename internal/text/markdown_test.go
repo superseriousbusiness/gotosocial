@@ -57,7 +57,7 @@ const (
 	mdWithCheekyHTML                   = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
 	mdWithCheekyHTMLExpected           = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a cheeky little script:</p>"
 	mdWithHashtagInitial               = "#welcome #Hashtag"
-	mdWithHashtagInitialExpected       = "<p><a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p>"
+	mdWithHashtagInitialExpected       = "<p><a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p>"
 	mdCodeBlockWithNewlines            = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
 	mdCodeBlockWithNewlinesExpected    = "<p>some code coming up</p><pre><code>\n\n\n</code></pre><p>that was some code</p>"
 	mdWithFootnote                     = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
