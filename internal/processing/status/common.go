@@ -142,9 +142,13 @@ func (p *Processor) processContent(
 		)
 	}
 
-	// format is the currently set text formatting
-	// function, according to the provided content-type.
-	var format text.FormatFunc
+	var (
+		// format is the currently set text formatting
+		// function, according to the provided content-type.
+		format text.FormatFunc
+		// formatCW is like format, but for content warning.
+		formatCW text.FormatFunc
+	)
 
 	if contentType == "" {
 		// If content type wasn't specified, use
@@ -157,10 +161,12 @@ func (p *Processor) processContent(
 	// Format status according to text/plain.
 	case "", string(apimodel.StatusContentTypePlain):
 		format = p.formatter.FromPlain
+		formatCW = p.formatter.FromPlainBasic
 
 	// Format status according to text/markdown.
 	case string(apimodel.StatusContentTypeMarkdown):
 		format = p.formatter.FromMarkdown
+		formatCW = p.formatter.FromMarkdownBasic
 
 	// Unknown.
 	default:
@@ -192,26 +198,23 @@ func (p *Processor) processContent(
 	status.Emojis = contentRes.Emojis
 	status.Tags = contentRes.Tags
 
-	// From here-on-out just use emoji-only
-	// plain-text formatting as the FormatFunc.
-	format = p.formatter.FromPlainEmojiOnly
-
 	// Sanitize content warning and format.
-	warning := text.SanitizeToPlaintext(contentWarning)
-	warningRes := formatInput(format, warning)
+	cwRes := formatInput(formatCW, contentWarning)
 
 	// Gather results of the formatted.
-	status.ContentWarning = warningRes.HTML
-	status.Emojis = append(status.Emojis, warningRes.Emojis...)
+	status.ContentWarning = cwRes.HTML
+	status.Emojis = append(status.Emojis, cwRes.Emojis...)
 
 	if poll != nil {
 		// Pre-allocate slice of poll options of expected length.
 		status.PollOptions = make([]string, len(poll.Options))
 		for i, option := range poll.Options {
 
-			// Sanitize each poll option and format.
-			option = text.SanitizeToPlaintext(option)
-			optionRes := formatInput(format, option)
+			// Strip each poll option and format.
+			//
+			// For polls just use basic formatting.
+			option = text.RemoveHTML(option)
+			optionRes := formatInput(p.formatter.FromPlainBasic, option)
 
 			// Gather results of the formatted.
 			status.PollOptions[i] = optionRes.HTML

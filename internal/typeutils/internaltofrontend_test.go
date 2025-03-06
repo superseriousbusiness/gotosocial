@@ -490,7 +490,154 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   "muted": false,
   "bookmarked": true,
   "pinned": false,
-  "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e ! first post on the instance :rainbow: !\u003c/p\u003e",
+  "reblog": null,
+  "application": {
+    "name": "superseriousbusiness",
+    "website": "https://superserious.business"
+  },
+  "account": {
+    "id": "01F8MH17FWEB39HZJ76B6VXSKF",
+    "username": "admin",
+    "acct": "admin",
+    "display_name": "",
+    "locked": false,
+    "discoverable": true,
+    "bot": false,
+    "created_at": "2022-05-17T13:10:59.000Z",
+    "note": "",
+    "url": "http://localhost:8080/@admin",
+    "avatar": "",
+    "avatar_static": "",
+    "header": "http://localhost:8080/assets/default_header.webp",
+    "header_static": "http://localhost:8080/assets/default_header.webp",
+    "header_description": "Flat gray background (default header).",
+    "followers_count": 1,
+    "following_count": 1,
+    "statuses_count": 4,
+    "last_status_at": "2021-10-20",
+    "emojis": [],
+    "fields": [],
+    "enable_rss": true,
+    "roles": [
+      {
+        "id": "admin",
+        "name": "admin",
+        "color": ""
+      }
+    ],
+    "group": false
+  },
+  "media_attachments": [
+    {
+      "id": "01F8MH6NEM8D7527KZAECTCR76",
+      "type": "image",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "text_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg",
+      "preview_url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/small/01F8MH6NEM8D7527KZAECTCR76.webp",
+      "remote_url": null,
+      "preview_remote_url": null,
+      "meta": {
+        "original": {
+          "width": 1200,
+          "height": 630,
+          "size": "1200x630",
+          "aspect": 1.9047619
+        },
+        "small": {
+          "width": 512,
+          "height": 268,
+          "size": "512x268",
+          "aspect": 1.9104477
+        },
+        "focus": {
+          "x": 0,
+          "y": 0
+        }
+      },
+      "description": "Black and white image of some 50's style text saying: Welcome On Board",
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj"
+    }
+  ],
+  "mentions": [],
+  "tags": [
+    {
+      "name": "welcome",
+      "url": "http://localhost:8080/tags/welcome"
+    }
+  ],
+  "emojis": [
+    {
+      "shortcode": "rainbow",
+      "url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "static_url": "http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/static/01F8MH9H8E4VG3KDYJR9EGPXCQ.png",
+      "visible_in_picker": true,
+      "category": "reactions"
+    }
+  ],
+  "card": null,
+  "poll": null,
+  "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "interaction_policy": {
+    "can_favourite": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reply": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    },
+    "can_reblog": {
+      "always": [
+        "public",
+        "me"
+      ],
+      "with_approval": []
+    }
+  }
+}`, string(b))
+}
+
+func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning() {
+	// Change status content warning.
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["admin_account_status_1"]
+	testStatus.ContentWarning = `<p>First paragraph of content warning</p><h4>Here's the title!</h4><p></p><p>Big boobs<br>Tee hee!<br><br>Some more text<br>And a bunch more<br><br>Hasta la victoria siempre!</p>`
+
+	requestingAccount := suite.testAccounts["local_account_1"]
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	suite.NoError(err)
+
+	b, err := json.MarshalIndent(apiStatus, "", "  ")
+	suite.NoError(err)
+
+	suite.Equal(`{
+  "id": "01F8MH75CBF9JFX4ZAD54N0W0R",
+  "created_at": "2021-10-20T11:36:45.000Z",
+  "edited_at": null,
+  "in_reply_to_id": null,
+  "in_reply_to_account_id": null,
+  "sensitive": false,
+  "spoiler_text": "First paragraph of content warning\n\nHere's the title!\n\nBig boobs\nTee hee!\n\nSome more text\nAnd a bunch more\n\nHasta la victoria siempre!",
+  "visibility": "public",
+  "language": "en",
+  "uri": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "url": "http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
+  "replies_count": 1,
+  "reblogs_count": 0,
+  "favourites_count": 1,
+  "favourited": true,
+  "reblogged": false,
+  "muted": false,
+  "bookmarked": true,
+  "pinned": false,
+  "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e ! first post on the instance :rainbow: !\u003c/p\u003e",
   "reblog": null,
   "application": {
     "name": "superseriousbusiness",
@@ -670,7 +817,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
   "muted": false,
   "bookmarked": true,
   "pinned": false,
-  "content": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+  "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e ! first post on the instance :rainbow: !\u003c/p\u003e fnord",
   "reblog": null,
   "application": {
     "name": "superseriousbusiness",
@@ -859,7 +1006,7 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
     "muted": false,
     "bookmarked": true,
     "pinned": false,
-    "content": "hello world! #welcome ! first post on the instance :rainbow: ! fnord",
+    "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e ! first post on the instance :rainbow: !\u003c/p\u003e fnord",
     "reblog": null,
     "application": {
       "name": "superseriousbusiness",
@@ -1588,7 +1735,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   "muted": false,
   "bookmarked": true,
   "pinned": false,
-  "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e ! first post on the instance :rainbow: !\u003c/p\u003e",
   "reblog": null,
   "application": {
     "name": "superseriousbusiness",
@@ -1733,7 +1880,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "this is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it",
+  "content": "\u003cp\u003ethis is a very personal post that I don't want anyone to interact with at all, and i only want mutuals to see it\u003c/p\u003e",
   "reblog": null,
   "application": {
     "name": "really cool gts application",
@@ -2812,7 +2959,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "muted": false,
       "bookmarked": false,
       "pinned": false,
-      "content": "dark souls status bot: \"thoughts of dog\"",
+      "content": "\u003cp\u003edark souls status bot: \"thoughts of dog\"\u003c/p\u003e",
       "reblog": null,
       "account": {
         "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",
@@ -3326,7 +3473,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
     "muted": false,
     "bookmarked": false,
     "pinned": false,
-    "content": "🐢 i don't mind people sharing and liking this one but I want to moderate replies to it 🐢",
+    "content": "\u003cp\u003e🐢 i don't mind people sharing and liking this one but I want to moderate replies to it 🐢\u003c/p\u003e",
     "reblog": null,
     "application": {
       "name": "kindaweird",
@@ -3591,7 +3738,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
     "muted": false,
     "bookmarked": false,
     "pinned": false,
-    "content": "hello everyone!",
+    "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
     "reblog": null,
     "application": {
       "name": "really cool gts application",
@@ -3760,7 +3907,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
     "muted": false,
     "bookmarked": false,
     "pinned": false,
-    "content": "hello everyone!",
+    "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
     "reblog": null,
     "application": {
       "name": "really cool gts application",

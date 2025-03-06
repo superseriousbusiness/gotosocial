@@ -91,7 +91,7 @@ func (suite *StatusHistoryTestSuite) TestGetHistory() {
 
 	suite.Equal(`[
   {
-    "content": "hello everyone!",
+    "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
     "spoiler_text": "introduction post",
     "sensitive": true,
     "created_at": "2021-10-20T10:40:37.000Z",

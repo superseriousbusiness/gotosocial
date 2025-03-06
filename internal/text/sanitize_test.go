@@ -36,30 +36,30 @@ type SanitizeTestSuite struct {
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeOutgoing() {
-	s := text.SanitizeToHTML(sanitizeOutgoing)
+	s := text.SanitizeHTML(sanitizeOutgoing)
 	suite.Equal(sanitizedOutgoing, s)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeHTML() {
-	s := text.SanitizeToHTML(sanitizeHTML)
+	s := text.SanitizeHTML(sanitizeHTML)
 	suite.Equal(sanitizedHTML, s)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeCaption1() {
 	dodgyCaption := "<script>console.log('haha!')</script>this is just a normal caption ;)"
-	sanitized := text.SanitizeToPlaintext(dodgyCaption)
+	sanitized := text.RemoveHTML(dodgyCaption)
 	suite.Equal("this is just a normal caption ;)", sanitized)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeCaption2() {
 	dodgyCaption := "<em>here's a LOUD caption</em>"
-	sanitized := text.SanitizeToPlaintext(dodgyCaption)
+	sanitized := text.RemoveHTML(dodgyCaption)
 	suite.Equal("here's a LOUD caption", sanitized)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeCaption3() {
 	dodgyCaption := ""
-	sanitized := text.SanitizeToPlaintext(dodgyCaption)
+	sanitized := text.RemoveHTML(dodgyCaption)
 	suite.Equal("", sanitized)
 }
 
@@ -75,21 +75,21 @@ with some newlines
 
 
 `
-	sanitized := text.SanitizeToPlaintext(dodgyCaption)
+	sanitized := text.RemoveHTML(dodgyCaption)
 	suite.Equal("here is\na multi line\ncaption\nwith some newlines", sanitized)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeCaption5() {
 	// html-escaped: "<script>console.log('aha!')</script> hello world"
 	dodgyCaption := `&lt;script&gt;console.log(&apos;aha!&apos;)&lt;/script&gt; hello world`
-	sanitized := text.SanitizeToPlaintext(dodgyCaption)
+	sanitized := text.RemoveHTML(dodgyCaption)
 	suite.Equal("hello world", sanitized)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeCaption6() {
 	// html-encoded: "<script>console.log('aha!')</script> hello world"
 	dodgyCaption := `&lt;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#99;&#111;&#110;&#115;&#111;&#108;&#101;&period;&#108;&#111;&#103;&lpar;&apos;&#97;&#104;&#97;&excl;&apos;&rpar;&lt;&sol;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#32;&#104;&#101;&#108;&#108;&#111;&#32;&#119;&#111;&#114;&#108;&#100;`
-	sanitized := text.SanitizeToPlaintext(dodgyCaption)
+	sanitized := text.RemoveHTML(dodgyCaption)
 	suite.Equal("hello world", sanitized)
 }
 
@@ -104,27 +104,27 @@ func (suite *SanitizeTestSuite) TestSanitizeCustomCSS() {
 	overflow: hidden;
 	text-overflow: ellipsis;
 }`
-	sanitized := text.SanitizeToPlaintext(customCSS)
+	sanitized := text.RemoveHTML(customCSS)
 	suite.Equal(customCSS, sanitized) // should be the same as it was before
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeNaughtyCustomCSS1() {
 	// try to break out of <style> into <head> and change the document title
 	customCSS := "</style><title>pee pee poo poo</title><style>"
-	sanitized := text.SanitizeToPlaintext(customCSS)
+	sanitized := text.RemoveHTML(customCSS)
 	suite.Empty(sanitized)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeNaughtyCustomCSS2() {
 	// try to break out of <style> into <head> and change the document title
 	customCSS := "pee pee poo poo</style><title></title><style>"
-	sanitized := text.SanitizeToPlaintext(customCSS)
+	sanitized := text.RemoveHTML(customCSS)
 	suite.Equal("pee pee poo poo", sanitized)
 }
 
 func (suite *SanitizeTestSuite) TestSanitizeInlineImg() {
 	withInlineImg := "<p>Here's an inline image: <img class=\"fixed-size-img svelte-uci8eb\" aria-hidden=\"false\" alt=\"A black-and-white photo of an Oblique Strategy card. The card reads: 'Define an area as 'safe' and use it as an anchor'.\" title=\"A black-and-white photo of an Oblique Strategy card. The card reads: 'Define an area as 'safe' and use it as an anchor'.\" width=\"0\" height=\"0\" src=\"https://example.org/fileserver/01H7J83147QMCE17C0RS9P10Y9/attachment/small/01H7J8365XXRTCP6CAMGEM49ZE.jpg\" style=\"object-position: 50% 50%;\"></p>"
-	sanitized := text.SanitizeToHTML(withInlineImg)
+	sanitized := text.SanitizeHTML(withInlineImg)
 	suite.Equal(`<p>Here&#39;s an inline image: </p>`, sanitized)
 }
 

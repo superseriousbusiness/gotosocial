@@ -60,33 +60,6 @@ func (suite *StatusCreateTestSuite) TestProcessContentWarningWithQuotationMarks(
 	suite.Equal("\"test\"", apiStatus.SpoilerText)
 }
 
-func (suite *StatusCreateTestSuite) TestProcessContentWarningWithHTMLEscapedQuotationMarks() {
-	ctx := context.Background()
-
-	creatingAccount := suite.testAccounts["local_account_1"]
-	creatingApplication := suite.testApplications["application_1"]
-
-	statusCreateForm := &apimodel.StatusCreateRequest{
-		Status:      "poopoo peepee",
-		MediaIDs:    []string{},
-		Poll:        nil,
-		InReplyToID: "",
-		Sensitive:   false,
-		SpoilerText: "&#34test&#34", // the html-escaped quotation marks should appear as normal quotation marks in the finished text
-		Visibility:  apimodel.VisibilityPublic,
-		LocalOnly:   util.Ptr(false),
-		ScheduledAt: nil,
-		Language:    "en",
-		ContentType: apimodel.StatusContentTypePlain,
-	}
-
-	apiStatus, err := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
-	suite.NoError(err)
-	suite.NotNil(apiStatus)
-
-	suite.Equal("\"test\"", apiStatus.SpoilerText)
-}
-
 func (suite *StatusCreateTestSuite) TestProcessStatusMarkdownWithUnderscoreEmoji() {
 	ctx := context.Background()
 

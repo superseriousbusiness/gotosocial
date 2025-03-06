@@ -20,6 +20,8 @@ package text
 import (
 	"bytes"
 	"context"
+	"regexp"
+	"strings"
 
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -27,11 +29,15 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
 	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer"
 	"github.com/yuin/goldmark/renderer/html"
 )
 
 // FromMarkdown fulfils FormatFunc by parsing
 // the given markdown input into a FormatResult.
+//
+// Inline (aka unsafe) HTML elements are allowed,
+// as they should be sanitized afterwards anyway.
 func (f *Formatter) FromMarkdown(
 	ctx context.Context,
 	parseMention gtsmodel.ParseMentionFunc,
@@ -39,18 +45,79 @@ func (f *Formatter) FromMarkdown(
 	statusID string,
 	input string,
 ) *FormatResult {
-	result := new(FormatResult)
+	return f.fromMarkdown(
+		ctx,
+		false, // basic = false
+		parseMention,
+		authorID,
+		statusID,
+		input,
+	)
+}
+
+// FromMarkdownBasic fulfils FormatFunc by parsing
+// the given markdown input into a FormatResult.
+//
+// Unlike FromMarkdown, it will only parse emojis with
+// the custom renderer, leaving aside mentions and tags.
+//
+// Inline (aka unsafe) HTML elements are not allowed.
+//
+// If the result is a single paragraph,
+// it will not be wrapped in <p> tags.
+func (f *Formatter) FromMarkdownBasic(
+	ctx context.Context,
+	parseMention gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	input string,
+) *FormatResult {
+	res := f.fromMarkdown(
+		ctx,
+		true, // basic = true
+		parseMention,
+		authorID,
+		statusID,
+		input,
+	)
+
+	res.HTML = unwrapParagraph(res.HTML)
+	return res
+}
+
+// fromMarkdown parses the given input text either
+// with or without emojis, and returns the result.
+func (f *Formatter) fromMarkdown(
+	ctx context.Context,
+	basic bool,
+	parseMention gtsmodel.ParseMentionFunc,
+	authorID string,
+	statusID string,
+	input string,
+) *FormatResult {
+	var (
+		result          = new(FormatResult)
+		rendererOptions = []renderer.Option{
+			html.WithXHTML(),
+			html.WithHardWraps(),
+		}
+	)
+
+	if !basic {
+		// Allow raw HTML. We sanitize
+		// at the end so this is OK.
+		rendererOptions = append(
+			rendererOptions,
+			html.WithUnsafe(),
+		)
+	}
 
 	// Instantiate goldmark parser for
 	// markdown, using custom renderer
 	// to add hashtag/mention links.
 	md := goldmark.New(
 		goldmark.WithRendererOptions(
-			html.WithXHTML(),
-			html.WithHardWraps(),
-			// Allows raw HTML. We sanitize
-			// at the end so this is OK.
-			html.WithUnsafe(),
+			rendererOptions...,
 		),
 		goldmark.WithExtensions(
 			&customRenderer{
@@ -59,7 +126,9 @@ func (f *Formatter) FromMarkdown(
 				parseMention,
 				authorID,
 				statusID,
-				false, // emojiOnly = false.
+				// If basic, pass
+				// emojiOnly = true.
+				basic,
 				result,
 			},
 			// Turns URLs into links.
@@ -85,8 +154,36 @@ func (f *Formatter) FromMarkdown(
 
 	// Clean and shrink HTML.
 	result.HTML = byteutil.B2S(htmlBytes.Bytes())
-	result.HTML = SanitizeToHTML(result.HTML)
+	result.HTML = SanitizeHTML(result.HTML)
 	result.HTML = MinifyHTML(result.HTML)
 
 	return result
+}
+
+var parasRegexp = regexp.MustCompile(`</?p>`)
+
+// unwrapParagraph removes opening and closing paragraph tags
+// of input HTML, if input html is a single paragraph only.
+func unwrapParagraph(html string) string {
+	if !strings.HasPrefix(html, "<p>") {
+		return html
+	}
+
+	if !strings.HasSuffix(html, "</p>") {
+		return html
+	}
+
+	// Make a substring excluding the
+	// opening and closing paragraph tags.
+	sub := html[3 : len(html)-4]
+
+	// If there are still other paragraph tags left
+	// inside the substring, return html unchanged.
+	containsOtherParas := parasRegexp.MatchString(sub)
+	if containsOtherParas {
+		return html
+	}
+
+	// Return the substring.
+	return sub
 }

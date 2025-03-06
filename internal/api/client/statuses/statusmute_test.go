@@ -108,7 +108,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "muted": true,
   "bookmarked": false,
   "pinned": false,
-  "content": "hello everyone!",
+  "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
   "reblog": null,
   "application": {
     "name": "really cool gts application",
@@ -197,7 +197,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "hello everyone!",
+  "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
   "reblog": null,
   "application": {
     "name": "really cool gts application",

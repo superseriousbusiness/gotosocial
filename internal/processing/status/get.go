@@ -52,9 +52,20 @@ func (p *Processor) SourceGet(ctx context.Context, requester *gtsmodel.Account, 
 			"target status not found",
 		)
 	}
+
+	// Try to use unparsed content
+	// warning text if available,
+	// fall back to parsed cw html.
+	var spoilerText string
+	if status.ContentWarningText != "" {
+		spoilerText = status.ContentWarningText
+	} else {
+		spoilerText = status.ContentWarning
+	}
+
 	return &apimodel.StatusSource{
 		ID:          status.ID,
 		Text:        status.Text,
-		SpoilerText: status.ContentWarning,
+		SpoilerText: spoilerText,
 	}, nil
 }

@@ -20,8 +20,10 @@ package text
 import (
 	"bytes"
 	"context"
+	"strings"
 
 	"codeberg.org/gruf/go-byteutil"
+	"github.com/k3a/html2text"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/regexes"
@@ -52,7 +54,7 @@ func (f *Formatter) FromPlain(
 	return f.fromPlain(
 		ctx,
 		plainTextParser,
-		false, // emojiOnly = false
+		false, // basic = false
 		parseMention,
 		authorID,
 		statusID,
@@ -85,7 +87,7 @@ func (f *Formatter) FromPlainNoParagraph(
 	return f.fromPlain(
 		ctx,
 		plainTextParser,
-		false, // emojiOnly = false
+		false, // basic = false
 		parseMention,
 		authorID,
 		statusID,
@@ -93,12 +95,14 @@ func (f *Formatter) FromPlainNoParagraph(
 	)
 }
 
-// FromPlainEmojiOnly fulfils FormatFunc by parsing
+// FromPlainBasic fulfils FormatFunc by parsing
 // the given plaintext input into a FormatResult.
 //
 // Unlike FromPlain, it will only parse emojis with
 // the custom renderer, leaving aside mentions and tags.
-func (f *Formatter) FromPlainEmojiOnly(
+//
+// Resulting HTML will also NOT be wrapped in <p> tags.
+func (f *Formatter) FromPlainBasic(
 	ctx context.Context,
 	parseMention gtsmodel.ParseMentionFunc,
 	authorID string,
@@ -116,7 +120,7 @@ func (f *Formatter) FromPlainEmojiOnly(
 	return f.fromPlain(
 		ctx,
 		plainTextParser,
-		true, // emojiOnly = true
+		true, // basic = true
 		parseMention,
 		authorID,
 		statusID,
@@ -130,7 +134,7 @@ func (f *Formatter) FromPlainEmojiOnly(
 func (f *Formatter) fromPlain(
 	ctx context.Context,
 	plainTextParser parser.Parser,
-	emojiOnly bool,
+	basic bool,
 	parseMention gtsmodel.ParseMentionFunc,
 	authorID string,
 	statusID string,
@@ -156,7 +160,9 @@ func (f *Formatter) fromPlain(
 				parseMention,
 				authorID,
 				statusID,
-				emojiOnly,
+				// If basic, pass
+				// emojiOnly = true.
+				basic,
 				result,
 			},
 			// Turns URLs into links.
@@ -181,8 +187,20 @@ func (f *Formatter) fromPlain(
 
 	// Clean and shrink HTML.
 	result.HTML = byteutil.B2S(htmlBytes.Bytes())
-	result.HTML = SanitizeToHTML(result.HTML)
+	result.HTML = SanitizeHTML(result.HTML)
 	result.HTML = MinifyHTML(result.HTML)
 
 	return result
+}
+
+// HTMLToPlain parses the given HTML and then outputs
+// it to close-as-possible equivalent plaintext.
+func HTMLToPlain(html string) string {
+	plain := html2text.HTML2TextWithOptions(
+		html,
+		html2text.WithLinksInnerText(),
+		html2text.WithUnixLineBreaks(),
+		html2text.WithListSupport(),
+	)
+	return strings.TrimSpace(plain)
 }

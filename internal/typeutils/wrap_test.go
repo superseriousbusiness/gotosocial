@@ -90,9 +90,9 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
     "attachment": [],
     "attributedTo": "http://localhost:8080/users/the_mighty_zork",
     "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-    "content": "hello everyone!",
+    "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
     "contentMap": {
-      "en": "hello everyone!"
+      "en": "\u003cp\u003ehello everyone!\u003c/p\u003e"
     },
     "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
     "interactionPolicy": {

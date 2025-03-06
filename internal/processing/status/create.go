@@ -143,6 +143,14 @@ func (p *Processor) Create(
 		}
 	}
 
+	// Only store ContentWarningText if the parsed
+	// result is different from the given SpoilerText,
+	// otherwise skip to avoid duplicating db columns.
+	var contentWarningText string
+	if content.ContentWarning != form.SpoilerText {
+		contentWarningText = form.SpoilerText
+	}
+
 	status := &gtsmodel.Status{
 		ID:                       statusID,
 		URI:                      accountURIs.StatusesURI + "/" + statusID,
@@ -160,9 +168,10 @@ func (p *Processor) Create(
 		Language: content.Language,
 
 		// Set formatted status content.
-		Content:        content.Content,
-		ContentWarning: content.ContentWarning,
-		Text:           form.Status, // raw
+		Content:            content.Content,
+		ContentWarning:     content.ContentWarning,
+		Text:               form.Status,        // raw
+		ContentWarningText: contentWarningText, // raw
 
 		// Set gathered mentions.
 		MentionIDs: content.MentionIDs,

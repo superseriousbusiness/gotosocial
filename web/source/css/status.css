@@ -141,6 +141,52 @@ main {
 		}
 	}
 
+	.text > .content,
+	.text-spoiler > summary > .spoiler-content {
+		word-break: break-word;
+		line-height: 1.6rem;
+		width: 100%;
+
+		a {
+			color: $link-fg;
+			text-decoration: underline;
+		}
+
+		/*
+			Normalize header sizes to fit better
+			with the line-height we use for statuses.
+		*/
+		h1 {
+			margin: 0;
+			font-size: 1.8rem;
+			line-height: initial;
+		}
+
+		h2 {
+			margin: 0;
+			font-size: 1.6rem;
+			line-height: initial;
+		}
+
+		h3 {
+			margin: 0;
+			font-size: 1.4rem;
+			line-height: initial;
+		}
+
+		h4 {
+			margin: 0;
+			font-size: 1.2rem;
+			line-height: initial;
+		}
+
+		h5 {
+			margin: 0;
+			font-size: 1rem;
+			line-height: initial;
+		}
+	}
+
 	.text {
 		margin: 0;
 		grid-row: span 1;
@@ -151,51 +197,6 @@ main {
 		gap: 0.5rem;
 
 		width: 100%;
-
-		a {
-			color: $link-fg;
-			text-decoration: underline;
-		}
-
-		.content {
-			word-break: break-word;
-			line-height: 1.6rem;
-			width: 100%;
-
-			/*
-				Normalize header sizes to fit better
-				with the line-height we use for statuses.
-			*/
-			h1 {
-				margin: 0;
-				font-size: 1.8rem;
-				line-height: initial;
-			}
-
-			h2 {
-				margin: 0;
-				font-size: 1.6rem;
-				line-height: initial;
-			}
-
-			h3 {
-				margin: 0;
-				font-size: 1.4rem;
-				line-height: initial;
-			}
-
-			h4 {
-				margin: 0;
-				font-size: 1.2rem;
-				line-height: initial;
-			}
-
-			h5 {
-				margin: 0;
-				font-size: 1rem;
-				line-height: initial;
-			}
-		}
 
 		.poll {
 			background-color: $gray2;

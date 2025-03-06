@@ -54,7 +54,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem1() {
 	suite.Equal("", item.Enclosure.Length)
 	suite.Equal("", item.Enclosure.Type)
 	suite.Equal("", item.Enclosure.Url)
-	suite.Equal("hello everyone!", item.Content)
+	suite.Equal("<p>hello everyone!</p>", item.Content)
 }
 
 func (suite *InternalToRSSTestSuite) TestStatusToRSSItem2() {
@@ -79,7 +79,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem2() {
 	suite.Equal("62529", item.Enclosure.Length)
 	suite.Equal("image/jpeg", item.Enclosure.Type)
 	suite.Equal("http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg", item.Enclosure.Url)
-	suite.Equal("hello world! #welcome ! first post on the instance <img src=\"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png\" title=\":rainbow:\" alt=\":rainbow:\" width=\"25\" height=\"25\" /> !", item.Content)
+	suite.Equal("<p>hello world! <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> ! first post on the instance <img src=\"http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png\" title=\":rainbow:\" alt=\":rainbow:\" width=\"25\" height=\"25\" /> !</p>", item.Content)
 }
 
 func (suite *InternalToRSSTestSuite) TestStatusToRSSItem3() {

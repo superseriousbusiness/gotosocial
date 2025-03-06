@@ -40,6 +40,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -1125,13 +1126,16 @@ func (c *Converter) StatusToWebStatus(
 	}
 
 	webStatus := &apimodel.WebStatus{
-		Status:  apiStatus,
-		Account: acct,
+		Status:         apiStatus,
+		SpoilerContent: s.ContentWarning,
+		Account:        acct,
 	}
 
 	// Whack a newline before and after each "pre" to make it easier to outdent it.
 	webStatus.Content = strings.ReplaceAll(webStatus.Content, "<pre>", "\n<pre>")
 	webStatus.Content = strings.ReplaceAll(webStatus.Content, "</pre>", "</pre>\n")
+	webStatus.SpoilerContent = strings.ReplaceAll(webStatus.SpoilerContent, "<pre>", "\n<pre>")
+	webStatus.SpoilerContent = strings.ReplaceAll(webStatus.SpoilerContent, "</pre>", "</pre>\n")
 
 	// Add additional information for template.
 	// Assume empty langs, hope for not empty language.
@@ -1372,7 +1376,7 @@ func (c *Converter) baseStatusToFrontend(
 		InReplyToID:        nil, // Set below.
 		InReplyToAccountID: nil, // Set below.
 		Sensitive:          *s.Sensitive,
-		SpoilerText:        s.ContentWarning,
+		SpoilerText:        text.HTMLToPlain(s.ContentWarning),
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
 		LocalOnly:          s.IsLocalOnly(),
 		Language:           nil, // Set below.

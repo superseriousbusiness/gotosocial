@@ -122,7 +122,7 @@ func (p *Processor) Create(
 		Username: form.Username,
 		Email:    form.Email,
 		Password: form.Password,
-		Reason:   text.SanitizeToPlaintext(reason),
+		Reason:   text.RemoveHTML(reason),
 		SignUpIP: form.IP,
 		Locale:   form.Locale,
 		AppID:    app.ID,
