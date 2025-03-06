@@ -359,12 +359,14 @@ func processContentType(
 	case form.ContentType != "":
 		return typeutils.APIContentTypeToContentType(form.ContentType)
 
-	// No content type on the form, return the status's current content type.
-	case status.ContentType != 0:
+	// No content type on the form, return the existing
+	// status's current content type if there is one.
+	case status != nil && status.ContentType != 0:
 		return status.ContentType
 
-	// Old statuses may not have a saved content type;
-	// return the user's default content type preference.
+	// We aren't editing an existing status, or if we are
+	// it's an old one that doesn't have a saved content
+	// type. Use the user's default content type setting.
 	case accountDefaultContentType != "":
 		return typeutils.APIContentTypeToContentType(apimodel.StatusContentType(accountDefaultContentType))
 
