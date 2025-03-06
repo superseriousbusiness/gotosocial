@@ -649,6 +649,7 @@ func sizeofStatus() uintptr {
 		URL:                      exampleURI,
 		Content:                  exampleText,
 		Text:                     exampleText,
+		ContentType:              gtsmodel.StatusContentTypePlain,
 		AttachmentIDs:            []string{exampleID, exampleID, exampleID},
 		TagIDs:                   []string{exampleID, exampleID, exampleID},
 		MentionIDs:               []string{},
@@ -694,6 +695,7 @@ func sizeofStatusEdit() uintptr {
 		Content:        exampleText,
 		ContentWarning: exampleUsername, // similar length
 		Text:           exampleText,
+		ContentType:    gtsmodel.StatusContentTypePlain,
 		Language:       "en",
 		Sensitive:      func() *bool { ok := false; return &ok }(),
 		AttachmentIDs:  []string{exampleID, exampleID, exampleID},

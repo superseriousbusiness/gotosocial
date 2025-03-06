@@ -110,6 +110,10 @@ type Status struct {
 	// so the user may redraft from the source text without the client having to reverse-engineer
 	// the original text from the HTML content.
 	Text string `json:"text,omitempty"`
+	// Content type that was used to parse the status's text. Returned when
+	// status is deleted, so if the user is redrafting the message the client
+	// can default to the same content type.
+	ContentType StatusContentType `json:"content_type,omitempty"`
 	// A list of filters that matched this status and why they matched, if there are any such filters.
 	Filtered []FilterResult `json:"filtered,omitempty"`
 	// The interaction policy for this status, as set by the status author.
@@ -320,6 +324,9 @@ type StatusSource struct {
 
 	// Plain-text version of spoiler text.
 	SpoilerText string `json:"spoiler_text"`
+
+	// Content type that was used to parse the text.
+	ContentType StatusContentType `json:"content_type,omitempty"`
 }
 
 // StatusEdit represents one historical revision of a status, containing

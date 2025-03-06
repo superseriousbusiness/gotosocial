@@ -24,6 +24,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Get gets the given status, taking account of privacy settings and blocks etc.
@@ -56,5 +57,6 @@ func (p *Processor) SourceGet(ctx context.Context, requester *gtsmodel.Account, 
 		ID:          status.ID,
 		Text:        status.Text,
 		SpoilerText: status.ContentWarning,
+		ContentType: typeutils.ContentTypeToAPIContentType(status.ContentType),
 	}, nil
 }

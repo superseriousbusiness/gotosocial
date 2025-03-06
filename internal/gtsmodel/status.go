@@ -69,6 +69,7 @@ type Status struct {
 	CreatedWithApplication   *Application       `bun:"rel:belongs-to"`                                              // application corresponding to createdWithApplicationID
 	ActivityStreamsType      string             `bun:",nullzero,notnull"`                                           // What is the activitystreams type of this status? See: https://www.w3.org/TR/activitystreams-vocabulary/#object-types. Will probably almost always be Note but who knows!.
 	Text                     string             `bun:""`                                                            // Original text of the status without formatting
+	ContentType              StatusContentType  `bun:",nullzero"`                                                   // Content type used to process the original text of the status
 	Federated                *bool              `bun:",notnull"`                                                    // This status will be federated beyond the local timeline(s)
 	InteractionPolicy        *InteractionPolicy `bun:""`                                                            // InteractionPolicy for this status. If null then the default InteractionPolicy should be assumed for this status's Visibility. Always null for boost wrappers.
 	PendingApproval          *bool              `bun:",nullzero,notnull,default:false"`                             // If true then status is a reply or boost wrapper that must be Approved by the reply-ee or boost-ee before being fully distributed.
@@ -375,6 +376,16 @@ func (v Visibility) String() string {
 		panic("invalid visibility")
 	}
 }
+
+// StatusContentType is the content type with which a status's text is
+// parsed. Can be either plain or markdown. Empty will default to plain.
+type StatusContentType enumType
+
+const (
+	StatusContentTypePlain    StatusContentType = 1
+	StatusContentTypeMarkdown StatusContentType = 2
+	StatusContentTypeDefault                    = StatusContentTypePlain
+)
 
 // Content models the simple string content
 // of a status along with its ContentMap,

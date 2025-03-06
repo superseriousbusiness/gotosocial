@@ -92,7 +92,8 @@ func (suite *StatusSourceTestSuite) TestGetSource() {
 	suite.Equal(`{
   "id": "01F8MHAMCHF6Y650WCRSCP4WMY",
   "text": "hello everyone!",
-  "spoiler_text": "introduction post"
+  "spoiler_text": "introduction post",
+  "content_type": "text/plain"
 }`, dst.String())
 }
 
