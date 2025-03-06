@@ -86,7 +86,7 @@ func (p *Processor) Edit(
 	}
 
 	// Process incoming content type
-	contentType := processContentType(form, status, requester.Settings.StatusContentType)
+	contentType := processContentType(form.ContentType, status, requester.Settings.StatusContentType)
 
 	// Process incoming status edit content fields.
 	content, errWithCode := p.processContent(ctx,
@@ -348,21 +348,21 @@ func (p *Processor) Edit(
 	return p.c.GetAPIStatus(ctx, requester, status)
 }
 
-// Returns the new content type of the status when applying an edit.
+// Returns the final content type to use when creating or editing a status.
 func processContentType(
-	form *apimodel.StatusEditRequest,
-	status *gtsmodel.Status,
+	requestContentType apimodel.StatusContentType,
+	existingStatus *gtsmodel.Status,
 	accountDefaultContentType string,
 ) gtsmodel.StatusContentType {
 	switch {
-	// Content type set on form, return the new value.
-	case form.ContentType != "":
-		return typeutils.APIContentTypeToContentType(form.ContentType)
+	// Content type set in the request, return the new value.
+	case requestContentType != "":
+		return typeutils.APIContentTypeToContentType(requestContentType)
 
-	// No content type on the form, return the existing
-	// status's current content type if there is one.
-	case status != nil && status.ContentType != 0:
-		return status.ContentType
+	// No content type in the request, return the existing
+	// status's current content type if we know of one.
+	case existingStatus != nil && existingStatus.ContentType != 0:
+		return existingStatus.ContentType
 
 	// We aren't editing an existing status, or if we are
 	// it's an old one that doesn't have a saved content
