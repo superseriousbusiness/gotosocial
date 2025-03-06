@@ -21,6 +21,7 @@ import (
 	"context"
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type Application interface {
@@ -38,6 +39,9 @@ type Application interface {
 
 	// GetAllTokens fetches all client oauth tokens from database.
 	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
+
+	// GetAccessTokens allows paging through a user's access (ie., user-level) tokens.
+	GetAccessTokens(ctx context.Context, userID string, page *paging.Page) ([]*gtsmodel.Token, error)
 
 	// GetTokenByID fetches the client oauth token from database with ID.
 	GetTokenByID(ctx context.Context, id string) (*gtsmodel.Token, error)
