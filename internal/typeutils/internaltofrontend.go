@@ -1391,7 +1391,7 @@ func (c *Converter) baseStatusToFrontend(
 		Emojis:             apiEmojis,
 		Card:               nil, // TODO: implement cards
 		Text:               s.Text,
-		ContentType:        c.ContentTypeToAPIContentType(ctx, s.ContentType),
+		ContentType:        ContentTypeToAPIContentType(s.ContentType),
 		InteractionPolicy:  *apiInteractionPolicy,
 	}
 
@@ -1628,7 +1628,7 @@ func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 }
 
 // Converts a gts status content type into its api equivalent
-func (c *Converter) ContentTypeToAPIContentType(ctx context.Context, m gtsmodel.StatusContentType) apimodel.StatusContentType {
+func ContentTypeToAPIContentType(m gtsmodel.StatusContentType) apimodel.StatusContentType {
 	switch m {
 	case gtsmodel.StatusContentTypePlain:
 		return apimodel.StatusContentTypePlain
