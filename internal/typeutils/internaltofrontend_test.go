@@ -1486,6 +1486,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
     "fields": [],
     "group": false
   },
+  "reblog_account": null,
   "media_attachments": [
     {
       "id": "01HE7Y3C432WRSNS10EZM86SA5",
