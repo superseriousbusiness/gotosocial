@@ -666,6 +666,7 @@ func sizeofStatus() uintptr {
 		BoostOfID:                exampleID,
 		BoostOfAccountID:         exampleID,
 		ContentWarning:           exampleUsername, // similar length
+		ContentWarningText:       exampleUsername, // similar length
 		Visibility:               gtsmodel.VisibilityPublic,
 		Sensitive:                func() *bool { ok := false; return &ok }(),
 		Language:                 "en",

@@ -127,6 +127,10 @@ type Status struct {
 type WebStatus struct {
 	*Status
 
+	// HTML version of spoiler content
+	// (ie., not converted to plaintext).
+	SpoilerContent string `json:"-"`
+
 	// Override API account with web account.
 	Account *WebAccount `json:"account"`
 

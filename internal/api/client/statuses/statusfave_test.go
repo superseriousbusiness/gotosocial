@@ -103,7 +103,7 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
   },
   "bookmarked": false,
   "card": null,
-  "content": "🐕🐕🐕🐕🐕",
+  "content": "<p>🐕🐕🐕🐕🐕</p>",
   "content_type": "text/plain",
   "created_at": "right the hell just now babyee",
   "edited_at": null,

@@ -129,7 +129,6 @@ func (suite *StatusUnfaveTestSuite) TestPostAlreadyNotFaved() {
 	err = json.Unmarshal(b, statusReply)
 	assert.NoError(suite.T(), err)
 
-	assert.Equal(suite.T(), targetStatus.ContentWarning, statusReply.SpoilerText)
 	assert.Equal(suite.T(), targetStatus.Content, statusReply.Content)
 	assert.True(suite.T(), statusReply.Sensitive)
 	assert.Equal(suite.T(), apimodel.VisibilityPublic, statusReply.Visibility)

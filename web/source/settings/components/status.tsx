@@ -126,15 +126,15 @@ function StatusBody({ status }: { status: StatusType }) {
 		<div className="status-body">
 			<details className="text-spoiler">
 				<summary>
-					<span
-						className="spoiler-text"
+					<div
+						className="spoiler-content"
 						lang={status.language}
 					>
 						{ status.spoiler_text
 							? status.spoiler_text + " "
 							: "[no content warning set] "
 						}
-					</span>
+					</div>
 					<span
 						className="button"
 						role="button"

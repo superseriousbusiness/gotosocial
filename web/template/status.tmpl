@@ -38,7 +38,9 @@
     {{- if .SpoilerText }}
     <details class="text-spoiler">
         <summary>
-            <span class="spoiler-text p-summary" lang="{{- .LanguageTag.TagStr -}}">{{- emojify .Emojis (escape .SpoilerText) -}}</span>
+            <div class="spoiler-content p-summary" lang="{{- .LanguageTag.TagStr -}}">
+                {{ noescape .SpoilerContent | emojify .Emojis }}
+            </div>
             <span class="button" role="button" tabindex="0">Toggle visibility</span>
         </summary>
         <div class="text">

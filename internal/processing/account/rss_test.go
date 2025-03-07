@@ -43,10 +43,10 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
     <pubDate>Wed, 20 Oct 2021 10:41:37 +0000</pubDate>
     <lastBuildDate>Wed, 20 Oct 2021 10:41:37 +0000</lastBuildDate>
     <item>
-      <title>open to see some puppies</title>
+      <title>open to see some &lt;strong&gt;puppies&lt;/strong&gt;</title>
       <link>http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37</link>
       <description>@admin@localhost:8080 made a new post: &#34;🐕🐕🐕🐕🐕&#34;</description>
-      <content:encoded><![CDATA[🐕🐕🐕🐕🐕]]></content:encoded>
+      <content:encoded><![CDATA[<p>🐕🐕🐕🐕🐕</p>]]></content:encoded>
       <author>@admin@localhost:8080</author>
       <guid isPermaLink="true">http://localhost:8080/@admin/statuses/01F8MHAAY43M6RJ473VQFCVH37</guid>
       <pubDate>Wed, 20 Oct 2021 12:36:45 +0000</pubDate>
@@ -56,7 +56,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
       <title>hello world! #welcome ! first post on the instance :rainbow: !</title>
       <link>http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R</link>
       <description>@admin@localhost:8080 posted 1 attachment: &#34;hello world! #welcome ! first post on the instance :rainbow: !&#34;</description>
-      <content:encoded><![CDATA[hello world! #welcome ! first post on the instance <img src="http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png" title=":rainbow:" alt=":rainbow:" width="25" height="25" /> !]]></content:encoded>
+      <content:encoded><![CDATA[<p>hello world! <a href="http://localhost:8080/tags/welcome" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>welcome</span></a> ! first post on the instance <img src="http://localhost:8080/fileserver/01AY6P665V14JJR0AFVRT7311Y/emoji/original/01F8MH9H8E4VG3KDYJR9EGPXCQ.png" title=":rainbow:" alt=":rainbow:" width="25" height="25" /> !</p>]]></content:encoded>
       <author>@admin@localhost:8080</author>
       <enclosure url="http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg" length="62529" type="image/jpeg"></enclosure>
       <guid isPermaLink="true">http://localhost:8080/@admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R</guid>
@@ -145,7 +145,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
       <title>introduction post</title>
       <link>http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY</link>
       <description>@the_mighty_zork@localhost:8080 made a new post: &#34;hello everyone!&#34;</description>
-      <content:encoded><![CDATA[hello everyone!]]></content:encoded>
+      <content:encoded><![CDATA[<p>hello everyone!</p>]]></content:encoded>
       <author>@the_mighty_zork@localhost:8080</author>
       <guid isPermaLink="true">http://localhost:8080/@the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY</guid>
       <pubDate>Wed, 20 Oct 2021 10:40:37 +0000</pubDate>

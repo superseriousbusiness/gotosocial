@@ -71,7 +71,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
   "muted": false,
   "bookmarked": false,
   "pinned": false,
-  "content": "dark souls status bot: \"thoughts of dog\"",
+  "content": "\u003cp\u003edark souls status bot: \"thoughts of dog\"\u003c/p\u003e",
   "reblog": null,
   "account": {
     "id": "01F8MH5ZK5VRH73AKHQM6Y9VNX",

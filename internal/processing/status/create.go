@@ -189,6 +189,13 @@ func (p *Processor) Create(
 		PendingApproval: util.Ptr(false),
 	}
 
+	// Only store ContentWarningText if the parsed
+	// result is different from the given SpoilerText,
+	// otherwise skip to avoid duplicating db columns.
+	if content.ContentWarning != form.SpoilerText {
+		status.ContentWarningText = form.SpoilerText
+	}
+
 	if backfill {
 		// Ensure backfilled status contains no
 		// mentions to anyone other than author.

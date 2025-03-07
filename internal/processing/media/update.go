@@ -87,7 +87,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, media
 
 // processDescription will sanitize and valid description against server configuration.
 func processDescription(description string) (string, gtserror.WithCode) {
-	description = text.SanitizeToPlaintext(description)
+	description = text.StripHTMLFromText(description)
 	chars := len([]rune(description))
 
 	if min := config.GetMediaDescriptionMinChars(); chars < min {

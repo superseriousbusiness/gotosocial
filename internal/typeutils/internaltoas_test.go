@@ -531,9 +531,9 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
   "attachment": [],
   "attributedTo": "http://localhost:8080/users/the_mighty_zork",
   "cc": "http://localhost:8080/users/the_mighty_zork/followers",
-  "content": "hello everyone!",
+  "content": "\u003cp\u003ehello everyone!\u003c/p\u003e",
   "contentMap": {
-    "en": "hello everyone!"
+    "en": "\u003cp\u003ehello everyone!\u003c/p\u003e"
   },
   "id": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",
   "interactionPolicy": {
@@ -613,9 +613,9 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
   ],
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": "http://localhost:8080/users/admin/followers",
-  "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e\u003c/a\u003e ! first post on the instance :rainbow: !\u003c/p\u003e",
   "contentMap": {
-    "en": "hello world! #welcome ! first post on the instance :rainbow: !"
+    "en": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e\u003c/a\u003e ! first post on the instance :rainbow: !\u003c/p\u003e"
   },
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "interactionPolicy": {
@@ -713,9 +713,9 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
   ],
   "attributedTo": "http://localhost:8080/users/admin",
   "cc": "http://localhost:8080/users/admin/followers",
-  "content": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e\u003c/a\u003e ! first post on the instance :rainbow: !\u003c/p\u003e",
   "contentMap": {
-    "en": "hello world! #welcome ! first post on the instance :rainbow: !"
+    "en": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e\u003c/a\u003e ! first post on the instance :rainbow: !\u003c/p\u003e"
   },
   "id": "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
   "interactionPolicy": {
@@ -805,9 +805,9 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
     "http://localhost:8080/users/admin/followers",
     "http://localhost:8080/users/the_mighty_zork"
   ],
-  "content": "hi @the_mighty_zork welcome to the instance!",
+  "content": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003ethe_mighty_zork\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e welcome to the instance!\u003c/p\u003e",
   "contentMap": {
-    "en": "hi @the_mighty_zork welcome to the instance!"
+    "en": "\u003cp\u003ehi \u003cspan class=\"h-card\"\u003e\u003ca href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\"\u003e@\u003cspan\u003ethe_mighty_zork\u003c/span\u003e\u003c/a\u003e\u003c/span\u003e welcome to the instance!\u003c/p\u003e"
   },
   "id": "http://localhost:8080/users/admin/statuses/01FF25D5Q0DH7CHD57CTRS6WK0",
   "inReplyTo": "http://localhost:8080/users/the_mighty_zork/statuses/01F8MHAMCHF6Y650WCRSCP4WMY",

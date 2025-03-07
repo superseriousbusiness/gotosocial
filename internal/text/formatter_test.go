@@ -93,6 +93,16 @@ func (suite *TextStandardTestSuite) FromMarkdown(input string) *text.FormatResul
 	)
 }
 
+func (suite *TextStandardTestSuite) FromMarkdownBasic(input string) *text.FormatResult {
+	return suite.formatter.FromMarkdownBasic(
+		context.Background(),
+		suite.parseMention,
+		suite.testAccounts["local_account_1"].ID,
+		"dummy_status_ID",
+		input,
+	)
+}
+
 func (suite *TextStandardTestSuite) FromPlain(input string) *text.FormatResult {
 	return suite.formatter.FromPlain(
 		context.Background(),

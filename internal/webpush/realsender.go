@@ -361,10 +361,10 @@ func formatNotificationBody(apiNotification *apimodel.Notification) string {
 		if apiNotification.Status.SpoilerText != "" {
 			body = apiNotification.Status.SpoilerText
 		} else {
-			body = text.SanitizeToPlaintext(apiNotification.Status.Content)
+			body = text.StripHTMLFromText(apiNotification.Status.Content)
 		}
 	} else {
-		body = text.SanitizeToPlaintext(apiNotification.Account.Note)
+		body = text.StripHTMLFromText(apiNotification.Account.Note)
 	}
 	return firstNBytesTrimSpace(body, bodyMaxLen)
 }

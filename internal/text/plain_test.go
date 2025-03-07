@@ -21,6 +21,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 const (
@@ -181,6 +182,150 @@ func (suite *PlainTestSuite) TestNumbersAreNotHashtags() {
 	statusText := `yo who else thinks #19_98 is #1?`
 	f := suite.FromPlain(statusText)
 	suite.Len(f.Tags, 0)
+}
+
+func (suite *PlainTestSuite) TestParseHTMLToPlain() {
+	for _, t := range []struct {
+		html          string
+		expectedPlain string
+	}{
+		{
+			// Check newlines between paras preserved.
+			html: "<p>butting into a serious discussion about programming languages*: \"elixir? I barely know 'er! honk honk!\"</p><p><small>*insofar as any discussion about programming languages can truly be considered \"serious\" since programmers are fucking clowns</small></p>",
+			expectedPlain: `butting into a serious discussion about programming languages*: "elixir? I barely know 'er! honk honk!"
+
+*insofar as any discussion about programming languages can truly be considered "serious" since programmers are fucking clowns`,
+		},
+		{
+			// This one looks a bit wacky but nobody should
+			// be putting definition lists in summaries *really*.
+			html:          "<dl class=\"status-stats\"><div class=\"stats-grouping\"><div class=\"stats-item published-at text-cutoff\"><dt class=\"sr-only\">Published</dt><dd><time class=\"dt-published\" datetime=\"2025-01-15T23:49:59.299Z\">Jan 16, 2025, 00:49</time></dd></div><div class=\"stats-grouping\"><div class=\"stats-item\" title=\"Replies\"><dt><span class=\"sr-only\">Replies</span><i class=\"fa fa-reply-all\" aria-hidden=\"true\"></i></dt><dd>0</dd></div><div class=\"stats-item\" title=\"Faves\"><dt><span class=\"sr-only\">Favourites</span><i class=\"fa fa-star\" aria-hidden=\"true\"></i></dt><dd>4</dd></div><div class=\"stats-item\" title=\"Boosts\"><dt><span class=\"sr-only\">Reblogs</span><i class=\"fa fa-retweet\" aria-hidden=\"true\"></i></dt><dd>0</dd></div></div></div><div class=\"stats-item language\" title=\"English\"><dt class=\"sr-only\">Language</dt><dd><span class=\"sr-only\">English</span><span aria-hidden=\"true\">en</span></dd></div></dl>",
+			expectedPlain: `PublishedJan 16, 2025, 00:49Replies0Favourites4Reblogs0LanguageEnglishen`,
+		},
+		{
+			// Check <br> converted to newlines and leading / trailing space removed.
+			html: "     <p>i'm a milf,<br>i'm a lover,<br>do your mom,<br>do your brother</p><p>i'm a sinner,<br>i'm a saint,<br>i will not be ashamed!</p><br>    <br>",
+			expectedPlain: `i'm a milf,
+i'm a lover,
+do your mom,
+do your brother
+
+i'm a sinner,
+i'm a saint,
+i will not be ashamed!`,
+		},
+		{
+			// Check newlines, links, lists still more or less readable as such.
+			html: "<p>Hello everyone, after a week or two down the release candidate mines, we've emerged blinking into the light carrying with us <a href=\"https://gts.superseriousbusiness.org/tags/gotosocial\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>GoToSocial</span></a> <strong>v0.18.0 Scroingly Sloth</strong>!</p><p><a href=\"https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.18.0\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.18.0</a></p><p>Please read the migration notes carefully for instructions on how to upgrade to this version. <strong>This version contains several very long migrations so you will need to be patient when upgrading, and backup your database first!!</strong></p><p><strong>Release highlights</strong></p><ul><li><strong>Status edit support</strong>: one of our most-requested features! You can now edit your own statuses, and see instance edit history from other accounts too (if your instance has them stored).</li><li><strong>Push notifications</strong>: probably the second most-requested feature! GoToSocial can now send push notifications to clients via their configured push providers.<br>You may need to uninstall / reinstall client applications, or log out and back in again, for this feature to work. (And if you're using Tusky, <a href=\"https://tusky.app/faq/#why-are-notifications-less-frequent-with-tusky\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">make sure you've got ntfy installed</a>).</li><li><strong>Global instance css customization</strong>: admins can now apply custom CSS across their entire instance via the settings panel.</li><li><strong>Domain permission subscriptions</strong>: it's now possible to configure your instance to subscribe to CSV, JSON, or plaintext lists of domain permissions.<br>Each night, your instance will fetch and automatically create domain permissions (or permission drafts) based on what it finds in a subscribed list.<br>See the <a href=\"https://docs.gotosocial.org/en/latest/admin/domain_permission_subscriptions/\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">domain permission subscription documentation</a> for more information.</li><li><strong>Trusted-proxies helper</strong>: instances with improperly configured trusted-proxies settings will now show a warning on the homepage, so admins can make sure their instance is configured correctly. Check your own instance homepage after updating to see if you need to do anything.</li><li><strong>Better outbox sorting</strong>: messages from GoToSocial are now delivered more quickly to people you mention, so conversations across instances should feel a bit snappier.</li><li><strong>Log in button</strong>: there's now a login button in the top right of the instance homepage, which leads to a helpful page about clients, with a link to the settings panel. Should make things less confusing for new users!</li><li><strong>Granular stats controls</strong>: with the <code>instance-stats-mode</code> setting, admins can now choose if and how their instance serves stats via the nodeinfo endpoints. Existing behavior from v0.17.0 is the default.</li><li><strong>Post backdating</strong>: via the API you can now backdate posts (if enabled in config.yaml). This is our first step towards making it possible to import your post history from elsewhere into your GoToSocial instance. While there's no way to do this in the settings panel yet, you can already use third-party tools like Slurp to import posts from a Mastodon export (see <a href=\"https://github.com/VyrCossont/slurp\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">Slurp</a>).</li><li><strong>Configurable sign-up limits</strong>: you can now configure your sign-up backlog length and sign-up throttling (defaults remain the same).</li><li><strong>NetBSD and FreeBSD builds</strong>: yep!</li><li><strong>Respect users <code>prefers-color-scheme</code> preference</strong>: there's now a light mode default theme to complement our trusty dark mode theme, and the theme will switch based on a visitor's <code>prefers-color-scheme</code> configuration. This applies to all page and profiles, with the exception of some custom themes. Works in the settings panel too!</li></ul><p>Thanks for reading! And seriously back up your database.</p>",
+			expectedPlain: `Hello everyone, after a week or two down the release candidate mines, we've emerged blinking into the light carrying with us #GoToSocial <https://gts.superseriousbusiness.org/tags/gotosocial> v0.18.0 Scroingly Sloth!
+
+https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.18.0 <https://github.com/superseriousbusiness/gotosocial/releases/tag/v0.18.0>
+
+Please read the migration notes carefully for instructions on how to upgrade to this version. This version contains several very long migrations so you will need to be patient when upgrading, and backup your database first!!
+
+Release highlights
+
+
+ - Status edit support: one of our most-requested features! You can now edit your own statuses, and see instance edit history from other accounts too (if your instance has them stored).
+ - Push notifications: probably the second most-requested feature! GoToSocial can now send push notifications to clients via their configured push providers.
+You may need to uninstall / reinstall client applications, or log out and back in again, for this feature to work. (And if you're using Tusky, make sure you've got ntfy installed <https://tusky.app/faq/#why-are-notifications-less-frequent-with-tusky>).
+ - Global instance css customization: admins can now apply custom CSS across their entire instance via the settings panel.
+ - Domain permission subscriptions: it's now possible to configure your instance to subscribe to CSV, JSON, or plaintext lists of domain permissions.
+Each night, your instance will fetch and automatically create domain permissions (or permission drafts) based on what it finds in a subscribed list.
+See the domain permission subscription documentation <https://docs.gotosocial.org/en/latest/admin/domain_permission_subscriptions/> for more information.
+ - Trusted-proxies helper: instances with improperly configured trusted-proxies settings will now show a warning on the homepage, so admins can make sure their instance is configured correctly. Check your own instance homepage after updating to see if you need to do anything.
+ - Better outbox sorting: messages from GoToSocial are now delivered more quickly to people you mention, so conversations across instances should feel a bit snappier.
+ - Log in button: there's now a login button in the top right of the instance homepage, which leads to a helpful page about clients, with a link to the settings panel. Should make things less confusing for new users!
+ - Granular stats controls: with the instance-stats-mode setting, admins can now choose if and how their instance serves stats via the nodeinfo endpoints. Existing behavior from v0.17.0 is the default.
+ - Post backdating: via the API you can now backdate posts (if enabled in config.yaml). This is our first step towards making it possible to import your post history from elsewhere into your GoToSocial instance. While there's no way to do this in the settings panel yet, you can already use third-party tools like Slurp to import posts from a Mastodon export (see Slurp <https://github.com/VyrCossont/slurp>).
+ - Configurable sign-up limits: you can now configure your sign-up backlog length and sign-up throttling (defaults remain the same).
+ - NetBSD and FreeBSD builds: yep!
+ - Respect users prefers-color-scheme preference: there's now a light mode default theme to complement our trusty dark mode theme, and the theme will switch based on a visitor's prefers-color-scheme configuration. This applies to all page and profiles, with the exception of some custom themes. Works in the settings panel too!
+
+
+Thanks for reading! And seriously back up your database.`,
+		},
+	} {
+		plain := text.ParseHTMLToPlain(t.html)
+		suite.Equal(t.expectedPlain, plain)
+	}
+}
+
+func (suite *PlainTestSuite) TestStripCaption1() {
+	dodgyCaption := "<script>console.log('haha!')</script>this is just a normal caption ;)"
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("this is just a normal caption ;)", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption2() {
+	dodgyCaption := "<em>here's a LOUD caption</em>"
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("here's a LOUD caption", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption3() {
+	dodgyCaption := ""
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption4() {
+	dodgyCaption := `
+
+
+here is
+a multi line
+caption
+with some newlines
+
+
+
+`
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("here is\na multi line\ncaption\nwith some newlines", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption5() {
+	// html-escaped: "<script>console.log('aha!')</script> hello world"
+	dodgyCaption := `&lt;script&gt;console.log(&apos;aha!&apos;)&lt;/script&gt; hello world`
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("hello world", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption6() {
+	// html-encoded: "<script>console.log('aha!')</script> hello world"
+	dodgyCaption := `&lt;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#99;&#111;&#110;&#115;&#111;&#108;&#101;&period;&#108;&#111;&#103;&lpar;&apos;&#97;&#104;&#97;&excl;&apos;&rpar;&lt;&sol;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#32;&#104;&#101;&#108;&#108;&#111;&#32;&#119;&#111;&#114;&#108;&#100;`
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("hello world", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCustomCSS() {
+	customCSS := `.toot .username {
+	color: var(--link_fg);
+	line-height: 2rem;
+	margin-top: -0.5rem;
+	align-self: start;
+	
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}`
+	stripped := text.StripHTMLFromText(customCSS)
+	suite.Equal(customCSS, stripped) // should be the same as it was before
+}
+
+func (suite *PlainTestSuite) TestStripNaughtyCustomCSS1() {
+	// try to break out of <style> into <head> and change the document title
+	customCSS := "</style><title>pee pee poo poo</title><style>"
+	stripped := text.StripHTMLFromText(customCSS)
+	suite.Empty(stripped)
+}
+
+func (suite *PlainTestSuite) TestStripNaughtyCustomCSS2() {
+	// try to break out of <style> into <head> and change the document title
+	customCSS := "pee pee poo poo</style><title></title><style>"
+	stripped := text.StripHTMLFromText(customCSS)
+	suite.Equal("pee pee poo poo", stripped)
 }
 
 func TestPlainTestSuite(t *testing.T) {

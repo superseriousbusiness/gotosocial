@@ -33,7 +33,7 @@ type Status struct {
 	PinnedAt                 time.Time          `bun:"type:timestamptz,nullzero"`                                   // Status was pinned by owning account at this time.
 	URI                      string             `bun:",unique,nullzero,notnull"`                                    // activitypub URI of this status
 	URL                      string             `bun:",nullzero"`                                                   // web url for viewing this status
-	Content                  string             `bun:""`                                                            // content of this status; likely html-formatted but not guaranteed
+	Content                  string             `bun:""`                                                            // Content HTML for this status.
 	AttachmentIDs            []string           `bun:"attachments,array"`                                           // Database IDs of any media attachments associated with this status
 	Attachments              []*MediaAttachment `bun:"attached_media,rel:has-many"`                                 // Attachments corresponding to attachmentIDs
 	TagIDs                   []string           `bun:"tags,array"`                                                  // Database IDs of any tags used in this status
@@ -61,7 +61,8 @@ type Status struct {
 	Edits                    []*StatusEdit      `bun:"-"`                                                           //
 	PollID                   string             `bun:"type:CHAR(26),nullzero"`                                      //
 	Poll                     *Poll              `bun:"-"`                                                           //
-	ContentWarning           string             `bun:",nullzero"`                                                   // cw string for this status
+	ContentWarning           string             `bun:",nullzero"`                                                   // Content warning HTML for this status.
+	ContentWarningText       string             `bun:""`                                                            // Original text of the content warning without formatting
 	Visibility               Visibility         `bun:",nullzero,notnull"`                                           // visibility entry for this status
 	Sensitive                *bool              `bun:",nullzero,notnull,default:false"`                             // mark the status as sensitive?
 	Language                 string             `bun:",nullzero"`                                                   // what language is this status written in?

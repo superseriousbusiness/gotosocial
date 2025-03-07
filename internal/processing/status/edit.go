@@ -301,13 +301,20 @@ func (p *Processor) Edit(
 	// update the other necessary status fields.
 	status.Content = content.Content
 	status.ContentWarning = content.ContentWarning
-	status.Text = form.Status
+	status.Text = form.Status // raw
 	status.ContentType = contentType
 	status.Language = content.Language
 	status.Sensitive = &form.Sensitive
 	status.AttachmentIDs = form.MediaIDs
 	status.Attachments = media
 	status.EditedAt = now
+
+	// Only store ContentWarningText if the parsed
+	// result is different from the given SpoilerText,
+	// otherwise skip to avoid duplicating db columns.
+	if content.ContentWarning != form.SpoilerText {
+		status.ContentWarningText = form.SpoilerText
+	}
 
 	if poll != nil {
 		// Set relevent fields for latest with poll.

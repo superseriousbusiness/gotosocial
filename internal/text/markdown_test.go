@@ -41,43 +41,45 @@ that was some JSON :)
 `
 
 const (
-	simpleMarkdown                  = "# Title\n\nHere's a simple text in markdown.\n\nHere's a [link](https://example.org)."
-	simpleMarkdownExpected          = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>"
-	withCodeBlockExpected           = "<h1>Title</h1><p>Below is some JSON.</p><pre><code class=\"language-json\">{\n  &#34;key&#34;: &#34;value&#34;,\n  &#34;another_key&#34;: [\n    &#34;value1&#34;,\n    &#34;value2&#34;\n  ]\n}\n</code></pre><p>that was some JSON :)</p>"
-	withInlineCode                  = "`Nobody tells you about the <code><del>SECRET CODE</del></code>, do they?`"
-	withInlineCodeExpected          = "<p><code>Nobody tells you about the &lt;code>&lt;del>SECRET CODE&lt;/del>&lt;/code>, do they?</code></p>"
-	withInlineCode2                 = "`Nobody tells you about the </code><del>SECRET CODE</del><code>, do they?`"
-	withInlineCode2Expected         = "<p><code>Nobody tells you about the &lt;/code>&lt;del>SECRET CODE&lt;/del>&lt;code>, do they?</code></p>"
-	withHashtag                     = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
-	withHashtagExpected             = "<h1>Title</h1><p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
-	withTamilHashtag                = "here's a simple status that uses a hashtag in Tamil #தமிழ்"
-	withTamilHashtagExpected        = "<p>here's a simple status that uses a hashtag in Tamil <a href=\"http://localhost:8080/tags/%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>தமிழ்</span></a></p>"
-	mdWithHTML                      = "# Title\n\nHere's a simple text in markdown.\n\nHere's a <a href=\"https://example.org\">link</a>.\n\nHere's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\">"
-	mdWithHTMLExpected              = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here's an image:</p>"
-	mdWithCheekyHTML                = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
-	mdWithCheekyHTMLExpected        = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a cheeky little script:</p>"
-	mdWithHashtagInitial            = "#welcome #Hashtag"
-	mdWithHashtagInitialExpected    = "<p><a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p>"
-	mdCodeBlockWithNewlines         = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
-	mdCodeBlockWithNewlinesExpected = "<p>some code coming up</p><pre><code>\n\n\n</code></pre><p>that was some code</p>"
-	mdWithFootnote                  = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
-	mdWithFootnoteExpected          = "<p>fox mulder,fbi.[^1]</p><p>[^1]: federated bureau of investigation</p>"
-	mdWithBlockQuote                = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
-	mdWithBlockQuoteExpected        = "<p>get ready, there's a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
-	mdHashtagAndCodeBlock           = "#Hashtag\n\n```\n#Hashtag\n```"
-	mdHashtagAndCodeBlockExpected   = "<p><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p><pre><code>#Hashtag\n</code></pre>"
-	mdMentionAndCodeBlock           = "@the_mighty_zork\n\n```\n@the_mighty_zork\n```"
-	mdMentionAndCodeBlockExpected   = "<p><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span></p><pre><code>@the_mighty_zork\n</code></pre>"
-	mdWithSmartypants               = "\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping"
-	mdWithSmartypantsExpected       = "<p>\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping</p>"
-	mdWithAsciiHeart                = "hello <3 old friend <3 i loved u </3 :(( you stole my heart"
-	mdWithAsciiHeartExpected        = "<p>hello &lt;3 old friend &lt;3 i loved u &lt;/3 :(( you stole my heart</p>"
-	mdWithStrikethrough             = "I have ~~mdae~~ made an error"
-	mdWithStrikethroughExpected     = "<p>I have <del>mdae</del> made an error</p>"
-	mdWithLink                      = "Check out this code, i heard it was written by a sloth https://github.com/superseriousbusiness/gotosocial"
-	mdWithLinkExpected              = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
-	mdObjectInCodeBlock             = "@foss_satan@fossbros-anonymous.io this is how to mention a user\n```\n@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you've been writing lately! :rainbow:\n```\nhope that helps"
-	mdObjectInCodeBlockExpected     = "<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span> this is how to mention a user</p><pre><code>@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you&#39;ve been writing lately! :rainbow:\n</code></pre><p>hope that helps</p>"
+	simpleMarkdown                     = "# Title\n\nHere's a simple text in markdown.\n\nHere's a [link](https://example.org)."
+	simpleMarkdownExpected             = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p>"
+	withCodeBlockExpected              = "<h1>Title</h1><p>Below is some JSON.</p><pre><code class=\"language-json\">{\n  &#34;key&#34;: &#34;value&#34;,\n  &#34;another_key&#34;: [\n    &#34;value1&#34;,\n    &#34;value2&#34;\n  ]\n}\n</code></pre><p>that was some JSON :)</p>"
+	withInlineCode                     = "`Nobody tells you about the <code><del>SECRET CODE</del></code>, do they?`"
+	withInlineCodeExpected             = "<p><code>Nobody tells you about the &lt;code>&lt;del>SECRET CODE&lt;/del>&lt;/code>, do they?</code></p>"
+	withInlineCode2                    = "`Nobody tells you about the </code><del>SECRET CODE</del><code>, do they?`"
+	withInlineCode2Expected            = "<p><code>Nobody tells you about the &lt;/code>&lt;del>SECRET CODE&lt;/del>&lt;code>, do they?</code></p>"
+	withHashtag                        = "# Title\n\nhere's a simple status that uses hashtag #Hashtag!"
+	withHashtagExpected                = "<h1>Title</h1><p>here's a simple status that uses hashtag <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a>!</p>"
+	withTamilHashtag                   = "here's a simple status that uses a hashtag in Tamil #தமிழ்"
+	withTamilHashtagExpected           = "<p>here's a simple status that uses a hashtag in Tamil <a href=\"http://localhost:8080/tags/%E0%AE%A4%E0%AE%AE%E0%AE%BF%E0%AE%B4%E0%AF%8D\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>தமிழ்</span></a></p>"
+	mdWithHTML                         = "# Title\n\nHere's a simple text in markdown.\n\nHere's a <a href=\"https://example.org\">link</a>.\n\nHere's an image: <img src=\"https://gts.superseriousbusiness.org/assets/logo.png\" alt=\"The GoToSocial sloth logo.\" width=\"500\" height=\"600\">"
+	mdWithHTMLExpected                 = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a <a href=\"https://example.org\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">link</a>.</p><p>Here's an image:</p>"
+	mdWithCheekyHTML                   = "# Title\n\nHere's a simple text in markdown.\n\nHere's a cheeky little script: <script>alert(ahhhh)</script>"
+	mdWithCheekyHTMLExpected           = "<h1>Title</h1><p>Here's a simple text in markdown.</p><p>Here's a cheeky little script:</p>"
+	mdWithHashtagInitial               = "#welcome #Hashtag"
+	mdWithHashtagInitialExpected       = "<p><a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> <a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p>"
+	mdCodeBlockWithNewlines            = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
+	mdCodeBlockWithNewlinesExpected    = "<p>some code coming up</p><pre><code>\n\n\n</code></pre><p>that was some code</p>"
+	mdWithFootnote                     = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
+	mdWithFootnoteExpected             = "<p>fox mulder,fbi.[^1]</p><p>[^1]: federated bureau of investigation</p>"
+	mdWithBlockQuote                   = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
+	mdWithBlockQuoteExpected           = "<p>get ready, there's a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
+	mdHashtagAndCodeBlock              = "#Hashtag\n\n```\n#Hashtag\n```"
+	mdHashtagAndCodeBlockExpected      = "<p><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>Hashtag</span></a></p><pre><code>#Hashtag\n</code></pre>"
+	mdMentionAndCodeBlock              = "@the_mighty_zork\n\n```\n@the_mighty_zork\n```"
+	mdMentionAndCodeBlockExpected      = "<p><span class=\"h-card\"><a href=\"http://localhost:8080/@the_mighty_zork\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>the_mighty_zork</span></a></span></p><pre><code>@the_mighty_zork\n</code></pre>"
+	mdMentionAndCodeBlockBasicExpected = "<p>@the_mighty_zork</p><pre><code>@the_mighty_zork\n</code></pre>"
+	mdWithSmartypants                  = "\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping"
+	mdWithSmartypantsExpected          = "<p>\"you have to quargle the bleepflorp\" they said with 1/2 of nominal speed and 1/3 of the usual glumping</p>"
+	mdWithAsciiHeart                   = "hello <3 old friend <3 i loved u </3 :(( you stole my heart"
+	mdWithAsciiHeartExpected           = "<p>hello &lt;3 old friend &lt;3 i loved u &lt;/3 :(( you stole my heart</p>"
+	mdWithStrikethrough                = "I have ~~mdae~~ made an error"
+	mdWithStrikethroughExpected        = "<p>I have <del>mdae</del> made an error</p>"
+	mdWithLink                         = "Check out this code, i heard it was written by a sloth https://github.com/superseriousbusiness/gotosocial"
+	mdWithLinkExpected                 = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
+	mdWithLinkBasicExpected            = "Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a>"
+	mdObjectInCodeBlock                = "@foss_satan@fossbros-anonymous.io this is how to mention a user\n```\n@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you've been writing lately! :rainbow:\n```\nhope that helps"
+	mdObjectInCodeBlockExpected        = "<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span> this is how to mention a user</p><pre><code>@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you&#39;ve been writing lately! :rainbow:\n</code></pre><p>hope that helps</p>"
 	// Hashtags can be italicized but only with *, not _.
 	mdItalicHashtag          = "*#hashtag*"
 	mdItalicHashtagExpected  = "<p><em><a href=\"http://localhost:8080/tags/hashtag\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>hashtag</span></a></em></p>"
@@ -169,6 +171,11 @@ func (suite *MarkdownTestSuite) TestParseMentionWithCodeBlock() {
 	suite.Equal(mdMentionAndCodeBlockExpected, formatted.HTML)
 }
 
+func (suite *MarkdownTestSuite) TestParseMentionWithCodeBlockBasic() {
+	formatted := suite.FromMarkdownBasic(mdMentionAndCodeBlock)
+	suite.Equal(mdMentionAndCodeBlockBasicExpected, formatted.HTML)
+}
+
 func (suite *MarkdownTestSuite) TestParseSmartypants() {
 	formatted := suite.FromMarkdown(mdWithSmartypants)
 	suite.Equal(mdWithSmartypantsExpected, formatted.HTML)
@@ -187,6 +194,11 @@ func (suite *MarkdownTestSuite) TestParseStrikethrough() {
 func (suite *MarkdownTestSuite) TestParseLink() {
 	formatted := suite.FromMarkdown(mdWithLink)
 	suite.Equal(mdWithLinkExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseLinkBasic() {
+	formatted := suite.FromMarkdownBasic(mdWithLink)
+	suite.Equal(mdWithLinkBasicExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseObjectInCodeBlock() {

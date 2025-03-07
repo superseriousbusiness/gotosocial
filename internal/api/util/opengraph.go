@@ -67,7 +67,7 @@ func OGBase(instance *apimodel.InstanceV1) *OGMeta {
 	}
 
 	og := &OGMeta{
-		Title:       text.SanitizeToPlaintext(instance.Title) + " - GoToSocial",
+		Title:       text.StripHTMLFromText(instance.Title) + " - GoToSocial",
 		Type:        "website",
 		Locale:      locale,
 		URL:         instance.URI,
@@ -161,7 +161,7 @@ func AccountTitle(account *apimodel.WebAccount, accountDomain string) string {
 // ParseDescription returns a string description which is
 // safe to use as a template.HTMLAttr inside templates.
 func ParseDescription(in string) string {
-	i := text.SanitizeToPlaintext(in)
+	i := text.StripHTMLFromText(in)
 	i = strings.ReplaceAll(i, "\n", " ")
 	i = strings.Join(strings.Fields(i), " ")
 	i = html.EscapeString(i)

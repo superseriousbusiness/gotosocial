@@ -50,6 +50,13 @@ func (p *Processor) Delete(ctx context.Context, requestingAccount *gtsmodel.Acco
 		return nil, errWithCode
 	}
 
+	// Replace content warning with raw
+	// version if it's available, to make
+	// delete + redraft work nicer.
+	if targetStatus.ContentWarningText != "" {
+		apiStatus.SpoilerText = targetStatus.ContentWarningText
+	}
+
 	// Process delete side effects.
 	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
 		APObjectType:   ap.ObjectNote,

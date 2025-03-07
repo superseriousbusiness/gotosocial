@@ -97,8 +97,8 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
-		// Parse new display name (always from plaintext).
-		account.DisplayName = text.SanitizeToPlaintext(displayName)
+		// HTML tags not allowed in display name.
+		account.DisplayName = text.StripHTMLFromText(displayName)
 		acctColumns = append(acctColumns, "display_name")
 	}
 
@@ -145,7 +145,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.AvatarDescription != nil {
-		desc := text.SanitizeToPlaintext(*form.AvatarDescription)
+		desc := text.StripHTMLFromText(*form.AvatarDescription)
 		form.AvatarDescription = &desc
 	}
 
@@ -175,7 +175,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.HeaderDescription != nil {
-		desc := text.SanitizeToPlaintext(*form.HeaderDescription)
+		desc := text.StripHTMLFromText(*form.HeaderDescription)
 		form.HeaderDescription = util.Ptr(desc)
 	}
 
@@ -265,7 +265,7 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 			return nil, gtserror.NewErrorBadRequest(err, err.Error())
 		}
 
-		account.Settings.CustomCSS = text.SanitizeToPlaintext(customCSS)
+		account.Settings.CustomCSS = text.StripHTMLFromText(customCSS)
 		settingsColumns = append(settingsColumns, "custom_css")
 	}
 
@@ -356,8 +356,8 @@ func (p *Processor) updateFields(
 
 		// Sanitize raw field values.
 		fieldRaw := &gtsmodel.Field{
-			Name:  text.SanitizeToPlaintext(name),
-			Value: text.SanitizeToPlaintext(value),
+			Name:  text.StripHTMLFromText(name),
+			Value: text.StripHTMLFromText(value),
 		}
 		fieldsRaw = append(fieldsRaw, fieldRaw)
 	}
@@ -385,7 +385,7 @@ func (p *Processor) processAccountText(
 	emojis := make(map[string]*gtsmodel.Emoji)
 
 	// Retrieve display name emojis.
-	for _, emoji := range p.formatter.FromPlainEmojiOnly(
+	for _, emoji := range p.formatter.FromPlainBasic(
 		ctx,
 		p.parseMention,
 		account.ID,
@@ -413,7 +413,7 @@ func (p *Processor) processAccountText(
 		// Name stays plain, but we still need to
 		// see if there are any emojis set in it.
 		field.Name = fieldRaw.Name
-		for _, emoji := range p.formatter.FromPlainEmojiOnly(
+		for _, emoji := range p.formatter.FromPlainBasic(
 			ctx,
 			p.parseMention,
 			account.ID,
