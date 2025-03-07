@@ -578,6 +578,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   "card": null,
   "poll": null,
   "text": "hello world! #welcome ! first post on the instance :rainbow: !",
+  "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
       "always": [
