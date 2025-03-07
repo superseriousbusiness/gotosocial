@@ -383,7 +383,7 @@ func filterableFields(s *gtsmodel.Status) []string {
 	// remove markdown-formatting characters
 	// and ensure more consistent filtering.
 	if s.Content != "" {
-		text := text.HTMLToPlain(s.Content)
+		text := text.ParseHTMLToPlain(s.Content)
 		if text != "" {
 			fields = append(fields, text)
 		}

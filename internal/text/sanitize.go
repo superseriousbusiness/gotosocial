@@ -18,9 +18,7 @@
 package text
 
 import (
-	"html"
 	"regexp"
-	"strings"
 
 	"github.com/microcosm-cc/bluemonday"
 )
@@ -165,21 +163,8 @@ var strict *bluemonday.Policy = bluemonday.StrictPolicy()
 
 // SanitizeHTML sanitizes only risky html elements
 // from the given string, allowing safe ones through.
-func SanitizeHTML(in string) string {
-	return regular.Sanitize(in)
-}
-
-// RemoveHTML runs text through strict sanitization.
-// This removes any html elements that were in the
-// string, and returns pruned plaintext.
-func RemoveHTML(in string) string {
-	// Unescape first to catch any tricky critters.
-	content := html.UnescapeString(in)
-
-	// Remove all detected HTML.
-	content = strict.Sanitize(content)
-
-	// Unescape again to return plaintext.
-	content = html.UnescapeString(content)
-	return strings.TrimSpace(content)
+//
+// It returns an HTML string.
+func SanitizeHTML(html string) string {
+	return regular.Sanitize(html)
 }

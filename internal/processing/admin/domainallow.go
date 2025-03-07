@@ -53,8 +53,8 @@ func (p *Processor) createDomainAllow(
 			ID:                 id.NewULID(),
 			Domain:             domain,
 			CreatedByAccountID: adminAcct.ID,
-			PrivateComment:     text.RemoveHTML(privateComment),
-			PublicComment:      text.RemoveHTML(publicComment),
+			PrivateComment:     text.StripHTMLFromText(privateComment),
+			PublicComment:      text.StripHTMLFromText(publicComment),
 			Obfuscate:          &obfuscate,
 			SubscriptionID:     subscriptionID,
 		}

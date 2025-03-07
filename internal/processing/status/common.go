@@ -236,7 +236,7 @@ func (p *Processor) processContent(
 			// Strip each poll option and format.
 			//
 			// For polls just use basic formatting.
-			option = text.RemoveHTML(option)
+			option = text.StripHTMLFromText(option)
 			optionRes := formatInput(p.formatter.FromPlainBasic, option)
 
 			// Gather results of the formatted.

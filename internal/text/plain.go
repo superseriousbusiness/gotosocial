@@ -20,6 +20,7 @@ package text
 import (
 	"bytes"
 	"context"
+	gohtml "html"
 	"strings"
 
 	"codeberg.org/gruf/go-byteutil"
@@ -193,9 +194,22 @@ func (f *Formatter) fromPlain(
 	return result
 }
 
-// HTMLToPlain parses the given HTML and then outputs
-// it to close-as-possible equivalent plaintext.
-func HTMLToPlain(html string) string {
+// ParseHTMLToPlain parses the given HTML string, then
+// outputs it to equivalent plaintext while trying to
+// keep as much of the smenantic intent of the input
+// HTML as possible, ie., titles are placed on separate
+// lines, `<br>`s are converted to newlines, text inside
+// `<strong>` and `<em>` tags is retained, but without
+// emphasis, `<a>` links are unnested and the URL they
+// link to is placed in angle brackets next to them,
+// lists are replaced with newline-separated indented
+// items, etc.
+//
+// This function is useful when you need to filter on
+// HTML and want to avoid catching tags in the filter,
+// or when you want to serve something in a plaintext
+// format that may contain HTML tags (eg., CWs).
+func ParseHTMLToPlain(html string) string {
 	plain := html2text.HTML2TextWithOptions(
 		html,
 		html2text.WithLinksInnerText(),
@@ -203,4 +217,22 @@ func HTMLToPlain(html string) string {
 		html2text.WithListSupport(),
 	)
 	return strings.TrimSpace(plain)
+}
+
+// StripHTMLFromText runs text through strict sanitization
+// to completely remove any HTML from the input without
+// trying to preserve the semantic intent of any HTML tags.
+//
+// This is useful in cases where the input was not allowed
+// to contain HTML at all, and the output isn't either.
+func StripHTMLFromText(text string) string {
+	// Unescape first to catch any tricky critters.
+	content := gohtml.UnescapeString(text)
+
+	// Remove all detected HTML.
+	content = strict.Sanitize(content)
+
+	// Unescape again to return plaintext.
+	content = gohtml.UnescapeString(content)
+	return strings.TrimSpace(content)
 }

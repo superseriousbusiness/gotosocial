@@ -184,7 +184,7 @@ func (suite *PlainTestSuite) TestNumbersAreNotHashtags() {
 	suite.Len(f.Tags, 0)
 }
 
-func (suite *PlainTestSuite) TestHTMLToPlain() {
+func (suite *PlainTestSuite) TestParseHTMLToPlain() {
 	for _, t := range []struct {
 		html          string
 		expectedPlain string
@@ -246,9 +246,86 @@ See the domain permission subscription documentation <https://docs.gotosocial.or
 Thanks for reading! And seriously back up your database.`,
 		},
 	} {
-		plain := text.HTMLToPlain(t.html)
+		plain := text.ParseHTMLToPlain(t.html)
 		suite.Equal(t.expectedPlain, plain)
 	}
+}
+
+func (suite *PlainTestSuite) TestStripCaption1() {
+	dodgyCaption := "<script>console.log('haha!')</script>this is just a normal caption ;)"
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("this is just a normal caption ;)", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption2() {
+	dodgyCaption := "<em>here's a LOUD caption</em>"
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("here's a LOUD caption", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption3() {
+	dodgyCaption := ""
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption4() {
+	dodgyCaption := `
+
+
+here is
+a multi line
+caption
+with some newlines
+
+
+
+`
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("here is\na multi line\ncaption\nwith some newlines", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption5() {
+	// html-escaped: "<script>console.log('aha!')</script> hello world"
+	dodgyCaption := `&lt;script&gt;console.log(&apos;aha!&apos;)&lt;/script&gt; hello world`
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("hello world", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCaption6() {
+	// html-encoded: "<script>console.log('aha!')</script> hello world"
+	dodgyCaption := `&lt;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#99;&#111;&#110;&#115;&#111;&#108;&#101;&period;&#108;&#111;&#103;&lpar;&apos;&#97;&#104;&#97;&excl;&apos;&rpar;&lt;&sol;&#115;&#99;&#114;&#105;&#112;&#116;&gt;&#32;&#104;&#101;&#108;&#108;&#111;&#32;&#119;&#111;&#114;&#108;&#100;`
+	stripped := text.StripHTMLFromText(dodgyCaption)
+	suite.Equal("hello world", stripped)
+}
+
+func (suite *PlainTestSuite) TestStripCustomCSS() {
+	customCSS := `.toot .username {
+	color: var(--link_fg);
+	line-height: 2rem;
+	margin-top: -0.5rem;
+	align-self: start;
+	
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}`
+	stripped := text.StripHTMLFromText(customCSS)
+	suite.Equal(customCSS, stripped) // should be the same as it was before
+}
+
+func (suite *PlainTestSuite) TestStripNaughtyCustomCSS1() {
+	// try to break out of <style> into <head> and change the document title
+	customCSS := "</style><title>pee pee poo poo</title><style>"
+	stripped := text.StripHTMLFromText(customCSS)
+	suite.Empty(stripped)
+}
+
+func (suite *PlainTestSuite) TestStripNaughtyCustomCSS2() {
+	// try to break out of <style> into <head> and change the document title
+	customCSS := "pee pee poo poo</style><title></title><style>"
+	stripped := text.StripHTMLFromText(customCSS)
+	suite.Equal("pee pee poo poo", stripped)
 }
 
 func TestPlainTestSuite(t *testing.T) {

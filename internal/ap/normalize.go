@@ -339,7 +339,7 @@ func NormalizeIncomingName(item WithName, rawJSON map[string]interface{}) {
 	//
 	// todo: We probably want to update this to allow
 	// *escaped* HTML markup, but for now just nuke it.
-	name = text.RemoveHTML(name)
+	name = text.StripHTMLFromText(name)
 
 	// Set normalized name property from the raw string; this
 	// will replace any existing name property on the item.

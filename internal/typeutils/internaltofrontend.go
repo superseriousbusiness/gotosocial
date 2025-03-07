@@ -1376,7 +1376,6 @@ func (c *Converter) baseStatusToFrontend(
 		InReplyToID:        nil, // Set below.
 		InReplyToAccountID: nil, // Set below.
 		Sensitive:          *s.Sensitive,
-		SpoilerText:        text.HTMLToPlain(s.ContentWarning),
 		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
 		LocalOnly:          s.IsLocalOnly(),
 		Language:           nil, // Set below.
@@ -1397,6 +1396,11 @@ func (c *Converter) baseStatusToFrontend(
 		Text:               s.Text,
 		ContentType:        ContentTypeToAPIContentType(s.ContentType),
 		InteractionPolicy:  *apiInteractionPolicy,
+
+		// Mastodon API says spoiler_text should be *text*, not HTML, so
+		// parse any HTML back to plaintext when serializing via the API,
+		// attempting to preserve semantic intent to keep it readable.
+		SpoilerText: text.ParseHTMLToPlain(s.ContentWarning),
 	}
 
 	if at := s.EditedAt; !at.IsZero() {
