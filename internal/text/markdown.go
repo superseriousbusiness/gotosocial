@@ -96,20 +96,26 @@ func (f *Formatter) fromMarkdown(
 	input string,
 ) *FormatResult {
 	var (
-		result          = new(FormatResult)
-		rendererOptions = []renderer.Option{
+		result = new(FormatResult)
+		opts   []renderer.Option
+	)
+
+	if basic {
+		// Don't allow raw HTML tags,
+		// markdown syntax only.
+		opts = []renderer.Option{
 			html.WithXHTML(),
 			html.WithHardWraps(),
 		}
-	)
+	} else {
+		opts = []renderer.Option{
+			html.WithXHTML(),
+			html.WithHardWraps(),
 
-	if !basic {
-		// Allow raw HTML. We sanitize
-		// at the end so this is OK.
-		rendererOptions = append(
-			rendererOptions,
+			// Allow raw HTML tags, we
+			// sanitize at the end anyway.
 			html.WithUnsafe(),
-		)
+		}
 	}
 
 	// Instantiate goldmark parser for
@@ -117,7 +123,7 @@ func (f *Formatter) fromMarkdown(
 	// to add hashtag/mention links.
 	md := goldmark.New(
 		goldmark.WithRendererOptions(
-			rendererOptions...,
+			opts...,
 		),
 		goldmark.WithExtensions(
 			&customRenderer{
