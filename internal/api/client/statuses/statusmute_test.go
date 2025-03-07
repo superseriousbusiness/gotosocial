@@ -149,6 +149,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "card": null,
   "poll": null,
   "text": "hello everyone!",
+  "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
       "always": [
@@ -238,6 +239,7 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "card": null,
   "poll": null,
   "text": "hello everyone!",
+  "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
       "always": [

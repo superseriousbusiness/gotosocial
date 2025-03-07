@@ -77,6 +77,10 @@ func (suite *StatusDeleteTestSuite) TestPostDelete() {
 	suite.NoError(err)
 	suite.NotNil(statusReply)
 
+	// Check that text and content type are returned for delete and redraft
+	suite.Equal("hello everyone!", statusReply.Text)
+	suite.Equal(apimodel.StatusContentTypePlain, statusReply.ContentType)
+
 	if !testrig.WaitFor(func() bool {
 		_, err := suite.db.GetStatusByID(ctx, targetStatus.ID)
 		return errors.Is(err, db.ErrNoEntries)

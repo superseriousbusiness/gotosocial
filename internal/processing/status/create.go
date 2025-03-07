@@ -66,11 +66,14 @@ func (p *Processor) Create(
 	// Generate new ID for status.
 	statusID := id.NewULID()
 
+	// Process incoming content type.
+	contentType := processContentType(form.ContentType, nil, requester.Settings.StatusContentType)
+
 	// Process incoming status content fields.
 	content, errWithCode := p.processContent(ctx,
 		requester,
 		statusID,
-		string(form.ContentType),
+		contentType,
 		form.Status,
 		form.SpoilerText,
 		form.Language,
@@ -172,6 +175,7 @@ func (p *Processor) Create(
 		ContentWarning:     content.ContentWarning,
 		Text:               form.Status,        // raw
 		ContentWarningText: contentWarningText, // raw
+		ContentType:        contentType,
 
 		// Set gathered mentions.
 		MentionIDs: content.MentionIDs,

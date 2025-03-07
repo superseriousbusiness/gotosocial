@@ -31,6 +31,7 @@ type StatusEdit struct {
 	Content                string             `bun:""`                                                            // Content of status at time of edit; likely html-formatted but not guaranteed.
 	ContentWarning         string             `bun:",nullzero"`                                                   // Content warning of status at time of edit.
 	Text                   string             `bun:""`                                                            // Original status text, without formatting, at time of edit.
+	ContentType            StatusContentType  `bun:",nullzero"`                                                   // Content type used to process the original text of the status.
 	Language               string             `bun:",nullzero"`                                                   // Status language at time of edit.
 	Sensitive              *bool              `bun:",nullzero,notnull,default:false"`                             // Status sensitive flag at time of edit.
 	AttachmentIDs          []string           `bun:"attachments,array"`                                           // Database IDs of media attachments associated with status at time of edit.

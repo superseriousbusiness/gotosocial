@@ -145,6 +145,7 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
     "bookmarked": true,
     "card": null,
     "content": "<p>hello world! <a href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\">#<span>welcome</span></a> ! first post on the instance :rainbow: !</p>",
+    "content_type": "text/plain",
     "created_at": "right the hell just now babyee",
     "edited_at": null,
     "emojis": [
@@ -331,6 +332,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
     "bookmarked": false,
     "card": null,
     "content": "<p>hi!</p>",
+    "content_type": "text/plain",
     "created_at": "right the hell just now babyee",
     "edited_at": null,
     "emojis": [],
@@ -543,6 +545,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
     "bookmarked": false,
     "card": null,
     "content": "<p>Hi <span class=\"h-card\"><a href=\"http://localhost:8080/@1happyturtle\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>1happyturtle</span></a></span>, can I reply?</p>",
+    "content_type": "text/markdown",
     "created_at": "right the hell just now babyee",
     "edited_at": null,
     "emojis": [],
