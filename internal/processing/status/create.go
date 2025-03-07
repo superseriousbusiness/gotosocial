@@ -146,14 +146,6 @@ func (p *Processor) Create(
 		}
 	}
 
-	// Only store ContentWarningText if the parsed
-	// result is different from the given SpoilerText,
-	// otherwise skip to avoid duplicating db columns.
-	var contentWarningText string
-	if content.ContentWarning != form.SpoilerText {
-		contentWarningText = form.SpoilerText
-	}
-
 	status := &gtsmodel.Status{
 		ID:                       statusID,
 		URI:                      accountURIs.StatusesURI + "/" + statusID,
@@ -171,11 +163,10 @@ func (p *Processor) Create(
 		Language: content.Language,
 
 		// Set formatted status content.
-		Content:            content.Content,
-		ContentWarning:     content.ContentWarning,
-		Text:               form.Status,        // raw
-		ContentWarningText: contentWarningText, // raw
-		ContentType:        contentType,
+		Content:        content.Content,
+		ContentWarning: content.ContentWarning,
+		Text:           form.Status, // raw
+		ContentType:    contentType,
 
 		// Set gathered mentions.
 		MentionIDs: content.MentionIDs,
@@ -196,6 +187,13 @@ func (p *Processor) Create(
 		// Assume not pending approval; this may
 		// change when permissivity is checked.
 		PendingApproval: util.Ptr(false),
+	}
+
+	// Only store ContentWarningText if the parsed
+	// result is different from the given SpoilerText,
+	// otherwise skip to avoid duplicating db columns.
+	if content.ContentWarning != form.SpoilerText {
+		status.ContentWarningText = form.SpoilerText
 	}
 
 	if backfill {

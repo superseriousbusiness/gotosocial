@@ -312,11 +312,9 @@ func (p *Processor) Edit(
 	// Only store ContentWarningText if the parsed
 	// result is different from the given SpoilerText,
 	// otherwise skip to avoid duplicating db columns.
-	var contentWarningText string
 	if content.ContentWarning != form.SpoilerText {
-		contentWarningText = form.SpoilerText
+		status.ContentWarningText = form.SpoilerText
 	}
-	status.ContentWarningText = contentWarningText // raw
 
 	if poll != nil {
 		// Set relevent fields for latest with poll.
