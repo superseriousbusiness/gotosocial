@@ -98,7 +98,7 @@
 
 我们支持基于 [Conda](https://docs.conda.io/en/latest/) 的工作流程，用于修改、构建和发布文档。以下是你可以在本地开始编辑的步骤：
 
-* 安装 [`miniconda`](https://docs.conda.io/en/latest/miniconda.html)
+* 安装 [`miniconda`](https://www.anaconda.com/docs/getting-started/miniconda/main)
 * 创建你的 conda 环境：`conda env create -f ./docs/environment.yml`
 * 激活环境：`conda activate gotosocial-docs`
 * 在本地运行：`mkdocs serve`
@@ -175,7 +175,7 @@ nodemon -e go --signal SIGTERM --exec "go run ./cmd/gotosocial --host localhost 
 
 #### Docker
 
-对于以下两种方法，你需要安装 [Docker buildx](https://docs.docker.com/buildx/working-with-buildx/)。
+对于以下两种方法，你需要安装 [Docker buildx](https://docs.docker.com/build/concepts/overview/#buildx)。
 
 ##### 使用 GoReleaser
 
@@ -402,7 +402,7 @@ GoToSocial 提供了一个 [testrig](https://github.com/superseriousbusiness/got
 
 #### 独立测试环境与 Pinafore
 
-你可以启动一个在本地主机运行的独立测试服务器 testrig，可以通过 [Pinafore](https://github.com/NickColley/pinafore/) 连接。
+你可以启动一个在本地主机运行的独立测试服务器 testrig，可以通过 [Pinafore](https://github.com/nolanlawson/pinafore/) 连接。
 
 要做到这一点，首先用 `DEBUG=1 ./scripts/build.sh` 构建 gotosocial 二进制文件。
 
@@ -483,7 +483,7 @@ GTS_DB_TYPE="postgres" GTS_DB_ADDRESS="localhost" go test -p 1 ./...
 
 GoToSocial 使用 [go-swagger](https://goswagger.io) 根据代码注释生成 Swagger API 文档。
 
-你可以遵循 [此处](https://goswagger.io/install.html) 的说明安装 go-swagger。
+你可以遵循 [此处](https://goswagger.io/go-swagger/install/) 的说明安装 go-swagger。
 
 如果你更改了任何 API 路径上的 Swagger 注释，可以通过运行以下命令在 `./docs/api/swagger.yaml` 生成一个新的 Swagger 文件：
 
