@@ -99,7 +99,7 @@ If you see something in the documentation that's missing, wrong, or unclear, fee
 
 We support a [Conda](https://docs.conda.io/en/latest/)-based workflow for hacking, building & publishing the documentation. Here's how you can get started locally:
 
-* Install [`miniconda`](https://docs.conda.io/en/latest/miniconda.html)
+* Install [`miniconda`](https://www.anaconda.com/docs/getting-started/miniconda/main)
 * Create your conda environment: `conda env create -f ./docs/environment.yml`
 * Activate the environment: `conda activate gotosocial-docs`
 * Serve locally: `mkdocs serve`
@@ -176,7 +176,7 @@ nodemon -e go --signal SIGTERM --exec "go run ./cmd/gotosocial --host localhost 
 
 #### Docker
 
-For both of the below methods, you need to have [Docker buildx](https://docs.docker.com/buildx/working-with-buildx/) installed.
+For both of the below methods, you need to have [Docker buildx](https://docs.docker.com/build/concepts/overview/#buildx) installed.
 
 ##### With GoReleaser
 
@@ -484,7 +484,7 @@ You'll additionally need functioning DNS for your two instance names, which you 
 
 GoToSocial uses [go-swagger](https://goswagger.io) to generate Swagger API documentation from code annotations.
 
-You can install go-swagger following the instructions [here](https://goswagger.io/install.html).
+You can install go-swagger following the instructions [here](https://goswagger.io/go-swagger/install/).
 
 If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml` by running:
 
