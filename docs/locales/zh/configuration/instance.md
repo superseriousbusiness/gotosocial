@@ -155,4 +155,15 @@ instance-subscriptions-process-every: "24h"
 # 选项: ["", "zero", "serve", "baffle"]
 # 默认: ""
 instance-stats-mode: ""
+
+# 布尔值。此变量控制本地账户是否可以使用 /api/v1/statuses 的 scheduled_at 参数将帖文设为过去的日期。
+# 此变量不影响将在未来定时发布的帖文（目前尚未实现），
+# 也无法阻止外站账户为其发布的帖文设置过去的日期。
+#
+# 如果设置为 true，所有本站账户都可以新增历史帖文。
+# 如果设置为 false，将禁止新增历史帖文，并在调用相关端点时返回错误。
+#
+# 选项: [true, false]
+# 默认值: true
+instance-allow-backdating-statuses: true
 ```
