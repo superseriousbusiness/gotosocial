@@ -253,9 +253,14 @@ func getBunColumnDef(db bun.IDB, rtype reflect.Type, fieldName string) (string, 
 		} else {
 			buf = append(buf, sqltype.VarChar...)
 		}
-		buf = append(buf, "("...)
-		buf = strconv.AppendInt(buf, int64(d.DefaultVarcharLen()), 10)
-		buf = append(buf, ")"...)
+
+		// Only specify varchar length for dialects
+		// where specifying VARCHAR length is mandatory.
+		if dvl := d.DefaultVarcharLen(); dvl != 0 {
+			buf = append(buf, "("...)
+			buf = strconv.AppendInt(buf, int64(dvl), 10)
+			buf = append(buf, ")"...)
+		}
 	}
 
 	// Append not null definition if field requires.
