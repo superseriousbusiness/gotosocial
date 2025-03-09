@@ -43,7 +43,8 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
 - [已知问题](#已知问题)
 - [安装 GoToSocial](#安装-gotosocial)
   - [支持的平台](#支持的平台)
-    - [FreeBSD](#freebsd)
+    - [64位](#64位)
+    - [BSD系](#bsd系)
     - [32位](#32位)
     - [OpenBSD](#openbsd)
   - [稳定版本](#稳定版本)
@@ -276,19 +277,34 @@ GoToSocial 支持 [OpenID Connect (OIDC)](https://openid.net/connect/) 身份提
 
 以下是 GoToSocial 当前针对不同平台的支持状态（如果某个平台未列出，则表示我们尚未检查，因此我们不清楚）：
 
+
+
 | 操作系统 | 架构                  | 支持程度                            | 二进制文件 | Docker 容器     |
 | ------- | --------------------- | ---------------------------------- | ---------- | --------------- |
 | Linux   | x86-64/AMD64 (64位)   | 🟢 完全支持                         | 是         | 是              |
 | Linux   | Armv8/ARM64 (64位)    | 🟢 完全支持                         | 是         | 是              |
 | FreeBSD | x86-64/AMD64 (64位)   | 🟢 完全支持<sup>[1](#freebsd)</sup> | 是         | 否              |
-| Linux   | x86-32/i386 (32位)    | 🟡 部分支持<sup>[2](#32-bit)</sup>  | 是         | 是              |
-| Linux   | Armv7/ARM32 (32位)    | 🟡 部分支持<sup>[2](#32-bit)</sup>  | 是         | 是              |
-| Linux   | Armv6/ARM32 (32位)    | 🟡 部分支持<sup>[2](#32-bit)</sup>  | 是         | 是              |
-| OpenBSD | 任何架构                  | 🔴 不支持<sup>[3](#openbsd)</sup>   | 否         | 否              |
+| FreeBSD | Armv8/ARM64 (64位)    | 🟢 完全支持<sup>[1](#freebsd)</sup> | 是         | 否              |
+| NetBSD  | x86-64/AMD64 (64位)   | 🟢 完全支持<sup>[1](#netbsd)</sup> | 是         | 否              |
+| NetBSD  | Armv8/ARM64 (64位)    | 🟢 完全支持<sup>[1](#netbsd)</sup> | 是         | 否              |
+| Linux   | x86-32/i386 (32位)    | 🟡 部分支持<sup>[2](#32位)</sup>         | 是         | 是              |
+| Linux   | Armv7/ARM32 (32位)    | 🟡 部分支持<sup>[2](#32位)</sup>         | 是         | 是              |
+| Linux   | Armv6/ARM32 (32位)    | 🟡 部分支持<sup>[2](#32位)</sup>         | 是         | 是              |
+| OpenBSD | Any                     | 🔴 不支持<sup>[3](#openbsd)</sup>           | 否         | 否              |
 
-#### FreeBSD
+#### 64位
 
-大多数情况下可用，只是在 WASM SQLite 上有一些问题；在 FreeBSD 上安装时请仔细查看发行说明。如果使用 Postgres，则不应出现问题。
+64位平台需要以下(现在很常见的)CPU指令:
+
+- x86-64需要SSE4.1(用于媒体解码和WASM SQLite)
+
+- Armv8需要ARM64大型系统扩展(ARM64 Large System Extensions)(特别是在使用WASM SQLite时)
+
+如果没有这些指令,性能将会受到影响。在这些情况下,您可以尝试使用完全**不受支持、实验性的**[nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/)标签自行构建二进制文件。
+
+#### BSD系
+
+大部分可以正常工作,只是使用WASM SQLite时需要[注意几个事项](https://github.com/ncruces/go-sqlite3/wiki/Support-matrix);在NetBSD或FreeBSD上安装时请仔细查看发行说明。如果使用Postgres运行,您应该不会有任何问题。
 
 #### 32位
 
@@ -300,7 +316,7 @@ GtS 在像 i386 或 Armv6/v7 这样的 32 位系统上表现不佳，这主要�
 
 #### OpenBSD
 
-由于性能问题（空闲时的高内存占用，在处理媒体时崩溃），此系统被标记为不支持。
+由于性能问题（不支持 WASM 编译器，空闲时的高内存占用，在处理媒体时崩溃），此系统被标记为不支持。
 
 虽然我们不支持在 OpenBSD 上运行 GtS，但你可以尝试使用完全**不受支持、实验性**的 [nowasm](https://docs.gotosocial.org/zh-cn/latest/advanced/builds/nowasm/) 标签自行构建二进制文件。
 
@@ -421,6 +437,7 @@ GoToSocial 使用以下开源库、框架和工具，在此声明并致谢 💕
   - [superseriousbusiness/exif-terminator](https://codeberg.org/superseriousbusiness/exif-terminator); EXIF 数据擦除。 [GNU AGPL v3 许可证](https://spdx.org/licenses/AGPL-3.0-or-later.html)。
   - [superseriousbusiness/httpsig](https://codeberg.org/superseriousbusiness/httpsig) 从 [go-fed/httpsig](https://github.com/go-fed/httpsig) 派生; 安全 HTTP 签名库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
   - [superseriousbusiness/oauth2](https://codeberg.org/superseriousbusiness/oauth2) 从 [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2) 派生; OAuth 服务器框架和令牌处理。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
+- [temoto/robotstxt](https://github.com/temoto/robotstxt); robots.txt 解析。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [tdewolff/minify](https://github.com/tdewolff/minify); Markdown 帖文的 HTML 压缩。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [uber-go/automaxprocs](https://github.com/uber-go/automaxprocs); GOMAXPROCS 自动化。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [ulule/limiter](https://github.com/ulule/limiter); http 流量限制中间件。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
