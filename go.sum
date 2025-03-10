@@ -450,12 +450,12 @@ github.com/ugorji/go/codec v1.2.12 h1:9LC83zGrHhuUA9l16C9AHXAqEV/2wBQ4nkvumAE65E
 github.com/ugorji/go/codec v1.2.12/go.mod h1:UNopzCgEMSXjBc6AOMqYvWC1ktqTAfzJZUZgYf6w6lg=
 github.com/ulule/limiter/v3 v3.11.2 h1:P4yOrxoEMJbOTfRJR2OzjL90oflzYPPmWg+dvwN2tHA=
 github.com/ulule/limiter/v3 v3.11.2/go.mod h1:QG5GnFOCV+k7lrL5Y8kgEeeflPH3+Cviqlqa8SVSQxI=
-github.com/uptrace/bun v1.2.10 h1:6TlxUQhGxiiv7MHjzxbV6ZNt/Im0PIQ3S45riAmbnGA=
-github.com/uptrace/bun v1.2.10/go.mod h1:ww5G8h59UrOnCHmZ8O1I/4Djc7M/Z3E+EWFS2KLB6dQ=
+github.com/uptrace/bun v1.2.11 h1:l9dTymsdZZAoSZ1+Qo3utms0RffgkDbIv+1UGk8N1wQ=
+github.com/uptrace/bun v1.2.11/go.mod h1:ww5G8h59UrOnCHmZ8O1I/4Djc7M/Z3E+EWFS2KLB6dQ=
 github.com/uptrace/bun/dialect/pgdialect v1.2.10 h1:+PAGCVyWDoAjMuAgn0+ud7fu3It8+Xvk7HQAJ5wCXMQ=
 github.com/uptrace/bun/dialect/pgdialect v1.2.10/go.mod h1:hv0zsoc3PeW5fl3JeBglZT1vl2FoERY+QwvuvKsKATA=
-github.com/uptrace/bun/dialect/sqlitedialect v1.2.10 h1:/74GDx1hnRrrmIvqpNbbFwD28sW1z+i/QjQSVy6XnnY=
-github.com/uptrace/bun/dialect/sqlitedialect v1.2.10/go.mod h1:xBx+N2q4G4s51tAxZU5vKB3Zu0bFl1uRmKqZwCPBilg=
+github.com/uptrace/bun/dialect/sqlitedialect v1.2.11 h1:t4OIcbkWnRPshRj7ZnbHVwUENa3OHhCUruyFcl3P+TY=
+github.com/uptrace/bun/dialect/sqlitedialect v1.2.11/go.mod h1:XHFFTvdlNtNFWPhpRAConN6DnVgt9EHr5G5IIarHYyg=
 github.com/uptrace/bun/extra/bunotel v1.2.10 h1:Qkg0PrpcnlC9AvqCfqTL3seZHc5t1siKdSFUPCxql+Q=
 github.com/uptrace/bun/extra/bunotel v1.2.10/go.mod h1:FP1Bx8AIK8WYVM1OL/ynpcnkg7xjBkTCB91PEjFhdmU=
 github.com/uptrace/opentelemetry-go-extra/otelsql v0.3.2 h1:ZjUj9BLYf9PEqBn8W/OapxhPjVRdC6CsXTdULHsyk5c=
