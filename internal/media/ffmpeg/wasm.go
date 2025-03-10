@@ -150,7 +150,7 @@ func compilerSupported() (string, bool) {
 		// later update go-ffmpreg to a version that makes
 		// use of threads, i.e. v7.x.x. in that case we would
 		// need to check for cpu.ARM64.HasATOMICS.
-		return "arm64 LSE/atomics required", true
+		return "", true
 	default:
 		return "unsupported ARCH", false
 	}
