@@ -37,7 +37,7 @@ func init() {
 			}
 			if _, err := tx.
 				NewRaw(
-					"CREATE VIEW IF NOT EXISTS ? AS "+
+					"CREATE VIEW ? AS "+
 						"SELECT COUNT(*) FROM ? "+
 						"WHERE (? = ?) AND (? IN (?)) AND (? = ?)",
 					bun.Ident("statuses_local_count_view"),
