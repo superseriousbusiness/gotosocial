@@ -79,6 +79,19 @@ func (suite *TimelineTestSuite) publicCount() int {
 	return publicCount
 }
 
+func (suite *TimelineTestSuite) localCount() int {
+	var localCount int
+	for _, status := range suite.testStatuses {
+		if status.Visibility == gtsmodel.VisibilityPublic &&
+			status.BoostOfID == "" &&
+			!util.PtrOrZero(status.PendingApproval) &&
+			util.PtrOrValue(status.Local, true) {
+			localCount++
+		}
+	}
+	return localCount
+}
+
 func (suite *TimelineTestSuite) checkStatuses(statuses []*gtsmodel.Status, maxID string, minID string, expectedLength int) {
 	if l := len(statuses); l != expectedLength {
 		suite.FailNowf("", "expected %d statuses in slice, got %d", expectedLength, l)
@@ -121,6 +134,21 @@ func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 	})
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, suite.publicCount())
+}
+
+func (suite *TimelineTestSuite) TestGetPublicTimelineLocal() {
+	ctx := context.Background()
+
+	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, true)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	suite.T().Log(kv.Field{
+		K: "statuses", V: s,
+	})
+
+	suite.checkStatuses(s, id.Highest, id.Lowest, suite.localCount())
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {

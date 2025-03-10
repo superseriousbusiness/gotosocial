@@ -193,10 +193,27 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, maxI
 	return t.state.DB.GetStatusesByIDs(ctx, statusIDs)
 }
 
-func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceID string, minID string, limit int, local bool) ([]*gtsmodel.Status, error) {
+func (t *timelineDB) GetPublicTimeline(
+	ctx context.Context,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+	local bool,
+) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
 		limit = 0
+	}
+
+	if local {
+		return t.getLocalTimeline(
+			ctx,
+			maxID,
+			sinceID,
+			minID,
+			limit,
+		)
 	}
 
 	// Make educated guess for slice size
@@ -238,13 +255,92 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, maxID string, sinceI
 		frontToBack = false
 	}
 
-	if local {
-		// return only statuses posted by local account havers
-		q = q.Where("? = ?", bun.Ident("status.local"), local)
-	}
-
 	// Only include statuses that aren't pending approval.
 	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
+
+	if limit > 0 {
+		// limit amount of statuses returned
+		q = q.Limit(limit)
+	}
+
+	if frontToBack {
+		// Page down.
+		q = q.Order("status.id DESC")
+	} else {
+		// Page up.
+		q = q.Order("status.id ASC")
+	}
+
+	if err := q.Scan(ctx, &statusIDs); err != nil {
+		return nil, err
+	}
+
+	if len(statusIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want statuses
+	// to be sorted by ID desc, so reverse ids slice.
+	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
+	if !frontToBack {
+		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
+			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
+		}
+	}
+
+	// Return status IDs loaded from cache + db.
+	return t.state.DB.GetStatusesByIDs(ctx, statusIDs)
+}
+
+func (t *timelineDB) getLocalTimeline(
+	ctx context.Context,
+	maxID string,
+	sinceID string,
+	minID string,
+	limit int,
+) ([]*gtsmodel.Status, error) {
+	// Make educated guess for slice size
+	var (
+		statusIDs   = make([]string, 0, limit)
+		frontToBack = true
+	)
+
+	q := t.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
+		// Local only.
+		Where("? = ?", bun.Ident("status.local"), true).
+		// Public only.
+		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
+		// Only include statuses that aren't pending approval.
+		Where("? = ?", bun.Ident("status.pending_approval"), false).
+		// Ignore boosts.
+		Where("? IS NULL", bun.Ident("status.boost_of_id")).
+		// Select only IDs from table
+		Column("status.id")
+
+	if maxID == "" || maxID >= id.Highest {
+		const future = 24 * time.Hour
+
+		// don't return statuses more than 24hr in the future
+		maxID = id.NewULIDFromTime(time.Now().Add(future))
+	}
+
+	// return only statuses LOWER (ie., older) than maxID
+	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
+
+	if sinceID != "" {
+		// return only statuses HIGHER (ie., newer) than sinceID
+		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
+	}
+
+	if minID != "" {
+		// return only statuses HIGHER (ie., newer) than minID
+		q = q.Where("? > ?", bun.Ident("status.id"), minID)
+
+		// page up
+		frontToBack = false
+	}
 
 	if limit > 0 {
 		// limit amount of statuses returned
