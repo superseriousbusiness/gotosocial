@@ -292,13 +292,13 @@ This is the current status of support offered by GoToSocial for different platfo
 
 #### 64-bit
 
-64-bit platforms require the following (now, very common) CPU features:
+Notes on 64-bit CPU feature requirements:
 
-- x86-64 require SSE4.1 (for both media decoding and WASM SQLite)
+- x86_64 requires the SSE4.1 instruction set. (CPUs manufactured after ~2010)
 
-- Armv8 require ARM64 Large System Extensions (specifically when using WASM SQLite)
+- ARM64 requires no specific features, ARMv8 CPUs (and later) have all required features.
 
-Without these features, performance will suffer. In these situations, you may have some success building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
+If any of the above features are missing, performance of media processing (and possibly, SQLite) will suffer. In these situations, you may have some success building a binary yourself with the totally **unsupported, experimental** [nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/) tag.
 
 #### BSDs
 
