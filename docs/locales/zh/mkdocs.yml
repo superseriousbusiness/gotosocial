@@ -30,6 +30,7 @@ nav:
       - "user_guide/password_management.md"
       - "user_guide/rss.md"
       - "user_guide/migration.md"
+      - "user_guide/importing_posts.md"
   - "开始部署":
       - "getting_started/index.md"
       - "getting_started/releases.md"
@@ -104,6 +105,7 @@ nav:
       - "federation/ratelimiting.md"
       - "federation/actors.md"
       - "federation/posts.md"
+      - "federation/interaction_policy.md"
       - "federation/moderation.md"
       - "federation/glossary.md"
   - "客户端 API 文档":
