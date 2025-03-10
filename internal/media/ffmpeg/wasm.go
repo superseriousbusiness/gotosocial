@@ -28,6 +28,7 @@ import (
 
 	"codeberg.org/gruf/go-ffmpreg/embed"
 	"codeberg.org/gruf/go-ffmpreg/wasm"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/tetratelabs/wazero"
 	"golang.org/x/sys/cpu"
 )
@@ -50,14 +51,20 @@ func initWASM(ctx context.Context) error {
 
 	var cfg wazero.RuntimeConfig
 
-	// Create new runtime config, taking bug into account:
-	// taking https://github.com/tetratelabs/wazero/pull/2365
-	//
-	// Thanks @ncruces (of go-sqlite3) for the fix!
-	if compilerSupported() {
-		cfg = wazero.NewRuntimeConfigCompiler()
-	} else {
-		cfg = wazero.NewRuntimeConfigInterpreter()
+	// Allocate new runtime config, letting
+	// wazero determine compiler / interpreter.
+	cfg = wazero.NewRuntimeConfig()
+
+	// Though still perform a check of CPU features at
+	// runtime to warn about slow interpreter performance.
+	if reason, supported := compilerSupported(); !supported {
+		log.Warn(ctx, "!!! WAZERO COMPILER MAY NOT BE AVAILABLE !!!"+
+			" Reason: "+reason+"."+
+			" Wazero will likely fall back to interpreter mode,"+
+			" resulting in poor performance for media processing (and SQLite, if in use)."+
+			" For more info and possible workarounds, please check:"+
+			" https://docs.gotosocial.org/en/latest/getting_started/releases/#supported-platforms",
+		)
 	}
 
 	if dir := os.Getenv("GTS_WAZERO_COMPILATION_CACHE"); dir != "" {
@@ -121,7 +128,7 @@ func initWASM(ctx context.Context) error {
 	return nil
 }
 
-func compilerSupported() bool {
+func compilerSupported() (string, bool) {
 	switch runtime.GOOS {
 	case "linux", "android",
 		"windows", "darwin",
@@ -129,15 +136,23 @@ func compilerSupported() bool {
 		"solaris", "illumos":
 		break
 	default:
-		return false
+		return "unsupported OS", false
 	}
 	switch runtime.GOARCH {
 	case "amd64":
-		return cpu.X86.HasSSE41
+		// NOTE: wazero in the future may decouple the
+		// requirement of simd (sse4_1) from requirements
+		// for compiler support in the future, but even
+		// still our module go-ffmpreg makes use of them.
+		return "amd64 SSE4.1 required", cpu.X86.HasSSE41
 	case "arm64":
-		return true
+		// NOTE: this particular check may change if we
+		// later update go-ffmpreg to a version that makes
+		// use of threads, i.e. v7.x.x. in that case we would
+		// need to check for cpu.ARM64.HasATOMICS.
+		return "", true
 	default:
-		return false
+		return "unsupported ARCH", false
 	}
 }
 
