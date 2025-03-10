@@ -66,10 +66,10 @@ require (
 	github.com/tetratelabs/wazero v1.9.0
 	github.com/tomnomnom/linkheader v0.0.0-20180905144013-02ca5825eb80
 	github.com/ulule/limiter/v3 v3.11.2
-	github.com/uptrace/bun v1.2.10
-	github.com/uptrace/bun/dialect/pgdialect v1.2.10
-	github.com/uptrace/bun/dialect/sqlitedialect v1.2.10
-	github.com/uptrace/bun/extra/bunotel v1.2.10
+	github.com/uptrace/bun v1.2.11
+	github.com/uptrace/bun/dialect/pgdialect v1.2.11
+	github.com/uptrace/bun/dialect/sqlitedialect v1.2.11
+	github.com/uptrace/bun/extra/bunotel v1.2.11
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/yuin/goldmark v1.7.8
 	go.opentelemetry.io/otel v1.34.0
