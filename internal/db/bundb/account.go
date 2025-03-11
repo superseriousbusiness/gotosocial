@@ -1021,6 +1021,12 @@ func (a *accountDB) GetAccountWebStatuses(
 	limit int,
 	maxID string,
 ) ([]*gtsmodel.Status, error) {
+	if account.Username == config.GetHost() {
+		// Instance account
+		// doesn't post statuses.
+		return nil, nil
+	}
+
 	// Check for an easy case: account exposes no statuses via the web.
 	webVisibility := account.Settings.WebVisibility
 	if webVisibility == gtsmodel.VisibilityNone {
