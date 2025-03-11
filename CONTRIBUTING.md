@@ -158,9 +158,9 @@ Be sure to run `git fetch` before building the project for the first time.
 
 #### Binary
 
-To get started, you first need to have Go installed. GtS is currently using Go 1.21, so you should take that too. See [here](https://golang.org/doc/install) for installation instructions.
+To get started, you first need to have Go installed. Check the top of the `go.mod` file to see which version of Go you need to install, and see [here](https://golang.org/doc/install) for installation instructions.
 
-Once you've got go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
+Once you've got Go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
 
 Once you've installed the prerequisites, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary.
 
@@ -188,8 +188,6 @@ Normally, these processes are handled by Drone (see CI/CD above). However, you c
 
 To do this, first [install GoReleaser](https://goreleaser.com/install/).
 
-Then install GoSwagger as described in [the Swagger section](#updating-swagger-docs).
-
 Then install Node and Yarn as described in [Stylesheet / Web dev](#stylesheet--web-dev).
 
 Finally, to create a snapshot build, do:
@@ -202,13 +200,15 @@ If all goes according to plan, you should now have a number of multiple-architec
 
 ##### Manually
 
-If you prefer a simple approach to building a Docker container, with fewer dependencies (go-swagger, Node, Yarn), you can also just build in the following way:
+If you prefer a simple approach to building a Docker container, with fewer dependencies (Node, Yarn), you can also just build in the following way:
 
 ```bash
 ./scripts/build.sh && docker buildx build -t superseriousbusiness/gotosocial:latest .
 ```
 
 The above command first builds the `gotosocial` binary, then invokes Docker buildx to build the container image.
+
+If you get an error while doing the build that looks like `"/web/assets/swagger.yaml": not found`, then you need to (re)generate the Swagger docs once, see [Updating Swagger docs](#updating-swagger-docs) for the command.
 
 If you want to build a docker image for a different CPU architecture without setting up buildx (for example for ARMv7 aka 32-bit ARM), first modify the Dockerfile by adding the following lines to the top (but don't commit this!):
 
@@ -484,13 +484,15 @@ You'll additionally need functioning DNS for your two instance names, which you 
 
 GoToSocial uses [go-swagger](https://goswagger.io) to generate Swagger API documentation from code annotations.
 
-You can install go-swagger following the instructions [here](https://goswagger.io/go-swagger/install/).
-
-If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml` by running:
+If you change Swagger annotations on any of the API paths, you can generate a new Swagger file at `./docs/api/swagger.yaml`, and copy that file to web assets, by running:
 
 ```bash
-go run github.com/go-swagger/go-swagger/cmd/swagger generate spec --scan-models --exclude-deps --output docs/api/swagger.yaml
+go run ./vendor/github.com/go-swagger/go-swagger/cmd/swagger \
+generate spec --scan-models --exclude-deps -o docs/api/swagger.yaml \
+&& cp docs/api/swagger.yaml web/assets/swagger.yaml
 ```
+
+You shouldn't need to install go-swagger to run this command, as it's already included in the `vendor` folder.
 
 ### CI/CD configuration
 
