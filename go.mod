@@ -27,7 +27,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
-	codeberg.org/gruf/go-structr v0.8.11
+	codeberg.org/gruf/go-structr v0.9.0
 	codeberg.org/superseriousbusiness/activity v1.12.0-gts
 	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
@@ -95,7 +95,7 @@ require (
 
 require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
-	codeberg.org/gruf/go-mangler v1.4.1 // indirect
+	codeberg.org/gruf/go-mangler v1.4.3 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
 	codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB // indirect
 	codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB // indirect

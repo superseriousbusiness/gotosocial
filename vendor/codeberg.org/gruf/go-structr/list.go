@@ -43,7 +43,7 @@ func free_list(list *list) {
 	if list.head != nil ||
 		list.tail != nil ||
 		list.len != 0 {
-		should_not_reach()
+		should_not_reach(false)
 		return
 	}
 	list_pool.Put(list)
@@ -107,6 +107,32 @@ func (l *list) move_back(elem *list_elem) {
 	l.push_back(elem)
 }
 
+// insert will insert given element at given location in list.
+func (l *list) insert(elem *list_elem, at *list_elem) {
+	if elem == at {
+		return
+	}
+
+	// Set new 'next'.
+	oldNext := at.next
+	at.next = elem
+
+	// Link to 'at'.
+	elem.prev = at
+
+	if oldNext == nil {
+		// Set new tail
+		l.tail = elem
+	} else {
+		// Link to 'prev'.
+		oldNext.prev = elem
+		elem.next = oldNext
+	}
+
+	// Incr count
+	l.len++
+}
+
 // remove will remove given elem from list.
 func (l *list) remove(elem *list_elem) {
 	// Get linked elems.
@@ -149,3 +175,11 @@ func (l *list) remove(elem *list_elem) {
 	// Decr count
 	l.len--
 }
+
+// func (l *list) range_up(yield func(*list_elem) bool) {
+
+// }
+
+// func (l *list) range_down(yield func(*list_elem) bool) {
+
+// }

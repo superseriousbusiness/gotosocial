@@ -5,7 +5,7 @@ type hashmap struct {
 	n int
 }
 
-func (m *hashmap) init(cap int) {
+func (m *hashmap) Init(cap int) {
 	m.m = make(map[string]*list, cap)
 	m.n = cap
 }
@@ -43,6 +43,10 @@ func (m *hashmap) Compact() {
 	// So we apply the inverse/2, once
 	// $maxLoad/2 % of hmap is empty we
 	// compact the map to drop buckets.
+	//
+	// TODO: this is still a relatively
+	// good approximation, but it has
+	// changed a little with swiss maps.
 	if 2*16*diff > m.n*13 {
 
 		// Create new map only big as required.

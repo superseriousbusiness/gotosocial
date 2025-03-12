@@ -57,13 +57,13 @@ func (q *Queue[T]) Init(config QueueConfig[T]) {
 	// Safely copy over
 	// provided config.
 	q.mutex.Lock()
+	defer q.mutex.Unlock()
 	q.indices = make([]Index, len(config.Indices))
 	for i, cfg := range config.Indices {
 		q.indices[i].ptr = unsafe.Pointer(q)
 		q.indices[i].init(t, cfg, 0)
 	}
 	q.pop = config.Pop
-	q.mutex.Unlock()
 }
 
 // Index selects index with given name from queue, else panics.
@@ -133,7 +133,7 @@ func (q *Queue[T]) Pop(index *Index, keys ...Key) []T {
 			value := item.data.(T)
 			values = append(values, value)
 
-			// Delete queued.
+			// Delete item.
 			q.delete(item)
 		})
 	}
@@ -253,7 +253,7 @@ func (q *Queue[T]) pop_n(n int, next func() *list_elem) []T {
 		value := item.data.(T)
 		values = append(values, value)
 
-		// Delete queued.
+		// Delete item.
 		q.delete(item)
 	}
 
@@ -298,9 +298,6 @@ func (q *Queue[T]) index(value T) *indexed_item {
 
 		// Extract fields comprising index key.
 		parts := extract_fields(ptr, idx.fields)
-		if parts == nil {
-			continue
-		}
 
 		// Calculate index key.
 		key := idx.key(buf, parts)
@@ -309,7 +306,14 @@ func (q *Queue[T]) index(value T) *indexed_item {
 		}
 
 		// Append item to this index.
-		idx.append(&q.queue, key, item)
+		evicted := idx.append(key, item)
+		if evicted != nil {
+
+			// This item is no longer
+			// indexed, remove from list.
+			q.queue.remove(&evicted.elem)
+			free_indexed_item(evicted)
+		}
 	}
 
 	// Done with buf.
@@ -318,11 +322,12 @@ func (q *Queue[T]) index(value T) *indexed_item {
 	return item
 }
 
-func (q *Queue[T]) delete(item *indexed_item) {
-	for len(item.indexed) != 0 {
+func (q *Queue[T]) delete(i *indexed_item) {
+	for len(i.indexed) != 0 {
 		// Pop last indexed entry from list.
-		entry := item.indexed[len(item.indexed)-1]
-		item.indexed = item.indexed[:len(item.indexed)-1]
+		entry := i.indexed[len(i.indexed)-1]
+		i.indexed[len(i.indexed)-1] = nil
+		i.indexed = i.indexed[:len(i.indexed)-1]
 
 		// Get entry's index.
 		index := entry.index
@@ -330,13 +335,13 @@ func (q *Queue[T]) delete(item *indexed_item) {
 		// Drop this index_entry.
 		index.delete_entry(entry)
 
-		// Check compact map.
+		// Compact index map.
 		index.data.Compact()
 	}
 
-	// Drop entry from queue list.
-	q.queue.remove(&item.elem)
+	// Drop from queue list.
+	q.queue.remove(&i.elem)
 
-	// Free now-unused item.
-	free_indexed_item(item)
+	// Free unused item.
+	free_indexed_item(i)
 }
