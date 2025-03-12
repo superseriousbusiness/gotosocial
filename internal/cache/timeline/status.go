@@ -30,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
@@ -247,6 +248,12 @@ type StatusTimeline struct {
 	idx_AccountID        *structr.Index //nolint:revive
 	idx_BoostOfID        *structr.Index //nolint:revive
 	idx_BoostOfAccountID *structr.Index //nolint:revive
+
+	// ...
+	last atomic.Pointer[structr.Direction]
+
+	// ...
+	max int
 }
 
 // Init ...
@@ -330,9 +337,15 @@ func (t *StatusTimeline) Load(
 	ord := page.Order()
 	dir := toDirection(ord)
 
-	// First we attempt to load status metadata
-	// entries from the timeline cache, up to lim.
-	metas := t.cache.Select(min, max, lim, dir)
+	// First we attempt to load status
+	// metadata entries from the timeline
+	// cache, up to given limit.
+	metas := t.cache.Select(
+		util.PtrIf(min),
+		util.PtrIf(max),
+		util.PtrIf(lim),
+		dir,
+	)
 
 	// Set the starting lo / hi ID paging
 	// values. We continually update these
@@ -584,11 +597,24 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 
 // Trim ...
 func (t *StatusTimeline) Trim(threshold float64) {
-	panic("TODO")
+
+	// ...
+	dir := structr.Asc
+
+	// ...
+	max := threshold * float64(t.max)
+
+	// ...
+	if p := t.last.Load(); p != nil {
+		dir = !(*p)
+	}
+
+	// ...
+	t.cache.Trim(int(max), dir)
 }
 
-// Clear will remove all cached entries from timeline.
-func (t *StatusTimeline) Clear() { t.cache.Clear() }
+// Clear will remove all cached entries from underlying timeline.
+func (t *StatusTimeline) Clear() { t.cache.Trim(0, structr.Desc) }
 
 // prepare will take a slice of cached (or, freshly loaded!) StatusMeta{}
 // models, and use given functions to return prepared frontend API models.
