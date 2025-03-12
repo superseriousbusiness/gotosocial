@@ -168,7 +168,7 @@ func (i *Index) init(t reflect.Type, cfg IndexConfig, cap int) {
 
 	// Initialize store for
 	// index_entry lists.
-	i.data.init(cap)
+	i.data.Init(cap)
 }
 
 // get_one will fetch one indexed item under key.
@@ -248,7 +248,7 @@ func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
 // doubly-linked-list in index hashmap. this handles case of
 // overwriting "unique" index entries, and removes from given
 // outer linked-list in the case that it is no longer indexed.
-func (i *Index) append(ll *list, key string, item *indexed_item) {
+func (i *Index) append(key string, item *indexed_item) (evicted *indexed_item) {
 	// Look for existing.
 	l := i.data.Get(key)
 
@@ -267,17 +267,16 @@ func (i *Index) append(ll *list, key string, item *indexed_item) {
 		// Drop index from inner item,
 		// catching the evicted item.
 		e := (*index_entry)(elem.data)
-		evicted := e.item
+		evicted = e.item
 		evicted.drop_index(e)
 
 		// Free unused entry.
 		free_index_entry(e)
 
-		if len(evicted.indexed) == 0 {
-			// Evicted item is not indexed,
-			// remove from outer linked list.
-			ll.remove(&evicted.elem)
-			free_indexed_item(evicted)
+		if len(evicted.indexed) != 0 {
+			// Evicted is still stored
+			// under index, don't return.
+			evicted = nil
 		}
 	}
 
@@ -292,6 +291,7 @@ func (i *Index) append(ll *list, key string, item *indexed_item) {
 
 	// Add entry to index list.
 	l.push_front(&entry.elem)
+	return
 }
 
 // delete will remove all indexed items under key, passing each to hook.
@@ -403,7 +403,7 @@ func new_index_entry() *index_entry {
 func free_index_entry(entry *index_entry) {
 	if entry.elem.next != nil ||
 		entry.elem.prev != nil {
-		should_not_reach()
+		should_not_reach(false)
 		return
 	}
 	entry.key = ""

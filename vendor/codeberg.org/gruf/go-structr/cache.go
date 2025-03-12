@@ -17,7 +17,7 @@ func DefaultIgnoreErr(err error) bool {
 }
 
 // CacheConfig defines config vars
-// for initializing a struct cache.
+// for initializing a Cache{} type.
 type CacheConfig[StructType any] struct {
 
 	// IgnoreErr defines which errors to
@@ -70,14 +70,13 @@ type Cache[StructType any] struct {
 	indices []Index
 
 	// max cache size, imposes size
-	// limit on the lruList in order
+	// limit on the lru list in order
 	// to evict old entries.
 	maxSize int
 
 	// protective mutex, guards:
-	// - Cache{}.lruList
+	// - Cache{}.*
 	// - Index{}.data
-	// - Cache{} hook fns
 	mutex sync.Mutex
 }
 
@@ -105,6 +104,7 @@ func (c *Cache[T]) Init(config CacheConfig[T]) {
 	// Safely copy over
 	// provided config.
 	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	c.indices = make([]Index, len(config.Indices))
 	for i, cfg := range config.Indices {
 		c.indices[i].ptr = unsafe.Pointer(c)
@@ -114,7 +114,6 @@ func (c *Cache[T]) Init(config CacheConfig[T]) {
 	c.copy = config.Copy
 	c.invalid = config.Invalidate
 	c.maxSize = config.MaxSize
-	c.mutex.Unlock()
 }
 
 // Index selects index with given name from cache, else panics.
@@ -161,6 +160,7 @@ func (c *Cache[T]) Get(index *Index, keys ...Key) []T {
 		// Concatenate all *values* from cached items.
 		index.get(keys[i].key, func(item *indexed_item) {
 			if value, ok := item.data.(T); ok {
+
 				// Append value COPY.
 				value = c.copy(value)
 				values = append(values, value)
@@ -431,6 +431,7 @@ func (c *Cache[T]) Store(value T, store func() error) error {
 }
 
 // Invalidate invalidates all results stored under index keys.
+// Note that if set, this will call the invalidate hook on each.
 func (c *Cache[T]) Invalidate(index *Index, keys ...Key) {
 	if index == nil {
 		panic("no index given")
@@ -455,7 +456,7 @@ func (c *Cache[T]) Invalidate(index *Index, keys ...Key) {
 				values = append(values, value)
 			}
 
-			// Delete cached.
+			// Delete item.
 			c.delete(item)
 		})
 	}
@@ -478,6 +479,7 @@ func (c *Cache[T]) Invalidate(index *Index, keys ...Key) {
 // Trim will truncate the cache to ensure it
 // stays within given percentage of MaxSize.
 func (c *Cache[T]) Trim(perc float64) {
+
 	// Acquire lock.
 	c.mutex.Lock()
 
@@ -572,7 +574,14 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 	if index != nil {
 		// Append item to index a key
 		// was already generated for.
-		index.append(&c.lru, key, item)
+		evicted := index.append(key, item)
+		if evicted != nil {
+
+			// This item is no longer
+			// indexed, remove from list.
+			c.lru.remove(&evicted.elem)
+			free_indexed_item(evicted)
+		}
 	}
 
 	// Get ptr to value data.
@@ -593,9 +602,6 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 
 		// Extract fields comprising index key.
 		parts := extract_fields(ptr, idx.fields)
-		if parts == nil {
-			continue
-		}
 
 		// Calculate index key.
 		key := idx.key(buf, parts)
@@ -604,14 +610,28 @@ func (c *Cache[T]) store_value(index *Index, key string, value T) {
 		}
 
 		// Append item to this index.
-		idx.append(&c.lru, key, item)
+		evicted := idx.append(key, item)
+		if evicted != nil {
+
+			// This item is no longer
+			// indexed, remove from list.
+			c.lru.remove(&evicted.elem)
+			free_indexed_item(evicted)
+		}
+	}
+
+	// Done with buf.
+	free_buffer(buf)
+
+	if len(item.indexed) == 0 {
+		// Item was not stored under
+		// any index. Drop this item.
+		free_indexed_item(item)
+		return
 	}
 
 	// Add item to main lru list.
 	c.lru.push_front(&item.elem)
-
-	// Done with buf.
-	free_buffer(buf)
 
 	if c.lru.len > c.maxSize {
 		// Cache has hit max size!
@@ -643,7 +663,14 @@ func (c *Cache[T]) store_error(index *Index, key string, err error) {
 
 	// Append item to index a key
 	// was already generated for.
-	index.append(&c.lru, key, item)
+	evicted := index.append(key, item)
+	if evicted != nil {
+
+		// This item is no longer
+		// indexed, remove from list.
+		c.lru.remove(&evicted.elem)
+		free_indexed_item(evicted)
+	}
 
 	// Add item to main lru list.
 	c.lru.push_front(&item.elem)
@@ -657,19 +684,23 @@ func (c *Cache[T]) store_error(index *Index, key string, err error) {
 	}
 }
 
-func (c *Cache[T]) delete(item *indexed_item) {
-	for len(item.indexed) != 0 {
+func (c *Cache[T]) delete(i *indexed_item) {
+	for len(i.indexed) != 0 {
 		// Pop last indexed entry from list.
-		entry := item.indexed[len(item.indexed)-1]
-		item.indexed = item.indexed[:len(item.indexed)-1]
+		entry := i.indexed[len(i.indexed)-1]
+		i.indexed[len(i.indexed)-1] = nil
+		i.indexed = i.indexed[:len(i.indexed)-1]
 
-		// Drop index_entry from index.
-		entry.index.delete_entry(entry)
+		// Get entry's index.
+		index := entry.index
+
+		// Drop this index_entry.
+		index.delete_entry(entry)
 	}
 
-	// Drop entry from lru list.
-	c.lru.remove(&item.elem)
+	// Drop from lru list.
+	c.lru.remove(&i.elem)
 
-	// Free now-unused item.
-	free_indexed_item(item)
+	// Free unused item.
+	free_indexed_item(i)
 }

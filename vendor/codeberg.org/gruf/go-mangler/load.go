@@ -8,6 +8,7 @@ import (
 // function will be returned for given value interface{} and reflected type. Else panics.
 func loadMangler(t reflect.Type) Mangler {
 	ctx := typecontext{rtype: t}
+	ctx.direct = true
 
 	// Load mangler fn
 	mng := load(ctx)
@@ -103,6 +104,9 @@ func loadReflectPtr(ctx typecontext) Mangler {
 		n++
 	}
 
+	// Set ptr type.
+	ctx.isptr = true
+
 	// Search for elemn type mangler.
 	if mng := load(ctx); mng != nil {
 		return deref_ptr_mangler(ctx, mng, n)
@@ -157,11 +161,13 @@ func loadReflectKnownSlice(ctx typecontext) Mangler {
 
 // loadReflectSlice ...
 func loadReflectSlice(ctx typecontext) Mangler {
-	// Set nesting type.
-	ctx.ntype = ctx.rtype
 
 	// Get nested element type.
-	ctx.rtype = ctx.rtype.Elem()
+	elem := ctx.rtype.Elem()
+
+	// Set this as nested type.
+	ctx.set_nested(false)
+	ctx.rtype = elem
 
 	// Preferably look for known slice mangler func
 	if mng := loadReflectKnownSlice(ctx); mng != nil {
@@ -178,11 +184,14 @@ func loadReflectSlice(ctx typecontext) Mangler {
 
 // loadReflectArray ...
 func loadReflectArray(ctx typecontext) Mangler {
-	// Set nesting type.
-	ctx.ntype = ctx.rtype
 
 	// Get nested element type.
-	ctx.rtype = ctx.rtype.Elem()
+	elem := ctx.rtype.Elem()
+
+	// Set this as a nested value type.
+	direct := ctx.rtype.Len() <= 1
+	ctx.set_nested(direct)
+	ctx.rtype = elem
 
 	// Use manglers for nested iteration.
 	if mng := load(ctx); mng != nil {
@@ -196,17 +205,15 @@ func loadReflectArray(ctx typecontext) Mangler {
 func loadReflectStruct(ctx typecontext) Mangler {
 	var mngs []Mangler
 
-	// Set nesting type.
-	ctx.ntype = ctx.rtype
+	// Set this as a nested value type.
+	direct := ctx.rtype.NumField() <= 1
+	ctx.set_nested(direct)
 
 	// Gather manglers for all fields.
 	for i := 0; i < ctx.ntype.NumField(); i++ {
 
-		// Field typectx.
-		ctx := typecontext{
-			ntype: ctx.ntype,
-			rtype: ctx.ntype.Field(i).Type,
-		}
+		// Update context with field at index.
+		ctx.rtype = ctx.ntype.Field(i).Type
 
 		// Load mangler.
 		mng := load(ctx)

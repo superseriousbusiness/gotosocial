@@ -133,7 +133,7 @@ func (q *QueueCtx[T]) pop(ctx context.Context, next func() *list_elem) (T, bool)
 	// Extract item value.
 	value := item.data.(T)
 
-	// Delete queued.
+	// Delete item.
 	q.delete(item)
 
 	// Get func ptrs.

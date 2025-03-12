@@ -33,7 +33,7 @@ func (k Key) Values() []any {
 
 // Zero indicates a zero value key.
 func (k Key) Zero() bool {
-	return (k.raw == nil)
+	return (k.key == "")
 }
 
 var buf_pool sync.Pool

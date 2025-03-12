@@ -37,7 +37,7 @@ func free_indexed_item(item *indexed_item) {
 	if len(item.indexed) > 0 ||
 		item.elem.next != nil ||
 		item.elem.prev != nil {
-		should_not_reach()
+		should_not_reach(false)
 		return
 	}
 	item.data = nil

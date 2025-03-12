@@ -1,3 +1,5 @@
+//go:build go1.19 || go1.20 || go1.21 || go1.22 || go1.23
+
 package mangler
 
 import (
@@ -35,8 +37,17 @@ func append_uint64(b []byte, u uint64) []byte {
 }
 
 type typecontext struct {
-	ntype reflect.Type
-	rtype reflect.Type
+	isptr  bool
+	direct bool
+	ntype  reflect.Type
+	rtype  reflect.Type
+}
+
+func (ctx *typecontext) set_nested(direct bool) {
+	ctx.direct = ctx.direct && direct && !ctx.isptr
+	ctx.ntype = ctx.rtype
+	ctx.rtype = nil
+	ctx.isptr = false
 }
 
 func deref_ptr_mangler(ctx typecontext, mangle Mangler, n uint) Mangler {
@@ -44,16 +55,14 @@ func deref_ptr_mangler(ctx typecontext, mangle Mangler, n uint) Mangler {
 		panic("bad input")
 	}
 
-	// Non-nested value types,
-	// i.e. just direct ptrs to
-	// primitives require one
-	// less dereference to ptr.
-	if ctx.ntype == nil {
+	// If this is a direct value type, i.e. non-nested primitive,
+	// or part of a single-field struct / single element array
+	// then it can be treated as a direct ptr with 1 less deref.
+	if ctx.direct {
 		n--
 	}
 
 	return func(buf []byte, ptr unsafe.Pointer) []byte {
-
 		// Deref n number times.
 		for i := n; i > 0; i-- {
 
@@ -117,6 +126,15 @@ func iter_array_mangler(ctx typecontext, mangle Mangler) Mangler {
 	// no. array elements.
 	n := ctx.ntype.Len()
 
+	// Optimize
+	// easy cases.
+	switch n {
+	case 0:
+		return empty_mangler
+	case 1:
+		return mangle
+	}
+
 	// memory size of elem.
 	esz := ctx.rtype.Size()
 
@@ -139,8 +157,16 @@ func iter_array_mangler(ctx typecontext, mangle Mangler) Mangler {
 }
 
 func iter_struct_mangler(ctx typecontext, manglers []Mangler) Mangler {
-	if ctx.rtype == nil || len(manglers) != ctx.rtype.NumField() {
+	if ctx.rtype == nil || len(manglers) != ctx.ntype.NumField() {
 		panic("bad input")
+	}
+
+	// Optimized easy cases.
+	switch len(manglers) {
+	case 0:
+		return empty_mangler
+	case 1:
+		return manglers[0]
 	}
 
 	type field struct {
@@ -149,9 +175,9 @@ func iter_struct_mangler(ctx typecontext, manglers []Mangler) Mangler {
 	}
 
 	// Bundle together the fields and manglers.
-	fields := make([]field, ctx.rtype.NumField())
+	fields := make([]field, ctx.ntype.NumField())
 	for i := range fields {
-		rfield := ctx.rtype.FieldByIndex([]int{i})
+		rfield := ctx.ntype.Field(i)
 		fields[i].offset = rfield.Offset
 		fields[i].mangle = manglers[i]
 		if fields[i].mangle == nil {
@@ -176,6 +202,10 @@ func iter_struct_mangler(ctx typecontext, manglers []Mangler) Mangler {
 
 		return buf
 	}
+}
+
+func empty_mangler(buf []byte, _ unsafe.Pointer) []byte {
+	return buf
 }
 
 // array_at returns ptr to index in array at ptr, given element size.
