@@ -21,11 +21,13 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"time"
 
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/uptrace/bun"
@@ -126,104 +128,6 @@ func (t *timelineDB) GetHomeTimeline(ctx context.Context, accountID string, page
 	)
 }
 
-<<<<<<< HEAD
-func (t *timelineDB) GetPublicTimeline(
-	ctx context.Context,
-	maxID string,
-	sinceID string,
-	minID string,
-	limit int,
-	local bool,
-) ([]*gtsmodel.Status, error) {
-	// Ensure reasonable
-	if limit < 0 {
-		limit = 0
-	}
-
-	if local {
-		return t.getLocalTimeline(
-			ctx,
-			maxID,
-			sinceID,
-			minID,
-			limit,
-		)
-	}
-
-	// Make educated guess for slice size
-	var (
-		statusIDs   = make([]string, 0, limit)
-		frontToBack = true
-	)
-
-	q := t.db.
-		NewSelect().
-		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
-		// Public only.
-		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
-		// Ignore boosts.
-		Where("? IS NULL", bun.Ident("status.boost_of_id")).
-		// Only include statuses that aren't pending approval.
-		Where("? = ?", bun.Ident("status.pending_approval"), false).
-		// Select only IDs from table
-		Column("status.id")
-
-	if maxID == "" || maxID >= id.Highest {
-		const future = 24 * time.Hour
-
-		// don't return statuses more than 24hr in the future
-		maxID = id.NewULIDFromTime(time.Now().Add(future))
-	}
-
-	// return only statuses LOWER (ie., older) than maxID
-	q = q.Where("? < ?", bun.Ident("status.id"), maxID)
-
-	if sinceID != "" {
-		// return only statuses HIGHER (ie., newer) than sinceID
-		q = q.Where("? > ?", bun.Ident("status.id"), sinceID)
-	}
-
-	if minID != "" {
-		// return only statuses HIGHER (ie., newer) than minID
-		q = q.Where("? > ?", bun.Ident("status.id"), minID)
-
-		// page up
-		frontToBack = false
-	}
-
-	if limit > 0 {
-		// limit amount of statuses returned
-		q = q.Limit(limit)
-	}
-
-	if frontToBack {
-		// Page down.
-		q = q.Order("status.id DESC")
-	} else {
-		// Page up.
-		q = q.Order("status.id ASC")
-	}
-
-	if err := q.Scan(ctx, &statusIDs); err != nil {
-		return nil, err
-	}
-
-	if len(statusIDs) == 0 {
-		return nil, nil
-	}
-
-	// If we're paging up, we still want statuses
-	// to be sorted by ID desc, so reverse ids slice.
-	// https://zchee.github.io/golang-wiki/SliceTricks/#reversing
-	if !frontToBack {
-		for l, r := 0, len(statusIDs)-1; l < r; l, r = l+1, r-1 {
-			statusIDs[l], statusIDs[r] = statusIDs[r], statusIDs[l]
-		}
-	}
-
-	// Return status IDs loaded from cache + db.
-	return t.state.DB.GetStatusesByIDs(ctx, statusIDs)
-=======
 func (t *timelineDB) GetPublicTimeline(ctx context.Context, page *paging.Page) ([]*gtsmodel.Status, error) {
 	return loadStatusTimelinePage(ctx, t.db, t.state,
 
@@ -239,12 +143,11 @@ func (t *timelineDB) GetPublicTimeline(ctx context.Context, page *paging.Page) (
 			q = q.Where("? IS NULL", bun.Ident("boost_of_id"))
 
 			// Only include statuses that aren't pending approval.
-			q = q.Where("NOT ? = ?", bun.Ident("pending_approval"), true)
+			q = q.Where("? = ?", bun.Ident("pending_approval"), false)
 
 			return q, nil
 		},
 	)
->>>>>>> 6f0abe7fb (start work rewriting timeline cache type)
 }
 
 func (t *timelineDB) getLocalTimeline(
