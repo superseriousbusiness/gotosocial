@@ -30,7 +30,7 @@ export function UseOurInstanceAccount(account: AdminAccount): boolean {
 	// Pull our own URL out of storage so we can
 	// tell if account is our instance account.
 	const ourDomain = useMemo(() => {
-		const instanceUrlStr = store.getState().oauth.instanceUrl;
+		const instanceUrlStr = store.getState().login.instanceUrl;
 		if (!instanceUrlStr) {
 			return "";
 		}

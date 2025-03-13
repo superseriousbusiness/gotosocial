@@ -18,6 +18,8 @@
 */
 
 import isValidDomain from "is-valid-domain";
+import { useCallback } from "react";
+import { ValidScopes, ValidTopLevelScopes } from "../types/scopes";
 
 /**
  * Validate the "domain" field of a form.
@@ -26,6 +28,11 @@ import isValidDomain from "is-valid-domain";
  */
 export function formDomainValidator(domain: string): string {
 	if (domain.length === 0) {
+		return "";
+	}
+
+	// Allow localhost for testing.
+	if (domain === "localhost") {
 		return "";
 	}
 
@@ -63,5 +70,67 @@ export function urlValidator(urlStr: string): string {
 		return `invalid protocol, must be http or https`;
 	}
 
-	return formDomainValidator(url.host);
+	return formDomainValidator(url.hostname);
 }
+
+export function useScopesValidator(): (_scopes: string[]) => string {
+	return useCallback((scopes) => {
+		return scopes.
+			map((scope) => validateScope(scope)).
+			flatMap((msg) => msg || []).
+			join(", ");
+	}, []);
+}
+
+export function useScopeValidator(): (_scope: string) => string {
+	return useCallback((scope) => validateScope(scope), []);
+}
+
+const validateScope = (scope: string) => {
+	if (!ValidScopes.includes(scope)) {
+		return scope + " is not a recognized scope";
+	} 
+	return "";
+};
+
+export function useScopesPermittedBy(): (_hasScopes: string[], _wantScopes: string[]) => string {
+	return useCallback((hasScopes, wantsScopes) => {
+		return wantsScopes.
+			map((wanted) => scopePermittedByScopes(hasScopes, wanted)).
+			flatMap((msg) => msg || []).
+			join(", ");
+	}, []);
+}
+
+const scopePermittedByScopes = (hasScopes: string[], wanted: string) => {
+	if (hasScopes.some((hasScope) => scopePermittedByScope(hasScope, wanted) === "")) {
+		return "";
+	}
+	return `scopes [${hasScopes}] do not permit ${wanted}`;
+};
+
+const scopePermittedByScope = (has: string, wanted: string) => {
+	if (has === wanted) {
+		// Exact match on either a
+		// top-level or granular scope.
+		return "";
+	}
+
+	// Ensure we have a
+	// known top-level scope.
+	switch (true) {
+		case (ValidTopLevelScopes.includes(has)):
+			// Check if top-level includes wanted,
+			// eg., have "admin", want "admin:read".
+			if (wanted.startsWith(has + ":")) {
+				return "";
+			} else {
+				return `scope ${has} does not permit ${wanted}`;
+			}
+	
+		default:
+			// Unknown top-level scope,
+			// can't permit anything.
+			return `unrecognized scope ${has}`;
+	}
+};

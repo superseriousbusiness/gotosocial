@@ -141,7 +141,7 @@ const extended = gtsApi.injectEndpoints({
 		searchItemForEmoji: build.mutation<EmojisFromItem, string>({
 			async queryFn(url, api, _extraOpts, fetchWithBQ) {
 				const state = api.getState() as RootState;
-				const oauthState = state.oauth;
+				const loginState = state.login;
 				
 				// First search for given url.
 				const searchRes = await fetchWithBQ({
@@ -161,8 +161,8 @@ const extended = gtsApi.injectEndpoints({
 				
 				// Ensure emojis domain is not OUR domain. If it
 				// is, we already have the emojis by definition.
-				if (oauthState.instanceUrl !== undefined) {
-					if (domain == new URL(oauthState.instanceUrl).host) {
+				if (loginState.instanceUrl !== undefined) {
+					if (domain == new URL(loginState.instanceUrl).host) {
 						throw "LOCAL_INSTANCE";
 					}
 				}

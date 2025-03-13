@@ -30,19 +30,19 @@ import {
 	REGISTER,
 } from "redux-persist";
 
-import { oauthSlice } from "./oauth";
+import { loginSlice } from "./login";
 import { gtsApi } from "../lib/query/gts-api";
 
 const combinedReducers = combineReducers({
 	[gtsApi.reducerPath]: gtsApi.reducer,
-	oauth: oauthSlice.reducer,
+	login: loginSlice.reducer,
 });
 
 const persistedReducer = persistReducer({
 	key: "gotosocial-settings",
 	storage: require("redux-persist/lib/storage").default,
 	stateReconciler: require("redux-persist/lib/stateReconciler/autoMergeLevel1").default,
-	whitelist: ["oauth"],
+	whitelist: ["login"],
 	migrate: async (state) => {
 		if (state == undefined) {
 			return state;
@@ -51,8 +51,8 @@ const persistedReducer = persistReducer({
 		// This is a cheeky workaround for
 		// redux-persist being a stickler.
 		let anyState = state as any; 
-		if (anyState?.oauth != undefined) {
-			anyState.oauth.expectingRedirect = false;
+		if (anyState?.login != undefined) {
+			anyState.login.expectingRedirect = false;
 		}
 
 		return anyState;

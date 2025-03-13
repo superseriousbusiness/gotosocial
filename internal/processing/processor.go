@@ -29,6 +29,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/advancedmigrations"
+	"github.com/superseriousbusiness/gotosocial/internal/processing/application"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/fedi"
@@ -81,6 +82,7 @@ type Processor struct {
 	account             account.Processor
 	admin               admin.Processor
 	advancedmigrations  advancedmigrations.Processor
+	application         application.Processor
 	conversations       conversations.Processor
 	fedi                fedi.Processor
 	filtersv1           filtersv1.Processor
@@ -111,6 +113,10 @@ func (p *Processor) Admin() *admin.Processor {
 
 func (p *Processor) AdvancedMigrations() *advancedmigrations.Processor {
 	return &p.advancedmigrations
+}
+
+func (p *Processor) Application() *application.Processor {
+	return &p.application
 }
 
 func (p *Processor) Conversations() *conversations.Processor {
@@ -221,6 +227,7 @@ func NewProcessor(
 	// processors + pin them to this struct.
 	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.admin = admin.New(&common, state, cleaner, subscriptions, federator, converter, mediaManager, federator.TransportController(), emailSender)
+	processor.application = application.New(state, converter)
 	processor.conversations = conversations.New(state, converter, visFilter)
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
