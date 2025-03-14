@@ -1,5 +1,3 @@
-codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
-codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytesize v1.0.3 h1:Tz8tCxhPLeyM5VryuBNjUHgKmLj4Bx9RbPaUSA3qg6g=
 codeberg.org/gruf/go-bytesize v1.0.3/go.mod h1:n/GU8HzL9f3UNp/mUKyr1qVmTlj7+xacpp0OHfkvLPs=
 codeberg.org/gruf/go-byteutil v1.3.0 h1:nRqJnCcRQ7xbfU6azw7zOzJrSMDIJHBqX6FL9vEMYmU=
