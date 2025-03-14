@@ -27,7 +27,7 @@ type Token struct {
 	ClientID            string    `bun:"type:CHAR(26),nullzero,notnull"`           // ID of the client who owns this token
 	UserID              string    `bun:"type:CHAR(26),nullzero"`                   // ID of the user who owns this token
 	RedirectURI         string    `bun:",nullzero,notnull"`                        // Oauth redirect URI for this token
-	Scope               string    `bun:",nullzero,notnull,default:'read'"`         // Oauth scope                                // Oauth scope
+	Scope               string    `bun:",nullzero,notnull,default:'read'"`         // Oauth scope
 	Code                string    `bun:",pk,nullzero,notnull,default:''"`          // Code, if present
 	CodeChallenge       string    `bun:",nullzero"`                                // Code challenge, if code present
 	CodeChallengeMethod string    `bun:",nullzero"`                                // Code challenge method, if code present

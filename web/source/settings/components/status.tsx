@@ -18,7 +18,7 @@
 */
 
 import React from "react";
-import { useVerifyCredentialsQuery } from "../lib/query/oauth";
+import { useVerifyCredentialsQuery } from "../lib/query/login";
 import { MediaAttachment, Status as StatusType } from "../lib/types/status";
 import sanitize from "sanitize-html";
 

@@ -15,34 +15,24 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package apps
+package application
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
-const (
-	BasePath       = "/v1/apps"
-	BasePathWithID = BasePath + "/:" + apiutil.IDKey
-)
-
-type Module struct {
-	processor *processing.Processor
+type Processor struct {
+	state     *state.State
+	converter *typeutils.Converter
 }
 
-func New(processor *processing.Processor) *Module {
-	return &Module{
-		processor: processor,
+func New(
+	state *state.State,
+	converter *typeutils.Converter,
+) Processor {
+	return Processor{
+		state:     state,
+		converter: converter,
 	}
-}
-
-func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
-	attachHandler(http.MethodPost, BasePath, m.AppsPOSTHandler)
-	attachHandler(http.MethodGet, BasePath, m.AppsGETHandler)
-	attachHandler(http.MethodGet, BasePathWithID, m.AppGETHandler)
-	attachHandler(http.MethodDelete, BasePathWithID, m.AppDELETEHandler)
 }

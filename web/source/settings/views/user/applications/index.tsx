@@ -18,38 +18,27 @@
 */
 
 import React from "react";
-import { useVerifyCredentialsQuery } from "../../../lib/query/login";
-import Loading from "../../../components/loading";
-import { Error as ErrorC } from "../../../components/error";
-import BasicSettings from "./basic-settings";
-import InteractionPolicySettings from "./interaction-policy-settings";
+import AppsSearchForm from "./search";
 
-export default function PostSettings() {
-	const {
-		data: account,
-		isLoading,
-		isFetching,
-		isError,
-		error,
-	} = useVerifyCredentialsQuery();
-
-	if (isLoading || isFetching) {
-		return <Loading />;
-	}
-
-	if (isError) {
-		return <ErrorC error={error} />;
-	}
-
-	if (!account) {
-		return <ErrorC error={new Error("account was undefined")} />;
-	}
-
+export default function Applications() {
 	return (
-		<>
-			<h1>Post Settings</h1>
-			<BasicSettings account={account} />
-			<InteractionPolicySettings />
-		</>
+		<div className="applications-view">
+			<div className="form-section-docs">
+				<h1>Applications</h1>
+				<p>
+					On this page you can search through applications you've created.
+					To manage an application, click on it to go to the detailed view.
+				</p>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#applications"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about managing your applications (opens in a new tab)
+				</a>
+			</div>
+			<AppsSearchForm />
+		</div>
 	);
 }

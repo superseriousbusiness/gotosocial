@@ -29,6 +29,10 @@ import ExportImport from "./export-import";
 import InteractionRequests from "./interactions";
 import InteractionRequestDetail from "./interactions/detail";
 import Tokens from "./tokens";
+import Applications from "./applications";
+import NewApp from "./applications/new";
+import AppDetail from "./applications/detail";
+import { AppTokenCallback } from "./applications/callback";
 
 /**
  * - /settings/user/profile
@@ -37,7 +41,8 @@ import Tokens from "./tokens";
  * - /settings/user/migration
  * - /settings/user/export-import
  * - /settings/user/tokens
- * - /settings/users/interaction_requests
+ * - /settings/user/interaction_requests
+ * - /settings/user/applications
  */
 export default function UserRouter() {
 	const baseUrl = useBaseUrl();
@@ -47,16 +52,40 @@ export default function UserRouter() {
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
+				<Switch>
+					<Route path="/profile" component={UserProfile} />
+					<Route path="/posts" component={PostSettings} />
+					<Route path="/emailpassword" component={EmailPassword} />
+					<Route path="/migration" component={UserMigration} />
+					<Route path="/export-import" component={ExportImport} />
+					<Route path="/tokens" component={Tokens} />
+				</Switch>
+				<InteractionRequestsRouter />
+				<ApplicationsRouter />
+			</Router>
+		</BaseUrlContext.Provider>
+	);
+}
+
+/**
+ * - /settings/user/applications/search
+ * - /settings/user/applications/{appID}
+ */
+function ApplicationsRouter() {
+	const parentUrl = useBaseUrl();
+	const thisBase = "/applications";
+	const absBase = parentUrl + thisBase;
+
+	return (
+		<BaseUrlContext.Provider value={absBase}>
+			<Router base={thisBase}>
 				<ErrorBoundary>
 					<Switch>
-						<Route path="/profile" component={UserProfile} />
-						<Route path="/posts" component={PostSettings} />
-						<Route path="/emailpassword" component={EmailPassword} />
-						<Route path="/migration" component={UserMigration} />
-						<Route path="/export-import" component={ExportImport} />
-						<Route path="/tokens" component={Tokens} />
-						<InteractionRequestsRouter />
-						<Route><Redirect to="/profile" /></Route>
+						<Route path="/search" component={Applications} />
+						<Route path="/new" component={NewApp} />
+						<Route path="/callback" component={AppTokenCallback} />
+						<Route path="/:appId" component={AppDetail} />
+						<Route><Redirect to="/search"/></Route>
 					</Switch>
 				</ErrorBoundary>
 			</Router>
@@ -76,11 +105,13 @@ function InteractionRequestsRouter() {
 	return (
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
-				<Switch>
-					<Route path="/search" component={InteractionRequests} />
-					<Route path="/:reqId" component={InteractionRequestDetail} />
-					<Route><Redirect to="/search"/></Route>
-				</Switch>
+				<ErrorBoundary>
+					<Switch>
+						<Route path="/search" component={InteractionRequests} />
+						<Route path="/:reqId" component={InteractionRequestDetail} />
+						<Route><Redirect to="/search"/></Route>
+					</Switch>
+				</ErrorBoundary>
 			</Router>
 		</BaseUrlContext.Provider>
 	);

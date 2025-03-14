@@ -20,7 +20,7 @@
 import React from "react";
 import Loading from "./loading";
 import { Error as ErrorC } from "./error";
-import { useVerifyCredentialsQuery, useLogoutMutation } from "../lib/query/oauth";
+import { useVerifyCredentialsQuery, useLogoutMutation } from "../lib/query/login";
 import { useInstanceV1Query } from "../lib/query/gts-api";
 
 export default function UserLogoutCard() {

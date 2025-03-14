@@ -116,7 +116,7 @@ const extended = gtsApi.injectEndpoints({
 				// Parse filename to something like:
 				// `example.org-blocklist-2023-10-09.json`.
 				const state = api.getState() as RootState;
-				const instanceUrl = state.oauth.instanceUrl?? "unknown";
+				const instanceUrl = state.login.instanceUrl?? "unknown";
 				const domain = new URL(instanceUrl).host;
 				const date = new Date();
 				const filename = [

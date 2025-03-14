@@ -31,11 +31,14 @@ type Application interface {
 	// GetApplicationByClientID fetches the application from the database with corresponding client_id value.
 	GetApplicationByClientID(ctx context.Context, clientID string) (*gtsmodel.Application, error)
 
+	// GetApplicationsManagedByUserID fetches a page of applications managed by the given userID.
+	GetApplicationsManagedByUserID(ctx context.Context, userID string, page *paging.Page) ([]*gtsmodel.Application, error)
+
 	// PutApplication places the new application in the database, erroring on non-unique ID or client_id.
 	PutApplication(ctx context.Context, app *gtsmodel.Application) error
 
-	// DeleteApplicationByClientID deletes the application with corresponding client_id value from the database.
-	DeleteApplicationByClientID(ctx context.Context, clientID string) error
+	// DeleteApplicationByID deletes the application with corresponding id from the database.
+	DeleteApplicationByID(ctx context.Context, id string) error
 
 	// GetAllTokens fetches all client oauth tokens from database.
 	GetAllTokens(ctx context.Context) ([]*gtsmodel.Token, error)
@@ -72,4 +75,8 @@ type Application interface {
 
 	// DeleteTokenByRefresh deletes client oauth token from database with refresh code.
 	DeleteTokenByRefresh(ctx context.Context, refresh string) error
+
+	// DeleteTokensByClientID deletes all tokens
+	// with the given clientID from the database.
+	DeleteTokensByClientID(ctx context.Context, clientID string) error
 }

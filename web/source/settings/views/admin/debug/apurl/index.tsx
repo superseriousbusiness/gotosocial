@@ -17,16 +17,14 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useEffect, useRef } from "react";
+import React from "react";
 import { useTextInput } from "../../../../lib/form";
 import { useLazyApURLQuery } from "../../../../lib/query/admin/debug";
 import { TextInput } from "../../../../components/form/inputs";
 import MutationButton from "../../../../components/form/mutation-button";
 import { ApURLResponse } from "../../../../lib/types/debug";
 import Loading from "../../../../components/loading";
-
-// Used for syntax highlighting of json result.
-import Prism from "../../../../../frontend/prism";
+import { HighlightedCode } from "../../../../components/highlightedcode";
 
 export default function ApURL() {
 	const urlField = useTextInput("url");
@@ -102,26 +100,5 @@ function ApURLResult({
 	};
 
 	const jsonStr = JSON.stringify(jsonObj, null, 2);
-	return <Highlighted jsonStr={jsonStr} />;
-}
-
-function Highlighted({ jsonStr }: { jsonStr: string }) {
-	const ref = useRef<HTMLElement | null>(null);
-	useEffect(() => {
-		if (ref.current) {
-			Prism.highlightElement(ref.current);
-		}
-	}, []);
-
-	// Prism takes control of the `pre` so wrap
-	// the whole thing in a div that we control.
-	return (
-		<div className="prism-highlighted">
-			<pre>
-				<code ref={ref} className="language-json">
-					{jsonStr}
-				</code>
-			</pre>
-		</div>
-	);
+	return <HighlightedCode code={jsonStr} lang="json" />;
 }

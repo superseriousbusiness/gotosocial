@@ -21,7 +21,7 @@ import React from "react";
 
 import FormWithData from "../../lib/form/form-with-data";
 
-import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
+import { useVerifyCredentialsQuery } from "../../lib/query/login";
 import { useArrayInput, useTextInput } from "../../lib/form";
 import { TextInput } from "../../components/form/inputs";
 import useFormSubmit from "../../lib/form/submit";
@@ -142,7 +142,7 @@ function AlsoKnownAsURI({ index, data }) {
 }
 
 function MoveForm({ data: profile }) {
-	let urlStr = store.getState().oauth.instanceUrl ?? "";
+	let urlStr = store.getState().login.instanceUrl ?? "";
 	let url = new URL(urlStr);
 	
 	const form = {

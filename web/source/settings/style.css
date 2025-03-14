@@ -1495,6 +1495,62 @@ button.tab-button {
 	}
 }
 
+.access-token-receive-form {
+	> .access-token-frame {
+		background-color: $gray2;
+		width: 100%;
+		padding: 0.25rem;
+		border-radius: $br-inner;
+		white-space: pre;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		font-family: monospace;
+		font-size: large;
+	}
+
+	.closed {
+		text-align: center;
+	}
+}
+
+.applications-view {
+	.application {
+		.info-list {
+			border: none;
+			width: 100%;
+	
+			.info-list-entry {
+				background: none;
+				padding: 0;
+			}
+
+			> .info-list-entry > .monospace {
+				font-size: large;
+			}
+		}
+	}
+}
+
+.application-details {
+	.info-list {
+		margin-top: 1rem;
+
+		> .info-list-entry .monospace {
+			font-size: large;
+		}
+
+		> .info-list-entry > dd > button {
+			font-size: medium;
+			padding-top: 0;
+			padding-bottom: 0;
+		}
+	}
+}
+
+.application-new > .form-section-docs > p > .monospace {
+	font-size: large;
+}
+
 .instance-rules {
 	list-style-position: inside;
 	margin: 0;

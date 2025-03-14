@@ -27,6 +27,7 @@ const (
 	/* Sub-scopes / scope components */
 
 	scopeAccounts      = "accounts"
+	scopeApplications  = "applications"
 	scopeBlocks        = "blocks"
 	scopeBookmarks     = "bookmarks"
 	scopeConversations = "conversations"
@@ -57,6 +58,8 @@ const (
 
 	ScopeReadAccounts           Scope = ScopeRead + ":" + scopeAccounts
 	ScopeWriteAccounts          Scope = ScopeWrite + ":" + scopeAccounts
+	ScopeReadApplications       Scope = ScopeRead + ":" + scopeApplications
+	ScopeWriteApplications      Scope = ScopeWrite + ":" + scopeApplications
 	ScopeReadBlocks             Scope = ScopeRead + ":" + scopeBlocks
 	ScopeWriteBlocks            Scope = ScopeWrite + ":" + scopeBlocks
 	ScopeReadBookmarks          Scope = ScopeRead + ":" + scopeBookmarks

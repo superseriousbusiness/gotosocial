@@ -194,6 +194,17 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		return nil, err
 	}
 
+	// If no app ID was set,
+	// use the instance app ID.
+	if newSignup.AppID == "" {
+		instanceApp, err := a.state.DB.GetInstanceApplication(ctx)
+		if err != nil {
+			err := gtserror.Newf("db error getting instance app: %w", err)
+			return nil, err
+		}
+		newSignup.AppID = instanceApp.ID
+	}
+
 	user = &gtsmodel.User{
 		ID:                     newUserID,
 		AccountID:              account.ID,

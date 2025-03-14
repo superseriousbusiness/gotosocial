@@ -24,17 +24,10 @@ import {
 	setToken as oauthSetToken,
 	remove as oauthRemove,
 	authorize as oauthAuthorize,
-} from "../../../redux/oauth";
+} from "../../../redux/login";
 import { RootState } from '../../../redux/store';
 import { Account } from '../../types/account';
-
-export interface OauthTokenRequestBody {
-	client_id: string;
-	client_secret: string;
-	redirect_uri: string;
-	grant_type: string;
-	code: string;
-}
+import { OAuthAccessTokenRequestBody } from '../../types/oauth';
 
 function getSettingsURL() {
 	/*
@@ -45,7 +38,7 @@ function getSettingsURL() {
 		 Also drops anything past /settings/, because authorization urls that are too long
 		 get rejected by GTS.
 	*/
-	let [pre, _past] = window.location.pathname.split("/settings");
+	const [pre, _past] = window.location.pathname.split("/settings");
 	return `${window.location.origin}${pre}/settings`;
 }
 
@@ -64,12 +57,12 @@ const extended = gtsApi.injectEndpoints({
 				error == undefined ? ["Auth"] : [],
 			async queryFn(_arg, api, _extraOpts, fetchWithBQ) {
 				const state = api.getState() as RootState;
-				const oauthState = state.oauth;
+				const loginState = state.login;
 
 				// If we're not in the middle of an auth/callback,
 				// we may already have an auth token, so just
 				// return a standard verify_credentials query.
-				if (oauthState.loginState != 'callback') {
+				if (loginState.current != 'awaitingcallback') {
 					return fetchWithBQ({
 						url: `/api/v1/accounts/verify_credentials`
 					});
@@ -77,8 +70,8 @@ const extended = gtsApi.injectEndpoints({
 
 				// We're in the middle of an auth/callback flow.
 				// Try to retrieve callback code from URL query.
-				let urlParams = new URLSearchParams(window.location.search);
-				let code = urlParams.get("code");
+				const urlParams = new URLSearchParams(window.location.search);
+				const code = urlParams.get("code");
 				if (code == undefined) {
 					return {
 						error: {
@@ -91,7 +84,7 @@ const extended = gtsApi.injectEndpoints({
 				
 				// Retrieve app with which the
 				// callback code was generated.
-				let app = oauthState.app;
+				const app = loginState.app;
 				if (app == undefined || app.client_id == undefined) {
 					return {
 						error: {
@@ -104,7 +97,7 @@ const extended = gtsApi.injectEndpoints({
 				
 				// Use the provided code and app
 				// secret to request an auth token.
-				const tokenReqBody: OauthTokenRequestBody = {
+				const tokenReqBody: OAuthAccessTokenRequestBody = {
 					client_id: app.client_id,
 					client_secret: app.client_secret,
 					redirect_uri: SETTINGS_URL,
@@ -139,7 +132,7 @@ const extended = gtsApi.injectEndpoints({
 		authorizeFlow: build.mutation({
 			async queryFn(formData, api, _extraOpts, fetchWithBQ) {
 				const state = api.getState() as RootState;
-				const oauthState = state.oauth;
+				const loginState = state.login;
 
 				let instanceUrl: string;
 				if (!formData.instance.startsWith("http")) {
@@ -147,8 +140,8 @@ const extended = gtsApi.injectEndpoints({
 				}
 
 				instanceUrl = new URL(formData.instance).origin;
-				if (oauthState?.instanceUrl == instanceUrl && oauthState.app) {
-					return { data: oauthState.app };
+				if (loginState?.instanceUrl == instanceUrl && loginState.app) {
+					return { data: loginState.app };
 				}
 				
 				const appResult = await fetchWithBQ({
@@ -166,24 +159,24 @@ const extended = gtsApi.injectEndpoints({
 					return { error: appResult.error as FetchBaseQueryError };
 				}
 
-				let app = appResult.data as any;
+				const app = appResult.data as any;
 
 				app.scopes = formData.scopes;
 				api.dispatch(oauthAuthorize({
 					instanceUrl: instanceUrl,
 					app: app,
-					loginState: "callback",
+					current: "awaitingcallback",
 					expectingRedirect: true
 				}));
 
-				let url = new URL(instanceUrl);
+				const url = new URL(instanceUrl);
 				url.pathname = "/oauth/authorize";
 				url.searchParams.set("client_id", app.client_id);
 				url.searchParams.set("redirect_uri", SETTINGS_URL);
 				url.searchParams.set("response_type", "code");
 				url.searchParams.set("scope", app.scopes);
 				
-				let redirectURL = url.toString();
+				const redirectURL = url.toString();
 				window.location.assign(redirectURL);
 				return { data: null };
 			},

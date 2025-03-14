@@ -299,11 +299,12 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 
 	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
 		// Populate the status' expected CreatedWithApplication (not always set).
+		// Don't error on ErrNoEntries, as the application may have been cleaned up.
 		status.CreatedWithApplication, err = s.state.DB.GetApplicationByID(
 			gtscontext.SetBarebones(ctx),
 			status.CreatedWithApplicationID,
 		)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			errs.Appendf("error populating status application: %w", err)
 		}
 	}

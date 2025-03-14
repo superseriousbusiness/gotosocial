@@ -24,6 +24,9 @@ type Application struct {
 	// The ID of the application.
 	// example: 01FBVD42CQ3ZEEVMW180SBX03B
 	ID string `json:"id,omitempty"`
+	// When the application was created. (ISO 8601 Datetime)
+	// example: 2021-07-30T09:20:25+00:00
+	CreatedAt string `json:"created_at,omitempty"`
 	// The name of the application.
 	// example: Tusky
 	Name string `json:"name"`
