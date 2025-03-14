@@ -10,8 +10,6 @@ code.superseriousbusiness.org/httpsig v1.4.0 h1:g9+KQMoTG0oR0II5gYb5pVVdNjbc7Cii
 code.superseriousbusiness.org/httpsig v1.4.0/go.mod h1:i2AKpj/WbA/o/UTvia9TAREzt0jP1AH3T1Uxjyhdzlw=
 code.superseriousbusiness.org/oauth2/v4 v4.8.0 h1:4LVXoPJXKgmDfwDegzBQPNpsdleMaL6YmDgFi6UDgEE=
 code.superseriousbusiness.org/oauth2/v4 v4.8.0/go.mod h1:+RLRBXPkjP/VhIC/46dcZkx3t5IvBSJYOjVCPgeWors=
-codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
-codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytesize v1.0.3 h1:Tz8tCxhPLeyM5VryuBNjUHgKmLj4Bx9RbPaUSA3qg6g=
 codeberg.org/gruf/go-bytesize v1.0.3/go.mod h1:n/GU8HzL9f3UNp/mUKyr1qVmTlj7+xacpp0OHfkvLPs=
 codeberg.org/gruf/go-byteutil v1.3.0 h1:nRqJnCcRQ7xbfU6azw7zOzJrSMDIJHBqX6FL9vEMYmU=

@@ -263,8 +263,7 @@ func (s *Surface) listTimelineStatusForFollow(
 		// At this point we are certain this status
 		// should be included in the timeline of the
 		// list that this list entry belongs to.
-		listTimelined, err := s.timelineStatus(
-			ctx,
+		listTimelined, err := s.timelineStatus(ctx,
 			s.State.Timelines.List.IngestOne,
 			list.ID, // list timelines are keyed by list ID
 			follow.Account,
@@ -444,8 +443,7 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 			continue
 		}
 
-		if _, err := s.timelineStatus(
-			ctx,
+		if _, err := s.timelineStatus(ctx,
 			s.State.Timelines.Home.IngestOne,
 			tagFollowerAccount.ID, // home timelines are keyed by account ID
 			tagFollowerAccount,
