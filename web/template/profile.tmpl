@@ -240,7 +240,13 @@
                 </div>
                 <div class="thread">
                     {{- if not .statuses }}
-                    <div data-nosnippet class="nothinghere">Nothing here!</div>
+                    <div data-nosnippet class="nothinghere">
+                        {{- if .show_back_to_top }}
+                            Reached the end of visible posts!
+                        {{- else }}
+                            Nothing to see here! {{ .account.Username }} has either not written any public posts yet, or has opted not to make posts visible via the World Wide Web.
+                        {{- end }}
+                    </div>
                     {{- else }}
                     {{- range .statuses }}
                     <article
