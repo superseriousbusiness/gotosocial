@@ -149,6 +149,10 @@ type WebAccount struct {
 	// Only set if this account had a header set
 	// (and not just the default "blank" image.)
 	HeaderAttachment *WebAttachment `json:"-"`
+
+	// Rendering mode for this
+	// account (microblog, gallery).
+	WebRenderingMode string `json:"-"`
 }
 
 // MutedAccount extends Account with a field used only by the muted user list.

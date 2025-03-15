@@ -222,6 +222,14 @@ func (c *Converter) AccountToWebAccount(
 		}
 	}
 
+	// Check for presence of settings before
+	// populating settings-specific thingies,
+	// as instance account doesn't store a
+	// settings struct.
+	if a.Settings != nil {
+		webAccount.WebRenderingMode = a.Settings.WebRenderingMode.String()
+	}
+
 	return webAccount, nil
 }
 

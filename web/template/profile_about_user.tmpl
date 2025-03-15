@@ -1,0 +1,48 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<section class="about-user" role="region" aria-labelledby="about-header">
+    <div class="col-header">
+        <h3 id="about-header">About<span class="sr-only">&nbsp;{{- .account.Username -}}</span></h3>
+    </div>
+    {{- if .account.Fields }}
+    {{- include "profile_fields.tmpl" . | indent 3 }}
+    {{- end }}
+    <h4 class="sr-only">Bio</h4>
+    <div class="bio p-note">
+        {{- if .account.Note }}
+        {{ emojify .account.Emojis (noescape .account.Note) }}
+        {{- else }}
+        <p>This GoToSocial user hasn't written a bio yet!</p>
+        {{- end }}
+    </div>
+    <h4 class="sr-only">Stats</h4>
+    <dl class="accountstats">
+        <dt>Joined</dt>
+        <dd><time datetime="{{- .account.CreatedAt -}}">{{- .account.CreatedAt | timestampVague -}}</time></dd>
+        <dt>Posts</dt>
+        <dd>{{- .account.StatusesCount -}}</dd>
+        <dt>Followed by</dt>
+        <dd>{{- if .account.HideCollections -}}<i>hidden</i>{{- else -}}{{- .account.FollowersCount -}}{{- end -}}</dd>
+        <dt>Following</dt>
+        <dd>{{- if .account.HideCollections -}}<i>hidden</i>{{- else -}}{{- .account.FollowingCount -}}{{- end -}}</dd>
+    </dl>
+</section>
+{{- end }}

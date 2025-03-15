@@ -21,16 +21,13 @@
 
 .page {
 	/* 
-		Profile page can be a little wider than default
-		page, since we're using a side-by-side column view.
+		Profile gallery can be much wider than default.
 	*/
-	grid-template-columns: 1fr min(92%, 65rem) 1fr;
+	grid-template-columns: 1fr min(92%, 85rem) 1fr;
 }
 
-.profile .column-split {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 1rem;
+.profile-gallery .about-user {
+	margin-bottom: 1rem;
 }
 
 .profile .statuses-wrapper {

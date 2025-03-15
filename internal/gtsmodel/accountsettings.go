@@ -18,6 +18,7 @@
 package gtsmodel
 
 import (
+	"strings"
 	"time"
 )
 
@@ -35,9 +36,51 @@ type AccountSettings struct {
 	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
 	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
 	WebVisibility                  Visibility         `bun:",nullzero,notnull,default:3"`                                 // Visibility level of statuses that visitors can view via the web profile.
+	WebRenderingMode               WebRenderingMode   `bun:",nullzero,notnull,default:1"`                                 // Rendering mode to use when showing this profile via the web.
 	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.
 	InteractionPolicyMutualsOnly   *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new mutuals only visibility statuses. If null, assume default policy.
 	InteractionPolicyFollowersOnly *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new followers only visibility statuses. If null, assume default policy.
 	InteractionPolicyUnlocked      *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new unlocked visibility statuses. If null, assume default policy.
 	InteractionPolicyPublic        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new public visibility statuses. If null, assume default policy.
+}
+
+// WebRenderingMode represents an account owner's
+// choice for how they want their profile to be
+// rendered via the web view, by default.
+type WebRenderingMode enumType
+
+const (
+	WebRenderingModeUnknown WebRenderingMode = 0
+
+	// "Classic" / default GtS microblog view.
+	WebRenderingModeMicroblog WebRenderingMode = 1
+
+	// 'gram-style gallery view with media only.
+	WebRenderingModeGallery WebRenderingMode = 2
+)
+
+// String returns a stringified, frontend
+// API compatible form of WebRenderingMode.
+func (wrm WebRenderingMode) String() string {
+	switch wrm {
+	case WebRenderingModeMicroblog:
+		return "microblog"
+	case WebRenderingModeGallery:
+		return "gallery"
+	default:
+		panic("invalid web rendering mode")
+	}
+}
+
+// ParseWebRenderingMode returns a web
+// rendering mode from the given value.
+func ParseWebRenderingMode(in string) WebRenderingMode {
+	switch strings.ToLower(in) {
+	case "microblog":
+		return WebRenderingModeMicroblog
+	case "gallery":
+		return WebRenderingModeGallery
+	default:
+		return WebRenderingModeUnknown
+	}
 }
