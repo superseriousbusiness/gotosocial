@@ -19,14 +19,18 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
+	"time"
 
 	"codeberg.org/gruf/go-storage/memory"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
@@ -39,7 +43,7 @@ func main() {
 	ctx, cncl := signal.NotifyContext(ctx, syscall.SIGTERM, syscall.SIGINT)
 	defer cncl()
 
-	log.SetLevel(log.INFO)
+	log.SetLevel(log.ERROR)
 
 	if len(os.Args) != 4 {
 		log.Panic(ctx, "Usage: go run ./cmd/process-media <input-file> <output-processed> <output-thumbnail>")
@@ -63,7 +67,8 @@ func main() {
 
 	var err error
 
-	config.SetHost("example.com")
+	config.SetProtocol("http")
+	config.SetHost("localhost:8080")
 	config.SetStorageBackend("disk")
 	config.SetStorageLocalBasePath("/tmp/gotosocial")
 	config.SetDbType("sqlite")
@@ -109,6 +114,7 @@ func main() {
 		log.Panic(ctx, err)
 	}
 
+	outputCopyable(media)
 	copyFile(ctx, &st, media.File.Path, os.Args[2])
 	copyFile(ctx, &st, media.Thumbnail.Path, os.Args[3])
 }
@@ -135,4 +141,105 @@ func copyFile(ctx context.Context, st *storage.Driver, key string, path string) 
 	if err != nil {
 		log.Panic(ctx, err)
 	}
+}
+
+func outputCopyable(media *gtsmodel.MediaAttachment) {
+	var (
+		now           = time.Now()
+		nowStr        = now.Format(time.RFC3339)
+		mediaType     string
+		fileMetaExtra string
+	)
+
+	switch media.Type {
+	case gtsmodel.FileTypeImage:
+		mediaType = "gtsmodel.FileTypeImage"
+	case gtsmodel.FileTypeVideo:
+		mediaType = "gtsmodel.FileTypeVideo"
+	case gtsmodel.FileTypeGifv:
+		mediaType = "gtsmodel.FileTypeGifv"
+	case gtsmodel.FileTypeAudio:
+		mediaType = "gtsmodel.FileTypeAudio"
+	case gtsmodel.FileTypeUnknown:
+		mediaType = "gtsmodel.FileTypeUnknown"
+	}
+
+	if media.FileMeta.Original.Duration != nil {
+		fileMetaExtra += fmt.Sprintf("\n\t\t\tDuration:  util.Ptr[float32](%f),", *media.FileMeta.Original.Duration)
+	}
+	if media.FileMeta.Original.Framerate != nil {
+		fileMetaExtra += fmt.Sprintf("\n\t\t\tFramerate: util.Ptr[float32](%f),", *media.FileMeta.Original.Framerate)
+	}
+	if media.FileMeta.Original.Bitrate != nil {
+		fileMetaExtra += fmt.Sprintf("\n\t\t\tBitrate:   util.Ptr[uint64](%d),", *media.FileMeta.Original.Bitrate)
+	}
+
+	fmt.Printf(`{
+	ID:        "%s",
+	StatusID:  "STATUS_ID_GOES_HERE",
+	URL:       "%s",
+	RemoteURL: "",
+	CreatedAt: TimeMustParse("%s"),
+	Type:      %s,
+	FileMeta: gtsmodel.FileMeta{
+		Original: gtsmodel.Original{
+			Width:     %d,
+			Height:    %d,
+			Size:      %d,
+			Aspect:    %f,%s
+		},
+		Small: gtsmodel.Small{
+			Width:  %d,
+			Height: %d,
+			Size:   %d,
+			Aspect: %f,
+		},
+		Focus: gtsmodel.Focus{
+			X: 0,
+			Y: 0,
+		},
+	},
+	AccountID:         "ACCOUNT_ID_GOES_HERE",
+	Description:       "DESCRIPTION_GOES_HERE",
+	ScheduledStatusID: "",
+	Blurhash:          "%s",
+	Processing:        2,
+	File: gtsmodel.File{
+		Path:        "%s",
+		ContentType: "%s",
+		FileSize:    %d,
+	},
+	Thumbnail: gtsmodel.Thumbnail{
+		Path:        "%s",
+		ContentType: "%s",
+		FileSize:    %d,
+		URL:         "%s",
+		RemoteURL:   "",
+	},
+	Avatar: util.Ptr(false),
+	Header: util.Ptr(false),
+	Cached: util.Ptr(true),
+}`+"\n",
+		media.ID,
+		strings.ReplaceAll(media.URL, media.AccountID, "ACCOUNT_ID_GOES_HERE"),
+		nowStr,
+		mediaType,
+		media.FileMeta.Original.Width,
+		media.FileMeta.Original.Height,
+		media.FileMeta.Original.Size,
+		media.FileMeta.Original.Aspect,
+		fileMetaExtra,
+		media.FileMeta.Small.Width,
+		media.FileMeta.Small.Height,
+		media.FileMeta.Small.Size,
+		media.FileMeta.Small.Aspect,
+		media.Blurhash,
+		strings.ReplaceAll(media.File.Path, media.AccountID, "ACCOUNT_ID_GOES_HERE"),
+		media.File.ContentType,
+		media.File.FileSize,
+		strings.ReplaceAll(media.Thumbnail.Path, media.AccountID, "ACCOUNT_ID_GOES_HERE"),
+		media.Thumbnail.ContentType,
+		media.Thumbnail.FileSize,
+		strings.ReplaceAll(media.Thumbnail.URL, media.AccountID, "ACCOUNT_ID_GOES_HERE"),
+	)
 }

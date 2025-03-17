@@ -878,6 +878,32 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	return *faves, nil
 }
 
+func qMediaOnly(ctx context.Context, q *bun.SelectQuery) *bun.SelectQuery {
+	// Attachments are stored as a json object; this
+	// implementation differs between SQLite and Postgres,
+	// so we have to be thorough to cover all eventualities
+	return q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		switch d := q.Dialect().Name(); d {
+		case dialect.PG:
+			return q.
+				Where("? IS NOT NULL", bun.Ident("status.attachments")).
+				Where("? != '{}'", bun.Ident("status.attachments"))
+
+		case dialect.SQLite:
+			return q.
+				Where("? IS NOT NULL", bun.Ident("status.attachments")).
+				Where("? != ''", bun.Ident("status.attachments")).
+				Where("? != 'null'", bun.Ident("status.attachments")).
+				Where("? != '{}'", bun.Ident("status.attachments")).
+				Where("? != '[]'", bun.Ident("status.attachments"))
+
+		default:
+			log.Panicf(ctx, "dialect %d was neither pg nor sqlite", d)
+			return q
+		}
+	})
+}
+
 func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, limit int, excludeReplies bool, excludeReblogs bool, maxID string, minID string, mediaOnly bool, publicOnly bool) ([]*gtsmodel.Status, error) {
 	// Ensure reasonable
 	if limit < 0 {
@@ -918,28 +944,9 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 		q = q.Where("? IS NULL", bun.Ident("status.boost_of_id"))
 	}
 
+	// Respect media-only preference.
 	if mediaOnly {
-		// Attachments are stored as a json object; this
-		// implementation differs between SQLite and Postgres,
-		// so we have to be thorough to cover all eventualities
-		q = q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			switch a.db.Dialect().Name() {
-			case dialect.PG:
-				return q.
-					Where("? IS NOT NULL", bun.Ident("status.attachments")).
-					Where("? != '{}'", bun.Ident("status.attachments"))
-			case dialect.SQLite:
-				return q.
-					Where("? IS NOT NULL", bun.Ident("status.attachments")).
-					Where("? != ''", bun.Ident("status.attachments")).
-					Where("? != 'null'", bun.Ident("status.attachments")).
-					Where("? != '{}'", bun.Ident("status.attachments")).
-					Where("? != '[]'", bun.Ident("status.attachments"))
-			default:
-				log.Panic(ctx, "db dialect was neither pg nor sqlite")
-				return q
-			}
-		})
+		q = qMediaOnly(ctx, q)
 	}
 
 	if publicOnly {
@@ -1018,6 +1025,7 @@ func (a *accountDB) GetAccountPinnedStatuses(ctx context.Context, accountID stri
 func (a *accountDB) GetAccountWebStatuses(
 	ctx context.Context,
 	account *gtsmodel.Account,
+	mediaOnly bool,
 	limit int,
 	maxID string,
 ) ([]*gtsmodel.Status, error) {
@@ -1076,6 +1084,11 @@ func (a *accountDB) GetAccountWebStatuses(
 
 	// Don't show local-only statuses on the web view.
 	q = q.Where("? = ?", bun.Ident("status.federated"), true)
+
+	// Respect media-only preference.
+	if mediaOnly {
+		q = qMediaOnly(ctx, q)
+	}
 
 	// return only statuses LOWER (ie., older) than maxID
 	if maxID == "" {

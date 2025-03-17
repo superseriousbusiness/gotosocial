@@ -22,7 +22,7 @@
 ****************************************/
 
 @import "modern-normalize/modern-normalize.css";
-@import "./prism.css";
+@import "./_prism.css";
 
 /* noto-sans-regular - latin */
 @font-face {

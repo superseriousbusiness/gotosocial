@@ -1,0 +1,87 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<main class="profile h-card">
+    {{- with . }}
+    {{- include "profile_header.tmpl" . | indent 1 }}
+    {{- end }}
+    {{- with . }}
+    {{- include "profile_about_user.tmpl" . | indent 1 }}
+    {{- end }}
+    <div
+        class="media-galleries-wrapper"
+        role="region"
+        aria-label="Media by {{ .account.Username -}}"
+    >
+        {{- if .pinned_statuses }}
+        <section class="pinned h-feed" aria-labelledby="pinned">
+            <div class="col-header">
+                <h3 class="p-name" id="pinned">Pinned media</h3>
+                <a href="#recent">jump to recent</a>
+            </div>
+            <div
+                class="media-gallery photoswipe-gallery"
+                role="group"
+            >
+                {{- range $index, $attachment := .pinnedGalleryItems }}
+                {{- includeIndex "status_attachment.tmpl" $attachment $index | indent 4 }}
+                {{- end }}
+            </div>
+        </section>
+        {{- end }}
+        <section class="recent h-feed" aria-labelledby="recent">
+            <div class="col-header">
+                <h3 id="recent p-name" tabindex="-1">Recent media</h3>
+                {{- if .rssFeed }}
+                <a href="{{- .rssFeed -}}" class="rss-icon" aria-label="RSS feed">
+                    <i class="fa fa-rss-square" aria-hidden="true"></i>
+                </a>
+                {{- end }}
+            </div>
+            {{- if not .galleryItems }}
+            <div data-nosnippet class="nothinghere">
+                {{- if .show_back_to_top }}
+                    Reached the end of visible media!
+                {{- else }}
+                    Nothing to see here! {{ .account.Username }} has either not posted any public media yet, or has opted not to make posts visible via the World Wide Web.
+                {{- end }}
+            </div>
+            {{- else }}
+            <div
+                class="media-gallery photoswipe-gallery"
+                role="group"
+            >
+                {{- range $index, $attachment := .galleryItems }}
+                {{- includeIndex "status_attachment.tmpl" $attachment $index | indent 4 }}
+                {{- end }}
+            </div>
+            {{- end }}
+            <nav class="backnextlinks">
+                {{- if .show_back_to_top }}
+                <a href="/@{{- .account.Username -}}">Back to top</a>
+                {{- end }}
+                {{- if .statuses_next }}
+                <a href="{{- .statuses_next -}}" class="next">Show older</a>
+                {{- end }}
+            </nav>
+        </section>
+    </div>
+</main>
+{{- end }}

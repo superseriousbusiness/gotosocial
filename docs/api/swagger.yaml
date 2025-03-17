@@ -179,6 +179,13 @@ definitions:
                 description: The default posting content type for new statuses.
                 type: string
                 x-go-name: StatusContentType
+            web_layout:
+                description: |-
+                    Layout to use for the web view of the account.
+                    "microblog": default, classic microblog layout.
+                    "gallery": gallery layout with media only.
+                type: string
+                x-go-name: WebLayout
             web_visibility:
                 description: |-
                     Visibility level(s) of posts to show for this account via the web api.
@@ -4848,6 +4855,13 @@ paths:
                     "none": show no posts on the web, not even Public ones.
                   in: formData
                   name: web_visibility
+                  type: string
+                - description: |-
+                    Layout to use for the web view of the account.
+                    "microblog": default, classic microblog layout.
+                    "gallery": gallery layout with media only.
+                  in: formData
+                  name: web_layout
                   type: string
                 - description: Name of 1st profile field to be added to this account's profile. (The index may be any string; add more indexes to send more fields.)
                   in: formData

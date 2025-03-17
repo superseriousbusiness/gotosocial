@@ -1,0 +1,107 @@
+/*
+	GoToSocial
+	Copyright (C) GoToSocial Authors admin@gotosocial.org
+	SPDX-License-Identifier: AGPL-3.0-or-later
+
+	This program is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+@import "./_profile-header.css";
+@import "./_media-wrapper.css";
+
+.page {
+	/* 
+		Profile gallery can be wider than default.
+	*/
+	grid-template-columns: 1fr min(98%, 65rem) 1fr;
+}
+
+.profile {
+	.about-user {
+		margin-bottom: 1rem;
+
+		.accountstats {
+			flex-direction: row;
+			justify-content: space-between;
+
+			.stats-item {
+				gap: 0.5rem;
+				width: 25%;
+				justify-content: space-around;
+
+				dt {
+					width: fit-content;
+					margin-left: auto;
+				}
+
+				dd {
+					margin-right: auto;
+				}
+			}
+
+			@media screen and (max-width: 750px) {
+				flex-direction: column;
+				.stats-item {
+					width: fit-content;
+					dt {
+						width: 7rem;
+					}
+				}
+			}
+		}
+	}
+	
+	.media-galleries-wrapper {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		min-width: 0%;
+
+		.media-gallery {
+			margin-top: 0.15rem;
+			margin-bottom: 0.15rem;
+		
+			display: grid;
+			gap: 0.15rem;
+
+			/* Desktop-ish width, show 3 cols of media */
+			grid-template-columns: repeat(3, 1fr);
+		
+			@media screen and (max-width: 55rem) {
+				/* Tablet-ish width, switch to 2 cols */
+				grid-template-columns: repeat(2, 1fr);
+			}
+
+			@media screen and (max-width: 36rem) {
+				/* Mobile-ish width, switch to 1 col */
+				grid-template-columns: repeat(1, 1fr);
+			}
+
+			.media-wrapper {
+				aspect-ratio: 4/3;
+				border: 0;
+				border-radius: 0;
+			}
+		}
+
+		.backnextlinks {
+			display: flex;
+			justify-content: space-between;
+	
+			.next {
+				margin-left: auto;
+			}
+		}
+	}
+}

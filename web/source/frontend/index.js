@@ -40,6 +40,9 @@ const lightbox = new PhotoswipeLightbox({
 	gallery: '.photoswipe-gallery',
 	children: '.photoswipe-slide',
 	pswpModule: Photoswipe,
+	// Bit darker than default 0.8.
+	bgOpacity: 0.9,
+	loop: false,
 });
 
 new PhotoswipeCaptionPlugin(lightbox, {
@@ -71,7 +74,8 @@ lightbox.addFilter('itemData', (item) => {
 				}
 			},
 			width: parseInt(el.dataset.pswpWidth),
-			height: parseInt(el.dataset.pswpHeight)
+			height: parseInt(el.dataset.pswpHeight),
+			parentStatus: el.dataset.pswpParentStatus,
 		};
 	}
 	return item;
@@ -96,6 +100,26 @@ lightbox.on("close", function () {
 	if (lightbox.pswp.currSlide.data._video != undefined) {
 		lightbox.pswp.currSlide.data._video.close();
 	}
+});
+
+lightbox.on('uiRegister', function() {
+	lightbox.pswp.ui.registerElement({
+		name: 'open-post-link',
+		ariaLabel: 'Open post',
+		order: 8,
+		isButton: true,
+		tagName: "a",
+		html: '<span title="Open post"><span class="sr-only">Open post</span><i class="fa fa-lg fa-external-link-square" aria-hidden="true"></i></span>',
+		onInit: (el, pswp) => {
+			el.setAttribute('target', '_blank');
+			el.setAttribute('rel', 'noopener');
+			pswp.on('change', () => {
+				el.href = pswp.currSlide.data.parentStatus
+					? pswp.currSlide.data.parentStatus
+					: pswp.currSlide.data.element.dataset.pswpParentStatus;
+			});
+		  }
+	});
 });
 
 lightbox.init();

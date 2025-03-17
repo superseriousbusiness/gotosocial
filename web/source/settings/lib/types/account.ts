@@ -79,6 +79,8 @@ export interface AccountSource {
 	privacy: string;
 	sensitive: boolean;
 	status_content_type: string;
+	web_visibility: string;
+	web_layout: string;
 }
 
 export interface SearchAccountParams {

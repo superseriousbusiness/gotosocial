@@ -19,7 +19,6 @@ package web
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -28,9 +27,24 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
-func (m *Module) profileGETHandler(c *gin.Context) {
+type profile struct {
+	instance       *apimodel.InstanceV1
+	account        *apimodel.WebAccount
+	rssFeed        string
+	robotsMeta     string
+	pinnedStatuses []*apimodel.WebStatus
+	statusResp     *apimodel.PageableResponse
+	paging         bool
+}
+
+// prepareProfile does content type checks, fetches the
+// targeted account from the db, and converts it to its
+// web representation, along with other data needed to
+// render the web view of the account.
+func (m *Module) prepareProfile(c *gin.Context) *profile {
 	ctx := c.Request.Context()
 
 	// We'll need the instance later, and we can also use it
@@ -38,7 +52,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	instance, errWithCode := m.processor.InstanceGetV1(ctx)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
+		return nil
 	}
 
 	// Return instance we already got from the db,
@@ -47,90 +61,137 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 		return instance, nil
 	}
 
-	// Parse account targetUsername from the URL.
-	targetUsername, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
+	// Parse + normalize account username from the URL.
+	requestedUsername, errWithCode := apiutil.ParseUsername(c.Param(apiutil.UsernameKey))
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-		return
+		return nil
 	}
+	requestedUsername = strings.ToLower(requestedUsername)
 
-	// Normalize requested username:
-	//
-	//   - Usernames on our instance are (currently) always lowercase.
-	//
-	// todo: Update this logic when different username patterns
-	// are allowed, and/or when status slugs are introduced.
-	targetUsername = strings.ToLower(targetUsername)
-
-	// Check what type of content is being requested. If we're getting an AP
-	// request on this endpoint we should render the AP representation instead.
-	accept, err := apiutil.NegotiateAccept(c, apiutil.HTMLOrActivityPubHeaders...)
+	// Check what type of content is being requested.
+	// If we're getting an AP request on this endpoint
+	// we should render the AP representation instead.
+	contentType, err := apiutil.NegotiateAccept(c, apiutil.HTMLOrActivityPubHeaders...)
 	if err != nil {
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), instanceGet)
-		return
+		return nil
 	}
 
-	if accept == string(apiutil.AppActivityJSON) || accept == string(apiutil.AppActivityLDJSON) {
-		// AP account representation has been requested.
-		m.returnAPAccount(c, targetUsername, accept, instanceGet)
-		return
+	if contentType == string(apiutil.AppActivityJSON) ||
+		contentType == string(apiutil.AppActivityLDJSON) {
+		// AP account representation has
+		// been requested, return that.
+		m.returnAPAccount(c, requestedUsername, contentType)
+		return nil
 	}
 
-	// text/html has been requested. Proceed with getting the web view of the account.
-
-	// Fetch the target account so we can do some checks on it.
-	targetAccount, errWithCode := m.processor.Account().GetWeb(ctx, targetUsername)
+	// text/html has been requested.
+	//
+	// Proceed with getting the web
+	// representation of the account.
+	account, errWithCode := m.processor.Account().GetWeb(ctx, requestedUsername)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-		return
+		return nil
 	}
 
-	// If target account is suspended, this page should not be visible.
+	// If target account is suspended,
+	// this page should not be visible.
+	//
 	// TODO: change this to 410?
-	if targetAccount.Suspended {
-		err := fmt.Errorf("target account %s is suspended", targetUsername)
+	if account.Suspended {
+		err := fmt.Errorf("target account %s is suspended", requestedUsername)
 		apiutil.WebErrorHandler(c, gtserror.NewErrorNotFound(err), instanceGet)
-		return
+		return nil
 	}
 
-	// Only generate RSS link if account has RSS enabled.
+	// Only generate RSS link if
+	// account has RSS enabled.
 	var rssFeed string
-	if targetAccount.EnableRSS {
-		rssFeed = "/@" + targetAccount.Username + "/feed.rss"
+	if account.EnableRSS {
+		rssFeed = "/@" + account.Username + "/feed.rss"
 	}
 
-	// Only allow search engines / robots to
-	// index if account is discoverable.
+	// Only allow search robots
+	// if account is discoverable.
 	var robotsMeta string
-	if targetAccount.Discoverable {
+	if account.Discoverable {
 		robotsMeta = apiutil.RobotsDirectivesAllowSome
 	}
 
-	// We need to change our response slightly if the
-	// profile visitor is paging through statuses.
+	// Check if paging.
+	maxStatusID := apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), "")
+	paging := maxStatusID != ""
+
+	// If not paging, load pinned statuses.
 	var (
-		maxStatusID    = apiutil.ParseMaxID(c.Query(apiutil.MaxIDKey), "")
-		paging         = maxStatusID != ""
+		mediaOnly      = account.WebLayout == "gallery"
 		pinnedStatuses []*apimodel.WebStatus
 	)
-
 	if !paging {
-		// Client opened bare profile (from the top)
-		// so load + display pinned statuses.
-		pinnedStatuses, errWithCode = m.processor.Account().WebStatusesGetPinned(ctx, targetAccount.ID)
+		var errWithCode gtserror.WithCode
+		pinnedStatuses, errWithCode = m.processor.Account().WebStatusesGetPinned(
+			ctx,
+			account.ID,
+			mediaOnly,
+		)
 		if errWithCode != nil {
 			apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-			return
+			return nil
 		}
 	}
 
 	// Get statuses from maxStatusID onwards (or from top if empty string).
-	statusResp, errWithCode := m.processor.Account().WebStatusesGet(ctx, targetAccount.ID, maxStatusID)
+	statusResp, errWithCode := m.processor.Account().WebStatusesGet(
+		ctx,
+		account.ID,
+		false, // mediaOnly = false
+		maxStatusID,
+	)
 	if errWithCode != nil {
 		apiutil.WebErrorHandler(c, errWithCode, instanceGet)
-		return
+		return nil
 	}
 
+	return &profile{
+		instance:       instance,
+		account:        account,
+		rssFeed:        rssFeed,
+		robotsMeta:     robotsMeta,
+		pinnedStatuses: pinnedStatuses,
+		statusResp:     statusResp,
+		paging:         paging,
+	}
+}
+
+// profileGETHandler selects the appropriate rendering
+// mode for the target account profile, and serves that.
+func (m *Module) profileGETHandler(c *gin.Context) {
+	p := m.prepareProfile(c)
+
+	// Choose desired web renderer for this acct.
+	switch wrm := p.account.WebLayout; wrm {
+
+	// El classico.
+	case "", "microblog":
+		m.profileMicroblog(c, p)
+
+	// 'gram style media gallery.
+	case "gallery":
+		m.profileGallery(c, p)
+
+	default:
+		log.Panicf(
+			c.Request.Context(),
+			"unknown webrenderingmode %s", wrm,
+		)
+	}
+}
+
+// profileMicroblog serves the profile
+// in classic GtS "microblog" view.
+func (m *Module) profileMicroblog(c *gin.Context, p *profile) {
 	// Prepare stylesheets for profile.
 	stylesheets := make([]string, 0, 7)
 
@@ -146,7 +207,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	)
 
 	// User-selected theme if set.
-	if theme := targetAccount.Theme; theme != "" {
+	if theme := p.account.Theme; theme != "" {
 		stylesheets = append(
 			stylesheets,
 			themesPathPrefix+"/"+theme,
@@ -156,23 +217,89 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 	// Custom CSS for this user last in cascade.
 	stylesheets = append(
 		stylesheets,
-		"/@"+targetAccount.Username+"/custom.css",
+		"/@"+p.account.Username+"/custom.css",
 	)
 
 	page := apiutil.WebPage{
 		Template:    "profile.tmpl",
-		Instance:    instance,
-		OGMeta:      apiutil.OGBase(instance).WithAccount(targetAccount),
+		Instance:    p.instance,
+		OGMeta:      apiutil.OGBase(p.instance).WithAccount(p.account),
 		Stylesheets: stylesheets,
 		Javascript:  []string{jsFrontend},
 		Extra: map[string]any{
-			"account":          targetAccount,
-			"rssFeed":          rssFeed,
-			"robotsMeta":       robotsMeta,
-			"statuses":         statusResp.Items,
-			"statuses_next":    statusResp.NextLink,
-			"pinned_statuses":  pinnedStatuses,
-			"show_back_to_top": paging,
+			"account":          p.account,
+			"rssFeed":          p.rssFeed,
+			"robotsMeta":       p.robotsMeta,
+			"statuses":         p.statusResp.Items,
+			"statuses_next":    p.statusResp.NextLink,
+			"pinned_statuses":  p.pinnedStatuses,
+			"show_back_to_top": p.paging,
+		},
+	}
+
+	apiutil.TemplateWebPage(c, page)
+}
+
+// profileMicroblog serves the profile
+// in media-only 'gram-style gallery view.
+func (m *Module) profileGallery(c *gin.Context, p *profile) {
+	// Get just attachments from pinned,
+	// making a rough guess for slice size.
+	pinnedGalleryItems := make([]*apimodel.WebAttachment, 0, len(p.pinnedStatuses)*4)
+	for _, status := range p.pinnedStatuses {
+		pinnedGalleryItems = append(pinnedGalleryItems, status.MediaAttachments...)
+	}
+
+	// Get just attachments from statuses,
+	// making a rough guess for slice size.
+	galleryItems := make([]*apimodel.WebAttachment, 0, len(p.statusResp.Items)*4)
+	for _, statusI := range p.statusResp.Items {
+		status := statusI.(*apimodel.WebStatus)
+		galleryItems = append(galleryItems, status.MediaAttachments...)
+	}
+
+	// Prepare stylesheets for profile.
+	stylesheets := make([]string, 0, 4)
+
+	// Profile gallery stylesheets.
+	stylesheets = append(
+		stylesheets,
+		[]string{
+			cssFA,
+			cssProfileGallery,
+		}...)
+
+	// User-selected theme if set.
+	if theme := p.account.Theme; theme != "" {
+		stylesheets = append(
+			stylesheets,
+			themesPathPrefix+"/"+theme,
+		)
+	}
+
+	// Custom CSS for this
+	// user last in cascade.
+	stylesheets = append(
+		stylesheets,
+		"/@"+p.account.Username+"/custom.css",
+	)
+
+	page := apiutil.WebPage{
+		Template:    "profile-gallery.tmpl",
+		Instance:    p.instance,
+		OGMeta:      apiutil.OGBase(p.instance).WithAccount(p.account),
+		Stylesheets: stylesheets,
+		Javascript:  []string{jsFrontend},
+		Extra: map[string]any{
+			"account":            p.account,
+			"rssFeed":            p.rssFeed,
+			"robotsMeta":         p.robotsMeta,
+			"pinnedGalleryItems": pinnedGalleryItems,
+			"galleryItems":       galleryItems,
+			"statuses":           p.statusResp.Items,
+			"statuses_next":      p.statusResp.NextLink,
+			"pinned_statuses":    p.pinnedStatuses,
+			"show_back_to_top":   p.paging,
 		},
 	}
 
@@ -184,8 +311,7 @@ func (m *Module) profileGETHandler(c *gin.Context) {
 func (m *Module) returnAPAccount(
 	c *gin.Context,
 	targetUsername string,
-	accept string,
-	instanceGet func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
+	contentType string,
 ) {
 	user, errWithCode := m.processor.Fedi().UserGet(c.Request.Context(), targetUsername, c.Request.URL)
 	if errWithCode != nil {
@@ -193,12 +319,5 @@ func (m *Module) returnAPAccount(
 		return
 	}
 
-	b, err := json.Marshal(user)
-	if err != nil {
-		err := gtserror.Newf("could not marshal json: %w", err)
-		apiutil.WebErrorHandler(c, gtserror.NewErrorInternalError(err), m.processor.InstanceGetV1)
-		return
-	}
-
-	c.Data(http.StatusOK, accept, b)
+	apiutil.JSONType(c, http.StatusOK, contentType, user)
 }

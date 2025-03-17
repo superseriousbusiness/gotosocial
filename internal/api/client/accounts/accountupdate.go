@@ -153,6 +153,14 @@ import (
 //			"none": show no posts on the web, not even Public ones.
 //		type: string
 //	-
+//		name: web_layout
+//		in: formData
+//		description: |-
+//			Layout to use for the web view of the account.
+//			"microblog": default, classic microblog layout.
+//			"gallery": gallery layout with media only.
+//		type: string
+//	-
 //		name: fields_attributes[0][name]
 //		in: formData
 //		description: Name of 1st profile field to be added to this account's profile.
@@ -351,7 +359,8 @@ func parseUpdateAccountForm(c *gin.Context) (*apimodel.UpdateCredentialsRequest,
 			form.CustomCSS == nil &&
 			form.EnableRSS == nil &&
 			form.HideCollections == nil &&
-			form.WebVisibility == nil) {
+			form.WebVisibility == nil &&
+			form.WebLayout == nil) {
 		return nil, errors.New("empty form submitted")
 	}
 

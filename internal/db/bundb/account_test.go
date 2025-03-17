@@ -490,7 +490,7 @@ func (suite *AccountTestSuite) TestGetAccountsAll() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(accounts, 9)
+	suite.Len(accounts, 10)
 }
 
 func (suite *AccountTestSuite) TestGetAccountsMaxID() {
@@ -564,7 +564,7 @@ func (suite *AccountTestSuite) TestGetAccountsMinID() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(accounts, 3)
+	suite.Len(accounts, 4)
 }
 
 func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
