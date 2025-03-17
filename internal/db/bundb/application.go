@@ -174,6 +174,15 @@ func (a *applicationDB) PutApplication(ctx context.Context, app *gtsmodel.Applic
 	})
 }
 
+// DeleteApplicationByID deletes application with the given ID.
+//
+// The function does not delete tokens owned by the application
+// or update statuses/accounts that used the application, since
+// the latter can be extremely expensive given the size of the
+// statuses table.
+//
+// Callers to this function should ensure that they do side
+// effects themselves (if required) before or after calling.
 func (a *applicationDB) DeleteApplicationByID(ctx context.Context, id string) error {
 	_, err := a.db.NewDelete().
 		Table("applications").
