@@ -146,7 +146,7 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 	statusResp, errWithCode := m.processor.Account().WebStatusesGet(
 		ctx,
 		account.ID,
-		false, // mediaOnly = false
+		mediaOnly,
 		maxStatusID,
 	)
 	if errWithCode != nil {
@@ -169,6 +169,11 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 // mode for the target account profile, and serves that.
 func (m *Module) profileGETHandler(c *gin.Context) {
 	p := m.prepareProfile(c)
+	if p == nil {
+		// Something went wrong,
+		// error already written.
+		return
+	}
 
 	// Choose desired web renderer for this acct.
 	switch wrm := p.account.WebLayout; wrm {

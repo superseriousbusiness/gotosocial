@@ -20,7 +20,7 @@ package migrations
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 
@@ -29,14 +29,53 @@ func init() {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 
 			// Add new column to settings.
-			if _, err := tx.NewAddColumn().
+			if _, err := tx.
+				NewAddColumn().
 				Table("account_settings").
 				ColumnExpr(
 					"? SMALLINT NOT NULL DEFAULT ?",
 					bun.Ident("web_layout"), 1,
 				).
 				Exec(ctx); err != nil {
-				return gtserror.Newf("error adding account_settings.web_layout: %w", err)
+				return err
+			}
+
+			// Drop existing statuses web index as it's out of date.
+			log.Info(ctx, "updating statuses_profile_web_view_idx, this may take a while, please wait!")
+			if _, err := tx.
+				NewDropIndex().
+				Index("statuses_profile_web_view_idx").
+				IfExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Table("statuses").
+				Index("statuses_profile_web_view_idx").
+				Column(
+					"account_id",
+					"visibility",
+					"in_reply_to_uri",
+					"boost_of_id",
+					"federated",
+					"attachments",
+				).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
+			}
+
+			if _, err := tx.
+				NewCreateIndex().
+				Table("statuses").
+				Index("statuses_profile_web_view_sorting_idx").
+				Column("account_id", "federated").
+				ColumnExpr("? DESC", bun.Ident("id")).
+				IfNotExists().
+				Exec(ctx); err != nil {
+				return err
 			}
 
 			return nil

@@ -1054,10 +1054,7 @@ func (a *accountDB) GetAccountWebStatuses(
 		TableExpr("? AS ?", bun.Ident("statuses"), bun.Ident("status")).
 		// Select only IDs from table
 		Column("status.id").
-		Where("? = ?", bun.Ident("status.account_id"), account.ID).
-		// Don't show replies or boosts.
-		Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
-		Where("? IS NULL", bun.Ident("status.boost_of_id"))
+		Where("? = ?", bun.Ident("status.account_id"), account.ID)
 
 	// Select statuses for this account according
 	// to their web visibility preference.
@@ -1082,15 +1079,19 @@ func (a *accountDB) GetAccountWebStatuses(
 		)
 	}
 
-	// Don't show local-only statuses on the web view.
-	q = q.Where("? = ?", bun.Ident("status.federated"), true)
+	// Don't show replies, boosts, or
+	// local-only statuses on the web view.
+	q = q.
+		Where("? IS NULL", bun.Ident("status.in_reply_to_uri")).
+		Where("? IS NULL", bun.Ident("status.boost_of_id")).
+		Where("? = ?", bun.Ident("status.federated"), true)
 
 	// Respect media-only preference.
 	if mediaOnly {
 		q = qMediaOnly(ctx, q)
 	}
 
-	// return only statuses LOWER (ie., older) than maxID
+	// Return only statuses LOWER (ie., older) than maxID
 	if maxID == "" {
 		maxID = id.Highest
 	}
