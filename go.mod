@@ -2,7 +2,7 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.23.0
 
-toolchain go1.23.3
+toolchain go1.24.1
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
@@ -36,7 +36,7 @@ require (
 	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
 	github.com/buckket/go-blurhash v1.1.0
-	github.com/coreos/go-oidc/v3 v3.12.0
+	github.com/coreos/go-oidc/v3 v3.13.0
 	github.com/gin-contrib/cors v1.7.3
 	github.com/gin-contrib/gzip v1.2.2
 	github.com/gin-contrib/sessions v1.0.2
@@ -83,8 +83,8 @@ require (
 	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/crypto v0.36.0
 	golang.org/x/image v0.24.0
-	golang.org/x/net v0.36.0
-	golang.org/x/oauth2 v0.27.0
+	golang.org/x/net v0.37.0
+	golang.org/x/oauth2 v0.28.0
 	golang.org/x/sys v0.31.0
 	golang.org/x/text v0.23.0
 	gopkg.in/mcuadros/go-syslog.v2 v2.3.0
