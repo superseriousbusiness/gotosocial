@@ -387,6 +387,54 @@ func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
 	}
 }
 
+// RangeUnsafe is functionally similar to Range(), except it does not pass *copies* of
+// data. It allows you to operate on the data directly and modify it. As such it can also
+// be more performant to use this function, even for read-write operations.
+//
+// Please note that the entire Timeline{} will be locked for the duration of the range
+// operation, i.e. from the beginning of the first yield call until the end of the last.
+func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(T) bool) {
+	return func(yield func(T) bool) {
+		if t.copy == nil {
+			panic("not initialized")
+		} else if yield == nil {
+			panic("nil func")
+		}
+
+		// Acquire lock.
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
+
+		switch dir {
+		case Asc:
+			// Iterate through linked list from bottom (i.e. tail).
+			for prev := t.list.tail; prev != nil; prev = prev.prev {
+
+				// Extract item from list element.
+				item := (*timeline_item)(prev.data)
+
+				// Pass to given function.
+				if !yield(item.data.(T)) {
+					break
+				}
+			}
+
+		case Desc:
+			// Iterate through linked list from top (i.e. head).
+			for next := t.list.head; next != nil; next = next.next {
+
+				// Extract item from list element.
+				item := (*timeline_item)(next.data)
+
+				// Pass to given function.
+				if !yield(item.data.(T)) {
+					break
+				}
+			}
+		}
+	}
+}
+
 // RangeKeys will iterate over all values for given keys in the given index.
 //
 // Please note that the entire Timeline{} will be locked for the duration of the range
