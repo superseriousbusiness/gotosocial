@@ -143,6 +143,17 @@ func (suite *ApplicationTestSuite) TestDeleteTokensByClientID() {
 	}
 }
 
+func (suite *ApplicationTestSuite) TestDeleteTokensByUnknownClientID() {
+	// Should not return ErrNoRows even though
+	// the client with given ID doesn't exist.
+	if err := suite.state.DB.DeleteTokensByClientID(
+		context.Background(),
+		"01JPJ4NCGH6GHY7ZVYBHNP55XS",
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+}
+
 func TestApplicationTestSuite(t *testing.T) {
 	suite.Run(t, new(ApplicationTestSuite))
 }
