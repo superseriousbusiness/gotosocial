@@ -792,7 +792,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
   "content": "\u003cp\u003ehello world! \u003ca href=\"http://localhost:8080/tags/welcome\" class=\"mention hashtag\" rel=\"tag nofollow noreferrer noopener\" target=\"_blank\"\u003e#\u003cspan\u003ewelcome\u003c/span\u003e\u003c/a\u003e ! first post on the instance :rainbow: !\u003c/p\u003e",
   "reblog": null,
   "application": {
-    "name": "Unknown/deleted application"
+    "name": "unknown application"
   },
   "account": {
     "id": "01F8MH17FWEB39HZJ76B6VXSKF",

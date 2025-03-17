@@ -1434,7 +1434,7 @@ func (c *Converter) baseStatusToFrontend(
 		// anymore, it's probably been cleaned up.
 		// Set a dummy application.
 		apiStatus.Application = &apimodel.Application{
-			Name: "Unknown/deleted application",
+			Name: "unknown application",
 		}
 
 	default:
