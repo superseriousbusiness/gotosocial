@@ -18,33 +18,11 @@
 */
 
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { OAuthApp, OAuthAccessToken } from "../lib/types/oauth";
 
-/**
- * OAuthToken represents a response
- * to an OAuth token request.
- */
-export interface OAuthToken {
-	/**
-	 * Most likely to be 'Bearer'
-	 * but may be something else.
-	 */
-	token_type: string;
-	/**
-	 * The actual token. Can be passed in to
-	 * authenticate further requests using the
-	 * Authorization header and the token type.
-	 */
-	access_token: string;
-}
-
-export interface OAuthApp {
-	client_id: string;
-	client_secret: string;
-}
-
-export interface OAuthState {
+export interface LoginState {
 	instanceUrl?: string;
-	loginState: "none" | "callback" | "login" | "logout";
+	current: "none" | "awaitingcallback" | "loggedin" | "loggedout";
 	expectingRedirect: boolean;
 	/**
 	 * Token stored in easy-to-use format.
@@ -55,29 +33,31 @@ export interface OAuthState {
 	app?: OAuthApp;
 }
 
-const initialState: OAuthState = {
-	loginState: 'none',
+const initialState: LoginState = {
+	current: 'none',
 	expectingRedirect: false,
 };
 
-export const oauthSlice = createSlice({
-	name: "oauth",
+export const loginSlice = createSlice({
+	name: "login",
 	initialState: initialState,
 	reducers: {
-		authorize: (_state, action: PayloadAction<OAuthState>) => {
+		authorize: (_state, action: PayloadAction<LoginState>) => {
 			// Overrides state with payload.
 			return action.payload;
 		},
-		setToken: (state, action: PayloadAction<OAuthToken>) => {
-			// Mark us as logged in by storing token.
+		setToken: (state, action: PayloadAction<OAuthAccessToken>) => {
+			// Mark us as logged
+			// in by storing token.
 			state.token = `${action.payload.token_type} ${action.payload.access_token}`;
-			state.loginState = "login";
+			state.current = "loggedin";
 		},
 		remove: (state) => {
-			// Mark us as logged out by clearing auth.
+			// Mark us as logged
+			// out by clearing auth.
 			delete state.token;
 			delete state.app;
-			state.loginState = "logout";
+			state.current = "loggedout";
 		}
 	}
 });
@@ -86,4 +66,4 @@ export const {
 	authorize,
 	setToken,
 	remove,
-} = oauthSlice.actions;
+} = loginSlice.actions;

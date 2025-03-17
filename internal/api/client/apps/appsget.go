@@ -15,7 +15,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package tokens
+package apps
 
 import (
 	"net/http"
@@ -26,23 +26,21 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// TokensInfoGETHandler swagger:operation GET /api/v1/tokens tokensInfoGet
+// AppsGETHandler swagger:operation GET /api/v1/apps appsGet
 //
-// See info about tokens created for/by your account.
+// Get an array of applications that are managed by the requester.
 //
-// The items will be returned in descending chronological order (newest first), with sequential IDs (bigger = newer).
-//
-// The returned Link header can be used to generate the previous and next queries when paging up or down.
+// The next and previous queries can be parsed from the returned Link header.
 //
 // Example:
 //
 // ```
-// <https://example.org/api/v1/tokens?limit=20&max_id=01FC3GSQ8A3MMJ43BPZSGEG29M>; rel="next", <https://example.org/api/v1/tokens?limit=20&min_id=01FC3KJW2GYXSDDRA6RWNDM46M>; rel="prev"
+// <https://example.org/api/v1/apps?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/apps?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
 // ````
 //
 //	---
 //	tags:
-//	- tokens
+//	- apps
 //
 //	produces:
 //	- application/json
@@ -83,28 +81,32 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- read:accounts
+//		- read:applications
 //
 //	responses:
 //		'200':
-//			name: tokens
-//			description: Array of token info entries.
-//			schema:
-//				type: array
-//				items:
-//					"$ref": "#/definitions/tokenInfo"
 //			headers:
 //				Link:
 //					type: string
 //					description: Links to the next and previous queries.
-//		'401':
-//			description: unauthorized
+//			schema:
+//				type: array
+//				items:
+//					"$ref": "#/definitions/application"
 //		'400':
 //			description: bad request
-func (m *Module) TokensInfoGETHandler(c *gin.Context) {
+//		'401':
+//			description: unauthorized
+//		'404':
+//			description: not found
+//		'406':
+//			description: not acceptable
+//		'500':
+//			description: internal server error
+func (m *Module) AppsGETHandler(c *gin.Context) {
 	authed, errWithCode := apiutil.TokenAuth(c,
 		true, true, true, true,
-		apiutil.ScopeReadAccounts,
+		apiutil.ScopeReadApplications,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -126,7 +128,7 @@ func (m *Module) TokensInfoGETHandler(c *gin.Context) {
 		return
 	}
 
-	resp, errWithCode := m.processor.Account().TokensGet(
+	resp, errWithCode := m.processor.Application().GetPage(
 		c.Request.Context(),
 		authed.User.ID,
 		page,
