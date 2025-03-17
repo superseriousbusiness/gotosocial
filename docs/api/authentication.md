@@ -27,7 +27,7 @@ The string `urn:ietf:wg:oauth:2.0:oob` is an indication of what is known as out-
     
     In this spirit, "read" is used in the example above, which means that the application will be restricted to only being able to do "read" actions.
     
-    For a list of available scopes, see https://docs.gotosocial.org/en/latest/api/swagger/
+    For a list of available scopes, see [the swagger docs](https://docs.gotosocial.org/en/latest/api/swagger/).
 
 !!! warning
     GoToSocial did not support scoped authorization tokens before version 0.19.0, so if you are using a version of GoToSocial below that, then any token you obtain in this process will be able to perform all actions on your behalf, including admin actions if your account has admin permissions.

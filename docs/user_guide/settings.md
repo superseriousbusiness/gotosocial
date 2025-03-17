@@ -294,7 +294,7 @@ In the applications section, you can create a new managed OAuth client applicati
 
 ### What is an OAuth client application?
 
-A GoToSocial OAuth client application is equivalent to an OAuth 2.0 client as described here: https://auth0.com/intro-to-iam/what-is-oauth-2#oauth20-roles.
+A GoToSocial OAuth client application is equivalent to an OAuth 2.0 client as described in [the Auth0 roles docs](https://auth0.com/intro-to-iam/what-is-oauth-2#oauth20-roles).
 
 When you create an application, you can then, as the "Resource Owner" of your account, give the application access to your account via an access token, which the application can use to interact with the GoToSocial client API "as you", or "on your behalf".
 
