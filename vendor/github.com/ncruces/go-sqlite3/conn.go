@@ -49,7 +49,7 @@ func Open(filename string) (*Conn, error) {
 }
 
 // OpenContext is like [Open] but includes a context,
-// which is used to interrupt the process of opening the connectiton.
+// which is used to interrupt the process of opening the connection.
 func OpenContext(ctx context.Context, filename string) (*Conn, error) {
 	return newConn(ctx, filename, OPEN_READWRITE|OPEN_CREATE|OPEN_URI)
 }
@@ -92,6 +92,9 @@ func newConn(ctx context.Context, filename string, flags OpenFlag) (ret *Conn, _
 	}()
 
 	c.ctx = context.WithValue(c.ctx, connKey{}, c)
+	if logger := defaultLogger.Load(); logger != nil {
+		c.ConfigLog(*logger)
+	}
 	c.arena = c.newArena()
 	c.handle, err = c.openDB(filename, flags)
 	if err == nil {

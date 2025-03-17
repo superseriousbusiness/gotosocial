@@ -125,6 +125,7 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 	file := vfsFile{
 		File:     f,
 		psow:     true,
+		atomic:   osBatchAtomic(f),
 		readOnly: flags&OPEN_READONLY != 0,
 		syncDir:  canSyncDirs && isCreate && isJournl,
 		shm:      NewSharedMemory(name.String()+"-shm", flags),
@@ -139,6 +140,7 @@ type vfsFile struct {
 	readOnly bool
 	keepWAL  bool
 	syncDir  bool
+	atomic   bool
 	psow     bool
 }
 
@@ -200,7 +202,7 @@ func (f *vfsFile) SectorSize() int {
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
 	ret := IOCAP_SUBPAGE_READ
-	if osBatchAtomic(f.File) {
+	if f.atomic {
 		ret |= IOCAP_BATCH_ATOMIC
 	}
 	if f.psow {

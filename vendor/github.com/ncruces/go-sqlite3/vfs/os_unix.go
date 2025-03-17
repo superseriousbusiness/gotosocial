@@ -65,10 +65,15 @@ func osTestLock(file *os.File, start, len int64) (int16, _ErrorCode) {
 		Start: start,
 		Len:   len,
 	}
-	if unix.FcntlFlock(file.Fd(), unix.F_GETLK, &lock) != nil {
-		return 0, _IOERR_CHECKRESERVEDLOCK
+	for {
+		err := unix.FcntlFlock(file.Fd(), unix.F_GETLK, &lock)
+		if err == nil {
+			return lock.Type, _OK
+		}
+		if err != unix.EINTR {
+			return 0, _IOERR_CHECKRESERVEDLOCK
+		}
 	}
-	return lock.Type, _OK
 }
 
 func osLockErrorCode(err error, def _ErrorCode) _ErrorCode {

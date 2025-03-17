@@ -2,7 +2,7 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.23.0
 
-toolchain go1.23.3
+toolchain go1.24.1
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
@@ -53,7 +53,7 @@ require (
 	github.com/miekg/dns v1.1.63
 	github.com/minio/minio-go/v7 v7.0.85
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ncruces/go-sqlite3 v0.24.0
+	github.com/ncruces/go-sqlite3 v0.24.1
 	github.com/oklog/ulid v1.3.1
 	github.com/prometheus/client_golang v1.21.1
 	github.com/rivo/uniseg v0.4.7

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 
 	"github.com/tetratelabs/wazero/api"
 
@@ -46,6 +47,15 @@ func (c *Conn) Config(op DBConfig, arg ...bool) (bool, error) {
 	rc := res_t(c.call("sqlite3_db_config", stk_t(c.handle),
 		stk_t(op), stk_t(argsPtr)))
 	return util.ReadBool(c.mod, argsPtr), c.error(rc)
+}
+
+var defaultLogger atomic.Pointer[func(code ExtendedErrorCode, msg string)]
+
+// ConfigLog sets up the default error logging callback for new connections.
+//
+// https://sqlite.org/errlog.html
+func ConfigLog(cb func(code ExtendedErrorCode, msg string)) {
+	defaultLogger.Store(&cb)
 }
 
 // ConfigLog sets up the error logging callback for the connection.
