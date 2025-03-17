@@ -43,7 +43,7 @@ import MutationButton from "../../components/form/mutation-button";
 
 import { useAccountThemesQuery } from "../../lib/query/user";
 import { useUpdateCredentialsMutation } from "../../lib/query/user";
-import { useVerifyCredentialsQuery } from "../../lib/query/oauth";
+import { useVerifyCredentialsQuery } from "../../lib/query/login";
 import { useInstanceV1Query } from "../../lib/query/gts-api";
 import { Account } from "../../lib/types/account";
 

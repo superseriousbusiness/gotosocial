@@ -632,8 +632,14 @@ func (c *Converter) AppToAPIAppSensitive(ctx context.Context, a *gtsmodel.Applic
 		return nil, gtserror.Newf("error getting VAPID public key: %w", err)
 	}
 
+	createdAt, err := id.TimeFromULID(a.ID)
+	if err != nil {
+		return nil, gtserror.Newf("error converting id to time: %w", err)
+	}
+
 	return &apimodel.Application{
 		ID:           a.ID,
+		CreatedAt:    util.FormatISO8601(createdAt),
 		Name:         a.Name,
 		Website:      a.Website,
 		RedirectURI:  strings.Join(a.RedirectURIs, "\n"),
@@ -1422,14 +1428,28 @@ func (c *Converter) baseStatusToFrontend(
 	apiStatus.InReplyToAccountID = util.PtrIf(s.InReplyToAccountID)
 	apiStatus.Language = util.PtrIf(s.Language)
 
-	if app := s.CreatedWithApplication; app != nil {
-		apiStatus.Application, err = c.AppToAPIAppPublic(ctx, app)
+	switch {
+	case s.CreatedWithApplication != nil:
+		// App exists for this status and is set.
+		apiStatus.Application, err = c.AppToAPIAppPublic(ctx, s.CreatedWithApplication)
 		if err != nil {
 			return nil, gtserror.Newf(
 				"error converting application %s: %w",
 				s.CreatedWithApplicationID, err,
 			)
 		}
+
+	case s.CreatedWithApplicationID != "":
+		// App existed for this status but not
+		// anymore, it's probably been cleaned up.
+		// Set a dummy application.
+		apiStatus.Application = &apimodel.Application{
+			Name: "unknown application",
+		}
+
+	default:
+		// No app stored for this (probably remote)
+		// status, so nothing to do (app is optional).
 	}
 
 	if s.Poll != nil {

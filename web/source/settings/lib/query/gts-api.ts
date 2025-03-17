@@ -77,7 +77,7 @@ const gtsBaseQuery: BaseQueryFn<
 	// Retrieve state at the moment
 	// this function was called.
 	const state = api.getState() as RootState;
-	const { instanceUrl, token } = state.oauth;
+	const { instanceUrl, token } = state.login;
 
 	// Derive baseUrl dynamically.
 	let baseUrl: string | undefined;
@@ -160,6 +160,7 @@ export const gtsApi = createApi({
 	reducerPath: "api",
 	baseQuery: gtsBaseQuery,
 	tagTypes: [
+		"Application",
 		"Auth",
 		"Emoji",
 		"Report",

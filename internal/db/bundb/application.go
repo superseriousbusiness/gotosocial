@@ -56,6 +56,73 @@ func (a *applicationDB) GetApplicationByClientID(ctx context.Context, clientID s
 	)
 }
 
+func (a *applicationDB) GetApplicationsManagedByUserID(
+	ctx context.Context,
+	userID string,
+	page *paging.Page,
+) ([]*gtsmodel.Application, error) {
+	var (
+		// Get paging params.
+		minID = page.GetMin()
+		maxID = page.GetMax()
+		limit = page.GetLimit()
+		order = page.GetOrder()
+
+		// Make educated guess for slice size.
+		appIDs = make([]string, 0, limit)
+	)
+
+	// Ensure user ID.
+	if userID == "" {
+		return nil, gtserror.New("userID not set")
+	}
+
+	q := a.db.
+		NewSelect().
+		TableExpr("? AS ?", bun.Ident("applications"), bun.Ident("application")).
+		Column("application.id").
+		Where("? = ?", bun.Ident("application.managed_by_user_id"), userID)
+
+	if maxID != "" {
+		// Return only apps LOWER (ie., older) than maxID.
+		q = q.Where("? < ?", bun.Ident("application.id"), maxID)
+	}
+
+	if minID != "" {
+		// Return only apps HIGHER (ie., newer) than minID.
+		q = q.Where("? > ?", bun.Ident("application.id"), minID)
+	}
+
+	if limit > 0 {
+		q = q.Limit(limit)
+	}
+
+	if order == paging.OrderAscending {
+		// Page up.
+		q = q.Order("application.id ASC")
+	} else {
+		// Page down.
+		q = q.Order("application.id DESC")
+	}
+
+	if err := q.Scan(ctx, &appIDs); err != nil {
+		return nil, err
+	}
+
+	if len(appIDs) == 0 {
+		return nil, nil
+	}
+
+	// If we're paging up, we still want apps
+	// to be sorted by ID desc (ie., newest to
+	// oldest), so reverse ids slice.
+	if order == paging.OrderAscending {
+		slices.Reverse(appIDs)
+	}
+
+	return a.getApplicationsByIDs(ctx, appIDs)
+}
+
 func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQuery func(*gtsmodel.Application) error, keyParts ...any) (*gtsmodel.Application, error) {
 	return a.state.Caches.DB.Application.LoadOne(lookup, func() (*gtsmodel.Application, error) {
 		var app gtsmodel.Application
@@ -69,6 +136,37 @@ func (a *applicationDB) getApplication(ctx context.Context, lookup string, dbQue
 	}, keyParts...)
 }
 
+func (a *applicationDB) getApplicationsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Application, error) {
+	apps, err := a.state.Caches.DB.Application.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Application, error) {
+			// Preallocate expected length of uncached apps.
+			apps := make([]*gtsmodel.Application, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) app IDs.
+			if err := a.db.NewSelect().
+				Model(&apps).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return apps, nil
+		},
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Reorder the apps by their
+	// IDs to ensure in correct order.
+	getID := func(t *gtsmodel.Application) string { return t.ID }
+	xslices.OrderBy(apps, ids, getID)
+
+	return apps, nil
+}
+
 func (a *applicationDB) PutApplication(ctx context.Context, app *gtsmodel.Application) error {
 	return a.state.Caches.DB.Application.Store(app, func() error {
 		_, err := a.db.NewInsert().Model(app).Exec(ctx)
@@ -76,27 +174,25 @@ func (a *applicationDB) PutApplication(ctx context.Context, app *gtsmodel.Applic
 	})
 }
 
-func (a *applicationDB) DeleteApplicationByClientID(ctx context.Context, clientID string) error {
-	// Attempt to delete application.
-	if _, err := a.db.NewDelete().
+// DeleteApplicationByID deletes application with the given ID.
+//
+// The function does not delete tokens owned by the application
+// or update statuses/accounts that used the application, since
+// the latter can be extremely expensive given the size of the
+// statuses table.
+//
+// Callers to this function should ensure that they do side
+// effects themselves (if required) before or after calling.
+func (a *applicationDB) DeleteApplicationByID(ctx context.Context, id string) error {
+	_, err := a.db.NewDelete().
 		Table("applications").
-		Where("? = ?", bun.Ident("client_id"), clientID).
-		Exec(ctx); err != nil {
+		Where("? = ?", bun.Ident("id"), id).
+		Exec(ctx)
+	if err != nil {
 		return err
 	}
 
-	// NOTE about further side effects:
-	//
-	// We don't need to handle updating any statuses or users
-	// (both of which may contain refs to applications), as
-	// DeleteApplication__() is only ever called during an
-	// account deletion, which handles deletion of the user
-	// and all their statuses already.
-	//
-
-	// Clear application from the cache.
-	a.state.Caches.DB.Application.Invalidate("ClientID", clientID)
-
+	a.state.Caches.DB.Application.Invalidate("ID", id)
 	return nil
 }
 
@@ -361,5 +457,29 @@ func (a *applicationDB) DeleteTokenByRefresh(ctx context.Context, refresh string
 	}
 
 	a.state.Caches.DB.Token.Invalidate("Refresh", refresh)
+	return nil
+}
+
+func (a *applicationDB) DeleteTokensByClientID(ctx context.Context, clientID string) error {
+	// Delete tokens owned by
+	// clientID and gather token IDs.
+	var tokenIDs []string
+	if _, err := a.db.
+		NewDelete().
+		Table("tokens").
+		Where("? = ?", bun.Ident("client_id"), clientID).
+		Returning("id").
+		Exec(ctx, &tokenIDs); err != nil {
+		return err
+	}
+
+	if len(tokenIDs) == 0 {
+		// Nothing was deleted,
+		// nothing to invalidate.
+		return nil
+	}
+
+	// Invalidate all deleted tokens.
+	a.state.Caches.DB.Token.InvalidateIDs("ID", tokenIDs)
 	return nil
 }

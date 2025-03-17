@@ -68,6 +68,23 @@ export default function UserMenu() {
 				itemUrl="tokens"
 				icon="fa-certificate"
 			/>
+			<MenuItem
+				name="Applications"
+				itemUrl="applications"
+				defaultChild="search"
+				icon="fa-plug"
+			>
+				<MenuItem
+					name="Search"
+					itemUrl="search"
+					icon="fa-list"
+				/>
+				<MenuItem
+					name="New Application"
+					itemUrl="new"
+					icon="fa-plus"
+				/>
+			</MenuItem>
 		</MenuItem>
 	);
 }

@@ -107,19 +107,33 @@ func (p *Processor) deleteUserAndTokensForAccount(ctx context.Context, account *
 		return gtserror.Newf("db error getting user: %w", err)
 	}
 
-	tokens := []*gtsmodel.Token{}
-	if err := p.state.DB.GetWhere(ctx, []db.Where{{Key: "user_id", Value: user.ID}}, &tokens); err != nil {
+	// Get all applications owned by user.
+	apps, err := p.state.DB.GetApplicationsManagedByUserID(ctx, user.ID, nil)
+	if err != nil {
+		return gtserror.Newf("db error getting apps: %w", err)
+	}
+
+	// Delete each app and any tokens it had created
+	// (not necessarily owned by deleted account).
+	for _, a := range apps {
+		if err := p.state.DB.DeleteApplicationByID(ctx, a.ID); err != nil {
+			return gtserror.Newf("db error deleting app: %w", err)
+		}
+
+		if err := p.state.DB.DeleteTokensByClientID(ctx, a.ClientID); err != nil {
+			return gtserror.Newf("db error deleting tokens for app: %w", err)
+		}
+	}
+
+	// Get any remaining access tokens owned by user.
+	tokens, err := p.state.DB.GetAccessTokens(ctx, user.ID, nil)
+	if err != nil {
 		return gtserror.Newf("db error getting tokens: %w", err)
 	}
 
+	// Delete each token.
 	for _, t := range tokens {
-		// Delete any OAuth applications associated with this token.
-		if err := p.state.DB.DeleteApplicationByClientID(ctx, t.ClientID); err != nil {
-			return gtserror.Newf("db error deleting application: %w", err)
-		}
-
-		// Delete the token itself.
-		if err := p.state.DB.DeleteByID(ctx, t.ID, t); err != nil {
+		if err := p.state.DB.DeleteTokenByID(ctx, t.ID); err != nil {
 			return gtserror.Newf("db error deleting token: %w", err)
 		}
 	}

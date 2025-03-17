@@ -66,7 +66,7 @@ export function App({ account }: AppProps) {
 								Ensure user ends up somewhere
 								if they just open /settings.
 							*/}
-								<Route path="/"><Redirect to="/user" /></Route>
+								<Route path="/"><Redirect to="/user/profile" /></Route>
 							</ErrorBoundary>
 						</Router>
 					</section>

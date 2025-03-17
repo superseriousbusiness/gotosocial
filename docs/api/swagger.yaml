@@ -835,6 +835,11 @@ definitions:
                 description: Client secret associated with this application.
                 type: string
                 x-go-name: ClientSecret
+            created_at:
+                description: When the application was created. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
             id:
                 description: The ID of the application.
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
@@ -3656,6 +3661,54 @@ info:
     contact:
         email: admin@gotosocial.org
         name: GoToSocial Authors
+    description: |-
+        This document describes the GoToSocial HTTP API.
+
+        For information on how to authenticate with the API using an OAuth access token, see the documentation here: https://docs.gotosocial.org/en/latest/api/authentication/.
+
+        Available scopes are:
+
+        admin: grants admin access to everything
+        admin:read: grants admin read access to everything
+        admin:read:accounts: grants admin read access to accounts
+        admin:read:domain_allows: grants admin read access to domain_allows
+        admin:read:domain_blocks: grants admin read access to domain_blocks
+        admin:read:reports: grants admin read access to reports
+        admin:write: grants admin write access to everything
+        admin:write:accounts: grants write read access to accounts
+        admin:write:domain_allows: grants admin write access to domain_allows
+        admin:write:domain_blocks: grants write read access to domain_blocks
+        admin:write:reports: grants admin write access to reports
+        profile: grants read access to verify_credentials
+        push: grants read/write access to push
+        read: grants read access to everything
+        read:accounts: grants read access to accounts
+        read:applications: grants read access to user-managed applications
+        read:blocks: grants read access to blocks
+        read:bookmarks: grants read access to bookmarks
+        read:favourites: grants read access to accounts
+        read:filters: grants read access to filters
+        read:follows: grants read access to follows
+        read:lists: grants read access to lists
+        read:mutes: grants read access to mutes
+        read:notifications: grants read access to notifications
+        read:search: grants read access to search
+        read:statuses: grants read access to statuses
+        write: grants write access to everything
+        write:accounts: grants write access to accounts
+        write:applications: grants write access to user-managed applications
+        write:blocks: grants write access to blocks
+        write:bookmarks: grants write access to bookmarks
+        write:conversations: grants write access to conversations
+        write:favourites: grants write access to favourites
+        write:filters: grants write access to filters
+        write:follows: grants write access to follows
+        write:lists: grants write access to lists
+        write:media: grants write access to media
+        write:mutes: grants write access to mutes
+        write:notifications: grants write access to notifications
+        write:reports: grants write access to reports
+        write:statuses: grants write access to statuses
     license:
         name: AGPL3
         url: https://www.gnu.org/licenses/agpl-3.0.en.html
@@ -7498,6 +7551,63 @@ paths:
             tags:
                 - announcements
     /api/v1/apps:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+
+                Example:
+
+                ```
+                <https://example.org/api/v1/apps?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/apps?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: appsGet
+            parameters:
+                - description: Return only items *OLDER* than the given max item ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: max_id
+                  type: string
+                - description: Return only items *newer* than the given since item ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: since_id
+                  type: string
+                - description: Return only items *immediately newer* than the given since item ID. The item with the specified ID will not be included in the response.
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: Number of items to return.
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/application'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:applications
+            summary: Get an array of applications that are managed by the requester.
+            tags:
+                - apps
         post:
             consumes:
                 - application/json
@@ -7507,8 +7617,10 @@ paths:
                 The registered application can be used to obtain an application token.
                 This can then be used to register a new account, or (through user auth) obtain an access token.
 
-                The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
-                The parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
+                If the application was registered with a Bearer token passed in the Authorization header, the created application will be managed by the authenticated user (must have scope write:applications).
+
+                Parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
+                Parameters can also be given in the body of the request, as XML, if the content-type is set to 'application/xml'.
             operationId: appCreate
             parameters:
                 - description: The name of the application.
@@ -7560,6 +7672,69 @@ paths:
                 "500":
                     description: internal server error
             summary: Register a new application on this instance.
+            tags:
+                - apps
+    /api/v1/apps/{id}:
+        delete:
+            operationId: appDelete
+            parameters:
+                - description: The id of the application to delete.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The deleted application.
+                    schema:
+                        $ref: '#/definitions/application'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:applications
+            summary: Delete a single application managed by the requester.
+            tags:
+                - apps
+        get:
+            operationId: appGet
+            parameters:
+                - description: The id of the requested application.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested application.
+                    schema:
+                        $ref: '#/definitions/application'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:applications
+            summary: Get a single application managed by the requester.
             tags:
                 - apps
     /api/v1/blocks:
@@ -11719,15 +11894,15 @@ paths:
                 ````
             operationId: tokensInfoGet
             parameters:
-                - description: Return only items *OLDER* than the given max status ID. The item with the specified ID will not be included in the response.
+                - description: Return only items *OLDER* than the given max item ID. The item with the specified ID will not be included in the response.
                   in: query
                   name: max_id
                   type: string
-                - description: Return only items *newer* than the given since status ID. The item with the specified ID will not be included in the response.
+                - description: Return only items *newer* than the given since item ID. The item with the specified ID will not be included in the response.
                   in: query
                   name: since_id
                   type: string
-                - description: Return only items *immediately newer* than the given since status ID. The item with the specified ID will not be included in the response.
+                - description: Return only items *immediately newer* than the given since item ID. The item with the specified ID will not be included in the response.
                   in: query
                   name: min_id
                   type: string
@@ -12941,6 +13116,7 @@ securityDefinitions:
             push: grants read/write access to push
             read: grants read access to everything
             read:accounts: grants read access to accounts
+            read:applications: grants read access to user-managed applications
             read:blocks: grants read access to blocks
             read:bookmarks: grants read access to bookmarks
             read:favourites: grants read access to accounts
@@ -12953,6 +13129,7 @@ securityDefinitions:
             read:statuses: grants read access to statuses
             write: grants write access to everything
             write:accounts: grants write access to accounts
+            write:applications: grants write access to user-managed applications
             write:blocks: grants write access to blocks
             write:bookmarks: grants write access to bookmarks
             write:conversations: grants write access to conversations

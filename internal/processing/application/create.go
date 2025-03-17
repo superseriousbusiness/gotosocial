@@ -15,24 +15,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package processing
+package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/url"
 	"strings"
 
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func (p *Processor) AppCreate(ctx context.Context, authed *apiutil.Auth, form *apimodel.ApplicationCreateRequest) (*apimodel.Application, gtserror.WithCode) {
+func (p *Processor) Create(
+	ctx context.Context,
+	managedByUserID string,
+	form *apimodel.ApplicationCreateRequest,
+) (*apimodel.Application, gtserror.WithCode) {
 	// Set default 'read' for
 	// scopes if it's not set.
 	var scopes string
@@ -49,13 +53,32 @@ func (p *Processor) AppCreate(ctx context.Context, authed *apiutil.Auth, form *a
 		// Redirect URIs can be just one value, or can be passed
 		// as a newline-separated list of strings. Ensure each URI
 		// is parseable + normalize it by reconstructing from *url.URL.
-		for _, redirectStr := range strings.Split(form.RedirectURIs, "\n") {
+		// Also ensure we don't add multiple copies of the same URI.
+		redirectStrs := strings.Split(form.RedirectURIs, "\n")
+		added := make(map[string]struct{}, len(redirectStrs))
+
+		for _, redirectStr := range redirectStrs {
+			redirectStr = strings.TrimSpace(redirectStr)
+			if redirectStr == "" {
+				continue
+			}
+
 			redirectURI, err := url.Parse(redirectStr)
 			if err != nil {
 				errText := fmt.Sprintf("error parsing redirect URI: %v", err)
 				return nil, gtserror.NewErrorBadRequest(err, errText)
 			}
-			redirectURIs = append(redirectURIs, redirectURI.String())
+
+			redirectURIStr := redirectURI.String()
+			if _, alreadyAdded := added[redirectURIStr]; !alreadyAdded {
+				redirectURIs = append(redirectURIs, redirectURIStr)
+				added[redirectURIStr] = struct{}{}
+			}
+		}
+
+		if len(redirectURIs) == 0 {
+			errText := "no redirect URIs left after trimming space"
+			return nil, gtserror.NewErrorBadRequest(errors.New(errText), errText)
 		}
 	} else {
 		// No redirect URI(s) provided, just set default oob.
@@ -71,13 +94,14 @@ func (p *Processor) AppCreate(ctx context.Context, authed *apiutil.Auth, form *a
 	// Generate + store app
 	// to put in the database.
 	app := &gtsmodel.Application{
-		ID:           id.NewULID(),
-		Name:         form.ClientName,
-		Website:      form.Website,
-		RedirectURIs: redirectURIs,
-		ClientID:     clientID,
-		ClientSecret: uuid.NewString(),
-		Scopes:       scopes,
+		ID:              id.NewULID(),
+		Name:            form.ClientName,
+		Website:         form.Website,
+		RedirectURIs:    redirectURIs,
+		ClientID:        clientID,
+		ClientSecret:    uuid.NewString(),
+		Scopes:          scopes,
+		ManagedByUserID: managedByUserID,
 	}
 	if err := p.state.DB.PutApplication(ctx, app); err != nil {
 		return nil, gtserror.NewErrorInternalError(err)
