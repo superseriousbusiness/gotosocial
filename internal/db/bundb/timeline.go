@@ -229,6 +229,8 @@ func (t *timelineDB) GetPublicTimeline(
 		Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic).
 		// Ignore boosts.
 		Where("? IS NULL", bun.Ident("status.boost_of_id")).
+		// Only include statuses that aren't pending approval.
+		Where("? = ?", bun.Ident("status.pending_approval"), false).
 		// Select only IDs from table
 		Column("status.id")
 
@@ -254,9 +256,6 @@ func (t *timelineDB) GetPublicTimeline(
 		// page up
 		frontToBack = false
 	}
-
-	// Only include statuses that aren't pending approval.
-	q = q.Where("NOT ? = ?", bun.Ident("status.pending_approval"), true)
 
 	if limit > 0 {
 		// limit amount of statuses returned
