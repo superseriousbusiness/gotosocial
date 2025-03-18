@@ -100,8 +100,8 @@
             data-pswp-index="{{- .Index -}}"
             data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
             poster="{{- .Item.PreviewURL -}}"
-            data-pswp-width="{{- .Item.Meta.Small.Width -}}px"
-            data-pswp-height="{{- .Item.Meta.Small.Height -}}px"
+            data-pswp-width="{{- .Item.Meta.Original.Width -}}px"
+            data-pswp-height="{{- .Item.Meta.Original.Height -}}px"
             {{- if .Item.Description }}
             alt="{{- .Item.Description -}}"
             title="{{- .Item.Description -}}"

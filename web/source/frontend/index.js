@@ -183,15 +183,22 @@ Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
 		settings: ["loop"],
 		disableContextMenu: false,
 		hideControls: false,
-		tooltips: { contrors: true, seek: true },
+		tooltips: { controls: true, seek: true },
 		iconUrl: "/assets/plyr.svg",
 		listeners: {
 			fullscreen: () => {
-				if (player.playing) {
-					setTimeout(() => {
-						player.play();
-					}, 1);
+				
+				if (lightbox.pswp !== undefined) {
+					console.log(lightbox.pswp.currSlide);
 				}
+				
+				// Continue playing the video
+				// after it's been fullscreened.
+				if (player.playing) {
+					setTimeout(() => player.play(), 1);
+				}
+
+				// Open the video as a photoswipe slide.
 				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
 					gallery: video.closest(".photoswipe-gallery")
 				});

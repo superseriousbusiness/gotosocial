@@ -70,7 +70,7 @@ func init() {
 			if _, err := tx.
 				NewCreateIndex().
 				Table("statuses").
-				Index("statuses_profile_web_view_sorting_idx").
+				Index("statuses_profile_web_view_order_by_idx").
 				Column("account_id", "federated").
 				ColumnExpr("? DESC", bun.Ident("id")).
 				IfNotExists().
