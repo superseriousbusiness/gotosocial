@@ -145,8 +145,12 @@ func (c *Caches) Start() error {
 func (c *Caches) Stop() {
 	log.Infof(nil, "stop: %p", c)
 
-	_ = c.Webfinger.Stop()
-	_ = c.StatusesFilterableFields.Stop()
+	if c.Webfinger != nil {
+		_ = c.Webfinger.Stop()
+	}
+	if c.StatusesFilterableFields != nil {
+		_ = c.StatusesFilterableFields.Stop()
+	}
 }
 
 // Sweep will sweep all the available caches to ensure none
