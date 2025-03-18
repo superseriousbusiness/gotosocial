@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/suite"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
@@ -812,6 +813,122 @@ func (suite *SubscriptionsTestSuite) TestAdoption() {
 		suite.FailNow(err.Error())
 	}
 	suite.Equal(testSubscription.ID, existingBlock3.SubscriptionID)
+}
+
+func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
+	var (
+		ctx           = context.Background()
+		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		testAccount   = suite.testAccounts["admin_account"]
+		subscriptions = subscriptions.New(
+			testStructs.State,
+			testStructs.TransportController,
+			testStructs.TypeConverter,
+		)
+
+		// Create a subscription for a CSV list of goodies.
+		testAllowSubscription = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
+			Priority:           255,
+			Title:              "goodies!",
+			PermissionType:     gtsmodel.DomainPermissionAllow,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(false),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://lists.example.org/goodies",
+			ContentType:        gtsmodel.DomainPermSubContentTypePlain,
+		}
+
+		testBlockSubscription = &gtsmodel.DomainPermissionSubscription{
+			ID:                 "01JPMVY19TKZND838Z7Y6S4EG8",
+			Priority:           255,
+			Title:              "baddies!",
+			PermissionType:     gtsmodel.DomainPermissionBlock,
+			AsDraft:            util.Ptr(false),
+			AdoptOrphans:       util.Ptr(false),
+			CreatedByAccountID: testAccount.ID,
+			CreatedByAccount:   testAccount,
+			URI:                "https://lists.example.org/baddies.csv",
+			ContentType:        gtsmodel.DomainPermSubContentTypeCSV,
+		}
+
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	// Store test subscriptions.
+	if err := testStructs.State.DB.PutDomainPermissionSubscription(
+		ctx, testAllowSubscription,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+	if err := testStructs.State.DB.PutDomainPermissionSubscription(
+		ctx, testBlockSubscription,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Put the instance in allowlist mode.
+	config.SetInstanceFederationMode("allowlist")
+	
+	// Fetch + process subscribed perms in order.
+	var order [2]gtsmodel.DomainPermissionType
+	if config.GetInstanceFederationMode() == config.InstanceFederationModeBlocklist {
+		order = [2]gtsmodel.DomainPermissionType{
+			gtsmodel.DomainPermissionAllow,
+			gtsmodel.DomainPermissionBlock,
+		}
+	} else {
+		order = [2]gtsmodel.DomainPermissionType{
+			gtsmodel.DomainPermissionBlock,
+			gtsmodel.DomainPermissionAllow,
+		}
+	}
+	for _, permType := range order {
+		subscriptions.ProcessDomainPermissionSubscriptions(ctx, permType)
+	}
+
+	// We should now have allows for each
+	// domain on the subscribed allow list.
+	for _, domain := range []string{
+		"people.we.like.com",
+		"goodeggs.org",
+		"allowthesefolks.church",
+	} {
+		var (
+			perm gtsmodel.DomainPermission
+			err  error
+		)
+		if !testrig.WaitFor(func() bool {
+			perm, err = testStructs.State.DB.GetDomainAllow(ctx, domain)
+			return err == nil
+		}) {
+			suite.FailNowf("", "timed out waiting for domain %s", domain)
+		}
+
+		suite.Equal(testAllowSubscription.ID, perm.GetSubscriptionID())
+	}
+
+	// And blocks for for each domain
+	// on the subscribed block list.
+	for _, domain := range []string{
+		"bumfaces.net",
+		"peepee.poopoo",
+		"nothanks.com",
+	} {
+		var (
+			perm gtsmodel.DomainPermission
+			err  error
+		)
+		if !testrig.WaitFor(func() bool {
+			perm, err = testStructs.State.DB.GetDomainBlock(ctx, domain)
+			return err == nil
+		}) {
+			suite.FailNowf("", "timed out waiting for domain %s", domain)
+		}
+
+		suite.Equal(testBlockSubscription.ID, perm.GetSubscriptionID())
+	}
 }
 
 func TestSubscriptionTestSuite(t *testing.T) {
