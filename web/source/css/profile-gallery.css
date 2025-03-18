@@ -24,7 +24,7 @@
 	/* 
 		Profile gallery can be wider than default.
 	*/
-	grid-template-columns: 1fr min(98%, 65rem) 1fr;
+	grid-template-columns: 1fr min(95%, 65rem) 1fr;
 }
 
 .profile {
