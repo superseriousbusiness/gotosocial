@@ -50,6 +50,10 @@ func init() {
 				return err
 			}
 
+			// Note: "attachments" field is not included in
+			// the index below as SQLite is fussy about using it,
+			// and it prevents this index from being used
+			// properly in non media-only queries.
 			if _, err := tx.
 				NewCreateIndex().
 				Table("statuses").
@@ -60,18 +64,7 @@ func init() {
 					"in_reply_to_uri",
 					"boost_of_id",
 					"federated",
-					"attachments",
 				).
-				IfNotExists().
-				Exec(ctx); err != nil {
-				return err
-			}
-
-			if _, err := tx.
-				NewCreateIndex().
-				Table("statuses").
-				Index("statuses_profile_web_view_order_by_idx").
-				Column("account_id", "federated").
 				ColumnExpr("? DESC", bun.Ident("id")).
 				IfNotExists().
 				Exec(ctx); err != nil {

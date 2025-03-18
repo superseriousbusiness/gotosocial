@@ -892,9 +892,7 @@ func qMediaOnly(ctx context.Context, q *bun.SelectQuery) *bun.SelectQuery {
 		case dialect.SQLite:
 			return q.
 				Where("? IS NOT NULL", bun.Ident("status.attachments")).
-				Where("? != ''", bun.Ident("status.attachments")).
 				Where("? != 'null'", bun.Ident("status.attachments")).
-				Where("? != '{}'", bun.Ident("status.attachments")).
 				Where("? != '[]'", bun.Ident("status.attachments"))
 
 		default:
