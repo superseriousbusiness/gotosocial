@@ -76,6 +76,7 @@ lightbox.addFilter('itemData', (item) => {
 			width: parseInt(el.dataset.pswpWidth),
 			height: parseInt(el.dataset.pswpHeight),
 			parentStatus: el.dataset.pswpParentStatus,
+			attachmentId: el.dataset.pswpAttachmentId,
 		};
 	}
 	return item;
@@ -180,29 +181,40 @@ Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
 	
 	let player = new Plyr(video, {
 		title: video.title,
-		settings: ["loop"],
+		settings: [],
+		controls: ['play-large', 'play', 'progress', 'current-time', 'volume', 'mute', 'fullscreen'],
 		disableContextMenu: false,
 		hideControls: false,
 		tooltips: { controls: true, seek: true },
 		iconUrl: "/assets/plyr.svg",
+		invertTime: false,
 		listeners: {
 			fullscreen: () => {
+				// Check if the photoswipe lightbox is
+				// open with this as the current slide.
+				const alreadyInLightbox = (
+					lightbox.pswp !== undefined &&
+					video.dataset.pswpAttachmentId === lightbox.pswp.currSlide.data.attachmentId
+				);
 				
-				if (lightbox.pswp !== undefined) {
-					console.log(lightbox.pswp.currSlide);
+				if (alreadyInLightbox) {
+					// If this video is already open as the
+					// current photoswipe slide, the fullscreen
+					// button toggles proper fullscreen.
+					player.fullscreen.toggle();
+				} else {
+					// Otherwise the fullscreen button opens
+					// the video as current photoswipe slide.
+					//
+					// (Don't pause the video while it's
+					// being transitioned to a slide.)
+					if (player.playing) {
+						setTimeout(() => player.play(), 1);
+					}
+					lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
+						gallery: video.closest(".photoswipe-gallery")
+					});
 				}
-				
-				// Continue playing the video
-				// after it's been fullscreened.
-				if (player.playing) {
-					setTimeout(() => player.play(), 1);
-				}
-
-				// Open the video as a photoswipe slide.
-				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
-					gallery: video.closest(".photoswipe-gallery")
-				});
-
 				return false;
 			}
 		}

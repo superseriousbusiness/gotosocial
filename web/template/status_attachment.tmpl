@@ -99,6 +99,7 @@
             playsinline
             data-pswp-index="{{- .Index -}}"
             data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
+            data-pswp-attachment-id="{{- .Item.ID -}}"
             poster="{{- .Item.PreviewURL -}}"
             data-pswp-width="{{- .Item.Meta.Original.Width -}}px"
             data-pswp-height="{{- .Item.Meta.Original.Height -}}px"
@@ -117,6 +118,7 @@
             playsinline
             data-pswp-index="{{- .Index -}}"
             data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
+            data-pswp-attachment-id="{{- .Item.ID -}}"
             {{- if and .Item.PreviewURL .Item.Meta.Small.Width }}
             poster="{{- .Item.PreviewURL -}}"
             data-pswp-width="{{- .Item.Meta.Small.Width -}}px"
@@ -138,6 +140,7 @@
             class="photoswipe-slide"
             data-pswp-index="{{- .Index -}}"
             data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
+            data-pswp-attachment-id="{{- .Item.ID -}}"
             href="{{- .Item.URL -}}"
             target="_blank"
             data-pswp-width="{{- .Item.Meta.Original.Width -}}px"
