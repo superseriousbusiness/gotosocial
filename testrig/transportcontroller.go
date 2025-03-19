@@ -640,6 +640,10 @@ nothanks.com`
   }
 ]`
 		jsonRespETag = "\"don't modify me daddy\""
+		allowsResp   = `people.we.like.com
+goodeggs.org
+allowthesefolks.church`
+		allowsRespETag = "\"never change\""
 	)
 
 	switch req.URL.String() {
@@ -716,6 +720,36 @@ nothanks.com`
 		} else {
 			responseBytes = []byte(csvResp)
 			responseContentType = textCSV
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/goodies.csv":
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          allowsRespETag,
+		}
+		if req.Header.Get("If-None-Match") == allowsRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(allowsResp)
+			responseContentType = textCSV
+			responseCode = http.StatusOK
+		}
+		responseContentLength = len(responseBytes)
+
+	case "https://lists.example.org/goodies":
+		extraHeaders = map[string]string{
+			"Last-Modified": lastModified,
+			"ETag":          allowsRespETag,
+		}
+		if req.Header.Get("If-None-Match") == allowsRespETag {
+			// Cached.
+			responseCode = http.StatusNotModified
+		} else {
+			responseBytes = []byte(allowsResp)
+			responseContentType = textPlain
 			responseCode = http.StatusOK
 		}
 		responseContentLength = len(responseBytes)
