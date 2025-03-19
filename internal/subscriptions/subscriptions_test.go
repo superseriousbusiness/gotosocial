@@ -827,17 +827,25 @@ func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
 		)
 
 		// Create a subscription for a CSV list of goodies.
+		// This one adopts orphans.
 		testAllowSubscription = &gtsmodel.DomainPermissionSubscription{
 			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
 			Priority:           255,
 			Title:              "goodies!",
 			PermissionType:     gtsmodel.DomainPermissionAllow,
 			AsDraft:            util.Ptr(false),
-			AdoptOrphans:       util.Ptr(false),
+			AdoptOrphans:       util.Ptr(true),
 			CreatedByAccountID: testAccount.ID,
 			CreatedByAccount:   testAccount,
 			URI:                "https://lists.example.org/goodies",
 			ContentType:        gtsmodel.DomainPermSubContentTypePlain,
+		}
+
+		existingAllow = &gtsmodel.DomainAllow{
+			ID:                 "01JHX2V5WN250TKB6FQ1M3QE1H",
+			Domain:             "people.we.like.com",
+			CreatedByAccount:   testAccount,
+			CreatedByAccountID: testAccount.ID,
 		}
 
 		testBlockSubscription = &gtsmodel.DomainPermissionSubscription{
@@ -852,7 +860,6 @@ func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
 			URI:                "https://lists.example.org/baddies.csv",
 			ContentType:        gtsmodel.DomainPermSubContentTypeCSV,
 		}
-
 	)
 	defer testrig.TearDownTestStructs(testStructs)
 
@@ -868,9 +875,14 @@ func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
 		suite.FailNow(err.Error())
 	}
 
+	// Store existing allow.
+	if err := testStructs.State.DB.CreateDomainAllow(ctx, existingAllow); err != nil {
+		suite.FailNow(err.Error())
+	}
+
 	// Put the instance in allowlist mode.
 	config.SetInstanceFederationMode("allowlist")
-	
+
 	// Fetch + process subscribed perms in order.
 	var order [2]gtsmodel.DomainPermissionType
 	if config.GetInstanceFederationMode() == config.InstanceFederationModeBlocklist {
@@ -929,6 +941,13 @@ func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
 
 		suite.Equal(testBlockSubscription.ID, perm.GetSubscriptionID())
 	}
+
+	var err error
+	existingAllow, err = testStructs.State.DB.GetDomainAllow(ctx, "people.we.like.com")
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Equal(existingAllow.SubscriptionID, testAllowSubscription.ID)
 }
 
 func TestSubscriptionTestSuite(t *testing.T) {

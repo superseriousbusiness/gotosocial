@@ -19,10 +19,12 @@ package subscriptions
 
 import (
 	"bufio"
+	"cmp"
 	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"slices"
 	"strconv"
@@ -869,9 +871,12 @@ func (s *Subscriptions) adoptPerm(
 	perm.SetCreatedByAccount(permSub.CreatedByAccount)
 
 	// Set new metadata on the perm.
-	perm.SetObfuscate(obfuscate)
 	perm.SetPrivateComment(privateComment)
 	perm.SetPublicComment(publicComment)
+
+	// Avoid trying to blat nil into the db directly by
+	// defaulting to false if not set on wanted perm.
+	perm.SetObfuscate(cmp.Or(obfuscate, util.Ptr(false)))
 
 	// Update the perm in the db.
 	var err error
