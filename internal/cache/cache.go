@@ -216,7 +216,6 @@ func (c *Caches) Sweep(threshold float64) {
 	c.Timelines.Home.Trim(threshold)
 	c.Timelines.List.Trim(threshold)
 	c.Timelines.Public.Trim(threshold)
-	c.Timelines.Local.Trim(threshold)
 	c.Visibility.Trim(threshold)
 }
 

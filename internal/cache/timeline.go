@@ -32,9 +32,6 @@ type TimelineCaches struct {
 
 	// Public ...
 	Public timeline.StatusTimeline
-
-	// Local ...
-	Local timeline.StatusTimeline
 }
 
 func (c *Caches) initHomeTimelines() {
@@ -59,12 +56,4 @@ func (c *Caches) initPublicTimeline() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.Timelines.Public.Init(cap)
-}
-
-func (c *Caches) initLocalTimeline() {
-	cap := 1000
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.Timelines.Local.Init(cap)
 }

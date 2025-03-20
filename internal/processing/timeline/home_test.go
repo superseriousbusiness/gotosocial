@@ -23,7 +23,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
@@ -35,10 +34,6 @@ type HomeTestSuite struct {
 }
 
 func (suite *HomeTestSuite) TearDownTest() {
-	if err := suite.state.Timelines.Home.Stop(); err != nil {
-		suite.FailNow(err.Error())
-	}
-
 	suite.TimelineStandardTestSuite.TearDownTest()
 }
 
@@ -47,7 +42,6 @@ func (suite *HomeTestSuite) TestHomeTimelineGetHideFiltered() {
 	var (
 		ctx                 = context.Background()
 		requester           = suite.testAccounts["local_account_1"]
-		authed              = &apiutil.Auth{Account: requester}
 		maxID               = ""
 		sinceID             = ""
 		minID               = "01F8MHAAY43M6RJ473VQFCVH36" // 1 before filteredStatus
@@ -98,10 +92,9 @@ func (suite *HomeTestSuite) TestHomeTimelineGetHideFiltered() {
 	if !filteredStatusFound {
 		suite.FailNow("precondition failed: status we would filter isn't present in unfiltered timeline")
 	}
-	// Prune the timeline to drop cached prepared statuses, a side effect of this precondition check.
-	if _, err := suite.state.Timelines.Home.Prune(ctx, requester.ID, 0, 0); err != nil {
-		suite.FailNow(err.Error())
-	}
+
+	// Clear the timeline to drop all cached statuses.
+	suite.state.Caches.Timelines.Home.Clear(requester.ID)
 
 	// Create a filter to hide one status on the timeline.
 	if err := suite.db.PutFilter(ctx, filter); err != nil {
