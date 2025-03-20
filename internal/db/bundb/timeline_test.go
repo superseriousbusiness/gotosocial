@@ -22,12 +22,12 @@ import (
 	"testing"
 	"time"
 
-	"codeberg.org/gruf/go-kv"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -124,14 +124,10 @@ func (suite *TimelineTestSuite) checkStatuses(statuses []*gtsmodel.Status, maxID
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 	ctx := context.Background()
 
-	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
+	s, err := suite.db.GetPublicTimeline(ctx, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-
-	suite.T().Log(kv.Field{
-		K: "statuses", V: s,
-	})
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, suite.publicCount())
 }
@@ -139,35 +135,12 @@ func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 func (suite *TimelineTestSuite) TestGetPublicTimelineLocal() {
 	ctx := context.Background()
 
-	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, true)
+	s, err := suite.db.GetLocalTimeline(ctx, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
-
-	suite.T().Log(kv.Field{
-		K: "statuses", V: s,
-	})
 
 	suite.checkStatuses(s, id.Highest, id.Lowest, suite.localCount())
-}
-
-func (suite *TimelineTestSuite) TestGetPublicTimelineWithFutureStatus() {
-	ctx := context.Background()
-
-	// Insert a status set far in the
-	// future, it shouldn't be retrieved.
-	futureStatus := getFutureStatus()
-	if err := suite.db.PutStatus(ctx, futureStatus); err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	s, err := suite.db.GetPublicTimeline(ctx, "", "", "", 20, false)
-	if err != nil {
-		suite.FailNow(err.Error())
-	}
-
-	suite.NotContains(s, futureStatus)
-	suite.checkStatuses(s, id.Highest, id.Lowest, suite.publicCount())
 }
 
 func (suite *TimelineTestSuite) TestGetHomeTimeline() {
@@ -176,7 +149,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -203,7 +176,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 
 	// First try with list just set to exclusive.
 	// We should only get zork's own statuses.
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -217,7 +190,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 
 	// Zork should only see their own
 	// statuses and admin's statuses now.
-	s, err = suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	s, err = suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -248,7 +221,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 
 	// Query should work fine; though far
 	// fewer statuses will be returned ofc.
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -269,7 +242,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineWithFutureStatus() {
 		suite.FailNow(err.Error())
 	}
 
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", "", 20, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -284,7 +257,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, "", "", id.Lowest, 5, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage("", "", id.Lowest, 5))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -300,7 +273,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
-	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, id.Highest, "", "", 5, false)
+	s, err := suite.db.GetHomeTimeline(ctx, viewingAccount.ID, toPage(id.Highest, "", "", 5))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -316,7 +289,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
-	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", "", 20)
+	s, err := suite.db.GetListTimeline(ctx, list.ID, toPage("", "", "", 20))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -330,7 +303,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
-	s, err := suite.db.GetListTimeline(ctx, list.ID, id.Highest, "", "", 5)
+	s, err := suite.db.GetListTimeline(ctx, list.ID, toPage(id.Highest, "", "", 5))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -346,7 +319,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineMinID() {
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
-	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", id.Lowest, 5)
+	s, err := suite.db.GetListTimeline(ctx, list.ID, toPage("", "", id.Lowest, 5))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -362,7 +335,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineMinIDPagingUp() {
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
-	s, err := suite.db.GetListTimeline(ctx, list.ID, "", "", "01F8MHC8VWDRBQR0N1BATDDEM5", 5)
+	s, err := suite.db.GetListTimeline(ctx, list.ID, toPage("", "", "01F8MHC8VWDRBQR0N1BATDDEM5", 5))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -378,7 +351,7 @@ func (suite *TimelineTestSuite) TestGetTagTimelineNoParams() {
 		tag = suite.testTags["welcome"]
 	)
 
-	s, err := suite.db.GetTagTimeline(ctx, tag.ID, "", "", "", 1)
+	s, err := suite.db.GetTagTimeline(ctx, tag.ID, toPage("", "", "", 1))
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -389,4 +362,20 @@ func (suite *TimelineTestSuite) TestGetTagTimelineNoParams() {
 
 func TestTimelineTestSuite(t *testing.T) {
 	suite.Run(t, new(TimelineTestSuite))
+}
+
+// toPage is a helper function to wrap a series of paging arguments in paging.Page{}.
+func toPage(maxID, sinceID, minID string, limit int) *paging.Page {
+	var pg paging.Page
+	pg.Limit = limit
+
+	if maxID != "" {
+		pg.Max = paging.MaxID(maxID)
+	}
+
+	if sinceID != "" || minID != "" {
+		pg.Min = paging.EitherMinID(minID, sinceID)
+	}
+
+	return &pg
 }

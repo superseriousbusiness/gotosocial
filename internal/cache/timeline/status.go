@@ -164,16 +164,6 @@ func (t *StatusTimelines) InsertInto(key string, statuses ...*gtsmodel.Status) {
 	t.MustGet(key).Insert(statuses...)
 }
 
-// Insert allows you to bulk insert many statuses into *all* mapped timelines.
-func (t *StatusTimelines) Insert(statuses ...*gtsmodel.Status) {
-	meta := toStatusMeta(statuses)
-	if p := t.ptr.Load(); p != nil {
-		for _, tt := range *p {
-			tt.cache.Insert(meta...)
-		}
-	}
-}
-
 // RemoveByStatusIDs ...
 func (t *StatusTimelines) RemoveByStatusIDs(statusIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
@@ -258,7 +248,13 @@ type StatusTimeline struct {
 	idx_BoostOfID        *structr.Index //nolint:revive
 	idx_BoostOfAccountID *structr.Index //nolint:revive
 
-	// ...
+	// last stores the last fetched direction
+	// of the timeline, which in turn determines
+	// where we will next trim from in keeping the
+	// timeline underneath configured 'max'.
+	//
+	// TODO: this could be more intelligent with
+	// a sliding average. a problem for future kim!
 	last atomic.Pointer[structr.Direction]
 
 	// ...
