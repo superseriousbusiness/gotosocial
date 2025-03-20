@@ -159,7 +159,12 @@ func (t *StatusTimelines) Delete(key string) {
 	}
 }
 
-// Insert ...
+// InsertInto allows you to bulk insert many statuses into timeline mapped by key.
+func (t *StatusTimelines) InsertInto(key string, statuses ...*gtsmodel.Status) {
+	t.MustGet(key).Insert(statuses...)
+}
+
+// Insert allows you to bulk insert many statuses into *all* mapped timelines.
 func (t *StatusTimelines) Insert(statuses ...*gtsmodel.Status) {
 	meta := toStatusMeta(statuses)
 	if p := t.ptr.Load(); p != nil {
@@ -167,11 +172,6 @@ func (t *StatusTimelines) Insert(statuses ...*gtsmodel.Status) {
 			tt.cache.Insert(meta...)
 		}
 	}
-}
-
-// InsertInto ...
-func (t *StatusTimelines) InsertInto(key string, statuses ...*gtsmodel.Status) {
-	t.MustGet(key).Insert(statuses...)
 }
 
 // RemoveByStatusIDs ...
@@ -206,6 +206,15 @@ func (t *StatusTimelines) UnprepareByAccountIDs(accountIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
 			tt.UnprepareByAccountIDs(accountIDs...)
+		}
+	}
+}
+
+// UnprepareAll ...
+func (t *StatusTimelines) UnprepareAll() {
+	if p := t.ptr.Load(); p != nil {
+		for _, tt := range *p {
+			tt.UnprepareAll()
 		}
 	}
 }
@@ -470,7 +479,20 @@ func (t *StatusTimeline) Load(
 	return apiStatuses, lo, hi, nil
 }
 
-// Insert ...
+// InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
+func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) {
+	t.cache.Insert(&StatusMeta{
+		ID:               status.ID,
+		AccountID:        status.AccountID,
+		BoostOfID:        status.BoostOfID,
+		BoostOfAccountID: status.BoostOfAccountID,
+		Local:            *status.Local,
+		loaded:           status,
+		prepared:         prepared,
+	})
+}
+
+// Insert allows you to bulk insert many statuses into the timeline.
 func (t *StatusTimeline) Insert(statuses ...*gtsmodel.Status) {
 	t.cache.Insert(toStatusMeta(statuses)...)
 }
@@ -595,6 +617,14 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	}
 }
 
+// UnprepareAll removes cached frontend API
+// models for all cached timeline entries.
+func (t *StatusTimeline) UnprepareAll() {
+	for value := range t.cache.RangeUnsafe(structr.Asc) {
+		value.prepared = nil
+	}
+}
+
 // Trim ...
 func (t *StatusTimeline) Trim(threshold float64) {
 
@@ -690,7 +720,8 @@ func loadStatuses(
 	metas []*StatusMeta,
 	loadIDs func([]string) ([]*gtsmodel.Status, error),
 ) error {
-	// ...
+	// Determine which of our passed status
+	// meta objects still need statuses loading.
 	toLoadIDs := make([]string, len(metas))
 	loadedMap := make(map[string]*StatusMeta, len(metas))
 	for i, meta := range metas {
@@ -733,7 +764,8 @@ func toStatusMeta(statuses []*gtsmodel.Status) []*StatusMeta {
 	})
 }
 
-// ...
+// doStatusPreFilter performs given filter function on provided statuses,
+// returning early if an error is returned. returns filtered statuses.
 func doStatusPreFilter(statuses []*gtsmodel.Status, filter func(*gtsmodel.Status) (bool, error)) ([]*gtsmodel.Status, error) {
 
 	// Check for provided
@@ -765,7 +797,9 @@ func doStatusPreFilter(statuses []*gtsmodel.Status, filter func(*gtsmodel.Status
 	return statuses, nil
 }
 
-// ...
+// doStatusPostFilter performs given filter function on provided status meta,
+// expecting that embedded status is already loaded, returning filtered status
+// meta, as well as those *filtered out*. returns early if error is returned.
 func doStatusPostFilter(metas []*StatusMeta, filter func(*gtsmodel.Status) (bool, error)) ([]*StatusMeta, []*StatusMeta, error) {
 
 	// Check for provided
