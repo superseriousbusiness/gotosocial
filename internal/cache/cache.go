@@ -98,6 +98,7 @@ func (c *Caches) Init() {
 	c.initListIDs()
 	c.initListedIDs()
 	c.initListTimelines()
+	c.initLocalTimeline()
 	c.initMarker()
 	c.initMedia()
 	c.initMention()
@@ -216,6 +217,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.Timelines.Home.Trim(threshold)
 	c.Timelines.List.Trim(threshold)
 	c.Timelines.Public.Trim(threshold)
+	c.Timelines.Local.Trim(threshold)
 	c.Visibility.Trim(threshold)
 }
 
