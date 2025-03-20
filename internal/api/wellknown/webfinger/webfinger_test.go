@@ -24,7 +24,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -80,12 +79,6 @@ func (suite *WebfingerStandardTestSuite) SetupTest() {
 	suite.state.DB = suite.db
 	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
 	suite.tc = typeutils.NewConverter(&suite.state)
-
-	testrig.StartTimelines(
-		&suite.state,
-		visibility.NewFilter(&suite.state),
-		suite.tc,
-	)
 
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage

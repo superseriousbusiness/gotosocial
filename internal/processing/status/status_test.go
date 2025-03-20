@@ -93,11 +93,6 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 
 	visFilter := visibility.NewFilter(&suite.state)
 	intFilter := interaction.NewFilter(&suite.state)
-	testrig.StartTimelines(
-		&suite.state,
-		visFilter,
-		suite.typeConverter,
-	)
 
 	common := common.New(&suite.state, suite.mediaManager, suite.typeConverter, suite.federator, visFilter)
 	polls := polls.New(&common, &suite.state, suite.typeConverter)
