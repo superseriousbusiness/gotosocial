@@ -20,7 +20,6 @@ package testrig
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"mime/multipart"
 	"net/url"
@@ -30,14 +29,10 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-kv/format"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Starts workers on the provided state using noop processing functions.
@@ -94,28 +89,6 @@ func StopWorkers(state *state.State) {
 	state.Workers.Dereference.Stop()
 	state.Workers.Processing.Stop()
 	state.Workers.WebPush.Stop()
-}
-
-func StartTimelines(state *state.State, visFilter *visibility.Filter, converter *typeutils.Converter) {
-	state.Timelines.Home = timeline.NewManager(
-		tlprocessor.HomeTimelineGrab(state),
-		tlprocessor.HomeTimelineFilter(state, visFilter),
-		tlprocessor.HomeTimelineStatusPrepare(state, converter),
-		tlprocessor.SkipInsert(),
-	)
-	if err := state.Timelines.Home.Start(); err != nil {
-		panic(fmt.Sprintf("error starting home timeline: %s", err))
-	}
-
-	state.Timelines.List = timeline.NewManager(
-		tlprocessor.ListTimelineGrab(state),
-		tlprocessor.ListTimelineFilter(state, visFilter),
-		tlprocessor.ListTimelineStatusPrepare(state, converter),
-		tlprocessor.SkipInsert(),
-	)
-	if err := state.Timelines.List.Start(); err != nil {
-		panic(fmt.Sprintf("error starting list timeline: %s", err))
-	}
 }
 
 // EqualRequestURIs checks whether inputs have equal request URIs,
