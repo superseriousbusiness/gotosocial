@@ -37,6 +37,9 @@ type Timeline interface {
 	// Statuses should be returned in descending order of when they were created (newest first).
 	GetPublicTimeline(ctx context.Context, page *paging.Page) ([]*gtsmodel.Status, error)
 
+	// GetLocalTimeline ...
+	GetLocalTimeline(ctx context.Context, page *paging.Page) ([]*gtsmodel.Status, error)
+
 	// GetFavedTimeline fetches the account's FAVED timeline -- ie., posts and replies that the requesting account has faved.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
 	//
