@@ -19,7 +19,6 @@ package timeline
 
 import (
 	"context"
-	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
@@ -34,6 +33,20 @@ func (p *Processor) PublicTimelineGet(
 	requester *gtsmodel.Account,
 	page *paging.Page,
 	local bool,
+) (
+	*apimodel.PageableResponse,
+	gtserror.WithCode,
+) {
+	if local {
+		return p.localTimelineGet(ctx, requester, page)
+	}
+	return p.publicTimelineGet(ctx, requester, page)
+}
+
+func (p *Processor) publicTimelineGet(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	page *paging.Page,
 ) (
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
@@ -58,12 +71,7 @@ func (p *Processor) PublicTimelineGet(
 		// page query flag, (this map
 		// later gets copied before
 		// any further usage).
-		func() url.Values {
-			if local {
-				return localOnlyTrue
-			}
-			return localOnlyFalse
-		}(),
+		localOnlyFalse,
 
 		// Status filter context.
 		statusfilter.FilterContextPublic,
@@ -81,11 +89,58 @@ func (p *Processor) PublicTimelineGet(
 		// i.e. filter after caching.
 		func(s *gtsmodel.Status) (bool, error) {
 
-			// Remove any non-local statuses
-			// if requester wants local-only.
-			if local && !*s.Local {
-				return true, nil
-			}
+			// Check the visibility of passed status to requesting user.
+			ok, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
+			return !ok, err
+		},
+	)
+}
+
+func (p *Processor) localTimelineGet(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	page *paging.Page,
+) (
+	*apimodel.PageableResponse,
+	gtserror.WithCode,
+) {
+	return p.getStatusTimeline(ctx,
+
+		// Auth'd
+		// account.
+		requester,
+
+		// Global local timeline cache.
+		&p.state.Caches.Timelines.Local,
+
+		// Current
+		// page.
+		page,
+
+		// Public timeline endpoint.
+		"/api/v1/timelines/public",
+
+		// Set local-only timeline
+		// page query flag, (this map
+		// later gets copied before
+		// any further usage).
+		localOnlyTrue,
+
+		// Status filter context.
+		statusfilter.FilterContextPublic,
+
+		// Database load function.
+		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
+			return p.state.DB.GetLocalTimeline(ctx, pg)
+		},
+
+		// Pre-filtering function,
+		// i.e. filter before caching.
+		nil,
+
+		// Post-filtering function,
+		// i.e. filter after caching.
+		func(s *gtsmodel.Status) (bool, error) {
 
 			// Check the visibility of passed status to requesting user.
 			ok, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
