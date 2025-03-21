@@ -76,6 +76,8 @@ type Status struct {
 	PendingApproval          *bool              `bun:",nullzero,notnull,default:false"`                             // If true then status is a reply or boost wrapper that must be Approved by the reply-ee or boost-ee before being fully distributed.
 	PreApproved              bool               `bun:"-"`                                                           // If true, then status is a reply to or boost wrapper of a status on our instance, has permission to do the interaction, and an Accept should be sent out for it immediately. Field not stored in the DB.
 	ApprovedByURI            string             `bun:",nullzero"`                                                   // URI of an Accept Activity that approves the Announce or Create Activity that this status was/will be attached to.
+	CardID                   string             `bun:"type:CHAR(26),nullzero,notnull"`                              //
+	Card                     *Card              `bun:"-"`                                                           // Preview card for links included within status content.
 }
 
 // GetID implements timeline.Timelineable{}.

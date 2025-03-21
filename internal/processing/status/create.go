@@ -189,6 +189,17 @@ func (p *Processor) Create(
 		PendingApproval: util.Ptr(false),
 	}
 
+	// Get preview card
+	card, errWithCode := FetchPreview(content.Content)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	if card != nil {
+		status.CardID = id.NewULIDFromTime(now)
+		status.Card = card
+	}
+
 	// Only store ContentWarningText if the parsed
 	// result is different from the given SpoilerText,
 	// otherwise skip to avoid duplicating db columns.
@@ -315,7 +326,6 @@ func (p *Processor) Create(
 
 // backfilledStatusID tries to find an unused ULID for a backfilled status.
 func (p *Processor) backfilledStatusID(ctx context.Context, createdAt time.Time) (string, error) {
-
 	// Any fetching of statuses here is
 	// only to check availability of ID,
 	// no need for any attached models.
@@ -522,7 +532,6 @@ func processInteractionPolicy(
 	settings *gtsmodel.AccountSettings,
 	status *gtsmodel.Status,
 ) gtserror.WithCode {
-
 	// If policy is set on the
 	// form then prefer this.
 	//
@@ -535,7 +544,6 @@ func processInteractionPolicy(
 			form.InteractionPolicy,
 			form.Visibility,
 		)
-
 		if err != nil {
 			errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
 			return errWithCode
