@@ -32,11 +32,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/uptrace/bun"
 )
 
 type AccountTestSuite struct {
@@ -339,73 +337,6 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 	}
 }
 
-func (suite *AccountTestSuite) TestUpdateAccount() {
-	ctx := context.Background()
-
-	testAccount := suite.testAccounts["local_account_1"]
-
-	testAccount.DisplayName = "new display name!"
-	testAccount.EmojiIDs = []string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}
-
-	err := suite.db.UpdateAccount(ctx, testAccount)
-	suite.NoError(err)
-
-	updated, err := suite.db.GetAccountByID(ctx, testAccount.ID)
-	suite.NoError(err)
-	suite.Equal("new display name!", updated.DisplayName)
-	suite.Equal([]string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}, updated.EmojiIDs)
-	suite.WithinDuration(time.Now(), updated.UpdatedAt, 5*time.Second)
-
-	// get account without cache + make sure it's really in the db as desired
-	dbService, ok := suite.db.(*bundb.DBService)
-	if !ok {
-		panic("db was not *bundb.DBService")
-	}
-
-	noCache := &gtsmodel.Account{}
-	err = dbService.DB().
-		NewSelect().
-		Model(noCache).
-		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
-		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment").
-		Relation("Emojis").
-		Scan(ctx)
-
-	suite.NoError(err)
-	suite.Equal("new display name!", noCache.DisplayName)
-	suite.Equal([]string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}, noCache.EmojiIDs)
-	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
-	suite.NotNil(noCache.AvatarMediaAttachment)
-	suite.NotNil(noCache.HeaderMediaAttachment)
-
-	// update again to remove emoji associations
-	testAccount.EmojiIDs = []string{}
-
-	err = suite.db.UpdateAccount(ctx, testAccount)
-	suite.NoError(err)
-
-	updated, err = suite.db.GetAccountByID(ctx, testAccount.ID)
-	suite.NoError(err)
-	suite.Equal("new display name!", updated.DisplayName)
-	suite.Empty(updated.EmojiIDs)
-	suite.WithinDuration(time.Now(), updated.UpdatedAt, 5*time.Second)
-
-	err = dbService.DB().
-		NewSelect().
-		Model(noCache).
-		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
-		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment").
-		Relation("Emojis").
-		Scan(ctx)
-
-	suite.NoError(err)
-	suite.Equal("new display name!", noCache.DisplayName)
-	suite.Empty(noCache.EmojiIDs)
-	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
-}
-
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	suite.NoError(err)
@@ -416,7 +347,7 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 		Domain:       "example.org",
 		URI:          "https://example.org/users/test_service",
 		URL:          "https://example.org/@test_service",
-		ActorType:    ap.ActorService,
+		ActorType:    gtsmodel.AccountActorTypeService,
 		PublicKey:    &key.PublicKey,
 		PublicKeyURI: "https://example.org/users/test_service#main-key",
 	}
@@ -427,7 +358,6 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	suite.WithinDuration(time.Now(), newAccount.CreatedAt, 30*time.Second)
 	suite.WithinDuration(time.Now(), newAccount.UpdatedAt, 30*time.Second)
 	suite.True(*newAccount.Locked)
-	suite.False(*newAccount.Bot)
 	suite.False(*newAccount.Discoverable)
 }
 

@@ -352,7 +352,6 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 	var (
 		locked       = util.PtrOrValue(a.Locked, true)
 		discoverable = util.PtrOrValue(a.Discoverable, false)
-		bot          = util.PtrOrValue(a.Bot, false)
 	)
 
 	// Remaining properties are simple and
@@ -365,7 +364,7 @@ func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.A
 		DisplayName:       a.DisplayName,
 		Locked:            locked,
 		Discoverable:      discoverable,
-		Bot:               bot,
+		Bot:               a.ActorType.IsBot(),
 		CreatedAt:         util.FormatISO8601(a.CreatedAt),
 		Note:              a.Note,
 		URL:               a.URL,
@@ -509,7 +508,7 @@ func (c *Converter) AccountToAPIAccountBlocked(ctx context.Context, a *gtsmodel.
 		ID:        a.ID,
 		Username:  a.Username,
 		Acct:      acct,
-		Bot:       *a.Bot,
+		Bot:       a.ActorType.IsBot(),
 		CreatedAt: util.FormatISO8601(a.CreatedAt),
 		URL:       a.URL,
 		// Empty array (not nillable).
