@@ -31,6 +31,10 @@ type Source struct {
 	//    "unlisted" = show Public *and* Unlisted visibility posts on the web.
 	//    "none" = show no posts on the web, not even Public ones.
 	WebVisibility Visibility `json:"web_visibility"`
+	// Layout to use for the web view of the account.
+	//    "microblog": default, classic microblog layout.
+	//    "gallery": gallery layout with media only.
+	WebLayout string `json:"web_layout"`
 	// Whether new statuses should be marked sensitive by default.
 	Sensitive bool `json:"sensitive"`
 	// The default posting language for new statuses.

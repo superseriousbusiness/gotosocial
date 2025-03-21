@@ -17,14 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-@import "photoswipe/dist/photoswipe.css";
-@import "photoswipe-dynamic-caption-plugin/photoswipe-dynamic-caption-plugin.css";
-@import "plyr/dist/plyr.css";
-
-main {
-	background: transparent;
-	grid-auto-rows: auto;
-}
+@import "./_status-media.css";
 
 .status {
 	background: $status-bg;
@@ -257,172 +250,6 @@ main {
 		}
 	}
 
-	.media {
-		grid-column: span 3;
-		display: grid;
-		grid-template-columns: 50% 50%;
-		grid-auto-rows: 10rem;
-		overflow: hidden;
-
-		.media-wrapper {
-			height: 100%;
-			width: 100%;
-			box-sizing: border-box;
-			border: 0.15rem solid $gray1;
-			border-radius: $br;
-			position: relative;
-			overflow: hidden;
-			z-index: 2;
-
-			details {
-				position: absolute;
-				height: 100%;
-				width: 100%;
-
-				&[open] summary {
-					height: auto;
-					width: auto;
-					margin: 1rem;
-					padding: 0;
-
-					.show, video, img {
-						display: none;
-					}
-
-					.eye.button .hide {
-						display: inline-block;
-						grid-column: 1 / span 3;
-						grid-row: 1 / span 2;
-					}
-				}
-
-				summary {
-					position: absolute;
-					height: 100%;
-					width: 100%;
-					z-index: 3;
-					overflow: hidden;
-					
-					display: grid;
-					padding: 1rem;
-					grid-template-columns: 1fr auto 1fr;
-					grid-template-rows: 1fr 1fr;
-					grid-template-areas: 
-						"eye sensitive ."
-						".   sensitive  .";
-
-					&::-webkit-details-marker {
-						display: none; /* Safari */
-					}
-
-					.eye.button {
-						grid-area: eye;
-						align-self: start;
-						justify-self: start;
-						margin: 0;
-						padding: 0.4rem;
-
-						.fa-fw {
-							line-height: $fa-fw;
-						}
-
-						.hide {
-							display: none;
-						}
-					}
-
-					.show.sensitive {
-						grid-area: sensitive;
-						align-self: center;
-
-						text-overflow: ellipsis;
-						overflow: hidden;
-						white-space: nowrap;
-
-						.button {
-							cursor: pointer;
-							align-self: center;
-						}
-					}
-
-					video, img {
-						z-index: -1;
-						position: absolute;
-						height: calc(100% + 1.2rem);
-						width: calc(100% + 1.2rem);
-						top: -0.6rem;
-						left: -0.6rem;
-						filter: blur(1.2rem);
-					}
-				}
-
-				video.plyr-video, .plyr {
-					position: absolute;
-					height: 100%;
-					width: 100%;
-					object-fit: contain;
-					background: $gray1;
-				}
-
-				.unknown-attachment {
-					.placeholder {
-						width: 100%;
-						height: 100%;
-						padding: 0.8rem;
-						border: 0.2rem dashed $white2;
-						
-						display: flex;
-						flex-direction: column;
-						align-items: center;
-						gap: 0.25rem;
-
-						color: $white2;
-
-						.placeholder-external-link {
-							align-self: end;
-							font-size: 2.5rem;
-						}
-
-						.placeholder-icon {
-							width: 100%;
-							font-size: 3.5rem;
-							text-align: center;
-							margin-top: auto;
-						}
-
-						.placeholder-link-to {
-							width: 100%;
-							text-align: center;
-							margin-bottom: auto;
-						}
-					}
-				}
-			}
-		}
-
-		&.single .media-wrapper {
-			grid-column: span 2;
-		}
-
-		&.odd .media-wrapper:first-child,
-		&.double .media-wrapper {
-			grid-row: span 2;
-		}
-
-		@media screen and (max-width: 42rem) {
-			.media-wrapper {
-				grid-column: span 2;
-				grid-row: span 2;
-			}
-		}
-
-		img {
-			width: 100%;
-			height: 100%;
-			object-fit: cover;
-		}
-	}
-
 	.status-info {
 		background: $status-info-bg;
 		color: $fg-reduced;
@@ -446,10 +273,6 @@ main {
 			.stats-item {
 				display: flex;
 				gap: 0.4rem;
-			}
-
-			.stats-item.published-at {
-				text-decoration: underline;
 			}
 
 			.stats-item:not(.published-at):not(.edited-at) {
@@ -495,36 +318,5 @@ main {
 		.status-info {
 			background: $status-focus-info-bg;
 		}
-	}
-}
-
-.plyr--video {
-	flex-direction: column-reverse;
-
-	.plyr__video-wrapper {
-		position: relative;
-	}
-
-	.plyr__controls {
-		align-self: stretch;
-		position: initial;
-		padding: 0.1rem;
-		padding-top: 0.2rem;
-	}
-
-	.plyr__control {
-		box-shadow: none;
-	}
-
-	.plyr__control--overlaid {
-		top: calc(50% - 18px);
-	}
-}
-
-.pswp__content {
-	padding: 2rem;
-
-	.plyr {
-		max-height: 100%;
 	}
 }

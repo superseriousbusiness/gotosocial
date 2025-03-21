@@ -18,8 +18,8 @@
 */
 
 .thread {
-    #tag-name {
-        /* Ensure ridiculous length tags get wrapped */
-        word-wrap: anywhere; 
-    }
+	#tag-name {
+		/* Ensure ridiculous length tags get wrapped */
+		word-wrap: anywhere; 
+	}
 }

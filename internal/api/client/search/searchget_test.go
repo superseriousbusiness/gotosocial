@@ -915,7 +915,7 @@ func (suite *SearchGetTestSuite) TestSearchAAny() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(searchResult.Accounts, 5)
+	suite.Len(searchResult.Accounts, 6)
 	suite.Len(searchResult.Statuses, 9)
 	suite.Len(searchResult.Hashtags, 0)
 }
@@ -1130,7 +1130,7 @@ func (suite *SearchGetTestSuite) TestSearchAAccounts() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(searchResult.Accounts, 5)
+	suite.Len(searchResult.Accounts, 6)
 	suite.Len(searchResult.Statuses, 0)
 	suite.Len(searchResult.Hashtags, 0)
 }

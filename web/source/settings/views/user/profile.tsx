@@ -61,20 +61,6 @@ interface UserProfileFormProps {
 }
 
 function UserProfileForm({ data: profile }: UserProfileFormProps) {
-	/*
-		User profile update form keys
-		- bool bot
-		- bool locked
-		- string display_name
-		- string note
-		- file avatar
-		- file header
-		- bool enable_rss
-		- bool hide_collections
-		- string custom_css (if enabled)
-		- string theme
-	*/
-
 	const { data: instance } = useInstanceV1Query();
 	const instanceConfig = React.useMemo(() => {
 		return {
@@ -120,7 +106,8 @@ function UserProfileForm({ data: profile }: UserProfileFormProps) {
 		discoverable: useBoolInput("discoverable", { source: profile}),
 		enableRSS: useBoolInput("enable_rss", { source: profile }),
 		hideCollections: useBoolInput("hide_collections", { source: profile }),
-		webVisibility: useTextInput("web_visibility", { source: profile, valueSelector: (p) => p.source?.web_visibility }),
+		webVisibility: useTextInput("web_visibility", { source: profile, valueSelector: (p: Account) => p.source?.web_visibility }),
+		webLayout: useTextInput("web_layout", { source: profile, valueSelector: (p: Account) => p.source?.web_layout }),
 		fields: useFieldArrayInput("fields_attributes", {
 			defaultValue: profile?.source?.fields,
 			length: instanceConfig.maxPinnedFields
@@ -185,18 +172,24 @@ function UserProfileForm({ data: profile }: UserProfileFormProps) {
 					/>
 				</fieldset>
 
-				<div className="theme">
-					<div>
-						<b id="theme-label">Theme</b>
-						<br/>
-						<span>After choosing theme and saving, <a href={profile.url} target="_blank">open your profile</a> and refresh to see changes.</span>
-					</div>
-					<Select
-						aria-labelledby="theme-label"
-						field={form.theme}
-						options={<>{themeOptions}</>}
-					/>
-				</div>
+				<span>After choosing theme or layout and saving, <a href={profile.url} target="_blank">open your profile</a> and refresh to see changes.</span>
+
+				<Select
+					label="Theme for the web view of your profile"
+					field={form.theme}
+					options={<>{themeOptions}</>}
+				/>
+
+				<Select
+					field={form.webLayout}
+					label="Layout for the web view of your profile"
+					options={
+						<>
+							<option value="microblog">Classic microblog layout (show recent + pinned posts; media shown alongside its parent post)</option>
+							<option value="gallery">'Gram-style gallery layout (show recent + pinned media; parent posts still accessible by link)</option>
+						</>
+					}
+				/>
 			</div>
 
 			<div className="form-section-docs">

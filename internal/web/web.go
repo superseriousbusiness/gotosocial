@@ -56,15 +56,16 @@ const (
 	eTagHeader            = "ETag"              // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/ETag
 	lastModifiedHeader    = "Last-Modified"     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Last-Modified
 
-	cssFA        = assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css"
-	cssAbout     = distPathPrefix + "/about.css"
-	cssIndex     = distPathPrefix + "/index.css"
-	cssLoginInfo = distPathPrefix + "/login-info.css"
-	cssStatus    = distPathPrefix + "/status.css"
-	cssThread    = distPathPrefix + "/thread.css"
-	cssProfile   = distPathPrefix + "/profile.css"
-	cssSettings  = distPathPrefix + "/settings-style.css"
-	cssTag       = distPathPrefix + "/tag.css"
+	cssFA             = assetsPathPrefix + "/Fork-Awesome/css/fork-awesome.min.css"
+	cssAbout          = distPathPrefix + "/about.css"
+	cssIndex          = distPathPrefix + "/index.css"
+	cssLoginInfo      = distPathPrefix + "/login-info.css"
+	cssStatus         = distPathPrefix + "/status.css"
+	cssThread         = distPathPrefix + "/thread.css"
+	cssProfile        = distPathPrefix + "/profile.css"
+	cssProfileGallery = distPathPrefix + "/profile-gallery.css"
+	cssSettings       = distPathPrefix + "/settings-style.css"
+	cssTag            = distPathPrefix + "/tag.css"
 
 	jsFrontend = distPathPrefix + "/frontend.js" // Progressive enhancement frontend JS.
 	jsSettings = distPathPrefix + "/settings.js" // Settings panel React application.

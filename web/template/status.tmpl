@@ -30,6 +30,16 @@
     it in an appropriate <article></article>!
 */ -}}
 
+{{- /* Produces something like "1 attachment", "2 attachments", etc */ -}}
+{{- define "attachmentsLength" -}}
+{{- (len .) }}{{- if eq (len .) 1 }} attachment{{- else }} attachments{{- end -}}
+{{- end -}}
+
+{{- /* Produces something like "media photoswipe-gallery odd single" */ -}}
+{{- define "galleryClass" -}}
+media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{ else if eq (len .) 2 }}double{{ end }}
+{{- end -}}
+
 {{- with . }}
 <header class="status-header">
     {{- include "status_header.tmpl" . | indent 1 }}
@@ -63,7 +73,15 @@
     </div>
     {{- end }}
     {{- if .MediaAttachments }}
-    {{- include "status_attachments.tmpl" . | indent 1 }}
+    <div
+        class="{{- template "galleryClass" .MediaAttachments -}}"
+        role="group"
+        aria-label="{{- template "attachmentsLength" .MediaAttachments -}}"
+    >
+        {{- range $index, $media := .MediaAttachments }}
+        {{- includeIndex "status_attachment.tmpl" $media $index | indent 2 }}
+        {{- end }}
+    </div>
     {{- end }}
 </div>
 <aside class="status-info" aria-hidden="true">

@@ -1,0 +1,56 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<section class="about-user" role="region" aria-labelledby="about-header">
+    <div class="col-header">
+        <h3 id="about-header">About<span class="sr-only">&nbsp;{{- .account.Username -}}</span></h3>
+    </div>
+    {{- if .account.Fields }}
+    {{- include "profile_fields.tmpl" . | indent 1 }}
+    {{- end }}
+    <h4 class="sr-only">Bio</h4>
+    <div class="bio p-note">
+        {{- if .account.Note }}
+        {{ emojify .account.Emojis (noescape .account.Note) }}
+        {{- else }}
+        <p>This GoToSocial user hasn't written a bio yet!</p>
+        {{- end }}
+    </div>
+    <h4 class="sr-only">Stats</h4>
+    <dl class="accountstats">
+        <div class="stats-item">
+            <dt class="joineddt text-cutoff">Joined</dt>
+            <dd class="joineddd text-cutoff"><time datetime="{{- .account.CreatedAt -}}">{{- .account.CreatedAt | timestampVague -}}</time></dd>
+        </div>
+        <div class="stats-item">
+            <dt class="postsdt text-cutoff">Posts</dt>
+            <dd class="postsdd text-cutoff">{{- .account.StatusesCount -}}</dd>
+        </div>
+        <div class="stats-item">
+            <dt class="followeddt text-cutoff">Followed by</dt>
+            <dd class="followeddd text-cutoff">{{- if .account.HideCollections -}}<i>hidden</i>{{- else -}}{{- .account.FollowersCount -}}{{- end -}}</dd>
+        </div>
+        <div class="stats-item">
+            <dt class="followingdt text-cutoff">Following</dt>
+            <dd class="followingdd text-cutoff">{{- if .account.HideCollections -}}<i>hidden</i>{{- else -}}{{- .account.FollowingCount -}}{{- end -}}</dd>
+        </div>
+    </dl>
+</section>
+{{- end }}

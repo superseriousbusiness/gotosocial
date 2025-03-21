@@ -18,6 +18,7 @@
 package gtsmodel
 
 import (
+	"strings"
 	"time"
 )
 
@@ -35,9 +36,51 @@ type AccountSettings struct {
 	EnableRSS                      *bool              `bun:",nullzero,notnull,default:false"`                             // enable RSS feed subscription for this account's public posts at [URL]/feed
 	HideCollections                *bool              `bun:",nullzero,notnull,default:false"`                             // Hide this account's followers/following collections.
 	WebVisibility                  Visibility         `bun:",nullzero,notnull,default:3"`                                 // Visibility level of statuses that visitors can view via the web profile.
+	WebLayout                      WebLayout          `bun:",nullzero,notnull,default:1"`                                 // Layout to use when showing this profile via the web.
 	InteractionPolicyDirect        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new direct visibility statuses by this account. If null, assume default policy.
 	InteractionPolicyMutualsOnly   *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new mutuals only visibility statuses. If null, assume default policy.
 	InteractionPolicyFollowersOnly *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new followers only visibility statuses. If null, assume default policy.
 	InteractionPolicyUnlocked      *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new unlocked visibility statuses. If null, assume default policy.
 	InteractionPolicyPublic        *InteractionPolicy `bun:""`                                                            // Interaction policy to use for new public visibility statuses. If null, assume default policy.
+}
+
+// WebLayout represents an account owner's
+// choice for how they want their profile to be
+// laid out via the web view, by default.
+type WebLayout enumType
+
+const (
+	WebLayoutUnknown WebLayout = 0
+
+	// "Classic" / default GtS microblog view.
+	WebLayoutMicroblog WebLayout = 1
+
+	// 'gram-style gallery view with media only.
+	WebLayoutGallery WebLayout = 2
+)
+
+// String returns a stringified, frontend
+// API compatible form of WebLayout.
+func (wrm WebLayout) String() string {
+	switch wrm {
+	case WebLayoutMicroblog:
+		return "microblog"
+	case WebLayoutGallery:
+		return "gallery"
+	default:
+		panic("invalid web layout")
+	}
+}
+
+// ParseWebLayout returns a web
+// layout from the given value.
+func ParseWebLayout(in string) WebLayout {
+	switch strings.ToLower(in) {
+	case "microblog":
+		return WebLayoutMicroblog
+	case "gallery":
+		return WebLayoutGallery
+	default:
+		return WebLayoutUnknown
+	}
 }

@@ -31,6 +31,30 @@ To choose a theme, just select it from the profile settings page, and click/tap 
 !!! tip "Adding more themes"
     Instance admins can add more themes by dropping css files into the `web/assets/themes` folder. See the [themes](../admin/themes.md) part of the admin docs for more information.
 
+### Select Layout
+
+GoToSocial lets you choose from two different layouts for the web view of your profile.
+
+The setting does not affect how the API behaves or how client applications look or work, it's purely a cosmetic change for the web view.
+
+In both cases, only top-level posts (or media from top-level posts) is shown, not replies or boosts, and the [Visibility Level of Posts to Show on Your Profile](#visibility-level-of-posts-to-show-on-your-profile) setting is respected.
+
+#### Microblog
+
+The GtS classic microblog layout. Your profile is split into two columns with your bio and recent/pinned posts.
+
+This is a good choice if you primarily post text, or a mixture of text and media.
+
+![Microblog layout](../public/user-settings-layout-microblog.png)
+
+#### Gallery
+
+'Gram-style layout. Posts are not shown directly on your profile. Instead, your recent/pinned media is shown in a gallery grid view. Posts (with their replies) can still be accessed via link.
+
+This is a good choice if you primarily post media.
+
+![Gallery layout](../public/user-settings-layout-gallery.png)
+
 ### Basic Information
 
 #### Display Name

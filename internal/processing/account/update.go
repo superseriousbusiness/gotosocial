@@ -294,6 +294,18 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		settingsColumns = append(settingsColumns, "web_visibility")
 	}
 
+	if form.WebLayout != nil {
+		webLayout := gtsmodel.ParseWebLayout(*form.WebLayout)
+		if webLayout == gtsmodel.WebLayoutUnknown {
+			const text = "web_layout must be one of microblog or gallery"
+			err := errors.New(text)
+			return nil, gtserror.NewErrorBadRequest(err, text)
+		}
+
+		account.Settings.WebLayout = webLayout
+		settingsColumns = append(settingsColumns, "web_layout")
+	}
+
 	// We've parsed + set everything, do
 	// necessary database updates now.
 

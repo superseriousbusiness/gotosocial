@@ -130,12 +130,12 @@ html, body {
 }
 
 /* Make show more/less buttons more legible */
-.status button, .status .button {
+.button {
   background-color: var(--almost-black);
   color: var(--almost-white);
   border: var(--dashed-border);
 }
-.status button:hover, .status .button:hover {
+.button:hover {
   background-color: var(--almost-white);
   color: var(--almost-black);
   border: var(--dashed-border);
