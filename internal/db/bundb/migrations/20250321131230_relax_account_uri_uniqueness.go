@@ -289,7 +289,7 @@ func init() {
 				return fmt.Errorf("total=%d does not match updated=%d", total, updated)
 			}
 
-			log.Info(ctx, "finished migrating %d accounts", total)
+			log.Infof(ctx, "finished migrating %d accounts", total)
 
 			// Drop the old table.
 			log.Info(ctx, "dropping old accounts table")
@@ -342,7 +342,7 @@ func init() {
 					columns []string
 				}
 
-				// Rename constraints from
+				// Rename uniqueness constraints from
 				// "new_accounts_*" to "accounts_*".
 				for _, spec := range []spec{
 					{

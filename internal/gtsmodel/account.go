@@ -55,13 +55,13 @@ type Account struct {
 	// Corresponds to AS `preferredUsername` prop, which gives
 	// no uniqueness guarantee. However, we do enforce uniqueness
 	// for it as, in practice, it always is and we rely on this.
-	Username string `bun:",nullzero,notnull,unique:usernamedomain"`
+	Username string `bun:",nullzero,notnull,unique:accounts_username_domain_uniq"`
 
 	// Domain of the account, discovered via webfinger.
 	//
 	// Null if this is a local account, otherwise
 	// something like `example.org`.
-	Domain string `bun:",nullzero,unique:usernamedomain"`
+	Domain string `bun:",nullzero,unique:accounts_username_domain_uniq"`
 
 	// Database ID of the account's avatar MediaAttachment, if set.
 	AvatarMediaAttachmentID string `bun:"type:CHAR(26),nullzero"`

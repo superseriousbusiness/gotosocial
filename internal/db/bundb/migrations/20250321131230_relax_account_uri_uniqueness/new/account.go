@@ -32,8 +32,8 @@ type Account struct {
 	CreatedAt               time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
 	UpdatedAt               time.Time        `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
 	FetchedAt               time.Time        `bun:"type:timestamptz,nullzero"`
-	Username                string           `bun:",nullzero,notnull,unique:usernamedomain"`
-	Domain                  string           `bun:",nullzero,unique:usernamedomain"`
+	Username                string           `bun:",nullzero,notnull,unique:accounts_username_domain_uniq"`
+	Domain                  string           `bun:",nullzero,unique:accounts_username_domain_uniq"`
 	AvatarMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
 	AvatarRemoteURL         string           `bun:",nullzero"`
 	HeaderMediaAttachmentID string           `bun:"type:CHAR(26),nullzero"`
