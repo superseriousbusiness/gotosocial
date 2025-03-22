@@ -20,6 +20,7 @@ package federatingdb
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/url"
 
@@ -158,40 +159,52 @@ func (f *federatingDB) getAccountForIRI(ctx context.Context, iri *url.URL) (*gts
 	switch {
 	case uris.IsUserPath(iri):
 		if acct, err = f.state.DB.GetAccountByURI(ctx, iri.String()); err != nil {
-			if err == db.ErrNoEntries {
+			if errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("no actor found that corresponds to uri %s", iri.String())
 			}
 			return nil, fmt.Errorf("db error searching for actor with uri %s", iri.String())
 		}
 		return acct, nil
 	case uris.IsInboxPath(iri):
-		if acct, err = f.state.DB.GetAccountByInboxURI(ctx, iri.String()); err != nil {
-			if err == db.ErrNoEntries {
+		if acct, err = f.state.DB.GetOneAccountByInboxURI(ctx, iri.String()); err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("no actor found that corresponds to inbox %s", iri.String())
+			}
+			if errors.Is(err, db.ErrMultipleEntries) {
+				return nil, fmt.Errorf("multiple actors found that correspond to inbox %s", iri.String())
 			}
 			return nil, fmt.Errorf("db error searching for actor with inbox %s", iri.String())
 		}
 		return acct, nil
 	case uris.IsOutboxPath(iri):
-		if acct, err = f.state.DB.GetAccountByOutboxURI(ctx, iri.String()); err != nil {
-			if err == db.ErrNoEntries {
+		if acct, err = f.state.DB.GetOneAccountByOutboxURI(ctx, iri.String()); err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("no actor found that corresponds to outbox %s", iri.String())
+			}
+			if errors.Is(err, db.ErrMultipleEntries) {
+				return nil, fmt.Errorf("multiple actors found that correspond to outbox %s", iri.String())
 			}
 			return nil, fmt.Errorf("db error searching for actor with outbox %s", iri.String())
 		}
 		return acct, nil
 	case uris.IsFollowersPath(iri):
-		if acct, err = f.state.DB.GetAccountByFollowersURI(ctx, iri.String()); err != nil {
-			if err == db.ErrNoEntries {
+		if acct, err = f.state.DB.GetOneAccountByFollowersURI(ctx, iri.String()); err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("no actor found that corresponds to followers_uri %s", iri.String())
+			}
+			if errors.Is(err, db.ErrMultipleEntries) {
+				return nil, fmt.Errorf("multiple actors found that correspond to followers_uri %s", iri.String())
 			}
 			return nil, fmt.Errorf("db error searching for actor with followers_uri %s", iri.String())
 		}
 		return acct, nil
 	case uris.IsFollowingPath(iri):
-		if acct, err = f.state.DB.GetAccountByFollowingURI(ctx, iri.String()); err != nil {
-			if err == db.ErrNoEntries {
+		if acct, err = f.state.DB.GetOneAccountByFollowingURI(ctx, iri.String()); err != nil {
+			if errors.Is(err, db.ErrNoEntries) {
 				return nil, fmt.Errorf("no actor found that corresponds to following_uri %s", iri.String())
+			}
+			if errors.Is(err, db.ErrMultipleEntries) {
+				return nil, fmt.Errorf("multiple actors found that correspond to following_uri %s", iri.String())
 			}
 			return nil, fmt.Errorf("db error searching for actor with following_uri %s", iri.String())
 		}

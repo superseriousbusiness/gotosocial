@@ -29,4 +29,8 @@ var (
 
 	// ErrAlreadyExists is returned when a conflict was encountered in the db when doing an insert.
 	ErrAlreadyExists = errors.New("already exists")
+
+	// ErrMultipleEntries is returned when multiple entries
+	// are found in the db when only one entry is sought.
+	ErrMultipleEntries = errors.New("multiple entries")
 )

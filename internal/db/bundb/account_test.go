@@ -32,6 +32,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
@@ -247,7 +248,20 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 				if account.URL == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByURL(ctx, account.URL)
+				return suite.db.GetOneAccountByURL(ctx, account.URL)
+			},
+
+			"url_multi": func() (*gtsmodel.Account, error) {
+				if account.URL == "" {
+					return nil, sentinelErr
+				}
+
+				accounts, err := suite.db.GetAccountsByURL(ctx, account.URL)
+				if err != nil {
+					return nil, err
+				}
+
+				return accounts[0], nil
 			},
 
 			"username@domain": func() (*gtsmodel.Account, error) {
@@ -273,28 +287,28 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 				if account.InboxURI == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByInboxURI(ctx, account.InboxURI)
+				return suite.db.GetOneAccountByInboxURI(ctx, account.InboxURI)
 			},
 
 			"outbox_uri": func() (*gtsmodel.Account, error) {
 				if account.OutboxURI == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByOutboxURI(ctx, account.OutboxURI)
+				return suite.db.GetOneAccountByOutboxURI(ctx, account.OutboxURI)
 			},
 
 			"following_uri": func() (*gtsmodel.Account, error) {
 				if account.FollowingURI == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByFollowingURI(ctx, account.FollowingURI)
+				return suite.db.GetOneAccountByFollowingURI(ctx, account.FollowingURI)
 			},
 
 			"followers_uri": func() (*gtsmodel.Account, error) {
 				if account.FollowersURI == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByFollowersURI(ctx, account.FollowersURI)
+				return suite.db.GetOneAccountByFollowersURI(ctx, account.FollowersURI)
 			},
 		} {
 
@@ -335,6 +349,39 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 			}
 		}
 	}
+}
+
+func (suite *AccountTestSuite) TestGetAccountsByURLMulti() {
+	ctx := context.Background()
+
+	// Update admin account to have the same url as zork.
+	testAccount1 := suite.testAccounts["local_account_1"]
+	testAccount2 := new(gtsmodel.Account)
+	*testAccount2 = *suite.testAccounts["admin_account"]
+	testAccount2.URL = testAccount1.URL
+	if err := suite.state.DB.UpdateAccount(ctx, testAccount2, "url"); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Select all accounts with that URL.
+	// Should return 2.
+	accounts, err := suite.state.DB.GetAccountsByURL(
+		gtscontext.SetBarebones(ctx),
+		testAccount1.URL,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Len(accounts, 2)
+
+	// Try to select one account with that URL.
+	// Should error.
+	account, err := suite.state.DB.GetOneAccountByURL(
+		gtscontext.SetBarebones(ctx),
+		testAccount1.URL,
+	)
+	suite.Nil(account)
+	suite.ErrorIs(err, db.ErrMultipleEntries)
 }
 
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
