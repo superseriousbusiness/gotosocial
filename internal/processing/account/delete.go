@@ -528,7 +528,7 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 	account.Fields = nil
 	account.Note = ""
 	account.NoteRaw = ""
-	account.Memorial = util.Ptr(false)
+	account.MemorializedAt = never
 	account.AlsoKnownAsURIs = nil
 	account.MovedToURI = ""
 	account.Discoverable = util.Ptr(false)
