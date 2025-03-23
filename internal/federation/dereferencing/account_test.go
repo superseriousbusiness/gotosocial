@@ -67,7 +67,7 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	dbGroup, err := suite.db.GetAccountByURI(context.Background(), group.URI)
 	suite.NoError(err)
 	suite.Equal(group.ID, dbGroup.ID)
-	suite.Equal(ap.ActorGroup, dbGroup.ActorType)
+	suite.Equal(ap.ActorGroup, dbGroup.ActorType.String())
 }
 
 func (suite *AccountTestSuite) TestDereferenceService() {
@@ -91,7 +91,7 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	dbService, err := suite.db.GetAccountByURI(context.Background(), service.URI)
 	suite.NoError(err)
 	suite.Equal(service.ID, dbService.ID)
-	suite.Equal(ap.ActorService, dbService.ActorType)
+	suite.Equal(ap.ActorService, dbService.ActorType.String())
 	suite.Equal("example.org", dbService.Domain)
 }
 

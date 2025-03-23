@@ -103,7 +103,7 @@ func (a *accountDB) getOneAccountBy(
 	// and only one account.
 	l := len(accounts)
 	if l == 0 {
-		return nil, db.ErrMultipleEntries
+		return nil, db.ErrNoEntries
 	}
 	if l > 1 {
 		return nil, db.ErrMultipleEntries
