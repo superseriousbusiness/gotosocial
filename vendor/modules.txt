@@ -66,7 +66,7 @@ codeberg.org/gruf/go-storage/s3
 # codeberg.org/gruf/go-structr v0.9.0
 ## explicit; go 1.22
 codeberg.org/gruf/go-structr
-# codeberg.org/superseriousbusiness/activity v1.12.0-gts
+# codeberg.org/superseriousbusiness/activity v1.13.0-gts
 ## explicit; go 1.21
 codeberg.org/superseriousbusiness/activity/pub
 codeberg.org/superseriousbusiness/activity/streams
@@ -202,6 +202,10 @@ codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_und
 codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_update
 codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_video
 codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_view
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_album
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_artist
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_library
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_track
 codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_always
 codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired
 codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby

@@ -37,6 +37,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAdd) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleAlbum) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAnnounce) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialAnnounceApproval) error:
@@ -46,6 +48,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsArrive) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsArticle) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleArtist) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAudio) error:
 			// Do nothing, this callback has a correct signature.
@@ -98,6 +102,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsJoin) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLeave) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleLibrary) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLike) error:
 			// Do nothing, this callback has a correct signature.
@@ -154,6 +160,8 @@ func NewJSONResolver(callbacks ...interface{}) (*JSONResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsTentativeReject) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTombstone) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleTrack) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTravel) error:
 			// Do nothing, this callback has a correct signature.
@@ -244,6 +252,13 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 		if len(ActivityStreamsAlias) > 0 {
 			ActivityStreamsAlias += ":"
 		}
+		FunkwhaleAlias, ok := aliasMap["https://funkwhale.audio/ns"]
+		if !ok {
+			FunkwhaleAlias = aliasMap["http://funkwhale.audio/ns"]
+		}
+		if len(FunkwhaleAlias) > 0 {
+			FunkwhaleAlias += ":"
+		}
 		GoToSocialAlias, ok := aliasMap["https://gotosocial.org/ns"]
 		if !ok {
 			GoToSocialAlias = aliasMap["http://gotosocial.org/ns"]
@@ -306,6 +321,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 				}
 			}
 			return ErrNoCallbackMatch
+		} else if typeString == FunkwhaleAlias+"Album" {
+			v, err := mgr.DeserializeAlbumFunkwhale()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.FunkwhaleAlbum) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
 		} else if typeString == ActivityStreamsAlias+"Announce" {
 			v, err := mgr.DeserializeAnnounceActivityStreams()(m, aliasMap)
 			if err != nil {
@@ -357,6 +383,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsArticle) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == FunkwhaleAlias+"Artist" {
+			v, err := mgr.DeserializeArtistFunkwhale()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.FunkwhaleArtist) error); ok {
 					return fn(ctx, v)
 				}
 			}
@@ -643,6 +680,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsLeave) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == FunkwhaleAlias+"Library" {
+			v, err := mgr.DeserializeLibraryFunkwhale()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.FunkwhaleLibrary) error); ok {
 					return fn(ctx, v)
 				}
 			}
@@ -951,6 +999,17 @@ func (this JSONResolver) Resolve(ctx context.Context, m map[string]interface{}) 
 			}
 			for _, i := range this.callbacks {
 				if fn, ok := i.(func(context.Context, vocab.ActivityStreamsTombstone) error); ok {
+					return fn(ctx, v)
+				}
+			}
+			return ErrNoCallbackMatch
+		} else if typeString == FunkwhaleAlias+"Track" {
+			v, err := mgr.DeserializeTrackFunkwhale()(m, aliasMap)
+			if err != nil {
+				return err
+			}
+			for _, i := range this.callbacks {
+				if fn, ok := i.(func(context.Context, vocab.FunkwhaleTrack) error); ok {
 					return fn(ctx, v)
 				}
 			}

@@ -14,9 +14,9 @@ const (
 	// only applicable to go-fed at code-generation time.
 	jsonLDContext = "@context"
 
-	asNS     = "https://www.w3.org/ns/activitystreams"
-	tootNS   = "http://joinmastodon.org/ns"
-	schemaNS = "http://schema.org"
+	asNS        = "https://www.w3.org/ns/activitystreams"
+	tootNS      = "http://joinmastodon.org/ns"
+	schemaNS    = "http://schema.org"
 )
 
 // Map of inlines @context entries that may need to be added

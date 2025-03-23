@@ -55,6 +55,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 	}, func(ctx context.Context, i vocab.ActivityStreamsAdd) error {
 		t = i
 		return nil
+	}, func(ctx context.Context, i vocab.FunkwhaleAlbum) error {
+		t = i
+		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsAnnounce) error {
 		t = i
 		return nil
@@ -68,6 +71,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsArticle) error {
+		t = i
+		return nil
+	}, func(ctx context.Context, i vocab.FunkwhaleArtist) error {
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsAudio) error {
@@ -146,6 +152,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsLeave) error {
+		t = i
+		return nil
+	}, func(ctx context.Context, i vocab.FunkwhaleLibrary) error {
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsLike) error {
@@ -230,6 +239,9 @@ func ToType(c context.Context, m map[string]interface{}) (t vocab.Type, err erro
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsTombstone) error {
+		t = i
+		return nil
+	}, func(ctx context.Context, i vocab.FunkwhaleTrack) error {
 		t = i
 		return nil
 	}, func(ctx context.Context, i vocab.ActivityStreamsTravel) error {

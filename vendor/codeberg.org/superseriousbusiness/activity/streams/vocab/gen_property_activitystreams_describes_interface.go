@@ -232,6 +232,22 @@ type ActivityStreamsDescribesProperty interface {
 	// IsActivityStreamsView returns false, GetActivityStreamsView will
 	// return an arbitrary value.
 	GetActivityStreamsView() ActivityStreamsView
+	// GetFunkwhaleAlbum returns the value of this property. When
+	// IsFunkwhaleAlbum returns false, GetFunkwhaleAlbum will return an
+	// arbitrary value.
+	GetFunkwhaleAlbum() FunkwhaleAlbum
+	// GetFunkwhaleArtist returns the value of this property. When
+	// IsFunkwhaleArtist returns false, GetFunkwhaleArtist will return an
+	// arbitrary value.
+	GetFunkwhaleArtist() FunkwhaleArtist
+	// GetFunkwhaleLibrary returns the value of this property. When
+	// IsFunkwhaleLibrary returns false, GetFunkwhaleLibrary will return
+	// an arbitrary value.
+	GetFunkwhaleLibrary() FunkwhaleLibrary
+	// GetFunkwhaleTrack returns the value of this property. When
+	// IsFunkwhaleTrack returns false, GetFunkwhaleTrack will return an
+	// arbitrary value.
+	GetFunkwhaleTrack() FunkwhaleTrack
 	// GetGoToSocialAnnounceApproval returns the value of this property. When
 	// IsGoToSocialAnnounceApproval returns false,
 	// GetGoToSocialAnnounceApproval will return an arbitrary value.
@@ -488,6 +504,22 @@ type ActivityStreamsDescribesProperty interface {
 	// "View". When true, use the GetActivityStreamsView and
 	// SetActivityStreamsView methods to access and set this property.
 	IsActivityStreamsView() bool
+	// IsFunkwhaleAlbum returns true if this property has a type of "Album".
+	// When true, use the GetFunkwhaleAlbum and SetFunkwhaleAlbum methods
+	// to access and set this property.
+	IsFunkwhaleAlbum() bool
+	// IsFunkwhaleArtist returns true if this property has a type of "Artist".
+	// When true, use the GetFunkwhaleArtist and SetFunkwhaleArtist
+	// methods to access and set this property.
+	IsFunkwhaleArtist() bool
+	// IsFunkwhaleLibrary returns true if this property has a type of
+	// "Library". When true, use the GetFunkwhaleLibrary and
+	// SetFunkwhaleLibrary methods to access and set this property.
+	IsFunkwhaleLibrary() bool
+	// IsFunkwhaleTrack returns true if this property has a type of "Track".
+	// When true, use the GetFunkwhaleTrack and SetFunkwhaleTrack methods
+	// to access and set this property.
+	IsFunkwhaleTrack() bool
 	// IsGoToSocialAnnounceApproval returns true if this property has a type
 	// of "AnnounceApproval". When true, use the
 	// GetGoToSocialAnnounceApproval and SetGoToSocialAnnounceApproval
@@ -696,6 +728,18 @@ type ActivityStreamsDescribesProperty interface {
 	// SetActivityStreamsView sets the value of this property. Calling
 	// IsActivityStreamsView afterwards returns true.
 	SetActivityStreamsView(v ActivityStreamsView)
+	// SetFunkwhaleAlbum sets the value of this property. Calling
+	// IsFunkwhaleAlbum afterwards returns true.
+	SetFunkwhaleAlbum(v FunkwhaleAlbum)
+	// SetFunkwhaleArtist sets the value of this property. Calling
+	// IsFunkwhaleArtist afterwards returns true.
+	SetFunkwhaleArtist(v FunkwhaleArtist)
+	// SetFunkwhaleLibrary sets the value of this property. Calling
+	// IsFunkwhaleLibrary afterwards returns true.
+	SetFunkwhaleLibrary(v FunkwhaleLibrary)
+	// SetFunkwhaleTrack sets the value of this property. Calling
+	// IsFunkwhaleTrack afterwards returns true.
+	SetFunkwhaleTrack(v FunkwhaleTrack)
 	// SetGoToSocialAnnounceApproval sets the value of this property. Calling
 	// IsGoToSocialAnnounceApproval afterwards returns true.
 	SetGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)

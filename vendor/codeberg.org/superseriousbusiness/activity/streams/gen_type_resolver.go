@@ -34,6 +34,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAdd) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleAlbum) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAnnounce) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialAnnounceApproval) error:
@@ -43,6 +45,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsArrive) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsArticle) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleArtist) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsAudio) error:
 			// Do nothing, this callback has a correct signature.
@@ -95,6 +99,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsJoin) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLeave) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleLibrary) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLike) error:
 			// Do nothing, this callback has a correct signature.
@@ -152,6 +158,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTombstone) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.FunkwhaleTrack) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsTravel) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsUndo) error:
@@ -204,6 +212,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
+		} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Album" {
+			if fn, ok := i.(func(context.Context, vocab.FunkwhaleAlbum) error); ok {
+				if v, ok := o.(vocab.FunkwhaleAlbum); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Announce" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsAnnounce) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsAnnounce); ok {
@@ -243,6 +260,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Article" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsArticle) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsArticle); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Artist" {
+			if fn, ok := i.(func(context.Context, vocab.FunkwhaleArtist) error); ok {
+				if v, ok := o.(vocab.FunkwhaleArtist); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -477,6 +503,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Leave" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsLeave) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsLeave); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Library" {
+			if fn, ok := i.(func(context.Context, vocab.FunkwhaleLibrary) error); ok {
+				if v, ok := o.(vocab.FunkwhaleLibrary); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -729,6 +764,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Tombstone" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsTombstone) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsTombstone); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Track" {
+			if fn, ok := i.(func(context.Context, vocab.FunkwhaleTrack) error); ok {
+				if v, ok := o.(vocab.FunkwhaleTrack); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.

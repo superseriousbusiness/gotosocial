@@ -21,6 +21,10 @@ type privateManager interface {
 	// the "ActivityStreamsAdd" non-functional property in the vocabulary
 	// "ActivityStreams"
 	DeserializeAddActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAdd, error)
+	// DeserializeAlbumFunkwhale returns the deserialization method for the
+	// "FunkwhaleAlbum" non-functional property in the vocabulary
+	// "Funkwhale"
+	DeserializeAlbumFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleAlbum, error)
 	// DeserializeAnnounceActivityStreams returns the deserialization method
 	// for the "ActivityStreamsAnnounce" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -41,6 +45,10 @@ type privateManager interface {
 	// for the "ActivityStreamsArticle" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeArticleActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsArticle, error)
+	// DeserializeArtistFunkwhale returns the deserialization method for the
+	// "FunkwhaleArtist" non-functional property in the vocabulary
+	// "Funkwhale"
+	DeserializeArtistFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleArtist, error)
 	// DeserializeAudioActivityStreams returns the deserialization method for
 	// the "ActivityStreamsAudio" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -123,6 +131,10 @@ type privateManager interface {
 	// the "ActivityStreamsLeave" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeLeaveActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsLeave, error)
+	// DeserializeLibraryFunkwhale returns the deserialization method for the
+	// "FunkwhaleLibrary" non-functional property in the vocabulary
+	// "Funkwhale"
+	DeserializeLibraryFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleLibrary, error)
 	// DeserializeLikeActivityStreams returns the deserialization method for
 	// the "ActivityStreamsLike" non-functional property in the vocabulary
 	// "ActivityStreams"
@@ -232,6 +244,10 @@ type privateManager interface {
 	// for the "ActivityStreamsTombstone" non-functional property in the
 	// vocabulary "ActivityStreams"
 	DeserializeTombstoneActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsTombstone, error)
+	// DeserializeTrackFunkwhale returns the deserialization method for the
+	// "FunkwhaleTrack" non-functional property in the vocabulary
+	// "Funkwhale"
+	DeserializeTrackFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleTrack, error)
 	// DeserializeTravelActivityStreams returns the deserialization method for
 	// the "ActivityStreamsTravel" non-functional property in the
 	// vocabulary "ActivityStreams"
