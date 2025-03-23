@@ -296,20 +296,6 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 				}
 				return suite.db.GetOneAccountByOutboxURI(ctx, account.OutboxURI)
 			},
-
-			"following_uri": func() (*gtsmodel.Account, error) {
-				if account.FollowingURI == "" {
-					return nil, sentinelErr
-				}
-				return suite.db.GetOneAccountByFollowingURI(ctx, account.FollowingURI)
-			},
-
-			"followers_uri": func() (*gtsmodel.Account, error) {
-				if account.FollowersURI == "" {
-					return nil, sentinelErr
-				}
-				return suite.db.GetOneAccountByFollowersURI(ctx, account.FollowersURI)
-			},
 		} {
 
 			// Clear database caches.

@@ -307,52 +307,6 @@ func (a *accountDB) GetOneAccountByOutboxURI(ctx context.Context, uri string) (*
 	)
 }
 
-func (a *accountDB) GetOneAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
-	return a.getOneAccountBy(
-		ctx,
-		"FollowersURI",
-		uri,
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
-
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.followers_uri"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return accounts, nil
-		},
-	)
-}
-
-func (a *accountDB) GetOneAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
-	return a.getOneAccountBy(
-		ctx,
-		"FollowingURI",
-		uri,
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
-
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.following_uri"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return accounts, nil
-		},
-	)
-}
-
 func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, error) {
 	var username string
 

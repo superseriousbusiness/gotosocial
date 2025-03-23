@@ -57,14 +57,6 @@ type Account interface {
 	// If more than one account has the given uri, ErrMultipleEntries will be returned.
 	GetOneAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
 
-	// GetOneAccountByFollowingURI returns one account with the given following_uri.
-	// If more than one account has the given uri, ErrMultipleEntries will be returned.
-	GetOneAccountByFollowingURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
-
-	// GetOneAccountByFollowersURI returns one account with the given followers_uri.
-	// If more than one account has the given URL, ErrMultipleEntries will be returned.
-	GetOneAccountByFollowersURI(ctx context.Context, uri string) (*gtsmodel.Account, error)
-
 	// GetAccountsByMovedToURI returns any accounts with given moved_to_uri set.
 	GetAccountsByMovedToURI(ctx context.Context, uri string) ([]*gtsmodel.Account, error)
 
