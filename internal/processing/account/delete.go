@@ -546,7 +546,7 @@ func stubbifyAccount(account *gtsmodel.Account, origin string) []string {
 		"fields",
 		"note",
 		"note_raw",
-		"memorial",
+		"memorialized_at",
 		"also_known_as_uris",
 		"moved_to_uri",
 		"discoverable",
