@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
@@ -105,6 +106,10 @@ func (p *Processor) getStatusTimeline(
 		// Compile all account mutes to useable form.
 		mutes = usermute.NewCompiledUserMuteList(allMutes)
 	}
+
+	// Ensure we have valid
+	// input paging data.
+	id.ValidatePage(page)
 
 	// ...
 	apiStatuses, lo, hi, err := timeline.Load(ctx,
