@@ -159,11 +159,6 @@ func (t *StatusTimelines) Delete(key string) {
 	}
 }
 
-// InsertInto allows you to bulk insert many statuses into timeline mapped by key.
-func (t *StatusTimelines) InsertInto(key string, statuses ...*gtsmodel.Status) {
-	t.MustGet(key).Insert(statuses...)
-}
-
 // RemoveByStatusIDs ...
 func (t *StatusTimelines) RemoveByStatusIDs(statusIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
@@ -196,6 +191,15 @@ func (t *StatusTimelines) UnprepareByAccountIDs(accountIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
 			tt.UnprepareByAccountIDs(accountIDs...)
+		}
+	}
+}
+
+// Unprepare ...
+func (t *StatusTimelines) Unprepare(key string) {
+	if p := t.ptr.Load(); p != nil {
+		if tt := (*p)[key]; tt != nil {
+			tt.UnprepareAll()
 		}
 	}
 }
@@ -270,7 +274,7 @@ func (t *StatusTimeline) Init(cap int) {
 			// ID as primary key is inherently an index.
 			// {Fields: "ID"},
 			{Fields: "AccountID", Multiple: true},
-			{Fields: "BoostOfStatusID", Multiple: true},
+			{Fields: "BoostOfID", Multiple: true},
 			{Fields: "BoostOfAccountID", Multiple: true},
 		},
 
@@ -370,7 +374,7 @@ func (t *StatusTimeline) Load(
 
 		// Before we can do any filtering, we need
 		// to load status models for cached entries.
-		err := loadStatuses(ctx, metas, loadIDs)
+		err := loadStatuses(metas, loadIDs)
 		if err != nil {
 			return nil, "", "", gtserror.Newf("error loading statuses: %w", err)
 		}
@@ -710,12 +714,16 @@ func (t *StatusTimeline) prepare(
 	return apiStatuses, nil
 }
 
-// loadStatuses ...
+// loadStatuses loads statuses using provided callback
+// for the statuses in meta slice that aren't loaded.
+// the amount very much depends on whether meta objects
+// are yet-to-be-cached (i.e. newly loaded, with status),
+// or are from the timeline cache (unloaded status).
 func loadStatuses(
-	ctx context.Context,
 	metas []*StatusMeta,
 	loadIDs func([]string) ([]*gtsmodel.Status, error),
 ) error {
+
 	// Determine which of our passed status
 	// meta objects still need statuses loading.
 	toLoadIDs := make([]string, len(metas))
