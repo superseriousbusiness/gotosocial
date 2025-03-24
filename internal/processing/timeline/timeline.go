@@ -108,12 +108,13 @@ func (p *Processor) getStatusTimeline(
 	}
 
 	// Ensure we have valid
-	// input paging data.
+	// input paging cursor.
 	id.ValidatePage(page)
 
 	// ...
 	apiStatuses, lo, hi, err := timeline.Load(ctx,
 
+		// ...
 		page,
 
 		// ...
