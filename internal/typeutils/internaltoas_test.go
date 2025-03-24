@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -100,7 +99,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
 
 	// Update zork to be a bot.
-	testAccount.Bot = util.Ptr(true)
+	testAccount.ActorType = gtsmodel.AccountActorTypeService
 	if err := suite.state.DB.UpdateAccount(context.Background(), testAccount); err != nil {
 		suite.FailNow(err.Error())
 	}

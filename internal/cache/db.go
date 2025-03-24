@@ -304,15 +304,18 @@ func (c *Caches) initAccount() {
 
 	c.DB.Account.Init(structr.CacheConfig[*gtsmodel.Account]{
 		Indices: []structr.IndexConfig{
+			// Unique fields.
 			{Fields: "ID"},
 			{Fields: "URI"},
-			{Fields: "URL"},
-			{Fields: "Username,Domain", AllowZero: true},
 			{Fields: "PublicKeyURI"},
-			{Fields: "InboxURI"},
-			{Fields: "OutboxURI"},
-			{Fields: "FollowersURI"},
-			{Fields: "FollowingURI"},
+			{Fields: "Username,Domain", AllowZero: true},
+
+			// Potentially non-unique fields.
+			{Fields: "URL", Multiple: true},
+			{Fields: "InboxURI", Multiple: true},
+			{Fields: "OutboxURI", Multiple: true},
+			{Fields: "FollowersURI", Multiple: true},
+			{Fields: "FollowingURI", Multiple: true},
 		},
 		MaxSize:    cap,
 		IgnoreErr:  ignoreErrors,

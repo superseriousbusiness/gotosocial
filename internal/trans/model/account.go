@@ -34,8 +34,6 @@ type Account struct {
 	DisplayName           string          `json:"displayName,omitempty" bun:",nullzero"`
 	Note                  string          `json:"note,omitempty" bun:",nullzero"`
 	NoteRaw               string          `json:"noteRaw,omitempty" bun:",nullzero"`
-	Memorial              *bool           `json:"memorial"`
-	Bot                   *bool           `json:"bot"`
 	Locked                *bool           `json:"locked"`
 	Discoverable          *bool           `json:"discoverable"`
 	URI                   string          `json:"uri" bun:",nullzero"`
@@ -45,7 +43,7 @@ type Account struct {
 	FollowingURI          string          `json:"followingUri" bun:",nullzero"`
 	FollowersURI          string          `json:"followersUri" bun:",nullzero"`
 	FeaturedCollectionURI string          `json:"featuredCollectionUri" bun:",nullzero"`
-	ActorType             string          `json:"actorType" bun:",nullzero"`
+	ActorType             int16           `json:"actorType" bun:",nullzero"`
 	PrivateKey            *rsa.PrivateKey `json:"-" mapstructure:"-"`
 	PrivateKeyString      string          `json:"privateKey,omitempty" mapstructure:"privateKey" bun:"-"`
 	PublicKey             *rsa.PublicKey  `json:"-" mapstructure:"-"`
