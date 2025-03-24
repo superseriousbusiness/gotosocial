@@ -66,7 +66,7 @@ codeberg.org/gruf/go-storage/s3
 # codeberg.org/gruf/go-structr v0.9.0
 ## explicit; go 1.22
 codeberg.org/gruf/go-structr
-# codeberg.org/superseriousbusiness/activity v1.12.0-gts
+# codeberg.org/superseriousbusiness/activity v1.13.0-gts
 ## explicit; go 1.21
 codeberg.org/superseriousbusiness/activity/pub
 codeberg.org/superseriousbusiness/activity/streams
@@ -202,6 +202,10 @@ codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_und
 codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_update
 codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_video
 codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_view
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_album
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_artist
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_library
+codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_track
 codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_always
 codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired
 codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby
@@ -514,7 +518,7 @@ github.com/goccy/go-json/internal/runtime
 # github.com/golang-jwt/jwt v3.2.2+incompatible
 ## explicit
 github.com/golang-jwt/jwt
-# github.com/golang-jwt/jwt/v5 v5.2.1
+# github.com/golang-jwt/jwt/v5 v5.2.2
 ## explicit; go 1.18
 github.com/golang-jwt/jwt/v5
 # github.com/golang/geo v0.0.0-20200319012246-673a6f80352d
@@ -587,7 +591,7 @@ github.com/jackc/pgpassfile
 # github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761
 ## explicit; go 1.14
 github.com/jackc/pgservicefile
-# github.com/jackc/pgx/v5 v5.7.2
+# github.com/jackc/pgx/v5 v5.7.3
 ## explicit; go 1.21
 github.com/jackc/pgx/v5
 github.com/jackc/pgx/v5/internal/iobufpool
@@ -660,8 +664,8 @@ github.com/mattn/go-isatty
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/miekg/dns v1.1.63
-## explicit; go 1.19
+# github.com/miekg/dns v1.1.64
+## explicit; go 1.22.0
 github.com/miekg/dns
 # github.com/minio/md5-simd v1.1.2
 ## explicit; go 1.14
@@ -822,11 +826,11 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/tdewolff/minify/v2 v2.21.3
-## explicit; go 1.18
+# github.com/tdewolff/minify/v2 v2.22.3
+## explicit; go 1.23.0
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.19
+# github.com/tdewolff/parse/v2 v2.7.21
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer
@@ -1092,12 +1096,12 @@ golang.org/x/image/riff
 golang.org/x/image/vp8
 golang.org/x/image/vp8l
 golang.org/x/image/webp
-# golang.org/x/mod v0.22.0
+# golang.org/x/mod v0.23.0
 ## explicit; go 1.22.0
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.36.0
+# golang.org/x/net v0.37.0
 ## explicit; go 1.23.0
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -1152,7 +1156,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.28.0
+# golang.org/x/tools v0.30.0
 ## explicit; go 1.22.0
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata
@@ -1336,7 +1340,7 @@ modernc.org/mathutil
 # modernc.org/memory v1.8.2
 ## explicit; go 1.21
 modernc.org/memory
-# modernc.org/sqlite v0.0.0-00010101000000-000000000000 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.36.0-concurrency-workaround
+# modernc.org/sqlite v0.0.0-00010101000000-000000000000 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.36.1-concurrency-workaround
 ## explicit; go 1.21
 modernc.org/sqlite
 modernc.org/sqlite/lib
@@ -1344,4 +1348,4 @@ modernc.org/sqlite/lib
 ## explicit; go 1.22.0
 mvdan.cc/xurls/v2
 # github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
-# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.36.0-concurrency-workaround
+# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.36.1-concurrency-workaround

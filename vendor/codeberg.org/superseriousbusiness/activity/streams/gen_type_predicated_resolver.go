@@ -35,6 +35,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsAdd) (bool, error):
 		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.FunkwhaleAlbum) (bool, error):
+		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsAnnounce) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.GoToSocialAnnounceApproval) (bool, error):
@@ -44,6 +46,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 	case func(context.Context, vocab.ActivityStreamsArrive) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsArticle) (bool, error):
+		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.FunkwhaleArtist) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsAudio) (bool, error):
 		// Do nothing, this predicate has a correct signature.
@@ -96,6 +100,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 	case func(context.Context, vocab.ActivityStreamsJoin) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsLeave) (bool, error):
+		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.FunkwhaleLibrary) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsLike) (bool, error):
 		// Do nothing, this predicate has a correct signature.
@@ -152,6 +158,8 @@ func NewTypePredicatedResolver(delegate Resolver, predicate interface{}) (*TypeP
 	case func(context.Context, vocab.ActivityStreamsTentativeReject) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsTombstone) (bool, error):
+		// Do nothing, this predicate has a correct signature.
+	case func(context.Context, vocab.FunkwhaleTrack) (bool, error):
 		// Do nothing, this predicate has a correct signature.
 	case func(context.Context, vocab.ActivityStreamsTravel) (bool, error):
 		// Do nothing, this predicate has a correct signature.
@@ -215,6 +223,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 		} else {
 			return false, ErrPredicateUnmatched
 		}
+	} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Album" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.FunkwhaleAlbum) (bool, error)); ok {
+			if v, ok := o.(vocab.FunkwhaleAlbum); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Announce" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsAnnounce) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsAnnounce); ok {
@@ -262,6 +281,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Article" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsArticle) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsArticle); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
+	} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Artist" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.FunkwhaleArtist) (bool, error)); ok {
+			if v, ok := o.(vocab.FunkwhaleArtist); ok {
 				predicatePasses, err = fn(ctx, v)
 			} else {
 				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -548,6 +578,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Leave" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsLeave) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsLeave); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
+	} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Library" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.FunkwhaleLibrary) (bool, error)); ok {
+			if v, ok := o.(vocab.FunkwhaleLibrary); ok {
 				predicatePasses, err = fn(ctx, v)
 			} else {
 				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -856,6 +897,17 @@ func (this TypePredicatedResolver) Apply(ctx context.Context, o ActivityStreamsI
 	} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Tombstone" {
 		if fn, ok := this.predicate.(func(context.Context, vocab.ActivityStreamsTombstone) (bool, error)); ok {
 			if v, ok := o.(vocab.ActivityStreamsTombstone); ok {
+				predicatePasses, err = fn(ctx, v)
+			} else {
+				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+				return false, errCannotTypeAssertType
+			}
+		} else {
+			return false, ErrPredicateUnmatched
+		}
+	} else if o.VocabularyURI() == "https://funkwhale.audio/ns" && o.GetTypeName() == "Track" {
+		if fn, ok := this.predicate.(func(context.Context, vocab.FunkwhaleTrack) (bool, error)); ok {
+			if v, ok := o.(vocab.FunkwhaleTrack); ok {
 				predicatePasses, err = fn(ctx, v)
 			} else {
 				// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.

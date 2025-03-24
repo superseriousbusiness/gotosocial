@@ -76,7 +76,8 @@ func IsStatusable(typeName string) bool {
 		ObjectEvent,
 		ObjectPlace,
 		ObjectProfile,
-		ActivityQuestion:
+		ActivityQuestion,
+		ObjectAlbum:
 		return true
 	default:
 		return false
@@ -226,11 +227,13 @@ type Statusable interface {
 	WithTo
 	WithCc
 	WithSensitive
-	WithConversation
 	WithContent
 	WithAttachment
 	WithTag
 	WithReplies
+}
+
+type InteractionPolicyAware interface {
 	WithInteractionPolicy
 	WithApprovedBy
 }
@@ -587,10 +590,6 @@ type WithInReplyTo interface {
 type WithSensitive interface {
 	GetActivityStreamsSensitive() vocab.ActivityStreamsSensitiveProperty
 	SetActivityStreamsSensitive(vocab.ActivityStreamsSensitiveProperty)
-}
-
-// WithConversation ...
-type WithConversation interface { // TODO
 }
 
 // WithContent represents an activity with ActivityStreamsContentProperty

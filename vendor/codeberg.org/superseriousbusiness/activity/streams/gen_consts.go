@@ -11,6 +11,9 @@ var ActivityStreamsActivityName string = "Activity"
 // ActivityStreamsAddName is the string literal of the name for the Add type in the ActivityStreams vocabulary.
 var ActivityStreamsAddName string = "Add"
 
+// FunkwhaleAlbumName is the string literal of the name for the Album type in the Funkwhale vocabulary.
+var FunkwhaleAlbumName string = "Album"
+
 // ActivityStreamsAnnounceName is the string literal of the name for the Announce type in the ActivityStreams vocabulary.
 var ActivityStreamsAnnounceName string = "Announce"
 
@@ -25,6 +28,9 @@ var ActivityStreamsArriveName string = "Arrive"
 
 // ActivityStreamsArticleName is the string literal of the name for the Article type in the ActivityStreams vocabulary.
 var ActivityStreamsArticleName string = "Article"
+
+// FunkwhaleArtistName is the string literal of the name for the Artist type in the Funkwhale vocabulary.
+var FunkwhaleArtistName string = "Artist"
 
 // ActivityStreamsAudioName is the string literal of the name for the Audio type in the ActivityStreams vocabulary.
 var ActivityStreamsAudioName string = "Audio"
@@ -103,6 +109,9 @@ var ActivityStreamsJoinName string = "Join"
 
 // ActivityStreamsLeaveName is the string literal of the name for the Leave type in the ActivityStreams vocabulary.
 var ActivityStreamsLeaveName string = "Leave"
+
+// FunkwhaleLibraryName is the string literal of the name for the Library type in the Funkwhale vocabulary.
+var FunkwhaleLibraryName string = "Library"
 
 // ActivityStreamsLikeName is the string literal of the name for the Like type in the ActivityStreams vocabulary.
 var ActivityStreamsLikeName string = "Like"
@@ -187,6 +196,9 @@ var ActivityStreamsTentativeRejectName string = "TentativeReject"
 
 // ActivityStreamsTombstoneName is the string literal of the name for the Tombstone type in the ActivityStreams vocabulary.
 var ActivityStreamsTombstoneName string = "Tombstone"
+
+// FunkwhaleTrackName is the string literal of the name for the Track type in the Funkwhale vocabulary.
+var FunkwhaleTrackName string = "Track"
 
 // ActivityStreamsTravelName is the string literal of the name for the Travel type in the ActivityStreams vocabulary.
 var ActivityStreamsTravelName string = "Travel"

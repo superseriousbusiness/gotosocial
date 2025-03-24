@@ -135,6 +135,10 @@ import (
 	typeupdate "codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_update"
 	typevideo "codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_video"
 	typeview "codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_view"
+	typealbum "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_album"
+	typeartist "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_artist"
+	typelibrary "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_library"
+	typetrack "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_track"
 	propertyalways "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_always"
 	propertyapprovalrequired "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby"
@@ -311,6 +315,10 @@ func init() {
 	typeupdate.SetManager(mgr)
 	typevideo.SetManager(mgr)
 	typeview.SetManager(mgr)
+	typealbum.SetManager(mgr)
+	typeartist.SetManager(mgr)
+	typelibrary.SetManager(mgr)
+	typetrack.SetManager(mgr)
 	propertyalways.SetManager(mgr)
 	propertyapprovalrequired.SetManager(mgr)
 	propertyapprovedby.SetManager(mgr)
@@ -395,6 +403,10 @@ func init() {
 	typeupdate.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typevideo.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeview.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typealbum.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typeartist.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typelibrary.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typetrack.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeannounceapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanannounce.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanlike.SetTypePropertyConstructor(NewJSONLDTypeProperty)

@@ -8,11 +8,11 @@ import (
 func ParseDecimal(b []byte) (float64, int) {
 	// float64 has up to 17 significant decimal digits and an exponent in [-1022,1023]
 	i := 0
-	//sign := 1.0
-	//if 0 < len(b) && b[0] == '-' {
-	//	sign = -1.0
-	//	i++
-	//}
+	sign := 1.0
+	if 0 < len(b) && b[0] == '-' {
+		sign = -1.0
+		i++
+	}
 
 	start := -1
 	dot := -1
@@ -52,17 +52,16 @@ func ParseDecimal(b []byte) (float64, int) {
 		exp++
 	}
 	if 1023 < exp {
-		return math.Inf(1), i
-		//if sign == 1.0 {
-		//	return math.Inf(1), i
-		//} else {
-		//	return math.Inf(-1), i
-		//}
+		if sign == 1.0 {
+			return math.Inf(1), i
+		} else {
+			return math.Inf(-1), i
+		}
 	} else if exp < -1022 {
 		return 0.0, i
 	}
 
-	f := float64(n) // sign * float64(n)
+	f := sign * float64(n)
 	if 0 <= exp && exp < 23 {
 		return f * float64pow10[exp], i
 	} else if 23 < exp && exp < 0 {

@@ -107,10 +107,16 @@ dockers:
     - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-amd64{{ end }}"
     build_flag_templates:
     - "--platform=linux/amd64"
-    - "--label=org.opencontainers.image.created={{.Date}}"
-    - "--label=org.opencontainers.image.title={{.ProjectName}}"
-    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.title=GoToSocial"
+    - "--label=org.opencontainers.image.authors=GoToSocial Authors"
+    - "--label=org.opencontainers.image.description=Fast, fun, small ActivityPub server."
+    - "--label=org.opencontainers.image.url=https://docs.gotosocial.org"
+    - "--label=org.opencontainers.image.documentation=https://docs.gotosocial.org/en/latest/getting_started/installation/container/"
+    - "--label=org.opencontainers.image.source=https://github.com/superseriousbusiness/gotosocial"
     - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.licenses=AGPL-3.0-or-later"
     extra_files:
     - web
     - go.mod
@@ -130,10 +136,16 @@ dockers:
     - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8{{ end }}"
     build_flag_templates:
     - "--platform=linux/arm64/v8"
-    - "--label=org.opencontainers.image.created={{.Date}}"
-    - "--label=org.opencontainers.image.title={{.ProjectName}}"
-    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.title=GoToSocial"
+    - "--label=org.opencontainers.image.authors=GoToSocial Authors"
+    - "--label=org.opencontainers.image.description=Fast, fun, small ActivityPub server."
+    - "--label=org.opencontainers.image.url=https://docs.gotosocial.org"
+    - "--label=org.opencontainers.image.documentation=https://docs.gotosocial.org/en/latest/getting_started/installation/container/"
+    - "--label=org.opencontainers.image.source=https://github.com/superseriousbusiness/gotosocial"
     - "--label=org.opencontainers.image.version={{.Version}}"
+    - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+    - "--label=org.opencontainers.image.created={{.Date}}"
+    - "--label=org.opencontainers.image.licenses=AGPL-3.0-or-later"
     extra_files:
     - web
     - go.mod
