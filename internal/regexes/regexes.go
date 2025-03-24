@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"sync"
 
-	"mvdan.cc/xurls/v2"
+	xurls "mvdan.cc/xurls/v2"
 )
 
 const (
@@ -40,7 +40,6 @@ const (
 	reports   = "reports"
 	accepts   = "accepts"
 
-	schemes                  = `(http|https)://`                                         // Allowed URI protocols for parsing links in text.
 	alphaNumeric             = `\p{L}\p{M}*|\p{N}`                                       // A single number or script character in any language, including chars with accents.
 	usernameGrp              = `(?:` + alphaNumeric + `|\.|\-|\_)`                       // Non-capturing group that matches against a single valid username character.
 	domainGrp                = `(?:` + alphaNumeric + `|\.|\-|\:)`                       // Non-capturing group that matches against a single valid domain character.
@@ -79,14 +78,9 @@ const (
 )
 
 var (
-	// LinkScheme captures http/https schemes in URLs.
-	LinkScheme = func() *regexp.Regexp {
-		rgx, err := xurls.StrictMatchingScheme(schemes)
-		if err != nil {
-			panic(err)
-		}
-		return rgx
-	}()
+	// URLLike captures anything that resembles a URL. This includes URLs
+	// with or without a scheme, and emails.
+	URLLike = xurls.Relaxed()
 
 	// MentionName captures the username and domain part from
 	// a mention string such as @whatever_user@example.org,
