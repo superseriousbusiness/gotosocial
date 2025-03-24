@@ -434,9 +434,10 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 		return nil, gtserror.SetMalformed(err)
 	}
 
-	// Status was sent to us or dereffed
-	// by us so it must be federated.
+	// Status was sent to us or dereffed by
+	// us so it must be federated and not local.
 	status.Federated = util.Ptr(true)
+	status.Local = util.Ptr(false)
 
 	// Derive interaction policy for this status.
 	status.InteractionPolicy = ap.ExtractInteractionPolicy(
@@ -446,9 +447,11 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 
 	// Set approvedByURI if present,
 	// for later dereferencing.
-	approvedByURI := ap.GetApprovedBy(statusable)
-	if approvedByURI != nil {
-		status.ApprovedByURI = approvedByURI.String()
+	if ipa, ok := statusable.(ap.InteractionPolicyAware); ok {
+		approvedByURI := ap.GetApprovedBy(ipa)
+		if approvedByURI != nil {
+			status.ApprovedByURI = approvedByURI.String()
+		}
 	}
 
 	// Assume not pending approval; this may

@@ -26,11 +26,13 @@ type ActivityStreamsClosedPropertyIterator struct {
 	activitystreamsAcceptMember                vocab.ActivityStreamsAccept
 	activitystreamsActivityMember              vocab.ActivityStreamsActivity
 	activitystreamsAddMember                   vocab.ActivityStreamsAdd
+	funkwhaleAlbumMember                       vocab.FunkwhaleAlbum
 	activitystreamsAnnounceMember              vocab.ActivityStreamsAnnounce
 	gotosocialAnnounceApprovalMember           vocab.GoToSocialAnnounceApproval
 	activitystreamsApplicationMember           vocab.ActivityStreamsApplication
 	activitystreamsArriveMember                vocab.ActivityStreamsArrive
 	activitystreamsArticleMember               vocab.ActivityStreamsArticle
+	funkwhaleArtistMember                      vocab.FunkwhaleArtist
 	activitystreamsAudioMember                 vocab.ActivityStreamsAudio
 	activitystreamsBlockMember                 vocab.ActivityStreamsBlock
 	activitystreamsCollectionMember            vocab.ActivityStreamsCollection
@@ -52,6 +54,7 @@ type ActivityStreamsClosedPropertyIterator struct {
 	activitystreamsInviteMember                vocab.ActivityStreamsInvite
 	activitystreamsJoinMember                  vocab.ActivityStreamsJoin
 	activitystreamsLeaveMember                 vocab.ActivityStreamsLeave
+	funkwhaleLibraryMember                     vocab.FunkwhaleLibrary
 	activitystreamsLikeMember                  vocab.ActivityStreamsLike
 	gotosocialLikeApprovalMember               vocab.GoToSocialLikeApproval
 	activitystreamsListenMember                vocab.ActivityStreamsListen
@@ -77,6 +80,7 @@ type ActivityStreamsClosedPropertyIterator struct {
 	activitystreamsTentativeAcceptMember       vocab.ActivityStreamsTentativeAccept
 	activitystreamsTentativeRejectMember       vocab.ActivityStreamsTentativeReject
 	activitystreamsTombstoneMember             vocab.ActivityStreamsTombstone
+	funkwhaleTrackMember                       vocab.FunkwhaleTrack
 	activitystreamsTravelMember                vocab.ActivityStreamsTravel
 	activitystreamsUndoMember                  vocab.ActivityStreamsUndo
 	activitystreamsUpdateMember                vocab.ActivityStreamsUpdate
@@ -145,6 +149,12 @@ func deserializeActivityStreamsClosedPropertyIterator(i interface{}, aliasMap ma
 				alias:                    alias,
 			}
 			return this, nil
+		} else if v, err := mgr.DeserializeAlbumFunkwhale()(m, aliasMap); err == nil {
+			this := &ActivityStreamsClosedPropertyIterator{
+				alias:                alias,
+				funkwhaleAlbumMember: v,
+			}
+			return this, nil
 		} else if v, err := mgr.DeserializeAnnounceActivityStreams()(m, aliasMap); err == nil {
 			this := &ActivityStreamsClosedPropertyIterator{
 				activitystreamsAnnounceMember: v,
@@ -173,6 +183,12 @@ func deserializeActivityStreamsClosedPropertyIterator(i interface{}, aliasMap ma
 			this := &ActivityStreamsClosedPropertyIterator{
 				activitystreamsArticleMember: v,
 				alias:                        alias,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeArtistFunkwhale()(m, aliasMap); err == nil {
+			this := &ActivityStreamsClosedPropertyIterator{
+				alias:                 alias,
+				funkwhaleArtistMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeAudioActivityStreams()(m, aliasMap); err == nil {
@@ -299,6 +315,12 @@ func deserializeActivityStreamsClosedPropertyIterator(i interface{}, aliasMap ma
 			this := &ActivityStreamsClosedPropertyIterator{
 				activitystreamsLeaveMember: v,
 				alias:                      alias,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeLibraryFunkwhale()(m, aliasMap); err == nil {
+			this := &ActivityStreamsClosedPropertyIterator{
+				alias:                  alias,
+				funkwhaleLibraryMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeLikeActivityStreams()(m, aliasMap); err == nil {
@@ -449,6 +471,12 @@ func deserializeActivityStreamsClosedPropertyIterator(i interface{}, aliasMap ma
 			this := &ActivityStreamsClosedPropertyIterator{
 				activitystreamsTombstoneMember: v,
 				alias:                          alias,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeTrackFunkwhale()(m, aliasMap); err == nil {
+			this := &ActivityStreamsClosedPropertyIterator{
+				alias:                alias,
+				funkwhaleTrackMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeTravelActivityStreams()(m, aliasMap); err == nil {
@@ -883,6 +911,30 @@ func (this ActivityStreamsClosedPropertyIterator) GetActivityStreamsView() vocab
 	return this.activitystreamsViewMember
 }
 
+// GetFunkwhaleAlbum returns the value of this property. When IsFunkwhaleAlbum
+// returns false, GetFunkwhaleAlbum will return an arbitrary value.
+func (this ActivityStreamsClosedPropertyIterator) GetFunkwhaleAlbum() vocab.FunkwhaleAlbum {
+	return this.funkwhaleAlbumMember
+}
+
+// GetFunkwhaleArtist returns the value of this property. When IsFunkwhaleArtist
+// returns false, GetFunkwhaleArtist will return an arbitrary value.
+func (this ActivityStreamsClosedPropertyIterator) GetFunkwhaleArtist() vocab.FunkwhaleArtist {
+	return this.funkwhaleArtistMember
+}
+
+// GetFunkwhaleLibrary returns the value of this property. When IsFunkwhaleLibrary
+// returns false, GetFunkwhaleLibrary will return an arbitrary value.
+func (this ActivityStreamsClosedPropertyIterator) GetFunkwhaleLibrary() vocab.FunkwhaleLibrary {
+	return this.funkwhaleLibraryMember
+}
+
+// GetFunkwhaleTrack returns the value of this property. When IsFunkwhaleTrack
+// returns false, GetFunkwhaleTrack will return an arbitrary value.
+func (this ActivityStreamsClosedPropertyIterator) GetFunkwhaleTrack() vocab.FunkwhaleTrack {
+	return this.funkwhaleTrackMember
+}
+
 // GetGoToSocialAnnounceApproval returns the value of this property. When
 // IsGoToSocialAnnounceApproval returns false, GetGoToSocialAnnounceApproval
 // will return an arbitrary value.
@@ -954,6 +1006,9 @@ func (this ActivityStreamsClosedPropertyIterator) GetType() vocab.Type {
 	if this.IsActivityStreamsAdd() {
 		return this.GetActivityStreamsAdd()
 	}
+	if this.IsFunkwhaleAlbum() {
+		return this.GetFunkwhaleAlbum()
+	}
 	if this.IsActivityStreamsAnnounce() {
 		return this.GetActivityStreamsAnnounce()
 	}
@@ -968,6 +1023,9 @@ func (this ActivityStreamsClosedPropertyIterator) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsArticle() {
 		return this.GetActivityStreamsArticle()
+	}
+	if this.IsFunkwhaleArtist() {
+		return this.GetFunkwhaleArtist()
 	}
 	if this.IsActivityStreamsAudio() {
 		return this.GetActivityStreamsAudio()
@@ -1031,6 +1089,9 @@ func (this ActivityStreamsClosedPropertyIterator) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsLeave() {
 		return this.GetActivityStreamsLeave()
+	}
+	if this.IsFunkwhaleLibrary() {
+		return this.GetFunkwhaleLibrary()
 	}
 	if this.IsActivityStreamsLike() {
 		return this.GetActivityStreamsLike()
@@ -1107,6 +1168,9 @@ func (this ActivityStreamsClosedPropertyIterator) GetType() vocab.Type {
 	if this.IsActivityStreamsTombstone() {
 		return this.GetActivityStreamsTombstone()
 	}
+	if this.IsFunkwhaleTrack() {
+		return this.GetFunkwhaleTrack()
+	}
 	if this.IsActivityStreamsTravel() {
 		return this.GetActivityStreamsTravel()
 	}
@@ -1148,11 +1212,13 @@ func (this ActivityStreamsClosedPropertyIterator) HasAny() bool {
 		this.IsActivityStreamsAccept() ||
 		this.IsActivityStreamsActivity() ||
 		this.IsActivityStreamsAdd() ||
+		this.IsFunkwhaleAlbum() ||
 		this.IsActivityStreamsAnnounce() ||
 		this.IsGoToSocialAnnounceApproval() ||
 		this.IsActivityStreamsApplication() ||
 		this.IsActivityStreamsArrive() ||
 		this.IsActivityStreamsArticle() ||
+		this.IsFunkwhaleArtist() ||
 		this.IsActivityStreamsAudio() ||
 		this.IsActivityStreamsBlock() ||
 		this.IsActivityStreamsCollection() ||
@@ -1174,6 +1240,7 @@ func (this ActivityStreamsClosedPropertyIterator) HasAny() bool {
 		this.IsActivityStreamsInvite() ||
 		this.IsActivityStreamsJoin() ||
 		this.IsActivityStreamsLeave() ||
+		this.IsFunkwhaleLibrary() ||
 		this.IsActivityStreamsLike() ||
 		this.IsGoToSocialLikeApproval() ||
 		this.IsActivityStreamsListen() ||
@@ -1199,6 +1266,7 @@ func (this ActivityStreamsClosedPropertyIterator) HasAny() bool {
 		this.IsActivityStreamsTentativeAccept() ||
 		this.IsActivityStreamsTentativeReject() ||
 		this.IsActivityStreamsTombstone() ||
+		this.IsFunkwhaleTrack() ||
 		this.IsActivityStreamsTravel() ||
 		this.IsActivityStreamsUndo() ||
 		this.IsActivityStreamsUpdate() ||
@@ -1590,6 +1658,34 @@ func (this ActivityStreamsClosedPropertyIterator) IsActivityStreamsView() bool {
 	return this.activitystreamsViewMember != nil
 }
 
+// IsFunkwhaleAlbum returns true if this property has a type of "Album". When
+// true, use the GetFunkwhaleAlbum and SetFunkwhaleAlbum methods to access and
+// set this property.
+func (this ActivityStreamsClosedPropertyIterator) IsFunkwhaleAlbum() bool {
+	return this.funkwhaleAlbumMember != nil
+}
+
+// IsFunkwhaleArtist returns true if this property has a type of "Artist". When
+// true, use the GetFunkwhaleArtist and SetFunkwhaleArtist methods to access
+// and set this property.
+func (this ActivityStreamsClosedPropertyIterator) IsFunkwhaleArtist() bool {
+	return this.funkwhaleArtistMember != nil
+}
+
+// IsFunkwhaleLibrary returns true if this property has a type of "Library". When
+// true, use the GetFunkwhaleLibrary and SetFunkwhaleLibrary methods to access
+// and set this property.
+func (this ActivityStreamsClosedPropertyIterator) IsFunkwhaleLibrary() bool {
+	return this.funkwhaleLibraryMember != nil
+}
+
+// IsFunkwhaleTrack returns true if this property has a type of "Track". When
+// true, use the GetFunkwhaleTrack and SetFunkwhaleTrack methods to access and
+// set this property.
+func (this ActivityStreamsClosedPropertyIterator) IsFunkwhaleTrack() bool {
+	return this.funkwhaleTrackMember != nil
+}
+
 // IsGoToSocialAnnounceApproval returns true if this property has a type of
 // "AnnounceApproval". When true, use the GetGoToSocialAnnounceApproval and
 // SetGoToSocialAnnounceApproval methods to access and set this property.
@@ -1674,6 +1770,8 @@ func (this ActivityStreamsClosedPropertyIterator) JSONLDContext() map[string]str
 		child = this.GetActivityStreamsActivity().JSONLDContext()
 	} else if this.IsActivityStreamsAdd() {
 		child = this.GetActivityStreamsAdd().JSONLDContext()
+	} else if this.IsFunkwhaleAlbum() {
+		child = this.GetFunkwhaleAlbum().JSONLDContext()
 	} else if this.IsActivityStreamsAnnounce() {
 		child = this.GetActivityStreamsAnnounce().JSONLDContext()
 	} else if this.IsGoToSocialAnnounceApproval() {
@@ -1684,6 +1782,8 @@ func (this ActivityStreamsClosedPropertyIterator) JSONLDContext() map[string]str
 		child = this.GetActivityStreamsArrive().JSONLDContext()
 	} else if this.IsActivityStreamsArticle() {
 		child = this.GetActivityStreamsArticle().JSONLDContext()
+	} else if this.IsFunkwhaleArtist() {
+		child = this.GetFunkwhaleArtist().JSONLDContext()
 	} else if this.IsActivityStreamsAudio() {
 		child = this.GetActivityStreamsAudio().JSONLDContext()
 	} else if this.IsActivityStreamsBlock() {
@@ -1726,6 +1826,8 @@ func (this ActivityStreamsClosedPropertyIterator) JSONLDContext() map[string]str
 		child = this.GetActivityStreamsJoin().JSONLDContext()
 	} else if this.IsActivityStreamsLeave() {
 		child = this.GetActivityStreamsLeave().JSONLDContext()
+	} else if this.IsFunkwhaleLibrary() {
+		child = this.GetFunkwhaleLibrary().JSONLDContext()
 	} else if this.IsActivityStreamsLike() {
 		child = this.GetActivityStreamsLike().JSONLDContext()
 	} else if this.IsGoToSocialLikeApproval() {
@@ -1776,6 +1878,8 @@ func (this ActivityStreamsClosedPropertyIterator) JSONLDContext() map[string]str
 		child = this.GetActivityStreamsTentativeReject().JSONLDContext()
 	} else if this.IsActivityStreamsTombstone() {
 		child = this.GetActivityStreamsTombstone().JSONLDContext()
+	} else if this.IsFunkwhaleTrack() {
+		child = this.GetFunkwhaleTrack().JSONLDContext()
 	} else if this.IsActivityStreamsTravel() {
 		child = this.GetActivityStreamsTravel().JSONLDContext()
 	} else if this.IsActivityStreamsUndo() {
@@ -1823,173 +1927,185 @@ func (this ActivityStreamsClosedPropertyIterator) KindIndex() int {
 	if this.IsActivityStreamsAdd() {
 		return 6
 	}
-	if this.IsActivityStreamsAnnounce() {
+	if this.IsFunkwhaleAlbum() {
 		return 7
 	}
-	if this.IsGoToSocialAnnounceApproval() {
+	if this.IsActivityStreamsAnnounce() {
 		return 8
 	}
-	if this.IsActivityStreamsApplication() {
+	if this.IsGoToSocialAnnounceApproval() {
 		return 9
 	}
-	if this.IsActivityStreamsArrive() {
+	if this.IsActivityStreamsApplication() {
 		return 10
 	}
-	if this.IsActivityStreamsArticle() {
+	if this.IsActivityStreamsArrive() {
 		return 11
 	}
-	if this.IsActivityStreamsAudio() {
+	if this.IsActivityStreamsArticle() {
 		return 12
 	}
-	if this.IsActivityStreamsBlock() {
+	if this.IsFunkwhaleArtist() {
 		return 13
 	}
-	if this.IsActivityStreamsCollection() {
+	if this.IsActivityStreamsAudio() {
 		return 14
 	}
-	if this.IsActivityStreamsCollectionPage() {
+	if this.IsActivityStreamsBlock() {
 		return 15
 	}
-	if this.IsActivityStreamsCreate() {
+	if this.IsActivityStreamsCollection() {
 		return 16
 	}
-	if this.IsActivityStreamsDelete() {
+	if this.IsActivityStreamsCollectionPage() {
 		return 17
 	}
-	if this.IsActivityStreamsDislike() {
+	if this.IsActivityStreamsCreate() {
 		return 18
 	}
-	if this.IsActivityStreamsDocument() {
+	if this.IsActivityStreamsDelete() {
 		return 19
 	}
-	if this.IsTootEmoji() {
+	if this.IsActivityStreamsDislike() {
 		return 20
 	}
-	if this.IsActivityStreamsEvent() {
+	if this.IsActivityStreamsDocument() {
 		return 21
 	}
-	if this.IsActivityStreamsFlag() {
+	if this.IsTootEmoji() {
 		return 22
 	}
-	if this.IsActivityStreamsFollow() {
+	if this.IsActivityStreamsEvent() {
 		return 23
 	}
-	if this.IsActivityStreamsGroup() {
+	if this.IsActivityStreamsFlag() {
 		return 24
 	}
-	if this.IsTootHashtag() {
+	if this.IsActivityStreamsFollow() {
 		return 25
 	}
-	if this.IsTootIdentityProof() {
+	if this.IsActivityStreamsGroup() {
 		return 26
 	}
-	if this.IsActivityStreamsIgnore() {
+	if this.IsTootHashtag() {
 		return 27
 	}
-	if this.IsActivityStreamsImage() {
+	if this.IsTootIdentityProof() {
 		return 28
 	}
-	if this.IsActivityStreamsIntransitiveActivity() {
+	if this.IsActivityStreamsIgnore() {
 		return 29
 	}
-	if this.IsActivityStreamsInvite() {
+	if this.IsActivityStreamsImage() {
 		return 30
 	}
-	if this.IsActivityStreamsJoin() {
+	if this.IsActivityStreamsIntransitiveActivity() {
 		return 31
 	}
-	if this.IsActivityStreamsLeave() {
+	if this.IsActivityStreamsInvite() {
 		return 32
 	}
-	if this.IsActivityStreamsLike() {
+	if this.IsActivityStreamsJoin() {
 		return 33
 	}
-	if this.IsGoToSocialLikeApproval() {
+	if this.IsActivityStreamsLeave() {
 		return 34
 	}
-	if this.IsActivityStreamsListen() {
+	if this.IsFunkwhaleLibrary() {
 		return 35
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsActivityStreamsLike() {
 		return 36
 	}
-	if this.IsActivityStreamsMove() {
+	if this.IsGoToSocialLikeApproval() {
 		return 37
 	}
-	if this.IsActivityStreamsNote() {
+	if this.IsActivityStreamsListen() {
 		return 38
 	}
-	if this.IsActivityStreamsOffer() {
+	if this.IsActivityStreamsMention() {
 		return 39
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsMove() {
 		return 40
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsNote() {
 		return 41
 	}
-	if this.IsActivityStreamsOrganization() {
+	if this.IsActivityStreamsOffer() {
 		return 42
 	}
-	if this.IsActivityStreamsPage() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 43
 	}
-	if this.IsActivityStreamsPerson() {
+	if this.IsActivityStreamsOrderedCollectionPage() {
 		return 44
 	}
-	if this.IsActivityStreamsPlace() {
+	if this.IsActivityStreamsOrganization() {
 		return 45
 	}
-	if this.IsActivityStreamsProfile() {
+	if this.IsActivityStreamsPage() {
 		return 46
 	}
-	if this.IsSchemaPropertyValue() {
+	if this.IsActivityStreamsPerson() {
 		return 47
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsActivityStreamsPlace() {
 		return 48
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsProfile() {
 		return 49
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsSchemaPropertyValue() {
 		return 50
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsActivityStreamsQuestion() {
 		return 51
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsRead() {
 		return 52
 	}
-	if this.IsGoToSocialReplyApproval() {
+	if this.IsActivityStreamsReject() {
 		return 53
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsActivityStreamsRelationship() {
 		return 54
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsRemove() {
 		return 55
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsGoToSocialReplyApproval() {
 		return 56
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsActivityStreamsService() {
 		return 57
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 58
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 59
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsTombstone() {
 		return 60
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsFunkwhaleTrack() {
 		return 61
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsTravel() {
 		return 62
+	}
+	if this.IsActivityStreamsUndo() {
+		return 63
+	}
+	if this.IsActivityStreamsUpdate() {
+		return 64
+	}
+	if this.IsActivityStreamsVideo() {
+		return 65
+	}
+	if this.IsActivityStreamsView() {
+		return 66
 	}
 	if this.IsIRI() {
 		return -2
@@ -2022,6 +2138,8 @@ func (this ActivityStreamsClosedPropertyIterator) LessThan(o vocab.ActivityStrea
 		return this.GetActivityStreamsActivity().LessThan(o.GetActivityStreamsActivity())
 	} else if this.IsActivityStreamsAdd() {
 		return this.GetActivityStreamsAdd().LessThan(o.GetActivityStreamsAdd())
+	} else if this.IsFunkwhaleAlbum() {
+		return this.GetFunkwhaleAlbum().LessThan(o.GetFunkwhaleAlbum())
 	} else if this.IsActivityStreamsAnnounce() {
 		return this.GetActivityStreamsAnnounce().LessThan(o.GetActivityStreamsAnnounce())
 	} else if this.IsGoToSocialAnnounceApproval() {
@@ -2032,6 +2150,8 @@ func (this ActivityStreamsClosedPropertyIterator) LessThan(o vocab.ActivityStrea
 		return this.GetActivityStreamsArrive().LessThan(o.GetActivityStreamsArrive())
 	} else if this.IsActivityStreamsArticle() {
 		return this.GetActivityStreamsArticle().LessThan(o.GetActivityStreamsArticle())
+	} else if this.IsFunkwhaleArtist() {
+		return this.GetFunkwhaleArtist().LessThan(o.GetFunkwhaleArtist())
 	} else if this.IsActivityStreamsAudio() {
 		return this.GetActivityStreamsAudio().LessThan(o.GetActivityStreamsAudio())
 	} else if this.IsActivityStreamsBlock() {
@@ -2074,6 +2194,8 @@ func (this ActivityStreamsClosedPropertyIterator) LessThan(o vocab.ActivityStrea
 		return this.GetActivityStreamsJoin().LessThan(o.GetActivityStreamsJoin())
 	} else if this.IsActivityStreamsLeave() {
 		return this.GetActivityStreamsLeave().LessThan(o.GetActivityStreamsLeave())
+	} else if this.IsFunkwhaleLibrary() {
+		return this.GetFunkwhaleLibrary().LessThan(o.GetFunkwhaleLibrary())
 	} else if this.IsActivityStreamsLike() {
 		return this.GetActivityStreamsLike().LessThan(o.GetActivityStreamsLike())
 	} else if this.IsGoToSocialLikeApproval() {
@@ -2124,6 +2246,8 @@ func (this ActivityStreamsClosedPropertyIterator) LessThan(o vocab.ActivityStrea
 		return this.GetActivityStreamsTentativeReject().LessThan(o.GetActivityStreamsTentativeReject())
 	} else if this.IsActivityStreamsTombstone() {
 		return this.GetActivityStreamsTombstone().LessThan(o.GetActivityStreamsTombstone())
+	} else if this.IsFunkwhaleTrack() {
+		return this.GetFunkwhaleTrack().LessThan(o.GetFunkwhaleTrack())
 	} else if this.IsActivityStreamsTravel() {
 		return this.GetActivityStreamsTravel().LessThan(o.GetActivityStreamsTravel())
 	} else if this.IsActivityStreamsUndo() {
@@ -2545,6 +2669,34 @@ func (this *ActivityStreamsClosedPropertyIterator) SetActivityStreamsView(v voca
 	this.activitystreamsViewMember = v
 }
 
+// SetFunkwhaleAlbum sets the value of this property. Calling IsFunkwhaleAlbum
+// afterwards returns true.
+func (this *ActivityStreamsClosedPropertyIterator) SetFunkwhaleAlbum(v vocab.FunkwhaleAlbum) {
+	this.clear()
+	this.funkwhaleAlbumMember = v
+}
+
+// SetFunkwhaleArtist sets the value of this property. Calling IsFunkwhaleArtist
+// afterwards returns true.
+func (this *ActivityStreamsClosedPropertyIterator) SetFunkwhaleArtist(v vocab.FunkwhaleArtist) {
+	this.clear()
+	this.funkwhaleArtistMember = v
+}
+
+// SetFunkwhaleLibrary sets the value of this property. Calling IsFunkwhaleLibrary
+// afterwards returns true.
+func (this *ActivityStreamsClosedPropertyIterator) SetFunkwhaleLibrary(v vocab.FunkwhaleLibrary) {
+	this.clear()
+	this.funkwhaleLibraryMember = v
+}
+
+// SetFunkwhaleTrack sets the value of this property. Calling IsFunkwhaleTrack
+// afterwards returns true.
+func (this *ActivityStreamsClosedPropertyIterator) SetFunkwhaleTrack(v vocab.FunkwhaleTrack) {
+	this.clear()
+	this.funkwhaleTrackMember = v
+}
+
 // SetGoToSocialAnnounceApproval sets the value of this property. Calling
 // IsGoToSocialAnnounceApproval afterwards returns true.
 func (this *ActivityStreamsClosedPropertyIterator) SetGoToSocialAnnounceApproval(v vocab.GoToSocialAnnounceApproval) {
@@ -2623,6 +2775,10 @@ func (this *ActivityStreamsClosedPropertyIterator) SetType(t vocab.Type) error {
 		this.SetActivityStreamsAdd(v)
 		return nil
 	}
+	if v, ok := t.(vocab.FunkwhaleAlbum); ok {
+		this.SetFunkwhaleAlbum(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ActivityStreamsAnnounce); ok {
 		this.SetActivityStreamsAnnounce(v)
 		return nil
@@ -2641,6 +2797,10 @@ func (this *ActivityStreamsClosedPropertyIterator) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsArticle); ok {
 		this.SetActivityStreamsArticle(v)
+		return nil
+	}
+	if v, ok := t.(vocab.FunkwhaleArtist); ok {
+		this.SetFunkwhaleArtist(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsAudio); ok {
@@ -2725,6 +2885,10 @@ func (this *ActivityStreamsClosedPropertyIterator) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsLeave); ok {
 		this.SetActivityStreamsLeave(v)
+		return nil
+	}
+	if v, ok := t.(vocab.FunkwhaleLibrary); ok {
+		this.SetFunkwhaleLibrary(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsLike); ok {
@@ -2827,6 +2991,10 @@ func (this *ActivityStreamsClosedPropertyIterator) SetType(t vocab.Type) error {
 		this.SetActivityStreamsTombstone(v)
 		return nil
 	}
+	if v, ok := t.(vocab.FunkwhaleTrack); ok {
+		this.SetFunkwhaleTrack(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ActivityStreamsTravel); ok {
 		this.SetActivityStreamsTravel(v)
 		return nil
@@ -2877,11 +3045,13 @@ func (this *ActivityStreamsClosedPropertyIterator) clear() {
 	this.activitystreamsAcceptMember = nil
 	this.activitystreamsActivityMember = nil
 	this.activitystreamsAddMember = nil
+	this.funkwhaleAlbumMember = nil
 	this.activitystreamsAnnounceMember = nil
 	this.gotosocialAnnounceApprovalMember = nil
 	this.activitystreamsApplicationMember = nil
 	this.activitystreamsArriveMember = nil
 	this.activitystreamsArticleMember = nil
+	this.funkwhaleArtistMember = nil
 	this.activitystreamsAudioMember = nil
 	this.activitystreamsBlockMember = nil
 	this.activitystreamsCollectionMember = nil
@@ -2903,6 +3073,7 @@ func (this *ActivityStreamsClosedPropertyIterator) clear() {
 	this.activitystreamsInviteMember = nil
 	this.activitystreamsJoinMember = nil
 	this.activitystreamsLeaveMember = nil
+	this.funkwhaleLibraryMember = nil
 	this.activitystreamsLikeMember = nil
 	this.gotosocialLikeApprovalMember = nil
 	this.activitystreamsListenMember = nil
@@ -2928,6 +3099,7 @@ func (this *ActivityStreamsClosedPropertyIterator) clear() {
 	this.activitystreamsTentativeAcceptMember = nil
 	this.activitystreamsTentativeRejectMember = nil
 	this.activitystreamsTombstoneMember = nil
+	this.funkwhaleTrackMember = nil
 	this.activitystreamsTravelMember = nil
 	this.activitystreamsUndoMember = nil
 	this.activitystreamsUpdateMember = nil
@@ -2956,6 +3128,8 @@ func (this ActivityStreamsClosedPropertyIterator) serialize() (interface{}, erro
 		return this.GetActivityStreamsActivity().Serialize()
 	} else if this.IsActivityStreamsAdd() {
 		return this.GetActivityStreamsAdd().Serialize()
+	} else if this.IsFunkwhaleAlbum() {
+		return this.GetFunkwhaleAlbum().Serialize()
 	} else if this.IsActivityStreamsAnnounce() {
 		return this.GetActivityStreamsAnnounce().Serialize()
 	} else if this.IsGoToSocialAnnounceApproval() {
@@ -2966,6 +3140,8 @@ func (this ActivityStreamsClosedPropertyIterator) serialize() (interface{}, erro
 		return this.GetActivityStreamsArrive().Serialize()
 	} else if this.IsActivityStreamsArticle() {
 		return this.GetActivityStreamsArticle().Serialize()
+	} else if this.IsFunkwhaleArtist() {
+		return this.GetFunkwhaleArtist().Serialize()
 	} else if this.IsActivityStreamsAudio() {
 		return this.GetActivityStreamsAudio().Serialize()
 	} else if this.IsActivityStreamsBlock() {
@@ -3008,6 +3184,8 @@ func (this ActivityStreamsClosedPropertyIterator) serialize() (interface{}, erro
 		return this.GetActivityStreamsJoin().Serialize()
 	} else if this.IsActivityStreamsLeave() {
 		return this.GetActivityStreamsLeave().Serialize()
+	} else if this.IsFunkwhaleLibrary() {
+		return this.GetFunkwhaleLibrary().Serialize()
 	} else if this.IsActivityStreamsLike() {
 		return this.GetActivityStreamsLike().Serialize()
 	} else if this.IsGoToSocialLikeApproval() {
@@ -3058,6 +3236,8 @@ func (this ActivityStreamsClosedPropertyIterator) serialize() (interface{}, erro
 		return this.GetActivityStreamsTentativeReject().Serialize()
 	} else if this.IsActivityStreamsTombstone() {
 		return this.GetActivityStreamsTombstone().Serialize()
+	} else if this.IsFunkwhaleTrack() {
+		return this.GetFunkwhaleTrack().Serialize()
 	} else if this.IsActivityStreamsTravel() {
 		return this.GetActivityStreamsTravel().Serialize()
 	} else if this.IsActivityStreamsUndo() {
@@ -3731,6 +3911,50 @@ func (this *ActivityStreamsClosedProperty) AppendActivityStreamsView(v vocab.Act
 		alias:                     this.alias,
 		myIdx:                     this.Len(),
 		parent:                    this,
+	})
+}
+
+// AppendFunkwhaleAlbum appends a Album value to the back of a list of the
+// property "closed". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsClosedProperty) AppendFunkwhaleAlbum(v vocab.FunkwhaleAlbum) {
+	this.properties = append(this.properties, &ActivityStreamsClosedPropertyIterator{
+		alias:                this.alias,
+		funkwhaleAlbumMember: v,
+		myIdx:                this.Len(),
+		parent:               this,
+	})
+}
+
+// AppendFunkwhaleArtist appends a Artist value to the back of a list of the
+// property "closed". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsClosedProperty) AppendFunkwhaleArtist(v vocab.FunkwhaleArtist) {
+	this.properties = append(this.properties, &ActivityStreamsClosedPropertyIterator{
+		alias:                 this.alias,
+		funkwhaleArtistMember: v,
+		myIdx:                 this.Len(),
+		parent:                this,
+	})
+}
+
+// AppendFunkwhaleLibrary appends a Library value to the back of a list of the
+// property "closed". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsClosedProperty) AppendFunkwhaleLibrary(v vocab.FunkwhaleLibrary) {
+	this.properties = append(this.properties, &ActivityStreamsClosedPropertyIterator{
+		alias:                  this.alias,
+		funkwhaleLibraryMember: v,
+		myIdx:                  this.Len(),
+		parent:                 this,
+	})
+}
+
+// AppendFunkwhaleTrack appends a Track value to the back of a list of the
+// property "closed". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsClosedProperty) AppendFunkwhaleTrack(v vocab.FunkwhaleTrack) {
+	this.properties = append(this.properties, &ActivityStreamsClosedPropertyIterator{
+		alias:                this.alias,
+		funkwhaleTrackMember: v,
+		myIdx:                this.Len(),
+		parent:               this,
 	})
 }
 
@@ -4812,6 +5036,74 @@ func (this *ActivityStreamsClosedProperty) InsertActivityStreamsView(idx int, v 
 	}
 }
 
+// InsertFunkwhaleAlbum inserts a Album value at the specified index for a
+// property "closed". Existing elements at that index and higher are shifted
+// back once. Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) InsertFunkwhaleAlbum(idx int, v vocab.FunkwhaleAlbum) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                this.alias,
+		funkwhaleAlbumMember: v,
+		myIdx:                idx,
+		parent:               this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertFunkwhaleArtist inserts a Artist value at the specified index for a
+// property "closed". Existing elements at that index and higher are shifted
+// back once. Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) InsertFunkwhaleArtist(idx int, v vocab.FunkwhaleArtist) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                 this.alias,
+		funkwhaleArtistMember: v,
+		myIdx:                 idx,
+		parent:                this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertFunkwhaleLibrary inserts a Library value at the specified index for a
+// property "closed". Existing elements at that index and higher are shifted
+// back once. Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) InsertFunkwhaleLibrary(idx int, v vocab.FunkwhaleLibrary) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                  this.alias,
+		funkwhaleLibraryMember: v,
+		myIdx:                  idx,
+		parent:                 this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertFunkwhaleTrack inserts a Track value at the specified index for a
+// property "closed". Existing elements at that index and higher are shifted
+// back once. Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) InsertFunkwhaleTrack(idx int, v vocab.FunkwhaleTrack) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                this.alias,
+		funkwhaleTrackMember: v,
+		myIdx:                idx,
+		parent:               this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // InsertGoToSocialAnnounceApproval inserts a AnnounceApproval value at the
 // specified index for a property "closed". Existing elements at that index
 // and higher are shifted back once. Invalidates all iterators.
@@ -5074,226 +5366,242 @@ func (this ActivityStreamsClosedProperty) Less(i, j int) bool {
 			rhs := this.properties[j].GetActivityStreamsAdd()
 			return lhs.LessThan(rhs)
 		} else if idx1 == 7 {
+			lhs := this.properties[i].GetFunkwhaleAlbum()
+			rhs := this.properties[j].GetFunkwhaleAlbum()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 8 {
 			lhs := this.properties[i].GetActivityStreamsAnnounce()
 			rhs := this.properties[j].GetActivityStreamsAnnounce()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 8 {
+		} else if idx1 == 9 {
 			lhs := this.properties[i].GetGoToSocialAnnounceApproval()
 			rhs := this.properties[j].GetGoToSocialAnnounceApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 9 {
+		} else if idx1 == 10 {
 			lhs := this.properties[i].GetActivityStreamsApplication()
 			rhs := this.properties[j].GetActivityStreamsApplication()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 10 {
+		} else if idx1 == 11 {
 			lhs := this.properties[i].GetActivityStreamsArrive()
 			rhs := this.properties[j].GetActivityStreamsArrive()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 11 {
+		} else if idx1 == 12 {
 			lhs := this.properties[i].GetActivityStreamsArticle()
 			rhs := this.properties[j].GetActivityStreamsArticle()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 12 {
+		} else if idx1 == 13 {
+			lhs := this.properties[i].GetFunkwhaleArtist()
+			rhs := this.properties[j].GetFunkwhaleArtist()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 14 {
 			lhs := this.properties[i].GetActivityStreamsAudio()
 			rhs := this.properties[j].GetActivityStreamsAudio()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 13 {
+		} else if idx1 == 15 {
 			lhs := this.properties[i].GetActivityStreamsBlock()
 			rhs := this.properties[j].GetActivityStreamsBlock()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 14 {
+		} else if idx1 == 16 {
 			lhs := this.properties[i].GetActivityStreamsCollection()
 			rhs := this.properties[j].GetActivityStreamsCollection()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 15 {
+		} else if idx1 == 17 {
 			lhs := this.properties[i].GetActivityStreamsCollectionPage()
 			rhs := this.properties[j].GetActivityStreamsCollectionPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 16 {
+		} else if idx1 == 18 {
 			lhs := this.properties[i].GetActivityStreamsCreate()
 			rhs := this.properties[j].GetActivityStreamsCreate()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 17 {
+		} else if idx1 == 19 {
 			lhs := this.properties[i].GetActivityStreamsDelete()
 			rhs := this.properties[j].GetActivityStreamsDelete()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 18 {
+		} else if idx1 == 20 {
 			lhs := this.properties[i].GetActivityStreamsDislike()
 			rhs := this.properties[j].GetActivityStreamsDislike()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 19 {
+		} else if idx1 == 21 {
 			lhs := this.properties[i].GetActivityStreamsDocument()
 			rhs := this.properties[j].GetActivityStreamsDocument()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 20 {
+		} else if idx1 == 22 {
 			lhs := this.properties[i].GetTootEmoji()
 			rhs := this.properties[j].GetTootEmoji()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 21 {
+		} else if idx1 == 23 {
 			lhs := this.properties[i].GetActivityStreamsEvent()
 			rhs := this.properties[j].GetActivityStreamsEvent()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 22 {
+		} else if idx1 == 24 {
 			lhs := this.properties[i].GetActivityStreamsFlag()
 			rhs := this.properties[j].GetActivityStreamsFlag()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 23 {
+		} else if idx1 == 25 {
 			lhs := this.properties[i].GetActivityStreamsFollow()
 			rhs := this.properties[j].GetActivityStreamsFollow()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 24 {
+		} else if idx1 == 26 {
 			lhs := this.properties[i].GetActivityStreamsGroup()
 			rhs := this.properties[j].GetActivityStreamsGroup()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 25 {
+		} else if idx1 == 27 {
 			lhs := this.properties[i].GetTootHashtag()
 			rhs := this.properties[j].GetTootHashtag()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 26 {
+		} else if idx1 == 28 {
 			lhs := this.properties[i].GetTootIdentityProof()
 			rhs := this.properties[j].GetTootIdentityProof()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 27 {
+		} else if idx1 == 29 {
 			lhs := this.properties[i].GetActivityStreamsIgnore()
 			rhs := this.properties[j].GetActivityStreamsIgnore()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 28 {
+		} else if idx1 == 30 {
 			lhs := this.properties[i].GetActivityStreamsImage()
 			rhs := this.properties[j].GetActivityStreamsImage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 29 {
+		} else if idx1 == 31 {
 			lhs := this.properties[i].GetActivityStreamsIntransitiveActivity()
 			rhs := this.properties[j].GetActivityStreamsIntransitiveActivity()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 30 {
+		} else if idx1 == 32 {
 			lhs := this.properties[i].GetActivityStreamsInvite()
 			rhs := this.properties[j].GetActivityStreamsInvite()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 31 {
+		} else if idx1 == 33 {
 			lhs := this.properties[i].GetActivityStreamsJoin()
 			rhs := this.properties[j].GetActivityStreamsJoin()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 32 {
+		} else if idx1 == 34 {
 			lhs := this.properties[i].GetActivityStreamsLeave()
 			rhs := this.properties[j].GetActivityStreamsLeave()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 33 {
+		} else if idx1 == 35 {
+			lhs := this.properties[i].GetFunkwhaleLibrary()
+			rhs := this.properties[j].GetFunkwhaleLibrary()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 36 {
 			lhs := this.properties[i].GetActivityStreamsLike()
 			rhs := this.properties[j].GetActivityStreamsLike()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 34 {
+		} else if idx1 == 37 {
 			lhs := this.properties[i].GetGoToSocialLikeApproval()
 			rhs := this.properties[j].GetGoToSocialLikeApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 35 {
+		} else if idx1 == 38 {
 			lhs := this.properties[i].GetActivityStreamsListen()
 			rhs := this.properties[j].GetActivityStreamsListen()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 36 {
+		} else if idx1 == 39 {
 			lhs := this.properties[i].GetActivityStreamsMention()
 			rhs := this.properties[j].GetActivityStreamsMention()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 37 {
+		} else if idx1 == 40 {
 			lhs := this.properties[i].GetActivityStreamsMove()
 			rhs := this.properties[j].GetActivityStreamsMove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 38 {
+		} else if idx1 == 41 {
 			lhs := this.properties[i].GetActivityStreamsNote()
 			rhs := this.properties[j].GetActivityStreamsNote()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 39 {
+		} else if idx1 == 42 {
 			lhs := this.properties[i].GetActivityStreamsOffer()
 			rhs := this.properties[j].GetActivityStreamsOffer()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 40 {
+		} else if idx1 == 43 {
 			lhs := this.properties[i].GetActivityStreamsOrderedCollection()
 			rhs := this.properties[j].GetActivityStreamsOrderedCollection()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 41 {
+		} else if idx1 == 44 {
 			lhs := this.properties[i].GetActivityStreamsOrderedCollectionPage()
 			rhs := this.properties[j].GetActivityStreamsOrderedCollectionPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 42 {
+		} else if idx1 == 45 {
 			lhs := this.properties[i].GetActivityStreamsOrganization()
 			rhs := this.properties[j].GetActivityStreamsOrganization()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 43 {
+		} else if idx1 == 46 {
 			lhs := this.properties[i].GetActivityStreamsPage()
 			rhs := this.properties[j].GetActivityStreamsPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 44 {
+		} else if idx1 == 47 {
 			lhs := this.properties[i].GetActivityStreamsPerson()
 			rhs := this.properties[j].GetActivityStreamsPerson()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 45 {
+		} else if idx1 == 48 {
 			lhs := this.properties[i].GetActivityStreamsPlace()
 			rhs := this.properties[j].GetActivityStreamsPlace()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 46 {
+		} else if idx1 == 49 {
 			lhs := this.properties[i].GetActivityStreamsProfile()
 			rhs := this.properties[j].GetActivityStreamsProfile()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 47 {
+		} else if idx1 == 50 {
 			lhs := this.properties[i].GetSchemaPropertyValue()
 			rhs := this.properties[j].GetSchemaPropertyValue()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 48 {
+		} else if idx1 == 51 {
 			lhs := this.properties[i].GetActivityStreamsQuestion()
 			rhs := this.properties[j].GetActivityStreamsQuestion()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 49 {
+		} else if idx1 == 52 {
 			lhs := this.properties[i].GetActivityStreamsRead()
 			rhs := this.properties[j].GetActivityStreamsRead()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 50 {
+		} else if idx1 == 53 {
 			lhs := this.properties[i].GetActivityStreamsReject()
 			rhs := this.properties[j].GetActivityStreamsReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 51 {
+		} else if idx1 == 54 {
 			lhs := this.properties[i].GetActivityStreamsRelationship()
 			rhs := this.properties[j].GetActivityStreamsRelationship()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 52 {
+		} else if idx1 == 55 {
 			lhs := this.properties[i].GetActivityStreamsRemove()
 			rhs := this.properties[j].GetActivityStreamsRemove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 53 {
+		} else if idx1 == 56 {
 			lhs := this.properties[i].GetGoToSocialReplyApproval()
 			rhs := this.properties[j].GetGoToSocialReplyApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 54 {
+		} else if idx1 == 57 {
 			lhs := this.properties[i].GetActivityStreamsService()
 			rhs := this.properties[j].GetActivityStreamsService()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 55 {
+		} else if idx1 == 58 {
 			lhs := this.properties[i].GetActivityStreamsTentativeAccept()
 			rhs := this.properties[j].GetActivityStreamsTentativeAccept()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 56 {
+		} else if idx1 == 59 {
 			lhs := this.properties[i].GetActivityStreamsTentativeReject()
 			rhs := this.properties[j].GetActivityStreamsTentativeReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 57 {
+		} else if idx1 == 60 {
 			lhs := this.properties[i].GetActivityStreamsTombstone()
 			rhs := this.properties[j].GetActivityStreamsTombstone()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 58 {
+		} else if idx1 == 61 {
+			lhs := this.properties[i].GetFunkwhaleTrack()
+			rhs := this.properties[j].GetFunkwhaleTrack()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 62 {
 			lhs := this.properties[i].GetActivityStreamsTravel()
 			rhs := this.properties[j].GetActivityStreamsTravel()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 59 {
+		} else if idx1 == 63 {
 			lhs := this.properties[i].GetActivityStreamsUndo()
 			rhs := this.properties[j].GetActivityStreamsUndo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 60 {
+		} else if idx1 == 64 {
 			lhs := this.properties[i].GetActivityStreamsUpdate()
 			rhs := this.properties[j].GetActivityStreamsUpdate()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 61 {
+		} else if idx1 == 65 {
 			lhs := this.properties[i].GetActivityStreamsVideo()
 			rhs := this.properties[j].GetActivityStreamsVideo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 62 {
+		} else if idx1 == 66 {
 			lhs := this.properties[i].GetActivityStreamsView()
 			rhs := this.properties[j].GetActivityStreamsView()
 			return lhs.LessThan(rhs)
@@ -6088,6 +6396,62 @@ func (this *ActivityStreamsClosedProperty) PrependActivityStreamsView(v vocab.Ac
 		alias:                     this.alias,
 		myIdx:                     0,
 		parent:                    this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependFunkwhaleAlbum prepends a Album value to the front of a list of the
+// property "closed". Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) PrependFunkwhaleAlbum(v vocab.FunkwhaleAlbum) {
+	this.properties = append([]*ActivityStreamsClosedPropertyIterator{{
+		alias:                this.alias,
+		funkwhaleAlbumMember: v,
+		myIdx:                0,
+		parent:               this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependFunkwhaleArtist prepends a Artist value to the front of a list of the
+// property "closed". Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) PrependFunkwhaleArtist(v vocab.FunkwhaleArtist) {
+	this.properties = append([]*ActivityStreamsClosedPropertyIterator{{
+		alias:                 this.alias,
+		funkwhaleArtistMember: v,
+		myIdx:                 0,
+		parent:                this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependFunkwhaleLibrary prepends a Library value to the front of a list of the
+// property "closed". Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) PrependFunkwhaleLibrary(v vocab.FunkwhaleLibrary) {
+	this.properties = append([]*ActivityStreamsClosedPropertyIterator{{
+		alias:                  this.alias,
+		funkwhaleLibraryMember: v,
+		myIdx:                  0,
+		parent:                 this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependFunkwhaleTrack prepends a Track value to the front of a list of the
+// property "closed". Invalidates all iterators.
+func (this *ActivityStreamsClosedProperty) PrependFunkwhaleTrack(v vocab.FunkwhaleTrack) {
+	this.properties = append([]*ActivityStreamsClosedPropertyIterator{{
+		alias:                this.alias,
+		funkwhaleTrackMember: v,
+		myIdx:                0,
+		parent:               this,
 	}}, this.properties...)
 	for i := 1; i < this.Len(); i++ {
 		(this.properties)[i].myIdx = i
@@ -6987,6 +7351,58 @@ func (this *ActivityStreamsClosedProperty) SetActivityStreamsView(idx int, v voc
 		alias:                     this.alias,
 		myIdx:                     idx,
 		parent:                    this,
+	}
+}
+
+// SetFunkwhaleAlbum sets a Album value to be at the specified index for the
+// property "closed". Panics if the index is out of bounds. Invalidates all
+// iterators.
+func (this *ActivityStreamsClosedProperty) SetFunkwhaleAlbum(idx int, v vocab.FunkwhaleAlbum) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                this.alias,
+		funkwhaleAlbumMember: v,
+		myIdx:                idx,
+		parent:               this,
+	}
+}
+
+// SetFunkwhaleArtist sets a Artist value to be at the specified index for the
+// property "closed". Panics if the index is out of bounds. Invalidates all
+// iterators.
+func (this *ActivityStreamsClosedProperty) SetFunkwhaleArtist(idx int, v vocab.FunkwhaleArtist) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                 this.alias,
+		funkwhaleArtistMember: v,
+		myIdx:                 idx,
+		parent:                this,
+	}
+}
+
+// SetFunkwhaleLibrary sets a Library value to be at the specified index for the
+// property "closed". Panics if the index is out of bounds. Invalidates all
+// iterators.
+func (this *ActivityStreamsClosedProperty) SetFunkwhaleLibrary(idx int, v vocab.FunkwhaleLibrary) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                  this.alias,
+		funkwhaleLibraryMember: v,
+		myIdx:                  idx,
+		parent:                 this,
+	}
+}
+
+// SetFunkwhaleTrack sets a Track value to be at the specified index for the
+// property "closed". Panics if the index is out of bounds. Invalidates all
+// iterators.
+func (this *ActivityStreamsClosedProperty) SetFunkwhaleTrack(idx int, v vocab.FunkwhaleTrack) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsClosedPropertyIterator{
+		alias:                this.alias,
+		funkwhaleTrackMember: v,
+		myIdx:                idx,
+		parent:               this,
 	}
 }
 

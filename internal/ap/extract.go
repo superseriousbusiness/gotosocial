@@ -1078,7 +1078,14 @@ func ExtractInteractionPolicy(
 	statusable Statusable,
 	owner *gtsmodel.Account,
 ) *gtsmodel.InteractionPolicy {
-	policyProp := statusable.GetGoToSocialInteractionPolicy()
+	ipa, ok := statusable.(InteractionPolicyAware)
+	if !ok {
+		// Not a type with interaction
+		// policy properties settable.
+		return nil
+	}
+
+	policyProp := ipa.GetGoToSocialInteractionPolicy()
 	if policyProp == nil || policyProp.Len() != 1 {
 		return nil
 	}

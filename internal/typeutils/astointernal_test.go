@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"testing"
 
@@ -224,8 +223,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 
 	b, err := json.Marshal(apiAcct)
 	suite.NoError(err)
-
-	fmt.Printf("\n\n\n%s\n\n\n", string(b))
+	suite.NotNil(b)
 }
 
 func (suite *ASToInternalTestSuite) TestParseBookwyrmStatus() {
@@ -280,6 +278,65 @@ func (suite *ASToInternalTestSuite) TestParseBookwyrmStatus() {
 
 	suite.Equal("Review of \"Dracula\" (5 stars): A great read, not just for codifying vampire lore, but the way it's built from letters and diaries.", status.ContentWarning)
 	suite.Len(status.Attachments, 1)
+}
+
+func (suite *ASToInternalTestSuite) TestParseBandwagonAlbum() {
+	authorAccount := suite.testAccounts["remote_account_1"]
+
+	raw := `{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    "https://w3id.org/security/v1",
+    {
+      "discoverable": "toot:discoverable",
+      "indexable": "toot:indexable",
+      "toot": "https://joinmastodon.org/ns#"
+    },
+    "https://funkwhale.audio/ns"
+  ],
+  "artists": [
+    {
+      "id": "https://bandwagon.fm/@67a0a0808121f77ed3466870",
+      "name": "Luka Prinčič",
+      "type": "Artist"
+    }
+  ],
+  "attachment": [
+    {
+      "mediaType": "image/webp",
+      "name": "image",
+      "type": "Document",
+      "url": "https://bandwagon.fm/67a0a219f050061c8b4ce427/attachments/67a0a21bf050061c8b4ce429"
+    }
+  ],
+  "attributedTo": "` + authorAccount.URI + `",
+  "content": "... a transgenre mutation, a fluid entity, jagged pop, electro-funk, techno-cabaret, a schlager, and soft alternative, queer to the core, satire and tragedy, sharp and fun indulgence for the dance of bodies and brains, activism and hedonism, which would all like to steal your attention.\r\n\r\nDRAGX̶FUNK is pronounced /dɹæɡɑːfʌŋk/.\r\n\r\n---\r\n\r\n## Buy digital\r\n💳 [Stripe](https://buy.stripe.com/6oE8x52iG1Kq5pKeV3)\r\n\r\n---\r\n\r\n## Buy dl/merch\r\n🎵 [Bandcamp](https://lukaprincic.bandcamp.com/album/dragx-funk)  \r\n\r\n---\r\n\r\n## More:\r\n🌐 [prin.lu](https://prin.lu/music/241205_dragx-funk/)  \r\n👉 [kamizdat.si](https://kamizdat.si/releases/dragx-funk-2/)\r\n",
+  "context": "https://bandwagon.fm/67a0a219f050061c8b4ce427",
+  "id": "https://bandwagon.fm/67a0a219f050061c8b4ce427",
+  "library": "https://bandwagon.fm/67a0a219f050061c8b4ce427/pub/children",
+  "license": "CC-BY-NC-SA",
+  "name": "DRAGX̶FUNK",
+  "published": "2025-03-17T11:40:53Z",
+  "to": [
+    "https://www.w3.org/ns/activitystreams#Public"
+  ],
+  "tracks": "https://bandwagon.fm/67a0a219f050061c8b4ce427/pub/children",
+  "type": "Album",
+  "url": "https://bandwagon.fm/67a0a219f050061c8b4ce427"
+}`
+
+	t := suite.jsonToType(raw)
+	asArticle, ok := t.(ap.Statusable)
+	if !ok {
+		suite.FailNow("type not coercible")
+	}
+
+	s, err := suite.typeconverter.ASStatusToStatus(context.Background(), asArticle)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.NotNil(s)
+	suite.NoError(err)
 }
 
 func (suite *ASToInternalTestSuite) TestParseFlag1() {

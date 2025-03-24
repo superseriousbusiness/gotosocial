@@ -19,11 +19,13 @@ type ActivityStreamsSubjectProperty struct {
 	activitystreamsAcceptMember                vocab.ActivityStreamsAccept
 	activitystreamsActivityMember              vocab.ActivityStreamsActivity
 	activitystreamsAddMember                   vocab.ActivityStreamsAdd
+	funkwhaleAlbumMember                       vocab.FunkwhaleAlbum
 	activitystreamsAnnounceMember              vocab.ActivityStreamsAnnounce
 	gotosocialAnnounceApprovalMember           vocab.GoToSocialAnnounceApproval
 	activitystreamsApplicationMember           vocab.ActivityStreamsApplication
 	activitystreamsArriveMember                vocab.ActivityStreamsArrive
 	activitystreamsArticleMember               vocab.ActivityStreamsArticle
+	funkwhaleArtistMember                      vocab.FunkwhaleArtist
 	activitystreamsAudioMember                 vocab.ActivityStreamsAudio
 	activitystreamsBlockMember                 vocab.ActivityStreamsBlock
 	activitystreamsCollectionMember            vocab.ActivityStreamsCollection
@@ -45,6 +47,7 @@ type ActivityStreamsSubjectProperty struct {
 	activitystreamsInviteMember                vocab.ActivityStreamsInvite
 	activitystreamsJoinMember                  vocab.ActivityStreamsJoin
 	activitystreamsLeaveMember                 vocab.ActivityStreamsLeave
+	funkwhaleLibraryMember                     vocab.FunkwhaleLibrary
 	activitystreamsLikeMember                  vocab.ActivityStreamsLike
 	gotosocialLikeApprovalMember               vocab.GoToSocialLikeApproval
 	activitystreamsListenMember                vocab.ActivityStreamsListen
@@ -70,6 +73,7 @@ type ActivityStreamsSubjectProperty struct {
 	activitystreamsTentativeAcceptMember       vocab.ActivityStreamsTentativeAccept
 	activitystreamsTentativeRejectMember       vocab.ActivityStreamsTentativeReject
 	activitystreamsTombstoneMember             vocab.ActivityStreamsTombstone
+	funkwhaleTrackMember                       vocab.FunkwhaleTrack
 	activitystreamsTravelMember                vocab.ActivityStreamsTravel
 	activitystreamsUndoMember                  vocab.ActivityStreamsUndo
 	activitystreamsUpdateMember                vocab.ActivityStreamsUpdate
@@ -138,6 +142,12 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 					alias:                    alias,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializeAlbumFunkwhale()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                alias,
+					funkwhaleAlbumMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializeAnnounceActivityStreams()(m, aliasMap); err == nil {
 				this := &ActivityStreamsSubjectProperty{
 					activitystreamsAnnounceMember: v,
@@ -166,6 +176,12 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 				this := &ActivityStreamsSubjectProperty{
 					activitystreamsArticleMember: v,
 					alias:                        alias,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeArtistFunkwhale()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                 alias,
+					funkwhaleArtistMember: v,
 				}
 				return this, nil
 			} else if v, err := mgr.DeserializeAudioActivityStreams()(m, aliasMap); err == nil {
@@ -292,6 +308,12 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 				this := &ActivityStreamsSubjectProperty{
 					activitystreamsLeaveMember: v,
 					alias:                      alias,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeLibraryFunkwhale()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                  alias,
+					funkwhaleLibraryMember: v,
 				}
 				return this, nil
 			} else if v, err := mgr.DeserializeLikeActivityStreams()(m, aliasMap); err == nil {
@@ -444,6 +466,12 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 					alias:                          alias,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializeTrackFunkwhale()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                alias,
+					funkwhaleTrackMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializeTravelActivityStreams()(m, aliasMap); err == nil {
 				this := &ActivityStreamsSubjectProperty{
 					activitystreamsTravelMember: v,
@@ -498,11 +526,13 @@ func (this *ActivityStreamsSubjectProperty) Clear() {
 	this.activitystreamsAcceptMember = nil
 	this.activitystreamsActivityMember = nil
 	this.activitystreamsAddMember = nil
+	this.funkwhaleAlbumMember = nil
 	this.activitystreamsAnnounceMember = nil
 	this.gotosocialAnnounceApprovalMember = nil
 	this.activitystreamsApplicationMember = nil
 	this.activitystreamsArriveMember = nil
 	this.activitystreamsArticleMember = nil
+	this.funkwhaleArtistMember = nil
 	this.activitystreamsAudioMember = nil
 	this.activitystreamsBlockMember = nil
 	this.activitystreamsCollectionMember = nil
@@ -524,6 +554,7 @@ func (this *ActivityStreamsSubjectProperty) Clear() {
 	this.activitystreamsInviteMember = nil
 	this.activitystreamsJoinMember = nil
 	this.activitystreamsLeaveMember = nil
+	this.funkwhaleLibraryMember = nil
 	this.activitystreamsLikeMember = nil
 	this.gotosocialLikeApprovalMember = nil
 	this.activitystreamsListenMember = nil
@@ -549,6 +580,7 @@ func (this *ActivityStreamsSubjectProperty) Clear() {
 	this.activitystreamsTentativeAcceptMember = nil
 	this.activitystreamsTentativeRejectMember = nil
 	this.activitystreamsTombstoneMember = nil
+	this.funkwhaleTrackMember = nil
 	this.activitystreamsTravelMember = nil
 	this.activitystreamsUndoMember = nil
 	this.activitystreamsUpdateMember = nil
@@ -936,6 +968,30 @@ func (this ActivityStreamsSubjectProperty) GetActivityStreamsView() vocab.Activi
 	return this.activitystreamsViewMember
 }
 
+// GetFunkwhaleAlbum returns the value of this property. When IsFunkwhaleAlbum
+// returns false, GetFunkwhaleAlbum will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetFunkwhaleAlbum() vocab.FunkwhaleAlbum {
+	return this.funkwhaleAlbumMember
+}
+
+// GetFunkwhaleArtist returns the value of this property. When IsFunkwhaleArtist
+// returns false, GetFunkwhaleArtist will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetFunkwhaleArtist() vocab.FunkwhaleArtist {
+	return this.funkwhaleArtistMember
+}
+
+// GetFunkwhaleLibrary returns the value of this property. When IsFunkwhaleLibrary
+// returns false, GetFunkwhaleLibrary will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetFunkwhaleLibrary() vocab.FunkwhaleLibrary {
+	return this.funkwhaleLibraryMember
+}
+
+// GetFunkwhaleTrack returns the value of this property. When IsFunkwhaleTrack
+// returns false, GetFunkwhaleTrack will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetFunkwhaleTrack() vocab.FunkwhaleTrack {
+	return this.funkwhaleTrackMember
+}
+
 // GetGoToSocialAnnounceApproval returns the value of this property. When
 // IsGoToSocialAnnounceApproval returns false, GetGoToSocialAnnounceApproval
 // will return an arbitrary value.
@@ -1007,6 +1063,9 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	if this.IsActivityStreamsAdd() {
 		return this.GetActivityStreamsAdd()
 	}
+	if this.IsFunkwhaleAlbum() {
+		return this.GetFunkwhaleAlbum()
+	}
 	if this.IsActivityStreamsAnnounce() {
 		return this.GetActivityStreamsAnnounce()
 	}
@@ -1021,6 +1080,9 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsArticle() {
 		return this.GetActivityStreamsArticle()
+	}
+	if this.IsFunkwhaleArtist() {
+		return this.GetFunkwhaleArtist()
 	}
 	if this.IsActivityStreamsAudio() {
 		return this.GetActivityStreamsAudio()
@@ -1084,6 +1146,9 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	}
 	if this.IsActivityStreamsLeave() {
 		return this.GetActivityStreamsLeave()
+	}
+	if this.IsFunkwhaleLibrary() {
+		return this.GetFunkwhaleLibrary()
 	}
 	if this.IsActivityStreamsLike() {
 		return this.GetActivityStreamsLike()
@@ -1160,6 +1225,9 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	if this.IsActivityStreamsTombstone() {
 		return this.GetActivityStreamsTombstone()
 	}
+	if this.IsFunkwhaleTrack() {
+		return this.GetFunkwhaleTrack()
+	}
 	if this.IsActivityStreamsTravel() {
 		return this.GetActivityStreamsTravel()
 	}
@@ -1186,11 +1254,13 @@ func (this ActivityStreamsSubjectProperty) HasAny() bool {
 		this.IsActivityStreamsAccept() ||
 		this.IsActivityStreamsActivity() ||
 		this.IsActivityStreamsAdd() ||
+		this.IsFunkwhaleAlbum() ||
 		this.IsActivityStreamsAnnounce() ||
 		this.IsGoToSocialAnnounceApproval() ||
 		this.IsActivityStreamsApplication() ||
 		this.IsActivityStreamsArrive() ||
 		this.IsActivityStreamsArticle() ||
+		this.IsFunkwhaleArtist() ||
 		this.IsActivityStreamsAudio() ||
 		this.IsActivityStreamsBlock() ||
 		this.IsActivityStreamsCollection() ||
@@ -1212,6 +1282,7 @@ func (this ActivityStreamsSubjectProperty) HasAny() bool {
 		this.IsActivityStreamsInvite() ||
 		this.IsActivityStreamsJoin() ||
 		this.IsActivityStreamsLeave() ||
+		this.IsFunkwhaleLibrary() ||
 		this.IsActivityStreamsLike() ||
 		this.IsGoToSocialLikeApproval() ||
 		this.IsActivityStreamsListen() ||
@@ -1237,6 +1308,7 @@ func (this ActivityStreamsSubjectProperty) HasAny() bool {
 		this.IsActivityStreamsTentativeAccept() ||
 		this.IsActivityStreamsTentativeReject() ||
 		this.IsActivityStreamsTombstone() ||
+		this.IsFunkwhaleTrack() ||
 		this.IsActivityStreamsTravel() ||
 		this.IsActivityStreamsUndo() ||
 		this.IsActivityStreamsUpdate() ||
@@ -1628,6 +1700,34 @@ func (this ActivityStreamsSubjectProperty) IsActivityStreamsView() bool {
 	return this.activitystreamsViewMember != nil
 }
 
+// IsFunkwhaleAlbum returns true if this property has a type of "Album". When
+// true, use the GetFunkwhaleAlbum and SetFunkwhaleAlbum methods to access and
+// set this property.
+func (this ActivityStreamsSubjectProperty) IsFunkwhaleAlbum() bool {
+	return this.funkwhaleAlbumMember != nil
+}
+
+// IsFunkwhaleArtist returns true if this property has a type of "Artist". When
+// true, use the GetFunkwhaleArtist and SetFunkwhaleArtist methods to access
+// and set this property.
+func (this ActivityStreamsSubjectProperty) IsFunkwhaleArtist() bool {
+	return this.funkwhaleArtistMember != nil
+}
+
+// IsFunkwhaleLibrary returns true if this property has a type of "Library". When
+// true, use the GetFunkwhaleLibrary and SetFunkwhaleLibrary methods to access
+// and set this property.
+func (this ActivityStreamsSubjectProperty) IsFunkwhaleLibrary() bool {
+	return this.funkwhaleLibraryMember != nil
+}
+
+// IsFunkwhaleTrack returns true if this property has a type of "Track". When
+// true, use the GetFunkwhaleTrack and SetFunkwhaleTrack methods to access and
+// set this property.
+func (this ActivityStreamsSubjectProperty) IsFunkwhaleTrack() bool {
+	return this.funkwhaleTrackMember != nil
+}
+
 // IsGoToSocialAnnounceApproval returns true if this property has a type of
 // "AnnounceApproval". When true, use the GetGoToSocialAnnounceApproval and
 // SetGoToSocialAnnounceApproval methods to access and set this property.
@@ -1698,6 +1798,8 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsActivity().JSONLDContext()
 	} else if this.IsActivityStreamsAdd() {
 		child = this.GetActivityStreamsAdd().JSONLDContext()
+	} else if this.IsFunkwhaleAlbum() {
+		child = this.GetFunkwhaleAlbum().JSONLDContext()
 	} else if this.IsActivityStreamsAnnounce() {
 		child = this.GetActivityStreamsAnnounce().JSONLDContext()
 	} else if this.IsGoToSocialAnnounceApproval() {
@@ -1708,6 +1810,8 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsArrive().JSONLDContext()
 	} else if this.IsActivityStreamsArticle() {
 		child = this.GetActivityStreamsArticle().JSONLDContext()
+	} else if this.IsFunkwhaleArtist() {
+		child = this.GetFunkwhaleArtist().JSONLDContext()
 	} else if this.IsActivityStreamsAudio() {
 		child = this.GetActivityStreamsAudio().JSONLDContext()
 	} else if this.IsActivityStreamsBlock() {
@@ -1750,6 +1854,8 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsJoin().JSONLDContext()
 	} else if this.IsActivityStreamsLeave() {
 		child = this.GetActivityStreamsLeave().JSONLDContext()
+	} else if this.IsFunkwhaleLibrary() {
+		child = this.GetFunkwhaleLibrary().JSONLDContext()
 	} else if this.IsActivityStreamsLike() {
 		child = this.GetActivityStreamsLike().JSONLDContext()
 	} else if this.IsGoToSocialLikeApproval() {
@@ -1800,6 +1906,8 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsTentativeReject().JSONLDContext()
 	} else if this.IsActivityStreamsTombstone() {
 		child = this.GetActivityStreamsTombstone().JSONLDContext()
+	} else if this.IsFunkwhaleTrack() {
+		child = this.GetFunkwhaleTrack().JSONLDContext()
 	} else if this.IsActivityStreamsTravel() {
 		child = this.GetActivityStreamsTravel().JSONLDContext()
 	} else if this.IsActivityStreamsUndo() {
@@ -1841,173 +1949,185 @@ func (this ActivityStreamsSubjectProperty) KindIndex() int {
 	if this.IsActivityStreamsAdd() {
 		return 4
 	}
-	if this.IsActivityStreamsAnnounce() {
+	if this.IsFunkwhaleAlbum() {
 		return 5
 	}
-	if this.IsGoToSocialAnnounceApproval() {
+	if this.IsActivityStreamsAnnounce() {
 		return 6
 	}
-	if this.IsActivityStreamsApplication() {
+	if this.IsGoToSocialAnnounceApproval() {
 		return 7
 	}
-	if this.IsActivityStreamsArrive() {
+	if this.IsActivityStreamsApplication() {
 		return 8
 	}
-	if this.IsActivityStreamsArticle() {
+	if this.IsActivityStreamsArrive() {
 		return 9
 	}
-	if this.IsActivityStreamsAudio() {
+	if this.IsActivityStreamsArticle() {
 		return 10
 	}
-	if this.IsActivityStreamsBlock() {
+	if this.IsFunkwhaleArtist() {
 		return 11
 	}
-	if this.IsActivityStreamsCollection() {
+	if this.IsActivityStreamsAudio() {
 		return 12
 	}
-	if this.IsActivityStreamsCollectionPage() {
+	if this.IsActivityStreamsBlock() {
 		return 13
 	}
-	if this.IsActivityStreamsCreate() {
+	if this.IsActivityStreamsCollection() {
 		return 14
 	}
-	if this.IsActivityStreamsDelete() {
+	if this.IsActivityStreamsCollectionPage() {
 		return 15
 	}
-	if this.IsActivityStreamsDislike() {
+	if this.IsActivityStreamsCreate() {
 		return 16
 	}
-	if this.IsActivityStreamsDocument() {
+	if this.IsActivityStreamsDelete() {
 		return 17
 	}
-	if this.IsTootEmoji() {
+	if this.IsActivityStreamsDislike() {
 		return 18
 	}
-	if this.IsActivityStreamsEvent() {
+	if this.IsActivityStreamsDocument() {
 		return 19
 	}
-	if this.IsActivityStreamsFlag() {
+	if this.IsTootEmoji() {
 		return 20
 	}
-	if this.IsActivityStreamsFollow() {
+	if this.IsActivityStreamsEvent() {
 		return 21
 	}
-	if this.IsActivityStreamsGroup() {
+	if this.IsActivityStreamsFlag() {
 		return 22
 	}
-	if this.IsTootHashtag() {
+	if this.IsActivityStreamsFollow() {
 		return 23
 	}
-	if this.IsTootIdentityProof() {
+	if this.IsActivityStreamsGroup() {
 		return 24
 	}
-	if this.IsActivityStreamsIgnore() {
+	if this.IsTootHashtag() {
 		return 25
 	}
-	if this.IsActivityStreamsImage() {
+	if this.IsTootIdentityProof() {
 		return 26
 	}
-	if this.IsActivityStreamsIntransitiveActivity() {
+	if this.IsActivityStreamsIgnore() {
 		return 27
 	}
-	if this.IsActivityStreamsInvite() {
+	if this.IsActivityStreamsImage() {
 		return 28
 	}
-	if this.IsActivityStreamsJoin() {
+	if this.IsActivityStreamsIntransitiveActivity() {
 		return 29
 	}
-	if this.IsActivityStreamsLeave() {
+	if this.IsActivityStreamsInvite() {
 		return 30
 	}
-	if this.IsActivityStreamsLike() {
+	if this.IsActivityStreamsJoin() {
 		return 31
 	}
-	if this.IsGoToSocialLikeApproval() {
+	if this.IsActivityStreamsLeave() {
 		return 32
 	}
-	if this.IsActivityStreamsListen() {
+	if this.IsFunkwhaleLibrary() {
 		return 33
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsActivityStreamsLike() {
 		return 34
 	}
-	if this.IsActivityStreamsMove() {
+	if this.IsGoToSocialLikeApproval() {
 		return 35
 	}
-	if this.IsActivityStreamsNote() {
+	if this.IsActivityStreamsListen() {
 		return 36
 	}
-	if this.IsActivityStreamsOffer() {
+	if this.IsActivityStreamsMention() {
 		return 37
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsMove() {
 		return 38
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsNote() {
 		return 39
 	}
-	if this.IsActivityStreamsOrganization() {
+	if this.IsActivityStreamsOffer() {
 		return 40
 	}
-	if this.IsActivityStreamsPage() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 41
 	}
-	if this.IsActivityStreamsPerson() {
+	if this.IsActivityStreamsOrderedCollectionPage() {
 		return 42
 	}
-	if this.IsActivityStreamsPlace() {
+	if this.IsActivityStreamsOrganization() {
 		return 43
 	}
-	if this.IsActivityStreamsProfile() {
+	if this.IsActivityStreamsPage() {
 		return 44
 	}
-	if this.IsSchemaPropertyValue() {
+	if this.IsActivityStreamsPerson() {
 		return 45
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsActivityStreamsPlace() {
 		return 46
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsProfile() {
 		return 47
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsSchemaPropertyValue() {
 		return 48
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsActivityStreamsQuestion() {
 		return 49
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsRead() {
 		return 50
 	}
-	if this.IsGoToSocialReplyApproval() {
+	if this.IsActivityStreamsReject() {
 		return 51
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsActivityStreamsRelationship() {
 		return 52
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsRemove() {
 		return 53
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsGoToSocialReplyApproval() {
 		return 54
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsActivityStreamsService() {
 		return 55
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 56
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 57
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsTombstone() {
 		return 58
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsFunkwhaleTrack() {
 		return 59
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsTravel() {
 		return 60
+	}
+	if this.IsActivityStreamsUndo() {
+		return 61
+	}
+	if this.IsActivityStreamsUpdate() {
+		return 62
+	}
+	if this.IsActivityStreamsVideo() {
+		return 63
+	}
+	if this.IsActivityStreamsView() {
+		return 64
 	}
 	if this.IsIRI() {
 		return -2
@@ -2036,6 +2156,8 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsActivity().LessThan(o.GetActivityStreamsActivity())
 	} else if this.IsActivityStreamsAdd() {
 		return this.GetActivityStreamsAdd().LessThan(o.GetActivityStreamsAdd())
+	} else if this.IsFunkwhaleAlbum() {
+		return this.GetFunkwhaleAlbum().LessThan(o.GetFunkwhaleAlbum())
 	} else if this.IsActivityStreamsAnnounce() {
 		return this.GetActivityStreamsAnnounce().LessThan(o.GetActivityStreamsAnnounce())
 	} else if this.IsGoToSocialAnnounceApproval() {
@@ -2046,6 +2168,8 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsArrive().LessThan(o.GetActivityStreamsArrive())
 	} else if this.IsActivityStreamsArticle() {
 		return this.GetActivityStreamsArticle().LessThan(o.GetActivityStreamsArticle())
+	} else if this.IsFunkwhaleArtist() {
+		return this.GetFunkwhaleArtist().LessThan(o.GetFunkwhaleArtist())
 	} else if this.IsActivityStreamsAudio() {
 		return this.GetActivityStreamsAudio().LessThan(o.GetActivityStreamsAudio())
 	} else if this.IsActivityStreamsBlock() {
@@ -2088,6 +2212,8 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsJoin().LessThan(o.GetActivityStreamsJoin())
 	} else if this.IsActivityStreamsLeave() {
 		return this.GetActivityStreamsLeave().LessThan(o.GetActivityStreamsLeave())
+	} else if this.IsFunkwhaleLibrary() {
+		return this.GetFunkwhaleLibrary().LessThan(o.GetFunkwhaleLibrary())
 	} else if this.IsActivityStreamsLike() {
 		return this.GetActivityStreamsLike().LessThan(o.GetActivityStreamsLike())
 	} else if this.IsGoToSocialLikeApproval() {
@@ -2138,6 +2264,8 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsTentativeReject().LessThan(o.GetActivityStreamsTentativeReject())
 	} else if this.IsActivityStreamsTombstone() {
 		return this.GetActivityStreamsTombstone().LessThan(o.GetActivityStreamsTombstone())
+	} else if this.IsFunkwhaleTrack() {
+		return this.GetFunkwhaleTrack().LessThan(o.GetFunkwhaleTrack())
 	} else if this.IsActivityStreamsTravel() {
 		return this.GetActivityStreamsTravel().LessThan(o.GetActivityStreamsTravel())
 	} else if this.IsActivityStreamsUndo() {
@@ -2178,6 +2306,8 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsActivity().Serialize()
 	} else if this.IsActivityStreamsAdd() {
 		return this.GetActivityStreamsAdd().Serialize()
+	} else if this.IsFunkwhaleAlbum() {
+		return this.GetFunkwhaleAlbum().Serialize()
 	} else if this.IsActivityStreamsAnnounce() {
 		return this.GetActivityStreamsAnnounce().Serialize()
 	} else if this.IsGoToSocialAnnounceApproval() {
@@ -2188,6 +2318,8 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsArrive().Serialize()
 	} else if this.IsActivityStreamsArticle() {
 		return this.GetActivityStreamsArticle().Serialize()
+	} else if this.IsFunkwhaleArtist() {
+		return this.GetFunkwhaleArtist().Serialize()
 	} else if this.IsActivityStreamsAudio() {
 		return this.GetActivityStreamsAudio().Serialize()
 	} else if this.IsActivityStreamsBlock() {
@@ -2230,6 +2362,8 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsJoin().Serialize()
 	} else if this.IsActivityStreamsLeave() {
 		return this.GetActivityStreamsLeave().Serialize()
+	} else if this.IsFunkwhaleLibrary() {
+		return this.GetFunkwhaleLibrary().Serialize()
 	} else if this.IsActivityStreamsLike() {
 		return this.GetActivityStreamsLike().Serialize()
 	} else if this.IsGoToSocialLikeApproval() {
@@ -2280,6 +2414,8 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsTentativeReject().Serialize()
 	} else if this.IsActivityStreamsTombstone() {
 		return this.GetActivityStreamsTombstone().Serialize()
+	} else if this.IsFunkwhaleTrack() {
+		return this.GetFunkwhaleTrack().Serialize()
 	} else if this.IsActivityStreamsTravel() {
 		return this.GetActivityStreamsTravel().Serialize()
 	} else if this.IsActivityStreamsUndo() {
@@ -2674,6 +2810,34 @@ func (this *ActivityStreamsSubjectProperty) SetActivityStreamsView(v vocab.Activ
 	this.activitystreamsViewMember = v
 }
 
+// SetFunkwhaleAlbum sets the value of this property. Calling IsFunkwhaleAlbum
+// afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetFunkwhaleAlbum(v vocab.FunkwhaleAlbum) {
+	this.Clear()
+	this.funkwhaleAlbumMember = v
+}
+
+// SetFunkwhaleArtist sets the value of this property. Calling IsFunkwhaleArtist
+// afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetFunkwhaleArtist(v vocab.FunkwhaleArtist) {
+	this.Clear()
+	this.funkwhaleArtistMember = v
+}
+
+// SetFunkwhaleLibrary sets the value of this property. Calling IsFunkwhaleLibrary
+// afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetFunkwhaleLibrary(v vocab.FunkwhaleLibrary) {
+	this.Clear()
+	this.funkwhaleLibraryMember = v
+}
+
+// SetFunkwhaleTrack sets the value of this property. Calling IsFunkwhaleTrack
+// afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetFunkwhaleTrack(v vocab.FunkwhaleTrack) {
+	this.Clear()
+	this.funkwhaleTrackMember = v
+}
+
 // SetGoToSocialAnnounceApproval sets the value of this property. Calling
 // IsGoToSocialAnnounceApproval afterwards returns true.
 func (this *ActivityStreamsSubjectProperty) SetGoToSocialAnnounceApproval(v vocab.GoToSocialAnnounceApproval) {
@@ -2752,6 +2916,10 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 		this.SetActivityStreamsAdd(v)
 		return nil
 	}
+	if v, ok := t.(vocab.FunkwhaleAlbum); ok {
+		this.SetFunkwhaleAlbum(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ActivityStreamsAnnounce); ok {
 		this.SetActivityStreamsAnnounce(v)
 		return nil
@@ -2770,6 +2938,10 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsArticle); ok {
 		this.SetActivityStreamsArticle(v)
+		return nil
+	}
+	if v, ok := t.(vocab.FunkwhaleArtist); ok {
+		this.SetFunkwhaleArtist(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsAudio); ok {
@@ -2854,6 +3026,10 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsLeave); ok {
 		this.SetActivityStreamsLeave(v)
+		return nil
+	}
+	if v, ok := t.(vocab.FunkwhaleLibrary); ok {
+		this.SetFunkwhaleLibrary(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsLike); ok {
@@ -2954,6 +3130,10 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.ActivityStreamsTombstone); ok {
 		this.SetActivityStreamsTombstone(v)
+		return nil
+	}
+	if v, ok := t.(vocab.FunkwhaleTrack); ok {
+		this.SetFunkwhaleTrack(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsTravel); ok {

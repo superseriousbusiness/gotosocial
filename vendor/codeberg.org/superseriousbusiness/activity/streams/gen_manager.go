@@ -135,6 +135,10 @@ import (
 	typeupdate "codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_update"
 	typevideo "codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_video"
 	typeview "codeberg.org/superseriousbusiness/activity/streams/impl/activitystreams/type_view"
+	typealbum "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_album"
+	typeartist "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_artist"
+	typelibrary "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_library"
+	typetrack "codeberg.org/superseriousbusiness/activity/streams/impl/funkwhale/type_track"
 	propertyalways "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_always"
 	propertyapprovalrequired "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby"
@@ -233,6 +237,18 @@ func (this Manager) DeserializeActorPropertyActivityStreams() func(map[string]in
 func (this Manager) DeserializeAddActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsAdd, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsAdd, error) {
 		i, err := typeadd.DeserializeAdd(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeAlbumFunkwhale returns the deserialization method for the
+// "FunkwhaleAlbum" non-functional property in the vocabulary "Funkwhale"
+func (this Manager) DeserializeAlbumFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleAlbum, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.FunkwhaleAlbum, error) {
+		i, err := typealbum.DeserializeAlbum(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -376,6 +392,18 @@ func (this Manager) DeserializeArriveActivityStreams() func(map[string]interface
 func (this Manager) DeserializeArticleActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsArticle, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsArticle, error) {
 		i, err := typearticle.DeserializeArticle(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeArtistFunkwhale returns the deserialization method for the
+// "FunkwhaleArtist" non-functional property in the vocabulary "Funkwhale"
+func (this Manager) DeserializeArtistFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleArtist, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.FunkwhaleArtist, error) {
+		i, err := typeartist.DeserializeArtist(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -1212,6 +1240,18 @@ func (this Manager) DeserializeLatitudePropertyActivityStreams() func(map[string
 func (this Manager) DeserializeLeaveActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsLeave, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsLeave, error) {
 		i, err := typeleave.DeserializeLeave(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeLibraryFunkwhale returns the deserialization method for the
+// "FunkwhaleLibrary" non-functional property in the vocabulary "Funkwhale"
+func (this Manager) DeserializeLibraryFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleLibrary, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.FunkwhaleLibrary, error) {
+		i, err := typelibrary.DeserializeLibrary(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
@@ -2122,6 +2162,18 @@ func (this Manager) DeserializeTombstoneActivityStreams() func(map[string]interf
 func (this Manager) DeserializeTotalItemsPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsTotalItemsProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsTotalItemsProperty, error) {
 		i, err := propertytotalitems.DeserializeTotalItemsProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeTrackFunkwhale returns the deserialization method for the
+// "FunkwhaleTrack" non-functional property in the vocabulary "Funkwhale"
+func (this Manager) DeserializeTrackFunkwhale() func(map[string]interface{}, map[string]string) (vocab.FunkwhaleTrack, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.FunkwhaleTrack, error) {
+		i, err := typetrack.DeserializeTrack(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}
