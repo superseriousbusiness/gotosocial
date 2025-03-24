@@ -22,7 +22,7 @@ import (
 	"regexp"
 	"sync"
 
-	"mvdan.cc/xurls/v2"
+	xurls "mvdan.cc/xurls/v2"
 )
 
 const (
@@ -78,9 +78,9 @@ const (
 )
 
 var (
-	// URL captures anything that looks like a URL. This includes
-	// URLs without a scheme, based on a built-in list of TLDs.
-	URL = xurls.Relaxed()
+	// URLLike captures anything that resembles a URL. This includes URLs
+	// with or without a scheme, and emails.
+	URLLike = xurls.Relaxed()
 
 	// MentionName captures the username and domain part from
 	// a mention string such as @whatever_user@example.org,
