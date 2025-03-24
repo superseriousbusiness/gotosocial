@@ -1,5 +1,5 @@
 # Use this image to build the executable
-FROM golang:1.18-alpine AS build
+FROM golang:1.24-alpine AS build
 
 WORKDIR /go/src/github.com/tdewolff/minify
 COPY . /go/src/github.com/tdewolff/minify/

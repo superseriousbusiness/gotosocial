@@ -822,11 +822,11 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/tdewolff/minify/v2 v2.21.3
-## explicit; go 1.18
+# github.com/tdewolff/minify/v2 v2.22.3
+## explicit; go 1.23.0
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.19
+# github.com/tdewolff/parse/v2 v2.7.21
 ## explicit; go 1.13
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer

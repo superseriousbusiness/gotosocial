@@ -534,7 +534,7 @@ func DecodeURL(b []byte) []byte {
 					c = c<<4 + int(b[j]-'a') + 10
 				}
 			}
-			if j == i+3 && c < 128 {
+			if j == i+3 {
 				b[i] = byte(c)
 				b = append(b[:i+1], b[i+3:]...)
 			}
