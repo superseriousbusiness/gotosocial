@@ -392,7 +392,7 @@ func (t *StatusTimeline) Load(
 	var filtered []*StatusMeta
 
 	// Check whether loaded enough from cache.
-	if need := len(metas) - lim; need > 0 {
+	if need := lim - len(metas); need > 0 {
 
 		// Use a copy of current page so
 		// we can repeatedly update it.
@@ -661,31 +661,11 @@ func (t *StatusTimeline) prepare(
 		panic("nil prepare fn")
 	}
 
-	// Iterate the given StatusMeta objects for pre-prepared frontend
-	// models, otherwise storing as unprepared for further processing.
-	apiStatuses := make([]*apimodel.Status, len(meta))
+	// Iterate the given StatusMeta objects for pre-prepared
+	// frontend models, otherwise attempting to prepare them.
+	apiStatuses := make([]*apimodel.Status, 0, len(meta))
 	unprepared := make([]*StatusMeta, 0, len(meta))
-	for i, meta := range meta {
-		apiStatuses[i] = meta.prepared
-		if meta.prepared == nil {
-			unprepared = append(unprepared, meta)
-		}
-	}
-
-	// If there were no unprepared
-	// StatusMeta objects, then we
-	// gathered everything we can!
-	if len(unprepared) == 0 {
-		return apiStatuses, nil
-	}
-
-	// By this point all status objects should
-	// be fully populated with loaded models,
-	// since they are required for filtering.
-	for i := 0; i < len(unprepared); {
-
-		// Get meta at index.
-		meta := unprepared[i]
+	for _, meta := range meta {
 
 		if meta.loaded == nil {
 			// We failed loading this
@@ -693,23 +673,35 @@ func (t *StatusTimeline) prepare(
 			continue
 		}
 
-		// Prepare the provided status to frontend.
-		apiStatus, err := prepareAPI(meta.loaded)
-		if err != nil {
-			log.Errorf(ctx, "error preparing status %s: %v", meta.loaded.URI, err)
-			continue
+		if meta.prepared == nil {
+			var err error
+
+			// Prepare the provided status to frontend.
+			meta.prepared, err = prepareAPI(meta.loaded)
+			if err != nil {
+				log.Errorf(ctx, "error preparing status %s: %v", meta.loaded.URI, err)
+				continue
+			}
+
+			// Add this meta to list of unprepared,
+			// for later re-caching in the timeline.
+			unprepared = append(unprepared, meta)
 		}
 
-		if apiStatus != nil {
+		if meta.prepared != nil {
 			// TODO: we won't need nil check when mutes
 			// / filters are moved to appropriate funcs.
-			apiStatuses = append(apiStatuses, apiStatus)
+			//
+			// Add the prepared API model to return slice.
+			apiStatuses = append(apiStatuses, meta.prepared)
 		}
 	}
 
-	// Re-insert all (previously) unprepared
-	// status meta types into timeline cache.
-	t.cache.Insert(unprepared...)
+	if len(unprepared) != 0 {
+		// Re-insert all (previously) unprepared
+		// status meta types into timeline cache.
+		t.cache.Insert(unprepared...)
+	}
 
 	return apiStatuses, nil
 }
