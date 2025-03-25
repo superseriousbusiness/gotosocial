@@ -157,7 +157,7 @@ func (t *timelineDB) GetLocalTimeline(ctx context.Context, page *paging.Page) ([
 
 		func(q *bun.SelectQuery) (*bun.SelectQuery, error) {
 			// Local only.
-			q = q.Where("? = ?", bun.Ident("status.local"), true)
+			q = q.Where("? = ?", bun.Ident("local"), true)
 
 			// Public only.
 			q = q.Where("? = ?", bun.Ident("visibility"), gtsmodel.VisibilityPublic)
@@ -263,10 +263,10 @@ func (t *timelineDB) GetListTimeline(ctx context.Context, listID string, page *p
 			// Select target account
 			// IDs from list follows.
 			subQ := t.db.NewSelect().
-				TableExpr("? AS ?", bun.Ident("follows"), bun.Ident("follow")).
-				Column("follow.target_account_id").
-				Where("? IN (?)", bun.Ident("follow.id"), bun.In(followIDs))
-			q = q.Where("? IN (?)", bun.Ident("status.account_id"), subQ)
+				Table("follows").
+				Column("follows.target_account_id").
+				Where("? IN (?)", bun.Ident("follows.id"), bun.In(followIDs))
+			q = q.Where("? IN (?)", bun.Ident("statuses.account_id"), subQ)
 
 			// Only include statuses that aren't pending approval.
 			q = q.Where("NOT ? = ?", bun.Ident("pending_approval"), true)
@@ -291,14 +291,14 @@ func (t *timelineDB) GetTagTimeline(ctx context.Context, tagID string, page *pag
 			q = q.Join(
 				"INNER JOIN ? ON ? = ?",
 				bun.Ident("status_to_tags"),
-				bun.Ident("status.id"), bun.Ident("status_to_tags.status_id"),
+				bun.Ident("statuses.id"), bun.Ident("status_to_tags.status_id"),
 			)
 
 			// This tag only.
 			q = q.Where("? = ?", bun.Ident("status_to_tags.tag_id"), tagID)
 
 			// Public only.
-			q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
+			q = q.Where("? = ?", bun.Ident("visibility"), gtsmodel.VisibilityPublic)
 
 			return q, nil
 		},
@@ -349,11 +349,10 @@ func loadStatusTimelinePage(
 		return nil, err
 	}
 
-	// Set ordering.
-	switch order {
-	case paging.OrderAscending:
+	// Set query ordering.
+	if order.Ascending() {
 		q = q.OrderExpr("? ASC", bun.Ident("id"))
-	case paging.OrderDescending:
+	} else /* i.e. descending */ {
 		q = q.OrderExpr("? DESC", bun.Ident("id"))
 	}
 
@@ -368,8 +367,8 @@ func loadStatusTimelinePage(
 
 	// The order we return from the database and
 	// timeline caches differs depending on ordering,
-	// but the caller always expected DESCENDING.
-	if page.GetOrder() == paging.OrderAscending {
+	// but the caller always expects DESCENDING.
+	if order.Ascending() {
 		slices.Reverse(statusIDs)
 	}
 
