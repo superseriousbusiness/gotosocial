@@ -72,7 +72,7 @@ func (p *Processor) ListTimelineGet(
 		requester,
 
 		// Keyed-by-list-ID, list timeline cache.
-		p.state.Caches.Timelines.List.MustGet(requester.ID),
+		p.state.Caches.Timelines.List.MustGet(list.ID),
 
 		// Current
 		// page.
