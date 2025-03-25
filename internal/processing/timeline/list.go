@@ -72,7 +72,7 @@ func (p *Processor) ListTimelineGet(
 		requester,
 
 		// Keyed-by-list-ID, list timeline cache.
-		p.state.Caches.Timelines.List.MustGet(list.ID),
+		p.state.Caches.Timelines.List.MustGet(listID),
 
 		// Current
 		// page.
@@ -90,7 +90,7 @@ func (p *Processor) ListTimelineGet(
 
 		// Database load function.
 		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
-			return p.state.DB.GetListTimeline(ctx, requester.ID, pg)
+			return p.state.DB.GetListTimeline(ctx, listID, pg)
 		},
 
 		// Pre-filtering function,
