@@ -66,8 +66,8 @@ func (p *Processor) getStatusTimeline(
 	requester *gtsmodel.Account,
 	timeline *timeline.StatusTimeline,
 	page *paging.Page,
-	pgPath string, // timeline page path
-	pgQuery url.Values, // timeline query parameters
+	pagePath string,
+	pageQuery url.Values,
 	filterCtx statusfilter.FilterContext,
 	loadPage func(*paging.Page) (statuses []*gtsmodel.Status, err error),
 	preFilter func(*gtsmodel.Status) (bool, error),
@@ -153,12 +153,17 @@ func (p *Processor) getStatusTimeline(
 		return nil, gtserror.WrapWithCode(http.StatusInternalServerError, err)
 	}
 
+	// Check for empty response.
+	if len(apiStatuses) == 0 {
+		return paging.EmptyResponse(), nil
+	}
+
 	// Package returned API statuses as pageable response.
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: xslices.ToAny(apiStatuses),
-		Path:  pgPath,
+		Path:  pagePath,
 		Next:  page.Next(lo, hi),
 		Prev:  page.Prev(lo, hi),
-		Query: pgQuery,
+		Query: pageQuery,
 	}), nil
 }

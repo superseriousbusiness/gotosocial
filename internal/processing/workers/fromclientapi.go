@@ -371,7 +371,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -413,7 +413,7 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg *messages.FromClien
 	}
 
 	// Interaction counts changed on the source status, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+	p.surface.invalidateStatusFromTimelines(vote.Poll.StatusID)
 
 	return nil
 }
@@ -565,7 +565,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
+	p.surface.invalidateStatusFromTimelines(fave.StatusID)
 
 	return nil
 }
@@ -671,7 +671,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
@@ -722,7 +722,7 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 	}
 
 	// Status representation has changed, invalidate from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(status.ID)
 
 	return nil
 }
@@ -875,7 +875,7 @@ func (p *clientAPI) UndoFave(ctx context.Context, cMsg *messages.FromClientAPI) 
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
+	p.surface.invalidateStatusFromTimelines(statusFave.StatusID)
 
 	return nil
 }
@@ -895,9 +895,8 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
-	if err := p.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
-		log.Errorf(ctx, "error removing timelined status: %v", err)
-	}
+	// Delete the boost wrapper status from timelines.
+	p.surface.deleteStatusFromTimelines(ctx, status.ID)
 
 	if err := p.federate.UndoAnnounce(ctx, status); err != nil {
 		log.Errorf(ctx, "error federating announce undo: %v", err)
@@ -905,7 +904,7 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(status.BoostOfID)
 
 	return nil
 }
@@ -968,7 +967,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -1154,7 +1153,7 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, req.Like.StatusID)
+	p.surface.invalidateStatusFromTimelines(req.Like.StatusID)
 
 	return nil
 }
@@ -1187,7 +1186,7 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 
 	// Interaction counts changed on the replied status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, reply.InReplyToID)
+	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -1225,7 +1224,7 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 
 	// Interaction counts changed on the original status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
