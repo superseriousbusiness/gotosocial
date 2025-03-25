@@ -38,7 +38,9 @@ type TimelineCaches struct {
 }
 
 func (c *Caches) initHomeTimelines() {
-	cap := 1000
+	// Per-user cache
+	// so use smaller.
+	cap := 400
 
 	log.Infof(nil, "cache size = %d", cap)
 
@@ -46,7 +48,9 @@ func (c *Caches) initHomeTimelines() {
 }
 
 func (c *Caches) initListTimelines() {
-	cap := 1000
+	// Per-user cache
+	// so use smaller.
+	cap := 400
 
 	log.Infof(nil, "cache size = %d", cap)
 
@@ -54,7 +58,9 @@ func (c *Caches) initListTimelines() {
 }
 
 func (c *Caches) initPublicTimeline() {
-	cap := 1000
+	// Global cache so
+	// allow larger.
+	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
 
@@ -62,7 +68,9 @@ func (c *Caches) initPublicTimeline() {
 }
 
 func (c *Caches) initLocalTimeline() {
-	cap := 1000
+	// Global cache so
+	// allow larger.
+	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
 
