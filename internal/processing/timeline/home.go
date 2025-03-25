@@ -44,7 +44,7 @@ func (p *Processor) HomeTimelineGet(
 		// account.
 		requester,
 
-		// Per-account home timeline cache.
+		// Keyed-by-account-ID, home timeline cache.
 		p.state.Caches.Timelines.Home.MustGet(requester.ID),
 
 		// Current
