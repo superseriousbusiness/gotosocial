@@ -71,7 +71,7 @@ func (p *Processor) ListTimelineGet(
 		// account.
 		requester,
 
-		// Per-account home timeline cache.
+		// Keyed-by-list-ID, list timeline cache.
 		p.state.Caches.Timelines.List.MustGet(requester.ID),
 
 		// Current
