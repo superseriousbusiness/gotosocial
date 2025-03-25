@@ -25,12 +25,12 @@ import (
 )
 
 const (
-	// BasePath is the base URI path for this module, minus the 'api' prefix
-	BasePath = "/v1/user"
-	// PasswordChangePath is the path for POSTing a password change request.
-	PasswordChangePath = BasePath + "/password_change"
-	// EmailChangePath is the path for POSTing an email address change request.
-	EmailChangePath = BasePath + "/email_change"
+	BasePath            = "/v1/user"
+	PasswordChangePath  = BasePath + "/password_change"
+	EmailChangePath     = BasePath + "/email_change"
+	TwoFactorPath       = BasePath + "/2fa"
+	TwoFactorQRCodePath = TwoFactorPath + "/qr.png"
+	TwoFactorEnablePath = TwoFactorPath + "/enable"
 )
 
 type Module struct {
@@ -47,4 +47,6 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodGet, BasePath, m.UserGETHandler)
 	attachHandler(http.MethodPost, PasswordChangePath, m.PasswordChangePOSTHandler)
 	attachHandler(http.MethodPost, EmailChangePath, m.EmailChangePOSTHandler)
+	attachHandler(http.MethodGet, TwoFactorQRCodePath, m.TwoFactorQRCodeGETHandler)
+	attachHandler(http.MethodPost, TwoFactorEnablePath, m.TwoFactorEnablePOSTHandler)
 }
