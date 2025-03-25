@@ -172,15 +172,11 @@ func (u *utils) wipeStatus(
 		}
 
 		// Remove the boost from any and all timelines.
-		if err := u.surface.deleteStatusFromTimelines(ctx, boost.ID); err != nil {
-			errs.Appendf("error deleting boost from timelines: %w", err)
-		}
+		u.surface.deleteStatusFromTimelines(ctx, boost.ID)
 	}
 
 	// Delete the status itself from any and all timelines.
-	if err := u.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
-		errs.Appendf("error deleting status from timelines: %w", err)
-	}
+	u.surface.deleteStatusFromTimelines(ctx, status.ID)
 
 	// Delete this status from any conversations it's part of.
 	if err := u.state.DB.DeleteStatusFromConversations(ctx, status.ID); err != nil {

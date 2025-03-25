@@ -531,18 +531,21 @@ func (s *Surface) tagFollowersForStatus(
 
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
-func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) error {
+func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) {
+	s.State.Caches.Timelines.Public.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.Local.RemoveByStatusIDs(statusID)
 	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
 	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
 	s.Stream.Delete(ctx, statusID)
-	return nil
 }
 
 // invalidateStatusFromTimelines does cache invalidation on the given status by
 // unpreparing it from all timelines, forcing it to be prepared again (with updated
 // stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
 // both for the status itself, and for any boosts of the status.
-func (s *Surface) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
+func (s *Surface) invalidateStatusFromTimelines(statusID string) {
+	s.State.Caches.Timelines.Public.UnprepareByStatusIDs(statusID)
+	s.State.Caches.Timelines.Local.UnprepareByStatusIDs(statusID)
 	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
 	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
 }
