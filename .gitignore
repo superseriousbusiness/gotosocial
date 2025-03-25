@@ -4,6 +4,10 @@
 # exclude built documentation, since readthedocs will build it for us anyway
 /docs/_build
 
+# exclude kim's commonly used
+# test stdout file location
+test.out
+
 # exclude coverage report
 cp.out
 
