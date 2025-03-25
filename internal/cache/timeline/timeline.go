@@ -41,13 +41,10 @@ func nextPageParams(
 }
 
 // toDirection converts page order to timeline direction.
-func toDirection(o paging.Order) structr.Direction {
-	switch o {
-	case paging.OrderAscending:
+func toDirection(order paging.Order) structr.Direction {
+	if order.Ascending() {
 		return structr.Asc
-	case paging.OrderDescending:
+	} else /* i.e. descending */ {
 		return structr.Desc
-	default:
-		return false
 	}
 }

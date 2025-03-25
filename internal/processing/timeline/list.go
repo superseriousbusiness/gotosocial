@@ -50,7 +50,7 @@ func (p *Processor) ListTimelineGet(
 	}
 
 	// Check exists.
-	if list != nil {
+	if list == nil {
 		const text = "list not found"
 		return nil, gtserror.NewErrorNotFound(
 			errors.New(text),

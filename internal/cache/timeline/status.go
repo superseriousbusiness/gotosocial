@@ -340,8 +340,8 @@ func (t *StatusTimeline) Load(
 	}
 
 	// Get paging details.
-	min := page.Min.Value
-	max := page.Max.Value
+	lo := page.Min.Value
+	hi := page.Max.Value
 	lim := page.Limit
 	ord := page.Order()
 	dir := toDirection(ord)
@@ -350,19 +350,21 @@ func (t *StatusTimeline) Load(
 	// metadata entries from the timeline
 	// cache, up to given limit.
 	metas := t.cache.Select(
-		util.PtrIf(min),
-		util.PtrIf(max),
+		util.PtrIf(lo),
+		util.PtrIf(hi),
 		util.PtrIf(lim),
 		dir,
 	)
 
-	// Set the starting lo / hi ID paging
-	// values. We continually update these
-	// for further timeline selections and
-	// for returning final next / prev pgs.
-	lo, hi := min, max
-
 	if len(metas) > 0 {
+		// We ALWAYS return and work on
+		// statuses in DESC order, but the
+		// timeline cache returns statuses
+		// in the *requested* order.
+		if dir == structr.Asc {
+			slices.Reverse(metas)
+		}
+
 		// Update paging values
 		// based on returned data.
 		lo, hi = nextPageParams(
@@ -466,17 +468,63 @@ func (t *StatusTimeline) Load(
 		}
 	}
 
-	// Using meta and funcs, prepare frontend API models.
-	apiStatuses, err := t.prepare(ctx, metas, prepareAPI)
-	if err != nil {
-		return nil, "", "", gtserror.Newf("error preparing api statuses: %w", err)
+	// Reset the lo, hi paging parameters,
+	// so we can set the final return vals.
+	lo, hi = "", ""
+
+	// Returned frontend API models.
+	var apiStatuses []*apimodel.Status
+	if len(metas) > 0 {
+		var err error
+
+		// Using meta and funcs, prepare frontend API models.
+		apiStatuses, err = t.prepare(ctx, metas, prepareAPI)
+		if err != nil {
+			return nil, "", "", gtserror.Newf("error preparing api statuses: %w", err)
+		}
+
+		// Get lo / hi from meta.
+		lo = metas[len(metas)-1].ID
+		hi = metas[0].ID
 	}
 
-	// Even if we don't return them, insert
-	// the excess (post-filtered) into cache.
-	t.cache.Insert(filtered...)
+	if len(filtered) > 0 {
+		// Even if we don't return them, insert
+		// the excess (post-filtered) into cache.
+		t.cache.Insert(filtered...)
+
+		// Check filtered values for lo / hi values.
+		lo = minIf(lo, filtered[len(filtered)-1].ID)
+		hi = maxIf(hi, filtered[0].ID)
+	}
 
 	return apiStatuses, lo, hi, nil
+}
+
+func minIf(id1, id2 string) string {
+	switch {
+	case id1 == "":
+		return id2
+	case id2 == "":
+		return id1
+	case id1 < id2:
+		return id1
+	default:
+		return id2
+	}
+}
+
+func maxIf(id1, id2 string) string {
+	switch {
+	case id1 == "":
+		return id2
+	case id2 == "":
+		return id1
+	case id1 > id2:
+		return id1
+	default:
+		return id2
+	}
 }
 
 // InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
