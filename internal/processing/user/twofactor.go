@@ -38,6 +38,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"golang.org/x/crypto/bcrypt"
 )
 
 var b32NoPadding = base32.StdEncoding.WithPadding(base32.NoPadding)
@@ -191,9 +192,28 @@ func (p *Processor) TwoFactorEnable(
 	// Valid code was provided so we
 	// should turn 2fa on for this user.
 	user.TwoFactorEnabledAt = time.Now()
-	user.TwoFactorBackups = make([]string, 8)
+
+	// Create recovery codes in cleartext
+	// to show to the user ONCE ONLY.
+	backupsClearText := make([]string, 8)
 	for i := 0; i < 8; i++ {
-		user.TwoFactorBackups[i] = uuid.NewString()
+		backupsClearText[i] = uuid.NewString()
+	}
+
+	// Store only the bcrypt-encrypted
+	// versions of the recovery codes.
+	user.TwoFactorBackups = make([]string, 8)
+	for i, backup := range backupsClearText {
+		encryptedBackup, err := bcrypt.GenerateFromPassword(
+			[]byte(backup),
+			bcrypt.DefaultCost,
+		)
+		if err != nil {
+			err := gtserror.Newf("error encrypting backup codes: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		user.TwoFactorBackups[i] = string(encryptedBackup)
 	}
 
 	if err := p.state.DB.UpdateUser(
@@ -206,5 +226,43 @@ func (p *Processor) TwoFactorEnable(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	return user.TwoFactorBackups, nil
+	return backupsClearText, nil
+}
+
+func (p *Processor) TwoFactorDisable(
+	ctx context.Context,
+	user *gtsmodel.User,
+	password string,
+) gtserror.WithCode {
+	if !user.TwoFactorEnabled() {
+		// Already not enabled,
+		// just return OK.
+		return nil
+	}
+
+	// Ensure provided password is correct.
+	if err := bcrypt.CompareHashAndPassword(
+		[]byte(user.EncryptedPassword),
+		[]byte(password),
+	); err != nil {
+		const errText = "incorrect password"
+		return gtserror.NewErrorUnauthorized(errors.New(errText), errText)
+	}
+
+	// Disable 2fa for this user.
+	user.TwoFactorEnabledAt = time.Time{}
+	user.TwoFactorSecret = ""
+	user.TwoFactorBackups = nil
+	if err := p.state.DB.UpdateUser(
+		ctx,
+		user,
+		"two_factor_enabled_at",
+		"two_factor_secret",
+		"two_factor_backups",
+	); err != nil {
+		err := gtserror.Newf("db error updating user: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	return nil
 }
