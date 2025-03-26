@@ -29,14 +29,14 @@ import (
 // on the paging order, the cursor value gets
 // updated while maintaining the boundary value.
 func nextPageParams(
-	curLo, curHi string,
+	page *paging.Page,
 	nextLo, nextHi string,
 	order paging.Order,
-) (lo string, hi string) {
+) {
 	if order.Ascending() {
-		return nextLo, curHi
+		page.Min.Value = nextLo
 	} else /* i.e. descending */ { //nolint:revive
-		return curLo, nextHi
+		page.Max.Value = nextHi
 	}
 }
 
