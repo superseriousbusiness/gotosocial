@@ -36,7 +36,7 @@ func nextPageParams(
 	if order.Ascending() {
 		return nextLo, curHi
 	} else /* i.e. descending */ {
-		return curLo, nextHi
+		return curLo, nextHi //nolint:revive
 	}
 }
 
@@ -45,6 +45,6 @@ func toDirection(order paging.Order) structr.Direction {
 	if order.Ascending() {
 		return structr.Asc
 	} else /* i.e. descending */ {
-		return structr.Desc
+		return structr.Desc //nolint:revive
 	}
 }
