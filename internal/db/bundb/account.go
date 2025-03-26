@@ -878,7 +878,7 @@ func (a *accountDB) GetAccountFaves(ctx context.Context, accountID string) ([]*g
 	return *faves, nil
 }
 
-func qMediaOnly(ctx context.Context, q *bun.SelectQuery) *bun.SelectQuery {
+func qMediaOnly(q *bun.SelectQuery) *bun.SelectQuery {
 	// Attachments are stored as a json object; this
 	// implementation differs between SQLite and Postgres,
 	// so we have to be thorough to cover all eventualities
@@ -896,8 +896,7 @@ func qMediaOnly(ctx context.Context, q *bun.SelectQuery) *bun.SelectQuery {
 				Where("? != '[]'", bun.Ident("status.attachments"))
 
 		default:
-			log.Panicf(ctx, "dialect %d was neither pg nor sqlite", d)
-			return q
+			panic("dialect " + d.String() + " was neither pg nor sqlite")
 		}
 	})
 }
@@ -944,7 +943,7 @@ func (a *accountDB) GetAccountStatuses(ctx context.Context, accountID string, li
 
 	// Respect media-only preference.
 	if mediaOnly {
-		q = qMediaOnly(ctx, q)
+		q = qMediaOnly(q)
 	}
 
 	if publicOnly {
@@ -1086,7 +1085,7 @@ func (a *accountDB) GetAccountWebStatuses(
 
 	// Respect media-only preference.
 	if mediaOnly {
-		q = qMediaOnly(ctx, q)
+		q = qMediaOnly(q)
 	}
 
 	// Return only statuses LOWER (ie., older) than maxID
