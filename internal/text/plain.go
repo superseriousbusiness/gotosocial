@@ -168,7 +168,7 @@ func (f *Formatter) fromPlain(
 			},
 			// Turns URLs into links.
 			extension.NewLinkify(
-				extension.WithLinkifyURLRegexp(regexes.LinkScheme),
+				extension.WithLinkifyURLRegexp(regexes.URLLike),
 			),
 		),
 	)

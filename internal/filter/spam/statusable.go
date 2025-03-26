@@ -375,7 +375,7 @@ func (f *Filter) errantLinks(
 	}
 
 	// Find + parse every http/https link in the status.
-	rawLinks := regexes.LinkScheme.FindAllString(concat, -1)
+	rawLinks := regexes.URLLike.FindAllString(concat, -1)
 	links := make([]preppedLink, 0, len(rawLinks))
 	for _, rawLink := range rawLinks {
 		linkURI, err := url.Parse(rawLink)

@@ -139,7 +139,7 @@ func (f *Formatter) fromMarkdown(
 			},
 			// Turns URLs into links.
 			extension.NewLinkify(
-				extension.WithLinkifyURLRegexp(regexes.LinkScheme),
+				extension.WithLinkifyURLRegexp(regexes.URLLike),
 			),
 			extension.Strikethrough,
 		),
