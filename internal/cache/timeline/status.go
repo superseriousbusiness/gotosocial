@@ -346,6 +346,13 @@ func (t *StatusTimeline) Load(
 	ord := page.Order()
 	dir := toDirection(ord)
 
+	// Use a copy of current page so
+	// we can repeatedly update it.
+	nextPg := new(paging.Page)
+	*nextPg = *page
+	nextPg.Min.Value = lo
+	nextPg.Max.Value = hi
+
 	// First we attempt to load status
 	// metadata entries from the timeline
 	// cache, up to given limit.
@@ -365,15 +372,6 @@ func (t *StatusTimeline) Load(
 			slices.Reverse(metas)
 		}
 
-		// Update paging values
-		// based on returned data.
-		lo, hi = nextPageParams(
-			lo, hi,
-			metas[len(metas)-1].ID,
-			metas[0].ID,
-			ord,
-		)
-
 		// Before we can do any filtering, we need
 		// to load status models for cached entries.
 		err := loadStatuses(metas, loadIDs)
@@ -381,27 +379,37 @@ func (t *StatusTimeline) Load(
 			return nil, "", "", gtserror.Newf("error loading statuses: %w", err)
 		}
 
+		// Update paging values
+		// based on returned data.
+		nextPageParams(nextPg,
+			metas[len(metas)-1].ID,
+			metas[0].ID,
+			ord,
+		)
+
+		// Before any further loading,
+		// store current lo,hi values,
+		// used for possible return.
+		lo = metas[len(metas)-1].ID
+		hi = metas[0].ID
+
 		// Drop all entries we failed to load statuses for.
 		metas = slices.DeleteFunc(metas, (*StatusMeta).isLoaded)
 
-		// Perform any post-filtering on cached status entries.
-		metas, _, err = doStatusPostFilter(metas, postFilter)
+		// Perform post-filtering on cached status entries.
+		metas, err = doStatusPostFilter(metas, postFilter)
 		if err != nil {
 			return nil, "", "", gtserror.Newf("error post-filtering statuses: %w", err)
 		}
 	}
 
-	var filtered []*StatusMeta
+	// Track all newly loaded status entries
+	// AFTER 'preFilter', but before 'postFilter',
+	// to later insert into timeline cache.
+	var justLoaded []*StatusMeta
 
 	// Check whether loaded enough from cache.
 	if need := lim - len(metas); need > 0 {
-
-		// Use a copy of current page so
-		// we can repeatedly update it.
-		nextPg := new(paging.Page)
-		*nextPg = *page
-		nextPg.Min.Value = lo
-		nextPg.Max.Value = hi
 
 		// Perform a maximum of 5
 		// load attempts fetching
@@ -422,16 +430,11 @@ func (t *StatusTimeline) Load(
 
 			// Update paging values
 			// based on returned data.
-			lo, hi = nextPageParams(
-				lo, hi,
+			nextPageParams(nextPg,
 				statuses[len(statuses)-1].ID,
 				statuses[0].ID,
 				ord,
 			)
-
-			// Update paging params.
-			nextPg.Min.Value = lo
-			nextPg.Max.Value = hi
 
 			// Perform any pre-filtering on newly loaded statuses.
 			statuses, err = doStatusPreFilter(statuses, preFilter)
@@ -450,15 +453,17 @@ func (t *StatusTimeline) Load(
 			// the cache in prepare() below.
 			uncached := toStatusMeta(statuses)
 
-			// Perform any post-filtering on recently loaded timeline entries.
-			newMetas, newFiltered, err := doStatusPostFilter(uncached, postFilter)
+			// Before any filtering append to newly loaded.
+			justLoaded = append(justLoaded, uncached...)
+
+			// Perform any post-filtering on loaded timeline entries.
+			filtered, err := doStatusPostFilter(uncached, postFilter)
 			if err != nil {
 				return nil, "", "", gtserror.Newf("error post-filtering statuses: %w", err)
 			}
 
-			// Append the meta to their relevant slices.
-			filtered = append(filtered, newFiltered...)
-			metas = append(metas, newMetas...)
+			// Append newly filtered meta entries.
+			metas = append(metas, filtered...)
 
 			// Check if we reached
 			// requested page limit.
@@ -468,63 +473,48 @@ func (t *StatusTimeline) Load(
 		}
 	}
 
-	// Reset the lo, hi paging parameters,
-	// so we can set the final return vals.
-	lo, hi = "", ""
-
 	// Returned frontend API models.
 	var apiStatuses []*apimodel.Status
 	if len(metas) > 0 {
-		var err error
+		switch {
+		case len(metas) <= lim:
+			// nothing to do
 
-		// Using meta and funcs, prepare frontend API models.
-		apiStatuses, err = t.prepare(ctx, metas, prepareAPI)
-		if err != nil {
-			return nil, "", "", gtserror.Newf("error preparing api statuses: %w", err)
+		case ord.Ascending():
+			// Ascending order was requested
+			// and we have more than limit, so
+			// trim extra metadata from end.
+			metas = metas[:lim]
+
+		// descending
+		default:
+			// Descending order was requested
+			// and we have more than limit, so
+			// trim extra metadata from start.
+			metas = metas[len(metas)-lim:]
 		}
 
-		// Get lo / hi from meta.
+		// Using meta and funcs, prepare frontend API models.
+		apiStatuses = prepareStatuses(ctx, metas, prepareAPI)
+
+		if hi == "" {
+			// Only set hi value if not
+			// already set, i.e. we never
+			// fetched any cached values.
+			hi = metas[0].ID
+		}
+
+		// Set lo value from fetched.
 		lo = metas[len(metas)-1].ID
-		hi = metas[0].ID
 	}
 
-	if len(filtered) > 0 {
+	if len(justLoaded) > 0 {
 		// Even if we don't return them, insert
 		// the excess (post-filtered) into cache.
-		t.cache.Insert(filtered...)
-
-		// Check filtered values for lo / hi values.
-		lo = minIf(lo, filtered[len(filtered)-1].ID)
-		hi = maxIf(hi, filtered[0].ID)
+		t.cache.Insert(justLoaded...)
 	}
 
 	return apiStatuses, lo, hi, nil
-}
-
-func minIf(id1, id2 string) string {
-	switch {
-	case id1 == "":
-		return id2
-	case id2 == "":
-		return id1
-	case id1 < id2:
-		return id1
-	default:
-		return id2
-	}
-}
-
-func maxIf(id1, id2 string) string {
-	switch {
-	case id1 == "":
-		return id2
-	case id2 == "":
-		return id1
-	case id1 > id2:
-		return id1
-	default:
-		return id2
-	}
 }
 
 // InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
@@ -676,34 +666,34 @@ func (t *StatusTimeline) UnprepareAll() {
 // Trim ...
 func (t *StatusTimeline) Trim(threshold float64) {
 
-	// ...
+	// Default trim dir.
 	dir := structr.Asc
 
-	// ...
+	// Calculate maximum allowed no.
+	// items as a percentage of max.
 	max := threshold * float64(t.max)
 
-	// ...
+	// Try load the last fetched
+	// timeline ordering, getting
+	// the inverse value for trimming.
 	if p := t.last.Load(); p != nil {
 		dir = !(*p)
 	}
 
-	// ...
+	// Trim timeline to 'max'.
 	t.cache.Trim(int(max), dir)
 }
 
 // Clear will remove all cached entries from underlying timeline.
 func (t *StatusTimeline) Clear() { t.cache.Trim(0, structr.Desc) }
 
-// prepare will take a slice of cached (or, freshly loaded!) StatusMeta{}
-// models, and use given functions to return prepared frontend API models.
-func (t *StatusTimeline) prepare(
+// prepareStatuses takes a slice of cached (or, freshly loaded!) StatusMeta{}
+// models, and use given function to return prepared frontend API models.
+func prepareStatuses(
 	ctx context.Context,
 	meta []*StatusMeta,
 	prepareAPI func(*gtsmodel.Status) (*apimodel.Status, error),
-) (
-	[]*apimodel.Status,
-	error,
-) {
+) []*apimodel.Status {
 	switch { //nolint:gocritic
 	case prepareAPI == nil:
 		panic("nil prepare fn")
@@ -712,7 +702,6 @@ func (t *StatusTimeline) prepare(
 	// Iterate the given StatusMeta objects for pre-prepared
 	// frontend models, otherwise attempting to prepare them.
 	apiStatuses := make([]*apimodel.Status, 0, len(meta))
-	unprepared := make([]*StatusMeta, 0, len(meta))
 	for _, meta := range meta {
 
 		if meta.loaded == nil {
@@ -730,10 +719,6 @@ func (t *StatusTimeline) prepare(
 				log.Errorf(ctx, "error preparing status %s: %v", meta.loaded.URI, err)
 				continue
 			}
-
-			// Add this meta to list of unprepared,
-			// for later re-caching in the timeline.
-			unprepared = append(unprepared, meta)
 		}
 
 		if meta.prepared != nil {
@@ -745,13 +730,7 @@ func (t *StatusTimeline) prepare(
 		}
 	}
 
-	if len(unprepared) != 0 {
-		// Re-insert all (previously) unprepared
-		// status meta types into timeline cache.
-		t.cache.Insert(unprepared...)
-	}
-
-	return apiStatuses, nil
+	return apiStatuses
 }
 
 // loadStatuses loads statuses using provided callback
@@ -844,16 +823,13 @@ func doStatusPreFilter(statuses []*gtsmodel.Status, filter func(*gtsmodel.Status
 // doStatusPostFilter performs given filter function on provided status meta,
 // expecting that embedded status is already loaded, returning filtered status
 // meta, as well as those *filtered out*. returns early if error is returned.
-func doStatusPostFilter(metas []*StatusMeta, filter func(*gtsmodel.Status) (bool, error)) ([]*StatusMeta, []*StatusMeta, error) {
+func doStatusPostFilter(metas []*StatusMeta, filter func(*gtsmodel.Status) (bool, error)) ([]*StatusMeta, error) {
 
 	// Check for provided
 	// filter function.
 	if filter == nil {
-		return metas, nil, nil
+		return metas, nil
 	}
-
-	// Prepare a slice to store filtered statuses.
-	filtered := make([]*StatusMeta, 0, len(metas))
 
 	// Iterate through input metas.
 	for i := 0; i < len(metas); {
@@ -862,13 +838,12 @@ func doStatusPostFilter(metas []*StatusMeta, filter func(*gtsmodel.Status) (bool
 		// Pass through filter func.
 		ok, err := filter(meta.loaded)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		if ok {
-			// Delete meta and add to filtered.
+			// Delete meta entry from input slice.
 			metas = slices.Delete(metas, i, i+1)
-			filtered = append(filtered, meta)
 			continue
 		}
 
@@ -876,5 +851,5 @@ func doStatusPostFilter(metas []*StatusMeta, filter func(*gtsmodel.Status) (bool
 		i++
 	}
 
-	return metas, filtered, nil
+	return metas, nil
 }
