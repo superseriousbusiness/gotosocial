@@ -704,7 +704,7 @@ func (t *StatusTimeline) prepare(
 	[]*apimodel.Status,
 	error,
 ) {
-	switch {
+	switch { //nolint:gocritic
 	case prepareAPI == nil:
 		panic("nil prepare fn")
 	}
