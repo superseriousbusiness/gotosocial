@@ -76,6 +76,10 @@ func LoadTemplates(engine *gin.Engine) error {
 
 	// Set additional "include" functions to render
 	// provided template name using the base template.
+
+	// Include renders the given template with the given data.
+	// Unlike `template`, `include` can be chained with `indent`
+	// to produce nicely-indented HTML.
 	funcMap["include"] = func(name string, data any) (template.HTML, error) {
 		var buf strings.Builder
 		err := tmpl.ExecuteTemplate(&buf, name, data)
@@ -85,6 +89,25 @@ func LoadTemplates(engine *gin.Engine) error {
 		return noescape(buf.String()), err
 	}
 
+	// includeIndex is like `include` but an index can be specified at
+	// `.Index` and data will be nested at `.Item`. Useful when ranging.
+	funcMap["includeIndex"] = func(name string, data any, index int) (template.HTML, error) {
+		var buf strings.Builder
+		withIndex := struct {
+			Item  any
+			Index int
+		}{
+			Item:  data,
+			Index: index,
+		}
+		err := tmpl.ExecuteTemplate(&buf, name, withIndex)
+
+		// Template was already escaped by
+		// ExecuteTemplate so we can trust it.
+		return noescape(buf.String()), err
+	}
+
+	// includeAttr is like `include` but for element attributes.
 	funcMap["includeAttr"] = func(name string, data any) (template.HTMLAttr, error) {
 		var buf strings.Builder
 		err := tmpl.ExecuteTemplate(&buf, name, data)

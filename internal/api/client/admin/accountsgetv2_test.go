@@ -223,6 +223,69 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
     }
   },
   {
+    "id": "01JPCMD83Y4WR901094YES3QC5",
+    "username": "media_mogul",
+    "domain": null,
+    "created_at": "2025-03-15T11:08:00.000Z",
+    "email": "media.mogul@example.org",
+    "ip": null,
+    "ips": [],
+    "locale": "en",
+    "invite_request": null,
+    "role": {
+      "id": "user",
+      "name": "user",
+      "color": "",
+      "permissions": "0",
+      "highlighted": false
+    },
+    "confirmed": true,
+    "approved": true,
+    "disabled": false,
+    "silenced": false,
+    "suspended": false,
+    "account": {
+      "id": "01JPCMD83Y4WR901094YES3QC5",
+      "username": "media_mogul",
+      "acct": "media_mogul",
+      "display_name": "",
+      "locked": false,
+      "discoverable": false,
+      "bot": false,
+      "created_at": "2025-03-15T11:08:00.000Z",
+      "note": "<p>I'm a test account that posts a shitload of media and I have my account rendered in \"gallery\" mode</p>",
+      "url": "http://localhost:8080/@media_mogul",
+      "avatar": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/avatar/original/01JPHQZ0ZHC2AXJK1JQNXRXQZN.jpeg",
+      "avatar_static": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/avatar/small/01JPHQZ0ZHC2AXJK1JQNXRXQZN.jpeg",
+      "avatar_description": "DESCRIPTION_GOES_HERE",
+      "avatar_media_id": "01JPHQZ0ZHC2AXJK1JQNXRXQZN",
+      "header": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/header/original/01JPHRB7F2RXPTEQFRYC85EPD9.png",
+      "header_static": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/header/small/01JPHRB7F2RXPTEQFRYC85EPD9.webp",
+      "header_description": "DESCRIPTION_GOES_HERE",
+      "header_media_id": "01JPHRB7F2RXPTEQFRYC85EPD9",
+      "followers_count": 0,
+      "following_count": 0,
+      "statuses_count": 2,
+      "last_status_at": "2025-03-15",
+      "emojis": [],
+      "fields": [
+        {
+          "name": "I'm going to post a lot of",
+          "value": "media!",
+          "verified_at": null
+        },
+        {
+          "name": "and there's nothing",
+          "value": "you can do about it",
+          "verified_at": null
+        }
+      ],
+      "enable_rss": true,
+      "group": false
+    },
+    "created_by_application_id": "01HT5P2YHDMPAAD500NDAY8JW1"
+  },
+  {
     "id": "01F8MH1H7YV1Z7D2C8K2730QBF",
     "username": "the_mighty_zork",
     "domain": null,
@@ -547,18 +610,18 @@ func (suite *AccountsGetTestSuite) TestAccountsMinID() {
 	}
 
 	link := recorder.Header().Get("Link")
-	suite.Equal(`<http://localhost:8080/api/v2/admin/accounts?limit=1&max_id=%2F%40localhost%3A8080>; rel="next", <http://localhost:8080/api/v2/admin/accounts?limit=1&min_id=%2F%40localhost%3A8080>; rel="prev"`, link)
+	suite.Equal(`<http://localhost:8080/api/v2/admin/accounts?limit=1&max_id=%2F%40media_mogul>; rel="next", <http://localhost:8080/api/v2/admin/accounts?limit=1&min_id=%2F%40media_mogul>; rel="prev"`, link)
 
 	suite.Equal(`[
   {
-    "id": "01AY6P665V14JJR0AFVRT7311Y",
-    "username": "localhost:8080",
+    "id": "01JPCMD83Y4WR901094YES3QC5",
+    "username": "media_mogul",
     "domain": null,
-    "created_at": "2020-05-17T13:10:59.000Z",
-    "email": "",
+    "created_at": "2025-03-15T11:08:00.000Z",
+    "email": "media.mogul@example.org",
     "ip": null,
     "ips": [],
-    "locale": "",
+    "locale": "en",
     "invite_request": null,
     "role": {
       "id": "user",
@@ -567,35 +630,51 @@ func (suite *AccountsGetTestSuite) TestAccountsMinID() {
       "permissions": "0",
       "highlighted": false
     },
-    "confirmed": false,
-    "approved": false,
+    "confirmed": true,
+    "approved": true,
     "disabled": false,
     "silenced": false,
     "suspended": false,
     "account": {
-      "id": "01AY6P665V14JJR0AFVRT7311Y",
-      "username": "localhost:8080",
-      "acct": "localhost:8080",
+      "id": "01JPCMD83Y4WR901094YES3QC5",
+      "username": "media_mogul",
+      "acct": "media_mogul",
       "display_name": "",
       "locked": false,
-      "discoverable": true,
+      "discoverable": false,
       "bot": false,
-      "created_at": "2020-05-17T13:10:59.000Z",
-      "note": "",
-      "url": "http://localhost:8080/@localhost:8080",
-      "avatar": "",
-      "avatar_static": "",
-      "header": "http://localhost:8080/assets/default_header.webp",
-      "header_static": "http://localhost:8080/assets/default_header.webp",
-      "header_description": "Flat gray background (default header).",
+      "created_at": "2025-03-15T11:08:00.000Z",
+      "note": "<p>I'm a test account that posts a shitload of media and I have my account rendered in \"gallery\" mode</p>",
+      "url": "http://localhost:8080/@media_mogul",
+      "avatar": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/avatar/original/01JPHQZ0ZHC2AXJK1JQNXRXQZN.jpeg",
+      "avatar_static": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/avatar/small/01JPHQZ0ZHC2AXJK1JQNXRXQZN.jpeg",
+      "avatar_description": "DESCRIPTION_GOES_HERE",
+      "avatar_media_id": "01JPHQZ0ZHC2AXJK1JQNXRXQZN",
+      "header": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/header/original/01JPHRB7F2RXPTEQFRYC85EPD9.png",
+      "header_static": "http://localhost:8080/fileserver/01JPCMD83Y4WR901094YES3QC5/header/small/01JPHRB7F2RXPTEQFRYC85EPD9.webp",
+      "header_description": "DESCRIPTION_GOES_HERE",
+      "header_media_id": "01JPHRB7F2RXPTEQFRYC85EPD9",
       "followers_count": 0,
       "following_count": 0,
-      "statuses_count": 0,
-      "last_status_at": null,
+      "statuses_count": 2,
+      "last_status_at": "2025-03-15",
       "emojis": [],
-      "fields": [],
+      "fields": [
+        {
+          "name": "I'm going to post a lot of",
+          "value": "media!",
+          "verified_at": null
+        },
+        {
+          "name": "and there's nothing",
+          "value": "you can do about it",
+          "verified_at": null
+        }
+      ],
+      "enable_rss": true,
       "group": false
-    }
+    },
+    "created_by_application_id": "01HT5P2YHDMPAAD500NDAY8JW1"
   }
 ]`, dst.String())
 }

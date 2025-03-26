@@ -137,6 +137,7 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	apiAccount.Source = &apimodel.Source{
 		Privacy:             c.VisToAPIVis(ctx, a.Settings.Privacy),
 		WebVisibility:       c.VisToAPIVis(ctx, a.Settings.WebVisibility),
+		WebLayout:           a.Settings.WebLayout.String(),
 		Sensitive:           *a.Settings.Sensitive,
 		Language:            a.Settings.Language,
 		StatusContentType:   statusContentType,
@@ -220,6 +221,14 @@ func (c *Converter) AccountToWebAccount(
 				PreviewMIMEType: ogHeader.Thumbnail.ContentType,
 			}
 		}
+	}
+
+	// Check for presence of settings before
+	// populating settings-specific thingies,
+	// as instance account doesn't store a
+	// settings struct.
+	if a.Settings != nil {
+		webAccount.WebLayout = a.Settings.WebLayout.String()
 	}
 
 	return webAccount, nil
@@ -1227,10 +1236,11 @@ func (c *Converter) StatusToWebStatus(
 	for i, apiAttachment := range apiStatus.MediaAttachments {
 		ogAttachment := ogAttachments[apiAttachment.ID]
 		webStatus.MediaAttachments[i] = &apimodel.WebAttachment{
-			Attachment:      apiAttachment,
-			Sensitive:       apiStatus.Sensitive,
-			MIMEType:        ogAttachment.File.ContentType,
-			PreviewMIMEType: ogAttachment.Thumbnail.ContentType,
+			Attachment:       apiAttachment,
+			Sensitive:        apiStatus.Sensitive,
+			MIMEType:         ogAttachment.File.ContentType,
+			PreviewMIMEType:  ogAttachment.Thumbnail.ContentType,
+			ParentStatusLink: apiStatus.URL,
 		}
 	}
 

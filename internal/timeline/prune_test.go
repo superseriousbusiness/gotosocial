@@ -40,7 +40,7 @@ func (suite *PruneTestSuite) TestPrune() {
 
 	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
 	suite.NoError(err)
-	suite.Equal(23, pruned)
+	suite.Equal(25, pruned)
 	suite.Equal(5, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
@@ -56,7 +56,7 @@ func (suite *PruneTestSuite) TestPruneTwice() {
 
 	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
 	suite.NoError(err)
-	suite.Equal(23, pruned)
+	suite.Equal(25, pruned)
 	suite.Equal(5, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 
 	// Prune same again, nothing should be pruned this time.
@@ -78,7 +78,7 @@ func (suite *PruneTestSuite) TestPruneTo0() {
 
 	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
 	suite.NoError(err)
-	suite.Equal(28, pruned)
+	suite.Equal(30, pruned)
 	suite.Equal(0, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
@@ -95,7 +95,7 @@ func (suite *PruneTestSuite) TestPruneToInfinityAndBeyond() {
 	pruned, err := suite.state.Timelines.Home.Prune(ctx, testAccountID, desiredPreparedItemsLength, desiredIndexedItemsLength)
 	suite.NoError(err)
 	suite.Equal(0, pruned)
-	suite.Equal(28, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
+	suite.Equal(30, suite.state.Timelines.Home.GetIndexedLength(ctx, testAccountID))
 }
 
 func TestPruneTestSuite(t *testing.T) {

@@ -149,6 +149,9 @@ type WebAccount struct {
 	// Only set if this account had a header set
 	// (and not just the default "blank" image.)
 	HeaderAttachment *WebAttachment `json:"-"`
+
+	// Layout for this account (microblog, gallery).
+	WebLayout string `json:"-"`
 }
 
 // MutedAccount extends Account with a field used only by the muted user list.
@@ -240,6 +243,10 @@ type UpdateCredentialsRequest struct {
 	// Visibility of statuses to show via the web view.
 	// "none", "public" (default), or "unlisted" (which includes public as well).
 	WebVisibility *string `form:"web_visibility" json:"web_visibility"`
+	// Layout to use for the web view of the account.
+	// "microblog": default, classic microblog layout.
+	// "gallery": gallery layout with media only.
+	WebLayout *string `form:"web_layout" json:"web_layout"`
 }
 
 // UpdateSource is to be used specifically in an UpdateCredentialsRequest.

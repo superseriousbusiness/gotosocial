@@ -1,0 +1,179 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- define "imagePreview" }}
+<img
+    src="{{- .PreviewURL -}}"
+    loading="lazy"
+    {{- if .Description }}
+    alt="{{- .Description -}}"
+    title="{{- .Description -}}"
+    {{- end }}
+    width="{{- .Meta.Original.Width -}}"
+    height="{{- .Meta.Original.Height -}}"
+/>
+{{- end }}
+
+{{- define "videoPreview" }}
+<img
+    src="{{- .PreviewURL -}}"
+    loading="lazy"
+    {{- if .Description }}
+    alt="{{- .Description -}}"
+    title="{{- .Description -}}"
+    {{- end }}
+    width="{{- .Meta.Small.Width -}}"
+    height="{{- .Meta.Small.Height -}}"
+/>
+{{- end }}
+
+{{- define "audioPreview" }}
+{{- if and .PreviewURL .Meta.Small.Width }}
+<img
+    src="{{- .PreviewURL -}}"
+    loading="lazy"
+    {{- if .Description }}
+    alt="{{- .Description -}}"
+    title="{{- .Description -}}"
+    {{- end }}
+    width="{{- .Meta.Small.Width -}}"
+    height="{{- .Meta.Small.Height -}}"
+/>
+{{- else }}
+<img
+    src="/assets/logo.webp"
+    loading="lazy"
+    {{- if .Description }}
+    alt="{{- .Description -}}"
+    title="{{- .Description -}}"
+    {{- end }}
+    width="518"
+    height="460"
+/>
+{{- end }}
+{{- end }}
+
+{{- with . }}
+<div class="media-wrapper">
+    <details class="{{- .Item.Type -}}-spoiler media-spoiler" {{- if not .Item.Sensitive }} open{{- end -}}>
+        <summary>
+            <div class="show sensitive button" aria-hidden="true">Show sensitive</div>
+            <span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
+                <i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
+                <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
+            </span>
+            {{- if or (eq .Item.Type "video") (eq .Item.Type "gifv") }}
+            {{- include "videoPreview" .Item | indent 3 }}
+            {{- else if eq .Item.Type "image" }}
+            {{- include "imagePreview" .Item | indent 3 }}
+            {{- else if eq .Item.Type "audio" }}
+            {{- include "audioPreview" .Item | indent 3 }}
+            {{- end }}
+        </summary>
+        {{- if or (eq .Item.Type "video") (eq .Item.Type "gifv") }}
+        <video
+            {{- if eq .Item.Type "video" }}
+            preload="none"
+            {{- else }}
+            preload="auto"
+            muted
+            {{- end }}
+            class="plyr-video photoswipe-slide{{- if eq .Item.Type "gifv" }} gifv{{ end }}"
+            controls
+            playsinline
+            data-pswp-index="{{- .Index -}}"
+            data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
+            data-pswp-attachment-id="{{- .Item.ID -}}"
+            poster="{{- .Item.PreviewURL -}}"
+            data-pswp-width="{{- .Item.Meta.Original.Width -}}px"
+            data-pswp-height="{{- .Item.Meta.Original.Height -}}px"
+            {{- if .Item.Description }}
+            alt="{{- .Item.Description -}}"
+            title="{{- .Item.Description -}}"
+            {{- end }}
+        >
+            <source type="{{- .Item.MIMEType -}}" src="{{- .Item.URL -}}"/>
+        </video>
+        {{- else if eq .Item.Type "audio" }}
+        <video
+            preload="none"
+            class="plyr-video photoswipe-slide"
+            controls
+            playsinline
+            data-pswp-index="{{- .Index -}}"
+            data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
+            data-pswp-attachment-id="{{- .Item.ID -}}"
+            {{- if and .Item.PreviewURL .Item.Meta.Small.Width }}
+            poster="{{- .Item.PreviewURL -}}"
+            data-pswp-width="{{- .Item.Meta.Small.Width -}}px"
+            data-pswp-height="{{- .Item.Meta.Small.Height -}}px"
+            {{- else }}
+            poster="/assets/logo.webp"
+            width="518px"
+            height="460px"
+            {{- end }}
+            {{- if .Item.Description }}
+            alt="{{- .Item.Description -}}"
+            title="{{- .Item.Description -}}"
+            {{- end }}
+        >
+            <source type="{{- .Item.MIMEType -}}" src="{{- .Item.URL -}}"/>
+        </video>
+        {{- else if eq .Item.Type "image" }}
+        <a
+            class="photoswipe-slide"
+            data-pswp-index="{{- .Index -}}"
+            data-pswp-parent-status="{{- .Item.ParentStatusLink -}}"
+            data-pswp-attachment-id="{{- .Item.ID -}}"
+            href="{{- .Item.URL -}}"
+            target="_blank"
+            data-pswp-width="{{- .Item.Meta.Original.Width -}}px"
+            data-pswp-height="{{- .Item.Meta.Original.Height -}}px"
+            data-cropped="true"
+            {{- if .Item.Description }}
+            alt="{{- .Item.Description -}}"
+            title="{{- .Item.Description -}}"
+            {{- end }}
+        >
+            {{- with .Item }}
+            {{- include "imagePreview" . | indent 3 }}
+            {{- end }}
+        </a>
+        {{- else }}
+        <a
+            class="unknown-attachment"
+            href="{{- .Item.RemoteURL -}}"
+            rel="nofollow noreferrer noopener"
+            target="_blank"
+            {{- if .Item.Description }}
+            title="Open external media: {{ .Item.Description -}}&#10;&#13;{{- .Item.RemoteURL -}}"
+            {{- else }}
+            title="Open external media.&#10;&#13;{{- .Item.RemoteURL -}}"
+            {{- end }}
+        >
+            <div class="placeholder" aria-hidden="true">
+                <i class="placeholder-external-link fa fa-external-link"></i>
+                <i class="placeholder-icon fa fa-file-text"></i>
+                <div class="placeholder-link-to">External media</div>
+            </div>
+        </a>
+        {{- end }}
+    </details>
+</div>
+{{- end }}

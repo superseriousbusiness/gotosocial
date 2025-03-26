@@ -115,8 +115,20 @@ func (p *Processor) GetRSSFeedForUsername(ctx context.Context, username string) 
 		// Reuse the lastPostAt value for feed.Updated.
 		feed.Updated = lastPostAt
 
-		// Retrieve latest statuses as they'd be shown on the web view of the account profile.
-		statuses, err := p.state.DB.GetAccountWebStatuses(ctx, account, rssFeedLength, "")
+		// Retrieve latest statuses as they'd be shown
+		// on the web view of the account profile.
+		//
+		// Take into account whether the user wants
+		// their web view laid out in gallery mode.
+		mediaOnly := account.Settings != nil &&
+			account.Settings.WebLayout == gtsmodel.WebLayoutGallery
+		statuses, err := p.state.DB.GetAccountWebStatuses(
+			ctx,
+			account,
+			mediaOnly,
+			rssFeedLength,
+			"", // Latest posts from the top.
+		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err = fmt.Errorf("db error getting account web statuses: %w", err)
 			return "", gtserror.NewErrorInternalError(err)

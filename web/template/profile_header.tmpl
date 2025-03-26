@@ -1,0 +1,185 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- define "profileMovedTo" -}}
+{{- with .account.Moved }}
+<div class="moved-to">
+    <b>
+        ℹ️ This account has permanently moved to
+        <a
+            href="{{ .URL }}"
+            class="nounderline"
+            rel="nofollow noreferrer noopener"
+            target="_blank"
+        >
+            @{{ .Username }}
+        </a>
+    </b>
+</div>
+{{- end }}
+{{- end -}}
+
+{{- define "defaultAvatarDimension" -}}
+{{- /* 136 is the default width/height for 8.5rem avatars, double it to get a good look when expanded. */ -}}
+272
+{{- end -}}
+
+{{- define "avatarWidth" -}}
+{{- with .account }}
+    {{- if isNil .AvatarAttachment -}}
+        {{- template "defaultAvatarDimension" . -}}
+    {{- else -}}
+        {{- /* Use the avatar's proper dimensions. */ -}}
+        {{- .AvatarAttachment.Meta.Original.Width -}}
+    {{- end -}}
+{{- end }}
+{{- end -}}
+
+{{- define "avatarHeight" -}}
+{{- with .account }}
+    {{- if isNil .AvatarAttachment -}}
+        {{- template "defaultAvatarDimension" . -}}
+    {{- else -}}
+        {{- /* Use the avatar's proper dimensions. */ -}}
+        {{- .AvatarAttachment.Meta.Original.Height -}}
+    {{- end -}}
+{{- end }}
+{{- end -}}
+
+{{- define "avatarAlt" -}}
+    Avatar for {{ .account.Username -}}
+    {{- if .account.AvatarDescription }}
+        {{- /* Add the avatar's image description. */ -}}
+        : {{ .account.AvatarDescription -}}
+    {{- end -}}
+{{- end -}}
+
+{{- define "headerAlt" -}}
+    Header for {{ .account.Username -}}
+    {{- if .account.HeaderDescription }}
+        {{- /* Add the header's image description. */ -}}
+        : {{ .account.HeaderDescription -}}
+    {{- end -}}
+{{- end -}}
+
+{{- define "avatar" -}}
+{{- with . }}
+<div
+    class="photoswipe-gallery odd single avatar-image-wrapper"
+    role="group"
+>
+    <a
+        class="photoswipe-slide"
+        href="{{- .account.Avatar -}}"
+        target="_blank"
+        data-pswp-width="{{- template "avatarWidth" . -}}px"
+        data-pswp-height="{{- template "avatarHeight" . -}}px"
+        data-cropped="true"
+        alt="{{- template "avatarAlt" . -}}"
+        title="{{- template "avatarAlt" . -}}"
+    >
+        <picture
+            aria-hidden="true"
+        >
+            {{- if .account.AvatarAttachment }}
+            <source
+                class="avatar"
+                srcset="{{- .account.AvatarStatic -}}"
+                type="{{- .account.AvatarAttachment.PreviewMIMEType -}}"
+                media="(prefers-reduced-motion: reduce)"
+            />
+            {{- end }}
+            <img
+                class="avatar u-photo"
+                src="{{- .account.Avatar -}}"
+                alt="{{- template "avatarAlt" . -}}"
+                title="{{- template "avatarAlt" . -}}"
+                width="{{- template "avatarWidth" . -}}"
+                height="{{- template "avatarHeight" . -}}"
+            />
+        </picture>
+    </a>
+</div>
+{{- end }}
+{{- end -}}
+
+{{- with . }}
+<h2 class="sr-only">Profile for {{ .account.Username -}}</h2>
+<section class="profile-header" role="region" aria-label="Basic info">
+    {{- if .account.Moved }}
+    {{- include "profileMovedTo" . | indent 2 }}
+    {{- end }}
+    <div class="header-image-wrapper">
+        <picture>
+            {{- if .account.HeaderAttachment }}
+            <source
+                srcset="{{- .account.HeaderStatic -}}"
+                type="{{- .account.HeaderAttachment.PreviewMIMEType -}}"
+                media="(prefers-reduced-motion: reduce)"
+            />
+            {{- end }}
+            <img
+                src="{{- .account.Header -}}"
+                alt="{{- template "headerAlt" . -}}"
+                title="{{- template "headerAlt" . -}}"
+            />
+        </picture>
+    </div>
+    <div class="basic-info">
+        {{- with . }}
+        {{- include "avatar" . | indent 3 }}
+        {{- end }}
+        <dl class="namerole">
+            <dt class="sr-only">Display name</dt>
+            <dd class="displayname text-cutoff p-name">
+                {{- if .account.DisplayName -}}
+                {{- emojify .account.Emojis (escape .account.DisplayName) -}}
+                {{- else -}}
+                {{- .account.Username -}}
+                {{- end -}}
+            </dd>
+            <div class="bot-username-wrapper">
+                {{- if .account.Bot }}
+                <dt class="sr-only">Bot account</dt>
+                <dd>
+                    <span class="sr-only">true</span>
+                    <div
+                        class="bot-legend-wrapper"
+                        aria-hidden="true"
+                        title="This is a bot account."
+                    >
+                        <i class="bot-icon fa fa-microchip"></i>
+                        <span class="bot-legend">bot</span>
+                    </div>
+                </dd>
+                {{- end }}
+                <dt class="sr-only">Username</dt>
+                <dd class="username text-cutoff p-nickname">@{{- .account.Username -}}@{{- .instance.AccountDomain -}}</dd>
+            </div>
+            {{- if .account.Roles }}
+            <dt class="sr-only">Role</dt>
+            {{- range .account.Roles }}
+            <dd class="role {{ .Name -}}">{{- .Name -}}</dd>
+            {{- end }}
+            {{- end }}
+        </dl>
+        <a class="u-url u-uid hidden" rel="me" href="/@{{- .account.Username -}}"></a>
+    </div>
+</section>
+{{- end }}

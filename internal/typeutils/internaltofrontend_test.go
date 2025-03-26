@@ -128,6 +128,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
   "source": {
     "privacy": "public",
     "web_visibility": "unlisted",
+    "web_layout": "microblog",
     "sensitive": false,
     "language": "en",
     "status_content_type": "text/plain",
@@ -324,6 +325,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
   "source": {
     "privacy": "public",
     "web_visibility": "unlisted",
+    "web_layout": "microblog",
     "sensitive": false,
     "language": "en",
     "status_content_type": "text/plain",
@@ -1815,7 +1817,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "blurhash": "LKE3VIw}0KD%a2o{M|t7NFWps:t7",
       "Sensitive": true,
       "MIMEType": "image/jpg",
-      "PreviewMIMEType": "image/webp"
+      "PreviewMIMEType": "image/webp",
+      "ParentStatusLink": "http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"
     },
     {
       "id": "01HE7ZFX9GKA5ZZVD4FACABSS9",
@@ -1830,7 +1833,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "blurhash": "L26*j+~qE1RP?wxut7ofRlM{R*of",
       "Sensitive": true,
       "MIMEType": "",
-      "PreviewMIMEType": ""
+      "PreviewMIMEType": "",
+      "ParentStatusLink": "http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"
     },
     {
       "id": "01HE88YG74PVAB81PX2XA9F3FG",
@@ -1845,7 +1849,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
       "blurhash": null,
       "Sensitive": true,
       "MIMEType": "",
-      "PreviewMIMEType": ""
+      "PreviewMIMEType": "",
+      "ParentStatusLink": "http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"
     }
   ],
   "LanguageTag": "en",
@@ -2364,8 +2369,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
   },
   "stats": {
     "domain_count": 2,
-    "status_count": 21,
-    "user_count": 4
+    "status_count": 23,
+    "user_count": 5
   },
   "thumbnail": "http://localhost:8080/assets/logo.webp",
   "contact_account": {

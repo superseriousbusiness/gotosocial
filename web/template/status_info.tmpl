@@ -17,36 +17,9 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "visibility_icon" -}}
-    {{- if eq .Visibility "public" -}}
-        globe
-    {{- else if eq .Visibility "unlisted" -}}
-        unlock
-    {{- else -}}
-        question
-    {{- end -}}
-{{- end -}}
-
-{{- define "visibility_title" -}}
-    {{- if eq .Visibility "public" -}}
-        Public
-    {{- else if eq .Visibility "unlisted" -}}
-        Unlisted
-    {{- else -}}
-        Unknown
-    {{- end -}}
-{{- end -}}
-
 {{- with . }}
 <dl class="status-stats">
     <div class="stats-grouping">
-        <div class="stats-item visibility-level" title="{{- template "visibility_title" . -}}">
-            <dt class="sr-only">Visibility</dt>
-            <dd>
-                <i class="fa fa-{{- template "visibility_icon" . -}}" aria-hidden="true"></i>
-                <span class="sr-only">{{- template "visibility_title" . -}}</span>
-            </dd>
-        </div>
         <div class="stats-item published-at text-cutoff">
             <dt class="sr-only">Published</dt>
             <dd>
@@ -57,7 +30,7 @@
         <div class="stats-item edited-at text-cutoff">
             <dt class="sr-only">Edited</dt>
             <dd>
-                edited <time class="dt-updated" datetime="{{- .EditedAt -}}">{{- .EditedAt | timestampPrecise -}}</time>
+                (edited <time class="dt-updated" datetime="{{- .EditedAt -}}">{{- .EditedAt | timestampPrecise -}}</time>)
             </dd>
         </div>
         {{ end }}

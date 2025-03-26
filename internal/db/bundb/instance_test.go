@@ -35,7 +35,7 @@ type InstanceTestSuite struct {
 func (suite *InstanceTestSuite) TestCountInstanceUsers() {
 	count, err := suite.db.CountInstanceUsers(context.Background(), config.GetHost())
 	suite.NoError(err)
-	suite.Equal(4, count)
+	suite.Equal(5, count)
 }
 
 func (suite *InstanceTestSuite) TestCountInstanceUsersRemote() {
@@ -47,7 +47,7 @@ func (suite *InstanceTestSuite) TestCountInstanceUsersRemote() {
 func (suite *InstanceTestSuite) TestCountInstanceStatuses() {
 	count, err := suite.db.CountInstanceStatuses(context.Background(), config.GetHost())
 	suite.NoError(err)
-	suite.Equal(21, count)
+	suite.Equal(23, count)
 }
 
 func (suite *InstanceTestSuite) TestCountInstanceStatusesRemote() {

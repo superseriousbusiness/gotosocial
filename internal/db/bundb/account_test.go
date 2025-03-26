@@ -49,6 +49,12 @@ func (suite *AccountTestSuite) TestGetAccountStatuses() {
 	suite.Len(statuses, 9)
 }
 
+func (suite *AccountTestSuite) TestGetAccountWebStatusesMediaOnly() {
+	statuses, err := suite.db.GetAccountWebStatuses(context.Background(), suite.testAccounts["local_account_3"], true, 20, "")
+	suite.NoError(err)
+	suite.Len(statuses, 2)
+}
+
 func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 	// get the first page
 	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, "", "", false, false)
@@ -490,7 +496,7 @@ func (suite *AccountTestSuite) TestGetAccountsAll() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(accounts, 9)
+	suite.Len(accounts, 10)
 }
 
 func (suite *AccountTestSuite) TestGetAccountsMaxID() {
@@ -564,7 +570,7 @@ func (suite *AccountTestSuite) TestGetAccountsMinID() {
 		suite.FailNow(err.Error())
 	}
 
-	suite.Len(accounts, 3)
+	suite.Len(accounts, 4)
 }
 
 func (suite *AccountTestSuite) TestGetAccountsModsOnly() {

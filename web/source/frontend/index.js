@@ -40,6 +40,9 @@ const lightbox = new PhotoswipeLightbox({
 	gallery: '.photoswipe-gallery',
 	children: '.photoswipe-slide',
 	pswpModule: Photoswipe,
+	// Bit darker than default 0.8.
+	bgOpacity: 0.9,
+	loop: false,
 });
 
 new PhotoswipeCaptionPlugin(lightbox, {
@@ -71,7 +74,9 @@ lightbox.addFilter('itemData', (item) => {
 				}
 			},
 			width: parseInt(el.dataset.pswpWidth),
-			height: parseInt(el.dataset.pswpHeight)
+			height: parseInt(el.dataset.pswpHeight),
+			parentStatus: el.dataset.pswpParentStatus,
+			attachmentId: el.dataset.pswpAttachmentId,
 		};
 	}
 	return item;
@@ -96,6 +101,26 @@ lightbox.on("close", function () {
 	if (lightbox.pswp.currSlide.data._video != undefined) {
 		lightbox.pswp.currSlide.data._video.close();
 	}
+});
+
+lightbox.on('uiRegister', function() {
+	lightbox.pswp.ui.registerElement({
+		name: 'open-post-link',
+		ariaLabel: 'Open post',
+		order: 8,
+		isButton: true,
+		tagName: "a",
+		html: '<span title="Open post"><span class="sr-only">Open post</span><i class="fa fa-lg fa-external-link-square" aria-hidden="true"></i></span>',
+		onInit: (el, pswp) => {
+			el.setAttribute('target', '_blank');
+			el.setAttribute('rel', 'noopener');
+			pswp.on('change', () => {
+				el.href = pswp.currSlide.data.parentStatus
+					? pswp.currSlide.data.parentStatus
+					: pswp.currSlide.data.element.dataset.pswpParentStatus;
+			});
+		  }
+	});
 });
 
 lightbox.init();
@@ -156,22 +181,40 @@ Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
 	
 	let player = new Plyr(video, {
 		title: video.title,
-		settings: ["loop"],
+		settings: [],
+		controls: ['play-large', 'play', 'progress', 'current-time', 'volume', 'mute', 'fullscreen'],
 		disableContextMenu: false,
 		hideControls: false,
-		tooltips: { contrors: true, seek: true },
+		tooltips: { controls: true, seek: true },
 		iconUrl: "/assets/plyr.svg",
+		invertTime: false,
 		listeners: {
 			fullscreen: () => {
-				if (player.playing) {
-					setTimeout(() => {
-						player.play();
-					}, 1);
+				// Check if the photoswipe lightbox is
+				// open with this as the current slide.
+				const alreadyInLightbox = (
+					lightbox.pswp !== undefined &&
+					video.dataset.pswpAttachmentId === lightbox.pswp.currSlide.data.attachmentId
+				);
+				
+				if (alreadyInLightbox) {
+					// If this video is already open as the
+					// current photoswipe slide, the fullscreen
+					// button toggles proper fullscreen.
+					player.fullscreen.toggle();
+				} else {
+					// Otherwise the fullscreen button opens
+					// the video as current photoswipe slide.
+					//
+					// (Don't pause the video while it's
+					// being transitioned to a slide.)
+					if (player.playing) {
+						setTimeout(() => player.play(), 1);
+					}
+					lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
+						gallery: video.closest(".photoswipe-gallery")
+					});
 				}
-				lightbox.loadAndOpen(parseInt(video.dataset.pswpIndex), {
-					gallery: video.closest(".photoswipe-gallery")
-				});
-
 				return false;
 			}
 		}
