@@ -10718,6 +10718,76 @@ paths:
             summary: Create a new status using the given form field parameters.
             tags:
                 - statuses
+    /api/v1/statuses/{id}:
+        delete:
+            description: |-
+                The deleted status will be returned in the response. The `text` field will contain the original text of the status as it was submitted.
+                This is useful when doing a 'delete and redraft' type operation.
+            operationId: statusDelete
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The status that was just deleted.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - write:statuses
+            summary: Delete status with the given ID. The status must belong to you.
+            tags:
+                - statuses
+        get:
+            operationId: statusGet
+            parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: The requested status.
+                    schema:
+                        $ref: '#/definitions/status'
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:statuses
+            summary: View status with the given ID.
+            tags:
+                - statuses
         put:
             consumes:
                 - application/json
@@ -10725,6 +10795,11 @@ paths:
             description: The parameters can also be given in the body of the request, as JSON, if the content-type is set to 'application/json'.
             operationId: statusEdit
             parameters:
+                - description: Target status ID.
+                  in: path
+                  name: id
+                  required: true
+                  type: string
                 - description: |-
                     Text content of the status.
                     If media_ids is provided, this becomes optional.
@@ -10822,76 +10897,6 @@ paths:
                 - OAuth2 Bearer:
                     - write:statuses
             summary: Edit an existing status using the given form field parameters.
-            tags:
-                - statuses
-    /api/v1/statuses/{id}:
-        delete:
-            description: |-
-                The deleted status will be returned in the response. The `text` field will contain the original text of the status as it was submitted.
-                This is useful when doing a 'delete and redraft' type operation.
-            operationId: statusDelete
-            parameters:
-                - description: Target status ID.
-                  in: path
-                  name: id
-                  required: true
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: The status that was just deleted.
-                    schema:
-                        $ref: '#/definitions/status'
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "403":
-                    description: forbidden
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - write:statuses
-            summary: Delete status with the given ID. The status must belong to you.
-            tags:
-                - statuses
-        get:
-            operationId: statusGet
-            parameters:
-                - description: Target status ID.
-                  in: path
-                  name: id
-                  required: true
-                  type: string
-            produces:
-                - application/json
-            responses:
-                "200":
-                    description: The requested status.
-                    schema:
-                        $ref: '#/definitions/status'
-                "400":
-                    description: bad request
-                "401":
-                    description: unauthorized
-                "403":
-                    description: forbidden
-                "404":
-                    description: not found
-                "406":
-                    description: not acceptable
-                "500":
-                    description: internal server error
-            security:
-                - OAuth2 Bearer:
-                    - read:statuses
-            summary: View status with the given ID.
             tags:
                 - statuses
     /api/v1/statuses/{id}/bookmark:
