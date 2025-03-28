@@ -17,33 +17,7 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */ -}}
 
-{{- define "imagePreview" }}
-<img
-    src="{{- .PreviewURL -}}"
-    loading="lazy"
-    {{- if .Description }}
-    alt="{{- .Description -}}"
-    title="{{- .Description -}}"
-    {{- end }}
-    width="{{- .Meta.Original.Width -}}"
-    height="{{- .Meta.Original.Height -}}"
-/>
-{{- end }}
-
-{{- define "videoPreview" }}
-<img
-    src="{{- .PreviewURL -}}"
-    loading="lazy"
-    {{- if .Description }}
-    alt="{{- .Description -}}"
-    title="{{- .Description -}}"
-    {{- end }}
-    width="{{- .Meta.Small.Width -}}"
-    height="{{- .Meta.Small.Height -}}"
-/>
-{{- end }}
-
-{{- define "audioPreview" }}
+{{- define "preview" }}
 {{- if and .PreviewURL .Meta.Small.Width }}
 <img
     src="{{- .PreviewURL -}}"
@@ -72,29 +46,38 @@
 {{- with . }}
 <div class="media-wrapper">
     <details class="{{- .Item.Type -}}-spoiler media-spoiler" {{- if not .Item.Sensitive }} open{{- end -}}>
-        <summary>
+        <summary
+            {{- if .Item.Description }}
+            title="{{- .Item.Description -}}"
+            {{- end }}
+        >
             <div class="show sensitive button" aria-hidden="true">Show sensitive</div>
-            <span class="eye button" role="button" tabindex="0" aria-label="Toggle media">
+            <span class="eye button" role="button" tabindex="0" aria-label="Toggle media visibility">
                 <i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
                 <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
             </span>
-            {{- if or (eq .Item.Type "video") (eq .Item.Type "gifv") }}
-            {{- include "videoPreview" .Item | indent 3 }}
-            {{- else if eq .Item.Type "image" }}
-            {{- include "imagePreview" .Item | indent 3 }}
-            {{- else if eq .Item.Type "audio" }}
-            {{- include "audioPreview" .Item | indent 3 }}
+            {{- if and (not (eq .Item.Type "unknown")) .Item.Meta.Small.Width }}
+            <div
+                class="blurhash-container"
+                data-blurhash-width="{{- .Item.Meta.Small.Width -}}"
+                data-blurhash-height="{{- .Item.Meta.Small.Height -}}"
+                data-blurhash-hash="{{- .Item.Blurhash -}}"
+                data-blurhash-aspect="{{- .Item.Meta.Small.Aspect -}}"
+            ></div>
             {{- end }}
         </summary>
         {{- if or (eq .Item.Type "video") (eq .Item.Type "gifv") }}
         <video
             {{- if eq .Item.Type "video" }}
             preload="none"
+            class="plyr-video photoswipe-slide"
             {{- else }}
             preload="auto"
             muted
+            autoplay
+            loop
+            class="plyr-video photoswipe-slide gifv"
             {{- end }}
-            class="plyr-video photoswipe-slide{{- if eq .Item.Type "gifv" }} gifv{{ end }}"
             controls
             playsinline
             data-pswp-index="{{- .Index -}}"
@@ -125,8 +108,8 @@
             data-pswp-height="{{- .Item.Meta.Small.Height -}}px"
             {{- else }}
             poster="/assets/logo.webp"
-            width="518px"
-            height="460px"
+            data-pswp-width="518px"
+            data-pswp-height="460px"
             {{- end }}
             {{- if .Item.Description }}
             alt="{{- .Item.Description -}}"
@@ -152,7 +135,7 @@
             {{- end }}
         >
             {{- with .Item }}
-            {{- include "imagePreview" . | indent 3 }}
+            {{- include "preview" . | indent 3 }}
             {{- end }}
         </a>
         {{- else }}

@@ -144,6 +144,7 @@ func (p *Processor) WebStatusesGet(
 	ctx context.Context,
 	targetAccountID string,
 	mediaOnly bool,
+	limit int,
 	maxID string,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
 	account, err := p.state.DB.GetAccountByID(ctx, targetAccountID)
@@ -164,7 +165,7 @@ func (p *Processor) WebStatusesGet(
 		ctx,
 		account,
 		mediaOnly,
-		20,
+		limit,
 		maxID,
 	)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {

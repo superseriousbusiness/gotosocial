@@ -68,6 +68,7 @@ const (
 	cssTag            = distPathPrefix + "/tag.css"
 
 	jsFrontend = distPathPrefix + "/frontend.js" // Progressive enhancement frontend JS.
+	jsBlurhash = distPathPrefix + "/blurhash.js" // Blurhash rendering JS.
 	jsSettings = distPathPrefix + "/settings.js" // Settings panel React application.
 )
 
