@@ -268,11 +268,9 @@ type StatusTimeline struct {
 // Init ...
 func (t *StatusTimeline) Init(cap int) {
 	t.cache.Init(structr.TimelineConfig[*StatusMeta, string]{
-		PKey: "ID",
+		PKey: structr.IndexConfig{Fields: "ID"},
 
 		Indices: []structr.IndexConfig{
-			// ID as primary key is inherently an index.
-			// {Fields: "ID"},
 			{Fields: "AccountID", Multiple: true},
 			{Fields: "BoostOfID", Multiple: true},
 			{Fields: "BoostOfAccountID", Multiple: true},
