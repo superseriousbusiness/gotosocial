@@ -106,12 +106,6 @@ func (suite *ConversationsTestSuite) SetupTest() {
 	suite.tc = typeutils.NewConverter(&suite.state)
 	suite.filter = visibility.NewFilter(&suite.state)
 
-	testrig.StartTimelines(
-		&suite.state,
-		suite.filter,
-		suite.tc,
-	)
-
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.Storage = suite.storage
 	suite.mediaManager = testrig.NewTestMediaManager(&suite.state)

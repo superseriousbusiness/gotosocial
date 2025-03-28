@@ -15,20 +15,28 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline
+package cache
 
-// Timelineable represents any item that can be indexed in a timeline.
-type Timelineable interface {
-	GetID() string
-	GetAccountID() string
-	GetBoostOfID() string
-	GetBoostOfAccountID() string
-}
+import "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 
-// Preparable represents any item that can be prepared in a timeline.
-type Preparable interface {
-	GetID() string
-	GetAccountID() string
-	GetBoostOfID() string
-	GetBoostOfAccountID() string
+func copyStatus(s1 *gtsmodel.Status) *gtsmodel.Status {
+	s2 := new(gtsmodel.Status)
+	*s2 = *s1
+
+	// Don't include ptr fields that
+	// will be populated separately.
+	// See internal/db/bundb/status.go.
+	s2.Account = nil
+	s2.InReplyTo = nil
+	s2.InReplyToAccount = nil
+	s2.BoostOf = nil
+	s2.BoostOfAccount = nil
+	s2.Poll = nil
+	s2.Attachments = nil
+	s2.Tags = nil
+	s2.Mentions = nil
+	s2.Emojis = nil
+	s2.CreatedWithApplication = nil
+
+	return s2
 }

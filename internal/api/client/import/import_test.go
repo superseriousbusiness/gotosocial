@@ -28,11 +28,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	importdata "github.com/superseriousbusiness/gotosocial/internal/api/client/import"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
@@ -66,12 +64,6 @@ func (suite *ImportTestSuite) SetupTest() {
 
 	suite.state.DB = testrig.NewTestDB(&suite.state)
 	suite.state.Storage = testrig.NewInMemoryStorage()
-
-	testrig.StartTimelines(
-		&suite.state,
-		visibility.NewFilter(&suite.state),
-		typeutils.NewConverter(&suite.state),
-	)
 
 	testrig.StandardDBSetup(suite.state.DB, nil)
 	testrig.StandardStorageSetup(suite.state.Storage, "../../../../testrig/media")

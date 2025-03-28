@@ -69,12 +69,6 @@ func SetupTestStructs(
 	visFilter := visibility.NewFilter(&state)
 	intFilter := interaction.NewFilter(&state)
 
-	StartTimelines(
-		&state,
-		visFilter,
-		typeconverter,
-	)
-
 	httpClient := NewMockHTTPClient(nil, rMediaPath)
 	httpClient.TestRemotePeople = NewTestFediPeople()
 	httpClient.TestRemoteStatuses = NewTestFediStatuses()
