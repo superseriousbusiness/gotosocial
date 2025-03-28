@@ -48,16 +48,31 @@ type WebPage struct {
 	// Can be nil.
 	Stylesheets []string
 
-	// Paths to JS files to add to
-	// the page as "script" entries.
+	// JS files to add to the
+	// page as "script" entries.
 	// Can be nil.
-	Javascript []string
+	Javascript []JavascriptEntry
 
 	// Extra parameters to pass to
 	// the template for rendering,
 	// eg., "account": *Account etc.
 	// Can be nil.
 	Extra map[string]any
+}
+
+type JavascriptEntry struct {
+	// Insert <script> tag at the end
+	// of <body> rather than in <head>.
+	Bottom bool
+
+	// Path to the js file.
+	Src string
+
+	// Use async="" attribute.
+	Async bool
+
+	// Use defer="" attribute.
+	Defer bool
 }
 
 // TemplateWebPage renders the given HTML template and

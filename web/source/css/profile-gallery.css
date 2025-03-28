@@ -72,27 +72,16 @@
 			margin-top: 0.15rem;
 			margin-bottom: 0.15rem;
 		
+			/* Show 3 cols of media */
 			display: grid;
+			grid-template-columns: repeat(3, 1fr);
 			gap: 0.15rem;
 
-			/* Desktop-ish width, show 3 cols of media */
-			grid-template-columns: repeat(3, 1fr);
-		
-			@media screen and (max-width: 55rem) {
-				/* Tablet-ish width, switch to 2 cols */
-				grid-template-columns: repeat(2, 1fr);
-			}
-
-			@media screen and (max-width: 36rem) {
-				/* Mobile-ish width, switch to 1 col */
-				grid-template-columns: repeat(1, 1fr);
-			}
-
 			.media-wrapper {
-				aspect-ratio: 4/3;
+				aspect-ratio: 1;
 				border: 0;
 				border-radius: 0;
-				background: $bg;
+				background: $status-bg;
 			}
 		}
 

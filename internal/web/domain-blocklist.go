@@ -68,7 +68,6 @@ func (m *Module) domainBlockListGETHandler(c *gin.Context) {
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance),
 		Stylesheets: []string{cssFA},
-		Javascript:  []string{jsFrontend},
 		Extra:       map[string]any{"blocklist": domainBlocks},
 	}
 

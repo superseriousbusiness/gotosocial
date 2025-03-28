@@ -54,7 +54,13 @@ func (m *Module) SettingsPanelHandler(c *gin.Context) {
 			cssStatus,  // Used for rendering stub/fake statuses.
 			cssSettings,
 		},
-		Javascript: []string{jsSettings},
+		Javascript: []apiutil.JavascriptEntry{
+			{
+				Src:   jsSettings,
+				Async: true,
+				Defer: true,
+			},
+		},
 	}
 
 	apiutil.TemplateWebPage(c, page)

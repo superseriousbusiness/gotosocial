@@ -64,6 +64,15 @@ skulk({
 				}]
 			],
 		},
+		blurhash: {
+			entryFile: "blurhash",
+			outputFile: "blurhash.js",
+			preset: ["js"],
+			prodCfg: prodCfg,
+			transform: [
+				["babelify", { global: true }]
+			],
+		},
 		settings: {
 			entryFile: "settings",
 			outputFile: "settings.js",

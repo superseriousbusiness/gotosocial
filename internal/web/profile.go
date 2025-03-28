@@ -142,11 +142,22 @@ func (m *Module) prepareProfile(c *gin.Context) *profile {
 		}
 	}
 
+	// Limit varies depending on whether this is a gallery view or not.
+	// If gallery view, we want a nice full screen of media, else we
+	// don't want to overwhelm the viewer with a shitload of posts.
+	var limit int
+	if account.WebLayout == "gallery" {
+		limit = 40
+	} else {
+		limit = 20
+	}
+
 	// Get statuses from maxStatusID onwards (or from top if empty string).
 	statusResp, errWithCode := m.processor.Account().WebStatusesGet(
 		ctx,
 		account.ID,
 		mediaOnly,
+		limit,
 		maxStatusID,
 	)
 	if errWithCode != nil {
@@ -230,7 +241,17 @@ func (m *Module) profileMicroblog(c *gin.Context, p *profile) {
 		Instance:    p.instance,
 		OGMeta:      apiutil.OGBase(p.instance).WithAccount(p.account),
 		Stylesheets: stylesheets,
-		Javascript:  []string{jsFrontend},
+		Javascript: []apiutil.JavascriptEntry{
+			{
+				Src:   jsFrontend,
+				Async: true,
+				Defer: true,
+			},
+			{
+				Bottom: true,
+				Src:    jsBlurhash,
+			},
+		},
 		Extra: map[string]any{
 			"account":          p.account,
 			"rssFeed":          p.rssFeed,
@@ -294,7 +315,17 @@ func (m *Module) profileGallery(c *gin.Context, p *profile) {
 		Instance:    p.instance,
 		OGMeta:      apiutil.OGBase(p.instance).WithAccount(p.account),
 		Stylesheets: stylesheets,
-		Javascript:  []string{jsFrontend},
+		Javascript: []apiutil.JavascriptEntry{
+			{
+				Src:   jsFrontend,
+				Async: true,
+				Defer: true,
+			},
+			{
+				Bottom: true,
+				Src:    jsBlurhash,
+			},
+		},
 		Extra: map[string]any{
 			"account":            p.account,
 			"rssFeed":            p.rssFeed,
