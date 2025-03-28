@@ -43,7 +43,7 @@ type TimelineConfig[StructType any, PK cmp.Ordered] struct {
 	// case only a single field is permitted, though
 	// it may be nested, and as described above the
 	// type must conform to cmp.Ordered.
-	PKey string
+	PKey IndexConfig
 
 	// Indices defines indices to create
 	// in the Timeline for the receiving
@@ -106,11 +106,7 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 	// The first index is created from PKey.
 	t.indices = make([]Index, len(config.Indices)+1)
 	t.indices[0].ptr = unsafe.Pointer(t)
-	t.indices[0].init(rt, IndexConfig{
-		Fields:    config.PKey,
-		AllowZero: true,
-		Multiple:  true,
-	}, 0)
+	t.indices[0].init(rt, config.PKey, 0)
 	if len(t.indices[0].fields) > 1 {
 		panic("primary key must contain only 1 field")
 	}
@@ -894,18 +890,127 @@ func (t *Timeline[T, PK]) store_one(last *list_elem, value value_with_pk[T, PK])
 	t_item.data = value.v
 	t_item.pk = value.kptr
 
+	// Get zero'th index, i.e.
+	// the primary key index.
+	idx0 := (&t.indices[0])
+
 	// Acquire key buf.
 	buf := new_buffer()
 
-	// Convert to indexed_item ptr.
+	// Calculate index key from already extracted
+	// primary key, checking for zero return value.
+	partptrs := []unsafe.Pointer{value.kptr}
+	key := idx0.key(buf, partptrs)
+	if key == "" { // i.e. (!allow_zero && pkey == zero)
+		free_timeline_item(t_item)
+		free_buffer(buf)
+		return last
+	}
+
+	// Convert to indexed_item pointer.
 	i_item := from_timeline_item(t_item)
 
+	if last == nil {
+		// No previous element was provided, this is
+		// first insert, we need to work from head.
+
+		// Check for emtpy head.
+		if t.list.head == nil {
+
+			// The easiest case, this will
+			// be the first item in list.
+			t.list.push_front(&t_item.elem)
+			last = t.list.head // return value
+			goto indexing
+		}
+
+		// Extract head item and its primary key.
+		headItem := (*timeline_item)(t.list.head.data)
+		headPK := *(*PK)(headItem.pk)
+		if value.k > headPK {
+
+			// Another easier case, this also
+			// will be the first item in list.
+			t.list.push_front(&t_item.elem)
+			last = t.list.head // return value
+			goto indexing
+		}
+
+		// Check (and drop) if pkey is a collision!
+		if value.k == headPK && is_unique(idx0.flags) {
+			free_timeline_item(t_item)
+			free_buffer(buf)
+			return t.list.head
+		}
+
+		// Set last = head.next
+		// as next to work from.
+		last = t.list.head.next
+	}
+
+	// Iterate through list from head
+	// to find location. Optimized into two
+	// cases to minimize loop CPU cycles.
+	if is_unique(idx0.flags) {
+		for next := last; //
+		next != nil; next = next.next {
+
+			// Extract item and it's primary key.
+			nextItem := (*timeline_item)(next.data)
+			nextPK := *(*PK)(nextItem.pk)
+
+			// If pkey smaller than
+			// cursor's, keep going.
+			if value.k < nextPK {
+				continue
+			}
+
+			// Check (and drop) if
+			// pkey is a collision!
+			if value.k == nextPK {
+				free_timeline_item(t_item)
+				free_buffer(buf)
+				return next
+			}
+
+			// New pkey is larger than cursor,
+			// insert into list just before it.
+			t.list.insert(&t_item.elem, next.prev)
+			last = next // return value
+			goto indexing
+		}
+	} else {
+		for next := last; //
+		next != nil; next = next.next {
+
+			// Extract item and it's primary key.
+			nextItem := (*timeline_item)(next.data)
+			nextPK := *(*PK)(nextItem.pk)
+
+			// If pkey smaller than
+			// cursor's, keep going.
+			if value.k < nextPK {
+				continue
+			}
+
+			// New pkey is larger than cursor,
+			// insert into list just before it.
+			t.list.insert(&t_item.elem, next.prev)
+			last = next // return value
+			goto indexing
+		}
+	}
+
+	// We reached the end of the
+	// list, insert at tail pos.
+	t.list.push_back(&t_item.elem)
+	last = t.list.tail // return value
+	goto indexing
+
+indexing:
 	// Append already-extracted
 	// primary key to 0th index.
-	idx := (&t.indices[0])
-	partptrs := []unsafe.Pointer{value.kptr}
-	key := idx.key(buf, partptrs)
-	evicted := idx.append(key, i_item)
+	evicted := idx0.append(key, i_item)
 	if evicted != nil {
 
 		// This item is no longer
@@ -948,61 +1053,7 @@ func (t *Timeline[T, PK]) store_one(last *list_elem, value value_with_pk[T, PK])
 
 	// Done with buf.
 	free_buffer(buf)
-
-	if last == nil {
-		// No previous element was provided, this is
-		// first insert, we need to work from head.
-
-		// Check for emtpy head.
-		if t.list.head == nil {
-
-			// The easiest case, this will
-			// be the first item in list.
-			t.list.push_front(&t_item.elem)
-			return t.list.head
-		}
-
-		// Extract head item and its primary key.
-		headItem := (*timeline_item)(t.list.head.data)
-		headPK := *(*PK)(headItem.pk)
-		if value.k >= headPK {
-
-			// Another easier case, this also
-			// will be the first item in list.
-			t.list.push_front(&t_item.elem)
-			return t.list.head
-		}
-
-		// Set last=head
-		// to work from.
-		last = t.list.head
-	}
-
-	// Iterate through linked list
-	// from head to find location.
-	for next := last.next; //
-	next != nil; next = next.next {
-
-		// Extract item and it's primary key.
-		nextItem := (*timeline_item)(next.data)
-		nextPK := *(*PK)(nextItem.pk)
-
-		// If pkey smaller than
-		// cursor's, keep going.
-		if value.k < nextPK {
-			continue
-		}
-
-		// New pkey is larger than cursor,
-		// insert into list just before it.
-		t.list.insert(&t_item.elem, next.prev)
-		return next
-	}
-
-	// We reached the end of the
-	// list, insert at tail pos.
-	t.list.push_back(&t_item.elem)
-	return t.list.tail
+	return last
 }
 
 func (t *Timeline[T, PK]) delete(i *timeline_item) {
