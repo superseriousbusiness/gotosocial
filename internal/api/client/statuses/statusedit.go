@@ -30,7 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
-// StatusEditPUTHandler swagger:operation PUT /api/v1/statuses statusEdit
+// StatusEditPUTHandler swagger:operation PUT /api/v1/statuses/{id} statusEdit
 //
 // Edit an existing status using the given form field parameters.
 //
@@ -45,6 +45,12 @@ import (
 //	- application/x-www-form-urlencoded
 //
 //	parameters:
+//	-
+//		name: id
+//		type: string
+//		description: Target status ID.
+//		in: path
+//		required: true
 //	-
 //		name: status
 //		x-go-name: Status
