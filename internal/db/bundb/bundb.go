@@ -130,6 +130,49 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
+func DoRollback(ctx context.Context) error {
+	var sqldb *sql.DB
+	var dialect func() schema.Dialect
+	var err error
+
+	switch t := strings.ToLower(config.GetDbType()); t {
+	case "postgres":
+		sqldb, dialect, err = pgConn(ctx)
+		if err != nil {
+			return err
+		}
+	case "sqlite":
+		sqldb, dialect, err = sqliteConn(ctx)
+		if err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("database type %s not supported for bundb", t)
+	}
+
+	db := bunDB(sqldb, dialect)
+
+	migrator := migrate.NewMigrator(db, migrations.Migrations)
+
+	if err := migrator.Lock(ctx); err != nil {
+		return err
+	}
+	defer migrator.Unlock(ctx) //nolint:errcheck
+
+	group, err := migrator.Rollback(ctx)
+	if err != nil {
+		return err
+	}
+
+	if group.IsZero() {
+		fmt.Printf("there are no groups to roll back\n")
+		return nil
+	}
+
+	fmt.Printf("rolled back %s\n", group)
+	return nil
+}
+
 // NewBunDBService returns a bunDB derived from the provided config, which implements the go-fed DB interface.
 // Under the hood, it uses https://github.com/uptrace/bun to create and maintain a database connection.
 func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
