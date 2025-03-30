@@ -58,6 +58,7 @@ type DBService struct {
 	db.AdvancedMigration
 	db.Application
 	db.Basic
+	db.Card
 	db.Conversation
 	db.Domain
 	db.Emoji
@@ -185,6 +186,10 @@ func NewBunDBService(ctx context.Context, state *state.State) (db.DB, error) {
 		},
 		Basic: &basicDB{
 			db: db,
+		},
+		Card: &cardDB{
+			db:    db,
+			state: state,
 		},
 		Conversation: &conversationDB{
 			db:    db,

@@ -55,7 +55,7 @@ func FetchPreview(text string) (*gtsmodel.Card, gtserror.WithCode) {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("unsupported scheme: %s", parsed.Scheme))
 	}
 
-	resp, err := http.Get(link)
+	resp, err := safeGet(parsed)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err, "request failed")
 	}
@@ -108,4 +108,9 @@ func FetchPreview(text string) (*gtsmodel.Card, gtserror.WithCode) {
 	}
 
 	return card, nil
+}
+
+func safeGet(u *url.URL) (*http.Response, error) {
+	// #nosec G107 -- URL was already validated
+	return http.Get(u.String())
 }

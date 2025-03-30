@@ -197,7 +197,14 @@ func (p *Processor) Create(
 
 	if card != nil {
 		status.CardID = id.NewULIDFromTime(now)
+		card.ID = status.CardID
 		status.Card = card
+
+		// Insert this newly prepared preview card into the database.
+		if err := p.state.DB.PutCard(ctx, card); err != nil {
+			err := gtserror.Newf("error inserting preview card in db: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// Only store ContentWarningText if the parsed

@@ -175,6 +175,24 @@ func (s *Status) EditsPopulated() bool {
 	return true
 }
 
+// CardPopulated returns whether card is
+// populated according to current CardID.
+func (s *Status) CardPopulated() bool {
+	if s.CardID == "" {
+		return true
+	}
+
+	if s.Card == nil {
+		return false
+	}
+
+	if s.Card.ID != s.CardID {
+		return false
+	}
+
+	return true
+}
+
 // EmojisUpToDate returns whether status emoji attachments of receiving status are up-to-date
 // according to emoji attachments of the passed status, by comparing their emoji URIs. We don't
 // use IDs as this is used to determine whether there are new emojis to fetch.

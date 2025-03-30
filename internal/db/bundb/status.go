@@ -297,6 +297,16 @@ func (s *statusDB) PopulateStatus(ctx context.Context, status *gtsmodel.Status) 
 		}
 	}
 
+	if !status.CardPopulated() {
+		status.Card, err = s.state.DB.GetCardByID(
+			gtscontext.SetBarebones(ctx),
+			status.CardID,
+		)
+		if err != nil {
+			errs.Appendf("error populating status preview card: %w", err)
+		}
+	}
+
 	if status.CreatedWithApplicationID != "" && status.CreatedWithApplication == nil {
 		// Populate the status' expected CreatedWithApplication (not always set).
 		// Don't error on ErrNoEntries, as the application may have been cleaned up.
