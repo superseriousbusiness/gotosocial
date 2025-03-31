@@ -19,6 +19,8 @@
 
 import { decode } from "blurhash";
 
+// Generate a blurhash canvas for each image for
+// each blurhash container and put it in the summary.
 Array.from(document.getElementsByClassName('blurhash-container')).forEach(blurhashContainer => {
 	const hash = blurhashContainer.dataset.blurhashHash;
 	const thumbHeight = blurhashContainer.dataset.blurhashHeight;
@@ -63,4 +65,82 @@ Array.from(document.getElementsByClassName('blurhash-container')).forEach(blurha
 
 	// Put the canvas inside the container.
 	blurhashContainer.appendChild(canvas);
+});
+
+// Add a smooth transition from blurhash
+// to image for each sensitive image.
+Array.from(document.getElementsByTagName('img')).forEach(img => {
+	if (!img.dataset.blurhashHash) {
+		// Has no blurhash,
+		// can't transition smoothly.
+		return;
+	}
+
+	if (img.dataset.sensitive !== "true") {
+		// Not sensitive, smooth
+		// transition doesn't matter.
+		return;
+	}
+
+	if (img.complete) {
+		// Image already loaded,
+		// don't stub it with anything.
+		return;
+	}
+	
+	const parentSlide = img.closest(".photoswipe-slide");
+	if (!parentSlide) {
+		// Parent slide was nil,
+		// can't do anything.
+		return;
+	}
+
+	const blurhashContainer = document.querySelector("div[data-blurhash-hash=\"" + img.dataset.blurhashHash + "\"]");
+	if (!blurhashContainer) {
+		// Blurhash div was nil,
+		// can't do anything.
+		return;
+	}
+
+	const canvas = blurhashContainer.children[0];
+	if (!canvas) {
+		// Canvas was nil,
+		// can't do anything.
+		return;
+	} 
+
+	// "Replace" the hidden img with a canvas
+	// that will show initially when it's clicked.
+	const clone = canvas.cloneNode(true);
+	clone.getContext("2d").drawImage(canvas, 0, 0);
+	parentSlide.prepend(clone);
+	img.className = img.className + " hidden";
+
+	// Add a listener so that when the spoiler
+	// is opened, loading of the image begins.
+	const parentSummary = img.closest(".media-spoiler");
+	parentSummary.addEventListener("toggle", (_) => {
+		if (parentSummary.hasAttribute("open") && !img.complete) {
+			img.loading = "eager";
+		}
+	});
+
+	// Add a callback that triggers
+	// when image loading is complete.
+	img.addEventListener("load", () => {
+		// Show the image now that it's loaded.
+		img.className = img.className.replace(" hidden", "");
+		
+		// Reset the lazy loading tag to its initial
+		// value. This doesn't matter too much since
+		// it's already loaded but it feels neater.
+		img.loading = "lazy";
+
+		// Remove the temporary blurhash
+		// canvas so only the image shows.
+		const canvas = parentSlide.getElementsByTagName("canvas")[0];
+		if (canvas) {
+			canvas.remove();
+		}
+	});
 });
