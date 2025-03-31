@@ -2,6 +2,7 @@ package structr
 
 import (
 	"cmp"
+	"os"
 	"reflect"
 	"slices"
 	"sync"
@@ -103,7 +104,8 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	// The first index is created from PKey.
+	// The first index is created from PKey,
+	// other indices are created as expected.
 	t.indices = make([]Index, len(config.Indices)+1)
 	t.indices[0].ptr = unsafe.Pointer(t)
 	t.indices[0].init(rt, config.PKey, 0)
@@ -115,8 +117,7 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 		t.indices[i+1].init(rt, cfg, 0)
 	}
 
-	// Before extracting
-	// first index for pkey.
+	// Extract pkey details from index.
 	field := t.indices[0].fields[0]
 	t.pkey = pkey_field{
 		rtype:   field.rtype,
@@ -203,7 +204,7 @@ func (t *Timeline[T, PK]) Insert(values ...T) {
 	// Allocate a slice of our value wrapping struct type.
 	with_keys := make([]value_with_pk[T, PK], len(values))
 	if len(with_keys) != len(values) {
-		panic("BCE")
+		panic(assert("BCE"))
 	}
 
 	// Range the provided values.
@@ -1010,48 +1011,35 @@ func (t *Timeline[T, PK]) store_one(last *list_elem, value value_with_pk[T, PK])
 indexing:
 	// Append already-extracted
 	// primary key to 0th index.
-	evicted := idx0.append(key, i_item)
-	if evicted != nil {
+	_ = idx0.add(key, i_item)
 
-		// This item is no longer
-		// indexed, remove from list.
-		t.list.remove(&evicted.elem)
-
-		// Now convert from index_item ptr
-		// and release it to global mem pool.
-		evicted := to_timeline_item(evicted)
-		free_timeline_item(evicted)
-	}
-
+	// Insert item into each of indices.
 	for i := 1; i < len(t.indices); i++ {
+
 		// Get current index ptr.
 		idx := (&t.indices[i])
 
 		// Extract fields comprising index key from value.
 		parts := extract_fields(value.vptr, idx.fields)
 
-		// Calculate this index key.
+		// Calculate this index key,
+		// checking for zero values.
 		key := idx.key(buf, parts)
 		if key == "" {
 			continue
 		}
 
-		// Append this item to index.
-		evicted := idx.append(key, i_item)
-		if evicted != nil {
+		// Add this item to index,
+		// checking for collisions.
+		if !idx.add(key, i_item) {
 
-			// This item is no longer
-			// indexed, remove from list.
-			t.list.remove(&evicted.elem)
-
-			// Now convert from index_item ptr
-			// and release it to global mem pool.
-			evicted := to_timeline_item(evicted)
-			free_timeline_item(evicted)
+			t.delete(t_item)
+			free_buffer(buf)
+			return last
 		}
 	}
 
-	// Done with buf.
+	// Done with bufs.
 	free_buffer(buf)
 	return last
 }
@@ -1098,7 +1086,7 @@ func init() {
 	// we rely on this to allow a ptr to one to be a ptr to either of them.
 	const off = unsafe.Offsetof(timeline_item{}.indexed_item)
 	if off != 0 {
-		panic("invalid timeline_item{}.indexed_item offset")
+		panic(assert("offset_of(timeline_item{}.indexed_item) = 0"))
 	}
 }
 
@@ -1112,10 +1100,9 @@ func from_timeline_item(item *timeline_item) *indexed_item {
 func to_timeline_item(item *indexed_item) *timeline_item {
 	to := (*timeline_item)(unsafe.Pointer(item))
 	if to.ck != ^uint(0) {
-		// ensure check bits are
-		// set indicating it was a
-		// timeline_item originally.
-		should_not_reach(true)
+		// ensure check bits are set indicating
+		// it was a timeline_item originally.
+		panic(assert("check bits are set"))
 	}
 	return to
 }
@@ -1140,7 +1127,8 @@ func free_timeline_item(item *timeline_item) {
 	if len(item.indexed) > 0 ||
 		item.elem.next != nil ||
 		item.elem.prev != nil {
-		should_not_reach(false)
+		msg := assert("item not in use")
+		os.Stderr.WriteString(msg + "\n")
 		return
 	}
 	item.data = nil
