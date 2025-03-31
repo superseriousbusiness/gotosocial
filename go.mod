@@ -2,7 +2,7 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.23.0
 
-toolchain go1.23.3
+toolchain go1.24.1
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
@@ -27,7 +27,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
-	codeberg.org/gruf/go-structr v0.9.0
+	codeberg.org/gruf/go-structr v0.9.4
 	codeberg.org/superseriousbusiness/activity v1.13.0-gts
 	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
@@ -96,7 +96,7 @@ require (
 
 require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
-	codeberg.org/gruf/go-mangler v1.4.3 // indirect
+	codeberg.org/gruf/go-mangler v1.4.4 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
 	codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB // indirect
 	codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB // indirect
