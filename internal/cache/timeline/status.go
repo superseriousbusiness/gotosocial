@@ -361,9 +361,9 @@ func (t *StatusTimeline) Load(
 	// Get paging details.
 	lo := page.Min.Value
 	hi := page.Max.Value
-	lim := page.Limit
-	ord := page.Order()
-	dir := toDirection(ord)
+	limit := page.Limit
+	order := page.Order()
+	dir := toDirection(order)
 
 	// Use a copy of current page so
 	// we can repeatedly update it.
@@ -378,7 +378,7 @@ func (t *StatusTimeline) Load(
 	metas := t.cache.Select(
 		util.PtrIf(lo),
 		util.PtrIf(hi),
-		util.PtrIf(lim),
+		util.PtrIf(limit),
 		dir,
 	)
 
@@ -403,7 +403,7 @@ func (t *StatusTimeline) Load(
 		nextPageParams(nextPg,
 			metas[len(metas)-1].ID,
 			metas[0].ID,
-			ord,
+			order,
 		)
 
 		// Before any further loading,
@@ -428,7 +428,7 @@ func (t *StatusTimeline) Load(
 	var justLoaded []*StatusMeta
 
 	// Check whether loaded enough from cache.
-	if need := lim - len(metas); need > 0 {
+	if need := limit - len(metas); need > 0 {
 
 		// Perform a maximum of 5
 		// load attempts fetching
@@ -452,7 +452,7 @@ func (t *StatusTimeline) Load(
 			nextPageParams(nextPg,
 				statuses[len(statuses)-1].ID,
 				statuses[0].ID,
-				ord,
+				order,
 			)
 
 			// Perform any pre-filtering on newly loaded statuses.
@@ -486,7 +486,7 @@ func (t *StatusTimeline) Load(
 
 			// Check if we reached
 			// requested page limit.
-			if len(metas) >= lim {
+			if len(metas) >= limit {
 				break
 			}
 		}
@@ -496,21 +496,21 @@ func (t *StatusTimeline) Load(
 	var apiStatuses []*apimodel.Status
 	if len(metas) > 0 {
 		switch {
-		case len(metas) <= lim:
+		case len(metas) <= limit:
 			// We have under
 			// expected limit.
 
-		case ord.Ascending():
+		case order.Ascending():
 			// Ascending order was requested
 			// and we have more than limit, so
 			// trim extra metadata from end.
-			metas = metas[:lim]
+			metas = metas[:limit]
 
 		default: /* i.e. descending */
 			// Descending order was requested
 			// and we have more than limit, so
 			// trim extra metadata from start.
-			metas = metas[len(metas)-lim:]
+			metas = metas[len(metas)-limit:]
 		}
 
 		// Using meta and funcs, prepare frontend API models.
