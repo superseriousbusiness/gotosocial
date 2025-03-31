@@ -2,7 +2,7 @@ module github.com/superseriousbusiness/gotosocial
 
 go 1.23.0
 
-toolchain go1.23.3
+toolchain go1.24.1
 
 // Replace go-swagger with our version that fixes (ours particularly) use of Go1.23
 replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
@@ -61,7 +61,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.0
 	github.com/stretchr/testify v1.10.0
-	github.com/tdewolff/minify/v2 v2.22.3
+	github.com/tdewolff/minify/v2 v2.22.4
 	github.com/technologize/otel-go-contrib v1.1.1
 	github.com/temoto/robotstxt v1.1.2
 	github.com/tetratelabs/wazero v1.9.0
