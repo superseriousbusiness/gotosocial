@@ -261,21 +261,39 @@ type StatusTimeline struct {
 	// a sliding average. a problem for future kim!
 	last atomic.Pointer[structr.Direction]
 
-	// ...
+	// defines the 'maximum' count of
+	// entries in the timeline that we
+	// apply our Trim() operation
+	// threshold to. the timeline itself
+	// does not limit items due to absurd
+	// complexities it would introduce,
+	// so we we apply a 'cut-off' via
+	// regular calls to Trim(threshold).
 	max int
 }
 
-// Init ...
+// Init will initialize the timeline for usage,
+// by preparing internal indices etc. This also
+// sets the given max capacity for Trim() operations.
 func (t *StatusTimeline) Init(cap int) {
 	t.cache.Init(structr.TimelineConfig[*StatusMeta, string]{
+
+		// Timeline item primary key field.
 		PKey: structr.IndexConfig{Fields: "ID"},
 
+		// Additional indexed fields.
 		Indices: []structr.IndexConfig{
 			{Fields: "AccountID", Multiple: true},
-			{Fields: "BoostOfID", Multiple: false},
 			{Fields: "BoostOfAccountID", Multiple: true},
+
+			// By setting multiple=false for BoostOfID, this will prevent
+			// timeline entries with matching BoostOfID will not be inserted
+			// after the first, which allows us to prevent repeated boosts
+			// of the same status from showing up within 'cap' entries.
+			{Fields: "BoostOfID", Multiple: false},
 		},
 
+		// Timeline item copy function.
 		Copy: func(s *StatusMeta) *StatusMeta {
 			var prepared *apimodel.Status
 			if s.prepared != nil {
