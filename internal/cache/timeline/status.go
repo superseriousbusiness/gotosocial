@@ -293,7 +293,7 @@ func (t *StatusTimeline) Init(cap int) {
 		},
 	})
 
-	// Create a fast index lookup ptrs.
+	// Get fast index lookup ptrs.
 	t.idx_ID = t.cache.Index("ID")
 	t.idx_AccountID = t.cache.Index("AccountID")
 	t.idx_BoostOfID = t.cache.Index("BoostOfID")
@@ -386,8 +386,8 @@ func (t *StatusTimeline) Load(
 		)
 
 		// Before any further loading,
-		// store current lo,hi values,
-		// used for possible return.
+		// store current lo, hi values
+		// as possible lo, hi returns.
 		lo = metas[len(metas)-1].ID
 		hi = metas[0].ID
 
@@ -471,12 +471,13 @@ func (t *StatusTimeline) Load(
 		}
 	}
 
-	// Returned frontend API models.
+	// Prepare frontend API models.
 	var apiStatuses []*apimodel.Status
 	if len(metas) > 0 {
 		switch {
 		case len(metas) <= lim:
-			// nothing to do
+			// We have under
+			// expected limit.
 
 		case ord.Ascending():
 			// Ascending order was requested
@@ -484,8 +485,7 @@ func (t *StatusTimeline) Load(
 			// trim extra metadata from end.
 			metas = metas[:lim]
 
-		// descending
-		default:
+		default: /* i.e. descending */
 			// Descending order was requested
 			// and we have more than limit, so
 			// trim extra metadata from start.
@@ -496,13 +496,14 @@ func (t *StatusTimeline) Load(
 		apiStatuses = prepareStatuses(ctx, metas, prepareAPI)
 
 		if hi == "" {
-			// Only set hi value if not
-			// already set, i.e. we never
-			// fetched any cached values.
+			// No cached statuses were previously
+			// loaded, we need to determine a hi
+			// paging value from recently loaded.
 			hi = metas[0].ID
 		}
 
-		// Set lo value from fetched.
+		// In case extra statuses were loaded,
+		// set lo paging value to last value.
 		lo = metas[len(metas)-1].ID
 	}
 
