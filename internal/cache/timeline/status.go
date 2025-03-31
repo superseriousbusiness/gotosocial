@@ -272,7 +272,7 @@ func (t *StatusTimeline) Init(cap int) {
 
 		Indices: []structr.IndexConfig{
 			{Fields: "AccountID", Multiple: true},
-			{Fields: "BoostOfID", Multiple: true},
+			{Fields: "BoostOfID", Multiple: false},
 			{Fields: "BoostOfAccountID", Multiple: true},
 		},
 
@@ -298,6 +298,9 @@ func (t *StatusTimeline) Init(cap int) {
 	t.idx_AccountID = t.cache.Index("AccountID")
 	t.idx_BoostOfID = t.cache.Index("BoostOfID")
 	t.idx_BoostOfAccountID = t.cache.Index("BoostOfAccountID")
+
+	// Set max.
+	t.max = cap
 }
 
 // Load ...
