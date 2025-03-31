@@ -146,7 +146,17 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 		Instance:    instance,
 		OGMeta:      apiutil.OGBase(instance).WithStatus(context.Status),
 		Stylesheets: stylesheets,
-		Javascript:  []string{jsFrontend},
+		Javascript: []apiutil.JavascriptEntry{
+			{
+				Src:   jsFrontend,
+				Async: true,
+				Defer: true,
+			},
+			{
+				Bottom: true,
+				Src:    jsBlurhash,
+			},
+		},
 		Extra: map[string]any{
 			"context": context,
 		},

@@ -35,7 +35,12 @@
 		grid-row: span 2;
 	}
 
-	@media screen and (max-width: 42rem) {
+	/*
+		On really skinny screens allow
+		media wrapper to take up full
+		width instead of showing 2 columns.
+	*/
+	@media screen and (max-width: 23rem) {
 		.media-wrapper {
 			grid-column: span 2;
 			grid-row: span 2;
