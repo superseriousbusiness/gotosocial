@@ -96,7 +96,7 @@ func (p *Processor) getStatusTimeline(
 		// Get a list of all account mutes for requester.
 		allMutes, err := p.state.DB.GetAccountMutes(ctx,
 			requester.ID,
-			nil, // nil page, i.e. all
+			nil, // i.e. all
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err := gtserror.Newf("error getting account mutes: %w", err)
@@ -111,16 +111,19 @@ func (p *Processor) getStatusTimeline(
 	// input paging cursor.
 	id.ValidatePage(page)
 
-	// ...
+	// Load status page via timeline cache, also
+	// getting lo, hi values for next, prev pages.
 	apiStatuses, lo, hi, err := timeline.Load(ctx,
 
-		// ...
+		// Status page
+		// to load.
 		page,
 
-		// ...
+		// Caller provided database
+		// status page loading function.
 		loadPage,
 
-		// ...
+		// Status load function for cached timeline entries.
 		func(ids []string) ([]*gtsmodel.Status, error) {
 			return p.state.DB.GetStatusesByIDs(ctx, ids)
 		},
@@ -133,7 +136,7 @@ func (p *Processor) getStatusTimeline(
 		// i.e. filter after caching.
 		postFilter,
 
-		// ...
+		// Frontend API model preparation function.
 		func(status *gtsmodel.Status) (*apimodel.Status, error) {
 			apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 				status,
