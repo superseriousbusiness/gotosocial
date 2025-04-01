@@ -321,7 +321,12 @@ func (t *StatusTimeline) Init(cap int) {
 	t.max = cap
 }
 
-// Load ...
+// Load will load timeline statuses according to given
+// page, using provided callbacks to load extra data when
+// necessary, and perform fine-grained filtering loaded
+// database models before eventual return to the user. The
+// returned strings are the lo, hi ID paging values, used
+// for generation of next, prev page links in the response.
 func (t *StatusTimeline) Load(
 	ctx context.Context,
 	page *paging.Page,
@@ -338,7 +343,7 @@ func (t *StatusTimeline) Load(
 	// what actually gets stored in the timeline cache.
 	preFilter func(each *gtsmodel.Status) (delete bool, err error),
 
-	// postFilterFn can be used to perform filtering of returned
+	// postFilter can be used to perform filtering of returned
 	// statuses AFTER insert into cache. i.e. this will not effect
 	// what actually gets stored in the timeline cache.
 	postFilter func(each *gtsmodel.Status) (delete bool, err error),
@@ -686,7 +691,10 @@ func (t *StatusTimeline) UnprepareAll() {
 	}
 }
 
-// Trim ...
+// Trim will ensure that receiving timeline is less than or
+// equal in length to the given threshold percentage of the
+// timeline's preconfigured maximum capacity. This will trim
+// from top / bottom depending on which was recently accessed.
 func (t *StatusTimeline) Trim(threshold float64) {
 
 	// Default trim dir.
