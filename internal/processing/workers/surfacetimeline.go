@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 
-	timeline2 "github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -356,16 +356,11 @@ func (s *Surface) listEligible(
 	}
 }
 
-// timelineStatus uses the provided ingest function to put the given
-// status in a timeline with the given ID, if it's timelineable.
-//
-// If the status was inserted into the timeline, true will be returned
-// + it will also be streamed to the user using the given streamType.
-
-// timelineStatus ...
+// timelineStatus will insert the given status into the given timeline, if it's
+// timelineable. if the status was inserted into the timeline, true will be returned.
 func (s *Surface) timelineStatus(
 	ctx context.Context,
-	timeline *timeline2.StatusTimeline,
+	timeline *timeline.StatusTimeline,
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
