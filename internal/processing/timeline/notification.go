@@ -36,6 +36,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// NotificationsGet ...
 func (p *Processor) NotificationsGet(
 	ctx context.Context,
 	authed *apiutil.Auth,

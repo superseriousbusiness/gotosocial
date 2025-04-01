@@ -243,7 +243,8 @@ func (t *StatusTimelines) ClearAll() {
 // StatusTimeline ...
 type StatusTimeline struct {
 
-	// underlying cache of *StatusMeta{}, primary-keyed by ID string.
+	// underlying timeline cache of *StatusMeta{},
+	// primary-keyed by ID, with extra indices below.
 	cache structr.Timeline[*StatusMeta, string]
 
 	// fast-access cache indices.
@@ -263,12 +264,11 @@ type StatusTimeline struct {
 
 	// defines the 'maximum' count of
 	// entries in the timeline that we
-	// apply our Trim() operation
-	// threshold to. the timeline itself
-	// does not limit items due to absurd
-	// complexities it would introduce,
-	// so we we apply a 'cut-off' via
-	// regular calls to Trim(threshold).
+	// apply our Trim() call threshold
+	// to. the timeline itself does not
+	// limit items due to complexities
+	// it would introduce, so we apply
+	// a 'cut-off' at regular intervals.
 	max int
 }
 
@@ -362,6 +362,11 @@ func (t *StatusTimeline) Load(
 	case loadPage == nil:
 		panic("nil load page func")
 	}
+
+	// TODO: there's quite a few opportunities for
+	// optimization here, with a lot of frequently
+	// used slices of the same types. depending on
+	// profiles it may be advantageous to pool some.
 
 	// Get paging details.
 	lo := page.Min.Value
