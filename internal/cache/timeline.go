@@ -31,10 +31,10 @@ type TimelineCaches struct {
 	List timeline.StatusTimelines
 
 	// Public ...
-	Public timeline.StatusTimeline
+	Public timeline.StatusTimelines
 
 	// Local ...
-	Local timeline.StatusTimeline
+	Local timeline.StatusTimelines
 }
 
 func (c *Caches) initHomeTimelines() {
