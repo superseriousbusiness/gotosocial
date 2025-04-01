@@ -467,7 +467,10 @@ func (t *StatusTimeline) Load(
 				continue
 			}
 
-			// Update returned lo paging value.
+			// On each iteration, since statuses
+			// returned will always be in DESC order,
+			// iteratively update the lo paging value
+			// that we return for next / prev pages.
 			lo = statuses[len(statuses)-1].ID
 
 			// Convert to our cache type,
@@ -522,8 +525,10 @@ func (t *StatusTimeline) Load(
 
 	if len(justLoaded) > 0 {
 		if hi == "" {
-			// No previously cached, set
-			// hi paging value from loaded.
+			// Check whether a hi value was set
+			// from an initial load of cached entries,
+			// if not we set the returned hi paging
+			// value from first in loaded statuses.
 			hi = justLoaded[0].ID
 		}
 
