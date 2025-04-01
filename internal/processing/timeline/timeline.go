@@ -156,11 +156,6 @@ func (p *Processor) getStatusTimeline(
 		return nil, gtserror.WrapWithCode(http.StatusInternalServerError, err)
 	}
 
-	// Check for empty response.
-	if len(apiStatuses) == 0 {
-		return paging.EmptyResponse(), nil
-	}
-
 	// Package returned API statuses as pageable response.
 	return paging.PackageResponse(paging.ResponseParams{
 		Items: xslices.ToAny(apiStatuses),
