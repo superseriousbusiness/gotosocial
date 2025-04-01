@@ -61,9 +61,9 @@ type StatusMeta struct {
 	loaded *gtsmodel.Status
 }
 
-// isLoaded is a small utility func that can fill
+// isNotLoaded is a small utility func that can fill
 // the slices.DeleteFunc() signature requirements.
-func (m *StatusMeta) isLoaded() bool {
+func (m *StatusMeta) isNotLoaded() bool {
 	return m.loaded == nil
 }
 
@@ -413,7 +413,7 @@ func (t *StatusTimeline) Load(
 		hi = metas[0].ID
 
 		// Drop all entries we failed to load statuses for.
-		metas = slices.DeleteFunc(metas, (*StatusMeta).isLoaded)
+		metas = slices.DeleteFunc(metas, (*StatusMeta).isNotLoaded)
 
 		// Perform post-filtering on cached status entries.
 		metas, err = doStatusPostFilter(metas, postFilter)
@@ -467,6 +467,9 @@ func (t *StatusTimeline) Load(
 				continue
 			}
 
+			// Update returned lo paging value.
+			lo = statuses[len(statuses)-1].ID
+
 			// Convert to our cache type,
 			// these will get inserted into
 			// the cache in prepare() below.
@@ -515,20 +518,15 @@ func (t *StatusTimeline) Load(
 
 		// Using meta and funcs, prepare frontend API models.
 		apiStatuses = prepareStatuses(ctx, metas, prepareAPI)
-
-		if hi == "" {
-			// No cached statuses were previously
-			// loaded, we need to determine a hi
-			// paging value from recently loaded.
-			hi = metas[0].ID
-		}
-
-		// In case extra statuses were loaded,
-		// set lo paging value to last value.
-		lo = metas[len(metas)-1].ID
 	}
 
 	if len(justLoaded) > 0 {
+		if hi == "" {
+			// No previously cached, set
+			// hi paging value from loaded.
+			hi = justLoaded[0].ID
+		}
+
 		// Even if we don't return them, insert
 		// the excess (post-filtered) into cache.
 		t.cache.Insert(justLoaded...)
