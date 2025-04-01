@@ -155,7 +155,7 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	}
 
 	// Clear the timeline to drop all cached statuses.
-	suite.state.Caches.Timelines.Public.Clear()
+	suite.state.Caches.Timelines.Public.ClearAll()
 
 	// Create a filter to hide one status on the timeline.
 	if err := suite.db.PutFilter(ctx, filter); err != nil {
