@@ -41,7 +41,8 @@ const extended = gtsApi.injectEndpoints({
 		}),
 		
 		user: build.query<User, void>({
-			query: () => ({url: `/api/v1/user`})
+			query: () => ({url: `/api/v1/user`}),
+			providesTags: ["User"],
 		}),
 		
 		passwordChange: build.mutation({

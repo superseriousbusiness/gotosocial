@@ -31,49 +31,163 @@ import (
 // Sign-ups that have been denied rather than
 // approved are stored as DeniedUser instead.
 type User struct {
-	ID                     string       `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt              time.Time    `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt              time.Time    `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Email                  string       `bun:",nullzero,unique"`                                            // confirmed email address for this user, this should be unique -- only one email address registered per instance, multiple users per email are not supported
-	AccountID              string       `bun:"type:CHAR(26),nullzero,notnull,unique"`                       // The id of the local gtsmodel.Account entry for this user.
-	Account                *Account     `bun:"rel:belongs-to"`                                              // Pointer to the account of this user that corresponds to AccountID.
-	EncryptedPassword      string       `bun:",nullzero,notnull"`                                           // The encrypted password of this user, generated using https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword. A salt is included so we're safe against 🌈 tables.
-	SignUpIP               net.IP       `bun:",nullzero"`                                                   // IP this user used to sign up. Only stored for pending sign-ups.
-	InviteID               string       `bun:"type:CHAR(26),nullzero"`                                      // id of the user who invited this user (who let this joker in?)
-	Reason                 string       `bun:",nullzero"`                                                   // What reason was given for signing up when this user was created?
-	Locale                 string       `bun:",nullzero"`                                                   // In what timezone/locale is this user located?
-	CreatedByApplicationID string       `bun:"type:CHAR(26),nullzero"`                                      // Which application id created this user? See gtsmodel.Application
-	CreatedByApplication   *Application `bun:"rel:belongs-to"`                                              // Pointer to the application corresponding to createdbyapplicationID.
-	LastEmailedAt          time.Time    `bun:"type:timestamptz,nullzero"`                                   // When was this user last contacted by email.
-	ConfirmationToken      string       `bun:",nullzero"`                                                   // What confirmation token did we send this user/what are we expecting back?
-	ConfirmationSentAt     time.Time    `bun:"type:timestamptz,nullzero"`                                   // When did we send email confirmation to this user?
-	ConfirmedAt            time.Time    `bun:"type:timestamptz,nullzero"`                                   // When did the user confirm their email address
-	UnconfirmedEmail       string       `bun:",nullzero"`                                                   // Email address that hasn't yet been confirmed
-	Moderator              *bool        `bun:",nullzero,notnull,default:false"`                             // Is this user a moderator?
-	Admin                  *bool        `bun:",nullzero,notnull,default:false"`                             // Is this user an admin?
-	Disabled               *bool        `bun:",nullzero,notnull,default:false"`                             // Is this user disabled from posting?
-	Approved               *bool        `bun:",nullzero,notnull,default:false"`                             // Has this user been approved by a moderator?
-	ResetPasswordToken     string       `bun:",nullzero"`                                                   // The generated token that the user can use to reset their password
-	ResetPasswordSentAt    time.Time    `bun:"type:timestamptz,nullzero"`                                   // When did we email the user their reset-password email?
-	ExternalID             string       `bun:",nullzero,unique"`                                            // If the login for the user is managed externally (e.g OIDC), we need to keep a stable reference to the external object (e.g OIDC sub claim)
+	// Database ID of the user.
+	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+
+	// Datetime when the user was created.
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+
+	// Datetime when was the user was last updated.
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+
+	// Confirmed email address for this user.
+	//
+	// This should be unique, ie., only one email
+	// address registered per instance. Multiple
+	// users per email are not (yet) supported.
+	Email string `bun:",nullzero,unique"`
+
+	// Database ID of the Account for this user.
+	AccountID string `bun:"type:CHAR(26),nullzero,notnull,unique"`
+
+	// Account corresponding to AccountID.
+	Account *Account `bun:"-"`
+
+	// Bcrypt-encrypted password of this user, generated using
+	// https://pkg.go.dev/golang.org/x/crypto/bcrypt#GenerateFromPassword.
+	//
+	// A salt is included so we're safe against 🌈 tables.
+	EncryptedPassword string `bun:",nullzero,notnull"`
+
+	// 2FA secret for this user.
+	//
+	// Null if 2FA is not enabled for this user.
+	TwoFactorSecret string `bun:",nullzero"`
+
+	// Slice of bcrypt-encrypted backup/recovery codes that a
+	// user can use if they lose their 2FA authenticator app.
+	//
+	// Null if 2FA is not enabled for this user.
+	TwoFactorBackups []string `bun:",nullzero,array"`
+
+	// Datetime when 2fa was enabled.
+	//
+	// Null if 2fa is not enabled for this user.
+	TwoFactorEnabledAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// IP this user used to sign up.
+	//
+	// Only stored for pending sign-ups.
+	SignUpIP net.IP `bun:",nullzero"`
+
+	// Database ID of the invite that this
+	// user used to sign up, if applicable.
+	InviteID string `bun:"type:CHAR(26),nullzero"`
+
+	// Reason given for signing up
+	// when this user was created.
+	Reason string `bun:",nullzero"`
+
+	// Timezone/locale in which
+	// this user is located.
+	Locale string `bun:",nullzero"`
+
+	// Database ID of the Application used to create this user.
+	CreatedByApplicationID string `bun:"type:CHAR(26),nullzero"`
+
+	// Application corresponding to ApplicationID.
+	CreatedByApplication *Application `bun:"-"`
+
+	// Datetime when this user was last contacted by email.
+	LastEmailedAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// Confirmation token emailed to this user.
+	//
+	// Only set if user's email not yet confirmed.
+	ConfirmationToken string `bun:",nullzero"`
+
+	// Datetime when confirmation token was emailed to user.
+	ConfirmationSentAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// Datetime when user confirmed
+	// their email address, if applicable.
+	ConfirmedAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// Email address that hasn't yet been confirmed.
+	UnconfirmedEmail string `bun:",nullzero"`
+
+	// True if user has moderator role.
+	Moderator *bool `bun:",nullzero,notnull,default:false"`
+
+	// True if user has admin role.
+	Admin *bool `bun:",nullzero,notnull,default:false"`
+
+	// True if user is disabled from posting.
+	Disabled *bool `bun:",nullzero,notnull,default:false"`
+
+	// True if this user's sign up has
+	// been approved by a moderator or admin.
+	Approved *bool `bun:",nullzero,notnull,default:false"`
+
+	// Reset password token that the user
+	// can use to reset their password.
+	ResetPasswordToken string `bun:",nullzero"`
+
+	// Datetime when reset password token was emailed to user.
+	ResetPasswordSentAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// If the login for the user is managed
+	// externally (e.g., via OIDC), this is a stable
+	// reference to the external object (e.g OIDC sub claim).
+	ExternalID string `bun:",nullzero,unique"`
+}
+
+func (u *User) TwoFactorEnabled() bool {
+	return !u.TwoFactorEnabledAt.IsZero()
 }
 
 // DeniedUser represents one user sign-up that
 // was submitted to the instance and denied.
 type DeniedUser struct {
-	ID                     string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                    // id of this item in the database
-	CreatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item created
-	UpdatedAt              time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
-	Email                  string    `bun:",nullzero,notnull"`                                           // Email address provided on the sign-up form.
-	Username               string    `bun:",nullzero,notnull"`                                           // Username provided on the sign-up form.
-	SignUpIP               net.IP    `bun:",nullzero"`                                                   // IP address the sign-up originated from.
-	InviteID               string    `bun:"type:CHAR(26),nullzero"`                                      // Invite ID provided on the sign-up form (if applicable).
-	Locale                 string    `bun:",nullzero"`                                                   // Locale provided on the sign-up form.
-	CreatedByApplicationID string    `bun:"type:CHAR(26),nullzero"`                                      // ID of application used to create this sign-up.
-	SignUpReason           string    `bun:",nullzero"`                                                   // Reason provided by user on the sign-up form.
-	PrivateComment         string    `bun:",nullzero"`                                                   // Comment from instance admin about why this sign-up was denied.
-	SendEmail              *bool     `bun:",nullzero,notnull,default:false"`                             // Send an email informing user that their sign-up has been denied.
-	Message                string    `bun:",nullzero"`                                                   // Message to include when sending an email to the denied user's email address, if SendEmail is true.
+	// Database ID of the user.
+	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+
+	// Datetime when the user was denied.
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+
+	// Datetime when the denied user was last updated.
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`
+
+	// Email address provided on the sign-up form.
+	Email string `bun:",nullzero,notnull"`
+
+	// Username provided on the sign-up form.
+	Username string `bun:",nullzero,notnull"`
+
+	// IP address the sign-up originated from.
+	SignUpIP net.IP `bun:",nullzero"`
+
+	// Invite ID provided on the sign-up form (if applicable).
+	InviteID string `bun:"type:CHAR(26),nullzero"`
+
+	// Locale provided on the sign-up form.
+	Locale string `bun:",nullzero"`
+
+	// ID of application used to create this sign-up.
+	CreatedByApplicationID string `bun:"type:CHAR(26),nullzero"`
+
+	// Reason provided by user on the sign-up form.
+	SignUpReason string `bun:",nullzero"`
+
+	// Comment from instance admin about why this sign-up was denied.
+	PrivateComment string `bun:",nullzero"`
+
+	// Send an email informing user that their sign-up has been denied.
+	SendEmail *bool `bun:",nullzero,notnull,default:false"`
+
+	// Message to include when sending an email to the
+	// denied user's email address, if SendEmail is true.
+	Message string `bun:",nullzero"`
 }
 
 // NewSignup models parameters for the creation

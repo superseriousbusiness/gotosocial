@@ -60,6 +60,9 @@ type User struct {
 	// Time when the last "please reset your password" email was sent, if at all. (ISO 8601 Datetime)
 	// example: 2021-07-30T09:20:25+00:00
 	ResetPasswordSentAt string `json:"reset_password_sent_at,omitempty"`
+	// Time at which 2fa was enabled for this user. (ISO 8601 Datetime)
+	// example: 2021-07-30T09:20:25+00:00
+	TwoFactorEnabledAt string `json:"two_factor_enabled_at,omitempty"`
 }
 
 // PasswordChangeRequest models user password change parameters.

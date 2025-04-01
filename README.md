@@ -231,6 +231,7 @@ Simply download the binary + assets (or Docker container), tweak your configurat
 - [Import, export](https://docs.gotosocial.org/en/latest/admin/settings/#importexport), and [subscribe](https://docs.gotosocial.org/en/latest/admin/domain_permission_subscriptions) to community-created domain allow and domain block lists.
 - HTTP signature authentication: GoToSocial requires [HTTP Signatures](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12) when sending and receiving messages, to ensure that your messages can't be tampered with and your identity can't be forged.
 - Built-in, automatic support for secure HTTPS with [Let's Encrypt](https://letsencrypt.org/).
+- Support for two-factor authentication via time-based one-time passwords (Google authenticator, LastPass authenticator, etc).
 
 ### Various federation modes
 
@@ -426,6 +427,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
 - [mvdan.cc/xurls](https://github.com/mvdan/xurls); URL parsing regular expressions. [BSD-3-Clause License](https://spdx.org/licenses/BSD-3-Clause.html).
 - [oklog/ulid](https://github.com/oklog/ulid); sequential, database-friendly ID generation. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - [open-telemetry/opentelemetry-go](https://github.com/open-telemetry/opentelemetry-go); OpenTelemetry API + SDK. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
+- [pquerna/otp](https://github.com/pquerna/otp); One Time Password utilities. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
 - spf13:
   - [spf13/cobra](https://github.com/spf13/cobra); command-line tooling. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).
   - [spf13/viper](https://github.com/spf13/viper); configuration management. [Apache-2.0 License](https://spdx.org/licenses/Apache-2.0.html).

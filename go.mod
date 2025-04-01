@@ -56,6 +56,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/ncruces/go-sqlite3 v0.24.0
 	github.com/oklog/ulid v1.3.1
+	github.com/pquerna/otp v1.4.0
 	github.com/prometheus/client_golang v1.21.1
 	github.com/rivo/uniseg v0.4.7
 	github.com/spf13/cobra v1.9.1
@@ -106,6 +107,7 @@ require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/bytedance/sonic v1.12.7 // indirect
 	github.com/bytedance/sonic/loader v0.2.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect

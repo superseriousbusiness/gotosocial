@@ -31,4 +31,5 @@ export interface User {
 	disabled: boolean;
 	approved: boolean;
 	reset_password_sent_at?: string;
+	two_factor_enabled_at?: string;
 }
