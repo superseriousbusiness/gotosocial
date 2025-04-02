@@ -81,12 +81,13 @@ func init() {
 				return err
 			}
 
-			// Set instance app
-			// ID on all users.
+			// Set instance app ID on
+			// users where it's null.
 			if _, err := tx.
 				NewUpdate().
 				Table("users").
 				Set("? = ?", bun.Ident("created_by_application_id"), instanceAppID).
+				Where("? IS NULL", bun.Ident("created_by_application_id")).
 				Exec(ctx); err != nil {
 				return err
 			}
