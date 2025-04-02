@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -69,6 +70,12 @@ func (p *Processor) TagTimelineGet(
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if page.Order().Ascending() {
+		// Returned statuses always
+		// need to be in DESC order.
+		slices.Reverse(statuses)
 	}
 
 	return p.packageTagResponse(
