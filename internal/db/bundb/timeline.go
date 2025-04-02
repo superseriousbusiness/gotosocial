@@ -365,13 +365,6 @@ func loadStatusTimelinePage(
 		return nil, err
 	}
 
-	// The order we return from the database and
-	// timeline caches differs depending on ordering,
-	// but the caller always expects DESCENDING.
-	if order.Ascending() {
-		slices.Reverse(statusIDs)
-	}
-
 	// Fetch statuses from DB / cache with given IDs.
 	return state.DB.GetStatusesByIDs(ctx, statusIDs)
 }

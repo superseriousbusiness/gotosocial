@@ -524,27 +524,6 @@ func (s *Surface) tagFollowersForStatus(
 	return visibleTagFollowerAccounts, errs.Combine()
 }
 
-// deleteStatusFromTimelines completely removes the given status from all timelines.
-// It will also stream deletion of the status to all open streams.
-func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) {
-	s.State.Caches.Timelines.Public.RemoveByStatusIDs(statusID)
-	s.State.Caches.Timelines.Local.RemoveByStatusIDs(statusID)
-	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
-	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
-	s.Stream.Delete(ctx, statusID)
-}
-
-// invalidateStatusFromTimelines does cache invalidation on the given status by
-// unpreparing it from all timelines, forcing it to be prepared again (with updated
-// stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
-// both for the status itself, and for any boosts of the status.
-func (s *Surface) invalidateStatusFromTimelines(statusID string) {
-	s.State.Caches.Timelines.Public.UnprepareByStatusIDs(statusID)
-	s.State.Caches.Timelines.Local.UnprepareByStatusIDs(statusID)
-	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
-	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
-}
-
 // timelineStatusUpdate looks up HOME and LIST timelines of accounts
 // that follow the the status author or tags and pushes edit messages into any
 // active streams.
@@ -822,56 +801,52 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 	return errs.Combine()
 }
 
-// invalidateTimelinesForBlock ...
-func (s *Surface) invalidateTimelinesForBlock(ctx context.Context, block *gtsmodel.Block) {
+// deleteStatusFromTimelines completely removes the given status from all timelines.
+// It will also stream deletion of the status to all open streams.
+func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) {
+	s.State.Caches.Timelines.Public.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.Local.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
+	s.Stream.Delete(ctx, statusID)
+}
 
-	// Check if origin is local account,
-	// i.e. has status timeline caches.
-	if block.Account.IsLocal() {
+// invalidateStatusFromTimelines does cache invalidation on the given status by
+// unpreparing it from all timelines, forcing it to be prepared again (with updated
+// stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
+// both for the status itself, and for any boosts of the status.
+func (s *Surface) invalidateStatusFromTimelines(statusID string) {
+	s.State.Caches.Timelines.Public.UnprepareByStatusIDs(statusID)
+	s.State.Caches.Timelines.Local.UnprepareByStatusIDs(statusID)
+	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
+	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
+}
 
-		// Remove target's statuses
-		// from origin's home timeline.
-		s.State.Caches.Timelines.Home.
-			MustGet(block.AccountID).
-			RemoveByAccountIDs(block.TargetAccountID)
+// removeTimelineEntriesByAccount removes all cached timeline entries authored by account ID.
+func (s *Surface) removeTimelineEntriesByAccount(accountID string) {
+	s.State.Caches.Timelines.Public.RemoveByAccountIDs(accountID)
+	s.State.Caches.Timelines.Home.RemoveByAccountIDs(accountID)
+	s.State.Caches.Timelines.Local.RemoveByAccountIDs(accountID)
+	s.State.Caches.Timelines.List.RemoveByAccountIDs(accountID)
+}
 
-		// Get the IDs of any lists created by origin account.
-		listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, block.AccountID)
-		if err != nil {
-			log.Errorf(ctx, "error getting account's list IDs for %s: %v", block.URI, err)
-		}
+// invalidateTimelinesForAccount invalidates all timeline caches stored for given account ID.
+func (s *Surface) invalidateTimelinesForAccount(ctx context.Context, accountID string) {
 
-		// Remove target's statuses from
-		// any of origin's list timelines.
-		for _, listID := range listIDs {
-			s.State.Caches.Timelines.List.
-				MustGet(listID).
-				RemoveByAccountIDs(block.TargetAccountID)
-		}
+	// There's a lot of visibility changes to caclculate for any
+	// relationship change, so just clear all account's timelines.
+	s.State.Caches.Timelines.Public.Clear(accountID)
+	s.State.Caches.Timelines.Home.Clear(accountID)
+	s.State.Caches.Timelines.Local.Clear(accountID)
+
+	// Get the IDs of all the lists owned by the given account ID.
+	listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, accountID)
+	if err != nil {
+		log.Errorf(ctx, "error getting lists for account %s: %v", accountID, err)
 	}
 
-	// Check if target is local account,
-	// i.e. has status timeline caches.
-	if block.TargetAccount.IsLocal() {
-
-		// Remove origin's statuses
-		// from target's home timeline.
-		s.State.Caches.Timelines.Home.
-			MustGet(block.TargetAccountID).
-			RemoveByAccountIDs(block.AccountID)
-
-		// Get the IDs of any lists created by target account.
-		listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, block.TargetAccountID)
-		if err != nil {
-			log.Errorf(ctx, "error getting target account's list IDs for %s: %v", block.URI, err)
-		}
-
-		// Remove origin's statuses from
-		// any of target's list timelines.
-		for _, listID := range listIDs {
-			s.State.Caches.Timelines.List.
-				MustGet(listID).
-				RemoveByAccountIDs(block.AccountID)
-		}
+	// Clear list timelines of account.
+	for _, listID := range listIDs {
+		s.State.Caches.Timelines.List.Clear(listID)
 	}
 }
