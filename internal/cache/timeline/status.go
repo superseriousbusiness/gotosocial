@@ -409,8 +409,8 @@ func (t *StatusTimeline) Load(
 		}
 
 		// Set initial lo, hi values.
-		hi = metas[len(metas)-1].ID
-		lo = metas[0].ID
+		lo = metas[len(metas)-1].ID
+		hi = metas[0].ID
 
 		// Update paging parameters used for next database query.
 		nextPageParams(nextPg, metas[len(metas)-1].ID, order)
@@ -453,10 +453,10 @@ func (t *StatusTimeline) Load(
 				break
 			}
 
-			if lo == "" {
-				// Set min returned paging
+			if hi == "" {
+				// Set hi returned paging
 				// value if not already set.
-				lo = statuses[0].ID
+				hi = statuses[0].ID
 			}
 
 			// Update nextPg cursor parameter for next database query.
@@ -496,8 +496,8 @@ func (t *StatusTimeline) Load(
 			// here. Even if below limit.
 			if len(apiStatuses) > 0 {
 
-				// Set returned hi status paging value.
-				hi = apiStatuses[len(apiStatuses)-1].ID
+				// Set returned lo status paging value.
+				lo = apiStatuses[len(apiStatuses)-1].ID
 				break
 			}
 		}
