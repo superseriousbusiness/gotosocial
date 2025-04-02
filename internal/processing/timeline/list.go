@@ -93,7 +93,7 @@ func (p *Processor) ListTimelineGet(
 			return p.state.DB.GetListTimeline(ctx, listID, pg)
 		},
 
-		// Pre-filtering function,
+		// Filtering function,
 		// i.e. filter before caching.
 		func(s *gtsmodel.Status) (bool, error) {
 
@@ -101,9 +101,5 @@ func (p *Processor) ListTimelineGet(
 			ok, err := p.visFilter.StatusHomeTimelineable(ctx, requester, s)
 			return !ok, err
 		},
-
-		// Post-filtering function,
-		// i.e. filter after caching.
-		nil,
 	)
 }

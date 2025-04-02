@@ -682,8 +682,15 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg *messages.FromClientAP
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
 	}
 
-	// Perform any necessary timeline invalidation.
-	p.surface.invalidateTimelinesForBlock(ctx, block)
+	if block.Account.IsLocal() {
+		// Perform timeline invalidation for block origin account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
+	}
+
+	if block.TargetAccount.IsLocal() {
+		// Perform timeline invalidation for block target account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
+	}
 
 	// TODO: same with notifications?
 	// TODO: same with bookmarks?
@@ -843,6 +850,16 @@ func (p *clientAPI) UndoFollow(ctx context.Context, cMsg *messages.FromClientAPI
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
+	if follow.Account.IsLocal() {
+		// Perform timeline invalidation for block origin account.
+		p.surface.invalidateTimelinesForAccount(ctx, follow.AccountID)
+	}
+
+	if follow.TargetAccount.IsLocal() {
+		// Perform timeline invalidation for block target account.
+		p.surface.invalidateTimelinesForAccount(ctx, follow.TargetAccountID)
+	}
+
 	if err := p.federate.UndoFollow(ctx, follow); err != nil {
 		log.Errorf(ctx, "error federating follow undo: %v", err)
 	}
@@ -854,6 +871,16 @@ func (p *clientAPI) UndoBlock(ctx context.Context, cMsg *messages.FromClientAPI)
 	block, ok := cMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
+	}
+
+	if block.Account.IsLocal() {
+		// Perform timeline invalidation for block origin account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
+	}
+
+	if block.TargetAccount.IsLocal() {
+		// Perform timeline invalidation for block target account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
 	}
 
 	if err := p.federate.UndoBlock(ctx, block); err != nil {
@@ -1009,6 +1036,25 @@ func (p *clientAPI) DeleteAccountOrUser(ctx context.Context, cMsg *messages.From
 	// (stops processing of remote origin data targeting this account).
 	p.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
 	p.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
+
+	// Remove any entries authored by account from timelines.
+	p.surface.removeTimelineEntriesByAccount(account.ID)
+
+	// Remove any of their cached timelines.
+	p.state.Caches.Timelines.Public.Delete(account.ID)
+	p.state.Caches.Timelines.Home.Delete(account.ID)
+	p.state.Caches.Timelines.Local.Delete(account.ID)
+
+	// Get the IDs of all the lists owned by the given account ID.
+	listIDs, err := p.state.DB.GetListIDsByAccountID(ctx, account.ID)
+	if err != nil {
+		log.Errorf(ctx, "error getting lists for account %s: %v", account.ID, err)
+	}
+
+	// Remove list timelines of account.
+	for _, listID := range listIDs {
+		p.state.Caches.Timelines.List.Delete(listID)
+	}
 
 	if err := p.federate.DeleteAccount(ctx, cMsg.Target); err != nil {
 		log.Errorf(ctx, "error federating account delete: %v", err)

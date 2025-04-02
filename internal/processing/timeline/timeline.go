@@ -70,8 +70,7 @@ func (p *Processor) getStatusTimeline(
 	pageQuery url.Values,
 	filterCtx statusfilter.FilterContext,
 	loadPage func(*paging.Page) (statuses []*gtsmodel.Status, err error),
-	preFilter func(*gtsmodel.Status) (bool, error),
-	postFilter func(*gtsmodel.Status) (bool, error),
+	filter func(*gtsmodel.Status) (bool, error),
 ) (
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
@@ -128,13 +127,9 @@ func (p *Processor) getStatusTimeline(
 			return p.state.DB.GetStatusesByIDs(ctx, ids)
 		},
 
-		// Pre-filtering function,
+		// Filtering function,
 		// i.e. filter before caching.
-		preFilter,
-
-		// Post-filtering function,
-		// i.e. filter after caching.
-		postFilter,
+		filter,
 
 		// Frontend API model preparation function.
 		func(status *gtsmodel.Status) (*apimodel.Status, error) {
