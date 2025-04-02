@@ -89,10 +89,6 @@ func (p *Processor) publicTimelineGet(
 			ok, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
 			return !ok, err
 		},
-
-		// Post-filtering function,
-		// i.e. filter after caching.
-		nil,
 	)
 }
 
@@ -134,7 +130,7 @@ func (p *Processor) localTimelineGet(
 			return p.state.DB.GetLocalTimeline(ctx, pg)
 		},
 
-		// Pre-filtering function,
+		// Filtering function,
 		// i.e. filter before caching.
 		func(s *gtsmodel.Status) (bool, error) {
 
@@ -142,9 +138,5 @@ func (p *Processor) localTimelineGet(
 			ok, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
 			return !ok, err
 		},
-
-		// Post-filtering function,
-		// i.e. filter after caching.
-		nil,
 	)
 }

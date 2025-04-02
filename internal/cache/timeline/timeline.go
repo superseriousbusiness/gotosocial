@@ -30,13 +30,13 @@ import (
 // updated while maintaining the boundary value.
 func nextPageParams(
 	page *paging.Page,
-	nextLo, nextHi string,
+	lastIdx string,
 	order paging.Order,
 ) {
 	if order.Ascending() {
-		page.Min.Value = nextLo
+		page.Min.Value = lastIdx
 	} else /* i.e. descending */ { //nolint:revive
-		page.Max.Value = nextHi
+		page.Max.Value = lastIdx
 	}
 }
 
