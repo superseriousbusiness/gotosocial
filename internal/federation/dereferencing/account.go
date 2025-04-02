@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"time"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -137,12 +138,17 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 	}
 
 	if account == nil {
-		// Else, search the database for existing by URL.
-		account, err = d.state.DB.GetAccountByURL(
+		// Else, search the database for one account with URL.
+		// Can return multiple hits so check for ErrMultipleEntries.
+		account, err = d.state.DB.GetOneAccountByURL(
 			gtscontext.SetBarebones(ctx),
 			uriStr,
 		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		if err != nil && !errorsv2.IsV2(
+			err,
+			db.ErrNoEntries,
+			db.ErrMultipleEntries,
+		) {
 			return nil, nil, gtserror.Newf("error checking database for account %s by url: %w", uriStr, err)
 		}
 	}

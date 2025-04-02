@@ -204,7 +204,7 @@ func (suite *AccountsGetTestSuite) TestAccountsGetFromTop() {
       "display_name": "",
       "locked": false,
       "discoverable": true,
-      "bot": false,
+      "bot": true,
       "created_at": "2020-05-17T13:10:59.000Z",
       "note": "",
       "url": "http://localhost:8080/@localhost:8080",
