@@ -279,12 +279,7 @@ func (t *StatusTimeline) Init(cap int) {
 		Indices: []structr.IndexConfig{
 			{Fields: "AccountID", Multiple: true},
 			{Fields: "BoostOfAccountID", Multiple: true},
-
-			// By setting multiple=false for BoostOfID, this will prevent
-			// timeline entries with matching BoostOfID will not be inserted
-			// after the first, which allows us to prevent repeated boosts
-			// of the same status from showing up within 'cap' entries.
-			{Fields: "BoostOfID", Multiple: false},
+			{Fields: "BoostOfID", Multiple: true},
 		},
 
 		// Timeline item copy function.
