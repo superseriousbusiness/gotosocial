@@ -80,14 +80,14 @@ type DomainPermissionRequest struct {
 	// Obfuscate the domain name when displaying this permission entry publicly.
 	// Ie., instead of 'example.org' show something like 'e**mpl*.or*'.
 	// example: false
-	Obfuscate bool `form:"obfuscate" json:"obfuscate"`
+	Obfuscate *bool `form:"obfuscate" json:"obfuscate"`
 	// Private comment for other admins on why this permission entry was created.
 	// example: don't like 'em!!!!
-	PrivateComment string `form:"private_comment" json:"private_comment"`
+	PrivateComment *string `form:"private_comment" json:"private_comment"`
 	// Public comment on why this permission entry was created.
 	// Will be visible to requesters at /api/v1/instance/peers if this endpoint is exposed.
 	// example: foss dorks 😫
-	PublicComment string `form:"public_comment" json:"public_comment"`
+	PublicComment *string `form:"public_comment" json:"public_comment"`
 	// Permission type to create (only applies to domain permission drafts, not explicit blocks and allows).
 	PermissionType string `form:"permission_type" json:"permission_type"`
 }

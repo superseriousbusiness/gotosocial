@@ -775,7 +775,7 @@ func (suite *SubscriptionsTestSuite) TestAdoption() {
 		existingBlock2,
 		existingBlock3,
 	} {
-		if err := testStructs.State.DB.CreateDomainBlock(
+		if err := testStructs.State.DB.PutDomainBlock(
 			ctx, block,
 		); err != nil {
 			suite.FailNow(err.Error())
@@ -876,7 +876,7 @@ func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
 	}
 
 	// Store existing allow.
-	if err := testStructs.State.DB.CreateDomainAllow(ctx, existingAllow); err != nil {
+	if err := testStructs.State.DB.PutDomainAllow(ctx, existingAllow); err != nil {
 		suite.FailNow(err.Error())
 	}
 

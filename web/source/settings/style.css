@@ -1406,6 +1406,7 @@ button.tab-button {
 	}
 }
 
+.domain-permission-details,
 .domain-permission-draft-details,
 .domain-permission-exclude-details,
 .domain-permission-subscription-details {
@@ -1414,6 +1415,7 @@ button.tab-button {
 	}
 }
 
+.domain-permission-details,
 .domain-permission-drafts-view,
 .domain-permission-draft-details,
 .domain-permission-subscriptions-view,

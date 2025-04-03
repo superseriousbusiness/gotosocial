@@ -84,6 +84,50 @@ func (p *Processor) DomainPermissionCreate(
 	}
 }
 
+// DomainPermissionUpdate updates a domain permission
+// of the given permissionType, with the given ID.
+func (p *Processor) DomainPermissionUpdate(
+	ctx context.Context,
+	permissionType gtsmodel.DomainPermissionType,
+	permID string,
+	obfuscate *bool,
+	publicComment *string,
+	privateComment *string,
+	subscriptionID *string,
+) (*apimodel.DomainPermission, gtserror.WithCode) {
+	switch permissionType {
+
+	// Explicitly block a domain.
+	case gtsmodel.DomainPermissionBlock:
+		return p.updateDomainBlock(
+			ctx,
+			permID,
+			obfuscate,
+			publicComment,
+			privateComment,
+			subscriptionID,
+		)
+
+	// Explicitly allow a domain.
+	case gtsmodel.DomainPermissionAllow:
+		return p.updateDomainAllow(
+			ctx,
+			permID,
+			obfuscate,
+			publicComment,
+			privateComment,
+			subscriptionID,
+		)
+
+	// 🎵 Why don't we all strap bombs to our chests,
+	// and ride our bikes to the next G7 picnic?
+	// Seems easier with every clock-tick. 🎵
+	default:
+		err := gtserror.Newf("unrecognized permission type %d", permissionType)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+}
+
 // DomainPermissionDelete removes one domain block with the given ID,
 // and processes side effects of removing the block asynchronously.
 //

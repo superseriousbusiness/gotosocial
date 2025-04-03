@@ -26,6 +26,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // DomainPermissionDraftsPOSTHandler swagger:operation POST /api/v1/admin/domain_permission_drafts domainPermissionDraftCreate
@@ -148,9 +149,9 @@ func (m *Module) DomainPermissionDraftsPOSTHandler(c *gin.Context) {
 		authed.Account,
 		form.Domain,
 		permType,
-		form.Obfuscate,
-		form.PublicComment,
-		form.PrivateComment,
+		util.PtrOrZero(form.Obfuscate),
+		util.PtrOrZero(form.PublicComment),
+		util.PtrOrZero(form.PrivateComment),
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)

@@ -32,8 +32,18 @@ import Loading from "../../../components/loading";
 import BackButton from "../../../components/back-button";
 import MutationButton from "../../../components/form/mutation-button";
 
-import { useDomainAllowsQuery, useDomainBlocksQuery } from "../../../lib/query/admin/domain-permissions/get";
-import { useAddDomainAllowMutation, useAddDomainBlockMutation, useRemoveDomainAllowMutation, useRemoveDomainBlockMutation } from "../../../lib/query/admin/domain-permissions/update";
+import { 
+	useDomainAllowsQuery,
+	useDomainBlocksQuery,
+} from "../../../lib/query/admin/domain-permissions/get";
+import {
+	useAddDomainAllowMutation,
+	useAddDomainBlockMutation,
+	useRemoveDomainAllowMutation,
+	useRemoveDomainBlockMutation,
+	useUpdateDomainAllowMutation,
+	useUpdateDomainBlockMutation,
+} from "../../../lib/query/admin/domain-permissions/update";
 import { DomainPerm } from "../../../lib/types/domain-permission";
 import { NoArg } from "../../../lib/types/query";
 import { Error } from "../../../components/error";
@@ -41,8 +51,9 @@ import { useBaseUrl } from "../../../lib/navigation/util";
 import { PermType } from "../../../lib/types/perm";
 import { useCapitalize } from "../../../lib/util";
 import { formDomainValidator } from "../../../lib/util/formvalidators";
+import UsernameLozenge from "../../../components/username-lozenge";
 
-export default function DomainPermDetail() {
+export default function DomainPermView() {
 	const baseUrl = useBaseUrl();
 	const search = useSearch();
 
@@ -101,33 +112,16 @@ export default function DomainPermDetail() {
 		? blocks[domain]
 		: allows[domain];
 	
-	// Render different into content depending on
-	// if we have a perm already for this domain.
-	let infoContent: React.JSX.Element;
-	if (existingPerm === undefined) {
-		infoContent = (
-			<span>
-				No stored {permType} yet, you can add one below:
-			</span>
-		);
-	} else {
-		infoContent = (
-			<div className="info">
-				<i className="fa fa-fw fa-exclamation-triangle" aria-hidden="true"></i>
-				<b>Editing existing domain {permTypeRaw} isn't implemented yet, <a href="https://github.com/superseriousbusiness/gotosocial/issues/1198" target="_blank" rel="noopener noreferrer">check here for progress</a></b>
-			</div>
-		);
-	}
+	const title = <span>Domain {permType} for {domain}</span>;
 
 	return (
-		<div>
-			<h1 className="text-cutoff">
-				<BackButton to={`~${baseUrl}/${permTypeRaw}`} />
-				{" "}
-				Domain {permType} for {domain}
-			</h1>
-			{infoContent}
-			<DomainPermForm
+		<div className="domain-permission-details">
+			<h1><BackButton to={`~${baseUrl}/${permTypeRaw}`} /> {title}</h1>
+			{ existingPerm
+				? <DomainPermDetails perm={existingPerm} permType={permType} />
+				: <span>No stored {permType} yet, you can add one below:</span>
+			}
+			<CreateOrUpdateDomainPerm
 				defaultDomain={domain}
 				perm={existingPerm}
 				permType={permType}
@@ -136,23 +130,75 @@ export default function DomainPermDetail() {
 	);
 }
 
-interface DomainPermFormProps {
+interface DomainPermDetailsProps {
+	perm: DomainPerm,
+	permType: PermType,
+}
+
+function DomainPermDetails({
+	perm,
+	permType
+}: DomainPermDetailsProps) {
+	const baseUrl = useBaseUrl();
+	const [ location ] = useLocation();
+	
+	const created = useMemo(() => {
+		if (perm.created_at) {
+			return new Date(perm.created_at).toDateString();
+		}
+		return "unknown";
+	}, [perm.created_at]);
+
+	return (
+		<dl className="info-list">
+			<div className="info-list-entry">
+				<dt>Created</dt>
+				<dd><time dateTime={perm.created_at}>{created}</time></dd>
+			</div>
+			<div className="info-list-entry">
+				<dt>Created By</dt>
+				<dd>
+					<UsernameLozenge
+						account={perm.created_by}
+						linkTo={`~/settings/moderation/accounts/${perm.created_by}`}
+						backLocation={`~${baseUrl}/${location}`}
+					/>
+				</dd>
+			</div>
+			<div className="info-list-entry">
+				<dt>Domain</dt>
+				<dd>{perm.domain}</dd>
+			</div>
+			<div className="info-list-entry">
+				<dt>Permission type</dt>
+				<dd className={`permission-type ${permType}`}>
+					<i
+						aria-hidden={true}
+						className={`fa fa-${permType === "allow" ? "check" : "close"}`}
+					></i>
+					{permType}
+				</dd>
+			</div>
+			<div className="info-list-entry">
+				<dt>Subscription ID</dt>
+				<dd>{perm.subscription_id ?? "[none]"}</dd>
+			</div>
+		</dl>
+	);
+}
+
+interface CreateOrUpdateDomainPermProps {
 	defaultDomain: string;
 	perm?: DomainPerm;
 	permType: PermType;
 }
 
-function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) {
+function CreateOrUpdateDomainPerm({
+	defaultDomain,
+	perm,
+	permType
+}: CreateOrUpdateDomainPermProps) {
 	const isExistingPerm = perm !== undefined;
-	const disabledForm = isExistingPerm
-		? {
-			disabled: true,
-			title: "Domain permissions currently cannot be edited."
-		}
-		: {
-			disabled: false,
-			title: "",
-		};
 
 	const form = {
 		domain: useTextInput("domain", {
@@ -171,70 +217,80 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 	// react is like "weh" (mood), but we can decide
 	// which ones to use conditionally.
 	const [ addBlock, addBlockResult ] = useAddDomainBlockMutation();
+	const [ updateBlock, updateBlockResult ] = useUpdateDomainBlockMutation({ fixedCacheKey: perm?.id });
 	const [ removeBlock, removeBlockResult] = useRemoveDomainBlockMutation({ fixedCacheKey: perm?.id });
 	const [ addAllow, addAllowResult ] = useAddDomainAllowMutation();
+	const [ updateAllow, updateAllowResult ] = useUpdateDomainAllowMutation({ fixedCacheKey: perm?.id });
 	const [ removeAllow, removeAllowResult ] = useRemoveDomainAllowMutation({ fixedCacheKey: perm?.id });
 	
 	const [
-		addTrigger,
-		addResult,
+		createOrUpdateTrigger,
+		createOrUpdateResult,
 		removeTrigger,
 		removeResult,
 	] = useMemo(() => {
-		return permType == "block"
-			? [
-				addBlock,
-				addBlockResult,
-				removeBlock,
-				removeBlockResult,
-			]
-			: [
-				addAllow,
-				addAllowResult,
-				removeAllow,
-				removeAllowResult,
-			];
-	}, [permType,
-		addBlock, addBlockResult, removeBlock, removeBlockResult,
-		addAllow, addAllowResult, removeAllow, removeAllowResult,
+		switch (true) {
+			case (permType === "block" && !isExistingPerm):
+				return [ addBlock, addBlockResult, removeBlock, removeBlockResult ];
+			case (permType === "block"):
+				return [ updateBlock, updateBlockResult, removeBlock, removeBlockResult ];
+			case !isExistingPerm:
+				return [ addAllow, addAllowResult, removeAllow, removeAllowResult ];
+			default:
+				return [ updateAllow, updateAllowResult, removeAllow, removeAllowResult ];
+		}
+	}, [permType, isExistingPerm,
+		addBlock, addBlockResult, updateBlock, updateBlockResult, removeBlock, removeBlockResult,
+		addAllow, addAllowResult, updateAllow, updateAllowResult, removeAllow, removeAllowResult,
 	]);
 
-	// Use appropriate submission params for this permType.
-	const [submitForm, submitFormResult] = useFormSubmit(form, [addTrigger, addResult], { changedOnly: false });
+	// Use appropriate submission params for this
+	// permType, and whether we're creating or updating.
+	const [submit, submitResult] = useFormSubmit(
+		form,
+		[
+			createOrUpdateTrigger,
+			createOrUpdateResult,
+		],
+		{
+			changedOnly: isExistingPerm
+		},
+	);
 
 	// Uppercase first letter of given permType.
 	const permTypeUpper = useCapitalize(permType);
 
 	const [location, setLocation] = useLocation();
-
 	function verifyUrlThenSubmit(e) {
 		// Adding a new domain permissions happens on a url like
 		// "/settings/admin/domain-permissions/:permType/domain.com",
 		// but if domain input changes, that doesn't match anymore
 		// and causes issues later on so, before submitting the form,
 		// silently change url, and THEN submit.
-		let correctUrl = `/${permType}s/${form.domain.value}`;
-		if (location != correctUrl) {
-			setLocation(correctUrl);
+		if (!isExistingPerm) {
+			let correctUrl = `/${permType}s/${form.domain.value}`;
+			if (location != correctUrl) {
+				setLocation(correctUrl);
+			}
 		}
-		return submitForm(e);
+		return submit(e);
 	}
 
 	return (
 		<form onSubmit={verifyUrlThenSubmit}>
-			<TextInput
-				field={form.domain}
-				label="Domain"
-				placeholder="example.com"
-				autoCapitalize="none"
-				spellCheck="false"
-				{...disabledForm}
-			/>
+			{ !isExistingPerm && 
+				<TextInput
+					field={form.domain}
+					label="Domain"
+					placeholder="example.com"
+					autoCapitalize="none"
+					spellCheck="false"
+				/>
+			}
 
 			<Checkbox
 				field={form.obfuscate}
 				label="Obfuscate domain in public lists"
-				{...disabledForm}
 			/>
 
 			<TextArea
@@ -242,7 +298,6 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 				label="Private comment"
 				autoCapitalize="sentences"
 				rows={3}
-				{...disabledForm}
 			/>
 
 			<TextArea
@@ -250,15 +305,14 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 				label="Public comment"
 				autoCapitalize="sentences"
 				rows={3}
-				{...disabledForm}
 			/>
 
 			<div className="action-buttons row">
 				<MutationButton
-					label={permTypeUpper}
-					result={submitFormResult}
+					label={isExistingPerm ? "Update " + permType.toString() : permTypeUpper}
+					result={submitResult}
 					showError={false}
-					{...disabledForm}
+					disabled={false}
 				/>
 
 				{
@@ -266,7 +320,7 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 					<MutationButton
 						type="button"
 						onClick={() => removeTrigger(perm.id?? "")}
-						label="Remove"
+						label={"Remove " + permType.toString()} 
 						result={removeResult}
 						className="button danger"
 						showError={false}
@@ -276,7 +330,7 @@ function DomainPermForm({ defaultDomain, perm, permType }: DomainPermFormProps) 
 			</div>
 
 			<>
-				{addResult.error && <Error error={addResult.error} />}
+				{createOrUpdateResult.error && <Error error={createOrUpdateResult.error} />}
 				{removeResult.error && <Error error={removeResult.error} />}
 			</>
 

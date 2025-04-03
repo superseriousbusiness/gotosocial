@@ -438,7 +438,7 @@ func (s *Subscriptions) processDomainPermission(
 				Obfuscate:          wantedPerm.GetObfuscate(),
 				SubscriptionID:     permSub.ID,
 			}
-			insertF = func() error { return s.state.DB.CreateDomainBlock(ctx, domainBlock) }
+			insertF = func() error { return s.state.DB.PutDomainBlock(ctx, domainBlock) }
 
 			action = &gtsmodel.AdminAction{
 				ID:             id.NewULID(),
@@ -461,7 +461,7 @@ func (s *Subscriptions) processDomainPermission(
 				Obfuscate:          wantedPerm.GetObfuscate(),
 				SubscriptionID:     permSub.ID,
 			}
-			insertF = func() error { return s.state.DB.CreateDomainAllow(ctx, domainAllow) }
+			insertF = func() error { return s.state.DB.PutDomainAllow(ctx, domainAllow) }
 
 			action = &gtsmodel.AdminAction{
 				ID:             id.NewULID(),
