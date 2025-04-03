@@ -522,6 +522,146 @@ func (t *StatusTimeline) Load(
 	return apiStatuses, lo, hi, nil
 }
 
+// LoadStatusTimeline is a function that may be used to load a timeline
+// page in a functionally similar way to StatusTimeline{}.Load(), but without
+// actually having access to a StatusTimeline{}. For example, for timelines that
+// we want to share code, but without yet implementing a cache for them. Note this
+// function may be removed in the future when un-needed.
+func LoadStatusTimeline(
+	ctx context.Context,
+	page *paging.Page,
+
+	// loadPage should load the timeline of given page for cache hydration.
+	loadPage func(page *paging.Page) (statuses []*gtsmodel.Status, err error),
+
+	// loadIDs should load status models with given IDs, this is used
+	// to load status models of already cached entries in the timeline.
+	loadIDs func(ids []string) (statuses []*gtsmodel.Status, err error),
+
+	// filter can be used to perform filtering of returned
+	// statuses BEFORE insert into cache. i.e. this will effect
+	// what actually gets stored in the timeline cache.
+	filter func(each *gtsmodel.Status) (delete bool, err error),
+
+	// prepareAPI should prepare internal status model to frontend API model.
+	prepareAPI func(status *gtsmodel.Status) (apiStatus *apimodel.Status, err error),
+) (
+	[]*apimodel.Status,
+	string, // lo
+	string, // hi
+	error,
+) {
+	switch {
+	case page == nil:
+		panic("nil page")
+	case loadPage == nil:
+		panic("nil load page func")
+	}
+
+	// Get paging details.
+	lo := page.Min.Value
+	hi := page.Max.Value
+	limit := page.Limit
+	order := page.Order()
+
+	// Use a copy of current page so
+	// we can repeatedly update it.
+	nextPg := new(paging.Page)
+	*nextPg = *page
+	nextPg.Min.Value = lo
+	nextPg.Max.Value = hi
+
+	// We now reset the lo,hi values to
+	// represent the lowest and highest
+	// index values of loaded statuses.
+	lo, hi = "", ""
+
+	// Preallocate a slice of up-to-limit API models.
+	apiStatuses := make([]*apimodel.Status, 0, limit)
+
+	// Check whether loaded enough from cache.
+	if need := limit - len(apiStatuses); need > 0 {
+
+		// Load a little more than
+		// limit to reduce db calls.
+		nextPg.Limit += 10
+
+		// Perform maximum of 10 load
+		// attempts fetching statuses.
+		for i := 0; i < 10; i++ {
+
+			// Load next timeline statuses.
+			statuses, err := loadPage(nextPg)
+			if err != nil {
+				return nil, "", "", gtserror.Newf("error loading timeline: %w", err)
+			}
+
+			// No more statuses from
+			// load function = at end.
+			if len(statuses) == 0 {
+				break
+			}
+
+			if hi == "" {
+				// Set hi returned paging
+				// value if not already set.
+				hi = statuses[0].ID
+			}
+
+			// Update nextPg cursor parameter for next database query.
+			nextPageParams(nextPg, statuses[len(statuses)-1].ID, order)
+
+			// Perform any filtering on newly loaded statuses.
+			statuses, err = doStatusFilter(statuses, filter)
+			if err != nil {
+				return nil, "", "", gtserror.Newf("error filtering statuses: %w", err)
+			}
+
+			// After filtering no more
+			// statuses remain, retry.
+			if len(statuses) == 0 {
+				continue
+			}
+
+			// Convert to our cache type,
+			// these will get inserted into
+			// the cache in prepare() below.
+			metas := toStatusMeta(statuses)
+
+			// Prepare frontend API models for
+			// the loaded statuses. For now this
+			// also does its own extra filtering.
+			apiStatuses = prepareStatuses(ctx,
+				metas,
+				prepareAPI,
+				apiStatuses,
+				limit,
+			)
+
+			// If we have anything, return
+			// here. Even if below limit.
+			if len(apiStatuses) > 0 {
+
+				// Set returned lo status paging value.
+				lo = apiStatuses[len(apiStatuses)-1].ID
+				break
+			}
+		}
+	}
+
+	if order.Ascending() {
+		// The caller always expects the statuses
+		// to be returned in DESC order, but we
+		// build the status slice in paging order.
+		// If paging ASC, we need to reverse the
+		// returned statuses and paging values.
+		slices.Reverse(apiStatuses)
+		lo, hi = hi, lo
+	}
+
+	return apiStatuses, lo, hi, nil
+}
+
 // InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
 func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) {
 	t.cache.Insert(&StatusMeta{

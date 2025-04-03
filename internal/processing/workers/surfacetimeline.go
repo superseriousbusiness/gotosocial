@@ -804,8 +804,6 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 // deleteStatusFromTimelines completely removes the given status from all timelines.
 // It will also stream deletion of the status to all open streams.
 func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) {
-	s.State.Caches.Timelines.Public.RemoveByStatusIDs(statusID)
-	s.State.Caches.Timelines.Local.RemoveByStatusIDs(statusID)
 	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
 	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
 	s.Stream.Delete(ctx, statusID)
@@ -816,17 +814,13 @@ func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string
 // stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
 // both for the status itself, and for any boosts of the status.
 func (s *Surface) invalidateStatusFromTimelines(statusID string) {
-	s.State.Caches.Timelines.Public.UnprepareByStatusIDs(statusID)
-	s.State.Caches.Timelines.Local.UnprepareByStatusIDs(statusID)
 	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
 	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
 }
 
 // removeTimelineEntriesByAccount removes all cached timeline entries authored by account ID.
 func (s *Surface) removeTimelineEntriesByAccount(accountID string) {
-	s.State.Caches.Timelines.Public.RemoveByAccountIDs(accountID)
 	s.State.Caches.Timelines.Home.RemoveByAccountIDs(accountID)
-	s.State.Caches.Timelines.Local.RemoveByAccountIDs(accountID)
 	s.State.Caches.Timelines.List.RemoveByAccountIDs(accountID)
 }
 
@@ -835,9 +829,7 @@ func (s *Surface) invalidateTimelinesForAccount(ctx context.Context, accountID s
 
 	// There's a lot of visibility changes to caclculate for any
 	// relationship change, so just clear all account's timelines.
-	s.State.Caches.Timelines.Public.Clear(accountID)
 	s.State.Caches.Timelines.Home.Clear(accountID)
-	s.State.Caches.Timelines.Local.Clear(accountID)
 
 	// Get the IDs of all the lists owned by the given account ID.
 	listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, accountID)

@@ -98,7 +98,6 @@ func (c *Caches) Init() {
 	c.initListIDs()
 	c.initListedIDs()
 	c.initListTimelines()
-	c.initLocalTimeline()
 	c.initMarker()
 	c.initMedia()
 	c.initMention()
@@ -107,7 +106,6 @@ func (c *Caches) Init() {
 	c.initPoll()
 	c.initPollVote()
 	c.initPollVoteIDs()
-	c.initPublicTimeline()
 	c.initReport()
 	c.initSinBinStatus()
 	c.initStatus()
@@ -216,8 +214,6 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.UserMuteIDs.Trim(threshold)
 	c.Timelines.Home.Trim(threshold)
 	c.Timelines.List.Trim(threshold)
-	c.Timelines.Public.Trim(threshold)
-	c.Timelines.Local.Trim(threshold)
 	c.Visibility.Trim(threshold)
 }
 

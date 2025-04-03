@@ -1041,9 +1041,7 @@ func (p *clientAPI) DeleteAccountOrUser(ctx context.Context, cMsg *messages.From
 	p.surface.removeTimelineEntriesByAccount(account.ID)
 
 	// Remove any of their cached timelines.
-	p.state.Caches.Timelines.Public.Delete(account.ID)
 	p.state.Caches.Timelines.Home.Delete(account.ID)
-	p.state.Caches.Timelines.Local.Delete(account.ID)
 
 	// Get the IDs of all the lists owned by the given account ID.
 	listIDs, err := p.state.DB.GetListIDsByAccountID(ctx, account.ID)

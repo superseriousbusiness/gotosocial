@@ -20,20 +20,15 @@ package timeline
 import (
 	"context"
 	"errors"
-	"fmt"
-	"slices"
+	"net/http"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // TagTimelineGet gets a pageable timeline for the given
@@ -42,49 +37,69 @@ import (
 // to requestingAcct before returning it.
 func (p *Processor) TagTimelineGet(
 	ctx context.Context,
-	requestingAcct *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	tagName string,
 	maxID string,
 	sinceID string,
 	minID string,
 	limit int,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
+
+	// Fetch the requested tag with name.
 	tag, errWithCode := p.getTag(ctx, tagName)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
+	// Check for a useable returned tag for endpoint.
 	if tag == nil || !*tag.Useable || !*tag.Listable {
+
 		// Obey mastodon API by returning 404 for this.
-		err := fmt.Errorf("tag was not found, or not useable/listable on this instance")
-		return nil, gtserror.NewErrorNotFound(err, err.Error())
+		const text = "tag was not found, or not useable/listable on this instance"
+		return nil, gtserror.NewWithCode(http.StatusNotFound, text)
 	}
 
-	page := paging.Page{
-		Min:   paging.EitherMinID(minID, sinceID),
-		Max:   paging.MaxID(maxID),
-		Limit: limit,
-	}
+	// Fetch status timeline for tag.
+	return p.getStatusTimeline(ctx,
 
-	statuses, err := p.state.DB.GetTagTimeline(ctx, tag.ID, &page)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("db error getting statuses: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+		// Auth'd
+		// account.
+		requester,
 
-	if page.Order().Ascending() {
-		// Returned statuses always
-		// need to be in DESC order.
-		slices.Reverse(statuses)
-	}
+		// No cache.
+		nil,
 
-	return p.packageTagResponse(
-		ctx,
-		requestingAcct,
-		statuses,
-		limit,
-		// Use API URL for tag.
+		// Current
+		// page.
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
+
+		// Tag timeline name's endpoint.
 		"/api/v1/timelines/tag/"+tagName,
+
+		// No page
+		// query.
+		nil,
+
+		// Status filter context.
+		statusfilter.FilterContextPublic,
+
+		// Database load function.
+		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
+			return p.state.DB.GetTagTimeline(ctx, tag.ID, pg)
+		},
+
+		// Filtering function,
+		// i.e. filter before caching.
+		func(s *gtsmodel.Status) (bool, error) {
+
+			// Check the visibility of passed status to requesting user.
+			ok, err := p.visFilter.StatusHomeTimelineable(ctx, requester, s)
+			return !ok, err
+		},
 	)
 }
 
@@ -105,70 +120,4 @@ func (p *Processor) getTag(ctx context.Context, tagName string) (*gtsmodel.Tag, 
 	}
 
 	return tag, nil
-}
-
-func (p *Processor) packageTagResponse(
-	ctx context.Context,
-	requestingAcct *gtsmodel.Account,
-	statuses []*gtsmodel.Status,
-	limit int,
-	requestPath string,
-) (*apimodel.PageableResponse, gtserror.WithCode) {
-	count := len(statuses)
-	if count == 0 {
-		return util.EmptyPageableResponse(), nil
-	}
-
-	var (
-		items = make([]interface{}, 0, count)
-
-		// Set next + prev values before filtering and API
-		// converting, so caller can still page properly.
-		nextMaxIDValue = statuses[count-1].ID
-		prevMinIDValue = statuses[0].ID
-	)
-
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAcct.ID)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAcct.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAcct.ID, nil)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAcct.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
-
-	for _, s := range statuses {
-		timelineable, err := p.visFilter.StatusTagTimelineable(ctx, requestingAcct, s)
-		if err != nil {
-			log.Errorf(ctx, "error checking status visibility: %v", err)
-			continue
-		}
-
-		if !timelineable {
-			continue
-		}
-
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, s, requestingAcct, statusfilter.FilterContextPublic, filters, compiledMutes)
-		if errors.Is(err, statusfilter.ErrHideStatus) {
-			continue
-		}
-		if err != nil {
-			log.Errorf(ctx, "error converting to api status: %v", err)
-			continue
-		}
-
-		items = append(items, apiStatus)
-	}
-
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:          items,
-		Path:           requestPath,
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
-	})
 }

@@ -29,12 +29,6 @@ type TimelineCaches struct {
 
 	// List ...
 	List timeline.StatusTimelines
-
-	// Public ...
-	Public timeline.StatusTimelines
-
-	// Local ...
-	Local timeline.StatusTimelines
 }
 
 func (c *Caches) initHomeTimelines() {
@@ -55,24 +49,4 @@ func (c *Caches) initListTimelines() {
 	log.Infof(nil, "cache size = %d", cap)
 
 	c.Timelines.List.Init(cap)
-}
-
-func (c *Caches) initPublicTimeline() {
-	// Global cache so
-	// allow larger.
-	cap := 800
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.Timelines.Public.Init(cap)
-}
-
-func (c *Caches) initLocalTimeline() {
-	// Global cache so
-	// allow larger.
-	cap := 800
-
-	log.Infof(nil, "cache size = %d", cap)
-
-	c.Timelines.Local.Init(cap)
 }
