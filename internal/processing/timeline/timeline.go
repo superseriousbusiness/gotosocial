@@ -112,6 +112,40 @@ func (p *Processor) getStatusTimeline(
 	var apiStatuses []*apimodel.Status
 	var lo, hi string
 
+	// Track whether a particular BoostOfID
+	// has already been boosted (i.e., seen)
+	// before in this paged request for statuses.
+	boosted := make(map[string]struct{}, 4)
+	alreadyBoosted := func(s *gtsmodel.Status) bool {
+		if s.BoostOfID != "" {
+			_, ok := boosted[s.BoostOfID]
+			if ok {
+				return true
+			}
+			boosted[s.BoostOfID] = struct{}{}
+		}
+		return false
+	}
+
+	// Pre-prepared filter function that just ensures we
+	// don't end up serving multiple copies of the same boost.
+	prepare := func(status *gtsmodel.Status) (*apimodel.Status, error) {
+		if alreadyBoosted(status) {
+			return nil, nil
+		}
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx,
+			status,
+			requester,
+			filterCtx,
+			filters,
+			mutes,
+		)
+		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+			return nil, err
+		}
+		return apiStatus, nil
+	}
+
 	if cache != nil {
 		// Load status page via timeline cache, also
 		// getting lo, hi values for next, prev pages.
@@ -134,20 +168,9 @@ func (p *Processor) getStatusTimeline(
 			// i.e. filter before caching.
 			filter,
 
-			// Frontend API model preparation function.
-			func(status *gtsmodel.Status) (*apimodel.Status, error) {
-				apiStatus, err := p.converter.StatusToAPIStatus(ctx,
-					status,
-					requester,
-					filterCtx,
-					filters,
-					mutes,
-				)
-				if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-					return nil, err
-				}
-				return apiStatus, nil
-			},
+			// Frontend API model
+			// preparation function.
+			prepare,
 		)
 	} else {
 		// Load status page without a receiving timeline cache.
@@ -159,19 +182,7 @@ func (p *Processor) getStatusTimeline(
 				return p.state.DB.GetStatusesByIDs(ctx, ids)
 			},
 			filter,
-			func(status *gtsmodel.Status) (*apimodel.Status, error) {
-				apiStatus, err := p.converter.StatusToAPIStatus(ctx,
-					status,
-					requester,
-					filterCtx,
-					filters,
-					mutes,
-				)
-				if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-					return nil, err
-				}
-				return apiStatus, nil
-			},
+			prepare,
 		)
 	}
 
