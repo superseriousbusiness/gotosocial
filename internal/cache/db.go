@@ -1312,6 +1312,28 @@ func (c *Caches) initStatus() {
 
 	log.Infof(nil, "cache size = %d", cap)
 
+	copyF := func(s1 *gtsmodel.Status) *gtsmodel.Status {
+		s2 := new(gtsmodel.Status)
+		*s2 = *s1
+
+		// Don't include ptr fields that
+		// will be populated separately.
+		// See internal/db/bundb/status.go.
+		s2.Account = nil
+		s2.InReplyTo = nil
+		s2.InReplyToAccount = nil
+		s2.BoostOf = nil
+		s2.BoostOfAccount = nil
+		s2.Poll = nil
+		s2.Attachments = nil
+		s2.Tags = nil
+		s2.Mentions = nil
+		s2.Emojis = nil
+		s2.CreatedWithApplication = nil
+
+		return s2
+	}
+
 	c.DB.Status.Init(structr.CacheConfig[*gtsmodel.Status]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
@@ -1323,7 +1345,7 @@ func (c *Caches) initStatus() {
 		},
 		MaxSize:    cap,
 		IgnoreErr:  ignoreErrors,
-		Copy:       copyStatus,
+		Copy:       copyF,
 		Invalidate: c.OnInvalidateStatus,
 	})
 }
