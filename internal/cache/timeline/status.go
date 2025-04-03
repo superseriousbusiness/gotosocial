@@ -61,12 +61,6 @@ type StatusMeta struct {
 	loaded *gtsmodel.Status
 }
 
-// isNotLoaded is a small utility func that can fill
-// the slices.DeleteFunc() signature requirements.
-func (m *StatusMeta) isNotLoaded() bool {
-	return m.loaded == nil
-}
-
 // StatusTimelines ...
 type StatusTimelines struct {
 	ptr atomic.Pointer[map[string]*StatusTimeline] // ronly except by CAS
