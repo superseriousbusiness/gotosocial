@@ -57,8 +57,8 @@ func (p *Processor) publicTimelineGet(
 		// account.
 		requester,
 
-		// Keyed-by-account-ID, public timeline cache.
-		p.state.Caches.Timelines.Public.MustGet(requester.ID),
+		// No cache.
+		nil,
 
 		// Current
 		// page.
@@ -106,8 +106,8 @@ func (p *Processor) localTimelineGet(
 		// account.
 		requester,
 
-		// Keyed-by-account-ID, local timeline cache.
-		p.state.Caches.Timelines.Local.MustGet(requester.ID),
+		// No cache.
+		nil,
 
 		// Current
 		// page.

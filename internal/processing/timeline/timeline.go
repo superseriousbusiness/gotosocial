@@ -64,7 +64,7 @@ func New(state *state.State, converter *typeutils.Converter, visFilter *visibili
 func (p *Processor) getStatusTimeline(
 	ctx context.Context,
 	requester *gtsmodel.Account,
-	timeline *timeline.StatusTimeline,
+	cache *timeline.StatusTimeline,
 	page *paging.Page,
 	pagePath string,
 	pageQuery url.Values,
@@ -75,13 +75,11 @@ func (p *Processor) getStatusTimeline(
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
 ) {
-	var (
-		filters []*gtsmodel.Filter
-		mutes   *usermute.CompiledUserMuteList
-	)
+	var err error
+	var filters []*gtsmodel.Filter
+	var mutes *usermute.CompiledUserMuteList
 
 	if requester != nil {
-		var err error
 
 		// Fetch all filters relevant for requesting account.
 		filters, err = p.state.DB.GetFiltersForAccountID(ctx,
@@ -110,42 +108,73 @@ func (p *Processor) getStatusTimeline(
 	// input paging cursor.
 	id.ValidatePage(page)
 
-	// Load status page via timeline cache, also
-	// getting lo, hi values for next, prev pages.
-	apiStatuses, lo, hi, err := timeline.Load(ctx,
+	// Returned models and page params.
+	var apiStatuses []*apimodel.Status
+	var lo, hi string
 
-		// Status page
-		// to load.
-		page,
+	if cache != nil {
+		// Load status page via timeline cache, also
+		// getting lo, hi values for next, prev pages.
+		apiStatuses, lo, hi, err = cache.Load(ctx,
 
-		// Caller provided database
-		// status page loading function.
-		loadPage,
+			// Status page
+			// to load.
+			page,
 
-		// Status load function for cached timeline entries.
-		func(ids []string) ([]*gtsmodel.Status, error) {
-			return p.state.DB.GetStatusesByIDs(ctx, ids)
-		},
+			// Caller provided database
+			// status page loading function.
+			loadPage,
 
-		// Filtering function,
-		// i.e. filter before caching.
-		filter,
+			// Status load function for cached timeline entries.
+			func(ids []string) ([]*gtsmodel.Status, error) {
+				return p.state.DB.GetStatusesByIDs(ctx, ids)
+			},
 
-		// Frontend API model preparation function.
-		func(status *gtsmodel.Status) (*apimodel.Status, error) {
-			apiStatus, err := p.converter.StatusToAPIStatus(ctx,
-				status,
-				requester,
-				filterCtx,
-				filters,
-				mutes,
-			)
-			if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-				return nil, err
-			}
-			return apiStatus, nil
-		},
-	)
+			// Filtering function,
+			// i.e. filter before caching.
+			filter,
+
+			// Frontend API model preparation function.
+			func(status *gtsmodel.Status) (*apimodel.Status, error) {
+				apiStatus, err := p.converter.StatusToAPIStatus(ctx,
+					status,
+					requester,
+					filterCtx,
+					filters,
+					mutes,
+				)
+				if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+					return nil, err
+				}
+				return apiStatus, nil
+			},
+		)
+	} else {
+		// Load status page without a receiving timeline cache.
+		// TODO: remove this code path when all support caching.
+		apiStatuses, lo, hi, err = timeline.LoadStatusTimeline(ctx,
+			page,
+			loadPage,
+			func(ids []string) ([]*gtsmodel.Status, error) {
+				return p.state.DB.GetStatusesByIDs(ctx, ids)
+			},
+			filter,
+			func(status *gtsmodel.Status) (*apimodel.Status, error) {
+				apiStatus, err := p.converter.StatusToAPIStatus(ctx,
+					status,
+					requester,
+					filterCtx,
+					filters,
+					mutes,
+				)
+				if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+					return nil, err
+				}
+				return apiStatus, nil
+			},
+		)
+	}
+
 	if err != nil {
 		err := gtserror.Newf("error loading timeline: %w", err)
 		return nil, gtserror.WrapWithCode(http.StatusInternalServerError, err)

@@ -154,9 +154,6 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 		suite.FailNow("precondition failed: status we would filter isn't present in unfiltered timeline")
 	}
 
-	// Clear the timeline to drop all cached statuses.
-	suite.state.Caches.Timelines.Public.ClearAll()
-
 	// Create a filter to hide one status on the timeline.
 	if err := suite.db.PutFilter(ctx, filter); err != nil {
 		suite.FailNow(err.Error())
