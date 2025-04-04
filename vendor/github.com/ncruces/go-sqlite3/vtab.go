@@ -79,9 +79,12 @@ func implements[T any](typ reflect.Type) bool {
 //
 // https://sqlite.org/c3ref/declare_vtab.html
 func (c *Conn) DeclareVTab(sql string) error {
+	if c.interrupt.Err() != nil {
+		return INTERRUPT
+	}
 	defer c.arena.mark()()
-	sqlPtr := c.arena.string(sql)
-	rc := res_t(c.call("sqlite3_declare_vtab", stk_t(c.handle), stk_t(sqlPtr)))
+	textPtr := c.arena.string(sql)
+	rc := res_t(c.call("sqlite3_declare_vtab", stk_t(c.handle), stk_t(textPtr)))
 	return c.error(rc)
 }
 
@@ -162,6 +165,7 @@ type VTabDestroyer interface {
 }
 
 // A VTabUpdater allows a virtual table to be updated.
+// Implementations must not retain arg.
 type VTabUpdater interface {
 	VTab
 	// https://sqlite.org/vtab.html#xupdate
@@ -241,6 +245,7 @@ type VTabSavepointer interface {
 // to loop through the virtual table.
 // A VTabCursor may optionally implement
 // [io.Closer] to free resources.
+// Implementations of Filter must not retain arg.
 //
 // https://sqlite.org/c3ref/vtab_cursor.html
 type VTabCursor interface {
@@ -489,12 +494,12 @@ func vtabBestIndexCallback(ctx context.Context, mod api.Module, pVTab, pIdxInfo 
 }
 
 func vtabUpdateCallback(ctx context.Context, mod api.Module, pVTab ptr_t, nArg int32, pArg, pRowID ptr_t) res_t {
-	vtab := vtabGetHandle(ctx, mod, pVTab).(VTabUpdater)
-
 	db := ctx.Value(connKey{}).(*Conn)
-	args := make([]Value, nArg)
-	callbackArgs(db, args, pArg)
-	rowID, err := vtab.Update(args...)
+	args := callbackArgs(db, nArg, pArg)
+	defer returnArgs(args)
+
+	vtab := vtabGetHandle(ctx, mod, pVTab).(VTabUpdater)
+	rowID, err := vtab.Update(*args...)
 	if err == nil {
 		util.Write64(mod, pRowID, rowID)
 	}
@@ -593,15 +598,17 @@ func cursorCloseCallback(ctx context.Context, mod api.Module, pCur ptr_t) res_t 
 }
 
 func cursorFilterCallback(ctx context.Context, mod api.Module, pCur ptr_t, idxNum int32, idxStr ptr_t, nArg int32, pArg ptr_t) res_t {
-	cursor := vtabGetHandle(ctx, mod, pCur).(VTabCursor)
 	db := ctx.Value(connKey{}).(*Conn)
-	args := make([]Value, nArg)
-	callbackArgs(db, args, pArg)
+	args := callbackArgs(db, nArg, pArg)
+	defer returnArgs(args)
+
 	var idxName string
 	if idxStr != 0 {
 		idxName = util.ReadString(mod, idxStr, _MAX_LENGTH)
 	}
-	err := cursor.Filter(int(idxNum), idxName, args...)
+
+	cursor := vtabGetHandle(ctx, mod, pCur).(VTabCursor)
+	err := cursor.Filter(int(idxNum), idxName, *args...)
 	return vtabError(ctx, mod, pCur, _CURSOR_ERROR, err)
 }
 
