@@ -52,6 +52,7 @@ import { PermType } from "../../../lib/types/perm";
 import { useCapitalize } from "../../../lib/util";
 import { formDomainValidator } from "../../../lib/util/formvalidators";
 import UsernameLozenge from "../../../components/username-lozenge";
+import { FormSubmitEvent } from "../../../lib/form/types";
 
 export default function DomainPermView() {
 	const baseUrl = useBaseUrl();
@@ -161,7 +162,7 @@ function DomainPermDetails({
 					<UsernameLozenge
 						account={perm.created_by}
 						linkTo={`~/settings/moderation/accounts/${perm.created_by}`}
-						backLocation={`~${baseUrl}/${location}`}
+						backLocation={`~${baseUrl}${location}`}
 					/>
 				</dd>
 			</div>
@@ -207,8 +208,8 @@ function CreateOrUpdateDomainPerm({
 			validator: formDomainValidator,
 		}),
 		obfuscate: useBoolInput("obfuscate", { source: perm }),
-		commentPrivate: useTextInput("private_comment", { source: perm }),
-		commentPublic: useTextInput("public_comment", { source: perm })
+		privateComment: useTextInput("private_comment", { source: perm }),
+		publicComment: useTextInput("public_comment", { source: perm })
 	};
 
 	// Check which perm type we're meant to be handling
@@ -248,12 +249,23 @@ function CreateOrUpdateDomainPerm({
 	// permType, and whether we're creating or updating.
 	const [submit, submitResult] = useFormSubmit(
 		form,
-		[
-			createOrUpdateTrigger,
-			createOrUpdateResult,
-		],
+		[ createOrUpdateTrigger, createOrUpdateResult ],
 		{
-			changedOnly: isExistingPerm
+			changedOnly: isExistingPerm,
+			// If we're updating an existing perm,
+			// insert the perm ID into the mutation
+			// data before submitting. Otherwise just
+			// return the mutationData unmodified.
+			customizeMutationArgs: (mutationData) => {
+				if (isExistingPerm) {
+					return {
+						id: perm?.id,
+						...mutationData,
+					};
+				} else {
+					return mutationData;
+				}
+			},
 		},
 	);
 
@@ -261,7 +273,7 @@ function CreateOrUpdateDomainPerm({
 	const permTypeUpper = useCapitalize(permType);
 
 	const [location, setLocation] = useLocation();
-	function verifyUrlThenSubmit(e) {
+	function onSubmit(e: FormSubmitEvent) {
 		// Adding a new domain permissions happens on a url like
 		// "/settings/admin/domain-permissions/:permType/domain.com",
 		// but if domain input changes, that doesn't match anymore
@@ -277,7 +289,7 @@ function CreateOrUpdateDomainPerm({
 	}
 
 	return (
-		<form onSubmit={verifyUrlThenSubmit}>
+		<form onSubmit={onSubmit}>
 			{ !isExistingPerm && 
 				<TextInput
 					field={form.domain}
@@ -294,14 +306,14 @@ function CreateOrUpdateDomainPerm({
 			/>
 
 			<TextArea
-				field={form.commentPrivate}
+				field={form.privateComment}
 				label="Private comment"
 				autoCapitalize="sentences"
 				rows={3}
 			/>
 
 			<TextArea
-				field={form.commentPublic}
+				field={form.publicComment}
 				label="Public comment"
 				autoCapitalize="sentences"
 				rows={3}
@@ -311,21 +323,22 @@ function CreateOrUpdateDomainPerm({
 				<MutationButton
 					label={isExistingPerm ? "Update " + permType.toString() : permTypeUpper}
 					result={submitResult}
-					showError={false}
-					disabled={false}
+					disabled={
+						isExistingPerm &&
+						!form.obfuscate.hasChanged() &&
+						!form.privateComment.hasChanged() &&
+						!form.publicComment.hasChanged()
+					}
 				/>
 
-				{
-					isExistingPerm &&
-					<MutationButton
+				{ isExistingPerm &&
+					<button
 						type="button"
 						onClick={() => removeTrigger(perm.id?? "")}
-						label={"Remove " + permType.toString()} 
-						result={removeResult}
 						className="button danger"
-						showError={false}
-						disabled={!isExistingPerm}
-					/>
+					>
+						Remove {permType.toString()}
+					</button>
 				}
 			</div>
 

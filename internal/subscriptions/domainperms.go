@@ -742,8 +742,8 @@ func permsFromJSON(
 		}
 
 		// Set remaining fields.
-		perm.SetPublicComment(apiPerm.PublicComment)
-		perm.SetObfuscate(&apiPerm.Obfuscate)
+		perm.SetPublicComment(util.PtrOrZero(apiPerm.PublicComment))
+		perm.SetObfuscate(util.Ptr(util.PtrOrZero(apiPerm.Obfuscate)))
 
 		// We're done.
 		perms = append(perms, perm)

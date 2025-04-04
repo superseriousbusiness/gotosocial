@@ -34,7 +34,7 @@ type Domain struct {
 	SilencedAt string `json:"silenced_at,omitempty"`
 	// If the domain is blocked, what's the publicly-stated reason for the block.
 	// example: they smell
-	PublicComment string `form:"public_comment" json:"public_comment,omitempty"`
+	PublicComment *string `form:"public_comment" json:"public_comment,omitempty"`
 }
 
 // DomainPermission represents a permission applied to one domain (explicit block/allow).
@@ -48,10 +48,10 @@ type DomainPermission struct {
 	ID string `json:"id,omitempty"`
 	// Obfuscate the domain name when serving this domain permission entry publicly.
 	// example: false
-	Obfuscate bool `json:"obfuscate,omitempty"`
+	Obfuscate *bool `json:"obfuscate,omitempty"`
 	// Private comment for this permission entry, visible to this instance's admins only.
 	// example: they are poopoo
-	PrivateComment string `json:"private_comment,omitempty"`
+	PrivateComment *string `json:"private_comment,omitempty"`
 	// If applicable, the ID of the subscription that caused this domain permission entry to be created.
 	// example: 01FBW25TF5J67JW3HFHZCSD23K
 	SubscriptionID string `json:"subscription_id,omitempty"`

@@ -57,9 +57,9 @@ const extended = gtsApi.injectEndpoints({
 		}),
 
 		updateDomainBlock: build.mutation<DomainPerm, any>({
-			query: (formData) => ({
+			query: ({ id, ...formData}) => ({
 				method: "PUT",
-				url: `/api/v1/admin/domain_blocks/${formData.id}`,
+				url: `/api/v1/admin/domain_blocks/${id}`,
 				asForm: true,
 				body: formData,
 				discardEmpty: false
@@ -72,9 +72,9 @@ const extended = gtsApi.injectEndpoints({
 		}),
 
 		updateDomainAllow: build.mutation<DomainPerm, any>({
-			query: (formData) => ({
+			query: ({ id, ...formData}) => ({
 				method: "PUT",
-				url: `/api/v1/admin/domain_allows/${formData.id}`,
+				url: `/api/v1/admin/domain_allows/${id}`,
 				asForm: true,
 				body: formData,
 				discardEmpty: false
