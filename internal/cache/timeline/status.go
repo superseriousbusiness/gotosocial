@@ -742,7 +742,7 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.ID.
-	for meta := range t.cache.RangeKeys(t.idx_ID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_ID, keys...) {
 		meta.prepared = nil
 	}
 
@@ -752,7 +752,7 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.BoostOfID.
-	for meta := range t.cache.RangeKeys(t.idx_BoostOfID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_BoostOfID, keys...) {
 		meta.prepared = nil
 	}
 }
@@ -774,7 +774,7 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.AccountID.
-	for meta := range t.cache.RangeKeys(t.idx_AccountID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_AccountID, keys...) {
 		meta.prepared = nil
 	}
 
@@ -784,7 +784,7 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.BoostOfAccountID.
-	for meta := range t.cache.RangeKeys(t.idx_BoostOfAccountID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_BoostOfAccountID, keys...) {
 		meta.prepared = nil
 	}
 }
@@ -885,11 +885,13 @@ func loadStatuses(
 
 	// Determine which of our passed status
 	// meta objects still need statuses loading.
-	toLoadIDs := make([]string, len(metas))
+	toLoadIDs := make([]string, 0, len(metas))
 	loadedMap := make(map[string]*StatusMeta, len(metas))
-	for i, meta := range metas {
+	for _, meta := range metas {
 		if meta.loaded == nil {
-			toLoadIDs[i] = meta.ID
+
+			// Append ID to list that need loading.
+			toLoadIDs = append(toLoadIDs, meta.ID)
 			loadedMap[meta.ID] = meta
 		}
 	}
