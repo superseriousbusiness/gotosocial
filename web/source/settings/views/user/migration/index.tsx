@@ -19,27 +19,27 @@
 
 import React from "react";
 
-import FormWithData from "../../lib/form/form-with-data";
+import FormWithData from "../../../lib/form/form-with-data";
 
-import { useVerifyCredentialsQuery } from "../../lib/query/login";
-import { useArrayInput, useTextInput } from "../../lib/form";
-import { TextInput } from "../../components/form/inputs";
-import useFormSubmit from "../../lib/form/submit";
-import MutationButton from "../../components/form/mutation-button";
-import { useAliasAccountMutation, useMoveAccountMutation } from "../../lib/query/user";
-import { FormContext, useWithFormContext } from "../../lib/form/context";
-import { store } from "../../redux/store";
+import { useVerifyCredentialsQuery } from "../../../lib/query/login";
+import { useArrayInput, useTextInput } from "../../../lib/form";
+import { TextInput } from "../../../components/form/inputs";
+import useFormSubmit from "../../../lib/form/submit";
+import MutationButton from "../../../components/form/mutation-button";
+import { useAliasAccountMutation, useMoveAccountMutation } from "../../../lib/query/user";
+import { FormContext, useWithFormContext } from "../../../lib/form/context";
+import { store } from "../../../redux/store";
 
-export default function UserMigration() {
+export default function Migration() {
 	return (
 		<FormWithData
 			dataQuery={useVerifyCredentialsQuery}
-			DataForm={UserMigrationForm}
+			DataForm={MigrationForm}
 		/>
 	);
 }
 
-function UserMigrationForm({ data: profile }) {
+function MigrationForm({ data: profile }) {
 	return (
 		<>
 			<h2>Account Migration Settings</h2>

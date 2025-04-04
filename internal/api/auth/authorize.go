@@ -18,8 +18,6 @@
 package auth
 
 import (
-	"errors"
-	"fmt"
 	"net/http"
 	"net/url"
 
@@ -28,119 +26,79 @@ import (
 	"github.com/google/uuid"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-// AuthorizeGETHandler should be served as GET at https://example.org/oauth/authorize
-// The idea here is to present an oauth authorize page to the user, with a button
-// that they have to click to accept.
+// AuthorizeGETHandler should be served as
+// GET at https://example.org/oauth/authorize.
+//
+// The idea here is to present an authorization
+// page to the user, informing them of the scopes
+// the application is requesting, with a button
+// that they have to click to give it permission.
 func (m *Module) AuthorizeGETHandler(c *gin.Context) {
-	s := sessions.Default(c)
-
 	if _, err := apiutil.NegotiateAccept(c, apiutil.HTMLAcceptHeaders...); err != nil {
 		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
 		return
 	}
 
-	// UserID will be set in the session by AuthorizePOSTHandler if the caller has already gone through the authentication flow
-	// If it's not set, then we don't know yet who the user is, so we need to redirect them to the sign in page.
-	userID, ok := s.Get(sessionUserID).(string)
-	if !ok || userID == "" {
-		form := &apimodel.OAuthAuthorize{}
-		if err := c.ShouldBind(form); err != nil {
-			m.clearSession(s)
-			apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
-			return
-		}
+	s := sessions.Default(c)
 
-		if errWithCode := saveAuthFormToSession(s, form); errWithCode != nil {
-			m.clearSession(s)
-			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-			return
-		}
-
-		c.Redirect(http.StatusSeeOther, "/auth"+AuthSignInPath)
+	// UserID will be set in the session by
+	// AuthorizePOSTHandler if the caller has
+	// already gone through the auth flow.
+	//
+	// If it's not set, then we don't yet know
+	// yet who the user is, so send them to the
+	// sign in page first.
+	if userID, ok := s.Get(sessionUserID).(string); !ok || userID == "" {
+		m.redirectAuthFormToSignIn(c)
 		return
 	}
 
-	// use session information to validate app, user, and account for this request
-	clientID, ok := s.Get(sessionClientID).(string)
-	if !ok || clientID == "" {
-		m.clearSession(s)
-		err := fmt.Errorf("key %s was not found in session", sessionClientID)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
+	user := m.userFromSession(c, s)
+	if user == nil {
+		// Error already
+		// written.
 		return
 	}
 
-	app, err := m.db.GetApplicationByClientID(c.Request.Context(), clientID)
-	if err != nil {
-		m.clearSession(s)
-		safe := fmt.Sprintf("application for %s %s could not be retrieved", sessionClientID, clientID)
-		var errWithCode gtserror.WithCode
-		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
-		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
-		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+	// If the user is unconfirmed, waiting approval,
+	// or suspended, redirect to an appropriate help page.
+	if !m.validateUser(c, user) {
+		// Already
+		// redirected.
 		return
 	}
 
-	user, err := m.db.GetUserByID(c.Request.Context(), userID)
-	if err != nil {
-		m.clearSession(s)
-		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
-		var errWithCode gtserror.WithCode
-		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
-		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
-		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
-	if err != nil {
-		m.clearSession(s)
-		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
-		var errWithCode gtserror.WithCode
-		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
-		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
-		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	if ensureUserIsAuthorizedOrRedirect(c, user, acct) {
-		return
-	}
-
-	// Finally we should also get the redirect and scope of this particular request, as stored in the session.
-	redirect, ok := s.Get(sessionRedirectURI).(string)
-	if !ok || redirect == "" {
-		m.clearSession(s)
-		err := fmt.Errorf("key %s was not found in session", sessionRedirectURI)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
-		return
-	}
-
-	scope, ok := s.Get(sessionScope).(string)
-	if !ok || scope == "" {
-		m.clearSession(s)
-		err := fmt.Errorf("key %s was not found in session", sessionScope)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, oauth.HelpfulAdvice), m.processor.InstanceGetV1)
-		return
-	}
-
+	// Everything looks OK.
+	// Start preparing to render the html template.
 	instance, errWithCode := m.processor.InstanceGetV1(c.Request.Context())
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	redirectURI := m.stringFromSession(c, s, sessionRedirectURI)
+	if redirectURI == "" {
+		// Error already
+		// written.
+		return
+	}
+
+	scope := m.stringFromSession(c, s, sessionScope)
+	if scope == "" {
+		// Error already
+		// written.
+		return
+	}
+
+	app := m.appFromSession(c, s)
+	if app == nil {
+		// Error already
+		// written.
 		return
 	}
 
@@ -150,158 +108,145 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 	// and the scope of the request. They can then
 	// approve it if it looks OK to them, which
 	// will POST to the AuthorizePOSTHandler.
-	page := apiutil.WebPage{
+	apiutil.TemplateWebPage(c, apiutil.WebPage{
 		Template: "authorize.tmpl",
 		Instance: instance,
 		Extra: map[string]any{
 			"appname":    app.Name,
 			"appwebsite": app.Website,
-			"redirect":   redirect,
+			"redirect":   redirectURI,
 			"scope":      scope,
-			"user":       acct.Username,
+			"user":       user.Account.Username,
 		},
-	}
-
-	apiutil.TemplateWebPage(c, page)
+	})
 }
 
-// AuthorizePOSTHandler should be served as POST at https://example.org/oauth/authorize
-// At this point we assume that the user has A) logged in and B) accepted that the app should act for them,
-// so we should proceed with the authentication flow and generate an oauth token for them if we can.
+// AuthorizePOSTHandler should be served as
+// POST at https://example.org/oauth/authorize.
+//
+// At this point we assume that the user has signed
+// in and permitted the app to act on their behalf.
+// We should proceed with the authentication flow
+// and generate an oauth code at the redirect URI.
 func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
+
+	// We need to use the session cookie to
+	// recreate the original form submitted
+	// to the authorizeGEThandler so that it
+	// can be validated by the oauth2 library.
 	s := sessions.Default(c)
 
-	// We need to retrieve the original form submitted to the authorizeGEThandler, and
-	// recreate it on the request so that it can be used further by the oauth2 library.
-	errs := []string{}
+	responseType := m.stringFromSession(c, s, sessionResponseType)
+	if responseType == "" {
+		// Error already
+		// written.
+		return
+	}
 
+	clientID := m.stringFromSession(c, s, sessionClientID)
+	if clientID == "" {
+		// Error already
+		// written.
+		return
+	}
+
+	redirectURI := m.stringFromSession(c, s, sessionRedirectURI)
+	if redirectURI == "" {
+		// Error already
+		// written.
+		return
+	}
+
+	scope := m.stringFromSession(c, s, sessionScope)
+	if scope == "" {
+		// Error already
+		// written.
+		return
+	}
+
+	user := m.userFromSession(c, s)
+	if user == nil {
+		// Error already
+		// written.
+		return
+	}
+
+	// Force login is optional with default of "false".
 	forceLogin, ok := s.Get(sessionForceLogin).(string)
-	if !ok {
+	if !ok || forceLogin == "" {
 		forceLogin = "false"
 	}
 
-	responseType, ok := s.Get(sessionResponseType).(string)
-	if !ok || responseType == "" {
-		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionResponseType))
-	}
-
-	clientID, ok := s.Get(sessionClientID).(string)
-	if !ok || clientID == "" {
-		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionClientID))
-	}
-
-	redirectURI, ok := s.Get(sessionRedirectURI).(string)
-	if !ok || redirectURI == "" {
-		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionRedirectURI))
-	}
-
-	scope, ok := s.Get(sessionScope).(string)
-	if !ok {
-		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionScope))
-	}
-
+	// Client state is optional with default of "".
 	var clientState string
-	if s, ok := s.Get(sessionClientState).(string); ok {
-		clientState = s
+	if cs, ok := s.Get(sessionClientState).(string); ok {
+		clientState = cs
 	}
 
-	userID, ok := s.Get(sessionUserID).(string)
-	if !ok {
-		errs = append(errs, fmt.Sprintf("key %s was not found in session", sessionUserID))
-	}
-
-	if len(errs) != 0 {
-		errs = append(errs, oauth.HelpfulAdvice)
-		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(errors.New("one or more missing keys on session during AuthorizePOSTHandler"), errs...), m.processor.InstanceGetV1)
+	// If the user is unconfirmed, waiting approval,
+	// or suspended, redirect to an appropriate help page.
+	if !m.validateUser(c, user) {
+		// Already
+		// redirected.
 		return
 	}
 
-	user, err := m.db.GetUserByID(c.Request.Context(), userID)
-	if err != nil {
-		m.clearSession(s)
-		safe := fmt.Sprintf("user with id %s could not be retrieved", userID)
-		var errWithCode gtserror.WithCode
-		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
-		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
-		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	acct, err := m.db.GetAccountByID(c.Request.Context(), user.AccountID)
-	if err != nil {
-		m.clearSession(s)
-		safe := fmt.Sprintf("account with id %s could not be retrieved", user.AccountID)
-		var errWithCode gtserror.WithCode
-		if err == db.ErrNoEntries {
-			errWithCode = gtserror.NewErrorBadRequest(err, safe, oauth.HelpfulAdvice)
-		} else {
-			errWithCode = gtserror.NewErrorInternalError(err, safe, oauth.HelpfulAdvice)
-		}
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
-	}
-
-	if ensureUserIsAuthorizedOrRedirect(c, user, acct) {
-		return
-	}
-
+	// If we're redirecting to our OOB token handler,
+	// we need to keep the session around so the OOB
+	// handler can extract values from it. Otherwise,
+	// we're going to be redirecting somewhere else
+	// so we can safely clear the session now.
 	if redirectURI != oauth.OOBURI {
-		// we're done with the session now, so just clear it out
-		m.clearSession(s)
+		m.mustClearSession(s)
 	}
 
-	// we have to set the values on the request form
-	// so that they're picked up by the oauth server
+	// Set values on the request form so that
+	// they're picked up by the oauth server.
 	c.Request.Form = url.Values{
-		sessionForceLogin:   {forceLogin},
 		sessionResponseType: {responseType},
 		sessionClientID:     {clientID},
 		sessionRedirectURI:  {redirectURI},
 		sessionScope:        {scope},
-		sessionUserID:       {userID},
+		sessionUserID:       {user.ID},
+		sessionForceLogin:   {forceLogin},
 	}
 
 	if clientState != "" {
+		// If client state was submitted,
+		// set it on the form so it can be
+		// fed back to the client via a query
+		// param at the eventual redirect URL.
 		c.Request.Form.Set("state", clientState)
 	}
 
-	if errWithCode := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request); errWithCode != nil {
+	// If OAuthHandleAuthorizeRequest is successful,
+	// it'll handle any further redirects for us,
+	// but we do still need to handle any errors.
+	errWithCode := m.processor.OAuthHandleAuthorizeRequest(c.Writer, c.Request)
+	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 	}
 }
 
-// saveAuthFormToSession checks the given OAuthAuthorize form,
-// and stores the values in the form into the session.
-func saveAuthFormToSession(s sessions.Session, form *apimodel.OAuthAuthorize) gtserror.WithCode {
-	if form == nil {
-		err := errors.New("OAuthAuthorize form was nil")
-		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
+// redirectAuthFormToSignIn binds an OAuthAuthorize form,
+// stores the values in the form into the session, and
+// redirects the user to the sign in page.
+func (m *Module) redirectAuthFormToSignIn(c *gin.Context) {
+	s := sessions.Default(c)
+
+	form := &apimodel.OAuthAuthorize{}
+	if err := c.ShouldBind(form); err != nil {
+		m.clearSessionWithBadRequest(c, s, err, err.Error(), oauth.HelpfulAdvice)
+		return
 	}
 
-	if form.ResponseType == "" {
-		err := errors.New("field response_type was not set on OAuthAuthorize form")
-		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
-	}
-
-	if form.ClientID == "" {
-		err := errors.New("field client_id was not set on OAuthAuthorize form")
-		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
-	}
-
-	if form.RedirectURI == "" {
-		err := errors.New("field redirect_uri was not set on OAuthAuthorize form")
-		return gtserror.NewErrorBadRequest(err, err.Error(), oauth.HelpfulAdvice)
-	}
-
-	// set default scope to read
+	// Set default scope to read.
 	if form.Scope == "" {
 		form.Scope = "read"
 	}
 
-	// save these values from the form so we can use them elsewhere in the session
+	// Save these values from the form so we
+	// can use them elsewhere in the session.
 	s.Set(sessionForceLogin, form.ForceLogin)
 	s.Set(sessionResponseType, form.ResponseType)
 	s.Set(sessionClientID, form.ClientID)
@@ -310,32 +255,43 @@ func saveAuthFormToSession(s sessions.Session, form *apimodel.OAuthAuthorize) gt
 	s.Set(sessionInternalState, uuid.NewString())
 	s.Set(sessionClientState, form.State)
 
-	if err := s.Save(); err != nil {
-		err := fmt.Errorf("error saving form values onto session: %s", err)
-		return gtserror.NewErrorInternalError(err, oauth.HelpfulAdvice)
-	}
-
-	return nil
+	m.mustSaveSession(s)
+	c.Redirect(http.StatusSeeOther, "/auth"+AuthSignInPath)
 }
 
-func ensureUserIsAuthorizedOrRedirect(ctx *gin.Context, user *gtsmodel.User, account *gtsmodel.Account) (redirected bool) {
-	if user.ConfirmedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, "/auth"+AuthCheckYourEmailPath)
-		redirected = true
-		return
-	}
+// validateUser checks if the given user:
+//
+//  1. Has a confirmed email address.
+//  2. Has been approved.
+//  3. Is not disabled or suspended.
+//
+// If all looks OK, returns true. Otherwise,
+// redirects to a help page and returns false.
+func (m *Module) validateUser(
+	c *gin.Context,
+	user *gtsmodel.User,
+) bool {
+	switch {
+	case user.ConfirmedAt.IsZero():
+		// User email not confirmed yet.
+		const redirectTo = "/auth" + AuthCheckYourEmailPath
+		c.Redirect(http.StatusSeeOther, redirectTo)
+		return false
 
-	if !*user.Approved {
-		ctx.Redirect(http.StatusSeeOther, "/auth"+AuthWaitForApprovalPath)
-		redirected = true
-		return
-	}
+	case !*user.Approved:
+		// User signup not approved yet.
+		const redirectTo = "/auth" + AuthWaitForApprovalPath
+		c.Redirect(http.StatusSeeOther, redirectTo)
+		return false
 
-	if *user.Disabled || !account.SuspendedAt.IsZero() {
-		ctx.Redirect(http.StatusSeeOther, "/auth"+AuthAccountDisabledPath)
-		redirected = true
-		return
-	}
+	case *user.Disabled || !user.Account.SuspendedAt.IsZero():
+		// User disabled or suspended.
+		const redirectTo = "/auth" + AuthAccountDisabledPath
+		c.Redirect(http.StatusSeeOther, redirectTo)
+		return false
 
-	return
+	default:
+		// All good.
+		return true
+	}
 }

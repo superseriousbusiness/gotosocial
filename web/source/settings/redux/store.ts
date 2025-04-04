@@ -71,7 +71,8 @@ export const store = configureStore({
 					PERSIST,
 					PURGE,
 					REGISTER,
-				]
+				],
+				ignoredPaths: ['api.queries.twoFactorQRCodePng(undefined).data.data'],
 			}
 		}).concat(gtsApi.middleware);
 	}

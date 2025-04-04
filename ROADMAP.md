@@ -73,10 +73,10 @@ These are provided in no specific order.
 - [x] **Non-replyable posts** -- design a non-replyable post path for GoToSocial based on https://github.com/mastodon/mastodon/issues/14762#issuecomment-1196889788; allow users to create non-replyable posts.
 - [x] **Block + allow list subscriptions** -- allow instance admins to subscribe their instance to domain block/allow lists.
 - [x] **Direct conversation view** -- allow users to easily page through all direct-message conversations they're a part of.
-- [ ] **Oauth token management** -- create / view / invalidate OAuth tokens via the settings panel.
-- [ ] **Status EDIT support** -- edit statuses that you've created, without having to delete + redraft. Federate edits out properly.
+- [x] **Oauth token management** -- create / view / invalidate OAuth tokens via the settings panel.
+- [x] **Status EDIT support** -- edit statuses that you've created, without having to delete + redraft. Federate edits out properly.
 - [ ] **Fediverse relay support** -- publish posts to relays, pull posts from relays.
-- [ ] **Two factor authentication (2fa)** -- allow users to enable 2FA for their account via the settings panel, enforce 2FA on login.
+- [x] **Two factor authentication (2fa)** -- allow users to enable 2FA for their account via the settings panel, enforce 2FA on login.
 - [ ] **Moderation: Append content warning / mark-as-sensitive all content from an instance/account**.
 
 More tbd!

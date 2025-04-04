@@ -225,7 +225,9 @@ If you want to reset all your policies to the initial defaults, you can click on
     
     As more ActivityPub servers roll out support for interaction policies, this issue will hopefully diminish, but in the meantime GoToSocial can offer only a "best effort" attempt to restrict interactions with your posts according to the policies you have set.
 
-## Email & Password
+## Account
+
+In the "Account" section, you can set your email and password, and set up two-factor authentication for your account.
 
 ### Email Change
 
@@ -244,6 +246,24 @@ You can use the Password Change section of the panel to set a new password for y
     If your instance is using OIDC as its authorization/identity provider, you will not be able to change your password via the GoToSocial settings panel, and you should contact your OIDC provider instead.
 
 For more information on the way GoToSocial manages passwords, please see the [Password management document](./password_management.md).
+
+### Two-Factor Authentication
+
+You can use this section of the panel to enable two-factor authentication (2FA) for your account.
+
+With 2FA enabled, you will have to provide a code from your configured authenticator app (Google authenticator, LastPass authenticator, etc) when you want to log in, in addition to your password.
+
+To enable 2FA, install an authenticator app on your mobile device, and use it to scan the QR code. You can also copy the 2FA secret manually and paste it into your authenticator. Once you've done that, enter a code from your authenticator to verify that the authenticator and the server are synced up correctly.
+
+On success, you will be shown a list of eight 2FA backup/recovery codes. Save these codes in a safe place (eg., in a password manager). If you lose access to your authenticator app, for example if you lose your device, then you can use one of these codes instead of a 2FA code when logging in. Once you have used a code, you will not be able to use it again. Should you use up all eight recovery codes, you should disable and reenable 2FA to generate new ones.
+
+To disable two-factor authentication, enter your current password in the form, and click the "Disable 2FA" button.
+
+!!! tip
+    Two-factor authentication is recommended, as it makes it more difficult for baddies to log in to your account by guessing your password, since they would also need access to your authenticator device. For more information on different types of 2FA, see [A Guide to Common Types of Two-Factor Authentication on the Web](https://www.eff.org/deeplinks/2017/09/guide-common-types-two-factor-authentication-web).
+
+!!! info
+    If your instance is using OIDC as its authorization/identity provider, you will not be able to enable 2FA in the settings panel, and you should contact your OIDC provider instead.
 
 ## Migration
 

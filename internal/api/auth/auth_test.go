@@ -96,7 +96,7 @@ func (suite *AuthStandardTestSuite) SetupTest() {
 		testrig.NewNoopWebPushSender(),
 		suite.mediaManager,
 	)
-	suite.authModule = auth.New(suite.db, suite.processor, suite.idp)
+	suite.authModule = auth.New(&suite.state, suite.processor, suite.idp)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)
 	testrig.StartNoopWorkers(&suite.state)

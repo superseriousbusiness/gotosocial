@@ -99,6 +99,10 @@ func (c *Converter) UserToAPIUser(ctx context.Context, u *gtsmodel.User) *apimod
 		user.ResetPasswordSentAt = util.FormatISO8601(u.ResetPasswordSentAt)
 	}
 
+	if !u.TwoFactorEnabledAt.IsZero() {
+		user.TwoFactorEnabledAt = util.FormatISO8601(u.TwoFactorEnabledAt)
+	}
+
 	return user
 }
 

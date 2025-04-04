@@ -39,6 +39,11 @@ export default function UserMenu() {
 				icon="fa-user"
 			/>
 			<MenuItem
+				name="Account"
+				itemUrl="account"
+				icon="fa-user-secret"
+			/>
+			<MenuItem
 				name="Posts"
 				itemUrl="posts"
 				icon="fa-paper-plane"
@@ -47,11 +52,6 @@ export default function UserMenu() {
 				name="Interaction Requests"
 				itemUrl="interaction_requests"
 				icon="fa-commenting-o"
-			/>
-			<MenuItem
-				name="Email & Password"
-				itemUrl="emailpassword"
-				icon="fa-user-secret"
 			/>
 			<MenuItem
 				name="Migration"

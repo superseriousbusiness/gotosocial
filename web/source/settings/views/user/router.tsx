@@ -21,10 +21,9 @@ import React from "react";
 import { BaseUrlContext, useBaseUrl } from "../../lib/navigation/util";
 import { Redirect, Route, Router, Switch } from "wouter";
 import { ErrorBoundary } from "../../lib/navigation/error";
-import UserProfile from "./profile";
-import UserMigration from "./migration";
+import Profile from "./profile/profile";
 import PostSettings from "./posts";
-import EmailPassword from "./emailpassword";
+import Account from "./account";
 import ExportImport from "./export-import";
 import InteractionRequests from "./interactions";
 import InteractionRequestDetail from "./interactions/detail";
@@ -33,11 +32,12 @@ import Applications from "./applications";
 import NewApp from "./applications/new";
 import AppDetail from "./applications/detail";
 import { AppTokenCallback } from "./applications/callback";
+import Migration from "./migration";
 
 /**
  * - /settings/user/profile
+ * - /settings/user/account
  * - /settings/user/posts
- * - /settings/user/emailpassword
  * - /settings/user/migration
  * - /settings/user/export-import
  * - /settings/user/tokens
@@ -53,10 +53,10 @@ export default function UserRouter() {
 		<BaseUrlContext.Provider value={absBase}>
 			<Router base={thisBase}>
 				<Switch>
-					<Route path="/profile" component={UserProfile} />
+					<Route path="/profile" component={Profile} />
+					<Route path="/account" component={Account} />
 					<Route path="/posts" component={PostSettings} />
-					<Route path="/emailpassword" component={EmailPassword} />
-					<Route path="/migration" component={UserMigration} />
+					<Route path="/migration" component={Migration} />
 					<Route path="/export-import" component={ExportImport} />
 					<Route path="/tokens" component={Tokens} />
 				</Switch>

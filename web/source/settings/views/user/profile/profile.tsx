@@ -24,10 +24,10 @@ import {
 	useFileInput,
 	useBoolInput,
 	useFieldArrayInput,
-} from "../../lib/form";
+} from "../../../lib/form";
 
-import useFormSubmit from "../../lib/form/submit";
-import { useWithFormContext, FormContext } from "../../lib/form/context";
+import useFormSubmit from "../../../lib/form/submit";
+import { useWithFormContext, FormContext } from "../../../lib/form/context";
 
 import {
 	TextInput,
@@ -35,32 +35,32 @@ import {
 	FileInput,
 	Checkbox,
 	Select
-} from "../../components/form/inputs";
+} from "../../../components/form/inputs";
 
-import FormWithData from "../../lib/form/form-with-data";
-import FakeProfile from "../../components/profile";
-import MutationButton from "../../components/form/mutation-button";
+import FormWithData from "../../../lib/form/form-with-data";
+import FakeProfile from "../../../components/profile";
+import MutationButton from "../../../components/form/mutation-button";
 
-import { useAccountThemesQuery } from "../../lib/query/user";
-import { useUpdateCredentialsMutation } from "../../lib/query/user";
-import { useVerifyCredentialsQuery } from "../../lib/query/login";
-import { useInstanceV1Query } from "../../lib/query/gts-api";
-import { Account } from "../../lib/types/account";
+import { useAccountThemesQuery } from "../../../lib/query/user";
+import { useUpdateCredentialsMutation } from "../../../lib/query/user";
+import { useVerifyCredentialsQuery } from "../../../lib/query/login";
+import { useInstanceV1Query } from "../../../lib/query/gts-api";
+import { Account } from "../../../lib/types/account";
 
-export default function UserProfile() {
+export default function Profile() {
 	return (
 		<FormWithData
 			dataQuery={useVerifyCredentialsQuery}
-			DataForm={UserProfileForm}
+			DataForm={ProfileForm}
 		/>
 	);
 }
 
-interface UserProfileFormProps {
+interface ProfileFormProps {
 	data: Account;
 }
 
-function UserProfileForm({ data: profile }: UserProfileFormProps) {
+function ProfileForm({ data: profile }: ProfileFormProps) {
 	const { data: instance } = useInstanceV1Query();
 	const instanceConfig = React.useMemo(() => {
 		return {
