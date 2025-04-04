@@ -33,6 +33,11 @@ type Domain struct {
 	// example: 2021-07-30T09:20:25+00:00
 	SilencedAt string `json:"silenced_at,omitempty"`
 	// If the domain is blocked, what's the publicly-stated reason for the block.
+	// Alternative to `public_comment` to be used when serializing/deserializing via /api/v1/instance.
+	// example: they smell
+	Comment *string `form:"comment" json:"comment,omitempty"`
+	// If the domain is blocked, what's the publicly-stated reason for the block.
+	// Alternative to `comment` to be used when serializing/deserializing NOT via /api/v1/instance.
 	// example: they smell
 	PublicComment *string `form:"public_comment" json:"public_comment,omitempty"`
 }

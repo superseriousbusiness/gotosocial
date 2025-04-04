@@ -18,6 +18,7 @@
 package admin
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -239,7 +240,7 @@ func (p *Processor) importOrUpdateDomainPerm(
 	var (
 		domain         = apiDomainPerm.Domain.Domain
 		obfuscate      = apiDomainPerm.Obfuscate
-		publicComment  = apiDomainPerm.PublicComment
+		publicComment  = cmp.Or(apiDomainPerm.PublicComment, apiDomainPerm.Comment)
 		privateComment = apiDomainPerm.PrivateComment
 		subscriptionID = "" // No sub ID for imports.
 	)

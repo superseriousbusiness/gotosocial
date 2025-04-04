@@ -118,6 +118,27 @@ JSON lists use content type `application/json`.
   {
     "domain": "bumfaces.net",
     "suspended_at": "2020-05-13T13:29:12.000Z",
+    "comment": "big jerks"
+  },
+  {
+    "domain": "peepee.poopoo",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "comment": "harassment"
+  },
+  {
+    "domain": "nothanks.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z"
+  }
+]
+```
+
+As an alternative to `"comment"`, `"public_comment"` will also work:
+
+```json
+[
+  {
+    "domain": "bumfaces.net",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
     "public_comment": "big jerks"
   },
   {
