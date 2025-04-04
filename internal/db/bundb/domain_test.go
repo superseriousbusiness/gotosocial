@@ -46,7 +46,7 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, domainBlock)
+	err = suite.db.PutDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// domain block now exists
@@ -75,7 +75,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedWithAllow() {
 	suite.False(blocked)
 
 	// Block this domain.
-	if err := suite.db.CreateDomainBlock(ctx, domainBlock); err != nil {
+	if err := suite.db.PutDomainBlock(ctx, domainBlock); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -96,7 +96,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedWithAllow() {
 		CreatedByAccount:   suite.testAccounts["admin_account"],
 	}
 
-	if err := suite.db.CreateDomainAllow(ctx, domainAllow); err != nil {
+	if err := suite.db.PutDomainAllow(ctx, domainAllow); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -124,7 +124,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedWildcard() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, domainBlock)
+	err = suite.db.PutDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// Start with the base block domain
@@ -164,7 +164,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, domainBlock)
+	err = suite.db.PutDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// domain block now exists
@@ -200,7 +200,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII2() {
 	suite.NoError(err)
 	suite.False(blocked)
 
-	err = suite.db.CreateDomainBlock(ctx, domainBlock)
+	err = suite.db.PutDomainBlock(ctx, domainBlock)
 	suite.NoError(err)
 
 	// domain block now exists
@@ -232,7 +232,7 @@ func (suite *DomainTestSuite) TestIsOtherDomainBlockedWildcardAndExplicit() {
 	}
 
 	for _, block := range blocks {
-		if err := suite.db.CreateDomainBlock(ctx, block); err != nil {
+		if err := suite.db.PutDomainBlock(ctx, block); err != nil {
 			suite.FailNow(err.Error())
 		}
 	}

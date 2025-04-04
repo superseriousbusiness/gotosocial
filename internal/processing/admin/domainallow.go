@@ -60,7 +60,7 @@ func (p *Processor) createDomainAllow(
 		}
 
 		// Insert the new allow into the database.
-		if err := p.state.DB.CreateDomainAllow(ctx, domainAllow); err != nil {
+		if err := p.state.DB.PutDomainAllow(ctx, domainAllow); err != nil {
 			err = gtserror.Newf("db error putting domain allow %s: %w", domain, err)
 			return nil, "", gtserror.NewErrorInternalError(err)
 		}
@@ -90,6 +90,54 @@ func (p *Processor) createDomainAllow(
 	}
 
 	return apiDomainAllow, action.ID, nil
+}
+
+func (p *Processor) updateDomainAllow(
+	ctx context.Context,
+	domainAllowID string,
+	obfuscate *bool,
+	publicComment *string,
+	privateComment *string,
+	subscriptionID *string,
+) (*apimodel.DomainPermission, gtserror.WithCode) {
+	domainAllow, err := p.state.DB.GetDomainAllowByID(ctx, domainAllowID)
+	if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			err = gtserror.Newf("db error getting domain allow: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// There are just no entries for this ID.
+		err = fmt.Errorf("no domain allow entry exists with ID %s", domainAllowID)
+		return nil, gtserror.NewErrorNotFound(err, err.Error())
+	}
+
+	var columns []string
+	if obfuscate != nil {
+		domainAllow.Obfuscate = obfuscate
+		columns = append(columns, "obfuscate")
+	}
+	if publicComment != nil {
+		domainAllow.PublicComment = *publicComment
+		columns = append(columns, "public_comment")
+	}
+	if privateComment != nil {
+		domainAllow.PrivateComment = *privateComment
+		columns = append(columns, "private_comment")
+	}
+	if subscriptionID != nil {
+		domainAllow.SubscriptionID = *subscriptionID
+		columns = append(columns, "subscription_id")
+	}
+
+	// Update the domain allow.
+	if err := p.state.DB.UpdateDomainAllow(ctx, domainAllow, columns...); err != nil {
+		err = gtserror.Newf("db error updating domain allow: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return p.apiDomainPerm(ctx, domainAllow, false)
 }
 
 func (p *Processor) deleteDomainAllow(

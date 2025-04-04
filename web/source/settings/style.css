@@ -618,6 +618,15 @@ span.form-info {
 	}
 }
 
+section > div.domain-block,
+section > div.domain-allow {
+	height: 100%;
+
+	> a {
+		margin-top: auto;
+	}
+}
+
 .domain-permissions-list {
 	p {
 		margin-top: 0;
@@ -976,32 +985,26 @@ button.tab-button {
 
 .domain-perm-import-list {
 	.checkbox-list-wrapper {
-		overflow-x: auto;
 		display: grid;
 		gap: 1rem;
 	}
 
 	.checkbox-list {
+		overflow-x: auto;
 
 		.header {
+			align-items: center;
 			input[type="checkbox"] {
-				align-self: start;
 				height: 1.5rem;
 			}
 		}
 
 		.entry {
-			gap: 0;
-			width: 100%;
-			grid-template-columns: auto minmax(25ch, 2fr) minmax(40ch, 1fr);
-			grid-template-rows: auto 1fr;
-
-			input[type="checkbox"] {
-				margin-right: 1rem;
-			}
+			grid-template-columns: auto max(50%, 14rem) 1fr;
+			column-gap: 1rem;
+			align-items: center;
 
 			.domain-input {
-				margin-right: 0.5rem;
 				display: grid;
 				grid-template-columns: 1fr $fa-fw;
 				gap: 0.5rem;
@@ -1020,12 +1023,20 @@ button.tab-button {
 			}
 
 			p {
-				align-self: center;
 				margin: 0;
-				grid-column: 4;
-				grid-row: 1 / span 2;
 			}
 		}
+	}
+
+	.set-comment-checkbox {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+
+		padding: 0.5rem 1rem 1rem 1rem;
+		width: 100%;
+		border: 0.1rem solid var(--gray1);
+		border-radius: 0.1rem;
 	}
 }
 
@@ -1406,6 +1417,7 @@ button.tab-button {
 	}
 }
 
+.domain-permission-details,
 .domain-permission-draft-details,
 .domain-permission-exclude-details,
 .domain-permission-subscription-details {
@@ -1414,6 +1426,7 @@ button.tab-button {
 	}
 }
 
+.domain-permission-details,
 .domain-permission-drafts-view,
 .domain-permission-draft-details,
 .domain-permission-subscriptions-view,

@@ -29,6 +29,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type singleDomainPermCreate func(
@@ -112,7 +113,7 @@ func (m *Module) createDomainPermissions(
 	if importing && form.Domains.Size == 0 {
 		err = errors.New("import was specified but list of domains is empty")
 	} else if !importing && form.Domain == "" {
-		err = errors.New("empty domain provided")
+		err = errors.New("no domain provided")
 	}
 
 	if err != nil {
@@ -122,14 +123,14 @@ func (m *Module) createDomainPermissions(
 
 	if !importing {
 		// Single domain permission creation.
-		domainBlock, _, errWithCode := single(
+		perm, _, errWithCode := single(
 			c.Request.Context(),
 			permType,
 			authed.Account,
 			form.Domain,
-			form.Obfuscate,
-			form.PublicComment,
-			form.PrivateComment,
+			util.PtrOrZero(form.Obfuscate),
+			util.PtrOrZero(form.PublicComment),
+			util.PtrOrZero(form.PrivateComment),
 			"", // No sub ID for single perm creation.
 		)
 
@@ -138,7 +139,7 @@ func (m *Module) createDomainPermissions(
 			return
 		}
 
-		apiutil.JSON(c, http.StatusOK, domainBlock)
+		apiutil.JSON(c, http.StatusOK, perm)
 		return
 	}
 
@@ -175,6 +176,82 @@ func (m *Module) createDomainPermissions(
 	}
 
 	apiutil.JSON(c, http.StatusOK, domainPerms)
+}
+
+func (m *Module) updateDomainPermission(
+	c *gin.Context,
+	permType gtsmodel.DomainPermissionType,
+) {
+	// Scope differs based on permType.
+	var requireScope apiutil.Scope
+	if permType == gtsmodel.DomainPermissionBlock {
+		requireScope = apiutil.ScopeAdminWriteDomainBlocks
+	} else {
+		requireScope = apiutil.ScopeAdminWriteDomainAllows
+	}
+
+	authed, errWithCode := apiutil.TokenAuth(c,
+		true, true, true, true,
+		requireScope,
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if !*authed.User.Admin {
+		err := fmt.Errorf("user %s not an admin", authed.User.ID)
+		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if authed.Account.IsMoving() {
+		apiutil.ForbiddenAfterMove(c)
+		return
+	}
+
+	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorNotAcceptable(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	permID, errWithCode := apiutil.ParseID(c.Param(apiutil.IDKey))
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	// Parse + validate form.
+	form := new(apimodel.DomainPermissionRequest)
+	if err := c.ShouldBind(form); err != nil {
+		apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
+		return
+	}
+
+	if form.Obfuscate == nil &&
+		form.PrivateComment == nil &&
+		form.PublicComment == nil {
+		const errText = "empty form submitted"
+		errWithCode := gtserror.NewErrorBadRequest(errors.New(errText), errText)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	perm, errWithCode := m.processor.Admin().DomainPermissionUpdate(
+		c.Request.Context(),
+		permType,
+		permID,
+		form.Obfuscate,
+		form.PublicComment,
+		form.PrivateComment,
+		nil, // Can't update perm sub ID this way yet.
+	)
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	apiutil.JSON(c, http.StatusOK, perm)
 }
 
 // deleteDomainPermission deletes a single domain permission (block or allow).

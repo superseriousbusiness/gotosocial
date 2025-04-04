@@ -24,14 +24,12 @@ import { isValidDomainPermission, hasBetterScope } from "../../../lib/util/domai
 import {
 	useTextInput,
 	useBoolInput,
-	useRadioInput,
 	useCheckListInput,
 } from "../../../lib/form";
 
 import {
 	Select,
 	TextArea,
-	RadioGroup,
 	Checkbox,
 	TextInput,
 } from "../../../components/form/inputs";
@@ -113,84 +111,81 @@ function ImportList({ list, data: domainPerms, permType }: ImportListProps) {
 		privateComment: useTextInput("private_comment", {
 			defaultValue: `Imported on ${new Date().toLocaleString()}`
 		}),
-		privateCommentBehavior: useRadioInput("private_comment_behavior", {
-			defaultValue: "append",
-			options: {
-				append: "Append to",
-				replace: "Replace"
-			}
-		}),
+		replacePrivateComment: useBoolInput("replace_private_comment", { defaultValue: false }),
 		publicComment: useTextInput("public_comment"),
-		publicCommentBehavior: useRadioInput("public_comment_behavior", {
-			defaultValue: "append",
-			options: {
-				append: "Append to",
-				replace: "Replace"
-			}
-		}),
+		replacePublicComment: useBoolInput("replace_public_comment", { defaultValue: false }),
 		permType: permType,
 	};
 
-	const [importDomains, importResult] = useFormSubmit(form, useImportDomainPermsMutation(), { changedOnly: false });
+	const [importDomains, importResult] = useFormSubmit(
+		form,
+		useImportDomainPermsMutation(),
+		{ changedOnly: false },
+	);
 
 	return (
-		<>
-			<form
-				onSubmit={importDomains}
-				className="domain-perm-import-list"
-			>
-				<span>{list.length} domain{list.length != 1 ? "s" : ""} in this list</span>
+		<form
+			onSubmit={importDomains}
+			className="domain-perm-import-list"
+		>
+			<span>{list.length} domain{list.length != 1 ? "s" : ""} in this list</span>
 
-				{hasComment.both &&
+			{hasComment.both &&
 					<Select field={showComment} options={
 						<>
 							<option value="public_comment">Show public comments</option>
 							<option value="private_comment">Show private comments</option>
 						</>
 					} />
-				}
+			}
 
-				<div className="checkbox-list-wrapper">
-					<DomainCheckList
-						field={form.domains}
-						domainPerms={domainPerms}
-						commentType={showComment.value as "public_comment" | "private_comment"}
-						permType={form.permType}
-					/>
-				</div>
+			<div className="checkbox-list-wrapper">
+				<DomainCheckList
+					field={form.domains}
+					domainPerms={domainPerms}
+					commentType={showComment.value as "public_comment" | "private_comment"}
+					permType={form.permType}
+				/>
+			</div>
 
+			<Checkbox
+				field={form.obfuscate}
+				label="Obfuscate domains in public lists"
+			/>
+
+			<div className="set-comment-checkbox">
+				<Checkbox
+					field={form.replacePrivateComment}
+					label="Set/replace private comment(s) to:"
+				/>
 				<TextArea
 					field={form.privateComment}
-					label="Private comment"
 					rows={3}
+					disabled={!form.replacePrivateComment.value}
+					placeholder="Private comment"
 				/>
-				<RadioGroup
-					field={form.privateCommentBehavior}
-					label="imported private comment"
-				/>
+			</div>
 
+			<div className="set-comment-checkbox">
+				<Checkbox
+					field={form.replacePublicComment}
+					label="Set/replace public comment(s) to:"
+				/>
 				<TextArea
 					field={form.publicComment}
-					label="Public comment"
 					rows={3}
+					disabled={!form.replacePublicComment.value}
+					placeholder="Public comment"
 				/>
-				<RadioGroup
-					field={form.publicCommentBehavior}
-					label="imported public comment"
-				/>
+			</div>
 
-				<Checkbox
-					field={form.obfuscate}
-					label="Obfuscate domains in public lists"
-				/>
 
-				<MutationButton
-					label="Import"
-					disabled={false}
-					result={importResult}
-				/>
-			</form>
-		</>
+			<MutationButton
+				label="Import"
+				disabled={false}
+				result={importResult}
+			/>
+		</form>
 	);
 }
 

@@ -46,8 +46,8 @@ export interface DomainPerm {
 	valid?: boolean;
 	checked?: boolean;
 	commentType?: string;
-	private_comment_behavior?: "append" | "replace";
-	public_comment_behavior?: "append" | "replace";
+	replace_private_comment?: boolean;
+	replace_public_comment?: boolean;
 }
 
 /**
@@ -65,8 +65,8 @@ const domainPermStripOnImport: Set<keyof DomainPerm> = new Set([
 	"valid",
 	"checked",
 	"commentType",
-	"private_comment_behavior",
-	"public_comment_behavior",
+	"replace_private_comment",
+	"replace_public_comment",
 ]);
 
 /**

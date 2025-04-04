@@ -26,7 +26,7 @@ type DomainBlock struct {
 	UpdatedAt          time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"` // when was item last updated
 	Domain             string    `bun:",nullzero,notnull"`                                           // domain to block. Eg. 'whatever.com'
 	CreatedByAccountID string    `bun:"type:CHAR(26),nullzero,notnull"`                              // Account ID of the creator of this block
-	CreatedByAccount   *Account  `bun:"rel:belongs-to"`                                              // Account corresponding to createdByAccountID
+	CreatedByAccount   *Account  `bun:"-"`                                                           // Account corresponding to createdByAccountID
 	PrivateComment     string    `bun:""`                                                            // Private comment on this block, viewable to admins
 	PublicComment      string    `bun:""`                                                            // Public comment on this block, viewable (optionally) by everyone
 	Obfuscate          *bool     `bun:",nullzero,notnull,default:false"`                             // whether the domain name should appear obfuscated when displaying it publicly

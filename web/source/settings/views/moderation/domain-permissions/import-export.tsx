@@ -61,7 +61,7 @@ export default function ImportExport() {
 									>
 										&lt; back
 									</span>
-									&nbsp; Confirm import of domain {form.permType.value}s:
+									&nbsp; Confirm {form.permType.value}s:
 								</h1>
 								<ProcessImport
 									list={parseResult.data}

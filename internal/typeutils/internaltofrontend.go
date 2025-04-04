@@ -2182,7 +2182,7 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	domainPerm := &apimodel.DomainPermission{
 		Domain: apimodel.Domain{
 			Domain:        domain,
-			PublicComment: d.GetPublicComment(),
+			PublicComment: util.Ptr(d.GetPublicComment()),
 		},
 	}
 
@@ -2193,8 +2193,8 @@ func (c *Converter) DomainPermToAPIDomainPerm(
 	}
 
 	domainPerm.ID = d.GetID()
-	domainPerm.Obfuscate = util.PtrOrZero(d.GetObfuscate())
-	domainPerm.PrivateComment = d.GetPrivateComment()
+	domainPerm.Obfuscate = d.GetObfuscate()
+	domainPerm.PrivateComment = util.Ptr(d.GetPrivateComment())
 	domainPerm.SubscriptionID = d.GetSubscriptionID()
 	domainPerm.CreatedBy = d.GetCreatedByAccountID()
 	if createdAt := d.GetCreatedAt(); !createdAt.IsZero() {
