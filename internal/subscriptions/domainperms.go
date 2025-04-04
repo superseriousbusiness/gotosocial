@@ -564,13 +564,13 @@ func permsFromCSV(
 
 	for i, columnHeader := range columnHeaders {
 		// Remove leading # if present.
-		normal := strings.TrimLeft(columnHeader, "#")
+		columnHeader = strings.TrimLeft(columnHeader, "#")
 
 		// Find index of each column header we
 		// care about, ensuring no duplicates.
-		switch normal {
+		switch {
 
-		case "domain":
+		case columnHeader == "domain":
 			if domainI != nil {
 				body.Close()
 				err := gtserror.NewfAt(3, "duplicate domain column header in csv: %+v", columnHeaders)
@@ -578,7 +578,7 @@ func permsFromCSV(
 			}
 			domainI = &i
 
-		case "severity":
+		case columnHeader == "severity":
 			if severityI != nil {
 				body.Close()
 				err := gtserror.NewfAt(3, "duplicate severity column header in csv: %+v", columnHeaders)
@@ -586,15 +586,15 @@ func permsFromCSV(
 			}
 			severityI = &i
 
-		case "public_comment":
+		case columnHeader == "public_comment" || columnHeader == "comment":
 			if publicCommentI != nil {
 				body.Close()
-				err := gtserror.NewfAt(3, "duplicate public_comment column header in csv: %+v", columnHeaders)
+				err := gtserror.NewfAt(3, "duplicate public_comment or comment column header in csv: %+v", columnHeaders)
 				return nil, err
 			}
 			publicCommentI = &i
 
-		case "obfuscate":
+		case columnHeader == "obfuscate":
 			if obfuscateI != nil {
 				body.Close()
 				err := gtserror.NewfAt(3, "duplicate obfuscate column header in csv: %+v", columnHeaders)
@@ -674,15 +674,15 @@ func permsFromCSV(
 			perm.SetPublicComment(record[*publicCommentI])
 		}
 
+		var obfuscate bool
 		if obfuscateI != nil {
-			obfuscate, err := strconv.ParseBool(record[*obfuscateI])
+			obfuscate, err = strconv.ParseBool(record[*obfuscateI])
 			if err != nil {
 				l.Warnf("couldn't parse obfuscate field of record: %+v", record)
 				continue
 			}
-
-			perm.SetObfuscate(&obfuscate)
 		}
+		perm.SetObfuscate(&obfuscate)
 
 		// We're done.
 		perms = append(perms, perm)
@@ -793,9 +793,15 @@ func permsFromPlain(
 		var perm gtsmodel.DomainPermission
 		switch permType {
 		case gtsmodel.DomainPermissionBlock:
-			perm = &gtsmodel.DomainBlock{Domain: domain}
+			perm = &gtsmodel.DomainBlock{
+				Domain:    domain,
+				Obfuscate: util.Ptr(false),
+			}
 		case gtsmodel.DomainPermissionAllow:
-			perm = &gtsmodel.DomainAllow{Domain: domain}
+			perm = &gtsmodel.DomainAllow{
+				Domain:    domain,
+				Obfuscate: util.Ptr(false),
+			}
 		}
 
 		// We're done.
