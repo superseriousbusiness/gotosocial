@@ -89,20 +89,26 @@ func (ctx Context) ResultText(value string) {
 }
 
 // ResultRawText sets the text result of the function to a []byte.
-// Returning a nil slice is the same as calling [Context.ResultNull].
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultRawText(value []byte) {
+	if len(value) == 0 {
+		ctx.ResultText("")
+		return
+	}
 	ptr := ctx.c.newBytes(value)
 	ctx.c.call("sqlite3_result_text_go",
 		stk_t(ctx.handle), stk_t(ptr), stk_t(len(value)))
 }
 
 // ResultBlob sets the result of the function to a []byte.
-// Returning a nil slice is the same as calling [Context.ResultNull].
 //
 // https://sqlite.org/c3ref/result_blob.html
 func (ctx Context) ResultBlob(value []byte) {
+	if len(value) == 0 {
+		ctx.ResultZeroBlob(0)
+		return
+	}
 	ptr := ctx.c.newBytes(value)
 	ctx.c.call("sqlite3_result_blob_go",
 		stk_t(ctx.handle), stk_t(ptr), stk_t(len(value)))

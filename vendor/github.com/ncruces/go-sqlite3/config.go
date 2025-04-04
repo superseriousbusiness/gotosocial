@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"sync/atomic"
 
 	"github.com/tetratelabs/wazero/api"
 
@@ -46,6 +47,15 @@ func (c *Conn) Config(op DBConfig, arg ...bool) (bool, error) {
 	rc := res_t(c.call("sqlite3_db_config", stk_t(c.handle),
 		stk_t(op), stk_t(argsPtr)))
 	return util.ReadBool(c.mod, argsPtr), c.error(rc)
+}
+
+var defaultLogger atomic.Pointer[func(code ExtendedErrorCode, msg string)]
+
+// ConfigLog sets up the default error logging callback for new connections.
+//
+// https://sqlite.org/errlog.html
+func ConfigLog(cb func(code ExtendedErrorCode, msg string)) {
+	defaultLogger.Store(&cb)
 }
 
 // ConfigLog sets up the error logging callback for the connection.
@@ -265,6 +275,10 @@ func traceCallback(ctx context.Context, mod api.Module, evt TraceEvent, pDB, pAr
 //
 // https://sqlite.org/c3ref/wal_checkpoint_v2.html
 func (c *Conn) WALCheckpoint(schema string, mode CheckpointMode) (nLog, nCkpt int, err error) {
+	if c.interrupt.Err() != nil {
+		return 0, 0, INTERRUPT
+	}
+
 	defer c.arena.mark()()
 	nLogPtr := c.arena.new(ptrlen)
 	nCkptPtr := c.arena.new(ptrlen)
@@ -378,6 +392,6 @@ func (c *Conn) EnableChecksums(schema string) error {
 	}
 
 	// Checkpoint the WAL.
-	_, _, err = c.WALCheckpoint(schema, CHECKPOINT_RESTART)
+	_, _, err = c.WALCheckpoint(schema, CHECKPOINT_FULL)
 	return err
 }

@@ -135,11 +135,10 @@ func ReadString(mod api.Module, ptr Ptr_t, maxlen int64) string {
 			panic(RangeErr)
 		}
 	}
-	if i := bytes.IndexByte(buf, 0); i < 0 {
-		panic(NoNulErr)
-	} else {
+	if i := bytes.IndexByte(buf, 0); i >= 0 {
 		return string(buf[:i])
 	}
+	panic(NoNulErr)
 }
 
 func WriteBytes(mod api.Module, ptr Ptr_t, b []byte) {
