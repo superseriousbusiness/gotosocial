@@ -31,6 +31,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
+// FavedTimelineGet ...
 func (p *Processor) FavedTimelineGet(ctx context.Context, authed *apiutil.Auth, maxID string, minID string, limit int) (*apimodel.PageableResponse, gtserror.WithCode) {
 	statuses, nextMaxID, prevMinID, err := p.state.DB.GetFavedTimeline(ctx, authed.Account.ID, maxID, minID, limit)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {

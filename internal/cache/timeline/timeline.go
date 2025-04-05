@@ -18,33 +18,33 @@
 package timeline
 
 import (
-	"context"
+	"codeberg.org/gruf/go-structr"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-func (t *timeline) Unprepare(ctx context.Context, itemID string) error {
-	t.Lock()
-	defer t.Unlock()
-
-	if t.items == nil || t.items.data == nil {
-		// Nothing to do.
-		return nil
+// nextPageParams gets the next set of paging
+// parameters to use based on the current set,
+// and the next set of lo / hi values. This will
+// correctly handle making sure that, depending
+// on the paging order, the cursor value gets
+// updated while maintaining the boundary value.
+func nextPageParams(
+	page *paging.Page,
+	lastIdx string,
+	order paging.Order,
+) {
+	if order.Ascending() {
+		page.Min.Value = lastIdx
+	} else /* i.e. descending */ { //nolint:revive
+		page.Max.Value = lastIdx
 	}
+}
 
-	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry)
-
-		if entry.itemID != itemID && entry.boostOfID != itemID {
-			// Not relevant.
-			continue
-		}
-
-		if entry.prepared == nil {
-			// It's already unprepared (mood).
-			continue
-		}
-
-		entry.prepared = nil // <- eat this up please garbage collector nom nom nom
+// toDirection converts page order to timeline direction.
+func toDirection(order paging.Order) structr.Direction {
+	if order.Ascending() {
+		return structr.Asc
+	} else /* i.e. descending */ { //nolint:revive
+		return structr.Desc
 	}
-
-	return nil
 }

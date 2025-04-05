@@ -197,9 +197,22 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 	// UNDO SOMETHING
 	case ap.ActivityUndo:
 
+		switch fMsg.APObjectType {
+		// UNDO FOLLOW
+		case ap.ActivityFollow:
+			return p.fediAPI.UndoFollow(ctx, fMsg)
+
+		// UNDO BLOCK
+		case ap.ActivityBlock:
+			return p.fediAPI.UndoBlock(ctx, fMsg)
+
 		// UNDO ANNOUNCE
-		if fMsg.APObjectType == ap.ActivityAnnounce {
+		case ap.ActivityAnnounce:
 			return p.fediAPI.UndoAnnounce(ctx, fMsg)
+
+		// UNDO LIKE
+		case ap.ActivityLike:
+			return p.fediAPI.UndoFave(ctx, fMsg)
 		}
 	}
 
@@ -346,7 +359,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// Interaction counts changed on the replied status; uncache the
 		// prepared version from all timelines. The status dereferencer
 		// functions will ensure necessary ancestors exist before this point.
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -393,7 +406,7 @@ func (p *fediAPI) CreatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 	}
 
 	// Interaction counts changed, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(status.ID)
 
 	return nil
 }
@@ -428,7 +441,7 @@ func (p *fediAPI) UpdatePollVote(ctx context.Context, fMsg *messages.FromFediAPI
 	}
 
 	// Interaction counts changed, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(status.ID)
 
 	return nil
 }
@@ -573,7 +586,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
+	p.surface.invalidateStatusFromTimelines(fave.StatusID)
 
 	return nil
 }
@@ -690,7 +703,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 
 	// Interaction counts changed on the original status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
@@ -701,53 +714,26 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg *messages.FromFediAPI) e
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", fMsg.GTSModel)
 	}
 
-	// Remove each account's posts from the other's timelines.
-	//
-	// First home timelines.
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.AccountID,
-		block.TargetAccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from block -> target's home timeline: %v", err)
+	if block.Account.IsLocal() {
+		// Perform timeline invalidation for block origin account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
 	}
 
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.TargetAccountID,
-		block.AccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from target -> block's home timeline: %v", err)
-	}
-
-	// Now list timelines.
-	if err := p.state.Timelines.List.WipeItemsFromAccountID(
-		ctx,
-		block.AccountID,
-		block.TargetAccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from block -> target's list timeline(s): %v", err)
-	}
-
-	if err := p.state.Timelines.List.WipeItemsFromAccountID(
-		ctx,
-		block.TargetAccountID,
-		block.AccountID,
-	); err != nil {
-		log.Errorf(ctx, "error wiping items from target -> block's list timeline(s): %v", err)
+	if block.TargetAccount.IsLocal() {
+		// Perform timeline invalidation for block target account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
 	}
 
 	// Remove any follows that existed between blocker + blockee.
-	if err := p.state.DB.DeleteFollow(
-		ctx,
+	// (note this handles removing any necessary list entries).
+	if err := p.state.DB.DeleteFollow(ctx,
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
 		log.Errorf(ctx, "error deleting follow from block -> target: %v", err)
 	}
 
-	if err := p.state.DB.DeleteFollow(
-		ctx,
+	if err := p.state.DB.DeleteFollow(ctx,
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
@@ -755,16 +741,14 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg *messages.FromFediAPI) e
 	}
 
 	// Remove any follow requests that existed between blocker + blockee.
-	if err := p.state.DB.DeleteFollowRequest(
-		ctx,
+	if err := p.state.DB.DeleteFollowRequest(ctx,
 		block.AccountID,
 		block.TargetAccountID,
 	); err != nil {
 		log.Errorf(ctx, "error deleting follow request from block -> target: %v", err)
 	}
 
-	if err := p.state.DB.DeleteFollowRequest(
-		ctx,
+	if err := p.state.DB.DeleteFollowRequest(ctx,
 		block.TargetAccountID,
 		block.AccountID,
 	); err != nil {
@@ -871,7 +855,7 @@ func (p *fediAPI) AcceptReply(ctx context.Context, fMsg *messages.FromFediAPI) e
 
 	// Interaction counts changed on the replied-to status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+	p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 
 	return nil
 }
@@ -920,11 +904,11 @@ func (p *fediAPI) AcceptRemoteStatus(ctx context.Context, fMsg *messages.FromFed
 	// Interaction counts changed on the interacted status;
 	// uncache the prepared version from all timelines.
 	if status.InReplyToID != "" {
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	if status.BoostOfID != "" {
-		p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
+		p.surface.invalidateStatusFromTimelines(status.BoostOfID)
 	}
 
 	return nil
@@ -953,7 +937,7 @@ func (p *fediAPI) AcceptAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
@@ -1004,7 +988,7 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	}
 
 	// Status representation was refetched, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(status.ID)
 
 	return nil
 }
@@ -1063,7 +1047,7 @@ func (p *fediAPI) DeleteStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -1089,6 +1073,9 @@ func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 	// (stops processing of remote origin data targeting this account).
 	p.state.Workers.Federator.Queue.Delete("Requesting.ID", account.ID)
 	p.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
+
+	// Remove any entries authored by account from timelines.
+	p.surface.removeTimelineEntriesByAccount(account.ID)
 
 	// First perform the actual account deletion.
 	if err := p.account.Delete(ctx, account, account.ID); err != nil {
@@ -1208,6 +1195,44 @@ func (p *fediAPI) RejectAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 	return nil
 }
 
+func (p *fediAPI) UndoFollow(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	follow, ok := fMsg.GTSModel.(*gtsmodel.Follow)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Follow", fMsg.GTSModel)
+	}
+
+	if follow.Account.IsLocal() {
+		// Perform timeline invalidation for block origin account.
+		p.surface.invalidateTimelinesForAccount(ctx, follow.AccountID)
+	}
+
+	if follow.TargetAccount.IsLocal() {
+		// Perform timeline invalidation for block target account.
+		p.surface.invalidateTimelinesForAccount(ctx, follow.TargetAccountID)
+	}
+
+	return nil
+}
+
+func (p *fediAPI) UndoBlock(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	block, ok := fMsg.GTSModel.(*gtsmodel.Block)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.Block", fMsg.GTSModel)
+	}
+
+	if block.Account.IsLocal() {
+		// Perform timeline invalidation for block origin account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
+	}
+
+	if block.TargetAccount.IsLocal() {
+		// Perform timeline invalidation for block target account.
+		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
+	}
+
+	return nil
+}
+
 func (p *fediAPI) UndoAnnounce(
 	ctx context.Context,
 	fMsg *messages.FromFediAPI,
@@ -1228,13 +1253,24 @@ func (p *fediAPI) UndoAnnounce(
 	}
 
 	// Remove the boost wrapper from all timelines.
-	if err := p.surface.deleteStatusFromTimelines(ctx, boost.ID); err != nil {
-		log.Errorf(ctx, "error removing timelined boost: %v", err)
-	}
+	p.surface.deleteStatusFromTimelines(ctx, boost.ID)
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
+
+	return nil
+}
+
+func (p *fediAPI) UndoFave(ctx context.Context, fMsg *messages.FromFediAPI) error {
+	statusFave, ok := fMsg.GTSModel.(*gtsmodel.StatusFave)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.StatusFave", fMsg.GTSModel)
+	}
+
+	// Interaction counts changed on the faved status;
+	// uncache the prepared version from all timelines.
+	p.surface.invalidateStatusFromTimelines(statusFave.StatusID)
 
 	return nil
 }

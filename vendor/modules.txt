@@ -1,6 +1,3 @@
-# codeberg.org/gruf/go-bytes v1.0.2
-## explicit; go 1.14
-codeberg.org/gruf/go-bytes
 # codeberg.org/gruf/go-bytesize v1.0.3
 ## explicit; go 1.17
 codeberg.org/gruf/go-bytesize
@@ -38,7 +35,7 @@ codeberg.org/gruf/go-kv/format
 # codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 ## explicit; go 1.21.3
 codeberg.org/gruf/go-list
-# codeberg.org/gruf/go-mangler v1.4.3
+# codeberg.org/gruf/go-mangler v1.4.4
 ## explicit; go 1.19
 codeberg.org/gruf/go-mangler
 # codeberg.org/gruf/go-maps v1.0.4
@@ -47,7 +44,7 @@ codeberg.org/gruf/go-maps
 # codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
 ## explicit; go 1.22.2
 codeberg.org/gruf/go-mempool
-# codeberg.org/gruf/go-mutexes v1.5.1
+# codeberg.org/gruf/go-mutexes v1.5.2
 ## explicit; go 1.22.2
 codeberg.org/gruf/go-mutexes
 # codeberg.org/gruf/go-runners v1.6.3
@@ -63,7 +60,7 @@ codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
-# codeberg.org/gruf/go-structr v0.9.0
+# codeberg.org/gruf/go-structr v0.9.5
 ## explicit; go 1.22
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/activity v1.13.0-gts

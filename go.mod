@@ -11,7 +11,6 @@ replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.37.0-concurrency-workaround
 
 require (
-	codeberg.org/gruf/go-bytes v1.0.2
 	codeberg.org/gruf/go-bytesize v1.0.3
 	codeberg.org/gruf/go-byteutil v1.3.0
 	codeberg.org/gruf/go-cache/v3 v3.6.1
@@ -23,11 +22,11 @@ require (
 	codeberg.org/gruf/go-kv v1.6.5
 	codeberg.org/gruf/go-list v0.0.0-20240425093752-494db03d641f
 	codeberg.org/gruf/go-mempool v0.0.0-20240507125005-cef10d64a760
-	codeberg.org/gruf/go-mutexes v1.5.1
+	codeberg.org/gruf/go-mutexes v1.5.2
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
-	codeberg.org/gruf/go-structr v0.9.0
+	codeberg.org/gruf/go-structr v0.9.5
 	codeberg.org/superseriousbusiness/activity v1.13.0-gts
 	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
@@ -96,7 +95,7 @@ require (
 
 require (
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
-	codeberg.org/gruf/go-mangler v1.4.3 // indirect
+	codeberg.org/gruf/go-mangler v1.4.4 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
 	codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB // indirect
 	codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB // indirect

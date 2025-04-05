@@ -42,12 +42,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/observability"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -88,20 +86,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		// worker processes / scheduled
 		// tasks from being executed.
 		testrig.StopWorkers(state)
-
-		if state.Timelines.Home != nil {
-			// Home timeline mgr was setup, ensure it gets stopped.
-			if err := state.Timelines.Home.Stop(); err != nil {
-				log.Errorf(ctx, "error stopping home timeline: %v", err)
-			}
-		}
-
-		if state.Timelines.List != nil {
-			// List timeline mgr was setup, ensure it gets stopped.
-			if err := state.Timelines.List.Stop(); err != nil {
-				log.Errorf(ctx, "error stopping list timeline: %v", err)
-			}
-		}
 
 		if state.Storage != nil {
 			// If storage was created, ensure torn down.
@@ -171,26 +155,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	webPushSender := testrig.NewWebPushMockSender()
 	typeConverter := typeutils.NewConverter(state)
 	filter := visibility.NewFilter(state)
-
-	// Initialize both home / list timelines.
-	state.Timelines.Home = timeline.NewManager(
-		tlprocessor.HomeTimelineGrab(state),
-		tlprocessor.HomeTimelineFilter(state, filter),
-		tlprocessor.HomeTimelineStatusPrepare(state, typeConverter),
-		tlprocessor.SkipInsert(),
-	)
-	if err := state.Timelines.Home.Start(); err != nil {
-		return fmt.Errorf("error starting home timeline: %s", err)
-	}
-	state.Timelines.List = timeline.NewManager(
-		tlprocessor.ListTimelineGrab(state),
-		tlprocessor.ListTimelineFilter(state, filter),
-		tlprocessor.ListTimelineStatusPrepare(state, typeConverter),
-		tlprocessor.SkipInsert(),
-	)
-	if err := state.Timelines.List.Start(); err != nil {
-		return fmt.Errorf("error starting list timeline: %s", err)
-	}
 
 	processor := testrig.NewTestProcessor(state, federator, emailSender, webPushSender, mediaManager)
 
