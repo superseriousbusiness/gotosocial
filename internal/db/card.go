@@ -17,48 +17,23 @@
 
 package db
 
-const (
-	// DBTypePostgres represents an underlying POSTGRES database type.
-	DBTypePostgres string = "POSTGRES"
+import (
+	"context"
+
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
-// DB provides methods for interacting with an underlying database or other storage mechanism.
-type DB interface {
-	Account
-	Admin
-	AdvancedMigration
-	Application
-	Basic
-	Card
-	Conversation
-	Domain
-	Emoji
-	HeaderFilter
-	Instance
-	Interaction
-	Filter
-	List
-	Marker
-	Media
-	Mention
-	Move
-	Notification
-	Poll
-	Relationship
-	Report
-	Rule
-	Search
-	Session
-	SinBinStatus
-	Status
-	StatusBookmark
-	StatusEdit
-	StatusFave
-	Tag
-	Thread
-	Timeline
-	User
-	Tombstone
-	WebPush
-	WorkerTask
+// Card contains functions for getting Cards, creating Cards, and checking various other fields on Cards.
+type Card interface {
+	// GetCardByID fetches the Card from the database with matching id column.
+	GetCardByID(ctx context.Context, id string) (*gtsmodel.Card, error)
+
+	// PutCard stores one Card in the database.
+	PutCard(ctx context.Context, Card *gtsmodel.Card) error
+
+	// UpdateCard updates one Card in the database.
+	UpdateCard(ctx context.Context, Card *gtsmodel.Card, columns ...string) error
+
+	// DeleteCardByID deletes one Card from the database.
+	DeleteCardByID(ctx context.Context, id string) error
 }
