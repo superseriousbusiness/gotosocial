@@ -447,6 +447,12 @@ section.with-sidebar > form {
 	flex-direction: column;
 	justify-content: space-around;
 	gap: 0.5rem;
+
+	.delete-header-button,
+	.delete-avatar-button {
+		margin-top: 0.5rem;
+		font-size: 1rem;
+	}
 }
 
 /*

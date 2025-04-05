@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 import {
 	useTextInput,
@@ -41,7 +41,7 @@ import FormWithData from "../../lib/form/form-with-data";
 import FakeProfile from "../../components/profile";
 import MutationButton from "../../components/form/mutation-button";
 
-import { useAccountThemesQuery } from "../../lib/query/user";
+import { useAccountThemesQuery, useDeleteAvatarMutation, useDeleteHeaderMutation } from "../../lib/query/user";
 import { useUpdateCredentialsMutation } from "../../lib/query/user";
 import { useVerifyCredentialsQuery } from "../../lib/query/login";
 import { useInstanceV1Query } from "../../lib/query/gts-api";
@@ -116,16 +116,22 @@ function UserProfileForm({ data: profile }: UserProfileFormProps) {
 		theme: useTextInput("theme", { source: profile }),
 	};
 
+	const [ noHeader, setNoHeader ] = useState(!profile.header_media_id);
+	const [ deleteHeader, deleteHeaderRes ] = useDeleteHeaderMutation();
+	const [ noAvatar, setNoAvatar ] = useState(!profile.avatar_media_id);
+	const [ deleteAvatar, deleteAvatarRes ] = useDeleteAvatarMutation();
+
 	const [submitForm, result] = useFormSubmit(form, useUpdateCredentialsMutation(), {
 		changedOnly: true,
-		onFinish: () => {
-			form.avatar.reset();
-			form.header.reset();
+		onFinish: (res) => {
+			if ('data' in res) {
+				form.avatar.reset();
+				form.header.reset();
+				setNoAvatar(!res.data.avatar_media_id);
+				setNoHeader(!res.data.header_media_id);
+			}
 		}
 	});
-
-	const noAvatarSet = !profile.avatar_media_id;
-	const noHeaderSet = !profile.header_media_id;
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
@@ -152,7 +158,21 @@ function UserProfileForm({ data: profile }: UserProfileFormProps) {
 						label="Image description; only settable if not using default header"
 						placeholder="A green field with pink flowers."
 						autoCapitalize="sentences"
-						disabled={noHeaderSet && !form.header.value}
+						disabled={noHeader && !form.header.value}
+					/>
+					<MutationButton
+						className="delete-header-button"
+						label="Delete header"
+						disabled={noHeader}
+						result={deleteHeaderRes}
+						onClick={(e) => {
+							e.preventDefault();
+							deleteHeader().then(res => {
+								if ('data' in res) {
+									setNoHeader(true);
+								}
+							});
+						}}
 					/>
 				</fieldset>
 				
@@ -168,7 +188,21 @@ function UserProfileForm({ data: profile }: UserProfileFormProps) {
 						label="Image description; only settable if not using default avatar"
 						placeholder="A cute drawing of a smiling sloth."
 						autoCapitalize="sentences"
-						disabled={noAvatarSet && !form.avatar.value}
+						disabled={noAvatar && !form.avatar.value}
+					/>
+					<MutationButton
+						className="delete-avatar-button"
+						label="Delete avatar"
+						disabled={noAvatar}
+						result={deleteAvatarRes}
+						onClick={(e) => {
+							e.preventDefault();
+							deleteAvatar().then(res => {
+								if ('data' in res) {
+									setNoAvatar(true);
+								}
+							});
+						}}
 					/>
 				</fieldset>
 
