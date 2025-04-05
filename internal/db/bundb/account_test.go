@@ -32,11 +32,10 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/uptrace/bun"
 )
 
 type AccountTestSuite struct {
@@ -255,7 +254,20 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 				if account.URL == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByURL(ctx, account.URL)
+				return suite.db.GetOneAccountByURL(ctx, account.URL)
+			},
+
+			"url_multi": func() (*gtsmodel.Account, error) {
+				if account.URL == "" {
+					return nil, sentinelErr
+				}
+
+				accounts, err := suite.db.GetAccountsByURL(ctx, account.URL)
+				if err != nil {
+					return nil, err
+				}
+
+				return accounts[0], nil
 			},
 
 			"username@domain": func() (*gtsmodel.Account, error) {
@@ -281,28 +293,14 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 				if account.InboxURI == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByInboxURI(ctx, account.InboxURI)
+				return suite.db.GetOneAccountByInboxURI(ctx, account.InboxURI)
 			},
 
 			"outbox_uri": func() (*gtsmodel.Account, error) {
 				if account.OutboxURI == "" {
 					return nil, sentinelErr
 				}
-				return suite.db.GetAccountByOutboxURI(ctx, account.OutboxURI)
-			},
-
-			"following_uri": func() (*gtsmodel.Account, error) {
-				if account.FollowingURI == "" {
-					return nil, sentinelErr
-				}
-				return suite.db.GetAccountByFollowingURI(ctx, account.FollowingURI)
-			},
-
-			"followers_uri": func() (*gtsmodel.Account, error) {
-				if account.FollowersURI == "" {
-					return nil, sentinelErr
-				}
-				return suite.db.GetAccountByFollowersURI(ctx, account.FollowersURI)
+				return suite.db.GetOneAccountByOutboxURI(ctx, account.OutboxURI)
 			},
 		} {
 
@@ -345,71 +343,37 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 	}
 }
 
-func (suite *AccountTestSuite) TestUpdateAccount() {
+func (suite *AccountTestSuite) TestGetAccountsByURLMulti() {
 	ctx := context.Background()
 
-	testAccount := suite.testAccounts["local_account_1"]
-
-	testAccount.DisplayName = "new display name!"
-	testAccount.EmojiIDs = []string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}
-
-	err := suite.db.UpdateAccount(ctx, testAccount)
-	suite.NoError(err)
-
-	updated, err := suite.db.GetAccountByID(ctx, testAccount.ID)
-	suite.NoError(err)
-	suite.Equal("new display name!", updated.DisplayName)
-	suite.Equal([]string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}, updated.EmojiIDs)
-	suite.WithinDuration(time.Now(), updated.UpdatedAt, 5*time.Second)
-
-	// get account without cache + make sure it's really in the db as desired
-	dbService, ok := suite.db.(*bundb.DBService)
-	if !ok {
-		panic("db was not *bundb.DBService")
+	// Update admin account to have the same url as zork.
+	testAccount1 := suite.testAccounts["local_account_1"]
+	testAccount2 := new(gtsmodel.Account)
+	*testAccount2 = *suite.testAccounts["admin_account"]
+	testAccount2.URL = testAccount1.URL
+	if err := suite.state.DB.UpdateAccount(ctx, testAccount2, "url"); err != nil {
+		suite.FailNow(err.Error())
 	}
 
-	noCache := &gtsmodel.Account{}
-	err = dbService.DB().
-		NewSelect().
-		Model(noCache).
-		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
-		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment").
-		Relation("Emojis").
-		Scan(ctx)
+	// Select all accounts with that URL.
+	// Should return 2.
+	accounts, err := suite.state.DB.GetAccountsByURL(
+		gtscontext.SetBarebones(ctx),
+		testAccount1.URL,
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.Len(accounts, 2)
 
-	suite.NoError(err)
-	suite.Equal("new display name!", noCache.DisplayName)
-	suite.Equal([]string{"01GD36ZKWTKY3T1JJ24JR7KY1Q", "01GD36ZV904SHBHNAYV6DX5QEF"}, noCache.EmojiIDs)
-	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
-	suite.NotNil(noCache.AvatarMediaAttachment)
-	suite.NotNil(noCache.HeaderMediaAttachment)
-
-	// update again to remove emoji associations
-	testAccount.EmojiIDs = []string{}
-
-	err = suite.db.UpdateAccount(ctx, testAccount)
-	suite.NoError(err)
-
-	updated, err = suite.db.GetAccountByID(ctx, testAccount.ID)
-	suite.NoError(err)
-	suite.Equal("new display name!", updated.DisplayName)
-	suite.Empty(updated.EmojiIDs)
-	suite.WithinDuration(time.Now(), updated.UpdatedAt, 5*time.Second)
-
-	err = dbService.DB().
-		NewSelect().
-		Model(noCache).
-		Where("? = ?", bun.Ident("account.id"), testAccount.ID).
-		Relation("AvatarMediaAttachment").
-		Relation("HeaderMediaAttachment").
-		Relation("Emojis").
-		Scan(ctx)
-
-	suite.NoError(err)
-	suite.Equal("new display name!", noCache.DisplayName)
-	suite.Empty(noCache.EmojiIDs)
-	suite.WithinDuration(time.Now(), noCache.UpdatedAt, 5*time.Second)
+	// Try to select one account with that URL.
+	// Should error.
+	account, err := suite.state.DB.GetOneAccountByURL(
+		gtscontext.SetBarebones(ctx),
+		testAccount1.URL,
+	)
+	suite.Nil(account)
+	suite.ErrorIs(err, db.ErrMultipleEntries)
 }
 
 func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
@@ -422,7 +386,7 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 		Domain:       "example.org",
 		URI:          "https://example.org/users/test_service",
 		URL:          "https://example.org/@test_service",
-		ActorType:    ap.ActorService,
+		ActorType:    gtsmodel.AccountActorTypeService,
 		PublicKey:    &key.PublicKey,
 		PublicKeyURI: "https://example.org/users/test_service#main-key",
 	}
@@ -433,7 +397,6 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 	suite.WithinDuration(time.Now(), newAccount.CreatedAt, 30*time.Second)
 	suite.WithinDuration(time.Now(), newAccount.UpdatedAt, 30*time.Second)
 	suite.True(*newAccount.Locked)
-	suite.False(*newAccount.Bot)
 	suite.False(*newAccount.Discoverable)
 }
 
