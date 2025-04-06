@@ -188,7 +188,7 @@ func init() {
 				for _, oldAccount := range oldAccounts {
 
 					var actorType new_gtsmodel.AccountActorType
-					if oldAccount.Domain != "" && oldAccount.Username == host {
+					if oldAccount.Domain == "" && oldAccount.Username == host {
 						// This is our instance account, override actor
 						// type to Service, as previously it was just person.
 						actorType = new_gtsmodel.AccountActorTypeService
