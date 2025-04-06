@@ -19,9 +19,11 @@ package util
 
 import "time"
 
-// ISO8601 is a formatter for serializing times that forces ISO8601 behavior.
-const ISO8601 = "2006-01-02T15:04:05.000Z"
-const ISO8601Date = "2006-01-02"
+const (
+	ISO8601     = "2006-01-02T15:04:05.000Z"
+	ISO8601Date = "2006-01-02"
+	RFC2822     = "Mon, 02 Jan 2006 15:04:05 -0700"
+)
 
 // FormatISO8601 converts the given time to UTC and then formats it
 // using the ISO8601 const, which the Mastodon API is able to understand.
@@ -38,4 +40,12 @@ func FormatISO8601Date(t time.Time) string {
 // ParseISO8601 parses the given time string according to the ISO8601 const.
 func ParseISO8601(in string) (time.Time, error) {
 	return time.Parse(ISO8601, in)
+}
+
+// FormatRFC2822 converts the given time to local and then formats it using
+// the RFC2822 const, which conforms with email Date header requirements.
+//
+// See: https://www.rfc-editor.org/rfc/rfc2822#section-3.3
+func FormatRFC2822(t time.Time) string {
+	return t.Local().Format(RFC2822)
 }

@@ -31,6 +31,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 func (s *sender) sendTemplate(template string, subject string, data any, toAddresses ...string) error {
@@ -105,7 +106,7 @@ func assembleMessage(mailSubject string, mailBody string, mailFrom string, msgID
 		// msg headers.'
 		msg.WriteString("To: Undisclosed Recipients:;" + CRLF)
 	}
-	msg.WriteString("Date: " + time.Now().Format(time.RFC822Z) + CRLF)
+	msg.WriteString("Date: " + util.FormatRFC2822(time.Now()) + CRLF)
 	msg.WriteString("From: " + mailFrom + CRLF)
 	msg.WriteString("Message-ID: <" + uuid.New().String() + "@" + msgIDHost + ">" + CRLF)
 	msg.WriteString("Subject: " + mailSubject + CRLF)
