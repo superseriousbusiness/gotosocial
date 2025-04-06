@@ -107,9 +107,14 @@ func (p *Processor) Alias(
 		}
 
 		// Ensure we have account dereferenced.
+		//
+		// As this comes from user input, allow checking
+		// by URL to make things easier, not just to an
+		// exact AP URI (which a user might not even know).
 		targetAccount, _, err := p.federator.GetAccountByURI(ctx,
 			account.Username,
 			newAKA.uri,
+			true,
 		)
 		if err != nil {
 			err := fmt.Errorf(

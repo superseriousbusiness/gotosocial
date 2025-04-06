@@ -303,10 +303,13 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg *messages.FromFediAPI) e
 	}
 
 	// Account to which the Move is taking place.
+	//
+	// Match by uri only.
 	targetAcct, targetAcctable, err := p.federate.GetAccountByURI(
 		ctx,
 		fMsg.Receiving.Username,
 		targetAcctURI,
+		false,
 	)
 	if err != nil {
 		return gtserror.Newf(

@@ -15,22 +15,12 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package db
+package common
 
-import (
-	"database/sql"
-	"errors"
-)
+import "time"
 
-var (
-	// ErrNoEntries is a direct ptr to sql.ErrNoRows since that is returned regardless
-	// of DB dialect. It is returned when no rows (entries) can be found for a query.
-	ErrNoEntries = sql.ErrNoRows
-
-	// ErrAlreadyExists is returned when a conflict was encountered in the db when doing an insert.
-	ErrAlreadyExists = errors.New("already exists")
-
-	// ErrMultipleEntries is returned when multiple entries
-	// are found in the db when only one entry is sought.
-	ErrMultipleEntries = errors.New("multiple entries")
-)
+type Field struct {
+	Name       string
+	Value      string
+	VerifiedAt time.Time `bun:",nullzero"`
+}

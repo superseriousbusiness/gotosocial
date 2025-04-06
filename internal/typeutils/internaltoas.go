@@ -36,7 +36,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
@@ -49,7 +48,7 @@ func (c *Converter) AccountToAS(
 	// accountable is a service if this
 	// is a bot account, otherwise a person.
 	var accountable ap.Accountable
-	if util.PtrOrZero(a.Bot) {
+	if a.ActorType.IsBot() {
 		accountable = streams.NewActivityStreamsService()
 	} else {
 		accountable = streams.NewActivityStreamsPerson()
@@ -393,7 +392,7 @@ func (c *Converter) AccountToASMinimal(
 	// accountable is a service if this
 	// is a bot account, otherwise a person.
 	var accountable ap.Accountable
-	if util.PtrOrZero(a.Bot) {
+	if a.ActorType.IsBot() {
 		accountable = streams.NewActivityStreamsService()
 	} else {
 		accountable = streams.NewActivityStreamsPerson()

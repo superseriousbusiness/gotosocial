@@ -24,6 +24,7 @@ import (
 	"net/url"
 	"time"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
@@ -88,14 +89,30 @@ func accountFresh(
 	return !time.Now().After(staleAt)
 }
 
-// GetAccountByURI will attempt to fetch an accounts by its URI, first checking the database. In the case of a newly-met remote model, or a remote model
-// whose last_fetched date is beyond a certain interval, the account will be dereferenced. In the case of dereferencing, some low-priority account information
-// may be enqueued for asynchronous fetching, e.g. featured account statuses (pins). An ActivityPub object indicates the account was dereferenced.
-func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
+// GetAccountByURI will attempt to fetch an accounts by its
+// URI, first checking the database. In the case of a newly-met
+// remote model, or a remote model whose last_fetched date is
+// beyond a certain interval, the account will be dereferenced.
+// In the case of dereferencing, some low-priority account info
+// may be enqueued for asynchronous fetching, e.g. pinned statuses.
+// An ActivityPub object indicates the account was dereferenced.
+//
+// if tryURL is true, then the database will also check for a *single*
+// account where uri == account.url, not just uri == account.uri.
+// Because url does not guarantee uniqueness, you should only set
+// tryURL to true when doing searches set in motion by a user,
+// ie., when it's not important that an exact account is returned.
+func (d *Dereferencer) GetAccountByURI(
+	ctx context.Context,
+	requestUser string,
+	uri *url.URL,
+	tryURL bool,
+) (*gtsmodel.Account, ap.Accountable, error) {
 	// Fetch and dereference account if necessary.
 	account, accountable, err := d.getAccountByURI(ctx,
 		requestUser,
 		uri,
+		tryURL,
 	)
 	if err != nil {
 		return nil, nil, err
@@ -117,8 +134,15 @@ func (d *Dereferencer) GetAccountByURI(ctx context.Context, requestUser string, 
 	return account, accountable, nil
 }
 
-// getAccountByURI is a package internal form of .GetAccountByURI() that doesn't bother dereferencing featured posts on update.
-func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, uri *url.URL) (*gtsmodel.Account, ap.Accountable, error) {
+// getAccountByURI is a package internal form of
+// .GetAccountByURI() that doesn't bother dereferencing
+// featured posts on update.
+func (d *Dereferencer) getAccountByURI(
+	ctx context.Context,
+	requestUser string,
+	uri *url.URL,
+	tryURL bool,
+) (*gtsmodel.Account, ap.Accountable, error) {
 	var (
 		account *gtsmodel.Account
 		uriStr  = uri.String()
@@ -126,9 +150,8 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 	)
 
 	// Search the database for existing account with URI.
+	// URI is unique so if we get a hit it's that account for sure.
 	account, err = d.state.DB.GetAccountByURI(
-		// request a barebones object, it may be in the
-		// db but with related models not yet dereferenced.
 		gtscontext.SetBarebones(ctx),
 		uriStr,
 	)
@@ -136,13 +159,20 @@ func (d *Dereferencer) getAccountByURI(ctx context.Context, requestUser string, 
 		return nil, nil, gtserror.Newf("error checking database for account %s by uri: %w", uriStr, err)
 	}
 
-	if account == nil {
-		// Else, search the database for existing by URL.
-		account, err = d.state.DB.GetAccountByURL(
+	if account == nil && tryURL {
+		// Else if we're permitted, search the database for *ONE*
+		// account with this URL. This can return multiple hits
+		// so check for ErrMultipleEntries. If we get exactly one
+		// hit it's *probably* the account we're looking for.
+		account, err = d.state.DB.GetOneAccountByURL(
 			gtscontext.SetBarebones(ctx),
 			uriStr,
 		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		if err != nil && !errorsv2.IsV2(
+			err,
+			db.ErrNoEntries,
+			db.ErrMultipleEntries,
+		) {
 			return nil, nil, gtserror.Newf("error checking database for account %s by url: %w", uriStr, err)
 		}
 	}

@@ -199,9 +199,11 @@ func (f *Federator) AuthenticateFederatedRequest(ctx context.Context, requestedU
 		}
 
 		// Dereference the account located at owner URI.
+		// Use exact URI match, not URL match.
 		pubKeyAuth.Owner, _, err = f.GetAccountByURI(ctx,
 			requestedUsername,
 			pubKeyAuth.OwnerURI,
+			false,
 		)
 		if err != nil {
 			if gtserror.StatusCode(err) == http.StatusGone {

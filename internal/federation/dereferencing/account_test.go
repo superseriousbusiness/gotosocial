@@ -54,6 +54,7 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 		context.Background(),
 		fetchingAccount.Username,
 		groupURL,
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(group)
@@ -67,7 +68,7 @@ func (suite *AccountTestSuite) TestDereferenceGroup() {
 	dbGroup, err := suite.db.GetAccountByURI(context.Background(), group.URI)
 	suite.NoError(err)
 	suite.Equal(group.ID, dbGroup.ID)
-	suite.Equal(ap.ActorGroup, dbGroup.ActorType)
+	suite.Equal(ap.ActorGroup, dbGroup.ActorType.String())
 }
 
 func (suite *AccountTestSuite) TestDereferenceService() {
@@ -78,6 +79,7 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 		context.Background(),
 		fetchingAccount.Username,
 		serviceURL,
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(service)
@@ -91,7 +93,7 @@ func (suite *AccountTestSuite) TestDereferenceService() {
 	dbService, err := suite.db.GetAccountByURI(context.Background(), service.URI)
 	suite.NoError(err)
 	suite.Equal(service.ID, dbService.ID)
-	suite.Equal(ap.ActorService, dbService.ActorType)
+	suite.Equal(ap.ActorService, dbService.ActorType.String())
 	suite.Equal("example.org", dbService.Domain)
 }
 
@@ -110,6 +112,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURL() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -129,6 +132,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsRemoteURLNoSharedInb
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -143,6 +147,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsername() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -157,6 +162,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountAsUsernameDomain() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(targetAccount.URI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(fetchedAccount)
@@ -213,6 +219,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountWithUnknownUserURI() {
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse("http://localhost:8080/users/thisaccountdoesnotexist"),
+		false,
 	)
 	suite.True(gtserror.IsUnretrievable(err))
 	suite.EqualError(err, db.ErrNoEntries.Error())
@@ -265,7 +272,7 @@ func (suite *AccountTestSuite) TestDereferenceLocalAccountByRedirect() {
 	uri := testrig.URLMustParse("https://this-will-be-redirected.butts/")
 
 	// Try dereference the test URI, since it correctly redirects to us it should return our account.
-	account, accountable, err := suite.dereferencer.GetAccountByURI(ctx, fetchingAccount.Username, uri)
+	account, accountable, err := suite.dereferencer.GetAccountByURI(ctx, fetchingAccount.Username, uri, false)
 	suite.NoError(err)
 	suite.Nil(accountable)
 	suite.NotNil(account)
@@ -318,7 +325,7 @@ func (suite *AccountTestSuite) TestDereferenceMasqueradingLocalAccount() {
 	)
 
 	// Try dereference the test URI, since it correctly redirects to us it should return our account.
-	account, accountable, err := suite.dereferencer.GetAccountByURI(ctx, fetchingAccount.Username, uri)
+	account, accountable, err := suite.dereferencer.GetAccountByURI(ctx, fetchingAccount.Username, uri, false)
 	suite.NotNil(err)
 	suite.Nil(account)
 	suite.Nil(accountable)
@@ -341,6 +348,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithNonMatchingURI() 
 		context.Background(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(remoteAltURI),
+		false,
 	)
 	suite.Equal(err.Error(), fmt.Sprintf("enrichAccount: account uri %s does not match %s", remoteURI, remoteAltURI))
 	suite.Nil(fetchedAccount)
@@ -357,6 +365,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithUnexpectedKeyChan
 	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
 		fetchingAcc.Username,
 		testrig.URLMustParse(remoteURI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(remoteAcc)
@@ -395,6 +404,7 @@ func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithExpectedKeyChange
 	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
 		fetchingAcc.Username,
 		testrig.URLMustParse(remoteURI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(remoteAcc)
@@ -436,6 +446,7 @@ func (suite *AccountTestSuite) TestRefreshFederatedRemoteAccountWithKeyChange() 
 	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
 		fetchingAcc.Username,
 		testrig.URLMustParse(remoteURI),
+		false,
 	)
 	suite.NoError(err)
 	suite.NotNil(remoteAcc)
