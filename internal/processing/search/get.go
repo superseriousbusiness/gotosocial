@@ -564,10 +564,15 @@ func (p *Processor) accountsByURI(
 	if resolve {
 		// We're allowed to resolve, leave the
 		// rest up to the dereferencer functions.
+		//
+		// Allow dereferencing by URL and not just URI;
+		// there are many cases where someone might
+		// paste a URL into the search bar.
 		account, _, err := p.federator.GetAccountByURI(
 			gtscontext.SetFastFail(ctx),
 			requestingAccount.Username,
 			uri,
+			true,
 		)
 
 		return []*gtsmodel.Account{account}, err

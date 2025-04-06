@@ -119,11 +119,15 @@ func (p *Processor) MoveSelf(
 	unlock := p.state.ProcessingLocks.Lock(lockKey)
 	defer unlock()
 
-	// Ensure we have a valid, up-to-date representation of the target account.
+	// Ensure we have a valid, up-to-date
+	// representation of the target account.
+	//
+	// Match by uri only.
 	targetAcct, targetAcctable, err = p.federator.GetAccountByURI(
 		ctx,
 		originAcct.Username,
 		targetAcctURI,
+		false,
 	)
 	if err != nil {
 		const text = "error dereferencing moved_to_uri"

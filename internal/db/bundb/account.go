@@ -46,22 +46,48 @@ type accountDB struct {
 	state *state.State
 }
 
-func (a *accountDB) getAccountsBy(
-	ctx context.Context,
-	index string,
-	keys []string,
-	load func([]string) ([]*gtsmodel.Account, error),
-	getKey func(*gtsmodel.Account) string,
-) ([]*gtsmodel.Account, error) {
-	// Load all input account keys via cache loader callback.
-	accounts, err := a.state.Caches.DB.Account.LoadIDs(index, keys, load)
+func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, error) {
+	return a.getAccount(
+		ctx,
+		"ID",
+		func(account *gtsmodel.Account) error {
+			return a.db.NewSelect().
+				Model(account).
+				Where("? = ?", bun.Ident("account.id"), id).
+				Scan(ctx)
+		},
+		id,
+	)
+}
+
+func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error) {
+	// Load all input account IDs via cache loader callback.
+	accounts, err := a.state.Caches.DB.Account.LoadIDs("ID",
+		ids,
+		func(uncached []string) ([]*gtsmodel.Account, error) {
+			// Preallocate expected length of uncached accounts.
+			accounts := make([]*gtsmodel.Account, 0, len(uncached))
+
+			// Perform database query scanning
+			// the remaining (uncached) account IDs.
+			if err := a.db.NewSelect().
+				Model(&accounts).
+				Where("? IN (?)", bun.Ident("id"), bun.In(uncached)).
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+
+			return accounts, nil
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Reorder the statuses by their
-	// keys to ensure in correct order.
-	xslices.OrderBy(accounts, keys, getKey)
+	// IDs to ensure in correct order.
+	getID := func(a *gtsmodel.Account) string { return a.ID }
+	xslices.OrderBy(accounts, ids, getID)
 
 	if gtscontext.Barebones(ctx) {
 		// no need to fully populate.
@@ -81,75 +107,6 @@ func (a *accountDB) getAccountsBy(
 	return accounts, nil
 }
 
-func (a *accountDB) getOneAccountBy(
-	ctx context.Context,
-	index string,
-	key string,
-	load func([]string) ([]*gtsmodel.Account, error),
-) (*gtsmodel.Account, error) {
-	// Get all accounts with the given key.
-	accounts, err := a.getAccountsBy(
-		ctx,
-		index,
-		[]string{key},
-		load,
-		func(a *gtsmodel.Account) string { return key },
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure we have one
-	// and only one account.
-	l := len(accounts)
-	if l == 0 {
-		return nil, db.ErrNoEntries
-	}
-	if l > 1 {
-		return nil, db.ErrMultipleEntries
-	}
-
-	return accounts[0], nil
-}
-
-func (a *accountDB) GetAccountByID(ctx context.Context, id string) (*gtsmodel.Account, error) {
-	return a.getAccount(
-		ctx,
-		"ID",
-		func(account *gtsmodel.Account) error {
-			return a.db.NewSelect().
-				Model(account).
-				Where("? = ?", bun.Ident("account.id"), id).
-				Scan(ctx)
-		},
-		id,
-	)
-}
-
-func (a *accountDB) GetAccountsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.Account, error) {
-	return a.getAccountsBy(
-		ctx,
-		"ID",
-		ids,
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
-
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.id"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
-
-			return accounts, nil
-		},
-		func(a *gtsmodel.Account) string { return a.ID },
-	)
-}
-
 func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
 	return a.getAccount(
 		ctx,
@@ -165,51 +122,45 @@ func (a *accountDB) GetAccountByURI(ctx context.Context, uri string) (*gtsmodel.
 }
 
 func (a *accountDB) GetOneAccountByURL(ctx context.Context, url string) (*gtsmodel.Account, error) {
-	return a.getOneAccountBy(
-		ctx,
-		"URL",
-		url,
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
+	// Select IDs of all
+	// accounts with this url.
+	var ids []string
+	if err := a.db.NewSelect().
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		Column("account.id").
+		Where("? = ?", bun.Ident("account.url"), url).
+		Scan(ctx, &ids); err != nil {
+		return nil, err
+	}
 
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.url"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
+	// Ensure exactly one account.
+	if len(ids) == 0 {
+		return nil, db.ErrNoEntries
+	}
+	if len(ids) > 1 {
+		return nil, db.ErrMultipleEntries
+	}
 
-			return accounts, nil
-		},
-	)
+	return a.GetAccountByID(ctx, ids[0])
 }
 
 func (a *accountDB) GetAccountsByURL(ctx context.Context, url string) ([]*gtsmodel.Account, error) {
-	// Get all accounts with the given URL.
-	return a.getAccountsBy(
-		ctx,
-		"ID",
-		[]string{url},
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
+	// Select IDs of all
+	// accounts with this url.
+	var ids []string
+	if err := a.db.NewSelect().
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		Column("account.id").
+		Where("? = ?", bun.Ident("account.url"), url).
+		Scan(ctx, &ids); err != nil {
+		return nil, err
+	}
 
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.url"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
+	if len(ids) == 0 {
+		return nil, db.ErrNoEntries
+	}
 
-			return accounts, nil
-		},
-		func(a *gtsmodel.Account) string { return a.URL },
-	)
+	return a.GetAccountsByIDs(ctx, ids)
 }
 
 func (a *accountDB) GetAccountByUsernameDomain(ctx context.Context, username string, domain string) (*gtsmodel.Account, error) {
@@ -261,50 +212,50 @@ func (a *accountDB) GetAccountByPubkeyID(ctx context.Context, id string) (*gtsmo
 	)
 }
 
-func (a *accountDB) GetOneAccountByInboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
-	return a.getOneAccountBy(
-		ctx,
-		"InboxURI",
-		uri,
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
+func (a *accountDB) GetOneAccountByInboxURI(ctx context.Context, inboxURI string) (*gtsmodel.Account, error) {
+	// Select IDs of all accounts
+	// with this inbox_uri.
+	var ids []string
+	if err := a.db.NewSelect().
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		Column("account.id").
+		Where("? = ?", bun.Ident("account.inbox_uri"), inboxURI).
+		Scan(ctx, &ids); err != nil {
+		return nil, err
+	}
 
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.inbox_uri"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
+	// Ensure exactly one account.
+	if len(ids) == 0 {
+		return nil, db.ErrNoEntries
+	}
+	if len(ids) > 1 {
+		return nil, db.ErrMultipleEntries
+	}
 
-			return accounts, nil
-		},
-	)
+	return a.GetAccountByID(ctx, ids[0])
 }
 
-func (a *accountDB) GetOneAccountByOutboxURI(ctx context.Context, uri string) (*gtsmodel.Account, error) {
-	return a.getOneAccountBy(
-		ctx,
-		"OutboxURI",
-		uri,
-		func(uncached []string) ([]*gtsmodel.Account, error) {
-			// Preallocate expected length of uncached accounts.
-			accounts := make([]*gtsmodel.Account, 0, len(uncached))
+func (a *accountDB) GetOneAccountByOutboxURI(ctx context.Context, outboxURI string) (*gtsmodel.Account, error) {
+	// Select IDs of all accounts
+	// with this outbox_uri.
+	var ids []string
+	if err := a.db.NewSelect().
+		TableExpr("? AS ?", bun.Ident("accounts"), bun.Ident("account")).
+		Column("account.id").
+		Where("? = ?", bun.Ident("account.outbox_uri"), outboxURI).
+		Scan(ctx, &ids); err != nil {
+		return nil, err
+	}
 
-			// Perform database query scanning
-			// the remaining (uncached) accounts.
-			if err := a.db.NewSelect().
-				Model(&accounts).
-				Where("? IN (?)", bun.Ident("account.outbox_uri"), bun.In(uncached)).
-				Scan(ctx); err != nil {
-				return nil, err
-			}
+	// Ensure exactly one account.
+	if len(ids) == 0 {
+		return nil, db.ErrNoEntries
+	}
+	if len(ids) > 1 {
+		return nil, db.ErrMultipleEntries
+	}
 
-			return accounts, nil
-		},
-	)
+	return a.GetAccountByID(ctx, ids[0])
 }
 
 func (a *accountDB) GetInstanceAccount(ctx context.Context, domain string) (*gtsmodel.Account, error) {

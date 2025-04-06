@@ -454,7 +454,8 @@ func (d *Dereferencer) enrichStatus(
 
 	// Ensure we have the author account of the status dereferenced (+ up-to-date). If this is a new status
 	// (i.e. status.AccountID == "") then any error here is irrecoverable. status.AccountID must ALWAYS be set.
-	if _, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil && status.AccountID == "" {
+	// We want the exact URI match here as well, not the imprecise URL match.
+	if _, _, err := d.getAccountByURI(ctx, requestUser, attributedTo, false); err != nil && status.AccountID == "" {
 
 		// Note that we specifically DO NOT wrap the error, instead collapsing it as string.
 		// Errors fetching an account do not necessarily relate to dereferencing the status.
@@ -1312,35 +1313,17 @@ func (d *Dereferencer) getPopulatedMention(
 	bool, // True if mention already exists in the DB.
 	error,
 ) {
-	// Mentions can be created using Name or Href.
-	// Prefer Href (TargetAccountURI), fall back to Name.
-	if mention.TargetAccountURI != "" {
+	// Mentions can be created using `name` or `href`,
+	// and when mention was extracted, we ensured that
+	// one of either `name` or `href` was set.
+	//
+	// Prefer to deref the mention target using `name`,
+	// which should always be exact. and fall back to `href`,
+	// which *should* be the target's URI, but may be the URL
+	// depending on implementation.
+	if mention.NameString != "" {
 
-		// Look for existing mention with target account's URI, if so use this.
-		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
-		if ok && existingMention.ID != "" {
-			return existingMention, true, nil
-		}
-
-		// Ensure that mention account URI is parseable.
-		accountURI, err := url.Parse(mention.TargetAccountURI)
-		if err != nil {
-			err := gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
-			return nil, false, err
-		}
-
-		// Ensure we have  account of the mention target dereferenced.
-		mention.TargetAccount, _, err = d.getAccountByURI(ctx,
-			requestUser,
-			accountURI,
-		)
-		if err != nil {
-			err := gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
-			return nil, false, err
-		}
-	} else {
-
-		// Href wasn't set, extract the username and domain parts from namestring.
+		// Extract the username and domain parts from namestring.
 		username, domain, err := util.ExtractNamestringParts(mention.NameString)
 		if err != nil {
 			err := gtserror.Newf("failed to parse namestring %s: %w", mention.NameString, err)
@@ -1368,6 +1351,34 @@ func (d *Dereferencer) getPopulatedMention(
 		existingMention, ok = existing.GetMentionByTargetURI(mention.TargetAccountURI)
 		if ok && existingMention.ID != "" {
 			return existingMention, true, nil
+		}
+	} else {
+
+		// Name wasn't set.
+		//
+		// Look for existing mention with target account's URI, if so use this.
+		existingMention, ok := existing.GetMentionByTargetURI(mention.TargetAccountURI)
+		if ok && existingMention.ID != "" {
+			return existingMention, true, nil
+		}
+
+		// Ensure that mention account URI is parseable.
+		accountURI, err := url.Parse(mention.TargetAccountURI)
+		if err != nil {
+			err := gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
+			return nil, false, err
+		}
+
+		// Ensure we have account of the mention target dereferenced.
+		// Don't allow imprecise URL here, we want the exact acct.
+		mention.TargetAccount, _, err = d.getAccountByURI(ctx,
+			requestUser,
+			accountURI,
+			false,
+		)
+		if err != nil {
+			err := gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
+			return nil, false, err
 		}
 	}
 
