@@ -139,7 +139,7 @@ func (v Value) Blob(buf []byte) []byte {
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) RawText() []byte {
 	ptr := ptr_t(v.c.call("sqlite3_value_text", v.protected()))
-	return v.rawBytes(ptr)
+	return v.rawBytes(ptr, 1)
 }
 
 // RawBlob returns the value as a []byte.
@@ -149,16 +149,16 @@ func (v Value) RawText() []byte {
 // https://sqlite.org/c3ref/value_blob.html
 func (v Value) RawBlob() []byte {
 	ptr := ptr_t(v.c.call("sqlite3_value_blob", v.protected()))
-	return v.rawBytes(ptr)
+	return v.rawBytes(ptr, 0)
 }
 
-func (v Value) rawBytes(ptr ptr_t) []byte {
+func (v Value) rawBytes(ptr ptr_t, nul int32) []byte {
 	if ptr == 0 {
 		return nil
 	}
 
 	n := int32(v.c.call("sqlite3_value_bytes", v.protected()))
-	return util.View(v.c.mod, ptr, int64(n))
+	return util.View(v.c.mod, ptr, int64(n+nul))[:n]
 }
 
 // Pointer gets the pointer associated with this value,

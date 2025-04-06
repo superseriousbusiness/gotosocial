@@ -50,11 +50,15 @@ func osDowngradeLock(file *os.File, _ LockLevel) _ErrorCode {
 }
 
 func osReleaseLock(file *os.File, _ LockLevel) _ErrorCode {
-	err := unix.Flock(int(file.Fd()), unix.LOCK_UN)
-	if err != nil {
-		return _IOERR_UNLOCK
+	for {
+		err := unix.Flock(int(file.Fd()), unix.LOCK_UN)
+		if err == nil {
+			return _OK
+		}
+		if err != unix.EINTR {
+			return _IOERR_UNLOCK
+		}
 	}
-	return _OK
 }
 
 func osCheckReservedLock(file *os.File) (bool, _ErrorCode) {
@@ -89,13 +93,18 @@ func osLock(file *os.File, typ int16, start, len int64, def _ErrorCode) _ErrorCo
 }
 
 func osUnlock(file *os.File, start, len int64) _ErrorCode {
-	err := unix.FcntlFlock(file.Fd(), unix.F_SETLK, &unix.Flock_t{
+	lock := unix.Flock_t{
 		Type:  unix.F_UNLCK,
 		Start: start,
 		Len:   len,
-	})
-	if err != nil {
-		return _IOERR_UNLOCK
 	}
-	return _OK
+	for {
+		err := unix.FcntlFlock(file.Fd(), unix.F_SETLK, &lock)
+		if err == nil {
+			return _OK
+		}
+		if err != unix.EINTR {
+			return _IOERR_UNLOCK
+		}
+	}
 }

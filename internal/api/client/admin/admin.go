@@ -102,12 +102,14 @@ func (m *Module) Route(attachHandler func(method string, path string, f ...gin.H
 	attachHandler(http.MethodPost, DomainBlocksPath, m.DomainBlocksPOSTHandler)
 	attachHandler(http.MethodGet, DomainBlocksPath, m.DomainBlocksGETHandler)
 	attachHandler(http.MethodGet, DomainBlocksPathWithID, m.DomainBlockGETHandler)
+	attachHandler(http.MethodPut, DomainBlocksPathWithID, m.DomainBlockUpdatePUTHandler)
 	attachHandler(http.MethodDelete, DomainBlocksPathWithID, m.DomainBlockDELETEHandler)
 
 	// domain allow stuff
 	attachHandler(http.MethodPost, DomainAllowsPath, m.DomainAllowsPOSTHandler)
 	attachHandler(http.MethodGet, DomainAllowsPath, m.DomainAllowsGETHandler)
 	attachHandler(http.MethodGet, DomainAllowsPathWithID, m.DomainAllowGETHandler)
+	attachHandler(http.MethodPut, DomainAllowsPathWithID, m.DomainAllowUpdatePUTHandler)
 	attachHandler(http.MethodDelete, DomainAllowsPathWithID, m.DomainAllowDELETEHandler)
 
 	// domain permission draft stuff

@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"errors"
-	"strconv"
 	"strings"
 
 	"github.com/ncruces/go-sqlite3/internal/util"
@@ -12,7 +11,6 @@ import (
 //
 // https://sqlite.org/c3ref/errcode.html
 type Error struct {
-	str  string
 	msg  string
 	sql  string
 	code res_t
@@ -29,19 +27,13 @@ func (e *Error) Code() ErrorCode {
 //
 // https://sqlite.org/rescode.html
 func (e *Error) ExtendedCode() ExtendedErrorCode {
-	return ExtendedErrorCode(e.code)
+	return xErrorCode(e.code)
 }
 
 // Error implements the error interface.
 func (e *Error) Error() string {
 	var b strings.Builder
-	b.WriteString("sqlite3: ")
-
-	if e.str != "" {
-		b.WriteString(e.str)
-	} else {
-		b.WriteString(strconv.Itoa(int(e.code)))
-	}
+	b.WriteString(util.ErrorCodeString(uint32(e.code)))
 
 	if e.msg != "" {
 		b.WriteString(": ")
@@ -103,12 +95,12 @@ func (e ErrorCode) Error() string {
 
 // Temporary returns true for [BUSY] errors.
 func (e ErrorCode) Temporary() bool {
-	return e == BUSY
+	return e == BUSY || e == INTERRUPT
 }
 
 // ExtendedCode returns the extended error code for this error.
 func (e ErrorCode) ExtendedCode() ExtendedErrorCode {
-	return ExtendedErrorCode(e)
+	return xErrorCode(e)
 }
 
 // Error implements the error interface.
@@ -133,7 +125,7 @@ func (e ExtendedErrorCode) As(err any) bool {
 
 // Temporary returns true for [BUSY] errors.
 func (e ExtendedErrorCode) Temporary() bool {
-	return ErrorCode(e) == BUSY
+	return ErrorCode(e) == BUSY || ErrorCode(e) == INTERRUPT
 }
 
 // Timeout returns true for [BUSY_TIMEOUT] errors.

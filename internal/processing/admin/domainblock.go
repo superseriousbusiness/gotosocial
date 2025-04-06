@@ -60,7 +60,7 @@ func (p *Processor) createDomainBlock(
 		}
 
 		// Insert the new block into the database.
-		if err := p.state.DB.CreateDomainBlock(ctx, domainBlock); err != nil {
+		if err := p.state.DB.PutDomainBlock(ctx, domainBlock); err != nil {
 			err = gtserror.Newf("db error putting domain block %s: %w", domain, err)
 			return nil, "", gtserror.NewErrorInternalError(err)
 		}
@@ -91,6 +91,54 @@ func (p *Processor) createDomainBlock(
 	}
 
 	return apiDomainBlock, action.ID, nil
+}
+
+func (p *Processor) updateDomainBlock(
+	ctx context.Context,
+	domainBlockID string,
+	obfuscate *bool,
+	publicComment *string,
+	privateComment *string,
+	subscriptionID *string,
+) (*apimodel.DomainPermission, gtserror.WithCode) {
+	domainBlock, err := p.state.DB.GetDomainBlockByID(ctx, domainBlockID)
+	if err != nil {
+		if !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			err = gtserror.Newf("db error getting domain block: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		// There are just no entries for this ID.
+		err = fmt.Errorf("no domain block entry exists with ID %s", domainBlockID)
+		return nil, gtserror.NewErrorNotFound(err, err.Error())
+	}
+
+	var columns []string
+	if obfuscate != nil {
+		domainBlock.Obfuscate = obfuscate
+		columns = append(columns, "obfuscate")
+	}
+	if publicComment != nil {
+		domainBlock.PublicComment = *publicComment
+		columns = append(columns, "public_comment")
+	}
+	if privateComment != nil {
+		domainBlock.PrivateComment = *privateComment
+		columns = append(columns, "private_comment")
+	}
+	if subscriptionID != nil {
+		domainBlock.SubscriptionID = *subscriptionID
+		columns = append(columns, "subscription_id")
+	}
+
+	// Update the domain block.
+	if err := p.state.DB.UpdateDomainBlock(ctx, domainBlock, columns...); err != nil {
+		err = gtserror.Newf("db error updating domain block: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	return p.apiDomainPerm(ctx, domainBlock, false)
 }
 
 func (p *Processor) deleteDomainBlock(

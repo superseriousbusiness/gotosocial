@@ -627,7 +627,7 @@ nothanks.com`
   {
     "domain": "bumfaces.net",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "public_comment": "big jerks"
+    "comment": "big jerks"
   },
     {
     "domain": "peepee.poopoo",

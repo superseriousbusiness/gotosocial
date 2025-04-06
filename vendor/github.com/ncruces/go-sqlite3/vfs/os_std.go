@@ -8,8 +8,8 @@ import (
 )
 
 const (
+	isUnix      = false
 	_O_NOFOLLOW = 0
-	canSyncDirs = false
 )
 
 func osAccess(path string, flags AccessFlag) error {

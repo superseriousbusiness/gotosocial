@@ -2,7 +2,6 @@ package sqlite3
 
 import (
 	"context"
-	"errors"
 	"math/rand"
 	"runtime"
 	"strconv"
@@ -21,11 +20,13 @@ type Txn struct {
 }
 
 // Begin starts a deferred transaction.
+// It panics if a transaction is in-progress.
+// For nested transactions, use [Conn.Savepoint].
 //
 // https://sqlite.org/lang_transaction.html
 func (c *Conn) Begin() Txn {
 	// BEGIN even if interrupted.
-	err := c.txnExecInterrupted(`BEGIN DEFERRED`)
+	err := c.exec(`BEGIN DEFERRED`)
 	if err != nil {
 		panic(err)
 	}
@@ -120,7 +121,8 @@ func (tx Txn) Commit() error {
 //
 // https://sqlite.org/lang_transaction.html
 func (tx Txn) Rollback() error {
-	return tx.c.txnExecInterrupted(`ROLLBACK`)
+	// ROLLBACK even if interrupted.
+	return tx.c.exec(`ROLLBACK`)
 }
 
 // Savepoint is a marker within a transaction
@@ -143,7 +145,7 @@ func (c *Conn) Savepoint() Savepoint {
 	// Names can be reused, but this makes catching bugs more likely.
 	name = QuoteIdentifier(name + "_" + strconv.Itoa(int(rand.Int31())))
 
-	err := c.txnExecInterrupted(`SAVEPOINT ` + name)
+	err := c.exec(`SAVEPOINT ` + name)
 	if err != nil {
 		panic(err)
 	}
@@ -199,7 +201,7 @@ func (s Savepoint) Release(errp *error) {
 		return
 	}
 	// ROLLBACK and RELEASE even if interrupted.
-	err := s.c.txnExecInterrupted(`ROLLBACK TO ` + s.name + `; RELEASE ` + s.name)
+	err := s.c.exec(`ROLLBACK TO ` + s.name + `; RELEASE ` + s.name)
 	if err != nil {
 		panic(err)
 	}
@@ -212,17 +214,7 @@ func (s Savepoint) Release(errp *error) {
 // https://sqlite.org/lang_transaction.html
 func (s Savepoint) Rollback() error {
 	// ROLLBACK even if interrupted.
-	return s.c.txnExecInterrupted(`ROLLBACK TO ` + s.name)
-}
-
-func (c *Conn) txnExecInterrupted(sql string) error {
-	err := c.Exec(sql)
-	if errors.Is(err, INTERRUPT) {
-		old := c.SetInterrupt(context.Background())
-		defer c.SetInterrupt(old)
-		err = c.Exec(sql)
-	}
-	return err
+	return s.c.exec(`ROLLBACK TO ` + s.name)
 }
 
 // TxnState determines the transaction state of a database.

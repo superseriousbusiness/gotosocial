@@ -22,6 +22,7 @@ import { gtsApi } from "../../gts-api";
 import {
 	replaceCacheOnMutation,
 	removeFromCacheOnMutation,
+	updateCacheOnMutation,
 } from "../../query-modifiers";
 import { listToKeyedObject } from "../../transforms";
 import type {
@@ -53,6 +54,36 @@ const extended = gtsApi.injectEndpoints({
 			}),
 			transformResponse: listToKeyedObject<DomainPerm>("domain"),
 			...replaceCacheOnMutation("domainAllows")
+		}),
+
+		updateDomainBlock: build.mutation<DomainPerm, any>({
+			query: ({ id, ...formData}) => ({
+				method: "PUT",
+				url: `/api/v1/admin/domain_blocks/${id}`,
+				asForm: true,
+				body: formData,
+				discardEmpty: false
+			}),
+			...updateCacheOnMutation("domainBlocks", {
+				key: (_draft, newData) => {
+					return newData.domain;
+				}
+			})
+		}),
+
+		updateDomainAllow: build.mutation<DomainPerm, any>({
+			query: ({ id, ...formData}) => ({
+				method: "PUT",
+				url: `/api/v1/admin/domain_allows/${id}`,
+				asForm: true,
+				body: formData,
+				discardEmpty: false
+			}),
+			...updateCacheOnMutation("domainAllows", {
+				key: (_draft, newData) => {
+					return newData.domain;
+				}
+			})
 		}),
 
 		removeDomainBlock: build.mutation<DomainPerm, string>({
@@ -92,6 +123,16 @@ const useAddDomainBlockMutation = extended.useAddDomainBlockMutation;
 const useAddDomainAllowMutation = extended.useAddDomainAllowMutation;
 
 /**
+ * Update a single domain permission (block) by PUTing to `/api/v1/admin/domain_blocks/{id}`.
+ */
+const useUpdateDomainBlockMutation = extended.useUpdateDomainBlockMutation;
+
+/**
+ * Update a single domain permission (allow) by PUTing to `/api/v1/admin/domain_allows/{id}`.
+ */
+const useUpdateDomainAllowMutation = extended.useUpdateDomainAllowMutation;
+
+/**
  * Remove a single domain permission (block) by DELETEing to `/api/v1/admin/domain_blocks/{id}`.
  */
 const useRemoveDomainBlockMutation = extended.useRemoveDomainBlockMutation;
@@ -104,6 +145,8 @@ const useRemoveDomainAllowMutation = extended.useRemoveDomainAllowMutation;
 export {
 	useAddDomainBlockMutation,
 	useAddDomainAllowMutation,
+	useUpdateDomainBlockMutation,
+	useUpdateDomainAllowMutation,
 	useRemoveDomainBlockMutation,
 	useRemoveDomainAllowMutation
 };

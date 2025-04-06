@@ -6,9 +6,8 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"runtime"
 	"syscall"
-
-	"github.com/ncruces/go-sqlite3/util/osutil"
 )
 
 type vfsOS struct{}
@@ -40,7 +39,7 @@ func (vfsOS) Delete(path string, syncDir bool) error {
 	if err != nil {
 		return err
 	}
-	if canSyncDirs && syncDir {
+	if isUnix && syncDir {
 		f, err := os.Open(filepath.Dir(path))
 		if err != nil {
 			return _OK
@@ -96,7 +95,7 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 	if name == nil {
 		f, err = os.CreateTemp(os.Getenv("SQLITE_TMPDIR"), "*.db")
 	} else {
-		f, err = osutil.OpenFile(name.String(), oflags, 0666)
+		f, err = os.OpenFile(name.String(), oflags, 0666)
 	}
 	if err != nil {
 		if name == nil {
@@ -118,15 +117,17 @@ func (vfsOS) OpenFilename(name *Filename, flags OpenFlag) (File, OpenFlag, error
 			return nil, flags, _IOERR_FSTAT
 		}
 	}
-	if flags&OPEN_DELETEONCLOSE != 0 {
+	if isUnix && flags&OPEN_DELETEONCLOSE != 0 {
 		os.Remove(f.Name())
 	}
 
 	file := vfsFile{
 		File:     f,
 		psow:     true,
+		atomic:   osBatchAtomic(f),
 		readOnly: flags&OPEN_READONLY != 0,
-		syncDir:  canSyncDirs && isCreate && isJournl,
+		syncDir:  isUnix && isCreate && isJournl,
+		delete:   !isUnix && flags&OPEN_DELETEONCLOSE != 0,
 		shm:      NewSharedMemory(name.String()+"-shm", flags),
 	}
 	return &file, flags, nil
@@ -139,6 +140,8 @@ type vfsFile struct {
 	readOnly bool
 	keepWAL  bool
 	syncDir  bool
+	atomic   bool
+	delete   bool
 	psow     bool
 }
 
@@ -152,6 +155,9 @@ var (
 )
 
 func (f *vfsFile) Close() error {
+	if f.delete {
+		defer os.Remove(f.Name())
+	}
 	if f.shm != nil {
 		f.shm.Close()
 	}
@@ -175,7 +181,7 @@ func (f *vfsFile) Sync(flags SyncFlag) error {
 	if err != nil {
 		return err
 	}
-	if canSyncDirs && f.syncDir {
+	if isUnix && f.syncDir {
 		f.syncDir = false
 		d, err := os.Open(filepath.Dir(f.File.Name()))
 		if err != nil {
@@ -200,11 +206,14 @@ func (f *vfsFile) SectorSize() int {
 
 func (f *vfsFile) DeviceCharacteristics() DeviceCharacteristic {
 	ret := IOCAP_SUBPAGE_READ
-	if osBatchAtomic(f.File) {
+	if f.atomic {
 		ret |= IOCAP_BATCH_ATOMIC
 	}
 	if f.psow {
 		ret |= IOCAP_POWERSAFE_OVERWRITE
+	}
+	if runtime.GOOS == "windows" {
+		ret |= IOCAP_UNDELETABLE_WHEN_OPEN
 	}
 	return ret
 }
@@ -214,6 +223,9 @@ func (f *vfsFile) SizeHint(size int64) error {
 }
 
 func (f *vfsFile) HasMoved() (bool, error) {
+	if runtime.GOOS == "windows" {
+		return false, nil
+	}
 	fi, err := f.Stat()
 	if err != nil {
 		return false, err

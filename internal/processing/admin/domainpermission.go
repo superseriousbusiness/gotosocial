@@ -18,6 +18,7 @@
 package admin
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -29,6 +30,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // DomainPermissionCreate creates an instance-level permission
@@ -81,6 +83,50 @@ func (p *Processor) DomainPermissionCreate(
 	default:
 		err := gtserror.Newf("unrecognized permission type %d", permissionType)
 		return nil, "", gtserror.NewErrorInternalError(err)
+	}
+}
+
+// DomainPermissionUpdate updates a domain permission
+// of the given permissionType, with the given ID.
+func (p *Processor) DomainPermissionUpdate(
+	ctx context.Context,
+	permissionType gtsmodel.DomainPermissionType,
+	permID string,
+	obfuscate *bool,
+	publicComment *string,
+	privateComment *string,
+	subscriptionID *string,
+) (*apimodel.DomainPermission, gtserror.WithCode) {
+	switch permissionType {
+
+	// Explicitly block a domain.
+	case gtsmodel.DomainPermissionBlock:
+		return p.updateDomainBlock(
+			ctx,
+			permID,
+			obfuscate,
+			publicComment,
+			privateComment,
+			subscriptionID,
+		)
+
+	// Explicitly allow a domain.
+	case gtsmodel.DomainPermissionAllow:
+		return p.updateDomainAllow(
+			ctx,
+			permID,
+			obfuscate,
+			publicComment,
+			privateComment,
+			subscriptionID,
+		)
+
+	// 🎵 Why don't we all strap bombs to our chests,
+	// and ride our bikes to the next G7 picnic?
+	// Seems easier with every clock-tick. 🎵
+	default:
+		err := gtserror.Newf("unrecognized permission type %d", permissionType)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 }
 
@@ -153,14 +199,14 @@ func (p *Processor) DomainPermissionsImport(
 	}
 	defer file.Close()
 
-	// Parse file as slice of domain blocks.
-	domainPerms := make([]*apimodel.DomainPermission, 0)
-	if err := json.NewDecoder(file).Decode(&domainPerms); err != nil {
+	// Parse file as slice of domain permissions.
+	apiDomainPerms := make([]*apimodel.DomainPermission, 0)
+	if err := json.NewDecoder(file).Decode(&apiDomainPerms); err != nil {
 		err = gtserror.Newf("error parsing attachment as domain permissions: %w", err)
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
 	}
 
-	count := len(domainPerms)
+	count := len(apiDomainPerms)
 	if count == 0 {
 		err = gtserror.New("error importing domain permissions: 0 entries provided")
 		return nil, gtserror.NewErrorBadRequest(err, err.Error())
@@ -170,50 +216,95 @@ func (p *Processor) DomainPermissionsImport(
 	// between successes and errors so that the caller can
 	// try failed imports again if desired.
 	multiStatusEntries := make([]apimodel.MultiStatusEntry, 0, count)
-
-	for _, domainPerm := range domainPerms {
-		var (
-			domain         = domainPerm.Domain.Domain
-			obfuscate      = domainPerm.Obfuscate
-			publicComment  = domainPerm.PublicComment
-			privateComment = domainPerm.PrivateComment
-			subscriptionID = "" // No sub ID for imports.
-			errWithCode    gtserror.WithCode
+	for _, apiDomainPerm := range apiDomainPerms {
+		multiStatusEntries = append(
+			multiStatusEntries,
+			p.importOrUpdateDomainPerm(
+				ctx,
+				permissionType,
+				account,
+				apiDomainPerm,
+			),
 		)
-
-		domainPerm, _, errWithCode = p.DomainPermissionCreate(
-			ctx,
-			permissionType,
-			account,
-			domain,
-			obfuscate,
-			publicComment,
-			privateComment,
-			subscriptionID,
-		)
-
-		var entry *apimodel.MultiStatusEntry
-
-		if errWithCode != nil {
-			entry = &apimodel.MultiStatusEntry{
-				// Use the failed domain entry as the resource value.
-				Resource: domain,
-				Message:  errWithCode.Safe(),
-				Status:   errWithCode.Code(),
-			}
-		} else {
-			entry = &apimodel.MultiStatusEntry{
-				// Use successfully created API model domain block as the resource value.
-				Resource: domainPerm,
-				Message:  http.StatusText(http.StatusOK),
-				Status:   http.StatusOK,
-			}
-		}
-
-		multiStatusEntries = append(multiStatusEntries, *entry)
 	}
 
 	return apimodel.NewMultiStatus(multiStatusEntries), nil
+}
+
+func (p *Processor) importOrUpdateDomainPerm(
+	ctx context.Context,
+	permType gtsmodel.DomainPermissionType,
+	account *gtsmodel.Account,
+	apiDomainPerm *apimodel.DomainPermission,
+) apimodel.MultiStatusEntry {
+	var (
+		domain         = apiDomainPerm.Domain.Domain
+		obfuscate      = apiDomainPerm.Obfuscate
+		publicComment  = cmp.Or(apiDomainPerm.PublicComment, apiDomainPerm.Comment)
+		privateComment = apiDomainPerm.PrivateComment
+		subscriptionID = "" // No sub ID for imports.
+	)
+
+	// Check if this domain
+	// perm already exists.
+	var (
+		domainPerm gtsmodel.DomainPermission
+		err        error
+	)
+	if permType == gtsmodel.DomainPermissionBlock {
+		domainPerm, err = p.state.DB.GetDomainBlock(ctx, domain)
+	} else {
+		domainPerm, err = p.state.DB.GetDomainAllow(ctx, domain)
+	}
+
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		// Real db error.
+		return apimodel.MultiStatusEntry{
+			Resource: domain,
+			Message:  "db error checking for existence of domain permission",
+			Status:   http.StatusInternalServerError,
+		}
+	}
+
+	var errWithCode gtserror.WithCode
+	if domainPerm != nil {
+		// Permission already exists, update it.
+		apiDomainPerm, errWithCode = p.DomainPermissionUpdate(
+			ctx,
+			permType,
+			domainPerm.GetID(),
+			obfuscate,
+			publicComment,
+			privateComment,
+			nil,
+		)
+	} else {
+		// Permission didn't exist yet, create it.
+		apiDomainPerm, _, errWithCode = p.DomainPermissionCreate(
+			ctx,
+			permType,
+			account,
+			domain,
+			util.PtrOrZero(obfuscate),
+			util.PtrOrZero(publicComment),
+			util.PtrOrZero(privateComment),
+			subscriptionID,
+		)
+	}
+
+	if errWithCode != nil {
+		return apimodel.MultiStatusEntry{
+			Resource: domain,
+			Message:  errWithCode.Safe(),
+			Status:   errWithCode.Code(),
+		}
+	}
+
+	return apimodel.MultiStatusEntry{
+		Resource: apiDomainPerm,
+		Message:  http.StatusText(http.StatusOK),
+		Status:   http.StatusOK,
+	}
 }
 
 // DomainPermissionsGet returns all existing domain

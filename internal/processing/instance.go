@@ -106,9 +106,9 @@ func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool,
 			}
 
 			domains = append(domains, &apimodel.Domain{
-				Domain:        d,
-				SuspendedAt:   util.FormatISO8601(domainBlock.CreatedAt),
-				PublicComment: domainBlock.PublicComment,
+				Domain:      d,
+				SuspendedAt: util.FormatISO8601(domainBlock.CreatedAt),
+				Comment:     &domainBlock.PublicComment,
 			})
 		}
 	}

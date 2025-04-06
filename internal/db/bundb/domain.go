@@ -36,7 +36,7 @@ type domainDB struct {
 	state *state.State
 }
 
-func (d *domainDB) CreateDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow) (err error) {
+func (d *domainDB) PutDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow) (err error) {
 	// Normalize the domain as punycode, note the extra
 	// validation step for domain name write operations.
 	allow.Domain, err = util.PunifySafely(allow.Domain)
@@ -162,7 +162,7 @@ func (d *domainDB) DeleteDomainAllow(ctx context.Context, domain string) error {
 	return nil
 }
 
-func (d *domainDB) CreateDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) error {
+func (d *domainDB) PutDomainBlock(ctx context.Context, block *gtsmodel.DomainBlock) error {
 	var err error
 
 	// Normalize the domain as punycode, note the extra

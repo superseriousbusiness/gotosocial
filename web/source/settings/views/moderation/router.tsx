@@ -25,7 +25,7 @@ import ReportDetail from "./reports/detail";
 import { ErrorBoundary } from "../../lib/navigation/error";
 import ImportExport from "./domain-permissions/import-export";
 import DomainPermissionsOverview from "./domain-permissions/overview";
-import DomainPermDetail from "./domain-permissions/detail";
+import DomainPermView from "./domain-permissions/detail";
 import AccountsSearch from "./accounts";
 import AccountsPending from "./accounts/pending";
 import AccountDetail from "./accounts/detail";
@@ -160,7 +160,7 @@ function ModerationDomainPermsRouter() {
 						<Route path="/subscriptions/preview" component={DomainPermissionSubscriptionsPreview} />
 						<Route path="/subscriptions/:permSubId" component={DomainPermissionSubscriptionDetail} />
 						<Route path="/:permType" component={DomainPermissionsOverview} />
-						<Route path="/:permType/:domain" component={DomainPermDetail} />
+						<Route path="/:permType/:domain" component={DomainPermView} />
 						<Route><Redirect to="/blocks"/></Route>
 					</Switch>
 				</ErrorBoundary>
