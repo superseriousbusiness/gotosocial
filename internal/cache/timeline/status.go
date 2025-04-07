@@ -43,6 +43,12 @@ type StatusMeta struct {
 	BoostOfAccountID string
 	Local            bool
 
+	// is an internal flag that may be set on
+	// a StatusMeta object that will prevent
+	// preparation of its apimodel.Status, due
+	// to it being a recently repeated boost.
+	repeatBoost bool
+
 	// prepared contains prepared frontend API
 	// model for the referenced status. This may
 	// or may-not be nil depending on whether the
@@ -50,7 +56,7 @@ type StatusMeta struct {
 	// call to "prepare" the frontend model.
 	prepared *apimodel.Status
 
-	// Loaded is a temporary field that may be
+	// loaded is a temporary field that may be
 	// set for a newly loaded timeline status
 	// so that statuses don't need to be loaded
 	// from the database twice in succession.
@@ -61,16 +67,18 @@ type StatusMeta struct {
 	loaded *gtsmodel.Status
 }
 
-// StatusTimelines ...
+// StatusTimelines is a concurrency safe map of StatusTimeline{}
+// objects, optimizing *very heavily* for reads over writes.
 type StatusTimelines struct {
 	ptr atomic.Pointer[map[string]*StatusTimeline] // ronly except by CAS
 	cap int
 }
 
-// Init ...
+// Init stores the given argument(s) such that any created StatusTimeline{}
+// objects by MustGet() will initialize them with the given arguments.
 func (t *StatusTimelines) Init(cap int) { t.cap = cap }
 
-// MustGet ...
+// MustGet will attempt to fetch StatusTimeline{} stored under key, else creating one.
 func (t *StatusTimelines) MustGet(key string) *StatusTimeline {
 	var tt *StatusTimeline
 
@@ -121,7 +129,7 @@ func (t *StatusTimelines) MustGet(key string) *StatusTimeline {
 	}
 }
 
-// Delete ...
+// Delete will delete the stored StatusTimeline{} under key, if any.
 func (t *StatusTimelines) Delete(key string) {
 	for {
 		// Load current ptr.
@@ -153,7 +161,7 @@ func (t *StatusTimelines) Delete(key string) {
 	}
 }
 
-// RemoveByStatusIDs ...
+// RemoveByStatusIDs calls RemoveByStatusIDs() for each of the stored StatusTimeline{}s.
 func (t *StatusTimelines) RemoveByStatusIDs(statusIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
@@ -162,7 +170,7 @@ func (t *StatusTimelines) RemoveByStatusIDs(statusIDs ...string) {
 	}
 }
 
-// RemoveByAccountIDs ...
+// RemoveByAccountIDs calls RemoveByAccountIDs() for each of the stored StatusTimeline{}s.
 func (t *StatusTimelines) RemoveByAccountIDs(accountIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
@@ -171,7 +179,7 @@ func (t *StatusTimelines) RemoveByAccountIDs(accountIDs ...string) {
 	}
 }
 
-// UnprepareByStatusIDs ...
+// UnprepareByStatusIDs calls UnprepareByStatusIDs() for each of the stored StatusTimeline{}s.
 func (t *StatusTimelines) UnprepareByStatusIDs(statusIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
@@ -180,7 +188,7 @@ func (t *StatusTimelines) UnprepareByStatusIDs(statusIDs ...string) {
 	}
 }
 
-// UnprepareByAccountIDs ...
+// UnprepareByAccountIDs calls UnprepareByAccountIDs() for each of the stored StatusTimeline{}s.
 func (t *StatusTimelines) UnprepareByAccountIDs(accountIDs ...string) {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
@@ -189,7 +197,7 @@ func (t *StatusTimelines) UnprepareByAccountIDs(accountIDs ...string) {
 	}
 }
 
-// Unprepare ...
+// Unprepare attempts to call UnprepareAll() for StatusTimeline{} under key.
 func (t *StatusTimelines) Unprepare(key string) {
 	if p := t.ptr.Load(); p != nil {
 		if tt := (*p)[key]; tt != nil {
@@ -198,7 +206,7 @@ func (t *StatusTimelines) Unprepare(key string) {
 	}
 }
 
-// UnprepareAll ...
+// UnprepareAll calls UnprepareAll() for each of the stored StatusTimeline{}s.
 func (t *StatusTimelines) UnprepareAll() {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
@@ -207,16 +215,16 @@ func (t *StatusTimelines) UnprepareAll() {
 	}
 }
 
-// Trim ...
-func (t *StatusTimelines) Trim(threshold float64) {
+// Trim calls Trim() for each of the stored StatusTimeline{}s.
+func (t *StatusTimelines) Trim() {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
-			tt.Trim(threshold)
+			tt.Trim()
 		}
 	}
 }
 
-// Clear ...
+// Clear attempts to call Clear() for StatusTimeline{} under key.
 func (t *StatusTimelines) Clear(key string) {
 	if p := t.ptr.Load(); p != nil {
 		if tt := (*p)[key]; tt != nil {
@@ -225,7 +233,7 @@ func (t *StatusTimelines) Clear(key string) {
 	}
 }
 
-// ClearAll ...
+// ClearAll calls Clear() for each of the stored StatusTimeline{}s.
 func (t *StatusTimelines) ClearAll() {
 	if p := t.ptr.Load(); p != nil {
 		for _, tt := range *p {
@@ -234,7 +242,12 @@ func (t *StatusTimelines) ClearAll() {
 	}
 }
 
-// StatusTimeline ...
+// StatusTimeline provides a concurrency-safe timeline
+// cache of status information. Internally only StatusMeta{}
+// objects are stored, and the statuses themselves are loaded
+// as-needed, caching prepared frontend representations where
+// possible. This is largely wrapping code for our own codebase
+// to be able to smoothly interact with structr.Timeline{}.
 type StatusTimeline struct {
 
 	// underlying timeline cache of *StatusMeta{},
@@ -247,23 +260,16 @@ type StatusTimeline struct {
 	idx_BoostOfID        *structr.Index //nolint:revive
 	idx_BoostOfAccountID *structr.Index //nolint:revive
 
-	// lasOrder stores the last fetched direction
-	// of the timeline, which in turn determines
-	// where we will next trim from in keeping the
-	// timeline underneath configured 'max'.
+	// cutoff and maximum item lengths.
+	// the timeline is trimmed back to
+	// cutoff on each call to Trim(),
+	// and maximum len triggers a Trim().
 	//
-	// TODO: this could be more intelligent with
-	// a sliding average. a problem for future kim!
-	lastOrder atomic.Pointer[structr.Direction]
-
-	// defines the 'maximum' count of
-	// entries in the timeline that we
-	// apply our Trim() call threshold
-	// to. the timeline itself does not
+	// the timeline itself does not
 	// limit items due to complexities
 	// it would introduce, so we apply
 	// a 'cut-off' at regular intervals.
-	max int
+	cut, max int
 }
 
 // Init will initialize the timeline for usage,
@@ -294,6 +300,7 @@ func (t *StatusTimeline) Init(cap int) {
 				AccountID:        s.AccountID,
 				BoostOfID:        s.BoostOfID,
 				BoostOfAccountID: s.BoostOfAccountID,
+				repeatBoost:      s.repeatBoost,
 				loaded:           nil, // NEVER stored
 				prepared:         prepared,
 			}
@@ -306,7 +313,9 @@ func (t *StatusTimeline) Init(cap int) {
 	t.idx_BoostOfID = t.cache.Index("BoostOfID")
 	t.idx_BoostOfAccountID = t.cache.Index("BoostOfAccountID")
 
-	// Set max.
+	// Set maximum capacity and
+	// cutoff threshold we trim to.
+	t.cut = int(0.60 * float64(cap))
 	t.max = cap
 }
 
@@ -347,11 +356,6 @@ func (t *StatusTimeline) Load(
 		panic("nil load page func")
 	}
 
-	// TODO: there's quite a few opportunities for
-	// optimization here, with a lot of frequently
-	// used slices of the same types. depending on
-	// profiles it may be advantageous to pool some.
-
 	// Get paging details.
 	lo := page.Min.Value
 	hi := page.Max.Value
@@ -375,9 +379,6 @@ func (t *StatusTimeline) Load(
 		util.PtrIf(limit),
 		dir,
 	)
-
-	// Mark last select order.
-	t.lastOrder.Store(&dir)
 
 	// We now reset the lo,hi values to
 	// represent the lowest and highest
@@ -506,9 +507,9 @@ func (t *StatusTimeline) Load(
 	}
 
 	if len(justLoaded) > 0 {
-		// Even if we don't return them, insert
-		// the excess (post-filtered) into cache.
-		t.cache.Insert(justLoaded...)
+		// Even if not returning them, insert
+		// the excess (filtered) into cache.
+		t.insert(justLoaded...)
 	}
 
 	return apiStatuses, lo, hi, nil
@@ -643,22 +644,48 @@ func LoadStatusTimeline(
 	return apiStatuses, lo, hi, nil
 }
 
-// InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
-func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) {
-	t.cache.Insert(&StatusMeta{
+// InsertOne allows you to insert a single status into the timeline, with optional prepared API model,
+// the return value indicates whether the passed status has been boosted recently on the timeline.
+func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) (repeatBoost bool) {
+	if status.BoostOfID != "" {
+		const repeatBoostDepth = 40
+
+		// Check through top $repeatBoostDepth number of timeline items.
+		for i, value := range t.cache.RangeUnsafe(structr.Desc) {
+			if i >= repeatBoostDepth {
+				break
+			}
+
+			// If inserted status has already been boosted, or original was posted
+			// within last $repeatBoostDepth, we indicate it as a repeated boost.
+			if value.ID == status.BoostOfID || value.BoostOfID == status.BoostOfID {
+				repeatBoost = true
+				break
+			}
+		}
+	}
+
+	// Insert into timeline.
+	t.insert(&StatusMeta{
 		ID:               status.ID,
 		AccountID:        status.AccountID,
 		BoostOfID:        status.BoostOfID,
 		BoostOfAccountID: status.BoostOfAccountID,
 		Local:            *status.Local,
-		loaded:           status,
+		repeatBoost:      repeatBoost,
+		loaded:           nil,
 		prepared:         prepared,
 	})
+
+	return
 }
 
-// Insert allows you to bulk insert many statuses into the timeline.
-func (t *StatusTimeline) Insert(statuses ...*gtsmodel.Status) {
-	t.cache.Insert(toStatusMeta(statuses)...)
+func (t *StatusTimeline) insert(metas ...*StatusMeta) {
+	if t.cache.Insert(metas...) > t.max {
+		// If cache reached beyond
+		// maximum, perform a trim.
+		t.Trim()
+	}
 }
 
 // RemoveByStatusID removes all cached timeline entries pertaining to
@@ -784,33 +811,16 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 // UnprepareAll removes cached frontend API
 // models for all cached timeline entries.
 func (t *StatusTimeline) UnprepareAll() {
-	for value := range t.cache.RangeUnsafe(structr.Asc) {
+	for _, value := range t.cache.RangeUnsafe(structr.Asc) {
 		value.prepared = nil
 	}
 }
 
 // Trim will ensure that receiving timeline is less than or
 // equal in length to the given threshold percentage of the
-// timeline's preconfigured maximum capacity. This will trim
-// from top / bottom depending on which was recently accessed.
-func (t *StatusTimeline) Trim(threshold float64) {
-
-	// Default trim dir.
-	dir := structr.Asc
-
-	// Calculate maximum allowed no.
-	// items as a percentage of max.
-	max := threshold * float64(t.max)
-
-	// Load last fetched timeline ordering,
-	// using the inverse value for trimming.
-	if p := t.lastOrder.Load(); p != nil {
-		dir = !(*p)
-	}
-
-	// Trim timeline to 'max'.
-	t.cache.Trim(int(max), dir)
-}
+// timeline's preconfigured maximum capacity. This will always
+// trim from the bottom-up to prioritize streamed inserts.
+func (t *StatusTimeline) Trim() { t.cache.Trim(t.cut, structr.Asc) }
 
 // Clear will remove all cached entries from underlying timeline.
 func (t *StatusTimeline) Clear() { t.cache.Trim(0, structr.Desc) }
@@ -842,6 +852,12 @@ func prepareStatuses(
 		if meta.loaded == nil {
 			// We failed loading this
 			// status, skip preparing.
+			continue
+		}
+
+		if meta.repeatBoost {
+			// This is a repeat boost in
+			// short timespan, skip it.
 			continue
 		}
 

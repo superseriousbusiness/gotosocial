@@ -190,7 +190,8 @@ func (t *Timeline[T, PK]) Select(min, max *PK, length *int, dir Direction) (valu
 
 // Insert will insert the given values into the timeline,
 // calling any set invalidate hook on each inserted value.
-func (t *Timeline[T, PK]) Insert(values ...T) {
+// Returns current list length after performing inserts.
+func (t *Timeline[T, PK]) Insert(values ...T) int {
 
 	// Acquire lock.
 	t.mutex.Lock()
@@ -269,6 +270,10 @@ func (t *Timeline[T, PK]) Insert(values ...T) {
 	// Get func ptrs.
 	invalid := t.invalid
 
+	// Get length AFTER
+	// insert to return.
+	len := t.list.len
+
 	// Done with lock.
 	t.mutex.Unlock()
 
@@ -279,6 +284,8 @@ func (t *Timeline[T, PK]) Insert(values ...T) {
 			invalid(value)
 		}
 	}
+
+	return len
 }
 
 // Invalidate invalidates all entries stored in index under given keys.
@@ -336,8 +343,8 @@ func (t *Timeline[T, PK]) Invalidate(index *Index, keys ...Key) {
 //
 // Please note that the entire Timeline{} will be locked for the duration of the range
 // operation, i.e. from the beginning of the first yield call until the end of the last.
-func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
-	return func(yield func(T) bool) {
+func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(index int, value T) bool) {
+	return func(yield func(int, T) bool) {
 		if t.copy == nil {
 			panic("not initialized")
 		} else if yield == nil {
@@ -348,7 +355,9 @@ func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
 		t.mutex.Lock()
 		defer t.mutex.Unlock()
 
+		var i int
 		switch dir {
+
 		case Asc:
 			// Iterate through linked list from bottom (i.e. tail).
 			for prev := t.list.tail; prev != nil; prev = prev.prev {
@@ -360,9 +369,12 @@ func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
 				value := t.copy(item.data.(T))
 
 				// Pass to given function.
-				if !yield(value) {
+				if !yield(i, value) {
 					break
 				}
+
+				// Iter
+				i++
 			}
 
 		case Desc:
@@ -376,9 +388,12 @@ func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
 				value := t.copy(item.data.(T))
 
 				// Pass to given function.
-				if !yield(value) {
+				if !yield(i, value) {
 					break
 				}
+
+				// Iter
+				i++
 			}
 		}
 	}
@@ -390,8 +405,8 @@ func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
 //
 // Please note that the entire Timeline{} will be locked for the duration of the range
 // operation, i.e. from the beginning of the first yield call until the end of the last.
-func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(T) bool) {
-	return func(yield func(T) bool) {
+func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(index int, value T) bool) {
+	return func(yield func(int, T) bool) {
 		if t.copy == nil {
 			panic("not initialized")
 		} else if yield == nil {
@@ -402,7 +417,9 @@ func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(T) bool) {
 		t.mutex.Lock()
 		defer t.mutex.Unlock()
 
+		var i int
 		switch dir {
+
 		case Asc:
 			// Iterate through linked list from bottom (i.e. tail).
 			for prev := t.list.tail; prev != nil; prev = prev.prev {
@@ -411,9 +428,12 @@ func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(T) bool) {
 				item := (*timeline_item)(prev.data)
 
 				// Pass to given function.
-				if !yield(item.data.(T)) {
+				if !yield(i, item.data.(T)) {
 					break
 				}
+
+				// Iter
+				i++
 			}
 
 		case Desc:
@@ -424,9 +444,12 @@ func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(T) bool) {
 				item := (*timeline_item)(next.data)
 
 				// Pass to given function.
-				if !yield(item.data.(T)) {
+				if !yield(i, item.data.(T)) {
 					break
 				}
+
+				// Iter
+				i++
 			}
 		}
 	}
@@ -1033,6 +1056,9 @@ indexing:
 		// checking for collisions.
 		if !idx.add(key, i_item) {
 
+			// This key already appears
+			// in this unique index. So
+			// drop new timeline item.
 			t.delete(t_item)
 			free_buffer(buf)
 			return last
