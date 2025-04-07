@@ -49,6 +49,7 @@ release:
 		fi; \
 		rm -rf dist/$$t; \
 	done
+	./publish.sh
 
 clean:
 	echo "Cleaning dist/"
