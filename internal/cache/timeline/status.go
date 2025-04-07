@@ -429,9 +429,9 @@ func (t *StatusTimeline) Load(
 		// limit to reduce db calls.
 		nextPg.Limit += 10
 
-		// Perform maximum of 10 load
+		// Perform maximum of 5 load
 		// attempts fetching statuses.
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 5; i++ {
 
 			// Load next timeline statuses.
 			statuses, err := loadPage(nextPg)
@@ -567,9 +567,9 @@ func LoadStatusTimeline(
 		// limit to reduce db calls.
 		nextPg.Limit += 10
 
-		// Perform maximum of 10 load
+		// Perform maximum of 5 load
 		// attempts fetching statuses.
-		for i := 0; i < 10; i++ {
+		for i := 0; i < 5; i++ {
 
 			// Load next timeline statuses.
 			statuses, err := loadPage(nextPg)
