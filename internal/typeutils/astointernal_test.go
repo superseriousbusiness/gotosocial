@@ -613,7 +613,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("https://honk.example.org/u/honk_user", acct.URL)
 	suite.Equal("honk_user", acct.Username)
 	suite.Equal("honk.example.org", acct.Domain)
-	suite.True(*acct.Locked)
+	suite.False(*acct.Locked)
 	suite.False(*acct.Discoverable)
 
 	// Store the account representation.
@@ -632,7 +632,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("https://honk.example.org/u/honk_user", acct.URL)
 	suite.Equal("honk_user", acct.Username)
 	suite.Equal("honk.example.org", acct.Domain)
-	suite.True(*acct.Locked)
+	suite.False(*acct.Locked)
 	suite.False(*acct.Discoverable)
 
 	// Check DB version.
@@ -649,7 +649,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URL)
 	suite.Equal("honk_user", dbAcct.Username)
 	suite.Equal("honk.example.org", dbAcct.Domain)
-	suite.True(*dbAcct.Locked)
+	suite.False(*dbAcct.Locked)
 	suite.False(*dbAcct.Discoverable)
 
 	// Update the account.
@@ -666,7 +666,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("https://honk.example.org/u/honk_user", acct.URL)
 	suite.Equal("honk_user", acct.Username)
 	suite.Equal("honk.example.org", acct.Domain)
-	suite.True(*acct.Locked)
+	suite.False(*acct.Locked)
 	suite.False(*acct.Discoverable)
 
 	// Check DB version.
@@ -683,7 +683,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URL)
 	suite.Equal("honk_user", dbAcct.Username)
 	suite.Equal("honk.example.org", dbAcct.Domain)
-	suite.True(*dbAcct.Locked)
+	suite.False(*dbAcct.Locked)
 	suite.False(*dbAcct.Discoverable)
 
 	// Clear caches.
@@ -703,7 +703,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	suite.Equal("https://honk.example.org/u/honk_user", dbAcct.URL)
 	suite.Equal("honk_user", dbAcct.Username)
 	suite.Equal("honk.example.org", dbAcct.Domain)
-	suite.True(*dbAcct.Locked)
+	suite.False(*dbAcct.Locked)
 	suite.False(*dbAcct.Discoverable)
 }
 
