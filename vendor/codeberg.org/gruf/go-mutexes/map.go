@@ -2,7 +2,6 @@ package mutexes
 
 import (
 	"sync"
-	"sync/atomic"
 	"unsafe"
 
 	"codeberg.org/gruf/go-mempool"
@@ -185,34 +184,11 @@ func (mu *rwmutex) Unlock() bool {
 		// Fully unlocked.
 		mu.t = 0
 
-		// NOTE: must remain in
-		// sync with runtime.notifyList{}.
-		//
-		// goexperiment.staticlockranking
-		// does change it slightly, but
-		// this does not alter the first
-		// 2 fields which are all we need.
-		type notifyList struct {
-			_      uint32
-			notify uint32
-			// ... other fields
-		}
-
-		// NOTE: must remain in
-		// sync with sync.Cond{}.
-		type syncCond struct {
-			_ struct{}
-			L sync.Locker
-			n notifyList
-			// ... other fields
-		}
-
 		// Awake all blocked goroutines and check
 		// for change in the last notified ticket.
-		cptr := (*syncCond)(unsafe.Pointer(&mu.c))
-		before := atomic.LoadUint32(&cptr.n.notify)
+		before := syncCond_last_ticket(&mu.c)
 		mu.c.Broadcast() // awakes all blocked!
-		after := atomic.LoadUint32(&cptr.n.notify)
+		after := syncCond_last_ticket(&mu.c)
 
 		// If ticket changed, this indicates
 		// AT LEAST one goroutine was awoken.
