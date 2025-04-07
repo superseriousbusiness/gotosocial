@@ -145,7 +145,7 @@ func (p *Processor) TwoFactorQRCodeURIGet(
 		// We do! Read some random crap.
 		// 32 bytes should be plenty entropy.
 		secret := make([]byte, 32)
-		if _, err := rand.Read(secret); err != nil {
+		if _, err := io.ReadFull(rand.Reader, secret); err != nil {
 			err := gtserror.Newf("error generating new secret: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
