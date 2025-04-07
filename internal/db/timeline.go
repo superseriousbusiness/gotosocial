@@ -27,17 +27,13 @@ import (
 // Timeline contains functionality for retrieving home/public/faved etc timelines for an account.
 type Timeline interface {
 	// GetHomeTimeline returns a slice of statuses from accounts that are followed by the given account id.
-	//
-	// Statuses should be returned in descending order of when they were created (newest first).
 	GetHomeTimeline(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// GetPublicTimeline fetches the account's PUBLIC timeline -- ie., posts and replies that are public.
 	// It will use the given filters and try to return as many statuses as possible up to the limit.
-	//
-	// Statuses should be returned in descending order of when they were created (newest first).
 	GetPublicTimeline(ctx context.Context, page *paging.Page) ([]*gtsmodel.Status, error)
 
-	// GetLocalTimeline ...
+	// GetLocalTimeline fetches the account's LOCAL timeline -- i.e. PUBLIC posts by LOCAL users.
 	GetLocalTimeline(ctx context.Context, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// GetFavedTimeline fetches the account's FAVED timeline -- ie., posts and replies that the requesting account has faved.
@@ -50,10 +46,8 @@ type Timeline interface {
 	GetFavedTimeline(ctx context.Context, accountID string, maxID string, minID string, limit int) ([]*gtsmodel.Status, string, string, error)
 
 	// GetListTimeline returns a slice of statuses from followed accounts collected within the list with the given listID.
-	// Statuses should be returned in descending order of when they were created (newest first).
 	GetListTimeline(ctx context.Context, listID string, page *paging.Page) ([]*gtsmodel.Status, error)
 
 	// GetTagTimeline returns a slice of public-visibility statuses that use the given tagID.
-	// Statuses should be returned in descending order of when they were created (newest first).
 	GetTagTimeline(ctx context.Context, tagID string, page *paging.Page) ([]*gtsmodel.Status, error)
 }
