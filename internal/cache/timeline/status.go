@@ -380,6 +380,12 @@ func (t *StatusTimeline) Load(
 		dir,
 	)
 
+	// TODO: in time, we should think about (dynamically?) preloading
+	// the timelines, and any page requests outside of the cached
+	// range go straight to the database. otherwise there's peculiarities
+	// that may arise due to concurrent new and old range inserts, also
+	// requests for old page ranges are almost always going to be one-off.
+
 	// We now reset the lo,hi values to
 	// represent the lowest and highest
 	// index values of loaded statuses.
