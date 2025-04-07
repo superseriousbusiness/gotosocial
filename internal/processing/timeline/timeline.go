@@ -112,27 +112,9 @@ func (p *Processor) getStatusTimeline(
 	var apiStatuses []*apimodel.Status
 	var lo, hi string
 
-	// Track whether a particular BoostOfID
-	// has already been boosted (i.e., seen)
-	// before in this paged request for statuses.
-	boosted := make(map[string]struct{}, 4)
-	alreadyBoosted := func(s *gtsmodel.Status) bool {
-		if s.BoostOfID != "" {
-			_, ok := boosted[s.BoostOfID]
-			if ok {
-				return true
-			}
-			boosted[s.BoostOfID] = struct{}{}
-		}
-		return false
-	}
-
 	// Pre-prepared filter function that just ensures we
 	// don't end up serving multiple copies of the same boost.
 	prepare := func(status *gtsmodel.Status) (*apimodel.Status, error) {
-		if alreadyBoosted(status) {
-			return nil, nil
-		}
 		apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 			status,
 			requester,
