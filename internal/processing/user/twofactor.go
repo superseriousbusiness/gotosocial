@@ -27,7 +27,6 @@ import (
 	"io"
 	"net/url"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -86,9 +85,9 @@ func totpURLForUser(user *gtsmodel.User) *url.URL {
 	v := url.Values{}
 	v.Set("secret", user.TwoFactorSecret)
 	v.Set("issuer", issuer)
-	v.Set("period", strconv.FormatInt(30, 10))
+	v.Set("period", "30") // 30 seconds totp validity.
 	v.Set("algorithm", "SHA1")
-	v.Set("digits", strconv.FormatInt(6, 10))
+	v.Set("digits", "6") // 6-digit totp.
 
 	return &url.URL{
 		Scheme:   "otpauth",
