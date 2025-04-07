@@ -522,20 +522,9 @@ func (t *StatusTimeline) Load(
 func LoadStatusTimeline(
 	ctx context.Context,
 	page *paging.Page,
-
-	// loadPage should load the timeline of given page for cache hydration.
 	loadPage func(page *paging.Page) (statuses []*gtsmodel.Status, err error),
-
-	// loadIDs should load status models with given IDs, this is used
-	// to load status models of already cached entries in the timeline.
 	loadIDs func(ids []string) (statuses []*gtsmodel.Status, err error),
-
-	// filter can be used to perform filtering of returned
-	// statuses BEFORE insert into cache. i.e. this will effect
-	// what actually gets stored in the timeline cache.
 	filter func(each *gtsmodel.Status) (delete bool, err error),
-
-	// prepareAPI should prepare internal status model to frontend API model.
 	prepareAPI func(status *gtsmodel.Status) (apiStatus *apimodel.Status, err error),
 ) (
 	[]*apimodel.Status,
