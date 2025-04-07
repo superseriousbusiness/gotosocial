@@ -21,6 +21,7 @@ import (
 	"errors"
 	"net/http"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -87,7 +88,10 @@ func (m *Module) AccountDeletePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if err := bcrypt.CompareHashAndPassword([]byte(authed.User.EncryptedPassword), []byte(form.Password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(
+		byteutil.S2B(authed.User.EncryptedPassword),
+		byteutil.S2B(form.Password),
+	); err != nil {
 		err = errors.New("invalid password provided in account delete request")
 		apiutil.ErrorHandler(c, gtserror.NewErrorForbidden(err, err.Error()), m.processor.InstanceGetV1)
 		return

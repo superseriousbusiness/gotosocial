@@ -3510,6 +3510,11 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: ResetPasswordSentAt
+            two_factor_enabled_at:
+                description: Time at which 2fa was enabled for this user. (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: TwoFactorEnabledAt
             unconfirmed_email:
                 description: Unconfirmed email address of this user, if set.
                 example: someone.else@somewhere.else.example.org
@@ -12139,6 +12144,146 @@ paths:
                 - OAuth2 Bearer:
                     - read:accounts
             summary: Get your own user model.
+            tags:
+                - user
+    /api/v1/user/2fa/disable:
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: |-
+                If 2fa is already disabled for this user, code 409 Conflict will be returned.
+
+                If the instance is running with OIDC enabled, two factor authentication cannot be turned on or off in GtS, it must be enabled or disabled using the OIDC provider. All calls to 2fa api endpoints will return 422 Unprocessable Entity while OIDC is enabled.
+            operationId: TwoFactorDisablePost
+            parameters:
+                - description: User's current password, for verification.
+                  in: formData
+                  name: password
+                  type: string
+            responses:
+                "200":
+                    description: QR code
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "422":
+                    description: unprocessable entity
+                "500":
+                    description: internal error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Disable 2fa for the authorized user. User's current password must be provided for verification purposes.
+            tags:
+                - user
+    /api/v1/user/2fa/enable:
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: |-
+                If 2fa is already enabled for this user, code 409 Conflict will be returned.
+
+                If the instance is running with OIDC enabled, two factor authentication cannot be turned on or off in GtS, it must be enabled or disabled using the OIDC provider. All calls to 2fa api endpoints will return 422 Unprocessable Entity while OIDC is enabled.
+            operationId: TwoFactorEnablePost
+            parameters:
+                - description: |-
+                    2fa code from the user's authenticator app.
+                    Sample: 123456
+                  in: formData
+                  name: code
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: QR code
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "422":
+                    description: unprocessable entity
+                "500":
+                    description: internal error
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: Enable 2fa for the authorized user, using the provided code from an authenticator app, and return an array of one-time recovery codes to allow bypassing 2fa.
+            tags:
+                - user
+    /api/v1/user/2fa/qr.png:
+        get:
+            description: |-
+                For the plaintext version of the QR code URI, call /api/v1/user/2fa/qruri instead.
+
+                If 2fa is already enabled for this user, the QR code (with its secret) will not be shared again. Instead, code 409 Conflict will be returned. To get a fresh secret, first disable 2fa using POST /api/v1/user/2fa/disable, and then call this endpoint again.
+
+                If the instance is running with OIDC enabled, two factor authentication cannot be turned on or off in GtS, it must be enabled or disabled using the OIDC provider. All calls to 2fa api endpoints will return 422 Unprocessable Entity while OIDC is enabled.
+            operationId: TwoFactorQRCodePngGet
+            produces:
+                - image/png
+            responses:
+                "200":
+                    description: QR code png
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "422":
+                    description: unprocessable entity
+                "500":
+                    description: internal error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Return a QR code png to allow the authorized user to enable 2fa for their login.
+            tags:
+                - user
+    /api/v1/user/2fa/qruri:
+        get:
+            description: |-
+                For a png of the QR code, call /api/v1/user/2fa/qr.png instead.
+
+                If 2fa is already enabled for this user, the QR code URI (with its secret) will not be shared again. Instead, code 409 Conflict will be returned. To get a fresh secret, first disable 2fa using POST /api/v1/user/2fa/disable, and then call this endpoint again.
+
+                If the instance is running with OIDC enabled, two factor authentication cannot be turned on or off in GtS, it must be enabled or disabled using the OIDC provider. All calls to 2fa api endpoints will return 422 Unprocessable Entity while OIDC is enabled.
+            operationId: TwoFactorQRCodeURIGet
+            produces:
+                - text/plain
+            responses:
+                "200":
+                    description: QR code uri
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "406":
+                    description: not acceptable
+                "409":
+                    description: conflict
+                "422":
+                    description: unprocessable entity
+                "500":
+                    description: internal error
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: Return a QR code uri to allow the authorized user to enable 2fa for their login.
             tags:
                 - user
     /api/v1/user/email_change:

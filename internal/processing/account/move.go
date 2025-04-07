@@ -25,6 +25,7 @@ import (
 	"slices"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
@@ -70,8 +71,8 @@ func (p *Processor) MoveSelf(
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
-		[]byte(authed.User.EncryptedPassword),
-		[]byte(form.Password),
+		byteutil.S2B(authed.User.EncryptedPassword),
+		byteutil.S2B(form.Password),
 	); err != nil {
 		const text = "invalid password provided in Move request"
 		return gtserror.NewErrorBadRequest(errors.New(text), text)

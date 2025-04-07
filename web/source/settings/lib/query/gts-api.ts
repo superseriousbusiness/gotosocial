@@ -143,15 +143,20 @@ const gtsBaseQuery: BaseQueryFn<
 			return headers;
 		},
 		responseHandler: (response) => {
-			// Return just text if caller has
-			// set a custom accept content-type.
-			if (accept !== "application/json") {
-				return response.text();
+			switch (true) {
+				case (accept === "application/json"):
+					// return good old
+					// fashioned JSON baby!
+					return response.json();
+				case (accept.startsWith("image/")):
+					// It's an image,
+					// return the blob.
+					return response.blob();
+				default:
+					// God knows what it
+					// is, just return text.
+					return response.text();
 			}
-
-			// Else return good old
-			// fashioned JSON baby!
-			return response.json();
 		},
 	})(args, api, extraOptions);
 };
@@ -174,6 +179,7 @@ export const gtsApi = createApi({
 		"DomainPermissionExclude",
 		"DomainPermissionSubscription",
 		"TokenInfo",
+		"User",
 	],
 	endpoints: (build) => ({
 		instanceV1: build.query<InstanceV1, void>({

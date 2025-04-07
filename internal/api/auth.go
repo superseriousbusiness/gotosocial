@@ -20,12 +20,12 @@ package api
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/api/auth"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
+	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 type Auth struct {
@@ -55,13 +55,19 @@ func (a *Auth) Route(r *router.Router, m ...gin.HandlerFunc) {
 	oauthGroup.Use(ccMiddleware, sessionMiddleware)
 
 	a.auth.RouteAuth(authGroup.Handle)
-	a.auth.RouteOauth(oauthGroup.Handle)
+	a.auth.RouteOAuth(oauthGroup.Handle)
 }
 
-func NewAuth(db db.DB, p *processing.Processor, idp oidc.IDP, routerSession *gtsmodel.RouterSession, sessionName string) *Auth {
+func NewAuth(
+	state *state.State,
+	p *processing.Processor,
+	idp oidc.IDP,
+	routerSession *gtsmodel.RouterSession,
+	sessionName string,
+) *Auth {
 	return &Auth{
 		routerSession: routerSession,
 		sessionName:   sessionName,
-		auth:          auth.New(db, p, idp),
+		auth:          auth.New(state, p, idp),
 	}
 }

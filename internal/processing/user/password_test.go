@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"testing"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"golang.org/x/crypto/bcrypt"
@@ -37,7 +38,10 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 	errWithCode := suite.user.PasswordChange(context.Background(), user, "password", "verygoodnewpassword")
 	suite.NoError(errWithCode)
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte("verygoodnewpassword"))
+	err := bcrypt.CompareHashAndPassword(
+		byteutil.S2B(user.EncryptedPassword),
+		byteutil.S2B("verygoodnewpassword"),
+	)
 	suite.NoError(err)
 
 	// get user from the db again
@@ -46,7 +50,10 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 	suite.NoError(err)
 
 	// check the password has changed
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("verygoodnewpassword"))
+	err = bcrypt.CompareHashAndPassword(
+		byteutil.S2B(dbUser.EncryptedPassword),
+		byteutil.S2B("verygoodnewpassword"),
+	)
 	suite.NoError(err)
 }
 
@@ -64,7 +71,10 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 	suite.NoError(err)
 
 	// check the password has not changed
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("password"))
+	err = bcrypt.CompareHashAndPassword(
+		byteutil.S2B(dbUser.EncryptedPassword),
+		byteutil.S2B("password"),
+	)
 	suite.NoError(err)
 }
 
@@ -82,7 +92,10 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordWeakNew() {
 	suite.NoError(err)
 
 	// check the password has not changed
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("password"))
+	err = bcrypt.CompareHashAndPassword(
+		byteutil.S2B(dbUser.EncryptedPassword),
+		byteutil.S2B("password"),
+	)
 	suite.NoError(err)
 }
 

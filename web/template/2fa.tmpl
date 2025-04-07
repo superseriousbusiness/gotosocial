@@ -1,0 +1,46 @@
+{{- /*
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+*/ -}}
+
+{{- with . }}
+<main>
+    <section class="with-form" aria-labelledby="two-factor">
+        <h2 id="two-factor">2FA Code Required</h2>
+        <form action="/auth/2fa" method="POST">
+            <p>Hi <b>{{- .user -}}</b>!</p>
+            <p>
+                You have enabled two-factor authentication for your account.
+                To continue signing in, please enter a code from your authenticator app.
+            </p>
+            <p>
+                If you have lost access to your authenticator app, you can enter one of your backup/recovery
+                codes into the form instead to bypass 2FA. Once you have used a code, it cannot be used again.
+            </p>
+            <div class="labelinput">
+                <label for="code">Code</label>
+                <input
+                    name="code"
+                    required
+                    placeholder="Please enter a code from your authenticator app, or a one-time backup/recovery code"
+                >
+            </div>
+            <button type="submit" class="btn btn-success">Submit</button>
+        </form>
+    </section>
+</main>
+{{- end }}

@@ -283,16 +283,16 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	var (
-		authModule        = api.NewAuth(state.DB, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule      = api.NewClient(state, processor)                                   // api client endpoints
-		metricsModule     = api.NewMetrics()                                                  // Metrics endpoints
-		healthModule      = api.NewHealth(state.DB.Ready)                                     // Health check endpoints
-		fileserverModule  = api.NewFileserver(processor)                                      // fileserver endpoints
-		robotsModule      = api.NewRobots()                                                   // robots.txt endpoint
-		wellKnownModule   = api.NewWellKnown(processor)                                       // .well-known endpoints
-		nodeInfoModule    = api.NewNodeInfo(processor)                                        // nodeinfo endpoint
-		activityPubModule = api.NewActivityPub(state.DB, processor)                           // ActivityPub endpoints
-		webModule         = web.New(state.DB, processor)                                      // web pages + user profiles + settings panels etc
+		authModule        = api.NewAuth(state, processor, idp, routerSession, sessionName) // auth/oauth paths
+		clientModule      = api.NewClient(state, processor)                                // api client endpoints
+		metricsModule     = api.NewMetrics()                                               // Metrics endpoints
+		healthModule      = api.NewHealth(state.DB.Ready)                                  // Health check endpoints
+		fileserverModule  = api.NewFileserver(processor)                                   // fileserver endpoints
+		robotsModule      = api.NewRobots()                                                // robots.txt endpoint
+		wellKnownModule   = api.NewWellKnown(processor)                                    // .well-known endpoints
+		nodeInfoModule    = api.NewNodeInfo(processor)                                     // nodeinfo endpoint
+		activityPubModule = api.NewActivityPub(state.DB, processor)                        // ActivityPub endpoints
+		webModule         = web.New(state.DB, processor)                                   // web pages + user profiles + settings panels etc
 	)
 
 	// these should be routed in order
