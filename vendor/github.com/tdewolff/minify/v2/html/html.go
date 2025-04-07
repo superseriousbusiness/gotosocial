@@ -145,11 +145,11 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 				w.Write(t.Data)
 			}
 			omitSpace = false
+		case html.TemplateToken:
+			w.Write(t.Data)
+			omitSpace = false
 		case html.TextToken:
-			if t.HasTemplate {
-				w.Write(t.Data)
-				omitSpace = parse.IsWhitespace(t.Data[len(t.Data)-1])
-			} else if rawTagHash != 0 {
+			if rawTagHash != 0 && !t.HasTemplate {
 				if rawTagHash == Style || rawTagHash == Script || rawTagHash == Iframe {
 					var mimetype []byte
 					var params map[string]string
@@ -196,7 +196,7 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 							t.Data = t.Data[:len(t.Data)-1]
 							omitSpace = false
 							break
-						} else if next.TokenType == html.TextToken && !parse.IsAllWhitespace(next.Data) {
+						} else if next.TokenType == html.TextToken && !parse.IsAllWhitespace(next.Data) || next.TokenType == html.TemplateToken {
 							// stop looking when text encountered
 							break
 						} else if next.TokenType == html.StartTagToken || next.TokenType == html.EndTagToken || next.TokenType == html.SvgToken || next.TokenType == html.MathToken {
@@ -215,7 +215,6 @@ func (o *Minifier) Minify(m *minify.M, w io.Writer, r io.Reader, _ map[string]st
 						i++
 					}
 				}
-
 				w.Write(t.Data)
 			}
 		case html.StartTagToken, html.EndTagToken:
