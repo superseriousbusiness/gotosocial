@@ -154,7 +154,7 @@ func (c *Converter) ASRepresentationToAccount(
 	// Assume not memorial (todo)
 	acct.MemorializedAt = time.Time{}
 
-	// Extract 'manuallyApprovesFollowers' aka locked account (default = true).
+	// Extract 'manuallyApprovesFollowers' aka locked account (default = false).
 	manuallyApprovesFollowers := ap.GetManuallyApprovesFollowers(accountable)
 	acct.Locked = &manuallyApprovesFollowers
 
