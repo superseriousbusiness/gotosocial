@@ -247,14 +247,14 @@ type StatusTimeline struct {
 	idx_BoostOfID        *structr.Index //nolint:revive
 	idx_BoostOfAccountID *structr.Index //nolint:revive
 
-	// last stores the last fetched direction
+	// lasOrder stores the last fetched direction
 	// of the timeline, which in turn determines
 	// where we will next trim from in keeping the
 	// timeline underneath configured 'max'.
 	//
 	// TODO: this could be more intelligent with
 	// a sliding average. a problem for future kim!
-	last atomic.Pointer[structr.Direction]
+	lastOrder atomic.Pointer[structr.Direction]
 
 	// defines the 'maximum' count of
 	// entries in the timeline that we
@@ -375,6 +375,9 @@ func (t *StatusTimeline) Load(
 		util.PtrIf(limit),
 		dir,
 	)
+
+	// Mark last select order.
+	t.lastOrder.Store(&dir)
 
 	// We now reset the lo,hi values to
 	// represent the lowest and highest
@@ -742,7 +745,7 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.ID.
-	for meta := range t.cache.RangeKeys(t.idx_ID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_ID, keys...) {
 		meta.prepared = nil
 	}
 
@@ -752,7 +755,7 @@ func (t *StatusTimeline) UnprepareByStatusIDs(statusIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.BoostOfID.
-	for meta := range t.cache.RangeKeys(t.idx_BoostOfID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_BoostOfID, keys...) {
 		meta.prepared = nil
 	}
 }
@@ -774,7 +777,7 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.AccountID.
-	for meta := range t.cache.RangeKeys(t.idx_AccountID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_AccountID, keys...) {
 		meta.prepared = nil
 	}
 
@@ -784,7 +787,7 @@ func (t *StatusTimeline) UnprepareByAccountIDs(accountIDs ...string) {
 	}
 
 	// Unprepare all statuses stored under StatusMeta.BoostOfAccountID.
-	for meta := range t.cache.RangeKeys(t.idx_BoostOfAccountID, keys...) {
+	for meta := range t.cache.RangeKeysUnsafe(t.idx_BoostOfAccountID, keys...) {
 		meta.prepared = nil
 	}
 }
@@ -810,10 +813,9 @@ func (t *StatusTimeline) Trim(threshold float64) {
 	// items as a percentage of max.
 	max := threshold * float64(t.max)
 
-	// Try load the last fetched
-	// timeline ordering, getting
-	// the inverse value for trimming.
-	if p := t.last.Load(); p != nil {
+	// Load last fetched timeline ordering,
+	// using the inverse value for trimming.
+	if p := t.lastOrder.Load(); p != nil {
 		dir = !(*p)
 	}
 
@@ -865,6 +867,7 @@ func prepareStatuses(
 			}
 		}
 
+		// Append to return slice.
 		if meta.prepared != nil {
 			apiStatuses = append(apiStatuses, meta.prepared)
 		}
