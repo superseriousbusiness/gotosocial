@@ -23,18 +23,18 @@ import (
 )
 
 type TimelineCaches struct {
-
-	// Home ...
+	// Home provides a concurrency-safe map of status timeline
+	// caches for home timelines, keyed by home's account ID.
 	Home timeline.StatusTimelines
 
-	// List ...
+	// List provides a concurrency-safe map of status
+	// timeline caches for lists, keyed by list ID.
 	List timeline.StatusTimelines
 }
 
 func (c *Caches) initHomeTimelines() {
-	// Per-user cache
-	// so use smaller.
-	cap := 400
+	// TODO: configurable
+	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
 
@@ -42,9 +42,8 @@ func (c *Caches) initHomeTimelines() {
 }
 
 func (c *Caches) initListTimelines() {
-	// Per-user cache
-	// so use smaller.
-	cap := 400
+	// TODO: configurable
+	cap := 800
 
 	log.Infof(nil, "cache size = %d", cap)
 

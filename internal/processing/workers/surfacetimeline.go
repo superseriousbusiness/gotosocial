@@ -383,19 +383,21 @@ func (s *Surface) timelineStatus(
 	}
 
 	// Insert status to timeline cache regardless of
-	// if API model was successfully prepared or not.
-	timeline.InsertOne(status, apiModel)
+	// if API model was succesfully prepared or not.
+	repeatBoost := timeline.InsertOne(status, apiModel)
 
-	if apiModel != nil {
-		// Only send the status to user's stream if not
-		// filtered / muted, i.e. successfully prepared model.
-		s.Stream.Update(ctx, account, apiModel, streamType)
-		return true
+	if apiModel == nil {
+		// Status was
+		// filtered / muted.
+		return false
 	}
 
-	// Status was
-	// filtered / muted.
-	return false
+	if !repeatBoost {
+		// Only stream if not repeated boost of recent status.
+		s.Stream.Update(ctx, account, apiModel, streamType)
+	}
+
+	return true
 }
 
 // timelineAndNotifyStatusForTagFollowers inserts the status into the
