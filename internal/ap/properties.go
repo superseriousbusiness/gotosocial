@@ -520,11 +520,11 @@ func SetDiscoverable(with WithDiscoverable, discoverable bool) {
 
 // GetManuallyApprovesFollowers returns the boolean contained in the ManuallyApprovesFollowers property of 'with'.
 //
-// Returns default 'true' if property unusable or not set.
+// Returns default 'false' if property unusable or not set.
 func GetManuallyApprovesFollowers(with WithManuallyApprovesFollowers) bool {
 	mafProp := with.GetActivityStreamsManuallyApprovesFollowers()
 	if mafProp == nil || !mafProp.IsXMLSchemaBoolean() {
-		return true
+		return false
 	}
 	return mafProp.Get()
 }
