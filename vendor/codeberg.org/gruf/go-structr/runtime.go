@@ -1,10 +1,9 @@
-//go:build go1.22 || go1.23
+//go:build go1.22 && !go1.25
 
 package structr
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"runtime"
 	"strings"
@@ -140,7 +139,7 @@ func extract_fields(ptr unsafe.Pointer, fields []struct_field) []unsafe.Pointer 
 	// Prepare slice of field value pointers.
 	ptrs := make([]unsafe.Pointer, len(fields))
 	if len(ptrs) != len(fields) {
-		panic("BCE")
+		panic(assert("BCE"))
 	}
 
 	for i, field := range fields {
@@ -264,12 +263,12 @@ func panicf(format string, args ...any) {
 	panic(fmt.Sprintf(format, args...))
 }
 
-// should_not_reach can be called to indicated a
-// block of code should not be able to be reached,
-// else it prints callsite info with a BUG report.
+// assert can be called to indicated a block
+// of code should not be able to be reached,
+// it returns a BUG report with callsite.
 //
 //go:noinline
-func should_not_reach(exit bool) {
+func assert(assert string) string {
 	pcs := make([]uintptr, 1)
 	_ = runtime.Callers(2, pcs)
 	fn := runtime.FuncForPC(pcs[0])
@@ -280,9 +279,11 @@ func should_not_reach(exit bool) {
 			funcname = funcname[i+1:]
 		}
 	}
-	if exit {
-		panic("BUG: assertion failed in " + funcname)
-	} else {
-		os.Stderr.WriteString("BUG: assertion failed in " + funcname + "\n")
-	}
+	var buf strings.Builder
+	buf.Grow(32 + len(assert) + len(funcname))
+	buf.WriteString("BUG: assertion \"")
+	buf.WriteString(assert)
+	buf.WriteString("\" failed in ")
+	buf.WriteString(funcname)
+	return buf.String()
 }

@@ -1,6 +1,7 @@
 package structr
 
 import (
+	"os"
 	"sync"
 	"unsafe"
 )
@@ -37,7 +38,8 @@ func free_indexed_item(item *indexed_item) {
 	if len(item.indexed) > 0 ||
 		item.elem.next != nil ||
 		item.elem.prev != nil {
-		should_not_reach(false)
+		msg := assert("item not in use")
+		os.Stderr.WriteString(msg + "\n")
 		return
 	}
 	item.data = nil
