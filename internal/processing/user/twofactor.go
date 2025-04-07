@@ -31,13 +31,13 @@ import (
 	"time"
 
 	"codeberg.org/gruf/go-byteutil"
-	"github.com/google/uuid"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -207,7 +207,7 @@ func (p *Processor) TwoFactorEnable(
 	// to show to the user ONCE ONLY.
 	backupsClearText := make([]string, 8)
 	for i := 0; i < 8; i++ {
-		backupsClearText[i] = uuid.NewString()
+		backupsClearText[i] = util.MustGenerateSecret()
 	}
 
 	// Store only the bcrypt-encrypted
@@ -215,7 +215,7 @@ func (p *Processor) TwoFactorEnable(
 	user.TwoFactorBackups = make([]string, 8)
 	for i, backup := range backupsClearText {
 		encryptedBackup, err := bcrypt.GenerateFromPassword(
-			[]byte(backup),
+			byteutil.S2B(backup),
 			bcrypt.DefaultCost,
 		)
 		if err != nil {
