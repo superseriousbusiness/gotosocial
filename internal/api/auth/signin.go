@@ -61,7 +61,7 @@ func (m *Module) SignInGETHandler(c *gin.Context) {
 		//
 		// We need the internal state to know where
 		// to redirect to.
-		internalState := m.stringFromSession(
+		internalState := m.mustStringFromSession(
 			c,
 			sessions.Default(c),
 			sessionInternalState,
@@ -195,7 +195,7 @@ func incorrectPassword(err error) (*gtsmodel.User, gtserror.WithCode) {
 func (m *Module) TwoFactorCodeGETHandler(c *gin.Context) {
 	s := sessions.Default(c)
 
-	user := m.userFromSession(c, s)
+	user := m.mustUserFromSession(c, s)
 	if user == nil {
 		// Error already
 		// written.
@@ -226,7 +226,7 @@ func (m *Module) TwoFactorCodeGETHandler(c *gin.Context) {
 func (m *Module) TwoFactorCodePOSTHandler(c *gin.Context) {
 	s := sessions.Default(c)
 
-	user := m.userFromSession(c, s)
+	user := m.mustUserFromSession(c, s)
 	if user == nil {
 		// Error already
 		// written.

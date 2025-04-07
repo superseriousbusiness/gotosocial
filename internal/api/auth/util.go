@@ -39,7 +39,13 @@ func (m *Module) mustSaveSession(s sessions.Session) {
 	}
 }
 
-func (m *Module) userFromSession(
+// mustUserFromSession returns a *gtsmodel.User by checking the
+// session for a user id and fetching the user from the database.
+//
+// On failure, the function clears session state, writes an internal
+// error to the response writer, and returns nil. Callers should always
+// return immediately if receiving nil back from this function!
+func (m *Module) mustUserFromSession(
 	c *gin.Context,
 	s sessions.Session,
 ) *gtsmodel.User {
@@ -74,7 +80,13 @@ func (m *Module) userFromSession(
 	return user
 }
 
-func (m *Module) appFromSession(
+// mustAppFromSession returns a *gtsmodel.Application by checking the
+// session for an application keyid and fetching the app from the database.
+//
+// On failure, the function clears session state, writes an internal
+// error to the response writer, and returns nil. Callers should always
+// return immediately if receiving nil back from this function!
+func (m *Module) mustAppFromSession(
 	c *gin.Context,
 	s sessions.Session,
 ) *gtsmodel.Application {
@@ -95,7 +107,14 @@ func (m *Module) appFromSession(
 	return app
 }
 
-func (m *Module) stringFromSession(
+// mustStringFromSession returns the string value
+// corresponding to the given session key, if any is set.
+//
+// On failure (nothing set), the function clears session
+// state, writes an internal error to the response writer,
+// and returns nil. Callers should always return immediately
+// if receiving nil back from this function!
+func (m *Module) mustStringFromSession(
 	c *gin.Context,
 	s sessions.Session,
 	key string,

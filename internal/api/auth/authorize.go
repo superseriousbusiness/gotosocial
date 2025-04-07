@@ -58,7 +58,7 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		return
 	}
 
-	user := m.userFromSession(c, s)
+	user := m.mustUserFromSession(c, s)
 	if user == nil {
 		// Error already
 		// written.
@@ -81,21 +81,21 @@ func (m *Module) AuthorizeGETHandler(c *gin.Context) {
 		return
 	}
 
-	redirectURI := m.stringFromSession(c, s, sessionRedirectURI)
+	redirectURI := m.mustStringFromSession(c, s, sessionRedirectURI)
 	if redirectURI == "" {
 		// Error already
 		// written.
 		return
 	}
 
-	scope := m.stringFromSession(c, s, sessionScope)
+	scope := m.mustStringFromSession(c, s, sessionScope)
 	if scope == "" {
 		// Error already
 		// written.
 		return
 	}
 
-	app := m.appFromSession(c, s)
+	app := m.mustAppFromSession(c, s)
 	if app == nil {
 		// Error already
 		// written.
@@ -136,35 +136,35 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 	// can be validated by the oauth2 library.
 	s := sessions.Default(c)
 
-	responseType := m.stringFromSession(c, s, sessionResponseType)
+	responseType := m.mustStringFromSession(c, s, sessionResponseType)
 	if responseType == "" {
 		// Error already
 		// written.
 		return
 	}
 
-	clientID := m.stringFromSession(c, s, sessionClientID)
+	clientID := m.mustStringFromSession(c, s, sessionClientID)
 	if clientID == "" {
 		// Error already
 		// written.
 		return
 	}
 
-	redirectURI := m.stringFromSession(c, s, sessionRedirectURI)
+	redirectURI := m.mustStringFromSession(c, s, sessionRedirectURI)
 	if redirectURI == "" {
 		// Error already
 		// written.
 		return
 	}
 
-	scope := m.stringFromSession(c, s, sessionScope)
+	scope := m.mustStringFromSession(c, s, sessionScope)
 	if scope == "" {
 		// Error already
 		// written.
 		return
 	}
 
-	user := m.userFromSession(c, s)
+	user := m.mustUserFromSession(c, s)
 	if user == nil {
 		// Error already
 		// written.

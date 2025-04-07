@@ -37,14 +37,14 @@ func (m *Module) OOBTokenGETHandler(c *gin.Context) {
 		return
 	}
 
-	user := m.userFromSession(c, s)
+	user := m.mustUserFromSession(c, s)
 	if user == nil {
 		// Error already
 		// written.
 		return
 	}
 
-	scope := m.stringFromSession(c, s, sessionScope)
+	scope := m.mustStringFromSession(c, s, sessionScope)
 	if scope == "" {
 		// Error already
 		// written.
