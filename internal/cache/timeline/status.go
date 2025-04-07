@@ -41,7 +41,6 @@ type StatusMeta struct {
 	AccountID        string
 	BoostOfID        string
 	BoostOfAccountID string
-	Local            bool
 
 	// is an internal flag that may be set on
 	// a StatusMeta object that will prevent
@@ -677,7 +676,6 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 		AccountID:        status.AccountID,
 		BoostOfID:        status.BoostOfID,
 		BoostOfAccountID: status.BoostOfAccountID,
-		Local:            *status.Local,
 		repeatBoost:      repeatBoost,
 		loaded:           nil,
 		prepared:         prepared,
@@ -937,7 +935,6 @@ func toStatusMeta(statuses []*gtsmodel.Status) []*StatusMeta {
 			AccountID:        s.AccountID,
 			BoostOfID:        s.BoostOfID,
 			BoostOfAccountID: s.BoostOfAccountID,
-			Local:            *s.Local,
 			loaded:           s,
 			prepared:         nil,
 		}
