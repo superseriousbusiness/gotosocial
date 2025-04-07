@@ -1,6 +1,7 @@
 package structr
 
 import (
+	"os"
 	"reflect"
 	"strings"
 	"sync"
@@ -244,6 +245,39 @@ func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
 	return string(buf.B)
 }
 
+// add will attempt to add given index entry to appropriate
+// doubly-linked-list in index hashmap. in the case of an
+// existing entry in a "unique" index, it will return false.
+func (i *Index) add(key string, item *indexed_item) bool {
+	// Look for existing.
+	l := i.data.Get(key)
+
+	if l == nil {
+
+		// Allocate new.
+		l = new_list()
+		i.data.Put(key, l)
+
+	} else if is_unique(i.flags) {
+
+		// Collision!
+		return false
+	}
+
+	// Prepare new index entry.
+	entry := new_index_entry()
+	entry.item = item
+	entry.key = key
+	entry.index = i
+
+	// Add ourselves to item's index tracker.
+	item.indexed = append(item.indexed, entry)
+
+	// Add entry to index list.
+	l.push_front(&entry.elem)
+	return true
+}
+
 // append will append the given index entry to appropriate
 // doubly-linked-list in index hashmap. this handles case of
 // overwriting "unique" index entries, and removes from given
@@ -403,7 +437,8 @@ func new_index_entry() *index_entry {
 func free_index_entry(entry *index_entry) {
 	if entry.elem.next != nil ||
 		entry.elem.prev != nil {
-		should_not_reach(false)
+		msg := assert("entry not in use")
+		os.Stderr.WriteString(msg + "\n")
 		return
 	}
 	entry.key = ""

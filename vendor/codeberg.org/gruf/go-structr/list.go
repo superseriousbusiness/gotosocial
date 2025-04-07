@@ -1,6 +1,7 @@
 package structr
 
 import (
+	"os"
 	"sync"
 	"unsafe"
 )
@@ -43,7 +44,8 @@ func free_list(list *list) {
 	if list.head != nil ||
 		list.tail != nil ||
 		list.len != 0 {
-		should_not_reach(false)
+		msg := assert("list not in use")
+		os.Stderr.WriteString(msg + "\n")
 		return
 	}
 	list_pool.Put(list)
