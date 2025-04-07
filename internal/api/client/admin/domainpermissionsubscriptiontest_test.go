@@ -97,14 +97,21 @@ func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubs
 	suite.Equal(`[
   {
     "domain": "bumfaces.net",
-    "public_comment": "big jerks"
+    "public_comment": "big jerks",
+    "obfuscate": false,
+    "private_comment": ""
   },
   {
     "domain": "peepee.poopoo",
-    "public_comment": "harassment"
+    "public_comment": "harassment",
+    "obfuscate": false,
+    "private_comment": ""
   },
   {
-    "domain": "nothanks.com"
+    "domain": "nothanks.com",
+    "public_comment": "",
+    "obfuscate": false,
+    "private_comment": ""
   }
 ]`, dst.String())
 
@@ -177,13 +184,22 @@ func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubs
 	// Ensure expected.
 	suite.Equal(`[
   {
-    "domain": "bumfaces.net"
+    "domain": "bumfaces.net",
+    "public_comment": "",
+    "obfuscate": false,
+    "private_comment": ""
   },
   {
-    "domain": "peepee.poopoo"
+    "domain": "peepee.poopoo",
+    "public_comment": "",
+    "obfuscate": false,
+    "private_comment": ""
   },
   {
-    "domain": "nothanks.com"
+    "domain": "nothanks.com",
+    "public_comment": "",
+    "obfuscate": false,
+    "private_comment": ""
   }
 ]`, dst.String())
 

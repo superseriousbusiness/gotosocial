@@ -78,8 +78,8 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	}
 
 	if form.Bot != nil {
-		account.Bot = form.Bot
-		acctColumns = append(acctColumns, "bot")
+		account.ActorType = gtsmodel.AccountActorTypeService
+		acctColumns = append(acctColumns, "actor_type")
 	}
 
 	if form.Locked != nil {

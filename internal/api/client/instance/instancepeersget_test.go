@@ -136,7 +136,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "public_comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts"
   }
 ]`, dst.String())
 }
@@ -186,7 +186,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthori
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "public_comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts"
   }
 ]`, dst.String())
 }
@@ -219,7 +219,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "public_comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts"
   }
 ]`, dst.String())
 }
@@ -263,12 +263,12 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
   {
     "domain": "o*g.*u**.t**.*or*t.*r**ev**",
     "suspended_at": "2021-06-09T10:34:55.000Z",
-    "public_comment": "just absolutely the worst, wowza"
+    "comment": "just absolutely the worst, wowza"
   },
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "public_comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts"
   }
 ]`, dst.String())
 }

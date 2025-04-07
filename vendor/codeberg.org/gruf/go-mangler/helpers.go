@@ -1,4 +1,4 @@
-//go:build go1.19 || go1.20 || go1.21 || go1.22 || go1.23
+//go:build go1.19 && !go1.25
 
 package mangler
 

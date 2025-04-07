@@ -25,7 +25,6 @@ type Conn struct {
 	*sqlite
 
 	interrupt  context.Context
-	pending    *Stmt
 	stmts      []*Stmt
 	busy       func(context.Context, int) bool
 	log        func(xErrorCode, string)
@@ -41,6 +40,7 @@ type Conn struct {
 	busylst time.Time
 	arena   arena
 	handle  ptr_t
+	gosched uint8
 }
 
 // Open calls [OpenFlags] with [OPEN_READWRITE], [OPEN_CREATE] and [OPEN_URI].
@@ -49,7 +49,7 @@ func Open(filename string) (*Conn, error) {
 }
 
 // OpenContext is like [Open] but includes a context,
-// which is used to interrupt the process of opening the connectiton.
+// which is used to interrupt the process of opening the connection.
 func OpenContext(ctx context.Context, filename string) (*Conn, error) {
 	return newConn(ctx, filename, OPEN_READWRITE|OPEN_CREATE|OPEN_URI)
 }
@@ -92,6 +92,9 @@ func newConn(ctx context.Context, filename string, flags OpenFlag) (ret *Conn, _
 	}()
 
 	c.ctx = context.WithValue(c.ctx, connKey{}, c)
+	if logger := defaultLogger.Load(); logger != nil {
+		c.ConfigLog(*logger)
+	}
 	c.arena = c.newArena()
 	c.handle, err = c.openDB(filename, flags)
 	if err == nil {
@@ -117,7 +120,7 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (ptr_t, error) {
 		return 0, err
 	}
 
-	c.call("sqlite3_progress_handler_go", stk_t(handle), 100)
+	c.call("sqlite3_progress_handler_go", stk_t(handle), 1000)
 	if flags|OPEN_URI != 0 && strings.HasPrefix(filename, "file:") {
 		var pragmas strings.Builder
 		if _, after, ok := strings.Cut(filename, "?"); ok {
@@ -129,7 +132,6 @@ func (c *Conn) openDB(filename string, flags OpenFlag) (ptr_t, error) {
 			}
 		}
 		if pragmas.Len() != 0 {
-			c.checkInterrupt(handle)
 			pragmaPtr := c.arena.string(pragmas.String())
 			rc := res_t(c.call("sqlite3_exec", stk_t(handle), stk_t(pragmaPtr), 0, 0, 0))
 			if err := c.sqlite.error(rc, handle, pragmas.String()); err != nil {
@@ -163,9 +165,6 @@ func (c *Conn) Close() error {
 		return nil
 	}
 
-	c.pending.Close()
-	c.pending = nil
-
 	rc := res_t(c.call("sqlite3_close", stk_t(c.handle)))
 	if err := c.error(rc); err != nil {
 		return err
@@ -180,11 +179,16 @@ func (c *Conn) Close() error {
 //
 // https://sqlite.org/c3ref/exec.html
 func (c *Conn) Exec(sql string) error {
-	defer c.arena.mark()()
-	sqlPtr := c.arena.string(sql)
+	if c.interrupt.Err() != nil {
+		return INTERRUPT
+	}
+	return c.exec(sql)
+}
 
-	c.checkInterrupt(c.handle)
-	rc := res_t(c.call("sqlite3_exec", stk_t(c.handle), stk_t(sqlPtr), 0, 0, 0))
+func (c *Conn) exec(sql string) error {
+	defer c.arena.mark()()
+	textPtr := c.arena.string(sql)
+	rc := res_t(c.call("sqlite3_exec", stk_t(c.handle), stk_t(textPtr), 0, 0, 0))
 	return c.error(rc, sql)
 }
 
@@ -203,20 +207,22 @@ func (c *Conn) PrepareFlags(sql string, flags PrepareFlag) (stmt *Stmt, tail str
 	if len(sql) > _MAX_SQL_LENGTH {
 		return nil, "", TOOBIG
 	}
+	if c.interrupt.Err() != nil {
+		return nil, "", INTERRUPT
+	}
 
 	defer c.arena.mark()()
 	stmtPtr := c.arena.new(ptrlen)
 	tailPtr := c.arena.new(ptrlen)
-	sqlPtr := c.arena.string(sql)
+	textPtr := c.arena.string(sql)
 
-	c.checkInterrupt(c.handle)
 	rc := res_t(c.call("sqlite3_prepare_v3", stk_t(c.handle),
-		stk_t(sqlPtr), stk_t(len(sql)+1), stk_t(flags),
+		stk_t(textPtr), stk_t(len(sql)+1), stk_t(flags),
 		stk_t(stmtPtr), stk_t(tailPtr)))
 
-	stmt = &Stmt{c: c}
+	stmt = &Stmt{c: c, sql: sql}
 	stmt.handle = util.Read32[ptr_t](c.mod, stmtPtr)
-	if sql := sql[util.Read32[ptr_t](c.mod, tailPtr)-sqlPtr:]; sql != "" {
+	if sql := sql[util.Read32[ptr_t](c.mod, tailPtr)-textPtr:]; sql != "" {
 		tail = sql
 	}
 
@@ -337,43 +343,17 @@ func (c *Conn) GetInterrupt() context.Context {
 //
 // https://sqlite.org/c3ref/interrupt.html
 func (c *Conn) SetInterrupt(ctx context.Context) (old context.Context) {
+	if ctx == nil {
+		panic("nil Context")
+	}
 	old = c.interrupt
 	c.interrupt = ctx
-
-	if ctx == old || ctx.Done() == old.Done() {
-		return old
-	}
-
-	// A busy SQL statement prevents SQLite from ignoring an interrupt
-	// that comes before any other statements are started.
-	if c.pending == nil {
-		defer c.arena.mark()()
-		stmtPtr := c.arena.new(ptrlen)
-		loopPtr := c.arena.string(`WITH RECURSIVE c(x) AS (VALUES(0) UNION ALL SELECT x FROM c) SELECT x FROM c`)
-		c.call("sqlite3_prepare_v3", stk_t(c.handle), stk_t(loopPtr), math.MaxUint64,
-			stk_t(PREPARE_PERSISTENT), stk_t(stmtPtr), 0)
-		c.pending = &Stmt{c: c}
-		c.pending.handle = util.Read32[ptr_t](c.mod, stmtPtr)
-	}
-
-	if old.Done() != nil && ctx.Err() == nil {
-		c.pending.Reset()
-	}
-	if ctx.Done() != nil {
-		c.pending.Step()
-	}
 	return old
-}
-
-func (c *Conn) checkInterrupt(handle ptr_t) {
-	if c.interrupt.Err() != nil {
-		c.call("sqlite3_interrupt", stk_t(handle))
-	}
 }
 
 func progressCallback(ctx context.Context, mod api.Module, _ ptr_t) (interrupt int32) {
 	if c, ok := ctx.Value(connKey{}).(*Conn); ok {
-		if c.interrupt.Done() != nil {
+		if c.gosched++; c.gosched%16 == 0 {
 			runtime.Gosched()
 		}
 		if c.interrupt.Err() != nil {
@@ -429,11 +409,8 @@ func (c *Conn) BusyHandler(cb func(ctx context.Context, count int) (retry bool))
 
 func busyCallback(ctx context.Context, mod api.Module, pDB ptr_t, count int32) (retry int32) {
 	if c, ok := ctx.Value(connKey{}).(*Conn); ok && c.handle == pDB && c.busy != nil {
-		interrupt := c.interrupt
-		if interrupt == nil {
-			interrupt = context.Background()
-		}
-		if interrupt.Err() == nil && c.busy(interrupt, int(count)) {
+		if interrupt := c.interrupt; interrupt.Err() == nil &&
+			c.busy(interrupt, int(count)) {
 			retry = 1
 		}
 	}

@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
@@ -131,7 +130,7 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 			FollowingURI:          uris.FollowingURI,
 			FollowersURI:          uris.FollowersURI,
 			FeaturedCollectionURI: uris.FeaturedCollectionURI,
-			ActorType:             ap.ActorPerson,
+			ActorType:             gtsmodel.AccountActorTypePerson,
 			PrivateKey:            privKey,
 			PublicKey:             &privKey.PublicKey,
 			PublicKeyURI:          uris.PublicKeyURI,
@@ -283,7 +282,7 @@ func (a *adminDB) CreateInstanceAccount(ctx context.Context) error {
 		PrivateKey:            key,
 		PublicKey:             &key.PublicKey,
 		PublicKeyURI:          newAccountURIs.PublicKeyURI,
-		ActorType:             ap.ActorPerson,
+		ActorType:             gtsmodel.AccountActorTypeService,
 		URI:                   newAccountURIs.UserURI,
 		InboxURI:              newAccountURIs.InboxURI,
 		OutboxURI:             newAccountURIs.OutboxURI,

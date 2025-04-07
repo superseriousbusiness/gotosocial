@@ -204,7 +204,6 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	suite.Equal("https://owncast.example.org/logo/external", acct.HeaderRemoteURL)
 	suite.Equal("Rob's Owncast Server", acct.DisplayName)
 	suite.Equal("linux audio stuff", acct.Note)
-	suite.True(*acct.Bot)
 	suite.False(*acct.Locked)
 	suite.True(*acct.Discoverable)
 	suite.Equal("https://owncast.example.org/federation/user/rgh", acct.URI)
@@ -212,7 +211,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 	suite.Equal("https://owncast.example.org/federation/user/rgh/inbox", acct.InboxURI)
 	suite.Equal("https://owncast.example.org/federation/user/rgh/outbox", acct.OutboxURI)
 	suite.Equal("https://owncast.example.org/federation/user/rgh/followers", acct.FollowersURI)
-	suite.Equal("Service", acct.ActorType)
+	suite.Equal(gtsmodel.AccountActorTypeService, acct.ActorType)
 	suite.Equal("https://owncast.example.org/federation/user/rgh#main-key", acct.PublicKeyURI)
 
 	acct.ID = "01G42D57DTCJQE8XT9KD4K88RK"

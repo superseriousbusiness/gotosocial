@@ -2,6 +2,7 @@ package structr
 
 import (
 	"cmp"
+	"os"
 	"reflect"
 	"slices"
 	"sync"
@@ -43,7 +44,7 @@ type TimelineConfig[StructType any, PK cmp.Ordered] struct {
 	// case only a single field is permitted, though
 	// it may be nested, and as described above the
 	// type must conform to cmp.Ordered.
-	PKey string
+	PKey IndexConfig
 
 	// Indices defines indices to create
 	// in the Timeline for the receiving
@@ -103,14 +104,11 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	// The first index is created from PKey.
+	// The first index is created from PKey,
+	// other indices are created as expected.
 	t.indices = make([]Index, len(config.Indices)+1)
 	t.indices[0].ptr = unsafe.Pointer(t)
-	t.indices[0].init(rt, IndexConfig{
-		Fields:    config.PKey,
-		AllowZero: true,
-		Multiple:  true,
-	}, 0)
+	t.indices[0].init(rt, config.PKey, 0)
 	if len(t.indices[0].fields) > 1 {
 		panic("primary key must contain only 1 field")
 	}
@@ -119,8 +117,7 @@ func (t *Timeline[T, PK]) Init(config TimelineConfig[T, PK]) {
 		t.indices[i+1].init(rt, cfg, 0)
 	}
 
-	// Before extracting
-	// first index for pkey.
+	// Extract pkey details from index.
 	field := t.indices[0].fields[0]
 	t.pkey = pkey_field{
 		rtype:   field.rtype,
@@ -207,7 +204,7 @@ func (t *Timeline[T, PK]) Insert(values ...T) {
 	// Allocate a slice of our value wrapping struct type.
 	with_keys := make([]value_with_pk[T, PK], len(values))
 	if len(with_keys) != len(values) {
-		panic("BCE")
+		panic(assert("BCE"))
 	}
 
 	// Range the provided values.
@@ -387,6 +384,54 @@ func (t *Timeline[T, PK]) Range(dir Direction) func(yield func(T) bool) {
 	}
 }
 
+// RangeUnsafe is functionally similar to Range(), except it does not pass *copies* of
+// data. It allows you to operate on the data directly and modify it. As such it can also
+// be more performant to use this function, even for read-write operations.
+//
+// Please note that the entire Timeline{} will be locked for the duration of the range
+// operation, i.e. from the beginning of the first yield call until the end of the last.
+func (t *Timeline[T, PK]) RangeUnsafe(dir Direction) func(yield func(T) bool) {
+	return func(yield func(T) bool) {
+		if t.copy == nil {
+			panic("not initialized")
+		} else if yield == nil {
+			panic("nil func")
+		}
+
+		// Acquire lock.
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
+
+		switch dir {
+		case Asc:
+			// Iterate through linked list from bottom (i.e. tail).
+			for prev := t.list.tail; prev != nil; prev = prev.prev {
+
+				// Extract item from list element.
+				item := (*timeline_item)(prev.data)
+
+				// Pass to given function.
+				if !yield(item.data.(T)) {
+					break
+				}
+			}
+
+		case Desc:
+			// Iterate through linked list from top (i.e. head).
+			for next := t.list.head; next != nil; next = next.next {
+
+				// Extract item from list element.
+				item := (*timeline_item)(next.data)
+
+				// Pass to given function.
+				if !yield(item.data.(T)) {
+					break
+				}
+			}
+		}
+	}
+}
+
 // RangeKeys will iterate over all values for given keys in the given index.
 //
 // Please note that the entire Timeline{} will be locked for the duration of the range
@@ -421,6 +466,48 @@ func (t *Timeline[T, PK]) RangeKeys(index *Index, keys ...Key) func(yield func(T
 
 				// Pass val to yield function.
 				done = done || !yield(value)
+			})
+
+			if done {
+				break
+			}
+		}
+	}
+}
+
+// RangeKeysUnsafe is functionally similar to RangeKeys(), except it does not pass *copies*
+// of data. It allows you to operate on the data directly and modify it. As such it can also
+// be more performant to use this function, even for read-write operations.
+//
+// Please note that the entire Timeline{} will be locked for the duration of the range
+// operation, i.e. from the beginning of the first yield call until the end of the last.
+func (t *Timeline[T, PK]) RangeKeysUnsafe(index *Index, keys ...Key) func(yield func(T) bool) {
+	return func(yield func(T) bool) {
+		if t.copy == nil {
+			panic("not initialized")
+		} else if index == nil {
+			panic("no index given")
+		} else if index.ptr != unsafe.Pointer(t) {
+			panic("invalid index for timeline")
+		} else if yield == nil {
+			panic("nil func")
+		}
+
+		// Acquire lock.
+		t.mutex.Lock()
+		defer t.mutex.Unlock()
+
+		for _, key := range keys {
+			var done bool
+
+			// Iterate over values in index under key.
+			index.get(key.key, func(i *indexed_item) {
+
+				// Cast to timeline_item type.
+				item := to_timeline_item(i)
+
+				// Pass value data to yield function.
+				done = done || !yield(item.data.(T))
 			})
 
 			if done {
@@ -538,7 +625,7 @@ func (t *Timeline[T, PK]) select_asc(min PK, max *PK, length *int) (values []T) 
 		pkey := *(*PK)(item.pk)
 
 		// Check below min.
-		if pkey < min {
+		if pkey <= min {
 			continue
 		}
 
@@ -661,7 +748,7 @@ func (t *Timeline[T, PK]) select_desc(min *PK, max PK, length *int) (values []T)
 		pkey := *(*PK)(item.pk)
 
 		// Check above max.
-		if pkey > max {
+		if pkey >= max {
 			continue
 		}
 
@@ -804,60 +891,25 @@ func (t *Timeline[T, PK]) store_one(last *list_elem, value value_with_pk[T, PK])
 	t_item.data = value.v
 	t_item.pk = value.kptr
 
+	// Get zero'th index, i.e.
+	// the primary key index.
+	idx0 := (&t.indices[0])
+
 	// Acquire key buf.
 	buf := new_buffer()
 
-	// Convert to indexed_item ptr.
-	i_item := from_timeline_item(t_item)
-
-	// Append already-extracted
-	// primary key to 0th index.
-	idx := (&t.indices[0])
+	// Calculate index key from already extracted
+	// primary key, checking for zero return value.
 	partptrs := []unsafe.Pointer{value.kptr}
-	key := idx.key(buf, partptrs)
-	evicted := idx.append(key, i_item)
-	if evicted != nil {
-
-		// This item is no longer
-		// indexed, remove from list.
-		t.list.remove(&evicted.elem)
-
-		// Now convert from index_item ptr
-		// and release it to global mem pool.
-		evicted := to_timeline_item(evicted)
-		free_timeline_item(evicted)
+	key := idx0.key(buf, partptrs)
+	if key == "" { // i.e. (!allow_zero && pkey == zero)
+		free_timeline_item(t_item)
+		free_buffer(buf)
+		return last
 	}
 
-	for i := 1; i < len(t.indices); i++ {
-		// Get current index ptr.
-		idx := (&t.indices[i])
-
-		// Extract fields comprising index key from value.
-		parts := extract_fields(value.vptr, idx.fields)
-
-		// Calculate this index key.
-		key := idx.key(buf, parts)
-		if key == "" {
-			continue
-		}
-
-		// Append this item to index.
-		evicted := idx.append(key, i_item)
-		if evicted != nil {
-
-			// This item is no longer
-			// indexed, remove from list.
-			t.list.remove(&evicted.elem)
-
-			// Now convert from index_item ptr
-			// and release it to global mem pool.
-			evicted := to_timeline_item(evicted)
-			free_timeline_item(evicted)
-		}
-	}
-
-	// Done with buf.
-	free_buffer(buf)
+	// Convert to indexed_item pointer.
+	i_item := from_timeline_item(t_item)
 
 	if last == nil {
 		// No previous element was provided, this is
@@ -869,50 +921,127 @@ func (t *Timeline[T, PK]) store_one(last *list_elem, value value_with_pk[T, PK])
 			// The easiest case, this will
 			// be the first item in list.
 			t.list.push_front(&t_item.elem)
-			return t.list.head
+			last = t.list.head // return value
+			goto indexing
 		}
 
 		// Extract head item and its primary key.
 		headItem := (*timeline_item)(t.list.head.data)
 		headPK := *(*PK)(headItem.pk)
-		if value.k >= headPK {
+		if value.k > headPK {
 
 			// Another easier case, this also
 			// will be the first item in list.
 			t.list.push_front(&t_item.elem)
+			last = t.list.head // return value
+			goto indexing
+		}
+
+		// Check (and drop) if pkey is a collision!
+		if value.k == headPK && is_unique(idx0.flags) {
+			free_timeline_item(t_item)
+			free_buffer(buf)
 			return t.list.head
 		}
 
-		// Set last=head
-		// to work from.
-		last = t.list.head
+		// Set last = head.next
+		// as next to work from.
+		last = t.list.head.next
 	}
 
-	// Iterate through linked list
-	// from head to find location.
-	for next := last.next; //
-	next != nil; next = next.next {
+	// Iterate through list from head
+	// to find location. Optimized into two
+	// cases to minimize loop CPU cycles.
+	if is_unique(idx0.flags) {
+		for next := last; //
+		next != nil; next = next.next {
 
-		// Extract item and it's primary key.
-		nextItem := (*timeline_item)(next.data)
-		nextPK := *(*PK)(nextItem.pk)
+			// Extract item and it's primary key.
+			nextItem := (*timeline_item)(next.data)
+			nextPK := *(*PK)(nextItem.pk)
 
-		// If pkey smaller than
-		// cursor's, keep going.
-		if value.k < nextPK {
-			continue
+			// If pkey smaller than
+			// cursor's, keep going.
+			if value.k < nextPK {
+				continue
+			}
+
+			// Check (and drop) if
+			// pkey is a collision!
+			if value.k == nextPK {
+				free_timeline_item(t_item)
+				free_buffer(buf)
+				return next
+			}
+
+			// New pkey is larger than cursor,
+			// insert into list just before it.
+			t.list.insert(&t_item.elem, next.prev)
+			last = next // return value
+			goto indexing
 		}
+	} else {
+		for next := last; //
+		next != nil; next = next.next {
 
-		// New pkey is larger than cursor,
-		// insert into list just before it.
-		t.list.insert(&t_item.elem, next.prev)
-		return next
+			// Extract item and it's primary key.
+			nextItem := (*timeline_item)(next.data)
+			nextPK := *(*PK)(nextItem.pk)
+
+			// If pkey smaller than
+			// cursor's, keep going.
+			if value.k < nextPK {
+				continue
+			}
+
+			// New pkey is larger than cursor,
+			// insert into list just before it.
+			t.list.insert(&t_item.elem, next.prev)
+			last = next // return value
+			goto indexing
+		}
 	}
 
 	// We reached the end of the
 	// list, insert at tail pos.
 	t.list.push_back(&t_item.elem)
-	return t.list.tail
+	last = t.list.tail // return value
+	goto indexing
+
+indexing:
+	// Append already-extracted
+	// primary key to 0th index.
+	_ = idx0.add(key, i_item)
+
+	// Insert item into each of indices.
+	for i := 1; i < len(t.indices); i++ {
+
+		// Get current index ptr.
+		idx := (&t.indices[i])
+
+		// Extract fields comprising index key from value.
+		parts := extract_fields(value.vptr, idx.fields)
+
+		// Calculate this index key,
+		// checking for zero values.
+		key := idx.key(buf, parts)
+		if key == "" {
+			continue
+		}
+
+		// Add this item to index,
+		// checking for collisions.
+		if !idx.add(key, i_item) {
+
+			t.delete(t_item)
+			free_buffer(buf)
+			return last
+		}
+	}
+
+	// Done with bufs.
+	free_buffer(buf)
+	return last
 }
 
 func (t *Timeline[T, PK]) delete(i *timeline_item) {
@@ -957,7 +1086,7 @@ func init() {
 	// we rely on this to allow a ptr to one to be a ptr to either of them.
 	const off = unsafe.Offsetof(timeline_item{}.indexed_item)
 	if off != 0 {
-		panic("invalid timeline_item{}.indexed_item offset")
+		panic(assert("offset_of(timeline_item{}.indexed_item) = 0"))
 	}
 }
 
@@ -971,10 +1100,9 @@ func from_timeline_item(item *timeline_item) *indexed_item {
 func to_timeline_item(item *indexed_item) *timeline_item {
 	to := (*timeline_item)(unsafe.Pointer(item))
 	if to.ck != ^uint(0) {
-		// ensure check bits are
-		// set indicating it was a
-		// timeline_item originally.
-		should_not_reach(true)
+		// ensure check bits are set indicating
+		// it was a timeline_item originally.
+		panic(assert("check bits are set"))
 	}
 	return to
 }
@@ -999,7 +1127,8 @@ func free_timeline_item(item *timeline_item) {
 	if len(item.indexed) > 0 ||
 		item.elem.next != nil ||
 		item.elem.prev != nil {
-		should_not_reach(false)
+		msg := assert("item not in use")
+		os.Stderr.WriteString(msg + "\n")
 		return
 	}
 	item.data = nil

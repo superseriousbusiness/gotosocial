@@ -23,6 +23,7 @@ const (
 	TextToken
 	SvgToken
 	MathToken
+	TemplateToken
 )
 
 // String returns the string representation of a TokenType.
@@ -185,18 +186,19 @@ func (l *Lexer) Next() (TokenType, []byte) {
 			} else if c == '!' {
 				l.r.Move(2)
 				return l.readMarkup()
-			} else if 0 < len(l.tmplBegin) && l.at(l.tmplBegin...) {
-				l.r.Move(len(l.tmplBegin))
-				l.moveTemplate()
-				l.hasTmpl = true
 			} else if c == '?' {
 				l.r.Move(1)
 				return CommentToken, l.shiftBogusComment()
 			}
 		} else if 0 < len(l.tmplBegin) && l.at(l.tmplBegin...) {
+			if 0 < l.r.Pos() {
+				l.text = l.r.Shift()
+				return TextToken, l.text
+			}
 			l.r.Move(len(l.tmplBegin))
 			l.moveTemplate()
 			l.hasTmpl = true
+			return TemplateToken, l.r.Shift()
 		} else if c == 0 && l.r.Err() != nil {
 			if 0 < l.r.Pos() {
 				l.text = l.r.Shift()

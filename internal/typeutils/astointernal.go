@@ -70,19 +70,10 @@ func (c *Converter) ASRepresentationToAccount(
 	acct.URI = uri
 
 	// Check whether account is a usable actor type.
-	switch acct.ActorType = accountable.GetTypeName(); acct.ActorType {
-
-	// people, groups, and organizations aren't bots
-	case ap.ActorPerson, ap.ActorGroup, ap.ActorOrganization:
-		acct.Bot = util.Ptr(false)
-
-	// apps and services are
-	case ap.ActorApplication, ap.ActorService:
-		acct.Bot = util.Ptr(true)
-
-	// we don't know what this is!
-	default:
-		err := gtserror.Newf("unusable actor type for %s", uri)
+	actorTypeName := accountable.GetTypeName()
+	acct.ActorType = gtsmodel.ParseAccountActorType(actorTypeName)
+	if acct.ActorType == gtsmodel.AccountActorTypeUnknown {
+		err := gtserror.Newf("unusable actor type %s for %s", actorTypeName, uri)
 		return nil, gtserror.SetMalformed(err)
 	}
 
@@ -161,7 +152,7 @@ func (c *Converter) ASRepresentationToAccount(
 	acct.Note = ap.ExtractSummary(accountable)
 
 	// Assume not memorial (todo)
-	acct.Memorial = util.Ptr(false)
+	acct.MemorializedAt = time.Time{}
 
 	// Extract 'manuallyApprovesFollowers' aka locked account (default = true).
 	manuallyApprovesFollowers := ap.GetManuallyApprovesFollowers(accountable)

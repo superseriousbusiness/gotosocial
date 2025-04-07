@@ -40,39 +40,19 @@ function importEntriesProcessor(formData: ImportDomainPermsParams): (_entry: Dom
 
 	// Override each obfuscate entry if necessary.
 	if (formData.obfuscate !== undefined) {
-		const obfuscateEntry = (entry: DomainPerm) => {
+		processingFuncs.push((entry: DomainPerm) => {
 			entry.obfuscate = formData.obfuscate;
-		};
-		processingFuncs.push(obfuscateEntry);
+		});
 	}
 
-	// Check whether we need to append or replace
-	// private_comment and public_comment.
+	// Check whether we need to replace
+	// private_comment and/or public_comment.
 	["private_comment","public_comment"].forEach((commentType) => {
-		let text = formData.commentType?.trim();
-		if (!text) {
-			return;
-		}
-
-		switch(formData[`${commentType}_behavior`]) {
-			case "append":
-				const appendComment = (entry: DomainPerm) => {
-					if (entry.commentType == undefined) {
-						entry.commentType = text;
-					} else {
-						entry.commentType = [entry.commentType, text].join("\n");
-					}
-				};
-
-				processingFuncs.push(appendComment);
-				break;
-			case "replace":
-				const replaceComment = (entry: DomainPerm) => {
-					entry.commentType = text;
-				};
-
-				processingFuncs.push(replaceComment);
-				break;
+		if (formData[`replace_${commentType}`]) {
+			const text = formData[commentType]?.trim();
+			processingFuncs.push((entry: DomainPerm) => {
+				entry[commentType] = text;
+			});
 		}
 	});
 

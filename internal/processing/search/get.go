@@ -490,7 +490,7 @@ func (p *Processor) byURI(
 
 	if includeAccounts(queryType) {
 		// Check if URI points to an account.
-		foundAccount, err := p.accountByURI(ctx, requestingAccount, uri, resolve)
+		foundAccounts, err := p.accountsByURI(ctx, requestingAccount, uri, resolve)
 		if err != nil {
 			// Check for semi-expected error types.
 			// On one of these, we can continue.
@@ -508,7 +508,9 @@ func (p *Processor) byURI(
 		} else {
 			// Hit! Return early since it's extremely unlikely
 			// a status and an account will have the same URL.
-			appendAccount(foundAccount)
+			for _, foundAccount := range foundAccounts {
+				appendAccount(foundAccount)
+			}
 			return nil
 		}
 	}
@@ -544,35 +546,42 @@ func (p *Processor) byURI(
 	return nil
 }
 
-// accountByURI looks for one account with the given URI.
+// accountsByURI looks for one account with the given URI/ID,
+// then if nothing is found, multiple accounts with the given URL.
+//
 // If resolve is false, it will only look in the database.
 // If resolve is true, it will try to resolve the account
 // from remote using the URI, if necessary.
 //
 // Will return either a hit, ErrNotRetrievable, ErrWrongType,
 // or a real error that the caller should handle.
-func (p *Processor) accountByURI(
+func (p *Processor) accountsByURI(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 	uri *url.URL,
 	resolve bool,
-) (*gtsmodel.Account, error) {
+) ([]*gtsmodel.Account, error) {
 	if resolve {
 		// We're allowed to resolve, leave the
 		// rest up to the dereferencer functions.
+		//
+		// Allow dereferencing by URL and not just URI;
+		// there are many cases where someone might
+		// paste a URL into the search bar.
 		account, _, err := p.federator.GetAccountByURI(
 			gtscontext.SetFastFail(ctx),
 			requestingAccount.Username,
 			uri,
+			true,
 		)
 
-		return account, err
+		return []*gtsmodel.Account{account}, err
 	}
 
 	// We're not allowed to resolve; search database only.
 	uriStr := uri.String() // stringify uri just once
 
-	// Search by ActivityPub URI.
+	// Search for single acct by ActivityPub URI.
 	account, err := p.state.DB.GetAccountByURI(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("error checking database for account using URI %s: %w", uriStr, err)
@@ -581,22 +590,22 @@ func (p *Processor) accountByURI(
 
 	if account != nil {
 		// We got a hit! No need to continue.
-		return account, nil
+		return []*gtsmodel.Account{account}, nil
 	}
 
-	// No hit yet. Fallback to try by URL.
-	account, err = p.state.DB.GetAccountByURL(ctx, uriStr)
+	// No hit yet. Fallback to look for any accounts with URL.
+	accounts, err := p.state.DB.GetAccountsByURL(ctx, uriStr)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("error checking database for account using URL %s: %w", uriStr, err)
+		err = gtserror.Newf("error checking database for accounts using URL %s: %w", uriStr, err)
 		return nil, err
 	}
 
-	if account != nil {
-		// We got a hit! No need to continue.
-		return account, nil
+	if len(accounts) != 0 {
+		// We got hits! No need to continue.
+		return accounts, nil
 	}
 
-	err = fmt.Errorf("account %s could not be retrieved locally and we cannot resolve", uriStr)
+	err = fmt.Errorf("account(s) %s could not be retrieved locally and we cannot resolve", uriStr)
 	return nil, gtserror.SetUnretrievable(err)
 }
 

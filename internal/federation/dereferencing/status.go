@@ -454,7 +454,8 @@ func (d *Dereferencer) enrichStatus(
 
 	// Ensure we have the author account of the status dereferenced (+ up-to-date). If this is a new status
 	// (i.e. status.AccountID == "") then any error here is irrecoverable. status.AccountID must ALWAYS be set.
-	if _, _, err := d.getAccountByURI(ctx, requestUser, attributedTo); err != nil && status.AccountID == "" {
+	// We want the exact URI match here as well, not the imprecise URL match.
+	if _, _, err := d.getAccountByURI(ctx, requestUser, attributedTo, false); err != nil && status.AccountID == "" {
 
 		// Note that we specifically DO NOT wrap the error, instead collapsing it as string.
 		// Errors fetching an account do not necessarily relate to dereferencing the status.
@@ -671,7 +672,7 @@ func (d *Dereferencer) fetchStatusMentions(
 
 		// Search existing status for a mention already stored,
 		// else ensure new mention's target account is populated.
-		mention, alreadyExists, err = d.getPopulatedMention(ctx,
+		mention, alreadyExists, err = d.populateMentionTarget(ctx,
 			requestUser,
 			existing,
 			mention,
@@ -1290,7 +1291,7 @@ func (d *Dereferencer) handleStatusEdit(
 	return cols, nil
 }
 
-// getPopulatedMention tries to populate the given
+// populateMentionTarget tries to populate the given
 // mention with the correct TargetAccount and (if not
 // yet set) TargetAccountURI, returning the populated
 // mention.
@@ -1302,7 +1303,13 @@ func (d *Dereferencer) handleStatusEdit(
 // Otherwise, this function will try to parse first
 // the Href of the mention, and then the namestring,
 // to see who it targets, and go fetch that account.
-func (d *Dereferencer) getPopulatedMention(
+//
+// Note: Ordinarily it would make sense to try the
+// namestring first, as it definitely can't be a URL
+// rather than a URI, but because some remotes do
+// silly things like only provide `@username` instead
+// of `@username@domain`, we try by URI first.
+func (d *Dereferencer) populateMentionTarget(
 	ctx context.Context,
 	requestUser string,
 	existing *gtsmodel.Status,
@@ -1312,8 +1319,9 @@ func (d *Dereferencer) getPopulatedMention(
 	bool, // True if mention already exists in the DB.
 	error,
 ) {
-	// Mentions can be created using Name or Href.
-	// Prefer Href (TargetAccountURI), fall back to Name.
+	// Mentions can be created using `name` or `href`.
+	//
+	// Prefer `href` (TargetAccountURI), fall back to Name.
 	if mention.TargetAccountURI != "" {
 
 		// Look for existing mention with target account's URI, if so use this.
@@ -1323,19 +1331,24 @@ func (d *Dereferencer) getPopulatedMention(
 		}
 
 		// Ensure that mention account URI is parseable.
-		accountURI, err := url.Parse(mention.TargetAccountURI)
+		targetAccountURI, err := url.Parse(mention.TargetAccountURI)
 		if err != nil {
 			err := gtserror.Newf("invalid account uri %q: %w", mention.TargetAccountURI, err)
 			return nil, false, err
 		}
 
-		// Ensure we have  account of the mention target dereferenced.
+		// Ensure we have the account of
+		// the mention target dereferenced.
+		//
+		// Use exact URI match only, not URL,
+		// as we want to be precise here.
 		mention.TargetAccount, _, err = d.getAccountByURI(ctx,
 			requestUser,
-			accountURI,
+			targetAccountURI,
+			false,
 		)
 		if err != nil {
-			err := gtserror.Newf("failed to dereference account %s: %w", accountURI, err)
+			err := gtserror.Newf("failed to dereference account %s: %w", targetAccountURI, err)
 			return nil, false, err
 		}
 	} else {
@@ -1353,14 +1366,29 @@ func (d *Dereferencer) getPopulatedMention(
 			return existingMention, true, nil
 		}
 
-		// Ensure we have the account of the mention target dereferenced.
+		// Ensure we have the account of
+		// the mention target dereferenced.
+		//
+		// This might fail if the remote does
+		// something silly like only setting
+		// `@username` and not `@username@domain`.
 		mention.TargetAccount, _, err = d.getAccountByUsernameDomain(ctx,
 			requestUser,
 			username,
 			domain,
 		)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err := gtserror.Newf("failed to dereference account %s: %w", mention.NameString, err)
+			return nil, false, err
+		}
+
+		if mention.TargetAccount == nil {
+			// Probably failed for abovementioned
+			// silly reason. Nothing we can do about it.
+			err := gtserror.Newf(
+				"failed to populate mention target account (badly formatted namestring?) %s: %w",
+				mention.NameString, err,
+			)
 			return nil, false, err
 		}
 

@@ -93,29 +93,29 @@
   font-family: "Atkinson Hyperlegible";
   font-weight: normal;
   font-style: normal;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2) format('woff2');
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Regular-102.woff) format('woff');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2) format('woff2'),
+       url(/assets/fonts/Atkinson-Hyperlegible-Regular-102.woff) format('woff');
 }
 @font-face {
   font-family: "Atkinson Hyperlegible";
   font-weight: bold;
   font-style: normal;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Bold-102a.woff2) format('woff2');
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Bold-102.woff) format('woff');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Bold-102a.woff2) format('woff2'),
+      url(/assets/fonts/Atkinson-Hyperlegible-Bold-102.woff) format('woff');
 }
 @font-face {
   font-family: "Atkinson Hyperlegible";
   font-weight: normal;
   font-style: italic;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Italic-102a.woff2) format('woff2');
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Italic-102.woff) format('woff');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-Italic-102a.woff2) format('woff2'),
+       url(/assets/fonts/Atkinson-Hyperlegible-Italic-102.woff) format('woff');
 }
 @font-face {
   font-family: "Atkinson Hyperlegible";
   font-weight: bold;
   font-style: italic;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2) format('woff2');
-  src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff) format('woff');
+  src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2) format('woff2'),
+       url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff) format('woff');
 }
 
 /* Main page background */
