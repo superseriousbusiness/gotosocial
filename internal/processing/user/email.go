@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
@@ -41,7 +42,10 @@ func (p *Processor) EmailChange(
 	newEmail string,
 ) (*apimodel.User, gtserror.WithCode) {
 	// Ensure provided password is correct.
-	if err := bcrypt.CompareHashAndPassword([]byte(user.EncryptedPassword), []byte(password)); err != nil {
+	if err := bcrypt.CompareHashAndPassword(
+		byteutil.S2B(user.EncryptedPassword),
+		byteutil.S2B(password),
+	); err != nil {
 		err := gtserror.Newf("%w", err)
 		return nil, gtserror.NewErrorUnauthorized(err, "password was incorrect")
 	}

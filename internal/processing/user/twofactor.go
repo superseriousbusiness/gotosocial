@@ -31,6 +31,7 @@ import (
 	"strings"
 	"time"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/google/uuid"
 	"github.com/pquerna/otp"
 	"github.com/pquerna/otp/totp"
@@ -251,8 +252,8 @@ func (p *Processor) TwoFactorDisable(
 
 	// Ensure provided password is correct.
 	if err := bcrypt.CompareHashAndPassword(
-		[]byte(user.EncryptedPassword),
-		[]byte(password),
+		byteutil.S2B(user.EncryptedPassword),
+		byteutil.S2B(password),
 	); err != nil {
 		const errText = "incorrect password"
 		return gtserror.NewErrorUnauthorized(errors.New(errText), errText)

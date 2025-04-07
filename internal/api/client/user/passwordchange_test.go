@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"testing"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
@@ -50,11 +51,17 @@ func (suite *PasswordChangeTestSuite) TestPasswordChangePOST() {
 	}
 
 	// new password should pass
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("peepeepoopoopassword"))
+	err = bcrypt.CompareHashAndPassword(
+		byteutil.S2B(dbUser.EncryptedPassword),
+		byteutil.S2B("peepeepoopoopassword"),
+	)
 	suite.NoError(err)
 
 	// old password should fail
-	err = bcrypt.CompareHashAndPassword([]byte(dbUser.EncryptedPassword), []byte("password"))
+	err = bcrypt.CompareHashAndPassword(
+		byteutil.S2B(dbUser.EncryptedPassword),
+		byteutil.S2B("password"),
+	)
 	suite.EqualError(err, "crypto/bcrypt: hashedPassword is not the hash of the given password")
 }
 

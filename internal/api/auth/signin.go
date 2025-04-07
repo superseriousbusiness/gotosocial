@@ -25,6 +25,7 @@ import (
 	"slices"
 	"strings"
 
+	"codeberg.org/gruf/go-byteutil"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/pquerna/otp/totp"
@@ -169,8 +170,8 @@ func (m *Module) validatePassword(
 	}
 
 	if err := bcrypt.CompareHashAndPassword(
-		[]byte(user.EncryptedPassword),
-		[]byte(password),
+		byteutil.S2B(user.EncryptedPassword),
+		byteutil.S2B(password),
 	); err != nil {
 		err := fmt.Errorf("password hash didn't match for user %s during sign in attempt: %s", user.Email, err)
 		return incorrectPassword(err)
@@ -278,8 +279,8 @@ func (m *Module) validate2FACode(c *gin.Context, user *gtsmodel.User, code strin
 	// Check against the user's stored codes.
 	for i := 0; i < len(user.TwoFactorBackups); i++ {
 		err := bcrypt.CompareHashAndPassword(
-			[]byte(user.TwoFactorBackups[i]),
-			[]byte(code),
+			byteutil.S2B(user.TwoFactorBackups[i]),
+			byteutil.S2B(code),
 		)
 		if err != nil {
 			// Doesn't match,
