@@ -680,8 +680,11 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 	return
 }
 
+// insert will insert given StatusMeta into timeline, and
+// if beyond t.max will initiate a timeline trim operation.
 func (t *StatusTimeline) insert(metas ...*StatusMeta) {
 	if t.cache.Insert(metas...) > t.max {
+
 		// If cache reached beyond
 		// maximum, perform a trim.
 		t.Trim()
