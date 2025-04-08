@@ -34,6 +34,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
+const repeatBoostDepth = 40
+
 // StatusMeta contains minimum viable metadata
 // about a Status in order to cache a timeline.
 type StatusMeta struct {
@@ -381,6 +383,29 @@ func (t *StatusTimeline) Preload(
 		n = t.cache.Insert(metas...)
 	}
 
+	// This is a potentially 100-1000s size map,
+	// but still easily manageable memory-wise.
+	recentBoosts := make(map[string]int, t.cut)
+
+	// Iterate the entire timeline cache and mark repeat boosts.
+	for idx, value := range t.cache.RangeUnsafe(structr.Asc) {
+
+		// Store current ID in map.
+		recentBoosts[value.ID] = idx
+
+		// If it's a boost, check if the original,
+		// or a boost of it has been seen recently.
+		if id := value.BoostOfID; id != "" {
+
+			// Check if seen recently.
+			last := recentBoosts[id]
+			value.repeatBoost = last < 40
+
+			// Update last-seen idx.
+			recentBoosts[id] = idx
+		}
+	}
+
 	return n, nil
 }
 
@@ -703,8 +728,6 @@ func LoadStatusTimeline(
 // the return value indicates whether the passed status has been boosted recently on the timeline.
 func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) (repeatBoost bool) {
 	if status.BoostOfID != "" {
-		const repeatBoostDepth = 40
-
 		// Check through top $repeatBoostDepth number of timeline items.
 		for i, value := range t.cache.RangeUnsafe(structr.Desc) {
 			if i >= repeatBoostDepth {
