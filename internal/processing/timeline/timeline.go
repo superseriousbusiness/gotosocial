@@ -70,7 +70,7 @@ func (p *Processor) getStatusTimeline(
 	pageQuery url.Values,
 	filterCtx statusfilter.FilterContext,
 	loadPage func(*paging.Page) (statuses []*gtsmodel.Status, err error),
-	filter func(*gtsmodel.Status) (bool, error),
+	filter func(*gtsmodel.Status) (delete bool),
 ) (
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
@@ -80,7 +80,6 @@ func (p *Processor) getStatusTimeline(
 	var mutes *usermute.CompiledUserMuteList
 
 	if requester != nil {
-
 		// Fetch all filters relevant for requesting account.
 		filters, err = p.state.DB.GetFiltersForAccountID(ctx,
 			requester.ID,

@@ -191,7 +191,7 @@ func (t *StatusTimeline) Preload(
 	// filter can be used to perform filtering of returned
 	// statuses BEFORE insert into cache. i.e. this will effect
 	// what actually gets stored in the timeline cache.
-	filter func(each *gtsmodel.Status) (delete bool, err error),
+	filter func(each *gtsmodel.Status) (delete bool),
 ) (
 	n int,
 	err error,
@@ -218,7 +218,7 @@ func (t *StatusTimeline) preload(
 	// filter can be used to perform filtering of returned
 	// statuses BEFORE insert into cache. i.e. this will effect
 	// what actually gets stored in the timeline cache.
-	filter func(each *gtsmodel.Status) (delete bool, err error),
+	filter func(each *gtsmodel.Status) (delete bool),
 ) (int, error) {
 	if loadPage == nil {
 		panic("nil load page func")
@@ -259,10 +259,7 @@ func (t *StatusTimeline) preload(
 		page.Max.Value = statuses[len(statuses)-1].ID
 
 		// Perform any filtering on newly loaded statuses.
-		statuses, err = doStatusFilter(statuses, filter)
-		if err != nil {
-			return n, gtserror.Newf("error filtering statuses: %w", err)
-		}
+		statuses = doStatusFilter(statuses, filter)
 
 		// After filtering no more
 		// statuses remain, retry.
@@ -320,8 +317,8 @@ func (t *StatusTimeline) Load(
 	// to load status models of already cached entries in the timeline.
 	loadIDs func(ids []string) (statuses []*gtsmodel.Status, err error),
 
-	// filter can be used to perform filtering of returned statuses.
-	filter func(each *gtsmodel.Status) (delete bool, err error),
+	// filter performs filtering of returned statuses.
+	filter func(each *gtsmodel.Status) (delete bool),
 
 	// prepareAPI should prepare internal status model to frontend API model.
 	prepareAPI func(status *gtsmodel.Status) (apiStatus *apimodel.Status, err error),
@@ -447,7 +444,7 @@ func loadStatusTimeline(
 	metas []*StatusMeta,
 	apiStatuses []*apimodel.Status,
 	loadPage func(page *paging.Page) (statuses []*gtsmodel.Status, err error),
-	filter func(each *gtsmodel.Status) (delete bool, err error),
+	filter func(each *gtsmodel.Status) (delete bool),
 	prepareAPI func(status *gtsmodel.Status) (apiStatus *apimodel.Status, err error),
 ) (
 	[]*apimodel.Status,
@@ -504,10 +501,7 @@ func loadStatusTimeline(
 		nextPageParams(nextPg, statuses[len(statuses)-1].ID, order)
 
 		// Perform any filtering on newly loaded statuses.
-		statuses, err = doStatusFilter(statuses, filter)
-		if err != nil {
-			return nil, "", "", gtserror.Newf("error filtering statuses: %w", err)
-		}
+		statuses = doStatusFilter(statuses, filter)
 
 		// After filtering no more
 		// statuses remain, retry.
@@ -829,34 +823,14 @@ func toStatusMeta(in []*StatusMeta, statuses []*gtsmodel.Status) []*StatusMeta {
 }
 
 // doStatusFilter performs given filter function on provided statuses,
-// returning early if an error is returned. returns filtered statuses.
-func doStatusFilter(statuses []*gtsmodel.Status, filter func(*gtsmodel.Status) (bool, error)) ([]*gtsmodel.Status, error) {
+func doStatusFilter(statuses []*gtsmodel.Status, filter func(*gtsmodel.Status) bool) []*gtsmodel.Status {
 
 	// Check for provided
 	// filter function.
 	if filter == nil {
-		return statuses, nil
+		return statuses
 	}
 
-	// Iterate through input statuses.
-	for i := 0; i < len(statuses); {
-		status := statuses[i]
-
-		// Pass through filter func.
-		ok, err := filter(status)
-		if err != nil {
-			return nil, err
-		}
-
-		if ok {
-			// Delete this status from input slice.
-			statuses = slices.Delete(statuses, i, i+1)
-			continue
-		}
-
-		// Iter.
-		i++
-	}
-
-	return statuses, nil
+	// Filter the provided input statuses.
+	return slices.DeleteFunc(statuses, filter)
 }
