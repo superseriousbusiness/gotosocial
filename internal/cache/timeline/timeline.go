@@ -18,9 +18,18 @@
 package timeline
 
 import (
+	"time"
+
 	"codeberg.org/gruf/go-structr"
+	"github.com/superseriousbusiness/gotosocial/internal/id"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
+
+// plus24hULID returns a ULID for now+24h.
+func plus24hULID() string {
+	t := time.Now().Add(24 * time.Hour)
+	return id.NewULIDFromTime(t)
+}
 
 // nextPageParams gets the next set of paging
 // parameters to use based on the current set,

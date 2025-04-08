@@ -351,6 +351,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		intFilter,
 	)
 
+	// Preload our local user's streaming timeline caches.
+	if err := process.Timeline().Preload(ctx); err != nil {
+		return fmt.Errorf("error preloading timelines: %w", err)
+	}
+
 	// Schedule background cleaning tasks.
 	if err := cleaner.ScheduleJobs(); err != nil {
 		return fmt.Errorf("error scheduling cleaner jobs: %w", err)
