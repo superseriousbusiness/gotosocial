@@ -346,11 +346,6 @@ func (t *StatusTimeline) Load(
 	nextPg.Min.Value = lo
 	nextPg.Max.Value = hi
 
-	// Reset lo, hi values from being
-	// used as input arguments, ready
-	// to be updated for return.
-	lo, hi = "", ""
-
 	// Interstitial meta objects.
 	var metas []*StatusMeta
 
