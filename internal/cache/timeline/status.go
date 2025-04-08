@@ -346,6 +346,11 @@ func (t *StatusTimeline) Load(
 	nextPg.Min.Value = lo
 	nextPg.Max.Value = hi
 
+	// Reset lo, hi values from being
+	// used as input arguments, ready
+	// to be updated for return.
+	lo, hi = "", ""
+
 	// Interstitial meta objects.
 	var metas []*StatusMeta
 
@@ -373,11 +378,6 @@ func (t *StatusTimeline) Load(
 			util.PtrIf(limit),
 			dir,
 		)
-
-		// Reset lo, hi values from being
-		// used as input arguments, ready
-		// to be updated for return.
-		lo, hi = "", ""
 
 		if len(metas) > 0 {
 			// Before we can do any filtering, we need
