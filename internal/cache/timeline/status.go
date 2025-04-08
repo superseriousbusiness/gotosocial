@@ -561,7 +561,7 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 	}
 
 	if status.BoostOfID != "" {
-		// Check through top $repeatBoostDepth number of timeline items.
+		// Check through top $repeatBoostDepth number of items.
 		for i, value := range t.cache.RangeUnsafe(structr.Desc) {
 			if i >= repeatBoostDepth {
 				break
@@ -576,8 +576,8 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 		}
 	}
 
-	// Insert new status into timeline.
-	if t.cache.Insert(&StatusMeta{
+	// Insert new timeline status.
+	t.cache.Insert(&StatusMeta{
 		ID:               status.ID,
 		AccountID:        status.AccountID,
 		BoostOfID:        status.BoostOfID,
@@ -585,12 +585,7 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 		repeatBoost:      skip,
 		loaded:           nil,
 		prepared:         prepared,
-	}) > t.max {
-
-		// If cache reached beyond
-		// maximum, perform a trim.
-		t.Trim()
-	}
+	})
 
 	return
 }
