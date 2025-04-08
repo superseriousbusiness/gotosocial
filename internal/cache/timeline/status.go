@@ -514,7 +514,7 @@ func (t *StatusTimeline) Load(
 	if len(justLoaded) > 0 {
 		// Even if not returning them, insert
 		// the excess (filtered) into cache.
-		t.insert(justLoaded...)
+		_ = t.cache.Insert(justLoaded...)
 	}
 
 	return apiStatuses, lo, hi, nil
@@ -670,8 +670,8 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 		}
 	}
 
-	// Insert into timeline.
-	t.insert(&StatusMeta{
+	// Insert new status into timeline.
+	if t.cache.Insert(&StatusMeta{
 		ID:               status.ID,
 		AccountID:        status.AccountID,
 		BoostOfID:        status.BoostOfID,
@@ -679,20 +679,14 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 		repeatBoost:      repeatBoost,
 		loaded:           nil,
 		prepared:         prepared,
-	})
-
-	return
-}
-
-// insert will insert given StatusMeta into timeline, and
-// if beyond t.max will initiate a timeline trim operation.
-func (t *StatusTimeline) insert(metas ...*StatusMeta) {
-	if t.cache.Insert(metas...) > t.max {
+	}) > t.max {
 
 		// If cache reached beyond
 		// maximum, perform a trim.
 		t.Trim()
 	}
+
+	return
 }
 
 // RemoveByStatusID removes all cached timeline entries pertaining to
