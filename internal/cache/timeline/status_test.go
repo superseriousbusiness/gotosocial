@@ -273,6 +273,12 @@ func TestStatusTimelineTrim(t *testing.T) {
 	assert.NotEqual(t, minID2, minStatus(&tt).ID)
 	assert.False(t, containsStatusID(&tt, minID1))
 	assert.False(t, containsStatusID(&tt, minID2))
+
+	// Trim at desired length
+	// should cause no change.
+	before := tt.cache.Len()
+	tt.Trim()
+	assert.Equal(t, before, tt.cache.Len())
 }
 
 // containsStatusID returns whether timeline contains a status with ID.

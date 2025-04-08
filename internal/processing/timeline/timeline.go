@@ -24,11 +24,12 @@ import (
 	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
+	timelinepkg "github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -61,10 +62,48 @@ func New(state *state.State, converter *typeutils.Converter, visFilter *visibili
 	}
 }
 
+// Preload ...
+func (p *Processor) Preload(ctx context.Context) error {
+
+	// Get all of our local user accounts.
+	users, err := p.state.DB.GetAllUsers(ctx)
+	if err != nil {
+		return gtserror.Newf("error getting users: %w", err)
+	}
+
+	for _, user := range users {
+		// Get associated account.
+		account := user.Account
+
+		// Preload this user account's home timeline cache.
+		if err := p.preloadHomeTimeline(ctx, account); err != nil {
+			return gtserror.Newf("error preloading home timeline: %w", err)
+		}
+
+		// Get all lists owned by this user account.
+		lists, err := p.state.DB.GetListsByAccountID(
+			gtscontext.SetBarebones(ctx),
+			account.ID,
+		)
+		if err != nil {
+			return gtserror.Newf("error getting account %s lists: %w", account.ID, err)
+		}
+
+		for _, list := range lists {
+			// Preload each of this user account's list timeline caches.
+			if err := p.preloadListTimeline(ctx, account, list); err != nil {
+				return gtserror.Newf("error preloading list timeline: %w", err)
+			}
+		}
+	}
+
+	return nil
+}
+
 func (p *Processor) getStatusTimeline(
 	ctx context.Context,
 	requester *gtsmodel.Account,
-	cache *timeline.StatusTimeline,
+	timeline *timelinepkg.StatusTimeline,
 	page *paging.Page,
 	pagePath string,
 	pageQuery url.Values,
@@ -128,10 +167,10 @@ func (p *Processor) getStatusTimeline(
 		return apiStatus, nil
 	}
 
-	if cache != nil {
+	if timeline != nil {
 		// Load status page via timeline cache, also
 		// getting lo, hi values for next, prev pages.
-		apiStatuses, lo, hi, err = cache.Load(ctx,
+		apiStatuses, lo, hi, err = timeline.Load(ctx,
 
 			// Status page
 			// to load.
@@ -157,7 +196,7 @@ func (p *Processor) getStatusTimeline(
 	} else {
 		// Load status page without a receiving timeline cache.
 		// TODO: remove this code path when all support caching.
-		apiStatuses, lo, hi, err = timeline.LoadStatusTimeline(ctx,
+		apiStatuses, lo, hi, err = timelinepkg.LoadStatusTimeline(ctx,
 			page,
 			loadPage,
 			func(ids []string) ([]*gtsmodel.Status, error) {
