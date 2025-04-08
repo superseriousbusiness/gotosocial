@@ -28,7 +28,8 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// HomeTimelineGet ...
+// HomeTimelineGet gets a pageable timeline of statuses
+// in the home timeline of the requesting account.
 func (p *Processor) HomeTimelineGet(
 	ctx context.Context,
 	requester *gtsmodel.Account,

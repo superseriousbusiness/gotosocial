@@ -110,6 +110,9 @@ func (p *Processor) getStatusTimeline(
 
 	// Load status page via timeline cache, also
 	// getting lo, hi values for next, prev pages.
+	//
+	// NOTE: this safely handles the case of a nil
+	// input timeline, i.e. uncached timeline type.
 	apiStatuses, lo, hi, err := timeline.Load(ctx,
 
 		// Status page

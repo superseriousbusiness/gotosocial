@@ -27,7 +27,11 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// PublicTimelineGet ...
+// PublicTimelineGet gets a pageable timeline of public statuses
+// for the given requesting account. It ensures that each status
+// in timeline is visible to the account before returning it.
+//
+// The local argument limits this to local-only statuses.
 func (p *Processor) PublicTimelineGet(
 	ctx context.Context,
 	requester *gtsmodel.Account,
