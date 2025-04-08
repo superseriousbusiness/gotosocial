@@ -25,7 +25,6 @@ import (
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
@@ -94,32 +93,32 @@ func (p *Processor) HomeTimelineGet(
 
 // preloadHomeTimeline will ensure that the timeline
 // cache for home owned by given account is preloaded.
-func (p *Processor) preloadHomeTimeline(
-	ctx context.Context,
-	account *gtsmodel.Account,
-) error {
+// func (p *Processor) preloadHomeTimeline(
+// 	ctx context.Context,
+// 	account *gtsmodel.Account,
+// ) error {
 
-	// Get (and so, create) home timeline cache for account ID.
-	timeline := p.state.Caches.Timelines.Home.MustGet(account.ID)
+// 	// Get (and so, create) home timeline cache for account ID.
+// 	timeline := p.state.Caches.Timelines.Home.MustGet(account.ID)
 
-	// Preload timeline with funcs.
-	n, err := timeline.Preload(ctx,
+// 	// Preload timeline with funcs.
+// 	n, err := timeline.Preload(ctx,
 
-		// Database load function.
-		func(page *paging.Page) ([]*gtsmodel.Status, error) {
-			return p.state.DB.GetHomeTimeline(ctx, account.ID, page)
-		},
+// 		// Database load function.
+// 		func(page *paging.Page) ([]*gtsmodel.Status, error) {
+// 			return p.state.DB.GetHomeTimeline(ctx, account.ID, page)
+// 		},
 
-		// Status filtering function.
-		func(status *gtsmodel.Status) (bool, error) {
-			ok, err := p.visFilter.StatusHomeTimelineable(ctx, account, status)
-			return !ok, err
-		},
-	)
-	if err != nil {
-		return gtserror.Newf("error preloading home timeline %s: %w", account.ID, err)
-	}
+// 		// Status filtering function.
+// 		func(status *gtsmodel.Status) (bool, error) {
+// 			ok, err := p.visFilter.StatusHomeTimelineable(ctx, account, status)
+// 			return !ok, err
+// 		},
+// 	)
+// 	if err != nil {
+// 		return gtserror.Newf("error preloading home timeline %s: %w", account.ID, err)
+// 	}
 
-	log.Infof(ctx, "%s: preloaded %d", account.Username, n)
-	return nil
-}
+// 	log.Infof(ctx, "%s: preloaded %d", account.Username, n)
+// 	return nil
+// }

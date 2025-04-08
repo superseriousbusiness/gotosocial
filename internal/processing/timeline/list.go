@@ -27,7 +27,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
@@ -107,33 +106,33 @@ func (p *Processor) ListTimelineGet(
 
 // preloadListTimeline will ensure that the timeline
 // cache for list owned by given account is preloaded.
-func (p *Processor) preloadListTimeline(
-	ctx context.Context,
-	account *gtsmodel.Account,
-	list *gtsmodel.List,
-) error {
+// func (p *Processor) preloadListTimeline(
+// 	ctx context.Context,
+// 	account *gtsmodel.Account,
+// 	list *gtsmodel.List,
+// ) error {
 
-	// Get (and so, create) list timeline cache for list ID.
-	timeline := p.state.Caches.Timelines.List.MustGet(list.ID)
+// 	// Get (and so, create) list timeline cache for list ID.
+// 	timeline := p.state.Caches.Timelines.List.MustGet(list.ID)
 
-	// Preload timeline with funcs.
-	n, err := timeline.Preload(ctx,
+// 	// Preload timeline with funcs.
+// 	n, err := timeline.Preload(ctx,
 
-		// Database load function.
-		func(page *paging.Page) ([]*gtsmodel.Status, error) {
-			return p.state.DB.GetListTimeline(ctx, list.ID, page)
-		},
+// 		// Database load function.
+// 		func(page *paging.Page) ([]*gtsmodel.Status, error) {
+// 			return p.state.DB.GetListTimeline(ctx, list.ID, page)
+// 		},
 
-		// Status filtering function.
-		func(status *gtsmodel.Status) (bool, error) {
-			ok, err := p.visFilter.StatusHomeTimelineable(ctx, account, status)
-			return !ok, err
-		},
-	)
-	if err != nil {
-		return gtserror.Newf("error preloading list timeline %s: %w", list.ID, err)
-	}
+// 		// Status filtering function.
+// 		func(status *gtsmodel.Status) (bool, error) {
+// 			ok, err := p.visFilter.StatusHomeTimelineable(ctx, account, status)
+// 			return !ok, err
+// 		},
+// 	)
+// 	if err != nil {
+// 		return gtserror.Newf("error preloading list timeline %s: %w", list.ID, err)
+// 	}
 
-	log.Infof(ctx, "%s[%q]: preloaded %d", account.Username, list.Title, n)
-	return nil
-}
+// 	log.Infof(ctx, "%s[%q]: preloaded %d", account.Username, list.Title, n)
+// 	return nil
+// }
