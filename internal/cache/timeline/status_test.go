@@ -6,15 +6,165 @@ import (
 
 	"codeberg.org/gruf/go-structr"
 	"github.com/stretchr/testify/assert"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 var testStatusMeta = []*StatusMeta{
-	{ID: "06B19VYTHEG01F3YW13RQE0QM8"},
-	{ID: "06B19VYTJFT0KDWT5C1CPY0XNC"},
-	{ID: "06B19VYTJ6WZQPRVNJHPEZH04W"},
-	{ID: "06B19VYTJPKGG8JYCR1ENAV7KC"},
-	{ID: "06B19VYTHRR8S35QXC5A6VE2YW"},
+	{
+		ID:               "06B19VYTHEG01F3YW13RQE0QM8",
+		AccountID:        "06B1A61MZEBBVDSNPRJAA8F2C4",
+		BoostOfID:        "06B1A5KQWGQ1ABM3FA7TDX1PK8",
+		BoostOfAccountID: "06B1A6707818050PCK8SJAEC6G",
+	},
+	{
+		ID:               "06B19VYTJFT0KDWT5C1CPY0XNC",
+		AccountID:        "06B1A61MZN3ZQPZVNGEFBNYBJW",
+		BoostOfID:        "06B1A5KQWSGFN4NNRV34KV5S9R",
+		BoostOfAccountID: "06B1A6707HY8RAXG7JPCWR7XD4",
+	},
+	{
+		ID:               "06B19VYTJ6WZQPRVNJHPEZH04W",
+		AccountID:        "06B1A61MZY7E0YB6G01VJX8ERR",
+		BoostOfID:        "06B1A5KQX5NPGSYGH8NC7HR1GR",
+		BoostOfAccountID: "06B1A6707XCSAF0MVCGGYF9160",
+	},
+	{
+		ID:               "06B19VYTJPKGG8JYCR1ENAV7KC",
+		AccountID:        "06B1A61N07K1GC35PJ3CZ4M020",
+		BoostOfID:        "06B1A5KQXG6ZCWE1R7C7KR7RYW",
+		BoostOfAccountID: "06B1A67084W6SB6P6HJB7K5DSG",
+	},
+	{
+		ID:               "06B19VYTHRR8S35QXC5A6VE2YW",
+		AccountID:        "06B1A61N0P1TGQDVKANNG4AKP4",
+		BoostOfID:        "06B1A5KQY3K839Z6S5HHAJKSWW",
+		BoostOfAccountID: "06B1A6708SPJC3X3ZG3SGG8BN8",
+	},
+}
+
+func TestStatusTimelineUnprepare(t *testing.T) {
+	var tt StatusTimeline
+	tt.Init(1000)
+
+	// Clone the input test status data.
+	data := slices.Clone(testStatusMeta)
+
+	// Bodge some 'prepared'
+	// models on test data.
+	for _, meta := range data {
+		meta.prepared = &apimodel.Status{}
+	}
+
+	// Insert test data into timeline.
+	_ = tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Unprepare this status with ID.
+		tt.UnprepareByStatusIDs(meta.ID)
+
+		// Check the item is unprepared.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value.prepared)
+	}
+
+	// Clear and reinsert.
+	tt.cache.Clear()
+	tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Unprepare this status with boost ID.
+		tt.UnprepareByStatusIDs(meta.BoostOfID)
+
+		// Check the item is unprepared.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value.prepared)
+	}
+
+	// Clear and reinsert.
+	tt.cache.Clear()
+	tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Unprepare this status with account ID.
+		tt.UnprepareByAccountIDs(meta.AccountID)
+
+		// Check the item is unprepared.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value.prepared)
+	}
+
+	// Clear and reinsert.
+	tt.cache.Clear()
+	tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Unprepare this status with boost account ID.
+		tt.UnprepareByAccountIDs(meta.BoostOfAccountID)
+
+		// Check the item is unprepared.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value.prepared)
+	}
+}
+
+func TestStatusTimelineRemove(t *testing.T) {
+	var tt StatusTimeline
+	tt.Init(1000)
+
+	// Clone the input test status data.
+	data := slices.Clone(testStatusMeta)
+
+	// Insert test data into timeline.
+	_ = tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Remove this status with ID.
+		tt.RemoveByStatusIDs(meta.ID)
+
+		// Check the item is now gone.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value)
+	}
+
+	// Clear and reinsert.
+	tt.cache.Clear()
+	tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Remove this status with boost ID.
+		tt.RemoveByStatusIDs(meta.BoostOfID)
+
+		// Check the item is now gone.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value)
+	}
+
+	// Clear and reinsert.
+	tt.cache.Clear()
+	tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Remove this status with account ID.
+		tt.RemoveByAccountIDs(meta.AccountID)
+
+		// Check the item is now gone.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value)
+	}
+
+	// Clear and reinsert.
+	tt.cache.Clear()
+	tt.cache.Insert(data...)
+
+	for _, meta := range data {
+		// Remove this status with boost account ID.
+		tt.RemoveByAccountIDs(meta.BoostOfAccountID)
+
+		// Check the item is now gone.
+		value := getStatusByID(&tt, meta.ID)
+		assert.Nil(t, value)
+	}
 }
 
 func TestStatusTimelineInserts(t *testing.T) {
@@ -127,12 +277,17 @@ func TestStatusTimelineTrim(t *testing.T) {
 
 // containsStatusID returns whether timeline contains a status with ID.
 func containsStatusID(t *StatusTimeline, id string) bool {
+	return getStatusByID(t, id) != nil
+}
+
+// getStatusByID attempts to fetch status with given ID from timeline.
+func getStatusByID(t *StatusTimeline, id string) *StatusMeta {
 	for _, value := range t.cache.Range(structr.Desc) {
 		if value.ID == id {
-			return true
+			return value
 		}
 	}
-	return false
+	return nil
 }
 
 // maxStatus returns the newest (i.e. highest value ID) status in timeline.
