@@ -291,8 +291,9 @@ func (t *StatusTimeline) preload(
 		if id := value.BoostOfID; id != "" {
 
 			// Check if seen recently.
-			last := recentBoosts[id]
-			value.repeatBoost = (last < 40)
+			last, ok := recentBoosts[id]
+			repeat := ok && (idx-last) < 40
+			value.repeatBoost = repeat
 
 			// Update last-seen idx.
 			recentBoosts[id] = idx
