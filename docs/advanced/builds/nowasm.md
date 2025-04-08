@@ -15,6 +15,10 @@ However! To enable folks to run **experimental, unsupported deployments of GoToS
 
 A GoToSocial binary built with `nowasm` will use the [modernc version of SQLite](https://pkg.go.dev/modernc.org/sqlite) instead of the WASM one, and will use on-system `ffmpeg` and `ffprobe` binaries for media processing.
 
+!!! tip
+    To test if your system is compatible with the standard builds, you can use this command:
+    `if grep -qE '^flags.* (sse4|LSE)' /proc/cpuinfo; then echo "Your system is supporting GTS!"; else echo "Your system is not supporting GTS, you'll have to use the 'nowasm' builds :("; fi`
+
 To build GoToSocial with the `nowasm` tag, you can pass the tag into our convenience `build.sh` script like so:
 
 ```bash
