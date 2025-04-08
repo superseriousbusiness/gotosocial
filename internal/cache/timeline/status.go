@@ -74,6 +74,8 @@ type StatusMeta struct {
 // as-needed, caching prepared frontend representations where
 // possible. This is largely wrapping code for our own codebase
 // to be able to smoothly interact with structr.Timeline{}.
+
+// ...
 type StatusTimeline struct {
 
 	// underlying timeline cache of *StatusMeta{},
@@ -302,7 +304,7 @@ func (t *StatusTimeline) Preload(
 
 			// Check if seen recently.
 			last := recentBoosts[id]
-			value.repeatBoost = last < 40
+			value.repeatBoost = (last < 40)
 
 			// Update last-seen idx.
 			recentBoosts[id] = idx
@@ -311,8 +313,12 @@ func (t *StatusTimeline) Preload(
 
 	// Mark timeline as preloaded.
 	old := t.preload.Swap(new(any))
-	if old != nil && *old != false {
-		log.Errorf(ctx, "BUG: invalid timeline preload state: %#v", *old)
+	if old != nil {
+		switch t := (*old).(type) {
+		case *sync.WaitGroup:
+		default:
+			log.Errorf(ctx, "BUG: invalid timeline preload state: %#v", t)
+		}
 	}
 
 	return n, nil
