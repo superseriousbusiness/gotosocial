@@ -29,7 +29,6 @@ import (
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
@@ -60,44 +59,6 @@ func New(state *state.State, converter *typeutils.Converter, visFilter *visibili
 		converter: converter,
 		visFilter: visFilter,
 	}
-}
-
-// Preload ...
-func (p *Processor) Preload(ctx context.Context) error {
-
-	// Get all of our local user accounts.
-	users, err := p.state.DB.GetAllUsers(ctx)
-	if err != nil {
-		return gtserror.Newf("error getting users: %w", err)
-	}
-
-	for _, user := range users {
-		// Get associated account.
-		account := user.Account
-
-		// Preload this user account's home timeline cache.
-		if err := p.preloadHomeTimeline(ctx, account); err != nil {
-			return gtserror.Newf("error preloading home timeline: %w", err)
-		}
-
-		// Get all lists owned by this user account.
-		lists, err := p.state.DB.GetListsByAccountID(
-			gtscontext.SetBarebones(ctx),
-			account.ID,
-		)
-		if err != nil {
-			return gtserror.Newf("error getting account %s lists: %w", account.ID, err)
-		}
-
-		for _, list := range lists {
-			// Preload each of this user account's list timeline caches.
-			if err := p.preloadListTimeline(ctx, account, list); err != nil {
-				return gtserror.Newf("error preloading list timeline: %w", err)
-			}
-		}
-	}
-
-	return nil
 }
 
 func (p *Processor) getStatusTimeline(
