@@ -66,7 +66,8 @@ func (p *Processor) TagTimelineGet(
 		// account.
 		requester,
 
-		// No cache.
+		// No
+		// cache.
 		nil,
 
 		// Current
