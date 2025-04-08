@@ -387,12 +387,9 @@ func (t *StatusTimeline) Load(
 				return nil, "", "", gtserror.Newf("error loading statuses: %w", err)
 			}
 
-			// Set initial lo, hi values.
+			// Set returned lo, hi values.
 			lo = metas[len(metas)-1].ID
 			hi = metas[0].ID
-
-			// Update paging parameters used for next database query.
-			nextPageParams(nextPg, metas[len(metas)-1].ID, order)
 
 			// Allocate slice of expected required API models.
 			apiStatuses = make([]*apimodel.Status, 0, len(metas))
@@ -522,9 +519,7 @@ func loadStatusTimeline(
 			continue
 		}
 
-		// Convert to our cache type,
-		// these will get inserted into
-		// the cache in prepare() below.
+		// Convert to our interstitial meta type.
 		metas = toStatusMeta(metas[:0], statuses)
 
 		// Prepare frontend API models for
