@@ -18,6 +18,7 @@
 package status
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -27,6 +28,7 @@ import (
 
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 )
 
 var urlRegex = regexp.MustCompile(`https?://[a-zA-Z0-9./?=_-]+`)
@@ -40,7 +42,7 @@ func extractLastURL(text string) string {
 }
 
 // FetchPreview retrieves OpenGraph metadata from a URL.
-func FetchPreview(text string) (*gtsmodel.Card, gtserror.WithCode) {
+func FetchPreview(ctx context.Context, httpClient *httpclient.Client, text string) (*gtsmodel.Card, gtserror.WithCode) {
 	link := extractLastURL(text)
 	if link == "" {
 		return nil, nil
@@ -55,7 +57,12 @@ func FetchPreview(text string) (*gtsmodel.Card, gtserror.WithCode) {
 		return nil, gtserror.NewErrorInternalError(fmt.Errorf("unsupported scheme: %s", parsed.Scheme))
 	}
 
-	resp, err := safeGet(parsed)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, link, nil)
+	if err != nil {
+		return nil, gtserror.NewErrorInternalError(err, "failed to create request")
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(err, "request failed")
 	}
@@ -108,9 +115,4 @@ func FetchPreview(text string) (*gtsmodel.Card, gtserror.WithCode) {
 	}
 
 	return card, nil
-}
-
-func safeGet(u *url.URL) (*http.Response, error) {
-	// #nosec G107 -- URL was already validated
-	return http.Get(u.String())
 }

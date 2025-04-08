@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/email"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -106,6 +107,7 @@ func SetupTestStructs(
 		webPushSender,
 		visFilter,
 		intFilter,
+		&httpclient.Client{}, // TODO: check if we need to replace it here
 	)
 
 	StartWorkers(&state, processor.Workers())

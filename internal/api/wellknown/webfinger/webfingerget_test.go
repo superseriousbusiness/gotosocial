@@ -37,6 +37,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
 	"github.com/superseriousbusiness/gotosocial/testrig"
@@ -100,6 +101,7 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
+		&httpclient.Client{}, // TODO: check if we need to replace it here
 	)
 
 	suite.webfingerModule = webfinger.New(suite.processor)

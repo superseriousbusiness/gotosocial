@@ -385,6 +385,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		webPushSender,
 		visFilter,
 		intFilter,
+		client,
 	)
 
 	// Schedule background cleaning tasks.

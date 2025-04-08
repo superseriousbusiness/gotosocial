@@ -24,6 +24,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	mm "github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
@@ -204,6 +205,7 @@ func NewProcessor(
 	webPushSender webpush.Sender,
 	visFilter *visibility.Filter,
 	intFilter *interaction.Filter,
+	client *httpclient.Client,
 ) *Processor {
 	parseMentionFunc := GetParseMentionFunc(state, federator)
 	processor := &Processor{
@@ -241,7 +243,7 @@ func NewProcessor(
 	processor.tags = tags.New(state, converter)
 	processor.timeline = timeline.New(state, converter, visFilter)
 	processor.search = search.New(state, federator, converter, visFilter)
-	processor.status = status.New(state, &common, &processor.polls, &processor.interactionRequests, federator, converter, visFilter, intFilter, parseMentionFunc)
+	processor.status = status.New(state, &common, &processor.polls, &processor.interactionRequests, federator, converter, visFilter, intFilter, parseMentionFunc, client)
 	processor.user = user.New(state, converter, oauthServer, emailSender)
 
 	// The advanced migrations processor sequences advanced migrations from all other processors.

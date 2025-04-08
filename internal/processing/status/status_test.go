@@ -25,6 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
@@ -116,6 +117,7 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 			&suite.state,
 			suite.federator,
 		),
+		&httpclient.Client{},
 	)
 
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

@@ -35,6 +35,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
@@ -130,6 +131,7 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 		suite.webPushSender,
 		visibility.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
+		&httpclient.Client{}, // TODO: check if we need to replace it here
 	)
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())
 

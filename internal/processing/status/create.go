@@ -190,9 +190,9 @@ func (p *Processor) Create(
 	}
 
 	// Get preview card
-	card, errWithCode := FetchPreview(content.Content)
+	card, errWithCode := FetchPreview(ctx, p.client, content.Content)
 	if errWithCode != nil {
-		return nil, errWithCode
+		log.Errorf(ctx, "error loading preview card: %v", errWithCode)
 	}
 
 	if card != nil {
