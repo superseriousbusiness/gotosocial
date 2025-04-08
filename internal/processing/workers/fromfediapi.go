@@ -715,13 +715,19 @@ func (p *fediAPI) CreateBlock(ctx context.Context, fMsg *messages.FromFediAPI) e
 	}
 
 	if block.Account.IsLocal() {
-		// Perform timeline invalidation for block origin account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
+		// Remove posts by target from origin's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			block.AccountID,
+			block.TargetAccountID,
+		)
 	}
 
 	if block.TargetAccount.IsLocal() {
-		// Perform timeline invalidation for block target account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
+		// Remove posts by origin from target's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			block.TargetAccountID,
+			block.AccountID,
+		)
 	}
 
 	// Remove any follows that existed between blocker + blockee.
@@ -1202,33 +1208,31 @@ func (p *fediAPI) UndoFollow(ctx context.Context, fMsg *messages.FromFediAPI) er
 	}
 
 	if follow.Account.IsLocal() {
-		// Perform timeline invalidation for block origin account.
-		p.surface.invalidateTimelinesForAccount(ctx, follow.AccountID)
+		// Remove posts by target from origin's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			follow.AccountID,
+			follow.TargetAccountID,
+		)
 	}
 
 	if follow.TargetAccount.IsLocal() {
-		// Perform timeline invalidation for block target account.
-		p.surface.invalidateTimelinesForAccount(ctx, follow.TargetAccountID)
+		// Remove posts by origin from target's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			follow.TargetAccountID,
+			follow.AccountID,
+		)
 	}
 
 	return nil
 }
 
 func (p *fediAPI) UndoBlock(ctx context.Context, fMsg *messages.FromFediAPI) error {
-	block, ok := fMsg.GTSModel.(*gtsmodel.Block)
+	_, ok := fMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", fMsg.GTSModel)
 	}
 
-	if block.Account.IsLocal() {
-		// Perform timeline invalidation for block origin account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
-	}
-
-	if block.TargetAccount.IsLocal() {
-		// Perform timeline invalidation for block target account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
-	}
+	// TODO: any required changes
 
 	return nil
 }

@@ -199,9 +199,6 @@ func (p *Processor) getStatusTimeline(
 		apiStatuses, lo, hi, err = timelinepkg.LoadStatusTimeline(ctx,
 			page,
 			loadPage,
-			func(ids []string) ([]*gtsmodel.Status, error) {
-				return p.state.DB.GetStatusesByIDs(ctx, ids)
-			},
 			filter,
 			prepare,
 		)
