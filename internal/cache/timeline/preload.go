@@ -33,10 +33,34 @@ import (
 // - brand-new     = nil (functionally same as 'needs preload')
 type preloader struct{ p atomic.Pointer[any] }
 
-// Check will concurrency-safely check the preload
-// state, and if needed call the provided function.
-// if a preload is in progress, it will wait until complete.
-func (p *preloader) Check(preload func()) {
+// Check will return the current preload state,
+// waiting if a preload is currently in progress.
+func (p *preloader) Check() bool {
+	for {
+		// Get state ptr.
+		ptr := p.p.Load()
+
+		// Check if requires preloading.
+		if ptr == nil || *ptr == false {
+			return false
+		}
+
+		// Check for a preload currently in progress.
+		if wg, _ := (*ptr).(*sync.WaitGroup); wg != nil {
+			wg.Wait()
+			continue
+		}
+
+		// Anything else
+		// means success.
+		return true
+	}
+}
+
+// CheckPreload will safely check the preload state,
+// and if needed call the provided function. if a
+// preload is in progress, it will wait until complete.
+func (p *preloader) CheckPreload(preload func()) {
 	for {
 		// Get state ptr.
 		ptr := p.p.Load()
@@ -95,7 +119,7 @@ func (p *preloader) start(old *any, preload func()) bool {
 
 // done marks state as preloaded,
 // i.e. no more preload required.
-func (p *preloader) done() {
+func (p *preloader) Done() {
 	old := p.p.Swap(new(any))
 	if old == nil { // was brand-new
 		return
@@ -109,7 +133,7 @@ func (p *preloader) done() {
 
 // clear will clear the state, marking a "preload" as required.
 // i.e. next call to Check() will call provided preload func.
-func (p *preloader) clear() {
+func (p *preloader) Clear() {
 	b := false
 	a := any(b)
 	for {

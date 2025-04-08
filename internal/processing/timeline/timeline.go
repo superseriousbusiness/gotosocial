@@ -108,29 +108,9 @@ func (p *Processor) getStatusTimeline(
 	// input paging cursor.
 	id.ValidatePage(page)
 
-	// Returned models and page params.
-	var apiStatuses []*apimodel.Status
-	var lo, hi string
-
-	// Pre-prepared filter function that just ensures we
-	// don't end up serving multiple copies of the same boost.
-	prepare := func(status *gtsmodel.Status) (*apimodel.Status, error) {
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx,
-			status,
-			requester,
-			filterCtx,
-			filters,
-			mutes,
-		)
-		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-			return nil, err
-		}
-		return apiStatus, nil
-	}
-
 	// Load status page via timeline cache, also
 	// getting lo, hi values for next, prev pages.
-	apiStatuses, lo, hi, err = timeline.Load(ctx,
+	apiStatuses, lo, hi, err := timeline.Load(ctx,
 
 		// Status page
 		// to load.
@@ -145,13 +125,24 @@ func (p *Processor) getStatusTimeline(
 			return p.state.DB.GetStatusesByIDs(ctx, ids)
 		},
 
-		// Filtering function,
-		// i.e. filter before caching.
+		// Call provided status
+		// filtering function.
 		filter,
 
-		// Frontend API model
-		// preparation function.
-		prepare,
+		// Frontend API model preparation function.
+		func(status *gtsmodel.Status) (*apimodel.Status, error) {
+			apiStatus, err := p.converter.StatusToAPIStatus(ctx,
+				status,
+				requester,
+				filterCtx,
+				filters,
+				mutes,
+			)
+			if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+				return nil, err
+			}
+			return apiStatus, nil
+		},
 	)
 
 	if err != nil {
