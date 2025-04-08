@@ -826,21 +826,23 @@ func (s *Surface) removeTimelineEntriesByAccount(accountID string) {
 	s.State.Caches.Timelines.List.RemoveByAccountIDs(accountID)
 }
 
-// invalidateTimelinesForAccount invalidates all timeline caches stored for given account ID.
-func (s *Surface) invalidateTimelinesForAccount(ctx context.Context, accountID string) {
-
-	// There's a lot of visibility changes to caclculate for any
-	// relationship change, so just clear all account's timelines.
-	s.State.Caches.Timelines.Home.Clear(accountID)
+func (s *Surface) removeRelationshipFromTimelines(ctx context.Context, timelineAccountID string, targetAccountID string) {
+	// Remove all statuses by target account
+	// from given account's home timeline.
+	s.State.Caches.Timelines.Home.
+		MustGet(timelineAccountID).
+		RemoveByAccountIDs(targetAccountID)
 
 	// Get the IDs of all the lists owned by the given account ID.
-	listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, accountID)
+	listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, timelineAccountID)
 	if err != nil {
-		log.Errorf(ctx, "error getting lists for account %s: %v", accountID, err)
+		log.Errorf(ctx, "error getting lists for account %s: %v", timelineAccountID, err)
 	}
 
-	// Clear list timelines of account.
 	for _, listID := range listIDs {
-		s.State.Caches.Timelines.List.Clear(listID)
+		// Remove all statuses by target account
+		// from given account's list timelines.
+		s.State.Caches.Timelines.List.MustGet(listID).
+			RemoveByAccountIDs(targetAccountID)
 	}
 }

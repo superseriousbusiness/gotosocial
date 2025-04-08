@@ -683,13 +683,19 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg *messages.FromClientAP
 	}
 
 	if block.Account.IsLocal() {
-		// Perform timeline invalidation for block origin account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
+		// Remove posts by target from origin's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			block.AccountID,
+			block.TargetAccountID,
+		)
 	}
 
 	if block.TargetAccount.IsLocal() {
-		// Perform timeline invalidation for block target account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
+		// Remove posts by origin from target's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			block.TargetAccountID,
+			block.AccountID,
+		)
 	}
 
 	// TODO: same with notifications?
@@ -851,13 +857,19 @@ func (p *clientAPI) UndoFollow(ctx context.Context, cMsg *messages.FromClientAPI
 	}
 
 	if follow.Account.IsLocal() {
-		// Perform timeline invalidation for block origin account.
-		p.surface.invalidateTimelinesForAccount(ctx, follow.AccountID)
+		// Remove posts by target from origin's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			follow.AccountID,
+			follow.TargetAccountID,
+		)
 	}
 
 	if follow.TargetAccount.IsLocal() {
-		// Perform timeline invalidation for block target account.
-		p.surface.invalidateTimelinesForAccount(ctx, follow.TargetAccountID)
+		// Remove posts by origin from target's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			follow.TargetAccountID,
+			follow.AccountID,
+		)
 	}
 
 	if err := p.federate.UndoFollow(ctx, follow); err != nil {
@@ -871,16 +883,6 @@ func (p *clientAPI) UndoBlock(ctx context.Context, cMsg *messages.FromClientAPI)
 	block, ok := cMsg.GTSModel.(*gtsmodel.Block)
 	if !ok {
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
-	}
-
-	if block.Account.IsLocal() {
-		// Perform timeline invalidation for block origin account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.AccountID)
-	}
-
-	if block.TargetAccount.IsLocal() {
-		// Perform timeline invalidation for block target account.
-		p.surface.invalidateTimelinesForAccount(ctx, block.TargetAccountID)
 	}
 
 	if err := p.federate.UndoBlock(ctx, block); err != nil {
