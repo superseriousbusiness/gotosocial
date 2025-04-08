@@ -27,6 +27,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
@@ -96,11 +97,14 @@ func (p *Processor) ListTimelineGet(
 
 		// Filtering function,
 		// i.e. filter before caching.
-		func(s *gtsmodel.Status) (bool, error) {
+		func(s *gtsmodel.Status) bool {
 
 			// Check the visibility of passed status to requesting user.
 			ok, err := p.visFilter.StatusHomeTimelineable(ctx, requester, s)
-			return !ok, err
+			if err != nil {
+				log.Errorf(ctx, "error filtering status %s: %v", s.URI, err)
+			}
+			return !ok
 		},
 	)
 }
