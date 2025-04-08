@@ -32,6 +32,12 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
+// repeatBoostDepth determines the minimum count
+// of statuses after which repeat boosts, or boosts
+// of the original, may appear. This is may not end
+// up *exact*, as small races between insert and the
+// repeatBoost calculation may allow 1 or so extra
+// to sneak in ahead of time. but it mostly works!
 const repeatBoostDepth = 40
 
 // StatusMeta contains minimum viable metadata
@@ -190,14 +196,14 @@ func (t *StatusTimeline) Preload(
 	n int,
 	err error,
 ) {
-	t.preloader.Check(func() {
+	t.preloader.CheckPreload(func() {
 		n, err = t.preload(loadPage, filter)
 		if err != nil {
 			return
 		}
 
 		// Mark preloaded.
-		t.preloader.done()
+		t.preloader.Done()
 	})
 	return
 }
@@ -547,6 +553,13 @@ func loadStatusTimeline(
 // InsertOne allows you to insert a single status into the timeline, with optional prepared API model.
 // The return value indicates whether status should be skipped from streams, e.g. if already boosted recently.
 func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.Status) (skip bool) {
+
+	// If timeline no preloaded, i.e.
+	// no-one using it, don't insert.
+	if !t.preloader.Check() {
+		return false
+	}
+
 	if status.BoostOfID != "" {
 		// Check through top $repeatBoostDepth number of timeline items.
 		for i, value := range t.cache.RangeUnsafe(structr.Desc) {
@@ -718,7 +731,7 @@ func (t *StatusTimeline) Trim() { t.cache.Trim(t.cut, structr.Asc) }
 
 // Clear will mark the entire timeline as requiring preload,
 // which will trigger a clear and reload of the entire thing.
-func (t *StatusTimeline) Clear() { t.preloader.clear() }
+func (t *StatusTimeline) Clear() { t.preloader.Clear() }
 
 // prepareStatuses takes a slice of cached (or, freshly loaded!) StatusMeta{}
 // models, and use given function to return prepared frontend API models.
