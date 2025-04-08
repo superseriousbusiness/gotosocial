@@ -128,42 +128,31 @@ func (p *Processor) getStatusTimeline(
 		return apiStatus, nil
 	}
 
-	if timeline != nil {
-		// Load status page via timeline cache, also
-		// getting lo, hi values for next, prev pages.
-		apiStatuses, lo, hi, err = timeline.Load(ctx,
+	// Load status page via timeline cache, also
+	// getting lo, hi values for next, prev pages.
+	apiStatuses, lo, hi, err = timeline.Load(ctx,
 
-			// Status page
-			// to load.
-			page,
+		// Status page
+		// to load.
+		page,
 
-			// Caller provided database
-			// status page loading function.
-			loadPage,
+		// Caller provided database
+		// status page loading function.
+		loadPage,
 
-			// Status load function for cached timeline entries.
-			func(ids []string) ([]*gtsmodel.Status, error) {
-				return p.state.DB.GetStatusesByIDs(ctx, ids)
-			},
+		// Status load function for cached timeline entries.
+		func(ids []string) ([]*gtsmodel.Status, error) {
+			return p.state.DB.GetStatusesByIDs(ctx, ids)
+		},
 
-			// Filtering function,
-			// i.e. filter before caching.
-			filter,
+		// Filtering function,
+		// i.e. filter before caching.
+		filter,
 
-			// Frontend API model
-			// preparation function.
-			prepare,
-		)
-	} else {
-		// Load status page without a receiving timeline cache.
-		// TODO: remove this code path when all support caching.
-		apiStatuses, lo, hi, err = timelinepkg.LoadStatusTimeline(ctx,
-			page,
-			loadPage,
-			filter,
-			prepare,
-		)
-	}
+		// Frontend API model
+		// preparation function.
+		prepare,
+	)
 
 	if err != nil {
 		err := gtserror.Newf("error loading timeline: %w", err)
