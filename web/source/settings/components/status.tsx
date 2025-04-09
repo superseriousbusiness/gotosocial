@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { useRef } from "react";
 import { useVerifyCredentialsQuery } from "../lib/query/login";
 import { MediaAttachment, Status as StatusType } from "../lib/types/status";
 import sanitize from "sanitize-html";
@@ -122,10 +122,26 @@ function StatusBody({ status }: { status: StatusType }) {
 		content = sanitize(status.content);
 	}
 
+	const detailsRef = useRef<HTMLDetailsElement>(null);
+	const detailsOnClick = () => {
+		detailsRef.current?.click();
+	};
+
+	const summaryRef = useRef<HTMLElement>(null);
+	const summaryOnClick = () => {
+		summaryRef.current?.click();
+	};
+
 	return (
 		<div className="status-body">
-			<details className="text-spoiler">
-				<summary>
+			<details
+				className="text-spoiler"
+				ref={detailsRef}
+			>
+				<summary
+					tabIndex={-1}
+					ref={summaryRef}
+				>
 					<div
 						className="spoiler-content"
 						lang={status.language}
@@ -140,6 +156,8 @@ function StatusBody({ status }: { status: StatusType }) {
 						role="button"
 						tabIndex={0}
 						aria-label="Toggle content visibility"
+						onClick={detailsOnClick}
+						onKeyDown={e => e.key === "Enter" && summaryOnClick()}
 					>
 						Toggle content visibility
 					</span>
@@ -183,23 +201,41 @@ function StatusMedia({ status }: { status: StatusType }) {
 }
 
 function StatusMediaEntry({ media }: { media: MediaAttachment }) {
+	const detailsRef = useRef<HTMLDetailsElement>(null);
+	const detailsOnClick = () => {
+		detailsRef.current?.click();
+	};
+
+	const summaryRef = useRef<HTMLElement>(null);
+	const summaryOnClick = () => {
+		summaryRef.current?.click();
+	};
+	
 	return (
 		<div className="media-wrapper">
 			<details className="image-spoiler media-spoiler">
-				<summary>
-					<div className="show sensitive button" aria-hidden="true">Show media</div>
-					<span className="eye button" role="button" tabIndex={0} aria-label="Toggle show media">
+				<summary tabIndex={-1} ref={summaryRef}>
+					<div
+						className="show sensitive button"
+						role="button"
+						tabIndex={0}
+						aria-hidden="true"
+						onClick={detailsOnClick}
+						onKeyDown={e => e.key === "Enter" && summaryOnClick()}
+					>
+						Show media
+					</div>
+					<span
+						className="eye button"
+						role="button"
+						tabIndex={0}
+						aria-label="Toggle show media"
+						onClick={detailsOnClick}
+						onKeyDown={e => e.key === "Enter" && summaryOnClick()}
+					>
 						<i className="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
 						<i className="show fa fa-fw fa-eye" aria-hidden="true"></i>
 					</span>
-					<img
-						src={media.preview_url}
-						loading="lazy"
-						alt={media.description}
-						title={media.description}
-						width={media.meta.small.width}
-						height={media.meta.small.height}
-					/>
 				</summary>
 				<a
 					href={media.url}

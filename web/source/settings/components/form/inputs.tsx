@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { useRef } from "react";
 
 import type {
 	ReactNode,
@@ -119,23 +119,36 @@ export interface FileInputProps extends React.DetailedHTMLProps<
 }
 
 export function FileInput({ label, field, ...props }: FileInputProps) {
-	const { onChange, ref, infoComponent } = field;
+	const ref = useRef<HTMLInputElement>(null);
+	const { onChange, infoComponent } = field;
 	const id = nanoid();
+	const onClick = () => {
+		ref.current?.click();
+	};
 
 	return (
 		<div className="form-field file">
-			<label className="label-label" htmlFor={id}>
-				{label}
-			</label>
-			<label className="label-button" htmlFor={id}>
-				<div className="file-input button">Browse</div>
+			<label
+				className="label-wrapper"
+				htmlFor={id}
+				tabIndex={0}
+				onClick={onClick}
+				onKeyDown={e => e.key === "Enter" && onClick()}
+				role="button"
+			>
+				<div className="label-label">
+					{label}
+				</div>
+				<div className="label-button">
+					<div className="file-input button">Browse</div>
+				</div>
 			</label>
 			<input
 				id={id}
 				type="file"
 				className="hidden"
 				onChange={onChange}
-				ref={ref ? ref as RefObject<HTMLInputElement> : undefined}
+				ref={ref}
 				{...props}
 			/>
 			{infoComponent}

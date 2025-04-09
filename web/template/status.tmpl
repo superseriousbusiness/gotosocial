@@ -51,7 +51,13 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
             <div class="spoiler-content p-summary" lang="{{- .LanguageTag.TagStr -}}">
                 {{ noescape .SpoilerContent | emojify .Emojis }}
             </div>
-            <span class="button" role="button" tabindex="0">Toggle visibility</span>
+            {{- with . }}
+            {{- /*
+                IMPORTANT: Button semantics and aria labels in "button" class below are added in
+                frontend/index.js, as the button doesn't function as a button without javascript.
+            */ -}}
+            {{- end }}
+            <span class="button">Toggle visibility</span>
         </summary>
         <div class="text">
             {{- with . }}

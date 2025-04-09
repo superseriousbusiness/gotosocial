@@ -54,7 +54,13 @@
             {{- end }}
         >
             <div class="show sensitive button" aria-hidden="true">Show sensitive</div>
-            <span class="eye button" role="button" tabindex="0" aria-label="Toggle media visibility">
+            {{- with . }}
+            {{- /*
+                IMPORTANT: Button semantics and aria labels in "eye button" class below are added in
+                frontend/index.js, as the button doesn't function as a button without javascript.
+            */ -}}
+            {{- end }}
+            <span class="eye button">
                 <i class="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
                 <i class="show fa fa-fw fa-eye" aria-hidden="true"></i>
             </span>

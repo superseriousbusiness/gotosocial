@@ -567,38 +567,32 @@ form {
 }
 
 .form-field.file {
-	display: grid;
-	grid-template-columns: auto 1fr;
-	grid-template-rows: auto auto;
-	grid-template-areas:
-		"label-label  label-label"
-		"label-button file-info"
-	;
-	
-	.label-label {
-		grid-area: label-label;
-	}
+	display: flex;
+	position: relative;
+	overflow: hidden;
 
-	.label-button {
-		grid-area: label-button;
+	.label-wrapper {
+		width: fit-content;
+		display: flex;
+		flex-direction: column;
+		&:focus {
+			outline: 0.15rem dashed $button-focus-border;
+			outline-offset: -0.15rem;
+		}
 	}
 
 	.form-info {
-		grid-area: file-info;
+		position: absolute;
+		font-weight: initial;
+		align-self: end;
+		margin-left: 4.25rem;
+		margin-bottom: 0.3rem;
+
 		.error {
 			padding: 0.1rem;
-  			line-height: 1.4rem;
+			line-height: 1.4rem;
 		}
 	}
-}
-
-span.form-info {
-	flex: 1 1 auto;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	padding: 0.3rem 0;
-	font-weight: initial;
 }
 
 .checkbox-list {
@@ -1337,6 +1331,9 @@ button.tab-button {
 .pseudolink {
 	cursor: pointer;
 	text-decoration: none;
+	&:focus {
+		outline: 0.15rem dotted $button-focus-border;
+	}
 }
 
 .info-list {
@@ -1738,7 +1735,6 @@ button.tab-button {
 	
 			.mutation-button {
 				width: 100%;
-				overflow-x: hidden;
 	
 				button {
 					font-size: 1rem;

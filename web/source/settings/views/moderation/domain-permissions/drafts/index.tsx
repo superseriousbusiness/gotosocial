@@ -211,21 +211,24 @@ function DraftListEntry({ permDraft, linkTo, backLocation }: DraftEntryProps) {
 
 	const title = `${permTypeUpper} ${domain}`;
 
+	const onClick = () => {
+		// When clicking on a draft, direct
+		// to the detail view for that draft.
+		setLocation(linkTo, {
+			// Store the back location in history so
+			// the detail view can use it to return to
+			// this page (including query parameters).
+			state: { backLocation: backLocation }
+		});
+	};
+
 	return (
 		<span
 			className={`pseudolink domain-permission-draft entry ${permType}`}
 			aria-label={title}
 			title={title}
-			onClick={() => {
-				// When clicking on a draft, direct
-				// to the detail view for that draft.
-				setLocation(linkTo, {
-					// Store the back location in history so
-					// the detail view can use it to return to
-					// this page (including query parameters).
-					state: { backLocation: backLocation }
-				});
-			}}
+			onClick={onClick}
+			onKeyDown={e => e.key === "Enter" && onClick()}
 			role="link"
 			tabIndex={0}
 		>

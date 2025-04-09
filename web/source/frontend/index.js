@@ -143,11 +143,22 @@ lightbox.on('uiRegister', function() {
 			el.setAttribute('target', '_blank');
 			el.setAttribute('rel', 'noopener');
 			pswp.on('change', () => {
-				el.href = pswp.currSlide.data.parentStatus
-					? pswp.currSlide.data.parentStatus
-					: pswp.currSlide.data.element.dataset.pswpParentStatus;
+				switch (true) {
+					case pswp.currSlide.data.parentStatus:
+						// Link to parent status.	
+						el.href = pswp.currSlide.data.parentStatus;
+						break;
+					case pswp.currSlide.data.element.dataset.pswpParentStatus:
+						// Link to parent status.	
+						el.href = pswp.currSlide.data.element.dataset.pswpParentStatus;
+						break;
+					default:
+						// Link to profile.
+						const location = window.location; 	
+						el.href = "//" + location.host + location.pathname;
+				}
 			});
-		  }
+		}
 	});
 });
 
@@ -163,26 +174,63 @@ function dynamicSpoiler(className, updateFunc) {
 	});
 }
 
-dynamicSpoiler("text-spoiler", (spoiler) => {
-	const button = spoiler.querySelector(".button");
+dynamicSpoiler("text-spoiler", (details) => {
+	const summary = details.children[0];
+	const button = details.querySelector(".button");
 
+	// Use button inside summary to
+	// toggle post body visibility.
+	button.tabIndex = "0";
+	button.setAttribute("aria-role", "button");
+	button.onclick = () => {
+		details.click();
+	};
+
+	// Let enter also trigger the button
+	// (for those using keyboard to navigate).
+	button.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			summary.click();
+		}
+	});
+
+	// Change button text depending on
+	// whether spoiler is open or closed rn.
 	return () => {
-		button.textContent = spoiler.open
+		button.textContent = details.open
 			? "Show less"
 			: "Show more";
 	};
 });
 
-dynamicSpoiler("media-spoiler", (spoiler) => {
-	const eye = spoiler.querySelector(".eye.button");
-	const video = spoiler.querySelector(".plyr-video");
+dynamicSpoiler("media-spoiler", (details) => {
+	const summary = details.children[0];
+	const button = details.querySelector(".eye.button");
+	const video = details.querySelector(".plyr-video");
 	const loopingAuto = !reduceMotion.matches && video != null && video.classList.contains("gifv");
 
+	// Use button *instead of summary*
+	// to toggle media visibility.
+	summary.tabIndex = "-1";
+	button.tabIndex = "0";
+	button.setAttribute("aria-role", "button");
+	button.onclick = () => {
+		details.click();
+	};
+
+	// Let enter also trigger the button
+	// (for those using keyboard to navigate).
+	button.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			summary.click();
+		}
+	});
+
 	return () => {
-		if (spoiler.open) {
-			eye.setAttribute("aria-label", "Hide media");
+		if (details.open) {
+			button.setAttribute("aria-label", "Hide media");
 		} else {
-			eye.setAttribute("aria-label", "Show media");
+			button.setAttribute("aria-label", "Show media");
 			if (video && !loopingAuto) {
 				video.pause();
 			}

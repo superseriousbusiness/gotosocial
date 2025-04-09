@@ -80,6 +80,7 @@ $profile-bg: $gray4;
 $button-bg: $blue2;
 $button-fg: $gray1;
 $button-hover-bg: $blue3;
+$button-focus-border: $blue3;
 
 $button-danger-bg: $error3;
 $button-danger-fg: $white1;

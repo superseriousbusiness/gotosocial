@@ -167,6 +167,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 					<MutationButton
 						className="delete-header-button"
 						label="Delete header"
+						tabIndex={0}
 						disabled={noHeader}
 						result={deleteHeaderRes}
 						onClick={(e) => {
@@ -179,7 +180,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 						}}
 					/>
 				</fieldset>
-				
+
 				<fieldset className="file-input-with-image-description">
 					<legend>Avatar</legend>
 					<FileInput
@@ -197,6 +198,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 					<MutationButton
 						className="delete-avatar-button"
 						label="Delete avatar"
+						tabIndex={0}
 						disabled={noAvatar}
 						result={deleteAvatarRes}
 						onClick={(e) => {

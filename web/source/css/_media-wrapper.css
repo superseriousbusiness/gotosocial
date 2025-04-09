@@ -74,6 +74,14 @@
 			div.blurhash-container > canvas {
 				display: none;
 			}
+
+			/*
+				Hide focus outline on click
+				to avoid ugly artifacts.
+			*/
+			&:focus {
+				outline: none;
+			}
 		}
 
 		summary {
@@ -123,6 +131,16 @@
 					cursor: pointer;
 					align-self: center;
 				}
+			}
+		}
+
+		a.photoswipe-slide {
+			display: inline-block;
+			height: 100%;
+			width: 100%;
+
+			&:focus {
+				outline-offset: -0.15rem;
 			}
 		}
 

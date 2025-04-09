@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React from "react";
+import React, { useRef } from "react";
 
 import { useEffect } from "react";
 import { useExportDomainListMutation } from "../../../lib/query/admin/domain-permissions/export";
@@ -70,6 +70,11 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 		/* eslint-disable-next-line react-hooks/exhaustive-deps */
 	}, [exportResult]);
 
+	const importFileRef = useRef<HTMLInputElement>(null);
+	const importFileOnClick = () => {
+		importFileRef.current?.click();
+	};
+
 	return (
 		<>
 			<h1>Import / Export domain permissions</h1>
@@ -101,7 +106,13 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						showError={false}
 						disabled={form.permType.value === undefined || form.permType.value.length === 0}
 					/>
-					<label className={`button with-icon${form.permType.value === undefined || form.permType.value.length === 0 ? " disabled" : ""}`}>
+					<label
+						className={`button with-icon${form.permType.value === undefined || form.permType.value.length === 0 ? " disabled" : ""}`}
+						tabIndex={0}
+						onClick={importFileOnClick}
+						onKeyDown={e => e.key === "Enter" && importFileOnClick()}
+						role="button"
+					>
 						<i className="fa fa-fw " aria-hidden="true" />
 						Import file
 						<input
@@ -110,6 +121,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 							onChange={fileChanged}
 							accept="application/json,text/plain,text/csv"
 							disabled={form.permType.value === undefined || form.permType.value.length === 0}
+							ref={importFileRef}
 						/>
 					</label>
 					<b /> {/* grid filler */}

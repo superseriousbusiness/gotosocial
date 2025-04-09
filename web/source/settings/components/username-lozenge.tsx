@@ -150,19 +150,21 @@ function ReadyUsernameLozenge({ account, linkTo, backLocation, classNames }: Rea
 
 	if (linkTo) {
 		className += " pseudolink";
+		const onClick = () => {
+			// When clicking on an account, direct
+			// to the detail view for that account.
+			setLocation(linkTo, {
+				// Store the back location in history so
+				// the detail view can use it to return to
+				// this page (including query parameters).
+				state: { backLocation: backLocation }
+			});
+		};
 		return (
 			<span
 				className={className}
-				onClick={() => {
-					// When clicking on an account, direct
-					// to the detail view for that account.
-					setLocation(linkTo, {
-						// Store the back location in history so
-						// the detail view can use it to return to
-						// this page (including query parameters).
-						state: { backLocation: backLocation }
-					});
-				}}
+				onClick={onClick}
+				onKeyDown={e => e.key === "Enter" && onClick()}
 				role="link"
 				tabIndex={0}
 			>

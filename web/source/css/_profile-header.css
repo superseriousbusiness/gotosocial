@@ -81,6 +81,24 @@
 			height: $avatar-size;
 			width: $avatar-size;
 
+			/*
+				Link to open media in slide
+				should fill entire media wrapper.
+			*/
+			a.photoswipe-slide {
+				display: inline-block;
+				height: 100%;
+				width: 100%;
+	
+				/*
+					Offset to avoid clashing with
+					thick border around avatars.
+				*/
+				&:focus {
+					outline-offset: 0.2rem;
+				}
+			}
+
 			.avatar {
 				/*
 					Fit 100% of the wrapper.
