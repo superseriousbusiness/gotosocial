@@ -145,11 +145,11 @@ lightbox.on('uiRegister', function() {
 			pswp.on('change', () => {
 				switch (true) {
 					case pswp.currSlide.data.parentStatus:
-						// Link to parent status.	
+						// Link to parent status.
 						el.href = pswp.currSlide.data.parentStatus;
 						break;
-					case pswp.currSlide.data.element.dataset.pswpParentStatus:
-						// Link to parent status.	
+					case pswp.currSlide.data.element && pswp.currSlide.data.element.dataset.pswpParentStatus:
+						// Link to parent status.
 						el.href = pswp.currSlide.data.element.dataset.pswpParentStatus;
 						break;
 					default:
