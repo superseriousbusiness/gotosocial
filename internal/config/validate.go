@@ -19,7 +19,6 @@ package config
 
 import (
 	"fmt"
-	"net/netip"
 	"net/url"
 	"strings"
 
@@ -181,23 +180,6 @@ func Validate() error {
 			tlsChainFlag, tlsKeyFlag,
 		)
 	}
-
-	// Parse `advanced-rate-limit-exceptions` and set
-	// parsed versions on config to avoid reparsing calls.
-	rles := GetAdvancedRateLimitExceptions()
-	rlesParsed := make([]netip.Prefix, 0, len(rles))
-	for _, rle := range rles {
-		parsed, err := netip.ParsePrefix(rle)
-		if err != nil {
-			errf(
-				"invalid entry %s in %s: %w",
-				rle, AdvancedRateLimitExceptionsFlag(), err,
-			)
-			continue
-		}
-		rlesParsed = append(rlesParsed, parsed)
-	}
-	SetAdvancedRateLimitExceptionsParsed(rlesParsed)
 
 	return errs.Combine()
 }

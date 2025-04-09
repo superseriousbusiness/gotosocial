@@ -136,7 +136,7 @@ var Defaults = Configuration{
 
 	AdvancedCookiesSamesite:      "lax",
 	AdvancedRateLimitRequests:    300, // 1 per second per 5 minutes
-	AdvancedRateLimitExceptions:  []string{},
+	AdvancedRateLimitExceptions:  IPPrefixes{},
 	AdvancedThrottlingMultiplier: 8, // 8 open requests per CPU
 	AdvancedThrottlingRetryAfter: time.Second * 30,
 	AdvancedSenderMultiplier:     2, // 2 senders per CPU
