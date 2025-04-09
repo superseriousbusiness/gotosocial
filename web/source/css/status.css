@@ -299,6 +299,14 @@
 
 		position: absolute;
 		z-index: 0;
+
+		&:focus-visible {
+			/*
+				Inset focus to compensate for themes where
+				statuses have a really thick border.
+			*/
+			outline-offset: -0.25rem;
+		}
 	}
 
 	&:first-child {

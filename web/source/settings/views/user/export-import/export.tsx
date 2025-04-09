@@ -102,7 +102,6 @@ export default function Export({ exportStats }: { exportStats: AccountExportStat
 						Following {exportStats.following_count} account{ exportStats.following_count !== 1 && "s" }
 					</span>
 					<MutationButton
-						className="text-cutoff"
 						label="Download following.csv"
 						type="button"
 						onClick={() => exportFollowing()}
@@ -116,7 +115,6 @@ export default function Export({ exportStats }: { exportStats: AccountExportStat
 						Followed by {exportStats.followers_count} account{ exportStats.followers_count !== 1 && "s" }
 					</span>
 					<MutationButton
-						className="text-cutoff"
 						label="Download followers.csv"
 						type="button"
 						onClick={() => exportFollowers()}
@@ -130,7 +128,6 @@ export default function Export({ exportStats }: { exportStats: AccountExportStat
 						Created {exportStats.lists_count} list{ exportStats.lists_count !== 1 && "s" }
 					</span>
 					<MutationButton
-						className="text-cutoff"
 						label="Download lists.csv"
 						type="button"
 						onClick={() => exportLists()}
@@ -144,7 +141,6 @@ export default function Export({ exportStats }: { exportStats: AccountExportStat
 						Blocking {exportStats.blocks_count} account{ exportStats.blocks_count !== 1 && "s" }
 					</span>
 					<MutationButton
-						className="text-cutoff"
 						label="Download blocks.csv"
 						type="button"
 						onClick={() => exportBlocks()}
@@ -158,7 +154,6 @@ export default function Export({ exportStats }: { exportStats: AccountExportStat
 						Muting {exportStats.mutes_count} account{ exportStats.mutes_count !== 1 && "s" }
 					</span>
 					<MutationButton
-						className="text-cutoff"
 						label="Download mutes.csv"
 						type="button"
 						onClick={() => exportMutes()}

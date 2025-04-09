@@ -139,21 +139,24 @@ function ApplicationListEntry({ app, linkTo, backLocation }: ApplicationListEntr
 	const created = useCreated(app);
 	const redirectURIs = useRedirectURIs(app);
 
+	const onClick = () => {
+		// When clicking on an app, direct
+		// to the detail view for that app.
+		setLocation(linkTo, {
+			// Store the back location in history so
+			// the detail view can use it to return to
+			// this page (including query parameters).
+			state: { backLocation: backLocation }
+		});
+	};
+
 	return (
 		<span
 			className={`pseudolink application entry`}
 			aria-label={`${app.name}`}
 			title={`${app.name}`}
-			onClick={() => {
-				// When clicking on an app, direct
-				// to the detail view for that app.
-				setLocation(linkTo, {
-					// Store the back location in history so
-					// the detail view can use it to return to
-					// this page (including query parameters).
-					state: { backLocation: backLocation }
-				});
-			}}
+			onClick={onClick}
+			onKeyDown={e => e.key === "Enter" && onClick()}
 			role="link"
 			tabIndex={0}
 		>

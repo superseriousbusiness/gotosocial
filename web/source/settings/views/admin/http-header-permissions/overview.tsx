@@ -65,20 +65,23 @@ export default function HeaderPermsOverview() {
 	} = useGetHeaderAllowsQuery(NoArg, { skip: permType !== "allow" });
 
 	const itemToEntry = (perm: HeaderPermission) => {
+		const onClick = () => {
+			// When clicking on a header perm,
+			// go to the detail view for perm.
+			setLocation(`/${permType}s/${perm.id}`, {
+				// Store the back location in
+				// history so the detail view
+				// can use it to return here.
+				state: { backLocation: location }
+			});
+		};
+		
 		return (
 			<dl
 				key={perm.id}
 				className="entry pseudolink"
-				onClick={() => {
-					// When clicking on a header perm,
-					// go to the detail view for perm.
-					setLocation(`/${permType}s/${perm.id}`, {
-						// Store the back location in
-						// history so the detail view
-						// can use it to return here.
-						state: { backLocation: location }
-					});
-				}}
+				onClick={onClick}
+				onKeyDown={e => e.key === "Enter" && onClick()}
 				role="link"
 				tabIndex={0}
 			>

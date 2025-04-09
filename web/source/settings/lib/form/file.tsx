@@ -84,7 +84,7 @@ export default function useFileInput(
 	}
 
 	const infoComponent = (
-		<span className="form-info">
+		<span className="form-info text-cutoff">
 			{info
 				? info
 				: initialInfo
