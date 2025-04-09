@@ -205,6 +205,9 @@ func TestStatusTimelineInserts(t *testing.T) {
 	maxID := maxStatusID(data)
 	assert.Equal(t, maxID, maxStatus(&tt).ID)
 
+	// Manually mark timeline as 'preloaded'.
+	tt.preloader.CheckPreload(tt.preloader.Done)
+
 	// Specifically craft a boost of latest (i.e. max) status in timeline.
 	boost := &gtsmodel.Status{ID: "06B1A00PQWDZZH9WK9P5VND35C", BoostOfID: maxID}
 
