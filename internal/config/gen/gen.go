@@ -65,7 +65,6 @@ func main() {
 	fmt.Fprint(output, license)
 	fmt.Fprint(output, "package config\n\n")
 	fmt.Fprint(output, "import (\n")
-	fmt.Fprint(output, "\t\"net/netip\"\n")
 	fmt.Fprint(output, "\t\"time\"\n\n")
 	fmt.Fprint(output, "\t\"codeberg.org/gruf/go-bytesize\"\n")
 	fmt.Fprint(output, "\t\"github.com/superseriousbusiness/gotosocial/internal/language\"\n")

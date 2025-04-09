@@ -530,10 +530,11 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// Create per-route / per-grouping middlewares.
 	// rate limiting
 	rlLimit := config.GetAdvancedRateLimitRequests()
-	clLimit := middleware.RateLimit(rlLimit, config.GetAdvancedRateLimitExceptionsParsed())        // client api
-	s2sLimit := middleware.RateLimit(rlLimit, config.GetAdvancedRateLimitExceptionsParsed())       // server-to-server (AP)
-	fsMainLimit := middleware.RateLimit(rlLimit, config.GetAdvancedRateLimitExceptionsParsed())    // fileserver / web templates
-	fsEmojiLimit := middleware.RateLimit(rlLimit*2, config.GetAdvancedRateLimitExceptionsParsed()) // fileserver (emojis only, use high limit)
+	exceptions := config.GetAdvancedRateLimitExceptions()
+	clLimit := middleware.RateLimit(rlLimit, exceptions)        // client api
+	s2sLimit := middleware.RateLimit(rlLimit, exceptions)       // server-to-server (AP)
+	fsMainLimit := middleware.RateLimit(rlLimit, exceptions)    // fileserver / web templates
+	fsEmojiLimit := middleware.RateLimit(rlLimit*2, exceptions) // fileserver (emojis only, use high limit)
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()

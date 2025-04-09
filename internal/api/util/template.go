@@ -171,7 +171,7 @@ func injectTrustedProxiesRec(
 		return
 	}
 
-	except := config.GetAdvancedRateLimitExceptionsParsed()
+	except := config.GetAdvancedRateLimitExceptions()
 	for _, prefix := range except {
 		if prefix.Contains(ip) {
 			// This ip is exempt from

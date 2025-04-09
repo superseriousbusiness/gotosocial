@@ -18,7 +18,6 @@
 package config
 
 import (
-	"net/netip"
 	"reflect"
 	"time"
 
@@ -168,15 +167,14 @@ type Configuration struct {
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`
 	SyslogAddress  string `name:"syslog-address" usage:"Address:port to send syslog logs to. Leave empty to connect to local syslog."`
 
-	AdvancedCookiesSamesite           string         `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
-	AdvancedRateLimitRequests         int            `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
-	AdvancedRateLimitExceptions       []string       `name:"advanced-rate-limit-exceptions" usage:"Slice of CIDRs to exclude from rate limit restrictions."`
-	AdvancedRateLimitExceptionsParsed []netip.Prefix `name:"advanced-rate-limit-exceptions-parsed"`
-	AdvancedThrottlingMultiplier      int            `name:"advanced-throttling-multiplier" usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
-	AdvancedThrottlingRetryAfter      time.Duration  `name:"advanced-throttling-retry-after" usage:"Retry-After duration response to send for throttled requests."`
-	AdvancedSenderMultiplier          int            `name:"advanced-sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
-	AdvancedCSPExtraURIs              []string       `name:"advanced-csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
-	AdvancedHeaderFilterMode          string         `name:"advanced-header-filter-mode" usage:"Set incoming request header filtering mode."`
+	AdvancedCookiesSamesite      string        `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	AdvancedRateLimitRequests    int           `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
+	AdvancedRateLimitExceptions  IPPrefixes    `name:"advanced-rate-limit-exceptions" usage:"Slice of CIDRs to exclude from rate limit restrictions."`
+	AdvancedThrottlingMultiplier int           `name:"advanced-throttling-multiplier" usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
+	AdvancedThrottlingRetryAfter time.Duration `name:"advanced-throttling-retry-after" usage:"Retry-After duration response to send for throttled requests."`
+	AdvancedSenderMultiplier     int           `name:"advanced-sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
+	AdvancedCSPExtraURIs         []string      `name:"advanced-csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
+	AdvancedHeaderFilterMode     string        `name:"advanced-header-filter-mode" usage:"Set incoming request header filtering mode."`
 
 	// HTTPClient configuration vars.
 	HTTPClient HTTPClientConfiguration `name:"http-client"`

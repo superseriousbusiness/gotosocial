@@ -156,7 +156,7 @@ func (s *ConfigState) AddServerFlags(cmd *cobra.Command) {
 		// Advanced flags
 		cmd.Flags().String(AdvancedCookiesSamesiteFlag(), cfg.AdvancedCookiesSamesite, fieldtag("AdvancedCookiesSamesite", "usage"))
 		cmd.Flags().Int(AdvancedRateLimitRequestsFlag(), cfg.AdvancedRateLimitRequests, fieldtag("AdvancedRateLimitRequests", "usage"))
-		cmd.Flags().StringSlice(AdvancedRateLimitExceptionsFlag(), cfg.AdvancedRateLimitExceptions, fieldtag("AdvancedRateLimitExceptions", "usage"))
+		cmd.Flags().StringSlice(AdvancedRateLimitExceptionsFlag(), cfg.AdvancedRateLimitExceptions.Strings(), fieldtag("AdvancedRateLimitExceptions", "usage"))
 		cmd.Flags().Int(AdvancedThrottlingMultiplierFlag(), cfg.AdvancedThrottlingMultiplier, fieldtag("AdvancedThrottlingMultiplier", "usage"))
 		cmd.Flags().Duration(AdvancedThrottlingRetryAfterFlag(), cfg.AdvancedThrottlingRetryAfter, fieldtag("AdvancedThrottlingRetryAfter", "usage"))
 		cmd.Flags().Int(AdvancedSenderMultiplierFlag(), cfg.AdvancedSenderMultiplier, fieldtag("AdvancedSenderMultiplier", "usage"))

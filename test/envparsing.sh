@@ -18,7 +18,6 @@ EXPECT=$(cat << "EOF"
         "192.0.2.0/24",
         "127.0.0.1/32"
     ],
-    "advanced-rate-limit-exceptions-parsed": null,
     "advanced-rate-limit-requests": 6969,
     "advanced-sender-multiplier": -1,
     "advanced-throttling-multiplier": -1,
