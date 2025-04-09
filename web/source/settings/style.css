@@ -575,7 +575,7 @@ form {
 		width: fit-content;
 		display: flex;
 		flex-direction: column;
-		&:focus {
+		&:focus-visible {
 			outline: 0.15rem dashed $button-focus-border;
 			outline-offset: -0.15rem;
 		}
@@ -1331,7 +1331,7 @@ button.tab-button {
 .pseudolink {
 	cursor: pointer;
 	text-decoration: none;
-	&:focus {
+	&:focus-visible {
 		outline: 0.15rem dotted $button-focus-border;
 	}
 }

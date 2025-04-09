@@ -117,6 +117,16 @@
 				.hide {
 					display: none;
 				}
+
+				&:focus-visible {
+					/*
+						Can't rely on media having background with
+						decent contrast so inset and use button-fg
+						instead so focus is definitely visible.
+					*/
+					outline: 0.25rem dashed $button-fg;
+					outline-offset: -0.25rem;
+				}
 			}
 
 			.show.sensitive {
@@ -139,8 +149,13 @@
 			height: 100%;
 			width: 100%;
 
-			&:focus {
-				outline-offset: -0.15rem;
+			/*
+				Inset outline to avoid outline
+				being hidden by overflow: hidden.
+			*/
+			&:focus-visible {
+				outline: $button-focus-outline;
+				outline-offset: -0.25rem;
 			}
 		}
 

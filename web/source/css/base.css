@@ -72,26 +72,26 @@ $fa-fw: 1.28571429em;
 	Outline to give links when they're
 	focused (ie., by clicking or tabbing to them).
 */
-$link-focus-outline: 0.15rem dotted $link-fg;
+$link-focus-outline: 0.25rem dotted $link-fg;
 
 /*
 	Outline to give buttons when they're
 	focused (ie., by clicking or tabbing to them).
 */
-$button-focus-outline: 0.15rem dashed $button-focus-border;
+$button-focus-outline: 0.25rem dashed $button-focus-border;
 
 /*
 	Outline to give input elements like radio buttons
 	and checkboxes when they're focused (ie., by clicking
 	or tabbing to them).
 */
-$input-clickable-focus-outline: 0.15rem dashed $input-focus-border;
+$input-clickable-focus-outline: 0.25rem dashed $input-focus-border;
 
 /*
 	Outline to give summary elements when they're
 	focused (ie., by clicking or tabbing to them).
 */
-$summary-focus-outline: 0.1rem dashed $link-fg;
+$summary-focus-outline: 0.25rem dotted $link-fg;
 
 /*
 	Outline to give <pre> elements when they're
@@ -100,7 +100,7 @@ $summary-focus-outline: 0.1rem dashed $link-fg;
 	This is used when we've got a preformatted
 	code block with a scroll bar inside of it.
 */
-$pre-focus-outline: 0.1rem dashed $link-fg;
+$pre-focus-outline: 0.25rem dashed $link-fg;
 
 /******************************************
 ***** SECTION 2: BASIC GLOBAL STYLING *****
@@ -122,7 +122,7 @@ body {
 
 a {
 	color: $link-fg;
-	&:focus {
+	&:focus-visible {
 		outline: $link-focus-outline;
 	}
 }
@@ -182,12 +182,12 @@ main {
 		background: $button-hover-bg;
 	}
 
-	&:focus {
+	&:focus-visible {
 		outline: $button-focus-outline;
 	}
 }
 
-summary:focus {
+summary:focus-visible {
 	outline: $summary-focus-outline;
 }
 
@@ -209,8 +209,8 @@ input, select, textarea, .input {
 		border-color: $input-focus-border;
 	}
 
-	&[type=checkbox]:focus,
-	&[type=radio]:focus {
+	&[type=checkbox]:focus-visible,
+	&[type=radio]:focus-visible {
 		outline: $input-clickable-focus-outline;
 	}
 

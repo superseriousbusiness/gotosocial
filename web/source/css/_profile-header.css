@@ -94,8 +94,9 @@
 					Offset to avoid clashing with
 					thick border around avatars.
 				*/
-				&:focus {
-					outline-offset: 0.2rem;
+				&:focus-visible {
+					outline: $button-focus-outline;
+					outline-offset: 0.25rem;
 				}
 			}
 

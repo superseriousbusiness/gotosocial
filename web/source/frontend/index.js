@@ -144,11 +144,12 @@ lightbox.on('uiRegister', function() {
 			el.setAttribute('rel', 'noopener');
 			pswp.on('change', () => {
 				switch (true) {
-					case pswp.currSlide.data.parentStatus:
+					case pswp.currSlide.data.parentStatus !== undefined:
 						// Link to parent status.
 						el.href = pswp.currSlide.data.parentStatus;
 						break;
-					case pswp.currSlide.data.element && pswp.currSlide.data.element.dataset.pswpParentStatus:
+					case pswp.currSlide.data.element !== undefined &&
+						pswp.currSlide.data.element.dataset.pswpParentStatus !== undefined:
 						// Link to parent status.
 						el.href = pswp.currSlide.data.element.dataset.pswpParentStatus;
 						break;
