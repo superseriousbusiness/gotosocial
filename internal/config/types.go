@@ -43,8 +43,8 @@ func (p *IPPrefixes) String() string {
 	var buf byteutil.Buffer
 	for _, prefix := range *p {
 		str := prefix.String()
-		buf.WriteString(str)
-		buf.WriteByte(',')
+		buf.B = append(buf.B, str...)
+		buf.B = append(buf.B, ',')
 	}
 	buf.Truncate(1)
 	return buf.String()
