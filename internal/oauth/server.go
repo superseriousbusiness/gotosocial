@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"strings"
 
+	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/superseriousbusiness/oauth2/v4"
 	oautherr "codeberg.org/superseriousbusiness/oauth2/v4/errors"
 	"codeberg.org/superseriousbusiness/oauth2/v4/manage"
@@ -71,6 +72,7 @@ type Server interface {
 	ValidationBearerToken(r *http.Request) (oauth2.TokenInfo, error)
 	GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, clientSecret string, userID string) (accessToken oauth2.TokenInfo, err error)
 	LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error)
+	RevokeAccessToken(ctx context.Context, clientID string, clientSecret string, access string) gtserror.WithCode
 }
 
 // s fulfils the Server interface
@@ -337,4 +339,76 @@ func (s *s) GenerateUserAccessToken(ctx context.Context, ti oauth2.TokenInfo, cl
 
 func (s *s) LoadAccessToken(ctx context.Context, access string) (accessToken oauth2.TokenInfo, err error) {
 	return s.server.Manager.LoadAccessToken(ctx, access)
+}
+
+func (s *s) RevokeAccessToken(
+	ctx context.Context,
+	clientID string,
+	clientSecret string,
+	access string,
+) gtserror.WithCode {
+	token, err := s.server.Manager.LoadAccessToken(ctx, access)
+	switch {
+	case err == nil:
+		// Got the token, can
+		// proceed to invalidate.
+
+	case errorsv2.IsV2(
+		err,
+		db.ErrNoEntries,
+		oautherr.ErrExpiredAccessToken,
+	):
+		// Token already deleted, expired,
+		// or doesn't exist, nothing to do.
+		return nil
+
+	default:
+		// Real error.
+		log.Errorf(ctx, "db error loading access token: %v", err)
+		return gtserror.NewErrorInternalError(
+			oautherr.ErrServerError,
+			"db error loading access token, check logs",
+		)
+	}
+
+	// Ensure token's client ID matches provided client ID.
+	if token.GetClientID() != clientID {
+		log.Debug(ctx, "client id of token does not match provided client_id")
+		return gtserror.NewErrorForbidden(
+			oautherr.ErrUnauthorizedClient,
+			"You are not authorized to revoke this token",
+		)
+	}
+
+	// Get client from the db using provided client ID.
+	client, err := s.server.Manager.GetClient(ctx, clientID)
+	if err != nil {
+		log.Errorf(ctx, "db error loading client: %v", err)
+		return gtserror.NewErrorInternalError(
+			oautherr.ErrServerError,
+			"db error loading client, check logs",
+		)
+	}
+
+	// Ensure requester also knows the client secret,
+	// which confirms that they indeed created the client.
+	if client.GetSecret() != clientSecret {
+		log.Debug(ctx, "secret of client does not match provided client_secret")
+		return gtserror.NewErrorForbidden(
+			oautherr.ErrUnauthorizedClient,
+			"You are not authorized to revoke this token",
+		)
+	}
+
+	// All good, invalidate the token.
+	err = s.server.Manager.RemoveAccessToken(ctx, access)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		log.Errorf(ctx, "db error removing access token: %v", err)
+		return gtserror.NewErrorInternalError(
+			oautherr.ErrServerError,
+			"db error removing access token, check logs",
+		)
+	}
+
+	return nil
 }

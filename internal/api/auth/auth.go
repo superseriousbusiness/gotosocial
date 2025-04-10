@@ -46,6 +46,7 @@ const (
 	OauthFinalizePath  = "/finalize"
 	OauthOOBTokenPath  = "/oob"   // #nosec G101 else we get a hardcoded credentials warning
 	OauthTokenPath     = "/token" // #nosec G101 else we get a hardcoded credentials warning
+	OauthRevokePath    = "/revoke"
 
 	/*
 		params / session keys
@@ -100,6 +101,7 @@ func (m *Module) RouteAuth(attachHandler func(method string, path string, f ...g
 // RouteOAuth routes all paths that should have an 'oauth' prefix
 func (m *Module) RouteOAuth(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodPost, OauthTokenPath, m.TokenPOSTHandler)
+	attachHandler(http.MethodPost, OauthRevokePath, m.TokenRevokePOSTHandler)
 	attachHandler(http.MethodGet, OauthAuthorizePath, m.AuthorizeGETHandler)
 	attachHandler(http.MethodPost, OauthAuthorizePath, m.AuthorizePOSTHandler)
 	attachHandler(http.MethodPost, OauthFinalizePath, m.FinalizePOSTHandler)

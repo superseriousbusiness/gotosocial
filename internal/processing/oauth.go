@@ -18,6 +18,7 @@
 package processing
 
 import (
+	"context"
 	"net/http"
 
 	"codeberg.org/superseriousbusiness/oauth2/v4"
@@ -37,4 +38,18 @@ func (p *Processor) OAuthHandleTokenRequest(r *http.Request) (map[string]interfa
 func (p *Processor) OAuthValidateBearerToken(r *http.Request) (oauth2.TokenInfo, error) {
 	// todo: some kind of metrics stuff here
 	return p.oauthServer.ValidationBearerToken(r)
+}
+
+func (p *Processor) OAuthRevokeAccessToken(
+	ctx context.Context,
+	clientID string,
+	clientSecret string,
+	accessToken string,
+) gtserror.WithCode {
+	return p.oauthServer.RevokeAccessToken(
+		ctx,
+		clientID,
+		clientSecret,
+		accessToken,
+	)
 }

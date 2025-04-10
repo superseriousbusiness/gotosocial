@@ -182,7 +182,48 @@ const extended = gtsApi.injectEndpoints({
 			},
 		}),
 		logout: build.mutation({
-			queryFn: (_arg, api) => {
+			async queryFn(_arg, api, _extraOpts, fetchWithBQ) {
+				const state = api.getState() as RootState;
+				const loginState = state.login;
+				
+				// Try to log out politely by revoking
+				// our access token. First fetch app,
+				// then token, then post to /oauth/revoke.
+
+				const app = loginState.app;
+				if (app === undefined) {
+					// This should never happen.
+					throw "trying to log out with undefined app";
+				}
+				
+				let token = loginState.token;
+				if (token === undefined) {
+					// This should never happen.
+					throw "trying to log out with undefined token";
+				}
+
+				// Trim "Bearer " from stored token
+				// to get just the access token part.
+				token = token.substring(7);
+
+				// Try to revoke the token. If we fail, just
+				// log the error and clear our state anyway.
+				const invalidateResult = await fetchWithBQ({
+					method: "POST",
+					url: "/oauth/revoke",
+					body: {
+						token: token,
+						client_id: app.client_id,
+						client_secret: app.client_secret,
+					},
+					asForm: true,
+				});
+				if (invalidateResult.error) {
+					// eslint-disable-next-line no-console
+					console.error("error logging out: ", invalidateResult.error);
+				}
+
+				// Clear our state.
 				api.dispatch(oauthRemove());
 				return { data: null };
 			},
