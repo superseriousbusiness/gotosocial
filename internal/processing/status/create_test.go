@@ -19,6 +19,9 @@ package status_test
 
 import (
 	"context"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -239,6 +242,47 @@ func (suite *StatusCreateTestSuite) TestProcessNoContentTypeUsesDefault() {
 	// the test accounts don't have settings, so we're comparing to
 	// the global default value instead of the requester's default
 	suite.Equal(apimodel.StatusContentTypeDefault, apiStatus.ContentType)
+}
+
+func (suite *StatusCreateTestSuite) TestProcessPreview() {
+	ctx := context.Background()
+	creatingAccount := suite.testAccounts["local_account_1"]
+	creatingApplication := suite.testApplications["application_1"]
+
+	httpServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		const body = `
+<html prefix="og: https://ogp.me/ns#">
+<head>
+<title>The Rock (1996)</title>
+<meta property="og:title" content="The Rock" />
+<meta property="og:type" content="video.movie" />
+<meta property="og:url" content="https://www.imdb.com/title/tt0117500/" />
+<meta property="og:image" content="https://ia.media-imdb.com/images/rock.jpg" />
+</head>
+</html>
+`
+
+		_, err := w.Write([]byte(body))
+		suite.NoError(err)
+	}))
+	defer httpServer.Close()
+
+	statusCreateForm := &apimodel.StatusCreateRequest{
+		Status:      fmt.Sprintf("poopoo %s peepee", httpServer.URL),
+		Visibility:  apimodel.VisibilityPublic,
+		LocalOnly:   util.Ptr(false),
+		Language:    "en",
+		ContentType: apimodel.StatusContentTypePlain,
+	}
+
+	apiStatus, errWithCode := suite.status.Create(ctx, creatingAccount, creatingApplication, statusCreateForm)
+	suite.NoError(errWithCode)
+	suite.NotNil(apiStatus)
+
+	suite.Equal("<p>poopoo peepee</p>", apiStatus.Content)
+
+	suite.NotNil(apiStatus.Card)
+	fmt.Println(apiStatus.Card)
 }
 
 func TestStatusCreateTestSuite(t *testing.T) {

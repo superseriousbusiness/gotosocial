@@ -395,6 +395,13 @@ func sizeofEmoji() uintptr {
 	}))
 }
 
+func sizeofCard() uintptr {
+	// TODO: this implementation need to be extended to contain other fields also.
+	return uintptr(size.Of(&gtsmodel.Card{
+		ID: exampleID,
+	}))
+}
+
 func sizeofEmojiCategory() uintptr {
 	return uintptr(size.Of(&gtsmodel.EmojiCategory{
 		ID:        exampleID,

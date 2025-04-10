@@ -23,6 +23,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/federation"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/media"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -58,5 +59,6 @@ func NewTestProcessor(
 		webPushSender,
 		visibility.NewFilter(state),
 		interaction.NewFilter(state),
+		&httpclient.Client{}, // TODO: check if we need to replace it here
 	)
 }

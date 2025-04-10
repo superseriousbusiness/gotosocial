@@ -240,7 +240,6 @@ func (c *Converter) AccountToWebAccount(
 
 // accountToAPIAccountPublic provides all the logic for AccountToAPIAccount, MINUS fetching moved account, to prevent possible recursion.
 func (c *Converter) accountToAPIAccountPublic(ctx context.Context, a *gtsmodel.Account) (*apimodel.Account, error) {
-
 	// Populate account struct fields.
 	err := c.state.DB.PopulateAccount(ctx, a)
 
@@ -1375,6 +1374,8 @@ func (c *Converter) baseStatusToFrontend(
 		log.Errorf(ctx, "error converting status emojis: %v", err)
 	}
 
+	apiCard := c.convertCardToAPICard(s.Card, s.CardID)
+
 	// Take status's interaction policy, or
 	// fall back to default for its visibility.
 	var p *gtsmodel.InteractionPolicy
@@ -1411,7 +1412,7 @@ func (c *Converter) baseStatusToFrontend(
 		Mentions:           apiMentions,
 		Tags:               apiTags,
 		Emojis:             apiEmojis,
-		Card:               nil, // TODO: implement cards
+		Card:               apiCard,
 		Text:               s.Text,
 		ContentType:        ContentTypeToAPIContentType(s.ContentType),
 		InteractionPolicy:  *apiInteractionPolicy,
@@ -2598,6 +2599,29 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 	return apiAttachments, errs.Combine()
 }
 
+func (c *Converter) convertCardToAPICard(card *gtsmodel.Card, _ string) *apimodel.Card {
+	if card == nil {
+		return nil
+	}
+
+	return &apimodel.Card{
+		URL:          card.URL,
+		Title:        card.Title,
+		Description:  card.Description,
+		Type:         card.Type,
+		AuthorName:   card.AuthorName,
+		AuthorURL:    card.AuthorURL,
+		ProviderName: card.ProviderName,
+		ProviderURL:  card.ProviderURL,
+		HTML:         card.HTML,
+		Width:        card.Width,
+		Height:       card.Height,
+		Image:        card.Image,
+		EmbedURL:     card.EmbedURL,
+		Blurhash:     card.Blurhash,
+	}
+}
+
 // FilterToAPIFiltersV1 converts one GTS model filter into an API v1 filter list
 func (c *Converter) FilterToAPIFiltersV1(ctx context.Context, filter *gtsmodel.Filter) ([]*apimodel.FilterV1, error) {
 	apiFilters := make([]*apimodel.FilterV1, 0, len(filter.Keywords))
@@ -2922,7 +2946,6 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 }
 
 func policyValsToAPIPolicyVals(vals gtsmodel.PolicyValues) []apimodel.PolicyValue {
-
 	var (
 		valsLen = len(vals)
 

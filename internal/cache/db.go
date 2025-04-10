@@ -52,6 +52,9 @@ type DBCaches struct {
 	// BoostOfIDs provides access to the boost of IDs list database cache.
 	BoostOfIDs SliceCache[string]
 
+	// Card provides access to the gtsmodel Card database cache.
+	Card StructCache[*gtsmodel.Card]
+
 	// Conversation provides access to the gtsmodel Conversation database cache.
 	Conversation StructCache[*gtsmodel.Conversation]
 
@@ -630,6 +633,32 @@ func (c *Caches) initEmoji() {
 			{Fields: "Shortcode,Domain", AllowZero: true},
 			{Fields: "ImageStaticURL"},
 			{Fields: "CategoryID", Multiple: true},
+		},
+		MaxSize:   cap,
+		IgnoreErr: ignoreErrors,
+		Copy:      copyF,
+	})
+}
+
+func (c *Caches) initCard() {
+	// Calculate maximum cache size.
+	cap := calculateResultCacheMax(
+		sizeofCard(),                   // model in-mem size.
+		config.GetCacheEmojiMemRatio(), // TODO: this need to be replaced with GetCacheCardMemRatio
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	copyF := func(e1 *gtsmodel.Card) *gtsmodel.Card {
+		e2 := new(gtsmodel.Card)
+		*e2 = *e1
+
+		return e2
+	}
+
+	c.DB.Card.Init(structr.CacheConfig[*gtsmodel.Card]{
+		Indices: []structr.IndexConfig{
+			{Fields: "ID"},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
