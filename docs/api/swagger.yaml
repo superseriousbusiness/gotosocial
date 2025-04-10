@@ -13197,6 +13197,43 @@ paths:
             summary: Returns a compliant nodeinfo response to node info queries.
             tags:
                 - nodeinfo
+    /oauth/revoke:
+        post:
+            consumes:
+                - multipart/form-data
+            operationId: oauthTokenRevoke
+            parameters:
+                - description: The client ID, obtained during app registration.
+                  in: formData
+                  name: client_id
+                  required: true
+                  type: string
+                - description: The client secret, obtained during app registration.
+                  in: formData
+                  name: client_secret
+                  required: true
+                  type: string
+                - description: The previously obtained token, to be invalidated.
+                  in: formData
+                  name: token
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK - If you own the provided token, the API call will provide OK and an empty response `{}`. This operation is idempotent, so calling this API multiple times will still return OK.
+                "400":
+                    description: bad request
+                "403":
+                    description: forbidden - If you provide a token you do not own, the API call will return a 403 error.
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            summary: Revoke an access token to make it no longer valid for use.
+            tags:
+                - oauth
     /readyz:
         get:
             description: If GtS is not ready, 500 Internal Error will be returned, and an error will be logged (but not returned to the caller, to avoid leaking internals).
