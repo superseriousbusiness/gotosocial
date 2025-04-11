@@ -1125,9 +1125,27 @@ func extractCanLike(
 		return gtsmodel.PolicyRules{}
 	}
 
+	// Try new `automaticApproval` and
+	// `manualApproval` properties first.
+	var (
+		automaticApproval = withRules.GetGoToSocialAutomaticApproval()
+		manualApproval    = withRules.GetGoToSocialManualApproval()
+	)
+	if (automaticApproval != nil && automaticApproval.Len() != 0) ||
+		(manualApproval != nil && manualApproval.Len() != 0) {
+		// At least one is set,
+		// use these new props.
+		return gtsmodel.PolicyRules{
+			AutomaticApproval: extractPolicyValues(automaticApproval, owner),
+			ManualApproval:    extractPolicyValues(manualApproval, owner),
+		}
+	}
+
+	// Fall back to deprecated `always`
+	// and `withApproval` properties.
 	return gtsmodel.PolicyRules{
-		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
-		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
+		AutomaticApproval: extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
+		ManualApproval:    extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}
 }
 
@@ -1149,9 +1167,27 @@ func extractCanReply(
 		return gtsmodel.PolicyRules{}
 	}
 
+	// Try new `automaticApproval` and
+	// `manualApproval` properties first.
+	var (
+		automaticApproval = withRules.GetGoToSocialAutomaticApproval()
+		manualApproval    = withRules.GetGoToSocialManualApproval()
+	)
+	if (automaticApproval != nil && automaticApproval.Len() != 0) ||
+		(manualApproval != nil && manualApproval.Len() != 0) {
+		// At least one is set,
+		// use these new props.
+		return gtsmodel.PolicyRules{
+			AutomaticApproval: extractPolicyValues(automaticApproval, owner),
+			ManualApproval:    extractPolicyValues(manualApproval, owner),
+		}
+	}
+
+	// Fall back to deprecated `always`
+	// and `withApproval` properties.
 	return gtsmodel.PolicyRules{
-		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
-		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
+		AutomaticApproval: extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
+		ManualApproval:    extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}
 }
 
@@ -1173,9 +1209,27 @@ func extractCanAnnounce(
 		return gtsmodel.PolicyRules{}
 	}
 
+	// Try new `automaticApproval` and
+	// `manualApproval` properties first.
+	var (
+		automaticApproval = withRules.GetGoToSocialAutomaticApproval()
+		manualApproval    = withRules.GetGoToSocialManualApproval()
+	)
+	if (automaticApproval != nil && automaticApproval.Len() != 0) ||
+		(manualApproval != nil && manualApproval.Len() != 0) {
+		// At least one is set,
+		// use these new props.
+		return gtsmodel.PolicyRules{
+			AutomaticApproval: extractPolicyValues(automaticApproval, owner),
+			ManualApproval:    extractPolicyValues(manualApproval, owner),
+		}
+	}
+
+	// Fall back to deprecated `always`
+	// and `withApproval` properties.
 	return gtsmodel.PolicyRules{
-		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
-		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
+		AutomaticApproval: extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
+		ManualApproval:    extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}
 }
 

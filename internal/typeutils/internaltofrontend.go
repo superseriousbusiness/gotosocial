@@ -2836,16 +2836,16 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 ) (*apimodel.InteractionPolicy, error) {
 	apiPolicy := &apimodel.InteractionPolicy{
 		CanFavourite: apimodel.PolicyRules{
-			Always:       policyValsToAPIPolicyVals(policy.CanLike.Always),
-			WithApproval: policyValsToAPIPolicyVals(policy.CanLike.WithApproval),
+			Always:       policyValsToAPIPolicyVals(policy.CanLike.AutomaticApproval),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanLike.ManualApproval),
 		},
 		CanReply: apimodel.PolicyRules{
-			Always:       policyValsToAPIPolicyVals(policy.CanReply.Always),
-			WithApproval: policyValsToAPIPolicyVals(policy.CanReply.WithApproval),
+			Always:       policyValsToAPIPolicyVals(policy.CanReply.AutomaticApproval),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanReply.ManualApproval),
 		},
 		CanReblog: apimodel.PolicyRules{
-			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.Always),
-			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.WithApproval),
+			Always:       policyValsToAPIPolicyVals(policy.CanAnnounce.AutomaticApproval),
+			WithApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.ManualApproval),
 		},
 	}
 
@@ -2864,13 +2864,13 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 		return nil, err
 	}
 
-	if likeable.Permission == gtsmodel.PolicyPermissionPermitted {
+	if likeable.Permission == gtsmodel.PolicyPermissionAutomaticApproval {
 		// We can do this!
 		apiPolicy.CanFavourite.Always = append(
 			apiPolicy.CanFavourite.Always,
 			apimodel.PolicyValueMe,
 		)
-	} else if likeable.Permission == gtsmodel.PolicyPermissionWithApproval {
+	} else if likeable.Permission == gtsmodel.PolicyPermissionManualApproval {
 		// We can do this with approval.
 		apiPolicy.CanFavourite.WithApproval = append(
 			apiPolicy.CanFavourite.WithApproval,
@@ -2884,13 +2884,13 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 		return nil, err
 	}
 
-	if replyable.Permission == gtsmodel.PolicyPermissionPermitted {
+	if replyable.Permission == gtsmodel.PolicyPermissionAutomaticApproval {
 		// We can do this!
 		apiPolicy.CanReply.Always = append(
 			apiPolicy.CanReply.Always,
 			apimodel.PolicyValueMe,
 		)
-	} else if replyable.Permission == gtsmodel.PolicyPermissionWithApproval {
+	} else if replyable.Permission == gtsmodel.PolicyPermissionManualApproval {
 		// We can do this with approval.
 		apiPolicy.CanReply.WithApproval = append(
 			apiPolicy.CanReply.WithApproval,
@@ -2904,13 +2904,13 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 		return nil, err
 	}
 
-	if boostable.Permission == gtsmodel.PolicyPermissionPermitted {
+	if boostable.Permission == gtsmodel.PolicyPermissionAutomaticApproval {
 		// We can do this!
 		apiPolicy.CanReblog.Always = append(
 			apiPolicy.CanReblog.Always,
 			apimodel.PolicyValueMe,
 		)
-	} else if boostable.Permission == gtsmodel.PolicyPermissionWithApproval {
+	} else if boostable.Permission == gtsmodel.PolicyPermissionManualApproval {
 		// We can do this with approval.
 		apiPolicy.CanReblog.WithApproval = append(
 			apiPolicy.CanReblog.WithApproval,

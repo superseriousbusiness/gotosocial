@@ -7,9 +7,9 @@ import "net/url"
 // GoToSocialCanQuotePropertyIterator represents a single value for the "canQuote"
 // property.
 type GoToSocialCanQuotePropertyIterator interface {
-	// Get returns the value of this property. When IsGoToSocialCanReply
+	// Get returns the value of this property. When IsGoToSocialCanQuote
 	// returns false, Get will return any arbitrary value.
-	Get() GoToSocialCanReply
+	Get() GoToSocialCanQuote
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return any arbitrary value.
 	GetIRI() *url.URL
@@ -19,9 +19,9 @@ type GoToSocialCanQuotePropertyIterator interface {
 	GetType() Type
 	// HasAny returns true if the value or IRI is set.
 	HasAny() bool
-	// IsGoToSocialCanReply returns true if this property is set and not an
+	// IsGoToSocialCanQuote returns true if this property is set and not an
 	// IRI.
-	IsGoToSocialCanReply() bool
+	IsGoToSocialCanQuote() bool
 	// IsIRI returns true if this property is an IRI.
 	IsIRI() bool
 	// JSONLDContext returns the JSONLD URIs required in the context string
@@ -45,9 +45,9 @@ type GoToSocialCanQuotePropertyIterator interface {
 	// Prev returns the previous iterator, or nil if there is no previous
 	// iterator.
 	Prev() GoToSocialCanQuotePropertyIterator
-	// Set sets the value of this property. Calling IsGoToSocialCanReply
+	// Set sets the value of this property. Calling IsGoToSocialCanQuote
 	// afterwards will return true.
-	Set(v GoToSocialCanReply)
+	Set(v GoToSocialCanQuote)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards will
 	// return true.
 	SetIRI(v *url.URL)
@@ -59,10 +59,10 @@ type GoToSocialCanQuotePropertyIterator interface {
 // Defines who can Create a new Object that quotes the Object to which this
 // interactionPolicy is attached.
 type GoToSocialCanQuoteProperty interface {
-	// AppendGoToSocialCanReply appends a CanReply value to the back of a list
+	// AppendGoToSocialCanQuote appends a CanQuote value to the back of a list
 	// of the property "canQuote". Invalidates iterators that are
 	// traversing using Prev.
-	AppendGoToSocialCanReply(v GoToSocialCanReply)
+	AppendGoToSocialCanQuote(v GoToSocialCanQuote)
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "canQuote"
 	AppendIRI(v *url.URL)
@@ -84,10 +84,10 @@ type GoToSocialCanQuoteProperty interface {
 	// the iterator's Next method and this property's Begin method to
 	// iterate from front to back through all values.
 	End() GoToSocialCanQuotePropertyIterator
-	// InsertGoToSocialCanReply inserts a CanReply value at the specified
+	// InsertGoToSocialCanQuote inserts a CanQuote value at the specified
 	// index for a property "canQuote". Existing elements at that index
 	// and higher are shifted back once. Invalidates all iterators.
-	InsertGoToSocialCanReply(idx int, v GoToSocialCanReply)
+	InsertGoToSocialCanQuote(idx int, v GoToSocialCanQuote)
 	// Insert inserts an IRI value at the specified index for a property
 	// "canQuote". Existing elements at that index and higher are shifted
 	// back once. Invalidates all iterators.
@@ -118,9 +118,9 @@ type GoToSocialCanQuoteProperty interface {
 	LessThan(o GoToSocialCanQuoteProperty) bool
 	// Name returns the name of this property ("canQuote") with any alias.
 	Name() string
-	// PrependGoToSocialCanReply prepends a CanReply value to the front of a
+	// PrependGoToSocialCanQuote prepends a CanQuote value to the front of a
 	// list of the property "canQuote". Invalidates all iterators.
-	PrependGoToSocialCanReply(v GoToSocialCanReply)
+	PrependGoToSocialCanQuote(v GoToSocialCanQuote)
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "canQuote".
 	PrependIRI(v *url.URL)
@@ -138,10 +138,10 @@ type GoToSocialCanQuoteProperty interface {
 	// instead of individual properties. It is exposed for alternatives to
 	// go-fed implementations to use.
 	Serialize() (interface{}, error)
-	// Set sets a CanReply value to be at the specified index for the property
+	// Set sets a CanQuote value to be at the specified index for the property
 	// "canQuote". Panics if the index is out of bounds. Invalidates all
 	// iterators.
-	Set(idx int, v GoToSocialCanReply)
+	Set(idx int, v GoToSocialCanQuote)
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "canQuote". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)

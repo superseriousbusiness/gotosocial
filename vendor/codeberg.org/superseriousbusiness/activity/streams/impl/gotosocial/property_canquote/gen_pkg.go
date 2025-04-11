@@ -9,10 +9,10 @@ var mgr privateManager
 // privateManager abstracts the code-generated manager that provides access to
 // concrete implementations.
 type privateManager interface {
-	// DeserializeCanReplyGoToSocial returns the deserialization method for
-	// the "GoToSocialCanReply" non-functional property in the vocabulary
+	// DeserializeCanQuoteGoToSocial returns the deserialization method for
+	// the "GoToSocialCanQuote" non-functional property in the vocabulary
 	// "GoToSocial"
-	DeserializeCanReplyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanReply, error)
+	DeserializeCanQuoteGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanQuote, error)
 }
 
 // SetManager sets the manager package-global variable. For internal use only, do

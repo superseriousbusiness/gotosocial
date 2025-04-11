@@ -548,6 +548,12 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
       ],
       "approvalRequired": []
     },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/the_mighty_zork"
+      ],
+      "approvalRequired": []
+    },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -627,6 +633,12 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/admin"
       ],
       "approvalRequired": []
     },
@@ -730,6 +742,12 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
       ],
       "approvalRequired": []
     },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/admin"
+      ],
+      "approvalRequired": []
+    },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -820,6 +838,12 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/admin"
       ],
       "approvalRequired": []
     },

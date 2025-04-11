@@ -11,7 +11,7 @@ import (
 // GoToSocialCanQuotePropertyIterator is an iterator for a property. It is
 // permitted to be a single nilable value type.
 type GoToSocialCanQuotePropertyIterator struct {
-	gotosocialCanReplyMember vocab.GoToSocialCanReply
+	gotosocialCanQuoteMember vocab.GoToSocialCanQuote
 	unknown                  interface{}
 	iri                      *url.URL
 	alias                    string
@@ -44,10 +44,10 @@ func deserializeGoToSocialCanQuotePropertyIterator(i interface{}, aliasMap map[s
 		}
 	}
 	if m, ok := i.(map[string]interface{}); ok {
-		if v, err := mgr.DeserializeCanReplyGoToSocial()(m, aliasMap); err == nil {
+		if v, err := mgr.DeserializeCanQuoteGoToSocial()(m, aliasMap); err == nil {
 			this := &GoToSocialCanQuotePropertyIterator{
 				alias:                    alias,
-				gotosocialCanReplyMember: v,
+				gotosocialCanQuoteMember: v,
 			}
 			return this, nil
 		}
@@ -59,10 +59,10 @@ func deserializeGoToSocialCanQuotePropertyIterator(i interface{}, aliasMap map[s
 	return this, nil
 }
 
-// Get returns the value of this property. When IsGoToSocialCanReply returns
+// Get returns the value of this property. When IsGoToSocialCanQuote returns
 // false, Get will return any arbitrary value.
-func (this GoToSocialCanQuotePropertyIterator) Get() vocab.GoToSocialCanReply {
-	return this.gotosocialCanReplyMember
+func (this GoToSocialCanQuotePropertyIterator) Get() vocab.GoToSocialCanQuote {
+	return this.gotosocialCanQuoteMember
 }
 
 // GetIRI returns the IRI of this property. When IsIRI returns false, GetIRI will
@@ -74,7 +74,7 @@ func (this GoToSocialCanQuotePropertyIterator) GetIRI() *url.URL {
 // GetType returns the value in this property as a Type. Returns nil if the value
 // is not an ActivityStreams type, such as an IRI or another value.
 func (this GoToSocialCanQuotePropertyIterator) GetType() vocab.Type {
-	if this.IsGoToSocialCanReply() {
+	if this.IsGoToSocialCanQuote() {
 		return this.Get()
 	}
 
@@ -83,12 +83,12 @@ func (this GoToSocialCanQuotePropertyIterator) GetType() vocab.Type {
 
 // HasAny returns true if the value or IRI is set.
 func (this GoToSocialCanQuotePropertyIterator) HasAny() bool {
-	return this.IsGoToSocialCanReply() || this.iri != nil
+	return this.IsGoToSocialCanQuote() || this.iri != nil
 }
 
-// IsGoToSocialCanReply returns true if this property is set and not an IRI.
-func (this GoToSocialCanQuotePropertyIterator) IsGoToSocialCanReply() bool {
-	return this.gotosocialCanReplyMember != nil
+// IsGoToSocialCanQuote returns true if this property is set and not an IRI.
+func (this GoToSocialCanQuotePropertyIterator) IsGoToSocialCanQuote() bool {
+	return this.gotosocialCanQuoteMember != nil
 }
 
 // IsIRI returns true if this property is an IRI.
@@ -102,7 +102,7 @@ func (this GoToSocialCanQuotePropertyIterator) IsIRI() bool {
 func (this GoToSocialCanQuotePropertyIterator) JSONLDContext() map[string]string {
 	m := map[string]string{"https://gotosocial.org/ns": this.alias}
 	var child map[string]string
-	if this.IsGoToSocialCanReply() {
+	if this.IsGoToSocialCanQuote() {
 		child = this.Get().JSONLDContext()
 	}
 	/*
@@ -120,7 +120,7 @@ func (this GoToSocialCanQuotePropertyIterator) JSONLDContext() map[string]string
 // a leaky API detail only for folks looking to replace the go-fed
 // implementation. Applications should not use this method.
 func (this GoToSocialCanQuotePropertyIterator) KindIndex() int {
-	if this.IsGoToSocialCanReply() {
+	if this.IsGoToSocialCanQuote() {
 		return 0
 	}
 	if this.IsIRI() {
@@ -145,13 +145,13 @@ func (this GoToSocialCanQuotePropertyIterator) LessThan(o vocab.GoToSocialCanQuo
 		return false
 	}
 	// LessThan comparison for the single value or unknown value.
-	if !this.IsGoToSocialCanReply() && !o.IsGoToSocialCanReply() {
+	if !this.IsGoToSocialCanQuote() && !o.IsGoToSocialCanQuote() {
 		// Both are unknowns.
 		return false
-	} else if this.IsGoToSocialCanReply() && !o.IsGoToSocialCanReply() {
+	} else if this.IsGoToSocialCanQuote() && !o.IsGoToSocialCanQuote() {
 		// Values are always greater than unknown values.
 		return false
-	} else if !this.IsGoToSocialCanReply() && o.IsGoToSocialCanReply() {
+	} else if !this.IsGoToSocialCanQuote() && o.IsGoToSocialCanQuote() {
 		// Unknowns are always less than known values.
 		return true
 	} else {
@@ -187,11 +187,11 @@ func (this GoToSocialCanQuotePropertyIterator) Prev() vocab.GoToSocialCanQuotePr
 	}
 }
 
-// Set sets the value of this property. Calling IsGoToSocialCanReply afterwards
+// Set sets the value of this property. Calling IsGoToSocialCanQuote afterwards
 // will return true.
-func (this *GoToSocialCanQuotePropertyIterator) Set(v vocab.GoToSocialCanReply) {
+func (this *GoToSocialCanQuotePropertyIterator) Set(v vocab.GoToSocialCanQuote) {
 	this.clear()
-	this.gotosocialCanReplyMember = v
+	this.gotosocialCanQuoteMember = v
 }
 
 // SetIRI sets the value of this property. Calling IsIRI afterwards will return
@@ -204,7 +204,7 @@ func (this *GoToSocialCanQuotePropertyIterator) SetIRI(v *url.URL) {
 // SetType attempts to set the property for the arbitrary type. Returns an error
 // if it is not a valid type to set on this property.
 func (this *GoToSocialCanQuotePropertyIterator) SetType(t vocab.Type) error {
-	if v, ok := t.(vocab.GoToSocialCanReply); ok {
+	if v, ok := t.(vocab.GoToSocialCanQuote); ok {
 		this.Set(v)
 		return nil
 	}
@@ -212,12 +212,12 @@ func (this *GoToSocialCanQuotePropertyIterator) SetType(t vocab.Type) error {
 	return fmt.Errorf("illegal type to set on GoToSocialCanQuote property: %T", t)
 }
 
-// clear ensures no value of this property is set. Calling IsGoToSocialCanReply
+// clear ensures no value of this property is set. Calling IsGoToSocialCanQuote
 // afterwards will return false.
 func (this *GoToSocialCanQuotePropertyIterator) clear() {
 	this.unknown = nil
 	this.iri = nil
-	this.gotosocialCanReplyMember = nil
+	this.gotosocialCanQuoteMember = nil
 }
 
 // serialize converts this into an interface representation suitable for
@@ -225,7 +225,7 @@ func (this *GoToSocialCanQuotePropertyIterator) clear() {
 // function as most typical use cases serialize types instead of individual
 // properties. It is exposed for alternatives to go-fed implementations to use.
 func (this GoToSocialCanQuotePropertyIterator) serialize() (interface{}, error) {
-	if this.IsGoToSocialCanReply() {
+	if this.IsGoToSocialCanQuote() {
 		return this.Get().Serialize()
 	} else if this.IsIRI() {
 		return this.iri.String(), nil
@@ -288,12 +288,12 @@ func NewGoToSocialCanQuoteProperty() *GoToSocialCanQuoteProperty {
 	return &GoToSocialCanQuoteProperty{alias: ""}
 }
 
-// AppendGoToSocialCanReply appends a CanReply value to the back of a list of the
+// AppendGoToSocialCanQuote appends a CanQuote value to the back of a list of the
 // property "canQuote". Invalidates iterators that are traversing using Prev.
-func (this *GoToSocialCanQuoteProperty) AppendGoToSocialCanReply(v vocab.GoToSocialCanReply) {
+func (this *GoToSocialCanQuoteProperty) AppendGoToSocialCanQuote(v vocab.GoToSocialCanQuote) {
 	this.properties = append(this.properties, &GoToSocialCanQuotePropertyIterator{
 		alias:                    this.alias,
-		gotosocialCanReplyMember: v,
+		gotosocialCanQuoteMember: v,
 		myIdx:                    this.Len(),
 		parent:                   this,
 	})
@@ -354,15 +354,15 @@ func (this GoToSocialCanQuoteProperty) End() vocab.GoToSocialCanQuotePropertyIte
 	return nil
 }
 
-// InsertGoToSocialCanReply inserts a CanReply value at the specified index for a
+// InsertGoToSocialCanQuote inserts a CanQuote value at the specified index for a
 // property "canQuote". Existing elements at that index and higher are shifted
 // back once. Invalidates all iterators.
-func (this *GoToSocialCanQuoteProperty) InsertGoToSocialCanReply(idx int, v vocab.GoToSocialCanReply) {
+func (this *GoToSocialCanQuoteProperty) InsertGoToSocialCanQuote(idx int, v vocab.GoToSocialCanQuote) {
 	this.properties = append(this.properties, nil)
 	copy(this.properties[idx+1:], this.properties[idx:])
 	this.properties[idx] = &GoToSocialCanQuotePropertyIterator{
 		alias:                    this.alias,
-		gotosocialCanReplyMember: v,
+		gotosocialCanQuoteMember: v,
 		myIdx:                    idx,
 		parent:                   this,
 	}
@@ -492,12 +492,12 @@ func (this GoToSocialCanQuoteProperty) Name() string {
 	}
 }
 
-// PrependGoToSocialCanReply prepends a CanReply value to the front of a list of
+// PrependGoToSocialCanQuote prepends a CanQuote value to the front of a list of
 // the property "canQuote". Invalidates all iterators.
-func (this *GoToSocialCanQuoteProperty) PrependGoToSocialCanReply(v vocab.GoToSocialCanReply) {
+func (this *GoToSocialCanQuoteProperty) PrependGoToSocialCanQuote(v vocab.GoToSocialCanQuote) {
 	this.properties = append([]*GoToSocialCanQuotePropertyIterator{{
 		alias:                    this.alias,
-		gotosocialCanReplyMember: v,
+		gotosocialCanQuoteMember: v,
 		myIdx:                    0,
 		parent:                   this,
 	}}, this.properties...)
@@ -572,13 +572,13 @@ func (this GoToSocialCanQuoteProperty) Serialize() (interface{}, error) {
 	return s, nil
 }
 
-// Set sets a CanReply value to be at the specified index for the property
+// Set sets a CanQuote value to be at the specified index for the property
 // "canQuote". Panics if the index is out of bounds. Invalidates all iterators.
-func (this *GoToSocialCanQuoteProperty) Set(idx int, v vocab.GoToSocialCanReply) {
+func (this *GoToSocialCanQuoteProperty) Set(idx int, v vocab.GoToSocialCanQuote) {
 	(this.properties)[idx].parent = nil
 	(this.properties)[idx] = &GoToSocialCanQuotePropertyIterator{
 		alias:                    this.alias,
-		gotosocialCanReplyMember: v,
+		gotosocialCanQuoteMember: v,
 		myIdx:                    idx,
 		parent:                   this,
 	}

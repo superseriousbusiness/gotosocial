@@ -1837,12 +1837,12 @@ func (c *Converter) PollVoteToASCreates(
 func populateValuesForProp[T ap.WithIRI](
 	prop ap.Property[T],
 	status *gtsmodel.Status,
-	urns gtsmodel.PolicyValues,
+	policyValues gtsmodel.PolicyValues,
 ) error {
 	iriStrs := make([]string, 0)
 
-	for _, urn := range urns {
-		switch urn {
+	for _, policyValue := range policyValues {
+		switch policyValue {
 
 		case gtsmodel.PolicyValueAuthor:
 			iriStrs = append(iriStrs, status.Account.URI)
@@ -1862,7 +1862,7 @@ func populateValuesForProp[T ap.WithIRI](
 			iriStrs = append(iriStrs, pub.PublicActivityPubIRI)
 
 		default:
-			iriStrs = append(iriStrs, string(urn))
+			iriStrs = append(iriStrs, string(policyValue))
 		}
 	}
 
@@ -1905,7 +1905,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canLikeAlwaysProp,
 		status,
-		interactionPolicy.CanLike.Always,
+		interactionPolicy.CanLike.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canLike.always: %w", err)
 	}
@@ -1918,7 +1918,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canLikeApprovalRequiredProp,
 		status,
-		interactionPolicy.CanLike.WithApproval,
+		interactionPolicy.CanLike.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canLike.approvalRequired: %w", err)
 	}
@@ -1943,7 +1943,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canReplyAlwaysProp,
 		status,
-		interactionPolicy.CanReply.Always,
+		interactionPolicy.CanReply.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canReply.always: %w", err)
 	}
@@ -1956,7 +1956,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canReplyApprovalRequiredProp,
 		status,
-		interactionPolicy.CanReply.WithApproval,
+		interactionPolicy.CanReply.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canReply.approvalRequired: %w", err)
 	}
@@ -1981,7 +1981,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canAnnounceAlwaysProp,
 		status,
-		interactionPolicy.CanAnnounce.Always,
+		interactionPolicy.CanAnnounce.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canAnnounce.always: %w", err)
 	}
@@ -1994,7 +1994,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canAnnounceApprovalRequiredProp,
 		status,
-		interactionPolicy.CanAnnounce.WithApproval,
+		interactionPolicy.CanAnnounce.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canAnnounce.approvalRequired: %w", err)
 	}
@@ -2006,6 +2006,50 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	canAnnounceProp := streams.NewGoToSocialCanAnnounceProperty()
 	canAnnounceProp.AppendGoToSocialCanAnnounce(canAnnounce)
 	policy.SetGoToSocialCanAnnounce(canAnnounceProp)
+
+	/*
+		CAN QUOTE
+
+		This will be used by Mastodon when they
+		introduce quotes with approvals etc.
+
+		For now we set it to always author only
+		(ie., nobody can quote) until we add support.
+	*/
+
+	// Build canQuote
+	canQuote := streams.NewGoToSocialCanQuote()
+
+	// Build canQuote.always to author only.
+	canQuoteAlwaysProp := streams.NewGoToSocialAlwaysProperty()
+	if err := populateValuesForProp(
+		canQuoteAlwaysProp,
+		status,
+		gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+	); err != nil {
+		return nil, gtserror.Newf("error setting canQuote.always: %w", err)
+	}
+
+	// Set canQuote.always
+	canQuote.SetGoToSocialAlways(canQuoteAlwaysProp)
+
+	// Build canQuote.approvalRequired to empty array.
+	canQuoteApprovalRequiredProp := streams.NewGoToSocialApprovalRequiredProperty()
+	if err := populateValuesForProp(
+		canQuoteApprovalRequiredProp,
+		status,
+		gtsmodel.PolicyValues{},
+	); err != nil {
+		return nil, gtserror.Newf("error setting canQuote.approvalRequired: %w", err)
+	}
+
+	// Set canQuote.approvalRequired
+	canQuote.SetGoToSocialApprovalRequired(canQuoteApprovalRequiredProp)
+
+	// Set canQuote on the policy.
+	canQuoteProp := streams.NewGoToSocialCanQuoteProperty()
+	canQuoteProp.AppendGoToSocialCanQuote(canQuote)
+	policy.SetGoToSocialCanQuote(canQuoteProp)
 
 	return policy, nil
 }

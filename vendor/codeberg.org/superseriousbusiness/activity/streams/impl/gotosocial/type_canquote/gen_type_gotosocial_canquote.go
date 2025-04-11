@@ -5,9 +5,13 @@ package typecanquote
 import vocab "codeberg.org/superseriousbusiness/activity/streams/vocab"
 
 type GoToSocialCanQuote struct {
-	JSONLDId vocab.JSONLDIdProperty
-	alias    string
-	unknown  map[string]interface{}
+	GoToSocialAlways            vocab.GoToSocialAlwaysProperty
+	GoToSocialApprovalRequired  vocab.GoToSocialApprovalRequiredProperty
+	GoToSocialAutomaticApproval vocab.GoToSocialAutomaticApprovalProperty
+	JSONLDId                    vocab.JSONLDIdProperty
+	GoToSocialManualApproval    vocab.GoToSocialManualApprovalProperty
+	alias                       string
+	unknown                     map[string]interface{}
 }
 
 // CanQuoteIsDisjointWith returns true if the other provided type is disjoint with
@@ -38,17 +42,45 @@ func DeserializeCanQuote(m map[string]interface{}, aliasMap map[string]string) (
 	}
 
 	// Begin: Known property deserialization
+	if p, err := mgr.DeserializeAlwaysPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialAlways = p
+	}
+	if p, err := mgr.DeserializeApprovalRequiredPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialApprovalRequired = p
+	}
+	if p, err := mgr.DeserializeAutomaticApprovalPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialAutomaticApproval = p
+	}
 	if p, err := mgr.DeserializeIdPropertyJSONLD()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
 		this.JSONLDId = p
+	}
+	if p, err := mgr.DeserializeManualApprovalPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialManualApproval = p
 	}
 	// End: Known property deserialization
 
 	// Begin: Unknown deserialization
 	for k, v := range m {
 		// Begin: Code that ensures a property name is unknown
-		if k == "id" {
+		if k == "always" {
+			continue
+		} else if k == "approvalRequired" {
+			continue
+		} else if k == "automaticApproval" {
+			continue
+		} else if k == "id" {
+			continue
+		} else if k == "manualApproval" {
 			continue
 		} // End: Code that ensures a property name is unknown
 
@@ -83,6 +115,30 @@ func NewGoToSocialCanQuote() *GoToSocialCanQuote {
 	}
 }
 
+// GetGoToSocialAlways returns the "always" property if it exists, and nil
+// otherwise.
+func (this GoToSocialCanQuote) GetGoToSocialAlways() vocab.GoToSocialAlwaysProperty {
+	return this.GoToSocialAlways
+}
+
+// GetGoToSocialApprovalRequired returns the "approvalRequired" property if it
+// exists, and nil otherwise.
+func (this GoToSocialCanQuote) GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty {
+	return this.GoToSocialApprovalRequired
+}
+
+// GetGoToSocialAutomaticApproval returns the "automaticApproval" property if it
+// exists, and nil otherwise.
+func (this GoToSocialCanQuote) GetGoToSocialAutomaticApproval() vocab.GoToSocialAutomaticApprovalProperty {
+	return this.GoToSocialAutomaticApproval
+}
+
+// GetGoToSocialManualApproval returns the "manualApproval" property if it exists,
+// and nil otherwise.
+func (this GoToSocialCanQuote) GetGoToSocialManualApproval() vocab.GoToSocialManualApprovalProperty {
+	return this.GoToSocialManualApproval
+}
+
 // GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 func (this GoToSocialCanQuote) GetJSONLDId() vocab.JSONLDIdProperty {
 	return this.JSONLDId
@@ -113,7 +169,11 @@ func (this GoToSocialCanQuote) IsExtending(other vocab.Type) bool {
 // alias used to import the type and its properties.
 func (this GoToSocialCanQuote) JSONLDContext() map[string]string {
 	m := map[string]string{"https://gotosocial.org/ns": this.alias}
+	m = this.helperJSONLDContext(this.GoToSocialAlways, m)
+	m = this.helperJSONLDContext(this.GoToSocialApprovalRequired, m)
+	m = this.helperJSONLDContext(this.GoToSocialAutomaticApproval, m)
 	m = this.helperJSONLDContext(this.JSONLDId, m)
+	m = this.helperJSONLDContext(this.GoToSocialManualApproval, m)
 
 	return m
 }
@@ -122,8 +182,64 @@ func (this GoToSocialCanQuote) JSONLDContext() map[string]string {
 // determination.
 func (this GoToSocialCanQuote) LessThan(o vocab.GoToSocialCanQuote) bool {
 	// Begin: Compare known properties
+	// Compare property "always"
+	if lhs, rhs := this.GoToSocialAlways, o.GetGoToSocialAlways(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "approvalRequired"
+	if lhs, rhs := this.GoToSocialApprovalRequired, o.GetGoToSocialApprovalRequired(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "automaticApproval"
+	if lhs, rhs := this.GoToSocialAutomaticApproval, o.GetGoToSocialAutomaticApproval(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
 	// Compare property "id"
 	if lhs, rhs := this.JSONLDId, o.GetJSONLDId(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "manualApproval"
+	if lhs, rhs := this.GoToSocialManualApproval, o.GetGoToSocialManualApproval(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -154,12 +270,44 @@ func (this GoToSocialCanQuote) LessThan(o vocab.GoToSocialCanQuote) bool {
 func (this GoToSocialCanQuote) Serialize() (map[string]interface{}, error) {
 	m := make(map[string]interface{})
 	// Begin: Serialize known properties
+	// Maybe serialize property "always"
+	if this.GoToSocialAlways != nil {
+		if i, err := this.GoToSocialAlways.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialAlways.Name()] = i
+		}
+	}
+	// Maybe serialize property "approvalRequired"
+	if this.GoToSocialApprovalRequired != nil {
+		if i, err := this.GoToSocialApprovalRequired.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialApprovalRequired.Name()] = i
+		}
+	}
+	// Maybe serialize property "automaticApproval"
+	if this.GoToSocialAutomaticApproval != nil {
+		if i, err := this.GoToSocialAutomaticApproval.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialAutomaticApproval.Name()] = i
+		}
+	}
 	// Maybe serialize property "id"
 	if this.JSONLDId != nil {
 		if i, err := this.JSONLDId.Serialize(); err != nil {
 			return nil, err
 		} else if i != nil {
 			m[this.JSONLDId.Name()] = i
+		}
+	}
+	// Maybe serialize property "manualApproval"
+	if this.GoToSocialManualApproval != nil {
+		if i, err := this.GoToSocialManualApproval.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialManualApproval.Name()] = i
 		}
 	}
 	// End: Serialize known properties
@@ -174,6 +322,26 @@ func (this GoToSocialCanQuote) Serialize() (map[string]interface{}, error) {
 	// End: Serialize unknown properties
 
 	return m, nil
+}
+
+// SetGoToSocialAlways sets the "always" property.
+func (this *GoToSocialCanQuote) SetGoToSocialAlways(i vocab.GoToSocialAlwaysProperty) {
+	this.GoToSocialAlways = i
+}
+
+// SetGoToSocialApprovalRequired sets the "approvalRequired" property.
+func (this *GoToSocialCanQuote) SetGoToSocialApprovalRequired(i vocab.GoToSocialApprovalRequiredProperty) {
+	this.GoToSocialApprovalRequired = i
+}
+
+// SetGoToSocialAutomaticApproval sets the "automaticApproval" property.
+func (this *GoToSocialCanQuote) SetGoToSocialAutomaticApproval(i vocab.GoToSocialAutomaticApprovalProperty) {
+	this.GoToSocialAutomaticApproval = i
+}
+
+// SetGoToSocialManualApproval sets the "manualApproval" property.
+func (this *GoToSocialCanQuote) SetGoToSocialManualApproval(i vocab.GoToSocialManualApprovalProperty) {
+	this.GoToSocialManualApproval = i
 }
 
 // SetJSONLDId sets the "id" property.
