@@ -20,6 +20,8 @@
 .profile .profile-header {
 	background: $profile-bg;
 	border-radius: $br;
+	margin-bottom: 1rem;
+	padding-bottom: 1rem;
 
 	/*
 		Link to open media in slide
@@ -69,6 +71,7 @@
 	.basic-info {
 		position: relative;
 		display: grid;
+		gap: 0 1rem;
 		box-sizing: border-box;
 		grid-template-columns: $avatar-size auto 1fr;
 		grid-template-rows: $overlap $name-size auto;
@@ -77,10 +80,12 @@
 			"avatar namerole namerole"
 			"avatar namerole namerole";
 
-		margin: 1rem;
-		margin-top: calc(-1 * $overlap);
-		gap: 0 1rem;
-		padding-bottom: 1rem;
+		/*
+			Margin top to inset profile pic into
+			header image, margin sides to inset
+			basic info from header wrapper.
+		*/
+		margin: calc(-1 * $overlap) 1rem 0 1rem;
 
 		.avatar-image-wrapper {
 			grid-area: avatar;
