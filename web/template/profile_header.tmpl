@@ -80,10 +80,7 @@
 
 {{- define "avatar" -}}
 {{- with . }}
-<div
-    class="photoswipe-gallery odd single avatar-image-wrapper"
-    role="group"
->
+<div class="photoswipe-gallery odd single avatar-image-wrapper" role="group">
     <a
         class="photoswipe-slide"
         href="{{- .account.Avatar -}}"
@@ -91,12 +88,9 @@
         data-pswp-width="{{- template "avatarWidth" . -}}px"
         data-pswp-height="{{- template "avatarHeight" . -}}px"
         data-cropped="true"
-        alt="{{- template "avatarAlt" . -}}"
         title="{{- template "avatarAlt" . -}}"
     >
-        <picture
-            aria-hidden="true"
-        >
+        <picture>
             {{- if .account.AvatarAttachment }}
             <source
                 class="avatar"
@@ -109,7 +103,6 @@
                 class="avatar u-photo"
                 src="{{- .account.Avatar -}}"
                 alt="{{- template "avatarAlt" . -}}"
-                title="{{- template "avatarAlt" . -}}"
                 width="{{- template "avatarWidth" . -}}"
                 height="{{- template "avatarHeight" . -}}"
             />
@@ -119,31 +112,60 @@
 {{- end }}
 {{- end -}}
 
+{{- define "header" -}}
 {{- with . }}
-<h2 class="sr-only">Profile for {{ .account.Username -}}</h2>
-<section class="profile-header" role="region" aria-label="Basic info">
-    {{- if .account.Moved }}
-    {{- include "profileMovedTo" . | indent 2 }}
-    {{- end }}
-    <div class="header-image-wrapper">
+{{- if .account.HeaderAttachment }}
+<div class="photoswipe-gallery odd single header-image-wrapper" role="group">
+    <a
+        class="photoswipe-slide"
+        href="{{- .account.Header -}}"
+        target="_blank"
+        data-pswp-width="{{- .account.HeaderAttachment.Meta.Original.Width -}}px"
+        data-pswp-height="{{- .account.HeaderAttachment.Meta.Original.Height -}}px"
+        data-cropped="true"
+        title="{{- template "headerAlt" . -}}"
+    >
         <picture>
-            {{- if .account.HeaderAttachment }}
             <source
                 srcset="{{- .account.HeaderStatic -}}"
                 type="{{- .account.HeaderAttachment.PreviewMIMEType -}}"
                 media="(prefers-reduced-motion: reduce)"
             />
-            {{- end }}
             <img
                 src="{{- .account.Header -}}"
                 alt="{{- template "headerAlt" . -}}"
-                title="{{- template "headerAlt" . -}}"
+                width="{{- .account.HeaderAttachment.Meta.Original.Width -}}"
+                height="{{- .account.HeaderAttachment.Meta.Original.Height -}}"
             />
         </picture>
-    </div>
+    </a>
+</div>
+{{- else }}
+<div class="header-image-wrapper">
+    <picture>
+        <img
+            src="{{- .account.Header -}}"
+            alt="{{- template "headerAlt" . -}}"
+            title="{{- template "headerAlt" . -}}"
+        />
+    </picture>
+</div>
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{- with . }}
+<h2 class="sr-only">Profile for {{ .account.Username -}}</h2>
+<section class="profile-header" role="region" aria-label="Basic info">
+    {{- if .account.Moved }}
+    {{- include "profileMovedTo" . | indent 1 }}
+    {{- end }}
+    {{- with . }}
+    {{- include "header" . | indent 1 }}
+    {{- end }}
     <div class="basic-info">
         {{- with . }}
-        {{- include "avatar" . | indent 3 }}
+        {{- include "avatar" . | indent 2 }}
         {{- end }}
         <dl class="namerole">
             <dt class="sr-only">Display name</dt>

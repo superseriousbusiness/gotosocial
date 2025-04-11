@@ -24,7 +24,6 @@
     loading="lazy"
     {{- if .Description }}
     alt="{{- .Description -}}"
-    title="{{- .Description -}}"
     {{- end }}
     width="{{- .Meta.Small.Width -}}"
     height="{{- .Meta.Small.Height -}}"
@@ -37,7 +36,6 @@
     loading="lazy"
     {{- if .Description }}
     alt="{{- .Description -}}"
-    title="{{- .Description -}}"
     {{- end }}
     width="518"
     height="460"
@@ -138,7 +136,6 @@
             data-pswp-height="{{- .Item.Meta.Original.Height -}}px"
             data-cropped="true"
             {{- if .Item.Description }}
-            alt="{{- .Item.Description -}}"
             title="{{- .Item.Description -}}"
             {{- end }}
         >
