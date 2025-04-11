@@ -11,7 +11,6 @@ replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.37.0-concurrency-workaround
 
 require (
-	codeberg.org/gruf/go-bytes v1.0.2
 	codeberg.org/gruf/go-bytesize v1.0.3
 	codeberg.org/gruf/go-byteutil v1.3.0
 	codeberg.org/gruf/go-cache/v3 v3.6.1
@@ -27,7 +26,7 @@ require (
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
-	codeberg.org/gruf/go-structr v0.9.6
+	codeberg.org/gruf/go-structr v0.9.7
 	codeberg.org/superseriousbusiness/activity v1.13.0-gts
 	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB

@@ -70,7 +70,7 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 			name := names[0]
 			names = names[1:]
 			if !is_exported(name) {
-				panicf("field is not exported: %s", name)
+				panic(fmt.Sprintf("field is not exported: %s", name))
 			}
 			return name
 		}
@@ -94,7 +94,7 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 
 		// Check for valid struct type.
 		if t.Kind() != reflect.Struct {
-			panicf("field %s is not struct (or ptr-to): %s", t, name)
+			panic(fmt.Sprintf("field %s is not struct (or ptr-to): %s", t, name))
 		}
 
 		var ok bool
@@ -102,7 +102,7 @@ func find_field(t reflect.Type, names []string) (sfield struct_field) {
 		// Look for next field by name.
 		field, ok = t.FieldByName(name)
 		if !ok {
-			panicf("unknown field: %s", name)
+			panic(fmt.Sprintf("unknown field: %s", name))
 		}
 
 		// Set next offset value.
@@ -256,11 +256,6 @@ func deref(p unsafe.Pointer, n uint) unsafe.Pointer {
 func eface_data(a any) unsafe.Pointer {
 	type eface struct{ _, data unsafe.Pointer }
 	return (*eface)(unsafe.Pointer(&a)).data
-}
-
-// panicf provides a panic with string formatting.
-func panicf(format string, args ...any) {
-	panic(fmt.Sprintf(format, args...))
 }
 
 // assert can be called to indicated a block

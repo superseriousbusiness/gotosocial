@@ -512,7 +512,9 @@ func (c *Converter) ASFollowToFollow(ctx context.Context, followable ap.Followab
 
 	follow := &gtsmodel.Follow{
 		URI:             uri,
+		Account:         origin,
 		AccountID:       origin.ID,
+		TargetAccount:   target,
 		TargetAccountID: target.ID,
 	}
 
