@@ -20,8 +20,20 @@
 .profile .profile-header {
 	background: $profile-bg;
 	border-radius: $br;
-	overflow: hidden;
-	margin-bottom: 1rem;
+
+	/*
+		Link to open media in slide
+		should fill entire media wrapper.
+	*/
+	a.photoswipe-slide {
+		display: inline-block;
+		height: 100%;
+		width: 100%;
+		
+		&:focus-visible {
+			outline: $button-focus-outline;
+		}
+	}
 
 	.moved-to {
 		padding: 1rem;
@@ -30,8 +42,10 @@
 
 	.header-image-wrapper {
 		position: relative;
-		padding-top: 33.33%; /* aspect-ratio 1/3 */
-
+		aspect-ratio: 3;
+		height: 100%;
+		width: 100%;
+		
 		img {
 			position: absolute;
 			top: 0;
@@ -66,6 +80,7 @@
 		margin: 1rem;
 		margin-top: calc(-1 * $overlap);
 		gap: 0 1rem;
+		padding-bottom: 1rem;
 
 		.avatar-image-wrapper {
 			grid-area: avatar;
@@ -82,22 +97,11 @@
 			width: $avatar-size;
 
 			/*
-				Link to open media in slide
-				should fill entire media wrapper.
+				Offset to avoid clashing with
+				thick border around avatars.
 			*/
-			a.photoswipe-slide {
-				display: inline-block;
-				height: 100%;
-				width: 100%;
-	
-				/*
-					Offset to avoid clashing with
-					thick border around avatars.
-				*/
-				&:focus-visible {
-					outline: $button-focus-outline;
-					outline-offset: 0.25rem;
-				}
+			a.photoswipe-slide:focus-visible {
+				outline-offset: 0.25rem;
 			}
 
 			.avatar {
