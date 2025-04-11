@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// DEPRECATED: Use `ReplyAuthorization` instead.
 type GoToSocialReplyApproval struct {
 	ActivityStreamsAltitude     vocab.ActivityStreamsAltitudeProperty
 	ActivityStreamsAttachment   vocab.ActivityStreamsAttachmentProperty

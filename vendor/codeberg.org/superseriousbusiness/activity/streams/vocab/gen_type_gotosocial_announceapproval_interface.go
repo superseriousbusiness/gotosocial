@@ -2,6 +2,7 @@
 
 package vocab
 
+// DEPRECATED: Use `AnnounceAuthorization` instead.
 type GoToSocialAnnounceApproval interface {
 	// GetActivityStreamsAltitude returns the "altitude" property if it
 	// exists, and nil otherwise.

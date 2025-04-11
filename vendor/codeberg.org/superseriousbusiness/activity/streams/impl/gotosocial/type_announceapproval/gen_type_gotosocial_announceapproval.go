@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// DEPRECATED: Use `AnnounceAuthorization` instead.
 type GoToSocialAnnounceApproval struct {
 	ActivityStreamsAltitude     vocab.ActivityStreamsAltitudeProperty
 	ActivityStreamsAttachment   vocab.ActivityStreamsAttachmentProperty

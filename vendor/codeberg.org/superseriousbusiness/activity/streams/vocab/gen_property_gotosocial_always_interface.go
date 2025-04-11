@@ -48,8 +48,9 @@ type GoToSocialAlwaysPropertyIterator interface {
 	SetIRI(v *url.URL)
 }
 
-// Indicates zero or more URI/IDs that can perform an interaction without
-// requiring approval by the Object AttributedTo Actor.
+// DEPRECATED: Use `automaticApproval` instead. Indicates zero or more URI/IDs
+// that can perform an interaction without requiring approval by the Object
+// AttributedTo Actor.
 type GoToSocialAlwaysProperty interface {
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "always"

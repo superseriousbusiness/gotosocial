@@ -40,6 +40,10 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialAnnounceApproval) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialAnnounceAuthorization) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialAnnounceRequest) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsApplication) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsArrive) error:
@@ -55,6 +59,8 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 		case func(context.Context, vocab.GoToSocialCanAnnounce) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialCanLike) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialCanQuote) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialCanReply) error:
 			// Do nothing, this callback has a correct signature.
@@ -106,6 +112,10 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialLikeApproval) error:
 			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialLikeAuthorization) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialLikeRequest) error:
+			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsLink) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsListen) error:
@@ -149,6 +159,10 @@ func NewTypeResolver(callbacks ...interface{}) (*TypeResolver, error) {
 		case func(context.Context, vocab.ActivityStreamsRemove) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.GoToSocialReplyApproval) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialReplyAuthorization) error:
+			// Do nothing, this callback has a correct signature.
+		case func(context.Context, vocab.GoToSocialReplyRequest) error:
 			// Do nothing, this callback has a correct signature.
 		case func(context.Context, vocab.ActivityStreamsService) error:
 			// Do nothing, this callback has a correct signature.
@@ -239,6 +253,24 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "AnnounceAuthorization" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialAnnounceAuthorization) error); ok {
+				if v, ok := o.(vocab.GoToSocialAnnounceAuthorization); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "AnnounceRequest" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialAnnounceRequest) error); ok {
+				if v, ok := o.(vocab.GoToSocialAnnounceRequest); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Application" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsApplication) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsApplication); ok {
@@ -305,6 +337,15 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "CanLike" {
 			if fn, ok := i.(func(context.Context, vocab.GoToSocialCanLike) error); ok {
 				if v, ok := o.(vocab.GoToSocialCanLike); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "CanQuote" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialCanQuote) error); ok {
+				if v, ok := o.(vocab.GoToSocialCanQuote); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
@@ -536,6 +577,24 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 					return errCannotTypeAssertType
 				}
 			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "LikeAuthorization" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialLikeAuthorization) error); ok {
+				if v, ok := o.(vocab.GoToSocialLikeAuthorization); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "LikeRequest" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialLikeRequest) error); ok {
+				if v, ok := o.(vocab.GoToSocialLikeRequest); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
 		} else if o.VocabularyURI() == "https://www.w3.org/ns/activitystreams" && o.GetTypeName() == "Link" {
 			if fn, ok := i.(func(context.Context, vocab.ActivityStreamsLink) error); ok {
 				if v, ok := o.(vocab.ActivityStreamsLink); ok {
@@ -728,6 +787,24 @@ func (this TypeResolver) Resolve(ctx context.Context, o ActivityStreamsInterface
 		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "ReplyApproval" {
 			if fn, ok := i.(func(context.Context, vocab.GoToSocialReplyApproval) error); ok {
 				if v, ok := o.(vocab.GoToSocialReplyApproval); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "ReplyAuthorization" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialReplyAuthorization) error); ok {
+				if v, ok := o.(vocab.GoToSocialReplyAuthorization); ok {
+					return fn(ctx, v)
+				} else {
+					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
+					return errCannotTypeAssertType
+				}
+			}
+		} else if o.VocabularyURI() == "https://gotosocial.org/ns" && o.GetTypeName() == "ReplyRequest" {
+			if fn, ok := i.(func(context.Context, vocab.GoToSocialReplyRequest) error); ok {
+				if v, ok := o.(vocab.GoToSocialReplyRequest); ok {
 					return fn(ctx, v)
 				} else {
 					// This occurs when the value is either not a go-fed type and is improperly satisfying various interfaces, or there is a bug in the go-fed generated code.
