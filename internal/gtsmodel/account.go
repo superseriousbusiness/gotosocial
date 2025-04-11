@@ -431,7 +431,7 @@ func (t AccountActorType) String() string {
 	case AccountActorTypeService:
 		return "Service"
 	default:
-		panic("invalid notification type")
+		panic("invalid actor type")
 	}
 }
 

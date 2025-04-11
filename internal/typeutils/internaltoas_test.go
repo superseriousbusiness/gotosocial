@@ -155,7 +155,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
   "published": "2022-05-20T11:09:18Z",
   "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "tag": [],
-  "type": "Service",
+  "type": "Application",
   "url": "http://localhost:8080/@the_mighty_zork"
 }`, string(bytes))
 }
