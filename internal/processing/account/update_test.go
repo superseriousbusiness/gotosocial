@@ -352,6 +352,10 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateBotNotBot() {
 	// Returned profile should be updated.
 	suite.True(apiAccount.Bot)
 
+	// We should have an update in the client api channel.
+	msg, _ := suite.getClientMsg(5 * time.Second)
+	suite.NotNil(msg)
+
 	// Check database model of account as well.
 	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)
 	if err != nil {
@@ -373,6 +377,10 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateBotNotBot() {
 
 	// Returned profile should be updated.
 	suite.False(apiAccount.Bot)
+
+	// We should have an update in the client api channel.
+	msg, _ = suite.getClientMsg(5 * time.Second)
+	suite.NotNil(msg)
 
 	// Check database model of account as well.
 	dbAccount, err = suite.db.GetAccountByID(ctx, testAccount.ID)
