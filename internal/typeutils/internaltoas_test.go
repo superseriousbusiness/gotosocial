@@ -99,7 +99,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
 	*testAccount = *suite.testAccounts["local_account_1"] // take zork for this test
 
 	// Update zork to be a bot.
-	testAccount.ActorType = gtsmodel.AccountActorTypeService
+	testAccount.ActorType = gtsmodel.AccountActorTypeApplication
 	if err := suite.state.DB.UpdateAccount(context.Background(), testAccount); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -155,7 +155,7 @@ func (suite *InternalToASTestSuite) TestAccountToASBot() {
   "published": "2022-05-20T11:09:18Z",
   "summary": "\u003cp\u003ehey yo this is my profile!\u003c/p\u003e",
   "tag": [],
-  "type": "Service",
+  "type": "Application",
   "url": "http://localhost:8080/@the_mighty_zork"
 }`, string(bytes))
 }

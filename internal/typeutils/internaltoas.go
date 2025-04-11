@@ -39,20 +39,32 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
-// AccountToAS converts a gts model account
-// into an activity streams person or service.
+func accountableForActorType(actorType gtsmodel.AccountActorType) ap.Accountable {
+	switch actorType {
+	case gtsmodel.AccountActorTypeApplication:
+		return streams.NewActivityStreamsApplication()
+	case gtsmodel.AccountActorTypeGroup:
+		return streams.NewActivityStreamsGroup()
+	case gtsmodel.AccountActorTypeOrganization:
+		return streams.NewActivityStreamsOrganization()
+	case gtsmodel.AccountActorTypePerson:
+		return streams.NewActivityStreamsPerson()
+	case gtsmodel.AccountActorTypeService:
+		return streams.NewActivityStreamsService()
+	default:
+		panic("invalid actor type")
+	}
+}
+
+// AccountToAS converts a gts model
+// account into an accountable.
 func (c *Converter) AccountToAS(
 	ctx context.Context,
 	a *gtsmodel.Account,
 ) (ap.Accountable, error) {
-	// accountable is a service if this
-	// is a bot account, otherwise a person.
-	var accountable ap.Accountable
-	if a.ActorType.IsBot() {
-		accountable = streams.NewActivityStreamsService()
-	} else {
-		accountable = streams.NewActivityStreamsPerson()
-	}
+	// Use appropriate underlying
+	// actor type of accountable.
+	accountable := accountableForActorType(a.ActorType)
 
 	// id should be the activitypub URI of this user
 	// something like https://example.org/users/example_user
@@ -389,14 +401,9 @@ func (c *Converter) AccountToASMinimal(
 	ctx context.Context,
 	a *gtsmodel.Account,
 ) (ap.Accountable, error) {
-	// accountable is a service if this
-	// is a bot account, otherwise a person.
-	var accountable ap.Accountable
-	if a.ActorType.IsBot() {
-		accountable = streams.NewActivityStreamsService()
-	} else {
-		accountable = streams.NewActivityStreamsPerson()
-	}
+	// Use appropriate underlying
+	// actor type of accountable.
+	accountable := accountableForActorType(a.ActorType)
 
 	// id should be the activitypub URI of this user
 	// something like https://example.org/users/example_user

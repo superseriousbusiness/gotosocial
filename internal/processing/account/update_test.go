@@ -26,6 +26,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type AccountUpdateTestSuite struct {
@@ -329,6 +330,64 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateNoteNotFields() {
 	suite.Equal(noteExpected, dbAccount.Note)
 	suite.Equal(fieldsRawBefore, len(dbAccount.FieldsRaw))
 	suite.Equal(fieldsBefore, len(dbAccount.Fields))
+}
+
+func (suite *AccountUpdateTestSuite) TestAccountUpdateBotNotBot() {
+	testAccount := &gtsmodel.Account{}
+	*testAccount = *suite.testAccounts["local_account_1"]
+	ctx := context.Background()
+
+	// Call update function to set bot = true.
+	apiAccount, errWithCode := suite.accountProcessor.Update(
+		ctx,
+		testAccount,
+		&apimodel.UpdateCredentialsRequest{
+			Bot: util.Ptr(true),
+		},
+	)
+	if errWithCode != nil {
+		suite.FailNow(errWithCode.Error())
+	}
+
+	// Returned profile should be updated.
+	suite.True(apiAccount.Bot)
+
+	// We should have an update in the client api channel.
+	msg, _ := suite.getClientMsg(5 * time.Second)
+	suite.NotNil(msg)
+
+	// Check database model of account as well.
+	dbAccount, err := suite.db.GetAccountByID(ctx, testAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.True(dbAccount.ActorType.IsBot())
+
+	// Call update function to set bot = false.
+	apiAccount, errWithCode = suite.accountProcessor.Update(
+		ctx,
+		testAccount,
+		&apimodel.UpdateCredentialsRequest{
+			Bot: util.Ptr(false),
+		},
+	)
+	if errWithCode != nil {
+		suite.FailNow(errWithCode.Error())
+	}
+
+	// Returned profile should be updated.
+	suite.False(apiAccount.Bot)
+
+	// We should have an update in the client api channel.
+	msg, _ = suite.getClientMsg(5 * time.Second)
+	suite.NotNil(msg)
+
+	// Check database model of account as well.
+	dbAccount, err = suite.db.GetAccountByID(ctx, testAccount.ID)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+	suite.False(dbAccount.ActorType.IsBot())
 }
 
 func TestAccountUpdateTestSuite(t *testing.T) {

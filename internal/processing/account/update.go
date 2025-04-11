@@ -77,8 +77,16 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		acctColumns = append(acctColumns, "discoverable")
 	}
 
-	if form.Bot != nil {
-		account.ActorType = gtsmodel.AccountActorTypeService
+	if bot := form.Bot; bot != nil {
+		if *bot {
+			// Mark account as an Application.
+			// See: https://www.w3.org/TR/activitystreams-vocabulary/#dfn-application
+			account.ActorType = gtsmodel.AccountActorTypeApplication
+		} else {
+			// Mark account as a Person.
+			// See: https://www.w3.org/TR/activitystreams-vocabulary/#dfn-person
+			account.ActorType = gtsmodel.AccountActorTypePerson
+		}
 		acctColumns = append(acctColumns, "actor_type")
 	}
 
