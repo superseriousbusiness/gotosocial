@@ -80,10 +80,7 @@
 
 {{- define "avatar" -}}
 {{- with . }}
-<div
-    class="photoswipe-gallery odd single avatar-image-wrapper"
-    role="group"
->
+<div class="photoswipe-gallery odd single avatar-image-wrapper" role="group">
     <a
         class="photoswipe-slide"
         href="{{- .account.Avatar -}}"
@@ -93,9 +90,7 @@
         data-cropped="true"
         title="{{- template "avatarAlt" . -}}"
     >
-        <picture
-            aria-hidden="true"
-        >
+        <picture>
             {{- if .account.AvatarAttachment }}
             <source
                 class="avatar"
@@ -120,10 +115,7 @@
 {{- define "header" -}}
 {{- with . }}
 {{- if .account.HeaderAttachment }}
-<div
-    class="photoswipe-gallery odd single header-image-wrapper"
-    role="group"
->
+<div class="photoswipe-gallery odd single header-image-wrapper" role="group">
     <a
         class="photoswipe-slide"
         href="{{- .account.Header -}}"
@@ -133,9 +125,7 @@
         data-cropped="true"
         title="{{- template "headerAlt" . -}}"
     >
-        <picture
-            aria-hidden="true"
-        >
+        <picture>
             <source
                 srcset="{{- .account.HeaderStatic -}}"
                 type="{{- .account.HeaderAttachment.PreviewMIMEType -}}"
