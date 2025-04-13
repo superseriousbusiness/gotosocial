@@ -18,7 +18,18 @@
 */
 
 /*
-	https://github.com/fontsource/font-files/tree/main/fonts/google/noto-sans
+	Standard fonts (v32)
+
+	Covered scripts:
+	- Cyrillic
+	- Devanagari
+	- Greek
+	- Vietnamese
+	- Latin
+
+	Sources:
+	- https://github.com/fontsource/font-files/tree/main/fonts/google/noto-sans
+	- https://fontsource.org/fonts/noto-sans
 */
 
 /* noto-sans-cyrillic-ext-400-normal */
@@ -438,7 +449,18 @@
 }
 
 /*
-	MONOSPACE FONTS
+	Monospace fonts (v32)
+
+	Covered scripts:
+	- Cyrillic
+	- Devanagari
+	- Greek
+	- Vietnamese
+	- Latin
+
+	Sources:
+	- https://github.com/fontsource/font-files/tree/main/fonts/google/noto-sans-mono
+	- https://fontsource.org/fonts/noto-sans-mono
 */
 
 /* noto-sans-mono-cyrillic-ext-400-normal */
