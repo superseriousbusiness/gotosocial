@@ -383,6 +383,7 @@ var Password action.GTSAction = func(ctx context.Context) error {
 	}
 
 	user.EncryptedPassword = string(encryptedPassword)
+	log.Info(ctx, "Updating password; you must restart the server to use the new password.")
 	return state.DB.UpdateUser(
 		ctx, user,
 		"encrypted_password",
