@@ -178,6 +178,7 @@ function AccessTokenForm({ app }: { app: App }) {
 			</div>
 
 			<TextInput
+				className="monospace"
 				field={scope}
 				label="Token scopes (space-separated list)"
 				autoCapitalize="off"

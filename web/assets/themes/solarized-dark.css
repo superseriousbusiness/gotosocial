@@ -67,13 +67,6 @@
   --plyr-video-control-color-hover: var(--base03);
 }
 
-@font-face {
-  font-family: "Noto Sans Mono";
-  font-weight: normal;
-  font-style: normal;
-  src: url(/assets/fonts/noto-sans-mono-v30-latin-regular.woff2) format('woff2');
-}
-
 /* Scroll bar */
 html, body {
   font-family: 'Noto Sans Mono', monospace;
