@@ -21,6 +21,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
@@ -272,14 +273,15 @@ func (s *Status) IsLocalOnly() bool {
 	return s.Federated == nil || !*s.Federated
 }
 
-// AllAttachmentIDs gathers ALL media attachment IDs from both the
-// receiving Status{}, and any historical Status{}.Edits. Note that
-// this function will panic if Status{}.Edits is not populated.
+// AllAttachmentIDs gathers ALL media attachment IDs from both
+// the receiving Status{}, and any historical Status{}.Edits.
 func (s *Status) AllAttachmentIDs() []string {
 	var total int
 
-	if len(s.EditIDs) != len(s.Edits) {
-		panic("status edits not populated")
+	// Check if this is being correctly
+	// called on fully populated status.
+	if !s.EditsPopulated() {
+		log.Warnf(nil, "status edits not populated for %s", s.URI)
 	}
 
 	// Get count of attachment IDs.
