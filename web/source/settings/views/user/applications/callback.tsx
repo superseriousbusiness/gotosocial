@@ -107,7 +107,7 @@ function AccessForAppForm({ data: app, code }: { data: App, code: string }) {
 			</div>
 			
 			{ result.data
-				? <div className="access-token-frame">{(result.data as OAuthAccessToken).access_token}</div>
+				? <div className="access-token-frame monospace">{(result.data as OAuthAccessToken).access_token}</div>
 				: <div className="access-token-frame closed"><i className="fa fa-eye-slash" aria-hidden={true}></i></div>
 			}
 			

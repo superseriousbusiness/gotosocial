@@ -23,26 +23,7 @@
 
 @import "modern-normalize/modern-normalize.css";
 @import "./_prism.css";
-
-/* noto-sans-regular - latin */
-@font-face {
-	font-family: "Noto Sans";
-	font-weight: 400;
-	font-display: swap;
-	font-style: normal;
-	src: url('../fonts/noto-sans-v27-latin-regular.woff2') format('woff2'),
-		 url('../fonts/noto-sans-v27-latin-regular.woff') format('woff');
-}
-
-/* noto-sans-700 - latin */
-@font-face {
-	font-family: "Noto Sans";
-	font-weight: 700;
-	font-display: swap;
-	font-style: normal;
-	src: url('../fonts/noto-sans-v27-latin-700.woff2') format('woff2'),
-		 url('../fonts/noto-sans-v27-latin-700.woff') format('woff');
-}
+@import "./_fonts.css";
 
 /*************************************
 ***** SECTION 1: HANDY VARIABLES *****
@@ -338,11 +319,12 @@ label {
 }
 
 /*
-	Set our own nice background for
-	monospace code and pre blocks.
+	Set our own nice background and
+	font for monospace code and pre blocks.
 */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
+	font-family: "Noto Sans Mono", monospace;
 	background-color: $gray2;
 }
 

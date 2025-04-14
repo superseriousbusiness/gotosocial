@@ -122,6 +122,7 @@ export default function NewApp() {
 			/>
 
 			<TextArea
+				className="monospace"
 				field={form.redirect_uris}
 				label="Redirect URIs (optional, newline-separated entries)"
 				placeholder={`https://example.org/my_cool_application`}
@@ -132,6 +133,7 @@ export default function NewApp() {
 			/>
 
 			<TextInput
+				className="monospace"
 				field={form.scopes}
 				label="Scopes (optional, space-separated entries)"
 				placeholder={`read write push`}

@@ -1494,10 +1494,6 @@ button.tab-button {
 				background: none;
 				padding: 0;
 			}
-
-			> .info-list-entry > .monospace {
-				font-size: large;
-			}
 		}
 	
 		.action-buttons {
@@ -1520,8 +1516,6 @@ button.tab-button {
 		white-space: pre;
 		overflow-x: auto;
 		-webkit-overflow-scrolling: touch;
-		font-family: monospace;
-		font-size: large;
 	}
 
 	.closed {
@@ -1539,10 +1533,6 @@ button.tab-button {
 				background: none;
 				padding: 0;
 			}
-
-			> .info-list-entry > .monospace {
-				font-size: large;
-			}
 		}
 	}
 }
@@ -1551,20 +1541,12 @@ button.tab-button {
 	.info-list {
 		margin-top: 1rem;
 
-		> .info-list-entry .monospace {
-			font-size: large;
-		}
-
 		> .info-list-entry > dd > button {
 			font-size: medium;
 			padding-top: 0;
 			padding-bottom: 0;
 		}
 	}
-}
-
-.application-new > .form-section-docs > p > .monospace {
-	font-size: large;
 }
 
 .instance-rules {
@@ -1640,8 +1622,7 @@ button.tab-button {
 			}
 	
 			dd {
-				font-family: monospace;
-				font-size: large;
+				font-family: "Noto Sans Mono", monospace;
 			}
 		}
 	}
@@ -1650,10 +1631,6 @@ button.tab-button {
 .http-header-permission-details {
 	.info-list {
 		margin-top: 1rem;
-
-		> .info-list-entry > .monospace {
-			font-size: large;
-		}
 	}
 }
 
@@ -1837,5 +1814,5 @@ button.tab-button {
 }
 
 .monospace {
-	font-family: monospace;
+	font-family: "Noto Sans Mono", monospace;
 }
