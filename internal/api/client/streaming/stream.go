@@ -163,8 +163,8 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	// correct, but some client do it since Mastodon allows it, so
 	// we must allow it for compatibility.
 	//
-	// Chrome browser also *always* expects the "Sec-Websocket-Protocol"
-	// response value to match input, so we always have to check it.
+	// Chrome also *always* expects the "Sec-Websocket-Protocol"
+	// response value to match input, so it must always be checked.
 	queryToken := c.Query(AccessTokenQueryKey)
 	headerToken := c.Query(AccessTokenHeader)
 
