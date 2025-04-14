@@ -57,7 +57,7 @@ require (
 	github.com/ncruces/go-sqlite3 v0.25.0
 	github.com/oklog/ulid v1.3.1
 	github.com/pquerna/otp v1.4.0
-	github.com/prometheus/client_golang v1.21.1
+	github.com/prometheus/client_golang v1.22.0
 	github.com/rivo/uniseg v0.4.7
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
