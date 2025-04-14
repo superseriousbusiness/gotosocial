@@ -297,7 +297,7 @@ func (suite *MediaCreateTestSuite) TestMediaCreateSuccessfulV2() {
 	}, *attachmentReply.Meta)
 	suite.Equal("LiB|W-#6RQR.~qvzRjWF_3rqV@a$", *attachmentReply.Blurhash)
 	suite.NotEmpty(attachmentReply.ID)
-	suite.Nil(attachmentReply.URL)
+	suite.NotEmpty(attachmentReply.URL)
 	suite.NotEmpty(attachmentReply.PreviewURL)
 	suite.Equal(len(storageKeysBeforeRequest)+2, len(storageKeysAfterRequest)) // 2 images should be added to storage: the original and the thumbnail
 }
