@@ -1,5 +1,5 @@
-//go:build (amd64 && go1.17 && !go1.24) || (arm64 && go1.20 && !go1.24)
-// +build amd64,go1.17,!go1.24 arm64,go1.20,!go1.24
+//go:build (amd64 && go1.17 && !go1.25) || (arm64 && go1.20 && !go1.25)
+// +build amd64,go1.17,!go1.25 arm64,go1.20,!go1.25
 
 
 /*
@@ -44,6 +44,7 @@ const (
     OptionCopyString       Options = api.OptionCopyString
     OptionValidateString   Options = api.OptionValidateString
     OptionNoValidateJSON   Options = api.OptionNoValidateJSON
+    OptionCaseSensitive    Options = api.OptionCaseSensitive
 )
 
 // StreamDecoder is the decoder context object for streaming input.
