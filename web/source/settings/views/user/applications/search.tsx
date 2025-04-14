@@ -139,7 +139,8 @@ function ApplicationListEntry({ app, linkTo, backLocation }: ApplicationListEntr
 	const created = useCreated(app);
 	const redirectURIs = useRedirectURIs(app);
 
-	const onClick = () => {
+	const onClick = (e) => {
+		e.preventDefault();
 		// When clicking on an app, direct
 		// to the detail view for that app.
 		setLocation(linkTo, {
@@ -156,7 +157,12 @@ function ApplicationListEntry({ app, linkTo, backLocation }: ApplicationListEntr
 			aria-label={`${app.name}`}
 			title={`${app.name}`}
 			onClick={onClick}
-			onKeyDown={e => e.key === "Enter" && onClick()}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					onClick(e);
+				}
+			}}
 			role="link"
 			tabIndex={0}
 		>

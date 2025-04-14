@@ -71,7 +71,8 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 	}, [exportResult]);
 
 	const importFileRef = useRef<HTMLInputElement>(null);
-	const importFileOnClick = () => {
+	const importFileOnClick = (e) => {
+		e.preventDefault();
 		importFileRef.current?.click();
 	};
 
@@ -110,7 +111,12 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						className={`button with-icon${form.permType.value === undefined || form.permType.value.length === 0 ? " disabled" : ""}`}
 						tabIndex={0}
 						onClick={importFileOnClick}
-						onKeyDown={e => e.key === "Enter" && importFileOnClick()}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								importFileOnClick(e);
+							}
+						}}
 						role="button"
 					>
 						<i className="fa fa-fw " aria-hidden="true" />

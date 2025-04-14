@@ -184,7 +184,8 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 	const created = new Date(report.created_at).toLocaleString();
 	const title = `${status}. @${target.account.acct} was reported by @${from.account.acct} on ${created}. Reason: "${comment}"`;
 
-	const onClick = () => {
+	const onClick = (e) => {
+		e.preventDefault();
 		// When clicking on a report, direct
 		// to the detail view for that report.
 		setLocation(linkTo, {
@@ -201,7 +202,12 @@ function ReportListEntry({ report, linkTo, backLocation }: ReportEntryProps) {
 			aria-label={title}
 			title={title}
 			onClick={onClick}
-			onKeyDown={e => e.key === "Enter" && onClick()}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					onClick(e);
+				}
+			}}
 			role="link"
 			tabIndex={0}
 		>

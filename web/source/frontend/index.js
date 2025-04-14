@@ -179,19 +179,24 @@ dynamicSpoiler("text-spoiler", (details) => {
 	const summary = details.children[0];
 	const button = details.querySelector(".button");
 
-	// Use button inside summary to
-	// toggle post body visibility.
+	// Use button *instead of summary*
+	// to toggle post visibility.
+	summary.tabIndex = "-1";
 	button.tabIndex = "0";
 	button.setAttribute("aria-role", "button");
-	button.onclick = () => {
-		details.click();
+	button.onclick = (e) => {
+		e.preventDefault();
+		return details.hasAttribute("open")
+			? details.removeAttribute("open")
+			: details.setAttribute("open", "");
 	};
 
 	// Let enter also trigger the button
 	// (for those using keyboard to navigate).
 	button.addEventListener("keydown", (e) => {
 		if (e.key === "Enter") {
-			summary.click();
+			e.preventDefault();
+			button.click();
 		}
 	});
 
@@ -215,15 +220,19 @@ dynamicSpoiler("media-spoiler", (details) => {
 	summary.tabIndex = "-1";
 	button.tabIndex = "0";
 	button.setAttribute("aria-role", "button");
-	button.onclick = () => {
-		details.click();
+	button.onclick = (e) => {
+		e.preventDefault();
+		return details.hasAttribute("open")
+			? details.removeAttribute("open")
+			: details.setAttribute("open", "");
 	};
 
 	// Let enter also trigger the button
 	// (for those using keyboard to navigate).
 	button.addEventListener("keydown", (e) => {
 		if (e.key === "Enter") {
-			summary.click();
+			e.preventDefault();
+			button.click();
 		}
 	});
 

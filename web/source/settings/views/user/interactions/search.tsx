@@ -174,7 +174,8 @@ function ReqsListEntry({ req, linkTo, backLocation }: ReqsListEntryProps) {
 	const ourContent = useContent(req.status);
 	const theirContent = useContent(req.reply);
 
-	const onClick = () => {
+	const onClick = (e) => {
+		e.preventDefault();
 		// When clicking on a request, direct
 		// to the detail view for that request.
 		setLocation(linkTo, {
@@ -191,7 +192,12 @@ function ReqsListEntry({ req, linkTo, backLocation }: ReqsListEntryProps) {
 			aria-label={label}
 			title={label}
 			onClick={onClick}
-			onKeyDown={e => e.key === "Enter" && onClick()}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					onClick(e);
+				}
+			}}
 			role="link"
 			tabIndex={0}
 		>

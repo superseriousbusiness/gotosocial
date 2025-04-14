@@ -211,7 +211,7 @@ function DraftListEntry({ permDraft, linkTo, backLocation }: DraftEntryProps) {
 
 	const title = `${permTypeUpper} ${domain}`;
 
-	const onClick = () => {
+	const onClick = (_) => {
 		// When clicking on a draft, direct
 		// to the detail view for that draft.
 		setLocation(linkTo, {
@@ -228,7 +228,12 @@ function DraftListEntry({ permDraft, linkTo, backLocation }: DraftEntryProps) {
 			aria-label={title}
 			title={title}
 			onClick={onClick}
-			onKeyDown={e => e.key === "Enter" && onClick()}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					onClick(e);
+				}
+			}}
 			role="link"
 			tabIndex={0}
 		>
