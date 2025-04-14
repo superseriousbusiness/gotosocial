@@ -627,16 +627,9 @@ github.com/json-iterator/go
 github.com/k3a/html2text
 # github.com/klauspost/compress v1.18.0
 ## explicit; go 1.22
-github.com/klauspost/compress
-github.com/klauspost/compress/fse
-github.com/klauspost/compress/huff0
-github.com/klauspost/compress/internal/cpuinfo
 github.com/klauspost/compress/internal/le
 github.com/klauspost/compress/internal/race
-github.com/klauspost/compress/internal/snapref
 github.com/klauspost/compress/s2
-github.com/klauspost/compress/zstd
-github.com/klauspost/compress/zstd/internal/xxhash
 # github.com/klauspost/cpuid/v2 v2.2.10
 ## explicit; go 1.22
 github.com/klauspost/cpuid/v2
@@ -745,13 +738,14 @@ github.com/pquerna/otp
 github.com/pquerna/otp/hotp
 github.com/pquerna/otp/internal
 github.com/pquerna/otp/totp
-# github.com/prometheus/client_golang v1.21.1
-## explicit; go 1.21
+# github.com/prometheus/client_golang v1.22.0
+## explicit; go 1.22
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
+github.com/prometheus/client_golang/prometheus/promhttp/internal
 # github.com/prometheus/client_model v0.6.1
 ## explicit; go 1.19
 github.com/prometheus/client_model/go
