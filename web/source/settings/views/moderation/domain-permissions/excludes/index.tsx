@@ -186,7 +186,8 @@ function ExcludeListEntry({ permExclude, linkTo, backLocation }: ExcludeEntryPro
 		return <ErrorC error={new Error("id was undefined")} />;
 	}
 
-	const onClick = () => {
+	const onClick = (e) => {
+		e.preventDefault();
 		// When clicking on a exclude, direct
 		// to the detail view for that exclude.
 		setLocation(linkTo, {
@@ -203,7 +204,12 @@ function ExcludeListEntry({ permExclude, linkTo, backLocation }: ExcludeEntryPro
 			aria-label={`Exclude ${domain}`}
 			title={`Exclude ${domain}`}
 			onClick={onClick}
-			onKeyDown={e => e.key === "Enter" && onClick()}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					onClick(e);
+				}
+			}}
 			role="link"
 			tabIndex={0}
 		>

@@ -109,7 +109,8 @@ export function SubscriptionListEntry({ permSub, linkTo, backLocation }: Subscri
 		successfullyFetchedAtStr = new Date(successfullyFetchedAt).toDateString();
 	}
 
-	const onClick = () => {
+	const onClick = (e) => {
+		e.preventDefault();
 		// When clicking on a subscription, direct
 		// to the detail view for that subscription.
 		setLocation(linkTo, {
@@ -126,7 +127,12 @@ export function SubscriptionListEntry({ permSub, linkTo, backLocation }: Subscri
 			aria-label={ariaLabel}
 			title={ariaLabel}
 			onClick={onClick}
-			onKeyDown={e => e.key === "Enter" && onClick()}
+			onKeyDown={(e) => {
+				if (e.key === "Enter") {
+					e.preventDefault();
+					onClick(e);
+				}
+			}}
 			role="link"
 			tabIndex={0}
 		>

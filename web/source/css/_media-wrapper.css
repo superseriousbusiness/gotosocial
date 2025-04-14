@@ -38,7 +38,7 @@
 	}
 
 	details {
-		position: absolute;
+		position: relative;
 		height: 100%;
 		width: 100%;
 
@@ -53,35 +53,6 @@
 			height: 100%;
 			width: 100%;
 			object-fit: cover;
-		}
-
-		&[open] summary {
-			height: auto;
-			width: auto;
-			margin: 1rem;
-			padding: 0;
-
-			.show {
-				display: none;
-			}
-
-			.eye.button .hide {
-				display: inline-block;
-				grid-column: 1 / span 3;
-				grid-row: 1 / span 2;
-			}
-
-			div.blurhash-container > canvas {
-				display: none;
-			}
-
-			/*
-				Hide focus outline on click
-				to avoid ugly artifacts.
-			*/
-			&:focus {
-				outline: none;
-			}
 		}
 
 		summary {
@@ -110,22 +81,20 @@
 				margin: 0;
 				padding: 0.4rem;
 
+				/*
+					Make button outline really thick as we can't
+					know whether media has good contrast with it.
+				*/
+				&:focus-visible {
+					outline: 0.5rem dashed $button-focus-border;
+				}
+
 				.fa-fw {
 					line-height: $fa-fw;
 				}
 
 				.hide {
 					display: none;
-				}
-
-				&:focus-visible {
-					/*
-						Can't rely on media having background with
-						decent contrast so inset and use button-fg
-						instead so focus is definitely visible.
-					*/
-					outline: 0.25rem dashed $button-fg;
-					outline-offset: -0.25rem;
 				}
 			}
 
@@ -144,18 +113,42 @@
 			}
 		}
 
-		a.photoswipe-slide {
-			display: inline-block;
-			height: 100%;
+		&[open] summary {
+			height: auto;
+			width: auto;
+			cursor: pointer;
+
+			grid-template-columns: 1fr;
+			grid-template-rows: 1fr;
+
+			.show {
+				display: none;
+			}
+
+			.eye.button .hide {
+				display: inline-block;
+			}
+
+			div.blurhash-container,
+			div.blurhash-container > canvas {
+				display: none;
+			}
+		}
+
+		a.photoswipe-slide,
+		a.unknown-attachment {
+			position: absolute;
 			width: 100%;
+			height: 100%;
 
 			/*
-				Inset outline to avoid outline
-				being hidden by overflow: hidden.
+				Make link outline really thick as we can't
+				know whether media has good contrast with it.
+				Indent outline to avoid being hidden by overflow: hidden.
 			*/
 			&:focus-visible {
-				outline: $button-focus-outline;
-				outline-offset: -0.25rem;
+				outline: 0.5rem dotted $link-fg;
+				outline-offset: -0.5rem;
 			}
 		}
 
@@ -173,8 +166,7 @@
 				width: 100%;
 				height: 100%;
 				padding: 0.8rem;
-				border: 0.2rem dashed $white2;
-						
+
 				display: flex;
 				flex-direction: column;
 				align-items: center;
@@ -220,16 +212,12 @@
 				
 				> span.eye.button {
 					font-size: smaller;
-					padding: 0 0.2rem 0 0.2rem;
+					padding: 0.2rem;
 	
 					> .fa-fw {
 						line-height: 1.4rem;
 					}
 				}
-			}
-
-			&[open] > summary {
-				margin: 0.5rem;
 			}
 		}
 	}
@@ -248,7 +236,7 @@
 				
 				> span.eye.button {
 					font-size: small;
-					padding: 0 0.1rem 0 0.1rem;
+					padding: 0.1rem;
 	
 					> .fa-fw {
 						line-height: 1.2rem;

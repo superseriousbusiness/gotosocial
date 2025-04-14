@@ -113,9 +113,6 @@ html, body {
 .status .media .media-wrapper {
   background: var(--bg-nearly-opaque);
 }
-.status .media .media-wrapper details .unknown-attachment .placeholder {
-  border: 0.2rem dashed var(--magenta);
-}
 
 /* Polls */
 .status .text .poll {

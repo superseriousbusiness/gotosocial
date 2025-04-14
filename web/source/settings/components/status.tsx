@@ -17,10 +17,11 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useRef } from "react";
+import React, { useState } from "react";
 import { useVerifyCredentialsQuery } from "../lib/query/login";
 import { MediaAttachment, Status as StatusType } from "../lib/types/status";
 import sanitize from "sanitize-html";
+import BlurhashCanvas from "./blurhash";
 
 export function FakeStatus({ children }) {
 	const { data: account = {
@@ -122,26 +123,15 @@ function StatusBody({ status }: { status: StatusType }) {
 		content = sanitize(status.content);
 	}
 
-	const detailsRef = useRef<HTMLDetailsElement>(null);
-	const detailsOnClick = () => {
-		detailsRef.current?.click();
-	};
-
-	const summaryRef = useRef<HTMLElement>(null);
-	const summaryOnClick = () => {
-		summaryRef.current?.click();
-	};
+	const [ detailsOpen, setDetailsOpen ] = useState(false);
 
 	return (
 		<div className="status-body">
 			<details
 				className="text-spoiler"
-				ref={detailsRef}
+				open={detailsOpen}
 			>
-				<summary
-					tabIndex={-1}
-					ref={summaryRef}
-				>
+				<summary tabIndex={-1}>
 					<div
 						className="spoiler-content"
 						lang={status.language}
@@ -155,11 +145,19 @@ function StatusBody({ status }: { status: StatusType }) {
 						className="button"
 						role="button"
 						tabIndex={0}
-						aria-label="Toggle content visibility"
-						onClick={detailsOnClick}
-						onKeyDown={e => e.key === "Enter" && summaryOnClick()}
+						aria-label={detailsOpen ? "Hide content" : "Show content"}
+						onClick={(e) => {
+							e.preventDefault();
+							setDetailsOpen(!detailsOpen);
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								setDetailsOpen(!detailsOpen);
+							}
+						}}
 					>
-						Toggle content visibility
+						{detailsOpen ? "Hide content" : "Show content"}
 					</span>
 				</summary>
 				<div
@@ -201,27 +199,29 @@ function StatusMedia({ status }: { status: StatusType }) {
 }
 
 function StatusMediaEntry({ media }: { media: MediaAttachment }) {
-	const detailsRef = useRef<HTMLDetailsElement>(null);
-	const detailsOnClick = () => {
-		detailsRef.current?.click();
-	};
-
-	const summaryRef = useRef<HTMLElement>(null);
-	const summaryOnClick = () => {
-		summaryRef.current?.click();
-	};
-	
+	const [ detailsOpen, setDetailsOpen ] = useState(false);
 	return (
 		<div className="media-wrapper">
-			<details className="image-spoiler media-spoiler">
-				<summary tabIndex={-1} ref={summaryRef}>
+			<details
+				className="image-spoiler media-spoiler"
+				open={detailsOpen}
+			>
+				<summary tabIndex={-1}>
 					<div
 						className="show sensitive button"
 						role="button"
-						tabIndex={0}
+						tabIndex={-1}
 						aria-hidden="true"
-						onClick={detailsOnClick}
-						onKeyDown={e => e.key === "Enter" && summaryOnClick()}
+						onClick={(e) => {
+							e.preventDefault();
+							setDetailsOpen(!detailsOpen);
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								setDetailsOpen(!detailsOpen);
+							}
+						}}
 					>
 						Show media
 					</div>
@@ -229,15 +229,27 @@ function StatusMediaEntry({ media }: { media: MediaAttachment }) {
 						className="eye button"
 						role="button"
 						tabIndex={0}
-						aria-label="Toggle show media"
-						onClick={detailsOnClick}
-						onKeyDown={e => e.key === "Enter" && summaryOnClick()}
+						aria-label={detailsOpen ? "Hide media" : "Show media"}
+						onClick={(e) => {
+							e.preventDefault();
+							setDetailsOpen(!detailsOpen);
+						}}
+						onKeyDown={(e) => {
+							if (e.key === "Enter") {
+								e.preventDefault();
+								setDetailsOpen(!detailsOpen);
+							}
+						}}
 					>
 						<i className="hide fa fa-fw fa-eye-slash" aria-hidden="true"></i>
 						<i className="show fa fa-fw fa-eye" aria-hidden="true"></i>
 					</span>
+					<div className="blurhash-container">
+						<BlurhashCanvas media={media} />
+					</div>
 				</summary>
 				<a
+					className="photoswipe-slide"
 					href={media.url}
 					target="_blank"
 				>

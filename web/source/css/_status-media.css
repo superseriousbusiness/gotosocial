@@ -20,7 +20,6 @@
 @import "./_media-wrapper.css";
 
 .media {
-	grid-column: span 3;
 	display: grid;
 	grid-template-columns: 50% 50%;
 	grid-auto-rows: 10rem;

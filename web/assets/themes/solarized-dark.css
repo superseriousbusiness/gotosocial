@@ -127,7 +127,6 @@ html, body {
 }
 .status .media .media-wrapper details .unknown-attachment .placeholder {
   color: var(--base1);
-  border: 0.2rem dashed var(--base1);
 }
 .status .media .media-wrapper details video.plyr-video {
   background: transparent;
