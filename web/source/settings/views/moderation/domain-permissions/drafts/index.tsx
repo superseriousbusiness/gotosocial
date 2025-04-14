@@ -211,7 +211,8 @@ function DraftListEntry({ permDraft, linkTo, backLocation }: DraftEntryProps) {
 
 	const title = `${permTypeUpper} ${domain}`;
 
-	const onClick = (_) => {
+	const onClick = (e) => {
+		e.preventDefault();
 		// When clicking on a draft, direct
 		// to the detail view for that draft.
 		setLocation(linkTo, {
