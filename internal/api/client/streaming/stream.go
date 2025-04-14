@@ -166,7 +166,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	// Chrome also *always* expects the "Sec-Websocket-Protocol"
 	// response value to match input, so it must always be checked.
 	queryToken := c.Query(AccessTokenQueryKey)
-	headerToken := c.Query(AccessTokenHeader)
+	headerToken := c.GetHeader(AccessTokenHeader)
 
 	// Prefer query token else use header token.
 	token := cmp.Or(queryToken, headerToken)
