@@ -92,9 +92,10 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
-	apiVersion, errWithCode := apiutil.ParseAPIVersion(
+	_, errWithCode := apiutil.ParseAPIVersion(
 		c.Param(apiutil.APIVersionKey),
-		[]string{apiutil.APIv1, apiutil.APIv2}...,
+		apiutil.APIv1,
+		apiutil.APIv2,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
@@ -137,14 +138,13 @@ func (m *Module) MediaCreatePOSTHandler(c *gin.Context) {
 		return
 	}
 
-	if apiVersion == apiutil.APIv2 {
-		// the mastodon v2 media API specifies that the URL should be null
-		// and that the client should call /api/v1/media/:id to get the URL
-		//
-		// so even though we have the URL already, remove it now to comply
-		// with the api
-		apiAttachment.URL = nil
-	}
+	// The v2 mastodon endpoint always returns TextURL,
+	// but in the case that a 202 Accepted (i.e. processing
+	// still in progress) is returned then the URL will be
+	// nil. Since we only ever return a 200 OK, we behave
+	// exactly the same as the v1 endpoint.
+	//
+	// https://docs.joinmastodon.org/methods/media/#v2
 
 	apiutil.JSON(c, http.StatusOK, apiAttachment)
 }
