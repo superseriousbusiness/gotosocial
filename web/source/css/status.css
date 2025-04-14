@@ -275,6 +275,10 @@
 				gap: 0.4rem;
 			}
 
+			.stats-item.published-at {
+				text-decoration: underline;
+			}
+
 			.stats-item:not(.published-at):not(.edited-at) {
 				z-index: 1;
 				user-select: none;
