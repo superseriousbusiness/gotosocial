@@ -139,8 +139,8 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 	}
 
 	apiAccount.Source = &apimodel.Source{
-		Privacy:             c.VisToAPIVis(ctx, a.Settings.Privacy),
-		WebVisibility:       c.VisToAPIVis(ctx, a.Settings.WebVisibility),
+		Privacy:             VisToAPIVis(a.Settings.Privacy),
+		WebVisibility:       VisToAPIVis(a.Settings.WebVisibility),
 		WebLayout:           a.Settings.WebLayout.String(),
 		Sensitive:           *a.Settings.Sensitive,
 		Language:            a.Settings.Language,
@@ -1395,7 +1395,7 @@ func (c *Converter) baseStatusToFrontend(
 		InReplyToID:        nil, // Set below.
 		InReplyToAccountID: nil, // Set below.
 		Sensitive:          *s.Sensitive,
-		Visibility:         c.VisToAPIVis(ctx, s.Visibility),
+		Visibility:         VisToAPIVis(s.Visibility),
 		LocalOnly:          s.IsLocalOnly(),
 		Language:           nil, // Set below.
 		URI:                s.URI,
@@ -1654,7 +1654,7 @@ func (c *Converter) StatusToAPIEdits(ctx context.Context, status *gtsmodel.Statu
 }
 
 // VisToAPIVis converts a gts visibility into its api equivalent
-func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apimodel.Visibility {
+func VisToAPIVis(m gtsmodel.Visibility) apimodel.Visibility {
 	switch m {
 	case gtsmodel.VisibilityPublic:
 		return apimodel.VisibilityPublic
@@ -1664,6 +1664,8 @@ func (c *Converter) VisToAPIVis(ctx context.Context, m gtsmodel.Visibility) apim
 		return apimodel.VisibilityPrivate
 	case gtsmodel.VisibilityDirect:
 		return apimodel.VisibilityDirect
+	case gtsmodel.VisibilityNone:
+		return apimodel.VisibilityNone
 	}
 	return ""
 }

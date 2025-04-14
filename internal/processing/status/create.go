@@ -221,9 +221,8 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if err := p.processVisibility(ctx, form, requester.Settings.Privacy, status); err != nil {
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	// Process the incoming created status visibility.
+	processVisibility(form, requester.Settings.Privacy, status)
 
 	// Process policy AFTER visibility as it relies
 	// on status.Visibility and form.Visibility being set.
@@ -485,12 +484,11 @@ func (p *Processor) processThreadID(ctx context.Context, status *gtsmodel.Status
 	return nil
 }
 
-func (p *Processor) processVisibility(
-	ctx context.Context,
+func processVisibility(
 	form *apimodel.StatusCreateRequest,
 	accountDefaultVis gtsmodel.Visibility,
 	status *gtsmodel.Status,
-) error {
+) {
 	switch {
 	// Visibility set on form, use that.
 	case form.Visibility != "":
@@ -500,21 +498,19 @@ func (p *Processor) processVisibility(
 	// this back on the form for later use.
 	case accountDefaultVis != 0:
 		status.Visibility = accountDefaultVis
-		form.Visibility = p.converter.VisToAPIVis(ctx, accountDefaultVis)
+		form.Visibility = typeutils.VisToAPIVis(accountDefaultVis)
 
 	// What? Fall back to global default, set
 	// this back on the form for later use.
 	default:
 		status.Visibility = gtsmodel.VisibilityDefault
-		form.Visibility = p.converter.VisToAPIVis(ctx, gtsmodel.VisibilityDefault)
+		form.Visibility = typeutils.VisToAPIVis(gtsmodel.VisibilityDefault)
 	}
 
 	// Set federated according to "local_only" field,
 	// assuming federated (ie., not local-only) by default.
 	localOnly := util.PtrOrValue(form.LocalOnly, false)
 	status.Federated = util.Ptr(!localOnly)
-
-	return nil
 }
 
 func processInteractionPolicy(
