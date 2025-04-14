@@ -18,6 +18,7 @@
 package streaming
 
 import (
+	"cmp"
 	"context"
 	"net/http"
 	"slices"
@@ -153,25 +154,22 @@ var pingMsg = []byte("ping!")
 //			description: bad request
 func (m *Module) StreamGETHandler(c *gin.Context) {
 	var (
-		token         string
-		tokenInHeader bool
-		account       *gtsmodel.Account
-		errWithCode   gtserror.WithCode
+		account     *gtsmodel.Account
+		errWithCode gtserror.WithCode
 	)
 
-	if t := c.Query(AccessTokenQueryKey); t != "" {
-		// Token was provided as
-		// query param, no problem.
-		token = t
-	} else if t := c.GetHeader(AccessTokenHeader); t != "" {
-		// Token was provided in "Sec-Websocket-Protocol" header.
-		//
-		// This is hacky and not technically correct but some
-		// clients do it since Mastodon allows it, so we must
-		// also allow it to avoid breaking expectations.
-		token = t
-		tokenInHeader = true
-	}
+	// Check both query parameter AND header "Sec-Websocket-Protocol"
+	// value for a token. The latter is hacky and not technically
+	// correct, but some client do it since Mastodon allows it, so
+	// we must allow it for compatibility.
+	//
+	// Chrome browser also *always* expects the "Sec-Websocket-Protocol"
+	// response value to match input, so we always have to check it.
+	queryToken := c.Query(AccessTokenQueryKey)
+	headerToken := c.Query(AccessTokenHeader)
+
+	// Prefer query token else use header token.
+	token := cmp.Or(queryToken, headerToken)
 
 	if token != "" {
 
@@ -229,8 +227,7 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 		return
 	}
 
-	l := log.
-		WithContext(c.Request.Context()).
+	l := log.WithContext(c.Request.Context()).
 		WithField("streamID", id.NewULID()).
 		WithField("username", account.Username)
 
@@ -241,12 +238,14 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 	// If the upgrade fails, then Upgrade replies to the client
 	// with an HTTP error response.
 	var responseHeader http.Header
-	if tokenInHeader {
-		// Return the token in the response,
-		// else Chrome fails to connect.
+	if headerToken != "" {
+
+		// Chrome always requires the input header
+		// token to be provided in response, even
+		// if it also provided via query... *shrugs*
 		//
 		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Protocol_upgrade_mechanism#sec-websocket-protocol
-		responseHeader = http.Header{AccessTokenHeader: {token}}
+		responseHeader = http.Header{AccessTokenHeader: {headerToken}}
 	}
 
 	wsConn, err := m.wsUpgrade.Upgrade(c.Writer, c.Request, responseHeader)
