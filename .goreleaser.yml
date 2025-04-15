@@ -102,9 +102,9 @@ dockers:
     ids:
     - gotosocial
     image_templates:
-    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64"
-    - "superseriousbusiness/{{ .ProjectName }}:latest-amd64"
-    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-amd64{{ end }}"
+    - "{{ if not .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64{{ end }}"                 # Use version tag (eg., `0.19.0`, `0.19.0-rc1`) for proper releases and prereleases.
+    - "{{ if and (not .Prerelease) (not .IsSnapshot) }}superseriousbusiness/{{ .ProjectName }}:latest-amd64{{ end }}" # Only use `latest` for proper releases, not prereleases or snapshots.
+    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-amd64{{ end }}"                           # Only use `snapshot` for snapshot builds triggered by merge to main.
     build_flag_templates:
     - "--platform=linux/amd64"
     - "--label=org.opencontainers.image.title=GoToSocial"
@@ -131,9 +131,9 @@ dockers:
     ids:
     - gotosocial
     image_templates:
-    - "superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8"
-    - "superseriousbusiness/{{ .ProjectName }}:latest-arm64v8"
-    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8{{ end }}"
+    - "{{ if not .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8{{ end }}"                 # Use version tag (eg., `0.19.0`, `0.19.0-rc1`) for proper releases and prereleases.
+    - "{{ if and (not .Prerelease) (not .IsSnapshot) }}superseriousbusiness/{{ .ProjectName }}:latest-arm64v8{{ end }}" # Only use `latest` for proper releases, not prereleases or snapshots.
+    - "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot-arm64v8{{ end }}"                           # Only use `snapshot` for snapshot builds triggered by merge to main.
     build_flag_templates:
     - "--platform=linux/arm64/v8"
     - "--label=org.opencontainers.image.title=GoToSocial"
@@ -155,14 +155,17 @@ dockers:
 
 # https://goreleaser.com/customization/docker_manifest/
 docker_manifests:
-  - name_template: superseriousbusiness/{{ .ProjectName }}:{{ .Version }}
+  # Use version tag (eg., `0.19.0`, `0.19.0-rc1`) for proper releases and prereleases.
+  - name_template: "{{ if not .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:{{ .Version }}{{ end }}"
     image_templates:
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-amd64
     - superseriousbusiness/{{ .ProjectName }}:{{ .Version }}-arm64v8
-  - name_template: superseriousbusiness/{{ .ProjectName }}:latest
+  # Only use `latest` for proper releases, not prereleases or snapshots.
+  - name_template: "{{ if and (not .Prerelease) (not .IsSnapshot) }}superseriousbusiness/{{ .ProjectName }}:latest{{ end }}"
     image_templates:
     - superseriousbusiness/{{ .ProjectName }}:latest-amd64
     - superseriousbusiness/{{ .ProjectName }}:latest-arm64v8
+  # Only use `snapshot` for snapshot builds triggered by merge to main.
   - name_template: "{{ if .IsSnapshot }}superseriousbusiness/{{ .ProjectName }}:snapshot{{ end }}"
     image_templates:
     - superseriousbusiness/{{ .ProjectName }}:snapshot-amd64
