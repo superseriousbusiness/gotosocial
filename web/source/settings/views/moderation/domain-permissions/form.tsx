@@ -71,8 +71,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 	}, [exportResult]);
 
 	const importFileRef = useRef<HTMLInputElement>(null);
-	const importFileOnClick = (e) => {
-		e.preventDefault();
+	const importFileOnClick = () => {
 		importFileRef.current?.click();
 	};
 
@@ -114,7 +113,7 @@ export default function ImportExportForm({ form, submitParse, parseResult }: Imp
 						onKeyDown={(e) => {
 							if (e.key === "Enter") {
 								e.preventDefault();
-								importFileOnClick(e);
+								importFileOnClick();
 							}
 						}}
 						role="button"
