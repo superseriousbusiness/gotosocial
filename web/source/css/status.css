@@ -28,8 +28,6 @@
 	padding-top: 0.75rem;
 
 	a {
-		position: relative;
-		z-index: 1;
 		color: inherit;
 		text-decoration: none;
 	}
@@ -107,11 +105,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.5rem;
-	}
-
-	.text-spoiler > summary, .text {
-		position: relative;
-		z-index: 1;
 	}
 
 	.text-spoiler > summary {
@@ -193,7 +186,6 @@
 
 		.poll {
 			background-color: $gray2;
-			z-index: 2;
 			
 			display: flex;
 			flex-direction: column;
@@ -277,7 +269,6 @@
 			}
 
 			details.stats-more-info {
-				z-index: 2;
 				margin-left: auto;
 				
 				& > summary {
@@ -350,7 +341,7 @@
 			.stats-more-info-content {
 				position: absolute;
 				right: 0;
-				z-index: 3;
+				z-index: 2;
 				
 				flex-direction: column;
 				max-width: 100%;
@@ -374,7 +365,6 @@
 			}
 
 			.stats-item:not(.published-at):not(.edit-timeline) {
-				z-index: 2;
 				user-select: none;
 			}
 
