@@ -260,6 +260,7 @@
 
 			.stats-grouping {
 				column-gap: 1rem;
+				row-gap: 0.25rem;
 			}
 
 			.stats-item {
@@ -360,8 +361,18 @@
 				}
 			}
 
-			.stats-item.published-at dd time.dt-published {
-				text-decoration: underline;
+			.stats-item.published-at dd a {
+				time.dt-published {
+					text-decoration: underline;
+				}
+
+				&:focus-visible {
+					outline: 0;
+					time.dt-published {
+						outline: $link-focus-outline;
+						outline-offset: -0.25rem;
+					}
+				}
 			}
 
 			.stats-item:not(.published-at):not(.edit-timeline) {
