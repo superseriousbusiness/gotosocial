@@ -90,27 +90,7 @@ media photoswipe-gallery {{ (len .) | oddOrEven }} {{ if eq (len .) 1 }}single{{
     </div>
     {{- end }}
 </div>
-<aside class="status-info" aria-hidden="true">
+<aside class="status-info">
     {{- include "status_info.tmpl" . | indent 1 }}
 </aside>
-{{- if .Local }}
-<a
-    href="{{- .URL -}}"
-    class="status-link u-url"
-    data-nosnippet
-    title="Open thread at this post"
->
-    Open thread at this post
-</a>
-{{- else }}
-<a
-    href="{{- .URL -}}"
-    class="status-link u-url"
-    data-nosnippet
-    rel="nofollow noreferrer noopener" target="_blank"
-    title="Open remote post (opens in a new window)"
->
-    Open remote post (opens in a new window)
-</a>
-{{- end }}
 {{- end }}

@@ -1217,6 +1217,31 @@ func (c *Converter) StatusToWebStatus(
 	// Mark local.
 	webStatus.Local = *s.Local
 
+	// Get edit history for this status.
+	if webStatus.EditedAt != nil {
+		if len(s.Edits) != len(s.EditIDs) {
+			s.Edits, err = c.state.DB.GetStatusEditsByIDs(ctx, s.EditIDs)
+			if err != nil && !errors.Is(err, db.ErrNoEntries) {
+				err := gtserror.Newf("db error getting status edits: %w", err)
+				return nil, err
+			}
+		}
+
+		for _, edit := range s.Edits {
+			webStatus.EditTimeline = append(
+				webStatus.EditTimeline,
+				util.FormatISO8601(edit.CreatedAt),
+			)
+		}
+
+		webStatus.EditTimeline = append(
+			webStatus.EditTimeline,
+			*webStatus.EditedAt,
+		)
+
+		slices.Reverse(webStatus.EditTimeline)
+	}
+
 	// Set additional templating
 	// variables on media attachments.
 

@@ -111,7 +111,7 @@
 
 	.text-spoiler > summary, .text {
 		position: relative;
-		z-index: 2;
+		z-index: 1;
 	}
 
 	.text-spoiler > summary {
@@ -264,8 +264,10 @@
 			.stats-more-info-content {
 				display: flex;
 				flex-wrap: wrap;
+			}
+
+			.stats-grouping {
 				column-gap: 1rem;
-				row-gap: 0.25rem;
 			}
 
 			.stats-item {
@@ -279,6 +281,15 @@
 				margin-left: auto;
 				
 				& > summary {
+					display: flex;
+
+					/*
+						Make it easy to touch.
+					*/
+					width: 3rem;
+					height: 2rem;
+					margin: -0.25rem -0.5rem;
+
 					/*
 						Remove details/summary
 						arrow and use our own.
@@ -297,16 +308,13 @@
 					}
 
 					/*
-						Normalize width and
-						alignment of fa icons.
+						Normalize fa
+						icon alignment.
 					*/
+					align-items: center;
 					i.fa {
-						width: 2rem;
 						text-align: center;
 					}
-					display: flex;
-					height: 100%;
-					align-items: center;
 
 					cursor: pointer;
 					border-radius: $br-inner;
@@ -342,8 +350,11 @@
 			.stats-more-info-content {
 				position: absolute;
 				right: 0;
+				z-index: 3;
+				
 				flex-direction: column;
 				max-width: 100%;
+				row-gap: 0.5rem;
 
 				background: $status-info-bg;
 				padding: 0.5rem 0.75rem;
@@ -351,40 +362,37 @@
 				box-shadow: $boxshadow;
 
 				opacity: 1;
+
+				.stats-grouping {
+					width: 100%;
+					justify-content: space-between;
+				}
 			}
 
 			.stats-item.published-at dd time.dt-published {
 				text-decoration: underline;
 			}
 
-			.stats-item:not(.published-at):not(.edited-at) {
-				z-index: 1;
+			.stats-item:not(.published-at):not(.edit-timeline) {
+				z-index: 2;
 				user-select: none;
+			}
+
+			.stats-item.edit-timeline {
+				flex-direction: column;
+				width: 100%;
+				border-top: $boxshadow-border;
+				padding-top: 0.4rem;
+				
+				dd {
+					display: flex;
+					align-items: center;
+					gap: 0.4rem;
+				}
 			}
 		}
 
 		grid-column: span 3;
-	}
-
-	.status-link {
-		top: 0;
-		right: 0;
-		bottom: 0;
-		left: 0;
-		overflow: hidden;
-		text-indent: 100%;
-		white-space: nowrap;
-
-		position: absolute;
-		z-index: 0;
-
-		&:focus-visible {
-			/*
-				Inset focus to compensate for themes where
-				statuses have a really thick border.
-			*/
-			outline-offset: -0.25rem;
-		}
 	}
 
 	&:first-child {

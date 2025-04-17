@@ -38,8 +38,8 @@
 {{- end -}}
 
 {{- with . }}
-<dl class="status-stats">
-    <div class="stats-grouping">
+<div class="status-stats">
+    <dl class="stats-grouping">
         <div class="stats-item visibility-level" title="{{- template "visibility_title" . -}}">
             <dt class="sr-only">Visibility</dt>
             <dd>
@@ -50,7 +50,26 @@
         <div class="stats-item published-at text-cutoff">
             <dt class="sr-only">Published</dt>
             <dd>
-                <time class="dt-published" datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>{{- if .EditedAt }}*{{- end }}
+                {{- if .Local }}
+                <a
+                    href="{{- .URL -}}"
+                    class="u-url"
+                    data-nosnippet
+                    title="Open thread at this post"
+                >
+                    <time class="dt-published" datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>{{- if .EditedAt }}*{{- end }}
+                </a>
+                {{- else }}
+                <a
+                    href="{{- .URL -}}"
+                    class="u-url"
+                    data-nosnippet
+                    rel="nofollow noreferrer noopener" target="_blank"
+                    title="Open remote post (opens in a new window)"
+                >
+                    <time class="dt-published" datetime="{{- .CreatedAt -}}">{{- .CreatedAt | timestampPrecise -}}</time>{{- if .EditedAt }}*{{- end }}
+                </a>
+                {{- end }}
             </dd>
         </div>
         {{- if .Pinned }}
@@ -63,24 +82,25 @@
         </div>
         {{- else }}
         {{- end }}
-    </div>
+    </dl>
     <details class="stats-more-info">
         <summary title="More info">
+            <i class="fa fa-fw fa-info" aria-hidden="true"></i>
             <span class="sr-only">More info</span>
-            <i class="fa fa-chevron-right show" aria-hidden="true"></i>
-            <i class="fa fa-chevron-down hide" aria-hidden="true"></i>
+            <i class="fa fa-fw fa-chevron-right show" aria-hidden="true"></i>
+            <i class="fa fa-fw fa-chevron-down hide" aria-hidden="true"></i>
         </summary>
-        <div class="stats-more-info-content">
+        <dl class="stats-more-info-content">
             <div class="stats-grouping">
                 {{- if .LanguageTag.DisplayStr }}
-                <div class="stats-item" title="{{ .LanguageTag.DisplayStr }}">
+                <div class="stats-item" title="Language">
                     <dt>
                         <span class="sr-only">Language</span>
                         <i class="fa fa-language" aria-hidden="true"></i>
                     </dt>
                     <dd>
-                        <span class="sr-only">{{ .LanguageTag.DisplayStr }}</span>
-                        <span aria-hidden="true">{{- .LanguageTag.TagStr -}}</span>
+                        <span class="sr-only">{{ .LanguageTag.DisplayStr -}}</span>
+                        <span aria-hidden="true" title="{{- .LanguageTag.DisplayStr -}}">{{- .LanguageTag.TagStr -}}</span>
                     </dd>
                 </div>
                 {{- else }}
@@ -107,18 +127,27 @@
                     <dd>{{- .ReblogsCount -}}</dd>
                 </div>
             </div>
-            {{- if .EditedAt -}}
-            <div class="stats-item edited-at text-cutoff" title="Edited {{ .EditedAt -}}">
-                <dt>
+            {{- if and .EditedAt (gt (len .EditTimeline) 1) -}}
+            <div class="stats-item edit-timeline text-cutoff">
+                <dt>Edit timeline:</dt>
+                {{- range $index, $edited := .EditTimeline }}
+                {{- if not (eq $index (add (len $.EditTimeline) -1)) }}
+                <dd class="text-cutoff" title="Edited {{ $edited -}}">
                     <span class="sr-only">Edited</span>
-                    <i class="fa fa-pencil" aria-hidden="true"></i>
-                </dt>
-                <dd class="text-cutoff">
-                    <time class="dt-updated" datetime="{{- .EditedAt -}}">{{- .EditedAt | timestampPrecise -}}</time>
+                    <i class="fa fa-asterisk" aria-hidden="true"></i>
+                    <time datetime="{{- $edited -}}">{{- $edited | timestampPrecise -}}</time>
                 </dd>
+                {{- else }}
+                <dd class="text-cutoff" title="Published {{ $.CreatedAt -}}">
+                    <span class="sr-only">Published</span>
+                    <i class="fa fa-pencil" aria-hidden="true"></i>
+                    <time datetime="{{- $.CreatedAt -}}">{{- $.CreatedAt | timestampPrecise -}}</time>
+                </dd>
+                {{- end }}
+                {{- end }}
             </div>
             {{ end }}
-        </div>
+        </dl>
     </details>
-</dl>
+</div>
 {{- end }}
