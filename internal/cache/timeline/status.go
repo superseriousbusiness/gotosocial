@@ -552,6 +552,12 @@ func (t *StatusTimeline) InsertOne(status *gtsmodel.Status, prepared *apimodel.S
 				break
 			}
 
+			// We don't care about values that have
+			// already been hidden as repeat boosts.
+			if value.repeatBoost {
+				continue
+			}
+
 			// If inserted status has already been boosted, or original was posted
 			// within last $repeatBoostDepth, we indicate it as a repeated boost.
 			if value.ID == status.BoostOfID || value.BoostOfID == status.BoostOfID {
