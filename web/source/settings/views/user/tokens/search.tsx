@@ -36,7 +36,7 @@ export default function TokensSearchForm() {
 	// Populate search form using values from
 	// urlQueryParams, to allow paging.
 	const form = {
-		limit: useTextInput("limit", { defaultValue: urlQueryParams.get("limit") ?? "20" })
+		limit: useTextInput("limit", { defaultValue: urlQueryParams.get("limit") ?? "25" })
 	};
 
 	// On mount, trigger search.

@@ -119,7 +119,7 @@ func (m *Module) TokensInfoGETHandler(c *gin.Context) {
 	page, errWithCode := paging.ParseIDPage(c,
 		0,   // min limit
 		100, // max limit
-		20,  // default limit
+		25,  // default limit
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
