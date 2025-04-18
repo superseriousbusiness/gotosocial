@@ -79,9 +79,18 @@
 		&.indent-3,
 		&.indent-4,
 		&.indent-5 {
-			.status-link {
-				margin-left: -0.5rem;
+			/*
+				Show a stripey line to the left of
+				indented statuses for better legibility.
+			*/
+			&::before {
+				content: "";
+				position: absolute;
+				left: 0;
+				top: 0;
+				height: 100%;
 				border-left: 0.15rem dashed $border-accent;
+				margin-left: -0.5rem;
 			}
 		}
 

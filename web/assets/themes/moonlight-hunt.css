@@ -143,6 +143,12 @@ blockquote {
   background: var(--outer-space);
 }
 
+/* Status info dropdown content */
+.status.expanded .status-info .status-stats .stats-more-info-content,
+.status .status-info .status-stats .stats-more-info-content {
+  background: var(--outer-space);
+}
+
 /* Make show more/less buttons more legible */
 .status .button {
   border: 1px solid var(--feral-orange);

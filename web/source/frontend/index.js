@@ -338,3 +338,25 @@ Array.from(document.getElementsByTagName('time')).forEach(timeTag => {
 		timeTag.textContent = dateTimeFormat.format(date);
 	}
 });
+
+// When clicking anywhere that's not an open
+// stats-info-more-content details dropdown,
+// close that open dropdown.
+document.body.addEventListener("click", (e) => {
+	const openStats = document.querySelector("details.stats-more-info[open]");
+	if (!openStats) {
+		// No open stats
+		// details element.
+		return;
+	}
+
+	if (openStats.contains(e.target)) {
+		// Click is within stats
+		// element, leave it alone.
+		return;
+	}
+
+	// Click was outside of
+	// stats elements, close it. 
+	openStats.removeAttribute("open");
+});

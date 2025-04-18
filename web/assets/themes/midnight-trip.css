@@ -129,6 +129,16 @@ html, body {
   background: black;
 }
 
+/* Status info dropdown content */
+.status.expanded .status-info .status-stats .stats-more-info-content,
+.status .status-info .status-stats .stats-more-info-content {
+  background-color: black;
+  border: 0.25rem solid var(--magenta);
+}
+.status .status-info .status-stats .stats-item.edit-timeline {
+  border-top: 0.15rem dotted var(--acid-green);
+}
+
 /* Back + next links */
 .backnextlinks {
   background: var(--gray1);

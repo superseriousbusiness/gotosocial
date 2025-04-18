@@ -142,3 +142,9 @@ code, code[class*="language-"] {
 blockquote {
 	background-color: var(--soft-lilac-translucent);
 }
+
+/* Status info dropdown content */
+.status.expanded .status-info .status-stats .stats-more-info-content,
+.status .status-info .status-stats .stats-more-info-content {
+  background: var(--soft-pink);
+}

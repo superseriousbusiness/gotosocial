@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useVerifyCredentialsQuery } from "../lib/query/login";
 import { MediaAttachment, Status as StatusType } from "../lib/types/status";
 import sanitize from "sanitize-html";
@@ -68,15 +68,6 @@ export function Status({ status }: { status: StatusType }) {
 			<StatusHeader status={status} />
 			<StatusBody status={status} />
 			<StatusFooter status={status} />
-			<a
-				href={status.url}
-				target="_blank"
-				className="status-link"
-				data-nosnippet
-				title="Open this status (opens in new tab)"
-			>
-				Open this status (opens in new tab)
-			</a>
 		</article>
 	);
 }
@@ -266,25 +257,103 @@ function StatusMediaEntry({ media }: { media: MediaAttachment }) {
 	);
 }
 
+function useVisibilityIcon(visibility: string): string {
+	return useMemo(() => {
+		switch (true) {
+			case visibility === "direct":
+				return "fa-envelope";
+			case visibility === "followers_only":
+				return "fa-lock";
+			case visibility === "unlisted":
+				return "fa-unlock";
+			case visibility === "public":
+				return "fa-globe";
+			default:
+				return "fa-question";
+		}
+	}, [visibility]);
+}
+
 function StatusFooter({ status }: { status: StatusType }) {
+	const visibilityIcon = useVisibilityIcon(status.visibility);	
 	return (
 		<aside className="status-info">
-			<dl className="status-stats">
-				<div className="stats-grouping">
+			<div className="status-stats">
+				<dl className="stats-grouping text-cutoff">
 					<div className="stats-item published-at text-cutoff">
 						<dt className="sr-only">Published</dt>
-						<dd>
-							<time dateTime={status.created_at}>
-								{ new Date(status.created_at).toLocaleString() }
-							</time>
+						<dd className="text-cutoff">
+							<a
+								href={status.url}
+								className="u-url text-cutoff"
+							>
+								<time
+									className="dt-published text-cutoff"
+									dateTime={status.created_at}
+								>
+									{new Date(status.created_at).toLocaleString(undefined, {
+										year: 'numeric',
+										month: 'short',
+										day: '2-digit',
+										hour: '2-digit',
+										minute: '2-digit',
+										hour12: false
+									})}
+								</time>
+							</a>
 						</dd>
 					</div>
-				</div>
-				<div className="stats-item language">
-					<dt className="sr-only">Language</dt>
-					<dd>{status.language}</dd>
-				</div>
-			</dl>
+					<div className="stats-grouping">
+						<div className="stats-item visibility-level" title={status.visibility}>
+							<dt className="sr-only">Visibility</dt>
+							<dd>
+								<i className={`fa ${visibilityIcon}`} aria-hidden="true"></i>
+								<span className="sr-only">{status.visibility}</span>
+							</dd>
+						</div>
+					</div>
+				</dl>
+				<details className="stats-more-info">
+					<summary title="More info">
+						<i className="fa fa-fw fa-info" aria-hidden="true"></i>
+						<span className="sr-only">More info</span>
+						<i className="fa fa-fw fa-chevron-right show" aria-hidden="true"></i>
+						<i className="fa fa-fw fa-chevron-down hide" aria-hidden="true"></i>
+					</summary>
+					<dl className="stats-more-info-content">
+						<div className="stats-grouping">
+							<div className="stats-item" title="Language">
+								<dt>
+									<span className="sr-only">Language</span>
+									<i className="fa fa-language" aria-hidden="true"></i>
+								</dt>
+								<dd>{status.language}</dd>
+							</div>
+							<div className="stats-item" title="Replies">
+								<dt>
+									<span className="sr-only">Replies</span>
+									<i className="fa fa-reply-all" aria-hidden="true"></i>
+								</dt>
+								<dd>{status.replies_count}</dd>
+							</div>
+							<div className="stats-item" title="Faves">
+								<dt>
+									<span className="sr-only">Favourites</span>
+									<i className="fa fa-star" aria-hidden="true"></i>
+								</dt>
+								<dd>{status.favourites_count}</dd>
+							</div>
+							<div className="stats-item" title="Boosts">
+								<dt>
+									<span className="sr-only">Reblogs</span>
+									<i className="fa fa-retweet" aria-hidden="true"></i>
+								</dt>
+								<dd>{status.reblogs_count}</dd>
+							</div>
+						</div>
+					</dl>
+				</details>
+			</div>
 		</aside>
 	);
 }

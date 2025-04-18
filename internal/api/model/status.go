@@ -166,6 +166,12 @@ type WebStatus struct {
 	// after the "main" thread, so it and everything
 	// below it can be considered "replies".
 	ThreadFirstReply bool
+
+	// Sorted slice of StatusEdit times for
+	// this status, from latest to oldest.
+	// Only set if status has been edited.
+	// Last entry is always creation time.
+	EditTimeline []string `json:"-"`
 }
 
 /*
