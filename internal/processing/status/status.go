@@ -22,6 +22,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/interactionrequests"
 	"github.com/superseriousbusiness/gotosocial/internal/processing/polls"
@@ -41,6 +42,7 @@ type Processor struct {
 	intFilter    *interaction.Filter
 	formatter    *text.Formatter
 	parseMention gtsmodel.ParseMentionFunc
+	client       *httpclient.Client
 
 	// other processors
 	polls   *polls.Processor
@@ -58,6 +60,7 @@ func New(
 	visFilter *visibility.Filter,
 	intFilter *interaction.Filter,
 	parseMention gtsmodel.ParseMentionFunc,
+	client *httpclient.Client,
 ) Processor {
 	return Processor{
 		c:            common,
@@ -70,5 +73,6 @@ func New(
 		parseMention: parseMention,
 		polls:        polls,
 		intReqs:      intReqs,
+		client:       client,
 	}
 }

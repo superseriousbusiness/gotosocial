@@ -70,6 +70,7 @@ func (c *Caches) Init() {
 	c.initBlock()
 	c.initBlockIDs()
 	c.initBoostOfIDs()
+	c.initCard()
 	c.initConversation()
 	c.initConversationLastStatusIDs()
 	c.initDomainAllow()
