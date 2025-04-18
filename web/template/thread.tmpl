@@ -78,7 +78,6 @@
             <a href="#replies">jump to replies</a>
             {{- end }}
         </div>
-
         {{- range $status := .context.Statuses }}
         <article
             class="status{{- if $status.ThreadContextStatus }} expanded{{- end -}}{{- if $status.Indent }} indent-{{ $status.Indent }}{{- end -}}"
@@ -90,9 +89,6 @@
         {{- include "repliesStart" $ | indent 1 }}
         {{- end }}
         {{- end }}
-
-    {{- if .context.ThreadReplies }}
     </section>
-    {{- end }}
 </main>
 {{- end }}
