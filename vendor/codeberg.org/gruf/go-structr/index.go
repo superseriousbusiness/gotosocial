@@ -1,6 +1,7 @@
 package structr
 
 import (
+	"fmt"
 	"os"
 	"reflect"
 	"strings"
@@ -222,10 +223,10 @@ func (i *Index) get(key string, hook func(*indexed_item)) {
 func (i *Index) key(buf *byteutil.Buffer, parts []unsafe.Pointer) string {
 	buf.B = buf.B[:0]
 	if len(parts) != len(i.fields) {
-		panicf("incorrect number key parts: want=%d received=%d",
+		panic(fmt.Sprintf("incorrect number key parts: want=%d received=%d",
 			len(i.fields),
 			len(parts),
-		)
+		))
 	}
 	if !allow_zero(i.flags) {
 		for x, field := range i.fields {

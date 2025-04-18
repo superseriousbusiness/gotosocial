@@ -1,6 +1,3 @@
-# codeberg.org/gruf/go-bytes v1.0.2
-## explicit; go 1.14
-codeberg.org/gruf/go-bytes
 # codeberg.org/gruf/go-bytesize v1.0.3
 ## explicit; go 1.17
 codeberg.org/gruf/go-bytesize
@@ -63,7 +60,7 @@ codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
-# codeberg.org/gruf/go-structr v0.9.6
+# codeberg.org/gruf/go-structr v0.9.7
 ## explicit; go 1.22
 codeberg.org/gruf/go-structr
 # codeberg.org/superseriousbusiness/activity v1.13.0-gts

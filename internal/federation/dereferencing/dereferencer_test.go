@@ -77,12 +77,6 @@ func (suite *DereferencerStandardTestSuite) SetupTest() {
 	suite.intFilter = interaction.NewFilter(&suite.state)
 	suite.media = testrig.NewTestMediaManager(&suite.state)
 
-	testrig.StartTimelines(
-		&suite.state,
-		suite.visFilter,
-		suite.converter,
-	)
-
 	suite.client = testrig.NewMockHTTPClient(nil, "../../../testrig/media")
 	suite.storage = testrig.NewInMemoryStorage()
 	suite.state.DB = suite.db

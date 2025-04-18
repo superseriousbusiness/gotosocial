@@ -15,36 +15,37 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline
+package id
 
 import (
-	"context"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-func (t *timeline) Unprepare(ctx context.Context, itemID string) error {
-	t.Lock()
-	defer t.Unlock()
-
-	if t.items == nil || t.items.data == nil {
-		// Nothing to do.
-		return nil
+// ValidatePage ensures that passed page has valid paging
+// values for the current defined ordering. That is, it
+// ensures a valid page *cursor* value, using id.Highest
+// or id.Lowest where appropriate when none given.
+func ValidatePage(page *paging.Page) {
+	if page == nil {
+		// unpaged
+		return
 	}
 
-	for e := t.items.data.Front(); e != nil; e = e.Next() {
-		entry := e.Value.(*indexedItemsEntry)
-
-		if entry.itemID != itemID && entry.boostOfID != itemID {
-			// Not relevant.
-			continue
+	switch page.Order() {
+	// If the page order is ascending,
+	// ensure that a minimum value is set.
+	// This will be used as the cursor.
+	case paging.OrderAscending:
+		if page.Min.Value == "" {
+			page.Min.Value = Lowest
 		}
 
-		if entry.prepared == nil {
-			// It's already unprepared (mood).
-			continue
+	// If the page order is descending,
+	// ensure that a maximum value is set.
+	// This will be used as the cursor.
+	case paging.OrderDescending:
+		if page.Max.Value == "" {
+			page.Max.Value = Highest
 		}
-
-		entry.prepared = nil // <- eat this up please garbage collector nom nom nom
 	}
-
-	return nil
 }

@@ -15,20 +15,37 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline
+package cache
 
-// Timelineable represents any item that can be indexed in a timeline.
-type Timelineable interface {
-	GetID() string
-	GetAccountID() string
-	GetBoostOfID() string
-	GetBoostOfAccountID() string
+import (
+	"github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+)
+
+type TimelineCaches struct {
+	// Home provides a concurrency-safe map of status timeline
+	// caches for home timelines, keyed by home's account ID.
+	Home timeline.StatusTimelines
+
+	// List provides a concurrency-safe map of status
+	// timeline caches for lists, keyed by list ID.
+	List timeline.StatusTimelines
 }
 
-// Preparable represents any item that can be prepared in a timeline.
-type Preparable interface {
-	GetID() string
-	GetAccountID() string
-	GetBoostOfID() string
-	GetBoostOfAccountID() string
+func (c *Caches) initHomeTimelines() {
+	// TODO: configurable
+	cap := 800
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.Timelines.Home.Init(cap)
+}
+
+func (c *Caches) initListTimelines() {
+	// TODO: configurable
+	cap := 800
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.Timelines.List.Init(cap)
 }

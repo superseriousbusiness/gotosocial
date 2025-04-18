@@ -25,6 +25,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -46,10 +47,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGet() {
 	resp, errWithCode := suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 
@@ -79,10 +81,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
 	resp, errWithCode := suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 
@@ -90,9 +93,9 @@ func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
 	// some other statuses were filtered out.
 	suite.NoError(errWithCode)
 	suite.Len(resp.Items, 1)
-	suite.Equal(`<http://localhost:8080/api/v1/timelines/public?limit=1&max_id=01F8MHCP5P2NWYQ416SBA0XSEV&local=false>; rel="next", <http://localhost:8080/api/v1/timelines/public?limit=1&min_id=01HE7XJ1CG84TBKH5V9XKBVGF5&local=false>; rel="prev"`, resp.LinkHeader)
-	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&max_id=01F8MHCP5P2NWYQ416SBA0XSEV&local=false`, resp.NextLink)
-	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&min_id=01HE7XJ1CG84TBKH5V9XKBVGF5&local=false`, resp.PrevLink)
+	suite.Equal(`<http://localhost:8080/api/v1/timelines/public?limit=1&local=false&max_id=01F8MHCP5P2NWYQ416SBA0XSEV>; rel="next", <http://localhost:8080/api/v1/timelines/public?limit=1&local=false&min_id=01HE7XJ1CG84TBKH5V9XKBVGF5>; rel="prev"`, resp.LinkHeader)
+	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&local=false&max_id=01F8MHCP5P2NWYQ416SBA0XSEV`, resp.NextLink)
+	suite.Equal(`http://localhost:8080/api/v1/timelines/public?limit=1&local=false&min_id=01HE7XJ1CG84TBKH5V9XKBVGF5`, resp.PrevLink)
 }
 
 // A timeline containing a status hidden due to filtering should return other statuses with no error.
@@ -133,10 +136,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	resp, errWithCode := suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 	suite.NoError(errWithCode)
@@ -149,8 +153,6 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	if !filteredStatusFound {
 		suite.FailNow("precondition failed: status we would filter isn't present in unfiltered timeline")
 	}
-	// The public timeline has no prepared status cache and doesn't need to be pruned,
-	// as in the home timeline version of this test.
 
 	// Create a filter to hide one status on the timeline.
 	if err := suite.db.PutFilter(ctx, filter); err != nil {
@@ -161,10 +163,11 @@ func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	resp, errWithCode = suite.timeline.PublicTimelineGet(
 		ctx,
 		requester,
-		maxID,
-		sinceID,
-		minID,
-		limit,
+		&paging.Page{
+			Min:   paging.EitherMinID(minID, sinceID),
+			Max:   paging.MaxID(maxID),
+			Limit: limit,
+		},
 		local,
 	)
 
