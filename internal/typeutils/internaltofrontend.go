@@ -1217,8 +1217,10 @@ func (c *Converter) StatusToWebStatus(
 	// Mark local.
 	webStatus.Local = *s.Local
 
-	// Get edit history for this status.
+	// Get edit history for this
+	// status, if it's been edited.
 	if webStatus.EditedAt != nil {
+		// Make sure edits are populated.
 		if len(s.Edits) != len(s.EditIDs) {
 			s.Edits, err = c.state.DB.GetStatusEditsByIDs(ctx, s.EditIDs)
 			if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -1227,6 +1229,8 @@ func (c *Converter) StatusToWebStatus(
 			}
 		}
 
+		// Include each historical entry
+		// (this includes the created date).
 		for _, edit := range s.Edits {
 			webStatus.EditTimeline = append(
 				webStatus.EditTimeline,
@@ -1234,11 +1238,21 @@ func (c *Converter) StatusToWebStatus(
 			)
 		}
 
+		// Make sure to include latest revision.
 		webStatus.EditTimeline = append(
 			webStatus.EditTimeline,
 			*webStatus.EditedAt,
 		)
 
+		// Sort the slice so it goes from
+		// newest -> oldest, like a timeline.
+		//
+		// It'll look something like:
+		//
+		//	- edit3 date (ie., latest version)
+		//	- edit2 date (if we have it)
+		//	- edit1 date (if we have it)
+		//	- created date
 		slices.Reverse(webStatus.EditTimeline)
 	}
 
