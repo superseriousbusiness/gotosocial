@@ -129,16 +129,6 @@ html, body {
   background: black;
 }
 
-/* Status info dropdown button */
-.status .status-info .status-stats details.stats-more-info > summary {
-  color: var(--button-fg);
-  background: var(--button-bg);
-}
-.status .status-info .status-stats details.stats-more-info > summary:hover {
-  outline: 0;
-  background: var(--button-hover-bg);
-}
-
 /* Status info dropdown content */
 .status.expanded .status-info .status-stats .stats-more-info-content,
 .status .status-info .status-stats .stats-more-info-content {
