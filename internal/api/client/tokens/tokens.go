@@ -43,6 +43,6 @@ func New(processor *processing.Processor) *Module {
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, BasePath, m.TokensInfoGETHandler)
-	attachHandler(http.MethodGet, BasePathWithID, m.TokensInfoGETHandler)
+	attachHandler(http.MethodGet, BasePathWithID, m.TokenInfoGETHandler)
 	attachHandler(http.MethodPost, InvalidateTokenPath, m.TokenInvalidatePOSTHandler)
 }
