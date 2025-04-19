@@ -102,9 +102,16 @@ const (
 
 	/* GtS stuff */
 
-	ObjectLikeApproval     = "LikeApproval"
-	ObjectReplyApproval    = "ReplyApproval"
-	ObjectAnnounceApproval = "AnnounceApproval"
+	ObjectLikeApproval          = "LikeApproval"     // deprecated, use LikeAuthorization.
+	ObjectReplyApproval         = "ReplyApproval"    // deprecated, use ReplyAuthorization.
+	ObjectAnnounceApproval      = "AnnounceApproval" // deprecated, use AnnounceAuthorization.
+	ObjectLikeAuthorization     = "LikeAuthorization"
+	ObjectReplyAuthorization    = "ReplyAuthorization"
+	ObjectAnnounceAuthorization = "AnnounceAuthorization"
+
+	ActivityLikeRequest     = "LikeRequest"
+	ActivityReplyRequest    = "ReplyRequest"
+	ActivityAnnounceRequest = "AnnounceRequest"
 
 	/* Funkwhale stuff */
 

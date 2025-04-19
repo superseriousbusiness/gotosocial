@@ -33,6 +33,14 @@ type privateManager interface {
 	// method for the "GoToSocialAnnounceApproval" non-functional property
 	// in the vocabulary "GoToSocial"
 	DeserializeAnnounceApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceApproval, error)
+	// DeserializeAnnounceAuthorizationGoToSocial returns the deserialization
+	// method for the "GoToSocialAnnounceAuthorization" non-functional
+	// property in the vocabulary "GoToSocial"
+	DeserializeAnnounceAuthorizationGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceAuthorization, error)
+	// DeserializeAnnounceRequestGoToSocial returns the deserialization method
+	// for the "GoToSocialAnnounceRequest" non-functional property in the
+	// vocabulary "GoToSocial"
+	DeserializeAnnounceRequestGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAnnounceRequest, error)
 	// DeserializeApplicationActivityStreams returns the deserialization
 	// method for the "ActivityStreamsApplication" non-functional property
 	// in the vocabulary "ActivityStreams"
@@ -140,6 +148,14 @@ type privateManager interface {
 	// for the "GoToSocialLikeApproval" non-functional property in the
 	// vocabulary "GoToSocial"
 	DeserializeLikeApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialLikeApproval, error)
+	// DeserializeLikeAuthorizationGoToSocial returns the deserialization
+	// method for the "GoToSocialLikeAuthorization" non-functional
+	// property in the vocabulary "GoToSocial"
+	DeserializeLikeAuthorizationGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialLikeAuthorization, error)
+	// DeserializeLikeRequestGoToSocial returns the deserialization method for
+	// the "GoToSocialLikeRequest" non-functional property in the
+	// vocabulary "GoToSocial"
+	DeserializeLikeRequestGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialLikeRequest, error)
 	// DeserializeListenActivityStreams returns the deserialization method for
 	// the "ActivityStreamsListen" non-functional property in the
 	// vocabulary "ActivityStreams"
@@ -217,6 +233,14 @@ type privateManager interface {
 	// for the "GoToSocialReplyApproval" non-functional property in the
 	// vocabulary "GoToSocial"
 	DeserializeReplyApprovalGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyApproval, error)
+	// DeserializeReplyAuthorizationGoToSocial returns the deserialization
+	// method for the "GoToSocialReplyAuthorization" non-functional
+	// property in the vocabulary "GoToSocial"
+	DeserializeReplyAuthorizationGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyAuthorization, error)
+	// DeserializeReplyRequestGoToSocial returns the deserialization method
+	// for the "GoToSocialReplyRequest" non-functional property in the
+	// vocabulary "GoToSocial"
+	DeserializeReplyRequestGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialReplyRequest, error)
 	// DeserializeServiceActivityStreams returns the deserialization method
 	// for the "ActivityStreamsService" non-functional property in the
 	// vocabulary "ActivityStreams"

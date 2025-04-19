@@ -48,8 +48,9 @@ type GoToSocialApprovalRequiredPropertyIterator interface {
 	SetIRI(v *url.URL)
 }
 
-// Indicates zero or more URI/IDs that require approval by the Object AttributedTo
-// Actor in order to perform an interaction.
+// DEPRECATED: Use `manualApproval` instead. Indicates zero or more URI/IDs that
+// require approval by the Object AttributedTo Actor in order to perform an
+// interaction.
 type GoToSocialApprovalRequiredProperty interface {
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "approvalRequired"

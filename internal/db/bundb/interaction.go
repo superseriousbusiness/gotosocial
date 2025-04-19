@@ -218,7 +218,7 @@ func (i *interactionDB) PopulateInteractionRequest(ctx context.Context, req *gts
 			errs.Appendf("error populating interactionRequest Like: %w", err)
 		}
 
-	case gtsmodel.InteractionReply:
+	case gtsmodel.InteractionReply, gtsmodel.InteractionReplyRequest:
 		req.Reply, err = i.state.DB.GetStatusByURI(ctx, req.InteractionURI)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			errs.Appendf("error populating interactionRequest Reply: %w", err)

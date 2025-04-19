@@ -67,7 +67,7 @@ func (p *Processor) Accept(
 	// Mark the request as accepted
 	// and generate a URI for it.
 	req.AcceptedAt = time.Now()
-	req.URI = uris.GenerateURIForAccept(acct.Username, req.ID)
+	req.ResponseURI = uris.GenerateURIForAccept(acct.Username, req.ID)
 	if err := p.state.DB.UpdateInteractionRequest(
 		ctx,
 		req,
@@ -132,7 +132,7 @@ func (p *Processor) acceptLike(
 	// Update the Like.
 	req.Like.PendingApproval = util.Ptr(false)
 	req.Like.PreApproved = false
-	req.Like.ApprovedByURI = req.URI
+	req.Like.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatusFave(
 		ctx,
 		req.Like,
@@ -173,7 +173,7 @@ func (p *Processor) acceptReply(
 	// Update the Reply.
 	req.Reply.PendingApproval = util.Ptr(false)
 	req.Reply.PreApproved = false
-	req.Reply.ApprovedByURI = req.URI
+	req.Reply.ApprovedByURI = req.ResponseURI
 	if err := p.state.DB.UpdateStatus(
 		ctx,
 		req.Reply,
@@ -203,26 +203,23 @@ func (p *Processor) acceptAnnounce(
 	ctx context.Context,
 	req *gtsmodel.InteractionRequest,
 ) gtserror.WithCode {
-	// If the Announce is missing, that means it's
-	// probably already been undone by someone,
-	// so there's nothing to actually accept.
-	if req.Reply == nil {
-		err := gtserror.Newf("no Announce found for interaction request %s", req.ID)
-		return gtserror.NewErrorNotFound(err)
-	}
-
-	// Update the Announce.
-	req.Announce.PendingApproval = util.Ptr(false)
-	req.Announce.PreApproved = false
-	req.Announce.ApprovedByURI = req.URI
-	if err := p.state.DB.UpdateStatus(
-		ctx,
-		req.Announce,
-		"pending_approval",
-		"approved_by_uri",
-	); err != nil {
-		err := gtserror.Newf("db error updating status announce: %w", err)
-		return gtserror.NewErrorInternalError(err)
+	// If the Announce is set, that means it comes
+	// from someone straight up sending the Announce
+	// instead of AnnounceRequest, so we already have
+	// the Announce in the db. We can update it now.
+	if req.Announce != nil {
+		req.Announce.PendingApproval = util.Ptr(false)
+		req.Announce.PreApproved = false
+		req.Announce.ApprovedByURI = req.ResponseURI
+		if err := p.state.DB.UpdateStatus(
+			ctx,
+			req.Announce,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			err := gtserror.Newf("db error updating status announce: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// Send the accepted request off through the

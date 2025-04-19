@@ -10,6 +10,9 @@ type GoToSocialInteractionPolicy interface {
 	// GetGoToSocialCanLike returns the "canLike" property if it exists, and
 	// nil otherwise.
 	GetGoToSocialCanLike() GoToSocialCanLikeProperty
+	// GetGoToSocialCanQuote returns the "canQuote" property if it exists, and
+	// nil otherwise.
+	GetGoToSocialCanQuote() GoToSocialCanQuoteProperty
 	// GetGoToSocialCanReply returns the "canReply" property if it exists, and
 	// nil otherwise.
 	GetGoToSocialCanReply() GoToSocialCanReplyProperty
@@ -42,6 +45,8 @@ type GoToSocialInteractionPolicy interface {
 	SetGoToSocialCanAnnounce(i GoToSocialCanAnnounceProperty)
 	// SetGoToSocialCanLike sets the "canLike" property.
 	SetGoToSocialCanLike(i GoToSocialCanLikeProperty)
+	// SetGoToSocialCanQuote sets the "canQuote" property.
+	SetGoToSocialCanQuote(i GoToSocialCanQuoteProperty)
 	// SetGoToSocialCanReply sets the "canReply" property.
 	SetGoToSocialCanReply(i GoToSocialCanReplyProperty)
 	// SetJSONLDId sets the "id" property.

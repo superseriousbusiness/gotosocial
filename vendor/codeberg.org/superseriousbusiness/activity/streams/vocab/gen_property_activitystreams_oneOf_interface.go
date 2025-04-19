@@ -245,14 +245,38 @@ type ActivityStreamsOneOfPropertyIterator interface {
 	// IsGoToSocialAnnounceApproval returns false,
 	// GetGoToSocialAnnounceApproval will return an arbitrary value.
 	GetGoToSocialAnnounceApproval() GoToSocialAnnounceApproval
+	// GetGoToSocialAnnounceAuthorization returns the value of this property.
+	// When IsGoToSocialAnnounceAuthorization returns false,
+	// GetGoToSocialAnnounceAuthorization will return an arbitrary value.
+	GetGoToSocialAnnounceAuthorization() GoToSocialAnnounceAuthorization
+	// GetGoToSocialAnnounceRequest returns the value of this property. When
+	// IsGoToSocialAnnounceRequest returns false,
+	// GetGoToSocialAnnounceRequest will return an arbitrary value.
+	GetGoToSocialAnnounceRequest() GoToSocialAnnounceRequest
 	// GetGoToSocialLikeApproval returns the value of this property. When
 	// IsGoToSocialLikeApproval returns false, GetGoToSocialLikeApproval
 	// will return an arbitrary value.
 	GetGoToSocialLikeApproval() GoToSocialLikeApproval
+	// GetGoToSocialLikeAuthorization returns the value of this property. When
+	// IsGoToSocialLikeAuthorization returns false,
+	// GetGoToSocialLikeAuthorization will return an arbitrary value.
+	GetGoToSocialLikeAuthorization() GoToSocialLikeAuthorization
+	// GetGoToSocialLikeRequest returns the value of this property. When
+	// IsGoToSocialLikeRequest returns false, GetGoToSocialLikeRequest
+	// will return an arbitrary value.
+	GetGoToSocialLikeRequest() GoToSocialLikeRequest
 	// GetGoToSocialReplyApproval returns the value of this property. When
 	// IsGoToSocialReplyApproval returns false, GetGoToSocialReplyApproval
 	// will return an arbitrary value.
 	GetGoToSocialReplyApproval() GoToSocialReplyApproval
+	// GetGoToSocialReplyAuthorization returns the value of this property.
+	// When IsGoToSocialReplyAuthorization returns false,
+	// GetGoToSocialReplyAuthorization will return an arbitrary value.
+	GetGoToSocialReplyAuthorization() GoToSocialReplyAuthorization
+	// GetGoToSocialReplyRequest returns the value of this property. When
+	// IsGoToSocialReplyRequest returns false, GetGoToSocialReplyRequest
+	// will return an arbitrary value.
+	GetGoToSocialReplyRequest() GoToSocialReplyRequest
 	// GetIRI returns the IRI of this property. When IsIRI returns false,
 	// GetIRI will return an arbitrary value.
 	GetIRI() *url.URL
@@ -529,14 +553,43 @@ type ActivityStreamsOneOfPropertyIterator interface {
 	// GetGoToSocialAnnounceApproval and SetGoToSocialAnnounceApproval
 	// methods to access and set this property.
 	IsGoToSocialAnnounceApproval() bool
+	// IsGoToSocialAnnounceAuthorization returns true if this property has a
+	// type of "AnnounceAuthorization". When true, use the
+	// GetGoToSocialAnnounceAuthorization and
+	// SetGoToSocialAnnounceAuthorization methods to access and set this
+	// property.
+	IsGoToSocialAnnounceAuthorization() bool
+	// IsGoToSocialAnnounceRequest returns true if this property has a type of
+	// "AnnounceRequest". When true, use the GetGoToSocialAnnounceRequest
+	// and SetGoToSocialAnnounceRequest methods to access and set this
+	// property.
+	IsGoToSocialAnnounceRequest() bool
 	// IsGoToSocialLikeApproval returns true if this property has a type of
 	// "LikeApproval". When true, use the GetGoToSocialLikeApproval and
 	// SetGoToSocialLikeApproval methods to access and set this property.
 	IsGoToSocialLikeApproval() bool
+	// IsGoToSocialLikeAuthorization returns true if this property has a type
+	// of "LikeAuthorization". When true, use the
+	// GetGoToSocialLikeAuthorization and SetGoToSocialLikeAuthorization
+	// methods to access and set this property.
+	IsGoToSocialLikeAuthorization() bool
+	// IsGoToSocialLikeRequest returns true if this property has a type of
+	// "LikeRequest". When true, use the GetGoToSocialLikeRequest and
+	// SetGoToSocialLikeRequest methods to access and set this property.
+	IsGoToSocialLikeRequest() bool
 	// IsGoToSocialReplyApproval returns true if this property has a type of
 	// "ReplyApproval". When true, use the GetGoToSocialReplyApproval and
 	// SetGoToSocialReplyApproval methods to access and set this property.
 	IsGoToSocialReplyApproval() bool
+	// IsGoToSocialReplyAuthorization returns true if this property has a type
+	// of "ReplyAuthorization". When true, use the
+	// GetGoToSocialReplyAuthorization and SetGoToSocialReplyAuthorization
+	// methods to access and set this property.
+	IsGoToSocialReplyAuthorization() bool
+	// IsGoToSocialReplyRequest returns true if this property has a type of
+	// "ReplyRequest". When true, use the GetGoToSocialReplyRequest and
+	// SetGoToSocialReplyRequest methods to access and set this property.
+	IsGoToSocialReplyRequest() bool
 	// IsIRI returns true if this property is an IRI. When true, use GetIRI
 	// and SetIRI to access and set this property
 	IsIRI() bool
@@ -756,12 +809,30 @@ type ActivityStreamsOneOfPropertyIterator interface {
 	// SetGoToSocialAnnounceApproval sets the value of this property. Calling
 	// IsGoToSocialAnnounceApproval afterwards returns true.
 	SetGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// SetGoToSocialAnnounceAuthorization sets the value of this property.
+	// Calling IsGoToSocialAnnounceAuthorization afterwards returns true.
+	SetGoToSocialAnnounceAuthorization(v GoToSocialAnnounceAuthorization)
+	// SetGoToSocialAnnounceRequest sets the value of this property. Calling
+	// IsGoToSocialAnnounceRequest afterwards returns true.
+	SetGoToSocialAnnounceRequest(v GoToSocialAnnounceRequest)
 	// SetGoToSocialLikeApproval sets the value of this property. Calling
 	// IsGoToSocialLikeApproval afterwards returns true.
 	SetGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// SetGoToSocialLikeAuthorization sets the value of this property. Calling
+	// IsGoToSocialLikeAuthorization afterwards returns true.
+	SetGoToSocialLikeAuthorization(v GoToSocialLikeAuthorization)
+	// SetGoToSocialLikeRequest sets the value of this property. Calling
+	// IsGoToSocialLikeRequest afterwards returns true.
+	SetGoToSocialLikeRequest(v GoToSocialLikeRequest)
 	// SetGoToSocialReplyApproval sets the value of this property. Calling
 	// IsGoToSocialReplyApproval afterwards returns true.
 	SetGoToSocialReplyApproval(v GoToSocialReplyApproval)
+	// SetGoToSocialReplyAuthorization sets the value of this property.
+	// Calling IsGoToSocialReplyAuthorization afterwards returns true.
+	SetGoToSocialReplyAuthorization(v GoToSocialReplyAuthorization)
+	// SetGoToSocialReplyRequest sets the value of this property. Calling
+	// IsGoToSocialReplyRequest afterwards returns true.
+	SetGoToSocialReplyRequest(v GoToSocialReplyRequest)
 	// SetIRI sets the value of this property. Calling IsIRI afterwards
 	// returns true.
 	SetIRI(v *url.URL)
@@ -1039,14 +1110,38 @@ type ActivityStreamsOneOfProperty interface {
 	// the back of a list of the property "oneOf". Invalidates iterators
 	// that are traversing using Prev.
 	AppendGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// AppendGoToSocialAnnounceAuthorization appends a AnnounceAuthorization
+	// value to the back of a list of the property "oneOf". Invalidates
+	// iterators that are traversing using Prev.
+	AppendGoToSocialAnnounceAuthorization(v GoToSocialAnnounceAuthorization)
+	// AppendGoToSocialAnnounceRequest appends a AnnounceRequest value to the
+	// back of a list of the property "oneOf". Invalidates iterators that
+	// are traversing using Prev.
+	AppendGoToSocialAnnounceRequest(v GoToSocialAnnounceRequest)
 	// AppendGoToSocialLikeApproval appends a LikeApproval value to the back
 	// of a list of the property "oneOf". Invalidates iterators that are
 	// traversing using Prev.
 	AppendGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// AppendGoToSocialLikeAuthorization appends a LikeAuthorization value to
+	// the back of a list of the property "oneOf". Invalidates iterators
+	// that are traversing using Prev.
+	AppendGoToSocialLikeAuthorization(v GoToSocialLikeAuthorization)
+	// AppendGoToSocialLikeRequest appends a LikeRequest value to the back of
+	// a list of the property "oneOf". Invalidates iterators that are
+	// traversing using Prev.
+	AppendGoToSocialLikeRequest(v GoToSocialLikeRequest)
 	// AppendGoToSocialReplyApproval appends a ReplyApproval value to the back
 	// of a list of the property "oneOf". Invalidates iterators that are
 	// traversing using Prev.
 	AppendGoToSocialReplyApproval(v GoToSocialReplyApproval)
+	// AppendGoToSocialReplyAuthorization appends a ReplyAuthorization value
+	// to the back of a list of the property "oneOf". Invalidates
+	// iterators that are traversing using Prev.
+	AppendGoToSocialReplyAuthorization(v GoToSocialReplyAuthorization)
+	// AppendGoToSocialReplyRequest appends a ReplyRequest value to the back
+	// of a list of the property "oneOf". Invalidates iterators that are
+	// traversing using Prev.
+	AppendGoToSocialReplyRequest(v GoToSocialReplyRequest)
 	// AppendIRI appends an IRI value to the back of a list of the property
 	// "oneOf"
 	AppendIRI(v *url.URL)
@@ -1327,14 +1422,41 @@ type ActivityStreamsOneOfProperty interface {
 	// that index and higher are shifted back once. Invalidates all
 	// iterators.
 	InsertGoToSocialAnnounceApproval(idx int, v GoToSocialAnnounceApproval)
+	// InsertGoToSocialAnnounceAuthorization inserts a AnnounceAuthorization
+	// value at the specified index for a property "oneOf". Existing
+	// elements at that index and higher are shifted back once.
+	// Invalidates all iterators.
+	InsertGoToSocialAnnounceAuthorization(idx int, v GoToSocialAnnounceAuthorization)
+	// InsertGoToSocialAnnounceRequest inserts a AnnounceRequest value at the
+	// specified index for a property "oneOf". Existing elements at that
+	// index and higher are shifted back once. Invalidates all iterators.
+	InsertGoToSocialAnnounceRequest(idx int, v GoToSocialAnnounceRequest)
 	// InsertGoToSocialLikeApproval inserts a LikeApproval value at the
 	// specified index for a property "oneOf". Existing elements at that
 	// index and higher are shifted back once. Invalidates all iterators.
 	InsertGoToSocialLikeApproval(idx int, v GoToSocialLikeApproval)
+	// InsertGoToSocialLikeAuthorization inserts a LikeAuthorization value at
+	// the specified index for a property "oneOf". Existing elements at
+	// that index and higher are shifted back once. Invalidates all
+	// iterators.
+	InsertGoToSocialLikeAuthorization(idx int, v GoToSocialLikeAuthorization)
+	// InsertGoToSocialLikeRequest inserts a LikeRequest value at the
+	// specified index for a property "oneOf". Existing elements at that
+	// index and higher are shifted back once. Invalidates all iterators.
+	InsertGoToSocialLikeRequest(idx int, v GoToSocialLikeRequest)
 	// InsertGoToSocialReplyApproval inserts a ReplyApproval value at the
 	// specified index for a property "oneOf". Existing elements at that
 	// index and higher are shifted back once. Invalidates all iterators.
 	InsertGoToSocialReplyApproval(idx int, v GoToSocialReplyApproval)
+	// InsertGoToSocialReplyAuthorization inserts a ReplyAuthorization value
+	// at the specified index for a property "oneOf". Existing elements at
+	// that index and higher are shifted back once. Invalidates all
+	// iterators.
+	InsertGoToSocialReplyAuthorization(idx int, v GoToSocialReplyAuthorization)
+	// InsertGoToSocialReplyRequest inserts a ReplyRequest value at the
+	// specified index for a property "oneOf". Existing elements at that
+	// index and higher are shifted back once. Invalidates all iterators.
+	InsertGoToSocialReplyRequest(idx int, v GoToSocialReplyRequest)
 	// Insert inserts an IRI value at the specified index for a property
 	// "oneOf". Existing elements at that index and higher are shifted
 	// back once. Invalidates all iterators.
@@ -1565,12 +1687,34 @@ type ActivityStreamsOneOfProperty interface {
 	// the front of a list of the property "oneOf". Invalidates all
 	// iterators.
 	PrependGoToSocialAnnounceApproval(v GoToSocialAnnounceApproval)
+	// PrependGoToSocialAnnounceAuthorization prepends a AnnounceAuthorization
+	// value to the front of a list of the property "oneOf". Invalidates
+	// all iterators.
+	PrependGoToSocialAnnounceAuthorization(v GoToSocialAnnounceAuthorization)
+	// PrependGoToSocialAnnounceRequest prepends a AnnounceRequest value to
+	// the front of a list of the property "oneOf". Invalidates all
+	// iterators.
+	PrependGoToSocialAnnounceRequest(v GoToSocialAnnounceRequest)
 	// PrependGoToSocialLikeApproval prepends a LikeApproval value to the
 	// front of a list of the property "oneOf". Invalidates all iterators.
 	PrependGoToSocialLikeApproval(v GoToSocialLikeApproval)
+	// PrependGoToSocialLikeAuthorization prepends a LikeAuthorization value
+	// to the front of a list of the property "oneOf". Invalidates all
+	// iterators.
+	PrependGoToSocialLikeAuthorization(v GoToSocialLikeAuthorization)
+	// PrependGoToSocialLikeRequest prepends a LikeRequest value to the front
+	// of a list of the property "oneOf". Invalidates all iterators.
+	PrependGoToSocialLikeRequest(v GoToSocialLikeRequest)
 	// PrependGoToSocialReplyApproval prepends a ReplyApproval value to the
 	// front of a list of the property "oneOf". Invalidates all iterators.
 	PrependGoToSocialReplyApproval(v GoToSocialReplyApproval)
+	// PrependGoToSocialReplyAuthorization prepends a ReplyAuthorization value
+	// to the front of a list of the property "oneOf". Invalidates all
+	// iterators.
+	PrependGoToSocialReplyAuthorization(v GoToSocialReplyAuthorization)
+	// PrependGoToSocialReplyRequest prepends a ReplyRequest value to the
+	// front of a list of the property "oneOf". Invalidates all iterators.
+	PrependGoToSocialReplyRequest(v GoToSocialReplyRequest)
 	// PrependIRI prepends an IRI value to the front of a list of the property
 	// "oneOf".
 	PrependIRI(v *url.URL)
@@ -1836,14 +1980,38 @@ type ActivityStreamsOneOfProperty interface {
 	// the specified index for the property "oneOf". Panics if the index
 	// is out of bounds. Invalidates all iterators.
 	SetGoToSocialAnnounceApproval(idx int, v GoToSocialAnnounceApproval)
+	// SetGoToSocialAnnounceAuthorization sets a AnnounceAuthorization value
+	// to be at the specified index for the property "oneOf". Panics if
+	// the index is out of bounds. Invalidates all iterators.
+	SetGoToSocialAnnounceAuthorization(idx int, v GoToSocialAnnounceAuthorization)
+	// SetGoToSocialAnnounceRequest sets a AnnounceRequest value to be at the
+	// specified index for the property "oneOf". Panics if the index is
+	// out of bounds. Invalidates all iterators.
+	SetGoToSocialAnnounceRequest(idx int, v GoToSocialAnnounceRequest)
 	// SetGoToSocialLikeApproval sets a LikeApproval value to be at the
 	// specified index for the property "oneOf". Panics if the index is
 	// out of bounds. Invalidates all iterators.
 	SetGoToSocialLikeApproval(idx int, v GoToSocialLikeApproval)
+	// SetGoToSocialLikeAuthorization sets a LikeAuthorization value to be at
+	// the specified index for the property "oneOf". Panics if the index
+	// is out of bounds. Invalidates all iterators.
+	SetGoToSocialLikeAuthorization(idx int, v GoToSocialLikeAuthorization)
+	// SetGoToSocialLikeRequest sets a LikeRequest value to be at the
+	// specified index for the property "oneOf". Panics if the index is
+	// out of bounds. Invalidates all iterators.
+	SetGoToSocialLikeRequest(idx int, v GoToSocialLikeRequest)
 	// SetGoToSocialReplyApproval sets a ReplyApproval value to be at the
 	// specified index for the property "oneOf". Panics if the index is
 	// out of bounds. Invalidates all iterators.
 	SetGoToSocialReplyApproval(idx int, v GoToSocialReplyApproval)
+	// SetGoToSocialReplyAuthorization sets a ReplyAuthorization value to be
+	// at the specified index for the property "oneOf". Panics if the
+	// index is out of bounds. Invalidates all iterators.
+	SetGoToSocialReplyAuthorization(idx int, v GoToSocialReplyAuthorization)
+	// SetGoToSocialReplyRequest sets a ReplyRequest value to be at the
+	// specified index for the property "oneOf". Panics if the index is
+	// out of bounds. Invalidates all iterators.
+	SetGoToSocialReplyRequest(idx int, v GoToSocialReplyRequest)
 	// SetIRI sets an IRI value to be at the specified index for the property
 	// "oneOf". Panics if the index is out of bounds.
 	SetIRI(idx int, v *url.URL)

@@ -4,12 +4,19 @@ package streams
 
 import (
 	typeannounceapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
+	typeannounceauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announceauthorization"
+	typeannouncerequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announcerequest"
 	typecanannounce "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
+	typecanquote "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canquote"
 	typecanreply "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
 	typelikeapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typelikeauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likeauthorization"
+	typelikerequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likerequest"
 	typereplyapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
+	typereplyauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyauthorization"
+	typereplyrequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyrequest"
 	vocab "codeberg.org/superseriousbusiness/activity/streams/vocab"
 )
 
@@ -17,6 +24,18 @@ import (
 // extends from the other's type.
 func GoToSocialGoToSocialAnnounceApprovalExtends(other vocab.Type) bool {
 	return typeannounceapproval.GoToSocialAnnounceApprovalExtends(other)
+}
+
+// GoToSocialGoToSocialAnnounceAuthorizationExtends returns true if
+// AnnounceAuthorization extends from the other's type.
+func GoToSocialGoToSocialAnnounceAuthorizationExtends(other vocab.Type) bool {
+	return typeannounceauthorization.GoToSocialAnnounceAuthorizationExtends(other)
+}
+
+// GoToSocialGoToSocialAnnounceRequestExtends returns true if AnnounceRequest
+// extends from the other's type.
+func GoToSocialGoToSocialAnnounceRequestExtends(other vocab.Type) bool {
+	return typeannouncerequest.GoToSocialAnnounceRequestExtends(other)
 }
 
 // GoToSocialGoToSocialCanAnnounceExtends returns true if CanAnnounce extends from
@@ -29,6 +48,12 @@ func GoToSocialGoToSocialCanAnnounceExtends(other vocab.Type) bool {
 // other's type.
 func GoToSocialGoToSocialCanLikeExtends(other vocab.Type) bool {
 	return typecanlike.GoToSocialCanLikeExtends(other)
+}
+
+// GoToSocialGoToSocialCanQuoteExtends returns true if CanQuote extends from the
+// other's type.
+func GoToSocialGoToSocialCanQuoteExtends(other vocab.Type) bool {
+	return typecanquote.GoToSocialCanQuoteExtends(other)
 }
 
 // GoToSocialGoToSocialCanReplyExtends returns true if CanReply extends from the
@@ -49,8 +74,32 @@ func GoToSocialGoToSocialLikeApprovalExtends(other vocab.Type) bool {
 	return typelikeapproval.GoToSocialLikeApprovalExtends(other)
 }
 
+// GoToSocialGoToSocialLikeAuthorizationExtends returns true if LikeAuthorization
+// extends from the other's type.
+func GoToSocialGoToSocialLikeAuthorizationExtends(other vocab.Type) bool {
+	return typelikeauthorization.GoToSocialLikeAuthorizationExtends(other)
+}
+
+// GoToSocialGoToSocialLikeRequestExtends returns true if LikeRequest extends from
+// the other's type.
+func GoToSocialGoToSocialLikeRequestExtends(other vocab.Type) bool {
+	return typelikerequest.GoToSocialLikeRequestExtends(other)
+}
+
 // GoToSocialGoToSocialReplyApprovalExtends returns true if ReplyApproval extends
 // from the other's type.
 func GoToSocialGoToSocialReplyApprovalExtends(other vocab.Type) bool {
 	return typereplyapproval.GoToSocialReplyApprovalExtends(other)
+}
+
+// GoToSocialGoToSocialReplyAuthorizationExtends returns true if
+// ReplyAuthorization extends from the other's type.
+func GoToSocialGoToSocialReplyAuthorizationExtends(other vocab.Type) bool {
+	return typereplyauthorization.GoToSocialReplyAuthorizationExtends(other)
+}
+
+// GoToSocialGoToSocialReplyRequestExtends returns true if ReplyRequest extends
+// from the other's type.
+func GoToSocialGoToSocialReplyRequestExtends(other vocab.Type) bool {
+	return typereplyrequest.GoToSocialReplyRequestExtends(other)
 }

@@ -66,7 +66,7 @@ func (p *Processor) Reject(
 	// Mark the request as rejected
 	// and generate a URI for it.
 	req.RejectedAt = time.Now()
-	req.URI = uris.GenerateURIForReject(acct.Username, req.ID)
+	req.ResponseURI = uris.GenerateURIForReject(acct.Username, req.ID)
 	if err := p.state.DB.UpdateInteractionRequest(
 		ctx,
 		req,

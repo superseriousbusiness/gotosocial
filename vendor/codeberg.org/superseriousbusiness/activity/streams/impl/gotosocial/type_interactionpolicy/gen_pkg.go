@@ -19,6 +19,10 @@ type privateManager interface {
 	// for the "GoToSocialCanLikeProperty" non-functional property in the
 	// vocabulary "GoToSocial"
 	DeserializeCanLikePropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanLikeProperty, error)
+	// DeserializeCanQuotePropertyGoToSocial returns the deserialization
+	// method for the "GoToSocialCanQuoteProperty" non-functional property
+	// in the vocabulary "GoToSocial"
+	DeserializeCanQuotePropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialCanQuoteProperty, error)
 	// DeserializeCanReplyPropertyGoToSocial returns the deserialization
 	// method for the "GoToSocialCanReplyProperty" non-functional property
 	// in the vocabulary "GoToSocial"

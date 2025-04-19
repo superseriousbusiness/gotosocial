@@ -28,7 +28,7 @@ require (
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.9.6
-	codeberg.org/superseriousbusiness/activity v1.13.0-gts
+	codeberg.org/superseriousbusiness/activity v1.13.0-gts.0.20250411153555-5d776b06f34a
 	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
 	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
 	codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB

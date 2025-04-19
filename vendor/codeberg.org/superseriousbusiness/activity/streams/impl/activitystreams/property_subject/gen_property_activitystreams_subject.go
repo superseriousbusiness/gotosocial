@@ -22,6 +22,8 @@ type ActivityStreamsSubjectProperty struct {
 	funkwhaleAlbumMember                       vocab.FunkwhaleAlbum
 	activitystreamsAnnounceMember              vocab.ActivityStreamsAnnounce
 	gotosocialAnnounceApprovalMember           vocab.GoToSocialAnnounceApproval
+	gotosocialAnnounceAuthorizationMember      vocab.GoToSocialAnnounceAuthorization
+	gotosocialAnnounceRequestMember            vocab.GoToSocialAnnounceRequest
 	activitystreamsApplicationMember           vocab.ActivityStreamsApplication
 	activitystreamsArriveMember                vocab.ActivityStreamsArrive
 	activitystreamsArticleMember               vocab.ActivityStreamsArticle
@@ -50,6 +52,8 @@ type ActivityStreamsSubjectProperty struct {
 	funkwhaleLibraryMember                     vocab.FunkwhaleLibrary
 	activitystreamsLikeMember                  vocab.ActivityStreamsLike
 	gotosocialLikeApprovalMember               vocab.GoToSocialLikeApproval
+	gotosocialLikeAuthorizationMember          vocab.GoToSocialLikeAuthorization
+	gotosocialLikeRequestMember                vocab.GoToSocialLikeRequest
 	activitystreamsListenMember                vocab.ActivityStreamsListen
 	activitystreamsMentionMember               vocab.ActivityStreamsMention
 	activitystreamsMoveMember                  vocab.ActivityStreamsMove
@@ -69,6 +73,8 @@ type ActivityStreamsSubjectProperty struct {
 	activitystreamsRelationshipMember          vocab.ActivityStreamsRelationship
 	activitystreamsRemoveMember                vocab.ActivityStreamsRemove
 	gotosocialReplyApprovalMember              vocab.GoToSocialReplyApproval
+	gotosocialReplyAuthorizationMember         vocab.GoToSocialReplyAuthorization
+	gotosocialReplyRequestMember               vocab.GoToSocialReplyRequest
 	activitystreamsServiceMember               vocab.ActivityStreamsService
 	activitystreamsTentativeAcceptMember       vocab.ActivityStreamsTentativeAccept
 	activitystreamsTentativeRejectMember       vocab.ActivityStreamsTentativeReject
@@ -158,6 +164,18 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 				this := &ActivityStreamsSubjectProperty{
 					alias:                            alias,
 					gotosocialAnnounceApprovalMember: v,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeAnnounceAuthorizationGoToSocial()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                                 alias,
+					gotosocialAnnounceAuthorizationMember: v,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeAnnounceRequestGoToSocial()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                           alias,
+					gotosocialAnnounceRequestMember: v,
 				}
 				return this, nil
 			} else if v, err := mgr.DeserializeApplicationActivityStreams()(m, aliasMap); err == nil {
@@ -328,6 +346,18 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 					gotosocialLikeApprovalMember: v,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializeLikeAuthorizationGoToSocial()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                             alias,
+					gotosocialLikeAuthorizationMember: v,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeLikeRequestGoToSocial()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                       alias,
+					gotosocialLikeRequestMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializeListenActivityStreams()(m, aliasMap); err == nil {
 				this := &ActivityStreamsSubjectProperty{
 					activitystreamsListenMember: v,
@@ -442,6 +472,18 @@ func DeserializeSubjectProperty(m map[string]interface{}, aliasMap map[string]st
 					gotosocialReplyApprovalMember: v,
 				}
 				return this, nil
+			} else if v, err := mgr.DeserializeReplyAuthorizationGoToSocial()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                              alias,
+					gotosocialReplyAuthorizationMember: v,
+				}
+				return this, nil
+			} else if v, err := mgr.DeserializeReplyRequestGoToSocial()(m, aliasMap); err == nil {
+				this := &ActivityStreamsSubjectProperty{
+					alias:                        alias,
+					gotosocialReplyRequestMember: v,
+				}
+				return this, nil
 			} else if v, err := mgr.DeserializeServiceActivityStreams()(m, aliasMap); err == nil {
 				this := &ActivityStreamsSubjectProperty{
 					activitystreamsServiceMember: v,
@@ -529,6 +571,8 @@ func (this *ActivityStreamsSubjectProperty) Clear() {
 	this.funkwhaleAlbumMember = nil
 	this.activitystreamsAnnounceMember = nil
 	this.gotosocialAnnounceApprovalMember = nil
+	this.gotosocialAnnounceAuthorizationMember = nil
+	this.gotosocialAnnounceRequestMember = nil
 	this.activitystreamsApplicationMember = nil
 	this.activitystreamsArriveMember = nil
 	this.activitystreamsArticleMember = nil
@@ -557,6 +601,8 @@ func (this *ActivityStreamsSubjectProperty) Clear() {
 	this.funkwhaleLibraryMember = nil
 	this.activitystreamsLikeMember = nil
 	this.gotosocialLikeApprovalMember = nil
+	this.gotosocialLikeAuthorizationMember = nil
+	this.gotosocialLikeRequestMember = nil
 	this.activitystreamsListenMember = nil
 	this.activitystreamsMentionMember = nil
 	this.activitystreamsMoveMember = nil
@@ -576,6 +622,8 @@ func (this *ActivityStreamsSubjectProperty) Clear() {
 	this.activitystreamsRelationshipMember = nil
 	this.activitystreamsRemoveMember = nil
 	this.gotosocialReplyApprovalMember = nil
+	this.gotosocialReplyAuthorizationMember = nil
+	this.gotosocialReplyRequestMember = nil
 	this.activitystreamsServiceMember = nil
 	this.activitystreamsTentativeAcceptMember = nil
 	this.activitystreamsTentativeRejectMember = nil
@@ -999,6 +1047,20 @@ func (this ActivityStreamsSubjectProperty) GetGoToSocialAnnounceApproval() vocab
 	return this.gotosocialAnnounceApprovalMember
 }
 
+// GetGoToSocialAnnounceAuthorization returns the value of this property. When
+// IsGoToSocialAnnounceAuthorization returns false,
+// GetGoToSocialAnnounceAuthorization will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetGoToSocialAnnounceAuthorization() vocab.GoToSocialAnnounceAuthorization {
+	return this.gotosocialAnnounceAuthorizationMember
+}
+
+// GetGoToSocialAnnounceRequest returns the value of this property. When
+// IsGoToSocialAnnounceRequest returns false, GetGoToSocialAnnounceRequest
+// will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetGoToSocialAnnounceRequest() vocab.GoToSocialAnnounceRequest {
+	return this.gotosocialAnnounceRequestMember
+}
+
 // GetGoToSocialLikeApproval returns the value of this property. When
 // IsGoToSocialLikeApproval returns false, GetGoToSocialLikeApproval will
 // return an arbitrary value.
@@ -1006,11 +1068,39 @@ func (this ActivityStreamsSubjectProperty) GetGoToSocialLikeApproval() vocab.GoT
 	return this.gotosocialLikeApprovalMember
 }
 
+// GetGoToSocialLikeAuthorization returns the value of this property. When
+// IsGoToSocialLikeAuthorization returns false, GetGoToSocialLikeAuthorization
+// will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetGoToSocialLikeAuthorization() vocab.GoToSocialLikeAuthorization {
+	return this.gotosocialLikeAuthorizationMember
+}
+
+// GetGoToSocialLikeRequest returns the value of this property. When
+// IsGoToSocialLikeRequest returns false, GetGoToSocialLikeRequest will return
+// an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetGoToSocialLikeRequest() vocab.GoToSocialLikeRequest {
+	return this.gotosocialLikeRequestMember
+}
+
 // GetGoToSocialReplyApproval returns the value of this property. When
 // IsGoToSocialReplyApproval returns false, GetGoToSocialReplyApproval will
 // return an arbitrary value.
 func (this ActivityStreamsSubjectProperty) GetGoToSocialReplyApproval() vocab.GoToSocialReplyApproval {
 	return this.gotosocialReplyApprovalMember
+}
+
+// GetGoToSocialReplyAuthorization returns the value of this property. When
+// IsGoToSocialReplyAuthorization returns false,
+// GetGoToSocialReplyAuthorization will return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetGoToSocialReplyAuthorization() vocab.GoToSocialReplyAuthorization {
+	return this.gotosocialReplyAuthorizationMember
+}
+
+// GetGoToSocialReplyRequest returns the value of this property. When
+// IsGoToSocialReplyRequest returns false, GetGoToSocialReplyRequest will
+// return an arbitrary value.
+func (this ActivityStreamsSubjectProperty) GetGoToSocialReplyRequest() vocab.GoToSocialReplyRequest {
+	return this.gotosocialReplyRequestMember
 }
 
 // GetIRI returns the IRI of this property. When IsIRI returns false, GetIRI will
@@ -1071,6 +1161,12 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	}
 	if this.IsGoToSocialAnnounceApproval() {
 		return this.GetGoToSocialAnnounceApproval()
+	}
+	if this.IsGoToSocialAnnounceAuthorization() {
+		return this.GetGoToSocialAnnounceAuthorization()
+	}
+	if this.IsGoToSocialAnnounceRequest() {
+		return this.GetGoToSocialAnnounceRequest()
 	}
 	if this.IsActivityStreamsApplication() {
 		return this.GetActivityStreamsApplication()
@@ -1156,6 +1252,12 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	if this.IsGoToSocialLikeApproval() {
 		return this.GetGoToSocialLikeApproval()
 	}
+	if this.IsGoToSocialLikeAuthorization() {
+		return this.GetGoToSocialLikeAuthorization()
+	}
+	if this.IsGoToSocialLikeRequest() {
+		return this.GetGoToSocialLikeRequest()
+	}
 	if this.IsActivityStreamsListen() {
 		return this.GetActivityStreamsListen()
 	}
@@ -1213,6 +1315,12 @@ func (this ActivityStreamsSubjectProperty) GetType() vocab.Type {
 	if this.IsGoToSocialReplyApproval() {
 		return this.GetGoToSocialReplyApproval()
 	}
+	if this.IsGoToSocialReplyAuthorization() {
+		return this.GetGoToSocialReplyAuthorization()
+	}
+	if this.IsGoToSocialReplyRequest() {
+		return this.GetGoToSocialReplyRequest()
+	}
 	if this.IsActivityStreamsService() {
 		return this.GetActivityStreamsService()
 	}
@@ -1257,6 +1365,8 @@ func (this ActivityStreamsSubjectProperty) HasAny() bool {
 		this.IsFunkwhaleAlbum() ||
 		this.IsActivityStreamsAnnounce() ||
 		this.IsGoToSocialAnnounceApproval() ||
+		this.IsGoToSocialAnnounceAuthorization() ||
+		this.IsGoToSocialAnnounceRequest() ||
 		this.IsActivityStreamsApplication() ||
 		this.IsActivityStreamsArrive() ||
 		this.IsActivityStreamsArticle() ||
@@ -1285,6 +1395,8 @@ func (this ActivityStreamsSubjectProperty) HasAny() bool {
 		this.IsFunkwhaleLibrary() ||
 		this.IsActivityStreamsLike() ||
 		this.IsGoToSocialLikeApproval() ||
+		this.IsGoToSocialLikeAuthorization() ||
+		this.IsGoToSocialLikeRequest() ||
 		this.IsActivityStreamsListen() ||
 		this.IsActivityStreamsMention() ||
 		this.IsActivityStreamsMove() ||
@@ -1304,6 +1416,8 @@ func (this ActivityStreamsSubjectProperty) HasAny() bool {
 		this.IsActivityStreamsRelationship() ||
 		this.IsActivityStreamsRemove() ||
 		this.IsGoToSocialReplyApproval() ||
+		this.IsGoToSocialReplyAuthorization() ||
+		this.IsGoToSocialReplyRequest() ||
 		this.IsActivityStreamsService() ||
 		this.IsActivityStreamsTentativeAccept() ||
 		this.IsActivityStreamsTentativeReject() ||
@@ -1735,6 +1849,21 @@ func (this ActivityStreamsSubjectProperty) IsGoToSocialAnnounceApproval() bool {
 	return this.gotosocialAnnounceApprovalMember != nil
 }
 
+// IsGoToSocialAnnounceAuthorization returns true if this property has a type of
+// "AnnounceAuthorization". When true, use the
+// GetGoToSocialAnnounceAuthorization and SetGoToSocialAnnounceAuthorization
+// methods to access and set this property.
+func (this ActivityStreamsSubjectProperty) IsGoToSocialAnnounceAuthorization() bool {
+	return this.gotosocialAnnounceAuthorizationMember != nil
+}
+
+// IsGoToSocialAnnounceRequest returns true if this property has a type of
+// "AnnounceRequest". When true, use the GetGoToSocialAnnounceRequest and
+// SetGoToSocialAnnounceRequest methods to access and set this property.
+func (this ActivityStreamsSubjectProperty) IsGoToSocialAnnounceRequest() bool {
+	return this.gotosocialAnnounceRequestMember != nil
+}
+
 // IsGoToSocialLikeApproval returns true if this property has a type of
 // "LikeApproval". When true, use the GetGoToSocialLikeApproval and
 // SetGoToSocialLikeApproval methods to access and set this property.
@@ -1742,11 +1871,39 @@ func (this ActivityStreamsSubjectProperty) IsGoToSocialLikeApproval() bool {
 	return this.gotosocialLikeApprovalMember != nil
 }
 
+// IsGoToSocialLikeAuthorization returns true if this property has a type of
+// "LikeAuthorization". When true, use the GetGoToSocialLikeAuthorization and
+// SetGoToSocialLikeAuthorization methods to access and set this property.
+func (this ActivityStreamsSubjectProperty) IsGoToSocialLikeAuthorization() bool {
+	return this.gotosocialLikeAuthorizationMember != nil
+}
+
+// IsGoToSocialLikeRequest returns true if this property has a type of
+// "LikeRequest". When true, use the GetGoToSocialLikeRequest and
+// SetGoToSocialLikeRequest methods to access and set this property.
+func (this ActivityStreamsSubjectProperty) IsGoToSocialLikeRequest() bool {
+	return this.gotosocialLikeRequestMember != nil
+}
+
 // IsGoToSocialReplyApproval returns true if this property has a type of
 // "ReplyApproval". When true, use the GetGoToSocialReplyApproval and
 // SetGoToSocialReplyApproval methods to access and set this property.
 func (this ActivityStreamsSubjectProperty) IsGoToSocialReplyApproval() bool {
 	return this.gotosocialReplyApprovalMember != nil
+}
+
+// IsGoToSocialReplyAuthorization returns true if this property has a type of
+// "ReplyAuthorization". When true, use the GetGoToSocialReplyAuthorization
+// and SetGoToSocialReplyAuthorization methods to access and set this property.
+func (this ActivityStreamsSubjectProperty) IsGoToSocialReplyAuthorization() bool {
+	return this.gotosocialReplyAuthorizationMember != nil
+}
+
+// IsGoToSocialReplyRequest returns true if this property has a type of
+// "ReplyRequest". When true, use the GetGoToSocialReplyRequest and
+// SetGoToSocialReplyRequest methods to access and set this property.
+func (this ActivityStreamsSubjectProperty) IsGoToSocialReplyRequest() bool {
+	return this.gotosocialReplyRequestMember != nil
 }
 
 // IsIRI returns true if this property is an IRI. When true, use GetIRI and SetIRI
@@ -1804,6 +1961,10 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsAnnounce().JSONLDContext()
 	} else if this.IsGoToSocialAnnounceApproval() {
 		child = this.GetGoToSocialAnnounceApproval().JSONLDContext()
+	} else if this.IsGoToSocialAnnounceAuthorization() {
+		child = this.GetGoToSocialAnnounceAuthorization().JSONLDContext()
+	} else if this.IsGoToSocialAnnounceRequest() {
+		child = this.GetGoToSocialAnnounceRequest().JSONLDContext()
 	} else if this.IsActivityStreamsApplication() {
 		child = this.GetActivityStreamsApplication().JSONLDContext()
 	} else if this.IsActivityStreamsArrive() {
@@ -1860,6 +2021,10 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsLike().JSONLDContext()
 	} else if this.IsGoToSocialLikeApproval() {
 		child = this.GetGoToSocialLikeApproval().JSONLDContext()
+	} else if this.IsGoToSocialLikeAuthorization() {
+		child = this.GetGoToSocialLikeAuthorization().JSONLDContext()
+	} else if this.IsGoToSocialLikeRequest() {
+		child = this.GetGoToSocialLikeRequest().JSONLDContext()
 	} else if this.IsActivityStreamsListen() {
 		child = this.GetActivityStreamsListen().JSONLDContext()
 	} else if this.IsActivityStreamsMention() {
@@ -1898,6 +2063,10 @@ func (this ActivityStreamsSubjectProperty) JSONLDContext() map[string]string {
 		child = this.GetActivityStreamsRemove().JSONLDContext()
 	} else if this.IsGoToSocialReplyApproval() {
 		child = this.GetGoToSocialReplyApproval().JSONLDContext()
+	} else if this.IsGoToSocialReplyAuthorization() {
+		child = this.GetGoToSocialReplyAuthorization().JSONLDContext()
+	} else if this.IsGoToSocialReplyRequest() {
+		child = this.GetGoToSocialReplyRequest().JSONLDContext()
 	} else if this.IsActivityStreamsService() {
 		child = this.GetActivityStreamsService().JSONLDContext()
 	} else if this.IsActivityStreamsTentativeAccept() {
@@ -1958,176 +2127,194 @@ func (this ActivityStreamsSubjectProperty) KindIndex() int {
 	if this.IsGoToSocialAnnounceApproval() {
 		return 7
 	}
-	if this.IsActivityStreamsApplication() {
+	if this.IsGoToSocialAnnounceAuthorization() {
 		return 8
 	}
-	if this.IsActivityStreamsArrive() {
+	if this.IsGoToSocialAnnounceRequest() {
 		return 9
 	}
-	if this.IsActivityStreamsArticle() {
+	if this.IsActivityStreamsApplication() {
 		return 10
 	}
-	if this.IsFunkwhaleArtist() {
+	if this.IsActivityStreamsArrive() {
 		return 11
 	}
-	if this.IsActivityStreamsAudio() {
+	if this.IsActivityStreamsArticle() {
 		return 12
 	}
-	if this.IsActivityStreamsBlock() {
+	if this.IsFunkwhaleArtist() {
 		return 13
 	}
-	if this.IsActivityStreamsCollection() {
+	if this.IsActivityStreamsAudio() {
 		return 14
 	}
-	if this.IsActivityStreamsCollectionPage() {
+	if this.IsActivityStreamsBlock() {
 		return 15
 	}
-	if this.IsActivityStreamsCreate() {
+	if this.IsActivityStreamsCollection() {
 		return 16
 	}
-	if this.IsActivityStreamsDelete() {
+	if this.IsActivityStreamsCollectionPage() {
 		return 17
 	}
-	if this.IsActivityStreamsDislike() {
+	if this.IsActivityStreamsCreate() {
 		return 18
 	}
-	if this.IsActivityStreamsDocument() {
+	if this.IsActivityStreamsDelete() {
 		return 19
 	}
-	if this.IsTootEmoji() {
+	if this.IsActivityStreamsDislike() {
 		return 20
 	}
-	if this.IsActivityStreamsEvent() {
+	if this.IsActivityStreamsDocument() {
 		return 21
 	}
-	if this.IsActivityStreamsFlag() {
+	if this.IsTootEmoji() {
 		return 22
 	}
-	if this.IsActivityStreamsFollow() {
+	if this.IsActivityStreamsEvent() {
 		return 23
 	}
-	if this.IsActivityStreamsGroup() {
+	if this.IsActivityStreamsFlag() {
 		return 24
 	}
-	if this.IsTootHashtag() {
+	if this.IsActivityStreamsFollow() {
 		return 25
 	}
-	if this.IsTootIdentityProof() {
+	if this.IsActivityStreamsGroup() {
 		return 26
 	}
-	if this.IsActivityStreamsIgnore() {
+	if this.IsTootHashtag() {
 		return 27
 	}
-	if this.IsActivityStreamsImage() {
+	if this.IsTootIdentityProof() {
 		return 28
 	}
-	if this.IsActivityStreamsIntransitiveActivity() {
+	if this.IsActivityStreamsIgnore() {
 		return 29
 	}
-	if this.IsActivityStreamsInvite() {
+	if this.IsActivityStreamsImage() {
 		return 30
 	}
-	if this.IsActivityStreamsJoin() {
+	if this.IsActivityStreamsIntransitiveActivity() {
 		return 31
 	}
-	if this.IsActivityStreamsLeave() {
+	if this.IsActivityStreamsInvite() {
 		return 32
 	}
-	if this.IsFunkwhaleLibrary() {
+	if this.IsActivityStreamsJoin() {
 		return 33
 	}
-	if this.IsActivityStreamsLike() {
+	if this.IsActivityStreamsLeave() {
 		return 34
 	}
-	if this.IsGoToSocialLikeApproval() {
+	if this.IsFunkwhaleLibrary() {
 		return 35
 	}
-	if this.IsActivityStreamsListen() {
+	if this.IsActivityStreamsLike() {
 		return 36
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsGoToSocialLikeApproval() {
 		return 37
 	}
-	if this.IsActivityStreamsMove() {
+	if this.IsGoToSocialLikeAuthorization() {
 		return 38
 	}
-	if this.IsActivityStreamsNote() {
+	if this.IsGoToSocialLikeRequest() {
 		return 39
 	}
-	if this.IsActivityStreamsOffer() {
+	if this.IsActivityStreamsListen() {
 		return 40
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsMention() {
 		return 41
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsMove() {
 		return 42
 	}
-	if this.IsActivityStreamsOrganization() {
+	if this.IsActivityStreamsNote() {
 		return 43
 	}
-	if this.IsActivityStreamsPage() {
+	if this.IsActivityStreamsOffer() {
 		return 44
 	}
-	if this.IsActivityStreamsPerson() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 45
 	}
-	if this.IsActivityStreamsPlace() {
+	if this.IsActivityStreamsOrderedCollectionPage() {
 		return 46
 	}
-	if this.IsActivityStreamsProfile() {
+	if this.IsActivityStreamsOrganization() {
 		return 47
 	}
-	if this.IsSchemaPropertyValue() {
+	if this.IsActivityStreamsPage() {
 		return 48
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsActivityStreamsPerson() {
 		return 49
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsPlace() {
 		return 50
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsActivityStreamsProfile() {
 		return 51
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsSchemaPropertyValue() {
 		return 52
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsQuestion() {
 		return 53
 	}
-	if this.IsGoToSocialReplyApproval() {
+	if this.IsActivityStreamsRead() {
 		return 54
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsActivityStreamsReject() {
 		return 55
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsRelationship() {
 		return 56
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsActivityStreamsRemove() {
 		return 57
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsGoToSocialReplyApproval() {
 		return 58
 	}
-	if this.IsFunkwhaleTrack() {
+	if this.IsGoToSocialReplyAuthorization() {
 		return 59
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsGoToSocialReplyRequest() {
 		return 60
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsService() {
 		return 61
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 62
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 63
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsTombstone() {
 		return 64
+	}
+	if this.IsFunkwhaleTrack() {
+		return 65
+	}
+	if this.IsActivityStreamsTravel() {
+		return 66
+	}
+	if this.IsActivityStreamsUndo() {
+		return 67
+	}
+	if this.IsActivityStreamsUpdate() {
+		return 68
+	}
+	if this.IsActivityStreamsVideo() {
+		return 69
+	}
+	if this.IsActivityStreamsView() {
+		return 70
 	}
 	if this.IsIRI() {
 		return -2
@@ -2162,6 +2349,10 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsAnnounce().LessThan(o.GetActivityStreamsAnnounce())
 	} else if this.IsGoToSocialAnnounceApproval() {
 		return this.GetGoToSocialAnnounceApproval().LessThan(o.GetGoToSocialAnnounceApproval())
+	} else if this.IsGoToSocialAnnounceAuthorization() {
+		return this.GetGoToSocialAnnounceAuthorization().LessThan(o.GetGoToSocialAnnounceAuthorization())
+	} else if this.IsGoToSocialAnnounceRequest() {
+		return this.GetGoToSocialAnnounceRequest().LessThan(o.GetGoToSocialAnnounceRequest())
 	} else if this.IsActivityStreamsApplication() {
 		return this.GetActivityStreamsApplication().LessThan(o.GetActivityStreamsApplication())
 	} else if this.IsActivityStreamsArrive() {
@@ -2218,6 +2409,10 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsLike().LessThan(o.GetActivityStreamsLike())
 	} else if this.IsGoToSocialLikeApproval() {
 		return this.GetGoToSocialLikeApproval().LessThan(o.GetGoToSocialLikeApproval())
+	} else if this.IsGoToSocialLikeAuthorization() {
+		return this.GetGoToSocialLikeAuthorization().LessThan(o.GetGoToSocialLikeAuthorization())
+	} else if this.IsGoToSocialLikeRequest() {
+		return this.GetGoToSocialLikeRequest().LessThan(o.GetGoToSocialLikeRequest())
 	} else if this.IsActivityStreamsListen() {
 		return this.GetActivityStreamsListen().LessThan(o.GetActivityStreamsListen())
 	} else if this.IsActivityStreamsMention() {
@@ -2256,6 +2451,10 @@ func (this ActivityStreamsSubjectProperty) LessThan(o vocab.ActivityStreamsSubje
 		return this.GetActivityStreamsRemove().LessThan(o.GetActivityStreamsRemove())
 	} else if this.IsGoToSocialReplyApproval() {
 		return this.GetGoToSocialReplyApproval().LessThan(o.GetGoToSocialReplyApproval())
+	} else if this.IsGoToSocialReplyAuthorization() {
+		return this.GetGoToSocialReplyAuthorization().LessThan(o.GetGoToSocialReplyAuthorization())
+	} else if this.IsGoToSocialReplyRequest() {
+		return this.GetGoToSocialReplyRequest().LessThan(o.GetGoToSocialReplyRequest())
 	} else if this.IsActivityStreamsService() {
 		return this.GetActivityStreamsService().LessThan(o.GetActivityStreamsService())
 	} else if this.IsActivityStreamsTentativeAccept() {
@@ -2312,6 +2511,10 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsAnnounce().Serialize()
 	} else if this.IsGoToSocialAnnounceApproval() {
 		return this.GetGoToSocialAnnounceApproval().Serialize()
+	} else if this.IsGoToSocialAnnounceAuthorization() {
+		return this.GetGoToSocialAnnounceAuthorization().Serialize()
+	} else if this.IsGoToSocialAnnounceRequest() {
+		return this.GetGoToSocialAnnounceRequest().Serialize()
 	} else if this.IsActivityStreamsApplication() {
 		return this.GetActivityStreamsApplication().Serialize()
 	} else if this.IsActivityStreamsArrive() {
@@ -2368,6 +2571,10 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsLike().Serialize()
 	} else if this.IsGoToSocialLikeApproval() {
 		return this.GetGoToSocialLikeApproval().Serialize()
+	} else if this.IsGoToSocialLikeAuthorization() {
+		return this.GetGoToSocialLikeAuthorization().Serialize()
+	} else if this.IsGoToSocialLikeRequest() {
+		return this.GetGoToSocialLikeRequest().Serialize()
 	} else if this.IsActivityStreamsListen() {
 		return this.GetActivityStreamsListen().Serialize()
 	} else if this.IsActivityStreamsMention() {
@@ -2406,6 +2613,10 @@ func (this ActivityStreamsSubjectProperty) Serialize() (interface{}, error) {
 		return this.GetActivityStreamsRemove().Serialize()
 	} else if this.IsGoToSocialReplyApproval() {
 		return this.GetGoToSocialReplyApproval().Serialize()
+	} else if this.IsGoToSocialReplyAuthorization() {
+		return this.GetGoToSocialReplyAuthorization().Serialize()
+	} else if this.IsGoToSocialReplyRequest() {
+		return this.GetGoToSocialReplyRequest().Serialize()
 	} else if this.IsActivityStreamsService() {
 		return this.GetActivityStreamsService().Serialize()
 	} else if this.IsActivityStreamsTentativeAccept() {
@@ -2845,6 +3056,20 @@ func (this *ActivityStreamsSubjectProperty) SetGoToSocialAnnounceApproval(v voca
 	this.gotosocialAnnounceApprovalMember = v
 }
 
+// SetGoToSocialAnnounceAuthorization sets the value of this property. Calling
+// IsGoToSocialAnnounceAuthorization afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetGoToSocialAnnounceAuthorization(v vocab.GoToSocialAnnounceAuthorization) {
+	this.Clear()
+	this.gotosocialAnnounceAuthorizationMember = v
+}
+
+// SetGoToSocialAnnounceRequest sets the value of this property. Calling
+// IsGoToSocialAnnounceRequest afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetGoToSocialAnnounceRequest(v vocab.GoToSocialAnnounceRequest) {
+	this.Clear()
+	this.gotosocialAnnounceRequestMember = v
+}
+
 // SetGoToSocialLikeApproval sets the value of this property. Calling
 // IsGoToSocialLikeApproval afterwards returns true.
 func (this *ActivityStreamsSubjectProperty) SetGoToSocialLikeApproval(v vocab.GoToSocialLikeApproval) {
@@ -2852,11 +3077,39 @@ func (this *ActivityStreamsSubjectProperty) SetGoToSocialLikeApproval(v vocab.Go
 	this.gotosocialLikeApprovalMember = v
 }
 
+// SetGoToSocialLikeAuthorization sets the value of this property. Calling
+// IsGoToSocialLikeAuthorization afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetGoToSocialLikeAuthorization(v vocab.GoToSocialLikeAuthorization) {
+	this.Clear()
+	this.gotosocialLikeAuthorizationMember = v
+}
+
+// SetGoToSocialLikeRequest sets the value of this property. Calling
+// IsGoToSocialLikeRequest afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetGoToSocialLikeRequest(v vocab.GoToSocialLikeRequest) {
+	this.Clear()
+	this.gotosocialLikeRequestMember = v
+}
+
 // SetGoToSocialReplyApproval sets the value of this property. Calling
 // IsGoToSocialReplyApproval afterwards returns true.
 func (this *ActivityStreamsSubjectProperty) SetGoToSocialReplyApproval(v vocab.GoToSocialReplyApproval) {
 	this.Clear()
 	this.gotosocialReplyApprovalMember = v
+}
+
+// SetGoToSocialReplyAuthorization sets the value of this property. Calling
+// IsGoToSocialReplyAuthorization afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetGoToSocialReplyAuthorization(v vocab.GoToSocialReplyAuthorization) {
+	this.Clear()
+	this.gotosocialReplyAuthorizationMember = v
+}
+
+// SetGoToSocialReplyRequest sets the value of this property. Calling
+// IsGoToSocialReplyRequest afterwards returns true.
+func (this *ActivityStreamsSubjectProperty) SetGoToSocialReplyRequest(v vocab.GoToSocialReplyRequest) {
+	this.Clear()
+	this.gotosocialReplyRequestMember = v
 }
 
 // SetIRI sets the value of this property. Calling IsIRI afterwards returns true.
@@ -2926,6 +3179,14 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.GoToSocialAnnounceApproval); ok {
 		this.SetGoToSocialAnnounceApproval(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialAnnounceAuthorization); ok {
+		this.SetGoToSocialAnnounceAuthorization(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialAnnounceRequest); ok {
+		this.SetGoToSocialAnnounceRequest(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsApplication); ok {
@@ -3040,6 +3301,14 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 		this.SetGoToSocialLikeApproval(v)
 		return nil
 	}
+	if v, ok := t.(vocab.GoToSocialLikeAuthorization); ok {
+		this.SetGoToSocialLikeAuthorization(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialLikeRequest); ok {
+		this.SetGoToSocialLikeRequest(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ActivityStreamsListen); ok {
 		this.SetActivityStreamsListen(v)
 		return nil
@@ -3114,6 +3383,14 @@ func (this *ActivityStreamsSubjectProperty) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.GoToSocialReplyApproval); ok {
 		this.SetGoToSocialReplyApproval(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialReplyAuthorization); ok {
+		this.SetGoToSocialReplyAuthorization(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialReplyRequest); ok {
+		this.SetGoToSocialReplyRequest(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsService); ok {

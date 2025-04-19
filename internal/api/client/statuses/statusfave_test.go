@@ -308,7 +308,7 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
 		suite.FailNow(err.Error())
 	}
 	suite.NotZero(intReq.AcceptedAt)
-	suite.NotEmpty(intReq.URI)
+	suite.NotEmpty(intReq.ResponseURI)
 
 	// Check visibility of status to public after posting fave.
 	visible, err = visFilter.StatusVisible(ctx, nil, dbStatus)

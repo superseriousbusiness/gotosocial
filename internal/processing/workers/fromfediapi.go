@@ -96,6 +96,10 @@ func (p *Processor) ProcessFromFediAPI(ctx context.Context, fMsg *messages.FromF
 		case ap.ActivityLike:
 			return p.fediAPI.CreateLike(ctx, fMsg)
 
+		// CREATE LIKE/FAVE REQUEST
+		case ap.ActivityLikeRequest:
+			return p.fediAPI.CreateLikeRequest(ctx, fMsg)
+
 		// CREATE ANNOUNCE/BOOST
 		case ap.ActivityAnnounce:
 			return p.fediAPI.CreateAnnounce(ctx, fMsg)
@@ -278,7 +282,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestReply(ctx, status); err != nil {
+		if err := p.utils.replyToRequestReply(ctx, status); err != nil {
 			return gtserror.Newf("error pending reply: %w", err)
 		}
 
@@ -305,7 +309,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 			InteractionURI:       status.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Reply:                status,
-			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -315,7 +319,7 @@ func (p *fediAPI) CreateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.URI
+		status.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -512,7 +516,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestFave(ctx, fave); err != nil {
+		if err := p.utils.faveToPendingFave(ctx, fave); err != nil {
 			return gtserror.Newf("error pending fave: %w", err)
 		}
 
@@ -539,7 +543,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 			InteractionURI:       fave.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Like:                 fave,
-			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -549,7 +553,7 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.URI
+		fave.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -567,13 +571,87 @@ func (p *fediAPI) CreateLike(ctx context.Context, fMsg *messages.FromFediAPI) er
 		// Don't return, just continue as normal.
 	}
 
-	if err := p.surface.notifyFave(ctx, fave); err != nil {
+	if err := p.surface.notifyFave(ctx,
+		fave.Account,
+		fave.TargetAccount,
+		fave.Status,
+	); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
+
+	return nil
+}
+
+func (p *fediAPI) CreateLikeRequest(
+	ctx context.Context,
+	fMsg *messages.FromFediAPI,
+) error {
+	// Unlike InteractionReq from xyz, InteractionReq from
+	// xyzRequest will only ever have xyz set on it if xyz
+	// is a reply, not a Like or an Announce.
+	//
+	// In this case, that means there's no Fave set on it.
+	interactionReq, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// Whatever happens, we'll need to store the request.
+	//
+	// AcceptedAt or RejectedAt should already be set on the
+	// request if it's automatically accepted, or not permitted,
+	// so we don't have to do that here.
+	err := p.state.DB.PutInteractionRequest(ctx, interactionReq)
+	switch {
+	case err == nil:
+		// All good,
+		// it's stored.
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		// Request already stored,
+		// did something race?
+		// Nothing to in that case.
+		return nil
+
+	default:
+		// Real error, cannot continue.
+		return gtserror.Newf("db error storing like request: %w", err)
+	}
+
+	// Process side effects.
+	switch {
+	case interactionReq.IsPending():
+		// If pending, ie., manual approval
+		// required, the only side effect is
+		// to notify the interactee.
+		if err := p.utils.surface.notifyPendingFave(
+			ctx,
+			interactionReq.InteractingAccount,
+			interactionReq.TargetAccount,
+			interactionReq.Status,
+		); err != nil {
+			log.Errorf(ctx, "error storing pending like notif: %v", err)
+		}
+
+	case interactionReq.IsAccepted():
+		// If accepted, ie., automatic approval,
+		// just send out the Accept message and
+		// wait for the Like to be delivered.
+		if err := p.federate.AcceptInteraction(ctx, interactionReq); err != nil {
+			log.Errorf(ctx, "error sending like accept: %v", err)
+		}
+
+	case interactionReq.IsRejected():
+		// If rejected, ie., not permitted,
+		// just send out the Reject message.
+		if err := p.federate.RejectInteraction(ctx, interactionReq); err != nil {
+			log.Errorf(ctx, "error sending like reject: %v", err)
+		}
+	}
 
 	return nil
 }
@@ -619,7 +697,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// preapproved, then just notify the account
 		// that's being interacted with: they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestAnnounce(ctx, boost); err != nil {
+		if err := p.utils.announceToRequestAnnounce(ctx, boost); err != nil {
 			return gtserror.Newf("error pending boost: %w", err)
 		}
 
@@ -646,7 +724,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 			InteractionURI:       boost.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Announce:             boost,
-			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -656,7 +734,7 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		// Mark the boost itself as now approved.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.URI
+		boost.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,
@@ -684,13 +762,88 @@ func (p *fediAPI) CreateAnnounce(ctx context.Context, fMsg *messages.FromFediAPI
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
+	if err := p.surface.notifyAnnounce(
+		ctx,
+		boost.Account,
+		boost.BoostOfAccount,
+		boost.BoostOf,
+	); err != nil {
 		log.Errorf(ctx, "error notifying announce: %v", err)
 	}
 
 	// Interaction counts changed on the original status;
 	// uncache the prepared version from all timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+
+	return nil
+}
+
+func (p *fediAPI) CreateAnnounceRequest(
+	ctx context.Context,
+	fMsg *messages.FromFediAPI,
+) error {
+	// Unlike InteractionReq from xyz, InteractionReq from
+	// xyzRequest will only ever have xyz set on it if xyz
+	// is a reply, not a Like or an Announce.
+	//
+	// In this case, that means there's no Announce set on it.
+	interactionReq, ok := fMsg.GTSModel.(*gtsmodel.InteractionRequest)
+	if !ok {
+		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", fMsg.GTSModel)
+	}
+
+	// Whatever happens, we'll need to store the request.
+	//
+	// AcceptedAt or RejectedAt should already be set on the
+	// request if it's automatically accepted, or not permitted,
+	// so we don't have to do that here.
+	err := p.state.DB.PutInteractionRequest(ctx, interactionReq)
+	switch {
+	case err == nil:
+		// All good,
+		// it's stored.
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		// Request already stored,
+		// did something race?
+		// Nothing to in that case.
+		return nil
+
+	default:
+		// Real error, cannot continue.
+		return gtserror.Newf("db error storing announce request: %w", err)
+	}
+
+	// Process side effects.
+	switch {
+	case interactionReq.IsPending():
+		// If pending, ie., manual approval
+		// required, the only side effect is
+		// to notify the interactee.
+		if err := p.utils.surface.notifyPendingAnnounce(
+			ctx,
+			interactionReq.InteractingAccount,
+			interactionReq.TargetAccount,
+			interactionReq.Status,
+		); err != nil {
+			log.Errorf(ctx, "error storing pending announce notif: %v", err)
+		}
+
+	case interactionReq.IsAccepted():
+		// If accepted, ie., automatic approval,
+		// just send out the Accept message and
+		// wait for the Announce to be delivered.
+		if err := p.federate.AcceptInteraction(ctx, interactionReq); err != nil {
+			log.Errorf(ctx, "error sending announce accept: %v", err)
+		}
+
+	case interactionReq.IsRejected():
+		// If rejected, ie., not permitted,
+		// just send out the Reject message.
+		if err := p.federate.RejectInteraction(ctx, interactionReq); err != nil {
+			log.Errorf(ctx, "error sending announce reject: %v", err)
+		}
+	}
 
 	return nil
 }

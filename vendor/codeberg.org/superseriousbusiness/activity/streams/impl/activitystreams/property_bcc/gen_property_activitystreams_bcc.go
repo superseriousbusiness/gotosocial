@@ -22,6 +22,8 @@ type ActivityStreamsBccPropertyIterator struct {
 	funkwhaleAlbumMember                       vocab.FunkwhaleAlbum
 	activitystreamsAnnounceMember              vocab.ActivityStreamsAnnounce
 	gotosocialAnnounceApprovalMember           vocab.GoToSocialAnnounceApproval
+	gotosocialAnnounceAuthorizationMember      vocab.GoToSocialAnnounceAuthorization
+	gotosocialAnnounceRequestMember            vocab.GoToSocialAnnounceRequest
 	activitystreamsApplicationMember           vocab.ActivityStreamsApplication
 	activitystreamsArriveMember                vocab.ActivityStreamsArrive
 	activitystreamsArticleMember               vocab.ActivityStreamsArticle
@@ -50,6 +52,8 @@ type ActivityStreamsBccPropertyIterator struct {
 	funkwhaleLibraryMember                     vocab.FunkwhaleLibrary
 	activitystreamsLikeMember                  vocab.ActivityStreamsLike
 	gotosocialLikeApprovalMember               vocab.GoToSocialLikeApproval
+	gotosocialLikeAuthorizationMember          vocab.GoToSocialLikeAuthorization
+	gotosocialLikeRequestMember                vocab.GoToSocialLikeRequest
 	activitystreamsListenMember                vocab.ActivityStreamsListen
 	activitystreamsMentionMember               vocab.ActivityStreamsMention
 	activitystreamsMoveMember                  vocab.ActivityStreamsMove
@@ -69,6 +73,8 @@ type ActivityStreamsBccPropertyIterator struct {
 	activitystreamsRelationshipMember          vocab.ActivityStreamsRelationship
 	activitystreamsRemoveMember                vocab.ActivityStreamsRemove
 	gotosocialReplyApprovalMember              vocab.GoToSocialReplyApproval
+	gotosocialReplyAuthorizationMember         vocab.GoToSocialReplyAuthorization
+	gotosocialReplyRequestMember               vocab.GoToSocialReplyRequest
 	activitystreamsServiceMember               vocab.ActivityStreamsService
 	activitystreamsTentativeAcceptMember       vocab.ActivityStreamsTentativeAccept
 	activitystreamsTentativeRejectMember       vocab.ActivityStreamsTentativeReject
@@ -157,6 +163,18 @@ func deserializeActivityStreamsBccPropertyIterator(i interface{}, aliasMap map[s
 			this := &ActivityStreamsBccPropertyIterator{
 				alias:                            alias,
 				gotosocialAnnounceApprovalMember: v,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeAnnounceAuthorizationGoToSocial()(m, aliasMap); err == nil {
+			this := &ActivityStreamsBccPropertyIterator{
+				alias:                                 alias,
+				gotosocialAnnounceAuthorizationMember: v,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeAnnounceRequestGoToSocial()(m, aliasMap); err == nil {
+			this := &ActivityStreamsBccPropertyIterator{
+				alias:                           alias,
+				gotosocialAnnounceRequestMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeApplicationActivityStreams()(m, aliasMap); err == nil {
@@ -327,6 +345,18 @@ func deserializeActivityStreamsBccPropertyIterator(i interface{}, aliasMap map[s
 				gotosocialLikeApprovalMember: v,
 			}
 			return this, nil
+		} else if v, err := mgr.DeserializeLikeAuthorizationGoToSocial()(m, aliasMap); err == nil {
+			this := &ActivityStreamsBccPropertyIterator{
+				alias:                             alias,
+				gotosocialLikeAuthorizationMember: v,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeLikeRequestGoToSocial()(m, aliasMap); err == nil {
+			this := &ActivityStreamsBccPropertyIterator{
+				alias:                       alias,
+				gotosocialLikeRequestMember: v,
+			}
+			return this, nil
 		} else if v, err := mgr.DeserializeListenActivityStreams()(m, aliasMap); err == nil {
 			this := &ActivityStreamsBccPropertyIterator{
 				activitystreamsListenMember: v,
@@ -439,6 +469,18 @@ func deserializeActivityStreamsBccPropertyIterator(i interface{}, aliasMap map[s
 			this := &ActivityStreamsBccPropertyIterator{
 				alias:                         alias,
 				gotosocialReplyApprovalMember: v,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeReplyAuthorizationGoToSocial()(m, aliasMap); err == nil {
+			this := &ActivityStreamsBccPropertyIterator{
+				alias:                              alias,
+				gotosocialReplyAuthorizationMember: v,
+			}
+			return this, nil
+		} else if v, err := mgr.DeserializeReplyRequestGoToSocial()(m, aliasMap); err == nil {
+			this := &ActivityStreamsBccPropertyIterator{
+				alias:                        alias,
+				gotosocialReplyRequestMember: v,
 			}
 			return this, nil
 		} else if v, err := mgr.DeserializeServiceActivityStreams()(m, aliasMap); err == nil {
@@ -919,6 +961,20 @@ func (this ActivityStreamsBccPropertyIterator) GetGoToSocialAnnounceApproval() v
 	return this.gotosocialAnnounceApprovalMember
 }
 
+// GetGoToSocialAnnounceAuthorization returns the value of this property. When
+// IsGoToSocialAnnounceAuthorization returns false,
+// GetGoToSocialAnnounceAuthorization will return an arbitrary value.
+func (this ActivityStreamsBccPropertyIterator) GetGoToSocialAnnounceAuthorization() vocab.GoToSocialAnnounceAuthorization {
+	return this.gotosocialAnnounceAuthorizationMember
+}
+
+// GetGoToSocialAnnounceRequest returns the value of this property. When
+// IsGoToSocialAnnounceRequest returns false, GetGoToSocialAnnounceRequest
+// will return an arbitrary value.
+func (this ActivityStreamsBccPropertyIterator) GetGoToSocialAnnounceRequest() vocab.GoToSocialAnnounceRequest {
+	return this.gotosocialAnnounceRequestMember
+}
+
 // GetGoToSocialLikeApproval returns the value of this property. When
 // IsGoToSocialLikeApproval returns false, GetGoToSocialLikeApproval will
 // return an arbitrary value.
@@ -926,11 +982,39 @@ func (this ActivityStreamsBccPropertyIterator) GetGoToSocialLikeApproval() vocab
 	return this.gotosocialLikeApprovalMember
 }
 
+// GetGoToSocialLikeAuthorization returns the value of this property. When
+// IsGoToSocialLikeAuthorization returns false, GetGoToSocialLikeAuthorization
+// will return an arbitrary value.
+func (this ActivityStreamsBccPropertyIterator) GetGoToSocialLikeAuthorization() vocab.GoToSocialLikeAuthorization {
+	return this.gotosocialLikeAuthorizationMember
+}
+
+// GetGoToSocialLikeRequest returns the value of this property. When
+// IsGoToSocialLikeRequest returns false, GetGoToSocialLikeRequest will return
+// an arbitrary value.
+func (this ActivityStreamsBccPropertyIterator) GetGoToSocialLikeRequest() vocab.GoToSocialLikeRequest {
+	return this.gotosocialLikeRequestMember
+}
+
 // GetGoToSocialReplyApproval returns the value of this property. When
 // IsGoToSocialReplyApproval returns false, GetGoToSocialReplyApproval will
 // return an arbitrary value.
 func (this ActivityStreamsBccPropertyIterator) GetGoToSocialReplyApproval() vocab.GoToSocialReplyApproval {
 	return this.gotosocialReplyApprovalMember
+}
+
+// GetGoToSocialReplyAuthorization returns the value of this property. When
+// IsGoToSocialReplyAuthorization returns false,
+// GetGoToSocialReplyAuthorization will return an arbitrary value.
+func (this ActivityStreamsBccPropertyIterator) GetGoToSocialReplyAuthorization() vocab.GoToSocialReplyAuthorization {
+	return this.gotosocialReplyAuthorizationMember
+}
+
+// GetGoToSocialReplyRequest returns the value of this property. When
+// IsGoToSocialReplyRequest returns false, GetGoToSocialReplyRequest will
+// return an arbitrary value.
+func (this ActivityStreamsBccPropertyIterator) GetGoToSocialReplyRequest() vocab.GoToSocialReplyRequest {
+	return this.gotosocialReplyRequestMember
 }
 
 // GetIRI returns the IRI of this property. When IsIRI returns false, GetIRI will
@@ -991,6 +1075,12 @@ func (this ActivityStreamsBccPropertyIterator) GetType() vocab.Type {
 	}
 	if this.IsGoToSocialAnnounceApproval() {
 		return this.GetGoToSocialAnnounceApproval()
+	}
+	if this.IsGoToSocialAnnounceAuthorization() {
+		return this.GetGoToSocialAnnounceAuthorization()
+	}
+	if this.IsGoToSocialAnnounceRequest() {
+		return this.GetGoToSocialAnnounceRequest()
 	}
 	if this.IsActivityStreamsApplication() {
 		return this.GetActivityStreamsApplication()
@@ -1076,6 +1166,12 @@ func (this ActivityStreamsBccPropertyIterator) GetType() vocab.Type {
 	if this.IsGoToSocialLikeApproval() {
 		return this.GetGoToSocialLikeApproval()
 	}
+	if this.IsGoToSocialLikeAuthorization() {
+		return this.GetGoToSocialLikeAuthorization()
+	}
+	if this.IsGoToSocialLikeRequest() {
+		return this.GetGoToSocialLikeRequest()
+	}
 	if this.IsActivityStreamsListen() {
 		return this.GetActivityStreamsListen()
 	}
@@ -1133,6 +1229,12 @@ func (this ActivityStreamsBccPropertyIterator) GetType() vocab.Type {
 	if this.IsGoToSocialReplyApproval() {
 		return this.GetGoToSocialReplyApproval()
 	}
+	if this.IsGoToSocialReplyAuthorization() {
+		return this.GetGoToSocialReplyAuthorization()
+	}
+	if this.IsGoToSocialReplyRequest() {
+		return this.GetGoToSocialReplyRequest()
+	}
 	if this.IsActivityStreamsService() {
 		return this.GetActivityStreamsService()
 	}
@@ -1177,6 +1279,8 @@ func (this ActivityStreamsBccPropertyIterator) HasAny() bool {
 		this.IsFunkwhaleAlbum() ||
 		this.IsActivityStreamsAnnounce() ||
 		this.IsGoToSocialAnnounceApproval() ||
+		this.IsGoToSocialAnnounceAuthorization() ||
+		this.IsGoToSocialAnnounceRequest() ||
 		this.IsActivityStreamsApplication() ||
 		this.IsActivityStreamsArrive() ||
 		this.IsActivityStreamsArticle() ||
@@ -1205,6 +1309,8 @@ func (this ActivityStreamsBccPropertyIterator) HasAny() bool {
 		this.IsFunkwhaleLibrary() ||
 		this.IsActivityStreamsLike() ||
 		this.IsGoToSocialLikeApproval() ||
+		this.IsGoToSocialLikeAuthorization() ||
+		this.IsGoToSocialLikeRequest() ||
 		this.IsActivityStreamsListen() ||
 		this.IsActivityStreamsMention() ||
 		this.IsActivityStreamsMove() ||
@@ -1224,6 +1330,8 @@ func (this ActivityStreamsBccPropertyIterator) HasAny() bool {
 		this.IsActivityStreamsRelationship() ||
 		this.IsActivityStreamsRemove() ||
 		this.IsGoToSocialReplyApproval() ||
+		this.IsGoToSocialReplyAuthorization() ||
+		this.IsGoToSocialReplyRequest() ||
 		this.IsActivityStreamsService() ||
 		this.IsActivityStreamsTentativeAccept() ||
 		this.IsActivityStreamsTentativeReject() ||
@@ -1655,6 +1763,21 @@ func (this ActivityStreamsBccPropertyIterator) IsGoToSocialAnnounceApproval() bo
 	return this.gotosocialAnnounceApprovalMember != nil
 }
 
+// IsGoToSocialAnnounceAuthorization returns true if this property has a type of
+// "AnnounceAuthorization". When true, use the
+// GetGoToSocialAnnounceAuthorization and SetGoToSocialAnnounceAuthorization
+// methods to access and set this property.
+func (this ActivityStreamsBccPropertyIterator) IsGoToSocialAnnounceAuthorization() bool {
+	return this.gotosocialAnnounceAuthorizationMember != nil
+}
+
+// IsGoToSocialAnnounceRequest returns true if this property has a type of
+// "AnnounceRequest". When true, use the GetGoToSocialAnnounceRequest and
+// SetGoToSocialAnnounceRequest methods to access and set this property.
+func (this ActivityStreamsBccPropertyIterator) IsGoToSocialAnnounceRequest() bool {
+	return this.gotosocialAnnounceRequestMember != nil
+}
+
 // IsGoToSocialLikeApproval returns true if this property has a type of
 // "LikeApproval". When true, use the GetGoToSocialLikeApproval and
 // SetGoToSocialLikeApproval methods to access and set this property.
@@ -1662,11 +1785,39 @@ func (this ActivityStreamsBccPropertyIterator) IsGoToSocialLikeApproval() bool {
 	return this.gotosocialLikeApprovalMember != nil
 }
 
+// IsGoToSocialLikeAuthorization returns true if this property has a type of
+// "LikeAuthorization". When true, use the GetGoToSocialLikeAuthorization and
+// SetGoToSocialLikeAuthorization methods to access and set this property.
+func (this ActivityStreamsBccPropertyIterator) IsGoToSocialLikeAuthorization() bool {
+	return this.gotosocialLikeAuthorizationMember != nil
+}
+
+// IsGoToSocialLikeRequest returns true if this property has a type of
+// "LikeRequest". When true, use the GetGoToSocialLikeRequest and
+// SetGoToSocialLikeRequest methods to access and set this property.
+func (this ActivityStreamsBccPropertyIterator) IsGoToSocialLikeRequest() bool {
+	return this.gotosocialLikeRequestMember != nil
+}
+
 // IsGoToSocialReplyApproval returns true if this property has a type of
 // "ReplyApproval". When true, use the GetGoToSocialReplyApproval and
 // SetGoToSocialReplyApproval methods to access and set this property.
 func (this ActivityStreamsBccPropertyIterator) IsGoToSocialReplyApproval() bool {
 	return this.gotosocialReplyApprovalMember != nil
+}
+
+// IsGoToSocialReplyAuthorization returns true if this property has a type of
+// "ReplyAuthorization". When true, use the GetGoToSocialReplyAuthorization
+// and SetGoToSocialReplyAuthorization methods to access and set this property.
+func (this ActivityStreamsBccPropertyIterator) IsGoToSocialReplyAuthorization() bool {
+	return this.gotosocialReplyAuthorizationMember != nil
+}
+
+// IsGoToSocialReplyRequest returns true if this property has a type of
+// "ReplyRequest". When true, use the GetGoToSocialReplyRequest and
+// SetGoToSocialReplyRequest methods to access and set this property.
+func (this ActivityStreamsBccPropertyIterator) IsGoToSocialReplyRequest() bool {
+	return this.gotosocialReplyRequestMember != nil
 }
 
 // IsIRI returns true if this property is an IRI. When true, use GetIRI and SetIRI
@@ -1724,6 +1875,10 @@ func (this ActivityStreamsBccPropertyIterator) JSONLDContext() map[string]string
 		child = this.GetActivityStreamsAnnounce().JSONLDContext()
 	} else if this.IsGoToSocialAnnounceApproval() {
 		child = this.GetGoToSocialAnnounceApproval().JSONLDContext()
+	} else if this.IsGoToSocialAnnounceAuthorization() {
+		child = this.GetGoToSocialAnnounceAuthorization().JSONLDContext()
+	} else if this.IsGoToSocialAnnounceRequest() {
+		child = this.GetGoToSocialAnnounceRequest().JSONLDContext()
 	} else if this.IsActivityStreamsApplication() {
 		child = this.GetActivityStreamsApplication().JSONLDContext()
 	} else if this.IsActivityStreamsArrive() {
@@ -1780,6 +1935,10 @@ func (this ActivityStreamsBccPropertyIterator) JSONLDContext() map[string]string
 		child = this.GetActivityStreamsLike().JSONLDContext()
 	} else if this.IsGoToSocialLikeApproval() {
 		child = this.GetGoToSocialLikeApproval().JSONLDContext()
+	} else if this.IsGoToSocialLikeAuthorization() {
+		child = this.GetGoToSocialLikeAuthorization().JSONLDContext()
+	} else if this.IsGoToSocialLikeRequest() {
+		child = this.GetGoToSocialLikeRequest().JSONLDContext()
 	} else if this.IsActivityStreamsListen() {
 		child = this.GetActivityStreamsListen().JSONLDContext()
 	} else if this.IsActivityStreamsMention() {
@@ -1818,6 +1977,10 @@ func (this ActivityStreamsBccPropertyIterator) JSONLDContext() map[string]string
 		child = this.GetActivityStreamsRemove().JSONLDContext()
 	} else if this.IsGoToSocialReplyApproval() {
 		child = this.GetGoToSocialReplyApproval().JSONLDContext()
+	} else if this.IsGoToSocialReplyAuthorization() {
+		child = this.GetGoToSocialReplyAuthorization().JSONLDContext()
+	} else if this.IsGoToSocialReplyRequest() {
+		child = this.GetGoToSocialReplyRequest().JSONLDContext()
 	} else if this.IsActivityStreamsService() {
 		child = this.GetActivityStreamsService().JSONLDContext()
 	} else if this.IsActivityStreamsTentativeAccept() {
@@ -1878,176 +2041,194 @@ func (this ActivityStreamsBccPropertyIterator) KindIndex() int {
 	if this.IsGoToSocialAnnounceApproval() {
 		return 7
 	}
-	if this.IsActivityStreamsApplication() {
+	if this.IsGoToSocialAnnounceAuthorization() {
 		return 8
 	}
-	if this.IsActivityStreamsArrive() {
+	if this.IsGoToSocialAnnounceRequest() {
 		return 9
 	}
-	if this.IsActivityStreamsArticle() {
+	if this.IsActivityStreamsApplication() {
 		return 10
 	}
-	if this.IsFunkwhaleArtist() {
+	if this.IsActivityStreamsArrive() {
 		return 11
 	}
-	if this.IsActivityStreamsAudio() {
+	if this.IsActivityStreamsArticle() {
 		return 12
 	}
-	if this.IsActivityStreamsBlock() {
+	if this.IsFunkwhaleArtist() {
 		return 13
 	}
-	if this.IsActivityStreamsCollection() {
+	if this.IsActivityStreamsAudio() {
 		return 14
 	}
-	if this.IsActivityStreamsCollectionPage() {
+	if this.IsActivityStreamsBlock() {
 		return 15
 	}
-	if this.IsActivityStreamsCreate() {
+	if this.IsActivityStreamsCollection() {
 		return 16
 	}
-	if this.IsActivityStreamsDelete() {
+	if this.IsActivityStreamsCollectionPage() {
 		return 17
 	}
-	if this.IsActivityStreamsDislike() {
+	if this.IsActivityStreamsCreate() {
 		return 18
 	}
-	if this.IsActivityStreamsDocument() {
+	if this.IsActivityStreamsDelete() {
 		return 19
 	}
-	if this.IsTootEmoji() {
+	if this.IsActivityStreamsDislike() {
 		return 20
 	}
-	if this.IsActivityStreamsEvent() {
+	if this.IsActivityStreamsDocument() {
 		return 21
 	}
-	if this.IsActivityStreamsFlag() {
+	if this.IsTootEmoji() {
 		return 22
 	}
-	if this.IsActivityStreamsFollow() {
+	if this.IsActivityStreamsEvent() {
 		return 23
 	}
-	if this.IsActivityStreamsGroup() {
+	if this.IsActivityStreamsFlag() {
 		return 24
 	}
-	if this.IsTootHashtag() {
+	if this.IsActivityStreamsFollow() {
 		return 25
 	}
-	if this.IsTootIdentityProof() {
+	if this.IsActivityStreamsGroup() {
 		return 26
 	}
-	if this.IsActivityStreamsIgnore() {
+	if this.IsTootHashtag() {
 		return 27
 	}
-	if this.IsActivityStreamsImage() {
+	if this.IsTootIdentityProof() {
 		return 28
 	}
-	if this.IsActivityStreamsIntransitiveActivity() {
+	if this.IsActivityStreamsIgnore() {
 		return 29
 	}
-	if this.IsActivityStreamsInvite() {
+	if this.IsActivityStreamsImage() {
 		return 30
 	}
-	if this.IsActivityStreamsJoin() {
+	if this.IsActivityStreamsIntransitiveActivity() {
 		return 31
 	}
-	if this.IsActivityStreamsLeave() {
+	if this.IsActivityStreamsInvite() {
 		return 32
 	}
-	if this.IsFunkwhaleLibrary() {
+	if this.IsActivityStreamsJoin() {
 		return 33
 	}
-	if this.IsActivityStreamsLike() {
+	if this.IsActivityStreamsLeave() {
 		return 34
 	}
-	if this.IsGoToSocialLikeApproval() {
+	if this.IsFunkwhaleLibrary() {
 		return 35
 	}
-	if this.IsActivityStreamsListen() {
+	if this.IsActivityStreamsLike() {
 		return 36
 	}
-	if this.IsActivityStreamsMention() {
+	if this.IsGoToSocialLikeApproval() {
 		return 37
 	}
-	if this.IsActivityStreamsMove() {
+	if this.IsGoToSocialLikeAuthorization() {
 		return 38
 	}
-	if this.IsActivityStreamsNote() {
+	if this.IsGoToSocialLikeRequest() {
 		return 39
 	}
-	if this.IsActivityStreamsOffer() {
+	if this.IsActivityStreamsListen() {
 		return 40
 	}
-	if this.IsActivityStreamsOrderedCollection() {
+	if this.IsActivityStreamsMention() {
 		return 41
 	}
-	if this.IsActivityStreamsOrderedCollectionPage() {
+	if this.IsActivityStreamsMove() {
 		return 42
 	}
-	if this.IsActivityStreamsOrganization() {
+	if this.IsActivityStreamsNote() {
 		return 43
 	}
-	if this.IsActivityStreamsPage() {
+	if this.IsActivityStreamsOffer() {
 		return 44
 	}
-	if this.IsActivityStreamsPerson() {
+	if this.IsActivityStreamsOrderedCollection() {
 		return 45
 	}
-	if this.IsActivityStreamsPlace() {
+	if this.IsActivityStreamsOrderedCollectionPage() {
 		return 46
 	}
-	if this.IsActivityStreamsProfile() {
+	if this.IsActivityStreamsOrganization() {
 		return 47
 	}
-	if this.IsSchemaPropertyValue() {
+	if this.IsActivityStreamsPage() {
 		return 48
 	}
-	if this.IsActivityStreamsQuestion() {
+	if this.IsActivityStreamsPerson() {
 		return 49
 	}
-	if this.IsActivityStreamsRead() {
+	if this.IsActivityStreamsPlace() {
 		return 50
 	}
-	if this.IsActivityStreamsReject() {
+	if this.IsActivityStreamsProfile() {
 		return 51
 	}
-	if this.IsActivityStreamsRelationship() {
+	if this.IsSchemaPropertyValue() {
 		return 52
 	}
-	if this.IsActivityStreamsRemove() {
+	if this.IsActivityStreamsQuestion() {
 		return 53
 	}
-	if this.IsGoToSocialReplyApproval() {
+	if this.IsActivityStreamsRead() {
 		return 54
 	}
-	if this.IsActivityStreamsService() {
+	if this.IsActivityStreamsReject() {
 		return 55
 	}
-	if this.IsActivityStreamsTentativeAccept() {
+	if this.IsActivityStreamsRelationship() {
 		return 56
 	}
-	if this.IsActivityStreamsTentativeReject() {
+	if this.IsActivityStreamsRemove() {
 		return 57
 	}
-	if this.IsActivityStreamsTombstone() {
+	if this.IsGoToSocialReplyApproval() {
 		return 58
 	}
-	if this.IsFunkwhaleTrack() {
+	if this.IsGoToSocialReplyAuthorization() {
 		return 59
 	}
-	if this.IsActivityStreamsTravel() {
+	if this.IsGoToSocialReplyRequest() {
 		return 60
 	}
-	if this.IsActivityStreamsUndo() {
+	if this.IsActivityStreamsService() {
 		return 61
 	}
-	if this.IsActivityStreamsUpdate() {
+	if this.IsActivityStreamsTentativeAccept() {
 		return 62
 	}
-	if this.IsActivityStreamsVideo() {
+	if this.IsActivityStreamsTentativeReject() {
 		return 63
 	}
-	if this.IsActivityStreamsView() {
+	if this.IsActivityStreamsTombstone() {
 		return 64
+	}
+	if this.IsFunkwhaleTrack() {
+		return 65
+	}
+	if this.IsActivityStreamsTravel() {
+		return 66
+	}
+	if this.IsActivityStreamsUndo() {
+		return 67
+	}
+	if this.IsActivityStreamsUpdate() {
+		return 68
+	}
+	if this.IsActivityStreamsVideo() {
+		return 69
+	}
+	if this.IsActivityStreamsView() {
+		return 70
 	}
 	if this.IsIRI() {
 		return -2
@@ -2082,6 +2263,10 @@ func (this ActivityStreamsBccPropertyIterator) LessThan(o vocab.ActivityStreamsB
 		return this.GetActivityStreamsAnnounce().LessThan(o.GetActivityStreamsAnnounce())
 	} else if this.IsGoToSocialAnnounceApproval() {
 		return this.GetGoToSocialAnnounceApproval().LessThan(o.GetGoToSocialAnnounceApproval())
+	} else if this.IsGoToSocialAnnounceAuthorization() {
+		return this.GetGoToSocialAnnounceAuthorization().LessThan(o.GetGoToSocialAnnounceAuthorization())
+	} else if this.IsGoToSocialAnnounceRequest() {
+		return this.GetGoToSocialAnnounceRequest().LessThan(o.GetGoToSocialAnnounceRequest())
 	} else if this.IsActivityStreamsApplication() {
 		return this.GetActivityStreamsApplication().LessThan(o.GetActivityStreamsApplication())
 	} else if this.IsActivityStreamsArrive() {
@@ -2138,6 +2323,10 @@ func (this ActivityStreamsBccPropertyIterator) LessThan(o vocab.ActivityStreamsB
 		return this.GetActivityStreamsLike().LessThan(o.GetActivityStreamsLike())
 	} else if this.IsGoToSocialLikeApproval() {
 		return this.GetGoToSocialLikeApproval().LessThan(o.GetGoToSocialLikeApproval())
+	} else if this.IsGoToSocialLikeAuthorization() {
+		return this.GetGoToSocialLikeAuthorization().LessThan(o.GetGoToSocialLikeAuthorization())
+	} else if this.IsGoToSocialLikeRequest() {
+		return this.GetGoToSocialLikeRequest().LessThan(o.GetGoToSocialLikeRequest())
 	} else if this.IsActivityStreamsListen() {
 		return this.GetActivityStreamsListen().LessThan(o.GetActivityStreamsListen())
 	} else if this.IsActivityStreamsMention() {
@@ -2176,6 +2365,10 @@ func (this ActivityStreamsBccPropertyIterator) LessThan(o vocab.ActivityStreamsB
 		return this.GetActivityStreamsRemove().LessThan(o.GetActivityStreamsRemove())
 	} else if this.IsGoToSocialReplyApproval() {
 		return this.GetGoToSocialReplyApproval().LessThan(o.GetGoToSocialReplyApproval())
+	} else if this.IsGoToSocialReplyAuthorization() {
+		return this.GetGoToSocialReplyAuthorization().LessThan(o.GetGoToSocialReplyAuthorization())
+	} else if this.IsGoToSocialReplyRequest() {
+		return this.GetGoToSocialReplyRequest().LessThan(o.GetGoToSocialReplyRequest())
 	} else if this.IsActivityStreamsService() {
 		return this.GetActivityStreamsService().LessThan(o.GetActivityStreamsService())
 	} else if this.IsActivityStreamsTentativeAccept() {
@@ -2642,6 +2835,20 @@ func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialAnnounceApproval(v 
 	this.gotosocialAnnounceApprovalMember = v
 }
 
+// SetGoToSocialAnnounceAuthorization sets the value of this property. Calling
+// IsGoToSocialAnnounceAuthorization afterwards returns true.
+func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialAnnounceAuthorization(v vocab.GoToSocialAnnounceAuthorization) {
+	this.clear()
+	this.gotosocialAnnounceAuthorizationMember = v
+}
+
+// SetGoToSocialAnnounceRequest sets the value of this property. Calling
+// IsGoToSocialAnnounceRequest afterwards returns true.
+func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialAnnounceRequest(v vocab.GoToSocialAnnounceRequest) {
+	this.clear()
+	this.gotosocialAnnounceRequestMember = v
+}
+
 // SetGoToSocialLikeApproval sets the value of this property. Calling
 // IsGoToSocialLikeApproval afterwards returns true.
 func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialLikeApproval(v vocab.GoToSocialLikeApproval) {
@@ -2649,11 +2856,39 @@ func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialLikeApproval(v voca
 	this.gotosocialLikeApprovalMember = v
 }
 
+// SetGoToSocialLikeAuthorization sets the value of this property. Calling
+// IsGoToSocialLikeAuthorization afterwards returns true.
+func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialLikeAuthorization(v vocab.GoToSocialLikeAuthorization) {
+	this.clear()
+	this.gotosocialLikeAuthorizationMember = v
+}
+
+// SetGoToSocialLikeRequest sets the value of this property. Calling
+// IsGoToSocialLikeRequest afterwards returns true.
+func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialLikeRequest(v vocab.GoToSocialLikeRequest) {
+	this.clear()
+	this.gotosocialLikeRequestMember = v
+}
+
 // SetGoToSocialReplyApproval sets the value of this property. Calling
 // IsGoToSocialReplyApproval afterwards returns true.
 func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialReplyApproval(v vocab.GoToSocialReplyApproval) {
 	this.clear()
 	this.gotosocialReplyApprovalMember = v
+}
+
+// SetGoToSocialReplyAuthorization sets the value of this property. Calling
+// IsGoToSocialReplyAuthorization afterwards returns true.
+func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialReplyAuthorization(v vocab.GoToSocialReplyAuthorization) {
+	this.clear()
+	this.gotosocialReplyAuthorizationMember = v
+}
+
+// SetGoToSocialReplyRequest sets the value of this property. Calling
+// IsGoToSocialReplyRequest afterwards returns true.
+func (this *ActivityStreamsBccPropertyIterator) SetGoToSocialReplyRequest(v vocab.GoToSocialReplyRequest) {
+	this.clear()
+	this.gotosocialReplyRequestMember = v
 }
 
 // SetIRI sets the value of this property. Calling IsIRI afterwards returns true.
@@ -2723,6 +2958,14 @@ func (this *ActivityStreamsBccPropertyIterator) SetType(t vocab.Type) error {
 	}
 	if v, ok := t.(vocab.GoToSocialAnnounceApproval); ok {
 		this.SetGoToSocialAnnounceApproval(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialAnnounceAuthorization); ok {
+		this.SetGoToSocialAnnounceAuthorization(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialAnnounceRequest); ok {
+		this.SetGoToSocialAnnounceRequest(v)
 		return nil
 	}
 	if v, ok := t.(vocab.ActivityStreamsApplication); ok {
@@ -2837,6 +3080,14 @@ func (this *ActivityStreamsBccPropertyIterator) SetType(t vocab.Type) error {
 		this.SetGoToSocialLikeApproval(v)
 		return nil
 	}
+	if v, ok := t.(vocab.GoToSocialLikeAuthorization); ok {
+		this.SetGoToSocialLikeAuthorization(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialLikeRequest); ok {
+		this.SetGoToSocialLikeRequest(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ActivityStreamsListen); ok {
 		this.SetActivityStreamsListen(v)
 		return nil
@@ -2913,6 +3164,14 @@ func (this *ActivityStreamsBccPropertyIterator) SetType(t vocab.Type) error {
 		this.SetGoToSocialReplyApproval(v)
 		return nil
 	}
+	if v, ok := t.(vocab.GoToSocialReplyAuthorization); ok {
+		this.SetGoToSocialReplyAuthorization(v)
+		return nil
+	}
+	if v, ok := t.(vocab.GoToSocialReplyRequest); ok {
+		this.SetGoToSocialReplyRequest(v)
+		return nil
+	}
 	if v, ok := t.(vocab.ActivityStreamsService); ok {
 		this.SetActivityStreamsService(v)
 		return nil
@@ -2968,6 +3227,8 @@ func (this *ActivityStreamsBccPropertyIterator) clear() {
 	this.funkwhaleAlbumMember = nil
 	this.activitystreamsAnnounceMember = nil
 	this.gotosocialAnnounceApprovalMember = nil
+	this.gotosocialAnnounceAuthorizationMember = nil
+	this.gotosocialAnnounceRequestMember = nil
 	this.activitystreamsApplicationMember = nil
 	this.activitystreamsArriveMember = nil
 	this.activitystreamsArticleMember = nil
@@ -2996,6 +3257,8 @@ func (this *ActivityStreamsBccPropertyIterator) clear() {
 	this.funkwhaleLibraryMember = nil
 	this.activitystreamsLikeMember = nil
 	this.gotosocialLikeApprovalMember = nil
+	this.gotosocialLikeAuthorizationMember = nil
+	this.gotosocialLikeRequestMember = nil
 	this.activitystreamsListenMember = nil
 	this.activitystreamsMentionMember = nil
 	this.activitystreamsMoveMember = nil
@@ -3015,6 +3278,8 @@ func (this *ActivityStreamsBccPropertyIterator) clear() {
 	this.activitystreamsRelationshipMember = nil
 	this.activitystreamsRemoveMember = nil
 	this.gotosocialReplyApprovalMember = nil
+	this.gotosocialReplyAuthorizationMember = nil
+	this.gotosocialReplyRequestMember = nil
 	this.activitystreamsServiceMember = nil
 	this.activitystreamsTentativeAcceptMember = nil
 	this.activitystreamsTentativeRejectMember = nil
@@ -3050,6 +3315,10 @@ func (this ActivityStreamsBccPropertyIterator) serialize() (interface{}, error) 
 		return this.GetActivityStreamsAnnounce().Serialize()
 	} else if this.IsGoToSocialAnnounceApproval() {
 		return this.GetGoToSocialAnnounceApproval().Serialize()
+	} else if this.IsGoToSocialAnnounceAuthorization() {
+		return this.GetGoToSocialAnnounceAuthorization().Serialize()
+	} else if this.IsGoToSocialAnnounceRequest() {
+		return this.GetGoToSocialAnnounceRequest().Serialize()
 	} else if this.IsActivityStreamsApplication() {
 		return this.GetActivityStreamsApplication().Serialize()
 	} else if this.IsActivityStreamsArrive() {
@@ -3106,6 +3375,10 @@ func (this ActivityStreamsBccPropertyIterator) serialize() (interface{}, error) 
 		return this.GetActivityStreamsLike().Serialize()
 	} else if this.IsGoToSocialLikeApproval() {
 		return this.GetGoToSocialLikeApproval().Serialize()
+	} else if this.IsGoToSocialLikeAuthorization() {
+		return this.GetGoToSocialLikeAuthorization().Serialize()
+	} else if this.IsGoToSocialLikeRequest() {
+		return this.GetGoToSocialLikeRequest().Serialize()
 	} else if this.IsActivityStreamsListen() {
 		return this.GetActivityStreamsListen().Serialize()
 	} else if this.IsActivityStreamsMention() {
@@ -3144,6 +3417,10 @@ func (this ActivityStreamsBccPropertyIterator) serialize() (interface{}, error) 
 		return this.GetActivityStreamsRemove().Serialize()
 	} else if this.IsGoToSocialReplyApproval() {
 		return this.GetGoToSocialReplyApproval().Serialize()
+	} else if this.IsGoToSocialReplyAuthorization() {
+		return this.GetGoToSocialReplyAuthorization().Serialize()
+	} else if this.IsGoToSocialReplyRequest() {
+		return this.GetGoToSocialReplyRequest().Serialize()
 	} else if this.IsActivityStreamsService() {
 		return this.GetActivityStreamsService().Serialize()
 	} else if this.IsActivityStreamsTentativeAccept() {
@@ -3885,6 +4162,30 @@ func (this *ActivityStreamsBccProperty) AppendGoToSocialAnnounceApproval(v vocab
 	})
 }
 
+// AppendGoToSocialAnnounceAuthorization appends a AnnounceAuthorization value to
+// the back of a list of the property "bcc". Invalidates iterators that are
+// traversing using Prev.
+func (this *ActivityStreamsBccProperty) AppendGoToSocialAnnounceAuthorization(v vocab.GoToSocialAnnounceAuthorization) {
+	this.properties = append(this.properties, &ActivityStreamsBccPropertyIterator{
+		alias:                                 this.alias,
+		gotosocialAnnounceAuthorizationMember: v,
+		myIdx:                                 this.Len(),
+		parent:                                this,
+	})
+}
+
+// AppendGoToSocialAnnounceRequest appends a AnnounceRequest value to the back of
+// a list of the property "bcc". Invalidates iterators that are traversing
+// using Prev.
+func (this *ActivityStreamsBccProperty) AppendGoToSocialAnnounceRequest(v vocab.GoToSocialAnnounceRequest) {
+	this.properties = append(this.properties, &ActivityStreamsBccPropertyIterator{
+		alias:                           this.alias,
+		gotosocialAnnounceRequestMember: v,
+		myIdx:                           this.Len(),
+		parent:                          this,
+	})
+}
+
 // AppendGoToSocialLikeApproval appends a LikeApproval value to the back of a list
 // of the property "bcc". Invalidates iterators that are traversing using Prev.
 func (this *ActivityStreamsBccProperty) AppendGoToSocialLikeApproval(v vocab.GoToSocialLikeApproval) {
@@ -3893,6 +4194,29 @@ func (this *ActivityStreamsBccProperty) AppendGoToSocialLikeApproval(v vocab.GoT
 		gotosocialLikeApprovalMember: v,
 		myIdx:                        this.Len(),
 		parent:                       this,
+	})
+}
+
+// AppendGoToSocialLikeAuthorization appends a LikeAuthorization value to the back
+// of a list of the property "bcc". Invalidates iterators that are traversing
+// using Prev.
+func (this *ActivityStreamsBccProperty) AppendGoToSocialLikeAuthorization(v vocab.GoToSocialLikeAuthorization) {
+	this.properties = append(this.properties, &ActivityStreamsBccPropertyIterator{
+		alias:                             this.alias,
+		gotosocialLikeAuthorizationMember: v,
+		myIdx:                             this.Len(),
+		parent:                            this,
+	})
+}
+
+// AppendGoToSocialLikeRequest appends a LikeRequest value to the back of a list
+// of the property "bcc". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsBccProperty) AppendGoToSocialLikeRequest(v vocab.GoToSocialLikeRequest) {
+	this.properties = append(this.properties, &ActivityStreamsBccPropertyIterator{
+		alias:                       this.alias,
+		gotosocialLikeRequestMember: v,
+		myIdx:                       this.Len(),
+		parent:                      this,
 	})
 }
 
@@ -3905,6 +4229,29 @@ func (this *ActivityStreamsBccProperty) AppendGoToSocialReplyApproval(v vocab.Go
 		gotosocialReplyApprovalMember: v,
 		myIdx:                         this.Len(),
 		parent:                        this,
+	})
+}
+
+// AppendGoToSocialReplyAuthorization appends a ReplyAuthorization value to the
+// back of a list of the property "bcc". Invalidates iterators that are
+// traversing using Prev.
+func (this *ActivityStreamsBccProperty) AppendGoToSocialReplyAuthorization(v vocab.GoToSocialReplyAuthorization) {
+	this.properties = append(this.properties, &ActivityStreamsBccPropertyIterator{
+		alias:                              this.alias,
+		gotosocialReplyAuthorizationMember: v,
+		myIdx:                              this.Len(),
+		parent:                             this,
+	})
+}
+
+// AppendGoToSocialReplyRequest appends a ReplyRequest value to the back of a list
+// of the property "bcc". Invalidates iterators that are traversing using Prev.
+func (this *ActivityStreamsBccProperty) AppendGoToSocialReplyRequest(v vocab.GoToSocialReplyRequest) {
+	this.properties = append(this.properties, &ActivityStreamsBccPropertyIterator{
+		alias:                        this.alias,
+		gotosocialReplyRequestMember: v,
+		myIdx:                        this.Len(),
+		parent:                       this,
 	})
 }
 
@@ -5010,6 +5357,40 @@ func (this *ActivityStreamsBccProperty) InsertGoToSocialAnnounceApproval(idx int
 	}
 }
 
+// InsertGoToSocialAnnounceAuthorization inserts a AnnounceAuthorization value at
+// the specified index for a property "bcc". Existing elements at that index
+// and higher are shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) InsertGoToSocialAnnounceAuthorization(idx int, v vocab.GoToSocialAnnounceAuthorization) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                                 this.alias,
+		gotosocialAnnounceAuthorizationMember: v,
+		myIdx:                                 idx,
+		parent:                                this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertGoToSocialAnnounceRequest inserts a AnnounceRequest value at the
+// specified index for a property "bcc". Existing elements at that index and
+// higher are shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) InsertGoToSocialAnnounceRequest(idx int, v vocab.GoToSocialAnnounceRequest) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                           this.alias,
+		gotosocialAnnounceRequestMember: v,
+		myIdx:                           idx,
+		parent:                          this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // InsertGoToSocialLikeApproval inserts a LikeApproval value at the specified
 // index for a property "bcc". Existing elements at that index and higher are
 // shifted back once. Invalidates all iterators.
@@ -5027,6 +5408,40 @@ func (this *ActivityStreamsBccProperty) InsertGoToSocialLikeApproval(idx int, v 
 	}
 }
 
+// InsertGoToSocialLikeAuthorization inserts a LikeAuthorization value at the
+// specified index for a property "bcc". Existing elements at that index and
+// higher are shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) InsertGoToSocialLikeAuthorization(idx int, v vocab.GoToSocialLikeAuthorization) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                             this.alias,
+		gotosocialLikeAuthorizationMember: v,
+		myIdx:                             idx,
+		parent:                            this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertGoToSocialLikeRequest inserts a LikeRequest value at the specified index
+// for a property "bcc". Existing elements at that index and higher are
+// shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) InsertGoToSocialLikeRequest(idx int, v vocab.GoToSocialLikeRequest) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                       this.alias,
+		gotosocialLikeRequestMember: v,
+		myIdx:                       idx,
+		parent:                      this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // InsertGoToSocialReplyApproval inserts a ReplyApproval value at the specified
 // index for a property "bcc". Existing elements at that index and higher are
 // shifted back once. Invalidates all iterators.
@@ -5038,6 +5453,40 @@ func (this *ActivityStreamsBccProperty) InsertGoToSocialReplyApproval(idx int, v
 		gotosocialReplyApprovalMember: v,
 		myIdx:                         idx,
 		parent:                        this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertGoToSocialReplyAuthorization inserts a ReplyAuthorization value at the
+// specified index for a property "bcc". Existing elements at that index and
+// higher are shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) InsertGoToSocialReplyAuthorization(idx int, v vocab.GoToSocialReplyAuthorization) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                              this.alias,
+		gotosocialReplyAuthorizationMember: v,
+		myIdx:                              idx,
+		parent:                             this,
+	}
+	for i := idx; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// InsertGoToSocialReplyRequest inserts a ReplyRequest value at the specified
+// index for a property "bcc". Existing elements at that index and higher are
+// shifted back once. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) InsertGoToSocialReplyRequest(idx int, v vocab.GoToSocialReplyRequest) {
+	this.properties = append(this.properties, nil)
+	copy(this.properties[idx+1:], this.properties[idx:])
+	this.properties[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                        this.alias,
+		gotosocialReplyRequestMember: v,
+		myIdx:                        idx,
+		parent:                       this,
 	}
 	for i := idx; i < this.Len(); i++ {
 		(this.properties)[i].myIdx = i
@@ -5223,230 +5672,254 @@ func (this ActivityStreamsBccProperty) Less(i, j int) bool {
 			rhs := this.properties[j].GetGoToSocialAnnounceApproval()
 			return lhs.LessThan(rhs)
 		} else if idx1 == 8 {
+			lhs := this.properties[i].GetGoToSocialAnnounceAuthorization()
+			rhs := this.properties[j].GetGoToSocialAnnounceAuthorization()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 9 {
+			lhs := this.properties[i].GetGoToSocialAnnounceRequest()
+			rhs := this.properties[j].GetGoToSocialAnnounceRequest()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 10 {
 			lhs := this.properties[i].GetActivityStreamsApplication()
 			rhs := this.properties[j].GetActivityStreamsApplication()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 9 {
+		} else if idx1 == 11 {
 			lhs := this.properties[i].GetActivityStreamsArrive()
 			rhs := this.properties[j].GetActivityStreamsArrive()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 10 {
+		} else if idx1 == 12 {
 			lhs := this.properties[i].GetActivityStreamsArticle()
 			rhs := this.properties[j].GetActivityStreamsArticle()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 11 {
+		} else if idx1 == 13 {
 			lhs := this.properties[i].GetFunkwhaleArtist()
 			rhs := this.properties[j].GetFunkwhaleArtist()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 12 {
+		} else if idx1 == 14 {
 			lhs := this.properties[i].GetActivityStreamsAudio()
 			rhs := this.properties[j].GetActivityStreamsAudio()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 13 {
+		} else if idx1 == 15 {
 			lhs := this.properties[i].GetActivityStreamsBlock()
 			rhs := this.properties[j].GetActivityStreamsBlock()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 14 {
+		} else if idx1 == 16 {
 			lhs := this.properties[i].GetActivityStreamsCollection()
 			rhs := this.properties[j].GetActivityStreamsCollection()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 15 {
+		} else if idx1 == 17 {
 			lhs := this.properties[i].GetActivityStreamsCollectionPage()
 			rhs := this.properties[j].GetActivityStreamsCollectionPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 16 {
+		} else if idx1 == 18 {
 			lhs := this.properties[i].GetActivityStreamsCreate()
 			rhs := this.properties[j].GetActivityStreamsCreate()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 17 {
+		} else if idx1 == 19 {
 			lhs := this.properties[i].GetActivityStreamsDelete()
 			rhs := this.properties[j].GetActivityStreamsDelete()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 18 {
+		} else if idx1 == 20 {
 			lhs := this.properties[i].GetActivityStreamsDislike()
 			rhs := this.properties[j].GetActivityStreamsDislike()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 19 {
+		} else if idx1 == 21 {
 			lhs := this.properties[i].GetActivityStreamsDocument()
 			rhs := this.properties[j].GetActivityStreamsDocument()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 20 {
+		} else if idx1 == 22 {
 			lhs := this.properties[i].GetTootEmoji()
 			rhs := this.properties[j].GetTootEmoji()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 21 {
+		} else if idx1 == 23 {
 			lhs := this.properties[i].GetActivityStreamsEvent()
 			rhs := this.properties[j].GetActivityStreamsEvent()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 22 {
+		} else if idx1 == 24 {
 			lhs := this.properties[i].GetActivityStreamsFlag()
 			rhs := this.properties[j].GetActivityStreamsFlag()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 23 {
+		} else if idx1 == 25 {
 			lhs := this.properties[i].GetActivityStreamsFollow()
 			rhs := this.properties[j].GetActivityStreamsFollow()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 24 {
+		} else if idx1 == 26 {
 			lhs := this.properties[i].GetActivityStreamsGroup()
 			rhs := this.properties[j].GetActivityStreamsGroup()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 25 {
+		} else if idx1 == 27 {
 			lhs := this.properties[i].GetTootHashtag()
 			rhs := this.properties[j].GetTootHashtag()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 26 {
+		} else if idx1 == 28 {
 			lhs := this.properties[i].GetTootIdentityProof()
 			rhs := this.properties[j].GetTootIdentityProof()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 27 {
+		} else if idx1 == 29 {
 			lhs := this.properties[i].GetActivityStreamsIgnore()
 			rhs := this.properties[j].GetActivityStreamsIgnore()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 28 {
+		} else if idx1 == 30 {
 			lhs := this.properties[i].GetActivityStreamsImage()
 			rhs := this.properties[j].GetActivityStreamsImage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 29 {
+		} else if idx1 == 31 {
 			lhs := this.properties[i].GetActivityStreamsIntransitiveActivity()
 			rhs := this.properties[j].GetActivityStreamsIntransitiveActivity()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 30 {
+		} else if idx1 == 32 {
 			lhs := this.properties[i].GetActivityStreamsInvite()
 			rhs := this.properties[j].GetActivityStreamsInvite()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 31 {
+		} else if idx1 == 33 {
 			lhs := this.properties[i].GetActivityStreamsJoin()
 			rhs := this.properties[j].GetActivityStreamsJoin()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 32 {
+		} else if idx1 == 34 {
 			lhs := this.properties[i].GetActivityStreamsLeave()
 			rhs := this.properties[j].GetActivityStreamsLeave()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 33 {
+		} else if idx1 == 35 {
 			lhs := this.properties[i].GetFunkwhaleLibrary()
 			rhs := this.properties[j].GetFunkwhaleLibrary()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 34 {
+		} else if idx1 == 36 {
 			lhs := this.properties[i].GetActivityStreamsLike()
 			rhs := this.properties[j].GetActivityStreamsLike()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 35 {
+		} else if idx1 == 37 {
 			lhs := this.properties[i].GetGoToSocialLikeApproval()
 			rhs := this.properties[j].GetGoToSocialLikeApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 36 {
+		} else if idx1 == 38 {
+			lhs := this.properties[i].GetGoToSocialLikeAuthorization()
+			rhs := this.properties[j].GetGoToSocialLikeAuthorization()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 39 {
+			lhs := this.properties[i].GetGoToSocialLikeRequest()
+			rhs := this.properties[j].GetGoToSocialLikeRequest()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 40 {
 			lhs := this.properties[i].GetActivityStreamsListen()
 			rhs := this.properties[j].GetActivityStreamsListen()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 37 {
+		} else if idx1 == 41 {
 			lhs := this.properties[i].GetActivityStreamsMention()
 			rhs := this.properties[j].GetActivityStreamsMention()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 38 {
+		} else if idx1 == 42 {
 			lhs := this.properties[i].GetActivityStreamsMove()
 			rhs := this.properties[j].GetActivityStreamsMove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 39 {
+		} else if idx1 == 43 {
 			lhs := this.properties[i].GetActivityStreamsNote()
 			rhs := this.properties[j].GetActivityStreamsNote()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 40 {
+		} else if idx1 == 44 {
 			lhs := this.properties[i].GetActivityStreamsOffer()
 			rhs := this.properties[j].GetActivityStreamsOffer()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 41 {
+		} else if idx1 == 45 {
 			lhs := this.properties[i].GetActivityStreamsOrderedCollection()
 			rhs := this.properties[j].GetActivityStreamsOrderedCollection()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 42 {
+		} else if idx1 == 46 {
 			lhs := this.properties[i].GetActivityStreamsOrderedCollectionPage()
 			rhs := this.properties[j].GetActivityStreamsOrderedCollectionPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 43 {
+		} else if idx1 == 47 {
 			lhs := this.properties[i].GetActivityStreamsOrganization()
 			rhs := this.properties[j].GetActivityStreamsOrganization()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 44 {
+		} else if idx1 == 48 {
 			lhs := this.properties[i].GetActivityStreamsPage()
 			rhs := this.properties[j].GetActivityStreamsPage()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 45 {
+		} else if idx1 == 49 {
 			lhs := this.properties[i].GetActivityStreamsPerson()
 			rhs := this.properties[j].GetActivityStreamsPerson()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 46 {
+		} else if idx1 == 50 {
 			lhs := this.properties[i].GetActivityStreamsPlace()
 			rhs := this.properties[j].GetActivityStreamsPlace()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 47 {
+		} else if idx1 == 51 {
 			lhs := this.properties[i].GetActivityStreamsProfile()
 			rhs := this.properties[j].GetActivityStreamsProfile()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 48 {
+		} else if idx1 == 52 {
 			lhs := this.properties[i].GetSchemaPropertyValue()
 			rhs := this.properties[j].GetSchemaPropertyValue()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 49 {
+		} else if idx1 == 53 {
 			lhs := this.properties[i].GetActivityStreamsQuestion()
 			rhs := this.properties[j].GetActivityStreamsQuestion()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 50 {
+		} else if idx1 == 54 {
 			lhs := this.properties[i].GetActivityStreamsRead()
 			rhs := this.properties[j].GetActivityStreamsRead()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 51 {
+		} else if idx1 == 55 {
 			lhs := this.properties[i].GetActivityStreamsReject()
 			rhs := this.properties[j].GetActivityStreamsReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 52 {
+		} else if idx1 == 56 {
 			lhs := this.properties[i].GetActivityStreamsRelationship()
 			rhs := this.properties[j].GetActivityStreamsRelationship()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 53 {
+		} else if idx1 == 57 {
 			lhs := this.properties[i].GetActivityStreamsRemove()
 			rhs := this.properties[j].GetActivityStreamsRemove()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 54 {
+		} else if idx1 == 58 {
 			lhs := this.properties[i].GetGoToSocialReplyApproval()
 			rhs := this.properties[j].GetGoToSocialReplyApproval()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 55 {
+		} else if idx1 == 59 {
+			lhs := this.properties[i].GetGoToSocialReplyAuthorization()
+			rhs := this.properties[j].GetGoToSocialReplyAuthorization()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 60 {
+			lhs := this.properties[i].GetGoToSocialReplyRequest()
+			rhs := this.properties[j].GetGoToSocialReplyRequest()
+			return lhs.LessThan(rhs)
+		} else if idx1 == 61 {
 			lhs := this.properties[i].GetActivityStreamsService()
 			rhs := this.properties[j].GetActivityStreamsService()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 56 {
+		} else if idx1 == 62 {
 			lhs := this.properties[i].GetActivityStreamsTentativeAccept()
 			rhs := this.properties[j].GetActivityStreamsTentativeAccept()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 57 {
+		} else if idx1 == 63 {
 			lhs := this.properties[i].GetActivityStreamsTentativeReject()
 			rhs := this.properties[j].GetActivityStreamsTentativeReject()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 58 {
+		} else if idx1 == 64 {
 			lhs := this.properties[i].GetActivityStreamsTombstone()
 			rhs := this.properties[j].GetActivityStreamsTombstone()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 59 {
+		} else if idx1 == 65 {
 			lhs := this.properties[i].GetFunkwhaleTrack()
 			rhs := this.properties[j].GetFunkwhaleTrack()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 60 {
+		} else if idx1 == 66 {
 			lhs := this.properties[i].GetActivityStreamsTravel()
 			rhs := this.properties[j].GetActivityStreamsTravel()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 61 {
+		} else if idx1 == 67 {
 			lhs := this.properties[i].GetActivityStreamsUndo()
 			rhs := this.properties[j].GetActivityStreamsUndo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 62 {
+		} else if idx1 == 68 {
 			lhs := this.properties[i].GetActivityStreamsUpdate()
 			rhs := this.properties[j].GetActivityStreamsUpdate()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 63 {
+		} else if idx1 == 69 {
 			lhs := this.properties[i].GetActivityStreamsVideo()
 			rhs := this.properties[j].GetActivityStreamsVideo()
 			return lhs.LessThan(rhs)
-		} else if idx1 == 64 {
+		} else if idx1 == 70 {
 			lhs := this.properties[i].GetActivityStreamsView()
 			rhs := this.properties[j].GetActivityStreamsView()
 			return lhs.LessThan(rhs)
@@ -6317,6 +6790,34 @@ func (this *ActivityStreamsBccProperty) PrependGoToSocialAnnounceApproval(v voca
 	}
 }
 
+// PrependGoToSocialAnnounceAuthorization prepends a AnnounceAuthorization value
+// to the front of a list of the property "bcc". Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) PrependGoToSocialAnnounceAuthorization(v vocab.GoToSocialAnnounceAuthorization) {
+	this.properties = append([]*ActivityStreamsBccPropertyIterator{{
+		alias:                                 this.alias,
+		gotosocialAnnounceAuthorizationMember: v,
+		myIdx:                                 0,
+		parent:                                this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependGoToSocialAnnounceRequest prepends a AnnounceRequest value to the front
+// of a list of the property "bcc". Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) PrependGoToSocialAnnounceRequest(v vocab.GoToSocialAnnounceRequest) {
+	this.properties = append([]*ActivityStreamsBccPropertyIterator{{
+		alias:                           this.alias,
+		gotosocialAnnounceRequestMember: v,
+		myIdx:                           0,
+		parent:                          this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // PrependGoToSocialLikeApproval prepends a LikeApproval value to the front of a
 // list of the property "bcc". Invalidates all iterators.
 func (this *ActivityStreamsBccProperty) PrependGoToSocialLikeApproval(v vocab.GoToSocialLikeApproval) {
@@ -6331,6 +6832,34 @@ func (this *ActivityStreamsBccProperty) PrependGoToSocialLikeApproval(v vocab.Go
 	}
 }
 
+// PrependGoToSocialLikeAuthorization prepends a LikeAuthorization value to the
+// front of a list of the property "bcc". Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) PrependGoToSocialLikeAuthorization(v vocab.GoToSocialLikeAuthorization) {
+	this.properties = append([]*ActivityStreamsBccPropertyIterator{{
+		alias:                             this.alias,
+		gotosocialLikeAuthorizationMember: v,
+		myIdx:                             0,
+		parent:                            this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependGoToSocialLikeRequest prepends a LikeRequest value to the front of a
+// list of the property "bcc". Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) PrependGoToSocialLikeRequest(v vocab.GoToSocialLikeRequest) {
+	this.properties = append([]*ActivityStreamsBccPropertyIterator{{
+		alias:                       this.alias,
+		gotosocialLikeRequestMember: v,
+		myIdx:                       0,
+		parent:                      this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
 // PrependGoToSocialReplyApproval prepends a ReplyApproval value to the front of a
 // list of the property "bcc". Invalidates all iterators.
 func (this *ActivityStreamsBccProperty) PrependGoToSocialReplyApproval(v vocab.GoToSocialReplyApproval) {
@@ -6339,6 +6868,34 @@ func (this *ActivityStreamsBccProperty) PrependGoToSocialReplyApproval(v vocab.G
 		gotosocialReplyApprovalMember: v,
 		myIdx:                         0,
 		parent:                        this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependGoToSocialReplyAuthorization prepends a ReplyAuthorization value to the
+// front of a list of the property "bcc". Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) PrependGoToSocialReplyAuthorization(v vocab.GoToSocialReplyAuthorization) {
+	this.properties = append([]*ActivityStreamsBccPropertyIterator{{
+		alias:                              this.alias,
+		gotosocialReplyAuthorizationMember: v,
+		myIdx:                              0,
+		parent:                             this,
+	}}, this.properties...)
+	for i := 1; i < this.Len(); i++ {
+		(this.properties)[i].myIdx = i
+	}
+}
+
+// PrependGoToSocialReplyRequest prepends a ReplyRequest value to the front of a
+// list of the property "bcc". Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) PrependGoToSocialReplyRequest(v vocab.GoToSocialReplyRequest) {
+	this.properties = append([]*ActivityStreamsBccPropertyIterator{{
+		alias:                        this.alias,
+		gotosocialReplyRequestMember: v,
+		myIdx:                        0,
+		parent:                       this,
 	}}, this.properties...)
 	for i := 1; i < this.Len(); i++ {
 		(this.properties)[i].myIdx = i
@@ -7233,6 +7790,32 @@ func (this *ActivityStreamsBccProperty) SetGoToSocialAnnounceApproval(idx int, v
 	}
 }
 
+// SetGoToSocialAnnounceAuthorization sets a AnnounceAuthorization value to be at
+// the specified index for the property "bcc". Panics if the index is out of
+// bounds. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) SetGoToSocialAnnounceAuthorization(idx int, v vocab.GoToSocialAnnounceAuthorization) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                                 this.alias,
+		gotosocialAnnounceAuthorizationMember: v,
+		myIdx:                                 idx,
+		parent:                                this,
+	}
+}
+
+// SetGoToSocialAnnounceRequest sets a AnnounceRequest value to be at the
+// specified index for the property "bcc". Panics if the index is out of
+// bounds. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) SetGoToSocialAnnounceRequest(idx int, v vocab.GoToSocialAnnounceRequest) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                           this.alias,
+		gotosocialAnnounceRequestMember: v,
+		myIdx:                           idx,
+		parent:                          this,
+	}
+}
+
 // SetGoToSocialLikeApproval sets a LikeApproval value to be at the specified
 // index for the property "bcc". Panics if the index is out of bounds.
 // Invalidates all iterators.
@@ -7246,6 +7829,32 @@ func (this *ActivityStreamsBccProperty) SetGoToSocialLikeApproval(idx int, v voc
 	}
 }
 
+// SetGoToSocialLikeAuthorization sets a LikeAuthorization value to be at the
+// specified index for the property "bcc". Panics if the index is out of
+// bounds. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) SetGoToSocialLikeAuthorization(idx int, v vocab.GoToSocialLikeAuthorization) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                             this.alias,
+		gotosocialLikeAuthorizationMember: v,
+		myIdx:                             idx,
+		parent:                            this,
+	}
+}
+
+// SetGoToSocialLikeRequest sets a LikeRequest value to be at the specified index
+// for the property "bcc". Panics if the index is out of bounds. Invalidates
+// all iterators.
+func (this *ActivityStreamsBccProperty) SetGoToSocialLikeRequest(idx int, v vocab.GoToSocialLikeRequest) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                       this.alias,
+		gotosocialLikeRequestMember: v,
+		myIdx:                       idx,
+		parent:                      this,
+	}
+}
+
 // SetGoToSocialReplyApproval sets a ReplyApproval value to be at the specified
 // index for the property "bcc". Panics if the index is out of bounds.
 // Invalidates all iterators.
@@ -7256,6 +7865,32 @@ func (this *ActivityStreamsBccProperty) SetGoToSocialReplyApproval(idx int, v vo
 		gotosocialReplyApprovalMember: v,
 		myIdx:                         idx,
 		parent:                        this,
+	}
+}
+
+// SetGoToSocialReplyAuthorization sets a ReplyAuthorization value to be at the
+// specified index for the property "bcc". Panics if the index is out of
+// bounds. Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) SetGoToSocialReplyAuthorization(idx int, v vocab.GoToSocialReplyAuthorization) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                              this.alias,
+		gotosocialReplyAuthorizationMember: v,
+		myIdx:                              idx,
+		parent:                             this,
+	}
+}
+
+// SetGoToSocialReplyRequest sets a ReplyRequest value to be at the specified
+// index for the property "bcc". Panics if the index is out of bounds.
+// Invalidates all iterators.
+func (this *ActivityStreamsBccProperty) SetGoToSocialReplyRequest(idx int, v vocab.GoToSocialReplyRequest) {
+	(this.properties)[idx].parent = nil
+	(this.properties)[idx] = &ActivityStreamsBccPropertyIterator{
+		alias:                        this.alias,
+		gotosocialReplyRequestMember: v,
+		myIdx:                        idx,
+		parent:                       this,
 	}
 }
 

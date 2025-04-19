@@ -1837,12 +1837,12 @@ func (c *Converter) PollVoteToASCreates(
 func populateValuesForProp[T ap.WithIRI](
 	prop ap.Property[T],
 	status *gtsmodel.Status,
-	urns gtsmodel.PolicyValues,
+	policyValues gtsmodel.PolicyValues,
 ) error {
 	iriStrs := make([]string, 0)
 
-	for _, urn := range urns {
-		switch urn {
+	for _, policyValue := range policyValues {
+		switch policyValue {
 
 		case gtsmodel.PolicyValueAuthor:
 			iriStrs = append(iriStrs, status.Account.URI)
@@ -1862,7 +1862,7 @@ func populateValuesForProp[T ap.WithIRI](
 			iriStrs = append(iriStrs, pub.PublicActivityPubIRI)
 
 		default:
-			iriStrs = append(iriStrs, string(urn))
+			iriStrs = append(iriStrs, string(policyValue))
 		}
 	}
 
@@ -1905,7 +1905,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canLikeAlwaysProp,
 		status,
-		interactionPolicy.CanLike.Always,
+		interactionPolicy.CanLike.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canLike.always: %w", err)
 	}
@@ -1918,7 +1918,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canLikeApprovalRequiredProp,
 		status,
-		interactionPolicy.CanLike.WithApproval,
+		interactionPolicy.CanLike.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canLike.approvalRequired: %w", err)
 	}
@@ -1943,7 +1943,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canReplyAlwaysProp,
 		status,
-		interactionPolicy.CanReply.Always,
+		interactionPolicy.CanReply.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canReply.always: %w", err)
 	}
@@ -1956,7 +1956,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canReplyApprovalRequiredProp,
 		status,
-		interactionPolicy.CanReply.WithApproval,
+		interactionPolicy.CanReply.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canReply.approvalRequired: %w", err)
 	}
@@ -1981,7 +1981,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canAnnounceAlwaysProp,
 		status,
-		interactionPolicy.CanAnnounce.Always,
+		interactionPolicy.CanAnnounce.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canAnnounce.always: %w", err)
 	}
@@ -1994,7 +1994,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canAnnounceApprovalRequiredProp,
 		status,
-		interactionPolicy.CanAnnounce.WithApproval,
+		interactionPolicy.CanAnnounce.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canAnnounce.approvalRequired: %w", err)
 	}
@@ -2018,7 +2018,7 @@ func (c *Converter) InteractionReqToASAccept(
 ) (vocab.ActivityStreamsAccept, error) {
 	accept := streams.NewActivityStreamsAccept()
 
-	acceptID, err := url.Parse(req.URI)
+	acceptID, err := url.Parse(req.ResponseURI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid accept uri: %w", err)
 	}
@@ -2114,7 +2114,7 @@ func (c *Converter) InteractionReqToASReject(
 ) (vocab.ActivityStreamsReject, error) {
 	reject := streams.NewActivityStreamsReject()
 
-	rejectID, err := url.Parse(req.URI)
+	rejectID, err := url.Parse(req.ResponseURI)
 	if err != nil {
 		return nil, gtserror.Newf("invalid reject uri: %w", err)
 	}

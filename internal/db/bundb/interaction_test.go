@@ -229,7 +229,7 @@ func (suite *InteractionTestSuite) TestInteractionRejected() {
 
 	// Update the interaction request to mark it rejected.
 	req.RejectedAt = time.Now()
-	req.URI = "https://some.reject.uri"
+	req.ResponseURI = "https://some.reject.uri"
 	if err := suite.state.DB.UpdateInteractionRequest(ctx, req, "uri", "rejected_at"); err != nil {
 		suite.FailNow(err.Error())
 	}

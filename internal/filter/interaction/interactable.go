@@ -78,8 +78,8 @@ func (f *Filter) StatusLikeable(
 		// always like their own status,
 		// no need for further checks.
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: util.Ptr(gtsmodel.PolicyValueAuthor),
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: util.Ptr(gtsmodel.PolicyValueAuthor),
 		}, nil
 	}
 
@@ -110,7 +110,7 @@ func (f *Filter) StatusLikeable(
 	// about interaction policies, and just return OK.
 	default:
 		return &gtsmodel.PolicyCheckResult{
-			Permission: gtsmodel.PolicyPermissionPermitted,
+			Permission: gtsmodel.PolicyPermissionAutomaticApproval,
 		}, nil
 	}
 }
@@ -153,7 +153,7 @@ func (f *Filter) StatusReplyable(
 			// and having the reply-to-their-own-reply go
 			// through as Permitted. None of that!
 			return &gtsmodel.PolicyCheckResult{
-				Permission: gtsmodel.PolicyPermissionWithApproval,
+				Permission: gtsmodel.PolicyPermissionManualApproval,
 			}, nil
 		}
 	}
@@ -163,8 +163,8 @@ func (f *Filter) StatusReplyable(
 		// always reply to their own status,
 		// no need for further checks.
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: util.Ptr(gtsmodel.PolicyValueAuthor),
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: util.Ptr(gtsmodel.PolicyValueAuthor),
 		}, nil
 	}
 
@@ -173,8 +173,8 @@ func (f *Filter) StatusReplyable(
 	// to them being mentioned, and easier to check!
 	if status.InReplyToAccountID == requester.ID {
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: util.Ptr(gtsmodel.PolicyValueMentioned),
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: util.Ptr(gtsmodel.PolicyValueMentioned),
 		}, nil
 	}
 
@@ -229,8 +229,8 @@ func (f *Filter) StatusReplyable(
 		// A mentioned account can always
 		// reply, no need for further checks.
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: util.Ptr(gtsmodel.PolicyValueMentioned),
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: util.Ptr(gtsmodel.PolicyValueMentioned),
 		}, nil
 	}
 
@@ -261,7 +261,7 @@ func (f *Filter) StatusReplyable(
 	// about interaction policies, and just return OK.
 	default:
 		return &gtsmodel.PolicyCheckResult{
-			Permission: gtsmodel.PolicyPermissionPermitted,
+			Permission: gtsmodel.PolicyPermissionAutomaticApproval,
 		}, nil
 	}
 }
@@ -291,8 +291,8 @@ func (f *Filter) StatusBoostable(
 		// always boost non-directs,
 		// no need for further checks.
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: util.Ptr(gtsmodel.PolicyValueAuthor),
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: util.Ptr(gtsmodel.PolicyValueAuthor),
 		}, nil
 	}
 
@@ -324,7 +324,7 @@ func (f *Filter) StatusBoostable(
 	case status.Visibility == gtsmodel.VisibilityPublic ||
 		status.Visibility == gtsmodel.VisibilityUnlocked:
 		return &gtsmodel.PolicyCheckResult{
-			Permission: gtsmodel.PolicyPermissionPermitted,
+			Permission: gtsmodel.PolicyPermissionAutomaticApproval,
 		}, nil
 
 	// Not permitted by any of the
@@ -353,7 +353,7 @@ func (f *Filter) checkPolicy(
 	matchAlways, matchAlwaysValue, err := f.matchPolicy(fctx,
 		requester,
 		status,
-		rules.Always,
+		rules.AutomaticApproval,
 	)
 	if err != nil {
 		return nil, gtserror.Newf("error checking policy match: %w", err)
@@ -364,7 +364,7 @@ func (f *Filter) checkPolicy(
 	matchWithApproval, _, err := f.matchPolicy(fctx,
 		requester,
 		status,
-		rules.WithApproval,
+		rules.ManualApproval,
 	)
 	if err != nil {
 		return nil, gtserror.Newf("error checking policy approval match: %w", err)
@@ -376,26 +376,26 @@ func (f *Filter) checkPolicy(
 	// prioritizing "always".
 	case matchAlways == explicit:
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: &matchAlwaysValue,
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: &matchAlwaysValue,
 		}, nil
 
 	case matchWithApproval == explicit:
 		return &gtsmodel.PolicyCheckResult{
-			Permission: gtsmodel.PolicyPermissionWithApproval,
+			Permission: gtsmodel.PolicyPermissionManualApproval,
 		}, nil
 
 	// Then try implicit match,
 	// prioritizing "always".
 	case matchAlways == implicit:
 		return &gtsmodel.PolicyCheckResult{
-			Permission:         gtsmodel.PolicyPermissionPermitted,
-			PermittedMatchedOn: &matchAlwaysValue,
+			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
+			PermissionMatchedOn: &matchAlwaysValue,
 		}, nil
 
 	case matchWithApproval == implicit:
 		return &gtsmodel.PolicyCheckResult{
-			Permission: gtsmodel.PolicyPermissionWithApproval,
+			Permission: gtsmodel.PolicyPermissionManualApproval,
 		}, nil
 	}
 

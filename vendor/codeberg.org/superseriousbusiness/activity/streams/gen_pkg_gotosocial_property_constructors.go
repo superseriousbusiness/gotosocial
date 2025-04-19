@@ -6,10 +6,15 @@ import (
 	propertyalways "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_always"
 	propertyapprovalrequired "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby"
+	propertyautomaticapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_automaticapproval"
 	propertycanannounce "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canannounce"
 	propertycanlike "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike"
+	propertycanquote "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canquote"
 	propertycanreply "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply"
+	propertyinteractingobject "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy"
+	propertyinteractiontarget "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_interactiontarget"
+	propertymanualapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_manualapproval"
 	vocab "codeberg.org/superseriousbusiness/activity/streams/vocab"
 )
 
@@ -30,6 +35,12 @@ func NewGoToSocialApprovedByProperty() vocab.GoToSocialApprovedByProperty {
 	return propertyapprovedby.NewGoToSocialApprovedByProperty()
 }
 
+// NewGoToSocialGoToSocialAutomaticApprovalProperty creates a new
+// GoToSocialAutomaticApprovalProperty
+func NewGoToSocialAutomaticApprovalProperty() vocab.GoToSocialAutomaticApprovalProperty {
+	return propertyautomaticapproval.NewGoToSocialAutomaticApprovalProperty()
+}
+
 // NewGoToSocialGoToSocialCanAnnounceProperty creates a new
 // GoToSocialCanAnnounceProperty
 func NewGoToSocialCanAnnounceProperty() vocab.GoToSocialCanAnnounceProperty {
@@ -41,13 +52,36 @@ func NewGoToSocialCanLikeProperty() vocab.GoToSocialCanLikeProperty {
 	return propertycanlike.NewGoToSocialCanLikeProperty()
 }
 
+// NewGoToSocialGoToSocialCanQuoteProperty creates a new GoToSocialCanQuoteProperty
+func NewGoToSocialCanQuoteProperty() vocab.GoToSocialCanQuoteProperty {
+	return propertycanquote.NewGoToSocialCanQuoteProperty()
+}
+
 // NewGoToSocialGoToSocialCanReplyProperty creates a new GoToSocialCanReplyProperty
 func NewGoToSocialCanReplyProperty() vocab.GoToSocialCanReplyProperty {
 	return propertycanreply.NewGoToSocialCanReplyProperty()
+}
+
+// NewGoToSocialGoToSocialInteractingObjectProperty creates a new
+// GoToSocialInteractingObjectProperty
+func NewGoToSocialInteractingObjectProperty() vocab.GoToSocialInteractingObjectProperty {
+	return propertyinteractingobject.NewGoToSocialInteractingObjectProperty()
 }
 
 // NewGoToSocialGoToSocialInteractionPolicyProperty creates a new
 // GoToSocialInteractionPolicyProperty
 func NewGoToSocialInteractionPolicyProperty() vocab.GoToSocialInteractionPolicyProperty {
 	return propertyinteractionpolicy.NewGoToSocialInteractionPolicyProperty()
+}
+
+// NewGoToSocialGoToSocialInteractionTargetProperty creates a new
+// GoToSocialInteractionTargetProperty
+func NewGoToSocialInteractionTargetProperty() vocab.GoToSocialInteractionTargetProperty {
+	return propertyinteractiontarget.NewGoToSocialInteractionTargetProperty()
+}
+
+// NewGoToSocialGoToSocialManualApprovalProperty creates a new
+// GoToSocialManualApprovalProperty
+func NewGoToSocialManualApprovalProperty() vocab.GoToSocialManualApprovalProperty {
+	return propertymanualapproval.NewGoToSocialManualApprovalProperty()
 }

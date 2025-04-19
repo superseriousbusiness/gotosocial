@@ -231,13 +231,19 @@ func (s *Surface) notifyFollow(
 	return nil
 }
 
-// notifyFave notifies the target of the given
-// fave that their status has been liked/faved.
+// notifyFave notifies the target of of a
+// fave that their status has been faved.
 func (s *Surface) notifyFave(
 	ctx context.Context,
-	fave *gtsmodel.StatusFave,
+	account *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	status *gtsmodel.Status,
 ) error {
-	notifyable, err := s.notifyableFave(ctx, fave)
+	notifyable, err := s.notifyableFave(ctx,
+		account,
+		targetAccount,
+		status,
+	)
 	if err != nil {
 		return err
 	}
@@ -251,24 +257,30 @@ func (s *Surface) notifyFave(
 	// of fave by account.
 	if err := s.Notify(ctx,
 		gtsmodel.NotificationFavourite,
-		fave.TargetAccount,
-		fave.Account,
-		fave.StatusID,
+		targetAccount,
+		account,
+		status.ID,
 	); err != nil {
-		return gtserror.Newf("error notifying status author %s: %w", fave.TargetAccountID, err)
+		return gtserror.Newf("error notifying status author %s: %w", targetAccount.ID, err)
 	}
 
 	return nil
 }
 
-// notifyPendingFave notifies the target of the
-// given fave that their status has been faved
-// and that approval is required.
+// notifyPendingFave notifies the target of a
+// fave that their status has been faved and
+// that approval is required.
 func (s *Surface) notifyPendingFave(
 	ctx context.Context,
-	fave *gtsmodel.StatusFave,
+	account *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	status *gtsmodel.Status,
 ) error {
-	notifyable, err := s.notifyableFave(ctx, fave)
+	notifyable, err := s.notifyableFave(ctx,
+		account,
+		targetAccount,
+		status,
+	)
 	if err != nil {
 		return err
 	}
@@ -282,34 +294,31 @@ func (s *Surface) notifyPendingFave(
 	// of fave by account.
 	if err := s.Notify(ctx,
 		gtsmodel.NotificationPendingFave,
-		fave.TargetAccount,
-		fave.Account,
-		fave.StatusID,
+		targetAccount,
+		account,
+		status.ID,
 	); err != nil {
-		return gtserror.Newf("error notifying status author %s: %w", fave.TargetAccountID, err)
+		return gtserror.Newf("error notifying status author %s: %w", targetAccount.ID, err)
 	}
 
 	return nil
 }
 
-// notifyableFave checks that the given
-// fave should be notified, taking account
-// of localness of receiving account, and mutes.
+// notifyableFave checks if a fave should
+// be notified, taking account of localness
+// of target account, and thread mutes.
 func (s *Surface) notifyableFave(
 	ctx context.Context,
-	fave *gtsmodel.StatusFave,
+	account *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	status *gtsmodel.Status,
 ) (bool, error) {
-	if fave.TargetAccountID == fave.AccountID {
+	if targetAccount.ID == account.ID {
 		// Self-fave, nothing to do.
 		return false, nil
 	}
 
-	// Beforehand, ensure the passed status fave is fully populated.
-	if err := s.State.DB.PopulateStatusFave(ctx, fave); err != nil {
-		return false, gtserror.Newf("error populating fave %s: %w", fave.ID, err)
-	}
-
-	if fave.TargetAccount.IsRemote() {
+	if targetAccount.IsRemote() {
 		// no need to notify
 		// remote accounts.
 		return false, nil
@@ -319,11 +328,11 @@ func (s *Surface) notifyableFave(
 	// muted the thread.
 	muted, err := s.State.DB.IsThreadMutedByAccount(
 		ctx,
-		fave.Status.ThreadID,
-		fave.TargetAccountID,
+		status.ThreadID,
+		targetAccount.ID,
 	)
 	if err != nil {
-		return false, gtserror.Newf("error checking status thread mute %s: %w", fave.StatusID, err)
+		return false, gtserror.Newf("error checking status thread mute %s: %w", status.ID, err)
 	}
 
 	if muted {
@@ -335,13 +344,20 @@ func (s *Surface) notifyableFave(
 	return true, nil
 }
 
-// notifyAnnounce notifies the status boost target
-// account that their status has been boosted.
+// notifyAnnounce notifies the target
+// acct that their status has been boosted.
 func (s *Surface) notifyAnnounce(
 	ctx context.Context,
-	boost *gtsmodel.Status,
+	account *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	targetStatus *gtsmodel.Status,
 ) error {
-	notifyable, err := s.notifyableAnnounce(ctx, boost)
+	notifyable, err := s.notifyableAnnounce(
+		ctx,
+		account,
+		targetAccount,
+		targetStatus,
+	)
 	if err != nil {
 		return err
 	}
@@ -355,11 +371,11 @@ func (s *Surface) notifyAnnounce(
 	// of boost by account.
 	if err := s.Notify(ctx,
 		gtsmodel.NotificationReblog,
-		boost.BoostOfAccount,
-		boost.Account,
-		boost.ID,
+		targetAccount,
+		account,
+		targetStatus.ID,
 	); err != nil {
-		return gtserror.Newf("error notifying boost target %s: %w", boost.BoostOfAccountID, err)
+		return gtserror.Newf("error notifying boost target %s: %w", targetAccount.ID, err)
 	}
 
 	return nil
@@ -370,9 +386,16 @@ func (s *Surface) notifyAnnounce(
 // and that the boost requires approval.
 func (s *Surface) notifyPendingAnnounce(
 	ctx context.Context,
-	boost *gtsmodel.Status,
+	account *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	targetStatus *gtsmodel.Status,
 ) error {
-	notifyable, err := s.notifyableAnnounce(ctx, boost)
+	notifyable, err := s.notifyableAnnounce(
+		ctx,
+		account,
+		targetAccount,
+		targetStatus,
+	)
 	if err != nil {
 		return err
 	}
@@ -386,11 +409,11 @@ func (s *Surface) notifyPendingAnnounce(
 	// of boost by account.
 	if err := s.Notify(ctx,
 		gtsmodel.NotificationPendingReblog,
-		boost.BoostOfAccount,
-		boost.Account,
-		boost.ID,
+		targetAccount,
+		account,
+		targetStatus.ID,
 	); err != nil {
-		return gtserror.Newf("error notifying boost target %s: %w", boost.BoostOfAccountID, err)
+		return gtserror.Newf("error notifying pending boost target %s: %w", targetAccount.ID, err)
 	}
 
 	return nil
@@ -401,24 +424,21 @@ func (s *Surface) notifyPendingAnnounce(
 // of localness of receiving account, and mutes.
 func (s *Surface) notifyableAnnounce(
 	ctx context.Context,
-	status *gtsmodel.Status,
+	account *gtsmodel.Account,
+	targetAccount *gtsmodel.Account,
+	targetStatus *gtsmodel.Status,
 ) (bool, error) {
-	if status.BoostOfID == "" {
-		// Not a boost, nothing to do.
-		return false, nil
-	}
-
-	if status.BoostOfAccountID == status.AccountID {
+	if account.ID == targetStatus.AccountID {
 		// Self-boost, nothing to do.
 		return false, nil
 	}
 
-	// Beforehand, ensure the passed status is fully populated.
-	if err := s.State.DB.PopulateStatus(ctx, status); err != nil {
-		return false, gtserror.Newf("error populating status %s: %w", status.ID, err)
+	// Ensure boosted status is populated.
+	if err := s.State.DB.PopulateStatus(ctx, targetStatus); err != nil {
+		return false, gtserror.Newf("error populating status %s: %w", targetStatus.ID, err)
 	}
 
-	if status.BoostOfAccount.IsRemote() {
+	if targetStatus.Account.IsRemote() {
 		// no need to notify
 		// remote accounts.
 		return false, nil
@@ -428,12 +448,11 @@ func (s *Surface) notifyableAnnounce(
 	// muted the thread.
 	muted, err := s.State.DB.IsThreadMutedByAccount(
 		ctx,
-		status.BoostOf.ThreadID,
-		status.BoostOfAccountID,
+		targetStatus.ThreadID,
+		targetAccount.ID,
 	)
-
 	if err != nil {
-		return false, gtserror.Newf("error checking status thread mute %s: %w", status.BoostOfID, err)
+		return false, gtserror.Newf("error checking status thread mute %s: %w", targetStatus.ID, err)
 	}
 
 	if muted {
