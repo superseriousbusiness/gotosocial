@@ -23,6 +23,7 @@ import { CustomEmoji } from "./custom-emoji";
 export interface Status {
 	id: string;
 	created_at: string;
+	edited_at: string | null;
 	in_reply_to_id: string | null;
 	in_reply_to_account_id: string | null;
 	sensitive: boolean;
