@@ -299,7 +299,7 @@ function StatusFooter({ status }: { status: StatusType }) {
 										minute: '2-digit',
 										hour12: false
 									})}
-								</time>
+								</time>{ status.edited_at && "*" }
 							</a>
 						</dd>
 					</div>
@@ -322,13 +322,15 @@ function StatusFooter({ status }: { status: StatusType }) {
 					</summary>
 					<dl className="stats-more-info-content">
 						<div className="stats-grouping">
-							<div className="stats-item" title="Language">
-								<dt>
-									<span className="sr-only">Language</span>
-									<i className="fa fa-language" aria-hidden="true"></i>
-								</dt>
-								<dd>{status.language}</dd>
-							</div>
+							{ status.language &&
+								<div className="stats-item" title="Language">
+									<dt>
+										<span className="sr-only">Language</span>
+										<i className="fa fa-language" aria-hidden="true"></i>
+									</dt>
+									<dd>{status.language}</dd>
+								</div>
+							}
 							<div className="stats-item" title="Replies">
 								<dt>
 									<span className="sr-only">Replies</span>

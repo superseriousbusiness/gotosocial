@@ -11171,7 +11171,6 @@ paths:
                 - statuses
     /api/v1/statuses/{id}/history:
         get:
-            description: 'UNIMPLEMENTED: Currently this endpoint will always return an array of length 1, containing only the latest/current version of the status.'
             operationId: statusHistoryGet
             parameters:
                 - description: Target status ID.
