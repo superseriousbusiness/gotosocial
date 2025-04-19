@@ -107,12 +107,15 @@ const extended = gtsApi.injectEndpoints({
 				const instanceUrl = state.login.instanceUrl;
 
 				// Parse instance URL + set params on it.
+				//
+				// Note that any space-separated scopes are
+				// replaced by '+'-separated, to fit the API.
 				const url = new URL(instanceUrl);
 				url.pathname = "/oauth/authorize";
 				url.searchParams.set("client_id", app.client_id);
 				url.searchParams.set("redirect_uri", redirectURI);
 				url.searchParams.set("response_type", "code");
-				url.searchParams.set("scope", scope);
+				url.searchParams.set("scope", scope.replace(" ", "+"));
 
 				// Set the app ID in state so we know which
 				// app to get out of our store after redirect.
