@@ -20,6 +20,7 @@ package auth
 import (
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -229,8 +230,8 @@ func (m *Module) AuthorizePOSTHandler(c *gin.Context) {
 }
 
 // redirectAuthFormToSignIn binds an OAuthAuthorize form,
-// stores the values in the form into the session, and
-// redirects the user to the sign in page.
+// presumed to be set as url query params, stores the values
+// into the session, and redirects the user to the sign in page.
 func (m *Module) redirectAuthFormToSignIn(c *gin.Context) {
 	s := sessions.Default(c)
 
@@ -240,9 +241,14 @@ func (m *Module) redirectAuthFormToSignIn(c *gin.Context) {
 		return
 	}
 
-	// Set default scope to read.
+	// If scope isn't set default to read.
+	//
+	// Else massage submitted scope(s) from
+	// '+'-separated to space-separated.
 	if form.Scope == "" {
 		form.Scope = "read"
+	} else {
+		form.Scope = strings.ReplaceAll(form.Scope, "+", " ")
 	}
 
 	// Save these values from the form so we

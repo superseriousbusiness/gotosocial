@@ -22,13 +22,13 @@ type OAuthAuthorize struct {
 	// Forces the user to re-login, which is necessary for authorizing with multiple accounts from the same instance.
 	ForceLogin string `form:"force_login" json:"force_login"`
 	// Should be set equal to `code`.
-	ResponseType string `form:"response_type" json:"response_type" validate:"required"`
+	ResponseType string `form:"response_type" json:"response_type" binding:"required"`
 	// Client ID, obtained during app registration.
-	ClientID string `form:"client_id" json:"client_id" validate:"required"`
+	ClientID string `form:"client_id" json:"client_id" binding:"required"`
 	// Set a URI to redirect the user to.
 	// If this parameter is set to urn:ietf:wg:oauth:2.0:oob then the authorization code will be shown instead.
 	// Must match one of the redirect URIs declared during app registration.
-	RedirectURI string `form:"redirect_uri" json:"redirect_uri" validate:"required"`
+	RedirectURI string `form:"redirect_uri" json:"redirect_uri" binding:"required"`
 	// List of requested OAuth scopes, separated by spaces (or by pluses, if using query parameters).
 	// Must be a subset of scopes declared during app registration. If not provided, defaults to read.
 	Scope string `form:"scope" json:"scope"`

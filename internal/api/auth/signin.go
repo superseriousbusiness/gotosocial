@@ -101,8 +101,8 @@ func (m *Module) SignInPOSTHandler(c *gin.Context) {
 
 	// Parse email + password.
 	form := &struct {
-		Email    string `form:"username" validate:"required"`
-		Password string `form:"password" validate:"required"`
+		Email    string `form:"username" binding:"required"`
+		Password string `form:"password" binding:"required"`
 	}{}
 	if err := c.ShouldBind(form); err != nil {
 		m.clearSessionWithBadRequest(c, s, err, oauth.HelpfulAdvice)
@@ -235,7 +235,7 @@ func (m *Module) TwoFactorCodePOSTHandler(c *gin.Context) {
 
 	// Parse 2fa code.
 	form := &struct {
-		Code string `form:"code" validate:"required"`
+		Code string `form:"code" binding:"required"`
 	}{}
 	if err := c.ShouldBind(form); err != nil {
 		m.clearSessionWithBadRequest(c, s, err, oauth.HelpfulAdvice)

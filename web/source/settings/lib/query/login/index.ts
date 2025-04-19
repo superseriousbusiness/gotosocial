@@ -28,6 +28,7 @@ import {
 import { RootState } from '../../../redux/store';
 import { Account } from '../../types/account';
 import { OAuthAccessTokenRequestBody } from '../../types/oauth';
+import { App } from '../../types/application';
 
 function getSettingsURL() {
 	/*
@@ -129,7 +130,7 @@ const extended = gtsApi.injectEndpoints({
 			}
 		}),
 
-		authorizeFlow: build.mutation({
+		authorizeFlow: build.mutation<any, { instance: string, scopes: string }>({
 			async queryFn(formData, api, _extraOpts, fetchWithBQ) {
 				const state = api.getState() as RootState;
 				const loginState = state.login;
@@ -159,22 +160,26 @@ const extended = gtsApi.injectEndpoints({
 					return { error: appResult.error as FetchBaseQueryError };
 				}
 
-				const app = appResult.data as any;
-
-				app.scopes = formData.scopes;
+				const app = appResult.data as App;
 				api.dispatch(oauthAuthorize({
 					instanceUrl: instanceUrl,
-					app: app,
+					app: {
+						client_id: app.client_id,
+						client_secret: app.client_secret,
+					},
 					current: "awaitingcallback",
 					expectingRedirect: true
 				}));
 
+				// Parse instance URL + set params on it.
+				//
+				// Note that scopes are '+'-separated to fit the API.
 				const url = new URL(instanceUrl);
 				url.pathname = "/oauth/authorize";
 				url.searchParams.set("client_id", app.client_id);
 				url.searchParams.set("redirect_uri", SETTINGS_URL);
 				url.searchParams.set("response_type", "code");
-				url.searchParams.set("scope", app.scopes);
+				url.searchParams.set("scope", app.scopes.join("+"));
 				
 				const redirectURL = url.toString();
 				window.location.assign(redirectURL);

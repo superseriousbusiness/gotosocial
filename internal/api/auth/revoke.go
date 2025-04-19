@@ -80,10 +80,12 @@ func (m *Module) TokenRevokePOSTHandler(c *gin.Context) {
 		return
 	}
 
+	// Don't set `binding:"required"` on these
+	// fields as we want to validate them ourself.
 	form := &struct {
-		ClientID     string `form:"client_id" validate:"required"`
-		ClientSecret string `form:"client_secret" validate:"required"`
-		Token        string `form:"token" validate:"required"`
+		ClientID     string `form:"client_id"`
+		ClientSecret string `form:"client_secret"`
+		Token        string `form:"token"`
 	}{}
 	if err := c.ShouldBind(form); err != nil {
 		errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
