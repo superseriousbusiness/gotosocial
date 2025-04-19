@@ -173,8 +173,7 @@ const extended = gtsApi.injectEndpoints({
 
 				// Parse instance URL + set params on it.
 				//
-				// Note that any space-separated scopes are
-				// replaced by '+'-separated, to fit the API.
+				// Note that scopes are '+'-separated to fit the API.
 				const url = new URL(instanceUrl);
 				url.pathname = "/oauth/authorize";
 				url.searchParams.set("client_id", app.client_id);
