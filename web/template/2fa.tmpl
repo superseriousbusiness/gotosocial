@@ -25,18 +25,23 @@
             <p>Hi <b>{{- .user -}}</b>!</p>
             <p>
                 You have enabled two-factor authentication for your account.
-                To continue signing in, please enter a code from your authenticator app.
+                To continue signing in, please enter a 6-digit code from your authenticator app.
             </p>
             <p>
-                If you have lost access to your authenticator app, you can enter one of your backup/recovery
-                codes into the form instead to bypass 2FA. Once you have used a code, it cannot be used again.
+                If you have lost access to your authenticator app, you can enter one of your 32-character backup/recovery
+                codes into the form instead to bypass 2FA. Once you have used a recovery code, it cannot be used again.
             </p>
             <div class="labelinput">
-                <label for="code">Code</label>
+                <label for="code">2FA Code</label>
                 <input
                     name="code"
+                    id="code"
+                    autocomplete="on"
+                    autocapitalize="characters"
                     required
-                    placeholder="Please enter a code from your authenticator app, or a one-time backup/recovery code"
+                    autofocus
+                    pattern="(^\d{6}$|^[0123456789ABCDEFGHJKMNPQRSTVWXYZ]{32}$)"
+                    placeholder="Please enter a 6-digit code from your authenticator app, or a 32-character backup/recovery code"
                 >
             </div>
             <button type="submit" class="btn btn-success">Submit</button>
