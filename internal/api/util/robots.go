@@ -36,13 +36,15 @@ User-agent: Amazonbot
 User-agent: anthropic-ai
 User-agent: Applebot
 User-agent: Applebot-Extended
+User-agent: Brightbot 1.0
 User-agent: Bytespider
 User-agent: CCBot
 User-agent: ChatGPT-User
-User-agent: ClaudeBot
 User-agent: Claude-Web
+User-agent: ClaudeBot
 User-agent: cohere-ai
 User-agent: cohere-training-data-crawler
+User-agent: Crawlspace
 User-agent: Diffbot
 User-agent: DuckAssistBot
 User-agent: FacebookBot
@@ -56,17 +58,23 @@ User-agent: iaskspider/2.0
 User-agent: ICC-Crawler
 User-agent: ImagesiftBot
 User-agent: img2dataset
+User-agent: imgproxy
 User-agent: ISSCyberRiskCrawler
 User-agent: Kangaroo Bot
 User-agent: Meta-ExternalAgent
 User-agent: Meta-ExternalFetcher
+User-agent: NovaAct
 User-agent: OAI-SearchBot
 User-agent: omgili
 User-agent: omgilibot
+User-agent: Operator
 User-agent: PanguBot
+User-agent: Perplexity-User
 User-agent: PerplexityBot
 User-agent: PetalBot
 User-agent: Scrapy
+User-agent: SemrushBot-OCOB
+User-agent: SemrushBot-SWA
 User-agent: Sidetrade indexer bot
 User-agent: Timpibot
 User-agent: VelenPublicWebCrawler
@@ -132,7 +140,7 @@ Disallow: /nodeinfo/
 `
 
 	// MD5 hash of basic robots.txt.
-	RobotsTxtETag = `ce6729aacbb16fae3628210c04b462b7`
+	RobotsTxtETag = `7b6b498f7381ac33cb3efb34c68f662d`
 	// MD5 hash of robots.txt with NodeInfo disallowed.
-	RobotsTxtDisallowNodeInfoETag = `a1e4ce6342978bc8d6c3e3dfab07cab4`
+	RobotsTxtDisallowNodeInfoETag = `6d21be573d502581a3bf7271b7e63fc8`
 )
