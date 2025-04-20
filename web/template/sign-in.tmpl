@@ -24,11 +24,26 @@
         <form action="/auth/sign_in" method="POST">
             <div class="labelinput">
                 <label for="email">Email</label>
-                <input type="email" name="username" required placeholder="Please enter your email address">
+                <input
+                    type="email"
+                    name="username"
+                    id="username"
+                    autocomplete="username"
+                    required
+                    autofocus
+                    placeholder="Please enter your email address"
+                >
             </div>
             <div class="labelinput">
                 <label for="password">Password</label>
-                <input type="password" name="password" required placeholder="Please enter your password">
+                <input
+                    type="password"
+                    name="password"
+                    id="password"
+                    autocomplete="current-password"
+                    required
+                    placeholder="Please enter your password"
+                >
             </div>
             <button type="submit" class="btn btn-success">Sign in</button>
         </form>
