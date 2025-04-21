@@ -40,6 +40,7 @@ type ActivityStreamsService struct {
 	ActivityStreamsImage                     vocab.ActivityStreamsImageProperty
 	ActivityStreamsInReplyTo                 vocab.ActivityStreamsInReplyToProperty
 	ActivityStreamsInbox                     vocab.ActivityStreamsInboxProperty
+	TootIndexable                            vocab.TootIndexableProperty
 	ActivityStreamsLiked                     vocab.ActivityStreamsLikedProperty
 	ActivityStreamsLikes                     vocab.ActivityStreamsLikesProperty
 	ActivityStreamsLocation                  vocab.ActivityStreamsLocationProperty
@@ -233,6 +234,11 @@ func DeserializeService(m map[string]interface{}, aliasMap map[string]string) (*
 	} else if p != nil {
 		this.ActivityStreamsInbox = p
 	}
+	if p, err := mgr.DeserializeIndexablePropertyToot()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.TootIndexable = p
+	}
 	if p, err := mgr.DeserializeLikedPropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
@@ -410,6 +416,8 @@ func DeserializeService(m map[string]interface{}, aliasMap map[string]string) (*
 		} else if k == "inReplyTo" {
 			continue
 		} else if k == "inbox" {
+			continue
+		} else if k == "indexable" {
 			continue
 		} else if k == "liked" {
 			continue
@@ -793,6 +801,12 @@ func (this ActivityStreamsService) GetTootFeatured() vocab.TootFeaturedProperty 
 	return this.TootFeatured
 }
 
+// GetTootIndexable returns the "indexable" property if it exists, and nil
+// otherwise.
+func (this ActivityStreamsService) GetTootIndexable() vocab.TootIndexableProperty {
+	return this.TootIndexable
+}
+
 // GetTypeName returns the name of this type.
 func (this ActivityStreamsService) GetTypeName() string {
 	return "Service"
@@ -847,6 +861,7 @@ func (this ActivityStreamsService) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsImage, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsInReplyTo, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsInbox, m)
+	m = this.helperJSONLDContext(this.TootIndexable, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsLiked, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsLikes, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsLocation, m)
@@ -1190,6 +1205,20 @@ func (this ActivityStreamsService) LessThan(o vocab.ActivityStreamsService) bool
 	} // Else: Both are nil
 	// Compare property "inbox"
 	if lhs, rhs := this.ActivityStreamsInbox, o.GetActivityStreamsInbox(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "indexable"
+	if lhs, rhs := this.TootIndexable, o.GetTootIndexable(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1759,6 +1788,14 @@ func (this ActivityStreamsService) Serialize() (map[string]interface{}, error) {
 			m[this.ActivityStreamsInbox.Name()] = i
 		}
 	}
+	// Maybe serialize property "indexable"
+	if this.TootIndexable != nil {
+		if i, err := this.TootIndexable.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.TootIndexable.Name()] = i
+		}
+	}
 	// Maybe serialize property "liked"
 	if this.ActivityStreamsLiked != nil {
 		if i, err := this.ActivityStreamsLiked.Serialize(); err != nil {
@@ -2207,6 +2244,11 @@ func (this *ActivityStreamsService) SetTootDiscoverable(i vocab.TootDiscoverable
 // SetTootFeatured sets the "featured" property.
 func (this *ActivityStreamsService) SetTootFeatured(i vocab.TootFeaturedProperty) {
 	this.TootFeatured = i
+}
+
+// SetTootIndexable sets the "indexable" property.
+func (this *ActivityStreamsService) SetTootIndexable(i vocab.TootIndexableProperty) {
+	this.TootIndexable = i
 }
 
 // SetW3IDSecurityV1PublicKey sets the "publicKey" property.

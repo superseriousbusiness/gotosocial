@@ -122,6 +122,9 @@ type ActivityStreamsPage interface {
 	// GetTootBlurhash returns the "blurhash" property if it exists, and nil
 	// otherwise.
 	GetTootBlurhash() TootBlurhashProperty
+	// GetTootFocalPoint returns the "focalPoint" property if it exists, and
+	// nil otherwise.
+	GetTootFocalPoint() TootFocalPointProperty
 	// GetTypeName returns the name of this type.
 	GetTypeName() string
 	// GetUnknownProperties returns the unknown properties for the Page type.
@@ -218,6 +221,8 @@ type ActivityStreamsPage interface {
 	SetJSONLDType(i JSONLDTypeProperty)
 	// SetTootBlurhash sets the "blurhash" property.
 	SetTootBlurhash(i TootBlurhashProperty)
+	// SetTootFocalPoint sets the "focalPoint" property.
+	SetTootFocalPoint(i TootFocalPointProperty)
 	// VocabularyURI returns the vocabulary's URI as a string.
 	VocabularyURI() string
 }

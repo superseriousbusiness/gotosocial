@@ -152,6 +152,9 @@ type ActivityStreamsOrganization interface {
 	// GetTootFeatured returns the "featured" property if it exists, and nil
 	// otherwise.
 	GetTootFeatured() TootFeaturedProperty
+	// GetTootIndexable returns the "indexable" property if it exists, and nil
+	// otherwise.
+	GetTootIndexable() TootIndexableProperty
 	// GetTypeName returns the name of this type.
 	GetTypeName() string
 	// GetUnknownProperties returns the unknown properties for the
@@ -274,6 +277,8 @@ type ActivityStreamsOrganization interface {
 	SetTootDiscoverable(i TootDiscoverableProperty)
 	// SetTootFeatured sets the "featured" property.
 	SetTootFeatured(i TootFeaturedProperty)
+	// SetTootIndexable sets the "indexable" property.
+	SetTootIndexable(i TootIndexableProperty)
 	// SetW3IDSecurityV1PublicKey sets the "publicKey" property.
 	SetW3IDSecurityV1PublicKey(i W3IDSecurityV1PublicKeyProperty)
 	// VocabularyURI returns the vocabulary's URI as a string.

@@ -2,6 +2,7 @@
 
 package vocab
 
+// DEPRECATED: Use `ReplyAuthorization` instead.
 type GoToSocialReplyApproval interface {
 	// GetActivityStreamsAltitude returns the "altitude" property if it
 	// exists, and nil otherwise.

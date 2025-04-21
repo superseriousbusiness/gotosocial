@@ -104,6 +104,10 @@ type privateManager interface {
 	// method for the "ActivityStreamsInboxProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeInboxPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsInboxProperty, error)
+	// DeserializeIndexablePropertyToot returns the deserialization method for
+	// the "TootIndexableProperty" non-functional property in the
+	// vocabulary "Toot"
+	DeserializeIndexablePropertyToot() func(map[string]interface{}, map[string]string) (vocab.TootIndexableProperty, error)
 	// DeserializeLikedPropertyActivityStreams returns the deserialization
 	// method for the "ActivityStreamsLikedProperty" non-functional
 	// property in the vocabulary "ActivityStreams"

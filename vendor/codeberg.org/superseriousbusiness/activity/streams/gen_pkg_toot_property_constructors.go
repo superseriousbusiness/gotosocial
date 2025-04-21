@@ -6,6 +6,8 @@ import (
 	propertyblurhash "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_blurhash"
 	propertydiscoverable "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_discoverable"
 	propertyfeatured "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_featured"
+	propertyfocalpoint "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_focalpoint"
+	propertyindexable "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_indexable"
 	propertysignaturealgorithm "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_signaturealgorithm"
 	propertysignaturevalue "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_signaturevalue"
 	propertyvoterscount "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_voterscount"
@@ -25,6 +27,16 @@ func NewTootDiscoverableProperty() vocab.TootDiscoverableProperty {
 // NewTootTootFeaturedProperty creates a new TootFeaturedProperty
 func NewTootFeaturedProperty() vocab.TootFeaturedProperty {
 	return propertyfeatured.NewTootFeaturedProperty()
+}
+
+// NewTootTootFocalPointProperty creates a new TootFocalPointProperty
+func NewTootFocalPointProperty() vocab.TootFocalPointProperty {
+	return propertyfocalpoint.NewTootFocalPointProperty()
+}
+
+// NewTootTootIndexableProperty creates a new TootIndexableProperty
+func NewTootIndexableProperty() vocab.TootIndexableProperty {
+	return propertyindexable.NewTootIndexableProperty()
 }
 
 // NewTootTootSignatureAlgorithmProperty creates a new

@@ -8,6 +8,7 @@ import vocab "codeberg.org/superseriousbusiness/activity/streams/vocab"
 type GoToSocialInteractionPolicy struct {
 	GoToSocialCanAnnounce vocab.GoToSocialCanAnnounceProperty
 	GoToSocialCanLike     vocab.GoToSocialCanLikeProperty
+	GoToSocialCanQuote    vocab.GoToSocialCanQuoteProperty
 	GoToSocialCanReply    vocab.GoToSocialCanReplyProperty
 	JSONLDId              vocab.JSONLDIdProperty
 	alias                 string
@@ -37,6 +38,11 @@ func DeserializeInteractionPolicy(m map[string]interface{}, aliasMap map[string]
 	} else if p != nil {
 		this.GoToSocialCanLike = p
 	}
+	if p, err := mgr.DeserializeCanQuotePropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialCanQuote = p
+	}
 	if p, err := mgr.DeserializeCanReplyPropertyGoToSocial()(m, aliasMap); err != nil {
 		return nil, err
 	} else if p != nil {
@@ -55,6 +61,8 @@ func DeserializeInteractionPolicy(m map[string]interface{}, aliasMap map[string]
 		if k == "canAnnounce" {
 			continue
 		} else if k == "canLike" {
+			continue
+		} else if k == "canQuote" {
 			continue
 		} else if k == "canReply" {
 			continue
@@ -120,6 +128,12 @@ func (this GoToSocialInteractionPolicy) GetGoToSocialCanLike() vocab.GoToSocialC
 	return this.GoToSocialCanLike
 }
 
+// GetGoToSocialCanQuote returns the "canQuote" property if it exists, and nil
+// otherwise.
+func (this GoToSocialInteractionPolicy) GetGoToSocialCanQuote() vocab.GoToSocialCanQuoteProperty {
+	return this.GoToSocialCanQuote
+}
+
 // GetGoToSocialCanReply returns the "canReply" property if it exists, and nil
 // otherwise.
 func (this GoToSocialInteractionPolicy) GetGoToSocialCanReply() vocab.GoToSocialCanReplyProperty {
@@ -159,6 +173,7 @@ func (this GoToSocialInteractionPolicy) JSONLDContext() map[string]string {
 	m := map[string]string{"https://gotosocial.org/ns": this.alias}
 	m = this.helperJSONLDContext(this.GoToSocialCanAnnounce, m)
 	m = this.helperJSONLDContext(this.GoToSocialCanLike, m)
+	m = this.helperJSONLDContext(this.GoToSocialCanQuote, m)
 	m = this.helperJSONLDContext(this.GoToSocialCanReply, m)
 	m = this.helperJSONLDContext(this.JSONLDId, m)
 
@@ -185,6 +200,20 @@ func (this GoToSocialInteractionPolicy) LessThan(o vocab.GoToSocialInteractionPo
 	} // Else: Both are nil
 	// Compare property "canLike"
 	if lhs, rhs := this.GoToSocialCanLike, o.GetGoToSocialCanLike(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "canQuote"
+	if lhs, rhs := this.GoToSocialCanQuote, o.GetGoToSocialCanQuote(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -259,6 +288,14 @@ func (this GoToSocialInteractionPolicy) Serialize() (map[string]interface{}, err
 			m[this.GoToSocialCanLike.Name()] = i
 		}
 	}
+	// Maybe serialize property "canQuote"
+	if this.GoToSocialCanQuote != nil {
+		if i, err := this.GoToSocialCanQuote.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialCanQuote.Name()] = i
+		}
+	}
 	// Maybe serialize property "canReply"
 	if this.GoToSocialCanReply != nil {
 		if i, err := this.GoToSocialCanReply.Serialize(); err != nil {
@@ -297,6 +334,11 @@ func (this *GoToSocialInteractionPolicy) SetGoToSocialCanAnnounce(i vocab.GoToSo
 // SetGoToSocialCanLike sets the "canLike" property.
 func (this *GoToSocialInteractionPolicy) SetGoToSocialCanLike(i vocab.GoToSocialCanLikeProperty) {
 	this.GoToSocialCanLike = i
+}
+
+// SetGoToSocialCanQuote sets the "canQuote" property.
+func (this *GoToSocialInteractionPolicy) SetGoToSocialCanQuote(i vocab.GoToSocialCanQuoteProperty) {
+	this.GoToSocialCanQuote = i
 }
 
 // SetGoToSocialCanReply sets the "canReply" property.

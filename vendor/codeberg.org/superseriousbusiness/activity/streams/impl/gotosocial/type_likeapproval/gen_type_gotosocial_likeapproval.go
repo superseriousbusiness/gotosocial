@@ -8,6 +8,7 @@ import (
 	"strings"
 )
 
+// DEPRECATED: Use `LikeAuthorization` instead.
 type GoToSocialLikeApproval struct {
 	ActivityStreamsAltitude     vocab.ActivityStreamsAltitudeProperty
 	ActivityStreamsAttachment   vocab.ActivityStreamsAttachmentProperty
