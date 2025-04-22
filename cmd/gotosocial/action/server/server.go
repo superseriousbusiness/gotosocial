@@ -499,7 +499,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	s2sLimit := middleware.RateLimit(rlLimit, exceptions)       // server-to-server (AP)
 	fsMainLimit := middleware.RateLimit(rlLimit, exceptions)    // fileserver / web templates
 	fsEmojiLimit := middleware.RateLimit(rlLimit*2, exceptions) // fileserver (emojis only, use high limit)
-	nollamas := middleware.NoLLaMas(state.DB)
+	nollamas := middleware.NoLLaMas(instanceAccount)
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()

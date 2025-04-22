@@ -257,8 +257,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		nodeInfoModule    = api.NewNodeInfo(processor)                                     // nodeinfo endpoint
 		activityPubModule = api.NewActivityPub(state.DB, processor)                        // ActivityPub endpoints
 		webModule         = web.New(state.DB, processor)                                   // web pages + user profiles + settings panels etc
-
-		nollamas = middleware.NoLLaMas(state.DB)
 	)
 
 	// these should be routed in order
@@ -273,7 +271,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	nodeInfoModule.Route(route)
 	activityPubModule.Route(route)
 	activityPubModule.RoutePublicKey(route)
-	webModule.Route(route, nollamas)
+	webModule.Route(route)
 
 	// Create background cleaner.
 	cleaner := cleaner.New(state)

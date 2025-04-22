@@ -18,7 +18,6 @@
 package middleware
 
 import (
-	"context"
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -30,19 +29,14 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func NoLLaMas(db db.DB) gin.HandlerFunc {
-	instance, err := db.GetInstanceAccount(context.Background(), "")
-	if err != nil {
-		panic(err)
-	}
-
+func NoLLaMas(instanceAcc *gtsmodel.Account) gin.HandlerFunc {
 	// Generate seed hash from
 	// this instance private key.
-	priv := instance.PrivateKey
+	priv := instanceAcc.PrivateKey
 	bpriv := x509.MarshalPKCS1PrivateKey(priv)
 	seed := sha512.Sum512(bpriv)
 
