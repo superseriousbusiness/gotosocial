@@ -154,7 +154,7 @@ func (m *Module) threadGETHandler(c *gin.Context) {
 			},
 			{
 				Bottom: true,
-				Src:    jsBlurhash,
+				Src:    jsFrontendPrerender,
 			},
 		},
 		Extra: map[string]any{

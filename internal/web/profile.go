@@ -249,7 +249,7 @@ func (m *Module) profileMicroblog(c *gin.Context, p *profile) {
 			},
 			{
 				Bottom: true,
-				Src:    jsBlurhash,
+				Src:    jsFrontendPrerender,
 			},
 		},
 		Extra: map[string]any{
@@ -323,7 +323,7 @@ func (m *Module) profileGallery(c *gin.Context, p *profile) {
 			},
 			{
 				Bottom: true,
-				Src:    jsBlurhash,
+				Src:    jsFrontendPrerender,
 			},
 		},
 		Extra: map[string]any{
