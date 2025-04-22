@@ -18,25 +18,39 @@
 package middleware
 
 import (
+	"context"
 	"crypto/sha256"
+	"crypto/sha512"
 	"crypto/subtle"
+	"crypto/x509"
 	"encoding/hex"
 	"hash"
 	"net/http"
-	"strconv"
 	"time"
 
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-//go:embed challenge.html
-var challengeHTML []byte
+func NoLLaMas(db db.DB) gin.HandlerFunc {
+	instance, err := db.GetInstanceAccount(context.Background(), "")
+	if err != nil {
+		panic(err)
+	}
 
-func NoLLaMas() gin.HandlerFunc {
+	// Generate seed hash from
+	// this instance private key.
+	priv := instance.PrivateKey
+	bpriv := x509.MarshalPKCS1PrivateKey(priv)
+	seed := sha512.Sum512(bpriv)
+
+	// Configure nollamas.
 	var nollamas nollamas
+	nollamas.seed = seed[:]
+	nollamas.ttl = time.Hour
+	nollamas.diff = 4
 	return nollamas.Serve
 }
 
@@ -91,9 +105,8 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// Check for a provided success token.
 	cookie, _ := c.Cookie("gts-nollamas")
 
-	if len(cookie) == 0 || len(cookie) > encodedHashLen {
-		// If they provide no cookie, or
-		// obviously wrong cookie, just
+	if len(cookie) > encodedHashLen {
+		// Clearly invalid cookie, just
 		// present them with new challenge.
 		m.renderChallenge(c, challenge)
 		return
@@ -112,9 +125,11 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
-	// Check headers to see if is in-progress challenge.
-	nonce := c.Request.Header.Get("X-NoLLaMas-Solution")
-	if nonce == "" {
+	// Check query to see if an in-progress
+	// challenge solution has been provided.
+	query := c.Request.URL.Query()
+	nonce := query.Get("nollamas_solution")
+	if nonce == "" || len(nonce) > 20 {
 
 		// No attempted solution, just
 		// present them with new challenge.
@@ -134,14 +149,18 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// Check that the first 'diff'
 	// many chars are indeed zeroes.
 	for i := range m.diff {
-		if subtle.ConstantTimeByteEq(solution[i], '0') == 0 {
+		if solution[i] != '0' {
 
 			// They failed challenge,
-			// present them fail page.
-			m.renderFail(c)
+			// re-present challenge page.
+			m.renderChallenge(c, challenge)
 			return
 		}
 	}
+
+	// Drop the solution from query.
+	query.Del("nollamas_solution")
+	c.Request.URL.RawQuery = query.Encode()
 
 	// They passed the challenge! Set success
 	// token cookie and allow them to continue.
@@ -156,21 +175,11 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 	// our challenge page.
 	c.Abort()
 
-	// Set the challenge we expect them to use in header.
-	c.Request.Header.Set("X-NoLLaMas-Challenge", challenge)
-	c.Request.Header.Set("X-NoLLaMas-Difficulty", strconv.FormatUint(uint64(m.diff), 10))
-
-	// Write the challenge HTML response to client.
-	apiutil.Data(c, http.StatusOK, "text/html", challengeHTML)
-}
-
-func (m *nollamas) renderFail(c *gin.Context) {
-	// Don't pass to further
-	// handlers, they only get
-	// our failure page.
-	c.Abort()
-
-	apiutil.Data(c, http.StatusOK, apiutil.AppJSON, []byte(`{"error": "failed nollamas challenge"}`))
+	// Write the templated challenge HTML response to client.
+	c.HTML(http.StatusOK, "nollamas.tmpl", map[string]any{
+		"challenge":  challenge,
+		"difficulty": m.diff,
+	})
 }
 
 func (m *nollamas) token(c *gin.Context, hash hash.Hash) string {
@@ -201,7 +210,7 @@ func (m *nollamas) token(c *gin.Context, hash hash.Hash) string {
 		byte(now),
 	})
 
-	// Finally append unique client request data.
+	// Finally, append unique client request data.
 	userAgent := c.Request.Header.Get("User-Agent")
 	_, _ = hash.Write(byteutil.S2B(userAgent))
 	clientIP := c.ClientIP()
@@ -210,18 +219,3 @@ func (m *nollamas) token(c *gin.Context, hash hash.Hash) string {
 	// Return hex encoded hash output.
 	return hex.EncodeToString(hash.Sum(nil))
 }
-
-// appendTime will append time as seconds in binary.
-// func appendTime(b []byte, t time.Time) []byte {
-// 	sec := t.Unix()
-// 	return append(b,
-// 		byte(sec>>56),
-// 		byte(sec>>48),
-// 		byte(sec>>40),
-// 		byte(sec>>32),
-// 		byte(sec>>24),
-// 		byte(sec>>16),
-// 		byte(sec>>8),
-// 		byte(sec),
-// 	)
-// }

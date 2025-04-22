@@ -5,43 +5,6 @@
     <title>Verifying...</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@480&display=swap');
-        @media (prefers-color-scheme: light) {
-            :root {
-                --color-1: #f9fafb;
-                --color-2: #2563eb;
-            }
-        }
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --color-1: #f5a9b8;
-                --color-2: #000000;
-            }
-        }
-        @media (prefers-color-scheme: no-preference) {
-            :root {
-                --color-1: #f9fafb;
-                --color-2: #2563eb;
-            }
-        }
-
-        html, body {
-            height: 100%;
-            margin: 0;
-            color: var(--color-1);
-            background-color: var(--color-2);
-            font-family: "IBM Plex Sans", sans-serif;
-            font-optical-sizing: auto;
-            font-weight: 480;
-            font-style: normal;
-            font-variation-settings: "wdth" 100;
-            font-size: 120%;
-        }
-        .hidden {
-            display: none;
-        }
-    </style>
 </head>
 
 <body>
@@ -56,13 +19,15 @@
         // Define our worker task func.
         const workerTask = function() {
             onmessage = async function(e) {
+                console.log('worker started');
+
                 const challenge = e.data.challenge;
                 const textEncoder = new TextEncoder();
 
-                // Get difficult and generate the expected
+                // Get difficulty and generate the expected
                 // zero ASCII prefix to check for in hashes.
                 const difficultyStr = e.data.difficulty;
-                const difficulty = parseInt(diffStr, 10);
+                const difficulty = parseInt(difficultyStr, 10);
                 const zeroPrefix = '0'.repeat(difficulty);
 
                 let nonce = 0;
@@ -82,64 +47,38 @@
                         break;
                     }
 
-                    // Send status updates.
-                    if (i % 1000 == 0) {
-                        postMessage({nonce: nonce});
-                        continue;
-                    }
-
                     // Iter.
-                    i++;
+                    nonce++;
                 }
             }
         };
 
         // Convert the worker task function to call-able base64 blob URL.
-        const workerTaskBlob = new Blob(['(',workerTask.toString(),')()'], 
+        const workerTaskBlob = new Blob(['(',workerTask.toString(),')()'],
             { type: 'application/javascript' });
         const workerTaskURL = URL.createObjectURL(workerTaskBlob);
 
-		const req = new XMLHttpRequest();
-        req.open('GET', window.location.href, false);
-        req.send(null);
-
-        // Read the incoming request headers for our challenge information.
-		const challenge = req.getResponseHeader('X-NoLLaMas-Challenge');
-		const difficulty = req.getResponseHeader('X-NoLLaMas-Difficulty');
-        console.log('received challenge:${challenge} difficulty:${difficulty}');
+        const challenge = '{{ .challenge }}';
+        const difficulty = '{{ .difficulty }}';
+        console.log('challenge:', challenge);
+        console.log('difficulty:', difficulty);
 
         // Prepare the worker with task function.
 		const worker = new Worker(workerTaskURL);
-
-        // Set the main worker function.
-        worker.onmessage = function (e) {
-            if (e.data.done) {
-                console.log("solution found for: ${e.data.nonce}");
-
-                fetch(window.location.href, {
-                    method: 'GET',
-                    headers: { 'X-NoLLaMas-Solution': e.data.nonce },
-                    credentials: 'include'
-                }).then(response => {
-                    console.log("Server response:", response.status);
-                    return response.text().then(() => {
-                        setTimeout(() => {
-                            window.location.href = window.location.href;
-                        }, 300);
-                    });
-                }).catch(error => {
-                    console.error('Error on refresh:', error);
-                });
-            } else if (e.data.progress) {
-                console.log("search progress: ${e.data.nonce}");
-            }
-        };
-
-        // Post our challenge.
         worker.postMessage({
 			challenge: challenge,
 			difficulty: difficulty,
         });
+
+        // Set the main worker function.
+        worker.onmessage = function (e) {
+            if (e.data.done) {
+                console.log('solution found for:', e.data.nonce);
+                let url = new URL(window.location.href);
+                url.searchParams.append('nollamas_solution', e.data.nonce);
+                window.location.href = url.toString();
+            }
+        };
     </script>
     <div style="display: flex; align-items: center; justify-content: center; min-width: 100%; min-height: 100%;">
         <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 75%; text-align: center;">
