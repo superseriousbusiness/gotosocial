@@ -1,4 +1,7 @@
-# sessions
+# Gorilla Sessions
+
+> [!IMPORTANT]
+> The latest version of this repository requires go 1.23 because of the new partitioned attribute. The last version that is compatible with older versions of go is v1.3.0.
 
 ![testing](https://github.com/gorilla/sessions/actions/workflows/test.yml/badge.svg)
 [![codecov](https://codecov.io/github/gorilla/sessions/branch/main/graph/badge.svg)](https://codecov.io/github/gorilla/sessions)
@@ -59,8 +62,7 @@ secret key used to authenticate the session. Inside the handler, we call
 some session values in session.Values, which is a `map[interface{}]interface{}`.
 And finally we call `session.Save()` to save the session in the response.
 
-More examples are available [on the Gorilla
-website](https://www.gorillatoolkit.org/pkg/sessions).
+More examples are available at [package documentation](https://pkg.go.dev/github.com/gorilla/sessions).
 
 ## Store Implementations
 
@@ -75,6 +77,7 @@ Other implementations of the `sessions.Store` interface:
 - [github.com/dsoprea/go-appengine-sessioncascade](https://github.com/dsoprea/go-appengine-sessioncascade) - Memcache/Datastore/Context in AppEngine
 - [github.com/kidstuff/mongostore](https://github.com/kidstuff/mongostore) - MongoDB
 - [github.com/srinathgs/mysqlstore](https://github.com/srinathgs/mysqlstore) - MySQL
+- [github.com/danielepintore/gorilla-sessions-mysql](https://github.com/danielepintore/gorilla-sessions-mysql) - MySQL
 - [github.com/EnumApps/clustersqlstore](https://github.com/EnumApps/clustersqlstore) - MySQL Cluster
 - [github.com/antonlindstrom/pgstore](https://github.com/antonlindstrom/pgstore) - PostgreSQL
 - [github.com/boj/redistore](https://github.com/boj/redistore) - Redis

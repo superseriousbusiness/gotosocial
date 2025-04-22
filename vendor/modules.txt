@@ -406,8 +406,8 @@ github.com/gin-contrib/cors
 # github.com/gin-contrib/gzip v1.2.3
 ## explicit; go 1.23.0
 github.com/gin-contrib/gzip
-# github.com/gin-contrib/sessions v1.0.2
-## explicit; go 1.20
+# github.com/gin-contrib/sessions v1.0.3
+## explicit; go 1.23.0
 github.com/gin-contrib/sessions
 github.com/gin-contrib/sessions/memstore
 # github.com/gin-contrib/sse v1.0.0
@@ -566,8 +566,8 @@ github.com/gorilla/handlers
 # github.com/gorilla/securecookie v1.1.2
 ## explicit; go 1.20
 github.com/gorilla/securecookie
-# github.com/gorilla/sessions v1.2.2
-## explicit; go 1.20
+# github.com/gorilla/sessions v1.4.0
+## explicit; go 1.23
 github.com/gorilla/sessions
 # github.com/gorilla/websocket v1.5.3
 ## explicit; go 1.12
@@ -957,7 +957,7 @@ github.com/yuin/goldmark/renderer
 github.com/yuin/goldmark/renderer/html
 github.com/yuin/goldmark/text
 github.com/yuin/goldmark/util
-# go.mongodb.org/mongo-driver v1.14.0
+# go.mongodb.org/mongo-driver v1.17.3
 ## explicit; go 1.18
 go.mongodb.org/mongo-driver/bson
 go.mongodb.org/mongo-driver/bson/bsoncodec
@@ -1052,7 +1052,7 @@ go.uber.org/automaxprocs/maxprocs
 # go.uber.org/multierr v1.11.0
 ## explicit; go 1.19
 go.uber.org/multierr
-# golang.org/x/arch v0.15.0
+# golang.org/x/arch v0.16.0
 ## explicit; go 1.23.0
 golang.org/x/arch/x86/x86asm
 # golang.org/x/crypto v0.37.0
