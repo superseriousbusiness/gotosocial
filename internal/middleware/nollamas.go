@@ -98,8 +98,8 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 	// Check for a provided success token.
 	cookie, _ := c.Cookie("gts-nollamas")
-
 	if len(cookie) > encodedHashLen {
+
 		// Clearly invalid cookie, just
 		// present them with new challenge.
 		m.renderChallenge(c, challenge)
