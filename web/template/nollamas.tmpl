@@ -64,10 +64,10 @@
         console.log('difficulty:', difficulty);
 
         // Prepare the worker with task function.
-		const worker = new Worker(workerTaskURL);
+        const worker = new Worker(workerTaskURL);
         worker.postMessage({
-			challenge: challenge,
-			difficulty: difficulty,
+            challenge: challenge,
+            difficulty: difficulty,
         });
 
         // Set the main worker function.

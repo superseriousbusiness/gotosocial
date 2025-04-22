@@ -125,7 +125,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 	nonce := query.Get("nollamas_solution")
 	if nonce == "" || len(nonce) > 20 {
 
-		// No attempted solution, just
+		// An invalid solution string, just
 		// present them with new challenge.
 		m.renderChallenge(c, challenge)
 		return
@@ -190,8 +190,8 @@ func (m *nollamas) token(c *gin.Context, hash hash.Hash) string {
 	_, _ = hash.Write([]byte{m.diff})
 
 	// Also seed the generated input with
-	// current time rounded to TTL, so with
-	// our single comparison handles expiries.
+	// current time rounded to TTL, so our
+	// single comparison handles expiries.
 	now := time.Now().Round(m.ttl).Unix()
 	_, _ = hash.Write([]byte{
 		byte(now >> 56),
