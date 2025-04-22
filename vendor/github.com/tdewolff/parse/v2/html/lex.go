@@ -162,7 +162,16 @@ func (l *Lexer) Next() (TokenType, []byte) {
 
 	for {
 		c = l.r.Peek(0)
-		if c == '<' {
+		if 0 < len(l.tmplBegin) && l.at(l.tmplBegin...) {
+			if 0 < l.r.Pos() {
+				l.text = l.r.Shift()
+				return TextToken, l.text
+			}
+			l.r.Move(len(l.tmplBegin))
+			l.moveTemplate()
+			l.hasTmpl = true
+			return TemplateToken, l.r.Shift()
+		} else if c == '<' {
 			c = l.r.Peek(1)
 			isEndTag := c == '/' && l.r.Peek(2) != '>' && (l.r.Peek(2) != 0 || l.r.PeekErr(2) == nil)
 			if !isEndTag && (c < 'a' || 'z' < c) && (c < 'A' || 'Z' < c) && c != '!' && c != '?' {
@@ -190,15 +199,6 @@ func (l *Lexer) Next() (TokenType, []byte) {
 				l.r.Move(1)
 				return CommentToken, l.shiftBogusComment()
 			}
-		} else if 0 < len(l.tmplBegin) && l.at(l.tmplBegin...) {
-			if 0 < l.r.Pos() {
-				l.text = l.r.Shift()
-				return TextToken, l.text
-			}
-			l.r.Move(len(l.tmplBegin))
-			l.moveTemplate()
-			l.hasTmpl = true
-			return TemplateToken, l.r.Shift()
 		} else if c == 0 && l.r.Err() != nil {
 			if 0 < l.r.Pos() {
 				l.text = l.r.Shift()
