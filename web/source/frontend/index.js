@@ -17,6 +17,15 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+	WHAT SHOULD GO IN THIS FILE?
+
+	This script is loaded in the document head, and deferred + async,
+	so it's *usually* run after the user is already looking at the page.
+	Put stuff in here that doesn't shift the layout, and it doesn't really
+	matter whether it loads immediately. So, progressive enhancement stuff.
+*/
+
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
@@ -165,89 +174,6 @@ lightbox.on('uiRegister', function() {
 
 lightbox.init();
 
-function dynamicSpoiler(className, updateFunc) {
-	Array.from(document.getElementsByClassName(className)).forEach((spoiler) => {
-		const update = updateFunc(spoiler);
-		if (update) {
-			update();
-			spoiler.addEventListener("toggle", update);
-		}
-	});
-}
-
-dynamicSpoiler("text-spoiler", (details) => {
-	const summary = details.children[0];
-	const button = details.querySelector(".button");
-
-	// Use button *instead of summary*
-	// to toggle post visibility.
-	summary.tabIndex = "-1";
-	button.tabIndex = "0";
-	button.setAttribute("aria-role", "button");
-	button.onclick = (e) => {
-		e.preventDefault();
-		return details.hasAttribute("open")
-			? details.removeAttribute("open")
-			: details.setAttribute("open", "");
-	};
-
-	// Let enter also trigger the button
-	// (for those using keyboard to navigate).
-	button.addEventListener("keydown", (e) => {
-		if (e.key === "Enter") {
-			e.preventDefault();
-			button.click();
-		}
-	});
-
-	// Change button text depending on
-	// whether spoiler is open or closed rn.
-	return () => {
-		button.textContent = details.open
-			? "Show less"
-			: "Show more";
-	};
-});
-
-dynamicSpoiler("media-spoiler", (details) => {
-	const summary = details.children[0];
-	const button = details.querySelector(".eye.button");
-	const video = details.querySelector(".plyr-video");
-	const loopingAuto = !reduceMotion.matches && video != null && video.classList.contains("gifv");
-
-	// Use button *instead of summary*
-	// to toggle media visibility.
-	summary.tabIndex = "-1";
-	button.tabIndex = "0";
-	button.setAttribute("aria-role", "button");
-	button.onclick = (e) => {
-		e.preventDefault();
-		return details.hasAttribute("open")
-			? details.removeAttribute("open")
-			: details.setAttribute("open", "");
-	};
-
-	// Let enter also trigger the button
-	// (for those using keyboard to navigate).
-	button.addEventListener("keydown", (e) => {
-		if (e.key === "Enter") {
-			e.preventDefault();
-			button.click();
-		}
-	});
-
-	return () => {
-		if (details.open) {
-			button.setAttribute("aria-label", "Hide media");
-		} else {
-			button.setAttribute("aria-label", "Show media");
-			if (video && !loopingAuto) {
-				video.pause();
-			}
-		}
-	};
-});
-
 Array.from(document.getElementsByClassName("plyr-video")).forEach((video) => {
 	const loopingAuto = !reduceMotion.matches && video.classList.contains("gifv");
 	let player = new Plyr(video, {
@@ -314,30 +240,6 @@ function inLightbox(element) {
 	return element.dataset.pswpAttachmentId ===
 		lightbox.pswp.currSlide.data.attachmentId;
 }
-
-// Define + reuse one DateTimeFormat (cheaper).
-const dateTimeFormat = Intl.DateTimeFormat(
-	undefined,
-	{
-		year: 'numeric',
-		month: 'short',
-		day: '2-digit',
-		hour: '2-digit',
-		minute: '2-digit',
-		hour12: false
-	},
-);
-
-// Reformat time text to browser locale.
-Array.from(document.getElementsByTagName('time')).forEach(timeTag => {
-	const datetime = timeTag.getAttribute('datetime');
-	const currentText = timeTag.textContent.trim();
-	// Only format if current text contains precise time.
-	if (currentText.match(/\d{2}:\d{2}/)) {
-		const date = new Date(datetime);
-		timeTag.textContent = dateTimeFormat.format(date);
-	}
-});
 
 // When clicking anywhere that's not an open
 // stats-info-more-content details dropdown,

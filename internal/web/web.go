@@ -67,9 +67,9 @@ const (
 	cssSettings       = distPathPrefix + "/settings-style.css"
 	cssTag            = distPathPrefix + "/tag.css"
 
-	jsFrontend = distPathPrefix + "/frontend.js" // Progressive enhancement frontend JS.
-	jsBlurhash = distPathPrefix + "/blurhash.js" // Blurhash rendering JS.
-	jsSettings = distPathPrefix + "/settings.js" // Settings panel React application.
+	jsFrontend          = distPathPrefix + "/frontend.js"           // Progressive enhancement frontend JS.
+	jsFrontendPrerender = distPathPrefix + "/frontend_prerender.js" // Frontend JS that should run before page renders.
+	jsSettings          = distPathPrefix + "/settings.js"           // Settings panel React application.
 )
 
 type Module struct {

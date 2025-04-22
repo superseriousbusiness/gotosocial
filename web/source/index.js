@@ -64,9 +64,9 @@ skulk({
 				}]
 			],
 		},
-		blurhash: {
-			entryFile: "blurhash",
-			outputFile: "blurhash.js",
+		frontend_prerender: {
+			entryFile: "frontend_prerender",
+			outputFile: "frontend_prerender.js",
 			preset: ["js"],
 			prodCfg: prodCfg,
 			transform: [
