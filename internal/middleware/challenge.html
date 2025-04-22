@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Verifying...</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@480&display=swap');
+        @media (prefers-color-scheme: light) {
+            :root {
+                --color-1: #f9fafb;
+                --color-2: #2563eb;
+            }
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --color-1: #f5a9b8;
+                --color-2: #000000;
+            }
+        }
+        @media (prefers-color-scheme: no-preference) {
+            :root {
+                --color-1: #f9fafb;
+                --color-2: #2563eb;
+            }
+        }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            color: var(--color-1);
+            background-color: var(--color-2);
+            font-family: "IBM Plex Sans", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 480;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+            font-size: 120%;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const jsOnlyElements = document.querySelectorAll('.hidden');
+            jsOnlyElements.forEach(el => {
+                el.classList.remove('hidden');
+            });
+        });
+
+        // Define our worker task func.
+        const workerTask = function() {
+            onmessage = async function(e) {
+                const challenge = e.data.challenge;
+                const textEncoder = new TextEncoder();
+
+                // Get difficult and generate the expected
+                // zero ASCII prefix to check for in hashes.
+                const difficultyStr = e.data.difficulty;
+                const difficulty = parseInt(diffStr, 10);
+                const zeroPrefix = '0'.repeat(difficulty);
+
+                let nonce = 0;
+                while (true) {
+                    // Create possible solution string from challenge + nonce.
+                    const solution = textEncoder.encode(challenge + nonce.toString());
+
+                    // Generate SHA256 hashsum of solution string and hex encode the result.
+                    const hashBuffer = await crypto.subtle.digest('SHA-256', solution);
+                    const hashArray = Array.from(new Uint8Array(hashBuffer));
+                    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+
+                    // Check if the hex encoded hash has
+                    // difficulty defined zeroes prefix.
+                    if (hashHex.startsWith(zeroPrefix)) {
+                        postMessage({ nonce: nonce, done: true });
+                        break;
+                    }
+
+                    // Send status updates.
+                    if (i % 1000 == 0) {
+                        postMessage({nonce: nonce});
+                        continue;
+                    }
+
+                    // Iter.
+                    i++;
+                }
+            }
+        };
+
+        // Convert the worker task function to call-able base64 blob URL.
+        const workerTaskBlob = new Blob(['(',workerTask.toString(),')()'], 
+            { type: 'application/javascript' });
+        const workerTaskURL = URL.createObjectURL(workerTaskBlob);
+
+		const req = new XMLHttpRequest();
+        req.open('GET', window.location.href, false);
+        req.send(null);
+
+        // Read the incoming request headers for our challenge information.
+		const challenge = req.getResponseHeader('X-NoLLaMas-Challenge');
+		const difficulty = req.getResponseHeader('X-NoLLaMas-Difficulty');
+        console.log('received challenge:${challenge} difficulty:${difficulty}');
+
+        // Prepare the worker with task function.
+		const worker = new Worker(workerTaskURL);
+
+        // Set the main worker function.
+        worker.onmessage = function (e) {
+            if (e.data.done) {
+                console.log("solution found for: ${e.data.nonce}");
+
+                fetch(window.location.href, {
+                    method: 'GET',
+                    headers: { 'X-NoLLaMas-Solution': e.data.nonce },
+                    credentials: 'include'
+                }).then(response => {
+                    console.log("Server response:", response.status);
+                    return response.text().then(() => {
+                        setTimeout(() => {
+                            window.location.href = window.location.href;
+                        }, 300);
+                    });
+                }).catch(error => {
+                    console.error('Error on refresh:', error);
+                });
+            } else if (e.data.progress) {
+                console.log("search progress: ${e.data.nonce}");
+            }
+        };
+
+        // Post our challenge.
+        worker.postMessage({
+			challenge: challenge,
+			difficulty: difficulty,
+        });
+    </script>
+    <div style="display: flex; align-items: center; justify-content: center; min-width: 100%; min-height: 100%;">
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 75%; text-align: center;">
+            <p class="hidden" style="margin-bottom: 0.25rem;"><svg fill="var(--color-1)" style="width: clamp(64px, 15%, 96px); height: auto;" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><style>.spinner_d9Sa{transform-origin:center}.spinner_qQQY{animation:spinner_ZpfF 9s linear infinite}.spinner_pote{animation:spinner_ZpfF .75s linear infinite}@keyframes spinner_ZpfF{100%{transform:rotate(360deg)}}</style><path d="M12,1A11,11,0,1,0,23,12,11,11,0,0,0,12,1Zm0,20a9,9,0,1,1,9-9A9,9,0,0,1,12,21Z"/><rect class="spinner_d9Sa spinner_qQQY" x="11" y="6" rx="1" width="2" height="7"/><rect class="spinner_d9Sa spinner_pote" x="11" y="11" rx="1" width="2" height="9"/></svg></p>
+            <p class="hidden" style="margin-top: 0.5rem; max-width: 24rem;">One moment while we verify your connection...</p>
+            <noscript>
+                <p style="display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="24px" height="24px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M12 10V13" stroke="#ff7800" stroke-width="2" stroke-linecap="round"></path><path d="M12 16V15.9888" stroke="#ff7800" stroke-width="2" stroke-linecap="round"></path><path d="M10.2518 5.147L3.6508 17.0287C2.91021 18.3618 3.87415 20 5.39912 20H18.6011C20.126 20 21.09 18.3618 20.3494 17.0287L13.7484 5.147C12.9864 3.77538 11.0138 3.77538 10.2518 5.147Z" stroke="#ff7800" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></g></svg>
+                    Javascript must be enabled to verify your browser.
+                </p>
+            </noscript>
+        </div>
+    </div>
+</body>
+
+</html>
