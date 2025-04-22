@@ -267,7 +267,7 @@ func (p *Processor) importOrUpdateDomainPerm(
 	}
 
 	var errWithCode gtserror.WithCode
-	if domainPerm != nil {
+	if !util.IsNil(domainPerm) {
 		// Permission already exists, update it.
 		apiDomainPerm, errWithCode = p.DomainPermissionUpdate(
 			ctx,
@@ -394,14 +394,20 @@ func (p *Processor) DomainPermissionGet(
 		err = gtserror.New("unrecognized permission type")
 	}
 
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			err = fmt.Errorf("no domain %s exists with id %s", permissionType.String(), id)
-			return nil, gtserror.NewErrorNotFound(err, err.Error())
-		}
-
-		err = gtserror.Newf("error getting domain %s with id %s: %w", permissionType.String(), id, err)
+	if err != nil && errors.Is(err, db.ErrNoEntries) {
+		err = gtserror.Newf(
+			"db error getting domain %s with id %s: %w",
+			permissionType.String(), id, err,
+		)
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if util.IsNil(domainPerm) {
+		errText := fmt.Sprintf(
+			"no domain %s exists with id %s",
+			permissionType.String(), id,
+		)
+		return nil, gtserror.NewErrorNotFound(errors.New(errText), errText)
 	}
 
 	return p.apiDomainPerm(ctx, domainPerm, export)
