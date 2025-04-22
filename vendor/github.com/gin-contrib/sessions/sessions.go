@@ -1,7 +1,7 @@
 package sessions
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +11,7 @@ import (
 
 const (
 	DefaultKey  = "github.com/gin-contrib/sessions"
-	errorFormat = "[sessions] ERROR! %s\n"
+	errorFormat = "[sessions] ERROR!"
 )
 
 type Store interface {
@@ -131,7 +131,10 @@ func (s *session) Session() *sessions.Session {
 		var err error
 		s.session, err = s.store.Get(s.request, s.name)
 		if err != nil {
-			log.Printf(errorFormat, err)
+			slog.Error(errorFormat,
+				"err", err,
+			)
+			return nil
 		}
 	}
 	return s.session

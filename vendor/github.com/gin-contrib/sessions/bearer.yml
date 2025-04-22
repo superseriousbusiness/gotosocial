@@ -1,0 +1,2 @@
+rule:
+  skip-rule: [go_gorilla_cookie_missing_http_only, go_gorilla_insecure_cookie]

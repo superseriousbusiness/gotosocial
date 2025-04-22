@@ -17,7 +17,17 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+	WHAT SHOULD GO IN THIS FILE?
+
+	This script is loaded just before the end of the HTML body, so
+	put stuff in here that should be run *before* the user sees the page.
+	So, stuff that shifts the layout or causes elements to jump around.
+*/
+
 import { decode } from "blurhash";
+
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // Generate a blurhash canvas for each image for
 // each blurhash container and put it in the summary.
@@ -143,4 +153,111 @@ Array.from(document.getElementsByTagName('img')).forEach(img => {
 			canvas.remove();
 		}
 	});
+});
+
+// Change the spoiler / content warning boxes from generic
+// "toggle visibility" to show/hide depending on state,
+// and add keyboard functionality to spoiler buttons.
+function dynamicSpoiler(className, updateFunc) {
+	Array.from(document.getElementsByClassName(className)).forEach((spoiler) => {
+		const update = updateFunc(spoiler);
+		if (update) {
+			update();
+			spoiler.addEventListener("toggle", update);
+		}
+	});
+}
+dynamicSpoiler("text-spoiler", (details) => {
+	const summary = details.children[0];
+	const button = details.querySelector(".button");
+
+	// Use button *instead of summary*
+	// to toggle post visibility.
+	summary.tabIndex = "-1";
+	button.tabIndex = "0";
+	button.setAttribute("aria-role", "button");
+	button.onclick = (e) => {
+		e.preventDefault();
+		return details.hasAttribute("open")
+			? details.removeAttribute("open")
+			: details.setAttribute("open", "");
+	};
+
+	// Let enter also trigger the button
+	// (for those using keyboard to navigate).
+	button.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			button.click();
+		}
+	});
+
+	// Change button text depending on
+	// whether spoiler is open or closed rn.
+	return () => {
+		button.textContent = details.open
+			? "Show less"
+			: "Show more";
+	};
+});
+dynamicSpoiler("media-spoiler", (details) => {
+	const summary = details.children[0];
+	const button = details.querySelector(".eye.button");
+	const video = details.querySelector(".plyr-video");
+	const loopingAuto = !reduceMotion.matches && video != null && video.classList.contains("gifv");
+
+	// Use button *instead of summary*
+	// to toggle media visibility.
+	summary.tabIndex = "-1";
+	button.tabIndex = "0";
+	button.setAttribute("aria-role", "button");
+	button.onclick = (e) => {
+		e.preventDefault();
+		return details.hasAttribute("open")
+			? details.removeAttribute("open")
+			: details.setAttribute("open", "");
+	};
+
+	// Let enter also trigger the button
+	// (for those using keyboard to navigate).
+	button.addEventListener("keydown", (e) => {
+		if (e.key === "Enter") {
+			e.preventDefault();
+			button.click();
+		}
+	});
+
+	return () => {
+		if (details.open) {
+			button.setAttribute("aria-label", "Hide media");
+		} else {
+			button.setAttribute("aria-label", "Show media");
+			if (video && !loopingAuto) {
+				video.pause();
+			}
+		}
+	};
+});
+
+// Reformat time text to browser locale.
+// Define + reuse one DateTimeFormat (cheaper).
+const dateTimeFormat = Intl.DateTimeFormat(
+	undefined,
+	{
+		year: 'numeric',
+		month: 'short',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	},
+);
+Array.from(document.getElementsByTagName('time')).forEach(timeTag => {
+	const datetime = timeTag.getAttribute('datetime');
+	const currentText = timeTag.textContent.trim();
+	// Only format if current text contains precise time.
+	if (currentText.match(/\d{2}:\d{2}/)) {
+		const date = new Date(datetime);
+		timeTag.textContent = dateTimeFormat.format(date);
+	}
 });
