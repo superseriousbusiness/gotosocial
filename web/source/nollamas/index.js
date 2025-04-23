@@ -23,15 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
 	const nollamas = document.querySelector(".nollamas");
 	const challenge = nollamas.dataset.nollamasChallenge;
 	const difficulty = nollamas.dataset.nollamasDifficulty;
-	
+
 	console.log('challenge:', challenge);
 	console.log('difficulty:', difficulty);
-	
-	// Not sure what this is for. Kim help??
-	const jsOnlyElements = document.querySelectorAll('.hidden');
-	jsOnlyElements.forEach(el => {
-		el.classList.remove('hidden');
-	});
 
 	// Prepare the worker with task function.
 	const worker = new Worker("/assets/dist/nollamasworker.js");
