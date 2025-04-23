@@ -34,6 +34,7 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
@@ -118,12 +119,17 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// a TTL basis, so it should be fine.
 	challenge := token[:len(token)/2]
 
+	// Prepare new log entry with challenge.
+	l := log.WithContext(c.Request.Context())
+	l = l.WithField("challenge", challenge)
+
 	// Check for a provided success token.
 	cookie, _ := c.Cookie("gts-nollamas")
 	if len(cookie) > encodedHashLen {
 
 		// Clearly invalid cookie, just
 		// present them with new challenge.
+		l.Warn("invalid cookie provided")
 		m.renderChallenge(c, challenge)
 		return
 	}
@@ -149,6 +155,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 		// An invalid solution string, just
 		// present them with new challenge.
+		l.Info("posing new challenge")
 		m.renderChallenge(c, challenge)
 		return
 	}
@@ -171,17 +178,16 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 			// They failed challenge,
 			// re-present challenge page.
+			l.Warn("invalid solution provided")
 			m.renderChallenge(c, challenge)
 			return
 		}
 	}
 
-	// Drop the solution from query.
-	query.Del("nollamas_solution")
-	c.Request.URL.RawQuery = query.Encode()
+	l.Infof("challenge passed: %s", nonce)
 
-	// They passed the challenge! Set success
-	// token cookie and allow them to continue.
+	// They passed the challenge! Set success token
+	// cookie and allow them to continue to next handlers.
 	c.SetCookie("gts-nollamas", token, int(m.ttl/time.Second),
 		"", "", false, false)
 	c.Next()
@@ -218,11 +224,10 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 }
 
 func (m *nollamas) token(c *gin.Context, hash *hashWithBufs) string {
-	// Use our safe, unique input seed which
-	// is already hashed, but will get rehashed.
-	// This ensures we don't leak private keys,
-	// but also we have cryptographically safe
-	// deterministic tokens for comparisons.
+	// Use our unique seed to seed hash,
+	// to ensure we have cryptographically
+	// unique, yet deterministic, tokens
+	// generated for a given http client.
 	hash.hash.Write(m.seed)
 
 	// Include difficulty level in
