@@ -20,13 +20,11 @@ package middleware
 import (
 	"context"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/sha256"
-	"crypto/sha512"
 	"crypto/subtle"
-	"crypto/x509"
 	"encoding/hex"
 	"hash"
+	"io"
 	"net/http"
 	"time"
 
@@ -34,29 +32,31 @@ import (
 	"github.com/gin-gonic/gin"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func NoLLaMas(
-	getInstance func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
-) gin.HandlerFunc {
-	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) gin.HandlerFunc {
+	if !config.GetAdvancedScraperDeterrence() {
+		// NoLLaMas middleware disabled.
+		return func(*gin.Context) {}
+	}
+
+	seed := make([]byte, 32)
+
+	// Read random data for the token seed.
+	_, err := io.ReadFull(rand.Reader, seed)
 	if err != nil {
 		panic(err)
 	}
 
-	// Generate seed hash
-	// from this private key.
-	bpriv := x509.MarshalPKCS1PrivateKey(privKey)
-	seed := sha512.Sum512(bpriv)
-
 	// Configure nollamas.
 	var nollamas nollamas
-	nollamas.seed = seed[:]
+	nollamas.seed = seed
 	nollamas.ttl = time.Hour
 	nollamas.diff = 4
-	nollamas.getInstance = getInstance
+	nollamas.getInstanceV1 = getInstanceV1
 	return nollamas.Serve
 }
 
@@ -66,13 +66,21 @@ const hashLen = sha256.BlockSize
 // i.e. hex.EncodedLen(hashLen).
 const encodedHashLen = 2 * hashLen
 
-func newHash() hash.Hash { return sha256.New() }
+// hashWithBufs encompasses a hash along
+// with the necessary buffers to generate
+// a hashsum and then encode that sum.
+type hashWithBufs struct {
+	hash hash.Hash
+	hbuf []byte
+	ebuf []byte
+}
 
 type nollamas struct {
-	seed        []byte // securely hashed private key
-	ttl         time.Duration
-	diff        uint8
-	getInstance func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)
+	seed []byte // unique token seed
+	ttl  time.Duration
+	diff uint8
+
+	getInstanceV1 func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)
 }
 
 func (m *nollamas) Serve(c *gin.Context) {
@@ -90,16 +98,17 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
-	// Get new hasher.
-	hash := newHash()
-
-	// Reset hash.
-	hash.Reset()
+	// Prepare hash + buffers.
+	hash := hashWithBufs{
+		hash: sha256.New(),
+		hbuf: make([]byte, 0, hashLen),
+		ebuf: make([]byte, encodedHashLen),
+	}
 
 	// Generate a unique token for
 	// this request only valid for
 	// a period of now +- m.ttl.
-	token := m.token(c, hash)
+	token := m.token(c, &hash)
 
 	// For unique challenge string just use a
 	// portion of their unique 'success' token.
@@ -144,14 +153,16 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
-	// Reset hash.
-	hash.Reset()
+	// Reset the hash.
+	hash.hash.Reset()
 
 	// Hash and encode input challenge with
 	// proposed nonce as a possible solution.
-	_, _ = hash.Write(byteutil.S2B(challenge))
-	_, _ = hash.Write(byteutil.S2B(nonce))
-	solution := hex.AppendEncode(nil, hash.Sum(nil))
+	hash.hash.Write(byteutil.S2B(challenge))
+	hash.hash.Write(byteutil.S2B(nonce))
+	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
+	hex.Encode(hash.ebuf, hash.hbuf)
+	solution := hash.ebuf
 
 	// Check that the first 'diff'
 	// many chars are indeed zeroes.
@@ -182,9 +193,10 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 	// our challenge page.
 	c.Abort()
 
-	instance, errWithCode := m.getInstance(c.Request.Context())
+	// Fetch current instance information for templating vars.
+	instance, errWithCode := m.getInstanceV1(c.Request.Context())
 	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.getInstance)
+		apiutil.ErrorHandler(c, errWithCode, m.getInstanceV1)
 		return
 	}
 
@@ -205,24 +217,24 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 	})
 }
 
-func (m *nollamas) token(c *gin.Context, hash hash.Hash) string {
+func (m *nollamas) token(c *gin.Context, hash *hashWithBufs) string {
 	// Use our safe, unique input seed which
 	// is already hashed, but will get rehashed.
 	// This ensures we don't leak private keys,
 	// but also we have cryptographically safe
 	// deterministic tokens for comparisons.
-	_, _ = hash.Write(m.seed)
+	hash.hash.Write(m.seed)
 
 	// Include difficulty level in
 	// hash input data so if config
 	// changes then token invalidates.
-	_, _ = hash.Write([]byte{m.diff})
+	hash.hash.Write([]byte{m.diff})
 
 	// Also seed the generated input with
 	// current time rounded to TTL, so our
 	// single comparison handles expiries.
 	now := time.Now().Round(m.ttl).Unix()
-	_, _ = hash.Write([]byte{
+	hash.hash.Write([]byte{
 		byte(now >> 56),
 		byte(now >> 48),
 		byte(now >> 40),
@@ -235,10 +247,12 @@ func (m *nollamas) token(c *gin.Context, hash hash.Hash) string {
 
 	// Finally, append unique client request data.
 	userAgent := c.Request.Header.Get("User-Agent")
-	_, _ = hash.Write(byteutil.S2B(userAgent))
+	hash.hash.Write(byteutil.S2B(userAgent))
 	clientIP := c.ClientIP()
-	_, _ = hash.Write(byteutil.S2B(clientIP))
+	hash.hash.Write(byteutil.S2B(clientIP))
 
 	// Return hex encoded hash output.
-	return hex.EncodeToString(hash.Sum(nil))
+	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
+	hex.Encode(hash.ebuf, hash.hbuf)
+	return string(hash.ebuf)
 }
