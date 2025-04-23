@@ -151,8 +151,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 	// Check query to see if an in-progress
 	// challenge solution has been provided.
-	query := c.Request.URL.Query()
-	nonce := query.Get("nollamas_solution")
+	nonce, _ := c.GetQuery("nollamas_solution")
 	if nonce == "" || len(nonce) > 20 {
 
 		// An invalid solution string, just
