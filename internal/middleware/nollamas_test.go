@@ -117,7 +117,7 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 		}
 	}
 
-	// Ensure valid results.
+	// Ensure valid posed challenge.
 	assert.NotZero(t, difficulty)
 	assert.NotEmpty(t, challenge)
 
