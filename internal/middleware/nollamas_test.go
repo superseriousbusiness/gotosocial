@@ -1,0 +1,172 @@
+// GoToSocial
+// Copyright (C) GoToSocial Authors admin@gotosocial.org
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package middleware_test
+
+import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"regexp"
+	"strconv"
+	"strings"
+	"testing"
+
+	"codeberg.org/gruf/go-byteutil"
+	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/assert"
+	"github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"github.com/superseriousbusiness/gotosocial/internal/router"
+)
+
+var challengeRegexp = regexp.MustCompile("data-nollamas-challenge=\".+\"")
+var difficultyRegexp = regexp.MustCompile("data-nollamas-difficulty=\".+\"")
+
+func TestNoLLaMasMiddleware(t *testing.T) {
+	// Gin test engine.
+	e := gin.New()
+
+	// Setup necessary configuration variables.
+	config.SetAdvancedScraperDeterrence(true)
+	config.SetWebTemplateBaseDir("../../web/template")
+
+	err := router.LoadTemplates(e)
+	assert.NoError(t, err)
+
+	// Add middleware to the gin engine handler stack.
+	middleware := middleware.NoLLaMas(getInstanceV1)
+	e.Use(middleware)
+
+	// Set test handler we can
+	// easily check if was used.
+	e.Handle("GET", "/", testHandler)
+
+	// Test with differing user-agents.
+	for _, userAgent := range []string{
+		"CURL",
+		"Mozilla FireSox",
+		"Google Gnome",
+	} {
+		testNoLLaMasMiddleware(t, e, userAgent)
+	}
+}
+
+func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
+	// Prepare a test request for gin engine.
+	r := httptest.NewRequest("GET", "/", nil)
+	r.Header.Set("User-Agent", userAgent)
+	rw := httptest.NewRecorder()
+
+	// Pass req through
+	// engine handler.
+	e.ServeHTTP(rw, r)
+
+	// Get http result.
+	res := rw.Result()
+
+	// It should have been stopped
+	// by middleware and NOT used
+	// the expected test handler.
+	ok := usedTestHandler(res)
+	assert.False(t, ok)
+
+	// Read entire response body.
+	b, err := io.ReadAll(res.Body)
+	if err != nil {
+		panic(err)
+	}
+
+	var difficulty uint64
+	var challenge string
+
+	// Parse output body and find the challenge / difficulty.
+	for _, line := range strings.Split(string(b), "\n") {
+		line = strings.TrimSpace(line)
+
+		switch {
+		case strings.HasPrefix(line, "data-nollamas-challenge=\""):
+			line = line[25:]
+			line = line[:len(line)-1]
+			challenge = line
+		case strings.HasPrefix(line, "data-nollamas-difficulty=\""):
+			line = line[26:]
+			line = line[:len(line)-1]
+			var err error
+			difficulty, err = strconv.ParseUint(line, 10, 8)
+			assert.NoError(t, err)
+		}
+	}
+
+	// Ensure valid results.
+	assert.NotZero(t, difficulty)
+	assert.NotEmpty(t, challenge)
+
+	// Prepare a test request for gin engine.
+	r = httptest.NewRequest("GET", "/", nil)
+	r.Header.Set("User-Agent", userAgent)
+	rw = httptest.NewRecorder()
+
+	// Now compute and set expected solution.
+	solution := computeSolution(challenge, difficulty)
+	r.URL.RawQuery = "nollamas_solution=" + solution
+
+	// Pass req through
+	// engine handler.
+	e.ServeHTTP(rw, r)
+
+	// Get http result.
+	res = rw.Result()
+
+	// Should have passed challenge.
+	ok = usedTestHandler(res)
+	assert.True(t, ok)
+}
+
+func getInstanceV1(context.Context) (*model.InstanceV1, gtserror.WithCode) {
+	return &model.InstanceV1{}, nil
+}
+
+func computeSolution(challenge string, difficulty uint64) string {
+outer:
+	for i := 0; ; i++ {
+		solution := strconv.Itoa(i)
+		combined := challenge + solution
+		hash := sha256.Sum256(byteutil.S2B(combined))
+		encoded := hex.EncodeToString(hash[:])
+		for i := range difficulty {
+			if encoded[i] != '0' {
+				continue outer
+			}
+		}
+		return solution
+	}
+}
+
+func usedTestHandler(res *http.Response) bool {
+	return res.Header.Get("test-handler") == "ok"
+}
+
+func testHandler(c *gin.Context) {
+	c.Writer.Header().Set("test-handler", "ok")
+	c.Writer.WriteHeader(http.StatusOK)
+}

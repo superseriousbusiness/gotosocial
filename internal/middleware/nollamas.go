@@ -198,7 +198,7 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 		return
 	}
 
-	// Write the templated challenge HTML response to client.
+	// Write templated challenge response to client.
 	apiutil.TemplateWebPage(c, apiutil.WebPage{
 		Template: "nollamas.tmpl",
 		Instance: instance,
