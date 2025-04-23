@@ -24,7 +24,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -39,9 +38,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
-
-var challengeRegexp = regexp.MustCompile("data-nollamas-challenge=\".+\"")
-var difficultyRegexp = regexp.MustCompile("data-nollamas-difficulty=\".+\"")
 
 func TestNoLLaMasMiddleware(t *testing.T) {
 	// Gin test engine.
