@@ -62,7 +62,7 @@ func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserro
 }
 
 // i.e. outputted hash slice length.
-const hashLen = sha256.BlockSize
+const hashLen = sha256.Size
 
 // i.e. hex.EncodedLen(hashLen).
 const encodedHashLen = 2 * hashLen
