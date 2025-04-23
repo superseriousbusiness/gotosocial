@@ -18,6 +18,9 @@
 package middleware
 
 import (
+	"context"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/sha512"
 	"crypto/subtle"
@@ -29,15 +32,23 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
-func NoLLaMas(instanceAcc *gtsmodel.Account) gin.HandlerFunc {
-	// Generate seed hash from
-	// this instance private key.
-	priv := instanceAcc.PrivateKey
-	bpriv := x509.MarshalPKCS1PrivateKey(priv)
+func NoLLaMas(
+	getInstance func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
+) gin.HandlerFunc {
+	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+
+	// Generate seed hash
+	// from this private key.
+	bpriv := x509.MarshalPKCS1PrivateKey(privKey)
 	seed := sha512.Sum512(bpriv)
 
 	// Configure nollamas.
@@ -45,6 +56,7 @@ func NoLLaMas(instanceAcc *gtsmodel.Account) gin.HandlerFunc {
 	nollamas.seed = seed[:]
 	nollamas.ttl = time.Hour
 	nollamas.diff = 4
+	nollamas.getInstance = getInstance
 	return nollamas.Serve
 }
 
@@ -57,9 +69,10 @@ const encodedHashLen = 2 * hashLen
 func newHash() hash.Hash { return sha256.New() }
 
 type nollamas struct {
-	seed []byte // securely hashed instance private key
-	ttl  time.Duration
-	diff uint8
+	seed        []byte // securely hashed private key
+	ttl         time.Duration
+	diff        uint8
+	getInstance func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)
 }
 
 func (m *nollamas) Serve(c *gin.Context) {
@@ -169,10 +182,26 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 	// our challenge page.
 	c.Abort()
 
+	instance, errWithCode := m.getInstance(c.Request.Context())
+	if errWithCode != nil {
+		apiutil.ErrorHandler(c, errWithCode, m.getInstance)
+		return
+	}
+
 	// Write the templated challenge HTML response to client.
-	c.HTML(http.StatusOK, "nollamas.tmpl", map[string]any{
-		"challenge":  challenge,
-		"difficulty": m.diff,
+	apiutil.TemplateWebPage(c, apiutil.WebPage{
+		Template: "nollamas.tmpl",
+		Instance: instance,
+		Extra: map[string]any{
+			"challenge":  challenge,
+			"difficulty": m.diff,
+		},
+		Javascript: []apiutil.JavascriptEntry{
+			{
+				Src:   "/assets/dist/nollamas.js",
+				Defer: true,
+			},
+		},
 	})
 }
 

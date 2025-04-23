@@ -73,6 +73,24 @@ skulk({
 				["babelify", { global: true }]
 			],
 		},
+		nollamas: {
+			entryFile: "nollamas",
+			outputFile: "nollamas.js",
+			preset: ["js"],
+			prodCfg: prodCfg,
+			transform: [
+				["babelify", { global: true }]
+			],
+		},
+		nollamasworker: {
+			entryFile: "nollamasworker",
+			outputFile: "nollamasworker.js",
+			preset: ["js"],
+			prodCfg: prodCfg,
+			transform: [
+				["babelify", { global: true }]
+			],
+		},
 		settings: {
 			entryFile: "settings",
 			outputFile: "settings.js",

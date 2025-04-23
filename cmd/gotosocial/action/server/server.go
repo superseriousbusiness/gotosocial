@@ -499,7 +499,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	s2sLimit := middleware.RateLimit(rlLimit, exceptions)       // server-to-server (AP)
 	fsMainLimit := middleware.RateLimit(rlLimit, exceptions)    // fileserver / web templates
 	fsEmojiLimit := middleware.RateLimit(rlLimit*2, exceptions) // fileserver (emojis only, use high limit)
-	nollamas := middleware.NoLLaMas(instanceAccount)
 
 	// throttling
 	cpuMultiplier := config.GetAdvancedThrottlingMultiplier()
@@ -545,7 +544,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	nodeInfoModule.Route(route, s2sLimit, s2sThrottle, gzip)
 	activityPubModule.Route(route, s2sLimit, s2sThrottle, robotsDisallowAll, gzip)
 	activityPubModule.RoutePublicKey(route, s2sLimit, pkThrottle, robotsDisallowAll, gzip)
-	webModule.Route(route, fsMainLimit, fsThrottle, robotsDisallowAIOnly, nollamas, gzip)
+	webModule.Route(route, fsMainLimit, fsThrottle, robotsDisallowAIOnly, gzip)
 
 	// Finally start the main http server!
 	if err := route.Start(); err != nil {
