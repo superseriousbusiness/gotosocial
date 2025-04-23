@@ -25,6 +25,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"testing"
@@ -102,7 +103,6 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 	// Parse output body and find the challenge / difficulty.
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
-
 		switch {
 		case strings.HasPrefix(line, "data-nollamas-challenge=\""):
 			line = line[25:]
@@ -126,7 +126,7 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 	r.Header.Set("User-Agent", userAgent)
 	rw = httptest.NewRecorder()
 
-	// Now compute and set expected solution.
+	// Now compute and set solution query paramater.
 	solution := computeSolution(challenge, difficulty)
 	r.URL.RawQuery = "nollamas_solution=" + solution
 
@@ -140,12 +140,15 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 	// Should have passed challenge.
 	ok = usedTestHandler(res)
 	assert.True(t, ok)
+
+	// Ensure our expected solution cookie (to bypass challenge) was set.
+	ok = slices.ContainsFunc(res.Cookies(), func(c *http.Cookie) bool {
+		return c.Name == "gts-nollamas"
+	})
+	assert.True(t, ok)
 }
 
-func getInstanceV1(context.Context) (*model.InstanceV1, gtserror.WithCode) {
-	return &model.InstanceV1{}, nil
-}
-
+// computeSolution does the functional equivalent of our nollamas workerTask.js.
 func computeSolution(challenge string, difficulty uint64) string {
 outer:
 	for i := 0; ; i++ {
@@ -162,6 +165,7 @@ outer:
 	}
 }
 
+// usedTestHandler returns whether testHandler() was used.
 func usedTestHandler(res *http.Response) bool {
 	return res.Header.Get("test-handler") == "ok"
 }
@@ -169,4 +173,8 @@ func usedTestHandler(res *http.Response) bool {
 func testHandler(c *gin.Context) {
 	c.Writer.Header().Set("test-handler", "ok")
 	c.Writer.WriteHeader(http.StatusOK)
+}
+
+func getInstanceV1(context.Context) (*model.InstanceV1, gtserror.WithCode) {
+	return &model.InstanceV1{}, nil
 }
