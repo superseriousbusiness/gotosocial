@@ -38,7 +38,17 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
 )
 
+// NoLLaMas returns a piece of HTTP middleware that provides a deterrence
+// on routes it is applied to against bots and scrapers. It generates a
+// unique but deterministic challenge for each HTTP client within an hour
+// TTL time that requires a proof-of-work solution to pass onto the next
+// handler in the chain. The outcome of this is that hopefully this should
+// make scraping our software economically unfeasible, only when enabled
+// though of course.
+//
+// Heavily inspired by: https://github.com/TecharoHQ/anubis
 func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) gin.HandlerFunc {
+
 	if !config.GetAdvancedScraperDeterrence() {
 		// NoLLaMas middleware disabled.
 		return func(*gin.Context) {}
