@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		if (e.data.done) {
 			console.log('solution found for:', e.data.nonce);
 			let url = new URL(window.location.href);
-			url.searchParams.append('nollamas_solution', e.data.nonce);
+			url.searchParams.set('nollamas_solution', e.data.nonce);
 			window.location.href = url.toString();
 		}
 	};
