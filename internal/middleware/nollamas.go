@@ -154,7 +154,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 	// Prepare new log entry with challenge.
 	l := log.WithContext(c.Request.Context())
-	l = l.WithField("challenge", challenge)
+	l = l.WithField("challenge", challenge[:len(challenge)/4])
 
 	// Check query to see if an in-progress
 	// challenge solution has been provided.
