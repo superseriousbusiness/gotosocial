@@ -157,6 +157,9 @@ func (m *nollamas) Serve(c *gin.Context) {
 	nonce, _ := c.GetQuery("nollamas_solution")
 	if nonce == "" || len(nonce) > 20 {
 
+		// noting that here, 20 is
+		// max integer string len.
+		//
 		// An invalid solution string, just
 		// present them with new challenge.
 		l.Info("posing new challenge")
