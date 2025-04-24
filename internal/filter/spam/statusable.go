@@ -142,7 +142,7 @@ func (f *Filter) StatusableOK(
 	}
 
 	// HEURISTIC 6: Are there any media attachments?
-	attachments, _ := ap.ExtractAttachments(statusable)
+	attachments := ap.ExtractAttachments(statusable)
 	hasAttachments := len(attachments) != 0
 	if hasAttachments {
 		err := errors.New("status has attachment(s)")

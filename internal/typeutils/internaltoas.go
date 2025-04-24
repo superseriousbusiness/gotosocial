@@ -678,22 +678,9 @@ func (c *Converter) StatusToAS(ctx context.Context, s *gtsmodel.Status) (ap.Stat
 	status.SetActivityStreamsContent(contentProp)
 
 	// attachments
-	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
-	attachments := s.Attachments
-	if len(s.AttachmentIDs) != len(attachments) {
-		attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, s.AttachmentIDs)
-		if err != nil {
-			return nil, gtserror.Newf("error getting attachments from database: %w", err)
-		}
+	if err := c.attachAttachments(ctx, s, status); err != nil {
+		return nil, gtserror.Newf("error attaching attachments: %w", err)
 	}
-	for _, a := range attachments {
-		doc, err := c.AttachmentToAS(ctx, a)
-		if err != nil {
-			return nil, gtserror.Newf("error converting attachment: %w", err)
-		}
-		attachmentProp.AppendActivityStreamsDocument(doc)
-	}
-	status.SetActivityStreamsAttachment(attachmentProp)
 
 	// replies
 	repliesCollection, err := c.StatusToASRepliesCollection(ctx, s, false)
@@ -1130,39 +1117,94 @@ func (c *Converter) EmojiToAS(ctx context.Context, e *gtsmodel.Emoji) (vocab.Too
 	return emoji, nil
 }
 
-// AttachmentToAS converts a gts model media attachment into an activity streams Attachment, suitable for federation
-func (c *Converter) AttachmentToAS(ctx context.Context, a *gtsmodel.MediaAttachment) (vocab.ActivityStreamsDocument, error) {
-	// type -- Document
-	doc := streams.NewActivityStreamsDocument()
-
-	// mediaType aka mime content type
-	mediaTypeProp := streams.NewActivityStreamsMediaTypeProperty()
-	mediaTypeProp.Set(a.File.ContentType)
-	doc.SetActivityStreamsMediaType(mediaTypeProp)
-
-	// url -- for the original image not the thumbnail
-	urlProp := streams.NewActivityStreamsUrlProperty()
-	imageURL, err := url.Parse(a.URL)
-	if err != nil {
-		return nil, fmt.Errorf("AttachmentToAS: error parsing uri %s: %s", a.URL, err)
+// attachAttachments converts the attachments on the given status
+// into Attachmentables, and appends them to the given Statusable.
+func (c *Converter) attachAttachments(
+	ctx context.Context,
+	s *gtsmodel.Status,
+	statusable ap.Statusable,
+) error {
+	// Ensure status attachments populated.
+	if len(s.AttachmentIDs) != len(s.Attachments) {
+		var err error
+		s.Attachments, err = c.state.DB.GetAttachmentsByIDs(ctx, s.AttachmentIDs)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return gtserror.Newf("db error getting attachments: %w", err)
+		}
 	}
-	urlProp.AppendIRI(imageURL)
-	doc.SetActivityStreamsUrl(urlProp)
 
-	// name -- aka image description
-	nameProp := streams.NewActivityStreamsNameProperty()
-	nameProp.AppendXMLSchemaString(a.Description)
-	doc.SetActivityStreamsName(nameProp)
+	// Prepare attachment property.
+	attachmentProp := streams.NewActivityStreamsAttachmentProperty()
+	defer statusable.SetActivityStreamsAttachment(attachmentProp)
 
-	// blurhash
-	blurProp := streams.NewTootBlurhashProperty()
-	blurProp.Set(a.Blurhash)
-	doc.SetTootBlurhash(blurProp)
+	for _, a := range s.Attachments {
 
-	// focalpoint
-	// TODO
+		// Use appropriate vocab.Type and
+		// append function for this attachment.
+		var (
+			attachmentable ap.Attachmentable
+			append         func()
+		)
+		switch a.Type {
 
-	return doc, nil
+		// png, gif, webp, jpeg, etc.
+		case gtsmodel.FileTypeImage:
+			t := streams.NewActivityStreamsImage()
+			attachmentable = t
+			append = func() { attachmentProp.AppendActivityStreamsImage(t) }
+
+		// mp4, m4a, wmv, webm, etc.
+		case gtsmodel.FileTypeVideo, gtsmodel.FileTypeGifv:
+			t := streams.NewActivityStreamsVideo()
+			attachmentable = t
+			append = func() { attachmentProp.AppendActivityStreamsVideo(t) }
+
+		// mp3, flac, ogg, wma, etc.
+		case gtsmodel.FileTypeAudio:
+			t := streams.NewActivityStreamsAudio()
+			attachmentable = t
+			append = func() { attachmentProp.AppendActivityStreamsAudio(t) }
+
+		// Not sure, fall back to Document.
+		default:
+			t := streams.NewActivityStreamsDocument()
+			attachmentable = t
+			append = func() { attachmentProp.AppendActivityStreamsDocument(t) }
+		}
+
+		// `mediaType` ie., mime content type.
+		ap.SetMediaType(attachmentable, a.File.ContentType)
+
+		// URL of the media file.
+		imageURL, err := url.Parse(a.URL)
+		if err != nil {
+			return gtserror.Newf("error parsing attachment url: %w", err)
+		}
+		ap.AppendURL(attachmentable, imageURL)
+
+		// `name` ie., image description
+		ap.AppendName(attachmentable, a.Description)
+
+		// `blurhash`
+		ap.SetBlurhash(attachmentable, a.Blurhash)
+
+		// Set `focalPoint` only if necessary.
+		if a.FileMeta.Focus.X != 0 && a.FileMeta.Focus.Y != 0 {
+			if withFocalPoint, ok := attachmentable.(ap.WithFocalPoint); ok {
+				focalPointProp := streams.NewTootFocalPointProperty()
+				focalPointProp.AppendXMLSchemaFloat(float64(a.FileMeta.Focus.X))
+				focalPointProp.AppendXMLSchemaFloat(float64(a.FileMeta.Focus.Y))
+				withFocalPoint.SetTootFocalPoint(focalPointProp)
+			}
+		}
+
+		// Done, append
+		// to Statusable.
+		append()
+	}
+
+	statusable.SetActivityStreamsAttachment(attachmentProp)
+	return nil
 }
 
 // FaveToAS converts a gts model status fave into an activityStreams LIKE, suitable for federation.

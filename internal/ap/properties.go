@@ -560,6 +560,70 @@ func SetApprovedBy(with WithApprovedBy, approvedBy *url.URL) {
 	abProp.Set(approvedBy)
 }
 
+// GetMediaType returns the string contained in
+// the MediaType property of 'with', if set.
+func GetMediaType(with WithMediaType) string {
+	mtProp := with.GetActivityStreamsMediaType()
+	if mtProp == nil || !mtProp.IsRFCRfc2045() {
+		return ""
+	}
+	return mtProp.Get()
+}
+
+// SetMediaType sets the given string
+// on the MediaType property of 'with'.
+func SetMediaType(with WithMediaType, mediaType string) {
+	mtProp := with.GetActivityStreamsMediaType()
+	if mtProp == nil {
+		mtProp = streams.NewActivityStreamsMediaTypeProperty()
+		with.SetActivityStreamsMediaType(mtProp)
+	}
+	mtProp.Set(mediaType)
+}
+
+// AppendName appends the given name
+// vals to the Name property of 'with'.
+func AppendName(with WithName, name ...string) {
+	if len(name) == 0 {
+		return
+	}
+	nameProp := with.GetActivityStreamsName()
+	if nameProp == nil {
+		nameProp = streams.NewActivityStreamsNameProperty()
+		with.SetActivityStreamsName(nameProp)
+	}
+	for _, name := range name {
+		nameProp.AppendXMLSchemaString(name)
+	}
+}
+
+// AppendSummary appends the given summary
+// vals to the Summary property of 'with'.
+func AppendSummary(with WithSummary, summary ...string) {
+	if len(summary) == 0 {
+		return
+	}
+	summaryProp := with.GetActivityStreamsSummary()
+	if summaryProp == nil {
+		summaryProp = streams.NewActivityStreamsSummaryProperty()
+		with.SetActivityStreamsSummary(summaryProp)
+	}
+	for _, summary := range summary {
+		summaryProp.AppendXMLSchemaString(summary)
+	}
+}
+
+// SetBlurhash sets the given string
+// on the Blurhash property of 'with'.
+func SetBlurhash(with WithBlurhash, mediaType string) {
+	bProp := with.GetTootBlurhash()
+	if bProp == nil {
+		bProp = streams.NewTootBlurhashProperty()
+		with.SetTootBlurhash(bProp)
+	}
+	bProp.Set(mediaType)
+}
+
 // extractIRIs extracts just the AP IRIs from an iterable
 // property that may contain types (with IRIs) or just IRIs.
 //

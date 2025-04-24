@@ -1,5 +1,56 @@
 # Posts and Post Properties
 
+## Attachments, Blurhash, and Focal Point
+
+GoToSocial sends media attachments in the `attachment` property of posts using the following types:
+
+- `Image` - any image type (webp, jpeg, gif, png, etc).
+- `Video` - any video type (mp4, mkv, webm, etc).
+- `Audio` - any audio type (mp3, flac, wma, etc).
+- `Document` - fallback for any other / unknown type.
+
+Attachments sent from GoToSocial include the MIME `mediaType`, the `url` of the full-sized version of the media file, and the `summary` property, which can be interpreted by remote instance's as a short description / alt text for the attachment.
+
+Types `Image` and `Video` will also include the `http://joinmastodon.org/ns#blurhash` property so that remotes can generate a colorful hash of the image. If an audio file included an embedded cover art image, then the `Audio` type will also include a blurhash. See the [Mastodon blurhash docs](https://docs.joinmastodon.org/spec/activitypub/#blurhash).
+
+`Image` types may also include the `http://joinmastodon.org/ns#focalPoint` property, which will be an array of two floats between -1.0 and 1.0 indicating the x-y coordinates of the image's focal point. See the [Mastondon focalPoint docs](https://docs.joinmastodon.org/spec/activitypub/#focalPoint).
+
+Here's an example of a `Note` with one attachment:
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "blurhash": "toot:blurhash",
+      "focalPoint": {
+        "@container": "@list",
+        "@id": "toot:focalPoint"
+      },
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
+  "type": "Note",
+  [...],
+  "attachment": [
+    {
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
+      "focalPoint": [
+        -0.5,
+        0.5
+      ],
+      "mediaType": "image/jpeg",
+      "summary": "Black and white image of some 50's style text saying: Welcome On Board",
+      "type": "Image",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
+    }
+  ],
+  [...]
+}
+```
+
+When receiving posts with attachments from remote instances, it will try to parse any of the four types `Image`, `Video`, `Audio`, or `Document` into media attachments. It doesn't matter which type is used. It will check for `blurhash` and `focalPoint` properties and use these if they are set. It will use the `summary` value as a short description / alt text, falling back to `name` if `summary` is not set.
+
 ## Hashtags
 
 GoToSocial users can include hashtags in their posts, which indicate to other instances that that user wishes their post to be grouped together with other posts using the same hashtag, for discovery purposes.

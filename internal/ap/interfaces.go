@@ -165,6 +165,29 @@ func ToApprovable(t vocab.Type) (Approvable, bool) {
 	return approvable, true
 }
 
+// IsAttachmentable returns whether AS vocab type name
+// is something that can be cast to Attachmentable.
+func IsAttachmentable(typeName string) bool {
+	switch typeName {
+	case ObjectAudio,
+		ObjectDocument,
+		ObjectImage,
+		ObjectVideo:
+		return true
+	default:
+		return false
+	}
+}
+
+// ToAttachmentable safely tries to cast vocab.Type as Attachmentable.
+func ToAttachmentable(t vocab.Type) (Attachmentable, bool) {
+	attachmentable, ok := t.(Attachmentable)
+	if !ok || !IsAttachmentable(t.GetTypeName()) {
+		return nil, false
+	}
+	return attachmentable, true
+}
+
 // Activityable represents the minimum activitypub interface for representing an 'activity'.
 // (see: IsActivityable() for types implementing this, though you MUST make sure to check
 // the typeName as this bare interface may be implementable by non-Activityable types).
@@ -628,9 +651,11 @@ type WithBlurhash interface {
 	SetTootBlurhash(vocab.TootBlurhashProperty)
 }
 
-// type withFocalPoint interface {
-// 	// TODO
-// }
+// WithFocalPoint represents an object with TootFocalPointProperty.
+type WithFocalPoint interface {
+	GetTootFocalPoint() vocab.TootFocalPointProperty
+	SetTootFocalPoint(vocab.TootFocalPointProperty)
+}
 
 // WithHref represents an activity with ActivityStreamsHrefProperty
 type WithHref interface {

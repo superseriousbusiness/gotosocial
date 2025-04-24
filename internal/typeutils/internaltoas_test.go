@@ -597,6 +597,10 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
       "Emoji": "toot:Emoji",
       "Hashtag": "as:Hashtag",
       "blurhash": "toot:blurhash",
+      "focalPoint": {
+        "@container": "@list",
+        "@id": "toot:focalPoint"
+      },
       "sensitive": "as:sensitive",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -604,9 +608,13 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
   "attachment": [
     {
       "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
+      "focalPoint": [
+        -0.5,
+        0.5
+      ],
       "mediaType": "image/jpeg",
-      "name": "Black and white image of some 50's style text saying: Welcome On Board",
-      "type": "Document",
+      "summary": "Black and white image of some 50's style text saying: Welcome On Board",
+      "type": "Image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
     }
   ],
@@ -697,6 +705,10 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
       "Emoji": "toot:Emoji",
       "Hashtag": "as:Hashtag",
       "blurhash": "toot:blurhash",
+      "focalPoint": {
+        "@container": "@list",
+        "@id": "toot:focalPoint"
+      },
       "sensitive": "as:sensitive",
       "toot": "http://joinmastodon.org/ns#"
     }
@@ -704,9 +716,13 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
   "attachment": [
     {
       "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
+      "focalPoint": [
+        -0.5,
+        0.5
+      ],
       "mediaType": "image/jpeg",
-      "name": "Black and white image of some 50's style text saying: Welcome On Board",
-      "type": "Document",
+      "summary": "Black and white image of some 50's style text saying: Welcome On Board",
+      "type": "Image",
       "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
     }
   ],

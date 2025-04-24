@@ -950,6 +950,8 @@ func (d *Dereferencer) fetchStatusAttachments(
 				RemoteURL:   &placeholder.RemoteURL,
 				Description: &placeholder.Description,
 				Blurhash:    &placeholder.Blurhash,
+				FocusX:      &placeholder.FileMeta.Focus.X,
+				FocusY:      &placeholder.FileMeta.Focus.Y,
 			},
 		)
 		if err != nil {

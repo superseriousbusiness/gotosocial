@@ -136,6 +136,7 @@ func LoadTemplates(engine *gin.Engine) error {
 var funcMap = template.FuncMap{
 	"add":              add,
 	"acctInstance":     acctInstance,
+	"objectPosition":   objectPosition,
 	"demojify":         demojify,
 	"deref":            deref,
 	"emojify":          emojify,
@@ -364,4 +365,13 @@ func deref(i any) any {
 	}
 
 	return vOf.Elem()
+}
+
+// objectPosition formats the given focus coordinates to a
+// string suitable for use as a css object-position value.
+func objectPosition(focusX float32, focusY float32) string {
+	const fmts = "%.2f"
+	xPos := ((focusX / 2) + .5) * 100
+	yPos := ((focusY / -2) + .5) * 100
+	return fmt.Sprintf(fmts, xPos) + "%" + " " + fmt.Sprintf(fmts, yPos) + "%"
 }
