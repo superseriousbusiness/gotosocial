@@ -91,6 +91,8 @@ type nollamas struct {
 	ttl  time.Duration
 	diff uint8
 
+	// extra fields required for
+	// our template rendering.
 	getInstanceV1 func(ctx context.Context) (*apimodel.InstanceV1, gtserror.WithCode)
 }
 
