@@ -132,10 +132,6 @@ func (m *nollamas) Serve(c *gin.Context) {
 		token[:len(token)/4] +
 		token[:len(token)/4]
 
-	// Prepare new log entry with challenge.
-	l := log.WithContext(c.Request.Context())
-	l = l.WithField("challenge", challenge)
-
 	// Check for a provided success token.
 	cookie, _ := c.Cookie("gts-nollamas")
 
@@ -151,6 +147,10 @@ func (m *nollamas) Serve(c *gin.Context) {
 		c.Next()
 		return
 	}
+
+	// Prepare new log entry with challenge.
+	l := log.WithContext(c.Request.Context())
+	l = l.WithField("challenge", challenge)
 
 	// Check query to see if an in-progress
 	// challenge solution has been provided.
