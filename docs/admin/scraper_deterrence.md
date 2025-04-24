@@ -5,6 +5,6 @@ it works is that it generates a unique but deterministic challenge for each inco
 
 Once a solution to this challenge has been provided, by refreshing the page with the solution in the query parameter, GoToSocial will verify this solution and on success will return the expected profile / status page with a cookie that provides challenge-less access to the instance for up-to the next hour.
 
-The outcomes of this, (when enabled), is that it should make scraping of your instance's profile / status pages economically unviable for automated data gathering (e.g. by AI companies, search engines). The only negative, is that places a requirement on JavaScript being enabled for people to access your profile / status web views.
+The outcomes of this, (when enabled), is that it should make scraping of your instance's profile / status pages economically unviable for automated data gathering (e.g. by AI companies, search engines). The only negative, is that it places a requirement on JavaScript being enabled for people to access your profile / status web views.
 
 This was heavily inspired by the great project that is [anubis](https://github.com/TecharoHQ/anubis), but ultimately we determined we could implement it ourselves with only the features we require, minimal code, and more granularity with our existing authorization / authentication procedures.
