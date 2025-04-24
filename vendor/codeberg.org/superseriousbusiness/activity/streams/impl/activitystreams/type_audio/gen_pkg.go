@@ -64,6 +64,10 @@ type privateManager interface {
 	// method for the "ActivityStreamsEndTimeProperty" non-functional
 	// property in the vocabulary "ActivityStreams"
 	DeserializeEndTimePropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsEndTimeProperty, error)
+	// DeserializeFocalPointPropertyToot returns the deserialization method
+	// for the "TootFocalPointProperty" non-functional property in the
+	// vocabulary "Toot"
+	DeserializeFocalPointPropertyToot() func(map[string]interface{}, map[string]string) (vocab.TootFocalPointProperty, error)
 	// DeserializeGeneratorPropertyActivityStreams returns the deserialization
 	// method for the "ActivityStreamsGeneratorProperty" non-functional
 	// property in the vocabulary "ActivityStreams"

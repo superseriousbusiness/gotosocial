@@ -9,6 +9,12 @@ type GoToSocialCanLike interface {
 	// GetGoToSocialApprovalRequired returns the "approvalRequired" property
 	// if it exists, and nil otherwise.
 	GetGoToSocialApprovalRequired() GoToSocialApprovalRequiredProperty
+	// GetGoToSocialAutomaticApproval returns the "automaticApproval" property
+	// if it exists, and nil otherwise.
+	GetGoToSocialAutomaticApproval() GoToSocialAutomaticApprovalProperty
+	// GetGoToSocialManualApproval returns the "manualApproval" property if it
+	// exists, and nil otherwise.
+	GetGoToSocialManualApproval() GoToSocialManualApprovalProperty
 	// GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 	GetJSONLDId() JSONLDIdProperty
 	// GetTypeName returns the name of this type.
@@ -38,6 +44,10 @@ type GoToSocialCanLike interface {
 	SetGoToSocialAlways(i GoToSocialAlwaysProperty)
 	// SetGoToSocialApprovalRequired sets the "approvalRequired" property.
 	SetGoToSocialApprovalRequired(i GoToSocialApprovalRequiredProperty)
+	// SetGoToSocialAutomaticApproval sets the "automaticApproval" property.
+	SetGoToSocialAutomaticApproval(i GoToSocialAutomaticApprovalProperty)
+	// SetGoToSocialManualApproval sets the "manualApproval" property.
+	SetGoToSocialManualApproval(i GoToSocialManualApprovalProperty)
 	// SetJSONLDId sets the "id" property.
 	SetJSONLDId(i JSONLDIdProperty)
 	// VocabularyURI returns the vocabulary's URI as a string.

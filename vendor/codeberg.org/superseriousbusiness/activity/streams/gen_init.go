@@ -142,22 +142,36 @@ import (
 	propertyalways "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_always"
 	propertyapprovalrequired "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvalrequired"
 	propertyapprovedby "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_approvedby"
+	propertyautomaticapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_automaticapproval"
 	propertycanannounce "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canannounce"
 	propertycanlike "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canlike"
+	propertycanquote "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canquote"
 	propertycanreply "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_canreply"
+	propertyinteractingobject "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_interactionpolicy"
+	propertyinteractiontarget "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_interactiontarget"
+	propertymanualapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/property_manualapproval"
 	typeannounceapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
+	typeannounceauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announceauthorization"
+	typeannouncerequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announcerequest"
 	typecanannounce "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
+	typecanquote "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canquote"
 	typecanreply "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
 	typelikeapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typelikeauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likeauthorization"
+	typelikerequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likerequest"
 	typereplyapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
+	typereplyauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyauthorization"
+	typereplyrequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyrequest"
 	propertyvalue "codeberg.org/superseriousbusiness/activity/streams/impl/schema/property_value"
 	typepropertyvalue "codeberg.org/superseriousbusiness/activity/streams/impl/schema/type_propertyvalue"
 	propertyblurhash "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_blurhash"
 	propertydiscoverable "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_discoverable"
 	propertyfeatured "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_featured"
+	propertyfocalpoint "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_focalpoint"
+	propertyindexable "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_indexable"
 	propertysignaturealgorithm "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_signaturealgorithm"
 	propertysignaturevalue "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_signaturevalue"
 	propertyvoterscount "codeberg.org/superseriousbusiness/activity/streams/impl/toot/property_voterscount"
@@ -322,22 +336,36 @@ func init() {
 	propertyalways.SetManager(mgr)
 	propertyapprovalrequired.SetManager(mgr)
 	propertyapprovedby.SetManager(mgr)
+	propertyautomaticapproval.SetManager(mgr)
 	propertycanannounce.SetManager(mgr)
 	propertycanlike.SetManager(mgr)
+	propertycanquote.SetManager(mgr)
 	propertycanreply.SetManager(mgr)
+	propertyinteractingobject.SetManager(mgr)
 	propertyinteractionpolicy.SetManager(mgr)
+	propertyinteractiontarget.SetManager(mgr)
+	propertymanualapproval.SetManager(mgr)
 	typeannounceapproval.SetManager(mgr)
+	typeannounceauthorization.SetManager(mgr)
+	typeannouncerequest.SetManager(mgr)
 	typecanannounce.SetManager(mgr)
 	typecanlike.SetManager(mgr)
+	typecanquote.SetManager(mgr)
 	typecanreply.SetManager(mgr)
 	typeinteractionpolicy.SetManager(mgr)
 	typelikeapproval.SetManager(mgr)
+	typelikeauthorization.SetManager(mgr)
+	typelikerequest.SetManager(mgr)
 	typereplyapproval.SetManager(mgr)
+	typereplyauthorization.SetManager(mgr)
+	typereplyrequest.SetManager(mgr)
 	propertyvalue.SetManager(mgr)
 	typepropertyvalue.SetManager(mgr)
 	propertyblurhash.SetManager(mgr)
 	propertydiscoverable.SetManager(mgr)
 	propertyfeatured.SetManager(mgr)
+	propertyfocalpoint.SetManager(mgr)
+	propertyindexable.SetManager(mgr)
 	propertysignaturealgorithm.SetManager(mgr)
 	propertysignaturevalue.SetManager(mgr)
 	propertyvoterscount.SetManager(mgr)
@@ -408,12 +436,19 @@ func init() {
 	typelibrary.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typetrack.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeannounceapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typeannounceauthorization.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typeannouncerequest.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanannounce.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanlike.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typecanquote.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typecanreply.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeinteractionpolicy.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typelikeapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typelikeauthorization.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typelikerequest.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typereplyapproval.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typereplyauthorization.SetTypePropertyConstructor(NewJSONLDTypeProperty)
+	typereplyrequest.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typepropertyvalue.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typeemoji.SetTypePropertyConstructor(NewJSONLDTypeProperty)
 	typehashtag.SetTypePropertyConstructor(NewJSONLDTypeProperty)
