@@ -40,8 +40,8 @@ codeberg.org/gruf/go-storage v0.2.0 h1:mKj3Lx6AavEkuXXtxqPhdq+akW9YwrnP16yQBF7K5
 codeberg.org/gruf/go-storage v0.2.0/go.mod h1:o3GzMDE5QNUaRnm/daUzFqvuAaC4utlgXDXYO79sWKU=
 codeberg.org/gruf/go-structr v0.9.6 h1:FSbJ1A0ubTQB82rC0K4o6qyiqrDGH1t9ivttm8Zy64o=
 codeberg.org/gruf/go-structr v0.9.6/go.mod h1:9k5hYztZ4PsBS+m1v5hUTeFiVUBTLF5VA7d9cd1OEMs=
-codeberg.org/superseriousbusiness/activity v1.13.0-gts h1:4WZLc/SNt+Vt5x2UjL2n6V5dHlIL9ECudUPx8Ld5rxw=
-codeberg.org/superseriousbusiness/activity v1.13.0-gts/go.mod h1:enxU1Lva4OcK6b/NBXscoHSEgEMsKJvdHrQFifQxp4o=
+codeberg.org/superseriousbusiness/activity v1.14.0 h1:z+jBjAIane9+Oqu6vO+tNvvNoji+OLU8KYDJ+R+ih+I=
+codeberg.org/superseriousbusiness/activity v1.14.0/go.mod h1:enxU1Lva4OcK6b/NBXscoHSEgEMsKJvdHrQFifQxp4o=
 codeberg.org/superseriousbusiness/exif-terminator v0.10.0 h1:FiLX/AK07tzceS36I+kOP2aEH+aytjPSIlFoYePMEyg=
 codeberg.org/superseriousbusiness/exif-terminator v0.10.0/go.mod h1:c/mCytx/+fisOZeVXtjCpXld/SeZb3VsD1vj3oPAihA=
 codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB h1:v2shEkOPgydTL0n44EFPsDT9dsEP7KRG85aPnojCYkI=

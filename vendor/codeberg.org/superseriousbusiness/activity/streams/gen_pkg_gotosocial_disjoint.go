@@ -4,12 +4,19 @@ package streams
 
 import (
 	typeannounceapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announceapproval"
+	typeannounceauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announceauthorization"
+	typeannouncerequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_announcerequest"
 	typecanannounce "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canannounce"
 	typecanlike "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canlike"
+	typecanquote "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canquote"
 	typecanreply "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_canreply"
 	typeinteractionpolicy "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_interactionpolicy"
 	typelikeapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likeapproval"
+	typelikeauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likeauthorization"
+	typelikerequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_likerequest"
 	typereplyapproval "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyapproval"
+	typereplyauthorization "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyauthorization"
+	typereplyrequest "codeberg.org/superseriousbusiness/activity/streams/impl/gotosocial/type_replyrequest"
 	vocab "codeberg.org/superseriousbusiness/activity/streams/vocab"
 )
 
@@ -17,6 +24,18 @@ import (
 // disjoint with the other's type.
 func GoToSocialAnnounceApprovalIsDisjointWith(other vocab.Type) bool {
 	return typeannounceapproval.AnnounceApprovalIsDisjointWith(other)
+}
+
+// GoToSocialAnnounceAuthorizationIsDisjointWith returns true if
+// AnnounceAuthorization is disjoint with the other's type.
+func GoToSocialAnnounceAuthorizationIsDisjointWith(other vocab.Type) bool {
+	return typeannounceauthorization.AnnounceAuthorizationIsDisjointWith(other)
+}
+
+// GoToSocialAnnounceRequestIsDisjointWith returns true if AnnounceRequest is
+// disjoint with the other's type.
+func GoToSocialAnnounceRequestIsDisjointWith(other vocab.Type) bool {
+	return typeannouncerequest.AnnounceRequestIsDisjointWith(other)
 }
 
 // GoToSocialCanAnnounceIsDisjointWith returns true if CanAnnounce is disjoint
@@ -29,6 +48,12 @@ func GoToSocialCanAnnounceIsDisjointWith(other vocab.Type) bool {
 // other's type.
 func GoToSocialCanLikeIsDisjointWith(other vocab.Type) bool {
 	return typecanlike.CanLikeIsDisjointWith(other)
+}
+
+// GoToSocialCanQuoteIsDisjointWith returns true if CanQuote is disjoint with the
+// other's type.
+func GoToSocialCanQuoteIsDisjointWith(other vocab.Type) bool {
+	return typecanquote.CanQuoteIsDisjointWith(other)
 }
 
 // GoToSocialCanReplyIsDisjointWith returns true if CanReply is disjoint with the
@@ -49,8 +74,32 @@ func GoToSocialLikeApprovalIsDisjointWith(other vocab.Type) bool {
 	return typelikeapproval.LikeApprovalIsDisjointWith(other)
 }
 
+// GoToSocialLikeAuthorizationIsDisjointWith returns true if LikeAuthorization is
+// disjoint with the other's type.
+func GoToSocialLikeAuthorizationIsDisjointWith(other vocab.Type) bool {
+	return typelikeauthorization.LikeAuthorizationIsDisjointWith(other)
+}
+
+// GoToSocialLikeRequestIsDisjointWith returns true if LikeRequest is disjoint
+// with the other's type.
+func GoToSocialLikeRequestIsDisjointWith(other vocab.Type) bool {
+	return typelikerequest.LikeRequestIsDisjointWith(other)
+}
+
 // GoToSocialReplyApprovalIsDisjointWith returns true if ReplyApproval is disjoint
 // with the other's type.
 func GoToSocialReplyApprovalIsDisjointWith(other vocab.Type) bool {
 	return typereplyapproval.ReplyApprovalIsDisjointWith(other)
+}
+
+// GoToSocialReplyAuthorizationIsDisjointWith returns true if ReplyAuthorization
+// is disjoint with the other's type.
+func GoToSocialReplyAuthorizationIsDisjointWith(other vocab.Type) bool {
+	return typereplyauthorization.ReplyAuthorizationIsDisjointWith(other)
+}
+
+// GoToSocialReplyRequestIsDisjointWith returns true if ReplyRequest is disjoint
+// with the other's type.
+func GoToSocialReplyRequestIsDisjointWith(other vocab.Type) bool {
+	return typereplyrequest.ReplyRequestIsDisjointWith(other)
 }

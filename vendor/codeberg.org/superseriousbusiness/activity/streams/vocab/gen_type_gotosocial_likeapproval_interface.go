@@ -2,6 +2,7 @@
 
 package vocab
 
+// DEPRECATED: Use `LikeAuthorization` instead.
 type GoToSocialLikeApproval interface {
 	// GetActivityStreamsAltitude returns the "altitude" property if it
 	// exists, and nil otherwise.

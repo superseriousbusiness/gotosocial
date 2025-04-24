@@ -31,6 +31,7 @@ type ActivityStreamsPage struct {
 	ActivityStreamsContext      vocab.ActivityStreamsContextProperty
 	ActivityStreamsDuration     vocab.ActivityStreamsDurationProperty
 	ActivityStreamsEndTime      vocab.ActivityStreamsEndTimeProperty
+	TootFocalPoint              vocab.TootFocalPointProperty
 	ActivityStreamsGenerator    vocab.ActivityStreamsGeneratorProperty
 	ActivityStreamsIcon         vocab.ActivityStreamsIconProperty
 	JSONLDId                    vocab.JSONLDIdProperty
@@ -172,6 +173,11 @@ func DeserializePage(m map[string]interface{}, aliasMap map[string]string) (*Act
 		return nil, err
 	} else if p != nil {
 		this.ActivityStreamsEndTime = p
+	}
+	if p, err := mgr.DeserializeFocalPointPropertyToot()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.TootFocalPoint = p
 	}
 	if p, err := mgr.DeserializeGeneratorPropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
@@ -325,6 +331,8 @@ func DeserializePage(m map[string]interface{}, aliasMap map[string]string) (*Act
 		} else if k == "duration" {
 			continue
 		} else if k == "endTime" {
+			continue
+		} else if k == "focalPoint" {
 			continue
 		} else if k == "generator" {
 			continue
@@ -644,6 +652,12 @@ func (this ActivityStreamsPage) GetTootBlurhash() vocab.TootBlurhashProperty {
 	return this.TootBlurhash
 }
 
+// GetTootFocalPoint returns the "focalPoint" property if it exists, and nil
+// otherwise.
+func (this ActivityStreamsPage) GetTootFocalPoint() vocab.TootFocalPointProperty {
+	return this.TootFocalPoint
+}
+
 // GetTypeName returns the name of this type.
 func (this ActivityStreamsPage) GetTypeName() string {
 	return "Page"
@@ -682,6 +696,7 @@ func (this ActivityStreamsPage) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsContext, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsDuration, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsEndTime, m)
+	m = this.helperJSONLDContext(this.TootFocalPoint, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsGenerator, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsIcon, m)
 	m = this.helperJSONLDContext(this.JSONLDId, m)
@@ -884,6 +899,20 @@ func (this ActivityStreamsPage) LessThan(o vocab.ActivityStreamsPage) bool {
 	} // Else: Both are nil
 	// Compare property "endTime"
 	if lhs, rhs := this.ActivityStreamsEndTime, o.GetActivityStreamsEndTime(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "focalPoint"
+	if lhs, rhs := this.TootFocalPoint, o.GetTootFocalPoint(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1359,6 +1388,14 @@ func (this ActivityStreamsPage) Serialize() (map[string]interface{}, error) {
 			m[this.ActivityStreamsEndTime.Name()] = i
 		}
 	}
+	// Maybe serialize property "focalPoint"
+	if this.TootFocalPoint != nil {
+		if i, err := this.TootFocalPoint.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.TootFocalPoint.Name()] = i
+		}
+	}
 	// Maybe serialize property "generator"
 	if this.ActivityStreamsGenerator != nil {
 		if i, err := this.ActivityStreamsGenerator.Serialize(); err != nil {
@@ -1748,6 +1785,11 @@ func (this *ActivityStreamsPage) SetJSONLDType(i vocab.JSONLDTypeProperty) {
 // SetTootBlurhash sets the "blurhash" property.
 func (this *ActivityStreamsPage) SetTootBlurhash(i vocab.TootBlurhashProperty) {
 	this.TootBlurhash = i
+}
+
+// SetTootFocalPoint sets the "focalPoint" property.
+func (this *ActivityStreamsPage) SetTootFocalPoint(i vocab.TootFocalPointProperty) {
+	this.TootFocalPoint = i
 }
 
 // VocabularyURI returns the vocabulary's URI as a string.

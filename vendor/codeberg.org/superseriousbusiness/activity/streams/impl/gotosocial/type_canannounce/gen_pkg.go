@@ -19,10 +19,19 @@ type privateManager interface {
 	// deserialization method for the "GoToSocialApprovalRequiredProperty"
 	// non-functional property in the vocabulary "GoToSocial"
 	DeserializeApprovalRequiredPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialApprovalRequiredProperty, error)
+	// DeserializeAutomaticApprovalPropertyGoToSocial returns the
+	// deserialization method for the
+	// "GoToSocialAutomaticApprovalProperty" non-functional property in
+	// the vocabulary "GoToSocial"
+	DeserializeAutomaticApprovalPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialAutomaticApprovalProperty, error)
 	// DeserializeIdPropertyJSONLD returns the deserialization method for the
 	// "JSONLDIdProperty" non-functional property in the vocabulary
 	// "JSONLD"
 	DeserializeIdPropertyJSONLD() func(map[string]interface{}, map[string]string) (vocab.JSONLDIdProperty, error)
+	// DeserializeManualApprovalPropertyGoToSocial returns the deserialization
+	// method for the "GoToSocialManualApprovalProperty" non-functional
+	// property in the vocabulary "GoToSocial"
+	DeserializeManualApprovalPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialManualApprovalProperty, error)
 }
 
 // jsonldContexter is a private interface to determine the JSON-LD contexts and
