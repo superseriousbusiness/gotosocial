@@ -1182,8 +1182,8 @@ func (c *Converter) attachAttachments(
 		}
 		ap.AppendURL(attachmentable, imageURL)
 
-		// `name` ie., image description
-		ap.AppendName(attachmentable, a.Description)
+		// `summary` ie., media description / alt text
+		ap.AppendSummary(attachmentable, a.Description)
 
 		// `blurhash`
 		ap.SetBlurhash(attachmentable, a.Blurhash)
