@@ -10,7 +10,6 @@ You can allow or disallow crawlers from collecting stats about your instance fro
 
 The AI scrapers come from a [community maintained repository][airobots]. It's manually kept in sync for the time being. If you know of any missing robots, please send them a PR!
 
-A number of AI scrapers are known to ignore entries in `robots.txt` even if it explicitly matches their User-Agent. This means the `robots.txt` file is not a foolproof way of ensuring AI scrapers don't grab your content. In addition to
-this you might want to look into blocking User-Agents via [requester header filtering](request_filtering_modes.md), and enabling a proof-of-work [scraper deterrence](scraper_deterrence.md).
+A number of AI scrapers are known to ignore entries in `robots.txt` even if it explicitly matches their User-Agent. This means the `robots.txt` file is not a foolproof way of ensuring AI scrapers don't grab your content. In addition to this you might want to look into blocking User-Agents via [requester header filtering](request_filtering_modes.md), and enabling a proof-of-work [scraper deterrence](scraper_deterrence.md).
 
 [airobots]: https://github.com/ai-robots-txt/ai.robots.txt/
