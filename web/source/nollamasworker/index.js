@@ -18,7 +18,7 @@
 */
 
 onmessage = async function(e) {
-	console.log('worker started');
+	console.log('worker started'); // eslint-disable-line no-console
 
 	const challenge = e.data.challenge;
 	const textEncoder = new TextEncoder();
@@ -30,7 +30,8 @@ onmessage = async function(e) {
 	const zeroPrefix = '0'.repeat(difficulty);
 
 	let nonce = 0;
-	while (true) {
+	while (true) { // eslint-disable-line no-constant-condition
+
 		// Create possible solution string from challenge + nonce.
 		const solution = textEncoder.encode(challenge + nonce.toString());
 

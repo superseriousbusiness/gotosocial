@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', function() {
 	const challenge = nollamas.dataset.nollamasChallenge;
 	const difficulty = nollamas.dataset.nollamasDifficulty;
 
-	console.log('challenge:', challenge);
-	console.log('difficulty:', difficulty);
+	console.log('challenge:', challenge);   // eslint-disable-line no-console
+	console.log('difficulty:', difficulty); // eslint-disable-line no-console
 
 	// Prepare the worker with task function.
 	const worker = new Worker("/assets/dist/nollamasworker.js");
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Set the main worker function.
 	worker.onmessage = function (e) {
 		if (e.data.done) {
-			console.log('solution found for:', e.data.nonce);
+			console.log('solution found for:', e.data.nonce); // eslint-disable-line no-console
 			let url = new URL(window.location.href);
 			url.searchParams.set('nollamas_solution', e.data.nonce);
 			window.location.href = url.toString();
