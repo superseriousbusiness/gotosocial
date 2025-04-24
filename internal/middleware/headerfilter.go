@@ -150,11 +150,6 @@ func isHeaderBlocked(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		// if expr != "" {
-		// 	// TODO: replace expvar with build
-		// 	// taggable metrics types in State{}.
-		// }
-
 		// A header was matched against!
 		// i.e. this request is blocked.
 		return true, nil
@@ -185,11 +180,6 @@ func isHeaderAllowed(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		// if expr != "" {
-		// 	// TODO: replace expvar with build
-		// 	// taggable metrics types in State{}.
-		// }
-
 		// A header was matched against!
 		// i.e. this request is allowed.
 		return true, nil
@@ -220,11 +210,6 @@ func isHeaderNotAllowed(state *state.State, c *gin.Context) (bool, error) {
 	}
 
 	if key != "" {
-		// if expr != "" {
-		// 	// TODO: replace expvar with build
-		// 	// taggable metrics types in State{}.
-		// }
-
 		// A header was matched against!
 		// i.e. request is NOT allowed.
 		return true, nil

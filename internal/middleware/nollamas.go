@@ -71,12 +71,6 @@ func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserro
 	return nollamas.Serve
 }
 
-// i.e. outputted hash slice length.
-const hashLen = sha256.Size
-
-// i.e. hex.EncodedLen(hashLen).
-const encodedHashLen = 2 * hashLen
-
 // hashWithBufs encompasses a hash along
 // with the necessary buffers to generate
 // a hashsum and then encode that sum.
@@ -110,6 +104,12 @@ func (m *nollamas) Serve(c *gin.Context) {
 		c.Next()
 		return
 	}
+
+	// i.e. outputted hash slice length.
+	const hashLen = sha256.Size
+
+	// i.e. hex.EncodedLen(hashLen).
+	const encodedHashLen = 2 * hashLen
 
 	// Prepare hash + buffers.
 	hash := hashWithBufs{
