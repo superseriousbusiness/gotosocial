@@ -122,12 +122,15 @@ func (m *nollamas) Serve(c *gin.Context) {
 	token := m.token(c, &hash)
 
 	// For unique challenge string just use a
-	// portion of their unique 'success' token.
+	// repeated portion of their 'success' token.
 	// SHA256 is not yet cracked, this is not an
 	// application of a hash requiring serious
 	// cryptographic security and it rotates on
 	// a TTL basis, so it should be fine.
-	challenge := token[:len(token)/2]
+	challenge := token[:len(token)/4] +
+		token[:len(token)/4] +
+		token[:len(token)/4] +
+		token[:len(token)/4]
 
 	// Prepare new log entry with challenge.
 	l := log.WithContext(c.Request.Context())
