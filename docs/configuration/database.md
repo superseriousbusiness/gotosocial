@@ -42,7 +42,7 @@ create user gotosocial with password 'some_really_good_password';
 grant all privileges on database gotosocial to gotosocial;
 ```
 
-If you start using Postgres after 14, or you encounter `error executing command: error creating dbservice: db migration error: ERROR: permission denied for schema public`, you should grant `CREATE` permission to your db user:
+If you start using Postgres after 14, or you encounter `error executing command: error creating dbservice: db migration error: ERROR: permission denied for schema public`, you should grant `CREATE` permission to your db user *(This **must** be run in a postgres shell that's connected to the gotosocial database)*:
 
 ```psql
 GRANT CREATE ON SCHEMA public TO gotosocial;
