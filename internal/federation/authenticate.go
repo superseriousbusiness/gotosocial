@@ -28,10 +28,10 @@ import (
 	"net/url"
 	"time"
 
+	"code.superseriousbusiness.org/httpsig"
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/superseriousbusiness/activity/streams"
 	typepublickey "codeberg.org/superseriousbusiness/activity/streams/impl/w3idsecurityv1/type_publickey"
-	"codeberg.org/superseriousbusiness/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"

@@ -1,3 +1,6 @@
+# code.superseriousbusiness.org/httpsig v1.4.0
+## explicit; go 1.21
+code.superseriousbusiness.org/httpsig
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
@@ -272,9 +275,6 @@ codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2
 # codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB
 ## explicit; go 1.12
 codeberg.org/superseriousbusiness/go-png-image-structure/v2
-# codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
-## explicit; go 1.21
-codeberg.org/superseriousbusiness/httpsig
 # codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB
 ## explicit; go 1.23.0
 codeberg.org/superseriousbusiness/oauth2/v4
