@@ -39,12 +39,14 @@ import (
 )
 
 // NoLLaMas returns a piece of HTTP middleware that provides a deterrence
-// on routes it is applied to against bots and scrapers. It generates a
+// on routes it is applied to, against bots and scrapers. It generates a
 // unique but deterministic challenge for each HTTP client within an hour
-// TTL time that requires a proof-of-work solution to pass onto the next
-// handler in the chain. The outcome of this is that hopefully this should
-// make scraping our software economically unfeasible, only when enabled
-// though of course.
+// TTL that requires a proof-of-work solution to pass onto the next handler.
+// On successful solution, the client is provided a cookie that allows them
+// to bypass this check within that hour TTL. The outcome of this is that it
+// should make scraping of these endpoints economically unfeasible, when enabled,
+// and with an absurdly minimal performance impact. The downside is that it
+// requires javascript to be enabled on the client to pass the middleware check.
 //
 // Heavily inspired by: https://github.com/TecharoHQ/anubis
 func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) gin.HandlerFunc {
@@ -262,8 +264,7 @@ func (m *nollamas) token(c *gin.Context, hash *hashWithBufs) string {
 	// Finally, append unique client request data.
 	userAgent := c.Request.Header.Get("User-Agent")
 	hash.hash.Write(byteutil.S2B(userAgent))
-	clientIP := c.ClientIP()
-	hash.hash.Write(byteutil.S2B(clientIP))
+	hash.hash.Write(byteutil.S2B(c.ClientIP()))
 
 	// Return hex encoded hash output.
 	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
