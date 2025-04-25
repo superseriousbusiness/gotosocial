@@ -233,7 +233,7 @@ func (t *StatusTimeline) preload(
 	page := new(paging.Page)
 	order := paging.OrderDescending
 	page.Max.Order = order
-	page.Max.Value = plus24hULID()
+	page.Max.Value = plus1hULID()
 	page.Min.Order = order
 	page.Min.Value = ""
 	page.Limit = 100

@@ -25,9 +25,9 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// plus24hULID returns a ULID for now+24h.
-func plus24hULID() string {
-	t := time.Now().Add(24 * time.Hour)
+// plus1hULID returns a ULID for now+1h.
+func plus1hULID() string {
+	t := time.Now().Add(time.Hour)
 	return id.NewULIDFromTime(t)
 }
 
