@@ -20,7 +20,7 @@ package auth
 import (
 	"net/http"
 
-	oautherr "codeberg.org/superseriousbusiness/oauth2/v4/errors"
+	oautherr "code.superseriousbusiness.org/oauth2/v4/errors"
 	"github.com/gin-gonic/gin"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"

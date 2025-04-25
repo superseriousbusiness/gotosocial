@@ -25,7 +25,7 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 
-	"codeberg.org/superseriousbusiness/httpsig"
+	"code.superseriousbusiness.org/httpsig"
 	"github.com/gin-gonic/gin"
 )
 

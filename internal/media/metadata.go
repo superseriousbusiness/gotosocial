@@ -22,7 +22,7 @@ import (
 	"os"
 	"strings"
 
-	terminator "codeberg.org/superseriousbusiness/exif-terminator"
+	terminator "code.superseriousbusiness.org/exif-terminator"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 )

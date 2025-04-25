@@ -20,7 +20,7 @@ package middleware
 import (
 	"net/http"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/log"

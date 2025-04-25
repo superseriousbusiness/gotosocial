@@ -18,7 +18,7 @@
 package federation
 
 import (
-	"codeberg.org/superseriousbusiness/activity/pub"
+	"code.superseriousbusiness.org/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/dereferencing"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"

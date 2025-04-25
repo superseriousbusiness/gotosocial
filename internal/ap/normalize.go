@@ -18,8 +18,8 @@
 package ap
 
 import (
-	"codeberg.org/superseriousbusiness/activity/pub"
-	"codeberg.org/superseriousbusiness/activity/streams"
+	"code.superseriousbusiness.org/activity/pub"
+	"code.superseriousbusiness.org/activity/streams"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
