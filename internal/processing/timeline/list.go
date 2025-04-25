@@ -106,5 +106,9 @@ func (p *Processor) ListTimelineGet(
 			}
 			return !ok
 		},
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
+		nil,
 	)
 }

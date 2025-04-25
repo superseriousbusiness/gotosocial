@@ -97,6 +97,10 @@ func (p *Processor) publicTimelineGet(
 			}
 			return !ok
 		},
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
+		nil,
 	)
 }
 
@@ -149,5 +153,9 @@ func (p *Processor) localTimelineGet(
 			}
 			return !ok
 		},
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
+		nil,
 	)
 }

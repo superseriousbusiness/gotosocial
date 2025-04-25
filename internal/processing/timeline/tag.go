@@ -105,6 +105,10 @@ func (p *Processor) TagTimelineGet(
 			}
 			return !ok
 		},
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
+		nil,
 	)
 }
 

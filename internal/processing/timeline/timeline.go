@@ -71,6 +71,7 @@ func (p *Processor) getStatusTimeline(
 	filterCtx statusfilter.FilterContext,
 	loadPage func(*paging.Page) (statuses []*gtsmodel.Status, err error),
 	filter func(*gtsmodel.Status) (delete bool),
+	postFilter func(*gtsmodel.Status) (remove bool),
 ) (
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
@@ -133,6 +134,15 @@ func (p *Processor) getStatusTimeline(
 
 		// Frontend API model preparation function.
 		func(status *gtsmodel.Status) (*apimodel.Status, error) {
+
+			// Check if status needs filtering OUTSIDE of caching stage.
+			// TODO: this will be moved to separate postFilter hook when
+			// all filtering has been removed from the type converter.
+			if postFilter != nil && postFilter(status) {
+				return nil, nil
+			}
+
+			// Finally, pass status to get converted to API model.
 			apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 				status,
 				requester,

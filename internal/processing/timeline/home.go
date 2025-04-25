@@ -40,6 +40,20 @@ func (p *Processor) HomeTimelineGet(
 	*apimodel.PageableResponse,
 	gtserror.WithCode,
 ) {
+
+	var pageQuery url.Values
+	var postFilter func(*gtsmodel.Status) bool
+	if local {
+		// Set local = true query.
+		pageQuery = localOnlyTrue
+		postFilter = func(s *gtsmodel.Status) bool {
+			return *s.Local
+		}
+	} else {
+		// Set local = false query.
+		pageQuery = localOnlyFalse
+		postFilter = nil
+	}
 	return p.getStatusTimeline(ctx,
 
 		// Auth'd
@@ -60,19 +74,7 @@ func (p *Processor) HomeTimelineGet(
 		// page query flag, (this map
 		// later gets copied before
 		// any further usage).
-		func() url.Values {
-			var pageQuery url.Values
-
-			if local {
-				// Set local = true query.
-				pageQuery = localOnlyTrue
-			} else {
-				// Set local = false query.
-				pageQuery = localOnlyFalse
-			}
-
-			return pageQuery
-		}(),
+		pageQuery,
 
 		// Status filter context.
 		statusfilter.FilterContextHome,
@@ -82,7 +84,7 @@ func (p *Processor) HomeTimelineGet(
 			return p.state.DB.GetHomeTimeline(ctx, requester.ID, pg)
 		},
 
-		// Pre-filtering function,
+		// Filtering function,
 		// i.e. filter before caching.
 		func(s *gtsmodel.Status) bool {
 
@@ -93,5 +95,9 @@ func (p *Processor) HomeTimelineGet(
 			}
 			return !ok
 		},
+
+		// Post filtering funtion,
+		// i.e. filter after caching.
+		postFilter,
 	)
 }
