@@ -47,7 +47,7 @@ func (p *Processor) HomeTimelineGet(
 		// Set local = true query.
 		pageQuery = localOnlyTrue
 		postFilter = func(s *gtsmodel.Status) bool {
-			return *s.Local
+			return !*s.Local
 		}
 	} else {
 		// Set local = false query.
