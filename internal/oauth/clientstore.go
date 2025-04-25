@@ -20,8 +20,8 @@ package oauth
 import (
 	"context"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4"
-	"codeberg.org/superseriousbusiness/oauth2/v4/errors"
+	"code.superseriousbusiness.org/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4/errors"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 

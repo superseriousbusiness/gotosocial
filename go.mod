@@ -11,6 +11,10 @@ replace github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go
 replace modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.37.0-concurrency-workaround
 
 require (
+	code.superseriousbusiness.org/activity v1.15.0
+	code.superseriousbusiness.org/exif-terminator v0.11.0
+	code.superseriousbusiness.org/httpsig v1.4.0
+	code.superseriousbusiness.org/oauth2/v4 v4.8.0
 	codeberg.org/gruf/go-bytes v1.0.2
 	codeberg.org/gruf/go-bytesize v1.0.3
 	codeberg.org/gruf/go-byteutil v1.3.0
@@ -28,10 +32,6 @@ require (
 	codeberg.org/gruf/go-sched v1.2.4
 	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.9.6
-	codeberg.org/superseriousbusiness/activity v1.14.0
-	codeberg.org/superseriousbusiness/exif-terminator v0.10.0
-	codeberg.org/superseriousbusiness/httpsig v1.3.0-SSB
-	codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB
 	github.com/DmitriyVTitov/size v1.5.0
 	github.com/KimMachineGun/automemlimit v0.7.1
 	github.com/SherClockHolmes/webpush-go v1.4.0
@@ -96,11 +96,11 @@ require (
 )
 
 require (
+	code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0 // indirect
+	code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 // indirect
 	codeberg.org/gruf/go-fastpath/v2 v2.0.0 // indirect
 	codeberg.org/gruf/go-mangler v1.4.4 // indirect
 	codeberg.org/gruf/go-maps v1.0.4 // indirect
-	codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB // indirect
-	codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB // indirect
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.2.1 // indirect
 	github.com/Masterminds/sprig/v3 v3.2.3 // indirect
@@ -125,7 +125,6 @@ require (
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.0.0 // indirect
 	github.com/go-errors/errors v1.1.1 // indirect
-	github.com/go-fed/httpsig v1.1.0 // indirect
 	github.com/go-ini/ini v1.67.0 // indirect
 	github.com/go-jose/go-jose/v4 v4.0.5 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
