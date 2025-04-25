@@ -21,7 +21,7 @@ package terminator
 import (
 	"io"
 
-	pngstructure "codeberg.org/superseriousbusiness/go-png-image-structure/v2"
+	pngstructure "code.superseriousbusiness.org/go-png-image-structure/v2"
 )
 
 type pngVisitor struct {

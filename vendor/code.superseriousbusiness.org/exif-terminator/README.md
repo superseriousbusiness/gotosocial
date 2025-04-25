@@ -66,7 +66,7 @@ import (
   "io"
   "os"
 
-  terminator "codeberg.org/superseriousbusiness/exif-terminator"
+  terminator "code.superseriousbusiness.org/exif-terminator"
 )
 
 func main() {
@@ -77,14 +77,8 @@ func main() {
   }
   defer sloth.Close()
 
-  // get the length of the file
-  stat, err := sloth.Stat()
-  if err != nil {
-    panic(err)
-  }
-
   // terminate!
-  out, err := terminator.Terminate(sloth, int(stat.Size()), "jpeg")
+  out, err := terminator.Terminate(sloth, "jpeg")
   if err != nil {
     panic(err)
   }
@@ -106,11 +100,11 @@ func main() {
 
 ### Libraries
 
-`exif-terminator` borrows heavily from the two [`dsoprea`](https://github.com/dsoprea) libraries credited below. In fact, it's basically a hack on top of those libraries. Thanks `dsoprea`!
+`exif-terminator` borrows heavily from the [`dsoprea`](https://github.com/dsoprea) libraries credited below. In fact, it's basically a hack on top of those libraries. Thanks `dsoprea`!
 
+- [superseriousbusiness/go-jpeg-image-structure](https://code.superseriousbusiness.org/go-jpeg-image-structure): jpeg structure parsing. [MIT License](https://spdx.org/licenses/MIT.html). Forked from [dsoprea/go-jpeg-image-structure](https://github.com/dsoprea/go-jpeg-image-structure): jpeg structure parsing. [MIT License](https://spdx.org/licenses/MIT.html).
+- [superseriousbusiness/go-png-image-structure](https://code.superseriousbusiness.org/go-png-image-structure): png structure parsing. Forked from [dsoprea/go-png-image-structure](https://github.com/dsoprea/go-png-image-structure): png structure parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [dsoprea/go-exif](https://github.com/dsoprea/go-exif): exif header reconstruction. [MIT License](https://spdx.org/licenses/MIT.html).
-- [dsoprea/go-jpeg-image-structure](https://github.com/dsoprea/go-jpeg-image-structure): jpeg structure parsing. [MIT License](https://spdx.org/licenses/MIT.html).
-- [dsoprea/go-png-image-structure](https://github.com/dsoprea/go-png-image-structure): png structure parsing. [MIT License](https://spdx.org/licenses/MIT.html).
 - [stretchr/testify](https://github.com/stretchr/testify); test framework. [MIT License](https://spdx.org/licenses/MIT.html).
 
 ## License
@@ -119,4 +113,4 @@ func main() {
 
 `exif-terminator` is free software, licensed under the [GNU AGPL v3 LICENSE](LICENSE).
 
-Copyright (C) 2022-2024 SuperSeriousBusiness.
+Copyright (C) 2022-2025 SuperSeriousBusiness.

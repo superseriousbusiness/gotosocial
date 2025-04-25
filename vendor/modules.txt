@@ -1,3 +1,12 @@
+# code.superseriousbusiness.org/exif-terminator v0.11.0
+## explicit; go 1.23
+code.superseriousbusiness.org/exif-terminator
+# code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0
+## explicit; go 1.17
+code.superseriousbusiness.org/go-jpeg-image-structure/v2
+# code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0
+## explicit; go 1.12
+code.superseriousbusiness.org/go-png-image-structure/v2
 # code.superseriousbusiness.org/httpsig v1.4.0
 ## explicit; go 1.21
 code.superseriousbusiness.org/httpsig
@@ -266,15 +275,6 @@ codeberg.org/superseriousbusiness/activity/streams/values/rfc2045
 codeberg.org/superseriousbusiness/activity/streams/values/rfc5988
 codeberg.org/superseriousbusiness/activity/streams/values/string
 codeberg.org/superseriousbusiness/activity/streams/vocab
-# codeberg.org/superseriousbusiness/exif-terminator v0.10.0
-## explicit; go 1.21
-codeberg.org/superseriousbusiness/exif-terminator
-# codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB
-## explicit; go 1.17
-codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2
-# codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB
-## explicit; go 1.12
-codeberg.org/superseriousbusiness/go-png-image-structure/v2
 # codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB
 ## explicit; go 1.23.0
 codeberg.org/superseriousbusiness/oauth2/v4

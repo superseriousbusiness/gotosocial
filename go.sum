@@ -1,3 +1,9 @@
+code.superseriousbusiness.org/exif-terminator v0.11.0 h1:Hof0MCcsa+1fS17gf86fTTZ8AQnMY9h9kzcc+2C6mVg=
+code.superseriousbusiness.org/exif-terminator v0.11.0/go.mod h1:9sutT1axa/kSdlPLlRFjCNKmyo/KNx8eX3XZvWBlAEY=
+code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0 h1:r9uq8StaSHYKJ8DklR9Xy+E9c40G1Z8yj5TRGi8L6+4=
+code.superseriousbusiness.org/go-jpeg-image-structure/v2 v2.3.0/go.mod h1:IK1OlR6APjVB3E9tuYGvf0qXMrwP+TrzcHS5rf4wffQ=
+code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 h1:I512jiIeXDC4//2BeSPrRM2ZS4wpBKUaPeTPxakMNGA=
+code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0/go.mod h1:SNHomXNW88o1pFfLHpD4KsCZLfcr4z5dm+xcX5SV10A=
 code.superseriousbusiness.org/httpsig v1.4.0 h1:g9+KQMoTG0oR0II5gYb5pVVdNjbc7CiiuqK8vcZjeQg=
 code.superseriousbusiness.org/httpsig v1.4.0/go.mod h1:i2AKpj/WbA/o/UTvia9TAREzt0jP1AH3T1Uxjyhdzlw=
 codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
@@ -44,12 +50,6 @@ codeberg.org/gruf/go-structr v0.9.6 h1:FSbJ1A0ubTQB82rC0K4o6qyiqrDGH1t9ivttm8Zy6
 codeberg.org/gruf/go-structr v0.9.6/go.mod h1:9k5hYztZ4PsBS+m1v5hUTeFiVUBTLF5VA7d9cd1OEMs=
 codeberg.org/superseriousbusiness/activity v1.14.0 h1:z+jBjAIane9+Oqu6vO+tNvvNoji+OLU8KYDJ+R+ih+I=
 codeberg.org/superseriousbusiness/activity v1.14.0/go.mod h1:enxU1Lva4OcK6b/NBXscoHSEgEMsKJvdHrQFifQxp4o=
-codeberg.org/superseriousbusiness/exif-terminator v0.10.0 h1:FiLX/AK07tzceS36I+kOP2aEH+aytjPSIlFoYePMEyg=
-codeberg.org/superseriousbusiness/exif-terminator v0.10.0/go.mod h1:c/mCytx/+fisOZeVXtjCpXld/SeZb3VsD1vj3oPAihA=
-codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB h1:v2shEkOPgydTL0n44EFPsDT9dsEP7KRG85aPnojCYkI=
-codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2 v2.1.0-SSB/go.mod h1:Ba/VzIqzDHqqKk5jg+7uFpUsHmdDOsuWLodbamD80jU=
-codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB h1:Lqi70gvqNuHyik0gUNrBwElvFUP7A3W1FYLVV5lUmbQ=
-codeberg.org/superseriousbusiness/go-png-image-structure/v2 v2.1.0-SSB/go.mod h1:99rP8gsZoCSUj+/lLdpV9+i86ujLdKSoUjvuxbgvN4M=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix h1:+JvBZqsQfdT+ROnk2DkvXsKQ9QBorKKKBk5fBqw62I8=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix/go.mod h1:WSigRRWEig8zV6t6Sm8Y+EmUjlzA/HoaZJ5edupq7po=
 codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB h1:UAFZKgUaeQEoHDmawh9DWXFopJnADfkiDo/CLAtWISc=

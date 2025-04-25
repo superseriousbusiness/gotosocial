@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"io"
 
-	jpegstructure "codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2"
+	jpegstructure "code.superseriousbusiness.org/go-jpeg-image-structure/v2"
 )
 
 var markerLen = map[byte]int{

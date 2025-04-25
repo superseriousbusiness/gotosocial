@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"io"
 
-	jpegstructure "codeberg.org/superseriousbusiness/go-jpeg-image-structure/v2"
-	pngstructure "codeberg.org/superseriousbusiness/go-png-image-structure/v2"
+	jpegstructure "code.superseriousbusiness.org/go-jpeg-image-structure/v2"
+	pngstructure "code.superseriousbusiness.org/go-png-image-structure/v2"
 )
 
 func Terminate(in io.Reader, mediaType string) (io.Reader, error) {
