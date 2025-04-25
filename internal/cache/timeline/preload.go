@@ -91,8 +91,8 @@ func (p *preloader) CheckPreload(preload func(*any)) {
 	}
 }
 
-// start attempts to start the given preload function, by
-// performing a CAS operation with 'old'. return is success.
+// start attempts to start the given preload function, by performing
+// a compare and swap operation with 'old'. return is success.
 func (p *preloader) start(old *any, preload func(*any)) bool {
 
 	// Optimistically setup a
