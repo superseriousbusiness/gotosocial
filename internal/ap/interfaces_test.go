@@ -18,7 +18,7 @@
 package ap_test
 
 import (
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 

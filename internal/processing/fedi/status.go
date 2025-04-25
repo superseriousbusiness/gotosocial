@@ -24,7 +24,7 @@ import (
 	"slices"
 	"strconv"
 
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"

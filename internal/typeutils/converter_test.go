@@ -18,7 +18,7 @@
 package typeutils_test
 
 import (
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"

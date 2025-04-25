@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"codeberg.org/superseriousbusiness/activity/streams"
-	typepublickey "codeberg.org/superseriousbusiness/activity/streams/impl/w3idsecurityv1/type_publickey"
+	"code.superseriousbusiness.org/activity/streams"
+	typepublickey "code.superseriousbusiness.org/activity/streams/impl/w3idsecurityv1/type_publickey"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )

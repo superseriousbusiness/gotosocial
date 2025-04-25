@@ -27,8 +27,8 @@ import (
 	"net/url"
 	"testing"
 
+	"code.superseriousbusiness.org/httpsig"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
-	"codeberg.org/superseriousbusiness/httpsig"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"

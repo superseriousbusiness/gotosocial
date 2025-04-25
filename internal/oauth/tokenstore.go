@@ -22,9 +22,9 @@ import (
 	"errors"
 	"time"
 
+	"code.superseriousbusiness.org/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4/models"
 	"codeberg.org/gruf/go-mutexes"
-	"codeberg.org/superseriousbusiness/oauth2/v4"
-	"codeberg.org/superseriousbusiness/oauth2/v4/models"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/id"

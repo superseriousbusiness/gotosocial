@@ -25,8 +25,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"codeberg.org/superseriousbusiness/activity/streams"
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
+	"code.superseriousbusiness.org/activity/streams"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"

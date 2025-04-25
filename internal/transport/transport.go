@@ -27,7 +27,7 @@ import (
 	"sync"
 	"time"
 
-	"codeberg.org/superseriousbusiness/httpsig"
+	"code.superseriousbusiness.org/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/httpclient"

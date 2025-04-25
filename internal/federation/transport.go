@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"codeberg.org/superseriousbusiness/activity/pub"
+	"code.superseriousbusiness.org/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/uris"
 )
 

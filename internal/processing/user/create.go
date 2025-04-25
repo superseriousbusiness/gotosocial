@@ -22,7 +22,7 @@ import (
 	"fmt"
 	"time"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	"github.com/superseriousbusiness/gotosocial/internal/config"

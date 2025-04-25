@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"codeberg.org/superseriousbusiness/httpsig"
+	"code.superseriousbusiness.org/httpsig"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 

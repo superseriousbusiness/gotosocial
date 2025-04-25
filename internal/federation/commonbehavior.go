@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/http"
 
-	"codeberg.org/superseriousbusiness/activity/streams"
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
+	"code.superseriousbusiness.org/activity/streams"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 )
 
 /*
