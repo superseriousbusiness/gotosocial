@@ -79,27 +79,6 @@ func (p *Page) Order() Order {
 	}
 }
 
-// GetBounds is a small helper function to return low and high page bound ptrs (checking for nil page).
-func (p *Page) GetBounds() (lo *Boundary, hi *Boundary) {
-	if p == nil {
-		return nil, nil
-	}
-	return p.Bounds()
-}
-
-// Bounds is a smaller helper function to return low and high page bound ptrs.
-func (p *Page) Bounds() (lo *Boundary, hi *Boundary) {
-	switch p.Order() {
-	case OrderAscending:
-		lo = &p.Max
-		hi = &p.Min
-	case OrderDescending:
-		lo = &p.Min
-		hi = &p.Max
-	}
-	return
-}
-
 // Page will page the given slice of input according
 // to the receiving Page's minimum, maximum and limit.
 // NOTE: input slice MUST be sorted according to the order is
