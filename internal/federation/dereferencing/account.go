@@ -24,8 +24,8 @@ import (
 	"net/url"
 	"time"
 
+	"code.superseriousbusiness.org/activity/pub"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
-	"codeberg.org/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/db"

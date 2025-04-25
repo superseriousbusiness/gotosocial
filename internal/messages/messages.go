@@ -23,9 +23,9 @@ import (
 	"net/url"
 	"reflect"
 
+	"code.superseriousbusiness.org/activity/streams"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"codeberg.org/gruf/go-structr"
-	"codeberg.org/superseriousbusiness/activity/streams"
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )

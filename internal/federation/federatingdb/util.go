@@ -23,9 +23,9 @@ import (
 	"fmt"
 	"net/url"
 
+	"code.superseriousbusiness.org/activity/streams"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"codeberg.org/gruf/go-byteutil"
-	"codeberg.org/superseriousbusiness/activity/streams"
-	"codeberg.org/superseriousbusiness/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"

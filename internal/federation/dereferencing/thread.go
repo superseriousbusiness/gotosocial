@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"code.superseriousbusiness.org/activity/pub"
 	"codeberg.org/gruf/go-kv"
-	"codeberg.org/superseriousbusiness/activity/pub"
 	"github.com/superseriousbusiness/gotosocial/internal/ap"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
