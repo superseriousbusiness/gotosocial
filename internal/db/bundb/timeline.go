@@ -162,11 +162,11 @@ func (t *timelineDB) GetLocalTimeline(ctx context.Context, page *paging.Page) ([
 			// Public only.
 			q = q.Where("? = ?", bun.Ident("visibility"), gtsmodel.VisibilityPublic)
 
-			// Ignore boosts.
-			q = q.Where("? IS NULL", bun.Ident("boost_of_id"))
-
 			// Only include statuses that aren't pending approval.
 			q = q.Where("? = ?", bun.Ident("pending_approval"), false)
+
+			// Ignore boosts.
+			q = q.Where("? IS NULL", bun.Ident("boost_of_id"))
 
 			return q, nil
 		},
@@ -332,6 +332,13 @@ func loadStatusTimelinePage(
 		Table("statuses").
 		Column("id")
 
+	// Append caller
+	// query details.
+	q, err := query(q)
+	if err != nil {
+		return nil, err
+	}
+
 	if maxID != "" {
 		// Set a maximum ID boundary if was given.
 		q = q.Where("? < ?", bun.Ident("id"), maxID)
@@ -340,13 +347,6 @@ func loadStatusTimelinePage(
 	if minID != "" {
 		// Set a minimum ID boundary if was given.
 		q = q.Where("? > ?", bun.Ident("id"), minID)
-	}
-
-	// Append caller
-	// query details.
-	q, err := query(q)
-	if err != nil {
-		return nil, err
 	}
 
 	// Set query ordering.
