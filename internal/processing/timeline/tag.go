@@ -99,7 +99,7 @@ func (p *Processor) TagTimelineGet(
 		func(s *gtsmodel.Status) bool {
 
 			// Check the visibility of passed status to requesting user.
-			ok, err := p.visFilter.StatusHomeTimelineable(ctx, requester, s)
+			ok, err := p.visFilter.StatusPublicTimelineable(ctx, requester, s)
 			if err != nil {
 				log.Errorf(ctx, "error filtering status %s: %v", s.URI, err)
 			}
