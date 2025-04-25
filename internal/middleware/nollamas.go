@@ -33,6 +33,7 @@ import (
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/oauth"
@@ -100,9 +101,19 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
-	if _, ok := c.Get(oauth.SessionAuthorizedToken); ok {
+	// Extract request context.
+	ctx := c.Request.Context()
+
+	if ctx.Value(oauth.SessionAuthorizedToken) != nil {
 		// Don't guard against requests
 		// providing valid OAuth tokens.
+		c.Next()
+		return
+	}
+
+	if gtscontext.HTTPSignature(ctx) != "" {
+		// Don't guard against requests
+		// providing HTTP signatures.
 		c.Next()
 		return
 	}
@@ -120,21 +131,21 @@ func (m *nollamas) Serve(c *gin.Context) {
 		ebuf: make([]byte, encodedHashLen),
 	}
 
-	// Generate a unique token for
-	// this request only valid for
-	// a period of now +- m.ttl.
-	token := m.token(c, &hash)
+	// Extract client fingerprint data.
+	userAgent := c.GetHeader("User-Agent")
+	clientIP := c.ClientIP()
+
+	// Generate a unique token for this request,
+	// only valid for a period of now +- m.ttl.
+	token := m.token(&hash, userAgent, clientIP)
 
 	// For unique challenge string just use a
-	// repeated portion of their 'success' token.
+	// single portion of their 'success' token.
 	// SHA256 is not yet cracked, this is not an
 	// application of a hash requiring serious
 	// cryptographic security and it rotates on
 	// a TTL basis, so it should be fine.
-	challenge := token[:len(token)/4] +
-		token[:len(token)/4] +
-		token[:len(token)/4] +
-		token[:len(token)/4]
+	challenge := token[:len(token)/4]
 
 	// Check for a provided success token.
 	cookie, _ := c.Cookie("gts-nollamas")
@@ -152,9 +163,10 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
-	// Prepare new log entry with challenge.
-	l := log.WithContext(c.Request.Context())
-	l = l.WithField("challenge", challenge[:len(challenge)/4])
+	// Prepare new log entry.
+	l := log.WithContext(ctx).
+		WithField("userAgent", userAgent).
+		WithField("challenge", challenge)
 
 	// Check query to see if an in-progress
 	// challenge solution has been provided.
@@ -174,25 +186,14 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// Reset the hash.
 	hash.hash.Reset()
 
-	// Hash and encode input challenge with
-	// proposed nonce as a possible solution.
-	hash.hash.Write(byteutil.S2B(challenge))
-	hash.hash.Write(byteutil.S2B(nonce))
-	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
-	hex.Encode(hash.ebuf, hash.hbuf)
-	solution := hash.ebuf
+	// Check challenge+nonce as possible solution.
+	if !m.checkChallenge(&hash, challenge, nonce) {
 
-	// Check that the first 'diff'
-	// many chars are indeed zeroes.
-	for i := range m.diff {
-		if solution[i] != '0' {
-
-			// They failed challenge,
-			// re-present challenge page.
-			l.Warn("invalid solution provided")
-			m.renderChallenge(c, challenge)
-			return
-		}
+		// They failed challenge,
+		// re-present challenge page.
+		l.Info("invalid solution provided")
+		m.renderChallenge(c, challenge)
+		return
 	}
 
 	l.Infof("challenge passed: %s", nonce)
@@ -234,7 +235,7 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 	})
 }
 
-func (m *nollamas) token(c *gin.Context, hash *hashWithBufs) string {
+func (m *nollamas) token(hash *hashWithBufs, userAgent, clientIP string) string {
 	// Use our unique seed to seed hash,
 	// to ensure we have cryptographically
 	// unique, yet deterministic, tokens
@@ -262,12 +263,31 @@ func (m *nollamas) token(c *gin.Context, hash *hashWithBufs) string {
 	})
 
 	// Finally, append unique client request data.
-	userAgent := c.Request.Header.Get("User-Agent")
 	hash.hash.Write(byteutil.S2B(userAgent))
-	hash.hash.Write(byteutil.S2B(c.ClientIP()))
+	hash.hash.Write(byteutil.S2B(clientIP))
 
 	// Return hex encoded hash output.
 	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
 	hex.Encode(hash.ebuf, hash.hbuf)
 	return string(hash.ebuf)
+}
+
+func (m *nollamas) checkChallenge(hash *hashWithBufs, challenge, nonce string) bool {
+	// Hash and encode input challenge with
+	// proposed nonce as a possible solution.
+	hash.hash.Write(byteutil.S2B(challenge))
+	hash.hash.Write(byteutil.S2B(nonce))
+	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
+	hex.Encode(hash.ebuf, hash.hbuf)
+	solution := hash.ebuf
+
+	// Check that the first 'diff'
+	// many chars are indeed zeroes.
+	for i := range m.diff {
+		if solution[i] != '0' {
+			return false
+		}
+	}
+
+	return true
 }

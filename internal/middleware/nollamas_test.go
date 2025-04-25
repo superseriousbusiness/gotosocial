@@ -47,6 +47,7 @@ func TestNoLLaMasMiddleware(t *testing.T) {
 	config.SetAdvancedScraperDeterrence(true)
 	config.SetWebTemplateBaseDir("../../web/template")
 
+	// Load templates into engine.
 	err := router.LoadTemplates(e)
 	assert.NoError(t, err)
 
