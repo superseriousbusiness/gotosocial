@@ -6,6 +6,8 @@ code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0 h1:I512jiIeXDC4//
 code.superseriousbusiness.org/go-png-image-structure/v2 v2.3.0/go.mod h1:SNHomXNW88o1pFfLHpD4KsCZLfcr4z5dm+xcX5SV10A=
 code.superseriousbusiness.org/httpsig v1.4.0 h1:g9+KQMoTG0oR0II5gYb5pVVdNjbc7CiiuqK8vcZjeQg=
 code.superseriousbusiness.org/httpsig v1.4.0/go.mod h1:i2AKpj/WbA/o/UTvia9TAREzt0jP1AH3T1Uxjyhdzlw=
+code.superseriousbusiness.org/oauth2/v4 v4.8.0 h1:4LVXoPJXKgmDfwDegzBQPNpsdleMaL6YmDgFi6UDgEE=
+code.superseriousbusiness.org/oauth2/v4 v4.8.0/go.mod h1:+RLRBXPkjP/VhIC/46dcZkx3t5IvBSJYOjVCPgeWors=
 codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
 codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytesize v1.0.3 h1:Tz8tCxhPLeyM5VryuBNjUHgKmLj4Bx9RbPaUSA3qg6g=
@@ -52,8 +54,6 @@ codeberg.org/superseriousbusiness/activity v1.14.0 h1:z+jBjAIane9+Oqu6vO+tNvvNoj
 codeberg.org/superseriousbusiness/activity v1.14.0/go.mod h1:enxU1Lva4OcK6b/NBXscoHSEgEMsKJvdHrQFifQxp4o=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix h1:+JvBZqsQfdT+ROnk2DkvXsKQ9QBorKKKBk5fBqw62I8=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix/go.mod h1:WSigRRWEig8zV6t6Sm8Y+EmUjlzA/HoaZJ5edupq7po=
-codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB h1:UAFZKgUaeQEoHDmawh9DWXFopJnADfkiDo/CLAtWISc=
-codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB/go.mod h1:fAEs7S0vD9yB+h7zBUWfAqwdbVqF4n8FcTnXpJC//AM=
 github.com/DmitriyVTitov/size v1.5.0 h1:/PzqxYrOyOUX1BXj6J9OuVRVGe+66VL4D9FlUaW515g=
 github.com/DmitriyVTitov/size v1.5.0/go.mod h1:le6rNI4CoLQV1b9gzp1+3d7hMAD/uu2QcJ+aYbNgiU0=
 github.com/KimMachineGun/automemlimit v0.7.1 h1:QcG/0iCOLChjfUweIMC3YL5Xy9C3VBeNmCZHrZfJMBw=

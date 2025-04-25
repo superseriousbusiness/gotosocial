@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4"
-	"codeberg.org/superseriousbusiness/oauth2/v4/errors"
-	"codeberg.org/superseriousbusiness/oauth2/v4/generates"
-	"codeberg.org/superseriousbusiness/oauth2/v4/models"
+	"code.superseriousbusiness.org/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4/errors"
+	"code.superseriousbusiness.org/oauth2/v4/generates"
+	"code.superseriousbusiness.org/oauth2/v4/models"
 )
 
 // NewDefaultManager create to default authorization management instance

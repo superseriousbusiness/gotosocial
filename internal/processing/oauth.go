@@ -21,7 +21,7 @@ import (
 	"context"
 	"net/http"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 

@@ -22,7 +22,7 @@ import (
 	"slices"
 	"strings"
 
-	"codeberg.org/superseriousbusiness/oauth2/v4"
+	"code.superseriousbusiness.org/oauth2/v4"
 	"github.com/gin-gonic/gin"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"

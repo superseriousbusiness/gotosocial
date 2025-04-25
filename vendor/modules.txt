@@ -10,6 +10,14 @@ code.superseriousbusiness.org/go-png-image-structure/v2
 # code.superseriousbusiness.org/httpsig v1.4.0
 ## explicit; go 1.21
 code.superseriousbusiness.org/httpsig
+# code.superseriousbusiness.org/oauth2/v4 v4.8.0
+## explicit; go 1.23.0
+code.superseriousbusiness.org/oauth2/v4
+code.superseriousbusiness.org/oauth2/v4/errors
+code.superseriousbusiness.org/oauth2/v4/generates
+code.superseriousbusiness.org/oauth2/v4/manage
+code.superseriousbusiness.org/oauth2/v4/models
+code.superseriousbusiness.org/oauth2/v4/server
 # codeberg.org/gruf/go-bytes v1.0.2
 ## explicit; go 1.14
 codeberg.org/gruf/go-bytes
@@ -275,14 +283,6 @@ codeberg.org/superseriousbusiness/activity/streams/values/rfc2045
 codeberg.org/superseriousbusiness/activity/streams/values/rfc5988
 codeberg.org/superseriousbusiness/activity/streams/values/string
 codeberg.org/superseriousbusiness/activity/streams/vocab
-# codeberg.org/superseriousbusiness/oauth2/v4 v4.7.0-SSB
-## explicit; go 1.23.0
-codeberg.org/superseriousbusiness/oauth2/v4
-codeberg.org/superseriousbusiness/oauth2/v4/errors
-codeberg.org/superseriousbusiness/oauth2/v4/generates
-codeberg.org/superseriousbusiness/oauth2/v4/manage
-codeberg.org/superseriousbusiness/oauth2/v4/models
-codeberg.org/superseriousbusiness/oauth2/v4/server
 # github.com/DmitriyVTitov/size v1.5.0
 ## explicit; go 1.14
 github.com/DmitriyVTitov/size

@@ -3,9 +3,9 @@
 //     package main
 //     import (
 //         "net/http"
-//         "codeberg.org/superseriousbusiness/oauth2/v4/manage"
-//         "codeberg.org/superseriousbusiness/oauth2/v4/server"
-//         "codeberg.org/superseriousbusiness/oauth2/v4/store"
+//         "code.superseriousbusiness.org/oauth2/v4/manage"
+//         "code.superseriousbusiness.org/oauth2/v4/server"
+//         "code.superseriousbusiness.org/oauth2/v4/store"
 //     )
 //     func main() {
 //         manager := manage.NewDefaultManager()
