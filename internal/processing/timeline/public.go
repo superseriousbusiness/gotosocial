@@ -58,8 +58,8 @@ func (p *Processor) publicTimelineGet(
 ) {
 	return p.getStatusTimeline(ctx,
 
-		// Auth'd
-		// account.
+		// Auth acconut,
+		// can be nil.
 		requester,
 
 		// No cache.
@@ -110,8 +110,8 @@ func (p *Processor) localTimelineGet(
 ) {
 	return p.getStatusTimeline(ctx,
 
-		// Auth'd
-		// account.
+		// Auth acconut,
+		// can be nil.
 		requester,
 
 		// No cache.
