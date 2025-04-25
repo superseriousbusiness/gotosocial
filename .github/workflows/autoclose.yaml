@@ -1,0 +1,30 @@
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  autoclose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: issue
+        if: ${{ github.event.issue.id != '' }}
+        run: |
+          gh issue close $ISSUE --comment "This repository is a mirror. Please open issues on https://codeberg.org/superseriousbusiness/gotosocial." --reason "not planned"
+          gh issue lock $ISSUE
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE: ${{ github.event.issue.html_url }}
+      - name: pr
+        if: ${{ github.event.pull_request.id != '' }}
+        run: |
+          gh pr close $PULL_REQUEST --comment "This repository is a mirror. Please open PRs on https://codeberg.org/superseriousbusiness/gotosocial."
+          gh pr lock $PULL_REQUEST
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PULL_REQUEST: ${{ github.event.pull_request.html_url }}
