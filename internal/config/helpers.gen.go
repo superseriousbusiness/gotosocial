@@ -21,8 +21,8 @@ package config
 import (
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/language"
 	"codeberg.org/gruf/go-bytesize"
-	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
 // GetLogLevel safely fetches the Configuration value for state's 'LogLevel' field

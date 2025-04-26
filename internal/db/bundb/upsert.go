@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )

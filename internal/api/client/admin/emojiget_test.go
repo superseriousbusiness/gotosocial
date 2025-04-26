@@ -25,9 +25,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/admin"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 type EmojiGetTestSuite struct {

@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"code.superseriousbusiness.org/gotosocial/internal/regexes"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"

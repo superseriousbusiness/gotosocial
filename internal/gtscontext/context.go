@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/httpsig"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // package private context key type.

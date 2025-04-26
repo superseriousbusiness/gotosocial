@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"testing"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"github.com/stretchr/testify/suite"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
 )
 
 type OpenGraphTestSuite struct {

@@ -20,7 +20,7 @@ package stream
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"code.superseriousbusiness.org/gotosocial/internal/stream"
 )
 
 // Delete streams the delete of the given statusID to *ALL* open streams.

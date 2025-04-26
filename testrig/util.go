@@ -28,16 +28,16 @@ import (
 	"path"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/messages"
+	tlprocessor "code.superseriousbusiness.org/gotosocial/internal/processing/timeline"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/workers"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/timeline"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-kv/format"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // Starts workers on the provided state using noop processing functions.

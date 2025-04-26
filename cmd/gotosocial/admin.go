@@ -18,12 +18,12 @@
 package main
 
 import (
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/admin/account"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/admin/media"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/admin/media/prune"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/admin/trans"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/account"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/media/prune"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/admin/trans"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 func adminCommands() *cobra.Command {

@@ -20,7 +20,7 @@ package gtsmodel
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local

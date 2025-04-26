@@ -20,8 +20,8 @@ package bundb
 import (
 	"database/sql"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db/postgres"
-	"github.com/superseriousbusiness/gotosocial/internal/db/sqlite"
+	"code.superseriousbusiness.org/gotosocial/internal/db/postgres"
+	"code.superseriousbusiness.org/gotosocial/internal/db/sqlite"
 )
 
 func init() {

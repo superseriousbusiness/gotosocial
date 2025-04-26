@@ -4,7 +4,7 @@ definitions:
         title: FilterAction
         description: FilterAction 是针对与过滤规则匹配的贴文所执行的操作。
         type: string
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationEmojis:
         properties:
             emoji_size_limit:
@@ -16,7 +16,7 @@ definitions:
         title: InstanceConfigurationEmojis
         description: InstanceConfigurationEmojis 结构体包含有关自定义表情的配置信息。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     Link:
         description: Link 代表针对查询请求返回的链接组中的一个“链接”。详见 https://webfinger.net/ 和 https://www.rfc-editor.org/rfc/rfc6415.html#section-3.1
         properties:
@@ -34,7 +34,7 @@ definitions:
                 x-go-name: Type
         title: Link
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     Mention:
         properties:
             acct:
@@ -62,7 +62,7 @@ definitions:
         title: Mention
         description: Mention 表示对另一个账户的一次提及。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoServices:
         properties:
             inbound:
@@ -78,7 +78,7 @@ definitions:
         title: NodeInfoServices
         description: 表示此节点对入站和出站连接提供的服务。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoSoftware:
         properties:
             homepage:
@@ -102,7 +102,7 @@ definitions:
         title: NodeInfoSoftware
         description: NodeInfoSoftware 表示此节点软件的名称和版本号。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsage:
         properties:
             localComments:
@@ -118,7 +118,7 @@ definitions:
         title: NodeInfoUsage
         description: 表示有关此服务器的使用信息，例如用户数量。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsers:
         properties:
             activeHalfYear:
@@ -136,7 +136,7 @@ definitions:
         title: NodeInfoUsers
         description: NodeInfoUsers 表示有关服务器上用户的聚合信息。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     Source:
         description: Source 表示用户自己账户的内容展示或发布偏好。在验证和更新凭据时，作为 Account 的一个属性返回的附加实体。
         properties:
@@ -195,7 +195,7 @@ definitions:
                 x-go-name: WebVisibility
         title: Source
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     TimelineMarker:
         properties:
             last_read_id:
@@ -214,11 +214,11 @@ definitions:
         title: TimelineMarker
         description: TimelineMarker 包含有关用户在特定时间线上的阅读进度的信息。
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     WebPushNotificationPolicy:
         description: WebPushNotificationPolicy 包含可以生成通知的帐户集合。
         type: string
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     account:
         description: Account 是一个 Fediverse 账户的抽象模型。被抽象的账户可以是本站账户，也可以是外站账户。
         properties:
@@ -400,7 +400,7 @@ definitions:
         title: Account
         type: object
         x-go-name: Account
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountDisplayRole:
         description: AccountDisplayRole 是账户的公开、可显示身份组的抽象模型。它是 AccountRole 的一个子集。
         properties:
@@ -423,7 +423,7 @@ definitions:
         title: AccountDisplayRole
         type: object
         x-go-name: AccountDisplayRole
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountExportStats:
         description: |-
             AccountExportStats 专门用于在 /api/v1/exports/stats 端点上通知有关导出大小的账户统计信息。
@@ -471,7 +471,7 @@ definitions:
                 x-go-name: StatusesCount
         type: object
         x-go-name: AccountExportStats
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountRelationship:
         properties:
             blocked_by:
@@ -535,7 +535,7 @@ definitions:
         description: Relationship 表示账户之间的关系。
         type: object
         x-go-name: Relationship
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountRole:
         properties:
             color:
@@ -568,7 +568,7 @@ definitions:
         description: AccountRole 是账户的身份组的抽象模型。
         type: object
         x-go-name: AccountRole
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminAccountInfo:
         properties:
             account:
@@ -663,7 +663,7 @@ definitions:
         description: AdminAccountInfo 是管理员视图下账户详情的抽象模型。
         type: object
         x-go-name: AdminAccountInfo
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminActionResponse:
         description: |-
             AdminActionResponse 是服务器对管理员操作的响应的抽象模型。
@@ -675,7 +675,7 @@ definitions:
                 x-go-name: ActionID
         type: object
         x-go-name: AdminActionResponse
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminEmoji:
         properties:
             category:
@@ -743,7 +743,7 @@ definitions:
         description: AdminEmoji 是管理员视图下自定义表情的抽象模型。
         type: object
         x-go-name: AdminEmoji
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminReport:
         properties:
             account:
@@ -825,7 +825,7 @@ definitions:
         description: AdminReport 是管理员视图下举报的抽象模型。
         type: object
         x-go-name: AdminReport
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     application:
         properties:
             client_id:
@@ -877,7 +877,7 @@ definitions:
         description: Application 是对 API 应用程序的抽象模型。
         type: object
         x-go-name: Application
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     attachment:
         properties:
             blurhash:
@@ -937,7 +937,7 @@ definitions:
         description: Attachment 是媒体附件的抽象模型。
         type: object
         x-go-name: Attachment
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     card:
         properties:
             author_name:
@@ -1011,7 +1011,7 @@ definitions:
         description: Card 表示使用 OpenGraph 标签从 URL 生成的丰富预览卡片。
         type: object
         x-go-name: Card
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     conversation:
         description: |-
             Conversation 表示具有“私信”可见性的对话。
@@ -1037,7 +1037,7 @@ definitions:
                 x-go-name: Unread
         type: object
         x-go-name: Conversation
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     debugAPUrlResponse:
         description: |-
             DebugAPUrlResponse 提供对 AP URL 解引用请求的详细调试信息。
@@ -1075,7 +1075,7 @@ definitions:
                 x-go-name: ResponseHeaders
         type: object
         x-go-name: DebugAPUrlResponse
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     defaultPolicies:
         properties:
             direct:
@@ -1089,7 +1089,7 @@ definitions:
         title: 发起请求的账户的新贴文的默认互动规则。
         type: object
         x-go-name: DefaultPolicies
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     domain:
         description: Domain 表示一个外站实例
         properties:
@@ -1115,7 +1115,7 @@ definitions:
                 x-go-name: SuspendedAt
         type: object
         x-go-name: Domain
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     domainPermission:
         properties:
             created_at:
@@ -1173,7 +1173,7 @@ definitions:
         description: DomainPermission 表示应用于某个实例的权限（显式阻止/允许）。
         type: object
         x-go-name: DomainPermission
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     domainPermissionSubscription:
         properties:
             adopt_orphans:
@@ -1268,7 +1268,7 @@ definitions:
         description: DomainPermissionSubscription （域名权限订阅）表示一个可以自动更新的域名权限列表订阅（类型可以为允许或阻止）
         type: object
         x-go-name: DomainPermissionSubscription
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
             category:
@@ -1300,7 +1300,7 @@ definitions:
         description: Emoji 表示一个自定义表情。
         type: object
         x-go-name: Emoji
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     emojiCategory:
         properties:
             id:
@@ -1315,7 +1315,7 @@ definitions:
         description: EmojiCategory 表示自定义表情的类别。
         type: object
         x-go-name: EmojiCategory
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     field:
         properties:
             name:
@@ -1337,13 +1337,13 @@ definitions:
         description: Field 表示要在账户资料上显示的名称/值对。
         type: object
         x-go-name: Field
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterContext:
         description: FilterContext 表示过滤规则要应用到的上下文。Filter API 的 v1 和 v2 使用相同的上下文集合。
         title: FilterContext
         type: string
         x-go-name: FilterContext
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterKeyword:
         properties:
             id:
@@ -1364,7 +1364,7 @@ definitions:
         description: FilterKeyword 表示 v2 过滤规则中要过滤的关键词文本。
         type: object
         x-go-name: FilterKeyword
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterResult:
         properties:
             filter:
@@ -1385,7 +1385,7 @@ definitions:
         description: FilterResult 与被过滤的贴文一起返回，以解释为什么被过滤。
         type: object
         x-go-name: FilterResult
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterStatus:
         properties:
             id:
@@ -1400,7 +1400,7 @@ definitions:
         description: FilterStatus 表示 v2 过滤规则中被过滤的贴文 ID。
         type: object
         x-go-name: FilterStatus
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterV1:
         description: |-
             FilterV1 表示用户定义的过滤规则，用于确定哪些贴文不应显示给用户。
@@ -1450,7 +1450,7 @@ definitions:
         title: FilterV1
         type: object
         x-go-name: FilterV1
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterV2:
         description: FilterV2 表示用户定义的过滤规则，用于确定哪些贴文不应显示给用户。v2 过滤规则具有名称，并且可以包含多个短语和贴文 ID 以进行过滤。
         properties:
@@ -1496,7 +1496,7 @@ definitions:
         title: FilterV2
         type: object
         x-go-name: FilterV2
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     headerFilter:
         properties:
             created_at:
@@ -1531,7 +1531,7 @@ definitions:
         description: HeaderFilter 表示应用于特定 HTTP 标头的正则过滤规则（允许/阻止）。
         type: object
         x-go-name: HeaderFilter
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     hostmeta:
         description: 'HostMeta 表示一份 hostmeta 文档。参见: https://www.rfc-editor.org/rfc/rfc6415.html#section-3'
         properties:
@@ -1545,7 +1545,7 @@ definitions:
         title: HostMeta
         type: object
         x-go-name: HostMeta
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationAccounts:
         properties:
             allow_custom_css:
@@ -1570,7 +1570,7 @@ definitions:
         description: InstanceConfigurationAccounts 是实例账户配置参数的抽象模型。
         type: object
         x-go-name: InstanceConfigurationAccounts
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationMediaAttachments:
         properties:
             image_matrix_limit:
@@ -1622,7 +1622,7 @@ definitions:
         description: InstanceConfigurationMediaAttachments 是实例媒体附件配置参数的抽象模型。
         type: object
         x-go-name: InstanceConfigurationMediaAttachments
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationPolls:
         properties:
             max_characters_per_option:
@@ -1653,7 +1653,7 @@ definitions:
         description: InstanceConfigurationPolls 是实例投票配置参数的抽象模型。
         type: object
         x-go-name: InstanceConfigurationPolls
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationStatuses:
         properties:
             characters_reserved_per_url:
@@ -1687,7 +1687,7 @@ definitions:
         description: InstanceConfigurationStatuses 是实例贴文配置参数的抽象模型。
         type: object
         x-go-name: InstanceConfigurationStatuses
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceRule:
         properties:
             id:
@@ -1700,7 +1700,7 @@ definitions:
         description: InstanceRule 表示一条实例规则。
         type: object
         x-go-name: InstanceRule
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV1:
         properties:
             account_domain:
@@ -1856,7 +1856,7 @@ definitions:
         description: InstanceV1 是关于此实例的信息的抽象模型。
         type: object
         x-go-name: InstanceV1
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV1Configuration:
         properties:
             accounts:
@@ -1877,7 +1877,7 @@ definitions:
         description: InstanceV1Configuration 是实例配置参数的抽象模型。
         type: object
         x-go-name: InstanceV1Configuration
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV1URLs:
         properties:
             streaming_api:
@@ -1889,7 +1889,7 @@ definitions:
         description: InstanceV1URLs 是客户端应用程序使用的与实例相关的 URL 的抽象模型。
         type: object
         x-go-name: InstanceV1URLs
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2:
         properties:
             account_domain:
@@ -1981,7 +1981,7 @@ definitions:
         description: InstanceV2 是关于此实例的信息的抽象模型。
         type: object
         x-go-name: InstanceV2
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Configuration:
         properties:
             accounts:
@@ -2008,7 +2008,7 @@ definitions:
         description: 此实例的配置值和限制。
         type: object
         x-go-name: InstanceV2Configuration
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2ConfigurationTranslation:
         properties:
             enabled:
@@ -2021,7 +2021,7 @@ definitions:
         description: 关于翻译功能的提示。
         type: object
         x-go-name: InstanceV2ConfigurationTranslation
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2ConfigurationVAPID:
         properties:
             public_key:
@@ -2031,7 +2031,7 @@ definitions:
         title: InstanceV2ConfigurationVAPID 存储实例的 VAPID 配置信息。
         type: object
         x-go-name: InstanceV2ConfigurationVAPID
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Contact:
         properties:
             account:
@@ -2047,7 +2047,7 @@ definitions:
         description: 此实例的联系信息。
         type: object
         x-go-name: InstanceV2Contact
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Registrations:
         properties:
             approval_required:
@@ -2070,7 +2070,7 @@ definitions:
         description: 此实例有关注册的信息。
         type: object
         x-go-name: InstanceV2Registrations
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Thumbnail:
         properties:
             blurhash:
@@ -2116,7 +2116,7 @@ definitions:
         description: 代表此实例的图像。
         type: object
         x-go-name: InstanceV2Thumbnail
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2ThumbnailVersions:
         properties:
             '@1x':
@@ -2135,7 +2135,7 @@ definitions:
         description: 缩略图的高分辨率版本，用于高 DPI 屏幕。
         type: object
         x-go-name: InstanceV2ThumbnailVersions
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2URLs:
         properties:
             streaming:
@@ -2147,7 +2147,7 @@ definitions:
         description: InstanceV2URLs 是客户端应用程序使用的与实例相关的 URL 的抽象模型。
         type: object
         x-go-name: InstanceV2URLs
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Usage:
         properties:
             users:
@@ -2156,7 +2156,7 @@ definitions:
         description: InstanceV2Usage 是关于此实例的使用数据的抽象模型。
         type: object
         x-go-name: InstanceV2Usage
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Users:
         properties:
             active_month:
@@ -2171,7 +2171,7 @@ definitions:
         description: 此实例的用户使用数据。
         type: object
         x-go-name: InstanceV2Users
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionPolicy:
         properties:
             can_favourite:
@@ -2184,7 +2184,7 @@ definitions:
         description: 某条贴文的互动规则。
         type: object
         x-go-name: InteractionPolicy
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionPolicyRules:
         properties:
             always:
@@ -2203,7 +2203,7 @@ definitions:
         description: 某类互动的规则。
         type: object
         x-go-name: PolicyRules
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionPolicyValue:
         description: |-
             一条贴文的互动规则条目。
@@ -2221,7 +2221,7 @@ definitions:
         title: InteractionPolicyValue
         type: string
         x-go-name: PolicyValue
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionRequest:
         properties:
             accepted_at:
@@ -2263,7 +2263,7 @@ definitions:
         description: InteractionRequest 表示待处理、已批准或已拒绝的点赞、回复或转发互动。
         type: object
         x-go-name: InteractionRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     list:
         properties:
             exclusive:
@@ -2292,7 +2292,7 @@ definitions:
         description: List 表示用户为关注的账户创建的列表。
         type: object
         x-go-name: List
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     markers:
         properties:
             home:
@@ -2303,7 +2303,7 @@ definitions:
         description: Marker 表示用户时间线中的上次阅读位置。
         type: object
         x-go-name: Marker
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mediaDimensions:
         properties:
             aspect:
@@ -2362,7 +2362,7 @@ definitions:
         description: MediaDimensions 是一份媒体附件的详细属性的抽象模型。
         type: object
         x-go-name: MediaDimensions
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mediaFocus:
         properties:
             x:
@@ -2381,7 +2381,7 @@ definitions:
         description: MediaFocus 是媒体附件的焦点的抽象模型。
         type: object
         x-go-name: MediaFocus
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mediaMeta:
         description: MediaMeta 是媒体附件的元数据的抽象模型。这可以是有关图像、音频文件、视频等的元数据。
         properties:
@@ -2394,7 +2394,7 @@ definitions:
         title: MediaMeta
         type: object
         x-go-name: MediaMeta
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mutedAccount:
         properties:
             acct:
@@ -2582,7 +2582,7 @@ definitions:
         description: MutedAccount 扩展了 Account，其中包含仅静音/隐藏用户列表使用的字段。
         type: object
         x-go-name: MutedAccount
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     nodeinfo:
         description: 'NodeInfo 表示版本 2.1 或版本 2.0 的 nodeinfo 数据结构。参见: https://nodeinfo.diaspora.software/schema.html'
         properties:
@@ -2616,7 +2616,7 @@ definitions:
         title: Nodeinfo
         type: object
         x-go-name: Nodeinfo
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     notification:
         properties:
             account:
@@ -2648,7 +2648,7 @@ definitions:
         description: Notification 表示与用户相关的事件的通知。
         type: object
         x-go-name: Notification
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     oauthToken:
         properties:
             access_token:
@@ -2675,7 +2675,7 @@ definitions:
         description: Token 表示用于 GoToSocial API 身份验证和执行操作的 OAuth 令牌。
         type: object
         x-go-name: Token
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     poll:
         properties:
             emojis:
@@ -2738,7 +2738,7 @@ definitions:
         description: Poll 表示一个附加到贴文的投票。
         type: object
         x-go-name: Poll
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     pollOption:
         properties:
             title:
@@ -2754,7 +2754,7 @@ definitions:
         description: PollOption 表示不同投票选项的当前投票计数。
         type: object
         x-go-name: PollOption
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     report:
         properties:
             action_taken:
@@ -2831,7 +2831,7 @@ definitions:
         description: Report 是提交给实例的一份举报的抽象模型，可以通过客户端 API 或联合 API 提交。
         type: object
         x-go-name: Report
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     searchResult:
         properties:
             accounts:
@@ -2853,7 +2853,7 @@ definitions:
         description: SearchResult 是一次搜索结果的抽象模型。
         type: object
         x-go-name: SearchResult
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     status:
         properties:
             account:
@@ -3007,7 +3007,7 @@ definitions:
         description: Status 表示一条贴文或帖子。
         type: object
         x-go-name: Status
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     statusEdit:
         description: |-
             StatusEdit 表示一条贴文的一个历史修订版本，包含该修订版本的状态的部分信息。
@@ -3059,7 +3059,7 @@ definitions:
                 x-go-name: SpoilerText
         type: object
         x-go-name: StatusEdit
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     statusReblogged:
         properties:
             account:
@@ -3221,7 +3221,7 @@ definitions:
         description: StatusReblogged 表示一条被转发的贴文。
         type: object
         x-go-name: StatusReblogged
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     statusSource:
         description: |-
             StatusSource 表示创建贴文时提交给 API 的贴文源文本。
@@ -3245,7 +3245,7 @@ definitions:
                 x-go-name: Text
         type: object
         x-go-name: StatusSource
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     swaggerCollection:
         properties:
             '@context':
@@ -3272,7 +3272,7 @@ definitions:
         description: SwaggerCollection 表示一个 ActivityPub 集合。
         type: object
         x-go-name: SwaggerCollection
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/activitypub/users
     swaggerCollectionPage:
         properties:
             id:
@@ -3308,7 +3308,7 @@ definitions:
         description: SwaggerCollectionPage 表示一个 ActivityPub 集合的一页。
         type: object
         x-go-name: SwaggerCollectionPage
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/activitypub/users
     swaggerFeaturedCollection:
         properties:
             '@context':
@@ -3345,7 +3345,7 @@ definitions:
         description: SwaggerFeaturedCollection 表示一个有序 ActivityPub 集合。
         type: object
         x-go-name: SwaggerFeaturedCollection
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
             following:
@@ -3375,7 +3375,7 @@ definitions:
         description: Tag 表示贴文内容中使用的某个话题标签。
         type: object
         x-go-name: Tag
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     theme:
         properties:
             description:
@@ -3394,7 +3394,7 @@ definitions:
         description: Theme 表示一个用户可选的预设 CSS 主题。
         type: object
         x-go-name: Theme
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     threadContext:
         description: |-
             ThreadContext 是围绕给定贴文的贴文树/贴文串的抽象模型。
@@ -3413,7 +3413,7 @@ definitions:
                 x-go-name: Descendants
         type: object
         x-go-name: ThreadContext
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     tokenInfo:
         description: |-
             TokenInfo 表示与用户关联的访问令牌的元数据。
@@ -3446,7 +3446,7 @@ definitions:
         title: TokenInfo
         type: object
         x-go-name: TokenInfo
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     user:
         properties:
             admin:
@@ -3518,7 +3518,7 @@ definitions:
         description: User 是单个用户的相关字段的抽象模型。
         type: object
         x-go-name: User
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     webPushNotification:
         description: |-
             WebPushNotification 表示 Web 推送服务器传递给客户端的通知摘要。
@@ -3565,7 +3565,7 @@ definitions:
         title: WebPushNotification
         type: object
         x-go-name: WebPushNotification
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     webPushSubscription:
         properties:
             alerts:
@@ -3594,7 +3594,7 @@ definitions:
         description: WebPushSubscription 表示对 Web 推送服务器的订阅。
         type: object
         x-go-name: WebPushSubscription
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     webPushSubscriptionAlerts:
         properties:
             admin.report:
@@ -3653,7 +3653,7 @@ definitions:
         description: WebPushSubscriptionAlerts 代表此 Web 推送订阅将接收的具体事件。
         type: object
         x-go-name: WebPushSubscriptionAlerts
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         properties:
             aliases:
@@ -3676,7 +3676,7 @@ definitions:
             参见 https://webfinger.net/
         type: object
         x-go-name: WellKnownResponse
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
 host: example.org
 info:
     contact:

@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/http"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/oauth2/v4"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (p *Processor) OAuthHandleAuthorizeRequest(w http.ResponseWriter, r *http.Request) gtserror.WithCode {

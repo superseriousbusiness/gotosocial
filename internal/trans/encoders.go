@@ -26,7 +26,7 @@ import (
 	"fmt"
 	"os"
 
-	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
+	transmodel "code.superseriousbusiness.org/gotosocial/internal/trans/model"
 )
 
 // accountEncode handles special fields like private + public keys on accounts

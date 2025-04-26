@@ -24,8 +24,8 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/stretchr/testify/assert"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 type Case struct {

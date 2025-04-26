@@ -21,7 +21,7 @@ import (
 	"context"
 	"reflect"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250226013442_add_status_content_type"
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250226013442_add_status_content_type"
 
 	"github.com/uptrace/bun"
 )

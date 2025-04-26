@@ -22,7 +22,7 @@ import (
 	"net/smtp"
 	"text/template"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
 // Sender contains functions for sending emails to instance users/new signups.

@@ -20,7 +20,7 @@ package trans
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 )
 
 // Exporter wraps functionality for exporting entries from the database to a file.

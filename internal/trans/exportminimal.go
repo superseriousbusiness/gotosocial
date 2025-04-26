@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 )
 
 func (e *exporter) ExportMinimal(ctx context.Context, path string) error {

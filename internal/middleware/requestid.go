@@ -26,8 +26,8 @@ import (
 	"sync"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 )
 
 var (

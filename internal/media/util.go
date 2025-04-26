@@ -25,9 +25,9 @@ import (
 	"os"
 	"path"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // file represents one file

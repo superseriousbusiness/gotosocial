@@ -18,8 +18,8 @@
 package main
 
 import (
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/testrig"
 	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/testrig"
 )
 
 func testrigCommands() *cobra.Command {

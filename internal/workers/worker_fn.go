@@ -20,10 +20,10 @@ package workers
 import (
 	"context"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/queue"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"codeberg.org/gruf/go-runners"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // FnWorkerPool wraps multiple FnWorker{}s in

@@ -23,9 +23,9 @@ import (
 	"os"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/trans"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/trans"
 )
 
 type ExportMinimalTestSuite struct {

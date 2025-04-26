@@ -20,8 +20,8 @@ package announcements
 import (
 	"net/http"
 
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 // BasePath is the base path for this api module, excluding the api prefix

@@ -1,4 +1,4 @@
-module github.com/superseriousbusiness/gotosocial
+module code.superseriousbusiness.org/gotosocial
 
 go 1.23.0
 

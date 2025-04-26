@@ -20,7 +20,7 @@ package gtsmodel
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // AccountSettings models settings / preferences for a local, non-instance account.

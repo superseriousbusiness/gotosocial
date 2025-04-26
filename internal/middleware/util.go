@@ -20,8 +20,8 @@ package middleware
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 // respondBlocked responds to the given gin context with

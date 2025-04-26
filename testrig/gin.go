@@ -20,8 +20,8 @@ package testrig
 import (
 	"net/http"
 
+	"code.superseriousbusiness.org/gotosocial/internal/router"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 // CreateGinTextContext creates a new gin.Context suitable for a test, with an instantiated gin.Engine.

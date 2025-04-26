@@ -20,9 +20,9 @@ package oauth
 import (
 	"context"
 
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/oauth2/v4"
 	"code.superseriousbusiness.org/oauth2/v4/errors"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 type clientStore struct {

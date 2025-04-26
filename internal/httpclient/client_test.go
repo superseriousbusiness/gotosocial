@@ -26,7 +26,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
 )
 
 var privateIPs = []string{

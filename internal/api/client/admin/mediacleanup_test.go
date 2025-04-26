@@ -24,9 +24,9 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/admin"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/admin"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type MediaCleanupTestSuite struct {

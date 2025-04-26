@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
 )
 
 // Delivery wraps an httpclient.Request{}

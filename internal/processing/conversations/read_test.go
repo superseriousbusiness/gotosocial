@@ -20,7 +20,7 @@ package conversations_test
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 func (suite *ConversationsTestSuite) TestRead() {

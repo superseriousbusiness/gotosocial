@@ -21,11 +21,11 @@ import (
 	"net/http"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/health"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/router"
 	"codeberg.org/gruf/go-cache/v3"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/health"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type MaintenanceModule struct {

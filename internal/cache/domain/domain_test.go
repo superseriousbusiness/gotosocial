@@ -21,7 +21,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/cache/domain"
+	"code.superseriousbusiness.org/gotosocial/internal/cache/domain"
 )
 
 func TestCache(t *testing.T) {

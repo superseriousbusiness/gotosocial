@@ -20,10 +20,10 @@ package api
 import (
 	"context"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/health"
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
+	"code.superseriousbusiness.org/gotosocial/internal/router"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/health"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type Health struct {

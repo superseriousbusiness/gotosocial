@@ -20,9 +20,9 @@ package migrations
 import (
 	"context"
 
-	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240715204203_media_pipeline_improvements"
-	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	old_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20240715204203_media_pipeline_improvements"
+	new_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 
 	"github.com/uptrace/bun"
 )

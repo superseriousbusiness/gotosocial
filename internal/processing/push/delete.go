@@ -20,7 +20,7 @@ package push
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
 // Delete deletes the Web Push subscription for the given access token, if there is one.

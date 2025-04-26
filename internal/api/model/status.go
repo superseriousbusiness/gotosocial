@@ -20,7 +20,7 @@ package model
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/language"
+	"code.superseriousbusiness.org/gotosocial/internal/language"
 )
 
 // Status models a status or post.

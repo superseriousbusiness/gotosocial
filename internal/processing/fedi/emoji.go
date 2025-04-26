@@ -21,8 +21,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
 // EmojiGet handles the GET for a federated emoji originating from this instance.

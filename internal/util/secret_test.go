@@ -21,7 +21,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 func TestMustGenerateSecret(t *testing.T) {

@@ -23,7 +23,7 @@ import (
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
 // Followers obtains the Followers Collection for an actor with the

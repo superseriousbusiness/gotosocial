@@ -21,8 +21,8 @@ import (
 	"net/http"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/tokens"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/tokens"
 )
 
 type TokensGetTestSuite struct {

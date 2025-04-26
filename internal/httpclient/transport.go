@@ -21,7 +21,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 )
 
 // SignFunc is a function signature that provides request signing.

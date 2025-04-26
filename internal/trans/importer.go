@@ -20,7 +20,7 @@ package trans
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 )
 
 // Importer wraps functionality for importing entries from a file into the database.

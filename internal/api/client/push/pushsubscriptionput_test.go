@@ -27,11 +27,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/push"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/push"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/oauth"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 )
 
 // putSubscription updates the push subscription for the named account and token.

@@ -23,11 +23,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/new"
-	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/old"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	new_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/new"
+	old_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/old"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"

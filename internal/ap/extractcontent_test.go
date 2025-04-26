@@ -20,8 +20,8 @@ package ap_test
 import (
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
 )
 
 type ExtractContentTestSuite struct {

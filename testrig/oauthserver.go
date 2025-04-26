@@ -20,9 +20,9 @@ package testrig
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth/handlers"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/oauth"
+	"code.superseriousbusiness.org/gotosocial/internal/oauth/handlers"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
 // NewTestOauthServer returns an oauth server with the given db

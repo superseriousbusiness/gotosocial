@@ -25,10 +25,10 @@ import (
 	"path"
 	"regexp"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/google/uuid"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 // TestSyslogLongMessageUnixgram is known to hang on macOS for messages longer than about 1500 bytes.

@@ -18,8 +18,8 @@
 package middleware
 
 import (
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 // RobotsHeaders adds robots directives to the X-Robots-Tag HTTP header.

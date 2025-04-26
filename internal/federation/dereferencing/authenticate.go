@@ -20,7 +20,7 @@ package dereferencing
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // verifyAccountKeysOnUpdate verifies that account's public key hasn't changed on update from

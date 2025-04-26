@@ -23,8 +23,8 @@ import (
 	"os"
 	"path"
 
+	gtsstorage "code.superseriousbusiness.org/gotosocial/internal/storage"
 	"codeberg.org/gruf/go-storage/memory"
-	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 )
 
 // NewInMemoryStorage returns a new in memory storage with the default test config

@@ -20,8 +20,8 @@ package util_test
 import (
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 type NamestringSuite struct {

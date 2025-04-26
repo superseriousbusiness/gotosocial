@@ -18,7 +18,7 @@
 package language
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
 )

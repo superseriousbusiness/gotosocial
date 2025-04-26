@@ -23,10 +23,10 @@ import (
 	"net/http"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/user"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/user"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"golang.org/x/crypto/bcrypt"
 )
 

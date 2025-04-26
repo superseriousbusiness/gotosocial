@@ -23,8 +23,8 @@ import (
 	"slices"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 	"github.com/stretchr/testify/assert"
-	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 func TestGrowJust(t *testing.T) {

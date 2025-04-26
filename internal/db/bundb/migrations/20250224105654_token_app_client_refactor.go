@@ -20,10 +20,10 @@ package migrations
 import (
 	"context"
 
-	oldmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
-	newmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250224105654_token_app_client_refactor"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	oldmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20211113114307_init"
+	newmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250224105654_token_app_client_refactor"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 

@@ -18,9 +18,9 @@
 package main
 
 import (
+	configaction "code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/debug/config"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
-	configaction "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/debug/config"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 func debugCommands() *cobra.Command {

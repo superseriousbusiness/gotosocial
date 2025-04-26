@@ -34,7 +34,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 )
 
 // token represents a request that is being processed.
