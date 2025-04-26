@@ -46,6 +46,9 @@ type Caches struct {
 	// `[status.ID][status.UpdatedAt.Unix()]`
 	StatusesFilterableFields *ttl.Cache[string, []string]
 
+	// Timelines ...
+	Timelines TimelineCaches
+
 	// Visibility provides access to the item visibility
 	// cache. (used by the visibility filter).
 	Visibility VisibilityCache
@@ -87,12 +90,14 @@ func (c *Caches) Init() {
 	c.initFollowRequest()
 	c.initFollowRequestIDs()
 	c.initFollowingTagIDs()
+	c.initHomeTimelines()
 	c.initInReplyToIDs()
 	c.initInstance()
 	c.initInteractionRequest()
 	c.initList()
 	c.initListIDs()
 	c.initListedIDs()
+	c.initListTimelines()
 	c.initMarker()
 	c.initMedia()
 	c.initMention()
@@ -109,6 +114,7 @@ func (c *Caches) Init() {
 	c.initStatusEdit()
 	c.initStatusFave()
 	c.initStatusFaveIDs()
+	c.initStatusesFilterableFields()
 	c.initTag()
 	c.initThreadMute()
 	c.initToken()
@@ -120,7 +126,6 @@ func (c *Caches) Init() {
 	c.initWebPushSubscription()
 	c.initWebPushSubscriptionIDs()
 	c.initVisibility()
-	c.initStatusesFilterableFields()
 }
 
 // Start will start any caches that require a background
@@ -207,6 +212,8 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.User.Trim(threshold)
 	c.DB.UserMute.Trim(threshold)
 	c.DB.UserMuteIDs.Trim(threshold)
+	c.Timelines.Home.Trim()
+	c.Timelines.List.Trim()
 	c.Visibility.Trim(threshold)
 }
 

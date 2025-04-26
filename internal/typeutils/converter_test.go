@@ -22,7 +22,6 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
@@ -529,12 +528,6 @@ func (suite *TypeUtilsTestSuite) TearDownTest() {
 // GetProcessor is a utility function that instantiates a processor.
 // Useful when a test in the test suite needs to change some state.
 func (suite *TypeUtilsTestSuite) GetProcessor() *processing.Processor {
-	testrig.StartTimelines(
-		&suite.state,
-		visibility.NewFilter(&suite.state),
-		suite.typeconverter,
-	)
-
 	httpClient := testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	transportController := testrig.NewTestTransportController(&suite.state, httpClient)
 	mediaManager := testrig.NewTestMediaManager(&suite.state)

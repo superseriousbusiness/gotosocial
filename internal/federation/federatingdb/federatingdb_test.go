@@ -25,7 +25,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/admin"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/federation/federatingdb"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/messages"
@@ -79,12 +78,6 @@ func (suite *FederatingDBTestSuite) SetupTest() {
 
 	suite.testActivities = testrig.NewTestActivities(suite.testAccounts)
 	suite.tc = typeutils.NewConverter(&suite.state)
-
-	testrig.StartTimelines(
-		&suite.state,
-		visibility.NewFilter(&suite.state),
-		suite.tc,
-	)
 
 	suite.federatingDB = testrig.NewTestFederatingDB(&suite.state)
 	testrig.StandardDBSetup(suite.db, suite.testAccounts)

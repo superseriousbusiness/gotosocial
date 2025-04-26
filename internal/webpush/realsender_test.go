@@ -90,12 +90,6 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 	suite.state.Storage = suite.storage
 	suite.typeconverter = typeutils.NewConverter(&suite.state)
 
-	testrig.StartTimelines(
-		&suite.state,
-		visibility.NewFilter(&suite.state),
-		suite.typeconverter,
-	)
-
 	suite.httpClient = testrig.NewMockHTTPClient(nil, "../../testrig/media")
 	suite.httpClient.TestRemotePeople = testrig.NewTestFediPeople()
 	suite.httpClient.TestRemoteStatuses = testrig.NewTestFediStatuses()

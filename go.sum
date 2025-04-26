@@ -10,8 +10,6 @@ code.superseriousbusiness.org/httpsig v1.4.0 h1:g9+KQMoTG0oR0II5gYb5pVVdNjbc7Cii
 code.superseriousbusiness.org/httpsig v1.4.0/go.mod h1:i2AKpj/WbA/o/UTvia9TAREzt0jP1AH3T1Uxjyhdzlw=
 code.superseriousbusiness.org/oauth2/v4 v4.8.0 h1:4LVXoPJXKgmDfwDegzBQPNpsdleMaL6YmDgFi6UDgEE=
 code.superseriousbusiness.org/oauth2/v4 v4.8.0/go.mod h1:+RLRBXPkjP/VhIC/46dcZkx3t5IvBSJYOjVCPgeWors=
-codeberg.org/gruf/go-bytes v1.0.2 h1:malqE42Ni+h1nnYWBUAJaDDtEzF4aeN4uPN8DfMNNvo=
-codeberg.org/gruf/go-bytes v1.0.2/go.mod h1:1v/ibfaosfXSZtRdW2rWaVrDXMc9E3bsi/M9Ekx39cg=
 codeberg.org/gruf/go-bytesize v1.0.3 h1:Tz8tCxhPLeyM5VryuBNjUHgKmLj4Bx9RbPaUSA3qg6g=
 codeberg.org/gruf/go-bytesize v1.0.3/go.mod h1:n/GU8HzL9f3UNp/mUKyr1qVmTlj7+xacpp0OHfkvLPs=
 codeberg.org/gruf/go-byteutil v1.3.0 h1:nRqJnCcRQ7xbfU6azw7zOzJrSMDIJHBqX6FL9vEMYmU=
@@ -50,8 +48,8 @@ codeberg.org/gruf/go-sched v1.2.4 h1:ddBB9o0D/2oU8NbQ0ldN5aWxogpXPRBATWi58+p++Hw
 codeberg.org/gruf/go-sched v1.2.4/go.mod h1:wad6l+OcYGWMA2TzNLMmLObsrbBDxdJfEy5WvTgBjNk=
 codeberg.org/gruf/go-storage v0.2.0 h1:mKj3Lx6AavEkuXXtxqPhdq+akW9YwrnP16yQBF7K5ZI=
 codeberg.org/gruf/go-storage v0.2.0/go.mod h1:o3GzMDE5QNUaRnm/daUzFqvuAaC4utlgXDXYO79sWKU=
-codeberg.org/gruf/go-structr v0.9.6 h1:FSbJ1A0ubTQB82rC0K4o6qyiqrDGH1t9ivttm8Zy64o=
-codeberg.org/gruf/go-structr v0.9.6/go.mod h1:9k5hYztZ4PsBS+m1v5hUTeFiVUBTLF5VA7d9cd1OEMs=
+codeberg.org/gruf/go-structr v0.9.7 h1:yQeIxTjYb6reNdgESk915twyjolydYBqat/mlZrP7bg=
+codeberg.org/gruf/go-structr v0.9.7/go.mod h1:9k5hYztZ4PsBS+m1v5hUTeFiVUBTLF5VA7d9cd1OEMs=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix h1:+JvBZqsQfdT+ROnk2DkvXsKQ9QBorKKKBk5fBqw62I8=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix/go.mod h1:WSigRRWEig8zV6t6Sm8Y+EmUjlzA/HoaZJ5edupq7po=
 github.com/DmitriyVTitov/size v1.5.0 h1:/PzqxYrOyOUX1BXj6J9OuVRVGe+66VL4D9FlUaW515g=
