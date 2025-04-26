@@ -634,32 +634,38 @@ func ExtractContent(i WithContent) gtsmodel.Content {
 	return content
 }
 
-// ExtractAttachments attempts to extract barebones MediaAttachment objects from given AS interface type.
+// ExtractAttachments attempts to extract barebones
+// MediaAttachment objects from given AS interface type.
 func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
 		return nil, nil
 	}
 
-	var errs gtserror.MultiError
+	var (
+		attachments = make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
+		errs        gtserror.MultiError
+	)
 
-	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
 	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {
 			errs.Appendf("nil attachment type")
 			continue
 		}
-		attachmentable, ok := t.(Attachmentable)
+
+		attachmentable, ok := ToAttachmentable(t)
 		if !ok {
-			errs.Appendf("incorrect attachment type: %T", t)
+			errs.Appendf("could not cast %T to Attachmentable", t)
 			continue
 		}
+
 		attachment, err := ExtractAttachment(attachmentable)
 		if err != nil {
 			errs.Appendf("error extracting attachment: %w", err)
 			continue
 		}
+
 		attachments = append(attachments, attachment)
 	}
 
@@ -681,7 +687,10 @@ func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
 		RemoteURL:   remoteURL.String(),
 		Description: ExtractDescription(i),
 		Blurhash:    ExtractBlurhash(i),
-		Processing:  gtsmodel.ProcessingStatusReceived,
+		FileMeta: gtsmodel.FileMeta{
+			Focus: ExtractFocus(i),
+		},
+		Processing: gtsmodel.ProcessingStatusReceived,
 	}, nil
 }
 
@@ -706,6 +715,50 @@ func ExtractBlurhash(i WithBlurhash) string {
 	}
 
 	return blurhashProp.Get()
+}
+
+// ExtractFocus parses a gtsmodel.Focus from the given Attachmentable's
+// `focalPoint` property, if Attachmentable can have `focalPoint`, and
+// `focalPoint` is set to a valid pair of floats. Otherwise, returns a
+// zero gtsmodel.Focus (ie., focus in the centre of the image).
+func ExtractFocus(attachmentable Attachmentable) gtsmodel.Focus {
+	focus := gtsmodel.Focus{}
+
+	withFocalPoint, ok := attachmentable.(WithFocalPoint)
+	if !ok {
+		return focus
+	}
+
+	focalPointProp := withFocalPoint.GetTootFocalPoint()
+	if focalPointProp == nil || focalPointProp.Len() != 2 {
+		return focus
+	}
+
+	xProp := focalPointProp.At(0)
+	if !xProp.IsXMLSchemaFloat() {
+		return focus
+	}
+
+	yProp := focalPointProp.At(1)
+	if !yProp.IsXMLSchemaFloat() {
+		return focus
+	}
+
+	x := xProp.Get()
+	if x < -1 || x > 1 {
+		return focus
+	}
+
+	y := yProp.Get()
+	if y < -1 || y > 1 {
+		return focus
+	}
+
+	// Looks good.
+	focus.X = float32(x)
+	focus.Y = float32(y)
+
+	return focus
 }
 
 // ExtractHashtags extracts a slice of minimal gtsmodel.Tags

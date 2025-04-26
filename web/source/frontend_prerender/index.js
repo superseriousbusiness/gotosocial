@@ -29,6 +29,11 @@ import { decode } from "blurhash";
 
 const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
+// Adjust object-position of any image that has a focal point set.
+document.querySelectorAll("img[data-object-position]").forEach(img => {
+	img.style["object-position"] = img.dataset.objectPosition;
+});
+
 // Generate a blurhash canvas for each image for
 // each blurhash container and put it in the summary.
 Array.from(document.getElementsByClassName('blurhash-container')).forEach(blurhashContainer => {
@@ -36,6 +41,7 @@ Array.from(document.getElementsByClassName('blurhash-container')).forEach(blurha
 	const thumbHeight = blurhashContainer.dataset.blurhashHeight;
 	const thumbWidth = blurhashContainer.dataset.blurhashWidth;
 	const thumbAspect = blurhashContainer.dataset.blurhashAspect;	
+	const objectPosition = blurhashContainer.dataset.blurhashObjectPosition;
 	
 	/*
 		It's very expensive to draw big canvases
@@ -72,6 +78,12 @@ Array.from(document.getElementsByClassName('blurhash-container')).forEach(blurha
 	);
 	imageData.data.set(pixels);
 	ctx.putImageData(imageData, 0, 0);
+
+	// Set object-position css property on
+	// the canvas if it's set on the container.
+	if (objectPosition) {
+		canvas.style["object-position"] = objectPosition;
+	}
 
 	// Put the canvas inside the container.
 	blurhashContainer.appendChild(canvas);

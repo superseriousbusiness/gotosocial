@@ -29,6 +29,7 @@
 const Photoswipe = require("photoswipe/dist/umd/photoswipe.umd.min.js");
 const PhotoswipeLightbox = require("photoswipe/dist/umd/photoswipe-lightbox.umd.min.js");
 const PhotoswipeCaptionPlugin = require("photoswipe-dynamic-caption-plugin").default;
+const ObjectPosition = require("./photoswipe-object-position.js").default;
 const Plyr = require("plyr");
 const Prism = require("./prism.js");
 
@@ -60,6 +61,10 @@ new PhotoswipeCaptionPlugin(lightbox, {
 		return slide.data.alt;
 	}
 });
+
+// Enable object-position plugin for lightbox so that css
+// object-position property can be used on preview images.
+new ObjectPosition(lightbox);
 
 lightbox.addFilter('itemData', (item) => {
 	const el = item.element;

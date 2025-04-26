@@ -193,8 +193,8 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
         "id": "01F8MH6NEM8D7527KZAECTCR76",
         "meta": {
           "focus": {
-            "x": 0,
-            "y": 0
+            "x": -0.5,
+            "y": 0.5
           },
           "original": {
             "aspect": 1.9047619,

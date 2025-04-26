@@ -29,6 +29,10 @@
     height="{{- .Meta.Small.Height -}}"
     data-blurhash-hash="{{- .Blurhash -}}"
     data-sensitive="{{- .Sensitive -}}"
+    {{- if or (ne .Meta.Focus.X 0.0) (ne .Meta.Focus.Y 0.0) }}
+    data-object-position="{{ objectPosition .Meta.Focus.X .Meta.Focus.Y }}"
+    {{- else }}
+    {{- end }}
 />
 {{- else }}
 <img
@@ -69,6 +73,10 @@
                 data-blurhash-height="{{- .Item.Meta.Small.Height -}}"
                 data-blurhash-hash="{{- .Item.Blurhash -}}"
                 data-blurhash-aspect="{{- .Item.Meta.Small.Aspect -}}"
+                {{- if or (ne .Item.Meta.Focus.X 0.0) (ne .Item.Meta.Focus.Y 0.0) }}
+                data-blurhash-object-position="{{ objectPosition .Item.Meta.Focus.X .Item.Meta.Focus.Y }}"
+                {{- else }}
+                {{- end }}
             ></div>
             {{- end }}
         </summary>

@@ -709,6 +709,12 @@ func NewTestAttachments() map[string]*gtsmodel.MediaAttachment {
 					Size:   137216,
 					Aspect: 1.9104477,
 				},
+				// Focus on top-left
+				// quadrant of image.
+				Focus: gtsmodel.Focus{
+					X: -0.5,
+					Y: 0.5,
+				},
 			},
 			AccountID:         "01F8MH17FWEB39HZJ76B6VXSKF",
 			Description:       "Black and white image of some 50's style text saying: Welcome On Board",

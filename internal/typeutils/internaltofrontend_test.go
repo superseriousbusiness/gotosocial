@@ -553,8 +553,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
           "aspect": 1.9104477
         },
         "focus": {
-          "x": 0,
-          "y": 0
+          "x": -0.5,
+          "y": 0.5
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
@@ -701,8 +701,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
           "aspect": 1.9104477
         },
         "focus": {
-          "x": 0,
-          "y": 0
+          "x": -0.5,
+          "y": 0.5
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
@@ -851,8 +851,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
           "aspect": 1.9104477
         },
         "focus": {
-          "x": 0,
-          "y": 0
+          "x": -0.5,
+          "y": 0.5
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
@@ -1032,8 +1032,8 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
           "aspect": 1.9104477
         },
         "focus": {
-          "x": 0,
-          "y": 0
+          "x": -0.5,
+          "y": 0.5
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
@@ -1218,8 +1218,8 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
             "aspect": 1.9104477
           },
           "focus": {
-            "x": 0,
-            "y": 0
+            "x": -0.5,
+            "y": 0.5
           }
         },
         "description": "Black and white image of some 50's style text saying: Welcome On Board",
@@ -1955,8 +1955,8 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
           "aspect": 1.9104477
         },
         "focus": {
-          "x": 0,
-          "y": 0
+          "x": -0.5,
+          "y": 0.5
         }
       },
       "description": "Black and white image of some 50's style text saying: Welcome On Board",
