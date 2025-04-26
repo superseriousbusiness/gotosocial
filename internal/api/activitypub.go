@@ -18,14 +18,14 @@
 package api
 
 import (
+	"code.superseriousbusiness.org/gotosocial/internal/api/activitypub/emoji"
+	"code.superseriousbusiness.org/gotosocial/internal/api/activitypub/publickey"
+	"code.superseriousbusiness.org/gotosocial/internal/api/activitypub/users"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
+	"code.superseriousbusiness.org/gotosocial/internal/router"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/emoji"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/publickey"
-	"github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type ActivityPub struct {

@@ -20,7 +20,7 @@ package db
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Filter contains methods for creating, reading, updating, and deleting filters and their keyword and status entries.

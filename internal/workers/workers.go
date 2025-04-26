@@ -20,11 +20,11 @@ package workers
 import (
 	"runtime"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/scheduler"
-	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/messages"
+	"code.superseriousbusiness.org/gotosocial/internal/scheduler"
+	"code.superseriousbusiness.org/gotosocial/internal/transport/delivery"
 )
 
 type Workers struct {

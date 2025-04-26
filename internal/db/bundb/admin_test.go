@@ -21,9 +21,9 @@ import (
 	"context"
 	"testing"
 
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20211113114307_init"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AdminTestSuite struct {

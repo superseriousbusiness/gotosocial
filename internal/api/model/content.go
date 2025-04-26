@@ -20,7 +20,7 @@ package model
 import (
 	"io"
 
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
+	"code.superseriousbusiness.org/gotosocial/internal/storage"
 )
 
 // Content wraps everything needed to serve a blob of content (some kind of media) through the API.

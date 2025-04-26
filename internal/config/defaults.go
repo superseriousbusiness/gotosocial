@@ -20,9 +20,9 @@ package config
 import (
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/language"
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
 // Defaults contains a populated Configuration with reasonable defaults. Note that

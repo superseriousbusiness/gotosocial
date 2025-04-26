@@ -23,12 +23,12 @@ import (
 	"os"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/trans"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/trans"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ImportMinimalTestSuite struct {

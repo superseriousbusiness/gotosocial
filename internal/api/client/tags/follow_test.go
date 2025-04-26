@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/tags"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/tags"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 )
 
 func (suite *TagsTestSuite) follow(

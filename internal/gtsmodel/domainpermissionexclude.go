@@ -20,7 +20,7 @@ package gtsmodel
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // DomainPermissionExclude represents one domain that should be excluded

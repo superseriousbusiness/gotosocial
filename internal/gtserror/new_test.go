@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
 func TestResponseError(t *testing.T) {

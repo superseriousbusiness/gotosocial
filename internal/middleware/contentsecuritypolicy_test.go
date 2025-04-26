@@ -20,7 +20,7 @@ package middleware_test
 import (
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
 )
 
 func TestBuildContentSecurityPolicy(t *testing.T) {

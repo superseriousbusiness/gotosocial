@@ -72,7 +72,7 @@ function ErrorFallback({ error, componentStack, resetErrorBoundary }) {
 		<div className="error">
 			<p>
 				{"An error occured, please report this on the "}
-				<a href="https://github.com/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
+				<a href="https://codeberg.org/superseriousbusiness/gotosocial/issues">GoToSocial issue tracker</a>
 				{" or "}
 				<a href="https://matrix.to/#/#gotosocial-help:superseriousbusiness.org">Matrix support room</a>.
 				<br />Include the details below:

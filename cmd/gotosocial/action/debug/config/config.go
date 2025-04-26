@@ -22,8 +22,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
 // Config just prints the collated config out to stdout as json.

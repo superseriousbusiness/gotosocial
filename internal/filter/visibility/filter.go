@@ -18,7 +18,7 @@
 package visibility
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
 // NoAuth is a placeholder ID used in cache lookups

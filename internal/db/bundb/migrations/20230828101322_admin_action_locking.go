@@ -22,9 +22,9 @@ import (
 
 	"github.com/uptrace/bun"
 
-	oldmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220315160814_admin_account_actions"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	oldmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20220315160814_admin_account_actions"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 func init() {

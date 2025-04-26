@@ -25,7 +25,7 @@ import (
 
 	"modernc.org/sqlite"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 )
 
 // Driver is our own wrapper around the

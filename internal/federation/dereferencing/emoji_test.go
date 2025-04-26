@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/media"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
 )
 
 type EmojiTestSuite struct {

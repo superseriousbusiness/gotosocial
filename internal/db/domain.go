@@ -21,8 +21,8 @@ import (
 	"context"
 	"net/url"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 )
 
 // Domain contains DB functions related to domains and domain blocks.

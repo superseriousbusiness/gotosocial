@@ -20,11 +20,11 @@ package cache
 import (
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/cache/headerfilter"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-cache/v3/ttl"
-	"github.com/superseriousbusiness/gotosocial/internal/cache/headerfilter"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 type Caches struct {

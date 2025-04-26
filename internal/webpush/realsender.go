@@ -27,16 +27,16 @@ import (
 	"strings"
 	"time"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/text"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	webpushgo "github.com/SherClockHolmes/webpush-go"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 // realSender is the production Web Push sender,

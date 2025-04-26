@@ -19,7 +19,7 @@
 
 package testrig
 
-import "github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
+import "code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
 
 // Start creates and starts a gotosocial testrig server.
 // This is only enabled in debug builds, else is nil.

@@ -24,7 +24,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 
 	"codeberg.org/gruf/go-cache/v3"
 )

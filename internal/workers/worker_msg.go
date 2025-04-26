@@ -21,11 +21,11 @@ import (
 	"context"
 	"errors"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/queue"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"codeberg.org/gruf/go-runners"
 	"codeberg.org/gruf/go-structr"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // MsgWorkerPool wraps multiple MsgWorker{}s in

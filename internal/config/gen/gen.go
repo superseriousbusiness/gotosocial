@@ -26,7 +26,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
 const license = `// GoToSocial
@@ -67,7 +67,7 @@ func main() {
 	fmt.Fprint(output, "import (\n")
 	fmt.Fprint(output, "\t\"time\"\n\n")
 	fmt.Fprint(output, "\t\"codeberg.org/gruf/go-bytesize\"\n")
-	fmt.Fprint(output, "\t\"github.com/superseriousbusiness/gotosocial/internal/language\"\n")
+	fmt.Fprint(output, "\t\"code.superseriousbusiness.org/gotosocial/internal/language\"\n")
 	fmt.Fprint(output, ")\n\n")
 	generateFields(output, nil, reflect.TypeOf(config.Configuration{}))
 	_ = output.Close()

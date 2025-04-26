@@ -25,14 +25,14 @@ import (
 	"os"
 	"path"
 
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db/bundb"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
 type list struct {

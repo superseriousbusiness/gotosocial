@@ -22,13 +22,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
+	"code.superseriousbusiness.org/gotosocial/internal/media"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/transport"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // FreshnessWindow represents a duration in which a

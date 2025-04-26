@@ -21,9 +21,9 @@ import (
 	"context"
 	"fmt"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/coreos/go-oidc/v3/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"golang.org/x/oauth2"
 )
 

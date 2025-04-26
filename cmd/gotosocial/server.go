@@ -18,9 +18,9 @@
 package main
 
 import (
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/server"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action/server"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 )
 
 // serverCommands returns the 'server' subcommand

@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 )
 

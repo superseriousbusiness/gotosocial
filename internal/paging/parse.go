@@ -20,8 +20,8 @@ package paging
 import (
 	"strconv"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // ParseIDPage parses an ID Page from a request context, returning BadRequest on error parsing.

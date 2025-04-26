@@ -25,9 +25,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	transmodel "code.superseriousbusiness.org/gotosocial/internal/trans/model"
 )
 
 func (i *importer) Import(ctx context.Context, path string) error {

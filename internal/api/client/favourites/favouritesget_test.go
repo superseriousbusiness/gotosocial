@@ -25,12 +25,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/favourites"
+	"code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/oauth"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/favourites"
-	"github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type FavouritesTestSuite struct {

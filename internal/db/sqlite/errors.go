@@ -23,8 +23,8 @@ import (
 	"database/sql/driver"
 	"fmt"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"github.com/ncruces/go-sqlite3"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // processSQLiteError processes an sqlite3.Error to

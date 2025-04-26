@@ -3,7 +3,7 @@ package auth
 import (
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 )
 
 func TestAdminGroup(t *testing.T) {

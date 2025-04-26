@@ -24,9 +24,9 @@ import (
 	"net/http"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/transport/delivery"
 	"github.com/stretchr/testify/assert"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
 )
 
 var deliveryCases = []struct {

@@ -31,12 +31,12 @@ import (
 	"strings"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-cache/v3"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-iotools"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 var (

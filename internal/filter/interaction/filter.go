@@ -18,7 +18,7 @@
 package interaction
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
 // Filter packages up logic for checking whether

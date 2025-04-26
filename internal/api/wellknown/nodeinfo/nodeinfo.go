@@ -20,12 +20,12 @@ package nodeinfo
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (

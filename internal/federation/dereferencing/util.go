@@ -20,7 +20,7 @@ package dereferencing
 import (
 	"slices"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // getEmojiByShortcodeDomain searches input slice

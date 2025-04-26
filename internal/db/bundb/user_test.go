@@ -21,8 +21,8 @@ import (
 	"context"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type UserTestSuite struct {

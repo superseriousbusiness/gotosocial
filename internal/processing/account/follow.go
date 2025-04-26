@@ -21,16 +21,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/messages"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // FollowCreate handles a follow request to an account, either remote or local.

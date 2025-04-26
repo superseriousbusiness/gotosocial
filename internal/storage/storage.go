@@ -28,6 +28,9 @@ import (
 	"path"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-cache/v3/ttl"
 	"codeberg.org/gruf/go-storage"
@@ -35,9 +38,6 @@ import (
 	"codeberg.org/gruf/go-storage/s3"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (

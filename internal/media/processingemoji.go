@@ -21,14 +21,14 @@ import (
 	"context"
 	"os"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/storage"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-runners"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/storage"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // ProcessingEmoji represents an emoji currently processing. It exposes

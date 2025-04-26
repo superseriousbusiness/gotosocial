@@ -24,8 +24,8 @@ import (
 	"fmt"
 	"time"
 
+	transmodel "code.superseriousbusiness.org/gotosocial/internal/trans/model"
 	"github.com/mitchellh/mapstructure"
-	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
 )
 
 func newDecoder(target interface{}) (*mapstructure.Decoder, error) {

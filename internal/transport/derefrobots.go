@@ -22,10 +22,10 @@ import (
 	"net/http"
 	"net/url"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/temoto/robotstxt"
 )
 

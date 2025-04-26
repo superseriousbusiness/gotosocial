@@ -18,8 +18,8 @@
 package admin
 
 import (
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // DomainAllowUpdatePUTHandler swagger:operation PUT /api/v1/admin/domain_allows/{id} domainAllowUpdate

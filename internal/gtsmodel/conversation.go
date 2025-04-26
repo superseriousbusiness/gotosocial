@@ -22,7 +22,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
+	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 )
 
 // Conversation represents direct messages between the owner account and a set of other accounts.

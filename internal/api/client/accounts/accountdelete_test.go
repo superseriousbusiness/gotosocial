@@ -22,9 +22,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/accounts"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/accounts"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AccountDeleteTestSuite struct {

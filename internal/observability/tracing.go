@@ -36,14 +36,14 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
 const (
 	tracerKey  = "gotosocial-server-tracer"
-	tracerName = "github.com/superseriousbusiness/gotosocial/internal/observability"
+	tracerName = "code.superseriousbusiness.org/gotosocial/internal/observability"
 )
 
 func InitializeTracing() error {

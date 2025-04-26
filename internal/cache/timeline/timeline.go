@@ -20,9 +20,9 @@ package timeline
 import (
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"codeberg.org/gruf/go-structr"
-	"github.com/superseriousbusiness/gotosocial/internal/id"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
 // plus1hULID returns a ULID for now+1h.

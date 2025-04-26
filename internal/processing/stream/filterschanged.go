@@ -20,8 +20,8 @@ package stream
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/stream"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/stream"
 )
 
 // FiltersChanged streams a filters changed event to any open, appropriate streams belonging to the given account.

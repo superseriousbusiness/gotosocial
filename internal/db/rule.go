@@ -20,7 +20,7 @@ package db
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Rule handles getting/creation/deletion/updating of instance rules.

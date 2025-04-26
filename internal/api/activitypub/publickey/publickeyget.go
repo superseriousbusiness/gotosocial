@@ -22,9 +22,9 @@ import (
 	"net/http"
 	"strings"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // PublicKeyGETHandler should be served at eg https://example.org/users/:username/main-key.

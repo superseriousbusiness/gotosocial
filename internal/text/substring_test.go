@@ -20,8 +20,8 @@ package text_test
 import (
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/text"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
 )
 
 type SubstringTestSuite struct {

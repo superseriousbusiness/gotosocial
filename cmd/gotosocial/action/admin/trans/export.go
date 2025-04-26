@@ -22,11 +22,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/trans"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db/bundb"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/trans"
 )
 
 // Export exports info from the database into a file

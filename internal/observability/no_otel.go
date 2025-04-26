@@ -20,7 +20,7 @@
 package observability
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"

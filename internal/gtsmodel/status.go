@@ -21,8 +21,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 )
 
 // Status represents a user-created 'post' or 'status' in the database, either remote or local

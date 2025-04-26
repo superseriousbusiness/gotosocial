@@ -20,10 +20,10 @@ package migrations
 import (
 	"context"
 
-	old_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20241121121623_enum_strings_to_ints"
-	new_gtsmodel "github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	old_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20241121121623_enum_strings_to_ints"
+	new_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 
 	"github.com/uptrace/bun"
 )

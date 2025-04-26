@@ -29,17 +29,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/api/wellknown/webfinger"
+	"code.superseriousbusiness.org/gotosocial/internal/cleaner"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
+	"code.superseriousbusiness.org/gotosocial/internal/subscriptions"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
-	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type WebfingerGetTestSuite struct {

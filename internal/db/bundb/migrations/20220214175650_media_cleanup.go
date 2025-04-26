@@ -22,8 +22,8 @@ import (
 	"database/sql"
 	"time"
 
-	previousgtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
-	newgtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220214175650_media_cleanup"
+	previousgtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20211113114307_init"
+	newgtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20220214175650_media_cleanup"
 	"github.com/uptrace/bun"
 )
 

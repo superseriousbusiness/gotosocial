@@ -23,9 +23,9 @@ import (
 	"io"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 type ResolveTestSuite struct {

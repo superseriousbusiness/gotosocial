@@ -18,8 +18,8 @@
 package admin
 
 import (
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 // DomainAllowsPOSTHandler swagger:operation POST /api/v1/admin/domain_allows domainAllowCreate

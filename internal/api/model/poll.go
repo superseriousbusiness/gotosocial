@@ -17,7 +17,7 @@
 
 package model
 
-import "github.com/superseriousbusiness/gotosocial/internal/language"
+import "code.superseriousbusiness.org/gotosocial/internal/language"
 
 // Poll represents a poll attached to a status.
 //

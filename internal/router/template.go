@@ -28,15 +28,15 @@ import (
 	"strings"
 	"unsafe"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/regexes"
+	"code.superseriousbusiness.org/gotosocial/internal/text"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/regexes"
-	"github.com/superseriousbusiness/gotosocial/internal/text"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 // LoadTemplates loads templates found at `web-template-base-dir`

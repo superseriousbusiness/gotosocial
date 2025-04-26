@@ -18,8 +18,8 @@
 package testrig
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/media"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/media"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
 // NewTestMediaManager returns a media handler with the default test config, and the given db and storage.

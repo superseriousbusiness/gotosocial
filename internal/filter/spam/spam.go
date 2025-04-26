@@ -17,7 +17,7 @@
 
 package spam
 
-import "github.com/superseriousbusiness/gotosocial/internal/state"
+import "code.superseriousbusiness.org/gotosocial/internal/state"
 
 // Filter packages logic for checking whether
 // given statuses should be considered spam.

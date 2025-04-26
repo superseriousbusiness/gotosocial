@@ -20,9 +20,9 @@ package config_test
 import (
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type ConfigValidateTestSuite struct {

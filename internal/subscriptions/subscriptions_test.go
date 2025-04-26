@@ -23,13 +23,13 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/subscriptions"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 const (

@@ -21,10 +21,10 @@ import (
 	"slices"
 	"testing"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"codeberg.org/gruf/go-structr"
 	"github.com/stretchr/testify/assert"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 var testStatusMeta = []*StatusMeta{

@@ -25,10 +25,10 @@ import (
 	"net/http"
 	"net/url"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // PushSubscriptionPOSTHandler swagger:operation POST /api/v1/push/subscription pushSubscriptionPost

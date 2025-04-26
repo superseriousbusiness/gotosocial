@@ -34,8 +34,8 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
 )
 
 func TestThrottlingMiddleware(t *testing.T) {

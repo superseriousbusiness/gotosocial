@@ -25,8 +25,8 @@ import (
 	"strings"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/util/xslices"
 )
 
 var (

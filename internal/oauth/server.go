@@ -24,17 +24,17 @@ import (
 	"net/http"
 	"strings"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/oauth2/v4"
 	oautherr "code.superseriousbusiness.org/oauth2/v4/errors"
 	"code.superseriousbusiness.org/oauth2/v4/manage"
 	"code.superseriousbusiness.org/oauth2/v4/server"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
 const (

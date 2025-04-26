@@ -17,6 +17,6 @@
 
 package main
 
-import "github.com/superseriousbusiness/gotosocial/internal/id"
+import "code.superseriousbusiness.org/gotosocial/internal/id"
 
 func main() { println(id.NewULID()) }

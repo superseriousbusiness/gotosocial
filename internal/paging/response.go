@@ -21,8 +21,8 @@ import (
 	"net/url"
 	"strings"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
 // ResponseParams models the parameters to pass to PageableResponse.

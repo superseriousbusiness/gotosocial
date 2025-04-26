@@ -20,7 +20,7 @@ package db
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Status contains functions for getting statuses, creating statuses, and checking various other fields on statuses.

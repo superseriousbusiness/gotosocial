@@ -24,7 +24,7 @@ GoToSocial 使用 [superseriousbusiness/httpsig](https://codeberg.org/superserio
 
 ## 传入请求
 
-GoToSocial 的请求签名验证在 [internal/federation](https://github.com/superseriousbusiness/gotosocial/blob/main/internal/federation/authenticate.go) 中实现。
+GoToSocial 的请求签名验证在 [internal/federation](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/federation/authenticate.go) 中实现。
 
 GoToSocial 将尝试按以下算法顺序解析签名，成功后将停止：
 
@@ -36,7 +36,7 @@ ED25519
 
 ## 发出请求
 
-GoToSocial 的请求签名在 [internal/transport](https://github.com/superseriousbusiness/gotosocial/blob/main/internal/transport/signing.go) 中实现。
+GoToSocial 的请求签名在 [internal/transport](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/transport/signing.go) 中实现。
 
 一旦解决了 https://github.com/superseriousbusiness/gotosocial/issues/2991 ，GoToSocial 将使用 `(created)` 伪标头代替 `date`。
 

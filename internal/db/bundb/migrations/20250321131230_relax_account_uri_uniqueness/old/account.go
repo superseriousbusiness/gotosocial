@@ -21,7 +21,7 @@ import (
 	"crypto/rsa"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/common"
+	"code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/common"
 	"github.com/uptrace/bun"
 )
 

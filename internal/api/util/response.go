@@ -26,10 +26,10 @@ import (
 	"strconv"
 	"sync"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-fastcopy"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 var (

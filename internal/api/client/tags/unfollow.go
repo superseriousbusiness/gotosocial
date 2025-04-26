@@ -20,8 +20,8 @@ package tags
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 // UnfollowTagPOSTHandler swagger:operation POST /api/v1/tags/{tag_name}/unfollow unfollowTag

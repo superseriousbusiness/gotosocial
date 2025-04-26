@@ -15,7 +15,7 @@ With GoToSocial, you can keep in touch with your friends, post, read, and share 
 
 Documentation is at [docs.gotosocial.org](https://docs.gotosocial.org). You can skip straight to the API documentation [here](https://docs.gotosocial.org/en/latest/api/swagger/).
 
-To build from source, check the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file.
+To build from source, check the [CONTRIBUTING.md](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/CONTRIBUTING.md) file.
 
 Here's a screenshot of the instance landing page! Check out the project's [official account](https://gts.superseriousbusiness.org/@gotosocial) running on GoToSocial.
 
@@ -101,7 +101,7 @@ It began as a solo project, and then picked up steam as more developers became i
 
 We made our first Alpha release in November 2021. We left Alpha and entered Beta in September/October 2024.
 
-For a detailed view on what's implemented and what's not, and progress made towards [stable release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release), please see [the roadmap document](https://github.com/superseriousbusiness/gotosocial/blob/main/ROADMAP.md).
+For a detailed view on what's implemented and what's not, and progress made towards [stable release](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release), please see [the roadmap document](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/ROADMAP.md).
 
 ---
 
@@ -343,7 +343,7 @@ Snapshot binary releases in the S3 bucket are keyed by Github commit hash. To ge
 
 ### From Source
 
-Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file.
+Instructions for building GoToSocial from source are in the [CONTRIBUTING.md](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/CONTRIBUTING.md) file.
 
 ### Third-party Packaging
 
@@ -364,7 +364,7 @@ You can also deploy your own instance of GoToSocial with the help of:
 
 ## Contributing
 
-You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](https://github.com/superseriousbusiness/gotosocial/blob/main/CONTRIBUTING.md) file for guidelines and setting up your dev environment.
+You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the issues page to see if there's anything you intend to jump in on, and read the [CONTRIBUTING.md](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/CONTRIBUTING.md) file for guidelines and setting up your dev environment.
 
 ---
 
@@ -454,10 +454,10 @@ Sloth logo by [Anna Abramek](https://abramek.art/).
 
 The Creative Commons Attribution-ShareAlike 4.0 International License license applies specifically to the following files and subdirectories of this repository:
 
-- [sloth logo png](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.png)
-- [sloth logo webp](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.webp)
-- [sloth logo svg](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/logo.svg)
-- [all default avatars](https://github.com/superseriousbusiness/gotosocial/blob/main/web/assets/default_avatars)
+- [sloth logo png](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.png)
+- [sloth logo webp](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.webp)
+- [sloth logo svg](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.svg)
+- [all default avatars](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/default_avatars)
 
 Under the terms of the license, you are free to:
 
@@ -515,7 +515,7 @@ If after reading this you are still interested in supporting us, that is wonderf
 
 <img src="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" width="75" alt="NGIZero logo"/>
 
-Combined with the above crowdfunding sources, 2023 Alpha development of GoToSocial was funded by a 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/). See [here](https://nlnet.nl/project/GoToSocial/#ack) for more details. The successful grant application is archived [here](https://github.com/superseriousbusiness/gotosocial/blob/main/archive/nlnet/2022-next-generation-internet-zero.md).
+Combined with the above crowdfunding sources, 2023 Alpha development of GoToSocial was funded by a 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/). See [here](https://nlnet.nl/project/GoToSocial/#ack) for more details. The successful grant application is archived [here](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/archive/nlnet/2022-next-generation-internet-zero.md).
 
 2024 Beta development of GoToSocial is being funded by an additional 50,000 EUR grant from the [NGI0 Entrust Fund](https://nlnet.nl/entrust/), via [NLnet](https://nlnet.nl/).
 
@@ -525,7 +525,7 @@ Combined with the above crowdfunding sources, 2023 Alpha development of GoToSoci
 
 ![the gnu AGPL logo](https://www.gnu.org/graphics/agplv3-155x51.png)
 
-GoToSocial is free software, licensed under the [GNU AGPL v3 LICENSE](https://github.com/superseriousbusiness/gotosocial/blob/main/LICENSE). We encourage forking and changing the code, hacking around with it, and experimenting.
+GoToSocial is free software, licensed under the [GNU AGPL v3 LICENSE](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/LICENSE). We encourage forking and changing the code, hacking around with it, and experimenting.
 
 See [here](https://www.gnu.org/licenses/why-affero-gpl.html) for the differences between AGPL versus GPL licensing, and [here](https://www.gnu.org/licenses/gpl-faq.html) for FAQ's about GPL licenses, including the AGPL.
 

@@ -20,9 +20,9 @@ package auth
 import (
 	"errors"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 // OOBTokenGETHandler parses the OAuth code from the query

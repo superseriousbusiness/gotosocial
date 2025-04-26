@@ -18,17 +18,17 @@
 package testrig
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/admin"
-	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/interaction"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
+	"code.superseriousbusiness.org/gotosocial/internal/admin"
+	"code.superseriousbusiness.org/gotosocial/internal/cleaner"
+	"code.superseriousbusiness.org/gotosocial/internal/email"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/common"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/subscriptions"
+	"code.superseriousbusiness.org/gotosocial/internal/transport"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // TestStructs encapsulates structs needed to

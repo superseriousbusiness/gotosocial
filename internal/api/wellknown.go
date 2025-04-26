@@ -18,13 +18,13 @@
 package api
 
 import (
+	"code.superseriousbusiness.org/gotosocial/internal/api/wellknown/hostmeta"
+	"code.superseriousbusiness.org/gotosocial/internal/api/wellknown/nodeinfo"
+	"code.superseriousbusiness.org/gotosocial/internal/api/wellknown/webfinger"
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
+	"code.superseriousbusiness.org/gotosocial/internal/router"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/hostmeta"
-	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/nodeinfo"
-	"github.com/superseriousbusiness/gotosocial/internal/api/wellknown/webfinger"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type WellKnown struct {

@@ -20,10 +20,10 @@ package auth
 import (
 	"net/http"
 
+	"code.superseriousbusiness.org/gotosocial/internal/oidc"
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/oidc"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 const (

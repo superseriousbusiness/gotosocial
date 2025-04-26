@@ -21,7 +21,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )

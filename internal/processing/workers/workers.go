@@ -18,18 +18,18 @@
 package workers
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/email"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/account"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/common"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/media"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/webpush"
-	"github.com/superseriousbusiness/gotosocial/internal/workers"
+	"code.superseriousbusiness.org/gotosocial/internal/email"
+	"code.superseriousbusiness.org/gotosocial/internal/federation"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/account"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/common"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/conversations"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/media"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/stream"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
+	"code.superseriousbusiness.org/gotosocial/internal/webpush"
+	"code.superseriousbusiness.org/gotosocial/internal/workers"
 )
 
 type Processor struct {

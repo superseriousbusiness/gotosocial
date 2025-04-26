@@ -21,7 +21,7 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 type HeaderFilter interface {

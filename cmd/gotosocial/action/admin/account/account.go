@@ -24,14 +24,14 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/cmd/gotosocial/action"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db/bundb"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
-	"github.com/superseriousbusiness/gotosocial/internal/validate"
+	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db/bundb"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
 

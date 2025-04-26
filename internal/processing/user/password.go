@@ -20,10 +20,10 @@ package user
 import (
 	"context"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/validate"
 	"codeberg.org/gruf/go-byteutil"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/validate"
 	"golang.org/x/crypto/bcrypt"
 )
 

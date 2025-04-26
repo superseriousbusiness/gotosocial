@@ -22,9 +22,9 @@ import (
 	"math/big"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-kv"
 	"github.com/oklog/ulid"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 const (

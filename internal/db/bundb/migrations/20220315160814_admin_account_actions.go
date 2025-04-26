@@ -20,7 +20,7 @@ package migrations
 import (
 	"context"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20220315160814_admin_account_actions"
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20220315160814_admin_account_actions"
 	"github.com/uptrace/bun"
 )
 

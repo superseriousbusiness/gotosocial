@@ -18,7 +18,7 @@ theme:
       toggle:
         icon: material/brightness-4
         name: Switch to dark mode
-repo_url: https://github.com/superseriousbusiness/gotosocial
+repo_url: https://codeberg.org/superseriousbusiness/gotosocial
 edit_uri: edit/main/docs/
 copyright: GoToSocial is licensed under the GNU AGPL v3 LICENSE. Copyright (C) GoToSocial Authors admin@gotosocial.org
 plugins:

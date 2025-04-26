@@ -20,9 +20,9 @@ package customemojis
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // CustomEmojisGETHandler swagger:operation GET /api/v1/custom_emojis customEmojisGet

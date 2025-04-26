@@ -25,16 +25,16 @@ import (
 	"slices"
 	"strings"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/oauth2/v4"
 	oautherr "code.superseriousbusiness.org/oauth2/v4/errors"
 	"code.superseriousbusiness.org/oauth2/v4/manage"
 	"code.superseriousbusiness.org/oauth2/v4/server"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // GetClientScopeHandler returns a handler for testing scope on a TokenGenerateRequest.

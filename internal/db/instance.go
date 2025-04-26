@@ -20,7 +20,7 @@ package db
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Instance contains functions for instance-level actions (counting instance users etc.).

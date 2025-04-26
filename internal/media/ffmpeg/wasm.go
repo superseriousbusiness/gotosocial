@@ -26,9 +26,9 @@ import (
 	"sync/atomic"
 	"unsafe"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-ffmpreg/embed"
 	"codeberg.org/gruf/go-ffmpreg/wasm"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/tetratelabs/wazero"
 	"golang.org/x/sys/cpu"
 )

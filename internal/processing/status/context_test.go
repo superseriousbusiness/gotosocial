@@ -20,9 +20,9 @@ package status_test
 import (
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/status"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/status"
 )
 
 type topoSortTestSuite struct {

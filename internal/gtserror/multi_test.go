@@ -21,8 +21,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
 func TestMultiError(t *testing.T) {

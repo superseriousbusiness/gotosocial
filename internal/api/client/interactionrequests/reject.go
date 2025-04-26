@@ -20,9 +20,9 @@ package interactionrequests
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // InteractionRequestRejectPOSTHandler swagger:operation POST /api/v1/interaction_requests/{id}/reject rejectInteractionRequest

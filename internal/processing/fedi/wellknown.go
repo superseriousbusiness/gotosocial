@@ -21,9 +21,9 @@ import (
 	"context"
 	"fmt"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
 const (
@@ -34,7 +34,7 @@ const (
 	nodeInfoSoftwareName            = "gotosocial"
 	nodeInfo20Rel                   = "http://nodeinfo.diaspora.software/ns/schema/2.0"
 	nodeInfo21Rel                   = "http://nodeinfo.diaspora.software/ns/schema/2.1"
-	nodeInfoRepo                    = "https://github.com/superseriousbusiness/gotosocial"
+	nodeInfoRepo                    = "https://codeberg.org/superseriousbusiness/gotosocial"
 	nodeInfoHomepage                = "https://docs.gotosocial.org"
 	webfingerProfilePage            = "http://webfinger.net/rel/profile-page"
 	webFingerProfilePageContentType = "text/html"

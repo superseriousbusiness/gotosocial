@@ -20,7 +20,7 @@ package db
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Tombstone contains functionality for storing + retrieving tombstones for remote AP Activities + Objects.

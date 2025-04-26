@@ -27,12 +27,12 @@ import (
 	"path"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/messages"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/workers"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-kv/format"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/messages"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/workers"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
 )
 
 // Starts workers on the provided state using noop processing functions.
