@@ -155,7 +155,7 @@ Though multiple GtS instances can use the same Postgres database and either shar
 
 ## Tuning
 
-Aside from the many instance tuning options present in the [example config file](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml) you can do additional tuning on the machine your GoToSocial instance is running on.
+Aside from the many instance tuning options present in the [example config file](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml) you can do additional tuning on the machine your GoToSocial instance is running on.
 
 ### Swap
 

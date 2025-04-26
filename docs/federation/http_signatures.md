@@ -24,7 +24,7 @@ See [#894](https://github.com/superseriousbusiness/gotosocial/issues/894) for mo
 
 ## Incoming Requests
 
-GoToSocial request signature validation is implemented in [internal/federation](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/federation/authenticate.go).
+GoToSocial request signature validation is implemented in [internal/federation](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/federation/authenticate.go).
 
 GoToSocial will attempt to parse the signature using the following algorithms (in order), stopping at the first success:
 
@@ -36,7 +36,7 @@ ED25519
 
 ## Outgoing Requests
 
-GoToSocial request signing is implemented in [internal/transport](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/transport/signing.go).
+GoToSocial request signing is implemented in [internal/transport](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/transport/signing.go).
 
 Once https://github.com/superseriousbusiness/gotosocial/issues/2991 is resolved, GoToSocial will use the `(created)` pseudo-header instead of `date`.
 

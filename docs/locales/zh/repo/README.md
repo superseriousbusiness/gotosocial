@@ -15,7 +15,7 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
 
 文档位于 [docs.gotosocial.org](https://docs.gotosocial.org/zh-cn/)。你可以直接跳至 [API 文档](https://docs.gotosocial.org/zh-cn/latest/api/swagger/)。
 
-要从源代码构建，请查看 [CONTRIBUTING.md](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
+要从源代码构建，请查看 [CONTRIBUTING.md](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
 
 这是实例首页的截图！你也可以看一看本项目在 GoToSocial 上的官方账号: [https://gts.superseriousbusiness.org/@gotosocial](https://gts.superseriousbusiness.org/@gotosocial)。
 
@@ -101,7 +101,7 @@ GoToSocial 的愿景是让许多小而特别的实例遍布联邦宇宙，让人
 
 我们在 2021 年 11 月进行了首次 Alpha 发布。我们于 2024 年 9 月/10 月离开 Alpha，进入 Beta 阶段。
 
-要详细了解已实现和未实现的内容，以及 [稳定发布](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release) 的进展，请查看 [路线图](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/ROADMAP.md)。
+要详细了解已实现和未实现的内容，以及 [稳定发布](https://en.wikipedia.org/wiki/Software_release_life_cycle#Stable_release) 的进展，请查看 [路线图](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/ROADMAP.md)。
 
 ---
 
@@ -344,7 +344,7 @@ S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获
 
 ### 从源代码构建
 
-有关从源代码构建 GoToSocial 的说明，请参见 [CONTRIBUTING.md](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
+有关从源代码构建 GoToSocial 的说明，请参见 [CONTRIBUTING.md](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件。
 
 ### 第三方打包
 
@@ -365,7 +365,7 @@ S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获
 
 ## 参与贡献
 
-你想为 GtS 作出贡献吗？太好了！❤️❤️❤️ 请查看问题页面，看看是否有你想参与的内容，并阅读 [CONTRIBUTING.md](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件以获取指南并配置开发环境。
+你想为 GtS 作出贡献吗？太好了！❤️❤️❤️ 请查看问题页面，看看是否有你想参与的内容，并阅读 [CONTRIBUTING.md](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/docs/locales/zh/repo/CONTRIBUTING.md) 文件以获取指南并配置开发环境。
 
 ---
 
@@ -454,10 +454,10 @@ GoToSocial 使用以下开源库、框架和工具，在此声明并致谢 💕
 
 该许可具体适用于以下存储库内的文件和子目录：
 
-- [树懒标志 png](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.png)
-- [树懒标志 webp](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.webp)
-- [树懒标志 svg](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.svg)
-- [所有默认头像](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/default_avatars)
+- [树懒标志 png](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.png)
+- [树懒标志 webp](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.webp)
+- [树懒标志 svg](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/logo.svg)
+- [所有默认头像](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/web/assets/default_avatars)
 
 根据许可证条款，你可以：
 
@@ -514,7 +514,7 @@ GoToSocial 欢迎与符合我们价值观的组织进行合作。在此对您的
 
 <img src="https://nlnet.nl/logo/NGI/NGIZero-green.hex.svg" width="75" alt="NGIZero logo"/>
 
-结合以上众筹来源，2023 年 GoToSocial Alpha 阶段的开发得到了 [NGI0 Entrust Fund](https://nlnet.nl/entrust/) 旗下的 [NLnet](https://nlnet.nl/) 提供的 50,000 欧元资助。详情请见[此处](https://nlnet.nl/project/GoToSocial/#ack)。成功的资助申请存档在[此处](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/archive/nlnet/2022-next-generation-internet-zero.md)。
+结合以上众筹来源，2023 年 GoToSocial Alpha 阶段的开发得到了 [NGI0 Entrust Fund](https://nlnet.nl/entrust/) 旗下的 [NLnet](https://nlnet.nl/) 提供的 50,000 欧元资助。详情请见[此处](https://nlnet.nl/project/GoToSocial/#ack)。成功的资助申请存档在[此处](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/archive/nlnet/2022-next-generation-internet-zero.md)。
 
 2024 年 GoToSocial Beta 阶段的开发将从 [NGI0 Entrust Fund](https://nlnet.nl/entrust/) 旗下的 [NLnet](https://nlnet.nl/) 那里再获得 50,000 欧元的资助。
 
@@ -524,7 +524,7 @@ GoToSocial 欢迎与符合我们价值观的组织进行合作。在此对您的
 
 ![GNU AGPL 徽标](https://www.gnu.org/graphics/agplv3-155x51.png)
 
-GoToSocial 是自由软件，采用 [GNU AGPL v3 许可](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/LICENSE)。我们鼓励你对代码进行派生和修改，进行各种实验。
+GoToSocial 是自由软件，采用 [GNU AGPL v3 许可](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/LICENSE)。我们鼓励你对代码进行派生和修改，进行各种实验。
 
 有关 AGPL 和 GPL 许可之间的区别，请参阅[这里](https://www.gnu.org/licenses/why-affero-gpl.html)，关于 GPL 许可（包括 AGPL）的常见问题解答，请参阅[这里](https://www.gnu.org/licenses/gpl-faq.html)。
 
