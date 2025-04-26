@@ -288,7 +288,10 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// status.Attachments
 	//
 	// Media attachments for later dereferencing.
-	status.Attachments = ap.ExtractAttachments(statusable)
+	status.Attachments, err = ap.ExtractAttachments(statusable)
+	if err != nil {
+		log.Warnf(ctx, "error(s) extracting attachments for %s: %v", uri, err)
+	}
 
 	// status.Poll
 	//

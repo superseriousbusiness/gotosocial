@@ -32,7 +32,6 @@ import (
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/text"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
@@ -637,35 +636,40 @@ func ExtractContent(i WithContent) gtsmodel.Content {
 
 // ExtractAttachments attempts to extract barebones
 // MediaAttachment objects from given AS interface type.
-func ExtractAttachments(i WithAttachment) []*gtsmodel.MediaAttachment {
+func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
 	attachmentProp := i.GetActivityStreamsAttachment()
 	if attachmentProp == nil {
-		return nil
+		return nil, nil
 	}
 
-	attachments := make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
+	var (
+		attachments = make([]*gtsmodel.MediaAttachment, 0, attachmentProp.Len())
+		errs        gtserror.MultiError
+	)
+
 	for iter := attachmentProp.Begin(); iter != attachmentProp.End(); iter = iter.Next() {
 		t := iter.GetType()
 		if t == nil {
+			errs.Appendf("nil attachment type")
 			continue
 		}
 
 		attachmentable, ok := ToAttachmentable(t)
 		if !ok {
-			log.Debugf(nil, "could not cast %T to Attachmentable", t)
+			errs.Appendf("could not cast %T to Attachmentable", t)
 			continue
 		}
 
 		attachment, err := ExtractAttachment(attachmentable)
 		if err != nil {
-			log.Debugf(nil, "error extracting attachment: %v", err)
+			errs.Appendf("error extracting attachment: %w", err)
 			continue
 		}
 
 		attachments = append(attachments, attachment)
 	}
 
-	return attachments
+	return attachments, errs.Combine()
 }
 
 // ExtractAttachment extracts a minimal gtsmodel.Attachment
