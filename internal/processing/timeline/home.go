@@ -19,132 +19,85 @@ package timeline
 
 import (
 	"context"
-	"errors"
+	"net/url"
 
 	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"github.com/superseriousbusiness/gotosocial/internal/paging"
 )
 
-// HomeTimelineGrab returns a function that satisfies GrabFunction for home timelines.
-func HomeTimelineGrab(state *state.State) timeline.GrabFunction {
-	return func(ctx context.Context, accountID string, maxID string, sinceID string, minID string, limit int) ([]timeline.Timelineable, bool, error) {
-		statuses, err := state.DB.GetHomeTimeline(ctx, accountID, maxID, sinceID, minID, limit, false)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err = gtserror.Newf("error getting statuses from db: %w", err)
-			return nil, false, err
-		}
+// HomeTimelineGet gets a pageable timeline of statuses
+// in the home timeline of the requesting account.
+func (p *Processor) HomeTimelineGet(
+	ctx context.Context,
+	requester *gtsmodel.Account,
+	page *paging.Page,
+	local bool,
+) (
+	*apimodel.PageableResponse,
+	gtserror.WithCode,
+) {
 
-		count := len(statuses)
-		if count == 0 {
-			// We just don't have enough statuses
-			// left in the db so return stop = true.
-			return nil, true, nil
+	var pageQuery url.Values
+	var postFilter func(*gtsmodel.Status) bool
+	if local {
+		// Set local = true query.
+		pageQuery = localOnlyTrue
+		postFilter = func(s *gtsmodel.Status) bool {
+			return !*s.Local
 		}
-
-		items := make([]timeline.Timelineable, count)
-		for i, s := range statuses {
-			items[i] = s
-		}
-
-		return items, false, nil
+	} else {
+		// Set local = false query.
+		pageQuery = localOnlyFalse
+		postFilter = nil
 	}
-}
+	return p.getStatusTimeline(ctx,
 
-// HomeTimelineFilter returns a function that satisfies FilterFunction for home timelines.
-func HomeTimelineFilter(state *state.State, visFilter *visibility.Filter) timeline.FilterFunction {
-	return func(ctx context.Context, accountID string, item timeline.Timelineable) (shouldIndex bool, err error) {
-		status, ok := item.(*gtsmodel.Status)
-		if !ok {
-			err = gtserror.New("could not convert item to *gtsmodel.Status")
-			return false, err
-		}
+		// Auth'd
+		// account.
+		requester,
 
-		requestingAccount, err := state.DB.GetAccountByID(ctx, accountID)
-		if err != nil {
-			err = gtserror.Newf("error getting account with id %s: %w", accountID, err)
-			return false, err
-		}
+		// Keyed-by-account-ID, home timeline cache.
+		p.state.Caches.Timelines.Home.MustGet(requester.ID),
 
-		timelineable, err := visFilter.StatusHomeTimelineable(ctx, requestingAccount, status)
-		if err != nil {
-			err = gtserror.Newf("error checking hometimelineability of status %s for account %s: %w", status.ID, accountID, err)
-			return false, err
-		}
+		// Current
+		// page.
+		page,
 
-		return timelineable, nil
-	}
-}
+		// Home timeline endpoint.
+		"/api/v1/timelines/home",
 
-// HomeTimelineStatusPrepare returns a function that satisfies PrepareFunction for home timelines.
-func HomeTimelineStatusPrepare(state *state.State, converter *typeutils.Converter) timeline.PrepareFunction {
-	return func(ctx context.Context, accountID string, itemID string) (timeline.Preparable, error) {
-		status, err := state.DB.GetStatusByID(ctx, itemID)
-		if err != nil {
-			err = gtserror.Newf("error getting status with id %s: %w", itemID, err)
-			return nil, err
-		}
+		// Set local-only timeline
+		// page query flag, (this map
+		// later gets copied before
+		// any further usage).
+		pageQuery,
 
-		requestingAccount, err := state.DB.GetAccountByID(ctx, accountID)
-		if err != nil {
-			err = gtserror.Newf("error getting account with id %s: %w", accountID, err)
-			return nil, err
-		}
+		// Status filter context.
+		statusfilter.FilterContextHome,
 
-		filters, err := state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
-		if err != nil {
-			err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
-			return nil, err
-		}
+		// Database load function.
+		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {
+			return p.state.DB.GetHomeTimeline(ctx, requester.ID, pg)
+		},
 
-		mutes, err := state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAccount.ID, nil)
-		if err != nil {
-			err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", requestingAccount.ID, err)
-			return nil, err
-		}
-		compiledMutes := usermute.NewCompiledUserMuteList(mutes)
+		// Filtering function,
+		// i.e. filter before caching.
+		func(s *gtsmodel.Status) bool {
 
-		return converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextHome, filters, compiledMutes)
-	}
-}
+			// Check the visibility of passed status to requesting user.
+			ok, err := p.visFilter.StatusHomeTimelineable(ctx, requester, s)
+			if err != nil {
+				log.Errorf(ctx, "error filtering status %s: %v", s.URI, err)
+			}
+			return !ok
+		},
 
-func (p *Processor) HomeTimelineGet(ctx context.Context, authed *apiutil.Auth, maxID string, sinceID string, minID string, limit int, local bool) (*apimodel.PageableResponse, gtserror.WithCode) {
-	statuses, err := p.state.Timelines.Home.GetTimeline(ctx, authed.Account.ID, maxID, sinceID, minID, limit, local)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		err = gtserror.Newf("error getting statuses: %w", err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	count := len(statuses)
-	if count == 0 {
-		return util.EmptyPageableResponse(), nil
-	}
-
-	var (
-		items          = make([]interface{}, count)
-		nextMaxIDValue = statuses[count-1].GetID()
-		prevMinIDValue = statuses[0].GetID()
+		// Post filtering funtion,
+		// i.e. filter after caching.
+		postFilter,
 	)
-
-	for i := range statuses {
-		items[i] = statuses[i]
-	}
-
-	return util.PackagePageableResponse(util.PageableResponseParams{
-		Items:          items,
-		Path:           "/api/v1/timelines/home",
-		NextMaxIDValue: nextMaxIDValue,
-		PrevMinIDValue: prevMinIDValue,
-		Limit:          limit,
-	})
 }

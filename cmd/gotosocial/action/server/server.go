@@ -57,12 +57,10 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/observability"
 	"github.com/superseriousbusiness/gotosocial/internal/oidc"
 	"github.com/superseriousbusiness/gotosocial/internal/processing"
-	tlprocessor "github.com/superseriousbusiness/gotosocial/internal/processing/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/router"
 	"github.com/superseriousbusiness/gotosocial/internal/state"
 	gtsstorage "github.com/superseriousbusiness/gotosocial/internal/storage"
 	"github.com/superseriousbusiness/gotosocial/internal/subscriptions"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/transport"
 	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 	"github.com/superseriousbusiness/gotosocial/internal/web"
@@ -138,20 +136,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		//
 		// Noop on unstarted workers.
 		state.Workers.Stop()
-
-		if state.Timelines.Home != nil {
-			// Home timeline mgr was setup, ensure it gets stopped.
-			if err := state.Timelines.Home.Stop(); err != nil {
-				log.Errorf(ctx, "error stopping home timeline: %v", err)
-			}
-		}
-
-		if state.Timelines.List != nil {
-			// List timeline mgr was setup, ensure it gets stopped.
-			if err := state.Timelines.List.Stop(); err != nil {
-				log.Errorf(ctx, "error stopping list timeline: %v", err)
-			}
-		}
 
 		if process != nil {
 			const timeout = time.Minute
@@ -322,26 +306,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 
 	// Create a Web Push notification sender.
 	webPushSender := webpush.NewSender(client, state, typeConverter)
-
-	// Initialize both home / list timelines.
-	state.Timelines.Home = timeline.NewManager(
-		tlprocessor.HomeTimelineGrab(state),
-		tlprocessor.HomeTimelineFilter(state, visFilter),
-		tlprocessor.HomeTimelineStatusPrepare(state, typeConverter),
-		tlprocessor.SkipInsert(),
-	)
-	if err := state.Timelines.Home.Start(); err != nil {
-		return fmt.Errorf("error starting home timeline: %s", err)
-	}
-	state.Timelines.List = timeline.NewManager(
-		tlprocessor.ListTimelineGrab(state),
-		tlprocessor.ListTimelineFilter(state, visFilter),
-		tlprocessor.ListTimelineStatusPrepare(state, typeConverter),
-		tlprocessor.SkipInsert(),
-	)
-	if err := state.Timelines.List.Start(); err != nil {
-		return fmt.Errorf("error starting list timeline: %s", err)
-	}
 
 	// Start the job scheduler
 	// (this is required for cleaner).

@@ -215,9 +215,6 @@ code.superseriousbusiness.org/oauth2/v4/generates
 code.superseriousbusiness.org/oauth2/v4/manage
 code.superseriousbusiness.org/oauth2/v4/models
 code.superseriousbusiness.org/oauth2/v4/server
-# codeberg.org/gruf/go-bytes v1.0.2
-## explicit; go 1.14
-codeberg.org/gruf/go-bytes
 # codeberg.org/gruf/go-bytesize v1.0.3
 ## explicit; go 1.17
 codeberg.org/gruf/go-bytesize
@@ -280,7 +277,7 @@ codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
 codeberg.org/gruf/go-storage/memory
 codeberg.org/gruf/go-storage/s3
-# codeberg.org/gruf/go-structr v0.9.6
+# codeberg.org/gruf/go-structr v0.9.7
 ## explicit; go 1.22
 codeberg.org/gruf/go-structr
 # github.com/DmitriyVTitov/size v1.5.0

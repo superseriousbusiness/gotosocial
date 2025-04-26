@@ -24,8 +24,8 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"bytes"
 
-	"codeberg.org/gruf/go-bytes"
 	"github.com/stretchr/testify/suite"
 	"github.com/superseriousbusiness/gotosocial/internal/api/client/lists"
 	"github.com/superseriousbusiness/gotosocial/internal/config"

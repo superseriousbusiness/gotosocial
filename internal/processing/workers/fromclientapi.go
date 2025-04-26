@@ -371,7 +371,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -413,7 +413,7 @@ func (p *clientAPI) CreatePollVote(ctx context.Context, cMsg *messages.FromClien
 	}
 
 	// Interaction counts changed on the source status, uncache from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, vote.Poll.StatusID)
+	p.surface.invalidateStatusFromTimelines(vote.Poll.StatusID)
 
 	return nil
 }
@@ -565,7 +565,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, fave.StatusID)
+	p.surface.invalidateStatusFromTimelines(fave.StatusID)
 
 	return nil
 }
@@ -671,7 +671,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }
@@ -682,22 +682,20 @@ func (p *clientAPI) CreateBlock(ctx context.Context, cMsg *messages.FromClientAP
 		return gtserror.Newf("%T not parseable as *gtsmodel.Block", cMsg.GTSModel)
 	}
 
-	// Remove blockee's statuses from blocker's timeline.
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.AccountID,
-		block.TargetAccountID,
-	); err != nil {
-		return gtserror.Newf("error wiping timeline items for block: %w", err)
+	if block.Account.IsLocal() {
+		// Remove posts by target from origin's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			block.AccountID,
+			block.TargetAccountID,
+		)
 	}
 
-	// Remove blocker's statuses from blockee's timeline.
-	if err := p.state.Timelines.Home.WipeItemsFromAccountID(
-		ctx,
-		block.TargetAccountID,
-		block.AccountID,
-	); err != nil {
-		return gtserror.Newf("error wiping timeline items for block: %w", err)
+	if block.TargetAccount.IsLocal() {
+		// Remove posts by origin from target's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			block.TargetAccountID,
+			block.AccountID,
+		)
 	}
 
 	// TODO: same with notifications?
@@ -737,7 +735,7 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 	}
 
 	// Status representation has changed, invalidate from timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
+	p.surface.invalidateStatusFromTimelines(status.ID)
 
 	return nil
 }
@@ -858,6 +856,22 @@ func (p *clientAPI) UndoFollow(ctx context.Context, cMsg *messages.FromClientAPI
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
+	if follow.Account.IsLocal() {
+		// Remove posts by target from origin's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			follow.AccountID,
+			follow.TargetAccountID,
+		)
+	}
+
+	if follow.TargetAccount.IsLocal() {
+		// Remove posts by origin from target's timelines.
+		p.surface.removeRelationshipFromTimelines(ctx,
+			follow.TargetAccountID,
+			follow.AccountID,
+		)
+	}
+
 	if err := p.federate.UndoFollow(ctx, follow); err != nil {
 		log.Errorf(ctx, "error federating follow undo: %v", err)
 	}
@@ -890,7 +904,7 @@ func (p *clientAPI) UndoFave(ctx context.Context, cMsg *messages.FromClientAPI) 
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, statusFave.StatusID)
+	p.surface.invalidateStatusFromTimelines(statusFave.StatusID)
 
 	return nil
 }
@@ -910,9 +924,8 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 		log.Errorf(ctx, "error updating account stats: %v", err)
 	}
 
-	if err := p.surface.deleteStatusFromTimelines(ctx, status.ID); err != nil {
-		log.Errorf(ctx, "error removing timelined status: %v", err)
-	}
+	// Delete the boost wrapper status from timelines.
+	p.surface.deleteStatusFromTimelines(ctx, status.ID)
 
 	if err := p.federate.UndoAnnounce(ctx, status); err != nil {
 		log.Errorf(ctx, "error federating announce undo: %v", err)
@@ -920,7 +933,7 @@ func (p *clientAPI) UndoAnnounce(ctx context.Context, cMsg *messages.FromClientA
 
 	// Interaction counts changed on the boosted status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, status.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(status.BoostOfID)
 
 	return nil
 }
@@ -983,7 +996,7 @@ func (p *clientAPI) DeleteStatus(ctx context.Context, cMsg *messages.FromClientA
 	if status.InReplyToID != "" {
 		// Interaction counts changed on the replied status;
 		// uncache the prepared version from all timelines.
-		p.surface.invalidateStatusFromTimelines(ctx, status.InReplyToID)
+		p.surface.invalidateStatusFromTimelines(status.InReplyToID)
 	}
 
 	return nil
@@ -1025,6 +1038,23 @@ func (p *clientAPI) DeleteAccountOrUser(ctx context.Context, cMsg *messages.From
 	// (stops processing of remote origin data targeting this account).
 	p.state.Workers.Federator.Queue.Delete("Receiving.ID", account.ID)
 	p.state.Workers.Federator.Queue.Delete("TargetURI", account.URI)
+
+	// Remove any entries authored by account from timelines.
+	p.surface.removeTimelineEntriesByAccount(account.ID)
+
+	// Remove any of their cached timelines.
+	p.state.Caches.Timelines.Home.Delete(account.ID)
+
+	// Get the IDs of all the lists owned by the given account ID.
+	listIDs, err := p.state.DB.GetListIDsByAccountID(ctx, account.ID)
+	if err != nil {
+		log.Errorf(ctx, "error getting lists for account %s: %v", account.ID, err)
+	}
+
+	// Remove list timelines of account.
+	for _, listID := range listIDs {
+		p.state.Caches.Timelines.List.Delete(listID)
+	}
 
 	if err := p.federate.DeleteAccount(ctx, cMsg.Target); err != nil {
 		log.Errorf(ctx, "error federating account delete: %v", err)
@@ -1169,7 +1199,7 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 
 	// Interaction counts changed on the faved status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, req.Like.StatusID)
+	p.surface.invalidateStatusFromTimelines(req.Like.StatusID)
 
 	return nil
 }
@@ -1202,7 +1232,7 @@ func (p *clientAPI) AcceptReply(ctx context.Context, cMsg *messages.FromClientAP
 
 	// Interaction counts changed on the replied status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, reply.InReplyToID)
+	p.surface.invalidateStatusFromTimelines(reply.InReplyToID)
 
 	return nil
 }
@@ -1240,7 +1270,7 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 
 	// Interaction counts changed on the original status;
 	// uncache the prepared version from all timelines.
-	p.surface.invalidateStatusFromTimelines(ctx, boost.BoostOfID)
+	p.surface.invalidateStatusFromTimelines(boost.BoostOfID)
 
 	return nil
 }

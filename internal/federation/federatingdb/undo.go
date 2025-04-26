@@ -136,10 +136,7 @@ func (f *federatingDB) undoFollow(
 
 	// Convert AS Follow to barebones *gtsmodel.Follow,
 	// retrieving origin + target accts from the db.
-	follow, err := f.converter.ASFollowToFollow(
-		gtscontext.SetBarebones(ctx),
-		asFollow,
-	)
+	follow, err := f.converter.ASFollowToFollow(ctx, asFollow)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("error converting AS Follow to follow: %w", err)
 		return err
@@ -151,6 +148,11 @@ func (f *federatingDB) undoFollow(
 	if follow == nil {
 		return nil
 	}
+
+	// Lock on the Follow URI
+	// as we may be updating it.
+	unlock := f.state.FedLocks.Lock(follow.URI)
+	defer unlock()
 
 	// Ensure addressee is follow target.
 	if follow.TargetAccountID != receivingAcct.ID {
@@ -178,7 +180,16 @@ func (f *federatingDB) undoFollow(
 		return err
 	}
 
-	log.Debug(ctx, "Follow undone")
+	// Send the deleted follow through to
+	// the fedi worker to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityFollow,
+		APActivityType: ap.ActivityUndo,
+		GTSModel:       follow,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
 	return nil
 }
 
@@ -269,7 +280,16 @@ func (f *federatingDB) undoLike(
 		return err
 	}
 
-	log.Debug(ctx, "Like undone")
+	// Send the deleted block through to
+	// the fedi worker to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityLike,
+		APActivityType: ap.ActivityUndo,
+		GTSModel:       fave,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
 	return nil
 }
 
@@ -298,10 +318,7 @@ func (f *federatingDB) undoBlock(
 
 	// Convert AS Block to barebones *gtsmodel.Block,
 	// retrieving origin + target accts from the DB.
-	block, err := f.converter.ASBlockToBlock(
-		gtscontext.SetBarebones(ctx),
-		asBlock,
-	)
+	block, err := f.converter.ASBlockToBlock(ctx, asBlock)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err := gtserror.Newf("error converting AS Block to block: %w", err)
 		return err
@@ -333,7 +350,16 @@ func (f *federatingDB) undoBlock(
 		return err
 	}
 
-	log.Debug(ctx, "Block undone")
+	// Send the deleted block through to
+	// the fedi worker to process side effects.
+	f.state.Workers.Federator.Queue.Push(&messages.FromFediAPI{
+		APObjectType:   ap.ActivityBlock,
+		APActivityType: ap.ActivityUndo,
+		GTSModel:       block,
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+
 	return nil
 }
 

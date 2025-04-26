@@ -23,7 +23,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/cache"
 	"github.com/superseriousbusiness/gotosocial/internal/db"
 	"github.com/superseriousbusiness/gotosocial/internal/storage"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/workers"
 )
 
@@ -34,11 +33,10 @@ import (
 // subpackage initialization, while the returned subpackage type will later
 // then be set and stored within the State{} itself.
 type State struct {
-	// Caches provides access to this state's collection of caches.
-	Caches cache.Caches
 
-	// Timelines provides access to this state's collection of timelines.
-	Timelines timeline.Timelines
+	// Caches provides access to this
+	// state's collection of caches.
+	Caches cache.Caches
 
 	// DB provides access to the database.
 	DB db.DB
@@ -59,7 +57,8 @@ type State struct {
 	// pinned statuses, creating notifs, etc.
 	ProcessingLocks mutexes.MutexMap
 
-	// Storage provides access to the storage driver.
+	// Storage provides access
+	// to the storage driver.
 	Storage *storage.Driver
 
 	// Workers provides access to this

@@ -21,6 +21,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
 	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
 	"github.com/superseriousbusiness/gotosocial/internal/filter/usermute"
 	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
@@ -28,7 +29,6 @@ import (
 	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
 	"github.com/superseriousbusiness/gotosocial/internal/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
 	"github.com/superseriousbusiness/gotosocial/internal/util"
 )
 
@@ -161,21 +161,16 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 
 			// Add status to home timeline for owner of
 			// this follow (origin account), if applicable.
-			homeTimelined, err = s.timelineStatus(ctx,
-				s.State.Timelines.Home.IngestOne,
-				follow.AccountID, // home timelines are keyed by account ID
+			if homeTimelined := s.timelineStatus(ctx,
+				s.State.Caches.Timelines.Home.MustGet(follow.AccountID),
 				follow.Account,
 				status,
 				stream.TimelineHome,
+				statusfilter.FilterContextHome,
 				filters,
 				mutes,
-			)
-			if err != nil {
-				log.Errorf(ctx, "error home timelining status: %v", err)
-				continue
-			}
+			); homeTimelined {
 
-			if homeTimelined {
 				// If hometimelined, add to list of returned account IDs.
 				homeTimelinedAccountIDs = append(homeTimelinedAccountIDs, follow.AccountID)
 			}
@@ -261,22 +256,16 @@ func (s *Surface) listTimelineStatusForFollow(
 		exclusive = exclusive || *list.Exclusive
 
 		// At this point we are certain this status
-		// should be included in the timeline of the
-		// list that this list entry belongs to.
-		listTimelined, err := s.timelineStatus(
-			ctx,
-			s.State.Timelines.List.IngestOne,
-			list.ID, // list timelines are keyed by list ID
+		// should be included in timeline of this list.
+		listTimelined := s.timelineStatus(ctx,
+			s.State.Caches.Timelines.List.MustGet(list.ID),
 			follow.Account,
 			status,
 			stream.TimelineList+":"+list.ID, // key streamType to this specific list
+			statusfilter.FilterContextHome,
 			filters,
 			mutes,
 		)
-		if err != nil {
-			log.Errorf(ctx, "error adding status to list timeline: %v", err)
-			continue
-		}
 
 		// Update flag based on if timelined.
 		timelined = timelined || listTimelined
@@ -367,53 +356,48 @@ func (s *Surface) listEligible(
 	}
 }
 
-// timelineStatus uses the provided ingest function to put the given
-// status in a timeline with the given ID, if it's timelineable.
-//
-// If the status was inserted into the timeline, true will be returned
-// + it will also be streamed to the user using the given streamType.
+// timelineStatus will insert the given status into the given timeline, if it's
+// timelineable. if the status was inserted into the timeline, true will be returned.
 func (s *Surface) timelineStatus(
 	ctx context.Context,
-	ingest func(context.Context, string, timeline.Timelineable) (bool, error),
-	timelineID string,
+	timeline *timeline.StatusTimeline,
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
+	filterCtx statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
-) (bool, error) {
+) bool {
 
-	// Ingest status into given timeline using provided function.
-	if inserted, err := ingest(ctx, timelineID, status); err != nil &&
-		!errors.Is(err, statusfilter.ErrHideStatus) {
-		err := gtserror.Newf("error ingesting status %s: %w", status.ID, err)
-		return false, err
-	} else if !inserted {
-		// Nothing more to do.
-		return false, nil
-	}
-
-	// Convert updated database model to frontend model.
-	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
+	// Attempt to convert status to frontend API representation,
+	// this will check whether status is filtered / muted.
+	apiModel, err := s.Converter.StatusToAPIStatus(ctx,
 		status,
 		account,
-		statusfilter.FilterContextHome,
+		filterCtx,
 		filters,
 		mutes,
 	)
 	if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
-		err := gtserror.Newf("error converting status %s to frontend representation: %w", status.ID, err)
-		return true, err
+		log.Error(ctx, "error converting status %s to frontend: %v", status.URI, err)
 	}
 
-	if apiStatus != nil {
-		// The status was inserted so stream it to the user.
-		s.Stream.Update(ctx, account, apiStatus, streamType)
-		return true, nil
+	// Insert status to timeline cache regardless of
+	// if API model was succesfully prepared or not.
+	repeatBoost := timeline.InsertOne(status, apiModel)
+
+	if apiModel == nil {
+		// Status was
+		// filtered / muted.
+		return false
 	}
 
-	// Status was hidden.
-	return false, nil
+	if !repeatBoost {
+		// Only stream if not repeated boost of recent status.
+		s.Stream.Update(ctx, account, apiModel, streamType)
+	}
+
+	return true
 }
 
 // timelineAndNotifyStatusForTagFollowers inserts the status into the
@@ -444,23 +428,15 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 			continue
 		}
 
-		if _, err := s.timelineStatus(
-			ctx,
-			s.State.Timelines.Home.IngestOne,
-			tagFollowerAccount.ID, // home timelines are keyed by account ID
+		_ = s.timelineStatus(ctx,
+			s.State.Caches.Timelines.Home.MustGet(tagFollowerAccount.ID),
 			tagFollowerAccount,
 			status,
 			stream.TimelineHome,
+			statusfilter.FilterContextHome,
 			filters,
 			mutes,
-		); err != nil {
-			errs.Appendf(
-				"error inserting status %s into home timeline for account %s: %w",
-				status.ID,
-				tagFollowerAccount.ID,
-				err,
-			)
-		}
+		)
 	}
 
 	return errs.Combine()
@@ -548,39 +524,6 @@ func (s *Surface) tagFollowersForStatus(
 	}
 
 	return visibleTagFollowerAccounts, errs.Combine()
-}
-
-// deleteStatusFromTimelines completely removes the given status from all timelines.
-// It will also stream deletion of the status to all open streams.
-func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) error {
-	if err := s.State.Timelines.Home.WipeItemFromAllTimelines(ctx, statusID); err != nil {
-		return err
-	}
-	if err := s.State.Timelines.List.WipeItemFromAllTimelines(ctx, statusID); err != nil {
-		return err
-	}
-	s.Stream.Delete(ctx, statusID)
-	return nil
-}
-
-// invalidateStatusFromTimelines does cache invalidation on the given status by
-// unpreparing it from all timelines, forcing it to be prepared again (with updated
-// stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
-// both for the status itself, and for any boosts of the status.
-func (s *Surface) invalidateStatusFromTimelines(ctx context.Context, statusID string) {
-	if err := s.State.Timelines.Home.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		log.
-			WithContext(ctx).
-			WithField("statusID", statusID).
-			Errorf("error unpreparing status from home timelines: %v", err)
-	}
-
-	if err := s.State.Timelines.List.UnprepareItemFromAllTimelines(ctx, statusID); err != nil {
-		log.
-			WithContext(ctx).
-			WithField("statusID", statusID).
-			Errorf("error unpreparing status from list timelines: %v", err)
-	}
 }
 
 // timelineStatusUpdate looks up HOME and LIST timelines of accounts
@@ -858,4 +801,48 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 		}
 	}
 	return errs.Combine()
+}
+
+// deleteStatusFromTimelines completely removes the given status from all timelines.
+// It will also stream deletion of the status to all open streams.
+func (s *Surface) deleteStatusFromTimelines(ctx context.Context, statusID string) {
+	s.State.Caches.Timelines.Home.RemoveByStatusIDs(statusID)
+	s.State.Caches.Timelines.List.RemoveByStatusIDs(statusID)
+	s.Stream.Delete(ctx, statusID)
+}
+
+// invalidateStatusFromTimelines does cache invalidation on the given status by
+// unpreparing it from all timelines, forcing it to be prepared again (with updated
+// stats, boost counts, etc) next time it's fetched by the timeline owner. This goes
+// both for the status itself, and for any boosts of the status.
+func (s *Surface) invalidateStatusFromTimelines(statusID string) {
+	s.State.Caches.Timelines.Home.UnprepareByStatusIDs(statusID)
+	s.State.Caches.Timelines.List.UnprepareByStatusIDs(statusID)
+}
+
+// removeTimelineEntriesByAccount removes all cached timeline entries authored by account ID.
+func (s *Surface) removeTimelineEntriesByAccount(accountID string) {
+	s.State.Caches.Timelines.Home.RemoveByAccountIDs(accountID)
+	s.State.Caches.Timelines.List.RemoveByAccountIDs(accountID)
+}
+
+func (s *Surface) removeRelationshipFromTimelines(ctx context.Context, timelineAccountID string, targetAccountID string) {
+	// Remove all statuses by target account
+	// from given account's home timeline.
+	s.State.Caches.Timelines.Home.
+		MustGet(timelineAccountID).
+		RemoveByAccountIDs(targetAccountID)
+
+	// Get the IDs of all the lists owned by the given account ID.
+	listIDs, err := s.State.DB.GetListIDsByAccountID(ctx, timelineAccountID)
+	if err != nil {
+		log.Errorf(ctx, "error getting lists for account %s: %v", timelineAccountID, err)
+	}
+
+	for _, listID := range listIDs {
+		// Remove all statuses by target account
+		// from given account's list timelines.
+		s.State.Caches.Timelines.List.MustGet(listID).
+			RemoveByAccountIDs(targetAccountID)
+	}
 }
