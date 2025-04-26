@@ -21,7 +21,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/language"
+	"code.superseriousbusiness.org/gotosocial/internal/language"
 	golanguage "golang.org/x/text/language"
 )
 

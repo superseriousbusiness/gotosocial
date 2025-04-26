@@ -26,7 +26,7 @@ import (
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 )
 
 // processSQLiteError processes an sqlite3.Error to

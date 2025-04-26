@@ -21,10 +21,10 @@ import (
 	"context"
 	"encoding/json"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/stream"
 	"codeberg.org/gruf/go-byteutil"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/stream"
 )
 
 // Conversation streams the given conversation to any open, appropriate streams belonging to the given account.

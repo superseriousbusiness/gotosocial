@@ -20,8 +20,8 @@ package cache
 import (
 	"errors"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	errorsv2 "codeberg.org/gruf/go-errors/v2"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // SentinelError is an error that can be returned and checked against to indicate a non-permanent

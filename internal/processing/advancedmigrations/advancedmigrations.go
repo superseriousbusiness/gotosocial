@@ -21,7 +21,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/superseriousbusiness/gotosocial/internal/processing/conversations"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/conversations"
 )
 
 // Processor holds references to any other processor that has migrations to run.

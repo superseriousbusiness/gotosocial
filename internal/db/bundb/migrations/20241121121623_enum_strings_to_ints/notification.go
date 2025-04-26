@@ -20,7 +20,7 @@ package gtsmodel
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // Notification models an alert/notification sent to an account about something like a reblog, like, new follow request, etc.

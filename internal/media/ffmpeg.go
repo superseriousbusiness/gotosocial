@@ -28,10 +28,10 @@ import (
 
 	"codeberg.org/gruf/go-byteutil"
 
-	_ffmpeg "github.com/superseriousbusiness/gotosocial/internal/media/ffmpeg"
+	_ffmpeg "code.superseriousbusiness.org/gotosocial/internal/media/ffmpeg"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"github.com/tetratelabs/wazero"
 )
 

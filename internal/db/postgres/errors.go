@@ -20,8 +20,8 @@ package postgres
 import (
 	"fmt"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 // processPostgresError processes an error, replacing any

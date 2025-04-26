@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/regexes"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/regexes"
 )
 
 const (

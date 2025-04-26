@@ -21,7 +21,7 @@ import (
 	"context"
 	"time"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 )
 
 func (suite *ConversationsTestSuite) TestGetAll() {

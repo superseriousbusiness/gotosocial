@@ -20,10 +20,10 @@ package migrations
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 
-	oldmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	oldmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 
 	"github.com/uptrace/bun"
 )

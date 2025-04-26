@@ -21,9 +21,9 @@ import (
 	"reflect"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/language"
 	"codeberg.org/gruf/go-bytesize"
 	"github.com/mitchellh/mapstructure"
-	"github.com/superseriousbusiness/gotosocial/internal/language"
 )
 
 // cfgtype is the reflected type information of Configuration{}.

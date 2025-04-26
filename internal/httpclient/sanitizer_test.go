@@ -22,7 +22,7 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
 )
 
 func TestSafeIP(t *testing.T) {

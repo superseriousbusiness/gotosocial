@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"slices"
 
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 func APIVisToVis(m apimodel.Visibility) gtsmodel.Visibility {

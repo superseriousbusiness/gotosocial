@@ -20,7 +20,7 @@ package migrations
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/uptrace/bun"
 )
 

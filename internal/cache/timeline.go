@@ -18,8 +18,8 @@
 package cache
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/cache/timeline"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
 type TimelineCaches struct {

@@ -29,14 +29,14 @@ import (
 	"code.superseriousbusiness.org/activity/pub"
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
-	apimodel "github.com/superseriousbusiness/gotosocial/internal/api/model"
-	"github.com/superseriousbusiness/gotosocial/internal/federation"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/state"
-	"github.com/superseriousbusiness/gotosocial/internal/transport"
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
+	"code.superseriousbusiness.org/gotosocial/internal/federation"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/transport"
 )
 
 const (
@@ -410,7 +410,7 @@ func NodeInfoResponse(req *http.Request) (
 			Software: apimodel.NodeInfoSoftware{
 				Name:       "GoToSocial",
 				Version:    "1.3.1.2",
-				Repository: "https://github.com/superseriousbusiness/gotosocial",
+				Repository: "https://codeberg.org/superseriousbusiness/gotosocial",
 				Homepage:   "https://docs.gotosocial.org",
 			},
 			Protocols: []string{"activitypub"},
@@ -421,7 +421,7 @@ func NodeInfoResponse(req *http.Request) (
 			Software: apimodel.NodeInfoSoftware{
 				Name:       "GoToSocial",
 				Version:    "1.3.1.2",
-				Repository: "https://github.com/superseriousbusiness/gotosocial",
+				Repository: "https://codeberg.org/superseriousbusiness/gotosocial",
 				Homepage:   "https://docs.gotosocial.org",
 			},
 			Protocols: []string{"activitypub"},

@@ -23,8 +23,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/technologize/otel-go-contrib/otelginmetrics"

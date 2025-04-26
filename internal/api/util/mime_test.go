@@ -3,7 +3,7 @@ package util_test
 import (
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/api/util"
 )
 
 func TestIsASContentType(t *testing.T) {

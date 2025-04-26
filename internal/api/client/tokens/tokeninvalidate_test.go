@@ -22,9 +22,9 @@ import (
 	"net/http"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/tokens"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/tokens"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type TokenInvalidateTestSuite struct {

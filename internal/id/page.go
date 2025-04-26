@@ -18,7 +18,7 @@
 package id
 
 import (
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 )
 
 // ValidatePage ensures that passed page has valid paging

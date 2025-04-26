@@ -23,10 +23,10 @@ import (
 	"strings"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
 	"gopkg.in/yaml.v3"
 )
 

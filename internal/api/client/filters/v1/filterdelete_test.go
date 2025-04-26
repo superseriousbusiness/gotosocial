@@ -23,12 +23,12 @@ import (
 	"net/http"
 	"net/http/httptest"
 
-	filtersV1 "github.com/superseriousbusiness/gotosocial/internal/api/client/filters/v1"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/oauth"
-	"github.com/superseriousbusiness/gotosocial/internal/stream"
-	"github.com/superseriousbusiness/gotosocial/testrig"
+	filtersV1 "code.superseriousbusiness.org/gotosocial/internal/api/client/filters/v1"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/oauth"
+	"code.superseriousbusiness.org/gotosocial/internal/stream"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 )
 
 func (suite *FiltersTestSuite) deleteFilter(

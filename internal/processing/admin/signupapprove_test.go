@@ -21,9 +21,9 @@ import (
 	"context"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type AdminApproveTestSuite struct {

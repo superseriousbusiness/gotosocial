@@ -21,8 +21,8 @@ import (
 	"context"
 	"database/sql/driver"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	pgx "github.com/jackc/pgx/v5/stdlib"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 var (

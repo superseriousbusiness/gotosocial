@@ -20,10 +20,10 @@ package auth
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	oautherr "code.superseriousbusiness.org/oauth2/v4/errors"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 // TokenRevokePOSTHandler swagger:operation POST /oauth/revoke oauthTokenRevoke

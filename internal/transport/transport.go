@@ -27,11 +27,11 @@ import (
 	"sync"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/transport/delivery"
 	"code.superseriousbusiness.org/httpsig"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
 )
 
 // Transport implements the pub.Transport interface with some additional functionality for fetching remote media.

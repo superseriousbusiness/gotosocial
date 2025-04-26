@@ -21,8 +21,8 @@ import (
 	"context"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type InboxTestSuite struct {

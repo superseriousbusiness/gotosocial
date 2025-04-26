@@ -20,7 +20,7 @@ package gtsmodel
 import (
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 // StatusEdit represents a **historical** view of a Status

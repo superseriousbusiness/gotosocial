@@ -23,7 +23,7 @@ import (
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/pub"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
 )
 
 // NewTransport returns a new Transport on behalf of a specific actor.

@@ -20,8 +20,8 @@ package usermute
 import (
 	"time"
 
-	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 type compiledUserMuteListEntry struct {

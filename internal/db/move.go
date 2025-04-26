@@ -21,7 +21,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
 type Move interface {

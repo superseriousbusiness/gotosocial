@@ -23,8 +23,8 @@ import (
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
 )
 
 // Get returns the database entry for the specified id.

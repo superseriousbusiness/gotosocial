@@ -25,8 +25,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	_ "github.com/superseriousbusiness/gotosocial/docs"
-	"github.com/superseriousbusiness/gotosocial/internal/config"
+	_ "code.superseriousbusiness.org/gotosocial/docs"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 )
 
 // Version is the version of GoToSocial being used.

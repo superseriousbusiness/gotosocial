@@ -25,7 +25,7 @@ import (
 	"code.superseriousbusiness.org/activity/pub"
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
-	"github.com/superseriousbusiness/gotosocial/internal/ap"
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
 )
 
 var testIteratorIRIs = [][]string{

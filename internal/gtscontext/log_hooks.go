@@ -20,8 +20,8 @@ package gtscontext
 import (
 	"context"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func init() {

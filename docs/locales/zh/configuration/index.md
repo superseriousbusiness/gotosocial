@@ -18,7 +18,7 @@ gotosocial --config-path ./config.yaml server start
 
 该命令需要一个 [YAML](https://en.wikipedia.org/wiki/YAML) 或 [JSON](https://en.wikipedia.org/wiki/JSON) 格式的文件。
 
-可以在[这里](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml)找到示例配置文件，其中包含每个配置字段的解释、默认值和示例值。此示例文件也包含在每个发行版的下载资源中。
+可以在[这里](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml)找到示例配置文件，其中包含每个配置字段的解释、默认值和示例值。此示例文件也包含在每个发行版的下载资源中。
 
 建议创建你自己的配置文件，只更改你需要改变的设置。这可以确保在每次发布时，你不必合并默认值的更改或者增删未从默认值更改的配置设置。
 
@@ -119,7 +119,7 @@ gotosocial server start --media-image-max-size 2097152
 
 *大多数*配置参数都提供了合理的默认值，除了必须自定义值的情况。
 
-请查看[示例配置文件](https://github.com/superseriousbusiness/gotosocial/blob/main/example/config.yaml)以获取默认值，或运行 `gotosocial --help`。
+请查看[示例配置文件](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml)以获取默认值，或运行 `gotosocial --help`。
 
 ## `GTS_WAZERO_COMPILATION_CACHE`
 

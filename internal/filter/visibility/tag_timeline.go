@@ -21,8 +21,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
 // StatusHomeTimelineable checks if given status should be included

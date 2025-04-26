@@ -21,8 +21,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/paging"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 )
 
 // EmojiAllDomains can be used as the `domain` value in a GetEmojis

@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/superseriousbusiness/gotosocial/internal/regexes"
-	"github.com/superseriousbusiness/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/regexes"
+	"code.superseriousbusiness.org/gotosocial/internal/uris"
 )
 
 // ExtractNamestringParts extracts the username test_user and

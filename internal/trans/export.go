@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	transmodel "github.com/superseriousbusiness/gotosocial/internal/trans/model"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	transmodel "code.superseriousbusiness.org/gotosocial/internal/trans/model"
 )
 
 func (e *exporter) exportAccounts(ctx context.Context, where []db.Where, file *os.File) ([]*transmodel.Account, error) {

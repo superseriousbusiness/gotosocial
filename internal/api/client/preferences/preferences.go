@@ -20,8 +20,8 @@ package preferences
 import (
 	"net/http"
 
+	"code.superseriousbusiness.org/gotosocial/internal/processing"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/processing"
 )
 
 const (

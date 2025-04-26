@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"sync/atomic"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
-	"github.com/superseriousbusiness/gotosocial/internal/headerfilter"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/headerfilter"
 )
 
 // Cache provides a means of caching headerfilter.Filters in

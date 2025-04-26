@@ -20,7 +20,7 @@ package health
 import (
 	"net/http"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 
 	"github.com/gin-gonic/gin"
 )

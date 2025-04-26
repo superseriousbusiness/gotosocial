@@ -22,11 +22,11 @@ import (
 	"errors"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/interactionrequests"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/internal/gtscontext"
-	"github.com/superseriousbusiness/gotosocial/internal/processing/interactionrequests"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type RejectTestSuite struct {

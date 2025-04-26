@@ -21,7 +21,7 @@ import (
 	"context"
 	"database/sql"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20211113114307_init"
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20211113114307_init"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 )

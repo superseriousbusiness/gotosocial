@@ -21,8 +21,8 @@ import (
 	"context"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
 )
 
 type SearchTestSuite struct {

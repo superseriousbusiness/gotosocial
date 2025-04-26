@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"net/url"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"codeberg.org/gruf/go-bytesize"
 	"codeberg.org/gruf/go-iotools"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 )
 
 func (t *transport) DereferenceMedia(ctx context.Context, iri *url.URL, maxsz int64) (io.ReadCloser, error) {

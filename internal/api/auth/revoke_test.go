@@ -25,9 +25,9 @@ import (
 	"net/http"
 	"testing"
 
+	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/db"
-	"github.com/superseriousbusiness/gotosocial/testrig"
 )
 
 type RevokeTestSuite struct {

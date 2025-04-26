@@ -29,9 +29,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/superseriousbusiness/gotosocial/internal/httpclient"
-	"github.com/superseriousbusiness/gotosocial/internal/queue"
-	"github.com/superseriousbusiness/gotosocial/internal/transport/delivery"
+	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
+	"code.superseriousbusiness.org/gotosocial/internal/queue"
+	"code.superseriousbusiness.org/gotosocial/internal/transport/delivery"
 )
 
 func TestDeliveryWorkerPool(t *testing.T) {

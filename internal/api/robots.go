@@ -18,10 +18,10 @@
 package api
 
 import (
+	"code.superseriousbusiness.org/gotosocial/internal/api/robots"
+	"code.superseriousbusiness.org/gotosocial/internal/middleware"
+	"code.superseriousbusiness.org/gotosocial/internal/router"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/api/robots"
-	"github.com/superseriousbusiness/gotosocial/internal/middleware"
-	"github.com/superseriousbusiness/gotosocial/internal/router"
 )
 
 type Robots struct {

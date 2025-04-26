@@ -28,10 +28,10 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/api/client/followrequests"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/suite"
-	"github.com/superseriousbusiness/gotosocial/internal/api/client/followrequests"
-	"github.com/superseriousbusiness/gotosocial/internal/gtsmodel"
 )
 
 type RejectTestSuite struct {

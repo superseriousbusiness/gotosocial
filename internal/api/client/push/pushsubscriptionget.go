@@ -20,8 +20,8 @@ package push
 import (
 	"net/http"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"github.com/gin-gonic/gin"
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 )
 
 // PushSubscriptionGETHandler swagger:operation GET /api/v1/push/subscription pushSubscriptionGet

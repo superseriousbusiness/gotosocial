@@ -21,7 +21,7 @@ import (
 	"context"
 	"strings"
 
-	gtsmodel "github.com/superseriousbusiness/gotosocial/internal/db/bundb/migrations/20231002153327_add_status_polls"
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20231002153327_add_status_polls"
 
 	"github.com/uptrace/bun"
 )

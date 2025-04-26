@@ -3,7 +3,7 @@ definitions:
     FilterAction:
         title: FilterAction is the action to apply to statuses matching a filter.
         type: string
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     InstanceConfigurationEmojis:
         properties:
             emoji_size_limit:
@@ -14,7 +14,7 @@ definitions:
                 x-go-name: EmojiSizeLimit
         title: InstanceConfigurationEmojis models instance emoji config parameters.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     Link:
         description: See https://webfinger.net/ and https://www.rfc-editor.org/rfc/rfc6415.html#section-3.1
         properties:
@@ -32,7 +32,7 @@ definitions:
                 x-go-name: Type
         title: Link represents one 'link' in a slice of links returned from a lookup request.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     Mention:
         properties:
             acct:
@@ -59,7 +59,7 @@ definitions:
                 x-go-name: Username
         title: Mention represents a mention of another account.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoServices:
         properties:
             inbound:
@@ -74,7 +74,7 @@ definitions:
                 x-go-name: Outbound
         title: NodeInfoServices represents inbound and outbound services that this node offers connections to.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoSoftware:
         properties:
             homepage:
@@ -97,7 +97,7 @@ definitions:
                 x-go-name: Version
         title: NodeInfoSoftware represents the name and version number of the software of this node.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsage:
         properties:
             localComments:
@@ -112,7 +112,7 @@ definitions:
                 $ref: '#/definitions/NodeInfoUsers'
         title: NodeInfoUsage represents usage information about this server, such as number of users.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     NodeInfoUsers:
         properties:
             activeHalfYear:
@@ -129,7 +129,7 @@ definitions:
                 x-go-name: Total
         title: NodeInfoUsers represents aggregate information about the users on the server.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     Source:
         description: Returned as an additional entity when verifying and updated credentials, as an attribute of Account.
         properties:
@@ -196,7 +196,7 @@ definitions:
                 x-go-name: WebVisibility
         title: Source represents display or publishing preferences of user's own account.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     TimelineMarker:
         properties:
             last_read_id:
@@ -214,11 +214,11 @@ definitions:
                 x-go-name: Version
         title: TimelineMarker contains information about a user's progress through a specific timeline.
         type: object
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     WebPushNotificationPolicy:
         title: WebPushNotificationPolicy names sets of accounts that can generate notifications.
         type: string
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     account:
         description: The modelled account can be either a remote account, or one on this instance.
         properties:
@@ -400,7 +400,7 @@ definitions:
         title: Account models a fediverse account.
         type: object
         x-go-name: Account
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountDisplayRole:
         description: This is a subset of AccountRole.
         properties:
@@ -423,7 +423,7 @@ definitions:
         title: AccountDisplayRole models a public, displayable role of an account.
         type: object
         x-go-name: AccountDisplayRole
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountExportStats:
         description: |-
             AccountExportStats models an account's stats
@@ -473,7 +473,7 @@ definitions:
                 x-go-name: StatusesCount
         type: object
         x-go-name: AccountExportStats
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountRelationship:
         properties:
             blocked_by:
@@ -536,7 +536,7 @@ definitions:
         title: Relationship represents a relationship between accounts.
         type: object
         x-go-name: Relationship
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     accountRole:
         properties:
             color:
@@ -568,7 +568,7 @@ definitions:
         title: AccountRole models the role of an account.
         type: object
         x-go-name: AccountRole
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminAccountInfo:
         properties:
             account:
@@ -663,7 +663,7 @@ definitions:
         title: AdminAccountInfo models the admin view of an account's details.
         type: object
         x-go-name: AdminAccountInfo
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminActionResponse:
         description: |-
             AdminActionResponse models the server
@@ -676,7 +676,7 @@ definitions:
                 x-go-name: ActionID
         type: object
         x-go-name: AdminActionResponse
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminEmoji:
         properties:
             category:
@@ -743,7 +743,7 @@ definitions:
         title: AdminEmoji models the admin view of a custom emoji.
         type: object
         x-go-name: AdminEmoji
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     adminReport:
         properties:
             account:
@@ -824,7 +824,7 @@ definitions:
         title: AdminReport models the admin view of a report.
         type: object
         x-go-name: AdminReport
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     application:
         properties:
             client_id:
@@ -880,7 +880,7 @@ definitions:
         title: Application models an api application.
         type: object
         x-go-name: Application
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     attachment:
         properties:
             blurhash:
@@ -939,7 +939,7 @@ definitions:
         title: Attachment models a media attachment.
         type: object
         x-go-name: Attachment
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     card:
         properties:
             author_name:
@@ -1012,7 +1012,7 @@ definitions:
         title: Card represents a rich preview card that is generated using OpenGraph tags from a URL.
         type: object
         x-go-name: Card
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     conversation:
         description: |-
             Conversation represents a conversation
@@ -1041,7 +1041,7 @@ definitions:
                 x-go-name: Unread
         type: object
         x-go-name: Conversation
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     debugAPUrlResponse:
         description: |-
             DebugAPUrlResponse provides detailed debug
@@ -1081,7 +1081,7 @@ definitions:
                 x-go-name: ResponseHeaders
         type: object
         x-go-name: DebugAPUrlResponse
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     defaultPolicies:
         properties:
             direct:
@@ -1095,7 +1095,7 @@ definitions:
         title: Default interaction policies to use for new statuses by requesting account.
         type: object
         x-go-name: DefaultPolicies
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     domain:
         description: Domain represents a remote domain
         properties:
@@ -1130,7 +1130,7 @@ definitions:
                 x-go-name: SuspendedAt
         type: object
         x-go-name: Domain
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     domainPermission:
         properties:
             comment:
@@ -1202,7 +1202,7 @@ definitions:
         title: DomainPermission represents a permission applied to one domain (explicit block/allow).
         type: object
         x-go-name: DomainPermission
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     domainPermissionSubscription:
         properties:
             adopt_orphans:
@@ -1296,7 +1296,7 @@ definitions:
         title: DomainPermissionSubscription represents an auto-refreshing subscription to a list of domain permissions (allows, blocks).
         type: object
         x-go-name: DomainPermissionSubscription
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     emoji:
         properties:
             category:
@@ -1327,7 +1327,7 @@ definitions:
         title: Emoji represents a custom emoji.
         type: object
         x-go-name: Emoji
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     emojiCategory:
         properties:
             id:
@@ -1341,7 +1341,7 @@ definitions:
         title: EmojiCategory represents a custom emoji category.
         type: object
         x-go-name: EmojiCategory
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     field:
         properties:
             name:
@@ -1362,13 +1362,13 @@ definitions:
         title: Field represents a name/value pair to display on an account's profile.
         type: object
         x-go-name: Field
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterContext:
         description: v1 and v2 filter APIs use the same set of contexts.
         title: FilterContext represents the context in which to apply a filter.
         type: string
         x-go-name: FilterContext
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterKeyword:
         properties:
             id:
@@ -1388,7 +1388,7 @@ definitions:
         title: FilterKeyword represents text to filter within a v2 filter.
         type: object
         x-go-name: FilterKeyword
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterResult:
         properties:
             filter:
@@ -1408,7 +1408,7 @@ definitions:
         title: FilterResult is returned along with a filtered status to explain why it was filtered.
         type: object
         x-go-name: FilterResult
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterStatus:
         properties:
             id:
@@ -1422,7 +1422,7 @@ definitions:
         title: FilterStatus represents a single status to filter within a v2 filter.
         type: object
         x-go-name: FilterStatus
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterV1:
         description: |-
             Note that v1 filters are mapped to v2 filters and v2 filter keywords internally.
@@ -1471,7 +1471,7 @@ definitions:
         title: FilterV1 represents a user-defined filter for determining which statuses should not be shown to the user.
         type: object
         x-go-name: FilterV1
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     filterV2:
         description: v2 filters have names and can include multiple phrases and status IDs to filter.
         properties:
@@ -1517,7 +1517,7 @@ definitions:
         title: FilterV2 represents a user-defined filter for determining which statuses should not be shown to the user.
         type: object
         x-go-name: FilterV2
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     headerFilter:
         properties:
             created_at:
@@ -1551,7 +1551,7 @@ definitions:
         title: HeaderFilter represents a regex value filter applied to one particular HTTP header (allow / block).
         type: object
         x-go-name: HeaderFilter
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     hostmeta:
         description: 'See: https://www.rfc-editor.org/rfc/rfc6415.html#section-3'
         properties:
@@ -1565,7 +1565,7 @@ definitions:
         title: HostMeta represents a hostmeta document.
         type: object
         x-go-name: HostMeta
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationAccounts:
         properties:
             allow_custom_css:
@@ -1590,7 +1590,7 @@ definitions:
         title: InstanceConfigurationAccounts models instance account config parameters.
         type: object
         x-go-name: InstanceConfigurationAccounts
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationMediaAttachments:
         properties:
             image_matrix_limit:
@@ -1643,7 +1643,7 @@ definitions:
         title: InstanceConfigurationMediaAttachments models instance media attachment config parameters.
         type: object
         x-go-name: InstanceConfigurationMediaAttachments
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationPolls:
         properties:
             max_characters_per_option:
@@ -1673,7 +1673,7 @@ definitions:
         title: InstanceConfigurationPolls models instance poll config parameters.
         type: object
         x-go-name: InstanceConfigurationPolls
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceConfigurationStatuses:
         properties:
             characters_reserved_per_url:
@@ -1706,7 +1706,7 @@ definitions:
         title: InstanceConfigurationStatuses models instance status config parameters.
         type: object
         x-go-name: InstanceConfigurationStatuses
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceRule:
         properties:
             id:
@@ -1718,7 +1718,7 @@ definitions:
         title: InstanceRule represents a single instance rule.
         type: object
         x-go-name: InstanceRule
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV1:
         properties:
             account_domain:
@@ -1875,7 +1875,7 @@ definitions:
         title: InstanceV1 models information about this instance.
         type: object
         x-go-name: InstanceV1
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV1Configuration:
         properties:
             accounts:
@@ -1895,7 +1895,7 @@ definitions:
         title: InstanceV1Configuration models instance configuration parameters.
         type: object
         x-go-name: InstanceV1Configuration
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV1URLs:
         properties:
             streaming_api:
@@ -1906,7 +1906,7 @@ definitions:
         title: InstanceV1URLs models instance-relevant URLs for client application consumption.
         type: object
         x-go-name: InstanceV1URLs
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2:
         properties:
             account_domain:
@@ -1998,7 +1998,7 @@ definitions:
         title: InstanceV2 models information about this instance.
         type: object
         x-go-name: InstanceV2
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Configuration:
         properties:
             accounts:
@@ -2024,7 +2024,7 @@ definitions:
         title: Configured values and limits for this instance.
         type: object
         x-go-name: InstanceV2Configuration
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2ConfigurationTranslation:
         properties:
             enabled:
@@ -2036,7 +2036,7 @@ definitions:
         title: Hints related to translation.
         type: object
         x-go-name: InstanceV2ConfigurationTranslation
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2ConfigurationVAPID:
         properties:
             public_key:
@@ -2046,7 +2046,7 @@ definitions:
         title: InstanceV2ConfigurationVAPID holds the instance's VAPID configuration.
         type: object
         x-go-name: InstanceV2ConfigurationVAPID
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Contact:
         properties:
             account:
@@ -2061,7 +2061,7 @@ definitions:
         title: Hints related to contacting a representative of the instance.
         type: object
         x-go-name: InstanceV2Contact
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Registrations:
         properties:
             approval_required:
@@ -2084,7 +2084,7 @@ definitions:
         title: Information about registering for this instance.
         type: object
         x-go-name: InstanceV2Registrations
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Thumbnail:
         properties:
             blurhash:
@@ -2130,7 +2130,7 @@ definitions:
         title: An image used to represent this instance.
         type: object
         x-go-name: InstanceV2Thumbnail
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2ThumbnailVersions:
         properties:
             '@1x':
@@ -2148,7 +2148,7 @@ definitions:
         title: Links to scaled resolution images, for high DPI screens.
         type: object
         x-go-name: InstanceV2ThumbnailVersions
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2URLs:
         properties:
             streaming:
@@ -2159,7 +2159,7 @@ definitions:
         title: InstanceV2URLs models instance-relevant URLs for client application consumption.
         type: object
         x-go-name: InstanceV2URLs
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Usage:
         properties:
             users:
@@ -2167,7 +2167,7 @@ definitions:
         title: Usage data for this instance.
         type: object
         x-go-name: InstanceV2Usage
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     instanceV2Users:
         properties:
             active_month:
@@ -2181,7 +2181,7 @@ definitions:
         title: Usage data related to users on this instance.
         type: object
         x-go-name: InstanceV2Users
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionPolicy:
         properties:
             can_favourite:
@@ -2193,7 +2193,7 @@ definitions:
         title: Interaction policy of a status.
         type: object
         x-go-name: InteractionPolicy
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionPolicyRules:
         properties:
             always:
@@ -2211,7 +2211,7 @@ definitions:
         title: Rules for one interaction type.
         type: object
         x-go-name: PolicyRules
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionPolicyValue:
         description: |-
             It can be EITHER one of the internal keywords listed below, OR a full-fledged ActivityPub URI of an Actor, like "https://example.org/users/some_user".
@@ -2228,7 +2228,7 @@ definitions:
         title: One interaction policy entry for a status.
         type: string
         x-go-name: PolicyValue
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     interactionRequest:
         properties:
             accepted_at:
@@ -2269,7 +2269,7 @@ definitions:
         title: InteractionRequest represents a pending, approved, or rejected interaction of type favourite, reply, or reblog.
         type: object
         x-go-name: InteractionRequest
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     list:
         properties:
             exclusive:
@@ -2297,7 +2297,7 @@ definitions:
         title: List represents a user-created list of accounts that the user follows.
         type: object
         x-go-name: List
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     markers:
         properties:
             home:
@@ -2307,7 +2307,7 @@ definitions:
         title: Marker represents the last read position within a user's timelines.
         type: object
         x-go-name: Marker
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mediaDimensions:
         properties:
             aspect:
@@ -2365,7 +2365,7 @@ definitions:
         title: MediaDimensions models detailed properties of a piece of media.
         type: object
         x-go-name: MediaDimensions
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mediaFocus:
         properties:
             x:
@@ -2385,7 +2385,7 @@ definitions:
         title: MediaFocus models the focal point of a piece of media.
         type: object
         x-go-name: MediaFocus
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mediaMeta:
         description: This can be metadata about an image, an audio file, video, etc.
         properties:
@@ -2398,7 +2398,7 @@ definitions:
         title: MediaMeta models media metadata.
         type: object
         x-go-name: MediaMeta
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     mutedAccount:
         properties:
             acct:
@@ -2586,7 +2586,7 @@ definitions:
         title: MutedAccount extends Account with a field used only by the muted user list.
         type: object
         x-go-name: MutedAccount
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     nodeinfo:
         description: 'See: https://nodeinfo.diaspora.software/schema.html'
         properties:
@@ -2620,7 +2620,7 @@ definitions:
         title: Nodeinfo represents a version 2.1 or version 2.0 nodeinfo schema.
         type: object
         x-go-name: Nodeinfo
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     notification:
         properties:
             account:
@@ -2651,7 +2651,7 @@ definitions:
         title: Notification represents a notification of an event relevant to the user.
         type: object
         x-go-name: Notification
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     oauthToken:
         properties:
             access_token:
@@ -2677,7 +2677,7 @@ definitions:
         title: Token represents an OAuth token used for authenticating with the GoToSocial API and performing actions.
         type: object
         x-go-name: Token
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     poll:
         properties:
             emojis:
@@ -2740,7 +2740,7 @@ definitions:
         title: Poll represents a poll attached to a status.
         type: object
         x-go-name: Poll
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     pollOption:
         properties:
             title:
@@ -2755,7 +2755,7 @@ definitions:
         title: PollOption represents the current vote counts for different poll options.
         type: object
         x-go-name: PollOption
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     report:
         properties:
             action_taken:
@@ -2831,7 +2831,7 @@ definitions:
         title: Report models a moderation report submitted to the instance, either via the client API or via the federated API.
         type: object
         x-go-name: Report
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     searchResult:
         properties:
             accounts:
@@ -2852,7 +2852,7 @@ definitions:
         title: SearchResult models a search result.
         type: object
         x-go-name: SearchResult
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     status:
         properties:
             account:
@@ -3015,7 +3015,7 @@ definitions:
         title: Status models a status or post.
         type: object
         x-go-name: Status
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     statusEdit:
         description: |-
             StatusEdit represents one historical revision of a status, containing
@@ -3061,7 +3061,7 @@ definitions:
                 x-go-name: SpoilerText
         type: object
         x-go-name: StatusEdit
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     statusReblogged:
         properties:
             account:
@@ -3224,7 +3224,7 @@ definitions:
         title: StatusReblogged represents a reblogged status.
         type: object
         x-go-name: StatusReblogged
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     statusSource:
         description: |-
             StatusSource represents the source text of a
@@ -3249,7 +3249,7 @@ definitions:
                 x-go-name: Text
         type: object
         x-go-name: StatusSource
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     swaggerCollection:
         properties:
             '@context':
@@ -3276,7 +3276,7 @@ definitions:
         title: SwaggerCollection represents an ActivityPub Collection.
         type: object
         x-go-name: SwaggerCollection
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/activitypub/users
     swaggerCollectionPage:
         properties:
             id:
@@ -3311,7 +3311,7 @@ definitions:
         title: SwaggerCollectionPage represents one page of a collection.
         type: object
         x-go-name: SwaggerCollectionPage
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/activitypub/users
     swaggerFeaturedCollection:
         properties:
             '@context':
@@ -3348,7 +3348,7 @@ definitions:
         title: SwaggerFeaturedCollection represents an ActivityPub OrderedCollection.
         type: object
         x-go-name: SwaggerFeaturedCollection
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/activitypub/users
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/activitypub/users
     tag:
         properties:
             following:
@@ -3378,7 +3378,7 @@ definitions:
         title: Tag represents a hashtag used within the content of a status.
         type: object
         x-go-name: Tag
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     theme:
         properties:
             description:
@@ -3396,7 +3396,7 @@ definitions:
         title: Theme represents one user-selectable preset CSS theme.
         type: object
         x-go-name: Theme
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     threadContext:
         description: |-
             ThreadContext models the tree or
@@ -3416,7 +3416,7 @@ definitions:
                 x-go-name: Descendants
         type: object
         x-go-name: ThreadContext
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     tokenInfo:
         description: The actual access token itself will never be sent via the API.
         properties:
@@ -3447,7 +3447,7 @@ definitions:
         title: TokenInfo represents metadata about one user-level access token.
         type: object
         x-go-name: TokenInfo
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     user:
         properties:
             admin:
@@ -3523,7 +3523,7 @@ definitions:
         title: User models fields relevant to one user.
         type: object
         x-go-name: User
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     webPushNotification:
         description: |-
             It does not contain an entire Notification, just the NotificationID and some preview information.
@@ -3570,7 +3570,7 @@ definitions:
         title: WebPushNotification represents a notification summary delivered to the client by the Web Push server.
         type: object
         x-go-name: WebPushNotification
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     webPushSubscription:
         properties:
             alerts:
@@ -3598,7 +3598,7 @@ definitions:
         title: WebPushSubscription represents a subscription to a Web Push server.
         type: object
         x-go-name: WebPushSubscription
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     webPushSubscriptionAlerts:
         properties:
             admin.report:
@@ -3656,7 +3656,7 @@ definitions:
         title: WebPushSubscriptionAlerts represents the specific events that this Web Push subscription will receive.
         type: object
         x-go-name: WebPushSubscriptionAlerts
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
     wellKnownResponse:
         description: See https://webfinger.net/
         properties:
@@ -3678,7 +3678,7 @@ definitions:
             For example, it would be returned from https://example.org/.well-known/webfinger?resource=acct:some_username@example.org
         type: object
         x-go-name: WellKnownResponse
-        x-go-package: github.com/superseriousbusiness/gotosocial/internal/api/model
+        x-go-package: code.superseriousbusiness/gotosocial/internal/api/model
 host: example.org
 info:
     contact:

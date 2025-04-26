@@ -24,13 +24,13 @@ import (
 	"strconv"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/gin-gonic/gin"
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
-	"github.com/superseriousbusiness/gotosocial/internal/util"
 	"github.com/ulule/limiter/v3"
 	"github.com/ulule/limiter/v3/drivers/store/memory"
 
-	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 )
 
 const rateLimitPeriod = 5 * time.Minute

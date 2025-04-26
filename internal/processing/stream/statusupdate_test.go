@@ -23,10 +23,10 @@ import (
 	"encoding/json"
 	"testing"
 
+	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
+	"code.superseriousbusiness.org/gotosocial/internal/stream"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"github.com/stretchr/testify/suite"
-	statusfilter "github.com/superseriousbusiness/gotosocial/internal/filter/status"
-	"github.com/superseriousbusiness/gotosocial/internal/stream"
-	"github.com/superseriousbusiness/gotosocial/internal/typeutils"
 )
 
 type StatusUpdateTestSuite struct {

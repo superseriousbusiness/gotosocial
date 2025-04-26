@@ -21,7 +21,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/superseriousbusiness/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // Filter stores a filter created by a local account.
