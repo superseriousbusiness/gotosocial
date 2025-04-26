@@ -151,7 +151,7 @@ GoToSocial 不支持[集群或任何形式的多节点部署](https://github.com
 
 ## 调优
 
-除了[示例配置文件](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml)中的众多实例调优选项之外，你还可以对运行 GoToSocial 实例的机器进行额外的调优。
+除了[示例配置文件](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml)中的众多实例调优选项之外，你还可以对运行 GoToSocial 实例的机器进行额外的调优。
 
 ### 交换内存
 

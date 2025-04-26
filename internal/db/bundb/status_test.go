@@ -193,7 +193,7 @@ func (suite *StatusTestSuite) TestDeleteStatus() {
 // To run this test for postgres specifically, start a postgres container on localhost
 // and then run:
 //
-// GTS_DB_TYPE=postgres GTS_DB_ADDRESS=localhost go test ./internal/db/bundb -run '^TestStatusTestSuite$' -testify.m '^(TestUpdateStatus)$' github.com/superseriousbusiness/gotosocial/internal/db/bundb
+// GTS_DB_TYPE=postgres GTS_DB_ADDRESS=localhost go test ./internal/db/bundb -run '^TestStatusTestSuite$' -testify.m '^(TestUpdateStatus)$' code.superseriousbusiness.org/gotosocial/internal/db/bundb
 func (suite *StatusTestSuite) TestUpdateStatus() {
 	// Take a copy of the status.
 	targetStatus := &gtsmodel.Status{}

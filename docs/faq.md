@@ -38,4 +38,4 @@ We introduced a sign-up flow in v0.16.0. The server you want to sign up to must 
 
 ## Why's it still in Beta?
 
-Take a look at the [list of open bugs](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and the [roadmap](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/ROADMAP.md) for a more detailed rundown.
+Take a look at the [list of open bugs](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) and the [roadmap](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/ROADMAP.md) for a more detailed rundown.

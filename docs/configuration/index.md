@@ -18,7 +18,7 @@ gotosocial --config-path ./config.yaml server start
 
 The command expects a file in [YAML](https://en.wikipedia.org/wiki/YAML) or [JSON](https://en.wikipedia.org/wiki/JSON) format.
 
-An example configuration file, with an explanation of each of the config fields, with default and example values, can be found [here](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml). This example file is also included in release downloads. 
+An example configuration file, with an explanation of each of the config fields, with default and example values, can be found [here](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml). This example file is also included in release downloads. 
 
 It's recommended to create your own configuration file with only the settings you need to change for your installation. This ensures you don't have to reconcile changes to defaults or adding/updating/removing settings from your configuration file that you haven't changed away from the defaults on every release.
 
@@ -125,7 +125,7 @@ This means in cases where you want to just try changing one thing, but don't wan
 
 Reasonable default values are provided for *most* of the configuration parameters, except in cases where a custom value is absolutely required.
 
-See the [example config file](https://https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml) for the default values, or run `gotosocial --help`.
+See the [example config file](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/example/config.yaml) for the default values, or run `gotosocial --help`.
 
 ## `GTS_WAZERO_COMPILATION_CACHE`
 

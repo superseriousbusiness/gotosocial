@@ -188,7 +188,7 @@ func TestFilterableText(t *testing.T) {
 		{
 			status: &gtsmodel.Status{
 				ContentWarning: "Nerd stuff",
-				Content:        `<p>Latest graphs for <a href="https://gts.superseriousbusiness.org/tags/gotosocial" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>GoToSocial</span></a> on <a href="https://github.com/ncruces/go-sqlite3" rel="nofollow noreferrer noopener" target="_blank">Wasm sqlite3</a> with <a href="https://codeberg.org/gruf/go-ffmpreg" rel="nofollow noreferrer noopener" target="_blank">embedded Wasm ffmpeg</a>, both running on <a href="https://wazero.io/" rel="nofollow noreferrer noopener" target="_blank">Wazero</a>, and configured with a <a href="https://https://codeberg.org/superseriousbusiness/gotosocial/src/commit/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266" rel="nofollow noreferrer noopener" target="_blank">50MiB db cache target</a>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything.</p>`,
+				Content:        `<p>Latest graphs for <a href="https://gts.superseriousbusiness.org/tags/gotosocial" class="mention hashtag" rel="tag nofollow noreferrer noopener" target="_blank">#<span>GoToSocial</span></a> on <a href="https://github.com/ncruces/go-sqlite3" rel="nofollow noreferrer noopener" target="_blank">Wasm sqlite3</a> with <a href="https://codeberg.org/gruf/go-ffmpreg" rel="nofollow noreferrer noopener" target="_blank">embedded Wasm ffmpeg</a>, both running on <a href="https://wazero.io/" rel="nofollow noreferrer noopener" target="_blank">Wazero</a>, and configured with a <a href="https://codeberg.org/superseriousbusiness/gotosocial/src/commit/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266" rel="nofollow noreferrer noopener" target="_blank">50MiB db cache target</a>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything.</p>`,
 				Attachments: []*gtsmodel.MediaAttachment{
 					{
 						Description: `Graph showing GtS using between 150-300 MiB of memory, steadily, over a few days.`,
@@ -206,7 +206,7 @@ func TestFilterableText(t *testing.T) {
 			},
 			expectedFields: []string{
 				"Nerd stuff",
-				"Latest graphs for #GoToSocial <https://gts.superseriousbusiness.org/tags/gotosocial> on Wasm sqlite3 <https://github.com/ncruces/go-sqlite3> with embedded Wasm ffmpeg <https://codeberg.org/gruf/go-ffmpreg>, both running on Wazero <https://wazero.io/>, and configured with a 50MiB db cache target <https://https://codeberg.org/superseriousbusiness/gotosocial/src/commit/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything.",
+				"Latest graphs for #GoToSocial <https://gts.superseriousbusiness.org/tags/gotosocial> on Wasm sqlite3 <https://github.com/ncruces/go-sqlite3> with embedded Wasm ffmpeg <https://codeberg.org/gruf/go-ffmpreg>, both running on Wazero <https://wazero.io/>, and configured with a 50MiB db cache target <https://codeberg.org/superseriousbusiness/gotosocial/src/commit/20fe430ef9ff3012a7a4dc2d01b68020c20e13bb/example/config.yaml#L259-L266>. This is the version we'll be releasing soonish, now we're happy with how we've tamed everything.",
 				"Graph showing GtS using between 150-300 MiB of memory, steadily, over a few days.",
 				"Another media attachment",
 				"Poll option 1",
