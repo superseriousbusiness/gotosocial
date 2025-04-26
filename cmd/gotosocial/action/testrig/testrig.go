@@ -35,7 +35,6 @@ import (
 	apiutil "github.com/superseriousbusiness/gotosocial/internal/api/util"
 	"github.com/superseriousbusiness/gotosocial/internal/cleaner"
 	"github.com/superseriousbusiness/gotosocial/internal/config"
-	"github.com/superseriousbusiness/gotosocial/internal/filter/visibility"
 	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
 	"github.com/superseriousbusiness/gotosocial/internal/language"
 	"github.com/superseriousbusiness/gotosocial/internal/log"
@@ -154,7 +153,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	emailSender := testrig.NewEmailSender("./web/template/", nil)
 	webPushSender := testrig.NewWebPushMockSender()
 	typeConverter := typeutils.NewConverter(state)
-	filter := visibility.NewFilter(state)
 
 	processor := testrig.NewTestProcessor(state, federator, emailSender, webPushSender, mediaManager)
 
