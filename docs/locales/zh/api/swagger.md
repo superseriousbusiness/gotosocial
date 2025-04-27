@@ -14,8 +14,8 @@ GoToSocial 使用 [go-swagger](https://github.com/go-swagger/go-swagger) 从代�
     
     有关更多背景信息，请参见以下问题：
     
-    - [#1958](https://github.com/superseriousbusiness/gotosocial/issues/1958)
-    - [#1944](https://github.com/superseriousbusiness/gotosocial/issues/1944)
-    - [#2641](https://github.com/superseriousbusiness/gotosocial/issues/2641)
+    - [#1958](https://codeberg.org/superseriousbusiness/gotosocial/issues/1958)
+    - [#1944](https://codeberg.org/superseriousbusiness/gotosocial/issues/1944)
+    - [#2641](https://codeberg.org/superseriousbusiness/gotosocial/issues/2641)
 
 <swagger-ui src="swagger.yaml"/>

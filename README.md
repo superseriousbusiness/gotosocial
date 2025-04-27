@@ -259,15 +259,15 @@ On top of this API, web developers are encouraged to build any front-end impleme
 
 ## Known Issues
 
-Since GoToSocial is still in beta, there are plenty of bugs. We use [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
+Since GoToSocial is still in beta, there are plenty of bugs. We use [GitHub issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
 
-Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://github.com/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
+Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://codeberg.org/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
 
 ---
 
 ## Installing GoToSocial
 
-Check our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation! And have a peruse of our [releases page](https://github.com/superseriousbusiness/gotosocial/releases).
+Check our [getting started](https://docs.gotosocial.org/en/latest/getting_started/) documentation! And have a peruse of our [releases page](https://codeberg.org/superseriousbusiness/gotosocial/releases).
 
 <!--releases-start-->
 ### Supported Platforms
@@ -339,7 +339,7 @@ To run from main using Docker, use the `snapshot` Docker tag. The Docker image `
 
 To run from main using a binary release, download the appropriate .tar.gz file for your architecture from our [self-hosted Minio S3 repository](https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots).
 
-Snapshot binary releases in the S3 bucket are keyed by Github commit hash. To get the latest one, sort by Last Modified, or check out the list of commits [here](https://github.com/superseriousbusiness/gotosocial/commits/main), copy the SHA of the latest one, and paste it in the Minio console filter. Snapshot binary releases are expired after 28 days, to keep our hosting costs down.
+Snapshot binary releases in the S3 bucket are keyed by Github commit hash. To get the latest one, sort by Last Modified, or check out the list of commits [here](https://codeberg.org/superseriousbusiness/gotosocial/commits/main), copy the SHA of the latest one, and paste it in the Minio console filter. Snapshot binary releases are expired after 28 days, to keep our hosting costs down.
 
 ### From Source
 
@@ -372,7 +372,7 @@ You would like to contribute to GtS? Great! ❤️❤️❤️ Check out the iss
 
 For questions and comments, you can [join our Matrix space](https://matrix.to/#/#gotosocial-space:superseriousbusiness.org) at `#gotosocial-space:superseriousbusiness.org`. This is the quickest way to reach the devs. You can also mail [admin@gotosocial.org](mailto:admin@gotosocial.org).
 
-For bugs and feature requests, please check to see if there's [already an issue](https://github.com/superseriousbusiness/gotosocial/issues), and if not, open one or use one of the above channels to make a request (if you don't have a Github account).
+For bugs and feature requests, please check to see if there's [already an issue](https://codeberg.org/superseriousbusiness/gotosocial/issues), and if not, open one or use one of the above channels to make a request (if you don't have a Github account).
 
 ---
 

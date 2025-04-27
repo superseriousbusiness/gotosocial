@@ -30,7 +30,7 @@ curl \
 
     本着这种精神，上述示例使用了`read`，这意味着当未来支持范围令牌时，应用将仅限于执行`read`操作。
 
-    你可以在[此处](https://github.com/superseriousbusiness/gotosocial/issues/2232)阅读更多关于计划中 OAuth 安全功能的信息。
+    你可以在[此处](https://codeberg.org/superseriousbusiness/gotosocial/issues/2232)阅读更多关于计划中 OAuth 安全功能的信息。
 
 成功调用会返回一个带有 `client_id` 和 `client_secret` 的响应，我们将在后续流程中需要使用这些信息。它看起来像这样：
 

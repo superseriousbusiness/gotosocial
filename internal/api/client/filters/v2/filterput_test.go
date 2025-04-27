@@ -359,7 +359,7 @@ func (suite *FiltersTestSuite) setFilterExpiration(id string, expiresIn *int, ex
 	return filter
 }
 
-// Regression test for https://github.com/superseriousbusiness/gotosocial/issues/3497
+// Regression test for https://codeberg.org/superseriousbusiness/gotosocial/issues/3497
 func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateEmptyString() {
 	id := suite.testFilters["local_account_1_filter_2"].ID
 
@@ -376,7 +376,7 @@ func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateEmptyString() {
 	suite.Nil(filter.ExpiresAt)
 }
 
-// Regression test related to https://github.com/superseriousbusiness/gotosocial/issues/3497
+// Regression test related to https://codeberg.org/superseriousbusiness/gotosocial/issues/3497
 func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateNullJSON() {
 	id := suite.testFilters["local_account_1_filter_3"].ID
 
@@ -395,7 +395,7 @@ func (suite *FiltersTestSuite) TestPutFilterUnsetExpirationDateNullJSON() {
 	suite.Nil(filter.ExpiresAt)
 }
 
-// Regression test related to https://github.com/superseriousbusiness/gotosocial/issues/3497
+// Regression test related to https://codeberg.org/superseriousbusiness/gotosocial/issues/3497
 func (suite *FiltersTestSuite) TestPutFilterUnalteredExpirationDateJSON() {
 	id := suite.testFilters["local_account_1_filter_4"].ID
 

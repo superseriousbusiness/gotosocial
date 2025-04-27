@@ -12,7 +12,7 @@
 我们提供了一个 GoToSocial 的 AppArmor 示例策略，你可以按以下步骤获取并安装：
 
 ```sh
-$ curl -LO 'https://github.com/superseriousbusiness/gotosocial/raw/main/example/apparmor/gotosocial'
+$ curl -LO 'https://codeberg.org/superseriousbusiness/gotosocial/raw/main/example/apparmor/gotosocial'
 $ sudo install -o root -g root gotosocial /etc/apparmor.d/gotosocial
 $ sudo apparmor_parser -Kr /etc/apparmor.d/gotosocial
 ```

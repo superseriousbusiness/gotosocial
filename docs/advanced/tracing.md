@@ -19,7 +19,7 @@ tracing-insecure-transport: true
 [obs]: ../configuration/observability.md
 [tempo]: https://grafana.com/oss/tempo/
 [grafana]: https://grafana.com/oss/grafana/
-[ext]: https://github.com/superseriousbusiness/gotosocial/tree/main/example/tracing
+[ext]: https://codeberg.org/superseriousbusiness/gotosocial/tree/main/example/tracing
 
 ## Querying and visualising traces
 

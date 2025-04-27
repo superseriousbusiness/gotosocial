@@ -32,4 +32,4 @@ You'll need to update the following settings:
 * `db-sqlite-journal-mode`
 * `db-sqlite-synchronous`
 
-We don't provide any recommendations as this will vary based on the solution you're using. See [this issue](https://github.com/superseriousbusiness/gotosocial/issues/3360#issuecomment-2380332027) for what you could potentially set those values to.
+We don't provide any recommendations as this will vary based on the solution you're using. See [this issue](https://codeberg.org/superseriousbusiness/gotosocial/issues/3360#issuecomment-2380332027) for what you could potentially set those values to.

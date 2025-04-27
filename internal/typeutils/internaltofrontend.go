@@ -50,7 +50,7 @@ const (
 	instancePollsMinExpiration               = 300     // seconds
 	instancePollsMaxExpiration               = 2629746 // seconds
 	instanceAccountsMaxFeaturedTags          = 10
-	instanceAccountsMaxProfileFields         = 6 // FIXME: https://github.com/superseriousbusiness/gotosocial/issues/1876
+	instanceAccountsMaxProfileFields         = 6 // FIXME: https://codeberg.org/superseriousbusiness/gotosocial/issues/1876
 	instanceSourceURL                        = "https://codeberg.org/superseriousbusiness/gotosocial"
 	instanceMastodonVersion                  = "3.5.3"
 )
@@ -2155,7 +2155,7 @@ func (c *Converter) ConversationToAPIConversation(
 	// If no other accounts are involved in this convo,
 	// just include the requesting account and return.
 	//
-	// See: https://github.com/superseriousbusiness/gotosocial/issues/3385#issuecomment-2394033477
+	// See: https://codeberg.org/superseriousbusiness/gotosocial/issues/3385#issuecomment-2394033477
 	otherAcctsLen := len(conversation.OtherAccounts)
 	if otherAcctsLen == 0 {
 		apiAcct, err := c.AccountToAPIAccountPublic(ctx, requester)

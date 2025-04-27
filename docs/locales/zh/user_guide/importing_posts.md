@@ -28,7 +28,7 @@
 
 ## 如何导入你的帖文
 
-当前，该过程需要借助利用 GTS API 的第三方工具。未来，我们可能会将此功能整合到 GoToSocial 内部：请关注 [issue #2](https://github.com/superseriousbusiness/gotosocial/issues/2) 以获取最新动态。
+当前，该过程需要借助利用 GTS API 的第三方工具。未来，我们可能会将此功能整合到 GoToSocial 内部：请关注 [issue #2](https://codeberg.org/superseriousbusiness/gotosocial/issues/2) 以获取最新动态。
 
 [`slurp`](https://github.com/VyrCossont/slurp)（由 GTS 开发者 Vyr Cossont 开发）可以导入来自 [Mastodon 归档](https://github.com/VyrCossont/slurp?tab=readme-ov-file#importing-a-mastodon-archive) 和 [Pixelfed 归档](https://github.com/VyrCossont/slurp?tab=readme-ov-file#importing-a-pixelfed-archive) 的帖文。请查阅 `slurp` 的文档、[Mastodon 关于导出数据的说明](https://docs.joinmastodon.org/user/moving/#export) 以及 Jeff Sikes 的文章 [“使用 Slurp 将 Pixelfed 帖文导入 GoToSocial”](https://box464.com/posts/gotosocial-slurp/) 以了解更多细节。你需要熟悉命令行基础，并提前安装 Git 和 Go 编译器。
 

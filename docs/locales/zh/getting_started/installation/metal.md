@@ -34,14 +34,14 @@ cd /gotosocial
 现在，下载与你运行的操作系统和架构相对应的最新 GoToSocial 发行版压缩包。
 
 !!! tip "提示"
-    你可以在[这里](https://github.com/superseriousbusiness/gotosocial/releases)找到按发布时间排列的发布列表，最新的发行版位于最上面。
+    你可以在[这里](https://codeberg.org/superseriousbusiness/gotosocial/releases)找到按发布时间排列的发布列表，最新的发行版位于最上面。
 
 例如，下载适用于 64 位 Linux 的版本：
 
 ```bash
 GTS_VERSION=X.Y.Z # 替换此处
 GTS_TARGET=linux_amd64
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
+wget https://codeberg.org/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 ```
 
 然后解压：

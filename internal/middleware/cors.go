@@ -56,7 +56,7 @@ func CORS() gin.HandlerFunc {
 
 			// Some clients require this; see:
 			//   - https://docs.joinmastodon.org/methods/statuses/#headers
-			//   - https://github.com/superseriousbusiness/gotosocial/issues/1664
+			//   - https://codeberg.org/superseriousbusiness/gotosocial/issues/1664
 			"Idempotency-Key",
 
 			// needed for websocket upgrade requests

@@ -51,7 +51,7 @@ func (suite *ExtractVisibilityTestSuite) TestExtractVisibilityFollowersOnly() {
 }
 
 func (suite *ExtractVisibilityTestSuite) TestExtractVisibilityFollowersOnlyAnnounce() {
-	// https://github.com/superseriousbusiness/gotosocial/issues/267
+	// https://codeberg.org/superseriousbusiness/gotosocial/issues/267
 	a := suite.addressable4
 	visibility, err := ap.ExtractVisibility(a, "https://example.org/users/someone/followers")
 	suite.NoError(err)

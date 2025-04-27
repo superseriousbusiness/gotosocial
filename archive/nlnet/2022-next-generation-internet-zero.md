@@ -10,7 +10,7 @@ GoToSocial
 
 > Website / wiki
 
-https://github.com/superseriousbusiness/gotosocial / https://docs.gotosocial.org
+https://codeberg.org/superseriousbusiness/gotosocial / https://docs.gotosocial.org
 
 > Abstract: Can you explain the whole project and its expected outcome(s). (you have 1200 characters)
 
@@ -87,8 +87,8 @@ Thirdly, we want to make GtS as customizable as possible by allowing admins to e
 
 The main technical challenges we foresee on the project are:
 
-1. Ensuring compatibility with other AP servers (see here: https://github.com/superseriousbusiness/gotosocial/projects/4).
-2. Ensuring compatibility with clients that use the Mastodon API (see here: https://github.com/superseriousbusiness/gotosocial/projects/5).
+1. Ensuring compatibility with other AP servers (see here: https://codeberg.org/superseriousbusiness/gotosocial/projects/4).
+2. Ensuring compatibility with clients that use the Mastodon API (see here: https://codeberg.org/superseriousbusiness/gotosocial/projects/5).
 3. Designing nuanced federation safety features that allow instance admins to screen federation without totally breaking it. This will require careful design discussions and lots of testing.
 4. Implementing our own open-source http signature library with a reference implementation of the latest draft of the http signature proposal: https://httpwg.org/http-extensions/draft-ietf-httpbis-message-signatures.html.
 5. Writing + maintaining our own extensions to the AP protocol (see below).

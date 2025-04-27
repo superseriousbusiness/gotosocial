@@ -258,15 +258,15 @@ GoToSocial 支持 [OpenID Connect (OIDC)](https://openid.net/connect/) 身份提
 
 ## 已知问题
 
-由于 GoToSocial 仍处于测试阶段，存在很多错误。我们使用 [GitHub issues](https://github.com/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) 跟踪这些问题。
+由于 GoToSocial 仍处于测试阶段，存在很多错误。我们使用 [GitHub issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) 跟踪这些问题。
 
-由于每个 ActivityPub 服务端实现对协议的解释略有不同，有些服务端尚未与 GoToSocial 正常联合。我们在 [这个项目](https://github.com/superseriousbusiness/gotosocial/projects/4) 中跟踪这些问题。最终，我们希望确保任何可以与 Mastodon 正确联合的 ActivityPub 实现也能够与 GoToSocial 联合。
+由于每个 ActivityPub 服务端实现对协议的解释略有不同，有些服务端尚未与 GoToSocial 正常联合。我们在 [这个项目](https://codeberg.org/superseriousbusiness/gotosocial/projects/4) 中跟踪这些问题。最终，我们希望确保任何可以与 Mastodon 正确联合的 ActivityPub 实现也能够与 GoToSocial 联合。
 
 ---
 
 ## 安装 GoToSocial
 
-查看我们的 [入门文档](https://docs.gotosocial.org/zh-cn/latest/getting_started/)，并浏览我们的 [发布页面](https://github.com/superseriousbusiness/gotosocial/releases)。
+查看我们的 [入门文档](https://docs.gotosocial.org/zh-cn/latest/getting_started/)，并浏览我们的 [发布页面](https://codeberg.org/superseriousbusiness/gotosocial/releases)。
 
 <!--releases-start-->
 ### 支持的平台
@@ -340,7 +340,7 @@ Docker 镜像 `superseriousbusiness/gotosocial:latest` 始终对应于最新稳�
 
 要使用二进制发布从主分支运行，请从我们的 [自托管 Minio S3 仓库](https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots)下载适合你架构的 .tar.gz 文件。
 
-S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获取最新的，请按上次修改时间排序，或者查看 [这里的提交列表](https://github.com/superseriousbusiness/gotosocial/commits/main)，复制最新的 SHA，并在 Minio 控制台过滤器中粘贴。快照二进制发布会在 28 天后过期，以降低我们的托管成本。
+S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获取最新的，请按上次修改时间排序，或者查看 [这里的提交列表](https://codeberg.org/superseriousbusiness/gotosocial/commits/main)，复制最新的 SHA，并在 Minio 控制台过滤器中粘贴。快照二进制发布会在 28 天后过期，以降低我们的托管成本。
 
 ### 从源代码构建
 
@@ -373,7 +373,7 @@ S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获
 
 如果你有问题或反馈，可以[加入我们的 Matrix 空间](https://matrix.to/#/#gotosocial-space:superseriousbusiness.org)，地址是 `#gotosocial-space:superseriousbusiness.org`。这是联系开发人员的最快方式。你也可以发送邮件至 [admin@gotosocial.org](mailto:admin@gotosocial.org)。
 
-对于错误和功能请求，请先查看是否[已有相应问题](https://github.com/superseriousbusiness/gotosocial/issues)，如果没有，可以开一个新问题工单(issue)，或者使用上述渠道提出请求（如果你没有 Github 账户的话）。
+对于错误和功能请求，请先查看是否[已有相应问题](https://codeberg.org/superseriousbusiness/gotosocial/issues)，如果没有，可以开一个新问题工单(issue)，或者使用上述渠道提出请求（如果你没有 Github 账户的话）。
 
 ---
 

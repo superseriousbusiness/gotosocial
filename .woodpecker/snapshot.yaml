@@ -4,7 +4,7 @@ when:
 
 steps:
   snapshot:
-    # https://github.com/superseriousbusiness/gotosocial-drone-build
+    # https://codeberg.org/superseriousbusiness/gotosocial-drone-build
     image: superseriousbusiness/gotosocial-drone-build:0.8.0
     pull: true
 

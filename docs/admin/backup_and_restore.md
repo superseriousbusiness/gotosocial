@@ -178,7 +178,7 @@ hooks:
 
 For PostgreSQL, you'll want to use `postgresql_databases` instead.
 
-The file mentioned in `patterns_from` can be created by transforming the output from the GoToSocial CLI media [`list-attachments`](cli.md#gotosocial-admin-media-list-attachments) and [`list-emojis`](cli.md#gotosocial-admin-media-list-emojis) commands. In order to generate the right patterns you can use the [`media-to-borg-patterns.py`](https://github.com/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) script. How Borg patterns work is explained in [their documentation](https://man.archlinux.org/man/borg-patterns.1).
+The file mentioned in `patterns_from` can be created by transforming the output from the GoToSocial CLI media [`list-attachments`](cli.md#gotosocial-admin-media-list-attachments) and [`list-emojis`](cli.md#gotosocial-admin-media-list-emojis) commands. In order to generate the right patterns you can use the [`media-to-borg-patterns.py`](https://codeberg.org/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) script. How Borg patterns work is explained in [their documentation](https://man.archlinux.org/man/borg-patterns.1).
 
 You'll need to put that file on your GoToSocial instance and make sure the file is executable. It requires Python 3 which you will already have if you have Borg and Borgmatic installed. It only depends on the Python standard library.
 

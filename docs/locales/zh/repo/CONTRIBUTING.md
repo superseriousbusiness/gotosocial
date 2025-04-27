@@ -43,7 +43,7 @@
 
 目前，我们使用 Github 的问题追踪系统来管理错误报告与功能请求。
 
-你可以在[此处](https://github.com/superseriousbusiness/gotosocial/issues "GoToSocial 的 Github 问题页")查看所有开放的问题。
+你可以在[此处](https://codeberg.org/superseriousbusiness/gotosocial/issues "GoToSocial 的 Github 问题页")查看所有开放的问题。
 
 在创建新问题之前，不论是错误还是功能请求，**请现仔细搜索所有仍处于打开状态和已被关闭的问题，以确保它尚未被解决过**。你可以使用 Github 的关键字搜索来进行此操作。如果你的问题与已有问题重复，它将被关闭。
 
@@ -123,8 +123,6 @@ conda env export -n gotosocial-docs --from-history --override-channels -c conda-
 
 Golang 的一个特点是，它所依赖的源代码管理路径与 `go.mod` 中使用的路径以及各 Go 文件中的包导入路径相同。这使得使用分支有些棘手。
 
-假设你要将 GoToSocial 分支到 `github.com/yourgithubname/gotosocial`，然后将存储库克隆到 `~/go/src/github.com/yourgithubname/gotosocial`。你可能会在尝试运行测试或构建时遇到错误，因此你可能会更改 `go.mod` 文件，使模块名称为 `github.com/yourgithubname/gotosocial` 而不是 `github.com/superseriousbusiness/gotosocial`。但这样做会破坏项目中的所有导入路径。这简直是噩梦！于是，你不得不逐一在源代码文件中将 `github.com/superseriousbusiness/gotosocial` 替换为 `github.com/yourgithubname/gotosocial`。这样确实能行得通，但一旦你决定对原始存储库发起合并请求，所有路径变更都会被包含在内！哦不！
-
 正确的解决方案是先派生存储库，然后克隆上游存储库，并将上游存储库的 `origin` 设置为你分支的源。
 
 有关更多细节，请参阅[这篇博客](https://blog.sgmansfield.com/2016/06/working-with-forks-in-go/)。
@@ -136,11 +134,11 @@ Golang 的一个特点是，它所依赖的源代码管理路径与 `go.mod` 中
 >
 > 现在克隆上游存储库（而非派生的存储库）：
 >
-> `mkdir -p ~/go/src/github.com/superseriousbusiness && git clone git@github.com:superseriousbusiness/gotosocial ~/go/src/github.com/superseriousbusiness/gotosocial`
+> `mkdir -p ~/go/src/code.superseriousbusiness.org && git clone git@codeberg.org:superseriousbusiness/gotosocial ~/go/src/code.superseriousbusiness.org/gotosocial`
 >
 > 转到你的计算机上上游存储库的顶级目录：
 >
-> `cd ~/go/src/github.com/superseriousbusiness/gotosocial`
+> `cd ~/go/src/code.superseriousbusiness.org/gotosocial`
 >
 > 将当前的 origin 远程源重命名为 upstream：
 >
@@ -148,7 +146,7 @@ Golang 的一个特点是，它所依赖的源代码管理路径与 `go.mod` 中
 >
 > 把你的派生分支添加为 origin：
 >
-> `git remote add origin git@github.com:yourgithubname/gotosocial`
+> `git remote add origin git@codeberg.org:username/gotosocial`
 >
 
 在第一次构建项目之前，一定要运行 `git fetch`。
@@ -159,7 +157,7 @@ Golang 的一个特点是，它所依赖的源代码管理路径与 `go.mod` 中
 
 要开始构建，你需要先安装 Go。GtS 目前使用 Go 1.21，因此你也应该使用这个版本。安装指南见[此处](https://golang.org/doc/install)。
 
-安装 go 后，将此存储库克隆到你的 Go 路径中。通常，此路径为 `~/go/src/github.com/superseriousbusiness/gotosocial`。
+安装 go 后，将此存储库克隆到你的 Go 路径中。通常，此路径为 `~/go/src/code.superseriousbusiness.org/gotosocial`。
 
 安装完上述环境与依赖后，可以尝试构建项目：`./scripts/build.sh`。此命令将构建 `gotosocial` 二进制文件。
 
@@ -396,7 +394,7 @@ golangci-lint run
 
 ### 测试
 
-GoToSocial 提供了一个 [testrig](https://github.com/superseriousbusiness/gotosocial/tree/main/testrig)，包含一些可以用于集成测试的模拟包。
+GoToSocial 提供了一个 [testrig](https://codeberg.org/superseriousbusiness/gotosocial/tree/main/testrig)，包含一些可以用于集成测试的模拟包。
 
 没有模拟的一个东西是数据库接口，因为使用内存中的 SQLite 数据库比模拟所有东西要简单得多。
 

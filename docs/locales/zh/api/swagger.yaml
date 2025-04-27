@@ -1562,7 +1562,7 @@ definitions:
             max_profile_fields:
                 description: |-
                     此实例允许每个账户设置的最大附加字段数。
-                    目前不可配置，硬编码为 6。详见 (https://github.com/superseriousbusiness/gotosocial/issues/1876)
+                    目前不可配置，硬编码为 6。详见 (https://codeberg.org/superseriousbusiness/gotosocial/issues/1876)
                 format: int64
                 type: integer
                 x-go-name: MaxProfileFields
@@ -1947,7 +1947,7 @@ definitions:
                 x-go-name: Rules
             source_url:
                 description: 本实例部署的软件的源代码 URL，应 AGPL 许可要求提供。
-                example: https://github.com/superseriousbusiness/gotosocial
+                example: https://codeberg.org/superseriousbusiness/gotosocial
                 type: string
                 x-go-name: SourceURL
             terms:

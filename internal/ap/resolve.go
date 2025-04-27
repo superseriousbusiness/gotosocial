@@ -78,7 +78,7 @@ func ResolveIncomingActivity(r *http.Request) (pub.Activity, bool, gtserror.With
 	}
 
 	// Normalize any Statusable, Accountable, Pollable fields found.
-	// (see: https://github.com/superseriousbusiness/gotosocial/issues/1661)
+	// (see: https://codeberg.org/superseriousbusiness/gotosocial/issues/1661)
 	NormalizeIncomingActivity(activity, raw)
 
 	return activity, true, nil

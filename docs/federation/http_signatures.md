@@ -20,7 +20,7 @@ When sending a request, GtS will attempt first *with* query parameters included.
 
 When receiving a request, GtS will attempt to validate the signature first *with* query parameters included. If the signature fails to validate, it will reattempt validation without query parameters included.
 
-See [#894](https://github.com/superseriousbusiness/gotosocial/issues/894) for more details.
+See [#894](https://codeberg.org/superseriousbusiness/gotosocial/issues/894) for more details.
 
 ## Incoming Requests
 
@@ -38,7 +38,7 @@ ED25519
 
 GoToSocial request signing is implemented in [internal/transport](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/transport/signing.go).
 
-Once https://github.com/superseriousbusiness/gotosocial/issues/2991 is resolved, GoToSocial will use the `(created)` pseudo-header instead of `date`.
+Once https://codeberg.org/superseriousbusiness/gotosocial/issues/2991 is resolved, GoToSocial will use the `(created)` pseudo-header instead of `date`.
 
 For now however, when assembling signatures:
 
@@ -82,4 +82,4 @@ For Mastodon, the public key of a user is served as part of that user's Actor re
 
 Remote servers federating with GoToSocial should extract the public key from the `publicKey` field. Then, they should use the `owner` field of the public key to further dereference the full version of the Actor, using a signed `GET` request.
 
-This behavior was introduced as a way of avoiding having remote servers make unsigned `GET` requests to the full Actor endpoint. However, this may change in future as it is not compliant and causes issues. Tracked in [this issue](https://github.com/superseriousbusiness/gotosocial/issues/1186).
+This behavior was introduced as a way of avoiding having remote servers make unsigned `GET` requests to the full Actor endpoint. However, this may change in future as it is not compliant and causes issues. Tracked in [this issue](https://codeberg.org/superseriousbusiness/gotosocial/issues/1186).

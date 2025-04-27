@@ -112,7 +112,7 @@ dockers:
     - "--label=org.opencontainers.image.description=Fast, fun, small ActivityPub server."
     - "--label=org.opencontainers.image.url=https://docs.gotosocial.org"
     - "--label=org.opencontainers.image.documentation=https://docs.gotosocial.org/en/latest/getting_started/installation/container/"
-    - "--label=org.opencontainers.image.source=https://github.com/superseriousbusiness/gotosocial"
+    - "--label=org.opencontainers.image.source=https://codeberg.org/superseriousbusiness/gotosocial"
     - "--label=org.opencontainers.image.version={{.Version}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.created={{.Date}}"
@@ -141,7 +141,7 @@ dockers:
     - "--label=org.opencontainers.image.description=Fast, fun, small ActivityPub server."
     - "--label=org.opencontainers.image.url=https://docs.gotosocial.org"
     - "--label=org.opencontainers.image.documentation=https://docs.gotosocial.org/en/latest/getting_started/installation/container/"
-    - "--label=org.opencontainers.image.source=https://github.com/superseriousbusiness/gotosocial"
+    - "--label=org.opencontainers.image.source=https://codeberg.org/superseriousbusiness/gotosocial"
     - "--label=org.opencontainers.image.version={{.Version}}"
     - "--label=org.opencontainers.image.revision={{.FullCommit}}"
     - "--label=org.opencontainers.image.created={{.Date}}"
@@ -278,7 +278,7 @@ release:
     - Changed `pee pee` to `poo poo`.
     - Changed `wee wee` to `more wee wee`.
     
-    You can see a diff of the config file here: https://github.com/superseriousbusiness/gotosocial/compare/{{ .PreviousTag }}...{{ .Tag }}#diff-c071e03510b2c57e193a44503fd9528a785f0f411497cc75841a9f8d0b1ac622
+    You can see a diff of the config file here: https://codeberg.org/superseriousbusiness/gotosocial/compare/{{ .PreviousTag }}...{{ .Tag }}#diff-c071e03510b2c57e193a44503fd9528a785f0f411497cc75841a9f8d0b1ac622
     
     ### Database Migrations
     
@@ -300,12 +300,12 @@ release:
 
     | OS      | Architecture            | Support level                      | Binary archive                                                                                                                                                       | Docker                                                  |
     | ------- | ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-    | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                   | `superseriousbusiness/gotosocial:{{ .Version }}`        |
-    | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                   | `superseriousbusiness/gotosocial:{{ .Version }}`        |
-    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [freebsd_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64.tar.gz)               | Not provided                                            |
-    | FreeBSD | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [freebsd_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_arm64.tar.gz)               | Not provided                                            |
-    | NetBSD  | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [netbsd_amd64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_amd64.tar.gz)                 | Not provided                                            |
-    | NetBSD  | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [netbsd_arm64.tar.gz](https://github.com/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_arm64.tar.gz)                 | Not provided                                            |
+    | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                   | `superseriousbusiness/gotosocial:{{ .Version }}`        |
+    | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                   | `superseriousbusiness/gotosocial:{{ .Version }}`        |
+    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [freebsd_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64.tar.gz)               | Not provided                                            |
+    | FreeBSD | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [freebsd_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_arm64.tar.gz)               | Not provided                                            |
+    | NetBSD  | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [netbsd_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_amd64.tar.gz)                 | Not provided                                            |
+    | NetBSD  | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [netbsd_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_arm64.tar.gz)                 | Not provided                                            |
     
     #### `nowasm`
     

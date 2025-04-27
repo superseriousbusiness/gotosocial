@@ -51,7 +51,7 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		// authenticate this request. However, we'll only serve
 		// the bare minimum user profile needed for the pubkey.
 		//
-		// TODO: https://github.com/superseriousbusiness/gotosocial/issues/1186
+		// TODO: https://codeberg.org/superseriousbusiness/gotosocial/issues/1186
 		minimalPerson, err := p.converter.AccountToASMinimal(ctx, receiver)
 		if err != nil {
 			err := gtserror.Newf("error converting to minimal account: %w", err)

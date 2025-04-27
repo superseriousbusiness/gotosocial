@@ -18,7 +18,7 @@ Different distributions have different sandboxing mechanisms they prefer and sup
 We ship an example AppArmor policy for GoToSocial, which you can retrieve and install as follows:
 
 ```sh
-$ curl -LO 'https://github.com/superseriousbusiness/gotosocial/raw/main/example/apparmor/gotosocial'
+$ curl -LO 'https://codeberg.org/superseriousbusiness/gotosocial/raw/main/example/apparmor/gotosocial'
 $ sudo install -o root -g root gotosocial /etc/apparmor.d/gotosocial
 $ sudo apparmor_parser -Kr /etc/apparmor.d/gotosocial
 ```

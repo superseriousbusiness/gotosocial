@@ -136,7 +136,7 @@ Traditionally, these Exif data points are used by photographers to help them cat
 To avoid leaking information about your location, GoToSocial makes a best-effort attempt to remove Exif information from media when you upload it, by zeroing out Exif data points.
 
 !!! danger
-    For your convenience and privacy, GoToSocial currently removes Exif tags from image files when they are uploaded. However, **automated removal of Exif data from mp4 videos is not currently supported** (see [#2577](https://github.com/superseriousbusiness/gotosocial/issues/2577)).
+    For your convenience and privacy, GoToSocial currently removes Exif tags from image files when they are uploaded. However, **automated removal of Exif data from mp4 videos is not currently supported** (see [#2577](https://codeberg.org/superseriousbusiness/gotosocial/issues/2577)).
     
     Before you upload a video to GoToSocial, we recommend ensuring that Exif data tags are already removed from the video. You can find various tools and services online for doing this.
     

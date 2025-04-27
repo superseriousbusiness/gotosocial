@@ -570,7 +570,7 @@ func (suite *ASToInternalTestSuite) TestParseAnnounce() {
 
 func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 	// Hopefully comprehensive checks for
-	// https://github.com/superseriousbusiness/gotosocial/issues/2527.
+	// https://codeberg.org/superseriousbusiness/gotosocial/issues/2527.
 
 	const honk_user = `{
   "@context": "https://www.w3.org/ns/activitystreams",

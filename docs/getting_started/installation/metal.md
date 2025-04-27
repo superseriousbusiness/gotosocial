@@ -34,14 +34,14 @@ cd /gotosocial
 Now, download the latest GoToSocial release archive corresponding to the operating system and architecture you're running on.
 
 !!! tip
-    You can find the list of releases [right here](https://github.com/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.
+    You can find the list of releases [right here](https://codeberg.org/superseriousbusiness/gotosocial/releases), arranged with the newest release at the top.
 
 For example, to download a version for running on 64-bit Linux:
 
 ```bash
 GTS_VERSION=X.Y.Z # replace this
 GTS_TARGET=linux_amd64
-wget https://github.com/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
+wget https://codeberg.org/superseriousbusiness/gotosocial/releases/download/v${GTS_VERSION}/gotosocial_${GTS_VERSION}_${GTS_TARGET}.tar.gz
 ```
 
 Then extract it:

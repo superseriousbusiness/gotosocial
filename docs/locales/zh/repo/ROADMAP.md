@@ -47,13 +47,13 @@
 
 ### 2023 年中
 
-- [x] **话题标签** -- 实现话题标签的联合与查看，让用户发现他们可能感兴趣的帖文。（完成！ https://github.com/superseriousbusiness/gotosocial/pull/2032）。
+- [x] **话题标签** -- 实现话题标签的联合与查看，让用户发现他们可能感兴趣的帖文。（完成！ https://codeberg.org/superseriousbusiness/gotosocial/pulls/2032）。
 
 ### 2023 年中到年底
 
-- [x] **投票** -- 实现对投票的解析、创建和参与功能。（完成！ https://github.com/superseriousbusiness/gotosocial/pull/2330）
-- [x] **静音帖文/贴文串** -- 取消订阅贴文串的回复通知；不在时间线上显示特定帖文。（完成！ https://github.com/superseriousbusiness/gotosocial/pull/2278）
-- [x] **有限联合/白名单** -- 允许实例管理员默认阻止与其他实例的联合。（完成！ https://github.com/superseriousbusiness/gotosocial/pull/2200）
+- [x] **投票** -- 实现对投票的解析、创建和参与功能。（完成！ https://codeberg.org/superseriousbusiness/gotosocial/pulls/2330）
+- [x] **静音帖文/贴文串** -- 取消订阅贴文串的回复通知；不在时间线上显示特定帖文。（完成！ https://codeberg.org/superseriousbusiness/gotosocial/pulls/2278）
+- [x] **有限联合/白名单** -- 允许实例管理员默认阻止与其他实例的联合。（完成！ https://codeberg.org/superseriousbusiness/gotosocial/pulls/2200）
 
 ### 2024 年初
 

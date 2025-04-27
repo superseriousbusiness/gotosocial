@@ -307,7 +307,7 @@ func addressable3() ap.Addressable {
 }
 
 func addressable4() vocab.ActivityStreamsAnnounce {
-	// https://github.com/superseriousbusiness/gotosocial/issues/267
+	// https://codeberg.org/superseriousbusiness/gotosocial/issues/267
 	announceJson := []byte(`
 {
 	"@context": "https://www.w3.org/ns/activitystreams",

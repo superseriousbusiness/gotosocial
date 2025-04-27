@@ -68,7 +68,7 @@ If you decide to use a VPS instead, you can spin yourself up something cheap wit
 !!! warning "Cloud storage volumes"
     Not all cloud VPS storage offerings are equal, and just because something claims to be backed by an SSD doesn't mean that it will necessarily be suitable to run a GoToSocial instance.
     
-    The [performance of Hetzner Cloud Volumes](https://github.com/superseriousbusiness/gotosocial/issues/2471#issuecomment-1891098323) is not guaranteed and seems to have very volatile latency. This will result in your GoToSocial instance performing poorly.
+    The [performance of Hetzner Cloud Volumes](https://codeberg.org/superseriousbusiness/gotosocial/issues/2471#issuecomment-1891098323) is not guaranteed and seems to have very volatile latency. This will result in your GoToSocial instance performing poorly.
 
 !!! danger "Oracle Free Tier"
     [Oracle Cloud Free Tier](https://www.oracle.com/cloud/free/) servers are not suitable for a GoToSocial deployment if you intend to federate with more than a handful of other instances and users.
@@ -149,7 +149,7 @@ If you can't leave `443` and `80` open on the machine, don't worry! You can conf
 
 ## Clustering / multi-node deployments
 
-GoToSocial does not support [clustering or any form of multi-node deployment](https://github.com/superseriousbusiness/gotosocial/issues/1749).
+GoToSocial does not support [clustering or any form of multi-node deployment](https://codeberg.org/superseriousbusiness/gotosocial/issues/1749).
 
 Though multiple GtS instances can use the same Postgres database and either shared local storage or the same object bucket, GtS relies on a lot of internal caching to keep things fast. There is no mechanism for synchronising these caches between instances. Without it, you'll get all kinds of odd and inconsistent behaviour. Don't do this!
 

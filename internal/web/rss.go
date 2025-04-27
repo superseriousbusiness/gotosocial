@@ -46,7 +46,7 @@ func (m *Module) rssFeedGETHandler(c *gin.Context) {
 
 	// Usernames on our instance will always be lowercase.
 	//
-	// todo: https://github.com/superseriousbusiness/gotosocial/issues/1813
+	// todo: https://codeberg.org/superseriousbusiness/gotosocial/issues/1813
 	username = strings.ToLower(username)
 
 	// Retrieve the getRSSFeed function from the processor.

@@ -850,7 +850,7 @@ func ExtractEmojis(i WithTag, host string) ([]*gtsmodel.Emoji, error) {
 // dummy URI for the emoji can be constructed in case
 // there's no id property or id property is null.
 //
-// https://github.com/superseriousbusiness/gotosocial/issues/3384)
+// https://codeberg.org/superseriousbusiness/gotosocial/issues/3384)
 func ExtractEmoji(
 	e Emojiable,
 	host string,
