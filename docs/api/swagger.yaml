@@ -1965,7 +1965,7 @@ definitions:
                 x-go-name: Rules
             source_url:
                 description: The URL for the source code of the software running on this instance, in keeping with AGPL license requirements.
-                example: https://codeberg.org/superseriousbusiness/gotosocial
+                example: https://github.com/superseriousbusiness/gotosocial
                 type: string
                 x-go-name: SourceURL
             terms:

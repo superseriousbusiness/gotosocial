@@ -859,7 +859,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
 
 	accountID := "01FS1X72SK9ZPW0J1QQ68BD264"
 
-	temp := fmt.Sprintf("./%s/gotosocial-test", os.TempDir())
+	temp := fmt.Sprintf("%s/gotosocial-test", os.TempDir())
 	defer os.RemoveAll(temp)
 
 	disk, err := disk.Open(temp, nil)
