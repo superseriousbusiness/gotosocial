@@ -10,7 +10,7 @@ GoToSocial
 
 > Website / wiki
 
-https://github.com/superseriousbusiness/gotosocial / https://docs.gotosocial.org
+https://codeberg.org/superseriousbusiness/gotosocial / https://docs.gotosocial.org
 
 > Abstract: Can you explain the whole project and its expected outcome(s). (you have 1200 characters)
 
@@ -106,13 +106,13 @@ Other technical challenges we will (continue to) address in the near future are 
 Much of the work we do involves debugging and solving interoperability issues with other federated softwares, which requires keeping communication channels open with the maintainers of those, and figuring out who needs to change what in order for the issue to be resolved. We've done that a lot over the last year or so:
 
 - Fixed interop with Bandwagon: https://github.com/EmissarySocial/bandwagon/issues/152
-- Fixed interop with Iceshrimp: https://github.com/superseriousbusiness/gotosocial/issues/1947
-- Coordinated interop with Mastodon: https://github.com/superseriousbusiness/gotosocial/pull/3703
-- Fixed federation with Gancio: https://github.com/superseriousbusiness/gotosocial/issues/3875
+- Fixed interop with Iceshrimp: https://codeberg.org/superseriousbusiness/gotosocial/issues/1947
+- Coordinated interop with Mastodon: https://codeberg.org/superseriousbusiness/gotosocial/pulls/3703
+- Fixed federation with Gancio: https://codeberg.org/superseriousbusiness/gotosocial/issues/3875
 - Alerted Pixelfed of AP serialization issues: https://github.com/pixelfed/pixelfed/issues/5642
 - Cajoled Bluesky into adding user-agent headers: https://github.com/bluesky-social/atproto/issues/3504
 - Help out Writefreely with http signature request issues: https://github.com/writefreely/writefreely/issues/661#issuecomment-1951367449
-- Debug federation with Lemmy along with one of the Lemmy devs: https://github.com/superseriousbusiness/gotosocial/issues/2697
+- Debug federation with Lemmy along with one of the Lemmy devs: https://codeberg.org/superseriousbusiness/gotosocial/issues/2697
 
 For GoToSocial-specific extensions to ActivityPub, we've also diligently documented what we've done so far, and exposed a GoToSocial namespace so that remote softwares can easily incorporate GtS extensions if they want to: https://docs.gotosocial.org/en/latest/federation/interaction_policy/, https://gotosocial.org/ns.
 

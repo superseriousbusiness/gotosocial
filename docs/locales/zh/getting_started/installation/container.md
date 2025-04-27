@@ -45,7 +45,7 @@ nano docker-compose.yaml
 * `X.Y.Z`：发布标签。这指向 GoToSocial 的特定、稳定的版本。
 
 !!! tip "提示"
-    `latest` 和 `snapshot` 标签是动态标签，而 `X.Y.Z` 标签是固定的。拉取动态标签的结果可能每天都会变化。同一系统上的 `latest` 可能与不同系统上的 `latest` 不同。建议使用 `X.Y.Z` 标签，以便你始终确切知道运行的是 GoToSocial 的哪个版本。发布列表可以在[这里](https://github.com/superseriousbusiness/gotosocial/releases)找到，最新的发布在顶部。
+    `latest` 和 `snapshot` 标签是动态标签，而 `X.Y.Z` 标签是固定的。拉取动态标签的结果可能每天都会变化。同一系统上的 `latest` 可能与不同系统上的 `latest` 不同。建议使用 `X.Y.Z` 标签，以便你始终确切知道运行的是 GoToSocial 的哪个版本。发布列表可以在[这里](https://codeberg.org/superseriousbusiness/gotosocial/releases)找到，最新的发布在顶部。
 
 ### 主机
 

@@ -28,7 +28,7 @@ The limitations on interactions with other accounts are an intentional politenes
 
 ## How to import your posts
 
-The process currently requires third-party tools which use the GTS API. In the future, we may integrate this into GoToSocial itself: please follow [issue #2](https://github.com/superseriousbusiness/gotosocial/issues/2) for updates.
+The process currently requires third-party tools which use the GTS API. In the future, we may integrate this into GoToSocial itself: please follow [issue #2](https://codeberg.org/superseriousbusiness/gotosocial/issues/2) for updates.
 
 [`slurp`](https://github.com/VyrCossont/slurp) (by GTS developer Vyr Cossont) can import [post archives from Mastodon](https://github.com/VyrCossont/slurp?tab=readme-ov-file#importing-a-mastodon-archive) as well as [from Pixelfed](https://github.com/VyrCossont/slurp?tab=readme-ov-file#importing-a-pixelfed-archive). Please consult `slurp`'s docs, [Mastodon's instructions for exporting your data](https://docs.joinmastodon.org/user/moving/#export), and ["Importing Pixelfed Posts to GoToSocial with Slurp" by Jeff Sikes](https://box464.com/posts/gotosocial-slurp/) for more details. You'll need to be familiar with command-line basics, and have Git and a Go compiler installed.
 

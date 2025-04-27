@@ -75,9 +75,9 @@ const (
 	mdWithAsciiHeartExpected           = "<p>hello &lt;3 old friend &lt;3 i loved u &lt;/3 :(( you stole my heart</p>"
 	mdWithStrikethrough                = "I have ~~mdae~~ made an error"
 	mdWithStrikethroughExpected        = "<p>I have <del>mdae</del> made an error</p>"
-	mdWithLink                         = "Check out this code, i heard it was written by a sloth https://github.com/superseriousbusiness/gotosocial"
-	mdWithLinkExpected                 = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a></p>"
-	mdWithLinkBasicExpected            = "Check out this code, i heard it was written by a sloth <a href=\"https://github.com/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://github.com/superseriousbusiness/gotosocial</a>"
+	mdWithLink                         = "Check out this code, i heard it was written by a sloth https://codeberg.org/superseriousbusiness/gotosocial"
+	mdWithLinkExpected                 = "<p>Check out this code, i heard it was written by a sloth <a href=\"https://codeberg.org/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://codeberg.org/superseriousbusiness/gotosocial</a></p>"
+	mdWithLinkBasicExpected            = "Check out this code, i heard it was written by a sloth <a href=\"https://codeberg.org/superseriousbusiness/gotosocial\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">https://codeberg.org/superseriousbusiness/gotosocial</a>"
 	mdObjectInCodeBlock                = "@foss_satan@fossbros-anonymous.io this is how to mention a user\n```\n@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you've been writing lately! :rainbow:\n```\nhope that helps"
 	mdObjectInCodeBlockExpected        = "<p><span class=\"h-card\"><a href=\"http://fossbros-anonymous.io/@foss_satan\" class=\"u-url mention\" rel=\"nofollow noreferrer noopener\" target=\"_blank\">@<span>foss_satan</span></a></span> this is how to mention a user</p><pre><code>@the_mighty_zork hey bud! nice #ObjectOrientedProgramming software you&#39;ve been writing lately! :rainbow:\n</code></pre><p>hope that helps</p>"
 	// Hashtags can be italicized but only with *, not _.
@@ -125,7 +125,7 @@ func (suite *MarkdownTestSuite) TestParseWithHashtag() {
 	suite.Equal(withHashtagExpected, formatted.HTML)
 }
 
-// Regressiom test for https://github.com/superseriousbusiness/gotosocial/issues/3618
+// Regressiom test for https://codeberg.org/superseriousbusiness/gotosocial/issues/3618
 func (suite *MarkdownTestSuite) TestParseWithTamilHashtag() {
 	formatted := suite.FromMarkdown(withTamilHashtag)
 	suite.Equal(withTamilHashtagExpected, formatted.HTML)

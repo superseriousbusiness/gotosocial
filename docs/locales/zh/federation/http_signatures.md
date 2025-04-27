@@ -20,7 +20,7 @@ GoToSocial 使用 [superseriousbusiness/httpsig](https://codeberg.org/superserio
 
 接收请求时，GtS 将首先尝试验证包含查询参数的签名。如果签名验证失败，它将尝试在不包含查询参数的情况下重新验证签名。
 
-详细信息请参见 [#894](https://github.com/superseriousbusiness/gotosocial/issues/894)。
+详细信息请参见 [#894](https://codeberg.org/superseriousbusiness/gotosocial/issues/894)。
 
 ## 传入请求
 
@@ -38,7 +38,7 @@ ED25519
 
 GoToSocial 的请求签名在 [internal/transport](https://codeberg.org/superseriousbusiness/gotosocial/src/branch/main/internal/transport/signing.go) 中实现。
 
-一旦解决了 https://github.com/superseriousbusiness/gotosocial/issues/2991 ，GoToSocial 将使用 `(created)` 伪标头代替 `date`。
+一旦解决了 https://codeberg.org/superseriousbusiness/gotosocial/issues/2991 ，GoToSocial 将使用 `(created)` 伪标头代替 `date`。
 
 然而，目前在组装签名时：
 
@@ -82,4 +82,4 @@ https://example.org/users/example_user#main-key
 
 与 GoToSocial 联合的外站服务器应从 `publicKey` 字段提取公钥。然后，它们应该使用公钥的 `owner` 字段签名 `GET` 请求，进一步解引用 Actor 的完整版本。
 
-这种行为是为了避免外站服务器对完整 Actor 端点进行未签名的 `GET` 请求引入的。然而，由于不合规且引发问题，此行为可能会在未来发生变化。在 [此问题](https://github.com/superseriousbusiness/gotosocial/issues/1186) 中进行跟踪。
+这种行为是为了避免外站服务器对完整 Actor 端点进行未签名的 `GET` 请求引入的。然而，由于不合规且引发问题，此行为可能会在未来发生变化。在 [此问题](https://codeberg.org/superseriousbusiness/gotosocial/issues/1186) 中进行跟踪。

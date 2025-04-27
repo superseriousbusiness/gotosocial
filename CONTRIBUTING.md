@@ -43,7 +43,7 @@ This document contains important information that will help you to write a succe
 
 Currently, we use Github's issue system for tracking bug reports and feature requests.
 
-You can view all open issues [here](https://github.com/superseriousbusiness/gotosocial/issues "The Github Issues page for GoToSocial").
+You can view all open issues [here](https://codeberg.org/superseriousbusiness/gotosocial/issues "The Github Issues page for GoToSocial").
 
 Before opening a new issue, whether bug or feature request, **please search carefully through both open and closed issues to make sure it hasn't been addressed already**. You can use Github's keyword issue search for this. If your issue is a duplicate of an existing issue, it will be closed.
 
@@ -122,26 +122,22 @@ Beware that `conda env export` will add a `prefix` entry to the environment.yml 
 
 ### Golang forking quirks
 
-One of the quirks of Golang is that it relies on the source management path being the same as the one used within `go.mod` and in package imports within individual Go files. This makes working with forks a bit awkward.
-
-Let's say you fork GoToSocial to `github.com/yourgithubname/gotosocial`, and then clone that repository to `~/go/src/github.com/yourgithubname/gotosocial`. You will probably run into errors trying to run tests or build, so you might change your `go.mod` file so that the module is called `github.com/yourgithubname/gotosocial` instead of `github.com/superseriousbusiness/gotosocial`. But then this breaks all the imports within the project. Nightmare! So now you have to go through the source files and painstakingly replace `github.com/superseriousbusiness/gotosocial` with `github.com/yourgithubname/gotosocial`. This works OK, but when you decide to make a pull request against the original repo, all the changed paths are included! Argh!
-
-The correct solution to this is to fork, then clone the upstream repository, then set `origin` of the upstream repository to that of your fork.
+One of the quirks of Golang is that it relies on the source management path being the same as the one used within `go.mod` and in package imports within individual Go files. This makes working with forks a bit awkward. The solution to this is to fork, then clone the upstream repository, then set `origin` of the upstream repository to that of your fork.
 
 See [this blog post](https://blog.sgmansfield.com/2016/06/working-with-forks-in-go/) for more details.
 
 In case this post disappears, here are the steps (slightly modified):
 
 >
-> Fork the repository on GitHub or set up whatever other remote git repo you will be using. In this case, I would go to GitHub and fork the repository.
+> Fork the repository on Codeberg or set up whatever other remote git repo you will be using. In this case, I would go to Codeberg and fork the repository.
 >
 > Now clone the upstream repo (not the fork):
 >
-> `mkdir -p ~/go/src/github.com/superseriousbusiness && git clone git@github.com:superseriousbusiness/gotosocial ~/go/src/github.com/superseriousbusiness/gotosocial`
+> `mkdir -p ~/go/src/code.superseriousbusiness.org && git clone git@codeberg.org:superseriousbusiness/gotosocial ~/go/src/code.superseriousbusiness.org/gotosocial`
 >
 > Navigate to the top level of the upstream repository on your computer:
 >
-> `cd ~/go/src/github.com/superseriousbusiness/gotosocial`
+> `cd ~/go/src/code.superseriousbusiness.org/gotosocial`
 >
 > Rename the current origin remote to upstream:
 >
@@ -149,7 +145,7 @@ In case this post disappears, here are the steps (slightly modified):
 >
 > Add your fork as origin:
 >
-> `git remote add origin git@github.com:yourgithubname/gotosocial`
+> `git remote add origin git@codeberg.org:username/gotosocial`
 >
 
 Be sure to run `git fetch` before building the project for the first time.
@@ -160,7 +156,7 @@ Be sure to run `git fetch` before building the project for the first time.
 
 To get started, you first need to have Go installed. Check the top of the `go.mod` file to see which version of Go you need to install, and see [here](https://golang.org/doc/install) for installation instructions.
 
-Once you've got Go installed, clone this repository into your Go path. Normally, this should be `~/go/src/github.com/superseriousbusiness/gotosocial`.
+Once you've got Go installed, clone this repository into your Go path. Normally, this should be `~/go/src/code.superseriousbusiness.org/gotosocial`.
 
 Once you've installed the prerequisites, you can try building the project: `./scripts/build.sh`. This will build the `gotosocial` binary.
 
@@ -397,7 +393,7 @@ If there's no output, great! It passed :)
 
 ### Testing
 
-GoToSocial provides a [testrig](https://github.com/superseriousbusiness/gotosocial/tree/main/testrig) with a number of mock packages you can use in integration tests.
+GoToSocial provides a [testrig](https://codeberg.org/superseriousbusiness/gotosocial/tree/main/testrig) with a number of mock packages you can use in integration tests.
 
 One thing that *isn't* mocked is the Database interface because it's just easier to use an in-memory SQLite database than to mock everything out.
 

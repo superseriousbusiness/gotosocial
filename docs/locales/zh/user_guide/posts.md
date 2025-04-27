@@ -136,7 +136,7 @@ GoToSocial 允许你在贴文中附加媒体文件，大多数客户端会在贴
 为了避免泄漏你的位置信息，GoToSocial 努力在上传媒体时通过清零 Exif 数据点移除 Exif 信息。
 
 !!! danger "危险"
-    为了方便和保护隐私，GoToSocial 在上传图片文件时会自动移除 Exif 标签。然而，**无法自动移除 mp4 视频的 Exif 数据**（参见 [#2577](https://github.com/superseriousbusiness/gotosocial/issues/2577)）。
+    为了方便和保护隐私，GoToSocial 在上传图片文件时会自动移除 Exif 标签。然而，**无法自动移除 mp4 视频的 Exif 数据**（参见 [#2577](https://codeberg.org/superseriousbusiness/gotosocial/issues/2577)）。
     
     在你将视频上传至 GoToSocial 之前，建议确保该视频的 Exif 数据标签已经被移除。你可以在线找到多种工具和服务来做到这一点。
     

@@ -45,7 +45,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:     "gotosocial",
 		Short:   "GoToSocial - a fediverse social media server",
-		Long:    "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://github.com/superseriousbusiness/gotosocial",
+		Long:    "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://codeberg.org/superseriousbusiness/gotosocial",
 		Version: version,
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			// before running any other cmd funcs, we must load config-path

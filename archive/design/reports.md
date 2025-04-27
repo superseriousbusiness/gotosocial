@@ -95,7 +95,7 @@ todo
 
 ### Friendica
 
-Unsure: Friendica and GoToSocial still don't federate properly with one another (https://github.com/superseriousbusiness/gotosocial/issues/169) so it's hard to test this.
+Unsure: Friendica and GoToSocial still don't federate properly with one another (https://codeberg.org/superseriousbusiness/gotosocial/issues/169) so it's hard to test this.
 
 ## What should GoToSocial do?
 

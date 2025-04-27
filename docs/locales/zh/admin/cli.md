@@ -13,7 +13,7 @@ GoToSocial - 一个联邦制社交媒体服务器
 
 帮助文档参见：https://docs.gotosocial.org。
 
-代码仓库：https://github.com/superseriousbusiness/gotosocial
+代码仓库：https://codeberg.org/superseriousbusiness/gotosocial
 
 用法：
   gotosocial [command]

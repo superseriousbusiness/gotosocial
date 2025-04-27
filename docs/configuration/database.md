@@ -146,7 +146,7 @@ db-tls-ca-cert: ""
 #
 # PLEASE NOTE!!: This setting currently only applies for Postgres. SQLite will always use 1 connection regardless
 # of what is set here. This behavior will change in future when we implement better SQLITE_BUSY handling.
-# See https://github.com/superseriousbusiness/gotosocial/issues/1407 for more details.
+# See https://codeberg.org/superseriousbusiness/gotosocial/issues/1407 for more details.
 #
 # Examples: [16, 8, 10, 2]
 # Default: 8

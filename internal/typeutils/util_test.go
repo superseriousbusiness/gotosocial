@@ -179,10 +179,10 @@ func TestFilterableText(t *testing.T) {
 		},
 		{
 			status: &gtsmodel.Status{
-				Content: `<p><span class="h-card"><a href="https://example.org/@zlatko" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>zlatko</span></a></span> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)</p><p><a href="https://github.com/superseriousbusiness/gotosocial/pull/2863" rel="nofollow noreferrer noopener" target="_blank">https://github.com/superseriousbusiness/gotosocial/pull/2863</a></p>`,
+				Content: `<p><span class="h-card"><a href="https://example.org/@zlatko" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>zlatko</span></a></span> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)</p><p><a href="https://codeberg.org/superseriousbusiness/gotosocial/pulls/2863" rel="nofollow noreferrer noopener" target="_blank">https://codeberg.org/superseriousbusiness/gotosocial/pulls/2863</a></p>`,
 			},
 			expectedFields: []string{
-				"@zlatko <https://example.org/@zlatko> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)\n\nhttps://github.com/superseriousbusiness/gotosocial/pull/2863 <https://github.com/superseriousbusiness/gotosocial/pull/2863>",
+				"@zlatko <https://example.org/@zlatko> currently we used modernc/sqlite3 for our sqlite driver, but we've been experimenting with wasm sqlite, and will likely move to that permanently in future; in the meantime, both options are available (the latter with a build tag)\n\nhttps://codeberg.org/superseriousbusiness/gotosocial/pulls/2863 <https://codeberg.org/superseriousbusiness/gotosocial/pulls/2863>",
 			},
 		},
 		{

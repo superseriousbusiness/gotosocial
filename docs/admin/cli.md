@@ -13,7 +13,7 @@ GoToSocial - a fediverse social media server
 
 For help, see: https://docs.gotosocial.org.
 
-Code: https://github.com/superseriousbusiness/gotosocial
+Code: https://codeberg.org/superseriousbusiness/gotosocial
 
 Usage:
   gotosocial [command]

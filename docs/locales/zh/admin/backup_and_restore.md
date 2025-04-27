@@ -178,7 +178,7 @@ hooks:
 
 对于 PostgreSQL，你应该使用 `postgresql_databases`。
 
-`patterns_from` 中提到的文件可以通过转换 GoToSocial CLI 媒体命令 [`list-attachments`](cli.md#gotosocial-admin-media-list-attachments) 和 [`list-emojis`](cli.md#gotosocial-admin-media-list-emojis) 的输出来创建。要生成正确的模式，您可以使用 [`media-to-borg-patterns.py`](https://github.com/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) 脚本。有关 Borg 模式如何工作的详情，参见 [他们的文档](https://man.archlinux.org/man/borg-patterns.1)。
+`patterns_from` 中提到的文件可以通过转换 GoToSocial CLI 媒体命令 [`list-attachments`](cli.md#gotosocial-admin-media-list-attachments) 和 [`list-emojis`](cli.md#gotosocial-admin-media-list-emojis) 的输出来创建。要生成正确的模式，您可以使用 [`media-to-borg-patterns.py`](https://codeberg.org/superseriousbusiness/gotosocial/tree/main/example/borgmatic/media-to-borg-patterns.py) 脚本。有关 Borg 模式如何工作的详情，参见 [他们的文档](https://man.archlinux.org/man/borg-patterns.1)。
 
 您需要将该文件放在您的 GoToSocial 实例上，并确保该文件是可执行的。它需要 Python 3，安装 Borg 和 Borgmatic 后您应该已经具备。它仅依赖于 Python 标准库。
 

@@ -1583,7 +1583,7 @@ definitions:
             max_profile_fields:
                 description: |-
                     The maximum number of profile fields allowed for each account.
-                    Currently not configurable, so this is hardcoded to 6. (https://github.com/superseriousbusiness/gotosocial/issues/1876)
+                    Currently not configurable, so this is hardcoded to 6. (https://codeberg.org/superseriousbusiness/gotosocial/issues/1876)
                 format: int64
                 type: integer
                 x-go-name: MaxProfileFields
@@ -1965,7 +1965,7 @@ definitions:
                 x-go-name: Rules
             source_url:
                 description: The URL for the source code of the software running on this instance, in keeping with AGPL license requirements.
-                example: https://github.com/superseriousbusiness/gotosocial
+                example: https://codeberg.org/superseriousbusiness/gotosocial
                 type: string
                 x-go-name: SourceURL
             terms:

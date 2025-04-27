@@ -47,13 +47,13 @@ What follows is a rough timeline of features that will be implemented on the roa
 
 ### Mid 2023
 
-- [x] **Hashtags** -- implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2032).
+- [x] **Hashtags** -- implement federating hashtags and viewing hashtags to allow users to discover posts that they might be interested in. (Done! https://codeberg.org/superseriousbusiness/gotosocial/pulls/2032).
 
 ### Mid/late 2023
 
-- [x] **Polls** -- implementing parsing, creating, and voting in polls. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2330)
-- [x] **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2278)
-- [x] **Limited peering/allowlists** -- allow instance admins to limit federation with other instances by default. (Done! https://github.com/superseriousbusiness/gotosocial/pull/2200)
+- [x] **Polls** -- implementing parsing, creating, and voting in polls. (Done! https://codeberg.org/superseriousbusiness/gotosocial/pulls/2330)
+- [x] **Mute posts/threads** -- opt-out of notifications for replies to a thread; no longer show a given post in your timeline. (Done! https://codeberg.org/superseriousbusiness/gotosocial/pulls/2278)
+- [x] **Limited peering/allowlists** -- allow instance admins to limit federation with other instances by default. (Done! https://codeberg.org/superseriousbusiness/gotosocial/pulls/2200)
 
 ### Early 2024
 

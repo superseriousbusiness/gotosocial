@@ -14,8 +14,8 @@ Most of the GoToSocial API endpoints require a user-level OAuth token. For a gui
     
     See the following issues for more context:
     
-    - [#1958](https://github.com/superseriousbusiness/gotosocial/issues/1958)
-    - [#1944](https://github.com/superseriousbusiness/gotosocial/issues/1944)
-    - [#2641](https://github.com/superseriousbusiness/gotosocial/issues/2641)
+    - [#1958](https://codeberg.org/superseriousbusiness/gotosocial/issues/1958)
+    - [#1944](https://codeberg.org/superseriousbusiness/gotosocial/issues/1944)
+    - [#2641](https://codeberg.org/superseriousbusiness/gotosocial/issues/2641)
 
 <swagger-ui src="swagger.yaml"/>

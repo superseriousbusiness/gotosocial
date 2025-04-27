@@ -30,7 +30,7 @@ import (
 // which will be a noop in most cases, but will fix some issues for those who
 // were running snapshots between GtS v0.17.0 and GtS v0.18.0.
 //
-// See https://github.com/superseriousbusiness/gotosocial/pull/3679.
+// See https://codeberg.org/superseriousbusiness/gotosocial/pulls/3679.
 func init() {
 	up := func(ctx context.Context, db *bun.DB) error {
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

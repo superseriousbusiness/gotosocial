@@ -64,7 +64,7 @@ function emojisFromSearchResult(searchRes): EmojisFromItem {
 	return {
 		type,
 		// Workaround to get host rather than account domain.
-		// See https://github.com/superseriousbusiness/gotosocial/issues/1225.
+		// See https://codeberg.org/superseriousbusiness/gotosocial/issues/1225.
 		domain: (new URL(data.url)).host,
 		list: data.emojis,
 	};

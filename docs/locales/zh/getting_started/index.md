@@ -64,7 +64,7 @@ GoToSocial 的轻量系统要求意味着它在配置良好的单板计算机上
 !!! warning "云存储卷"
     并非所有的云 VPS 存储都相同，声称基于 SSD 的存储并不一定适合作为 GoToSocial 实例的运行环境。
     
-    [Hetzner 云卷的性能](https://github.com/superseriousbusiness/gotosocial/issues/2471#issuecomment-1891098323)没有保证，且延迟波动较大。这会导致你的 GoToSocial 实例表现不佳。
+    [Hetzner 云卷的性能](https://codeberg.org/superseriousbusiness/gotosocial/issues/2471#issuecomment-1891098323)没有保证，且延迟波动较大。这会导致你的 GoToSocial 实例表现不佳。
 
 !!! danger "Oracle 免费套餐"
     如果你打算与多个其他实例和用户联合，[Oracle 云免费套餐](https://www.oracle.com/cloud/free/) 服务器不适合用于 GoToSocial 部署。
@@ -145,7 +145,7 @@ GoToSocial 需要开放端口 `80` 和 `443`。
 
 ## 集群 / 多节点部署
 
-GoToSocial 不支持[集群或任何形式的多节点部署](https://github.com/superseriousbusiness/gotosocial/issues/1749)。
+GoToSocial 不支持[集群或任何形式的多节点部署](https://codeberg.org/superseriousbusiness/gotosocial/issues/1749)。
 
 尽管多个 GtS 实例可以使用相同的 Postgres 数据库和共享的本地存储或相同的对象桶，但 GtS 依赖于大量的内部缓存以保持高效。没有同步这些实例缓存的机制。没有它，你会得到各种奇怪和不一致的行为。不要这样做！
 
