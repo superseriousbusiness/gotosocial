@@ -1,7 +1,6 @@
 # https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
 when:
-  - event: push
-    branch: main
+  - event: tag
 
 steps:
   release:
