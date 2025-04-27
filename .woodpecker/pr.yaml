@@ -1,0 +1,98 @@
+# https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
+when:
+  - event: pull_request
+
+steps:
+  # Lint the Go code.
+  lint:
+    # We use golangci-lint for linting.
+    # See: https://golangci-lint.run/
+    image: golangci/golangci-lint:v1.62.0
+    pull: true
+
+    # https://woodpecker-ci.org/docs/administration/configuration/backends/docker#run-user
+    backend_options:
+      docker:
+        user: 1000:1000
+
+    # https://woodpecker-ci.org/docs/usage/volumes
+    volumes:
+      - /woodpecker/gotosocial/go-build-cache:/.cache/go-build
+      - /woodpecker/gotosocial/go-pkg-cache:/go/pkg
+      - /woodpecker/gotosocial/golangci-lint-cache:/.cache/golangci-lint
+
+    # https://woodpecker-ci.org/docs/usage/environment
+    environment:
+      GOFLAGS: "-buildvcs=false"
+
+    # https://woodpecker-ci.org/docs/usage/workflow-syntax#commands
+    commands:
+      - golangci-lint run
+
+  # Test the Go code.
+  test:
+    image: golang:1.23-alpine
+    pull: true
+
+    # https://woodpecker-ci.org/docs/administration/configuration/backends/docker#run-user
+    backend_options:
+      docker:
+        user: 1000:1000
+
+    # https://woodpecker-ci.org/docs/usage/volumes
+    volumes:
+      - /woodpecker/gotosocial/go-build-cache:/.cache/go-build
+      - /woodpecker/gotosocial/go-pkg-cache:/go/pkg
+      - /woodpecker/gotosocial/wazero-compilation-cache:/.cache/wazero
+      - /woodpecker/gotosocial/test-tmp:/tmp
+
+    # https://woodpecker-ci.org/docs/usage/environment
+    environment:
+      CGO_ENABLED: "0"
+      GTS_WAZERO_COMPILATION_CACHE: "/.cache/wazero"
+    
+    # https://woodpecker-ci.org/docs/usage/workflow-syntax#commands
+    commands:
+      - >-
+        go test
+        -ldflags="-s -w -extldflags '-static'"
+        -tags="netgo osusergo static_build kvformat timetzdata"
+        -failfast
+        -timeout=30m
+        ./...
+      - ./test/envparsing.sh
+      - ./test/swagger.sh
+    
+    # https://woodpecker-ci.org/docs/usage/workflow-syntax#depends_on
+    depends_on: [lint]
+
+  # Validate the web code.
+  web:
+    image: node:lts-alpine
+    pull: true
+
+    # https://woodpecker-ci.org/docs/administration/configuration/backends/docker#run-user
+    backend_options:
+      docker:
+        user: 1000:1000
+
+    # https://woodpecker-ci.org/docs/usage/volumes
+    volumes:
+      - /woodpecker/gotosocial/node_modules:/woodpecker/src/codeberg.org/superseriousbusiness/gotosocial/web/source/node_modules
+      - /woodpecker/gotosocial/yarn-cache:/.cache/yarn
+      - /woodpecker/gotosocial/web-dist-test:/woodpecker/src/codeberg.org/superseriousbusiness/gotosocial/web/assets/dist
+    
+    # https://woodpecker-ci.org/docs/usage/workflow-syntax#commands
+    commands:
+      # Install web dependencies.
+      - yarn --cwd ./web/source install --frozen-lockfile --cache-folder /.cache/yarn
+      - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
+      
+      # Lint web source.
+      - yarn --cwd ./web/source lint
+
+      # Ensure build works.
+      - yarn --cwd ./web/source build
+
+    # https://woodpecker-ci.org/docs/usage/workflow-syntax#depends_on
+    depends_on: [test]

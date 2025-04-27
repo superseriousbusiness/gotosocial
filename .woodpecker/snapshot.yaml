@@ -1,0 +1,47 @@
+# https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
+when:
+  - event: tag
+
+steps:
+  snapshot:
+    # https://github.com/superseriousbusiness/gotosocial-drone-build
+    image: superseriousbusiness/gotosocial-drone-build:0.8.0
+    pull: true
+
+    # https://woodpecker-ci.org/docs/usage/volumes
+    volumes:
+      - /woodpecker/gotosocial/go-build-cache-root:/root/.cache/go-build
+      - /woodpecker/gotosocial/go-pkg-cache-root:/go/pkg
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    # https://woodpecker-ci.org/docs/usage/environment
+    # https://woodpecker-ci.org/docs/usage/secrets#usage
+    environment:
+      DOCKER_USERNAME: gotosocial
+      DOCKER_PASSWORD:
+        from_secret: gts_docker_password
+      S3_ACCESS_KEY_ID:
+        from_secret: gts_s3_access_key_id
+      S3_SECRET_ACCESS_KEY:
+        from_secret: gts_s3_secret_access_key
+      S3_HOSTNAME: "https://s3.superseriousbusiness.org"
+      S3_BUCKET_NAME: "gotosocial-snapshots"
+    
+    # https://woodpecker-ci.org/docs/usage/workflow-syntax#commands
+    commands:
+      # Create a snapshot build with GoReleaser.
+      - git fetch --tags
+      - goreleaser release --clean --snapshot
+      
+      # Login to Docker, push Docker image snapshots + manifests.
+      - /go/dockerlogin.sh
+      - docker push superseriousbusiness/gotosocial:snapshot-arm64v8
+      - docker push superseriousbusiness/gotosocial:snapshot-amd64
+      - |
+          docker manifest create superseriousbusiness/gotosocial:snapshot \
+          superseriousbusiness/gotosocial:snapshot-amd64 \
+          superseriousbusiness/gotosocial:snapshot-arm64v8
+      - docker manifest push superseriousbusiness/gotosocial:snapshot
+      
+      # Publish binary .tar.gz snapshots to S3.
+      - /go/snapshot_publish.sh
