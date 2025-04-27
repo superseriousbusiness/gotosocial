@@ -1,3 +1,11 @@
+# https://goreleaser.com/ci/woodpecker/
+# https://woodpecker-ci.org/docs/usage/workflow-syntax#clone
+clone:
+  git:
+    image: woodpeckerci/plugin-git
+    settings:
+      tags: true
+
 # https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
 when:
   - event: tag
