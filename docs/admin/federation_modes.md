@@ -31,13 +31,18 @@ When your instance encounters a mention or an announce of a status or account it
 
 ## Combining blocks and allows
 
-It is possible to both block and allow the same domain, and the effect of combining these two things depends on which federation mode your instance is currently using.
+!!! danger
+    Combining blocks and allows is a tricky business!
+    
+    When importing lists of allows and blocks, you should always review the list manually to make sure that you do not inadvertently block a domain that you would prefer not to block, since this can have **very annoying side effects** like removing follows/following, statuses, etc.
+    
+    When in doubt, always add an explicit allow first as an insurance policy!
 
-![A flow chart diagram showing how the two different federation modes treat incoming requests.](../public/diagrams/federation_modes.png)
+It is possible to both block and allow the same domain, and the effect of combining these two things depends on which federation mode your instance is currently using, as explained in the following subsections, which are summarised in a flowchart that you can find below.
 
 ### In blocklist mode
 
-As the chart shows, in blocklist mode (the left-hand part of the diagram), an explicit domain allow can be used to override a domain block.
+As the chart below shows, in blocklist mode (the left-hand part of the diagram), an explicit domain allow can be used to override a domain block.
 
 This is useful in cases where you are importing a blocklist from someone else, but the imported blocklist contains some instances you would actually prefer not to block. To avoid blocking those instances, you can create explicit domain allows for those instances first. Then, when you import the block list, the explicitly allowed domains will not be blocked, and the side effects of creating a block (deleting statuses, media, relationships etc) will not be processed.
 
@@ -47,16 +52,11 @@ Conversely, if you add an explicit allow for a domain that was blocked, the side
 
 ### In allowlist mode
 
-As the chart shows, in allowlist mode (the right-hand part of the diagram) an explicit domain block trumps an explicit domain allow. The following two things must be true in order for an instance to be allowed through, when running in allowlist mode:
+As the chart below shows, in allowlist mode (the right-hand part of the diagram) an explicit domain block trumps an explicit domain allow. The following two things must be true in order for an instance to be allowed through, when running in allowlist mode:
 
 1. An explicit domain block **does not exist** for the instance.
 2. An explicit domain allow **does exist** for the instance.
 
 If either of the above conditions are not met, the request will be denied.
 
-!!! danger
-    Combining blocks and allows is a tricky business!
-    
-    When importing lists of allows and blocks, you should always review the list manually to make sure that you do not inadvertently block a domain that you would prefer not to block, since this can have **very annoying side effects** like removing follows/following, statuses, etc.
-    
-    When in doubt, always add an explicit allow first as an insurance policy!
+![A flow chart diagram showing how the two different federation modes treat incoming requests.](../public/diagrams/federation_modes.png)
