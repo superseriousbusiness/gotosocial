@@ -175,6 +175,7 @@ type Configuration struct {
 	AdvancedSenderMultiplier     int           `name:"advanced-sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
 	AdvancedCSPExtraURIs         []string      `name:"advanced-csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
 	AdvancedHeaderFilterMode     string        `name:"advanced-header-filter-mode" usage:"Set incoming request header filtering mode."`
+	AdvancedScraperDeterrence    bool          `name:"advanced-scraper-deterrence" usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
 
 	// HTTPClient configuration vars.
 	HTTPClient HTTPClientConfiguration `name:"http-client"`

@@ -2906,6 +2906,31 @@ func GetAdvancedHeaderFilterMode() string { return global.GetAdvancedHeaderFilte
 // SetAdvancedHeaderFilterMode safely sets the value for global configuration 'AdvancedHeaderFilterMode' field
 func SetAdvancedHeaderFilterMode(v string) { global.SetAdvancedHeaderFilterMode(v) }
 
+// GetAdvancedScraperDeterrence safely fetches the Configuration value for state's 'AdvancedScraperDeterrence' field
+func (st *ConfigState) GetAdvancedScraperDeterrence() (v bool) {
+	st.mutex.RLock()
+	v = st.config.AdvancedScraperDeterrence
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedScraperDeterrence safely sets the Configuration value for state's 'AdvancedScraperDeterrence' field
+func (st *ConfigState) SetAdvancedScraperDeterrence(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AdvancedScraperDeterrence = v
+	st.reloadToViper()
+}
+
+// AdvancedScraperDeterrenceFlag returns the flag name for the 'AdvancedScraperDeterrence' field
+func AdvancedScraperDeterrenceFlag() string { return "advanced-scraper-deterrence" }
+
+// GetAdvancedScraperDeterrence safely fetches the value for global configuration 'AdvancedScraperDeterrence' field
+func GetAdvancedScraperDeterrence() bool { return global.GetAdvancedScraperDeterrence() }
+
+// SetAdvancedScraperDeterrence safely sets the value for global configuration 'AdvancedScraperDeterrence' field
+func SetAdvancedScraperDeterrence(v bool) { global.SetAdvancedScraperDeterrence(v) }
+
 // GetHTTPClientAllowIPs safely fetches the Configuration value for state's 'HTTPClient.AllowIPs' field
 func (st *ConfigState) GetHTTPClientAllowIPs() (v []string) {
 	st.mutex.RLock()
