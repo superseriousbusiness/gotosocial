@@ -75,7 +75,7 @@ func (e *Error) As(err any) bool {
 
 // Temporary returns true for [BUSY] errors.
 func (e *Error) Temporary() bool {
-	return e.Code() == BUSY
+	return e.Code() == BUSY || e.Code() == INTERRUPT
 }
 
 // Timeout returns true for [BUSY_TIMEOUT] errors.
