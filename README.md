@@ -3,7 +3,7 @@
 
 **Update regarding corporate sponsors: we are open to sponsorship arrangements with organizations that align with our values; see the conditions below**
 
-GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang.
+🏳️‍🌈 GoToSocial is an [ActivityPub](https://activitypub.rocks/) social network server, written in Golang. 🏳️‍⚧️
 
 With GoToSocial, you can keep in touch with your friends, post, read, and share images and articles. All without being tracked or advertised to!
 
@@ -40,6 +40,7 @@ Here's a screenshot of the instance landing page! Check out the project's [offic
   - [Various federation modes](#various-federation-modes)
   - [OIDC integration](#oidc-integration)
   - [Backend-first design](#backend-first-design)
+- [Alternatives to GoToSocial](#alternatives-to-gotosocial)
 - [Known Issues](#known-issues)
 - [Installing GoToSocial](#installing-gotosocial)
   - [Supported Platforms](#supported-platforms)
@@ -257,9 +258,21 @@ On top of this API, web developers are encouraged to build any front-end impleme
 
 ---
 
+## Alternatives to GoToSocial
+
+Don't like GtS but still want to use the fediverse? Like GtS but prefer not to use beta software? There are lots of alternatives that might suit you better! Here are some that we know work well (alphabetical order):
+
+- [Akkoma]([https://](https://akkoma.social/)): Full-featured ActivityPub microblogging with emoji reacts and quote posts (Elixir).
+- [Honk](https://humungus.tedunangst.com/r/honk/m/activitypub.7): Minimalist, opinionated microblogging with "No likes, no faves, no polls, no stars, no claps, no counts." (Go).
+- [Iceshrimp.net](https://iceshrimp.dev/iceshrimp/Iceshrimp.NET): rewrite of Iceshrimp from the ground up (.Net).
+- [Mastodon](https://joinmastodon.org/): Actively developed, widely recognized, scaleable ActivityPub microblogging instance (Ruby).
+- [Snac2](https://codeberg.org/grunfink/snac2): Simple, minimalistic instance with very low system requirements (portable C).
+
+---
+
 ## Known Issues
 
-Since GoToSocial is still in beta, there are plenty of bugs. We use [GitHub issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
+Since GoToSocial is still in beta, there are plenty of bugs. We use [Codeberg issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) to track these.
 
 Since every ActivityPub server implementation has a slightly different interpretation of the protocol, some servers don't quite federate properly with GoToSocial yet. We're tracking these issues [in this project](https://codeberg.org/superseriousbusiness/gotosocial/projects/4). Eventually, we want to make sure that any implementation that can federate nicely with Mastodon should also be able to federate with GoToSocial.
 
