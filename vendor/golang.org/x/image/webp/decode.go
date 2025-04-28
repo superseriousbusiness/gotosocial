@@ -261,7 +261,7 @@ func Decode(r io.Reader) (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	return m, err
+	return m, nil
 }
 
 // DecodeConfig returns the color model and dimensions of a WEBP image without

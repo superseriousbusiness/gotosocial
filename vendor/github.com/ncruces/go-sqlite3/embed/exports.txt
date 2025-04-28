@@ -66,6 +66,7 @@ sqlite3_errmsg
 sqlite3_error_offset
 sqlite3_errstr
 sqlite3_exec
+sqlite3_exec_go
 sqlite3_expanded_sql
 sqlite3_file_control
 sqlite3_filename_database
