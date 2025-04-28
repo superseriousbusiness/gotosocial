@@ -37,7 +37,7 @@ Domain permission subscriptions make it possible to easily create allowlist-fede
 
 For example, instances `instance-a.example.org`, `instance-b.example.org`, and `instance-c.example.org` decide that they only want to federate with each other.
 
-Using some version management platform like GitHub, they host a plaintext-formatted allowlist at something like `https://raw.githubusercontent.com/our-cluster/allowlist/refs/heads/main/allows.txt`.
+Using some version management platform like Codeberg, they host a plaintext-formatted allowlist at something like `https://codeberg.org/our-cluster/allowlist/raw/branch/main/allows.txt`.
 
 The contents of the plaintext-formatted allowlist are as follows:
 
@@ -47,7 +47,7 @@ instance-b.example.org
 instance-c.example.org
 ```
 
-Each instance admin sets their federation mode to `allowlist`, and creates a subscription to create allows from `https://raw.githubusercontent.com/our-cluster/allowlist/refs/heads/main/allows.txt`, which results in domain allow entries being created for their own domain, and for each other domain in the cluster.
+Each instance admin sets their federation mode to `allowlist`, and creates a subscription to create allows from `https://codeberg.org/our-cluster/allowlist/raw/branch/main/allows.txt`, which results in domain allow entries being created for their own domain, and for each other domain in the cluster.
 
 At some point, someone from `instance-d.example.org` asks (out of band) whether they can be added to the cluster. The existing admins agree, and update their plaintext-formatted allowlist to read:
 
@@ -66,7 +66,7 @@ Domain permission subscriptions make it easy to collaborate on and subscribe to 
 
 For example, the admins of instances `instance-e.example.org`, `instance-f.example.org`, and `instance-g.example.org` decide that they are tired of duplicating work by playing whack-a-mole with bad actors. To make their lives easier, they decide to collaborate on a shared blocklist.
 
-Using some version management platform like GitHub, they host a blocklist at something like `https://raw.githubusercontent.com/baddies/blocklist/refs/heads/main/blocks.csv`.
+Using some version management platform like Codeberg, they host a blocklist at something like `https://codeberg.org/our-cluster/allowlist/raw/branch/main/blocks.csv`.
 
 When someone discovers a new domain hosting an instance they don't like, they can open a pull request or similar against the list, to add the questionable instance to the domain.
 

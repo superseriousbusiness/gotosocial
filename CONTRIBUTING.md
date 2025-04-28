@@ -32,8 +32,6 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
     - [Federation](#federation)
   - [Updating Swagger docs](#updating-swagger-docs)
   - [CI/CD configuration](#cicd-configuration)
-  - [Release Checklist](#release-checklist)
-    - [What if something goes wrong?](#what-if-something-goes-wrong)
 
 ## Introduction
 
@@ -41,11 +39,11 @@ This document contains important information that will help you to write a succe
 
 ## Bug reports and feature requests
 
-Currently, we use Github's issue system for tracking bug reports and feature requests.
+Currently, we use Codeberg's issue system for tracking bug reports and feature requests.
 
-You can view all open issues [here](https://codeberg.org/superseriousbusiness/gotosocial/issues "The Github Issues page for GoToSocial").
+You can view all open issues [here](https://codeberg.org/superseriousbusiness/gotosocial/issues "The Codeberg Issues page for GoToSocial").
 
-Before opening a new issue, whether bug or feature request, **please search carefully through both open and closed issues to make sure it hasn't been addressed already**. You can use Github's keyword issue search for this. If your issue is a duplicate of an existing issue, it will be closed.
+Before opening a new issue, whether bug or feature request, **please search carefully through both open and closed issues to make sure it hasn't been addressed already**. You can use Codeberg's keyword issue search for this. If your issue is a duplicate of an existing issue, it will be closed.
 
 Before you open a feature request issue, please consider the following:
 
@@ -492,55 +490,12 @@ You shouldn't need to install go-swagger to run this command, as it's already in
 
 ### CI/CD configuration
 
-GoToSocial uses [Drone](https://www.drone.io/) for CI/CD tasks like running tests, linting, and building Docker containers.
+GoToSocial uses [Woodpecker CI](https://woodpecker-ci.org/) for CI/CD tasks like running tests, linting, and building Docker containers.
 
-These runs are integrated with GitHub, and will be run on opening a pull request or merging into main.
+These runs are integrated with Codeberg, and will be run on opening a pull request or merging into main.
 
-The Drone instance for GoToSocial is [here](https://drone.superseriousbusiness.org/superseriousbusiness/gotosocial).
+The `woodpecker` pipeline files are in the `.woodpecker` directory of this repository — these define how and when Woodpecker should run.
 
-The `drone.yml` file is [here](./.drone.yml) — this defines how and when Drone should run. Documentation for Drone is [here](https://docs.drone.io/).
+The Woodpecker instance for GoToSocial is [here](https://woodpecker.superseriousbusiness.org/repos/2).
 
-It is worth noting that the `drone.yml` file must be signed by the Drone admin account to be considered valid. This must be done every time the file is changed. This is to prevent tampering and hijacking of the Drone instance. See [here](https://docs.drone.io/signature/).
-
-To sign the file, first install and setup the [drone cli tool](https://docs.drone.io/cli/install/). Then, run:
-
-```bash
-drone -t PUT_YOUR_DRONE_ADMIN_TOKEN_HERE -s https://drone.superseriousbusiness.org sign superseriousbusiness/gotosocial --save
-```
-
-### Release Checklist
-
-First things first: If this is a security hot-fix, we'll probably rush through this list, and make a prettier release a few days later.
-
-Now, with that out of the way, here's our Checklist.
-
-GoToSocial follows [Semantic Versioning](https://semver.org/).
-So our first concern on the Checklist is:
-
-- What version are we releasing?
-
-Next we need to check:
-
-- Do the assets have to be rebuilt and committed to the repository.
-- Do the swagger docs have to be rebuilt?
-
-On the project management side:
-
-- Are there any issues that have to be moved to a different milestone?
-- Are there any things on the [Roadmap](./ROADMAP.md) that can be ticked off?
-
-Once we're happy with our Checklist, we can create the tag, and push it.
-And the rest [is automation](./.drone.yml).
-
-We can now head to GitHub, and add some personality to the release notes.
-Finally, we make announcements on the all our channels that the release is out!
-
-#### What if something goes wrong?
-
-Sometimes things go awry.
-We release a buggy release, we forgot something ­ something important.
-
-If the release is so bad that it's unusable ­ or dangerous! ­ to a great part of our user-base, we can pull.
-That is: Delete the tag.
-
-Either way, once we've resolved the issue, we just start from the top of this list again. Version numbers are cheap. It's cheap to burn them.
+Documentation for Woodpecker is [here](https://woodpecker-ci.org/docs/intro).

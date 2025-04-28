@@ -123,7 +123,7 @@ sudo usermod -a -G gotosocial gotosocial
 sudo chown -R gotosocial:gotosocial /gotosocial
 ```
 
-你可以在 [GitHub](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) 或你的安装文件夹中的 `example` 文件夹中找到一个 `gotosocial.service` 文件。
+你可以在 [Codeberg](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/gotosocial.service) 或你的安装文件夹中的 `example` 文件夹中找到一个 `gotosocial.service` 文件。
 
 将它复制到 `/etc/systemd/system/gotosocial.service`：
 

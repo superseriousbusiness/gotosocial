@@ -123,7 +123,7 @@ Then make them the owner of your GoToSocial installation since they will need to
 sudo chown -R gotosocial:gotosocial /gotosocial
 ```
 
-You can find a `gotosocial.service` file in the `example` folder on [github](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) or your installation.
+You can find a `gotosocial.service` file in the `example` folder on [our repository](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/gotosocial.service) or your installation.
 
 Copy it to `/etc/systemd/system/gotosocial.service`:
 
