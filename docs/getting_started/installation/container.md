@@ -20,10 +20,10 @@ cd ~/gotosocial
 
 ## Get the latest docker-compose.yaml
 
-Use `wget` to download the latest [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml) example, which we'll customize for our needs:
+Use `wget` to download the latest [docker-compose.yaml](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/docker-compose/docker-compose.yaml) example, which we'll customize for our needs:
 
 ```bash
-wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml
+wget https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/docker-compose/docker-compose.yaml
 ```
 
 ## Edit the docker-compose.yaml

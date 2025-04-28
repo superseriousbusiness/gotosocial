@@ -135,7 +135,7 @@ To speed up startup time of GoToSocial, you can cache the compiled modules betwe
 
 You can instruct GoToSocial on where to store the Wazero artifacts by setting the environment variable `GTS_WAZERO_COMPILATION_CACHE` to a directory, which will be used by GtS to store two smallish artifacts of ~50MiB or so each (~100MiB total).
 
-For an example of this in action, see the [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml), and the [gotosocial.service](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) example files.
+For an example of this in action, see the [docker-compose.yaml](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/docker-compose/docker-compose.yaml), and the [gotosocial.service](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/gotosocial.service) example files.
 
 If you want to provide this value to GtS outside of systemd or Docker, you can do so in the following manner when starting up your GtS server:
 

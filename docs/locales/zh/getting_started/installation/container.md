@@ -20,10 +20,10 @@ cd ~/gotosocial
 
 ## 获取最新的 docker-compose.yaml
 
-使用 `wget` 下载最新的 [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml) 示例，我们将根据需要进行自定义：
+使用 `wget` 下载最新的 [docker-compose.yaml](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/docker-compose/docker-compose.yaml) 示例，我们将根据需要进行自定义：
 
 ```bash
-wget https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml
+wget https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/docker-compose/docker-compose.yaml
 ```
 
 ## 编辑 docker-compose.yaml

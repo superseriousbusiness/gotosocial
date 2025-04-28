@@ -129,7 +129,7 @@ gotosocial server start --media-image-max-size 2097152
 
 你可以通过将环境变量 `GTS_WAZERO_COMPILATION_CACHE` 设置为一个目录来指示 GoToSocial 存储 Wazero 工件，该目录将由 GtS 用于存储两个大小约为 ~50MiB 的小型工件（总计约 ~100MiB）。
 
-要了解此方法的示例，请参见 [docker-compose.yaml](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/docker-compose/docker-compose.yaml) 和 [gotosocial.service](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/example/gotosocial.service) 示例文件。
+要了解此方法的示例，请参见 [docker-compose.yaml](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/docker-compose/docker-compose.yaml) 和 [gotosocial.service](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/example/gotosocial.service) 示例文件。
 
 如果你希望在 systemd 或 Docker 之外为 GtS 提供此值，可以在启动 GtS 服务器时通过以下方式进行：
 

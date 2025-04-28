@@ -8,7 +8,7 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
 通过 GoToSocial，你可以与朋友保持联系，发帖、阅读和分享图片及文章，且不会被追踪或广告打扰！
 
 <p align="middle">
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/sloth.webp" width="300"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/sloth.webp" width="300"/>
 </p>
 
 **GoToSocial 仍然是 [BETA 软件](https://en.wikipedia.org/wiki/Software_release_life_cycle#Beta)**。它已经可被部署和使用，并能与许多其他 Fediverse 服务端顺利联合（但还不是与所有服务端）。然而，许多功能尚未实现，而且还有不少漏洞！我们在 2024 年 9 月/10 月离开了 Alpha 阶段，并计划于 2026 年结束 Beta。
@@ -19,7 +19,7 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
 
 这是实例首页的截图！你也可以看一看本项目在 GoToSocial 上的官方账号: [https://gts.superseriousbusiness.org/@gotosocial](https://gts.superseriousbusiness.org/@gotosocial)。
 
-![GoToSocial 实例 goblin.technology 的首页截图。它展示了实例的基本信息，如用户数和贴文数等。](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/instancesplash.png)
+![GoToSocial 实例 goblin.technology 的首页截图。它展示了实例的基本信息，如用户数和贴文数等。](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/instancesplash.png)
 <!--overview-end-->
 
 ## 目录 <!-- omit in toc -->
@@ -73,7 +73,7 @@ GoToSocial 提供了一个轻量级、可定制且注重安全的进入 [联邦�
 
 如果你曾使用过 Twitter 或 Tumblr（甚至是 Myspace）等服务，GoToSocial 可能会让你感到熟悉：你可以关注他人并拥有粉丝，发布贴文，点赞、回复和分享他人的帖子，并通过时间线浏览你关注的人的贴文。你可以撰写长篇或短篇贴文，或者仅发布图片，一切随你选择。当然，你也可以屏蔽他人，或通过选择仅向朋友发布来限制不想要的互动。
 
-![GoToSocial 中的网页版账户页截图，显示了头像、简介和粉丝/关注人数。](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/profile1.png)
+![GoToSocial 中的网页版账户页截图，显示了头像、简介和粉丝/关注人数。](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/profile1.png)
 
 **GoToSocial 不使用推荐算法，也不收集你的数据来推荐内容或“改善你的体验”**。时间线是按时间顺序排列的：你在时间线顶部看到的内容是*刚刚发布的*，而不是根据你的个人资料选择的“有趣”或“有争议”的内容。
 
@@ -85,7 +85,7 @@ GoToSocial 不会宣称比其他应用更“好”，但它提供了一些可能
 
 因为 GoToSocial 使用 [ActivityPub](https://activitypub.rocks/)，你不仅可以与本站上的人交流，还可以无缝与 [联邦宇宙](https://en.wikipedia.org/wiki/Fediverse) 上的人交流。
 
-![activitypub 标志](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/ap_logo.svg)
+![activitypub 标志](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/ap_logo.svg)
 
 联合意味着你的实例是一个遍布世界的、使用相同协议通信的服务器网络的一部分。你的数据不再集中在一家公司服务器上，而是在你自己的服务器上，根据你的意愿，跨越由其他人运行的服务器组成的弹性网络实现共享。
 
@@ -129,7 +129,7 @@ GoToSocial 提供公开、不列出/悄悄公开、仅粉丝和私信（最好�
 
 GoToSocial 允许你通过 [互动规则](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#默认互动规则) 选择谁可以回复你的贴文。你可以选择允许任何人回复贴文，仅允许朋友回复，等等。
 
-![互动规则设置](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/user-settings-interaction-policy-1.png)
+![互动规则设置](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/user-settings-interaction-policy-1.png)
 
 ### 仅本站贴文
 
@@ -143,7 +143,7 @@ GoToSocial 允许你选择将个人资料暴露为 RSS 订阅源，这样人们�
 
 使用 GoToSocial，你可以使用流行且易用的 Markdown 标记语言来撰写帖子，从而生成丰富的 HTML 贴文，支持引用段落、语法高亮代码块、列表、内嵌链接等。
 
-![markdown 格式化贴文](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/markdown-post.png)
+![markdown 格式化贴文](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/markdown-post.png)
 
 ### 主题与自定义 CSS
 
@@ -154,61 +154,61 @@ GoToSocial 允许你选择将个人资料暴露为 RSS 订阅源，这样人们�
 <details>
 <summary>显示主题示例</summary>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-blurple-dark.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-blurple-dark.png"/>
   <figcaption>Blurple dark</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-blurple-light.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-blurple-light.png"/>
   <figcaption>Blurple light</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-brutalist-light.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-brutalist-light.png"/>
   <figcaption>Brutalist light</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-brutalist-dark.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-brutalist-dark.png"/>
   <figcaption>Brutalist dark</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-ecks-pee.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-ecks-pee.png"/>
   <figcaption>Ecks pee</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-midnight-trip.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-midnight-trip.png"/>
   <figcaption>Midnight trip</figcaption>
 </figure>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-moonlight-hunt.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-moonlight-hunt.png"/>
   <figcaption>Moonlight hunt</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-rainforest.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-rainforest.png"/>
   <figcaption>Rainforest</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-soft.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-soft.png"/>
   <figcaption>Soft</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-solarized-dark.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-solarized-dark.png"/>
   <figcaption>Solarized dark</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-solarized-light.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-solarized-light.png"/>
   <figcaption>Solarized light</figcaption>
 </figure>
 <hr/>
 <figure>
-  <img src="https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/theme-sunset.png"/>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-sunset.png"/>
   <figcaption>Sunset</figcaption>
 </figure>
 <hr/>
@@ -218,7 +218,7 @@ GoToSocial 允许你选择将个人资料暴露为 RSS 订阅源，这样人们�
 
 GoToSocial 仅需约 250-350MiB 的 RAM，并且只要求极少的 CPU 频率，因此非常适合单板计算机、旧笔记本和每月 5 美元的小 VPS。
 
-![Grafana 图标显示 GoToSocial 堆占用约为 250MB，偶尔飙升至 400MB-500MB。](https://raw.githubusercontent.com/superseriousbusiness/gotosocial/main/docs/overrides/public/getting-started-memory-graph.png)
+![Grafana 图标显示 GoToSocial 堆占用约为 250MB，偶尔飙升至 400MB-500MB。](https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/getting-started-memory-graph.png)
 
 除数据库外无需其他依赖（也可以仅使用 SQLite！）。
 
