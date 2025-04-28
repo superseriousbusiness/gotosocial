@@ -1,3 +1,8 @@
+# https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
+when:
+  - event: push
+    branch: main
+
 # https://goreleaser.com/ci/woodpecker/
 # https://woodpecker-ci.org/docs/usage/workflow-syntax#clone
 clone:
@@ -6,15 +11,10 @@ clone:
     settings:
       tags: true
 
-# https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
-when:
-  - event: push
-    branch: main
-
 steps:
   snapshot:
-    # https://codeberg.org/superseriousbusiness/gotosocial-drone-build
-    image: superseriousbusiness/gotosocial-drone-build:0.8.0
+    # https://codeberg.org/superseriousbusiness/gotosocial-woodpecker-build
+    image: superseriousbusiness/gotosocial-woodpecker-build:0.10.0
     pull: true
 
     # https://woodpecker-ci.org/docs/usage/volumes

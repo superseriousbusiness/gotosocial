@@ -1,3 +1,7 @@
+# https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
+when:
+  - event: tag
+
 # https://goreleaser.com/ci/woodpecker/
 # https://woodpecker-ci.org/docs/usage/workflow-syntax#clone
 clone:
@@ -6,14 +10,10 @@ clone:
     settings:
       tags: true
 
-# https://woodpecker-ci.org/docs/usage/workflow-syntax#when---global-workflow-conditions
-when:
-  - event: tag
-
 steps:
   release:
-    # https://codeberg.org/superseriousbusiness/gotosocial-drone-build
-    image: superseriousbusiness/gotosocial-drone-build:0.8.0
+    # https://codeberg.org/superseriousbusiness/gotosocial-woodpecker-build
+    image: superseriousbusiness/gotosocial-woodpecker-build:0.10.0
     pull: true
 
     # https://woodpecker-ci.org/docs/usage/volumes
@@ -39,10 +39,10 @@ steps:
       # When releasing, compare commits to the most recent tag that is not the
       # current one AND is not a release candidate tag (ie., no "rc" in the name).
       #
-      # The DRONE_TAG env var should point to the tag that triggered this build.
-      # See: https://docs.drone.io/pipeline/environment/reference/drone-tag/ 
+      # The CI_COMMIT_TAG env var should point to the tag that triggered this build.
+      # See: https://woodpecker-ci.org/docs/usage/environment
       #
       # Note, this may cause annoyances when doing backport releases, for example,
       # releasing v0.10.1 when we've already released v0.15.0 or whatever, but
       # they should only be superficial annoyances related to the release notes.
-      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v "rc\|${DRONE_TAG}" | sort -V -r | head -n 1) goreleaser release --clean
+      - GORELEASER_PREVIOUS_TAG=$(git tag -l | grep -v "rc\|${CI_COMMIT_TAG}" | sort -V -r | head -n 1) goreleaser release --clean

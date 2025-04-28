@@ -2,7 +2,7 @@
 # Dockerfile reference: https://docs.docker.com/engine/reference/builder/
 
 # stage 1: generate the web/assets/dist bundles
-FROM --platform=${BUILDPLATFORM} node:18-alpine AS bundler
+FROM --platform=${BUILDPLATFORM} node:lts-alpine AS bundler
 
 COPY web web
 RUN yarn --cwd ./web/source install && \
@@ -11,7 +11,7 @@ RUN yarn --cwd ./web/source install && \
     rm -rf ./web/source
 
 # stage 2: build the executor container
-FROM --platform=${TARGETPLATFORM} alpine:3.20 as executor
+FROM --platform=${TARGETPLATFORM} alpine:3.21 AS executor
 
 # switch to non-root user:group for GtS
 USER 1000:1000
