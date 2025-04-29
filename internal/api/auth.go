@@ -19,6 +19,7 @@ package api
 
 import (
 	"code.superseriousbusiness.org/gotosocial/internal/api/auth"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/middleware"
 	"code.superseriousbusiness.org/gotosocial/internal/oidc"
@@ -31,6 +32,7 @@ import (
 type Auth struct {
 	routerSession *gtsmodel.RouterSession
 	sessionName   string
+	cookiePolicy  apiutil.CookiePolicy
 
 	auth *auth.Module
 }
@@ -47,7 +49,12 @@ func (a *Auth) Route(r *router.Router, m ...gin.HandlerFunc) {
 			Directives: []string{"private", "max-age=120"},
 			Vary:       []string{"Accept", "Accept-Encoding"},
 		})
-		sessionMiddleware = middleware.Session(a.sessionName, a.routerSession.Auth, a.routerSession.Crypt)
+		sessionMiddleware = middleware.Session(
+			a.sessionName,
+			a.routerSession.Auth,
+			a.routerSession.Crypt,
+			a.cookiePolicy,
+		)
 	)
 	authGroup.Use(m...)
 	oauthGroup.Use(m...)
@@ -64,10 +71,12 @@ func NewAuth(
 	idp oidc.IDP,
 	routerSession *gtsmodel.RouterSession,
 	sessionName string,
+	cookiePolicy apiutil.CookiePolicy,
 ) *Auth {
 	return &Auth{
 		routerSession: routerSession,
 		sessionName:   sessionName,
+		cookiePolicy:  cookiePolicy,
 		auth:          auth.New(state, p, idp),
 	}
 }

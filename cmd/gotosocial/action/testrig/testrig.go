@@ -244,17 +244,20 @@ var Start action.GTSAction = func(ctx context.Context) error {
 		return fmt.Errorf("error generating session name for session middleware: %w", err)
 	}
 
+	// Configure our instance cookie policy.
+	cookiePolicy := apiutil.NewCookiePolicy()
+
 	var (
-		authModule        = api.NewAuth(state, processor, idp, routerSession, sessionName) // auth/oauth paths
-		clientModule      = api.NewClient(state, processor)                                // api client endpoints
-		metricsModule     = api.NewMetrics()                                               // Metrics endpoints
-		healthModule      = api.NewHealth(state.DB.Ready)                                  // Health check endpoints
-		fileserverModule  = api.NewFileserver(processor)                                   // fileserver endpoints
-		robotsModule      = api.NewRobots()                                                // robots.txt endpoint
-		wellKnownModule   = api.NewWellKnown(processor)                                    // .well-known endpoints
-		nodeInfoModule    = api.NewNodeInfo(processor)                                     // nodeinfo endpoint
-		activityPubModule = api.NewActivityPub(state.DB, processor)                        // ActivityPub endpoints
-		webModule         = web.New(state.DB, processor)                                   // web pages + user profiles + settings panels etc
+		authModule        = api.NewAuth(state, processor, idp, routerSession, sessionName, cookiePolicy) // auth/oauth paths
+		clientModule      = api.NewClient(state, processor)                                              // api client endpoints
+		metricsModule     = api.NewMetrics()                                                             // Metrics endpoints
+		healthModule      = api.NewHealth(state.DB.Ready)                                                // Health check endpoints
+		fileserverModule  = api.NewFileserver(processor)                                                 // fileserver endpoints
+		robotsModule      = api.NewRobots()                                                              // robots.txt endpoint
+		wellKnownModule   = api.NewWellKnown(processor)                                                  // .well-known endpoints
+		nodeInfoModule    = api.NewNodeInfo(processor)                                                   // nodeinfo endpoint
+		activityPubModule = api.NewActivityPub(state.DB, processor)                                      // ActivityPub endpoints
+		webModule         = web.New(state.DB, processor, cookiePolicy)                                   // web pages + user profiles + settings panels etc
 	)
 
 	// these should be routed in order

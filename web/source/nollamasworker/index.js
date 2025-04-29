@@ -25,9 +25,10 @@ onmessage = async function(e) {
 
 	// Get difficulty and generate the expected
 	// zero ASCII prefix to check for in hashes.
-	const difficultyStr = e.data.difficulty;
-	const difficulty = parseInt(difficultyStr, 10);
-	const zeroPrefix = '0'.repeat(difficulty);
+	const difficulty1Str = e.data.difficulty1;
+	const difficulty2Str = e.data.difficulty2;
+	const difficulty1 = parseInt(difficulty1Str, 10);
+	const zeroPrefix = '0'.repeat(difficulty1);
 
 	let nonce = 0;
 	while (true) { // eslint-disable-line no-constant-condition
@@ -43,8 +44,13 @@ onmessage = async function(e) {
 		// Check if the hex encoded hash has
 		// difficulty defined zeroes prefix.
 		if (hashHex.startsWith(zeroPrefix)) {
-			postMessage({ nonce: nonce, done: true });
-			break;
+
+			// Check if the next char after zero prefix
+			// is specifically less than difficulty2 char.
+			if (hashHex.charAt(difficulty1) < difficulty2Str) {
+				postMessage({ nonce: nonce, done: true });
+				break;
+			}
 		}
 
 		// Iter.

@@ -44,17 +44,20 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Read the challenge and difficulty from
 	// data attributes on the nollamas section.
 	const challenge = nollamas.dataset.nollamasChallenge;
-	const difficulty = nollamas.dataset.nollamasDifficulty;
+	const difficulty1 = nollamas.dataset.nollamasDifficulty1;
+	const difficulty2 = nollamas.dataset.nollamasDifficulty2;
 
-	console.log('challenge:', challenge);   // eslint-disable-line no-console
-	console.log('difficulty:', difficulty); // eslint-disable-line no-console
+	console.log('challenge:', challenge);     // eslint-disable-line no-console
+	console.log('difficulty1:', difficulty1); // eslint-disable-line no-console
+	console.log('difficulty2:', difficulty2); // eslint-disable-line no-console
 
 	// Prepare the worker with task function.
 	const worker = new Worker("/assets/dist/nollamasworker.js");
 	const startTime = performance.now();
 	worker.postMessage({
 		challenge: challenge,
-		difficulty: difficulty,
+		difficulty1: difficulty1,
+		difficulty2: difficulty2,
 	});
 
 	// Set the main worker function.

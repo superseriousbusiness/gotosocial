@@ -170,12 +170,20 @@ func testDefaults() config.Configuration {
 		AdvancedRateLimitRequests:    0, // disabled
 		AdvancedThrottlingMultiplier: 0, // disabled
 		AdvancedSenderMultiplier:     0, // 1 sender only, regardless of CPU
+		AdvancedScraperDeterrence:    envBool("GTS_ADVANCED_SCRAPER_DETERRENCE", false),
 
 		SoftwareVersion: "0.0.0-testrig",
 
 		// simply use cache defaults.
 		Cache: config.Defaults.Cache,
 	}
+}
+
+func envBool(key string, _default bool) bool {
+	return env(key, _default, func(value string) bool {
+		b, _ := strconv.ParseBool(value)
+		return b
+	})
 }
 
 func envInt(key string, _default int) int {

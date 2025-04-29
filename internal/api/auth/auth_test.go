@@ -24,6 +24,7 @@ import (
 
 	"code.superseriousbusiness.org/gotosocial/internal/admin"
 	"code.superseriousbusiness.org/gotosocial/internal/api/auth"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/email"
@@ -142,7 +143,7 @@ func (suite *AuthStandardTestSuite) newContext(
 
 	// Trigger the session middleware on the context.
 	store := memstore.NewStore(make([]byte, 32), make([]byte, 32))
-	store.Options(middleware.SessionOptions())
+	store.Options(middleware.SessionOptions(apiutil.NewCookiePolicy()))
 	sessionMiddleware := sessions.Sessions("gotosocial-localhost", store)
 	sessionMiddleware(ctx)
 

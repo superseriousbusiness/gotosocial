@@ -50,7 +50,10 @@ import (
 // requires javascript to be enabled on the client to pass the middleware check.
 //
 // Heavily inspired by: https://github.com/TecharoHQ/anubis
-func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserror.WithCode)) gin.HandlerFunc {
+func NoLLaMas(
+	cookiePolicy apiutil.CookiePolicy,
+	getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
+) gin.HandlerFunc {
 
 	if !config.GetAdvancedScraperDeterrence() {
 		// NoLLaMas middleware disabled.
@@ -69,8 +72,10 @@ func NoLLaMas(getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserro
 	var nollamas nollamas
 	nollamas.seed = seed
 	nollamas.ttl = time.Hour
-	nollamas.diff = 4
+	nollamas.diff1 = 4
+	nollamas.diff2 = '4'
 	nollamas.getInstanceV1 = getInstanceV1
+	nollamas.policy = cookiePolicy
 	return nollamas.Serve
 }
 
@@ -84,9 +89,28 @@ type hashWithBufs struct {
 }
 
 type nollamas struct {
-	seed []byte // unique token seed
-	ttl  time.Duration
-	diff uint8
+	// our instance cookie policy.
+	policy apiutil.CookiePolicy
+
+	// unique token seed
+	// to prevent hashes
+	// being guessable
+	seed []byte
+
+	// success cookie TTL
+	ttl time.Duration
+
+	// algorithm difficulty knobs.
+	// diff1 determines the number of
+	// leading zeroes required, while
+	// diff2 checks the next byte at
+	// index is less than it.
+	//
+	// e.g. you look for say:
+	// - b[0:3] must be '0'
+	// - b[4] can be < '5'
+	diff1 uint8
+	diff2 uint8
 
 	// extra fields required for
 	// our template rendering.
@@ -211,7 +235,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 	// They passed the challenge! Set success token
 	// cookie and allow them to continue to next handlers.
-	c.SetCookie("gts-nollamas", token, int(m.ttl/time.Second), "", "", false, false)
+	m.policy.SetCookie(c, "gts-nollamas", token, int(m.ttl/time.Second), "/")
 	c.Redirect(http.StatusTemporaryRedirect, c.Request.URL.RequestURI())
 }
 
@@ -239,8 +263,12 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 		},
 		Extra: map[string]any{
-			"challenge":  challenge,
-			"difficulty": m.diff,
+			"challenge":   challenge,
+			"difficulty1": m.diff1,
+
+			// must be a str otherwise template
+			// renders uint8 as int, not char
+			"difficulty2": hexStrs[m.diff2],
 		},
 		Javascript: []apiutil.JavascriptEntry{
 			{
@@ -261,7 +289,8 @@ func (m *nollamas) token(hash *hashWithBufs, userAgent, clientIP string) string 
 	// Include difficulty level in
 	// hash input data so if config
 	// changes then token invalidates.
-	hash.hash.Write([]byte{m.diff})
+	hash.hash.Write([]byte{m.diff1})
+	hash.hash.Write([]byte{m.diff2})
 
 	// Also seed the generated input with
 	// current time rounded to TTL, so our
@@ -297,13 +326,40 @@ func (m *nollamas) checkChallenge(hash *hashWithBufs, challenge, nonce string) b
 	hex.Encode(hash.ebuf, hash.hbuf)
 	solution := hash.ebuf
 
+	// Compiler bound-check-elimination hint.
+	if len(solution) < int(m.diff1+1) {
+		panic(gtserror.New("BCE"))
+	}
+
 	// Check that the first 'diff'
 	// many chars are indeed zeroes.
-	for i := range m.diff {
+	for i := range m.diff1 {
 		if solution[i] != '0' {
 			return false
 		}
 	}
 
-	return true
+	// Check that next char is < 'diff2'.
+	return solution[m.diff1] < m.diff2
+}
+
+// hexStrs is a quick lookup of ASCII hex
+// bytes to their string equivalent.
+var hexStrs = [...]string{
+	'0': "0",
+	'1': "1",
+	'2': "2",
+	'3': "3",
+	'4': "4",
+	'5': "5",
+	'6': "6",
+	'7': "7",
+	'8': "8",
+	'9': "9",
+	'a': "a",
+	'b': "b",
+	'c': "c",
+	'd': "d",
+	'e': "e",
+	'f': "f",
 }

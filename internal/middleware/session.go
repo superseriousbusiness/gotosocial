@@ -19,12 +19,10 @@ package middleware
 
 import (
 	"fmt"
-	"net/http"
 	"net/url"
-	"strings"
 
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
-	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
 	"github.com/gin-gonic/gin"
@@ -32,29 +30,15 @@ import (
 )
 
 // SessionOptions returns the standard set of options to use for each session.
-func SessionOptions() sessions.Options {
-	var samesite http.SameSite
-	switch strings.TrimSpace(strings.ToLower(config.GetAdvancedCookiesSamesite())) {
-	case "lax":
-		samesite = http.SameSiteLaxMode
-	case "strict":
-		samesite = http.SameSiteStrictMode
-	default:
-		log.Warnf(nil, "%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), config.GetAdvancedCookiesSamesite())
-		samesite = http.SameSiteLaxMode
-	}
-
+func SessionOptions(cookiePolicy apiutil.CookiePolicy) sessions.Options {
 	return sessions.Options{
 		Path:   "/",
-		Domain: config.GetHost(),
+		Domain: cookiePolicy.Domain,
 		// 2 minutes
-		MaxAge: 120,
-		// only set secure over https
-		Secure: config.GetProtocol() == "https",
-		// forbid javascript from inspecting cookie
-		HttpOnly: true,
-		// https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site-00#section-4.1.1
-		SameSite: samesite,
+		MaxAge:   120,
+		Secure:   cookiePolicy.Secure,
+		HttpOnly: cookiePolicy.HTTPOnly,
+		SameSite: cookiePolicy.SameSite,
 	}
 }
 
@@ -84,11 +68,10 @@ func SessionName() (string, error) {
 	return fmt.Sprintf("gotosocial-%s", punyHostname), nil
 }
 
-// Session returns a new gin middleware that implements session cookies using the given
-// sessionName, authentication key, and encryption key. Session name can be derived from the
-// SessionName utility function in this package.
-func Session(sessionName string, auth []byte, crypt []byte) gin.HandlerFunc {
+// Session returns a new gin middleware that implements session cookies using the given sessionName, authentication
+// key, and encryption key. Session name can be derived from the SessionName utility function in this package.
+func Session(sessionName string, auth []byte, crypt []byte, cookiePolicy apiutil.CookiePolicy) gin.HandlerFunc {
 	store := memstore.NewStore(auth, crypt)
-	store.Options(SessionOptions())
+	store.Options(SessionOptions(cookiePolicy))
 	return sessions.Sessions(sessionName, store)
 }
