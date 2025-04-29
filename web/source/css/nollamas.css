@@ -21,7 +21,10 @@
 	display: flex;
 	flex-direction: column;
 
-	.nollamas-solving {
+	.nollamas-status {
+		display: flex;
+		flex-direction: column;
 		align-self: center;
+		align-items: center;
 	}
 }

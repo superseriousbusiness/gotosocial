@@ -17,6 +17,8 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+const explanation = "Your browser is currently solving a proof-of-work challenge designed to deter \"ai\" scrapers. This should take no more than a few seconds...";
+
 document.addEventListener('DOMContentLoaded', function() {
 	// Get the nollamas section container.
 	const nollamas = document.querySelector(".nollamas");
@@ -25,16 +27,19 @@ document.addEventListener('DOMContentLoaded', function() {
 	// a proof-of-work captcha is being done.
 	const p = this.createElement("p");
 	p.className = "nollamas-explanation";
-	p.appendChild(document.createTextNode("Your browser is currently solving a proof-of-work challenge designed to deter \"ai\" scrapers. This should take no more than a few seconds..."));
+	p.appendChild(document.createTextNode(explanation));
 	nollamas.appendChild(p);
 
-	// Add a loading spinner as well if motion is allowed.
+	// Add a loading spinner, but only
+	// animate it if motion is allowed.
+	const spinner = document.createElement("i");
+	spinner.className = "fa fa-spinner fa-2x fa-fw nollamas-status";
 	if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-		const i = this.createElement("i");
-		i.className = "fa fa-2x fa-spin fa-refresh nollamas-solving";
-		i.setAttribute("title","Solving...");
-		nollamas.appendChild(i);
+		spinner.className += " fa-pulse";
 	}
+	spinner.setAttribute("title","Solving...");
+	spinner.setAttribute("aria-label", "Solving");
+	nollamas.appendChild(spinner);
 
 	// Read the challenge and difficulty from
 	// data attributes on the nollamas section.
@@ -46,6 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Prepare the worker with task function.
 	const worker = new Worker("/assets/dist/nollamasworker.js");
+	const startTime = performance.now();
 	worker.postMessage({
 		challenge: challenge,
 		difficulty: difficulty,
@@ -54,10 +60,35 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Set the main worker function.
 	worker.onmessage = function (e) {
 		if (e.data.done) {
-			console.log('solution found for:', e.data.nonce); // eslint-disable-line no-console
-			let url = new URL(window.location.href);
-			url.searchParams.set('nollamas_solution', e.data.nonce);
-			window.location.href = url.toString();
+			const endTime = performance.now();
+			const duration = endTime - startTime;
+			
+			// Remove spinner and replace it with a tick
+			// and info about how long it took to solve.
+			nollamas.removeChild(spinner);
+			const solutionWrapper = document.createElement("div");
+			solutionWrapper.className = "nollamas-status";
+			
+			const tick = document.createElement("i");
+			tick.className = "fa fa-check fa-2x fa-fw";
+			tick.setAttribute("title","Solved!");
+			tick.setAttribute("aria-label", "Solved!");
+			solutionWrapper.appendChild(tick);
+
+			const took = document.createElement("span");
+			took.appendChild(document.createTextNode(`Solved in ${duration.toString()}ms!`));
+			solutionWrapper.appendChild(took);
+
+			nollamas.appendChild(solutionWrapper);
+			
+			// Wait for 500ms before redirecting, to give
+			// visitors a shot at reading the message, but
+			// not so long that they have to wait unduly.
+			setTimeout(() => {
+				let url = new URL(window.location.href);
+				url.searchParams.set('nollamas_solution', e.data.nonce);
+				window.location.replace(url.toString());
+			}, 500);
 		}
 	};
 });
