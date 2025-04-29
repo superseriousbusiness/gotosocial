@@ -1275,7 +1275,7 @@ advanced-header-filter-mode: ""
 # The downside is that it requires javascript to be enabled.
 #
 # For more details please check the documentation at:
-# https://docs.gotosocial.org/en/latest/admin/scraper_deterrence
+# https://docs.gotosocial.org/en/latest/advanced/scraper_deterrence
 #
 # Options: [true, false]
 # Default: true

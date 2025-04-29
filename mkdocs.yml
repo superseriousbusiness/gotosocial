@@ -131,6 +131,7 @@ nav:
     - "advanced/tracing.md"
     - "advanced/metrics.md"
     - "advanced/replicating-sqlite.md"
+    - "advanced/scraper_deterrence.md"
     - "advanced/sqlite-networked-storage.md"
     - "Advanced builds":
       - "advanced/builds/nowasm.md"

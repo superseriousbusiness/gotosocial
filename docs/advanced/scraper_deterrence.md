@@ -11,4 +11,7 @@ This was heavily inspired by the great project that is [anubis], but ultimately 
 
 The GoToSocial implementation of this scraper deterrence is still incredibly minimal, so if you're looking for more features or fine-grained control over your deterrence measures then by all means keep ours disabled and stand-up a service like [anubis] in front of your instance!
 
+!!! warning
+    This proof-of-work scraper deterrence does not protect user profile RSS feeds due to the extra complexity involved. If you rely on your RSS feed being exposed, this is one such case where [anubis] may be a better fit!
+
 [anubis]: https://github.com/TecharoHQ/anubis
