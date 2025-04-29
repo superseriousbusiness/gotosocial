@@ -57,6 +57,9 @@ Contains `account`, `export`, `import`, and `media` subcommands.
 
 This command can be used to create a new account on your instance.
 
+!!! Warning
+    You must have launched the server at least once before running this command, to initialize essential entries in the database.
+
 `gotosocial admin account create --help`:
 
 ```text

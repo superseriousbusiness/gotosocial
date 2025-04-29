@@ -165,15 +165,11 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 		return nil, err
 	}
 
-	defer func() {
-		// Pin account to (new)
-		// user before returning.
-		user.Account = account
-	}()
-
+	// If there's already a
+	// user for this account,
+	// just pin acct + return.
 	if user != nil {
-		// Already had a user for this
-		// account, just return that.
+		user.Account = account
 		return user, nil
 	}
 
@@ -194,13 +190,21 @@ func (a *adminDB) NewSignup(ctx context.Context, newSignup gtsmodel.NewSignup) (
 	}
 
 	// If no app ID was set,
-	// use the instance app ID.
+	// get the instance app
+	// and use its ID.
 	if newSignup.AppID == "" {
 		instanceApp, err := a.state.DB.GetInstanceApplication(ctx)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			err := gtserror.Newf("db error getting instance app: %w", err)
 			return nil, err
 		}
+
+		if instanceApp == nil {
+			const errText = "instance application not yet created, run the server at least once *before* creating users"
+			err := gtserror.New(errText)
+			return nil, err
+		}
+
 		newSignup.AppID = instanceApp.ID
 	}
 
