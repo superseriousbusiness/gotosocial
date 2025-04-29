@@ -21,7 +21,7 @@ import (
 	"context"
 	"testing"
 
-	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20211113114307_init"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
 )
@@ -90,6 +90,27 @@ func (suite *AdminTestSuite) TestCreateInstanceAccount() {
 	acct, err = suite.db.GetInstanceAccount(context.Background(), "")
 	suite.NoError(err)
 	suite.NotNil(acct)
+}
+
+func (suite *AdminTestSuite) TestNewSignupWithNoInstanceApp() {
+	ctx := context.Background()
+
+	// Delete the instance app.
+	if err := suite.state.DB.DeleteApplicationByID(
+		ctx,
+		suite.testApplications["instance_application"].ID,
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Try to create a new signup with no provided app ID,
+	// it should fail as it can't fetch the instance app.
+	_, err := suite.state.DB.NewSignup(ctx, gtsmodel.NewSignup{
+		Username: "whatever",
+		Email:    "whatever@wherever.org",
+		Password: "really_good_password",
+	})
+	suite.EqualError(err, "NewSignup: instance application not yet created, run the server at least once *before* creating users")
 }
 
 func TestAdminTestSuite(t *testing.T) {
