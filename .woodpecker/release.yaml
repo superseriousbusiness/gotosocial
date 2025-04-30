@@ -25,11 +25,17 @@ steps:
     # https://woodpecker-ci.org/docs/usage/environment
     # https://woodpecker-ci.org/docs/usage/secrets#usage
     environment:
+      # Needed for goreleaser to
+      # push manifests + containers.
       DOCKER_USERNAME: gotosocial
       DOCKER_PASSWORD:
         from_secret: gts_docker_password
-      GITHUB_TOKEN:
-        from_secret: github_token
+      
+      # Needed for goreleaser
+      # to publish the release.
+      # https://goreleaser.com/scm/gitea/
+      GITEA_TOKEN:
+        from_secret: codeberg_token
     
     # https://woodpecker-ci.org/docs/usage/workflow-syntax#commands
     commands:

@@ -2,6 +2,11 @@
 version: 2
 project_name: gotosocial
 
+# https://goreleaser.com/scm/gitea/#urls
+gitea_urls:
+  api: https://codeberg.org/api/v1
+  download: https://codeberg.org
+
 # https://goreleaser.com/customization/hooks/
 before:
   hooks:
@@ -232,6 +237,10 @@ source:
 
 # https://goreleaser.com/customization/release/
 release:
+  # https://goreleaser.com/customization/release/#gitea
+  gitea:
+    owner: superseriousbusiness
+    name: gotosocial
   draft: true
   prerelease: auto
   header: |
@@ -319,7 +328,7 @@ release:
 
 # https://goreleaser.com/customization/changelog/
 changelog:
-  use: github
+  use: gitea
   groups:
     - title: Features and performance
       regexp: '^.*\[(?:feature|performance).*\].*$'

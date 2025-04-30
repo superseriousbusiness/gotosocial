@@ -26,9 +26,14 @@ steps:
     # https://woodpecker-ci.org/docs/usage/environment
     # https://woodpecker-ci.org/docs/usage/secrets#usage
     environment:
+      # Needed to push snapshot
+      # manifests + containers.
       DOCKER_USERNAME: gotosocial
       DOCKER_PASSWORD:
         from_secret: gts_docker_password
+
+      # Needed for snapshot script
+      # to publish artifacts to S3.
       S3_ACCESS_KEY_ID:
         from_secret: gts_s3_access_key_id
       S3_SECRET_ACCESS_KEY:
