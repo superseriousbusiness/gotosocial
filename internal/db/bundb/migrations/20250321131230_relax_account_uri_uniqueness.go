@@ -28,6 +28,7 @@ import (
 	new_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/new"
 	old_gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20250321131230_relax_account_uri_uniqueness/old"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
@@ -188,13 +189,27 @@ func init() {
 				for _, oldAccount := range oldAccounts {
 
 					var actorType new_gtsmodel.AccountActorType
-					if oldAccount.Domain == "" && oldAccount.Username == host {
+					switch {
+
+					case oldAccount.Domain != "":
+						// Not our account, just parse new actor type.
+						actorType = new_gtsmodel.ParseAccountActorType(oldAccount.ActorType)
+
+					case oldAccount.Username == host:
 						// This is our instance account, override actor
 						// type to Service, as previously it was just person.
 						actorType = new_gtsmodel.AccountActorTypeService
-					} else {
-						// Not our instance account, just parse new actor type.
-						actorType = new_gtsmodel.ParseAccountActorType(oldAccount.ActorType)
+
+					default:
+						// Not our instance account. Use old
+						// *Bot flag to determine actor type.
+						if util.PtrOrZero(oldAccount.Bot) {
+							// It's a bot.
+							actorType = new_gtsmodel.AccountActorTypeApplication
+						} else {
+							// Just normal men, just innocent men.
+							actorType = new_gtsmodel.AccountActorTypePerson
+						}
 					}
 
 					if actorType == new_gtsmodel.AccountActorTypeUnknown {
