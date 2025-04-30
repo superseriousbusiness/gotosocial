@@ -23,18 +23,20 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"code.superseriousbusiness.org/activity/pub"
+	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
-	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/federation/federatingdb"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"codeberg.org/gruf/go-byteutil"
 	"codeberg.org/gruf/go-cache/v3"
 )
@@ -140,23 +142,37 @@ func (c *controller) NewTransportForUsername(ctx context.Context, username strin
 	return transport, nil
 }
 
-// dereferenceLocalFollowers is a shortcut to dereference followers of an
-// account on this instance, without making any external api/http calls.
+// dereferenceLocal is a shortcut to try dereferencing
+// something on this instance without making any http calls.
 //
-// It is passed to new transports, and should only be invoked when the iri.Host == this host.
-func (c *controller) dereferenceLocalFollowers(ctx context.Context, iri *url.URL) (*http.Response, error) {
-	followers, err := c.fedDB.Followers(ctx, iri)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+// Will return an error if nothing could be found, indicating that
+// the calling transport should continue with an http call anyway.
+//
+// It should only be invoked when the iri.Host == this host.
+func (c *controller) dereferenceLocal(
+	ctx context.Context,
+	uri *url.URL,
+) (*http.Response, error) {
+	var (
+		t   vocab.Type
+		err error
+	)
+
+	t, err = c.fedDB.Get(ctx, uri)
+	if err != nil {
+		// Don't check especially for
+		// db.ErrNoEntries, as we *want*
+		// to pass this back to the caller
+		// if we didn't get anything.
 		return nil, err
 	}
 
-	if followers == nil {
-		// Return a generic 404 not found response.
-		rsp := craftResponse(iri, http.StatusNotFound)
-		return rsp, nil
+	if util.IsNil(t) {
+		// This should never happen.
+		panic("nil vocab.Type after successful c.fedDB.Get call")
 	}
 
-	i, err := ap.Serialize(followers)
+	i, err := ap.Serialize(t)
 	if err != nil {
 		return nil, err
 	}
@@ -165,84 +181,22 @@ func (c *controller) dereferenceLocalFollowers(ctx context.Context, iri *url.URL
 	if err != nil {
 		return nil, err
 	}
+	contentLength := len(b)
 
 	// Return a response with AS data as body.
-	rsp := craftResponse(iri, http.StatusOK)
-	rsp.Body = io.NopCloser(bytes.NewReader(b))
+	rsp := &http.Response{
+		Request:       &http.Request{URL: uri},
+		Status:        http.StatusText(http.StatusOK),
+		StatusCode:    http.StatusOK,
+		Body:          io.NopCloser(bytes.NewReader(b)),
+		ContentLength: int64(contentLength),
+		Header: map[string][]string{
+			"Content-Type":   {apiutil.AppActivityLDJSON},
+			"Content-Length": {strconv.Itoa(contentLength)},
+		},
+	}
+
 	return rsp, nil
-}
-
-// dereferenceLocalUser is a shortcut to dereference followers an account on
-// this instance, without making any external api/http calls.
-//
-// It is passed to new transports, and should only be invoked when the iri.Host == this host.
-func (c *controller) dereferenceLocalUser(ctx context.Context, iri *url.URL) (*http.Response, error) {
-	user, err := c.fedDB.Get(ctx, iri)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, err
-	}
-
-	if user == nil {
-		// Return a generic 404 not found response.
-		rsp := craftResponse(iri, http.StatusNotFound)
-		return rsp, nil
-	}
-
-	i, err := ap.Serialize(user)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := json.Marshal(i)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return a response with AS data as body.
-	rsp := craftResponse(iri, http.StatusOK)
-	rsp.Body = io.NopCloser(bytes.NewReader(b))
-	return rsp, nil
-}
-
-// dereferenceLocalAccept is a shortcut to dereference an accept created
-// by an account on this instance, without making any external api/http calls.
-//
-// It is passed to new transports, and should only be invoked when the iri.Host == this host.
-func (c *controller) dereferenceLocalAccept(ctx context.Context, iri *url.URL) (*http.Response, error) {
-	accept, err := c.fedDB.GetAccept(ctx, iri)
-	if err != nil && !errors.Is(err, db.ErrNoEntries) {
-		return nil, err
-	}
-
-	if accept == nil {
-		// Return a generic 404 not found response.
-		rsp := craftResponse(iri, http.StatusNotFound)
-		return rsp, nil
-	}
-
-	i, err := ap.Serialize(accept)
-	if err != nil {
-		return nil, err
-	}
-
-	b, err := json.Marshal(i)
-	if err != nil {
-		return nil, err
-	}
-
-	// Return a response with AS data as body.
-	rsp := craftResponse(iri, http.StatusOK)
-	rsp.Body = io.NopCloser(bytes.NewReader(b))
-	return rsp, nil
-}
-
-func craftResponse(url *url.URL, code int) *http.Response {
-	rsp := new(http.Response)
-	rsp.Request = new(http.Request)
-	rsp.Request.URL = url
-	rsp.Status = http.StatusText(code)
-	rsp.StatusCode = code
-	return rsp
 }
 
 // privkeyToPublicStr will create a string representation of RSA public key from private.
