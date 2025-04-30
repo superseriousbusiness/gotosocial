@@ -51,6 +51,7 @@ type TransportTestSuite struct {
 	testApplications map[string]*gtsmodel.Application
 	testUsers        map[string]*gtsmodel.User
 	testAccounts     map[string]*gtsmodel.Account
+	testStatuses     map[string]*gtsmodel.Status
 
 	transport transport.Transport
 }
@@ -60,6 +61,7 @@ func (suite *TransportTestSuite) SetupSuite() {
 	suite.testApplications = testrig.NewTestApplications()
 	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testStatuses = testrig.NewTestStatuses()
 }
 
 func (suite *TransportTestSuite) SetupTest() {

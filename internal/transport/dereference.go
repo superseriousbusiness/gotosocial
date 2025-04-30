@@ -19,37 +19,41 @@ package transport
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/url"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
-	"code.superseriousbusiness.org/gotosocial/internal/uris"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
 
 func (t *transport) Dereference(ctx context.Context, iri *url.URL) (*http.Response, error) {
-	// If the request is to us, we can shortcut for
-	// certain URIs rather than going through the normal
-	// request flow, thereby saving time and energy.
+	// If the request is to us, we can try to shortcut
+	// rather than going through the normal request flow.
+	//
+	// Only bail on a real error, otherwise continue
+	// to just make a normal http request to ourself.
 	if iri.Host == config.GetHost() {
-		switch {
-
-		case uris.IsFollowersPath(iri):
-			// The request is for followers of one of
-			// our accounts, which we can shortcut.
-			return t.controller.dereferenceLocalFollowers(ctx, iri)
-
-		case uris.IsUserPath(iri):
-			// The request is for one of our
-			// accounts, which we can shortcut.
-			return t.controller.dereferenceLocalUser(ctx, iri)
-
-		case uris.IsAcceptsPath(iri):
-			// The request is for an Accept on
-			// our instance, which we can shortcut.
-			return t.controller.dereferenceLocalAccept(ctx, iri)
+		rsp, err := t.controller.dereferenceLocal(ctx, iri)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Real error.
+			err := gtserror.Newf("error trying dereferenceLocal: %w", err)
+			return nil, err
 		}
+
+		if rsp != nil {
+			// Got something!
+			//
+			// No need for
+			// further business.
+			return rsp, nil
+		}
+
+		// Blast out a cheeky warning so we can keep track of this.
+		log.Warnf(ctx, "about to perform request to self: GET %s", iri)
 	}
 
 	// Build IRI just once
