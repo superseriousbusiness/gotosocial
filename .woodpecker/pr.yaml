@@ -3,8 +3,14 @@ when:
   - event: pull_request
 
 steps:
-  # Lint the Go code.
+  # Lint the Go code only if
+  # some Go files have changed.
   lint:
+    when:
+      # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
+      # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
+      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" })'
+
     # We use golangci-lint for linting.
     # See: https://golangci-lint.run/
     image: golangci/golangci-lint:v1.62.0
@@ -29,8 +35,14 @@ steps:
     commands:
       - golangci-lint run
 
-  # Test the Go code.
+  # Test the Go code only if
+  # some Go files have changed.
   test:
+    when:
+      # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
+      # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
+      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" })'
+
     image: golang:1.23-alpine
     pull: true
 
@@ -66,8 +78,14 @@ steps:
     # https://woodpecker-ci.org/docs/usage/workflow-syntax#depends_on
     depends_on: [lint]
 
-  # Validate the web code.
+  # Validate the web code only
+  # if web source has changed.
   web:
+    when:
+      # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
+      # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
+      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "web/source/" })'
+
     image: node:lts-alpine
     pull: true
 
@@ -93,6 +111,3 @@ steps:
 
       # Ensure build works.
       - yarn --cwd ./web/source build
-
-    # https://woodpecker-ci.org/docs/usage/workflow-syntax#depends_on
-    depends_on: [test]
