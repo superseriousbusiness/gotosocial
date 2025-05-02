@@ -750,6 +750,9 @@ func (p *clientAPI) UpdateAccount(ctx context.Context, cMsg *messages.FromClient
 		log.Errorf(ctx, "error federating account update: %v", err)
 	}
 
+	// Account representation has changed, invalidate from timelines.
+	p.surface.invalidateTimelineEntriesByAccount(account.ID)
+
 	return nil
 }
 

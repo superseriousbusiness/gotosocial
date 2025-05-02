@@ -811,6 +811,9 @@ func (p *fediAPI) UpdateAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 		log.Errorf(ctx, "error refreshing account: %v", err)
 	}
 
+	// Account representation has changed, invalidate from timelines.
+	p.surface.invalidateTimelineEntriesByAccount(account.ID)
+
 	return nil
 }
 

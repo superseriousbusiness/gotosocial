@@ -826,6 +826,12 @@ func (s *Surface) removeTimelineEntriesByAccount(accountID string) {
 	s.State.Caches.Timelines.List.RemoveByAccountIDs(accountID)
 }
 
+// removeTimelineEntriesByAccount invalidates all cached timeline entries authored by account ID.
+func (s *Surface) invalidateTimelineEntriesByAccount(accountID string) {
+	s.State.Caches.Timelines.Home.UnprepareByAccountIDs(accountID)
+	s.State.Caches.Timelines.List.UnprepareByAccountIDs(accountID)
+}
+
 func (s *Surface) removeRelationshipFromTimelines(ctx context.Context, timelineAccountID string, targetAccountID string) {
 	// Remove all statuses by target account
 	// from given account's home timeline.
