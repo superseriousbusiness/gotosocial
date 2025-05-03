@@ -185,6 +185,13 @@ definitions:
                 description: 新贴文的默认内容格式。
                 type: string
                 x-go-name: StatusContentType
+            web_layout:
+                description: |-
+                    账户的网页布局。
+                    "microblog": 默认值，经典微博客布局。
+                    "gallery": 仅显示媒体的画廊布局。
+                type: string
+                x-go-name: WebLayout
             web_visibility:
                 description: |-
                     通过网页端API显示的该账户下贴文的最低可见性。
@@ -836,6 +843,11 @@ definitions:
                 description: 应用程序关联的客户端密钥。
                 type: string
                 x-go-name: ClientSecret
+            created_at:
+                description: 应用程序创建时间。 (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: CreatedAt
             id:
                 description: 应用程序的 ID。
                 example: 01FBVD42CQ3ZEEVMW180SBX03B
@@ -1093,13 +1105,22 @@ definitions:
     domain:
         description: Domain 表示一个外站实例
         properties:
+            comment:
+                description: |-
+                    如果域名被屏蔽，公开声明的屏蔽原因是什么。
+                    可用于在通过 /api/v1/instance 执行序列化/反序列化时替代 `public_comment`。
+                example: 这个实例有股味
+                type: string
+                x-go-name: Comment
             domain:
                 description: 实例的主机名。
                 example: example.org
                 type: string
                 x-go-name: Domain
             public_comment:
-                description: 若实例被屏蔽，公开的屏蔽原因是什么。
+                description: |-
+                    如果实例被屏蔽，公开的屏蔽原因是什么。
+                    可用于在 **不** 通过 /api/v1/instance 执行序列化/反序列化时替代 `comment`。
                 example: 它们被骚扰账号攻陷了。
                 type: string
                 x-go-name: PublicComment
@@ -1118,6 +1139,13 @@ definitions:
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     domainPermission:
         properties:
+            comment:
+                description: |-
+                    如果域名被屏蔽，公开声明的屏蔽原因是什么。
+                    可用于在通过 /api/v1/instance 执行序列化/反序列化时替代 `public_comment`。
+                example: 它们闻起来很糟糕
+                type: string
+                x-go-name: Comment
             created_at:
                 description: 此权限条目创建的时间 (ISO 8601 Datetime)。
                 example: "2021-07-30T09:20:25+00:00"
@@ -1150,7 +1178,9 @@ definitions:
                 type: string
                 x-go-name: PrivateComment
             public_comment:
-                description: 若实例被屏蔽，公开的屏蔽原因是什么。
+                description: |-
+                    若实例被屏蔽，公开的屏蔽原因是什么。
+                    可用于在 **不** 通过 /api/v1/instance 执行序列化/反序列化时替代 `comment`。
                 example: 它们被骚扰账号攻陷了。
                 type: string
                 x-go-name: PublicComment
@@ -3509,6 +3539,11 @@ definitions:
                 example: "2021-07-30T09:20:25+00:00"
                 type: string
                 x-go-name: ResetPasswordSentAt
+            two_factor_enabled_at:
+                description: 此用户启用双因素验证的时间。 (ISO 8601 Datetime)
+                example: "2021-07-30T09:20:25+00:00"
+                type: string
+                x-go-name: TwoFactorEnabledAt
             unconfirmed_email:
                 description: 此用户的未确认电子邮件地址（如果用户设置了电子邮件地址）。
                 example: someone.else@somewhere.else.example.org
@@ -3681,12 +3716,60 @@ host: example.org
 info:
     contact:
         email: admin@gotosocial.org
-        name: 全体 GotoSocial 开发者
+        name: GotoSocial 开发者
+    description: |-
+        该文档描述了 GoToSocial HTTP API。
+
+        有关如何使用 OAuth 访问令牌进行 API 身份验证的信息，请参阅此处的文档：https://docs.gotosocial.org/zh-cn/latest/api/authentication/。
+
+        可用权限范围：
+
+        admin: 授予对所有内容的管理权限
+        admin:read: 授予对所有内容的管理读权限
+        admin:read:accounts: 授予对账号的管理读权限
+        admin:read:domain_allows: 授予对域名白名单的管理读权限
+        admin:read:domain_blocks: 授予对域名黑名单的管理读权限
+        admin:read:reports: 授予对举报的管理读权限
+        admin:write: 授予对所有内容的管理写权限
+        admin:write:accounts: 授予对账号的管理写权限
+        admin:write:domain_allows: 授予对域名白名单的管理写权限
+        admin:write:domain_blocks: 授予对域名黑名单的管理写权限
+        admin:write:reports: 授予对举报的管理写权限
+        profile: 授予对 verify_credentials 的读权限
+        push: 授予对 push 的读写权限
+        read: 授予对所有内容的读权限
+        read:accounts: 授予对账号的读权限
+        read:applications: 授予对用户管理的应用的读权限
+        read:blocks: 授予对屏蔽的读权限
+        read:bookmarks: 授予对收藏的读权限
+        read:favourites: 授予对点赞的读权限
+        read:filters: 授予对过滤规则的读权限
+        read:follows: 授予对关注的读权限
+        read:lists: 授予对列表的读权限
+        read:mutes: 授予对隐藏的读权限
+        read:notifications: 授予对通知的读权限
+        read:search: 授予对搜索的读权限
+        read:statuses: 授予对贴文的读权限
+        write: 授予对所有内容的写权限
+        write:accounts: 授予对账号的写权限
+        write:applications: 授予对用户管理的应用的写权限
+        write:blocks: 授予对屏蔽的写权限
+        write:bookmarks: 授予对收藏的写权限
+        write:conversations: 授予对对话的写权限
+        write:favourites: 授予对点赞的写权限
+        write:filters: 授予对过滤规则的写权限
+        write:follows: 授予对关注的写权限
+        write:lists: 授予对列表的写权限
+        write:media: 授予对媒体的写权限
+        write:mutes: 授予对隐藏的写权限
+        write:notifications: 授予对通知的写权限
+        write:reports: 授予对举报的写权限
+        write:statuses: 授予对贴文的写权限
     license:
         name: AGPL3
         url: https://www.gnu.org/licenses/agpl-3.0.zh-cn.html
     title: GoToSocial Swagger 文档
-    version: 0.18.2-SNAPSHOT-98c4cae8
+    version: 0.19.1-SNAPSHOT-6c879186
 paths:
     /.well-known/host-meta:
         get:
@@ -4898,6 +4981,13 @@ paths:
                   in: formData
                   name: web_visibility
                   type: string
+                - description: |-
+                    此账户使用的网页布局。
+                    "microblog": 默认，经典的微博客布局。
+                    "gallery": 仅显示媒体的画廊布局。
+                  in: formData
+                  name: web_layout
+                  type: string
                 - description: 要添加到此帐户的资料页的第一个资料字段的名称。 （索引可以是任何字符串；添加更多索引以发送更多字段。）
                   in: formData
                   name: fields_attributes[0][name]
@@ -5823,6 +5913,53 @@ paths:
             description: 查看具有给定 ID 的实例白名单条目。
             tags:
                 - admin
+        put:
+            consumes:
+                - multipart/form-data
+            operationId: domainAllowUpdate
+            parameters:
+                - description: 实例白名单条目的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: 公开展示时对域名进行混淆。例如，`example.org` 将变为类似于 `ex***e.org` 的文本。
+                  in: formData
+                  name: obfuscate
+                  type: boolean
+                - description: 对该实例白名单条目的公开评论。当选择公开白名单时，此评论将显示在对应的实例白名单条目旁边。
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: 对该实例白名单条目的私密评论。仅显示给其他管理员，因此这是一个有用的内部方法，可用于跟踪为什么某个域名最终被允许。
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 更新后的实例白名单条目。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin:write:domain_allows
+            summary: 更新单个实例白名单条目
+            tags:
+                - admin
     /api/v1/admin/domain_blocks:
         get:
             operationId: domainBlocksGet
@@ -5857,6 +5994,53 @@ paths:
                     - admin:read:domain_blocks
             summary: 查看实例黑名单
             description: 查看当前所有实例黑名单。
+            tags:
+                - admin
+        put:
+            consumes:
+                - multipart/form-data
+            operationId: domainBlockUpdate
+            parameters:
+                - description: 实例黑名单条目的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+                - description: 公开展示时对域名进行混淆。例如，`example.org` 将变成类似于 `ex***e.org`。
+                  in: formData
+                  name: obfuscate
+                  type: boolean
+                - description: 对此实例黑名单条目的公开评论。如果选择公开黑名单，此评论将显示在对应的实例黑名单条目旁边。
+                  in: formData
+                  name: public_comment
+                  type: string
+                - description: 对此实例黑名单条目的私密评论。仅显示给其他管理员，因此这是一个有用的内部方法，用于追踪为什么某个域名最终被屏蔽。
+                  in: formData
+                  name: private_comment
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 更新后的实例黑名单条目。
+                    schema:
+                        $ref: '#/definitions/domainPermission'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止访问
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - admin:write:domain_blocks
+            summary: 更新单个实例黑名单条目
             tags:
                 - admin
         post:
@@ -7560,6 +7744,64 @@ paths:
             tags:
                 - announcements
     /api/v1/apps:
+        get:
+            description: |-
+                获取由请求者管理的应用程序的数组。
+                可从返回的 Link 标头解析出下一页和上一页的查询地址。
+
+                示例：
+
+                ```
+                <https://example.org/api/v1/apps?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/apps?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: appsGet
+            parameters:
+                - description: 只返回比给定的 max ID *旧* 的应用。具有指定 ID 的应用不会包含在响应中。
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 只返回比给定的 since ID *新* 的应用。具有指定 ID 的应用不会包含在响应中。
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 只返回比给定的 min ID *相邻且更新* 的应用（用于向上翻页）。具有指定 ID 的应用不会包含在响应中。
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 20
+                  description: 要返回的应用数量。
+                  in: query
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: 下一/上一查询的链接。
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/application'
+                        type: array
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - read:applications
+            summary: 获取应用列表
+            tags:
+                - apps
         post:
             consumes:
                 - application/json
@@ -7569,6 +7811,8 @@ paths:
                 在本实例注册一个新的应用程序。
                 注册的应用程序可用于获取应用程序令牌。
                 然后可以使用此令牌注册新帐户，或（通过用户身份验证）获取访问令牌。
+
+                如果应用程序是通过在 Authorization 标头中使用 Bearer 令牌创建的，则新创建的应用程序将由经过对应的的用户管理（Bearer 令牌必须具有 write:applications 范围）。
 
                 若 Content-Type 为 'application/json'，则参数也可以在请求体中以 JSON 形式给出。
                 若 Content-Type 为 'application/xml'，则参数也可以在请求体中以 XML 形式给出。
@@ -7623,6 +7867,71 @@ paths:
                 "500":
                     description: internal server error 服务器内部错误
             summary: 创建应用程序
+            tags:
+                - apps
+    /api/v1/apps/{id}:
+        delete:
+            operationId: appDelete
+            parameters:
+                - description: 要删除的应用程序的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 被删除的应用程序。
+                    schema:
+                        $ref: '#/definitions/application'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - write:applications
+            summary: 删除单个应用
+            description: 删除单个由请求者管理的应用程序。
+            tags:
+                - apps
+        get:
+            operationId: appGet
+            parameters:
+                - description: 要请求的应用程序的 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 请求的应用程序。
+                    schema:
+                        $ref: '#/definitions/application'
+                "400":
+                    description: bad request 无效请求
+                "401":
+                    description: unauthorized 未授权
+                "404":
+                    description: not found 未找到
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            security:
+                - OAuth2 Bearer:
+                    - read:applications
+            summary: 获取单个应用
+            description: 获取单个由请求者管理的应用程序。
             tags:
                 - apps
     /api/v1/blocks:
@@ -10671,6 +10980,11 @@ paths:
                 - application/x-www-form-urlencoded
             operationId: statusEdit
             parameters:
+                - description: 要编辑的贴文 ID。
+                  in: path
+                  name: id
+                  required: true
+                  type: string
                 - description: |-
                     贴文的文本内容。
                     如果提供了 media_ids，此项变为可选。
@@ -10773,7 +11087,7 @@ paths:
     /api/v1/statuses/{id}:
         delete:
             description: |-
-                删除给定 ID 的贴文。贴文必须属于您。
+                删除给定 ID 的贴文。贴文必须属于调用API的用户。
                 删除的贴文将在响应中返回。`text` 字段将包含贴文的原始文本，就像它被提交时一样。这在执行“删除并重新撰写”类型操作时很有用。
             operationId: statusDelete
             parameters:
@@ -10985,7 +11299,7 @@ paths:
                 - statuses
     /api/v1/statuses/{id}/history:
         get:
-            description: '查看给定 ID 的贴文的编辑历史。 **未实现**：当前此端点将始终返回一个长度为 1 的数组，仅包含贴文的最新/当前版本。'
+            description: '查看给定 ID 的贴文的编辑历史。'
             operationId: statusHistoryGet
             parameters:
                 - description: 目标贴文 ID。
@@ -11986,6 +12300,150 @@ paths:
             description: 获取自己的用户模型。
             tags:
                 - user
+    /api/v1/user/2fa/disable:
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: |-
+                如果双因素验证已被禁用，将返回 409 Conflict。
+
+                如果实例正在运行 OIDC，那么将无法在 GtS 中启用或禁用双因素验证，必须在 OIDC 提供商处启用或禁用。所有对双因素验证 API 端点的调用在 OIDC 启用时将返回 422 Unprocessable Entity。
+            operationId: TwoFactorDisablePost
+            parameters:
+                - description: 用户的当前密码，用于验证。
+                  in: formData
+                  name: password
+                  type: string
+            responses:
+                "200":
+                    description: 二维码
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "422":
+                    description: unprocessable entity 无法处理
+                "500":
+                    description: internal error 内部错误
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: 禁用双因素验证
+            description: 为当前用户禁用双因素验证，必须提供用户当前密码用于验证。
+            tags:
+                - user
+    /api/v1/user/2fa/enable:
+        post:
+            consumes:
+                - application/json
+                - application/x-www-form-urlencoded
+            description: |-
+                如果双因素验证已被启用，将返回 409 Conflict。
+
+                如果实例正在运行 OIDC，那么将无法在 GtS 中启用或禁用双因素验证，必须在 OIDC 提供商处启用或禁用。所有对双因素验证 API 端点的调用在 OIDC 启用时将返回 422 Unprocessable Entity。
+            operationId: TwoFactorEnablePost
+            parameters:
+                - description: |-
+                    用户的双因素验证代码。
+                    示例：123456
+                  in: formData
+                  name: code
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: 二维码
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "422":
+                    description: unprocessable entity 无法处理
+                "500":
+                    description: internal error 内部错误
+            security:
+                - OAuth2 Bearer:
+                    - write:accounts
+            summary: 启用双因素验证
+            description: 为当前用户启用双因素验证，使用验证器应用提供的代码，返回一个一次性恢复代码数组，以允许绕过双因素验证。
+            tags:
+                - user
+    /api/v1/user/2fa/qr.png:
+        get:
+            description: |-
+                若希望获取二维码 URI 的明文版本，请调用 /api/v1/user/2fa/qruri 接口。
+
+                若用户已经启用了双因素认证，将不会再次分享二维码（及其密钥）。反之，会返回 409 Conflict 错误。要获取新的密钥，请先使用 POST /api/v1/user/2fa/disable 接口禁用双因素认证，然后再调用此接口。
+
+                若实例启用了 OIDC，则无法在 GtS 中开启或关闭双因素认证，必须使用 OIDC 提供商进行启用或禁用。在启用 OIDC 期间，所有对 2fa API 接口的调用都将返回 422 Unprocessable Entity 错误。
+            operationId: TwoFactorQRCodePngGet
+            produces:
+                - image/png
+            responses:
+                "200":
+                    description: 二维码 PNG 图片
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "422":
+                    description: unprocessable entity 无法处理
+                "500":
+                    description: internal error 内部错误
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: 查看用于启用双因素认证的二维码
+            description: 返回一个二维码 PNG 图片，允许对应用户启用双因素认证。
+            tags:
+                - user
+    /api/v1/user/2fa/qruri:
+        get:
+            description: |-
+                若需要 PNG 格式的二维码，请调用 /api/v1/user/2fa/qr.png 接口。
+
+                若用户已经启用了双因素验证，将不会再次分享二维码（及其密钥）。反之，会返回 409 Conflict 错误。要获取新的密钥，请先使用 POST /api/v1/user/2fa/disable 接口禁用双因素验证，然后再调用此接口。
+
+                若实例启用了 OIDC，则无法在 GtS 中开启或关闭双因素验证，必须使用 OIDC 提供商进行启用或禁用。在启用 OIDC 期间，所有对双因素验证 API 接口的调用都将返回 422 Unprocessable Entity 错误。
+            operationId: TwoFactorQRCodeURIGet
+            produces:
+                - text/plain
+            responses:
+                "200":
+                    description: 二维码 URI
+                "401":
+                    description: unauthorized 未授权
+                "403":
+                    description: forbidden 禁止
+                "406":
+                    description: not acceptable 不可接受
+                "409":
+                    description: conflict 冲突
+                "422":
+                    description: unprocessable entity 无法处理
+                "500":
+                    description: internal error 内部错误
+            security:
+                - OAuth2 Bearer:
+                    - read:accounts
+            summary: 查看用于启用双因素验证的二维码 URI
+            description: 返回一个二维码 URI，允许对应用户启用双因素验证。
+            tags:
+                - user
     /api/v1/user/email_change:
         post:
             consumes:
@@ -12915,6 +13373,44 @@ paths:
             summary: NodeInfo 2.0
             tags:
                 - nodeinfo
+    /oauth/revoke:
+        post:
+            consumes:
+                - multipart/form-data
+            operationId: oauthTokenRevoke
+            parameters:
+                - description: 客户端 ID，在注册应用时获取。
+                  in: formData
+                  name: client_id
+                  required: true
+                  type: string
+                - description: 客户端密钥，在注册应用时获取。
+                  in: formData
+                  name: client_secret
+                  required: true
+                  type: string
+                - description: 已获取的令牌，令牌将作废。
+                  in: formData
+                  name: token
+                  required: true
+                  type: string
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: OK - 如果你拥有你所提供的令牌，API 调用将返回 OK 和一个空响应 `{}`。此操作是幂等的，因此多次调用此 API 将仍然返回 OK。
+                "400":
+                    description: bad request 无效请求
+                "403":
+                    description: forbidden - 如果你提供了一个你并不拥有的令牌，API 调用将返回 403 错误。
+                "406":
+                    description: not acceptable 不可接受
+                "500":
+                    description: internal server error 服务器内部错误
+            summary: 撤销访问令牌
+            description: 撤销访问令牌，使其不再可用。
+            tags:
+                - oauth
     /readyz:
         get:
             description: 若 GoToSocial 服务“就绪” (即能够连接到数据库后端并执行简单的 SELECT)，则返回无响应体的 200 状态码。若 GtS 尚未准备就绪，则在日志中记录错误（但不返回给调用方，以避免泄露内部信息）。
@@ -13101,6 +13597,7 @@ securityDefinitions:
             push: 授予对推送的读取和写入权限
             read: 授予对所有内容的读取权限
             read:accounts: 授予对账户的读取权限
+            read:applications: 授予对用户管理的应用的读取权限
             read:blocks: 授予对屏蔽状态的读取权限
             read:bookmarks: 授予对收藏的读取权限
             read:favourites: 授予对点赞的读取权限
@@ -13113,6 +13610,7 @@ securityDefinitions:
             read:statuses: 授予对贴文的读取权限
             write: 授予对所有内容的写入权限
             write:accounts: 授予对账户的写入权限
+            write:applications: 授予对用户管理的应用的写入权限
             write:blocks: 授予对屏蔽状态的写入权限
             write:bookmarks: 授予对收藏的写入权限
             write:conversations: 授予对对话的写入权限

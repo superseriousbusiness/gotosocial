@@ -37,7 +37,7 @@
 
 例如，实例 `instance-a.example.org`、`instance-b.example.org` 和 `instance-c.example.org` 决定他们只想彼此联合。
 
-他们可以使用像 GitHub 这样的版本管理平台托管一个纯文本格式的允许列表，比如在 `https://raw.githubusercontent.com/our-cluster/allowlist/refs/heads/main/allows.txt`。
+他们可以使用像 Codeberg 这样的版本管理平台托管一个纯文本格式的允许列表，比如在 `https://codeberg.org/our-cluster/allowlist/raw/branch/main/allows.txt`。
 
 纯文本格式的允许列表内容如下:
 
@@ -47,7 +47,7 @@ instance-b.example.org
 instance-c.example.org
 ```
 
-每个实例管理员都将他们的联合模式设置为`白名单`，并创建一个类型为“允许”，订阅地址为 `https://raw.githubusercontent.com/our-cluster/allowlist/refs/heads/main/allows.txt` 的订阅，这会为他们自己的域名以及集群中的其他域名创建域名允许条目。
+每个实例管理员都将他们的联合模式设置为`allowlist`，并创建一个类型为“允许”，订阅地址为 `https://codeberg.org/our-cluster/allowlist/raw/branch/main/allows.txt` 的订阅，这会为他们自己的域名以及集群中的其他域名创建域名允许条目。
 
 在某个时候，来自 `instance-d.example.org` 的某人（在站外）申请被添加到集群中。现有的管理员同意，并更新他们的纯文本格式允许列表为:
 
@@ -66,7 +66,7 @@ instance-d.example.org
 
 例如，实例 `instance-e.example.org`、`instance-f.example.org` 和 `instance-g.example.org` 的管理员认定：他们厌倦了通过与坏人玩打地鼠游戏来重复工作。为了让生活更轻松，他们决定合作开发一个共享的阻止列表。
 
-他们使用像 GitHub 这样的版本管理平台在类似 `https://raw.githubusercontent.com/baddies/blocklist/refs/heads/main/blocks.csv` 的地方托管一个阻止列表。
+他们使用像 Codeberg 这样的版本管理平台在类似 `https://codeberg.org/our-cluster/allowlist/raw/branch/main/blocks.csv` 的地方托管一个阻止列表。
 
 当有人发现另一个他们不喜欢的实例时，他们可以通过合并请求或类似方法添加这个有问题的实例到域名列表中。
 
@@ -112,6 +112,27 @@ nothanks.com,suspend,false,false,,false
 ### JSON (application/json)
 
 JSON列表使用内容类型 `application/json`。
+
+```json
+[
+  {
+    "domain": "bumfaces.net",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "comment": "这个实例上有坏蛋"
+  },
+  {
+    "domain": "peepee.poopoo",
+    "suspended_at": "2020-05-13T13:29:12.000Z",
+    "comment": "骚扰"
+  },
+  {
+    "domain": "nothanks.com",
+    "suspended_at": "2020-05-13T13:29:12.000Z"
+  }
+]
+```
+
+可以使用 `"comment"` 字段替代 `"public_comment"`:
 
 ```json
 [

@@ -149,4 +149,21 @@ advanced-csp-extra-uris: []
 # 选项: ["block", "allow", ""]
 # 默认: ""
 advanced-header-filter-mode: ""
+
+# 布尔值。启用基于工作量证明的爬虫威慑机制，
+# 作用于账户页和贴文页面。这将为每个 HTTP 客户端生成一个唯一确定
+# 的质询，需要由客户端在访问上述端点时完成。
+# 完成后，客户端会获得一个 Cookie，允许其在 1 小时窗口内免验证访问。
+#
+# 这样做的结果是，它理论上使得对这些端点的抓取在经济上变得不可行，
+# 同时对你自己的实例的性能影响可以忽略不计。
+#
+# 缺点是它要求客户端启用 JavaScript。
+#
+# 更多详情请查阅文档：
+# https://docs.gotosocial.org/zh-cn/latest/admin/scraper_deterrence
+#
+# 选项: [true, false]
+# 默认值: true
+advanced-scraper-deterrence: false
 ```

@@ -15,6 +15,10 @@
 
 使用 `nowasm` 构建的 GoToSocial 二进制文件将使用 [modernc 版本的 SQLite](https://pkg.go.dev/modernc.org/sqlite) 而不是 WASM 版本，并将在系统上使用 `ffmpeg` 和 `ffprobe` 二进制文件进行媒体处理。
 
+!!! tip "提示"
+    要测试你的系统是否支持标准构建，可以使用此命令：
+    `if grep -qE '^flags.* (sse4|LSE)' /proc/cpuinfo; then echo "Your system is supporting GTS!"; else echo "Your system is not supporting GTS, you'll have to use the 'nowasm' builds :("; fi`
+
 要使用 `nowasm` 标签构建 GoToSocial，可以像这样将标签传入我们的便利 `build.sh` 脚本：
 
 ```bash

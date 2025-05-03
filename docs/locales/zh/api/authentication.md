@@ -2,6 +2,9 @@
 
 使用客户端 API 需要进行身份验证。本页记录了如何获取身份验证令牌的通用流程，并提供了使用 `curl` 在命令行界面进行操作的示例。
 
+!!! tip "提示"
+    如果你不想使用命令行，而是想通过设置面板获取 API 访问令牌，可以参考 [应用文档](https://docs.gotosocial.org/zh-cn/latest/user_guide/settings/#applications)。
+
 ## 创建新应用
 
 我们需要注册一个新应用，以便请求 OAuth 令牌。这可以通过向 `/api/v1/apps` 端点发送 `POST` 请求来完成。注意将下面命令中的 `your_app_name` 替换为你想使用的应用名称：
@@ -19,18 +22,15 @@ curl \
 
 字符串 `urn:ietf:wg:oauth:2.0:oob` 表示一种称为带外身份验证的技术，这是一种用于多因素身份验证的技术，旨在减少恶意行为者干扰身份验证过程的途径。在此情况下，它允许我们查看并手动复制生成的令牌以便继续使用。
 
-注意，`scopes` 可以是以下任意空格分隔的组合：
-
-- `read`
-- `write`
-- `admin`
+!!! tip "权限范围"
+    根据应用执行的工作对应用进行最低限度的授权是一个好习惯。例如，如果你的应用不会发布贴文，请使用 `scope=read` 或进一步仅授权子权限。
+    
+    本着这种精神，上例使用了`read`，这意味着应用将仅限于执行`read`操作。
+    
+    可用范围列表请参阅[Swagger 文档](https://docs.gotosocial.org/zh-cn/latest/api/swagger/).
 
 !!! warning "警告"
-    GoToSocial 目前不支持范围授权令牌，因此在此过程中获得的任何令牌都可以代表你执行所有操作，包括如果你的账户具有管理员权限时的管理员操作。然而，始终以最低权限授予你的应用是一个好习惯。例如，如果你的应用不会发布贴文，请使用 scope=read。
-
-    本着这种精神，上述示例使用了`read`，这意味着当未来支持范围令牌时，应用将仅限于执行`read`操作。
-
-    你可以在[此处](https://codeberg.org/superseriousbusiness/gotosocial/issues/2232)阅读更多关于计划中 OAuth 安全功能的信息。
+    GoToSocial 0.19.0 之前的版本并不支持范围授权令牌，因此运行低于 0.19.0 的 GoToSocial 的用户通过此流程获得的任何令牌都可以代表用户执行所有操作。如果用户具有管理权限，那么令牌还可以执行管理操作。
 
 成功调用会返回一个带有 `client_id` 和 `client_secret` 的响应，我们将在后续流程中需要使用这些信息。它看起来像这样：
 
@@ -126,7 +126,6 @@ curl \
 
 ```bash
 curl \
-  -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   'https://example.org/api/v1/accounts/verify_credentials'
 ```
@@ -141,7 +140,6 @@ curl \
 
 ```bash
 curl \
-  -H 'Content-Type: application/json' \ 
   -H 'Authorization: Bearer YOUR_ACCESS_TOKEN' \
   'https://example.org/api/v1/notifications'
 ```

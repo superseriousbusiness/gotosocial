@@ -9,9 +9,9 @@ GoToSocial 编译为二进制可执行文件。
 以下是 `gotosocial --help` 的完整输出，不包括全局配置选项的大列表。
 
 ```text
-GoToSocial - 一个联邦制社交媒体服务器
+GoToSocial - 一个联合式社交媒体服务器
 
-帮助文档参见：https://docs.gotosocial.org。
+帮助文档参见：https://docs.gotosocial.org/zh-cn/。
 
 代码仓库：https://codeberg.org/superseriousbusiness/gotosocial
 
@@ -56,6 +56,9 @@ GoToSocial - 一个联邦制社交媒体服务器
 ### gotosocial admin account create
 
 此命令可用于在你的实例上创建新账户。
+
+!!! Warning "警告"
+    执行此命令前，你必须至少运行过一次服务端，以初始化数据库中的必要条目，然后才能运行此命令。
 
 `gotosocial admin account create --help`:
 

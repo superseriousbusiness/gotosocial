@@ -1,5 +1,56 @@
 # 帖文及其属性
 
+## 媒体附件, Blurhash, 与焦点
+
+GoToSocial 在贴文的 `attachment` 属性中使用以下类型发送媒体附件：
+
+- `Image` - 任何图片类型 (webp, jpeg, gif, png, 等等)。
+- `Video` - 任何视频类型 (mp4, mkv, webm, 等等)。
+- `Audio` - 任何音频类型 (mp3, flac, wma, 等等)。
+- `Document` - 任何其他 / 未知类型。
+
+GoToSocial 发送的附件包含 MIME 类型（`mediaType`）、媒体文件的完整尺寸版本的 `url` 以及摘要（`summary`）属性，外站实例可以将摘要属性解析为附件的简短描述或替代文本。
+
+`Image` 和 `Video` 类型还会包含 `http://joinmastodon.org/ns#blurhash` 属性，以便外站实例可以生成图片的彩色哈希值。如果音频文件包含嵌入的封面图片，那么 `Audio` 类型也会包含 blurhash。请参阅 [Mastodon blurhash 文档](https://docs.joinmastodon.org/spec/activitypub/#blurhash)。
+
+`Image` 类型还可能包含 `http://joinmastodon.org/ns#focalPoint` 属性，它是一个包含两个浮点数的数组，取值范围在 -1.0 到 1.0 之间，表示图片的焦点 x-y 坐标。请参阅 [Mastodon focalPoint 文档](https://docs.joinmastodon.org/spec/activitypub/#focalPoint)。
+
+以下是一个包含一个附件的 `Note` 示例：
+
+```json
+{
+  "@context": [
+    "https://www.w3.org/ns/activitystreams",
+    {
+      "blurhash": "toot:blurhash",
+      "focalPoint": {
+        "@container": "@list",
+        "@id": "toot:focalPoint"
+      },
+      "toot": "http://joinmastodon.org/ns#"
+    }
+  ],
+  "type": "Note",
+  [...],
+  "attachment": [
+    {
+      "blurhash": "LIIE|gRj00WB-;j[t7j[4nWBj[Rj",
+      "focalPoint": [
+        -0.5,
+        0.5
+      ],
+      "mediaType": "image/jpeg",
+      "summary": "Black and white image of some 50's style text saying: Welcome On Board",
+      "type": "Image",
+      "url": "http://localhost:8080/fileserver/01F8MH17FWEB39HZJ76B6VXSKF/attachment/original/01F8MH6NEM8D7527KZAECTCR76.jpg"
+    }
+  ],
+  [...]
+}
+```
+
+当接收来自外站实例的带有附件的贴文时，GoToSocial 会尝试将 `Image`、`Video`、`Audio` 或 `Document` 类型解析为媒体附件。实际使用这四种类型中的哪种类型并不重要。它会检查 `blurhash` 和 `focalPoint` 属性，若这些属性存在，就使用它们。它会使用 `summary` 值作为简短描述 / 替代文本，如果 `summary` 未设置，则回退到 `name`。
+
 ## 话题标签
 
 GoToSocial 用户可以在贴文中包含话题标签，用于向其他实例表明该用户希望将其贴文与其他使用相同话题标签的贴文加入同一分组，以便于发现。
