@@ -258,13 +258,9 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 		msgs = append(msgs, &messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
-			GTSModel: &gtsmodel.Follow{
-				AccountID:       requestingAccount.ID,
-				TargetAccountID: targetAccount.ID,
-				URI:             follow.URI,
-			},
-			Origin: requestingAccount,
-			Target: targetAccount,
+			GTSModel:       follow,
+			Origin:         requestingAccount,
+			Target:         targetAccount,
 		})
 	}
 
@@ -294,9 +290,13 @@ func (p *Processor) unfollow(ctx context.Context, requestingAccount *gtsmodel.Ac
 		msgs = append(msgs, &messages.FromClientAPI{
 			APObjectType:   ap.ActivityFollow,
 			APActivityType: ap.ActivityUndo,
+			// Dummy out a follow to undo,
+			// based on the follow request.
 			GTSModel: &gtsmodel.Follow{
 				AccountID:       requestingAccount.ID,
+				Account:         requestingAccount,
 				TargetAccountID: targetAccount.ID,
+				TargetAccount:   targetAccount,
 				URI:             followReq.URI,
 			},
 			Origin: requestingAccount,
