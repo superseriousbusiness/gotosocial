@@ -182,4 +182,23 @@ advanced-csp-extra-uris: []
 # Options: ["block", "allow", ""]
 # Default: ""
 advanced-header-filter-mode: ""
+
+# Bool. Enables a proof-of-work based deterrence against scrapers
+# on profile and status web pages. This will generate a unique but
+# deterministic challenge for each HTTP client to complete before
+# accessing the above mentioned endpoints, on success being given
+# a cookie that permits challenge-less access within a 1hr window.
+#
+# The outcome of this is that it should make scraping of these
+# endpoints economically unfeasible, while having a negligible
+# performance impact on your own instance.
+#
+# The downside is that it requires javascript to be enabled.
+#
+# For more details please check the documentation at:
+# https://docs.gotosocial.org/en/latest/admin/scraper_deterrence
+#
+# Options: [true, false]
+# Default: true
+advanced-scraper-deterrence: false
 ```
