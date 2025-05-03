@@ -42,6 +42,13 @@ create user gotosocial with password 'some_really_good_password';
 grant all privileges on database gotosocial to gotosocial;
 ```
 
+如果开始使用时你使用的是 Postgres 14 或更高版本，或者遇到 `error executing command: error creating dbservice: db migration error: ERROR: permission denied for schema public`，你应当授予你的 db 用户 `CREATE` 权限 *(这 **必须** 在连接到 gotosocial 数据库的 postgres shell 中执行)*:
+
+```psql
+GRANT CREATE ON SCHEMA public TO gotosocial;
+SELECT has_schema_privilege('gotosocial', 'public', 'CREATE'); -- should return t
+```
+
 GoToSocial 使用 ULIDs（全局唯一且按字典顺序可排序的标识符），这在非英文排序环境中不起作用。因此，创建数据库时使用 `C.UTF-8` 地区设置很重要。在已经使用非 C 地区初始化的系统上，必须使用 `template0` 原始数据库模板才能进行。
 
 如果你希望使用特定选项连接到 Postgres，可以使用 `db-postgres-connection-string` 定义连接字符串。如果 `db-postgres-connection-string` 已定义，则所有其他与数据库相关的配置字段将被忽略。例如，可以使用 `db-postgres-connection-string` 连接到 `mySchema`，用户名为 `myUser`，密码为 `myPass`，在 `localhost` 上，数据库名称为 `db`：

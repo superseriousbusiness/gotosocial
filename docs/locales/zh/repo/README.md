@@ -3,7 +3,7 @@
 
 **有关企业赞助的更新：我们欢迎与符合我们价值观的组织建立赞助关系；请查看下述条件**
 
-GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks/) 社交网络服务端。
+🏳️‍🌈 GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks/) 社交网络服务端。 🏳️‍⚧️
 
 通过 GoToSocial，你可以与朋友保持联系，发帖、阅读和分享图片及文章，且不会被追踪或广告打扰！
 
@@ -40,6 +40,7 @@ GoToSocial 是一个用 Golang 编写的 [ActivityPub](https://activitypub.rocks
   - [多种联合模式](#多种联合模式)
   - [OIDC 集成](#oidc-集成)
   - [后端优先设计](#后端优先设计)
+- [替代实现](#替代实现)
 - [已知问题](#已知问题)
 - [安装 GoToSocial](#安装-gotosocial)
   - [支持的平台](#支持的平台)
@@ -231,6 +232,7 @@ GoToSocial 仅需约 250-350MiB 的 RAM，并且只要求极少的 CPU 频率，
 - [导入/导出](https://docs.gotosocial.org/zh-cn/latest/admin/settings/#导入导出) 社区创建的域名允许和域名阻止列表，并[订阅](https://docs.gotosocial.org/zh-cn/latest/admin/domain_permission_subscriptions)这些列表。
 - HTTP 签名认证：GoToSocial 在发送和接收消息时要求 [HTTP 签名](https://datatracker.ietf.org/doc/html/draft-cavage-http-signatures-12)，以确保消息不能被篡改，身份不能被伪造。
 - 内置 [Let's Encrypt](https://letsencrypt.org/) 的自动使用 HTTPS 支持。
+- 支持基于时间的一次性双因素认证代码（Google 认证器，LastPass 认证器等）。
 
 ### 多种联合模式
 
@@ -256,9 +258,21 @@ GoToSocial 支持 [OpenID Connect (OIDC)](https://openid.net/connect/) 身份提
 
 ---
 
+## 替代实现
+
+不喜欢 GtS 但还是想搭建联邦宇宙服务？喜欢 GtS 但不想用测试版软件？有很多替代实现可能更适合你！这里列出一些我们知道的使用效果不错的实现（按字母顺序排列）：
+
+- [Akkoma](https://akkoma.social/)：功能齐全的 ActivityPub 微博客，支持表情反应和引用贴文（Elixir）。
+- [Honk](https://humungus.tedunangst.com/r/honk/m/activitypub.7)：极简、有特点的微博客服务端，特点是“没有点赞、没有收藏、没有投票、没有加星、没有鼓掌、没有互动计数”（Go）。
+- [Iceshrimp.net](https://iceshrimp.dev/iceshrimp/Iceshrimp.NET)：Iceshrimp 的全新重写版本（.Net）。
+- [Mastodon](https://joinmastodon.org/)：积极开发、广为人知、可扩展的 ActivityPub 微博客服务端（Ruby）。
+- [Snac2](https://codeberg.org/grunfink/snac2)：简约、最小化的实例，系统要求非常低（可移植 C）。
+
+---
+
 ## 已知问题
 
-由于 GoToSocial 仍处于测试阶段，存在很多错误。我们使用 [GitHub issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) 跟踪这些问题。
+由于 GoToSocial 仍处于测试阶段，存在很多错误。我们使用 [Codeberg issues](https://codeberg.org/superseriousbusiness/gotosocial/issues?q=is%3Aissue+is%3Aopen+label%3Abug) 跟踪这些问题。
 
 由于每个 ActivityPub 服务端实现对协议的解释略有不同，有些服务端尚未与 GoToSocial 正常联合。我们在 [这个项目](https://codeberg.org/superseriousbusiness/gotosocial/projects/4) 中跟踪这些问题。最终，我们希望确保任何可以与 Mastodon 正确联合的 ActivityPub 实现也能够与 GoToSocial 联合。
 
@@ -294,13 +308,13 @@ GoToSocial 支持 [OpenID Connect (OIDC)](https://openid.net/connect/) 身份提
 
 #### 64位
 
-64位平台需要以下(现在很常见的)CPU指令:
+对 64 位 CPU 的特性要求注释：
 
-- x86-64需要SSE4.1(用于媒体解码和WASM SQLite)
+- x86_64 需要支持 SSE4.1 指令集 (自2010年左右起生产的CPU大多支持)
 
-- Armv8需要ARM64大型系统扩展(ARM64 Large System Extensions)(特别是在使用WASM SQLite时)
+- ARM64 没有特定指令集要求， ARMv8 CPU（及后续版本）已支持全部所需特性。
 
-如果没有这些指令,性能将会受到影响。在这些情况下,您可以尝试使用完全**不受支持、实验性的**[nowasm](https://docs.gotosocial.org/en/latest/advanced/builds/nowasm/)标签自行构建二进制文件。
+如果没有这些指令集，媒体处理性能将会受到影响（多数情况下，SQLite性能也会收到影响）。在这些情况下,您可以尝试使用完全**不受支持、实验性的**[nowasm](https://docs.gotosocial.org/zh-cn/latest/advanced/builds/nowasm/)标签自行构建二进制文件。
 
 #### BSD系
 
@@ -340,7 +354,7 @@ Docker 镜像 `superseriousbusiness/gotosocial:latest` 始终对应于最新稳�
 
 要使用二进制发布从主分支运行，请从我们的 [自托管 Minio S3 仓库](https://minio.s3.superseriousbusiness.org/browser/gotosocial-snapshots)下载适合你架构的 .tar.gz 文件。
 
-S3 存储桶中的快照版二进制发布由 Github 提交哈希控制。要获取最新的，请按上次修改时间排序，或者查看 [这里的提交列表](https://codeberg.org/superseriousbusiness/gotosocial/commits/main)，复制最新的 SHA，并在 Minio 控制台过滤器中粘贴。快照二进制发布会在 28 天后过期，以降低我们的托管成本。
+S3 存储桶中的快照版二进制发布由代码提交哈希控制。要获取最新的，请按上次修改时间排序，或者查看 [这里的提交列表](https://codeberg.org/superseriousbusiness/gotosocial/commits/main)，复制最新的 SHA，并在 Minio 控制台过滤器中粘贴。快照二进制发布会在 28 天后过期，以降低我们的托管成本。
 
 ### 从源代码构建
 
@@ -428,15 +442,16 @@ GoToSocial 使用以下开源库、框架和工具，在此声明并致谢 💕
 - [mvdan.cc/xurls](https://github.com/mvdan/xurls); URL 解析正则表达式。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
 - [oklog/ulid](https://github.com/oklog/ulid); 顺序友好的数据库 ID 生成。 [Apache-2.0 许可证](https://spdx.org/licenses/Apache-2.0.html)。
 - [open-telemetry/opentelemetry-go](https://github.com/open-telemetry/opentelemetry-go); OpenTelemetry API + SDK。 [Apache-2.0 许可证](https://spdx.org/licenses/Apache-2.0.html)。
+- [pquerna/otp](https://github.com/pquerna/otp); 一次性代码工具。 [Apache-2.0 许可证](https://spdx.org/licenses/Apache-2.0.html)。
 - spf13:
   - [spf13/cobra](https://github.com/spf13/cobra); 命令行工具。 [Apache-2.0 许可证](https://spdx.org/licenses/Apache-2.0.html)。
   - [spf13/viper](https://github.com/spf13/viper); 配置管理。 [Apache-2.0 许可证](https://spdx.org/licenses/Apache-2.0.html)。
 - [stretchr/testify](https://github.com/stretchr/testify); 测试框架。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - superseriousbusiness:
-  - [superseriousbusiness/activity](https://codeberg.org/superseriousbusiness/activity) 从 [go-fed/activity](https://github.com/go-fed/activity) 派生; Golang ActivityPub/ActivityStreams 库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
-  - [superseriousbusiness/exif-terminator](https://codeberg.org/superseriousbusiness/exif-terminator); EXIF 数据擦除。 [GNU AGPL v3 许可证](https://spdx.org/licenses/AGPL-3.0-or-later.html)。
-  - [superseriousbusiness/httpsig](https://codeberg.org/superseriousbusiness/httpsig) 从 [go-fed/httpsig](https://github.com/go-fed/httpsig) 派生; 安全 HTTP 签名库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
-  - [superseriousbusiness/oauth2](https://codeberg.org/superseriousbusiness/oauth2) 从 [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2) 派生; OAuth 服务器框架和令牌处理。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
+  - [superseriousbusiness/activity](https://code.superseriousbusiness.org/activity) 从 [go-fed/activity](https://github.com/go-fed/activity) 派生; Golang ActivityPub/ActivityStreams 库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
+  - [superseriousbusiness/exif-terminator](https://code.superseriousbusiness.org/exif-terminator); EXIF 数据擦除。 [GNU AGPL v3 许可证](https://spdx.org/licenses/AGPL-3.0-or-later.html)。
+  - [superseriousbusiness/httpsig](https://code.superseriousbusiness.org/httpsig) 从 [go-fed/httpsig](https://github.com/go-fed/httpsig) 派生; 安全 HTTP 签名库。 [BSD-3-Clause 许可证](https://spdx.org/licenses/BSD-3-Clause.html)。
+  - [superseriousbusiness/oauth2](https://code.superseriousbusiness.org/oauth2) 从 [go-oauth2/oauth2](https://github.com/go-oauth2/oauth2) 派生; OAuth 服务器框架和令牌处理。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [temoto/robotstxt](https://github.com/temoto/robotstxt); robots.txt 解析。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [tdewolff/minify](https://github.com/tdewolff/minify); Markdown 帖文的 HTML 压缩。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
 - [uber-go/automaxprocs](https://github.com/uber-go/automaxprocs); GOMAXPROCS 自动化。 [MIT 许可证](https://spdx.org/licenses/MIT.html)。
