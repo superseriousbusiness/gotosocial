@@ -17,43 +17,51 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-onmessage = async function(e) {
-	console.log('worker started'); // eslint-disable-line no-console
+import sha256 from "./sha256";
 
-	const challenge = e.data.challenge;
+let compute = async function(challengeStr, diffStr) {
 	const textEncoder = new TextEncoder();
 
-	// Get difficulty and generate the expected
-	// zero ASCII prefix to check for in hashes.
-	const difficulty1Str = e.data.difficulty1;
-	const difficulty2Str = e.data.difficulty2;
-	const difficulty1 = parseInt(difficulty1Str, 10);
-	const zeroPrefix = '0'.repeat(difficulty1);
+	// Get difficulty1 as number and generate
+	// expected zero ASCII prefix to check for.
+	const diff1 = parseInt(diffStr, 10);
+	const zeros = "0".repeat(diff1);
+
+	// Calculate hex encoded prefix required to check solution, where we
+	// need diff1 no. chars in hex, and hex encoding doubles input length.
+	const prefixLen = diff1 / 2 + (diff1 % 2 != 0 ? 2 : 0);
 
 	let nonce = 0;
 	while (true) { // eslint-disable-line no-constant-condition
 
-		// Create possible solution string from challenge + nonce.
-		const solution = textEncoder.encode(challenge + nonce.toString());
+		// Create possible solution string from challenge string + nonce.
+		const solution = textEncoder.encode(challengeStr + nonce.toString());
 
-		// Generate SHA256 hashsum of solution string and hex encode the result.
-		const hashBuffer = await crypto.subtle.digest('SHA-256', solution);
-		const hashArray = Array.from(new Uint8Array(hashBuffer));
-		const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+		// Generate SHA256 hashsum of solution string, and hex encode the
+		// necessary prefix length we need to check for a valid solution.
+		const prefixArray = Array.from(sha256(solution).slice(0, prefixLen));
+		const prefixHex = prefixArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
 		// Check if the hex encoded hash has
 		// difficulty defined zeroes prefix.
-		if (hashHex.startsWith(zeroPrefix)) {
-
-			// Check if the next char after zero prefix
-			// is specifically less than difficulty2 char.
-			if (hashHex.charAt(difficulty1) < difficulty2Str) {
-				postMessage({ nonce: nonce, done: true });
-				break;
-			}
+		if (prefixHex.startsWith(zeros)) {
+			return nonce;
 		}
 
 		// Iter.
 		nonce++;
 	}
+};
+
+onmessage = async function(e) {
+	console.log('worker started'); // eslint-disable-line no-console
+
+	const challenge = e.data.challenge;
+	const difficulty = e.data.difficulty;
+
+	// Compute the nonce that produces solution with args.
+	let nonce = await compute(challenge, difficulty);
+
+	// Post the solution nonce back to caller.
+	postMessage({ nonce: nonce, done: true });
 };

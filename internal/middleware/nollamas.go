@@ -72,8 +72,7 @@ func NoLLaMas(
 	var nollamas nollamas
 	nollamas.seed = seed
 	nollamas.ttl = time.Hour
-	nollamas.diff1 = 4
-	nollamas.diff2 = '4'
+	nollamas.diff = 4
 	nollamas.getInstanceV1 = getInstanceV1
 	nollamas.policy = cookiePolicy
 	return nollamas.Serve
@@ -101,16 +100,9 @@ type nollamas struct {
 	ttl time.Duration
 
 	// algorithm difficulty knobs.
-	// diff1 determines the number of
-	// leading zeroes required, while
-	// diff2 checks the next byte at
-	// index is less than it.
-	//
-	// e.g. you look for say:
-	// - b[0:3] must be '0'
-	// - b[4] can be < '5'
-	diff1 uint8
-	diff2 uint8
+	// diff determines the number
+	// of leading zeroes required.
+	diff uint8
 
 	// extra fields required for
 	// our template rendering.
@@ -187,6 +179,12 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
+	// From here-on out, all
+	// possibilities are handled
+	// by us. Prevent further http
+	// handlers from being called.
+	c.Abort()
+
 	// Prepare new log entry.
 	l := log.WithContext(ctx).
 		WithField("userAgent", userAgent).
@@ -225,10 +223,6 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 	l.Infof("challenge passed: %s", nonce)
 
-	// Don't pass to further
-	// handlers, we'll redirect.
-	c.Abort()
-
 	// Drop solution query and encode.
 	query.Del("nollamas_solution")
 	c.Request.URL.RawQuery = query.Encode()
@@ -240,11 +234,6 @@ func (m *nollamas) Serve(c *gin.Context) {
 }
 
 func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
-	// Don't pass to further
-	// handlers, they only get
-	// our challenge page.
-	c.Abort()
-
 	// Fetch current instance information for templating vars.
 	instance, errWithCode := m.getInstanceV1(c.Request.Context())
 	if errWithCode != nil {
@@ -263,12 +252,8 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 		},
 		Extra: map[string]any{
-			"challenge":   challenge,
-			"difficulty1": m.diff1,
-
-			// must be a str otherwise template
-			// renders uint8 as int, not char
-			"difficulty2": hexStrs[m.diff2],
+			"challenge":  challenge,
+			"difficulty": m.diff,
 		},
 		Javascript: []apiutil.JavascriptEntry{
 			{
@@ -289,8 +274,7 @@ func (m *nollamas) token(hash *hashWithBufs, userAgent, clientIP string) string 
 	// Include difficulty level in
 	// hash input data so if config
 	// changes then token invalidates.
-	hash.hash.Write([]byte{m.diff1})
-	hash.hash.Write([]byte{m.diff2})
+	hash.hash.Write([]byte{m.diff})
 
 	// Also seed the generated input with
 	// current time rounded to TTL, so our
@@ -326,40 +310,18 @@ func (m *nollamas) checkChallenge(hash *hashWithBufs, challenge, nonce string) b
 	hex.Encode(hash.ebuf, hash.hbuf)
 	solution := hash.ebuf
 
-	// Compiler bound-check-elimination hint.
-	if len(solution) < int(m.diff1+1) {
+	// Compiler bound-check hint.
+	if len(solution) < int(m.diff) {
 		panic(gtserror.New("BCE"))
 	}
 
 	// Check that the first 'diff'
 	// many chars are indeed zeroes.
-	for i := range m.diff1 {
+	for i := range m.diff {
 		if solution[i] != '0' {
 			return false
 		}
 	}
 
-	// Check that next char is < 'diff2'.
-	return solution[m.diff1] < m.diff2
-}
-
-// hexStrs is a quick lookup of ASCII hex
-// bytes to their string equivalent.
-var hexStrs = [...]string{
-	'0': "0",
-	'1': "1",
-	'2': "2",
-	'3': "3",
-	'4': "4",
-	'5': "5",
-	'6': "6",
-	'7': "7",
-	'8': "8",
-	'9': "9",
-	'a': "a",
-	'b': "b",
-	'c': "c",
-	'd': "d",
-	'e': "e",
-	'f': "f",
+	return true
 }

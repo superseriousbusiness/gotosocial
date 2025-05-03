@@ -96,8 +96,7 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 	}
 
 	var challenge string
-	var diff1 uint64
-	var diff2 uint8
+	var difficulty uint64
 
 	// Parse output body and find the challenge / difficulty.
 	for _, line := range strings.Split(string(b), "\n") {
@@ -107,22 +106,17 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 			line = line[25:]
 			line = line[:len(line)-1]
 			challenge = line
-		case strings.HasPrefix(line, "data-nollamas-difficulty1=\""):
-			line = line[27:]
+		case strings.HasPrefix(line, "data-nollamas-difficulty=\""):
+			line = line[26:]
 			line = line[:len(line)-1]
 			var err error
-			diff1, err = strconv.ParseUint(line, 10, 8)
+			difficulty, err = strconv.ParseUint(line, 10, 8)
 			assert.NoError(t, err)
-		case strings.HasPrefix(line, "data-nollamas-difficulty2=\""):
-			line = line[27:]
-			line = line[:len(line)-1]
-			diff2 = line[0]
 		}
 	}
 
 	// Ensure valid posed challenge.
-	assert.NotZero(t, diff1)
-	assert.NotZero(t, diff2)
+	assert.NotZero(t, difficulty)
 	assert.NotEmpty(t, challenge)
 
 	// Prepare a test request for gin engine.
@@ -131,12 +125,11 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 	rw = httptest.NewRecorder()
 
 	// Now compute and set solution query paramater.
-	solution := computeSolution(challenge, diff1, diff2)
+	solution := computeSolution(challenge, difficulty)
 	r.URL.RawQuery = "nollamas_solution=" + solution
 
 	t.Logf("challenge=%s", challenge)
-	t.Logf("diff1=%d", diff1)
-	t.Logf("diff2='%c'", diff2)
+	t.Logf("difficulty=%d", difficulty)
 	t.Logf("solution=%s", solution)
 
 	// Pass req through
@@ -159,20 +152,17 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 }
 
 // computeSolution does the functional equivalent of our nollamas workerTask.js.
-func computeSolution(challenge string, diff1 uint64, diff2 uint8) string {
+func computeSolution(challenge string, diff uint64) string {
 outer:
 	for i := 0; ; i++ {
 		solution := strconv.Itoa(i)
 		combined := challenge + solution
 		hash := sha256.Sum256(byteutil.S2B(combined))
 		encoded := hex.EncodeToString(hash[:])
-		for i := range diff1 {
+		for i := range diff {
 			if encoded[i] != '0' {
 				continue outer
 			}
-		}
-		if encoded[diff1] >= diff2 {
-			continue outer
 		}
 		return solution
 	}

@@ -19,7 +19,7 @@
 
 const explanation = "Your browser is currently solving a proof-of-work challenge designed to deter \"ai\" scrapers. This should take no more than a few seconds...";
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function() {
 	// Get the nollamas section container.
 	const nollamas = document.querySelector(".nollamas");
 
@@ -44,20 +44,17 @@ document.addEventListener('DOMContentLoaded', function() {
 	// Read the challenge and difficulty from
 	// data attributes on the nollamas section.
 	const challenge = nollamas.dataset.nollamasChallenge;
-	const difficulty1 = nollamas.dataset.nollamasDifficulty1;
-	const difficulty2 = nollamas.dataset.nollamasDifficulty2;
+	const difficulty = nollamas.dataset.nollamasDifficulty;
 
-	console.log('challenge:', challenge);     // eslint-disable-line no-console
-	console.log('difficulty1:', difficulty1); // eslint-disable-line no-console
-	console.log('difficulty2:', difficulty2); // eslint-disable-line no-console
+	console.log("challenge:", challenge);     // eslint-disable-line no-console
+	console.log("difficulty:", difficulty); // eslint-disable-line no-console
 
 	// Prepare the worker with task function.
 	const worker = new Worker("/assets/dist/nollamasworker.js");
 	const startTime = performance.now();
 	worker.postMessage({
 		challenge: challenge,
-		difficulty1: difficulty1,
-		difficulty2: difficulty2,
+		difficulty: difficulty,
 	});
 
 	// Set the main worker function.
@@ -65,13 +62,13 @@ document.addEventListener('DOMContentLoaded', function() {
 		if (e.data.done) {
 			const endTime = performance.now();
 			const duration = endTime - startTime;
-			
+
 			// Remove spinner and replace it with a tick
 			// and info about how long it took to solve.
 			nollamas.removeChild(spinner);
 			const solutionWrapper = document.createElement("div");
 			solutionWrapper.className = "nollamas-status";
-			
+
 			const tick = document.createElement("i");
 			tick.className = "fa fa-check fa-2x fa-fw";
 			tick.setAttribute("title","Solved!");
@@ -79,17 +76,18 @@ document.addEventListener('DOMContentLoaded', function() {
 			solutionWrapper.appendChild(tick);
 
 			const took = document.createElement("span");
-			took.appendChild(document.createTextNode(`Solved in ${duration.toString()}ms!`));
+			const solvedText = `Solved after ${e.data.nonce} iterations, in ${duration.toString()}ms!`;
+			took.appendChild(document.createTextNode(solvedText));
 			solutionWrapper.appendChild(took);
 
 			nollamas.appendChild(solutionWrapper);
-			
+
 			// Wait for 500ms before redirecting, to give
 			// visitors a shot at reading the message, but
 			// not so long that they have to wait unduly.
 			setTimeout(() => {
 				let url = new URL(window.location.href);
-				url.searchParams.set('nollamas_solution', e.data.nonce);
+				url.searchParams.set("nollamas_solution", e.data.nonce);
 				window.location.replace(url.toString());
 			}, 500);
 		}
