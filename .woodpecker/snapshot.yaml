@@ -15,10 +15,23 @@ steps:
   snapshot:
     # Snapshot only if some interesting
     # source code files have changed.
+    #
+    # CI_PIPELINE_FILES is undefined if
+    # files changed > 500, so account for
+    # this and snapshot anyway if so.
     when:
       # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
-      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" || # startsWith "web/"  || # == "Dockerfile" })'
+      - evaluate: >-
+          (not ("CI_PIPELINE_FILES" in $env)) ||
+          any(fromJSON(CI_PIPELINE_FILES), {
+          # startsWith "internal/" ||
+          # startsWith "cmd/" ||
+          # startsWith "testrig/" ||
+          # startsWith "vendor/" ||
+          # startsWith "web/" ||
+          # == "Dockerfile"
+          })
 
     # https://codeberg.org/superseriousbusiness/gotosocial-woodpecker-build
     image: superseriousbusiness/gotosocial-woodpecker-build:0.10.0

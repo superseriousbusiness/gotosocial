@@ -5,11 +5,23 @@ when:
 steps:
   # Lint the Go code only if
   # some Go files have changed.
+  #
+  # CI_PIPELINE_FILES is undefined if
+  # files changed > 500, and empty on
+  # force pushes, so account for this
+  # and run step to be safe.
   lint:
     when:
       # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
-      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" })'
+      - evaluate: >-
+          (not ("CI_PIPELINE_FILES" in $env)) ||
+          len(CI_PIPELINE_FILES) == 0 ||
+          any(fromJSON(CI_PIPELINE_FILES), {
+          # startsWith "internal/" ||
+          # startsWith "cmd/" ||
+          # startsWith "testrig/"
+          })
 
     # We use golangci-lint for linting.
     # See: https://golangci-lint.run/
@@ -37,11 +49,24 @@ steps:
 
   # Test the Go code only if
   # some Go files have changed.
+  #
+  # CI_PIPELINE_FILES is undefined if
+  # files changed > 500, and empty on
+  # force pushes, so account for this
+  # and run step to be safe.
   test:
     when:
       # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
-      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" })'
+      - evaluate: >-
+          (not ("CI_PIPELINE_FILES" in $env)) ||
+          len(CI_PIPELINE_FILES) == 0 ||
+          any(fromJSON(CI_PIPELINE_FILES), {
+          # startsWith "internal/" ||
+          # startsWith "cmd/" ||
+          # startsWith "testrig/" ||
+          # startsWith "vendor/"
+          })
 
     image: golang:1.23-alpine
     pull: true
@@ -80,11 +105,19 @@ steps:
 
   # Validate the web code only
   # if web source has changed.
+  #
+  # CI_PIPELINE_FILES is undefined if
+  # files changed > 500, and empty on
+  # force pushes, so account for this
+  # and run step to be safe.
   web:
     when:
       # https://woodpecker-ci.org/docs/usage/workflow-syntax#evaluate
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
-      - evaluate: '(not ("CI_PIPELINE_FILES" in $env)) || any(fromJSON(CI_PIPELINE_FILES), { # startsWith "web/source/" })'
+      - evaluate: >-
+          (not ("CI_PIPELINE_FILES" in $env)) ||
+          len(CI_PIPELINE_FILES) == 0 ||
+          any(fromJSON(CI_PIPELINE_FILES), { # startsWith "web/source/" })
 
     image: node:lts-alpine
     pull: true
