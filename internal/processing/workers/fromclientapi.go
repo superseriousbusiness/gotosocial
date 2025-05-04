@@ -731,6 +731,25 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 		}
 	}
 
+	// Notify any *new* mentions added
+	// to this status by the editor.
+	for _, mention := range status.Mentions {
+		// Check if we've seen
+		// this mention already.
+		if !mention.IsNew {
+			// Already seen
+			// it, skip.
+			continue
+		}
+
+		// Haven't seen this mention
+		// yet, notify it if necessary.
+		mention.Status = status
+		if err := p.surface.notifyMention(ctx, mention); err != nil {
+			log.Errorf(ctx, "error notifying mention: %v", err)
+		}
+	}
+
 	// Push message that the status has been edited to streams.
 	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
 		log.Errorf(ctx, "error streaming status edit: %v", err)

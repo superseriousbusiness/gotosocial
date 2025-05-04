@@ -1003,7 +1003,26 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		log.Errorf(ctx, "error streaming status edit: %v", err)
 	}
 
-	// Status representation was refetched, uncache from timelines.
+	// Notify any *new* mentions added
+	// to this status by the editor.
+	for _, mention := range status.Mentions {
+		// Check if we've seen
+		// this mention already.
+		if !mention.IsNew {
+			// Already seen
+			// it, skip.
+			continue
+		}
+
+		// Haven't seen this mention
+		// yet, notify it if necessary.
+		mention.Status = status
+		if err := p.surface.notifyMention(ctx, mention); err != nil {
+			log.Errorf(ctx, "error notifying mention: %v", err)
+		}
+	}
+
+	// Status representation changed, uncache from timelines.
 	p.surface.invalidateStatusFromTimelines(ctx, status.ID)
 
 	return nil

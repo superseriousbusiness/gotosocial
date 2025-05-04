@@ -49,6 +49,12 @@ type Mention struct {
 	// This will not be put in the database, it's just for convenience.
 	NameString string `bun:"-"`
 
+	// IsNew indicates whether this mention is "new" in the sense
+	// that it has not previously been inserted into the database.
+	//
+	// This will not be put in the database, it's just for convenience.
+	IsNew bool `bun:"-"`
+
 	// TargetAccountURI is the AP ID (uri) of the user mentioned.
 	//
 	// This will not be put in the database, it's just for convenience.

@@ -64,6 +64,39 @@ func (m *mentionDB) GetMention(ctx context.Context, id string) (*gtsmodel.Mentio
 	return mention, nil
 }
 
+func (m *mentionDB) GetMentionByTargetAcctStatus(
+	ctx context.Context,
+	targetAcctID string,
+	statusID string,
+) (*gtsmodel.Mention, error) {
+	// Get the status first.
+	status, err := m.state.DB.GetStatusByID(ctx, statusID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Populate mentions if necessary.
+	if !status.MentionsPopulated() {
+		status.Mentions, err = m.GetMentions(ctx, status.MentionIDs)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// See if the mention is there.
+	mention, ok := status.GetMentionByTargetID(targetAcctID)
+	if !ok {
+		return nil, db.ErrNoEntries
+	}
+
+	// Further populate the mention fields where applicable.
+	if err := m.PopulateMention(ctx, mention); err != nil {
+		return nil, err
+	}
+
+	return mention, nil
+}
+
 func (m *mentionDB) GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error) {
 	// Load all mention IDs via cache loader callbacks.
 	mentions, err := m.state.Caches.DB.Mention.LoadIDs("ID",
