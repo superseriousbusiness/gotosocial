@@ -1083,6 +1083,12 @@ func (c *Caches) initMention() {
 		m2.OriginAccount = nil
 		m2.TargetAccount = nil
 
+		// Zero non-db fields.
+		m2.NameString = ""
+		m2.IsNew = false
+		m2.TargetAccountURI = ""
+		m2.TargetAccountURL = ""
+
 		return m2
 	}
 

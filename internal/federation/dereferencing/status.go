@@ -708,6 +708,7 @@ func (d *Dereferencer) fetchStatusMentions(
 		mention.TargetAccountURL = mention.TargetAccount.URL
 		mention.StatusID = status.ID
 		mention.Status = status
+		mention.IsNew = true
 
 		// Place the new mention into the database.
 		if err := d.state.DB.PutMention(ctx, mention); err != nil {

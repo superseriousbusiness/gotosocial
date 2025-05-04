@@ -549,9 +549,7 @@ func sizeofMention() uintptr {
 		OriginAccountID:  exampleURI,
 		OriginAccountURI: exampleURI,
 		TargetAccountID:  exampleID,
-		NameString:       exampleUsername,
-		TargetAccountURI: exampleURI,
-		TargetAccountURL: exampleURI,
+		Silent:           util.Ptr(false),
 	}))
 }
 

@@ -28,6 +28,9 @@ type Mention interface {
 	// GetMention gets a single mention by ID
 	GetMention(ctx context.Context, id string) (*gtsmodel.Mention, error)
 
+	// GetMentionByTargetAcctStatus returns a mention by targetAccountID and statusID.
+	GetMentionByTargetAcctStatus(ctx context.Context, targetAcctID string, statusID string) (*gtsmodel.Mention, error)
+
 	// GetMentions gets multiple mentions.
 	GetMentions(ctx context.Context, ids []string) ([]*gtsmodel.Mention, error)
 

@@ -210,6 +210,16 @@ func (s *Status) GetMentionByTargetURI(uri string) (*Mention, bool) {
 	return nil, false
 }
 
+// GetMentionByTargetID searches status for Mention{} with target ID.
+func (s *Status) GetMentionByTargetID(id string) (*Mention, bool) {
+	for _, mention := range s.Mentions {
+		if mention.TargetAccountID == id {
+			return mention, true
+		}
+	}
+	return nil, false
+}
+
 // GetMentionByUsernameDomain fetches the Mention associated with given
 // username and domains, typically extracted from a mention Namestring.
 func (s *Status) GetMentionByUsernameDomain(username, domain string) (*Mention, bool) {

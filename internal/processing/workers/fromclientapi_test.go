@@ -89,6 +89,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 			OriginAccountID:  account.ID,
 			OriginAccountURI: account.URI,
 			TargetAccountID:  replyToStatus.AccountID,
+			IsNew:            true,
 		}
 
 		if err := state.DB.PutMention(ctx, mention); err != nil {
@@ -117,6 +118,7 @@ func (suite *FromClientAPITestSuite) newStatus(
 			TargetAccountID:  mentionedAccount.ID,
 			TargetAccount:    mentionedAccount,
 			Silent:           util.Ptr(false),
+			IsNew:            true,
 		}
 
 		newStatus.Mentions = append(newStatus.Mentions, newMention)

@@ -156,7 +156,9 @@ func (cr *customRenderer) handleMention(text string) string {
 		return text
 	}
 
-	if cr.statusID != "" {
+	// Store mention if it's from a
+	// status and wasn't stored before.
+	if cr.statusID != "" && mention.IsNew {
 		if err := cr.db.PutMention(cr.ctx, mention); err != nil {
 			log.Errorf(cr.ctx, "error putting mention in db: %s", err)
 			return text
