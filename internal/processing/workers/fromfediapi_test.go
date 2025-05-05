@@ -735,6 +735,52 @@ func (suite *FromFediAPITestSuite) TestUndoAnnounce() {
 	}
 }
 
+func (suite *FromFediAPITestSuite) TestUpdateNote() {
+	var (
+		ctx            = context.Background()
+		testStructs    = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+		requestingAcct = suite.testAccounts["remote_account_2"]
+		receivingAcct  = suite.testAccounts["local_account_1"]
+	)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	update := testrig.NewTestActivities(suite.testAccounts)["remote_account_2_status_1_update"]
+	statusable := update.Activity.GetActivityStreamsObject().At(0).GetActivityStreamsNote()
+	noteURI := ap.GetJSONLDId(statusable)
+
+	// Get the OG status.
+	status, err := testStructs.State.DB.GetStatusByURI(ctx, noteURI.String())
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Process the Update.
+	err = testStructs.Processor.Workers().ProcessFromFediAPI(ctx, &messages.FromFediAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityUpdate,
+		GTSModel:       status, // original status
+		APObject:       (ap.Statusable)(statusable),
+		Receiving:      receivingAcct,
+		Requesting:     requestingAcct,
+	})
+	suite.NoError(err)
+
+	// Wait for side effects to trigger:
+	// zork should have a mention notif.
+	if !testrig.WaitFor(func() bool {
+		_, err := testStructs.State.DB.GetNotification(
+			gtscontext.SetBarebones(ctx),
+			gtsmodel.NotificationMention,
+			receivingAcct.ID,
+			requestingAcct.ID,
+			status.ID,
+		)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for mention notif")
+	}
+}
+
 func TestFromFederatorTestSuite(t *testing.T) {
 	suite.Run(t, &FromFediAPITestSuite{})
 }
