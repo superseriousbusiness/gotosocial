@@ -110,7 +110,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 	config.SetInstanceLanguages(parsedLangs)
 
-	if err := observability.InitializeTracing(); err != nil {
+	if err := observability.InitializeTracing(ctx); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
@@ -161,7 +161,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	defer testrig.StopWorkers(state)
 
 	// Initialize metrics.
-	if err := observability.InitializeMetrics(state.DB); err != nil {
+	if err := observability.InitializeMetrics(ctx, state.DB); err != nil {
 		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
@@ -250,7 +250,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	var (
 		authModule        = api.NewAuth(state, processor, idp, routerSession, sessionName, cookiePolicy) // auth/oauth paths
 		clientModule      = api.NewClient(state, processor)                                              // api client endpoints
-		metricsModule     = api.NewMetrics()                                                             // Metrics endpoints
 		healthModule      = api.NewHealth(state.DB.Ready)                                                // Health check endpoints
 		fileserverModule  = api.NewFileserver(processor)                                                 // fileserver endpoints
 		robotsModule      = api.NewRobots()                                                              // robots.txt endpoint
@@ -263,7 +262,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// these should be routed in order
 	authModule.Route(route)
 	clientModule.Route(route)
-	metricsModule.Route(route)
 	healthModule.Route(route)
 	fileserverModule.Route(route)
 	fileserverModule.RouteEmojis(route, instanceAccount.ID)
