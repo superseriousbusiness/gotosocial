@@ -21,7 +21,7 @@ import (
 	"container/list"
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/gtserror"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 )
 
 type indexedItems struct {

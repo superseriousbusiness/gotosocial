@@ -21,8 +21,8 @@ import (
 	"container/list"
 	"context"
 
+	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-kv"
-	"github.com/superseriousbusiness/gotosocial/internal/log"
 )
 
 func (t *timeline) Remove(ctx context.Context, statusID string) (int, error) {

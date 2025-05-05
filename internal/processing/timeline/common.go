@@ -20,7 +20,7 @@ package timeline
 import (
 	"context"
 
-	"github.com/superseriousbusiness/gotosocial/internal/timeline"
+	"code.superseriousbusiness.org/gotosocial/internal/timeline"
 )
 
 // SkipInsert returns a function that satisifes SkipInsertFunction.
