@@ -22,19 +22,21 @@ package observability
 import (
 	"context"
 	"fmt"
+	"net"
+	"net/http"
+	"strconv"
 
 	"codeberg.org/gruf/go-kv"
+
 	"github.com/gin-gonic/gin"
+
+	"go.opentelemetry.io/contrib/exporters/autoexport"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/sdk/resource"
-	"go.opentelemetry.io/otel/sdk/trace"
-	"go.opentelemetry.io/otel/semconv/v1.20.0/httpconv"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
-	oteltrace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/trace"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
@@ -46,66 +48,35 @@ const (
 	tracerName = "code.superseriousbusiness.org/gotosocial/internal/observability"
 )
 
-func InitializeTracing() error {
+func InitializeTracing(ctx context.Context) error {
 	if !config.GetTracingEnabled() {
 		return nil
 	}
 
-	insecure := config.GetTracingInsecureTransport()
-
-	var tpo trace.TracerProviderOption
-	switch config.GetTracingTransport() {
-	case "grpc":
-		opts := []otlptracegrpc.Option{
-			otlptracegrpc.WithEndpoint(config.GetTracingEndpoint()),
-		}
-		if insecure {
-			opts = append(opts, otlptracegrpc.WithInsecure())
-		}
-		exp, err := otlptracegrpc.New(context.Background(), opts...)
-		if err != nil {
-			return fmt.Errorf("building tracing exporter: %w", err)
-		}
-		tpo = trace.WithBatcher(exp)
-	case "http":
-		opts := []otlptracehttp.Option{
-			otlptracehttp.WithEndpoint(config.GetTracingEndpoint()),
-		}
-		if insecure {
-			opts = append(opts, otlptracehttp.WithInsecure())
-		}
-		exp, err := otlptracehttp.New(context.Background(), opts...)
-		if err != nil {
-			return fmt.Errorf("building tracing exporter: %w", err)
-		}
-		tpo = trace.WithBatcher(exp)
-	default:
-		return fmt.Errorf("invalid tracing transport: %s", config.GetTracingTransport())
-	}
-	r, err := resource.Merge(
-		resource.Default(),
-		resource.NewSchemaless(
-			semconv.ServiceName("GoToSocial"),
-			semconv.ServiceVersion(config.GetSoftwareVersion()),
-		),
-	)
+	r, err := Resource()
 	if err != nil {
 		// this can happen if semconv versioning is out-of-sync
 		return fmt.Errorf("building tracing resource: %w", err)
 	}
 
-	tp := trace.NewTracerProvider(
-		tpo,
-		trace.WithResource(r),
+	se, err := autoexport.NewSpanExporter(ctx)
+	if err != nil {
+		return err
+	}
+
+	tp := sdktrace.NewTracerProvider(
+		sdktrace.WithResource(r),
+		sdktrace.WithBatcher(se),
 	)
+
 	otel.SetTracerProvider(tp)
-	propagator := propagation.NewCompositeTextMapPropagator(
+	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},
-	)
-	otel.SetTextMapPropagator(propagator)
+	))
+
 	log.Hook(func(ctx context.Context, kvs []kv.Field) []kv.Field {
-		span := oteltrace.SpanFromContext(ctx)
+		span := trace.SpanFromContext(ctx)
 		if span != nil && span.SpanContext().HasTraceID() {
 			return append(kvs, kv.Field{K: "traceID", V: span.SpanContext().TraceID().String()})
 		}
@@ -121,7 +92,7 @@ func TracingMiddleware() gin.HandlerFunc {
 	provider := otel.GetTracerProvider()
 	tracer := provider.Tracer(
 		tracerName,
-		oteltrace.WithInstrumentationVersion(config.GetSoftwareVersion()),
+		trace.WithInstrumentationVersion(config.GetSoftwareVersion()),
 	)
 	propagator := otel.GetTextMapPropagator()
 	return func(c *gin.Context) {
@@ -140,16 +111,16 @@ func TracingMiddleware() gin.HandlerFunc {
 			c.Request = c.Request.WithContext(savedCtx)
 		}()
 		ctx := propagator.Extract(savedCtx, propagation.HeaderCarrier(c.Request.Header))
-		opts := []oteltrace.SpanStartOption{
-			oteltrace.WithAttributes(httpconv.ServerRequest(config.GetHost(), c.Request)...),
-			oteltrace.WithSpanKind(oteltrace.SpanKindServer),
+		opts := []trace.SpanStartOption{
+			trace.WithAttributes(ServerRequestAttributes(c.Request)...),
+			trace.WithSpanKind(trace.SpanKindServer),
 		}
 
 		rAttr := semconv.HTTPRoute(spanName)
-		opts = append(opts, oteltrace.WithAttributes(rAttr))
+		opts = append(opts, trace.WithAttributes(rAttr))
 		id := gtscontext.RequestID(c.Request.Context())
 		if id != "" {
-			opts = append(opts, oteltrace.WithAttributes(attribute.String("requestID", id)))
+			opts = append(opts, trace.WithAttributes(attribute.String("requestID", id)))
 		}
 		ctx, span := tracer.Start(ctx, spanName, opts...)
 		defer span.End()
@@ -161,7 +132,6 @@ func TracingMiddleware() gin.HandlerFunc {
 		c.Next()
 
 		status := c.Writer.Status()
-		span.SetStatus(httpconv.ServerStatus(status))
 		if status > 0 {
 			span.SetAttributes(semconv.HTTPResponseStatusCode(status))
 		}
@@ -175,8 +145,52 @@ func InjectRequestID() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := gtscontext.RequestID(c.Request.Context())
 		if id != "" {
-			span := oteltrace.SpanFromContext(c.Request.Context())
+			span := trace.SpanFromContext(c.Request.Context())
 			span.SetAttributes(attribute.String("requestID", id))
 		}
 	}
+}
+
+func ServerRequestAttributes(req *http.Request) []attribute.KeyValue {
+	attrs := make([]attribute.KeyValue, 0, 8)
+	attrs = append(attrs, method(req.Method))
+	attrs = append(attrs, semconv.URLFull(req.URL.RequestURI()))
+	attrs = append(attrs, semconv.URLScheme(req.URL.Scheme))
+	attrs = append(attrs, semconv.UserAgentOriginal(req.UserAgent()))
+	attrs = append(attrs, semconv.NetworkProtocolName("http"))
+	attrs = append(attrs, semconv.NetworkProtocolVersion(fmt.Sprintf("%d:%d", req.ProtoMajor, req.ProtoMinor)))
+
+	if ip, port, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+		iport, _ := strconv.Atoi(port)
+		attrs = append(attrs,
+			semconv.NetworkPeerAddress(ip),
+			semconv.NetworkPeerPort(iport),
+		)
+	} else if req.RemoteAddr != "" {
+		attrs = append(attrs,
+			semconv.NetworkPeerAddress(req.RemoteAddr),
+		)
+	}
+
+	return attrs
+}
+
+func method(m string) attribute.KeyValue {
+	var methodLookup = map[string]attribute.KeyValue{
+		http.MethodConnect: semconv.HTTPRequestMethodConnect,
+		http.MethodDelete:  semconv.HTTPRequestMethodDelete,
+		http.MethodGet:     semconv.HTTPRequestMethodGet,
+		http.MethodHead:    semconv.HTTPRequestMethodHead,
+		http.MethodOptions: semconv.HTTPRequestMethodOptions,
+		http.MethodPatch:   semconv.HTTPRequestMethodPatch,
+		http.MethodPost:    semconv.HTTPRequestMethodPost,
+		http.MethodPut:     semconv.HTTPRequestMethodPut,
+		http.MethodTrace:   semconv.HTTPRequestMethodTrace,
+	}
+
+	if kv, ok := methodLookup[m]; ok {
+		return kv
+	}
+
+	return semconv.HTTPRequestMethodGet
 }

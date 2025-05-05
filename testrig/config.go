@@ -154,13 +154,8 @@ func testDefaults() config.Configuration {
 		SMTPFrom:               "GoToSocial",
 		SMTPDiscloseRecipients: false,
 
-		TracingEnabled:           false,
-		TracingEndpoint:          "localhost:4317",
-		TracingTransport:         "grpc",
-		TracingInsecureTransport: true,
-
-		MetricsEnabled:     true,
-		MetricsAuthEnabled: false,
+		TracingEnabled: false,
+		MetricsEnabled: false,
 
 		SyslogEnabled:  false,
 		SyslogProtocol: "udp",

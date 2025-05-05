@@ -184,7 +184,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Initialize tracing (noop if not enabled).
-	if err := observability.InitializeTracing(); err != nil {
+	if err := observability.InitializeTracing(ctx); err != nil {
 		return fmt.Errorf("error initializing tracing: %w", err)
 	}
 
@@ -377,7 +377,7 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	}
 
 	// Initialize metrics.
-	if err := observability.InitializeMetrics(state.DB); err != nil {
+	if err := observability.InitializeMetrics(ctx, state.DB); err != nil {
 		return fmt.Errorf("error initializing metrics: %w", err)
 	}
 
@@ -484,7 +484,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	var (
 		authModule        = api.NewAuth(state, process, idp, routerSession, sessionName, cookiePolicy) // auth/oauth paths
 		clientModule      = api.NewClient(state, process)                                              // api client endpoints
-		metricsModule     = api.NewMetrics()                                                           // Metrics endpoints
 		healthModule      = api.NewHealth(dbService.Ready)                                             // Health check endpoints
 		fileserverModule  = api.NewFileserver(process)                                                 // fileserver endpoints
 		robotsModule      = api.NewRobots()                                                            // robots.txt endpoint
@@ -538,7 +537,6 @@ var Start action.GTSAction = func(ctx context.Context) error {
 	// apply throttling *after* rate limiting
 	authModule.Route(route, clLimit, clThrottle, robotsDisallowAll, gzip)
 	clientModule.Route(route, clLimit, clThrottle, robotsDisallowAll, gzip)
-	metricsModule.Route(route, clLimit, clThrottle, robotsDisallowAIOnly)
 	healthModule.Route(route, clLimit, clThrottle, robotsDisallowAIOnly)
 	fileserverModule.Route(route, fsMainLimit, fsThrottle, robotsDisallowAIOnly)
 	fileserverModule.RouteEmojis(route, instanceAccount.ID, fsEmojiLimit, fsThrottle, robotsDisallowAIOnly)

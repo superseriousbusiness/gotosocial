@@ -21,46 +21,32 @@ package observability
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/technologize/otel-go-contrib/otelginmetrics"
+	"go.opentelemetry.io/contrib/exporters/autoexport"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	sdk "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/exemplar"
-	"go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.24.0"
 )
 
-const (
-	serviceName = "GoToSocial"
-)
-
-func InitializeMetrics(db db.DB) error {
+func InitializeMetrics(ctx context.Context, db db.DB) error {
 	if !config.GetMetricsEnabled() {
 		return nil
 	}
 
-	if config.GetMetricsAuthEnabled() {
-		if config.GetMetricsAuthPassword() == "" || config.GetMetricsAuthUsername() == "" {
-			return errors.New("metrics-auth-username and metrics-auth-password must be set when metrics-auth-enabled is true")
-		}
+	r, err := Resource()
+	if err != nil {
+		// this can happen if semconv versioning is out-of-sync
+		return fmt.Errorf("building tracing resource: %w", err)
 	}
 
-	r, _ := resource.Merge(
-		resource.Default(),
-		resource.NewSchemaless(
-			semconv.ServiceName(serviceName),
-			semconv.ServiceVersion(config.GetSoftwareVersion()),
-		),
-	)
-
-	prometheusExporter, err := prometheus.New()
+	mt, err := autoexport.NewMetricReader(ctx)
 	if err != nil {
 		return err
 	}
@@ -68,7 +54,7 @@ func InitializeMetrics(db db.DB) error {
 	meterProvider := sdk.NewMeterProvider(
 		sdk.WithExemplarFilter(exemplar.AlwaysOffFilter),
 		sdk.WithResource(r),
-		sdk.WithReader(prometheusExporter),
+		sdk.WithReader(mt),
 	)
 
 	otel.SetMeterProvider(meterProvider)

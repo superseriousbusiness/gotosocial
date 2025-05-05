@@ -146,9 +146,6 @@ EXPECT=$(cat << "EOF"
     "media-remote-cache-days": 30,
     "media-remote-max-size": 420,
     "media-video-size-hint": 41943040,
-    "metrics-auth-enabled": false,
-    "metrics-auth-password": "",
-    "metrics-auth-username": "",
     "metrics-enabled": false,
     "oidc-admin-groups": [
         "steamy"
@@ -199,9 +196,6 @@ EXPECT=$(cat << "EOF"
     "tls-certificate-chain": "",
     "tls-certificate-key": "",
     "tracing-enabled": false,
-    "tracing-endpoint": "localhost:4317",
-    "tracing-insecure-transport": true,
-    "tracing-transport": "grpc",
     "trusted-proxies": [
         "127.0.0.1/32",
         "docker.host.local"
@@ -269,7 +263,6 @@ GTS_MEDIA_EMOJI_LOCAL_MAX_SIZE=420 \
 GTS_MEDIA_EMOJI_REMOTE_MAX_SIZE=420 \
 GTS_MEDIA_FFMPEG_POOL_SIZE=8 \
 GTS_MEDIA_VIDEO_SIZE_HINT='40MiB' \
-GTS_METRICS_AUTH_ENABLED=false \
 GTS_METRICS_ENABLED=false \
 GTS_STORAGE_BACKEND='local' \
 GTS_STORAGE_LOCAL_BASE_PATH='/root/store' \
@@ -308,8 +301,6 @@ GTS_SMTP_DISCLOSE_RECIPIENTS=true \
 GTS_SYSLOG_ENABLED=true \
 GTS_SYSLOG_PROTOCOL='udp' \
 GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
-GTS_TRACING_ENDPOINT='localhost:4317' \
-GTS_TRACING_INSECURE_TRANSPORT=true \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS="192.0.2.0/24,127.0.0.1/32" \
 GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \

@@ -122,13 +122,8 @@ var Defaults = Configuration{
 	SMTPFrom:               "",
 	SMTPDiscloseRecipients: false,
 
-	TracingEnabled:           false,
-	TracingTransport:         "grpc",
-	TracingEndpoint:          "",
-	TracingInsecureTransport: false,
-
-	MetricsEnabled:     false,
-	MetricsAuthEnabled: false,
+	TracingEnabled: false,
+	MetricsEnabled: false,
 
 	SyslogEnabled:  false,
 	SyslogProtocol: "udp",

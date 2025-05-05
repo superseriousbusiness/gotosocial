@@ -2,9 +2,31 @@
 
 These settings let you tune and configure certain observability related behaviours.
 
+GoToSocial uses OpenTelemetry. The metrics and trace exporters can be configured using the standard OpenTelemetry SDK environment variables. For a full reference, see [the OpenTelemetry docs](https://opentelemetry.io/docs/languages/sdk-configuration/).
+
 ## Metrics
 
 Before enabling metrics, [read the guide](../advanced/metrics.md) and ensure you've taken the appropriate security measures for your setup.
+
+### Tracing
+
+To enable tracing, set `tracing-enabled` to `true`.
+
+Valid values for `OTEL_TRACES_EXPORTER` are [documented here](https://opentelemetry.io/docs/languages/sdk-configuration/general/#otel_traces_exporter).
+
+### Metrics
+
+To enable metrics, set `metrics-enabled` to `true`. By default this'll use OTLP to push metrics to an OpenTelemetry receiver.
+
+Valid values for `OTEL_METRICS_EXPORTER` are [documented here](https://opentelemetry.io/docs/languages/sdk-configuration/general/#otel_metrics_exporter)
+
+For Prometheus, set `OTEL_METRICS_EXPORTER` to `prometheus`. This will start a **second** HTTP server, bound for `localhost:9464` with the OpenTelemetry metrics. You can change this using:
+* `OTEL_EXPORTER_PROMETHEUS_HOST`
+* `OTEL_EXPORTER_PROMETHEUS_PORT`
+
+### Authentication
+
+If you want to expose the metrics with authentication, you'll need a reverse proxy. You can configure it to proxy to `http://localhost:9464/metrics` and handle authentication in your reverse proxy however you like.
 
 ## Settings
 
@@ -22,36 +44,7 @@ request-id-header: "X-Request-Id"
 # Default: false
 tracing-enabled: false
 
-# String. Set the transport protocol for the tracing system. Can either be "grpc" 
-# for OTLP gRPC, or "http" for OTLP HTTP.
-# Options: ["grpc", "http"]
-# Default: "grpc"
-tracing-transport: "grpc"
-
-# String. Endpoint of the trace ingester. When using the gRPC or HTTP based 
-# transports, provide the endpoint as a single address/port combination without a 
-# protocol scheme.
-# Examples: ["localhost:4317"]
-# Default: ""
-tracing-endpoint: ""
-
-# Bool. Disable TLS for the gRPC and HTTP transport protocols.
-# Default: false
-tracing-insecure-transport: false
-
 # Bool. Enable OpenTelemetry based metrics support.
 # Default: false
 metrics-enabled: false
-
-# Bool. Enable HTTP Basic Authentication for Prometheus metrics endpoint.
-# Default: false
-metrics-auth-enabled: false
-
-# String. Username for Prometheus metrics endpoint.
-# Default: ""
-metrics-auth-username: ""
-
-# String. Password for Prometheus metrics endpoint.
-# Default: ""
-metrics-auth-password: ""
 ```
