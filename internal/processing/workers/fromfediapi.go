@@ -998,11 +998,6 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		}
 	}
 
-	// Push message that the status has been edited to streams.
-	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
-		log.Errorf(ctx, "error streaming status edit: %v", err)
-	}
-
 	// Notify any *new* mentions added
 	// to this status by the editor.
 	for _, mention := range status.Mentions {
@@ -1020,6 +1015,11 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		if err := p.surface.notifyMention(ctx, mention); err != nil {
 			log.Errorf(ctx, "error notifying mention: %v", err)
 		}
+	}
+
+	// Push message that the status has been edited to streams.
+	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
+		log.Errorf(ctx, "error streaming status edit: %v", err)
 	}
 
 	// Status representation changed, uncache from timelines.

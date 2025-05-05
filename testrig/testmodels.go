@@ -3508,6 +3508,49 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 	keyToSignDelete := accounts["remote_account_1"].PrivateKey
 	deleteForRemoteAccount3Sig, deleteForRemoteAccount3Digest, deleteForRemoteAccount3Date := GetSignatureForActivity(deleteForRemoteAccount3, "https://somewhere.mysterious/users/rest_in_piss#main-key", keyToSignDelete, URLMustParse(accounts["local_account_1"].InboxURI))
 
+	remoteAccount2Status1Updated := NewAPNote(
+		URLMustParse("http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
+		URLMustParse("http://example.org/@Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
+		TimeMustParse("2023-11-02T12:44:25+02:00"),
+		`<p>hi <span class="h-card"><a href="http://localhost:8080/@admin" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>admin</span></a></span> here's some media for ya, <span class="h-card"><a href="http://localhost:8080/@the_mighty_zork" class="u-url mention" rel="nofollow noreferrer noopener" target="_blank">@<span>the_mighty_zork</span></a></span> you might like this too</p>`,
+		"<p>some unknown media included</p>",
+		URLMustParse("http://example.org/users/Some_User"),
+		[]*url.URL{
+			ap.PublicURI(),
+		},
+		[]*url.URL{
+			URLMustParse("http://example.org/users/Some_User/followers"),
+			URLMustParse("http://localhost:8080/users/admin"),
+			URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+		},
+		true,
+		[]vocab.ActivityStreamsMention{
+			newAPMention(
+				URLMustParse("http://localhost:8080/users/admin"),
+				"@admin@localhost:8080",
+			),
+			newAPMention(
+				URLMustParse("http://localhost:8080/users/the_mighty_zork"),
+				"@the_mighty_zork@localhost:8080",
+			),
+		},
+		nil,
+		nil,
+	)
+	update := WrapAPNoteInUpdate(
+		URLMustParse("http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5/update1"),
+		URLMustParse("http://example.org/users/Some_User/statuses/01HE7XJ1CG84TBKH5V9XKBVGF5"),
+		URLMustParse("http://example.org/users/Some_User"),
+		TimeMustParse("2023-11-02T12:46:25+02:00"),
+		remoteAccount2Status1Updated,
+	)
+	updateSig, updateDigest, updateDate := GetSignatureForActivity(
+		update,
+		accounts["remote_account_2"].PublicKeyURI,
+		accounts["remote_account_2"].PrivateKey,
+		URLMustParse(accounts["local_account_1"].InboxURI),
+	)
+
 	return map[string]ActivityWithSignature{
 		"dm_for_zork": {
 			Activity:        createDmForZork,
@@ -3556,6 +3599,12 @@ func NewTestActivities(accounts map[string]*gtsmodel.Account) map[string]Activit
 			SignatureHeader: deleteForRemoteAccount3Sig,
 			DigestHeader:    deleteForRemoteAccount3Digest,
 			DateHeader:      deleteForRemoteAccount3Date,
+		},
+		"remote_account_2_status_1_update": {
+			Activity:        update,
+			SignatureHeader: updateSig,
+			DigestHeader:    updateDigest,
+			DateHeader:      updateDate,
 		},
 	}
 }
@@ -5178,6 +5227,27 @@ func WrapAPNoteInCreate(createID *url.URL, createActor *url.URL, createPublished
 	}
 
 	return create
+}
+
+func WrapAPNoteInUpdate(
+	updateID *url.URL,
+	updateTarget *url.URL,
+	updateActor *url.URL,
+	updatePublished time.Time,
+	updateNote vocab.ActivityStreamsNote,
+) vocab.ActivityStreamsUpdate {
+	update := streams.NewActivityStreamsUpdate()
+
+	ap.SetJSONLDId(update, updateID)
+	ap.AppendTargetIRIs(update, updateTarget)
+	ap.AppendActorIRIs(update, updateActor)
+	ap.SetPublished(update, updatePublished)
+
+	objectProp := streams.NewActivityStreamsObjectProperty()
+	objectProp.AppendActivityStreamsNote(updateNote)
+	update.SetActivityStreamsObject(objectProp)
+
+	return update
 }
 
 func newAPAnnounce(announceID *url.URL, announceActor *url.URL, announcePublished time.Time, announceTo *url.URL, announceNote vocab.ActivityStreamsNote) vocab.ActivityStreamsAnnounce {
