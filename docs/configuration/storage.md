@@ -100,6 +100,19 @@ storage-s3-secret-key: ""
 # Examples: ["gts","cool-instance"]
 # Default: ""
 storage-s3-bucket: ""
+
+# String. Bucket lookup type.
+#
+# If you know what kind of bucket lookup type you need you can specify it here.
+#
+# Many providers are no longer offering path-style bucket access and only subdomain-style. Then,
+# you will need to specify "dns" here instead of the default "auto".
+#
+# If your provider only supports path-style bucket access, specify "path".
+#
+# Examples: ["path", "dns", "auto"]
+# Default: "auto"
+storage-s3-bucket-lookup: "auto"
 ```
 
 ## AWS S3 Configuration

@@ -112,15 +112,16 @@ type Configuration struct {
 	MediaCleanupEvery        time.Duration `name:"media-cleanup-every" usage:"Period to elapse between cleanups, starting from media-cleanup-at."`
 	MediaFfmpegPoolSize      int           `name:"media-ffmpeg-pool-size" usage:"Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS."`
 
-	StorageBackend       string `name:"storage-backend" usage:"Storage backend to use for media attachments"`
-	StorageLocalBasePath string `name:"storage-local-base-path" usage:"Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir."`
-	StorageS3Endpoint    string `name:"storage-s3-endpoint" usage:"S3 Endpoint URL (e.g 'minio.example.org:9000')"`
-	StorageS3AccessKey   string `name:"storage-s3-access-key" usage:"S3 Access Key"`
-	StorageS3SecretKey   string `name:"storage-s3-secret-key" usage:"S3 Secret Key"`
-	StorageS3UseSSL      bool   `name:"storage-s3-use-ssl" usage:"Use SSL for S3 connections. Only set this to 'false' when testing locally"`
-	StorageS3BucketName  string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
-	StorageS3Proxy       bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
-	StorageS3RedirectURL string `name:"storage-s3-redirect-url" usage:"Custom URL to use for redirecting S3 media links. If set, this will be used instead of the S3 bucket URL."`
+	StorageBackend        string `name:"storage-backend" usage:"Storage backend to use for media attachments"`
+	StorageLocalBasePath  string `name:"storage-local-base-path" usage:"Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir."`
+	StorageS3Endpoint     string `name:"storage-s3-endpoint" usage:"S3 Endpoint URL (e.g 'minio.example.org:9000')"`
+	StorageS3AccessKey    string `name:"storage-s3-access-key" usage:"S3 Access Key"`
+	StorageS3SecretKey    string `name:"storage-s3-secret-key" usage:"S3 Secret Key"`
+	StorageS3UseSSL       bool   `name:"storage-s3-use-ssl" usage:"Use SSL for S3 connections. Only set this to 'false' when testing locally"`
+	StorageS3BucketName   string `name:"storage-s3-bucket" usage:"Place blobs in this bucket"`
+	StorageS3Proxy        bool   `name:"storage-s3-proxy" usage:"Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL"`
+	StorageS3RedirectURL  string `name:"storage-s3-redirect-url" usage:"Custom URL to use for redirecting S3 media links. If set, this will be used instead of the S3 bucket URL."`
+	StorageS3BucketLookup string `name:"storage-s3-bucket-lookup" usage:"S3 bucket lookup type to use. Can be 'auto', 'dns' or 'path'. Defaults to 'auto'."`
 
 	StatusesMaxChars           int `name:"statuses-max-chars" usage:"Max permitted characters for posted statuses, including content warning"`
 	StatusesPollMaxOptions     int `name:"statuses-poll-max-options" usage:"Max amount of options permitted on a poll"`

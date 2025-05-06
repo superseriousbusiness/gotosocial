@@ -185,6 +185,7 @@ EXPECT=$(cat << "EOF"
     "storage-local-base-path": "/root/store",
     "storage-s3-access-key": "minio",
     "storage-s3-bucket": "gts",
+    "storage-s3-bucket-lookup": "auto",
     "storage-s3-endpoint": "localhost:9000",
     "storage-s3-proxy": true,
     "storage-s3-redirect-url": "",
@@ -270,6 +271,7 @@ GTS_STORAGE_S3_ACCESS_KEY='minio' \
 GTS_STORAGE_S3_SECRET_KEY='miniostorage' \
 GTS_STORAGE_S3_ENDPOINT='localhost:9000' \
 GTS_STORAGE_S3_USE_SSL='false' \
+GTS_STORAGE_S3_BUCKET_LOOKUP='auto' \
 GTS_STORAGE_S3_PROXY='true' \
 GTS_STORAGE_S3_REDIRECT_URL='' \
 GTS_STORAGE_S3_BUCKET='gts' \
