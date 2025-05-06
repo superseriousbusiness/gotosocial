@@ -134,7 +134,7 @@ GoToSocial lets you choose who can reply to your posts, via [interaction policie
 
 ### Local-only posting
 
-Sometimes you only want to talk to people you share an instance with. GoToSocial supports this via local-only posting, which ensures that your post stays on your instance only. (Local-only posting is currently dependent on client support.)
+Sometimes you only want to talk to people you share an instance with. GoToSocial supports this via local-only posting, which ensures that your post stays on your instance only, even if it gets boosted. They also do not show up in the web interface, and are not accessible publicly via URL. (Local-only posting is currently dependent on client support.)
 
 ### RSS feed
 
