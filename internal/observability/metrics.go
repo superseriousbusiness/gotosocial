@@ -29,6 +29,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/technologize/otel-go-contrib/otelginmetrics"
 	"go.opentelemetry.io/contrib/exporters/autoexport"
+	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/metric"
 	sdk "go.opentelemetry.io/otel/sdk/metric"
@@ -58,6 +59,12 @@ func InitializeMetrics(ctx context.Context, db db.DB) error {
 	)
 
 	otel.SetMeterProvider(meterProvider)
+
+	if err := runtime.Start(
+		runtime.WithMeterProvider(meterProvider),
+	); err != nil {
+		return err
+	}
 
 	meter := meterProvider.Meter(serviceName)
 
