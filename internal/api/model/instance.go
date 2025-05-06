@@ -120,6 +120,17 @@ type InstanceConfigurationMediaAttachments struct {
 	//
 	// example: 16777216
 	VideoMatrixLimit int `json:"video_matrix_limit"`
+	// The maximum size of a description, in characters.
+	// Omitted for /api/v1/instance response.
+	//
+	// example: 5000
+	DescriptionLimit int `json:"description_limit,omitempty"`
+	// The minimum size required for a description, in characters.
+	// Omitted if zero/not set.
+	// Omitted for /api/v1/instance response.
+	//
+	// example: 200
+	DescriptionMinimum int `json:"description_minimum,omitempty"`
 }
 
 // InstanceConfigurationPolls models instance poll config parameters.

@@ -2501,7 +2501,8 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
       "image_matrix_limit": 2147483647,
       "video_size_limit": 41943040,
       "video_frame_rate_limit": 2147483647,
-      "video_matrix_limit": 2147483647
+      "video_matrix_limit": 2147483647,
+      "description_limit": 500
     },
     "polls": {
       "max_options": 6,

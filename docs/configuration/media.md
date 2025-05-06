@@ -50,9 +50,9 @@ media-remote-max-size: 40MiB
 media-description-min-chars: 0
 
 # Int. Maximum amount of characters permitted in an image or video description.
-# Examples: [1000, 1500, 3000]
-# Default: 1500
-media-description-max-chars: 1500
+# Examples: [1000, 5000, 10000]
+# Default: 5000
+media-description-max-chars: 5000
 
 # Size. Max size in bytes of emojis uploaded to this instance via the admin API.
 #
