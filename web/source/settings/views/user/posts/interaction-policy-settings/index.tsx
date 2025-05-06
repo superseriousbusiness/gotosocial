@@ -17,7 +17,7 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-import React, { useCallback, useMemo } from "react";
+import React, { forwardRef, useCallback, useMemo, useRef } from "react";
 import {
 	useDefaultInteractionPoliciesQuery,
 	useResetDefaultInteractionPoliciesMutation,
@@ -191,57 +191,109 @@ function InteractionPoliciesForm({ defaultPolicies }: InteractionPoliciesFormPro
 
 // A tablist of tab buttons, one for each visibility.
 function PolicyPanelsTablist({ selectedVis }: { selectedVis: TextFormInputHook}) {
+	const publicRef = useRef<HTMLButtonElement>(null);
+	const unlistedRef = useRef<HTMLButtonElement>(null);
+	const privateRef = useRef<HTMLButtonElement>(null);
+	
 	return (
 		<div className="tab-buttons" role="tablist">
 			<Tab
-				thisVisibility="public"
 				label="Public"
 				selectedVis={selectedVis}
+				prevVis="private"
+				thisVis="public"
+				nextVis="unlisted"
+				prevRef={privateRef}
+				thisRef={publicRef}
+				nextRef={unlistedRef}
 			/>
 			<Tab
-				thisVisibility="unlisted"
 				label="Unlisted"
 				selectedVis={selectedVis}
+				prevVis="public"
+				thisVis="unlisted"
+				nextVis="private"
+				prevRef={publicRef}
+				thisRef={unlistedRef}
+				nextRef={privateRef}
 			/>
 			<Tab
-				thisVisibility="private"
 				label="Followers-only"
 				selectedVis={selectedVis}
+				prevVis="unlisted"
+				thisVis="private"
+				nextVis="public"
+				prevRef={unlistedRef}
+				thisRef={privateRef}
+				nextRef={publicRef}
 			/>
 		</div>
 	);
 }
 
 interface TabProps {
-	thisVisibility: string;
-	label: string,
-	selectedVis: TextFormInputHook
+	label: string;
+	selectedVis: TextFormInputHook;
+	prevVis: string;
+	thisVis: string;
+	nextVis: string;
+	prevRef: React.RefObject<HTMLButtonElement>;
+	thisRef: React.RefObject<HTMLButtonElement>;
+	nextRef: React.RefObject<HTMLButtonElement>;
 }
 
 // One tab in a tablist, corresponding to the given thisVisibility.
-function Tab({ thisVisibility, label, selectedVis }: TabProps) {
-	const selected = useMemo(() => {
-		return selectedVis.value === thisVisibility;
-	}, [selectedVis, thisVisibility]);
+const Tab = forwardRef(
+	function Tab({
+		label,
+		selectedVis,
+		prevVis,
+		thisVis,
+		nextVis,
+		prevRef,
+		thisRef,
+		nextRef,
+	}: TabProps) {
+		const selected = useMemo(() => {
+			return selectedVis.value === thisVis;
+		}, [selectedVis, thisVis]);
 
-	return (
-		<button
-			id={`tab-${thisVisibility}`}
-			title={label}
-			role="tab"
-			className={`tab-button ${selected && "active"}`}
-			onClick={(e) => {
-				e.preventDefault();
-				selectedVis.setter(thisVisibility);
-			}}
-			aria-selected={selected}
-			aria-controls={`panel-${thisVisibility}`}
-			tabIndex={selected ? 0 : -1}
-		>
-			{label}
-		</button>
-	);
-}
+		return (
+			<button
+				id={`tab-${thisVis}`}
+				title={label}
+				role="tab"
+				ref={thisRef}
+				className={`tab-button ${selected && "active"}`}
+				onClick={(e) => {
+					// Allow tab to be clicked.
+					e.preventDefault();
+					selectedVis.setter(thisVis);
+				}}
+				onKeyDown={(e) => {
+					// Allow cycling through
+					// tabs with arrow keys.
+					if (e.key === "ArrowLeft") {
+						// Select and set
+						// focus on previous tab.
+						selectedVis.setter(prevVis);
+						prevRef.current?.focus();
+					} else if (e.key === "ArrowRight") {
+						// Select and set
+						// focus on next tab.
+						selectedVis.setter(nextVis);
+						nextRef.current?.focus();
+					}
+				}}
+				aria-selected={selected}
+				aria-controls={`panel-${thisVis}`}
+				tabIndex={selected ? 0 : -1}
+			>
+				{label}
+			</button>
+		);
+	}
+);
 
 interface PolicyPanelProps {
 	policyForm: PolicyForm;

@@ -493,9 +493,8 @@ section.with-form {
 			gap: 0.4rem;
 
 			& > input {
-				height: 100%;
-				width: 5%;
-				min-width: 1.2rem;
+				height: 1rem;
+				width: 1rem;
 				align-self: center;
 			}
 		}
