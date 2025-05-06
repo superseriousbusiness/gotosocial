@@ -1781,6 +1781,31 @@ func GetStorageS3RedirectURL() string { return global.GetStorageS3RedirectURL() 
 // SetStorageS3RedirectURL safely sets the value for global configuration 'StorageS3RedirectURL' field
 func SetStorageS3RedirectURL(v string) { global.SetStorageS3RedirectURL(v) }
 
+// GetStorageS3BucketLookup safely fetches the Configuration value for state's 'StorageS3BucketLookup' field
+func (st *ConfigState) GetStorageS3BucketLookup() (v string) {
+	st.mutex.RLock()
+	v = st.config.StorageS3BucketLookup
+	st.mutex.RUnlock()
+	return
+}
+
+// SetStorageS3BucketLookup safely sets the Configuration value for state's 'StorageS3BucketLookup' field
+func (st *ConfigState) SetStorageS3BucketLookup(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3BucketLookup = v
+	st.reloadToViper()
+}
+
+// StorageS3BucketLookupFlag returns the flag name for the 'StorageS3BucketLookup' field
+func StorageS3BucketLookupFlag() string { return "storage-s3-bucket-lookup" }
+
+// GetStorageS3BucketLookup safely fetches the value for global configuration 'StorageS3BucketLookup' field
+func GetStorageS3BucketLookup() string { return global.GetStorageS3BucketLookup() }
+
+// SetStorageS3BucketLookup safely sets the value for global configuration 'StorageS3BucketLookup' field
+func SetStorageS3BucketLookup(v string) { global.SetStorageS3BucketLookup(v) }
+
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
 	st.mutex.RLock()

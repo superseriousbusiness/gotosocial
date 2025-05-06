@@ -87,11 +87,12 @@ var Defaults = Configuration{
 	MediaCleanupEvery:        24 * time.Hour, // 1/day.
 	MediaFfmpegPoolSize:      1,
 
-	StorageBackend:       "local",
-	StorageLocalBasePath: "/gotosocial/storage",
-	StorageS3UseSSL:      true,
-	StorageS3Proxy:       false,
-	StorageS3RedirectURL: "",
+	StorageBackend:        "local",
+	StorageLocalBasePath:  "/gotosocial/storage",
+	StorageS3UseSSL:       true,
+	StorageS3Proxy:        false,
+	StorageS3RedirectURL:  "",
+	StorageS3BucketLookup: "auto",
 
 	StatusesMaxChars:           5000,
 	StatusesPollMaxOptions:     6,
