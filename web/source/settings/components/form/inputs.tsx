@@ -122,10 +122,6 @@ export function FileInput({ label, field, ...props }: FileInputProps) {
 	const ref = useRef<HTMLInputElement>(null);
 	const { onChange, infoComponent } = field;
 	const id = nanoid();
-	const onClick = (e) => {
-		e.preventDefault();
-		ref.current?.click();
-	};
 
 	return (
 		<div className="form-field file">
@@ -133,11 +129,9 @@ export function FileInput({ label, field, ...props }: FileInputProps) {
 				className="label-wrapper"
 				htmlFor={id}
 				tabIndex={0}
-				onClick={onClick}
 				onKeyDown={(e) => {
 					if (e.key === "Enter") {
-						e.preventDefault();
-						onClick(e);
+						ref.current?.click();
 					}
 				}}
 				role="button"
