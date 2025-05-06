@@ -161,7 +161,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 
 			// Add status to home timeline for owner of
 			// this follow (origin account), if applicable.
-			if homeTimelined := s.timelineStatus(ctx,
+			if homeTimelined = s.timelineStatus(ctx,
 				s.State.Caches.Timelines.Home.MustGet(follow.AccountID),
 				follow.Account,
 				status,
