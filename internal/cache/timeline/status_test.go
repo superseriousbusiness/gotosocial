@@ -18,11 +18,16 @@
 package timeline
 
 import (
+	"context"
+	"fmt"
 	"slices"
 	"testing"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"codeberg.org/gruf/go-structr"
 	"github.com/stretchr/testify/assert"
 )
@@ -58,6 +63,46 @@ var testStatusMeta = []*StatusMeta{
 		BoostOfID:        "06B1A5KQY3K839Z6S5HHAJKSWW",
 		BoostOfAccountID: "06B1A6708SPJC3X3ZG3SGG8BN8",
 	},
+}
+
+func TestStatusTimelineLoadLimit(t *testing.T) {
+	var tt StatusTimeline
+	tt.Init(1000)
+
+	// Prepare new context for the duration of this test.
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	// Clone the input test status data.
+	data := slices.Clone(testStatusMeta)
+
+	// Insert test data into timeline.
+	_ = tt.cache.Insert(data...)
+
+	// Manually mark timeline as 'preloaded'.
+	tt.preloader.CheckPreload(tt.preloader.Done)
+
+	// Craft a new page for selection,
+	// setting placeholder min / max values
+	// but in particular setting a limit
+	// HIGHER than currently cached values.
+	page := new(paging.Page)
+	page.Min = paging.MinID(id.Lowest)
+	page.Max = paging.MaxID(id.Highest)
+	page.Limit = len(data) + 10
+
+	// Load crafted page from the cache. This
+	// SHOULD load all cached entries, then
+	// generate an extra 10 statuses up to limit.
+	apiStatuses, _, _, err := tt.Load(ctx,
+		page,
+		loadGeneratedStatusPage,
+		loadStatusIDsFrom(data),
+		nil, // no filtering
+		func(status *gtsmodel.Status) (*apimodel.Status, error) { return new(apimodel.Status), nil },
+	)
+	assert.NoError(t, err)
+	assert.Len(t, apiStatuses, page.Limit)
 }
 
 func TestStatusTimelineUnprepare(t *testing.T) {
@@ -299,6 +344,44 @@ func TestStatusTimelineTrim(t *testing.T) {
 	before := tt.cache.Len()
 	tt.Trim()
 	assert.Equal(t, before, tt.cache.Len())
+}
+
+// loadStatusIDsFrom imitates loading of statuses of given IDs from the database, instead selecting
+// statuses with appropriate IDs from the given slice of status meta, converting them to statuses.
+func loadStatusIDsFrom(data []*StatusMeta) func(ids []string) ([]*gtsmodel.Status, error) {
+	return func(ids []string) ([]*gtsmodel.Status, error) {
+		var statuses []*gtsmodel.Status
+		for _, id := range ids {
+			i := slices.IndexFunc(data, func(s *StatusMeta) bool {
+				return s.ID == id
+			})
+			if i < 0 || i >= len(data) {
+				panic(fmt.Sprintf("could not find %s in %v", id, log.VarDump(data)))
+			}
+			statuses = append(statuses, &gtsmodel.Status{
+				ID:               data[i].ID,
+				AccountID:        data[i].AccountID,
+				BoostOfID:        data[i].BoostOfID,
+				BoostOfAccountID: data[i].BoostOfAccountID,
+			})
+		}
+		return statuses, nil
+	}
+}
+
+// loadGeneratedStatusPage imitates loading of a given page of statuses,
+// simply generating new statuses until the given page's limit is reached.
+func loadGeneratedStatusPage(page *paging.Page) ([]*gtsmodel.Status, error) {
+	var statuses []*gtsmodel.Status
+	for range page.Limit {
+		statuses = append(statuses, &gtsmodel.Status{
+			ID:               id.NewULID(),
+			AccountID:        id.NewULID(),
+			BoostOfID:        id.NewULID(),
+			BoostOfAccountID: id.NewULID(),
+		})
+	}
+	return statuses, nil
 }
 
 // containsStatusID returns whether timeline contains a status with ID.

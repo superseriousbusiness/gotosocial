@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strings"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
@@ -35,19 +36,21 @@ import (
 // Logger returns a gin middleware which provides request logging and panic recovery.
 func Logger(logClientIP bool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Initialize the logging fields
-		fields := make(kv.Fields, 5, 7)
-
 		// Determine pre-handler time
 		before := time.Now()
 
-		// defer so that we log *after the request has completed*
+		// defer so that we log *after
+		// the request has completed*
 		defer func() {
+
+			// Get response status code.
 			code := c.Writer.Status()
-			path := c.Request.URL.Path
+
+			// Get request context.
+			ctx := c.Request.Context()
 
 			if r := recover(); r != nil {
-				if c.Writer.Status() == 0 {
+				if code == 0 {
 					// No response was written, send a generic Internal Error
 					c.Writer.WriteHeader(http.StatusInternalServerError)
 				}
@@ -65,37 +68,51 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 					WithField("stacktrace", callers).Error(err)
 			}
 
-			// NOTE:
-			// It is very important here that we are ONLY logging
-			// the request path, and none of the query parameters.
-			// Query parameters can contain sensitive information
-			// and could lead to storing plaintext API keys in logs
+			// Initialize the logging fields
+			fields := make(kv.Fields, 5, 8)
 
 			// Set request logging fields
 			fields[0] = kv.Field{"latency", time.Since(before)}
 			fields[1] = kv.Field{"userAgent", c.Request.UserAgent()}
 			fields[2] = kv.Field{"method", c.Request.Method}
 			fields[3] = kv.Field{"statusCode", code}
-			fields[4] = kv.Field{"path", path}
 
-			// Set optional request logging fields.
+			// If the request contains sensitive query
+			// data only log path, else log entire URI.
+			if sensitiveQuery(c.Request.URL.RawQuery) {
+				path := c.Request.URL.Path
+				fields[4] = kv.Field{"uri", path}
+			} else {
+				uri := c.Request.RequestURI
+				fields[4] = kv.Field{"uri", uri}
+			}
+
 			if logClientIP {
+				// Append IP only if configured to.
 				fields = append(fields, kv.Field{
 					"clientIP", c.ClientIP(),
 				})
 			}
 
-			ctx := c.Request.Context()
 			if pubKeyID := gtscontext.HTTPSignaturePubKeyID(ctx); pubKeyID != nil {
+				// Append public key ID if attached.
 				fields = append(fields, kv.Field{
 					"pubKeyID", pubKeyID.String(),
 				})
 			}
 
-			// Create log entry with fields
-			l := log.New()
-			l = l.WithContext(ctx)
-			l = l.WithFields(fields...)
+			if len(c.Errors) > 0 {
+				// Always attach any found errors.
+				fields = append(fields, kv.Field{
+					"errors", c.Errors,
+				})
+			}
+
+			// Create entry
+			// with fields.
+			l := log.New().
+				WithContext(ctx).
+				WithFields(fields...)
 
 			// Default is info
 			lvl := log.INFO
@@ -103,11 +120,6 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			if code >= 500 {
 				// Actual error.
 				lvl = log.ERROR
-			}
-
-			if len(c.Errors) > 0 {
-				// Always attach any found errors.
-				l = l.WithField("errors", c.Errors)
 			}
 
 			// Get appropriate text for this code.
@@ -125,13 +137,20 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			// Generate a nicer looking bytecount
 			size := bytesize.Size(c.Writer.Size()) // #nosec G115 -- Just logging
 
-			// Finally, write log entry with status text + body size.
+			// Write log entry with status text + body size.
 			l.Logf(lvl, "%s: wrote %s", statusText, size)
 		}()
 
-		// Process request
+		// Process
+		// request.
 		c.Next()
 	}
+}
+
+// sensitiveQuery checks whether given query string
+// contains sensitive data that shouldn't be logged.
+func sensitiveQuery(query string) bool {
+	return strings.Contains(query, "token")
 }
 
 // gatherFrames gathers runtime frames from a frame iterator.

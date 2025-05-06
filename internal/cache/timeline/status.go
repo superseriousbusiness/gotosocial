@@ -336,6 +336,14 @@ func (t *StatusTimeline) Load(
 	limit := page.Limit
 	order := page.Order()
 	dir := toDirection(order)
+	if limit <= 0 {
+
+		// a page limit MUST be set!
+		// this shouldn't be possible
+		// but we check anyway to stop
+		// chance of limitless db calls!
+		panic("invalid page limit")
+	}
 
 	// Use a copy of current page so
 	// we can repeatedly update it.
@@ -344,11 +352,11 @@ func (t *StatusTimeline) Load(
 	nextPg.Min.Value = lo
 	nextPg.Max.Value = hi
 
-	// Interstitial meta objects.
-	var metas []*StatusMeta
+	// Preallocate slice of interstitial models.
+	metas := make([]*StatusMeta, 0, limit)
 
-	// Returned frontend API statuses.
-	var apiStatuses []*apimodel.Status
+	// Preallocate slice of required status API models.
+	apiStatuses := make([]*apimodel.Status, 0, limit)
 
 	// TODO: we can remove this nil
 	// check when we've updated all
@@ -362,13 +370,17 @@ func (t *StatusTimeline) Load(
 			return nil, "", "", err
 		}
 
+		// Load a little more than limit to
+		// reduce chance of db calls below.
+		limitPtr := util.Ptr(limit + 10)
+
 		// First we attempt to load status
 		// metadata entries from the timeline
 		// cache, up to given limit.
 		metas = t.cache.Select(
 			util.PtrIf(lo),
 			util.PtrIf(hi),
-			util.PtrIf(limit),
+			limitPtr,
 			dir,
 		)
 
@@ -384,9 +396,6 @@ func (t *StatusTimeline) Load(
 			lo = metas[len(metas)-1].ID
 			hi = metas[0].ID
 
-			// Allocate slice of expected required API models.
-			apiStatuses = make([]*apimodel.Status, 0, len(metas))
-
 			// Prepare frontend API models for
 			// the cached statuses. For now this
 			// also does its own extra filtering.
@@ -399,10 +408,10 @@ func (t *StatusTimeline) Load(
 		}
 	}
 
-	// If no cached timeline statuses
-	// were found for page, we need to
-	// call through to the database.
-	if len(apiStatuses) == 0 {
+	// If not enough cached timeline
+	// statuses were found for page,
+	// we need to call to database.
+	if len(apiStatuses) < limit {
 
 		// Pass through to main timeline db load function.
 		apiStatuses, lo, hi, err = loadStatusTimeline(ctx,
@@ -460,24 +469,30 @@ func loadStatusTimeline(
 	// vals of loaded statuses.
 	var lo, hi string
 
-	// Extract paging params.
+	// Extract paging params, in particular
+	// limit is used separate to nextPg to
+	// determine the *expected* return limit,
+	// not just what we use in db queries.
+	returnLimit := nextPg.Limit
 	order := nextPg.Order()
-	limit := nextPg.Limit
-
-	// Load a little more than
-	// limit to reduce db calls.
-	nextPg.Limit += 10
-
-	// Ensure we have a slice of meta objects to
-	// use in later preparation of the API models.
-	metas = xslices.GrowJust(metas[:0], nextPg.Limit)
-
-	// Ensure we have a slice of required frontend API models.
-	apiStatuses = xslices.GrowJust(apiStatuses[:0], nextPg.Limit)
 
 	// Perform maximum of 5 load
 	// attempts fetching statuses.
 	for i := 0; i < 5; i++ {
+
+		// Update page limit to the *remaining*
+		// limit of total we're expected to return.
+		nextPg.Limit = returnLimit - len(apiStatuses)
+		if nextPg.Limit <= 0 {
+
+			// We reached the end! Set lo paging value.
+			lo = apiStatuses[len(apiStatuses)-1].ID
+			break
+		}
+
+		// But load a bit more than
+		// limit to reduce db calls.
+		nextPg.Limit += 10
 
 		// Load next timeline statuses.
 		statuses, err := loadPage(nextPg)
@@ -519,17 +534,8 @@ func loadStatusTimeline(
 			metas,
 			prepareAPI,
 			apiStatuses,
-			limit,
+			returnLimit,
 		)
-
-		// If we have anything, return
-		// here. Even if below limit.
-		if len(apiStatuses) > 0 {
-
-			// Set returned lo status paging value.
-			lo = apiStatuses[len(apiStatuses)-1].ID
-			break
-		}
 	}
 
 	return apiStatuses, lo, hi, nil

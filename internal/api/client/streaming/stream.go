@@ -170,7 +170,6 @@ func (m *Module) StreamGETHandler(c *gin.Context) {
 
 	// Prefer query token else use header token.
 	token := cmp.Or(queryToken, headerToken)
-
 	if token != "" {
 
 		// Token was provided, use it to authorize stream.
