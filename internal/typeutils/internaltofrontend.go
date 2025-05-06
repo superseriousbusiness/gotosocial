@@ -1966,6 +1966,8 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
 	instance.Configuration.Statuses.SupportedMimeTypes = instanceStatusesSupportedMimeTypes
 	instance.Configuration.MediaAttachments.SupportedMimeTypes = media.SupportedMIMETypes
+	instance.Configuration.MediaAttachments.DescriptionLimit = config.GetMediaDescriptionMaxChars()
+	instance.Configuration.MediaAttachments.DescriptionMinimum = config.GetMediaDescriptionMinChars()
 
 	// NOTE: we use the local max sizes here
 	// as it hints to apps like Tusky for image

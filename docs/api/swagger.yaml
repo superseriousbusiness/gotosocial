@@ -1593,6 +1593,23 @@ definitions:
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     instanceConfigurationMediaAttachments:
         properties:
+            description_limit:
+                description: |-
+                    The maximum size of a description, in characters.
+                    Omitted for /api/v1/instance response.
+                example: 5000
+                format: int64
+                type: integer
+                x-go-name: DescriptionLimit
+            description_minimum:
+                description: |-
+                    The minimum size required for a description, in characters.
+                    Omitted if zero/not set.
+                    Omitted for /api/v1/instance response.
+                example: 200
+                format: int64
+                type: integer
+                x-go-name: DescriptionMinimum
             image_matrix_limit:
                 description: |-
                     Max allowed image size in pixels as height*width.
