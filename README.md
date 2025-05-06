@@ -262,7 +262,7 @@ On top of this API, web developers are encouraged to build any front-end impleme
 
 Don't like GtS but still want to use the fediverse? Like GtS but prefer not to use beta software? There are lots of alternatives that might suit you better! Here are some that we know work well (alphabetical order):
 
-- [Akkoma]([https://](https://akkoma.social/)): Full-featured ActivityPub microblogging with emoji reacts and quote posts (Elixir).
+- [Akkoma](https://akkoma.social/): Full-featured ActivityPub microblogging with emoji reacts and quote posts (Elixir).
 - [Honk](https://humungus.tedunangst.com/r/honk/m/activitypub.7): Minimalist, opinionated microblogging with "No likes, no faves, no polls, no stars, no claps, no counts." (Go).
 - [Iceshrimp.net](https://iceshrimp.dev/iceshrimp/Iceshrimp.NET): rewrite of Iceshrimp from the ground up (.Net).
 - [Mastodon](https://joinmastodon.org/): Actively developed, widely recognized, scaleable ActivityPub microblogging instance (Ruby).
@@ -336,7 +336,7 @@ While we don't support running GtS on OpenBSD, you may have some success buildin
 
 We package our stable releases for both binary builds and Docker containers, so that you don't have to build from source yourself.
 
-The Docker image `superseriousbusiness/gotosocial:latest` will always correspond to the latest stable release. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull superseriousbusiness/gotosocial:latest` manually just before use.
+The Docker image `docker.io/superseriousbusiness/gotosocial:latest` will always correspond to the latest stable release. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull docker.io/superseriousbusiness/gotosocial:latest` manually just before use.
 
 ### Snapshot Releases
 
@@ -346,7 +346,7 @@ Please be warned that you do so at your own risk! We try to keep main working pr
 
 #### Docker
 
-To run from main using Docker, use the `snapshot` Docker tag. The Docker image `superseriousbusiness/gotosocial:snapshot` will always correspond to the latest commit on main. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull superseriousbusiness/gotosocial:snapshot` manually just before use.
+To run from main using Docker, use the `snapshot` Docker tag. The Docker image `docker.io/superseriousbusiness/gotosocial:snapshot` will always correspond to the latest commit on main that involves changes to Go code or web assets/source. Since this tag is overwritten frequently, you may want to use Docker CLI flag `--pull always` to ensure that you always have the most up-to-date image every time you run using this tag. Alternatively, run `docker pull docker.io/superseriousbusiness/gotosocial:snapshot` manually just before use.
 
 #### Binary release .tar.gz
 
