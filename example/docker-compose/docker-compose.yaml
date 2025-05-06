@@ -1,6 +1,6 @@
 services:
   gotosocial:
-    image: superseriousbusiness/gotosocial:latest
+    image: docker.io/superseriousbusiness/gotosocial:latest
     container_name: gotosocial
     user: 1000:1000
     networks:

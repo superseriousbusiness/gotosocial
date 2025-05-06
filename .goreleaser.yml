@@ -263,8 +263,8 @@ release:
     #### Binary/tar
     
     1. Stop GoToSocial.
-    2. **Back up your database!** If you're running on SQLite, this is as simple as copying your `sqlite.db` file, eg., `cp sqlite.db sqlite.db.backup`.
-    3. Download and untar the new release, including the web assets and html templates.
+    2. **Back up your database!** If you're running on SQLite, this is as simple as copying your `sqlite.db` file, eg., `cp sqlite.db sqlite.db.backup`. On Postgres you can do this with [pg_dump](https://www.postgresql.org/docs/current/backup-dump.html).
+    3. Download and untar the new release, **including the web assets and html templates**, not just the binary.
     4. Edit your config.yaml file if necessary (see below).
     5. Start GoToSocial.
     6. Wait patiently for any migrations to run, **do not interrupt migrations or you could leave your db in a broken state and will have to restore from backup**!
@@ -273,8 +273,8 @@ release:
     #### Docker
     
     1. Stop GoToSocial.
-    2. **Back up your database!** If you're running on SQLite, this is as simple as copying your `sqlite.db` file, eg., `cp sqlite.db sqlite.db.backup`.
-    3. Pull the new docker container (`superseriousbusiness/gotosocial:{{ .Version }}` or `superseriousbusiness/gotosocial:latest`)
+    2. **Back up your database!** If you're running on SQLite, this is as simple as copying your `sqlite.db` file, eg., `cp sqlite.db sqlite.db.backup`. On Postgres you can do this with [pg_dump](https://www.postgresql.org/docs/current/backup-dump.html).
+    3. Pull the new docker container with `docker pull docker.io/superseriousbusiness/gotosocial:{{ .Version }}` or `docker pull docker.io/superseriousbusiness/gotosocial:latest` if this is a stable release and not a release candidate.
     4. Edit your config.yaml file or environment variables if necessary (see below).
     5. Start GoToSocial.
     6. Wait patiently for any migrations to run, **do not interrupt migrations or you could leave your db in a broken state and will have to restore from backup**!
@@ -307,14 +307,14 @@ release:
     
     GoToSocial releases binary builds for 64-bit Linux, FreeBSD, and NetBSD operating systems. We also release Docker builds for 64-bit Linux.
 
-    | OS      | Architecture            | Support level                      | Binary archive                                                                                                                                                       | Docker                                                  |
-    | ------- | ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-    | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                   | `superseriousbusiness/gotosocial:{{ .Version }}`        |
-    | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                   | `superseriousbusiness/gotosocial:{{ .Version }}`        |
-    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [freebsd_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64.tar.gz)               | Not provided                                            |
-    | FreeBSD | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [freebsd_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_arm64.tar.gz)               | Not provided                                            |
-    | NetBSD  | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [netbsd_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_amd64.tar.gz)                 | Not provided                                            |
-    | NetBSD  | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [netbsd_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_arm64.tar.gz)                 | Not provided                                            |
+    | OS      | Architecture            | Support level                      | Binary archive                                                                                                                                                       | Docker                                                     |
+    | ------- | ----------------------- | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+    | Linux   | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [linux_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_amd64.tar.gz)                 | `docker.io/superseriousbusiness/gotosocial:{{ .Version }}` |
+    | Linux   | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [linux_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_linux_arm64.tar.gz)                 | `docker.io/superseriousbusiness/gotosocial:{{ .Version }}` |
+    | FreeBSD | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [freebsd_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_amd64.tar.gz)             | Not provided                                               |
+    | FreeBSD | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [freebsd_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_freebsd_arm64.tar.gz)             | Not provided                                               |
+    | NetBSD  | x86-64/AMD64 (64-bit)   | 🟢 Full                            | [netbsd_amd64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_amd64.tar.gz)               | Not provided                                               |
+    | NetBSD  | Armv8/ARM64 (64-bit)    | 🟢 Full                            | [netbsd_arm64.tar.gz](https://codeberg.org/superseriousbusiness/gotosocial/releases/download/{{ .Tag }}/gotosocial_{{ .Version }}_netbsd_arm64.tar.gz)               | Not provided                                               |
     
     #### `nowasm`
     

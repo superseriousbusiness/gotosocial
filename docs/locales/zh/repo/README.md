@@ -338,7 +338,7 @@ GtS 在像 i386 或 Armv6/v7 这样的 32 位系统上表现不佳，这主要�
 
 我们为二进制构建和 Docker 容器打包稳定版本，这样你就不需要自己从源代码构建。
 
-Docker 镜像 `superseriousbusiness/gotosocial:latest` 始终对应于最新稳定版本。由于此标签经常被覆盖，你可能希望使用 Docker CLI 标志 `--pull always` 确保每次运行此标签时都有最新的镜像，或者也可在使用前手动运行 `docker pull superseriousbusiness/gotosocial:latest`。
+Docker 镜像 `docker.io/superseriousbusiness/gotosocial:latest` 始终对应于最新稳定版本。由于此标签经常被覆盖，你可能希望使用 Docker CLI 标志 `--pull always` 确保每次运行此标签时都有最新的镜像，或者也可在使用前手动运行 `docker pull docker.io/superseriousbusiness/gotosocial:latest`。
 
 ### 快照版本
 
@@ -348,7 +348,7 @@ Docker 镜像 `superseriousbusiness/gotosocial:latest` 始终对应于最新稳�
 
 #### Docker
 
-要使用 Docker 从主分支运行，请使用 `snapshot` Docker 标签。Docker 镜像 `superseriousbusiness/gotosocial:snapshot` 始终对应主分支上的最新提交。由于此标签经常被覆盖，你可能希望使用 Docker CLI 标志 `--pull always` 确保每次运行此标签时都有最新的镜像，或者也可在使用前手动运行 `docker pull superseriousbusiness/gotosocial:snapshot`。
+要使用 Docker 从主分支运行，请使用 `snapshot` Docker 标签。Docker 镜像 `docker.io/superseriousbusiness/gotosocial:snapshot` 始终对应主分支上的最新提交。由于此标签经常被覆盖，你可能希望使用 Docker CLI 标志 `--pull always` 确保每次运行此标签时都有最新的镜像，或者也可在使用前手动运行 `docker pull docker.io/superseriousbusiness/gotosocial:snapshot`。
 
 #### 二进制发布 .tar.gz
 
