@@ -20,16 +20,19 @@
 package observability
 
 import (
+	"context"
+
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 
 	"github.com/gin-gonic/gin"
 	"github.com/uptrace/bun"
 )
 
-func InitializeMetrics(db db.DB) error {
+func InitializeMetrics(ctx context.Context, db db.DB) error {
 	return nil
 }
-func InitializeTracing() error {
+
+func InitializeTracing(ctx context.Context) error {
 	return nil
 }
 
