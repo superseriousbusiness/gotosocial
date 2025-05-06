@@ -270,6 +270,9 @@ codeberg.org/gruf/go-runners
 # codeberg.org/gruf/go-sched v1.2.4
 ## explicit; go 1.19
 codeberg.org/gruf/go-sched
+# codeberg.org/gruf/go-split v1.2.0
+## explicit; go 1.20
+codeberg.org/gruf/go-split
 # codeberg.org/gruf/go-storage v0.2.0
 ## explicit; go 1.22
 codeberg.org/gruf/go-storage

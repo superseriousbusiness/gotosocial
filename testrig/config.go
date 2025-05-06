@@ -161,11 +161,19 @@ func testDefaults() config.Configuration {
 		SyslogProtocol: "udp",
 		SyslogAddress:  "localhost:514",
 
-		AdvancedCookiesSamesite:      "lax",
-		AdvancedRateLimitRequests:    0, // disabled
-		AdvancedThrottlingMultiplier: 0, // disabled
-		AdvancedSenderMultiplier:     0, // 1 sender only, regardless of CPU
-		AdvancedScraperDeterrence:    envBool("GTS_ADVANCED_SCRAPER_DETERRENCE", false),
+		Advanced: config.AdvancedConfig{
+			CookiesSamesite:   "lax",
+			SenderMultiplier:  0, // 1 sender only, regardless of CPU
+			ScraperDeterrence: envBool("GTS_ADVANCED_SCRAPER_DETERRENCE", false),
+
+			RateLimit: config.RateLimitConfig{
+				Requests: 0, // disabled
+			},
+
+			Throttling: config.ThrottlingConfig{
+				Multiplier: 0, // disabled
+			},
+		},
 
 		SoftwareVersion: "0.0.0-testrig",
 

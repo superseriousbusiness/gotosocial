@@ -130,15 +130,23 @@ var Defaults = Configuration{
 	SyslogProtocol: "udp",
 	SyslogAddress:  "localhost:514",
 
-	AdvancedCookiesSamesite:      "lax",
-	AdvancedRateLimitRequests:    300, // 1 per second per 5 minutes
-	AdvancedRateLimitExceptions:  IPPrefixes{},
-	AdvancedThrottlingMultiplier: 8, // 8 open requests per CPU
-	AdvancedThrottlingRetryAfter: time.Second * 30,
-	AdvancedSenderMultiplier:     2, // 2 senders per CPU
-	AdvancedCSPExtraURIs:         []string{},
-	AdvancedHeaderFilterMode:     RequestHeaderFilterModeDisabled,
-	AdvancedScraperDeterrence:    false,
+	Advanced: AdvancedConfig{
+		SenderMultiplier:  2, // 2 senders per CPU
+		CSPExtraURIs:      []string{},
+		HeaderFilterMode:  RequestHeaderFilterModeDisabled,
+		CookiesSamesite:   "lax",
+		ScraperDeterrence: false,
+
+		RateLimit: RateLimitConfig{
+			Requests:   300, // 1 per second per 5 minutes
+			Exceptions: IPPrefixes{},
+		},
+
+		Throttling: ThrottlingConfig{
+			Multiplier: 8, // 8 open requests per CPU
+			RetryAfter: 30 * time.Second,
+		},
+	},
 
 	Cache: CacheConfiguration{
 		// Rough memory target that the total

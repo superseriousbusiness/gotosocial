@@ -1,0 +1,4 @@
+advanced:
+  scraper-deterrence: true
+  rate-limit:
+    requests: 5000

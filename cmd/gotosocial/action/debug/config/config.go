@@ -32,11 +32,8 @@ var Config action.GTSAction = func(ctx context.Context) (err error) {
 
 	// Marshal configuration to a raw JSON map
 	config.Config(func(cfg *config.Configuration) {
-		raw, err = cfg.MarshalMap()
+		raw = cfg.MarshalMap()
 	})
-	if err != nil {
-		return err
-	}
 
 	enc := json.NewEncoder(os.Stdout)
 	enc.SetIndent("", "    ")

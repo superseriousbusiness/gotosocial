@@ -18,6 +18,8 @@
 package language
 
 import (
+	"errors"
+
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
@@ -95,12 +97,34 @@ func (l *Language) UnmarshalText(text []byte) error {
 	if err != nil {
 		return err
 	}
-
 	*l = *lang
 	return nil
 }
 
 type Languages []*Language
+
+func (l *Languages) Set(in string) error {
+	if l == nil {
+		return errors.New("nil receiver")
+	}
+	prefix, err := Parse(in)
+	if err != nil {
+		return err
+	}
+	(*l) = append((*l), prefix)
+	return nil
+}
+
+func (l *Languages) Strings() []string {
+	if l == nil || len(*l) == 0 {
+		return nil
+	}
+	strs := make([]string, len(*l))
+	for i, lang := range *l {
+		strs[i] = lang.TagStr
+	}
+	return strs
+}
 
 func (l Languages) Tags() []language.Tag {
 	tags := make([]language.Tag, len(l))

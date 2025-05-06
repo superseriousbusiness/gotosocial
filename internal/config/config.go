@@ -19,11 +19,11 @@ package config
 
 import (
 	"reflect"
+	"strings"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/language"
 	"codeberg.org/gruf/go-bytesize"
-	"github.com/mitchellh/mapstructure"
 )
 
 // cfgtype is the reflected type information of Configuration{}.
@@ -32,9 +32,15 @@ var cfgtype = reflect.TypeOf(Configuration{})
 // fieldtag will fetch the string value for the given tag name
 // on the given field name in the Configuration{} struct.
 func fieldtag(field, tag string) string {
-	sfield, ok := cfgtype.FieldByName(field)
-	if !ok {
-		panic("unknown struct field")
+	nextType := cfgtype
+	var sfield reflect.StructField
+	for _, field := range strings.Split(field, ".") {
+		var ok bool
+		sfield, ok = nextType.FieldByName(field)
+		if !ok {
+			panic("unknown struct field")
+		}
+		nextType = sfield.Type
 	}
 	return sfield.Tag.Get(tag)
 }
@@ -45,21 +51,22 @@ func fieldtag(field, tag string) string {
 // will need to regenerate the global Getter/Setter helpers by running:
 // `go run ./internal/config/gen/ -out ./internal/config/helpers.gen.go`
 type Configuration struct {
-	LogLevel           string   `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
-	LogTimestampFormat string   `name:"log-timestamp-format" usage:"Format to use for the log timestamp, as supported by Go's time.Layout"`
-	LogDbQueries       bool     `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
-	LogClientIP        bool     `name:"log-client-ip" usage:"Include the client IP in logs"`
-	ApplicationName    string   `name:"application-name" usage:"Name of the application, used in various places internally"`
-	LandingPageUser    string   `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
-	ConfigPath         string   `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
-	Host               string   `name:"host" usage:"Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!"`
-	AccountDomain      string   `name:"account-domain" usage:"Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!"`
-	Protocol           string   `name:"protocol" usage:"Protocol to use for the REST api of the server (only use http if you are debugging or behind a reverse proxy!)"`
-	BindAddress        string   `name:"bind-address" usage:"Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces."`
-	Port               int      `name:"port" usage:"Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine."`
-	TrustedProxies     []string `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
-	SoftwareVersion    string   `name:"software-version" usage:""`
+	LogLevel           string `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
+	LogTimestampFormat string `name:"log-timestamp-format" usage:"Format to use for the log timestamp, as supported by Go's time.Layout"`
+	LogDbQueries       bool   `name:"log-db-queries" usage:"Log database queries verbosely when log-level is trace or debug"`
+	LogClientIP        bool   `name:"log-client-ip" usage:"Include the client IP in logs"`
+	RequestIDHeader    string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
 
+	ConfigPath                 string        `name:"config-path" usage:"Path to a file containing gotosocial configuration. Values set in this file will be overwritten by values set as env vars or arguments"`
+	ApplicationName            string        `name:"application-name" usage:"Name of the application, used in various places internally"`
+	LandingPageUser            string        `name:"landing-page-user" usage:"the user that should be shown on the instance's landing page"`
+	Host                       string        `name:"host" usage:"Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!"`
+	AccountDomain              string        `name:"account-domain" usage:"Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!"`
+	Protocol                   string        `name:"protocol" usage:"Protocol to use for the REST api of the server (only use http if you are debugging or behind a reverse proxy!)"`
+	BindAddress                string        `name:"bind-address" usage:"Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces."`
+	Port                       int           `name:"port" usage:"Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine."`
+	TrustedProxies             []string      `name:"trusted-proxies" usage:"Proxies to trust when parsing x-forwarded headers into real IPs."`
+	SoftwareVersion            string        `name:"software-version" usage:""`
 	DbType                     string        `name:"db-type" usage:"Database type: eg., postgres"`
 	DbAddress                  string        `name:"db-address" usage:"Database ipv4 address, hostname, or filename"`
 	DbPort                     int           `name:"db-port" usage:"Database port"`
@@ -160,15 +167,8 @@ type Configuration struct {
 	SyslogProtocol string `name:"syslog-protocol" usage:"Protocol to use when directing logs to syslog. Leave empty to connect to local syslog."`
 	SyslogAddress  string `name:"syslog-address" usage:"Address:port to send syslog logs to. Leave empty to connect to local syslog."`
 
-	AdvancedCookiesSamesite      string        `name:"advanced-cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
-	AdvancedRateLimitRequests    int           `name:"advanced-rate-limit-requests" usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
-	AdvancedRateLimitExceptions  IPPrefixes    `name:"advanced-rate-limit-exceptions" usage:"Slice of CIDRs to exclude from rate limit restrictions."`
-	AdvancedThrottlingMultiplier int           `name:"advanced-throttling-multiplier" usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
-	AdvancedThrottlingRetryAfter time.Duration `name:"advanced-throttling-retry-after" usage:"Retry-After duration response to send for throttled requests."`
-	AdvancedSenderMultiplier     int           `name:"advanced-sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
-	AdvancedCSPExtraURIs         []string      `name:"advanced-csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
-	AdvancedHeaderFilterMode     string        `name:"advanced-header-filter-mode" usage:"Set incoming request header filtering mode."`
-	AdvancedScraperDeterrence    bool          `name:"advanced-scraper-deterrence" usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
+	// Advanced flags.
+	Advanced AdvancedConfig `name:"advanced"`
 
 	// HTTPClient configuration vars.
 	HTTPClient HTTPClientConfiguration `name:"http-client"`
@@ -177,15 +177,13 @@ type Configuration struct {
 	Cache CacheConfiguration `name:"cache"`
 
 	// TODO: move these elsewhere, these are more ephemeral vs long-running flags like above
-	AdminAccountUsername     string `name:"username" usage:"the username to create/delete/etc"`
-	AdminAccountEmail        string `name:"email" usage:"the email address of this account"`
-	AdminAccountPassword     string `name:"password" usage:"the password to set for this account"`
-	AdminTransPath           string `name:"path" usage:"the path of the file to import from/export to"`
-	AdminMediaPruneDryRun    bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning"`
-	AdminMediaListLocalOnly  bool   `name:"local-only" usage:"list only local attachments/emojis; if specified then remote-only cannot also be true"`
-	AdminMediaListRemoteOnly bool   `name:"remote-only" usage:"list only remote attachments/emojis; if specified then local-only cannot also be true"`
-
-	RequestIDHeader string `name:"request-id-header" usage:"Header to extract the Request ID from. Eg.,'X-Request-Id'."`
+	AdminAccountUsername     string `name:"username" usage:"the username to create/delete/etc" ephemeral:"yes"`
+	AdminAccountEmail        string `name:"email" usage:"the email address of this account" ephemeral:"yes"`
+	AdminAccountPassword     string `name:"password" usage:"the password to set for this account" ephemeral:"yes"`
+	AdminTransPath           string `name:"path" usage:"the path of the file to import from/export to" ephemeral:"yes"`
+	AdminMediaPruneDryRun    bool   `name:"dry-run" usage:"perform a dry run and only log number of items eligible for pruning" ephemeral:"yes"`
+	AdminMediaListLocalOnly  bool   `name:"local-only" usage:"list only local attachments/emojis; if specified then remote-only cannot also be true" ephemeral:"yes"`
+	AdminMediaListRemoteOnly bool   `name:"remote-only" usage:"list only remote attachments/emojis; if specified then local-only cannot also be true" ephemeral:"yes"`
 }
 
 type HTTPClientConfiguration struct {
@@ -255,15 +253,27 @@ type CacheConfiguration struct {
 	VisibilityMemRatio                    float64       `name:"visibility-mem-ratio"`
 }
 
-// MarshalMap will marshal current Configuration into a map structure (useful for JSON/TOML/YAML).
-func (cfg *Configuration) MarshalMap() (map[string]interface{}, error) {
-	var dst map[string]interface{}
-	dec, _ := mapstructure.NewDecoder(&mapstructure.DecoderConfig{
-		TagName: "name",
-		Result:  &dst,
-	})
-	if err := dec.Decode(cfg); err != nil {
-		return nil, err
-	}
-	return dst, nil
+type AdvancedConfig struct {
+	CookiesSamesite   string           `name:"cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	SenderMultiplier  int              `name:"sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
+	CSPExtraURIs      []string         `name:"csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
+	HeaderFilterMode  string           `name:"header-filter-mode" usage:"Set incoming request header filtering mode."`
+	ScraperDeterrence bool             `name:"scraper-deterrence" usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
+	RateLimit         RateLimitConfig  `name:"rate-limit"`
+	Throttling        ThrottlingConfig `name:"throttling"`
 }
+
+type RateLimitConfig struct {
+	Requests   int        `name:"requests"   usage:"Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off."`
+	Exceptions IPPrefixes `name:"exceptions" usage:"Slice of CIDRs to exclude from rate limit restrictions."`
+}
+
+type ThrottlingConfig struct {
+	Multiplier int           `name:"multiplier"  usage:"Multiplier to use per cpu for http request throttling. 0 or less turns throttling off."`
+	RetryAfter time.Duration `name:"retry-after" usage:"Retry-After duration response to send for throttled requests."`
+}
+
+// type ScraperDeterrenceConfig struct {
+// 	Enabled    bool  `name:"enabled"    usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
+// 	Difficulty uint8 `name:"difficulty" usage:"The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions."`
+// }

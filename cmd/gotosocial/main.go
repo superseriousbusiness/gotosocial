@@ -23,10 +23,9 @@ import (
 	godebug "runtime/debug"
 	"strings"
 
-	"github.com/spf13/cobra"
-
 	_ "code.superseriousbusiness.org/gotosocial/docs"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"github.com/spf13/cobra"
 )
 
 // Version is the version of GoToSocial being used.
@@ -41,24 +40,18 @@ func main() {
 	// override version in config store
 	config.SetSoftwareVersion(version)
 
-	// instantiate the root command
-	rootCmd := &cobra.Command{
-		Use:     "gotosocial",
-		Short:   "GoToSocial - a fediverse social media server",
-		Long:    "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://codeberg.org/superseriousbusiness/gotosocial",
-		Version: version,
-		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// before running any other cmd funcs, we must load config-path
-			return config.LoadEarlyFlags(cmd)
-		},
-		SilenceErrors: true,
-		SilenceUsage:  true,
-	}
+	rootCmd := new(cobra.Command)
+	rootCmd.Use = "gotosocial"
+	rootCmd.Short = "GoToSocial - a fediverse social media server"
+	rootCmd.Long = "GoToSocial - a fediverse social media server\n\nFor help, see: https://docs.gotosocial.org.\n\nCode: https://codeberg.org/superseriousbusiness/gotosocial"
+	rootCmd.Version = version
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
 
-	// attach global flags to the root command so that they can be accessed from any subcommand
-	config.AddGlobalFlags(rootCmd)
+	// Register global flags with root.
+	config.RegisterGlobalFlags(rootCmd)
 
-	// add subcommands
+	// Add subcommands with their flags.
 	rootCmd.AddCommand(serverCommands())
 	rootCmd.AddCommand(debugCommands())
 	rootCmd.AddCommand(adminCommands())
@@ -70,7 +63,7 @@ func main() {
 		log.Fatal("gotosocial must be built and run with the DEBUG enviroment variable set to enable and access testrig")
 	}
 
-	// run
+	// Run the prepared root command.
 	if err := rootCmd.Execute(); err != nil {
 		log.Fatalf("error executing command: %s", err)
 	}

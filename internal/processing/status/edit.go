@@ -85,7 +85,11 @@ func (p *Processor) Edit(
 	}
 
 	// Process incoming content type.
-	contentType := processContentType(form.ContentType, status, requester.Settings.StatusContentType)
+	contentType := processContentType(
+		form.ContentType,
+		status,
+		requester.Settings.StatusContentType,
+	)
 
 	// Process incoming status edit content fields.
 	content, errWithCode := p.processContent(ctx,

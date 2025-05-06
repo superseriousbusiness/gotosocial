@@ -18,9 +18,8 @@
 package config
 
 import (
+	"errors"
 	"net/netip"
-
-	"codeberg.org/gruf/go-byteutil"
 )
 
 // IPPrefixes is a type-alias for []netip.Prefix
@@ -28,26 +27,15 @@ import (
 type IPPrefixes []netip.Prefix
 
 func (p *IPPrefixes) Set(in string) error {
+	if p == nil {
+		return errors.New("nil receiver")
+	}
 	prefix, err := netip.ParsePrefix(in)
 	if err != nil {
 		return err
 	}
 	(*p) = append((*p), prefix)
 	return nil
-}
-
-func (p *IPPrefixes) String() string {
-	if p == nil || len(*p) == 0 {
-		return ""
-	}
-	var buf byteutil.Buffer
-	for _, prefix := range *p {
-		str := prefix.String()
-		buf.B = append(buf.B, str...)
-		buf.B = append(buf.B, ',')
-	}
-	buf.Truncate(1)
-	return buf.String()
 }
 
 func (p *IPPrefixes) Strings() []string {

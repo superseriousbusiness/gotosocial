@@ -19,7 +19,6 @@ package main
 
 import (
 	configaction "code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/debug/config"
-	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +38,6 @@ func debugCommands() *cobra.Command {
 			return run(cmd.Context(), configaction.Config)
 		},
 	}
-	config.AddServerFlags(debugConfigCmd)
 	debugCmd.AddCommand(debugConfigCmd)
 	return debugCmd
 }

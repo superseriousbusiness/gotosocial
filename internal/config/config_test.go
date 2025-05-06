@@ -24,19 +24,18 @@ import (
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"codeberg.org/gruf/go-kv"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 )
 
-func expectedKV(kvpairs ...string) map[string]interface{} {
-	ret := make(map[string]interface{}, len(kvpairs)/2)
-
-	for i := 0; i < len(kvpairs)-1; i += 2 {
-		ret[kvpairs[i]] = kvpairs[i+1]
+func expectedKV(kvs ...kv.Field) map[string]interface{} {
+	ret := make(map[string]interface{}, len(kvs))
+	for _, kv := range kvs {
+		ret[kv.K] = kv.V
 	}
-
 	return ret
 }
 
@@ -61,7 +60,7 @@ func TestCLIParsing(t *testing.T) {
 		expected map[string]interface{}
 	}
 
-	defaults, _ := config.Defaults.MarshalMap()
+	defaults := config.Defaults.MarshalMap()
 
 	testcases := map[string]testcase{
 		"Make sure defaults are set correctly": {
@@ -73,7 +72,7 @@ func TestCLIParsing(t *testing.T) {
 				"--db-address", "some.db.address",
 			},
 			expected: expectedKV(
-				"db-address", "some.db.address",
+				kv.Field{"db-address", "some.db.address"},
 			),
 		},
 
@@ -82,7 +81,7 @@ func TestCLIParsing(t *testing.T) {
 				"GTS_DB_ADDRESS=some.db.address",
 			},
 			expected: expectedKV(
-				"db-address", "some.db.address",
+				kv.Field{"db-address", "some.db.address"},
 			),
 		},
 
@@ -94,7 +93,7 @@ func TestCLIParsing(t *testing.T) {
 				"GTS_DB_ADDRESS=some.other.db.address",
 			},
 			expected: expectedKV(
-				"db-address", "some.db.address",
+				kv.Field{"db-address", "some.db.address"},
 			),
 		},
 
@@ -119,8 +118,8 @@ func TestCLIParsing(t *testing.T) {
 			},
 			// only checking our overridden one and one non-default from the config file here instead of including all of test.yaml
 			expected: expectedKV(
-				"account-domain", "my.test.domain",
-				"host", "gts.example.org",
+				kv.Field{"account-domain", "my.test.domain"},
+				kv.Field{"host", "gts.example.org"},
 			),
 		},
 
@@ -133,8 +132,8 @@ func TestCLIParsing(t *testing.T) {
 			},
 			// only checking our overridden one and one non-default from the config file here instead of including all of test.yaml
 			expected: expectedKV(
-				"account-domain", "my.test.domain",
-				"host", "gts.example.org",
+				kv.Field{"account-domain", "my.test.domain"},
+				kv.Field{"host", "gts.example.org"},
 			),
 		},
 
@@ -148,8 +147,8 @@ func TestCLIParsing(t *testing.T) {
 			},
 			// only checking our overridden one and one non-default from the config file here instead of including all of test.yaml
 			expected: expectedKV(
-				"account-domain", "my.test.domain",
-				"host", "gts.example.org",
+				kv.Field{"account-domain", "my.test.domain"},
+				kv.Field{"host", "gts.example.org"},
 			),
 		},
 
@@ -165,9 +164,19 @@ func TestCLIParsing(t *testing.T) {
 				"--config-path", "testdata/test2.yaml",
 			},
 			expected: expectedKV(
-				"log-level", "trace",
-				"account-domain", "peepee.poopoo",
-				"application-name", "gotosocial",
+				kv.Field{"log-level", "trace"},
+				kv.Field{"account-domain", "peepee.poopoo"},
+				kv.Field{"application-name", "gotosocial"},
+			),
+		},
+
+		"Loading nested config file. This should also work the same": {
+			cli: []string{
+				"--config-path", "testdata/test3.yaml",
+			},
+			expected: expectedKV(
+				kv.Field{"advanced-scraper-deterrence", true},
+				kv.Field{"advanced-rate-limit-requests", 5000},
 			),
 		},
 	}
@@ -185,8 +194,7 @@ func TestCLIParsing(t *testing.T) {
 
 			state := config.NewState()
 			cmd := cobra.Command{}
-			state.AddGlobalFlags(&cmd)
-			state.AddServerFlags(&cmd)
+			config.RegisterGlobalFlags(&cmd)
 
 			if data.cli != nil {
 				cmd.ParseFlags(data.cli)
@@ -194,7 +202,7 @@ func TestCLIParsing(t *testing.T) {
 
 			state.BindFlags(&cmd)
 
-			state.Reload()
+			state.LoadConfigFile()
 
 			state.Viper(func(v *viper.Viper) {
 				for k, ev := range data.expected {

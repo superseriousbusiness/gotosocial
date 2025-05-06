@@ -29,6 +29,7 @@ require (
 	codeberg.org/gruf/go-mutexes v1.5.2
 	codeberg.org/gruf/go-runners v1.6.3
 	codeberg.org/gruf/go-sched v1.2.4
+	codeberg.org/gruf/go-split v1.2.0
 	codeberg.org/gruf/go-storage v0.2.0
 	codeberg.org/gruf/go-structr v0.9.7
 	github.com/DmitriyVTitov/size v1.5.0
@@ -42,7 +43,6 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-playground/form/v4 v4.2.1
 	github.com/go-swagger/go-swagger v0.31.0
-	github.com/go-viper/mapstructure/v2 v2.2.1
 	github.com/google/go-cmp v0.7.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/feeds v1.2.0
@@ -57,7 +57,9 @@ require (
 	github.com/oklog/ulid v1.3.1
 	github.com/pquerna/otp v1.4.0
 	github.com/rivo/uniseg v0.4.7
+	github.com/spf13/cast v1.7.1
 	github.com/spf13/cobra v1.9.1
+	github.com/spf13/pflag v1.0.6
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/tdewolff/minify/v2 v2.23.1
@@ -140,6 +142,7 @@ require (
 	github.com/go-playground/locales v0.14.1 // indirect
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-playground/validator/v10 v10.26.0 // indirect
+	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
 	github.com/go-xmlfmt/xmlfmt v0.0.0-20191208150333-d5b6f63a941b // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
@@ -194,8 +197,6 @@ require (
 	github.com/shopspring/decimal v1.3.1 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
-	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/pflag v1.0.6 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/tdewolff/parse/v2 v2.7.23 // indirect
 	github.com/tmthrgd/go-hex v0.0.0-20190904060850-447a3041c3bc // indirect

@@ -19,7 +19,6 @@ package main
 
 import (
 	"code.superseriousbusiness.org/gotosocial/cmd/gotosocial/action/server"
-	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"github.com/spf13/cobra"
 )
 
@@ -39,7 +38,6 @@ func serverCommands() *cobra.Command {
 			return run(cmd.Context(), server.Start)
 		},
 	}
-	config.AddServerFlags(serverStartCmd)
 	serverCmd.AddCommand(serverStartCmd)
 
 	serverMaintenanceCmd := &cobra.Command{
@@ -52,7 +50,6 @@ func serverCommands() *cobra.Command {
 			return run(cmd.Context(), server.Maintenance)
 		},
 	}
-	config.AddServerFlags(serverMaintenanceCmd)
 	serverCmd.AddCommand(serverMaintenanceCmd)
 
 	return serverCmd

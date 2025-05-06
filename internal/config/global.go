@@ -32,29 +32,17 @@ func init() {
 // package, and instead pass the ConfigState round in a global gts state.
 
 // Config provides you safe access to the global configuration.
-func Config(fn func(cfg *Configuration)) {
-	global.Config(fn)
-}
+func Config(fn func(cfg *Configuration)) { global.Config(fn) }
 
-// Reload will reload the current configuration values from file.
-func Reload() error {
-	return global.Reload()
-}
-
-// LoadEarlyFlags will bind specific flags from given Cobra command to global viper
-// instance, and load the current configuration values. This is useful for flags like
-// .ConfigPath which have to parsed first in order to perform early configuration load.
-func LoadEarlyFlags(cmd *cobra.Command) error {
-	return global.LoadEarlyFlags(cmd)
-}
+// RegisterGlobalFlags ...
+func RegisterGlobalFlags(root *cobra.Command) { global.RegisterGlobalFlags(root) }
 
 // BindFlags binds given command's pflags to the global viper instance.
-func BindFlags(cmd *cobra.Command) error {
-	return global.BindFlags(cmd)
-}
+func BindFlags(cmd *cobra.Command) error { return global.BindFlags(cmd) }
+
+// LoadConfigFile loads the currently set configuration file into the global viper instance.
+func LoadConfigFile() error { return global.LoadConfigFile() }
 
 // Reset will totally clear global
 // ConfigState{}, loading defaults.
-func Reset() {
-	global.Reset()
-}
+func Reset() { global.Reset() }

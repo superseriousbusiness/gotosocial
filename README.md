@@ -424,6 +424,7 @@ The following open source libraries, frameworks, and tools are used by GoToSocia
   - [gruf/go-mutexes](https://codeberg.org/gruf/go-mutexes); safemutex & mutex map. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-runners](https://codeberg.org/gruf/go-runners); synchronization utilities. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-sched](https://codeberg.org/gruf/go-sched); task scheduler. [MIT License](https://spdx.org/licenses/MIT.html).
+  - [gruf/go-split](https://codeberg.org/gruf/go-split); configuration string handling. [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-storage](https://codeberg.org/gruf/go-storage); file storage backend (local & s3). [MIT License](https://spdx.org/licenses/MIT.html).
   - [gruf/go-structr](https://codeberg.org/gruf/go-structr); struct caching + queueing with automated indexing by field. [MIT License](https://spdx.org/licenses/MIT.html).
 - jackc:
