@@ -88,36 +88,6 @@
   --boxshadow-border: 1px solid var(--ecks-pee-darkest-blue);
 }
 
-/* Set fonts with woff fallbacks */
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-weight: normal;
-  font-style: normal;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Regular-102a.woff2) format('woff2'),
-       url(/assets/fonts/Atkinson-Hyperlegible-Regular-102.woff) format('woff');
-}
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-weight: bold;
-  font-style: normal;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Bold-102a.woff2) format('woff2'),
-      url(/assets/fonts/Atkinson-Hyperlegible-Bold-102.woff) format('woff');
-}
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-weight: normal;
-  font-style: italic;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-Italic-102a.woff2) format('woff2'),
-       url(/assets/fonts/Atkinson-Hyperlegible-Italic-102.woff) format('woff');
-}
-@font-face {
-  font-family: "Atkinson Hyperlegible";
-  font-weight: bold;
-  font-style: italic;
-  src: url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102a.woff2) format('woff2'),
-       url(/assets/fonts/Atkinson-Hyperlegible-BoldItalic-102.woff) format('woff');
-}
-
 /* Main page background */
 body {
   background: radial-gradient(
@@ -216,7 +186,8 @@ html, body {
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-	background: black;
+	font-family: "Atkinson Hyperlegible Mono", "Noto Sans Mono", monospace;
+  background: black;
   color: var(--ecks-pee-white);
   border-radius: 0;
 }
@@ -276,4 +247,9 @@ button:hover, .button:hover {
 /* Make these bold or they don't contrast enough */
 .backnextlinks {
   font-weight: bold;
+}
+
+button, .button,
+.status .text-spoiler > summary .button {
+  font-family: 'Atkinson Hyperlegible', 'Noto Sans', sans-serif;
 }
