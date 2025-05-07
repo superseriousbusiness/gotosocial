@@ -131,11 +131,10 @@ var Defaults = Configuration{
 	SyslogAddress:  "localhost:514",
 
 	Advanced: AdvancedConfig{
-		SenderMultiplier:  2, // 2 senders per CPU
-		CSPExtraURIs:      []string{},
-		HeaderFilterMode:  RequestHeaderFilterModeDisabled,
-		CookiesSamesite:   "lax",
-		ScraperDeterrence: false,
+		SenderMultiplier: 2, // 2 senders per CPU
+		CSPExtraURIs:     []string{},
+		HeaderFilterMode: RequestHeaderFilterModeDisabled,
+		CookiesSamesite:  "lax",
 
 		RateLimit: RateLimitConfig{
 			Requests:   300, // 1 per second per 5 minutes
@@ -145,6 +144,11 @@ var Defaults = Configuration{
 		Throttling: ThrottlingConfig{
 			Multiplier: 8, // 8 open requests per CPU
 			RetryAfter: 30 * time.Second,
+		},
+
+		ScraperDeterrence: ScraperDeterrenceConfig{
+			Enabled:    false,
+			Difficulty: 4,
 		},
 	},
 

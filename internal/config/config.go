@@ -254,13 +254,13 @@ type CacheConfiguration struct {
 }
 
 type AdvancedConfig struct {
-	CookiesSamesite   string           `name:"cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
-	SenderMultiplier  int              `name:"sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
-	CSPExtraURIs      []string         `name:"csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
-	HeaderFilterMode  string           `name:"header-filter-mode" usage:"Set incoming request header filtering mode."`
-	ScraperDeterrence bool             `name:"scraper-deterrence" usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
-	RateLimit         RateLimitConfig  `name:"rate-limit"`
-	Throttling        ThrottlingConfig `name:"throttling"`
+	CookiesSamesite   string                  `name:"cookies-samesite" usage:"'strict' or 'lax', see https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie/SameSite"`
+	SenderMultiplier  int                     `name:"sender-multiplier" usage:"Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended)."`
+	CSPExtraURIs      []string                `name:"csp-extra-uris" usage:"Additional URIs to allow when building content-security-policy for media + images."`
+	HeaderFilterMode  string                  `name:"header-filter-mode" usage:"Set incoming request header filtering mode."`
+	RateLimit         RateLimitConfig         `name:"rate-limit"`
+	Throttling        ThrottlingConfig        `name:"throttling"`
+	ScraperDeterrence ScraperDeterrenceConfig `name:"scraper-deterrence"`
 }
 
 type RateLimitConfig struct {
@@ -273,7 +273,7 @@ type ThrottlingConfig struct {
 	RetryAfter time.Duration `name:"retry-after" usage:"Retry-After duration response to send for throttled requests."`
 }
 
-// type ScraperDeterrenceConfig struct {
-// 	Enabled    bool  `name:"enabled"    usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
-// 	Difficulty uint8 `name:"difficulty" usage:"The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions."`
-// }
+type ScraperDeterrenceConfig struct {
+	Enabled    bool  `name:"enabled"    usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
+	Difficulty uint8 `name:"difficulty" usage:"The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions."`
+}

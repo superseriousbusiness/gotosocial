@@ -136,11 +136,12 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Int("advanced-sender-multiplier", cfg.Advanced.SenderMultiplier, "Multiplier to use per cpu for batching outgoing fedi messages. 0 or less turns batching off (not recommended).")
 	flags.StringSlice("advanced-csp-extra-uris", cfg.Advanced.CSPExtraURIs, "Additional URIs to allow when building content-security-policy for media + images.")
 	flags.String("advanced-header-filter-mode", cfg.Advanced.HeaderFilterMode, "Set incoming request header filtering mode.")
-	flags.Bool("advanced-scraper-deterrence", cfg.Advanced.ScraperDeterrence, "Enable proof-of-work based scraper deterrence on profile / status pages")
 	flags.Int("advanced-rate-limit-requests", cfg.Advanced.RateLimit.Requests, "Amount of HTTP requests to permit within a 5 minute window. 0 or less turns rate limiting off.")
 	flags.StringSlice("advanced-rate-limit-exceptions", cfg.Advanced.RateLimit.Exceptions.Strings(), "Slice of CIDRs to exclude from rate limit restrictions.")
 	flags.Int("advanced-throttling-multiplier", cfg.Advanced.Throttling.Multiplier, "Multiplier to use per cpu for http request throttling. 0 or less turns throttling off.")
 	flags.Duration("advanced-throttling-retry-after", cfg.Advanced.Throttling.RetryAfter, "Retry-After duration response to send for throttled requests.")
+	flags.Bool("advanced-scraper-deterrence-enabled", cfg.Advanced.ScraperDeterrence.Enabled, "Enable proof-of-work based scraper deterrence on profile / status pages")
+	flags.Uint8("advanced-scraper-deterrence-difficulty", cfg.Advanced.ScraperDeterrence.Difficulty, "The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions.")
 	flags.StringSlice("http-client-allow-ips", cfg.HTTPClient.AllowIPs, "")
 	flags.StringSlice("http-client-block-ips", cfg.HTTPClient.BlockIPs, "")
 	flags.Duration("http-client-timeout", cfg.HTTPClient.Timeout, "")
@@ -205,7 +206,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 180)
+	cfgmap := make(map[string]any, 181)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -313,11 +314,12 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["advanced-sender-multiplier"] = cfg.Advanced.SenderMultiplier
 	cfgmap["advanced-csp-extra-uris"] = cfg.Advanced.CSPExtraURIs
 	cfgmap["advanced-header-filter-mode"] = cfg.Advanced.HeaderFilterMode
-	cfgmap["advanced-scraper-deterrence"] = cfg.Advanced.ScraperDeterrence
 	cfgmap["advanced-rate-limit-requests"] = cfg.Advanced.RateLimit.Requests
 	cfgmap["advanced-rate-limit-exceptions"] = cfg.Advanced.RateLimit.Exceptions.Strings()
 	cfgmap["advanced-throttling-multiplier"] = cfg.Advanced.Throttling.Multiplier
 	cfgmap["advanced-throttling-retry-after"] = cfg.Advanced.Throttling.RetryAfter
+	cfgmap["advanced-scraper-deterrence-enabled"] = cfg.Advanced.ScraperDeterrence.Enabled
+	cfgmap["advanced-scraper-deterrence-difficulty"] = cfg.Advanced.ScraperDeterrence.Difficulty
 	cfgmap["http-client-allow-ips"] = cfg.HTTPClient.AllowIPs
 	cfgmap["http-client-block-ips"] = cfg.HTTPClient.BlockIPs
 	cfgmap["http-client-timeout"] = cfg.HTTPClient.Timeout
@@ -1277,14 +1279,6 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		}
 	}
 
-	if ival, ok := cfgmap["advanced-scraper-deterrence"]; ok {
-		var err error
-		cfg.Advanced.ScraperDeterrence, err = cast.ToBoolE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> bool for 'advanced-scraper-deterrence': %w", ival, err)
-		}
-	}
-
 	if ival, ok := cfgmap["advanced-rate-limit-requests"]; ok {
 		var err error
 		cfg.Advanced.RateLimit.Requests, err = cast.ToIntE(ival)
@@ -1319,6 +1313,22 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.Advanced.Throttling.RetryAfter, err = cast.ToDurationE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> time.Duration for 'advanced-throttling-retry-after': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["advanced-scraper-deterrence-enabled"]; ok {
+		var err error
+		cfg.Advanced.ScraperDeterrence.Enabled, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'advanced-scraper-deterrence-enabled': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["advanced-scraper-deterrence-difficulty"]; ok {
+		var err error
+		cfg.Advanced.ScraperDeterrence.Difficulty, err = cast.ToUint8E(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> uint8 for 'advanced-scraper-deterrence-difficulty': %w", ival, err)
 		}
 	}
 
@@ -4553,31 +4563,6 @@ func GetAdvancedHeaderFilterMode() string { return global.GetAdvancedHeaderFilte
 // SetAdvancedHeaderFilterMode safely sets the value for global configuration 'Advanced.HeaderFilterMode' field
 func SetAdvancedHeaderFilterMode(v string) { global.SetAdvancedHeaderFilterMode(v) }
 
-// AdvancedScraperDeterrenceFlag returns the flag name for the 'Advanced.ScraperDeterrence' field
-func AdvancedScraperDeterrenceFlag() string { return "advanced-scraper-deterrence" }
-
-// GetAdvancedScraperDeterrence safely fetches the Configuration value for state's 'Advanced.ScraperDeterrence' field
-func (st *ConfigState) GetAdvancedScraperDeterrence() (v bool) {
-	st.mutex.RLock()
-	v = st.config.Advanced.ScraperDeterrence
-	st.mutex.RUnlock()
-	return
-}
-
-// SetAdvancedScraperDeterrence safely sets the Configuration value for state's 'Advanced.ScraperDeterrence' field
-func (st *ConfigState) SetAdvancedScraperDeterrence(v bool) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.Advanced.ScraperDeterrence = v
-	st.reloadToViper()
-}
-
-// GetAdvancedScraperDeterrence safely fetches the value for global configuration 'Advanced.ScraperDeterrence' field
-func GetAdvancedScraperDeterrence() bool { return global.GetAdvancedScraperDeterrence() }
-
-// SetAdvancedScraperDeterrence safely sets the value for global configuration 'Advanced.ScraperDeterrence' field
-func SetAdvancedScraperDeterrence(v bool) { global.SetAdvancedScraperDeterrence(v) }
-
 // AdvancedRateLimitRequestsFlag returns the flag name for the 'Advanced.RateLimit.Requests' field
 func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
 
@@ -4677,6 +4662,62 @@ func GetAdvancedThrottlingRetryAfter() time.Duration { return global.GetAdvanced
 
 // SetAdvancedThrottlingRetryAfter safely sets the value for global configuration 'Advanced.Throttling.RetryAfter' field
 func SetAdvancedThrottlingRetryAfter(v time.Duration) { global.SetAdvancedThrottlingRetryAfter(v) }
+
+// AdvancedScraperDeterrenceEnabledFlag returns the flag name for the 'Advanced.ScraperDeterrence.Enabled' field
+func AdvancedScraperDeterrenceEnabledFlag() string { return "advanced-scraper-deterrence-enabled" }
+
+// GetAdvancedScraperDeterrenceEnabled safely fetches the Configuration value for state's 'Advanced.ScraperDeterrence.Enabled' field
+func (st *ConfigState) GetAdvancedScraperDeterrenceEnabled() (v bool) {
+	st.mutex.RLock()
+	v = st.config.Advanced.ScraperDeterrence.Enabled
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedScraperDeterrenceEnabled safely sets the Configuration value for state's 'Advanced.ScraperDeterrence.Enabled' field
+func (st *ConfigState) SetAdvancedScraperDeterrenceEnabled(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Advanced.ScraperDeterrence.Enabled = v
+	st.reloadToViper()
+}
+
+// GetAdvancedScraperDeterrenceEnabled safely fetches the value for global configuration 'Advanced.ScraperDeterrence.Enabled' field
+func GetAdvancedScraperDeterrenceEnabled() bool { return global.GetAdvancedScraperDeterrenceEnabled() }
+
+// SetAdvancedScraperDeterrenceEnabled safely sets the value for global configuration 'Advanced.ScraperDeterrence.Enabled' field
+func SetAdvancedScraperDeterrenceEnabled(v bool) { global.SetAdvancedScraperDeterrenceEnabled(v) }
+
+// AdvancedScraperDeterrenceDifficultyFlag returns the flag name for the 'Advanced.ScraperDeterrence.Difficulty' field
+func AdvancedScraperDeterrenceDifficultyFlag() string {
+	return "advanced-scraper-deterrence-difficulty"
+}
+
+// GetAdvancedScraperDeterrenceDifficulty safely fetches the Configuration value for state's 'Advanced.ScraperDeterrence.Difficulty' field
+func (st *ConfigState) GetAdvancedScraperDeterrenceDifficulty() (v uint8) {
+	st.mutex.RLock()
+	v = st.config.Advanced.ScraperDeterrence.Difficulty
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAdvancedScraperDeterrenceDifficulty safely sets the Configuration value for state's 'Advanced.ScraperDeterrence.Difficulty' field
+func (st *ConfigState) SetAdvancedScraperDeterrenceDifficulty(v uint8) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Advanced.ScraperDeterrence.Difficulty = v
+	st.reloadToViper()
+}
+
+// GetAdvancedScraperDeterrenceDifficulty safely fetches the value for global configuration 'Advanced.ScraperDeterrence.Difficulty' field
+func GetAdvancedScraperDeterrenceDifficulty() uint8 {
+	return global.GetAdvancedScraperDeterrenceDifficulty()
+}
+
+// SetAdvancedScraperDeterrenceDifficulty safely sets the value for global configuration 'Advanced.ScraperDeterrence.Difficulty' field
+func SetAdvancedScraperDeterrenceDifficulty(v uint8) {
+	global.SetAdvancedScraperDeterrenceDifficulty(v)
+}
 
 // HTTPClientAllowIPsFlag returns the flag name for the 'HTTPClient.AllowIPs' field
 func HTTPClientAllowIPsFlag() string { return "http-client-allow-ips" }
@@ -6451,17 +6492,6 @@ func flattenConfigMap(cfgmap map[string]any) {
 	}
 
 	for _, key := range [][]string{
-		{"advanced", "scraper-deterrence"},
-	} {
-		ival, ok := mapGet(cfgmap, key...)
-		if ok {
-			cfgmap["advanced-scraper-deterrence"] = ival
-			nestedKeys[key[0]] = struct{}{}
-			break
-		}
-	}
-
-	for _, key := range [][]string{
 		{"advanced-rate-limit", "requests"},
 		{"advanced", "rate-limit", "requests"},
 	} {
@@ -6504,6 +6534,30 @@ func flattenConfigMap(cfgmap map[string]any) {
 		ival, ok := mapGet(cfgmap, key...)
 		if ok {
 			cfgmap["advanced-throttling-retry-after"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"advanced-scraper-deterrence", "enabled"},
+		{"advanced", "scraper-deterrence", "enabled"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["advanced-scraper-deterrence-enabled"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"advanced-scraper-deterrence", "difficulty"},
+		{"advanced", "scraper-deterrence", "difficulty"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["advanced-scraper-deterrence-difficulty"] = ival
 			nestedKeys[key[0]] = struct{}{}
 			break
 		}

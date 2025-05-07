@@ -55,7 +55,7 @@ func NoLLaMas(
 	getInstanceV1 func(context.Context) (*apimodel.InstanceV1, gtserror.WithCode),
 ) gin.HandlerFunc {
 
-	if !config.GetAdvancedScraperDeterrence() {
+	if !config.GetAdvancedScraperDeterrenceEnabled() {
 		// NoLLaMas middleware disabled.
 		return func(*gin.Context) {}
 	}
@@ -72,7 +72,7 @@ func NoLLaMas(
 	var nollamas nollamas
 	nollamas.seed = seed
 	nollamas.ttl = time.Hour
-	nollamas.diff = 4
+	nollamas.diff = config.GetAdvancedScraperDeterrenceDifficulty()
 	nollamas.getInstanceV1 = getInstanceV1
 	nollamas.policy = cookiePolicy
 	return nollamas.Serve

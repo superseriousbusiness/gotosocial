@@ -175,7 +175,7 @@ func TestCLIParsing(t *testing.T) {
 				"--config-path", "testdata/test3.yaml",
 			},
 			expected: expectedKV(
-				kv.Field{"advanced-scraper-deterrence", true},
+				kv.Field{"advanced-scraper-deterrence-enabled", true},
 				kv.Field{"advanced-rate-limit-requests", 5000},
 			),
 		},

@@ -19,7 +19,8 @@ EXPECT=$(cat << "EOF"
         "127.0.0.1/32"
     ],
     "advanced-rate-limit-requests": 6969,
-    "advanced-scraper-deterrence": true,
+    "advanced-scraper-deterrence-difficulty": 5,
+    "advanced-scraper-deterrence-enabled": true,
     "advanced-sender-multiplier": -1,
     "advanced-throttling-multiplier": -1,
     "advanced-throttling-retry-after": 10000000000,
@@ -302,7 +303,8 @@ GTS_SYSLOG_ADDRESS='127.0.0.1:6969' \
 GTS_ADVANCED_COOKIES_SAMESITE='strict' \
 GTS_ADVANCED_RATE_LIMIT_EXCEPTIONS="192.0.2.0/24,127.0.0.1/32" \
 GTS_ADVANCED_RATE_LIMIT_REQUESTS=6969 \
-GTS_ADVANCED_SCRAPER_DETERRENCE=true \
+GTS_ADVANCED_SCRAPER_DETERRENCE_DIFFICULTY=5 \
+GTS_ADVANCED_SCRAPER_DETERRENCE_ENABLED=true \
 GTS_ADVANCED_SENDER_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_MULTIPLIER=-1 \
 GTS_ADVANCED_THROTTLING_RETRY_AFTER='10s' \

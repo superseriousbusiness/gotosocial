@@ -45,7 +45,7 @@ func TestNoLLaMasMiddleware(t *testing.T) {
 	e := gin.New()
 
 	// Setup necessary configuration variables.
-	config.SetAdvancedScraperDeterrence(true)
+	config.SetAdvancedScraperDeterrenceEnabled(true)
 	config.SetWebTemplateBaseDir("../../web/template")
 
 	// Load templates into engine.

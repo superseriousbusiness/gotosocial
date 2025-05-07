@@ -1264,4 +1264,23 @@ advanced-header-filter-mode: ""
 #
 # Options: [true, false]
 # Default: true
-advanced-scraper-deterrence: false
+advanced-scraper-deterrence-enabled: false
+
+# Uint. Allows tweaking the difficulty of the proof-of-work algorithm
+# used in the scraper deterrence. This determines how many leading '0'
+# characters are required to be generated in each solution. Higher
+# values will on-average take longer to find solutions for, and the
+# inverse is also true.
+#
+# The downside is that if your deterrence takes too long to solve,
+# it may deter some users from viewing your web status / profile page.
+# And conversely, the longer it takes for a solution to be found, the
+# more you'll be incurring increased CPU usage for scrapers, and possibly
+# even cause their operation to time out before completion.
+#
+# For more details please check the documentation at:
+# https://docs.gotosocial.org/en/latest/advanced/scraper_deterrence
+#
+# Examples: [3, 4, 5]
+# Default: 4
+advanced-scraper-deterrence-difficulty: 4
