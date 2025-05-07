@@ -79,7 +79,7 @@ image/webp
             {{- include "page_header.tmpl" . | indent 3 }}
         </header>
         <div class="page-content">
-            {{- include .pageContent . | indent 3 | outdentPre }}
+            {{- include .pageContent . | indent 3 | outdentPreformatted }}
         </div>
         <footer class="page-footer">
             {{- include "page_footer.tmpl" . | indent 3 }}

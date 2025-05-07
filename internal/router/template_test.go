@@ -22,10 +22,19 @@ import (
 	"testing"
 )
 
-func TestOutdentPre(t *testing.T) {
+func TestOutdentPreformatted(t *testing.T) {
 	const html = template.HTML(`
         <div class="text">
-            <div class="content" lang="en">                
+            <div
+                class="content"
+                lang="en"
+                title="DW from Arthur is labeled &#34;crawlers&#34;. 
+        
+            She&#39;s reading a sign on a door that says: &#34;robots.txt: don&#39;t crawl this website, it&#39;s not for you, please, thanks.&#34;
+        
+        With her hands on her hips looking annoyed she says &#34;That sign won&#39;t stop me because I can&#39;t read!&#34;"
+                alt="pee pee poo poo"
+            >
                 <p>Here's a bunch of HTML, read it and weep, weep then!</p>
                 <pre><code class="language-html">&lt;section class=&#34;about-user&#34;&gt;
                     &lt;div class=&#34;col-header&#34;&gt;
@@ -67,7 +76,15 @@ func TestOutdentPre(t *testing.T) {
             </div>
         </div>
         <div class="text">
-            <div class="content" lang="en">                
+            <div
+                class="content"
+                lang="en"
+                alt="DW from Arthur is labeled &#34;crawlers&#34;. 
+        
+        She&#39;s reading a sign on a door that says: &#34;robots.txt: don&#39;t crawl this website, it&#39;s not for you, please, thanks.&#34;
+        
+        With her hands on her hips looking annoyed she says &#34;That sign won&#39;t stop me because I can&#39;t read!&#34;"
+            >
                 <p>Here's a bunch of HTML, read it and weep, weep then!</p>
                 <pre><code class="language-html">&lt;section class=&#34;about-user&#34;&gt;
                     &lt;div class=&#34;col-header&#34;&gt;
@@ -112,7 +129,16 @@ func TestOutdentPre(t *testing.T) {
 
 	const expected = template.HTML(`
         <div class="text">
-            <div class="content" lang="en">                
+            <div
+                class="content"
+                lang="en"
+                title="DW from Arthur is labeled &#34;crawlers&#34;. 
+
+    She&#39;s reading a sign on a door that says: &#34;robots.txt: don&#39;t crawl this website, it&#39;s not for you, please, thanks.&#34;
+
+With her hands on her hips looking annoyed she says &#34;That sign won&#39;t stop me because I can&#39;t read!&#34;"
+                alt="pee pee poo poo"
+            >
                 <p>Here's a bunch of HTML, read it and weep, weep then!</p>
 <pre><code class="language-html">&lt;section class=&#34;about-user&#34;&gt;
     &lt;div class=&#34;col-header&#34;&gt;
@@ -154,7 +180,15 @@ func TestOutdentPre(t *testing.T) {
             </div>
         </div>
         <div class="text">
-            <div class="content" lang="en">                
+            <div
+                class="content"
+                lang="en"
+                alt="DW from Arthur is labeled &#34;crawlers&#34;. 
+
+She&#39;s reading a sign on a door that says: &#34;robots.txt: don&#39;t crawl this website, it&#39;s not for you, please, thanks.&#34;
+
+With her hands on her hips looking annoyed she says &#34;That sign won&#39;t stop me because I can&#39;t read!&#34;"
+            >
                 <p>Here's a bunch of HTML, read it and weep, weep then!</p>
 <pre><code class="language-html">&lt;section class=&#34;about-user&#34;&gt;
     &lt;div class=&#34;col-header&#34;&gt;
@@ -197,7 +231,7 @@ func TestOutdentPre(t *testing.T) {
         </div>
 `)
 
-	out := outdentPre(html)
+	out := outdentPreformatted(html)
 	if out != expected {
 		t.Fatalf("unexpected output:\n`%s`\n", out)
 	}
