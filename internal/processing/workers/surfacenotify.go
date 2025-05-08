@@ -582,9 +582,17 @@ func (s *Surface) notifyStatusEdit(
 	// interacted with the status.
 	var errs gtserror.MultiError
 	for _, i := range interactions {
+		targetAcct := i.GetAccount()
+		if targetAcct.ID == status.AccountID {
+			// Don't notify an account
+			// if they've interacted
+			// with their *own* status.
+			continue
+		}
+
 		if err := s.Notify(ctx,
 			gtsmodel.NotificationUpdate,
-			i.GetAccount(),
+			targetAcct,
 			status.Account,
 			editID,
 		); err != nil {
