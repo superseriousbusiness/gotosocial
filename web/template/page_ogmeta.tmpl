@@ -25,14 +25,14 @@
 
 {{- with .ogMeta }}
 {{- if .Locale }}
-<meta name="og:locale" content="{{- .Locale -}}">
+<meta property="og:locale" content="{{- .Locale -}}">
 {{- else }}
 {{- end }}
 <meta property="og:type" content="{{- .Type -}}">
 <meta property="og:title" content="{{- demojify .Title | noescape -}}">
 <meta property="og:url" content="{{- .URL -}}">
 <meta property="og:site_name" content="{{- .SiteName -}}">
-<meta property="og:description" {{ demojify .Description | noescapeAttr -}}>
+<meta property="og:description" content="{{- demojify .Description | noescape -}}">
 {{- if .ArticlePublisher }}
 <meta property="og:article:publisher" content="{{ .ArticlePublisher }}">
 <meta property="og:article:author" content="{{ .ArticleAuthor }}">
@@ -44,14 +44,34 @@
 <meta property="og:profile:username" content="{{- .ProfileUsername -}}">
 {{- else }}
 {{- end }}
-<meta property="og:image" content="{{- .Image -}}">
-{{- if .ImageAlt }}
-<meta property="og:image:alt" content="{{- .ImageAlt -}}">
+{{- range $i, $m := .Media }}
+<meta property="og:{{- $m.OGType -}}" content="{{- $m.URL -}}">
+{{- if or (eq $m.OGType "video") (eq $m.OGType "audio") }}
+<meta property="og:{{- $m.OGType -}}:secure_url" content="{{- $m.URL -}}">
 {{- else }}
 {{- end }}
-{{- if .ImageWidth }}
-<meta property="og:image:width" content="{{ .ImageWidth }}">
-<meta property="og:image:height" content="{{ .ImageHeight }}">
+{{- if $m.MIMEType }}
+<meta property="og:{{- $m.OGType -}}:type" content="{{ $m.MIMEType }}">
 {{- else }}
+{{- end }}
+{{- if $m.Width }}
+<meta property="og:{{- $m.OGType -}}:width" content="{{ $m.Width }}">
+<meta property="og:{{- $m.OGType -}}:height" content="{{ $m.Height }}">
+{{- else }}
+{{- end }}
+{{- if $m.Alt }}
+<meta property="og:{{- $m.OGType -}}:alt" content="{{ $m.Alt }}">
+{{- else }}
+{{- end }}
+{{- end }}
+{{- if .TwitterSummaryLargeImage }}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="{{- .TwitterSummaryLargeImage -}}">
+{{- if .TwitterImageAlt }}
+<meta name="twitter:image:alt" content="{{- .TwitterImageAlt -}}">
+{{- else }}
+{{- end }}
+{{- else }}
+<meta name="twitter:card" content="summary">
 {{- end }}
 {{- end }}
