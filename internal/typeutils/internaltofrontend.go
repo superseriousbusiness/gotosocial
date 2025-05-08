@@ -2055,58 +2055,41 @@ func (c *Converter) NotificationToAPINotification(
 	filters []*gtsmodel.Filter,
 	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Notification, error) {
-	if n.TargetAccount == nil {
-		tAccount, err := c.state.DB.GetAccountByID(ctx, n.TargetAccountID)
-		if err != nil {
-			return nil, fmt.Errorf("NotificationToapi: error getting target account with id %s from the db: %s", n.TargetAccountID, err)
-		}
-		n.TargetAccount = tAccount
+	// Ensure notif populated.
+	if err := c.state.DB.PopulateNotification(ctx, n); err != nil {
+		return nil, gtserror.Newf("error populating notification: %w", err)
 	}
 
-	if n.OriginAccount == nil {
-		ogAccount, err := c.state.DB.GetAccountByID(ctx, n.OriginAccountID)
-		if err != nil {
-			return nil, fmt.Errorf("NotificationToapi: error getting origin account with id %s from the db: %s", n.OriginAccountID, err)
-		}
-		n.OriginAccount = ogAccount
-	}
-
+	// Get account that triggered this notif.
 	apiAccount, err := c.AccountToAPIAccountPublic(ctx, n.OriginAccount)
 	if err != nil {
-		return nil, fmt.Errorf("NotificationToapi: error converting account to api: %s", err)
+		return nil, gtserror.Newf("error converting account to api: %w", err)
 	}
 
+	// Get status that triggered this notif, if set.
 	var apiStatus *apimodel.Status
-	if n.StatusID != "" {
-		if n.Status == nil {
-			status, err := c.state.DB.GetStatusByID(ctx, n.StatusID)
-			if err != nil {
-				return nil, fmt.Errorf("NotificationToapi: error getting status with id %s from the db: %s", n.StatusID, err)
-			}
-			n.Status = status
+	if n.Status != nil {
+		apiStatus, err = c.StatusToAPIStatus(
+			ctx, n.Status,
+			n.TargetAccount,
+			statusfilter.FilterContextNotifications,
+			filters, mutes,
+		)
+		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+			return nil, gtserror.Newf("error converting status to api: %w", err)
 		}
 
-		if n.Status.Account == nil {
-			if n.Status.AccountID == n.TargetAccount.ID {
-				n.Status.Account = n.TargetAccount
-			} else if n.Status.AccountID == n.OriginAccount.ID {
-				n.Status.Account = n.OriginAccount
-			}
+		if apiStatus == nil {
+			// Notif filtered for this
+			// status, nothing to do.
+			return nil, err
 		}
 
-		var err error
-		apiStatus, err = c.StatusToAPIStatus(ctx, n.Status, n.TargetAccount, statusfilter.FilterContextNotifications, filters, mutes)
-		if err != nil {
-			if errors.Is(err, statusfilter.ErrHideStatus) {
-				return nil, err
-			}
-			return nil, fmt.Errorf("NotificationToapi: error converting status to api: %s", err)
+		if apiStatus.Reblog != nil {
+			// Use the actual reblog status
+			// for the notifications endpoint.
+			apiStatus = apiStatus.Reblog.Status
 		}
-	}
-
-	if apiStatus != nil && apiStatus.Reblog != nil {
-		// use the actual reblog status for the notifications endpoint
-		apiStatus = apiStatus.Reblog.Status
 	}
 
 	return &apimodel.Notification{

@@ -54,24 +54,28 @@ func (n *notificationDB) GetNotificationByID(ctx context.Context, id string) (*g
 
 func (n *notificationDB) GetNotification(
 	ctx context.Context,
-	notificationType gtsmodel.NotificationType,
-	targetAccountID string,
-	originAccountID string,
-	statusID string,
+	notifType gtsmodel.NotificationType,
+	targetAcctID string,
+	originAcctID string,
+	statusOrEditID string,
 ) (*gtsmodel.Notification, error) {
 	return n.getNotification(
 		ctx,
-		"NotificationType,TargetAccountID,OriginAccountID,StatusID",
+		"NotificationType,TargetAccountID,OriginAccountID,StatusOrEditID",
 		func(notif *gtsmodel.Notification) error {
-			return n.db.NewSelect().
+			q := n.db.NewSelect().
 				Model(notif).
-				Where("? = ?", bun.Ident("notification_type"), notificationType).
-				Where("? = ?", bun.Ident("target_account_id"), targetAccountID).
-				Where("? = ?", bun.Ident("origin_account_id"), originAccountID).
-				Where("? = ?", bun.Ident("status_id"), statusID).
-				Scan(ctx)
+				Where("? = ?", bun.Ident("notification_type"), notifType).
+				Where("? = ?", bun.Ident("target_account_id"), targetAcctID).
+				Where("? = ?", bun.Ident("origin_account_id"), originAcctID)
+
+			if statusOrEditID != "" {
+				q = q.Where("? = ?", bun.Ident("status_id"), statusOrEditID)
+			}
+
+			return q.Scan(ctx)
 		},
-		notificationType, targetAccountID, originAccountID, statusID,
+		notifType, targetAcctID, originAcctID, statusOrEditID,
 	)
 }
 
@@ -176,13 +180,28 @@ func (n *notificationDB) PopulateNotification(ctx context.Context, notif *gtsmod
 		}
 	}
 
-	if notif.StatusID != "" && notif.Status == nil {
+	if notif.StatusOrEditID != "" && notif.Status == nil {
+		// Try getting status by ID first.
 		notif.Status, err = n.state.DB.GetStatusByID(
 			gtscontext.SetBarebones(ctx),
-			notif.StatusID,
+			notif.StatusOrEditID,
 		)
-		if err != nil {
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Only append real db error. It might be an edit ID.
 			errs.Appendf("error populating notif status: %w", err)
+		}
+
+		if notif.Status == nil {
+			// If it's still not set, try
+			// getting status by edit ID.
+			notif.Status, err = n.state.DB.GetStatusByEditID(
+				gtscontext.SetBarebones(ctx),
+				notif.StatusOrEditID,
+			)
+			if err != nil {
+				// Append any error here as it's an issue.
+				errs.Appendf("error populating notif status: %w", err)
+			}
 		}
 	}
 

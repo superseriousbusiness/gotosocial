@@ -70,7 +70,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 			CreatedAt:        time.Now(),
 			TargetAccountID:  targetAccountID,
 			OriginAccountID:  originAccountID,
-			StatusID:         statusID,
+			StatusOrEditID:   statusID,
 			Read:             util.Ptr(false),
 		}
 
@@ -263,7 +263,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsPertainingToStatusID(
 	}
 
 	for _, n := range notif {
-		if n.StatusID == testStatus.ID {
+		if n.StatusOrEditID == testStatus.ID {
 			suite.FailNowf("", "no notifications with status id %s should remain", testStatus.ID)
 		}
 	}

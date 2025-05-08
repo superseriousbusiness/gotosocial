@@ -95,3 +95,10 @@ func (ir *InteractionRequest) IsAccepted() bool {
 func (ir *InteractionRequest) IsRejected() bool {
 	return !ir.RejectedAt.IsZero()
 }
+
+// Interaction abstractly represents
+// one interaction with a status, via
+// liking, replying to, or boosting it.
+type Interaction interface {
+	GetAccount() *Account
+}

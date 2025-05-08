@@ -102,7 +102,7 @@ func (suite *FromFediAPITestSuite) TestProcessFederationAnnounce() {
 	suite.Equal(gtsmodel.NotificationReblog, notif.NotificationType)
 	suite.Equal(boostedStatus.AccountID, notif.TargetAccountID)
 	suite.Equal(announceStatus.AccountID, notif.OriginAccountID)
-	suite.Equal(announceStatus.ID, notif.StatusID)
+	suite.Equal(announceStatus.ID, notif.StatusOrEditID)
 	suite.False(*notif.Read)
 }
 
@@ -173,7 +173,7 @@ func (suite *FromFediAPITestSuite) TestProcessReplyMention() {
 	suite.Equal(gtsmodel.NotificationMention, notif.NotificationType)
 	suite.Equal(replyingStatus.InReplyToAccountID, notif.TargetAccountID)
 	suite.Equal(replyingStatus.AccountID, notif.OriginAccountID)
-	suite.Equal(replyingStatus.ID, notif.StatusID)
+	suite.Equal(replyingStatus.ID, notif.StatusOrEditID)
 	suite.False(*notif.Read)
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
@@ -245,7 +245,7 @@ func (suite *FromFediAPITestSuite) TestProcessFave() {
 	suite.Equal(gtsmodel.NotificationFavourite, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
-	suite.Equal(fave.StatusID, notif.StatusID)
+	suite.Equal(fave.StatusID, notif.StatusOrEditID)
 	suite.False(*notif.Read)
 
 	ctx, _ := context.WithTimeout(context.Background(), time.Second*5)
@@ -318,7 +318,7 @@ func (suite *FromFediAPITestSuite) TestProcessFaveWithDifferentReceivingAccount(
 	suite.Equal(gtsmodel.NotificationFavourite, notif.NotificationType)
 	suite.Equal(fave.TargetAccountID, notif.TargetAccountID)
 	suite.Equal(fave.AccountID, notif.OriginAccountID)
-	suite.Equal(fave.StatusID, notif.StatusID)
+	suite.Equal(fave.StatusID, notif.StatusOrEditID)
 	suite.False(*notif.Read)
 
 	// 2. no notification should be streamed to the account that received the fave message, because they weren't the target

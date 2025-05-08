@@ -3193,7 +3193,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 			CreatedAt:        TimeMustParse("2022-05-14T13:21:09+02:00"),
 			TargetAccountID:  "01F8MH1H7YV1Z7D2C8K2730QBF",
 			OriginAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
-			StatusID:         "01F8MHAMCHF6Y650WCRSCP4WMY",
+			StatusOrEditID:   "01F8MHAMCHF6Y650WCRSCP4WMY",
 			Read:             util.Ptr(false),
 		},
 		"local_account_2_like": {
@@ -3202,7 +3202,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 			CreatedAt:        TimeMustParse("2022-01-13T12:45:01+02:00"),
 			TargetAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			OriginAccountID:  "01F8MH5NBDF2MV7CTC4Q5128HF",
-			StatusID:         "01F8MH75CBF9JFX4ZAD54N0W0R",
+			StatusOrEditID:   "01F8MH75CBF9JFX4ZAD54N0W0R",
 			Read:             util.Ptr(false),
 		},
 		"new_signup": {
@@ -3211,7 +3211,7 @@ func NewTestNotifications() map[string]*gtsmodel.Notification {
 			CreatedAt:        TimeMustParse("2022-06-04T13:12:00Z"),
 			TargetAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			OriginAccountID:  "01F8MH0BBE4FHXPH513MBVFHB0",
-			StatusID:         "",
+			StatusOrEditID:   "",
 			Read:             util.Ptr(false),
 		},
 	}

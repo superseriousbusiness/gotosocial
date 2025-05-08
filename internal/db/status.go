@@ -94,4 +94,12 @@ type Status interface {
 	// MaxDirectStatusID, and expects to eventually return the status with that ID.
 	// It is used only by the conversation advanced migration.
 	GetDirectStatusIDsBatch(ctx context.Context, minID string, maxIDInclusive string, count int) ([]string, error)
+
+	// GetStatusInteractions gets all abstract "interactions" of a status (likes, replies, boosts).
+	// If localOnly is true, will return only interactions performed by accounts on this instance.
+	// Aside from that, interactions are not filtered or deduplicated, it's up to the caller to do that.
+	GetStatusInteractions(ctx context.Context, statusID string, localOnly bool) ([]gtsmodel.Interaction, error)
+
+	// GetStatusByEditID gets one status corresponding to the given edit ID.
+	GetStatusByEditID(ctx context.Context, editID string) (*gtsmodel.Status, error)
 }

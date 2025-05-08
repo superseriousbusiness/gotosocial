@@ -573,7 +573,7 @@ func sizeofNotification() uintptr {
 		CreatedAt:        exampleTime,
 		TargetAccountID:  exampleID,
 		OriginAccountID:  exampleID,
-		StatusID:         exampleID,
+		StatusOrEditID:   exampleID,
 		Read:             func() *bool { ok := false; return &ok }(),
 	}))
 }

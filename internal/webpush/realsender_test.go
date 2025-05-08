@@ -260,7 +260,7 @@ func (suite *RealSenderStandardTestSuite) TestSendPolicyMismatch() {
 		NotificationType: gtsmodel.NotificationFavourite,
 		TargetAccountID:  suite.testAccounts["local_account_1"].ID,
 		OriginAccountID:  suite.testAccounts["remote_account_1"].ID,
-		StatusID:         "01F8MHAMCHF6Y650WCRSCP4WMY",
+		StatusOrEditID:   "01F8MHAMCHF6Y650WCRSCP4WMY",
 		Read:             util.Ptr(false),
 	}
 	if err := suite.db.PutNotification(context.Background(), notification); !suite.NoError(err) {
