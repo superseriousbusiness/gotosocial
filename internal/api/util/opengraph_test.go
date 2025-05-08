@@ -18,7 +18,6 @@
 package util
 
 import (
-	"fmt"
 	"testing"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -40,7 +39,7 @@ func (suite *OpenGraphTestSuite) TestParseDescription() {
 	for _, tt := range tests {
 		tt := tt
 		suite.Run(tt.name, func() {
-			suite.Equal(fmt.Sprintf("content=\"%s\"", tt.exp), ParseDescription(tt.in))
+			suite.Equal(tt.exp, ParseDescription(tt.in))
 		})
 	}
 }
@@ -49,6 +48,8 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 	baseMeta := OGBase(&apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
+		Thumbnail:     "https://example.org/instance-avatar.webp",
+		ThumbnailType: "image/webp",
 	})
 
 	acct := &apimodel.Account{
@@ -57,21 +58,31 @@ func (suite *OpenGraphTestSuite) TestWithAccountWithNote() {
 		URL:         "https://example.org/@example_account",
 		Note:        "<p>This is my profile, read it and weep! Weep then!</p>",
 		Username:    "example_account",
+		Avatar:      "https://example.org/avatar.jpg",
 	}
 
 	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
-		Title:                "example person!!, @example_account@example.org",
-		Type:                 "profile",
-		Locale:               "en",
-		URL:                  "https://example.org/@example_account",
-		SiteName:             "example.org",
-		Description:          "content=\"This is my profile, read it and weep! Weep then!\"",
-		Image:                "",
-		ImageWidth:           "",
-		ImageHeight:          "",
-		ImageAlt:             "Avatar for example_account",
+		Title:       "example person!!, @example_account@example.org",
+		Type:        "profile",
+		Locale:      "en",
+		URL:         "https://example.org/@example_account",
+		SiteName:    "example.org",
+		Description: "This is my profile, read it and weep! Weep then!",
+		Media: []OGMedia{
+			{
+				OGType: "image",
+				Alt:    "Avatar for example_account",
+				URL:    "https://example.org/avatar.jpg",
+			},
+			{
+				// Instance avatar.
+				OGType:   "image",
+				URL:      "https://example.org/instance-avatar.webp",
+				MIMEType: "image/webp",
+			},
+		},
 		ArticlePublisher:     "",
 		ArticleAuthor:        "",
 		ArticleModifiedTime:  "",
@@ -84,6 +95,8 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 	baseMeta := OGBase(&apimodel.InstanceV1{
 		AccountDomain: "example.org",
 		Languages:     []string{"en"},
+		Thumbnail:     "https://example.org/instance-avatar.webp",
+		ThumbnailType: "image/webp",
 	})
 
 	acct := &apimodel.Account{
@@ -92,21 +105,31 @@ func (suite *OpenGraphTestSuite) TestWithAccountNoNote() {
 		URL:         "https://example.org/@example_account",
 		Note:        "", // <- empty
 		Username:    "example_account",
+		Avatar:      "https://example.org/avatar.jpg",
 	}
 
 	accountMeta := baseMeta.WithAccount(&apimodel.WebAccount{Account: acct})
 
 	suite.EqualValues(OGMeta{
-		Title:                "example person!!, @example_account@example.org",
-		Type:                 "profile",
-		Locale:               "en",
-		URL:                  "https://example.org/@example_account",
-		SiteName:             "example.org",
-		Description:          "content=\"This GoToSocial user hasn't written a bio yet!\"",
-		Image:                "",
-		ImageWidth:           "",
-		ImageHeight:          "",
-		ImageAlt:             "Avatar for example_account",
+		Title:       "example person!!, @example_account@example.org",
+		Type:        "profile",
+		Locale:      "en",
+		URL:         "https://example.org/@example_account",
+		SiteName:    "example.org",
+		Description: "This GoToSocial user hasn't written a bio yet!",
+		Media: []OGMedia{
+			{
+				OGType: "image",
+				Alt:    "Avatar for example_account",
+				URL:    "https://example.org/avatar.jpg",
+			},
+			{
+				// Instance avatar.
+				OGType:   "image",
+				URL:      "https://example.org/instance-avatar.webp",
+				MIMEType: "image/webp",
+			},
+		},
 		ArticlePublisher:     "",
 		ArticleAuthor:        "",
 		ArticleModifiedTime:  "",

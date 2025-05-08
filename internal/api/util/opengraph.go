@@ -19,20 +19,21 @@ package util
 
 import (
 	"html"
+	"slices"
 	"strconv"
 	"strings"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/text"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
-
-const maxOGDescriptionLength = 300
 
 // OGMeta represents supported OpenGraph Meta tags
 //
 // see eg https://ogp.me/
 type OGMeta struct {
-	// vanilla og tags
+	/* Vanilla og tags */
+
 	Title       string // og:title
 	Type        string // og:type
 	Locale      string // og:locale
@@ -40,26 +41,57 @@ type OGMeta struct {
 	SiteName    string // og:site_name
 	Description string // og:description
 
-	// image tags
-	Image       string // og:image
-	ImageWidth  string // og:image:width
-	ImageHeight string // og:image:height
-	ImageAlt    string // og:image:alt
+	// Zero or more media entries of type image,
+	// video, or audio (https://ogp.me/#array).
+	Media []OGMedia
 
-	// article tags
+	/* Article tags. */
+
 	ArticlePublisher     string // article:publisher
 	ArticleAuthor        string // article:author
 	ArticleModifiedTime  string // article:modified_time
 	ArticlePublishedTime string // article:published_time
 
-	// profile tags
+	/* Profile tags. */
+
 	ProfileUsername string // profile:username
+
+	/*
+		Twitter card stuff
+		https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards
+	*/
+
+	// Set to media URL for media posts.
+	TwitterSummaryLargeImage string
+	TwitterImageAlt          string
+}
+
+func (o *OGMeta) prependMedia(i ...OGMedia) {
+	if len(o.Media) == 0 {
+		// Set as
+		// only entries.
+		o.Media = i
+	} else {
+		// Prepend as higher
+		// priority entries.
+		o.Media = slices.Insert(o.Media, 0, i...)
+	}
+}
+
+// OGMedia represents one OpenGraph media
+// entry of type image, video, or audio.
+type OGMedia struct {
+	OGType   string // image/video/audio
+	URL      string // og:${type}
+	MIMEType string // og:${type}:type
+	Width    string // og:${type}:width
+	Height   string // og:${type}:height
+	Alt      string // og:${type}:alt
 }
 
 // OGBase returns an *ogMeta suitable for serving at
 // the base root of an instance. It also serves as a
-// foundation for building account / status ogMeta on
-// top of.
+// foundation for building account / status ogMeta.
 func OGBase(instance *apimodel.InstanceV1) *OGMeta {
 	var locale string
 	if len(instance.Languages) > 0 {
@@ -73,9 +105,14 @@ func OGBase(instance *apimodel.InstanceV1) *OGMeta {
 		URL:         instance.URI,
 		SiteName:    instance.AccountDomain,
 		Description: ParseDescription(instance.ShortDescription),
-
-		Image:    instance.Thumbnail,
-		ImageAlt: instance.ThumbnailDescription,
+		Media: []OGMedia{
+			{
+				OGType:   "image",
+				URL:      instance.Thumbnail,
+				Alt:      instance.ThumbnailDescription,
+				MIMEType: instance.ThumbnailType,
+			},
+		},
 	}
 
 	return og
@@ -84,67 +121,154 @@ func OGBase(instance *apimodel.InstanceV1) *OGMeta {
 // WithAccount uses the given account to build an ogMeta
 // struct specific to that account. It's suitable for serving
 // at account profile pages.
-func (og *OGMeta) WithAccount(account *apimodel.WebAccount) *OGMeta {
-	og.Title = AccountTitle(account, og.SiteName)
-	og.Type = "profile"
-	og.URL = account.URL
-	if account.Note != "" {
-		og.Description = ParseDescription(account.Note)
+func (o *OGMeta) WithAccount(acct *apimodel.WebAccount) *OGMeta {
+	o.Title = AccountTitle(acct, o.SiteName)
+	o.ProfileUsername = acct.Username
+	o.Type = "profile"
+	o.URL = acct.URL
+	if acct.Note != "" {
+		o.Description = ParseDescription(acct.Note)
 	} else {
-		og.Description = `content="This GoToSocial user hasn't written a bio yet!"`
+		const desc = "This GoToSocial user hasn't written a bio yet!"
+		o.Description = desc
 	}
 
-	og.Image = account.Avatar
-	og.ImageAlt = "Avatar for " + account.Username
+	// Add avatar image.
+	o.prependMedia(ogImgForAcct(acct))
 
-	og.ProfileUsername = account.Username
+	return o
+}
 
-	return og
+// util funct to return OGImage using account.
+func ogImgForAcct(account *apimodel.WebAccount) OGMedia {
+	ogMedia := OGMedia{
+		OGType: "image",
+		URL:    account.Avatar,
+		Alt:    "Avatar for " + account.Username,
+	}
+
+	if desc := account.AvatarDescription; desc != "" {
+		ogMedia.Alt += ": " + desc
+	}
+
+	// Add extra info if not default avi.
+	if a := account.AvatarAttachment; a != nil {
+		ogMedia.MIMEType = a.MIMEType
+		ogMedia.Width = strconv.Itoa(a.Meta.Original.Width)
+		ogMedia.Height = strconv.Itoa(a.Meta.Original.Height)
+	}
+
+	return ogMedia
 }
 
 // WithStatus uses the given status to build an ogMeta
 // struct specific to that status. It's suitable for serving
 // at status pages.
-func (og *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
-	og.Title = "Post by " + AccountTitle(status.Account, og.SiteName)
-	og.Type = "article"
+func (o *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
+	o.Title = "Post by " + AccountTitle(status.Account, o.SiteName)
+	o.Type = "article"
 	if status.Language != nil {
-		og.Locale = *status.Language
+		o.Locale = *status.Language
 	}
-	og.URL = status.URL
+	o.URL = status.URL
 	switch {
 	case status.SpoilerText != "":
-		og.Description = ParseDescription("CW: " + status.SpoilerText)
+		o.Description = ParseDescription("CW: " + status.SpoilerText)
 	case status.Text != "":
-		og.Description = ParseDescription(status.Text)
+		o.Description = ParseDescription(status.Text)
 	default:
-		og.Description = og.Title
+		o.Description = o.Title
 	}
 
-	if !status.Sensitive && len(status.MediaAttachments) > 0 {
-		a := status.MediaAttachments[0]
+	// Prepend account image.
+	o.prependMedia(ogImgForAcct(status.Account))
 
-		og.ImageWidth = strconv.Itoa(a.Meta.Small.Width)
-		og.ImageHeight = strconv.Itoa(a.Meta.Small.Height)
+	if l := len(status.MediaAttachments); l != 0 && !status.Sensitive {
 
-		if a.PreviewURL != nil {
-			og.Image = *a.PreviewURL
+		// Take first not "unknown"
+		// attachment as the "main" one.
+		for _, a := range status.MediaAttachments {
+			if a.Type == "unknown" {
+				// Skip unknown.
+				continue
+			}
+
+			// Start with
+			// common media tags.
+			desc := util.PtrOrZero(a.Description)
+			ogMedia := OGMedia{
+				URL:      *a.URL,
+				MIMEType: a.MIMEType,
+				Alt:      desc,
+			}
+
+			// Gather ogMedias for
+			// this attachment.
+			ogMedias := []OGMedia{}
+
+			// Add further tags
+			// depending on type.
+			switch a.Type {
+
+			case "image":
+				ogMedia.OGType = "image"
+				ogMedia.Width = strconv.Itoa(a.Meta.Original.Width)
+				ogMedia.Height = strconv.Itoa(a.Meta.Original.Height)
+
+				// If this image is the only piece of media,
+				// set TwitterSummaryLargeImage to indicate
+				// that a large image summary is preferred.
+				if l == 1 {
+					o.TwitterSummaryLargeImage = *a.URL
+					o.TwitterImageAlt = desc
+				}
+
+			case "audio":
+				ogMedia.OGType = "audio"
+
+			case "video", "gifv":
+				ogMedia.OGType = "video"
+				ogMedia.Width = strconv.Itoa(a.Meta.Original.Width)
+				ogMedia.Height = strconv.Itoa(a.Meta.Original.Height)
+			}
+
+			// Add this to our gathered entries.
+			ogMedias = append(ogMedias, ogMedia)
+
+			if a.Type != "image" {
+				// Add static/thumbnail
+				// for non-images.
+				ogMedias = append(
+					ogMedias,
+					OGMedia{
+						OGType:   "image",
+						URL:      *a.PreviewURL,
+						MIMEType: a.PreviewMIMEType,
+						Width:    strconv.Itoa(a.Meta.Small.Width),
+						Height:   strconv.Itoa(a.Meta.Small.Height),
+						Alt:      util.PtrOrZero(a.Description),
+					},
+				)
+			}
+
+			// Prepend gathered entries.
+			//
+			// This will cause the full-size
+			// entry to appear before its
+			// thumbnail entry (if set).
+			o.prependMedia(ogMedias...)
+
+			// Done!
+			break
 		}
-
-		if a.Description != nil {
-			og.ImageAlt = *a.Description
-		}
-	} else {
-		og.Image = status.Account.Avatar
-		og.ImageAlt = "Avatar for " + status.Account.Username
 	}
 
-	og.ArticlePublisher = status.Account.URL
-	og.ArticleAuthor = status.Account.URL
-	og.ArticlePublishedTime = status.CreatedAt
-	og.ArticleModifiedTime = status.CreatedAt
+	o.ArticlePublisher = status.Account.URL
+	o.ArticleAuthor = status.Account.URL
+	o.ArticlePublishedTime = status.CreatedAt
+	o.ArticleModifiedTime = util.PtrOrValue(status.EditedAt, status.CreatedAt)
 
-	return og
+	return o
 }
 
 // AccountTitle parses a page title from account and accountDomain
@@ -159,26 +283,27 @@ func AccountTitle(account *apimodel.WebAccount, accountDomain string) string {
 }
 
 // ParseDescription returns a string description which is
-// safe to use as a template.HTMLAttr inside templates.
+// safe to use as the content of a `content="..."` attribute.
 func ParseDescription(in string) string {
 	i := text.StripHTMLFromText(in)
 	i = strings.ReplaceAll(i, "\n", " ")
 	i = strings.Join(strings.Fields(i), " ")
 	i = html.EscapeString(i)
 	i = strings.ReplaceAll(i, `\`, "&bsol;")
-	i = truncate(i, maxOGDescriptionLength)
-	return `content="` + i + `"`
+	return truncate(i)
 }
 
-// truncate trims given string to
-// specified length (in runes).
-func truncate(s string, l int) string {
+// truncate trims string
+// to maximum 160 runes.
+func truncate(s string) string {
+	const truncateLen = 160
+
 	r := []rune(s)
-	if len(r) < l {
+	if len(r) < truncateLen {
 		// No need
 		// to trim.
 		return s
 	}
 
-	return string(r[:l]) + "..."
+	return string(r[:truncateLen-3]) + "…"
 }
