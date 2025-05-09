@@ -578,7 +578,7 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 // NormalizeOutgoingInteractionPolicyProp replaces single-entry interactionPolicy values
 // with single-entry arrays, for better compatibility with other AP implementations.
 //
-// Ie:
+// Eg:
 //
 //	"interactionPolicy": {
 //		"canAnnounce": {
@@ -638,6 +638,7 @@ func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON 
 		"canLike",
 		"canReply",
 		"canAnnounce",
+		"canQuote",
 	} {
 		// Either "canAnnounce",
 		// "canLike", or "canApprove"

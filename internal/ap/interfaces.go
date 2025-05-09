@@ -277,7 +277,7 @@ type Pollable interface {
 
 // PollOptionable represents the minimum activitypub interface for representing a poll 'vote'.
 // (see: IsPollOptionable() for types implementing this, though you MUST make sure to check
-// the typeName as this bare interface may be implementable by non-Pollable types).
+// the typeName as this bare interface mwithRulesay be implementable by non-Pollable types).
 type PollOptionable interface {
 	vocab.Type
 
@@ -755,8 +755,10 @@ type WithInteractionPolicy interface {
 
 // WithPolicyRules represents an activity with always and approvalRequired properties.
 type WithPolicyRules interface {
-	GetGoToSocialAlways() vocab.GoToSocialAlwaysProperty
-	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty
+	GetGoToSocialAutomaticApproval() vocab.GoToSocialAutomaticApprovalProperty
+	GetGoToSocialManualApproval() vocab.GoToSocialManualApprovalProperty
+	GetGoToSocialAlways() vocab.GoToSocialAlwaysProperty                     // Deprecated
+	GetGoToSocialApprovalRequired() vocab.GoToSocialApprovalRequiredProperty // Deprecated
 }
 
 // WithApprovedBy represents a Statusable with the approvedBy property.

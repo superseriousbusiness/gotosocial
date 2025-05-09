@@ -548,6 +548,12 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
       ],
       "approvalRequired": []
     },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/the_mighty_zork"
+      ],
+      "approvalRequired": []
+    },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -635,6 +641,12 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/admin"
       ],
       "approvalRequired": []
     },
@@ -746,6 +758,12 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
       ],
       "approvalRequired": []
     },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/admin"
+      ],
+      "approvalRequired": []
+    },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
@@ -836,6 +854,12 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "approvalRequired": []
+    },
+    "canQuote": {
+      "always": [
+        "http://localhost:8080/users/admin"
       ],
       "approvalRequired": []
     },
@@ -1258,7 +1282,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptAnnounce() {
 		InteractingAccount:   interactingAccount,
 		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:      gtsmodel.InteractionAnnounce,
-		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		ResponseURI:          "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 
@@ -1310,7 +1334,7 @@ func (suite *InternalToASTestSuite) TestInteractionReqToASAcceptLike() {
 		InteractingAccount:   interactingAccount,
 		InteractionURI:       "https://fossbros-anonymous.io/users/foss_satan/statuses/01J1AKRRHQ6MDDQHV0TP716T2K",
 		InteractionType:      gtsmodel.InteractionLike,
-		URI:                  "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
+		ResponseURI:          "http://localhost:8080/users/the_mighty_zork/accepts/01J1AKMZ8JE5NW0ZSFTRC1JJNE",
 		AcceptedAt:           testrig.TimeMustParse("2022-06-09T13:12:00Z"),
 	}
 

@@ -287,7 +287,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestReply(ctx, status); err != nil {
+		if err := p.utils.replyToRequestReply(ctx, status); err != nil {
 			return gtserror.Newf("error pending reply: %w", err)
 		}
 
@@ -321,7 +321,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 			InteractionURI:       status.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Reply:                status,
-			URI:                  uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(status.InReplyToAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -331,7 +331,7 @@ func (p *clientAPI) CreateStatus(ctx context.Context, cMsg *messages.FromClientA
 		// Mark the status as now approved.
 		status.PendingApproval = util.Ptr(false)
 		status.PreApproved = false
-		status.ApprovedByURI = approval.URI
+		status.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			status,
@@ -494,7 +494,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestFave(ctx, fave); err != nil {
+		if err := p.utils.faveToPendingFave(ctx, fave); err != nil {
 			return gtserror.Newf("error pending fave: %w", err)
 		}
 
@@ -528,7 +528,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 			InteractionURI:       fave.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Like:                 fave,
-			URI:                  uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(fave.TargetAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -538,7 +538,7 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// Mark the fave itself as now approved.
 		fave.PendingApproval = util.Ptr(false)
 		fave.PreApproved = false
-		fave.ApprovedByURI = approval.URI
+		fave.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatusFave(
 			ctx,
 			fave,
@@ -555,7 +555,11 @@ func (p *clientAPI) CreateLike(ctx context.Context, cMsg *messages.FromClientAPI
 		// Don't return, just continue as normal.
 	}
 
-	if err := p.surface.notifyFave(ctx, fave); err != nil {
+	if err := p.surface.notifyFave(ctx,
+		fave.Account,
+		fave.TargetAccount,
+		fave.Status,
+	); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
@@ -589,7 +593,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// and/or notify the account that's being
 		// interacted with (if it's local): they can
 		// approve or deny the interaction later.
-		if err := p.utils.requestAnnounce(ctx, boost); err != nil {
+		if err := p.utils.announceToRequestAnnounce(ctx, boost); err != nil {
 			return gtserror.Newf("error pending boost: %w", err)
 		}
 
@@ -623,7 +627,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 			InteractionURI:       boost.URI,
 			InteractionType:      gtsmodel.InteractionLike,
 			Announce:             boost,
-			URI:                  uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
+			ResponseURI:          uris.GenerateURIForAccept(boost.BoostOfAccount.Username, id),
 			AcceptedAt:           time.Now(),
 		}
 		if err := p.state.DB.PutInteractionRequest(ctx, approval); err != nil {
@@ -633,7 +637,7 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 		// Mark the boost itself as now approved.
 		boost.PendingApproval = util.Ptr(false)
 		boost.PreApproved = false
-		boost.ApprovedByURI = approval.URI
+		boost.ApprovedByURI = approval.ResponseURI
 		if err := p.state.DB.UpdateStatus(
 			ctx,
 			boost,
@@ -661,7 +665,11 @@ func (p *clientAPI) CreateAnnounce(ctx context.Context, cMsg *messages.FromClien
 	}
 
 	// Notify the boost target account.
-	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
+	if err := p.surface.notifyAnnounce(ctx,
+		boost.Account,
+		boost.BoostOfAccount,
+		boost.BoostOf,
+	); err != nil {
 		log.Errorf(ctx, "error notifying boost: %v", err)
 	}
 
@@ -1209,8 +1217,13 @@ func (p *clientAPI) AcceptLike(ctx context.Context, cMsg *messages.FromClientAPI
 		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
-	// Notify the fave (distinct from the notif for the pending fave).
-	if err := p.surface.notifyFave(ctx, req.Like); err != nil {
+	// Notify the fave (distinct from
+	// the notif for the pending fave).
+	if err := p.surface.notifyFave(ctx,
+		req.InteractingAccount,
+		req.TargetAccount,
+		req.Status,
+	); err != nil {
 		log.Errorf(ctx, "error notifying fave: %v", err)
 	}
 
@@ -1265,6 +1278,25 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 		return gtserror.Newf("%T not parseable as *gtsmodel.InteractionRequest", cMsg.GTSModel)
 	}
 
+	// Send out the Accept.
+	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
+		log.Errorf(ctx, "error federating approval of announce: %v", err)
+	}
+
+	// If req.Announce is not set, that means we got
+	// the request politely as AnnounceRequest, and
+	// so we don't have the Announce wrapper stored
+	// because it hasn't been sent yet.
+	if req.Announce == nil {
+		// Nothing to do but wait for the
+		// remote to send the Announce.
+		return nil
+	}
+
+	// If it *is* set, that means it comes from someone
+	// straight up sending the Announce first instead of
+	// AnnounceRequest, so we already have the Announce
+	// in the db, and we can process it now.
 	var (
 		interactingAcct = req.InteractingAccount
 		boost           = req.Announce
@@ -1280,14 +1312,15 @@ func (p *clientAPI) AcceptAnnounce(ctx context.Context, cMsg *messages.FromClien
 		log.Errorf(ctx, "error timelining and notifying status: %v", err)
 	}
 
-	// Notify the announce (distinct from the notif for the pending announce).
-	if err := p.surface.notifyAnnounce(ctx, boost); err != nil {
+	// Notify the announce (distinct from
+	// the notif for the pending announce).
+	if err := p.surface.notifyAnnounce(
+		ctx,
+		boost.Account,
+		boost.BoostOfAccount,
+		boost.BoostOf,
+	); err != nil {
 		log.Errorf(ctx, "error notifying announce: %v", err)
-	}
-
-	// Send out the Accept.
-	if err := p.federate.AcceptInteraction(ctx, req); err != nil {
-		log.Errorf(ctx, "error federating approval of announce: %v", err)
 	}
 
 	// Interaction counts changed on the original status;

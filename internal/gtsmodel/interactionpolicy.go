@@ -123,10 +123,10 @@ const (
 	// Interaction is conditionally permitted
 	// for this PolicyValue + interaction combo,
 	// pending approval by the item owner.
-	PolicyPermissionWithApproval
+	PolicyPermissionManualApproval
 	// Interaction is permitted for this
 	// PolicyValue + interaction combination.
-	PolicyPermissionPermitted
+	PolicyPermissionAutomaticApproval
 )
 
 // PolicyCheckResult encapsulates the results
@@ -138,39 +138,39 @@ type PolicyCheckResult struct {
 	Permission PolicyPermission
 
 	// Value that this check matched on.
-	// Only set if Permission = permitted.
-	PermittedMatchedOn *PolicyValue
+	// Only set if Permission = automatic.
+	PermissionMatchedOn *PolicyValue
 }
 
 // MatchedOnCollection returns true if this policy check
-// result turned up Permitted, and matched based on the
+// result turned up AutomaticApproval, and matched based on the
 // requester's presence in a followers or following collection.
 func (pcr *PolicyCheckResult) MatchedOnCollection() bool {
-	if !pcr.Permitted() {
+	if !pcr.AutomaticApproval() {
 		// Not permitted at all
 		// so definitely didn't
 		// match on collection.
 		return false
 	}
 
-	if pcr.PermittedMatchedOn == nil {
+	if pcr.PermissionMatchedOn == nil {
 		return false
 	}
 
-	return *pcr.PermittedMatchedOn == PolicyValueFollowers ||
-		*pcr.PermittedMatchedOn == PolicyValueFollowing
+	return *pcr.PermissionMatchedOn == PolicyValueFollowers ||
+		*pcr.PermissionMatchedOn == PolicyValueFollowing
+}
+
+// AutomaticApproval returns true if this policy
+// check resulted in Permission = automatic approval.
+func (pcr *PolicyCheckResult) AutomaticApproval() bool {
+	return pcr.Permission == PolicyPermissionAutomaticApproval
 }
 
 // Permitted returns true if this policy
-// check resulted in Permission = permitted.
-func (pcr *PolicyCheckResult) Permitted() bool {
-	return pcr.Permission == PolicyPermissionPermitted
-}
-
-// Permitted returns true if this policy
-// check resulted in Permission = with approval.
-func (pcr *PolicyCheckResult) WithApproval() bool {
-	return pcr.Permission == PolicyPermissionWithApproval
+// check resulted in Permission = manual approval.
+func (pcr *PolicyCheckResult) ManualApproval() bool {
+	return pcr.Permission == PolicyPermissionManualApproval
 }
 
 // Permitted returns true if this policy
@@ -201,14 +201,22 @@ type InteractionPolicy struct {
 // to which a certain interaction is permitted
 // to various Actor and Actor Collection URIs.
 type PolicyRules struct {
-	// Always is for PolicyValues who are
-	// permitted to do an interaction
-	// without requiring approval.
-	Always PolicyValues
-	// WithApproval is for PolicyValues who
-	// are conditionally permitted to do
-	// an interaction, pending approval.
-	WithApproval PolicyValues
+	// AutomaticApproval is for PolicyValue entries
+	// that are pre-approved to do an interaction
+	// and will receive automatic approval.
+	//
+	// Note: This is stored in the db as JSON.
+	// JSON tags set for back compat with previous
+	// (now deprecated) name for this PolicyValues.
+	AutomaticApproval PolicyValues `json:"Always,omitempty"`
+	// ManualApproval is for PolicyValues entries
+	// that are conditionally permitted to do
+	// an interaction, pending manual approval.
+	//
+	// Note: This is stored in the db as JSON.
+	// JSON tags set for back compat with previous
+	// (now deprecated) name for this PolicyValues.
+	ManualApproval PolicyValues `json:"WithApproval,omitempty"`
 }
 
 // Returns the default interaction policy
@@ -231,24 +239,24 @@ func DefaultInteractionPolicyFor(v Visibility) *InteractionPolicy {
 var defaultPolicyPublic = &InteractionPolicy{
 	CanLike: PolicyRules{
 		// Anyone can like.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValuePublic,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 	CanReply: PolicyRules{
 		// Anyone can reply.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValuePublic,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 	CanAnnounce: PolicyRules{
 		// Anyone can announce.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValuePublic,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 }
 
@@ -269,29 +277,29 @@ var defaultPolicyFollowersOnly = &InteractionPolicy{
 	CanLike: PolicyRules{
 		// Self, followers and
 		// mentioned can like.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValueAuthor,
 			PolicyValueFollowers,
 			PolicyValueMentioned,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 	CanReply: PolicyRules{
 		// Self, followers and
 		// mentioned can reply.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValueAuthor,
 			PolicyValueFollowers,
 			PolicyValueMentioned,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 	CanAnnounce: PolicyRules{
 		// Only self can announce.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValueAuthor,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 }
 
@@ -305,27 +313,27 @@ var defaultPolicyDirect = &InteractionPolicy{
 	CanLike: PolicyRules{
 		// Mentioned and self
 		// can always like.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValueAuthor,
 			PolicyValueMentioned,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 	CanReply: PolicyRules{
 		// Mentioned and self
 		// can always reply.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValueAuthor,
 			PolicyValueMentioned,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 	CanAnnounce: PolicyRules{
 		// Only self can announce.
-		Always: PolicyValues{
+		AutomaticApproval: PolicyValues{
 			PolicyValueAuthor,
 		},
-		WithApproval: make(PolicyValues, 0),
+		ManualApproval: make(PolicyValues, 0),
 	},
 }
 

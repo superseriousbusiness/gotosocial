@@ -487,7 +487,7 @@ func sizeofInteractionRequest() uintptr {
 		InteractingAccountID: exampleID,
 		InteractionURI:       exampleURI,
 		InteractionType:      gtsmodel.InteractionAnnounce,
-		URI:                  exampleURI,
+		ResponseURI:          exampleURI,
 		AcceptedAt:           exampleTime,
 	}))
 }

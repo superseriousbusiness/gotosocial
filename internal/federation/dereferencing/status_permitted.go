@@ -265,7 +265,7 @@ func (d *Dereferencer) isPermittedReply(
 		)
 	}
 
-	if replyable.Permitted() &&
+	if replyable.AutomaticApproval() &&
 		!replyable.MatchedOnCollection() {
 		// Reply is permitted and match was *not* made
 		// based on inclusion in a followers/following
@@ -375,7 +375,7 @@ func (d *Dereferencer) unpermittedByParent(
 		InteractingAccountID: reply.AccountID,
 		InteractionURI:       reply.URI,
 		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  uri,
+		ResponseURI:          uri,
 		RejectedAt:           time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
@@ -430,7 +430,7 @@ func (d *Dereferencer) isPermittedByApprovedByIRI(
 	// pending approval, clear that now.
 	reply.PendingApproval = util.Ptr(false)
 	if thisReq != nil {
-		thisReq.URI = approvedByIRI
+		thisReq.ResponseURI = approvedByIRI
 		thisReq.AcceptedAt = time.Now()
 		thisReq.RejectedAt = time.Time{}
 		err := d.state.DB.UpdateInteractionRequest(
@@ -483,7 +483,7 @@ func (d *Dereferencer) rejectedByPolicy(
 		// request is marked as rejected.
 		thisReq.RejectedAt = time.Now()
 		thisReq.AcceptedAt = time.Time{}
-		thisReq.URI = rejectURI
+		thisReq.ResponseURI = rejectURI
 		err := d.state.DB.UpdateInteractionRequest(
 			ctx,
 			thisReq,
@@ -507,7 +507,7 @@ func (d *Dereferencer) rejectedByPolicy(
 		InteractingAccountID: reply.AccountID,
 		InteractionURI:       reply.URI,
 		InteractionType:      gtsmodel.InteractionReply,
-		URI:                  rejectURI,
+		ResponseURI:          rejectURI,
 		RejectedAt:           time.Now(),
 	}
 	err := d.state.DB.PutInteractionRequest(ctx, rejection)
@@ -569,7 +569,7 @@ func (d *Dereferencer) isPermittedBoost(
 		return false, nil
 	}
 
-	if boostable.Permitted() &&
+	if boostable.AutomaticApproval() &&
 		!boostable.MatchedOnCollection() {
 		// Booster is permitted to do this
 		// interaction, and didn't match on
