@@ -17,6 +17,8 @@ before:
   - yarn --cwd ./web/source install
   - yarn --cwd ./web/source ts-patch install # https://typia.io/docs/setup/#manual-setup
   - yarn --cwd ./web/source build
+  # Bundle all licenses into web/assets/all_licenses.txt
+  - ./scripts/bundle_licenses.sh
 
 # https://goreleaser.com/customization/build/
 builds:
