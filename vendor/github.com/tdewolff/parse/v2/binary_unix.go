@@ -22,12 +22,12 @@ func newBinaryReaderMmap(filename string) (*binaryReaderMmap, error) {
 	}
 	defer f.Close()
 
-	fi, err := f.Stat()
+	info, err := f.Stat()
 	if err != nil {
 		return nil, err
 	}
 
-	size := fi.Size()
+	size := info.Size()
 	if size == 0 {
 		// Treat (size == 0) as a special case, avoiding the syscall, since
 		// "man 2 mmap" says "the length... must be greater than 0".
@@ -38,9 +38,9 @@ func newBinaryReaderMmap(filename string) (*binaryReaderMmap, error) {
 			data: make([]byte, 0),
 		}, nil
 	} else if size < 0 {
-		return nil, fmt.Errorf("mmap: file %q has negative size", filename)
+		return nil, fmt.Errorf("mmap: file %s has negative size", filename)
 	} else if size != int64(int(size)) {
-		return nil, fmt.Errorf("mmap: file %q is too large", filename)
+		return nil, fmt.Errorf("mmap: file %s is too large", filename)
 	}
 
 	data, err := syscall.Mmap(int(f.Fd()), 0, int(size), syscall.PROT_READ, syscall.MAP_SHARED)

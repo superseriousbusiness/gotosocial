@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 export \
     MINIO_ADDR='127.0.0.1:8080' \
@@ -9,8 +9,7 @@ export \
     S3_DIR=$(mktemp -d)
 
 # Drop the test S3 bucket and kill minio on exit
-trap 'rm -rf "$S3_DIR"; [ $MINIO_PID -ne 0 ] && kill -9 $MINIO_PID' \
-    HUP INT QUIT ABRT KILL TERM EXIT
+trap 'rm -rf "$S3_DIR"; [ $MINIO_PID -ne 0 ] && kill -9 $MINIO_PID' EXIT
 
 # Create required S3 bucket dir
 mkdir -p "${S3_DIR}/${MINIO_BUCKET}"

@@ -273,8 +273,8 @@ codeberg.org/gruf/go-sched
 # codeberg.org/gruf/go-split v1.2.0
 ## explicit; go 1.20
 codeberg.org/gruf/go-split
-# codeberg.org/gruf/go-storage v0.2.0
-## explicit; go 1.22
+# codeberg.org/gruf/go-storage v0.2.1
+## explicit; go 1.23.0
 codeberg.org/gruf/go-storage
 codeberg.org/gruf/go-storage/disk
 codeberg.org/gruf/go-storage/internal
@@ -286,7 +286,7 @@ codeberg.org/gruf/go-structr
 # github.com/DmitriyVTitov/size v1.5.0
 ## explicit; go 1.14
 github.com/DmitriyVTitov/size
-# github.com/KimMachineGun/automemlimit v0.7.1
+# github.com/KimMachineGun/automemlimit v0.7.2
 ## explicit; go 1.22.0
 github.com/KimMachineGun/automemlimit/memlimit
 # github.com/Masterminds/goutils v1.1.1
@@ -666,8 +666,8 @@ github.com/mattn/go-isatty
 ## explicit; go 1.19
 github.com/microcosm-cc/bluemonday
 github.com/microcosm-cc/bluemonday/css
-# github.com/miekg/dns v1.1.65
-## explicit; go 1.22.0
+# github.com/miekg/dns v1.1.66
+## explicit; go 1.23.0
 github.com/miekg/dns
 # github.com/minio/crc64nvme v1.0.1
 ## explicit; go 1.22
@@ -707,7 +707,7 @@ github.com/modern-go/reflect2
 # github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822
 ## explicit
 github.com/munnerz/goautoneg
-# github.com/ncruces/go-sqlite3 v0.25.1
+# github.com/ncruces/go-sqlite3 v0.25.2
 ## explicit; go 1.23.0
 github.com/ncruces/go-sqlite3
 github.com/ncruces/go-sqlite3/driver
@@ -804,7 +804,7 @@ github.com/sourcegraph/conc/panics
 github.com/spf13/afero
 github.com/spf13/afero/internal/common
 github.com/spf13/afero/mem
-# github.com/spf13/cast v1.7.1
+# github.com/spf13/cast v1.8.0
 ## explicit; go 1.19
 github.com/spf13/cast
 # github.com/spf13/cobra v1.9.1
@@ -830,12 +830,12 @@ github.com/stretchr/testify/suite
 # github.com/subosito/gotenv v1.6.0
 ## explicit; go 1.18
 github.com/subosito/gotenv
-# github.com/tdewolff/minify/v2 v2.23.1
-## explicit; go 1.18.0
+# github.com/tdewolff/minify/v2 v2.23.5
+## explicit; go 1.17
 github.com/tdewolff/minify/v2
 github.com/tdewolff/minify/v2/html
-# github.com/tdewolff/parse/v2 v2.7.23
-## explicit; go 1.13
+# github.com/tdewolff/parse/v2 v2.8.0
+## explicit; go 1.11
 github.com/tdewolff/parse/v2
 github.com/tdewolff/parse/v2/buffer
 github.com/tdewolff/parse/v2/html
@@ -1123,7 +1123,7 @@ go.uber.org/multierr
 # golang.org/x/arch v0.16.0
 ## explicit; go 1.23.0
 golang.org/x/arch/x86/x86asm
-# golang.org/x/crypto v0.37.0
+# golang.org/x/crypto v0.38.0
 ## explicit; go 1.23.0
 golang.org/x/crypto/acme
 golang.org/x/crypto/acme/autocert
@@ -1147,7 +1147,7 @@ golang.org/x/crypto/ssh/internal/bcrypt_pbkdf
 # golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 ## explicit; go 1.23.0
 golang.org/x/exp/constraints
-# golang.org/x/image v0.26.0
+# golang.org/x/image v0.27.0
 ## explicit; go 1.23.0
 golang.org/x/image/riff
 golang.org/x/image/vp8
@@ -1158,7 +1158,7 @@ golang.org/x/image/webp
 golang.org/x/mod/internal/lazyregexp
 golang.org/x/mod/module
 golang.org/x/mod/semver
-# golang.org/x/net v0.39.0
+# golang.org/x/net v0.40.0
 ## explicit; go 1.23.0
 golang.org/x/net/bpf
 golang.org/x/net/context
@@ -1177,21 +1177,21 @@ golang.org/x/net/ipv4
 golang.org/x/net/ipv6
 golang.org/x/net/publicsuffix
 golang.org/x/net/trace
-# golang.org/x/oauth2 v0.29.0
+# golang.org/x/oauth2 v0.30.0
 ## explicit; go 1.23.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.13.0
+# golang.org/x/sync v0.14.0
 ## explicit; go 1.23.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/semaphore
-# golang.org/x/sys v0.32.0
+# golang.org/x/sys v0.33.0
 ## explicit; go 1.23.0
 golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/text v0.24.0
+# golang.org/x/text v0.25.0
 ## explicit; go 1.23.0
 golang.org/x/text/cases
 golang.org/x/text/encoding
@@ -1213,7 +1213,7 @@ golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
 golang.org/x/text/width
-# golang.org/x/tools v0.31.0
+# golang.org/x/tools v0.32.0
 ## explicit; go 1.23.0
 golang.org/x/tools/go/ast/astutil
 golang.org/x/tools/go/gcexportdata

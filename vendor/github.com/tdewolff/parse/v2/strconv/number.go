@@ -10,7 +10,7 @@ import (
 func ParseNumber(b []byte, groupSym rune, decSym rune) (int64, int, int) {
 	n, dec := 0, 0
 	sign := int64(1)
-	price := int64(0)
+	num := int64(0)
 	hasDecimals := false
 	if 0 < len(b) && b[0] == '-' {
 		sign = -1
@@ -19,13 +19,13 @@ func ParseNumber(b []byte, groupSym rune, decSym rune) (int64, int, int) {
 	for n < len(b) {
 		if '0' <= b[n] && b[n] <= '9' {
 			digit := sign * int64(b[n]-'0')
-			if sign == 1 && (math.MaxInt64/10 < price || math.MaxInt64-digit < price*10) {
+			if sign == 1 && (math.MaxInt64/10 < num || math.MaxInt64-digit < num*10) {
 				break
-			} else if sign == -1 && (price < math.MinInt64/10 || price*10 < math.MinInt64-digit) {
+			} else if sign == -1 && (num < math.MinInt64/10 || num*10 < math.MinInt64-digit) {
 				break
 			}
-			price *= 10
-			price += digit
+			num *= 10
+			num += digit
 			if hasDecimals {
 				dec++
 			}
@@ -39,11 +39,11 @@ func ParseNumber(b []byte, groupSym rune, decSym rune) (int64, int, int) {
 			break
 		}
 	}
-	return price, dec, n
+	return num, dec, n
 }
 
 // AppendNumber will append an int64 formatted as a number with the given number of decimal digits.
-func AppendNumber(b []byte, price int64, dec int, groupSize int, groupSym rune, decSym rune) []byte {
+func AppendNumber(b []byte, num int64, dec int, groupSize int, groupSym rune, decSym rune) []byte {
 	if dec < 0 {
 		dec = 0
 	}
@@ -55,12 +55,12 @@ func AppendNumber(b []byte, price int64, dec int, groupSize int, groupSym rune, 
 	}
 
 	sign := int64(1)
-	if price < 0 {
+	if num < 0 {
 		sign = -1
 	}
 
 	// calculate size
-	n := LenInt(price)
+	n := LenInt(num)
 	if dec < n && 0 < groupSize && groupSym != 0 {
 		n += utf8.RuneLen(groupSym) * (n - dec - 1) / groupSize
 	}
@@ -86,8 +86,8 @@ func AppendNumber(b []byte, price int64, dec int, groupSize int, groupSym rune, 
 	i += n - 1
 	if 0 < dec {
 		for 0 < dec {
-			c := byte(sign*(price%10)) + '0'
-			price /= 10
+			c := byte(sign*(num%10)) + '0'
+			num /= 10
 			b[i] = c
 			dec--
 			i--
@@ -97,7 +97,7 @@ func AppendNumber(b []byte, price int64, dec int, groupSize int, groupSym rune, 
 	}
 
 	// print integer-part
-	if price == 0 {
+	if num == 0 {
 		b[i] = '0'
 		if sign == -1 {
 			b[i-1] = '-'
@@ -105,14 +105,14 @@ func AppendNumber(b []byte, price int64, dec int, groupSize int, groupSym rune, 
 		return b
 	}
 	j := 0
-	for price != 0 {
+	for num != 0 {
 		if 0 < groupSize && groupSym != 0 && 0 < j && j%groupSize == 0 {
 			i -= utf8.RuneLen(groupSym)
 			utf8.EncodeRune(b[i+1:], groupSym)
 		}
 
-		c := byte(sign*(price%10)) + '0'
-		price /= 10
+		c := byte(sign*(num%10)) + '0'
+		num /= 10
 		b[i] = c
 		i--
 		j++

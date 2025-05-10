@@ -574,6 +574,16 @@ func (r *BinaryReader2) Read(b []byte) (int, error) {
 	return n, err
 }
 
+// ReadAt complies with io.ReaderAt.
+func (r *BinaryReader2) ReadAt(b []byte, off int64) (int, error) {
+	data, err := r.f.Bytes(len(b), off)
+	if err != nil && err != io.EOF {
+		return 0, err
+	}
+	n := copy(b, data)
+	return n, err
+}
+
 // ReadBytes reads n bytes.
 func (r *BinaryReader2) ReadBytes(n int) []byte {
 	data, err := r.f.Bytes(n, r.pos)
