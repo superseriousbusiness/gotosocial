@@ -18,23 +18,23 @@
 */ -}}
 
 {{- with . }}
-<section class="about-user" role="region" aria-labelledby="about-header">
-    <div class="col-header">
+<section id="profile-about-user" class="about-user" role="region" aria-labelledby="about-header">
+    <div id="profile-col-header" class="col-header">
         <h3 id="about-header">About<span class="sr-only">&nbsp;{{- .account.Username -}}</span></h3>
     </div>
     {{- if .account.Fields }}
     {{- include "profile_fields.tmpl" . | indent 1 }}
     {{- end }}
-    <h4 class="sr-only">Bio</h4>
-    <div class="bio p-note">
+    <div id="profile-bio" class="bio p-note">
+        <h4 class="sr-only">Bio</h4>
         {{- if .account.Note }}
         {{ emojify .account.Emojis (noescape .account.Note) }}
         {{- else }}
         <p>This GoToSocial user hasn't written a bio yet!</p>
         {{- end }}
     </div>
-    <h4 class="sr-only">Stats</h4>
-    <dl class="accountstats">
+    <dl id="profile-stats" class="accountstats">
+        <h4 class="sr-only">Stats</h4>
         <div class="stats-item">
             <dt class="joineddt text-cutoff">Joined</dt>
             <dd class="joineddd text-cutoff"><time datetime="{{- .account.CreatedAt -}}">{{- .account.CreatedAt | timestampVague -}}</time></dd>
