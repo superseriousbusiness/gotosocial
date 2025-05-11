@@ -14,15 +14,20 @@ GTS_PLATFORM="linux"
 GTS_ARCH="amd64"
 GTS_FILENAME="gotosocial_${GTS_PLATFORM}_${GTS_ARCH}.tar.gz"
 
-GITHUB_API_HOST="api.github.com"
-GITHUB_ORG="superseriousbusiness"
-GITHUB_REPO="gotosocial"
-GITHUB_BRANCH="main"
-GITHUB_ENDPOINT="https://${GITHUB_API_HOST}/repos/${GITHUB_ORG}/${GITHUB_REPO}/commits/${GITHUB_BRANCH}"
+API_HOST="codeberg.org"
+ORG="superseriousbusiness"
+REPO="gotosocial"
+BRANCH="main"
 
-echo "fetching latest hash from endpoint '${GITHUB_ENDPOINT}'"
-LATEST_HASH="$(curl --silent --fail --retry 5 --retry-max-time 180 --max-time 30 "${GITHUB_ENDPOINT}" | jq -r .sha)"
-echo "got latest hash = ${LATEST_HASH}"
+ENDPOINT="https://${API_HOST}/api/v1/repos/${ORG}/${REPO}/git/refs/heads/${BRANCH}"
+
+if [ $# -ge 1 ] && [ -n "$1" ]; then
+	LATEST_HASH=$1
+else
+	echo "fetching latest hash from endpoint '${ENDPOINT}'"
+	LATEST_HASH="$(curl --silent --fail --retry 5 --retry-max-time 180 --max-time 30 "${ENDPOINT}" | jq -r 'first(.[]|.object.sha)')"
+	echo "got latest hash = ${LATEST_HASH}"
+fi
 
 MINIO_HOST="s3.superseriousbusiness.org"
 MINIO_BUCKET="gotosocial-snapshots"
