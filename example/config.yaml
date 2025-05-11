@@ -362,29 +362,61 @@ instance-federation-mode: "blocklist"
 # Default: false
 instance-federation-spam-filter: false
 
-# Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=open in order
-# to see a list of instances that this instance 'peers' with. Even if set to 'false', then authenticated
-# users (members of the instance) will still be able to query the endpoint.
+# Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=open
+# in order to see a list of domains that this instance 'peers' with.
+#
+# Even if set to 'false', then authenticated users (members of the instance)
+# will still be able to query these endpoints using an OAuth token.
+#
 # Options: [true, false]
 # Default: false
 instance-expose-peers: false
 
-# Bool. Allow unauthenticated users to make queries to /api/v1/instance/peers?filter=suspended in order
-# to see a list of instances that this instance blocks/suspends. Even if set to 'false', then authenticated
-# users (members of the instance) will still be able to query the endpoint.
+# Bool. Allow unauthenticated users to make queries to the following instance API
+# endpoints in order to see a list of domains that this instance explicitly blocks,
+# including the public reason for each block:
 #
-# WARNING: Setting this variable to 'true' may result in your instance being scraped by blocklist scrapers.
+# - /api/v1/instance/peers?filter=blocklist
+# - /api/v1/instance/peers?filter=suspended (deprecated)
+# - /api/v1/instance/domain_blocks
+#
+# Even if set to 'false', then authenticated users (members of the instance)
+# will still be able to query these endpoints using an OAuth token.
+#
+# WARNING: Setting to 'true' may result in your instance being targeted by blocklist scrapers.
 # See: https://docs.gotosocial.org/en/latest/admin/domain_blocks/#block-announce-bots
 #
 # Options: [true, false]
 # Default: false
-instance-expose-suspended: false
+instance-expose-blocklist: false
 
-# Bool. Allow unauthenticated users to view /about/suspended,
-# showing the HTML rendered list of instances that this instance blocks/suspends.
+# Bool. Allow unauthenticated users to view /about/domain_blocks,
+# which shows an HTML-rendered list of domains that this instance blocks,
+# including the public reason for each block.
 # Options: [true, false]
 # Default: false
-instance-expose-suspended-web: false
+instance-expose-blocklist-web: false
+
+# Bool. Allow unauthenticated users to make queries to the following instance API
+# endpoints in order to see a list of domains that this instance explicitly allows
+# including the public reason for each allow:
+#
+# - /api/v1/instance/peers?filter=allowlist
+# - /api/v1/instance/domain_allows
+#
+# Even if set to 'false', then authenticated users (members of the instance)
+# will still be able to query these endpoints using an OAuth token.
+#
+# Options: [true, false]
+# Default: false
+instance-expose-allowlist: false
+
+# Bool. Allow unauthenticated users to view /about/domain_allows,
+# which shows an HTML-rendered list of domains that this instance allows,
+# including the public reason for each allow.
+# Options: [true, false]
+# Default: false
+instance-expose-blocklist-web: false
 
 # Bool. Allow unauthenticated users to make queries to /api/v1/timelines/public in order
 # to see a list of public posts on this server. Even if set to 'false', then authenticated

@@ -88,8 +88,10 @@ func testDefaults() config.Configuration {
 		InstanceFederationMode:         config.InstanceFederationModeDefault,
 		InstanceFederationSpamFilter:   true,
 		InstanceExposePeers:            true,
-		InstanceExposeSuspended:        true,
-		InstanceExposeSuspendedWeb:     true,
+		InstanceExposeBlocklist:        true,
+		InstanceExposeBlocklistWeb:     true,
+		InstanceExposeAllowlist:        true,
+		InstanceExposeAllowlistWeb:     true,
 		InstanceDeliverToSharedInboxes: true,
 		InstanceLanguages: language.Languages{
 			{

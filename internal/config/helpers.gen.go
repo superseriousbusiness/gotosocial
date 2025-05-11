@@ -63,8 +63,10 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.String("instance-federation-mode", cfg.InstanceFederationMode, "Set instance federation mode.")
 	flags.Bool("instance-federation-spam-filter", cfg.InstanceFederationSpamFilter, "Enable basic spam filter heuristics for messages coming from other instances, and drop messages identified as spam")
 	flags.Bool("instance-expose-peers", cfg.InstanceExposePeers, "Allow unauthenticated users to query /api/v1/instance/peers?filter=open")
-	flags.Bool("instance-expose-suspended", cfg.InstanceExposeSuspended, "Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended")
-	flags.Bool("instance-expose-suspended-web", cfg.InstanceExposeSuspendedWeb, "Expose list of suspended instances as webpage on /about/suspended")
+	flags.Bool("instance-expose-blocklist", cfg.InstanceExposeBlocklist, "Expose list of blocked domains via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=blocked and /api/v1/instance/domain_blocks")
+	flags.Bool("instance-expose-blocklist-web", cfg.InstanceExposeBlocklistWeb, "Expose list of explicitly blocked domains as webpage on /about/domain_blocks")
+	flags.Bool("instance-expose-allowlist", cfg.InstanceExposeAllowlist, "Expose list of allowed domains via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=allowed and /api/v1/instance/domain_allows")
+	flags.Bool("instance-expose-allowlist-web", cfg.InstanceExposeAllowlistWeb, "Expose list of explicitly allowed domains as webpage on /about/domain_allows")
 	flags.Bool("instance-expose-public-timeline", cfg.InstanceExposePublicTimeline, "Allow unauthenticated users to query /api/v1/timelines/public")
 	flags.Bool("instance-deliver-to-shared-inboxes", cfg.InstanceDeliverToSharedInboxes, "Deliver federated messages to shared inboxes, if they're available.")
 	flags.Bool("instance-inject-mastodon-version", cfg.InstanceInjectMastodonVersion, "This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection")
@@ -206,7 +208,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 181)
+	cfgmap := make(map[string]any, 183)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -241,8 +243,10 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["instance-federation-mode"] = cfg.InstanceFederationMode
 	cfgmap["instance-federation-spam-filter"] = cfg.InstanceFederationSpamFilter
 	cfgmap["instance-expose-peers"] = cfg.InstanceExposePeers
-	cfgmap["instance-expose-suspended"] = cfg.InstanceExposeSuspended
-	cfgmap["instance-expose-suspended-web"] = cfg.InstanceExposeSuspendedWeb
+	cfgmap["instance-expose-blocklist"] = cfg.InstanceExposeBlocklist
+	cfgmap["instance-expose-blocklist-web"] = cfg.InstanceExposeBlocklistWeb
+	cfgmap["instance-expose-allowlist"] = cfg.InstanceExposeAllowlist
+	cfgmap["instance-expose-allowlist-web"] = cfg.InstanceExposeAllowlistWeb
 	cfgmap["instance-expose-public-timeline"] = cfg.InstanceExposePublicTimeline
 	cfgmap["instance-deliver-to-shared-inboxes"] = cfg.InstanceDeliverToSharedInboxes
 	cfgmap["instance-inject-mastodon-version"] = cfg.InstanceInjectMastodonVersion
@@ -672,19 +676,35 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		}
 	}
 
-	if ival, ok := cfgmap["instance-expose-suspended"]; ok {
+	if ival, ok := cfgmap["instance-expose-blocklist"]; ok {
 		var err error
-		cfg.InstanceExposeSuspended, err = cast.ToBoolE(ival)
+		cfg.InstanceExposeBlocklist, err = cast.ToBoolE(ival)
 		if err != nil {
-			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-suspended': %w", ival, err)
+			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-blocklist': %w", ival, err)
 		}
 	}
 
-	if ival, ok := cfgmap["instance-expose-suspended-web"]; ok {
+	if ival, ok := cfgmap["instance-expose-blocklist-web"]; ok {
 		var err error
-		cfg.InstanceExposeSuspendedWeb, err = cast.ToBoolE(ival)
+		cfg.InstanceExposeBlocklistWeb, err = cast.ToBoolE(ival)
 		if err != nil {
-			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-suspended-web': %w", ival, err)
+			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-blocklist-web': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["instance-expose-allowlist"]; ok {
+		var err error
+		cfg.InstanceExposeAllowlist, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-allowlist': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["instance-expose-allowlist-web"]; ok {
+		var err error
+		cfg.InstanceExposeAllowlistWeb, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-allowlist-web': %w", ival, err)
 		}
 	}
 
@@ -2732,55 +2752,105 @@ func GetInstanceExposePeers() bool { return global.GetInstanceExposePeers() }
 // SetInstanceExposePeers safely sets the value for global configuration 'InstanceExposePeers' field
 func SetInstanceExposePeers(v bool) { global.SetInstanceExposePeers(v) }
 
-// InstanceExposeSuspendedFlag returns the flag name for the 'InstanceExposeSuspended' field
-func InstanceExposeSuspendedFlag() string { return "instance-expose-suspended" }
+// InstanceExposeBlocklistFlag returns the flag name for the 'InstanceExposeBlocklist' field
+func InstanceExposeBlocklistFlag() string { return "instance-expose-blocklist" }
 
-// GetInstanceExposeSuspended safely fetches the Configuration value for state's 'InstanceExposeSuspended' field
-func (st *ConfigState) GetInstanceExposeSuspended() (v bool) {
+// GetInstanceExposeBlocklist safely fetches the Configuration value for state's 'InstanceExposeBlocklist' field
+func (st *ConfigState) GetInstanceExposeBlocklist() (v bool) {
 	st.mutex.RLock()
-	v = st.config.InstanceExposeSuspended
+	v = st.config.InstanceExposeBlocklist
 	st.mutex.RUnlock()
 	return
 }
 
-// SetInstanceExposeSuspended safely sets the Configuration value for state's 'InstanceExposeSuspended' field
-func (st *ConfigState) SetInstanceExposeSuspended(v bool) {
+// SetInstanceExposeBlocklist safely sets the Configuration value for state's 'InstanceExposeBlocklist' field
+func (st *ConfigState) SetInstanceExposeBlocklist(v bool) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.InstanceExposeSuspended = v
+	st.config.InstanceExposeBlocklist = v
 	st.reloadToViper()
 }
 
-// GetInstanceExposeSuspended safely fetches the value for global configuration 'InstanceExposeSuspended' field
-func GetInstanceExposeSuspended() bool { return global.GetInstanceExposeSuspended() }
+// GetInstanceExposeBlocklist safely fetches the value for global configuration 'InstanceExposeBlocklist' field
+func GetInstanceExposeBlocklist() bool { return global.GetInstanceExposeBlocklist() }
 
-// SetInstanceExposeSuspended safely sets the value for global configuration 'InstanceExposeSuspended' field
-func SetInstanceExposeSuspended(v bool) { global.SetInstanceExposeSuspended(v) }
+// SetInstanceExposeBlocklist safely sets the value for global configuration 'InstanceExposeBlocklist' field
+func SetInstanceExposeBlocklist(v bool) { global.SetInstanceExposeBlocklist(v) }
 
-// InstanceExposeSuspendedWebFlag returns the flag name for the 'InstanceExposeSuspendedWeb' field
-func InstanceExposeSuspendedWebFlag() string { return "instance-expose-suspended-web" }
+// InstanceExposeBlocklistWebFlag returns the flag name for the 'InstanceExposeBlocklistWeb' field
+func InstanceExposeBlocklistWebFlag() string { return "instance-expose-blocklist-web" }
 
-// GetInstanceExposeSuspendedWeb safely fetches the Configuration value for state's 'InstanceExposeSuspendedWeb' field
-func (st *ConfigState) GetInstanceExposeSuspendedWeb() (v bool) {
+// GetInstanceExposeBlocklistWeb safely fetches the Configuration value for state's 'InstanceExposeBlocklistWeb' field
+func (st *ConfigState) GetInstanceExposeBlocklistWeb() (v bool) {
 	st.mutex.RLock()
-	v = st.config.InstanceExposeSuspendedWeb
+	v = st.config.InstanceExposeBlocklistWeb
 	st.mutex.RUnlock()
 	return
 }
 
-// SetInstanceExposeSuspendedWeb safely sets the Configuration value for state's 'InstanceExposeSuspendedWeb' field
-func (st *ConfigState) SetInstanceExposeSuspendedWeb(v bool) {
+// SetInstanceExposeBlocklistWeb safely sets the Configuration value for state's 'InstanceExposeBlocklistWeb' field
+func (st *ConfigState) SetInstanceExposeBlocklistWeb(v bool) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
-	st.config.InstanceExposeSuspendedWeb = v
+	st.config.InstanceExposeBlocklistWeb = v
 	st.reloadToViper()
 }
 
-// GetInstanceExposeSuspendedWeb safely fetches the value for global configuration 'InstanceExposeSuspendedWeb' field
-func GetInstanceExposeSuspendedWeb() bool { return global.GetInstanceExposeSuspendedWeb() }
+// GetInstanceExposeBlocklistWeb safely fetches the value for global configuration 'InstanceExposeBlocklistWeb' field
+func GetInstanceExposeBlocklistWeb() bool { return global.GetInstanceExposeBlocklistWeb() }
 
-// SetInstanceExposeSuspendedWeb safely sets the value for global configuration 'InstanceExposeSuspendedWeb' field
-func SetInstanceExposeSuspendedWeb(v bool) { global.SetInstanceExposeSuspendedWeb(v) }
+// SetInstanceExposeBlocklistWeb safely sets the value for global configuration 'InstanceExposeBlocklistWeb' field
+func SetInstanceExposeBlocklistWeb(v bool) { global.SetInstanceExposeBlocklistWeb(v) }
+
+// InstanceExposeAllowlistFlag returns the flag name for the 'InstanceExposeAllowlist' field
+func InstanceExposeAllowlistFlag() string { return "instance-expose-allowlist" }
+
+// GetInstanceExposeAllowlist safely fetches the Configuration value for state's 'InstanceExposeAllowlist' field
+func (st *ConfigState) GetInstanceExposeAllowlist() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceExposeAllowlist
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceExposeAllowlist safely sets the Configuration value for state's 'InstanceExposeAllowlist' field
+func (st *ConfigState) SetInstanceExposeAllowlist(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeAllowlist = v
+	st.reloadToViper()
+}
+
+// GetInstanceExposeAllowlist safely fetches the value for global configuration 'InstanceExposeAllowlist' field
+func GetInstanceExposeAllowlist() bool { return global.GetInstanceExposeAllowlist() }
+
+// SetInstanceExposeAllowlist safely sets the value for global configuration 'InstanceExposeAllowlist' field
+func SetInstanceExposeAllowlist(v bool) { global.SetInstanceExposeAllowlist(v) }
+
+// InstanceExposeAllowlistWebFlag returns the flag name for the 'InstanceExposeAllowlistWeb' field
+func InstanceExposeAllowlistWebFlag() string { return "instance-expose-allowlist-web" }
+
+// GetInstanceExposeAllowlistWeb safely fetches the Configuration value for state's 'InstanceExposeAllowlistWeb' field
+func (st *ConfigState) GetInstanceExposeAllowlistWeb() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceExposeAllowlistWeb
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceExposeAllowlistWeb safely sets the Configuration value for state's 'InstanceExposeAllowlistWeb' field
+func (st *ConfigState) SetInstanceExposeAllowlistWeb(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeAllowlistWeb = v
+	st.reloadToViper()
+}
+
+// GetInstanceExposeAllowlistWeb safely fetches the value for global configuration 'InstanceExposeAllowlistWeb' field
+func GetInstanceExposeAllowlistWeb() bool { return global.GetInstanceExposeAllowlistWeb() }
+
+// SetInstanceExposeAllowlistWeb safely sets the value for global configuration 'InstanceExposeAllowlistWeb' field
+func SetInstanceExposeAllowlistWeb(v bool) { global.SetInstanceExposeAllowlistWeb(v) }
 
 // InstanceExposePublicTimelineFlag returns the flag name for the 'InstanceExposePublicTimeline' field
 func InstanceExposePublicTimelineFlag() string { return "instance-expose-public-timeline" }
