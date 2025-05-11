@@ -30,6 +30,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 )
 
 // notifyPendingReply notifies the account replied-to
@@ -555,19 +556,67 @@ func (s *Surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) erro
 	return errs.Combine()
 }
 
+func (s *Surface) notifyStatusEdit(
+	ctx context.Context,
+	status *gtsmodel.Status,
+	editID string,
+) error {
+	// Get local-only interactions (we can't/don't notify remotes).
+	interactions, err := s.State.DB.GetStatusInteractions(ctx, status.ID, true)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return gtserror.Newf("db error getting status interactions: %w", err)
+	}
+
+	// Deduplicate interactions by account ID,
+	// we don't need to notify someone twice
+	// if they've both boosted *and* replied
+	// to an edited status, for example.
+	interactions = xslices.DeduplicateFunc(
+		interactions,
+		func(v gtsmodel.Interaction) string {
+			return v.GetAccount().ID
+		},
+	)
+
+	// Notify each account that's
+	// interacted with the status.
+	var errs gtserror.MultiError
+	for _, i := range interactions {
+		targetAcct := i.GetAccount()
+		if targetAcct.ID == status.AccountID {
+			// Don't notify an account
+			// if they've interacted
+			// with their *own* status.
+			continue
+		}
+
+		if err := s.Notify(ctx,
+			gtsmodel.NotificationUpdate,
+			targetAcct,
+			status.Account,
+			editID,
+		); err != nil {
+			errs.Appendf("error notifying status edit: %w", err)
+			continue
+		}
+	}
+
+	return errs.Combine()
+}
+
 func getNotifyLockURI(
 	notificationType gtsmodel.NotificationType,
 	targetAccount *gtsmodel.Account,
 	originAccount *gtsmodel.Account,
-	statusID string,
+	statusOrEditID string,
 ) string {
 	builder := strings.Builder{}
 	builder.WriteString("notification:?")
 	builder.WriteString("type=" + notificationType.String())
-	builder.WriteString("&target=" + targetAccount.URI)
-	builder.WriteString("&origin=" + originAccount.URI)
-	if statusID != "" {
-		builder.WriteString("&statusID=" + statusID)
+	builder.WriteString("&targetAcct=" + targetAccount.URI)
+	builder.WriteString("&originAcct=" + originAccount.URI)
+	if statusOrEditID != "" {
+		builder.WriteString("&statusOrEditID=" + statusOrEditID)
 	}
 	return builder.String()
 }
@@ -582,13 +631,13 @@ func getNotifyLockURI(
 // for non-local first.
 //
 // targetAccount and originAccount must be
-// set, but statusID can be an empty string.
+// set, but statusOrEditID can be empty.
 func (s *Surface) Notify(
 	ctx context.Context,
 	notificationType gtsmodel.NotificationType,
 	targetAccount *gtsmodel.Account,
 	originAccount *gtsmodel.Account,
-	statusID string,
+	statusOrEditID string,
 ) error {
 	if targetAccount.IsRemote() {
 		// nothing to do.
@@ -601,7 +650,7 @@ func (s *Surface) Notify(
 		notificationType,
 		targetAccount,
 		originAccount,
-		statusID,
+		statusOrEditID,
 	)
 	unlock := s.State.ProcessingLocks.Lock(lockURI)
 
@@ -617,7 +666,7 @@ func (s *Surface) Notify(
 		notificationType,
 		targetAccount.ID,
 		originAccount.ID,
-		statusID,
+		statusOrEditID,
 	); err == nil {
 		// Notification exists;
 		// nothing to do.
@@ -636,7 +685,7 @@ func (s *Surface) Notify(
 		TargetAccount:    targetAccount,
 		OriginAccountID:  originAccount.ID,
 		OriginAccount:    originAccount,
-		StatusID:         statusID,
+		StatusOrEditID:   statusOrEditID,
 	}
 
 	if err := s.State.DB.PutNotification(ctx, notif); err != nil {

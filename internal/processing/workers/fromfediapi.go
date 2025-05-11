@@ -1010,6 +1010,14 @@ func (p *fediAPI) UpdateStatus(ctx context.Context, fMsg *messages.FromFediAPI) 
 		}
 	}
 
+	// Notify of the latest edit.
+	if editsLen := len(status.EditIDs); editsLen != 0 {
+		editID := status.EditIDs[editsLen-1]
+		if err := p.surface.notifyStatusEdit(ctx, status, editID); err != nil {
+			log.Errorf(ctx, "error notifying status edit: %v", err)
+		}
+	}
+
 	// Push message that the status has been edited to streams.
 	if err := p.surface.timelineStatusUpdate(ctx, status); err != nil {
 		log.Errorf(ctx, "error streaming status edit: %v", err)

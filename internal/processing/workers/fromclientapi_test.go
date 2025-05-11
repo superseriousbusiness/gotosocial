@@ -2149,6 +2149,96 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusWithFollowedHashtag(
 	suite.checkNotWebPushed(testStructs.WebPushSender, receivingAccount.ID)
 }
 
+// Test that when someone edits a status that's been interacted with,
+// the interacter gets a notification that the status has been edited.
+func (suite *FromClientAPITestSuite) TestProcessUpdateStatusInteractedWith() {
+	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
+	defer testrig.TearDownTestStructs(testStructs)
+
+	var (
+		ctx              = context.Background()
+		postingAccount   = suite.testAccounts["local_account_1"]
+		receivingAccount = suite.testAccounts["admin_account"]
+		streams          = suite.openStreams(ctx,
+			testStructs.Processor,
+			receivingAccount,
+			nil,
+		)
+		notifStream = streams[stream.TimelineNotifications]
+	)
+
+	// Copy the test status.
+	//
+	// This is one that the receiving account
+	// has interacted with (by replying).
+	testStatus := new(gtsmodel.Status)
+	*testStatus = *suite.testStatuses["local_account_1_status_1"]
+
+	// Create + store an edit.
+	edit := &gtsmodel.StatusEdit{
+		// Just set the ID + status ID, other
+		// fields don't matter for this test.
+		ID:       "01JTR74W15VS6A6MK15N5JVJ55",
+		StatusID: testStatus.ID,
+	}
+
+	if err := testStructs.State.DB.PutStatusEdit(ctx, edit); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Set edit on status as
+	// it would be for real.
+	testStatus.EditIDs = []string{edit.ID}
+	testStatus.Edits = []*gtsmodel.StatusEdit{edit}
+
+	// Update the status.
+	if err := testStructs.Processor.Workers().ProcessFromClientAPI(
+		ctx,
+		&messages.FromClientAPI{
+			APObjectType:   ap.ObjectNote,
+			APActivityType: ap.ActivityUpdate,
+			GTSModel:       testStatus,
+			Origin:         postingAccount,
+		},
+	); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Wait for a notification to appear for the status.
+	var notif *gtsmodel.Notification
+	if !testrig.WaitFor(func() bool {
+		var err error
+		notif, err = testStructs.State.DB.GetNotification(
+			ctx,
+			gtsmodel.NotificationUpdate,
+			receivingAccount.ID,
+			postingAccount.ID,
+			edit.ID,
+		)
+		return err == nil
+	}) {
+		suite.FailNow("timed out waiting for edited status notification")
+	}
+
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil, nil)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	notifJSON, err := json.Marshal(apiNotif)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	// Check notif in stream.
+	suite.checkStreamed(
+		notifStream,
+		true,
+		string(notifJSON),
+		stream.EventTypeNotification,
+	)
+}
+
 func (suite *FromClientAPITestSuite) TestProcessStatusDelete() {
 	testStructs := testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 	defer testrig.TearDownTestStructs(testStructs)

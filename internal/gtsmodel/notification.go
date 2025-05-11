@@ -32,8 +32,8 @@ type Notification struct {
 	TargetAccount    *Account         `bun:"-"`                                                           // Account corresponding to TargetAccountID. Can be nil, always check first + select using ID if necessary.
 	OriginAccountID  string           `bun:"type:CHAR(26),nullzero,notnull"`                              // ID of the account that performed the action that created the notification.
 	OriginAccount    *Account         `bun:"-"`                                                           // Account corresponding to OriginAccountID. Can be nil, always check first + select using ID if necessary.
-	StatusID         string           `bun:"type:CHAR(26),nullzero"`                                      // If the notification pertains to a status, what is the database ID of that status?
-	Status           *Status          `bun:"-"`                                                           // Status corresponding to StatusID. Can be nil, always check first + select using ID if necessary.
+	StatusOrEditID   string           `bun:"status_id,type:CHAR(26),nullzero"`                            // If the notification pertains to a status or a status edit event, what is the database ID of the status or status edit?
+	Status           *Status          `bun:"-"`                                                           // Status corresponding to StatusOrEditID. Can be nil, always check first + select using ID if necessary.
 	Read             *bool            `bun:",nullzero,notnull,default:false"`                             // Notification has been seen/read
 }
 

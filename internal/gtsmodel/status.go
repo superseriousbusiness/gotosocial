@@ -89,6 +89,13 @@ func (s *Status) GetAccountID() string {
 	return s.AccountID
 }
 
+// GetAccount returns the account that owns
+// this status. May be nil if status not populated.
+// Fulfils Interaction interface.
+func (s *Status) GetAccount() *Account {
+	return s.Account
+}
+
 // GetBoostOfID implements timeline.Timelineable{}.
 func (s *Status) GetBoostOfID() string {
 	return s.BoostOfID

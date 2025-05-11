@@ -1155,7 +1155,7 @@ func (c *Caches) initNotification() {
 	c.DB.Notification.Init(structr.CacheConfig[*gtsmodel.Notification]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
-			{Fields: "NotificationType,TargetAccountID,OriginAccountID,StatusID", AllowZero: true},
+			{Fields: "NotificationType,TargetAccountID,OriginAccountID,StatusOrEditID", AllowZero: true},
 		},
 		MaxSize:   cap,
 		IgnoreErr: ignoreErrors,
