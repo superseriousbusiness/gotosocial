@@ -20,8 +20,7 @@ package migrations
 import (
 	"context"
 
-	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20240809134448_interaction_requests_client_api"
 
 	"github.com/uptrace/bun"
 )
@@ -93,7 +92,7 @@ func init() {
 			// For each currently pending status, check whether it's a reply or
 			// a boost, and insert a corresponding interaction request into the db.
 			for _, pendingStatus := range pendingStatuses {
-				req := typeutils.StatusToInteractionRequest(pendingStatus)
+				req := gtsmodel.StatusToInteractionReq(pendingStatus)
 				if _, err := tx.
 					NewInsert().
 					Model(req).
@@ -121,7 +120,7 @@ func init() {
 			}
 
 			for _, pendingFave := range pendingFaves {
-				req := typeutils.StatusFaveToInteractionRequest(pendingFave)
+				req := gtsmodel.StatusFaveToInteractionRequest(pendingFave)
 
 				if _, err := tx.
 					NewInsert().

@@ -40,11 +40,8 @@ type Status struct {
 	InReplyToID              string     `bun:"type:CHAR(26),nullzero"`
 	InReplyToURI             string     `bun:",nullzero"`
 	InReplyToAccountID       string     `bun:"type:CHAR(26),nullzero"`
-	InReplyTo                *Status    `bun:"-"`
 	BoostOfID                string     `bun:"type:CHAR(26),nullzero"`
-	BoostOfURI               string     `bun:"-"`
 	BoostOfAccountID         string     `bun:"type:CHAR(26),nullzero"`
-	BoostOf                  *Status    `bun:"-"`
 	ThreadID                 string     `bun:"type:CHAR(26),nullzero"`
 	PollID                   string     `bun:"type:CHAR(26),nullzero"`
 	ContentWarning           string     `bun:",nullzero"`
@@ -60,23 +57,14 @@ type Status struct {
 	Likeable                 *bool      `bun:",notnull"`
 }
 
-// Visibility represents the visibility granularity of a status.
 type Visibility string
 
 const (
-	// VisibilityNone means nobody can see this.
-	// It's only used for web status visibility.
-	VisibilityNone Visibility = "none"
-	// VisibilityPublic means this status will be visible to everyone on all timelines.
-	VisibilityPublic Visibility = "public"
-	// VisibilityUnlocked means this status will be visible to everyone, but will only show on home timeline to followers, and in lists.
-	VisibilityUnlocked Visibility = "unlocked"
-	// VisibilityFollowersOnly means this status is viewable to followers only.
+	VisibilityNone          Visibility = "none"
+	VisibilityPublic        Visibility = "public"
+	VisibilityUnlocked      Visibility = "unlocked"
 	VisibilityFollowersOnly Visibility = "followers_only"
-	// VisibilityMutualsOnly means this status is visible to mutual followers only.
-	VisibilityMutualsOnly Visibility = "mutuals_only"
-	// VisibilityDirect means this status is visible only to mentioned recipients.
-	VisibilityDirect Visibility = "direct"
-	// VisibilityDefault is used when no other setting can be found.
-	VisibilityDefault Visibility = VisibilityUnlocked
+	VisibilityMutualsOnly   Visibility = "mutuals_only"
+	VisibilityDirect        Visibility = "direct"
+	VisibilityDefault       Visibility = VisibilityUnlocked
 )
