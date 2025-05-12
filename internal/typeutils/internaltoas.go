@@ -1947,7 +1947,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canLikeAlwaysProp,
 		status,
-		interactionPolicy.CanLike.Always,
+		interactionPolicy.CanLike.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canLike.always: %w", err)
 	}
@@ -1960,7 +1960,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canLikeApprovalRequiredProp,
 		status,
-		interactionPolicy.CanLike.WithApproval,
+		interactionPolicy.CanLike.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canLike.approvalRequired: %w", err)
 	}
@@ -1985,7 +1985,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canReplyAlwaysProp,
 		status,
-		interactionPolicy.CanReply.Always,
+		interactionPolicy.CanReply.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canReply.always: %w", err)
 	}
@@ -1998,7 +1998,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canReplyApprovalRequiredProp,
 		status,
-		interactionPolicy.CanReply.WithApproval,
+		interactionPolicy.CanReply.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canReply.approvalRequired: %w", err)
 	}
@@ -2023,7 +2023,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canAnnounceAlwaysProp,
 		status,
-		interactionPolicy.CanAnnounce.Always,
+		interactionPolicy.CanAnnounce.AutomaticApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canAnnounce.always: %w", err)
 	}
@@ -2036,7 +2036,7 @@ func (c *Converter) InteractionPolicyToASInteractionPolicy(
 	if err := populateValuesForProp(
 		canAnnounceApprovalRequiredProp,
 		status,
-		interactionPolicy.CanAnnounce.WithApproval,
+		interactionPolicy.CanAnnounce.ManualApproval,
 	); err != nil {
 		return nil, gtserror.Newf("error setting canAnnounce.approvalRequired: %w", err)
 	}

@@ -2245,13 +2245,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
 				CanLike: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 				CanReply: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 				CanAnnounce: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
@@ -2426,13 +2426,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
 				CanLike: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 				CanReply: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 				CanAnnounce: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
@@ -2458,14 +2458,14 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(true),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
 				CanLike: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 				CanReply: gtsmodel.PolicyRules{
-					Always:       gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
-					WithApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+					ManualApproval:    gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 				CanAnnounce: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,
@@ -2490,13 +2490,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Federated:                util.Ptr(false),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
 				CanLike: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 				CanReply: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 				CanAnnounce: gtsmodel.PolicyRules{
-					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
+					AutomaticApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 			},
 			ActivityStreamsType: ap.ObjectNote,

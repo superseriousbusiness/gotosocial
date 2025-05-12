@@ -96,7 +96,7 @@ func (p *Processor) BoostCreate(
 	// Derive pendingApproval status.
 	var pendingApproval bool
 	switch {
-	case policyResult.WithApproval():
+	case policyResult.ManualApproval():
 		// We're allowed to do
 		// this pending approval.
 		pendingApproval = true
@@ -117,7 +117,7 @@ func (p *Processor) BoostCreate(
 			boost.PreApproved = true
 		}
 
-	case policyResult.Permitted():
+	case policyResult.AutomaticApproval():
 		// We're permitted to do this
 		// based on another kind of match.
 		pendingApproval = false
