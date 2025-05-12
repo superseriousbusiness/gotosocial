@@ -102,13 +102,23 @@ const (
 
 	/* GtS stuff */
 
-	ObjectLikeApproval     = "LikeApproval"
-	ObjectReplyApproval    = "ReplyApproval"
-	ObjectAnnounceApproval = "AnnounceApproval"
+	ObjectLikeAuthorization     = "LikeAuthorization"
+	ObjectReplyAuthorization    = "ReplyAuthorization"
+	ObjectAnnounceAuthorization = "AnnounceAuthorization"
+
+	ActivityLikeRequest     = "LikeRequest"
+	ActivityReplyRequest    = "ReplyRequest"
+	ActivityAnnounceRequest = "AnnounceRequest"
 
 	/* Funkwhale stuff */
 
 	ObjectAlbum = "Album"
+
+	/* Deprecated stuff */
+
+	ObjectLikeApproval     = "LikeApproval"     // deprecated, use LikeAuthorization.
+	ObjectReplyApproval    = "ReplyApproval"    // deprecated, use ReplyAuthorization.
+	ObjectAnnounceApproval = "AnnounceApproval" // deprecated, use AnnounceAuthorization.
 )
 
 // isActivity returns whether AS type name is of an Activity (NOT IntransitiveActivity).

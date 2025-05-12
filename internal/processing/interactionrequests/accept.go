@@ -203,26 +203,23 @@ func (p *Processor) acceptAnnounce(
 	ctx context.Context,
 	req *gtsmodel.InteractionRequest,
 ) gtserror.WithCode {
-	// If the Announce is missing, that means it's
-	// probably already been undone by someone,
-	// so there's nothing to actually accept.
-	if req.Reply == nil {
-		err := gtserror.Newf("no Announce found for interaction request %s", req.ID)
-		return gtserror.NewErrorNotFound(err)
-	}
-
-	// Update the Announce.
-	req.Announce.PendingApproval = util.Ptr(false)
-	req.Announce.PreApproved = false
-	req.Announce.ApprovedByURI = req.URI
-	if err := p.state.DB.UpdateStatus(
-		ctx,
-		req.Announce,
-		"pending_approval",
-		"approved_by_uri",
-	); err != nil {
-		err := gtserror.Newf("db error updating status announce: %w", err)
-		return gtserror.NewErrorInternalError(err)
+	// If the Announce is set, that means it comes
+	// from someone straight up sending the Announce
+	// instead of AnnounceRequest, so we already have
+	// the Announce in the db. We can update it now.
+	if req.Announce != nil {
+		req.Announce.PendingApproval = util.Ptr(false)
+		req.Announce.PreApproved = false
+		req.Announce.ApprovedByURI = req.URI
+		if err := p.state.DB.UpdateStatus(
+			ctx,
+			req.Announce,
+			"pending_approval",
+			"approved_by_uri",
+		); err != nil {
+			err := gtserror.Newf("db error updating status announce: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
 	}
 
 	// Send the accepted request off through the
