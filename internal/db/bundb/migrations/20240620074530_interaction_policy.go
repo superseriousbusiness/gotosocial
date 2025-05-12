@@ -22,8 +22,8 @@ import (
 
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 
-	oldmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy"
-	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	newmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy/new"
+	oldmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20240620074530_interaction_policy/old"
 
 	"github.com/uptrace/bun"
 )
@@ -161,49 +161,45 @@ func init() {
 				return err
 			}
 
-			// Get the mapping of old enum string values to new integer values.
-			visibilityMapping := visibilityEnumMapping[oldmodel.Visibility]()
-
 			// For each status found in this way, update
 			// to new version of interaction policy.
 			for _, oldStatus := range oldStatuses {
 				// Start with default policy for this visibility.
-				v := visibilityMapping[oldStatus.Visibility]
-				policy := gtsmodel.DefaultInteractionPolicyFor(v)
+				policy := newmodel.DefaultInteractionPolicyFor(newmodel.Visibility(oldStatus.Visibility))
 
 				if !*oldStatus.Likeable {
 					// Only author can like.
-					policy.CanLike = gtsmodel.PolicyRules{
-						Always: gtsmodel.PolicyValues{
-							gtsmodel.PolicyValueAuthor,
+					policy.CanLike = newmodel.PolicyRules{
+						Always: newmodel.PolicyValues{
+							newmodel.PolicyValueAuthor,
 						},
-						WithApproval: make(gtsmodel.PolicyValues, 0),
+						WithApproval: make(newmodel.PolicyValues, 0),
 					}
 				}
 
 				if !*oldStatus.Replyable {
 					// Only author + mentioned can Reply.
-					policy.CanReply = gtsmodel.PolicyRules{
-						Always: gtsmodel.PolicyValues{
-							gtsmodel.PolicyValueAuthor,
-							gtsmodel.PolicyValueMentioned,
+					policy.CanReply = newmodel.PolicyRules{
+						Always: newmodel.PolicyValues{
+							newmodel.PolicyValueAuthor,
+							newmodel.PolicyValueMentioned,
 						},
-						WithApproval: make(gtsmodel.PolicyValues, 0),
+						WithApproval: make(newmodel.PolicyValues, 0),
 					}
 				}
 
 				if !*oldStatus.Boostable {
 					// Only author can Announce.
-					policy.CanAnnounce = gtsmodel.PolicyRules{
-						Always: gtsmodel.PolicyValues{
-							gtsmodel.PolicyValueAuthor,
+					policy.CanAnnounce = newmodel.PolicyRules{
+						Always: newmodel.PolicyValues{
+							newmodel.PolicyValueAuthor,
 						},
-						WithApproval: make(gtsmodel.PolicyValues, 0),
+						WithApproval: make(newmodel.PolicyValues, 0),
 					}
 				}
 
 				// Update status with the new interaction policy.
-				newStatus := &gtsmodel.Status{
+				newStatus := &newmodel.Status{
 					ID:                oldStatus.ID,
 					InteractionPolicy: policy,
 				}
