@@ -582,16 +582,16 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 //
 //	"interactionPolicy": {
 //		"canAnnounce": {
-//			"always": "https://www.w3.org/ns/activitystreams#Public",
-//			"approvalRequired": []
+//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
+//			"manualApproval": []
 //		},
 //		"canLike": {
-//			"always": "https://www.w3.org/ns/activitystreams#Public",
-//			"approvalRequired": []
+//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
+//			"manualApproval": []
 //		},
 //		"canReply": {
-//			"always": "https://www.w3.org/ns/activitystreams#Public",
-//			"approvalRequired": []
+//			"automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
+//			"manualApproval": []
 //		}
 //	}
 //
@@ -599,22 +599,22 @@ func NormalizeOutgoingContentProp(item WithContent, rawJSON map[string]interface
 //
 //	"interactionPolicy": {
 //		"canAnnounce": {
-//			"always": [
+//			"automaticApproval": [
 //				"https://www.w3.org/ns/activitystreams#Public"
 //			],
-//			"approvalRequired": []
+//			"manualApproval": []
 //		},
 //		"canLike": {
-//			"always": [
+//			"automaticApproval": [
 //				"https://www.w3.org/ns/activitystreams#Public"
 //			],
-//			"approvalRequired": []
+//			"manualApproval": []
 //		},
 //		"canReply": {
-//			"always": [
+//			"automaticApproval": [
 //				"https://www.w3.org/ns/activitystreams#Public"
 //			],
-//			"approvalRequired": []
+//			"manualApproval": []
 //		}
 //	}
 //
@@ -655,8 +655,10 @@ func NormalizeOutgoingInteractionPolicyProp(item WithInteractionPolicy, rawJSON 
 		}
 
 		for _, PolicyValuesKey := range []string{
-			"always",
-			"approvalRequired",
+			"automaticApproval",
+			"manualApproval",
+			"always",           // deprecated
+			"approvalRequired", // deprecated
 		} {
 			PolicyValuesVal, ok := rulesValMap[PolicyValuesKey]
 			if !ok {

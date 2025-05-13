@@ -115,8 +115,8 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
 	defer resp.Body.Close()
 
 	suite.Equal(http.StatusOK, resp.StatusCode)
-	suite.EqualValues(1502, resp.ContentLength)
-	suite.Equal("1502", resp.Header.Get("Content-Length"))
+	suite.EqualValues(1769, resp.ContentLength)
+	suite.Equal("1769", resp.Header.Get("Content-Length"))
 	suite.Equal(apiutil.AppActivityLDJSON, resp.Header.Get("Content-Type"))
 
 	b, err := io.ReadAll(resp.Body)
@@ -150,19 +150,31 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     }
   },
   "published": "2021-10-20T10:40:37Z",

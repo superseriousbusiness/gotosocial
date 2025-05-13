@@ -152,6 +152,11 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -159,6 +164,11 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -166,6 +176,11 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -242,6 +257,11 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -249,6 +269,11 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -256,6 +281,11 @@ func (suite *StatusMuteTestSuite) TestMuteUnmuteStatus() {
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"

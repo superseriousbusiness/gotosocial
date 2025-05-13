@@ -98,7 +98,7 @@ func (f *federatingDB) Like(ctx context.Context, likeable vocab.ActivityStreamsL
 	)
 
 	switch {
-	case policyResult.WithApproval():
+	case policyResult.ManualApproval():
 		// Requester allowed to do
 		// this pending approval.
 		pendingApproval = true
@@ -111,7 +111,7 @@ func (f *federatingDB) Like(ctx context.Context, likeable vocab.ActivityStreamsL
 		pendingApproval = true
 		preApproved = true
 
-	case policyResult.Permitted():
+	case policyResult.AutomaticApproval():
 		// Requester straight up
 		// permitted to do this,
 		// no need for Accept.

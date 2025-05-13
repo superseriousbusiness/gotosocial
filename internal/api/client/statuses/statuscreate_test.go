@@ -156,6 +156,13 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
         "mentioned",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -163,6 +170,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
         "author",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -172,6 +184,13 @@ func (suite *StatusCreateTestSuite) TestPostNewStatus() {
         "mentioned",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -241,6 +260,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
         "author",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -248,6 +272,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
         "author",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -257,6 +286,16 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicy() {
         "following",
         "mentioned",
         "me"
+      ],
+      "automatic_approval": [
+        "author",
+        "followers",
+        "following",
+        "mentioned",
+        "me"
+      ],
+      "manual_approval": [
+        "public"
       ],
       "with_approval": [
         "public"
@@ -338,6 +377,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
         "author",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -345,6 +389,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
         "author",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -354,6 +403,16 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
         "following",
         "mentioned",
         "me"
+      ],
+      "automatic_approval": [
+        "author",
+        "followers",
+        "following",
+        "mentioned",
+        "me"
+      ],
+      "manual_approval": [
+        "public"
       ],
       "with_approval": [
         "public"
@@ -553,6 +612,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -560,6 +624,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -567,6 +636,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMarkdown() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -638,6 +712,11 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -645,6 +724,11 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -652,6 +736,11 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -717,6 +806,11 @@ func (suite *StatusCreateTestSuite) TestPostStatusWithLinksAndTags() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -724,6 +818,11 @@ func (suite *StatusCreateTestSuite) TestPostStatusWithLinksAndTags() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -731,6 +830,11 @@ func (suite *StatusCreateTestSuite) TestPostStatusWithLinksAndTags() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -810,6 +914,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -817,6 +926,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -824,6 +938,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithEmoji() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -901,6 +1020,11 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -908,6 +1032,11 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -915,6 +1044,11 @@ func (suite *StatusCreateTestSuite) TestReplyToLocalStatus() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -985,6 +1119,11 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -992,6 +1131,11 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -999,6 +1143,11 @@ func (suite *StatusCreateTestSuite) TestAttachNewMediaSuccess() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -1091,6 +1240,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -1098,6 +1252,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -1105,6 +1264,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithNoncanonicalLanguageTag
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -1167,6 +1331,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -1174,6 +1343,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -1181,6 +1355,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollForm() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -1265,6 +1444,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -1272,6 +1456,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -1279,6 +1468,11 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusWithPollJSON() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },

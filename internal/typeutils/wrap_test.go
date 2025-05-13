@@ -100,19 +100,31 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
         "always": [
           "https://www.w3.org/ns/activitystreams#Public"
         ],
-        "approvalRequired": []
+        "approvalRequired": [],
+        "automaticApproval": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "manualApproval": []
       },
       "canLike": {
         "always": [
           "https://www.w3.org/ns/activitystreams#Public"
         ],
-        "approvalRequired": []
+        "approvalRequired": [],
+        "automaticApproval": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "manualApproval": []
       },
       "canReply": {
         "always": [
           "https://www.w3.org/ns/activitystreams#Public"
         ],
-        "approvalRequired": []
+        "approvalRequired": [],
+        "automaticApproval": [
+          "https://www.w3.org/ns/activitystreams#Public"
+        ],
+        "manualApproval": []
       }
     },
     "published": "2021-10-20T12:40:37+02:00",

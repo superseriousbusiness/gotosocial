@@ -135,6 +135,11 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
   "poll": null,
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -142,6 +147,11 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -149,6 +159,11 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"

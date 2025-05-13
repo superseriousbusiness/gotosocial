@@ -572,6 +572,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
         "poll": null,
         "interaction_policy": {
           "can_favourite": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -579,6 +584,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "with_approval": []
           },
           "can_reply": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -586,6 +596,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetAll() {
             "with_approval": []
           },
           "can_reblog": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -829,6 +844,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
         "poll": null,
         "interaction_policy": {
           "can_favourite": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -836,6 +856,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
             "with_approval": []
           },
           "can_reply": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -843,6 +868,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetCreatedByAccount() {
             "with_approval": []
           },
           "can_reblog": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -1086,6 +1116,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
         "poll": null,
         "interaction_policy": {
           "can_favourite": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -1093,6 +1128,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
             "with_approval": []
           },
           "can_reply": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"
@@ -1100,6 +1140,11 @@ func (suite *ReportsGetTestSuite) TestReportsGetTargetAccount() {
             "with_approval": []
           },
           "can_reblog": {
+            "automatic_approval": [
+              "public",
+              "me"
+            ],
+            "manual_approval": [],
             "always": [
               "public",
               "me"

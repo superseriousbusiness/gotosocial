@@ -583,6 +583,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -590,6 +595,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -597,6 +607,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -731,6 +746,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -738,6 +758,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -745,6 +770,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -881,6 +911,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -888,6 +923,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -895,6 +935,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1088,6 +1133,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
   ],
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1095,6 +1145,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1102,6 +1157,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredStatusToFrontend() {
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1274,6 +1334,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
     ],
     "interaction_policy": {
       "can_favourite": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -1281,6 +1346,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
         "with_approval": []
       },
       "can_reply": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -1288,6 +1358,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
         "with_approval": []
       },
       "can_reblog": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -1366,6 +1441,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
   ],
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1373,6 +1453,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1380,6 +1465,11 @@ func (suite *InternalToFrontendTestSuite) TestWarnFilteredBoostToFrontend() {
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1665,6 +1755,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
   "poll": null,
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1672,6 +1767,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1679,6 +1779,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1744,18 +1849,30 @@ func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
   "poll": null,
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public"
+      ],
+      "manual_approval": [],
       "always": [
         "public"
       ],
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public"
+      ],
+      "manual_approval": [],
       "always": [
         "public"
       ],
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public"
+      ],
+      "manual_approval": [],
       "always": [
         "public"
       ],
@@ -1985,6 +2102,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1992,6 +2114,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -1999,6 +2126,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -2084,18 +2216,30 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
   "content_type": "text/plain",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "author"
+      ],
+      "manual_approval": [],
       "always": [
         "author"
       ],
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "author"
+      ],
+      "manual_approval": [],
       "always": [
         "author"
       ],
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "author"
+      ],
+      "manual_approval": [],
       "always": [
         "author"
       ],
@@ -2208,6 +2352,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
   "content_type": "text/markdown",
   "interaction_policy": {
     "can_favourite": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -2215,6 +2364,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
       "with_approval": []
     },
     "can_reply": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -2222,6 +2376,11 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
       "with_approval": []
     },
     "can_reblog": {
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "always": [
         "public",
         "me"
@@ -3186,6 +3345,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
       "poll": null,
       "interaction_policy": {
         "can_favourite": {
+          "automatic_approval": [
+            "public",
+            "me"
+          ],
+          "manual_approval": [],
           "always": [
             "public",
             "me"
@@ -3193,6 +3357,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "with_approval": []
         },
         "can_reply": {
+          "automatic_approval": [
+            "public",
+            "me"
+          ],
+          "manual_approval": [],
           "always": [
             "public",
             "me"
@@ -3200,6 +3369,11 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
           "with_approval": []
         },
         "can_reblog": {
+          "automatic_approval": [
+            "public",
+            "me"
+          ],
+          "manual_approval": [],
           "always": [
             "public",
             "me"
@@ -3688,6 +3862,11 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
     "content_type": "text/plain",
     "interaction_policy": {
       "can_favourite": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3695,6 +3874,13 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
         "with_approval": []
       },
       "can_reply": {
+        "automatic_approval": [
+          "author",
+          "me"
+        ],
+        "manual_approval": [
+          "public"
+        ],
         "always": [
           "author",
           "me"
@@ -3704,6 +3890,11 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
         ]
       },
       "can_reblog": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3787,6 +3978,11 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
     "content_type": "text/markdown",
     "interaction_policy": {
       "can_favourite": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3794,6 +3990,11 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
         "with_approval": []
       },
       "can_reply": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3801,6 +4002,11 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
         "with_approval": []
       },
       "can_reblog": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3947,6 +4153,11 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
     "content_type": "text/plain",
     "interaction_policy": {
       "can_favourite": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3954,6 +4165,11 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
         "with_approval": []
       },
       "can_reply": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -3961,6 +4177,11 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
         "with_approval": []
       },
       "can_reblog": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -4117,6 +4338,11 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
     "content_type": "text/plain",
     "interaction_policy": {
       "can_favourite": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -4124,6 +4350,11 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
         "with_approval": []
       },
       "can_reply": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"
@@ -4131,6 +4362,11 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
         "with_approval": []
       },
       "can_reblog": {
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "always": [
           "public",
           "me"

@@ -265,7 +265,7 @@ func (d *Dereferencer) isPermittedReply(
 		)
 	}
 
-	if replyable.Permitted() &&
+	if replyable.AutomaticApproval() &&
 		!replyable.MatchedOnCollection() {
 		// Reply is permitted and match was *not* made
 		// based on inclusion in a followers/following
@@ -569,7 +569,7 @@ func (d *Dereferencer) isPermittedBoost(
 		return false, nil
 	}
 
-	if boostable.Permitted() &&
+	if boostable.AutomaticApproval() &&
 		!boostable.MatchedOnCollection() {
 		// Booster is permitted to do this
 		// interaction, and didn't match on

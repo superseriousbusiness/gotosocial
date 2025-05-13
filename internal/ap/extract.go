@@ -1173,15 +1173,7 @@ func extractCanLike(
 		return gtsmodel.PolicyRules{}
 	}
 
-	withRules := propIter.Get()
-	if withRules == nil {
-		return gtsmodel.PolicyRules{}
-	}
-
-	return gtsmodel.PolicyRules{
-		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
-		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
-	}
+	return extractPolicyRules(propIter.Get(), owner)
 }
 
 func extractCanReply(
@@ -1197,15 +1189,7 @@ func extractCanReply(
 		return gtsmodel.PolicyRules{}
 	}
 
-	withRules := propIter.Get()
-	if withRules == nil {
-		return gtsmodel.PolicyRules{}
-	}
-
-	return gtsmodel.PolicyRules{
-		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
-		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
-	}
+	return extractPolicyRules(propIter.Get(), owner)
 }
 
 func extractCanAnnounce(
@@ -1226,9 +1210,39 @@ func extractCanAnnounce(
 		return gtsmodel.PolicyRules{}
 	}
 
+	return extractPolicyRules(propIter.Get(), owner)
+}
+
+func extractPolicyRules(
+	withRules WithPolicyRules,
+	owner *gtsmodel.Account,
+) gtsmodel.PolicyRules {
+	if withRules == nil {
+		return gtsmodel.PolicyRules{}
+	}
+
+	// Check for `automaticApproval` and
+	// `manualApproval` properties first.
+	var (
+		automaticApproval = withRules.GetGoToSocialAutomaticApproval()
+		manualApproval    = withRules.GetGoToSocialManualApproval()
+	)
+	if (automaticApproval != nil && automaticApproval.Len() != 0) ||
+		(manualApproval != nil && manualApproval.Len() != 0) {
+		// At least one is set, use these props.
+		return gtsmodel.PolicyRules{
+			AutomaticApproval: extractPolicyValues(automaticApproval, owner),
+			ManualApproval:    extractPolicyValues(manualApproval, owner),
+		}
+	}
+
+	// Fall back to deprecated `always`
+	// and `withApproval` properties.
+	//
+	// TODO: Remove this in GtS v0.21.0.
 	return gtsmodel.PolicyRules{
-		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
-		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
+		AutomaticApproval: extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
+		ManualApproval:    extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}
 }
 

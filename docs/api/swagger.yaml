@@ -2214,13 +2214,29 @@ definitions:
     interactionPolicyRules:
         properties:
             always:
-                description: Policy entries for accounts that can always do this type of interaction.
+                description: |-
+                    Policy entries for accounts that can always do this type of interaction.
+                    Deprecated: Use "automatic_approval" instead.
                 items:
                     $ref: '#/definitions/interactionPolicyValue'
                 type: array
                 x-go-name: Always
+            automatic_approval:
+                description: Policy entries for accounts that will receive automatic approval for this type of interaction.
+                items:
+                    $ref: '#/definitions/interactionPolicyValue'
+                type: array
+                x-go-name: AutomaticApproval
+            manual_approval:
+                description: Policy entries for accounts that require manual approval for this type of interaction.
+                items:
+                    $ref: '#/definitions/interactionPolicyValue'
+                type: array
+                x-go-name: ManualApproval
             with_approval:
-                description: Policy entries for accounts that require approval to do this type of interaction.
+                description: |-
+                    Policy entries for accounts that require approval to do this type of interaction.
+                    Deprecated: Use "manual_approval" instead.
                 items:
                     $ref: '#/definitions/interactionPolicyValue'
                 type: array

@@ -540,19 +540,31 @@ func (suite *InternalToASTestSuite) TestStatusToAS() {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     }
   },
   "published": "2021-10-20T12:40:37+02:00",
@@ -630,19 +642,31 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASWithIDs() {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     }
   },
   "published": "2021-10-20T11:36:45Z",
@@ -738,19 +762,31 @@ func (suite *InternalToASTestSuite) TestStatusWithTagsToASFromDB() {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     }
   },
   "published": "2021-10-20T11:36:45Z",
@@ -831,19 +867,31 @@ func (suite *InternalToASTestSuite) TestStatusToASWithMentions() {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canLike": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     },
     "canReply": {
       "always": [
         "https://www.w3.org/ns/activitystreams#Public"
       ],
-      "approvalRequired": []
+      "approvalRequired": [],
+      "automaticApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ],
+      "manualApproval": []
     }
   },
   "published": "2021-11-20T13:32:16Z",

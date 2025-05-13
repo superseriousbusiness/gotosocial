@@ -113,6 +113,11 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -120,6 +125,11 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -127,6 +137,11 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -168,6 +183,11 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
           "public",
           "me"
         ],
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       },
       "can_reblog": {
@@ -175,6 +195,11 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
           "public",
           "me"
         ],
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       },
       "can_reply": {
@@ -182,6 +207,11 @@ func (suite *StatusBoostTestSuite) TestPostBoost() {
           "public",
           "me"
         ],
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       }
     },
@@ -298,6 +328,13 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
         "mentioned",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -305,6 +342,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
         "author",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -314,6 +356,13 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
         "mentioned",
         "me"
       ],
+      "automatic_approval": [
+        "author",
+        "followers",
+        "mentioned",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -349,6 +398,13 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
           "mentioned",
           "me"
         ],
+        "automatic_approval": [
+          "author",
+          "followers",
+          "mentioned",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       },
       "can_reblog": {
@@ -356,6 +412,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
           "author",
           "me"
         ],
+        "automatic_approval": [
+          "author",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       },
       "can_reply": {
@@ -365,6 +426,13 @@ func (suite *StatusBoostTestSuite) TestPostBoostOwnFollowersOnly() {
           "mentioned",
           "me"
         ],
+        "automatic_approval": [
+          "author",
+          "followers",
+          "mentioned",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       }
     },
@@ -513,6 +581,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -520,6 +593,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -527,6 +605,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -560,6 +643,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
           "public",
           "me"
         ],
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       },
       "can_reblog": {
@@ -567,6 +655,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
           "public",
           "me"
         ],
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       },
       "can_reply": {
@@ -574,6 +667,11 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
           "public",
           "me"
         ],
+        "automatic_approval": [
+          "public",
+          "me"
+        ],
+        "manual_approval": [],
         "with_approval": []
       }
     },

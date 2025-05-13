@@ -1,5 +1,8 @@
 # Interaction Policy
 
+!!! warning "Feature still in development"
+    Much like GoToSocial, this feature is still in pre-v1 beta development. Naming or schemas or methods of approval / rejection may change. We aim to finalize the document by GoToSocial v0.21.0, at which point it can be considered "ready" for other ActivityPub implementers to use.
+
 GoToSocial uses the property `interactionPolicy` on posts, in order to indicate to remote instances what sort of interactions are (conditionally) permitted to be processed and stored by the origin server, for any given post.
 
 The `@context` document for `interactionPolicy` and related objects and properties is at `https://gotosocial.org/ns`.
@@ -15,6 +18,9 @@ The `@context` document for `interactionPolicy` and related objects and properti
     
     For better or worse, GoToSocial can offer only a best-effort, partial, technological solution to what is more or less an issue of social behavior and boundaries.
 
+!!! info "Deprecated `always` and `approvalRequired` properties"
+    Previous versions of this document used the properties `always` and `approvalRequired`. These are now deprecated in favor of `automaticApproval` and `manualApproval`. GoToSocial versions before v0.20.0 send and receive only these deprecated properties. GoToSocial v0.20.0 sends and receives both the deprecated and the new properties. GoToSocial v0.21.0 onwards uses only the new properties. 
+
 ## Overview
 
 `interactionPolicy` is an object property attached to the post-like `Object`s `Note`, `Article`, `Question`, etc, with the following format:
@@ -28,16 +34,16 @@ The `@context` document for `interactionPolicy` and related objects and properti
   [...],
   "interactionPolicy": {
     "canLike": {
-      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
-      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+      "automaticApproval": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "manualApproval": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
     },
     "canReply": {
-      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
-      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+      "automaticApproval": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "manualApproval": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
     },
     "canAnnounce": {
-      "always": [ "zero_or_more_uris_that_can_always_do_this" ],
-      "approvalRequired": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
+      "automaticApproval": [ "zero_or_more_uris_that_can_always_do_this" ],
+      "manualApproval": [ "zero_or_more_uris_that_require_approval_to_do_this" ]
     }
   },
   [...]
@@ -52,10 +58,10 @@ In the `interactionPolicy` object:
 
 And:
 
-- `always` denotes ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who are permitted to create + distribute an interaction targeting a post without requiring manual approval by the post author.
-- `approvalRequired` denotes ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who are permitted to create an interaction targeting a post, but should wait for manual approval by the post author before distributing it (see [Requesting, Obtaining, and Validating Approval](#requesting-obtaining-and-validating-approval)).
+- `automaticApproval` denotes ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who will receive automated approval from the post author to create + distribute an interaction targeting a post.
+- `manualApproval` denotes ActivityPub URIs/IDs of `Actor`s or `Collection`s of `Actor`s who will receive approval from the post author at the author's own discretion, and may not receive approval at all, or may be rejected (see [Requesting, Obtaining, and Validating Approval](#requesting-obtaining-and-validating-approval)).
 
-Valid URI entries in `always` and `approvalRequired` include:
+Valid URI entries in `automaticApproval` and `manualApproval` include:
 
 - the magic ActivityStreams Public URI `https://www.w3.org/ns/activitystreams#Public`
 - the URIs of the post creator's `Following` and/or `Followers` collections
@@ -74,21 +80,21 @@ For example:
 ```
 
 !!! info
-    Be aware that according to JSON-LD the values of `always` and `approvalRequired` can be either single strings or arrays of strings. That is, the following are all valid:
+    Be aware that according to JSON-LD the values of `automaticApproval` and `manualApproval` can be either single strings or arrays of strings. That is, the following are all valid:
     
-    - Single string: `"always": "https://example.org/users/someone"`
-    - Single-entry array: `"always": [ "https://example.org/users/someone" ]`
-    - Multiple-entry array: `"always": [ "https://example.org/users/someone", "https://example.org/users/someone_else" ]`
+    - Single string: `"automaticApproval": "https://example.org/users/someone"`
+    - Single-entry array: `"automaticApproval": [ "https://example.org/users/someone" ]`
+    - Multiple-entry array: `"automaticApproval": [ "https://example.org/users/someone", "https://example.org/users/someone_else" ]`
 
 ## Specifying Nobody
 
-To specify that **nobody** can perform an interaction on a post **except** for its author (who is always permitted), implementations should set the `always` array to **just the URI of the post author**, and `approvalRequired` can be unset, `null`, or empty.
+To specify that **nobody** can perform an interaction on a post **except** for its author (who is always permitted), implementations should set the `automaticApproval` array to **just the URI of the post author**, and `manualApproval` can be unset, `null`, or empty.
 
 For example, the following `canLike` value indicates that nobody can `Like` the post it is attached to except for the post author:
 
 ```json
 "canLike": {
-  "always": "the_activitypub_uri_of_the_post_author"
+  "automaticApproval": "the_activitypub_uri_of_the_post_author"
 },
 ```
 
@@ -103,13 +109,13 @@ Another example. The following `interactionPolicy` on a post by `https://example
   [...],
   "interactionPolicy": {
     "canLike": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canReply": {
-      "always": "https://example.org/users/someone"
+      "automaticApproval": "https://example.org/users/someone"
     },
     "canAnnounce": {
-      "always": "https://example.org/users/someone"
+      "automaticApproval": "https://example.org/users/someone"
     }
   },
   [...]
@@ -128,28 +134,28 @@ For example:
 ```json
 [...],
 "canReply": {
-  "always": "https://example.org/users/someone",
-  "approvalRequired": "https://www.w3.org/ns/activitystreams#Public"
+  "automaticApproval": "https://example.org/users/someone",
+  "manualApproval": "https://www.w3.org/ns/activitystreams#Public"
 },
 [...]
 ```
 
-Here, `@someone@example.org` is present in `always`, and is also implicitly present in the magic ActivityStreams Public collection in `approvalRequired`. In this case, they can always reply, as the `always` value is more explicit.
+Here, `@someone@example.org` is present in `automaticApproval`, and is also implicitly present in the magic ActivityStreams Public collection in `manualApproval`. In this case, they can always reply, as the `automaticApproval` value is more explicit.
 
 Another example:
 
 ```json
 [...],
 "canReply": {
-  "always": "https://www.w3.org/ns/activitystreams#Public",
-  "approvalRequired": "https://example.org/users/someone"
+  "automaticApproval": "https://www.w3.org/ns/activitystreams#Public",
+  "manualApproval": "https://example.org/users/someone"
 },
 [...]
 ```
 
-Here, `@someone@example.org` is present in `approvalRequired`, but is also implicitly present in the magic ActivityStreams Public collection in `always`. In this case everyone can reply without approval, **except** for `@someone@example.org`, who requires approval.
+Here, `@someone@example.org` is present in `manualApproval`, but is also implicitly present in the magic ActivityStreams Public collection in `automaticApproval`. In this case everyone can reply without approval, **except** for `@someone@example.org`, who requires approval.
 
-In case the **exact same** URI is present in both `always` and `approvalRequired`, the **highest level of permission** takes precedence (ie., a URI in `always` takes precedence over the same URI in `approvalRequired`).
+In case the **exact same** URI is present in both `automaticApproval` and `manualApproval`, the **highest level of permission** takes precedence (ie., a URI in `automaticApproval` takes precedence over the same URI in `manualApproval`).
 
 ## Default / fallback `interactionPolicy`
 
@@ -164,20 +170,20 @@ When the `interactionPolicy` property is not present at all on a post, or the `i
   [...],
   "interactionPolicy": {
     "canLike": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canReply": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canAnnounce": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     }
   },
   [...]
 }
 ```
 
-As implied by the lack of any `approvalRequired` property in any of the sub-policies, the default value for `approvalRequired` is an empty array.
+As implied by the lack of any `manualApproval` property in any of the sub-policies, the default value for `manualApproval` is an empty array.
 
 This default `interactionPolicy` was designed to reflect the de facto interaction policy of all posts from pre-v0.17.0 GoToSocial, and other ActivityPub server softwares, at the time of writing. That is to say, it is exactly what servers that are not interaction policy aware *already assume* about interaction permissions.
 
@@ -200,7 +206,7 @@ If `canLike` is missing on an `interactionPolicy`, or the value of `canLike` is 
 
 ```json
 "canLike": {
-  "always": "https://www.w3.org/ns/activitystreams#Public"
+  "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
 }
 ```
 
@@ -212,7 +218,7 @@ If `canReply` is missing on an `interactionPolicy`, or the value of `canReply` i
 
 ```json
 "canReply": {
-  "always": "https://www.w3.org/ns/activitystreams#Public"
+  "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
 }
 ```
 
@@ -224,7 +230,7 @@ If `canAnnounce` is missing on an `interactionPolicy`, or the value of `canAnnou
 
 ```json
 "canAnnounce": {
-  "always": "https://www.w3.org/ns/activitystreams#Public"
+  "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
 }
 ```
 
@@ -266,7 +272,7 @@ Likewise, when enforcing received interaction policies, GoToSocial will **ALWAYS
 
 As such, when sending out interaction policies, GoToSocial will **ALWAYS** add the URI of the post author to the `canLike.always`, `canReply.always`, and `canAnnounce.always` arrays, **UNLESS** they are already covered by the ActivityStreams magic public URI.
 
-Likewise, when enforcing received interaction policies, GoToSocial will **ALWAYS** behave as though the URI of the post author themself is present in each `always` field, even if it wasn't.
+Likewise, when enforcing received interaction policies, GoToSocial will **ALWAYS** behave as though the URI of the post author themself is present in each `automaticApproval` field, even if it wasn't.
 
 ## Examples
 
@@ -293,18 +299,18 @@ This can be achieved with the following `interactionPolicy`, which is attached t
   [...],
   "interactionPolicy": {
     "canLike": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canReply": {
-      "always": [
+      "automaticApproval": [
         "https://example.org/users/the_mighty_zork",
         "https://example.org/users/booblover6969",
         "https://example.org/users/hodor"
       ],
-      "approvalRequired": "https://www.w3.org/ns/activitystreams#Public"
+      "manualApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canAnnounce": {
-      "always": [
+      "automaticApproval": [
         "https://example.org/users/the_mighty_zork",
         "https://example.org/users/the_mighty_zork/followers",
         "https://example.org/users/booblover6969",
@@ -333,13 +339,13 @@ This can be achieved by setting the following `interactionPolicy` on every post 
   [...],
   "interactionPolicy": {
     "canLike": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canReply": {
-      "always": "https://example.org/users/the_mighty_zork"
+      "automaticApproval": "https://example.org/users/the_mighty_zork"
     },
     "canAnnounce": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     }
   },
   [...]
@@ -361,13 +367,13 @@ In this example, `@the_mighty_zork` wants to write a completely open post that c
   [...],
   "interactionPolicy": {
     "canLike": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canReply": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     },
     "canAnnounce": {
-      "always": "https://www.w3.org/ns/activitystreams#Public"
+      "automaticApproval": "https://www.w3.org/ns/activitystreams#Public"
     }
   },
   [...]
@@ -416,7 +422,7 @@ This section describes the enforcement and verification of interaction policies,
 
 ### Requesting, Obtaining, and Validating Approval
 
-When an actor's URI is in the `approvalRequired` array for a type of interaction, **or** their presence in a collection needs to be validated (see [Validating presence in a Followers / Following collection](#validating-presence-in-a-followers--following-collection)), implementations wishing to obtain approval for that actor to interact with a policied post should do the following:
+When an actor's URI is in the `manualApproval` array for a type of interaction, **or** their presence in a collection needs to be validated (see [Validating presence in a Followers / Following collection](#validating-presence-in-a-followers--following-collection)), implementations wishing to obtain approval for that actor to interact with a policied post should do the following:
 
 1. Compose the interaction `Activity` (ie., `Like`, `Create` (reply), or `Announce`), as normal.
 2. Address the `Activity` `to` and `cc` the expected recipients for that `Activity`, as normal.
@@ -592,11 +598,11 @@ If the approval cannot be dereferenced, or does not pass validity checks, the in
 
 ### Validating presence in a Followers / Following collection
 
-If an `Actor` interacting with an `object` (via `Like`, `inReplyTo`, or `Announce`) is permitted to do that interaction based on their presence in a `Followers` or `Following` collection in the `always` field of an interaction policy, then their server **should still wait** for an `Accept` to be received from the server of the target actor, before distributing the interaction more widely with the `approvedBy` property set to the URI/ID of the approval.
+If an `Actor` interacting with an `object` (via `Like`, `inReplyTo`, or `Announce`) is permitted to do that interaction based on their presence in a `Followers` or `Following` collection in the `automaticApproval` field of an interaction policy, then their server **should still wait** for an `Accept` to be received from the server of the target actor, before distributing the interaction more widely with the `approvedBy` property set to the URI/ID of the approval.
 
 This is to prevent scenarios where third servers have to somehow verify the presence of the interacting `Actor` in the `Followers` or `Following` collection of the `Actor` being interacted with. It is simpler to allow the target server to do that verification, and to trust that their approval implicitly agrees that the interacting `Actor` is present in the relevant collection.
 
-Likewise, when receiving an interaction from an `Actor` whose permission to interact matches with one of the `Following` or `Followers` collections in the `always` property, the server of the interacted-with `Actor` should ensure that they *always* send out an `Accept` as soon as possible, so that the interacting `Actor` server can send out the `Activity` with the proper proof of acceptance.
+Likewise, when receiving an interaction from an `Actor` whose permission to interact matches with one of the `Following` or `Followers` collections in the `automaticApproval` property, the server of the interacted-with `Actor` should ensure that they *always* send out an `Accept` as soon as possible, so that the interacting `Actor` server can send out the `Activity` with the proper proof of acceptance.
 
 This process should bypass the normal "pending approval" stage whereby the server of the `Actor` being interacted with notifies them of the pending interaction, and waits for them to accept or reject, since there is no point notifying an `Actor` of a pending approval that they have already explicitly agreed to. In the GoToSocial codebase in particular, this is called "preapproval".
 
@@ -606,7 +612,7 @@ This section describes optional behaviors that implementers *may* use when sendi
 
 #### Always send out `Accept`s
 
-Implementers may wish to *always* send out an `Accept` to remote interacters, even when the interaction is implicitly or explicitly permitted by their presence in the `always` array. When receiving such an `Accept`, implementations may still want to update their representation of the interaction to include an `approvedBy` URI pointing at an approval. This may be useful later on when handling revocations (TODO).
+Implementers may wish to *always* send out an `Accept` to remote interacters, even when the interaction is implicitly or explicitly permitted by their presence in the `automaticApproval` array. When receiving such an `Accept`, implementations may still want to update their representation of the interaction to include an `approvedBy` URI pointing at an approval. This may be useful later on when handling revocations (TODO).
 
 #### Type hinting: inline `object` property on `Accept` and `Reject`
 

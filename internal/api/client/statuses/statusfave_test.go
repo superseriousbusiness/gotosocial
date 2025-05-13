@@ -119,6 +119,11 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -126,6 +131,11 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -133,6 +143,11 @@ func (suite *StatusFaveTestSuite) TestPostFave() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },
@@ -244,6 +259,11 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reblog": {
@@ -251,6 +271,11 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     },
     "can_reply": {
@@ -258,6 +283,11 @@ func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
         "public",
         "me"
       ],
+      "automatic_approval": [
+        "public",
+        "me"
+      ],
+      "manual_approval": [],
       "with_approval": []
     }
   },

@@ -112,7 +112,7 @@ func (p *Processor) FaveCreate(
 	)
 
 	switch {
-	case policyResult.WithApproval():
+	case policyResult.ManualApproval():
 		// We're allowed to do
 		// this pending approval.
 		pendingApproval = true
@@ -133,7 +133,7 @@ func (p *Processor) FaveCreate(
 			preApproved = true
 		}
 
-	case policyResult.Permitted():
+	case policyResult.AutomaticApproval():
 		// We're permitted to do this
 		// based on another kind of match.
 		pendingApproval = false
