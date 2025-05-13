@@ -16,12 +16,9 @@ steps:
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
       - evaluate: >-
           (not ("CI_PIPELINE_FILES" in $env)) ||
-          len(CI_PIPELINE_FILES) == 0 ||
-          any(fromJSON(CI_PIPELINE_FILES), {
-          # startsWith "internal/" ||
-          # startsWith "cmd/" ||
-          # startsWith "testrig/"
-          })
+          CI_PIPELINE_FILES == "[]" ||
+          any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" }) ||
+          len(fromJSON(CI_PIPELINE_FILES)) == 0
 
     # We use golangci-lint for linting.
     # See: https://golangci-lint.run/
@@ -60,13 +57,9 @@ steps:
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
       - evaluate: >-
           (not ("CI_PIPELINE_FILES" in $env)) ||
-          len(CI_PIPELINE_FILES) == 0 ||
-          any(fromJSON(CI_PIPELINE_FILES), {
-          # startsWith "internal/" ||
-          # startsWith "cmd/" ||
-          # startsWith "testrig/" ||
-          # startsWith "vendor/"
-          })
+          CI_PIPELINE_FILES == "[]" ||
+          any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" }) ||
+          len(fromJSON(CI_PIPELINE_FILES)) == 0
 
     image: golang:1.23-alpine
     pull: true
@@ -116,8 +109,9 @@ steps:
       # https://woodpecker-ci.org/docs/usage/environment#built-in-environment-variables
       - evaluate: >-
           (not ("CI_PIPELINE_FILES" in $env)) ||
-          len(CI_PIPELINE_FILES) == 0 ||
-          any(fromJSON(CI_PIPELINE_FILES), { # startsWith "web/source/" })
+          CI_PIPELINE_FILES == "[]" ||
+          any(fromJSON(CI_PIPELINE_FILES), { # startsWith "web/source/" }) ||
+          len(fromJSON(CI_PIPELINE_FILES)) == 0
 
     image: node:lts-alpine
     pull: true
