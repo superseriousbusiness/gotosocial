@@ -81,6 +81,11 @@ Polls can have up to
 <b>{{- .instance.Configuration.Polls.MaxCharactersPerOption }} characters per option</b>.
 {{- end -}}
 
+{{- define "profileLimits" -}}
+Profiles can have up to
+<b>{{- .instance.Configuration.Accounts.MaxProfileFields }} profile fields</b>.
+{{- end -}}
+
 {{- with . }}
 <main class="about">
     <nav class="about-section" aria-labelledby="toc">
@@ -137,6 +142,7 @@ Polls can have up to
             <ul>
                 <li>{{- template "statusLimits" . -}}</li>
                 <li>{{- template "pollLimits" . -}}</li>
+                <li>{{- template "profileLimits" . -}}</li>
                 <li>{{- template "customCSSLimits" . -}}</li>
             </ul>
         </div>

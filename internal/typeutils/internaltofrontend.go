@@ -50,7 +50,6 @@ const (
 	instancePollsMinExpiration               = 300     // seconds
 	instancePollsMaxExpiration               = 2629746 // seconds
 	instanceAccountsMaxFeaturedTags          = 10
-	instanceAccountsMaxProfileFields         = 6 // FIXME: https://codeberg.org/superseriousbusiness/gotosocial/issues/1876
 	instanceSourceURL                        = "https://codeberg.org/superseriousbusiness/gotosocial"
 	instanceMastodonVersion                  = "3.5.3"
 )
@@ -1814,7 +1813,7 @@ func (c *Converter) InstanceToAPIV1Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Polls.MaxExpiration = instancePollsMaxExpiration
 	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
-	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
+	instance.Configuration.Accounts.MaxProfileFields = config.GetAccountsMaxProfileFields()
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 
@@ -1992,7 +1991,7 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Configuration.Polls.MaxExpiration = instancePollsMaxExpiration
 	instance.Configuration.Accounts.AllowCustomCSS = config.GetAccountsAllowCustomCSS()
 	instance.Configuration.Accounts.MaxFeaturedTags = instanceAccountsMaxFeaturedTags
-	instance.Configuration.Accounts.MaxProfileFields = instanceAccountsMaxProfileFields
+	instance.Configuration.Accounts.MaxProfileFields = config.GetAccountsMaxProfileFields()
 	instance.Configuration.Emojis.EmojiSizeLimit = int(config.GetMediaEmojiLocalMaxSize()) // #nosec G115 -- Already validated.
 	instance.Configuration.OIDCEnabled = config.GetOIDCEnabled()
 

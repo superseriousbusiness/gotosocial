@@ -79,6 +79,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Int("accounts-registration-backlog-limit", cfg.AccountsRegistrationBacklogLimit, "Limit how big the 'accounts pending approval' queue can grow before registration is closed. 0 or less = no limit.")
 	flags.Bool("accounts-allow-custom-css", cfg.AccountsAllowCustomCSS, "Allow accounts to enable custom CSS for their profile pages and statuses.")
 	flags.Int("accounts-custom-css-length", cfg.AccountsCustomCSSLength, "Maximum permitted length (characters) of custom CSS for accounts.")
+	flags.Int("accounts-max-profile-fields", cfg.AccountsMaxProfileFields, "Maximum amount of profile fields an account can have.")
 	flags.Int("media-description-min-chars", cfg.MediaDescriptionMinChars, "Min required chars for an image description")
 	flags.Int("media-description-max-chars", cfg.MediaDescriptionMaxChars, "Max permitted chars for an image description")
 	flags.Int("media-remote-cache-days", cfg.MediaRemoteCacheDays, "Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely.")
@@ -206,7 +207,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 181)
+	cfgmap := make(map[string]any, 182)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -257,6 +258,7 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["accounts-registration-backlog-limit"] = cfg.AccountsRegistrationBacklogLimit
 	cfgmap["accounts-allow-custom-css"] = cfg.AccountsAllowCustomCSS
 	cfgmap["accounts-custom-css-length"] = cfg.AccountsCustomCSSLength
+	cfgmap["accounts-max-profile-fields"] = cfg.AccountsMaxProfileFields
 	cfgmap["media-description-min-chars"] = cfg.MediaDescriptionMinChars
 	cfgmap["media-description-max-chars"] = cfg.MediaDescriptionMaxChars
 	cfgmap["media-remote-cache-days"] = cfg.MediaRemoteCacheDays
@@ -802,6 +804,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.AccountsCustomCSSLength, err = cast.ToIntE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> int for 'accounts-custom-css-length': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["accounts-max-profile-fields"]; ok {
+		var err error
+		cfg.AccountsMaxProfileFields, err = cast.ToIntE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> int for 'accounts-max-profile-fields': %w", ival, err)
 		}
 	}
 
@@ -3137,6 +3147,31 @@ func GetAccountsCustomCSSLength() int { return global.GetAccountsCustomCSSLength
 
 // SetAccountsCustomCSSLength safely sets the value for global configuration 'AccountsCustomCSSLength' field
 func SetAccountsCustomCSSLength(v int) { global.SetAccountsCustomCSSLength(v) }
+
+// AccountsMaxProfileFieldsFlag returns the flag name for the 'AccountsMaxProfileFields' field
+func AccountsMaxProfileFieldsFlag() string { return "accounts-max-profile-fields" }
+
+// GetAccountsMaxProfileFields safely fetches the Configuration value for state's 'AccountsMaxProfileFields' field
+func (st *ConfigState) GetAccountsMaxProfileFields() (v int) {
+	st.mutex.RLock()
+	v = st.config.AccountsMaxProfileFields
+	st.mutex.RUnlock()
+	return
+}
+
+// SetAccountsMaxProfileFields safely sets the Configuration value for state's 'AccountsMaxProfileFields' field
+func (st *ConfigState) SetAccountsMaxProfileFields(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.AccountsMaxProfileFields = v
+	st.reloadToViper()
+}
+
+// GetAccountsMaxProfileFields safely fetches the value for global configuration 'AccountsMaxProfileFields' field
+func GetAccountsMaxProfileFields() int { return global.GetAccountsMaxProfileFields() }
+
+// SetAccountsMaxProfileFields safely sets the value for global configuration 'AccountsMaxProfileFields' field
+func SetAccountsMaxProfileFields(v int) { global.SetAccountsMaxProfileFields(v) }
 
 // MediaDescriptionMinCharsFlag returns the flag name for the 'MediaDescriptionMinChars' field
 func MediaDescriptionMinCharsFlag() string { return "media-description-min-chars" }

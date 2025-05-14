@@ -42,7 +42,6 @@ const (
 	maximumUsernameLength         = 64
 	maximumEmojiCategoryLength    = 64
 	maximumProfileFieldLength     = 255
-	maximumProfileFields          = 6
 	maximumListTitleLength        = 200
 	maximumFilterKeywordLength    = 40
 	maximumFilterTitleLength      = 200
@@ -269,6 +268,7 @@ func ULID(i string, name string) error {
 // and also iterates through the fields and trims each name + value
 // to maximumProfileFieldLength, if they were above.
 func ProfileFields(fields []*gtsmodel.Field) error {
+	maximumProfileFields := config.GetAccountsMaxProfileFields()
 	if len(fields) > maximumProfileFields {
 		return fmt.Errorf("cannot have more than %d profile fields", maximumProfileFields)
 	}

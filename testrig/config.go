@@ -109,6 +109,7 @@ func testDefaults() config.Configuration {
 		AccountsRegistrationBacklogLimit: 20,
 		AccountsAllowCustomCSS:           true,
 		AccountsCustomCSSLength:          10000,
+		AccountsMaxProfileFields:         8,
 
 		MediaDescriptionMinChars: 0,
 		MediaDescriptionMaxChars: 500,

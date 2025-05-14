@@ -64,4 +64,12 @@ accounts-allow-custom-css: false
 # Examples: [500, 5000, 9999]
 # Default: 10000
 accounts-custom-css-length: 10000
+
+# Int. The maximum number of profile fields allowed for each account.
+#
+# Note that going way higher than the default might break federation.
+#
+# Examples: [4, 6, 12]
+# Default: 6
+accounts-max-profile-fields: 6
 ```

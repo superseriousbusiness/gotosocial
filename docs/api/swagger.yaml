@@ -1581,9 +1581,7 @@ definitions:
                 type: integer
                 x-go-name: MaxFeaturedTags
             max_profile_fields:
-                description: |-
-                    The maximum number of profile fields allowed for each account.
-                    Currently not configurable, so this is hardcoded to 6. (https://codeberg.org/superseriousbusiness/gotosocial/issues/1876)
+                description: The maximum number of profile fields allowed for each account.
                 format: int64
                 type: integer
                 x-go-name: MaxProfileFields

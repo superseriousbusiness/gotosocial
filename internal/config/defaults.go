@@ -75,6 +75,7 @@ var Defaults = Configuration{
 	AccountsRegistrationBacklogLimit: 20,
 	AccountsAllowCustomCSS:           false,
 	AccountsCustomCSSLength:          10000,
+	AccountsMaxProfileFields:         6,
 
 	MediaDescriptionMinChars: 0,
 	MediaDescriptionMaxChars: 1500,

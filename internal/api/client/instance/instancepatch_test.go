@@ -147,7 +147,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch1() {
     "accounts": {
       "allow_custom_css": true,
       "max_featured_tags": 10,
-      "max_profile_fields": 6
+      "max_profile_fields": 8
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -290,7 +290,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch2() {
     "accounts": {
       "allow_custom_css": true,
       "max_featured_tags": 10,
-      "max_profile_fields": 6
+      "max_profile_fields": 8
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -433,7 +433,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch3() {
     "accounts": {
       "allow_custom_css": true,
       "max_featured_tags": 10,
-      "max_profile_fields": 6
+      "max_profile_fields": 8
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -627,7 +627,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch6() {
     "accounts": {
       "allow_custom_css": true,
       "max_featured_tags": 10,
-      "max_profile_fields": 6
+      "max_profile_fields": 8
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -792,7 +792,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
     "accounts": {
       "allow_custom_css": true,
       "max_featured_tags": 10,
-      "max_profile_fields": 6
+      "max_profile_fields": 8
     },
     "emojis": {
       "emoji_size_limit": 51200
@@ -976,7 +976,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch9() {
     "accounts": {
       "allow_custom_css": true,
       "max_featured_tags": 10,
-      "max_profile_fields": 6
+      "max_profile_fields": 8
     },
     "emojis": {
       "emoji_size_limit": 51200
