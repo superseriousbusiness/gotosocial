@@ -2,21 +2,21 @@
 
 GoToSocial stores statuses, accounts, etc, in a database. This can be either [SQLite](https://sqlite.org/index.html) or [Postgres](https://www.postgresql.org/).
 
-By default, GoToSocial will use Postgres, but this is easy to change.
+By default, GoToSocial will use SQLite, but this is easy to change.
 
 ## SQLite
 
 SQLite, as the name implies, is the lightest database type that GoToSocial can use. It stores entries in a simple file format, usually in the same directory as the GoToSocial binary itself. SQLite is great for small instances and single-board computers, where a dedicated database would be overkill.
 
-To configure GoToSocial to use SQLite, change `db-type` to `sqlite`. The `address` setting will then be a filename instead of an address, so you will want to change it to `sqlite.db` or something similar.
+To use SQLite, keep the default `db-type` as `sqlite`. By default the database will be kept in the same directory as the GoToSocial binary, ie., `./sqlite.db`, but you can change this using `db-address` if you want to keep it somewhere else. In the same directory as the `sqlite.db` file, the SQLite driver will also create files `sqlite.db-wal` and `sqlite.db-shm` for temporary storage.
 
 Note that the `:memory:` setting will use an *in-memory database* which will be wiped when your GoToSocial instance stops running. This is for testing only and is absolutely not suitable for running a proper instance, so *don't do this*.
 
 ## Postgres
 
-Postgres is a heavier database format, which is useful for larger instances where you need to scale performance, or where you need to run your database on a dedicated machine separate from your GoToSocial instance (or do funky stuff like run a database cluster).
+Postgres (aka PostgreSQL) is a heavier database which is useful for larger instances where you need to run your database on a dedicated machine separate from your GoToSocial instance (or do funky stuff like run a database cluster).
 
-You can connect to Postgres using either a Unix socket connection, or via TCP, depending on what you've set as your `db-address` value.
+To configure GoToSocial to use Postgres, change `db-type` to `postgres`. The `db-address` setting will then be either a Unix socket connection or a hostname.
 
 GoToSocial also supports connecting to Postgres using SSL/TLS over TCP. If you're running Postgres on a different machine from GoToSocial, and connecting to it via an IP address or hostname (as opposed to just running on localhost), then SSL/TLS is **CRUCIAL** to avoid leaking data all over the place!
 
@@ -71,8 +71,8 @@ db-postgres-connection-string: 'postgres://myUser:myPass@localhost/db?search_pat
 
 # String. Database type.
 # Options: ["postgres","sqlite"]
-# Default: "postgres"
-db-type: "postgres"
+# Default: "sqlite"
+db-type: "sqlite"
 
 # String. Database address or parameters.
 #
@@ -87,29 +87,29 @@ db-type: "postgres"
 #
 # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
 # Default: ""
-db-address: ""
+db-address: "sqlite.db"
 
-# Int. Port for database connection.
+# Int. Port for postgres database connection; ignored for sqlite.
 # Examples: [5432, 1234, 6969]
 # Default: 5432
 db-port: 5432
 
-# String. Username for the database connection.
+# String. Username for postgres database connection.
 # Examples: ["mydbuser","postgres","gotosocial"]
 # Default: ""
 db-user: ""
 
-# String. Password to use for the database connection
+# String. Password to use for postgres database connection.
 # Examples: ["password123","verysafepassword","postgres"]
 # Default: ""
 db-password: ""
 
-# String. Name of the database to use within the provided database type.
+# String. Name of the database to use for postgres database connection.
 # Examples: ["mydb","postgres","gotosocial"]
 # Default: "gotosocial"
 db-database: "gotosocial"
 
-# String. Disable, enable, or require SSL/TLS connection to the database.
+# String. Disable, enable, or require SSL/TLS connection to postgres.
 # If "disable" then no TLS connection will be attempted.
 # If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
 # If "require" then TLS will be required to make a connection, and a valid certificate must be presented.

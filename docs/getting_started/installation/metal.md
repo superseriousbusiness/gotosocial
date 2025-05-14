@@ -63,8 +63,6 @@ You'll probably need to change the following settings:
 
 - Set `host` to whatever hostname you're going to be running the server on (eg., `example.org`).
 - Set `port` to `443`.
-- Set `db-type` to `sqlite`.
-- Set `db-address` to `sqlite.db`.
 - Set `storage-local-base-path` to the storage directory you created above (eg., `/gotosocial/storage`).
 - Set `letsencrypt-enabled` to `true`.
 - Set `letsencrypt-cert-dir` to the certificate storage directory you created above (eg., `/gotosocial/storage/certs`).

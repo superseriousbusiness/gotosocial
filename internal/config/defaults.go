@@ -41,8 +41,8 @@ var Defaults = Configuration{
 	Port:               8080,
 	TrustedProxies:     []string{"127.0.0.1/32", "::1"}, // localhost
 
-	DbType:                   "postgres",
-	DbAddress:                "",
+	DbType:                   "sqlite",
+	DbAddress:                "db.sqlite",
 	DbPort:                   5432,
 	DbUser:                   "",
 	DbPassword:               "",

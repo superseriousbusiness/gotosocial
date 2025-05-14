@@ -55,7 +55,7 @@ For media storage, including [storage of remote media files in the cache](../adm
 
 ### Single-board Computers
 
-GoToSocial's light system requirements means that it runs pretty well on decently-specced single-board computers. If running on a single-board computer, you should ensure that GoToSocial is using a USB drive (preferably an SSD) to store its database files and media, not SD card storage, since the latter tends to be too slow to run a database on.
+GoToSocial's light system requirements means that it runs pretty well on decently-specced single-board computers. If running on a single-board computer, you should ensure that GoToSocial is using a USB drive (preferably an SSD) to store its database files and media, not SD card storage, since the latter tends to be too slow to run a database on and can easily get corrupted with write-heavy workloads.
 
 ### VPS
 

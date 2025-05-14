@@ -141,8 +141,8 @@ trusted-proxies:
 
 # String. Database type.
 # Options: ["postgres","sqlite"]
-# Default: "postgres"
-db-type: "postgres"
+# Default: "sqlite"
+db-type: "sqlite"
 
 # String. Database address or parameters.
 #
@@ -157,29 +157,29 @@ db-type: "postgres"
 #
 # Examples: ["localhost","my.db.host","127.0.0.1","192.111.39.110",":memory:", "sqlite.db"]
 # Default: ""
-db-address: ""
+db-address: "sqlite.db"
 
-# Int. Port for database connection.
+# Int. Port for postgres database connection; ignored for sqlite.
 # Examples: [5432, 1234, 6969]
 # Default: 5432
 db-port: 5432
 
-# String. Username for the database connection.
+# String. Username for postgres database connection.
 # Examples: ["mydbuser","postgres","gotosocial"]
 # Default: ""
 db-user: ""
 
-# String. Password to use for the database connection
+# String. Password to use for postgres database connection.
 # Examples: ["password123","verysafepassword","postgres"]
 # Default: ""
 db-password: ""
 
-# String. Name of the database to use within the provided database type.
+# String. Name of the database to use for postgres database connection.
 # Examples: ["mydb","postgres","gotosocial"]
 # Default: "gotosocial"
 db-database: "gotosocial"
 
-# String. Disable, enable, or require SSL/TLS connection to the database.
+# String. Disable, enable, or require SSL/TLS connection to postgres.
 # If "disable" then no TLS connection will be attempted.
 # If "enable" then TLS will be tried, but the database certificate won't be checked (for self-signed certs).
 # If "require" then TLS will be required to make a connection, and a valid certificate must be presented.
