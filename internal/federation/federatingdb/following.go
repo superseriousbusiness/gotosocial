@@ -31,7 +31,7 @@ import (
 // If modified, the library will then call Update.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Following(ctx context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
+func (f *DB) Following(ctx context.Context, actorIRI *url.URL) (following vocab.ActivityStreamsCollection, err error) {
 	acct, err := f.state.DB.GetAccountByURI(ctx, actorIRI.String())
 	if err != nil {
 		return nil, err

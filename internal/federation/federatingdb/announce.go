@@ -29,7 +29,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 )
 
-func (f *federatingDB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
+func (f *DB) Announce(ctx context.Context, announce vocab.ActivityStreamsAnnounce) error {
 	log.DebugKV(ctx, "announce", serialize{announce})
 
 	activityContext := getActivityContext(ctx)

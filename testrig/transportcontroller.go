@@ -31,7 +31,6 @@ import (
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
-	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -56,7 +55,7 @@ const (
 // PER TEST rather than per suite, so that the do function can be set on a test by test (or even more granular)
 // basis.
 func NewTestTransportController(state *state.State, client pub.HttpClient) transport.Controller {
-	return transport.NewController(state, NewTestFederatingDB(state), &federation.Clock{}, client)
+	return transport.NewController(state, NewTestFederatingDB(state), client)
 }
 
 type MockHTTPClient struct {

@@ -45,7 +45,7 @@ import (
 //
 // Under certain conditions and network activities, Create may be called
 // multiple times for the same ActivityStreams object.
-func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
+func (f *DB) Create(ctx context.Context, asType vocab.Type) error {
 	log.DebugKV(ctx, "create", serialize{asType})
 
 	// Cache entry for this activity type's ID for later
@@ -126,7 +126,7 @@ func (f *federatingDB) Create(ctx context.Context, asType vocab.Type) error {
 // createPollOptionable handles a Create activity for a PollOptionable.
 // This function doesn't handle database insertion, only validation checks
 // before passing off to a worker for asynchronous processing.
-func (f *federatingDB) createPollOptionables(
+func (f *DB) createPollOptionables(
 	ctx context.Context,
 	receiver *gtsmodel.Account,
 	requester *gtsmodel.Account,
@@ -274,7 +274,7 @@ func (f *federatingDB) createPollOptionables(
 // This function won't insert anything in the database yet,
 // but will pass the Statusable (if appropriate) through to
 // the processor for further asynchronous processing.
-func (f *federatingDB) createStatusable(
+func (f *DB) createStatusable(
 	ctx context.Context,
 	receiver *gtsmodel.Account,
 	requester *gtsmodel.Account,

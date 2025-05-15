@@ -27,7 +27,7 @@ import (
 )
 
 // NewTestFederatingDB returns a federating DB with the underlying db
-func NewTestFederatingDB(state *state.State) federatingdb.DB {
+func NewTestFederatingDB(state *state.State) *federatingdb.DB {
 	return federatingdb.New(
 		state,
 		typeutils.NewConverter(state),

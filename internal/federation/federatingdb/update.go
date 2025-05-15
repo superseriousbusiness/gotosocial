@@ -40,7 +40,7 @@ import (
 // the entire value.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
+func (f *DB) Update(ctx context.Context, asType vocab.Type) error {
 	log.DebugKV(ctx, "update", serialize{asType})
 
 	// Mark activity as handled.
@@ -67,7 +67,7 @@ func (f *federatingDB) Update(ctx context.Context, asType vocab.Type) error {
 	return nil
 }
 
-func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, accountable ap.Accountable) error {
+func (f *DB) updateAccountable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, accountable ap.Accountable) error {
 	// Extract AP URI of the updated Accountable model.
 	idProp := accountable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {
@@ -105,7 +105,7 @@ func (f *federatingDB) updateAccountable(ctx context.Context, receivingAcct *gts
 	return nil
 }
 
-func (f *federatingDB) updateStatusable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, statusable ap.Statusable) error {
+func (f *DB) updateStatusable(ctx context.Context, receivingAcct *gtsmodel.Account, requestingAcct *gtsmodel.Account, statusable ap.Statusable) error {
 	// Extract AP URI of the updated model.
 	idProp := statusable.GetJSONLDId()
 	if idProp == nil || !idProp.IsIRI() {

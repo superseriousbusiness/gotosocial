@@ -29,7 +29,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 )
 
-func (f *federatingDB) Block(ctx context.Context, blockable vocab.ActivityStreamsBlock) error {
+func (f *DB) Block(ctx context.Context, blockable vocab.ActivityStreamsBlock) error {
 	log.DebugKV(ctx, "block", serialize{blockable})
 
 	// Extract relevant values from passed ctx.

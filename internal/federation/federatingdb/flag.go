@@ -30,7 +30,7 @@ import (
 	"github.com/miekg/dns"
 )
 
-func (f *federatingDB) Flag(ctx context.Context, flaggable vocab.ActivityStreamsFlag) error {
+func (f *DB) Flag(ctx context.Context, flaggable vocab.ActivityStreamsFlag) error {
 	log.DebugKV(ctx, "flag", serialize{flaggable})
 
 	// Mark activity as handled.

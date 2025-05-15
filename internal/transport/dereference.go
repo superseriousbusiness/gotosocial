@@ -25,7 +25,7 @@ import (
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
-	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/federation/federatingdb"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 )
@@ -38,10 +38,8 @@ func (t *transport) Dereference(ctx context.Context, iri *url.URL) (*http.Respon
 	// to just make a normal http request to ourself.
 	if iri.Host == config.GetHost() {
 		rsp, err := t.controller.dereferenceLocal(ctx, iri)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			// Real error.
-			err := gtserror.Newf("error trying dereferenceLocal: %w", err)
-			return nil, err
+		if err != nil && !errors.Is(err, federatingdb.ErrNotImplemented) {
+			return nil, gtserror.Newf("error dereferencing local: %w", err)
 		}
 
 		if rsp != nil {

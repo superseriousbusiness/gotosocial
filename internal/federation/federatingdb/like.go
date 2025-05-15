@@ -31,7 +31,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 )
 
-func (f *federatingDB) Like(ctx context.Context, likeable vocab.ActivityStreamsLike) error {
+func (f *DB) Like(ctx context.Context, likeable vocab.ActivityStreamsLike) error {
 	log.DebugKV(ctx, "like", serialize{likeable})
 
 	// Mark activity as handled.

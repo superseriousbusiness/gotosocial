@@ -35,7 +35,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 )
 
-func (f *federatingDB) Move(ctx context.Context, move vocab.ActivityStreamsMove) error {
+func (f *DB) Move(ctx context.Context, move vocab.ActivityStreamsMove) error {
 	log.DebugKV(ctx, "move", serialize{move})
 
 	// Mark activity as handled.

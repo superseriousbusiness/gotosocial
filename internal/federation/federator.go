@@ -37,7 +37,7 @@ var _ interface {
 
 type Federator struct {
 	db           db.DB
-	federatingDB federatingdb.DB
+	federatingDB *federatingdb.DB
 	clock        pub.Clock
 	converter    *typeutils.Converter
 	transport    transport.Controller
@@ -54,7 +54,7 @@ type Federator struct {
 // NewFederator returns a new federator instance.
 func NewFederator(
 	state *state.State,
-	federatingDB federatingdb.DB,
+	federatingDB *federatingdb.DB,
 	transportController transport.Controller,
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
@@ -112,7 +112,7 @@ func (f *Federator) FederatingActor() pub.FederatingActor {
 }
 
 // FederatingDB returns the underlying FederatingDB interface.
-func (f *Federator) FederatingDB() federatingdb.DB {
+func (f *Federator) FederatingDB() *federatingdb.DB {
 	return f.federatingDB
 }
 

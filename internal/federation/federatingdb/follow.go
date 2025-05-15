@@ -29,7 +29,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 )
 
-func (f *federatingDB) Follow(ctx context.Context, followable vocab.ActivityStreamsFollow) error {
+func (f *DB) Follow(ctx context.Context, followable vocab.ActivityStreamsFollow) error {
 	log.DebugKV(ctx, "follow", serialize{followable})
 
 	// Mark activity as handled.

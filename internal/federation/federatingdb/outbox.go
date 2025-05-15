@@ -31,7 +31,7 @@ import (
 // The library makes this call only after acquiring a lock first.
 //
 // Implementation note: we don't (yet) serve outboxes, so just return empty and nil here.
-func (f *federatingDB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+func (f *DB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
@@ -42,7 +42,7 @@ func (f *federatingDB) GetOutbox(ctx context.Context, outboxIRI *url.URL) (inbox
 // The library makes this call only after acquiring a lock first.
 //
 // Implementation note: we don't allow outbox setting so just return nil here.
-func (f *federatingDB) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
+func (f *DB) SetOutbox(ctx context.Context, outbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
 }
 
@@ -50,7 +50,7 @@ func (f *federatingDB) SetOutbox(ctx context.Context, outbox vocab.ActivityStrea
 // actor's inbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
+func (f *DB) OutboxForInbox(ctx context.Context, inboxIRI *url.URL) (outboxIRI *url.URL, err error) {
 	acct, err := f.state.DB.GetOneAccountByInboxURI(ctx, inboxIRI.String())
 	if err != nil {
 		return nil, err

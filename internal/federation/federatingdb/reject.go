@@ -33,7 +33,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
 )
 
-func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
+func (f *DB) Reject(ctx context.Context, reject vocab.ActivityStreamsReject) error {
 	log.DebugKV(ctx, "reject", serialize{reject})
 
 	activityContext := getActivityContext(ctx)
@@ -122,7 +122,7 @@ func (f *federatingDB) Reject(ctx context.Context, reject vocab.ActivityStreamsR
 	return nil
 }
 
-func (f *federatingDB) rejectFollowType(
+func (f *DB) rejectFollowType(
 	ctx context.Context,
 	asType vocab.Type,
 	receivingAcct *gtsmodel.Account,
@@ -137,11 +137,6 @@ func (f *federatingDB) rejectFollowType(
 		err := gtserror.Newf("error converting Follow to *gtsmodel.Follow: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
-
-	// Lock on the Follow URI
-	// as we may be updating it.
-	unlock := f.state.FedLocks.Lock(follow.URI)
-	defer unlock()
 
 	// Make sure the creator of the original follow
 	// is the same as whatever inbox this landed in.
@@ -158,8 +153,7 @@ func (f *federatingDB) rejectFollowType(
 	}
 
 	// Reject the follow.
-	err = f.state.DB.RejectFollowRequest(
-		ctx,
+	err = f.state.DB.RejectFollowRequest(ctx,
 		follow.AccountID,
 		follow.TargetAccountID,
 	)
@@ -171,17 +165,12 @@ func (f *federatingDB) rejectFollowType(
 	return nil
 }
 
-func (f *federatingDB) rejectFollowIRI(
+func (f *DB) rejectFollowIRI(
 	ctx context.Context,
 	objectIRI string,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
 ) error {
-	// Lock on this potential Follow
-	// URI as we may be updating it.
-	unlock := f.state.FedLocks.Lock(objectIRI)
-	defer unlock()
-
 	// Get the follow req from the db.
 	followReq, err := f.state.DB.GetFollowRequestByURI(ctx, objectIRI)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -214,8 +203,7 @@ func (f *federatingDB) rejectFollowIRI(
 	}
 
 	// Reject the follow.
-	err = f.state.DB.RejectFollowRequest(
-		ctx,
+	err = f.state.DB.RejectFollowRequest(ctx,
 		followReq.AccountID,
 		followReq.TargetAccountID,
 	)
@@ -227,7 +215,7 @@ func (f *federatingDB) rejectFollowIRI(
 	return nil
 }
 
-func (f *federatingDB) rejectStatusIRI(
+func (f *DB) rejectStatusIRI(
 	ctx context.Context,
 	activityID string,
 	objectIRI string,
@@ -379,7 +367,7 @@ func (f *federatingDB) rejectStatusIRI(
 	return nil
 }
 
-func (f *federatingDB) rejectLikeIRI(
+func (f *DB) rejectLikeIRI(
 	ctx context.Context,
 	activityID string,
 	objectIRI string,

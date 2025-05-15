@@ -35,7 +35,7 @@ import (
 // The library makes this call only after acquiring a lock first.
 //
 // Implementation note: we have our own logic for inboxes so always return false here.
-func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
+func (f *DB) InboxContains(c context.Context, inbox, id *url.URL) (contains bool, err error) {
 	return false, nil
 }
 
@@ -45,7 +45,7 @@ func (f *federatingDB) InboxContains(c context.Context, inbox, id *url.URL) (con
 // The library makes this call only after acquiring a lock first.
 //
 // Implementation note: we don't (yet) serve inboxes, so just return empty and nil here.
-func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
+func (f *DB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox vocab.ActivityStreamsOrderedCollectionPage, err error) {
 	return streams.NewActivityStreamsOrderedCollectionPage(), nil
 }
 
@@ -56,7 +56,7 @@ func (f *federatingDB) GetInbox(c context.Context, inboxIRI *url.URL) (inbox voc
 // The library makes this call only after acquiring a lock first.
 //
 // Implementation note: we don't allow inbox setting so just return nil here.
-func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
+func (f *DB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOrderedCollectionPage) error {
 	return nil
 }
 
@@ -76,7 +76,7 @@ func (f *federatingDB) SetInbox(c context.Context, inbox vocab.ActivityStreamsOr
 // then each follower inbox IRI should be returned in the inboxIRIs slice.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs []*url.URL, err error) {
+func (f *DB) InboxesForIRI(c context.Context, iri *url.URL) (inboxIRIs []*url.URL, err error) {
 	// check if this is a followers collection iri for a local account...
 	if iri.Host == config.GetHost() && uris.IsFollowersPath(iri) {
 		localAccountUsername, err := uris.ParseFollowersPath(iri)

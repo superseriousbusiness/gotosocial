@@ -24,6 +24,6 @@ import (
 
 // Exists is an implementation of pub.Database{}.Exists(), optimized specifically for
 // the only usecase in which go-fed/activity/pub actually calls it. Do not use otherwise!
-func (f *federatingDB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
+func (f *DB) Exists(ctx context.Context, id *url.URL) (exists bool, err error) {
 	return f.activityIDs.Has(id.String()), nil
 }

@@ -33,6 +33,6 @@ import (
 // processes require tight loops acquiring and releasing locks.
 //
 // Used to ensure race conditions in multiple requests do not occur.
-func (f *federatingDB) Lock(c context.Context, id *url.URL) (func(), error) {
-	return f.state.FedLocks.Lock("federatingDB " + id.String()), nil // id should NEVER be nil.
+func (f *DB) Lock(c context.Context, id *url.URL) (func(), error) {
+	return f.state.FedLocks.Lock("fdb:" + id.String()), nil // id should NEVER be nil.
 }

@@ -37,7 +37,7 @@ type FederatingDBTestSuite struct {
 	suite.Suite
 	db           db.DB
 	tc           *typeutils.Converter
-	federatingDB federatingdb.DB
+	federatingDB *federatingdb.DB
 	state        state.State
 
 	testTokens       map[string]*gtsmodel.Token

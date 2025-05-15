@@ -269,9 +269,8 @@ func (p *fediAPI) MoveAccount(ctx context.Context, fMsg *messages.FromFediAPI) e
 	// try to send the same Move several times with
 	// different IDs (you never know), but we only
 	// want to process them based on origin + target.
-	unlock := p.state.FedLocks.Lock(
-		"move:" + originAcctURIStr + ":" + targetAcctURIStr,
-	)
+	key := "move:" + originAcctURIStr + ":" + targetAcctURIStr
+	unlock := p.state.FedLocks.Lock(key)
 	defer unlock()
 
 	// Check if Move is rate limited based

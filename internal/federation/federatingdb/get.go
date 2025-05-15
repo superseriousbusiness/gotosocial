@@ -19,15 +19,18 @@ package federatingdb
 
 import (
 	"context"
+	"errors"
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
-	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
 )
+
+var ErrNotImplemented = errors.New("not implemented")
 
 // Get returns the database entry for the specified id.
 //
@@ -48,30 +51,38 @@ import (
 //
 // It may be useful in future to add more matching here so that more
 // stuff can be shortcutted by the dereferencer, saving HTTP calls.
-func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
+func (f *DB) Get(ctx context.Context, id *url.URL) (value vocab.Type, err error) {
 	log.DebugKV(ctx, "id", id)
 
 	// Ensure our host, for safety.
 	if id.Host != config.GetHost() {
-		return nil, gtserror.Newf("%s was not for our host", id.String())
+		return nil, gtserror.Newf("%s was not for our host", id)
 	}
 
-	if username, err := uris.ParseUserPath(id); err == nil && username != "" {
-		acct, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, "")
+	if username, _ := uris.ParseUserPath(id); username != "" {
+		acct, err := f.state.DB.GetAccountByUsernameDomain(
+			gtscontext.SetBarebones(ctx),
+			username,
+			"",
+		)
 		if err != nil {
 			return nil, err
 		}
 		return f.converter.AccountToAS(ctx, acct)
 
-	} else if _, statusID, err := uris.ParseStatusesPath(id); err == nil && statusID != "" {
+	} else if _, statusID, _ := uris.ParseStatusesPath(id); statusID != "" {
 		status, err := f.state.DB.GetStatusByID(ctx, statusID)
 		if err != nil {
 			return nil, err
 		}
 		return f.converter.StatusToAS(ctx, status)
 
-	} else if username, err := uris.ParseFollowersPath(id); err == nil && username != "" {
-		acct, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, "")
+	} else if username, _ := uris.ParseFollowersPath(id); username != "" {
+		acct, err := f.state.DB.GetAccountByUsernameDomain(
+			gtscontext.SetBarebones(ctx),
+			username,
+			"",
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -83,8 +94,12 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 
 		return f.Followers(ctx, acctURI)
 
-	} else if username, err := uris.ParseFollowingPath(id); err == nil && username != "" {
-		acct, err := f.state.DB.GetAccountByUsernameDomain(ctx, username, "")
+	} else if username, _ := uris.ParseFollowingPath(id); username != "" {
+		acct, err := f.state.DB.GetAccountByUsernameDomain(
+			gtscontext.SetBarebones(ctx),
+			username,
+			"",
+		)
 		if err != nil {
 			return nil, err
 		}
@@ -102,8 +117,5 @@ func (f *federatingDB) Get(ctx context.Context, id *url.URL) (value vocab.Type, 
 
 	// Nothing found, the caller
 	// will have to deal with this.
-	return nil, gtserror.Newf(
-		"not implemented for %s: %w",
-		id.String(), db.ErrNoEntries,
-	)
+	return nil, ErrNotImplemented
 }

@@ -23,6 +23,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,11 +31,12 @@ import (
 	"strconv"
 
 	"code.superseriousbusiness.org/activity/pub"
-	"code.superseriousbusiness.org/activity/streams/vocab"
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
+	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/federation/federatingdb"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"codeberg.org/gruf/go-byteutil"
@@ -52,15 +54,14 @@ type Controller interface {
 
 type controller struct {
 	state     *state.State
-	fedDB     federatingdb.DB
-	clock     pub.Clock
+	fedDB     *federatingdb.DB
 	client    pub.HttpClient
 	trspCache cache.TTLCache[string, *transport]
 	userAgent string
 }
 
 // NewController returns an implementation of the Controller interface for creating new transports
-func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.Clock, client pub.HttpClient) Controller {
+func NewController(state *state.State, federatingDB *federatingdb.DB, client pub.HttpClient) Controller {
 	var (
 		host    = config.GetHost()
 		proto   = config.GetProtocol()
@@ -70,7 +71,6 @@ func NewController(state *state.State, federatingDB federatingdb.DB, clock pub.C
 	c := &controller{
 		state:     state,
 		fedDB:     federatingDB,
-		clock:     clock,
 		client:    client,
 		trspCache: cache.NewTTL[string, *transport](0, 100, 0),
 		userAgent: fmt.Sprintf("gotosocial/%s (+%s://%s)", version, proto, host),
@@ -153,37 +153,51 @@ func (c *controller) dereferenceLocal(
 	ctx context.Context,
 	uri *url.URL,
 ) (*http.Response, error) {
-	var (
-		t   vocab.Type
-		err error
-	)
 
-	t, err = c.fedDB.Get(ctx, uri)
-	if err != nil {
-		// Don't check especially for
-		// db.ErrNoEntries, as we *want*
-		// to pass this back to the caller
-		// if we didn't get anything.
-		return nil, err
+	// Try fetch via federating DB.
+	t, err := c.fedDB.Get(ctx, uri)
+
+	switch {
+	// No problem.
+	case err == nil:
+
+	// Catch and handle objects not found.
+	case errors.Is(err, db.ErrNoEntries):
+		return &http.Response{
+			Request:    &http.Request{URL: uri},
+			Status:     http.StatusText(http.StatusNotFound),
+			StatusCode: http.StatusNotFound,
+			Header: map[string][]string{
+				"Content-Type":   {apiutil.AppActivityLDJSON},
+				"Content-Length": {"0"},
+			},
+		}, nil
+
+	// Any other.
+	default:
+		return nil, gtserror.Newf("error getting: %w", err)
 	}
 
 	if util.IsNil(t) {
-		// This should never happen.
-		panic("nil vocab.Type after successful c.fedDB.Get call")
+		// Assert this should never happen.
+		panic(gtserror.New("nil vocab.Type"))
 	}
 
-	i, err := ap.Serialize(t)
+	// Serialize type to JSON map.
+	m, err := ap.Serialize(t)
 	if err != nil {
 		return nil, err
 	}
 
-	b, err := json.Marshal(i)
+	// Marshal JSON to bytes.
+	b, err := json.Marshal(m)
 	if err != nil {
 		return nil, err
 	}
+
+	// Return a response
+	// with AS data as body.
 	contentLength := len(b)
-
-	// Return a response with AS data as body.
 	rsp := &http.Response{
 		Request:       &http.Request{URL: uri},
 		Status:        http.StatusText(http.StatusOK),

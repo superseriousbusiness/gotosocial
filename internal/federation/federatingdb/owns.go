@@ -34,7 +34,7 @@ import (
 // Owns returns true if the IRI belongs to this instance, and if
 // the database has an entry for the IRI.
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
+func (f *DB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	log.DebugKV(ctx, "id", id)
 
 	// if the id host isn't this instance host, we don't own this IRI
@@ -150,7 +150,7 @@ func (f *federatingDB) Owns(ctx context.Context, id *url.URL) (bool, error) {
 	return false, fmt.Errorf("could not match activityID: %s", id.String())
 }
 
-func (f *federatingDB) ownsLike(ctx context.Context, uri *url.URL) (bool, error) {
+func (f *DB) ownsLike(ctx context.Context, uri *url.URL) (bool, error) {
 	username, id, err := uris.ParseLikedPath(uri)
 	if err != nil {
 		return false, fmt.Errorf("error parsing Like path for url %s: %w", uri.String(), err)

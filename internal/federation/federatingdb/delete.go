@@ -36,7 +36,7 @@ import (
 // Protocol instead call Update to create a Tombstone.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
+func (f *DB) Delete(ctx context.Context, id *url.URL) error {
 	log.DebugKV(ctx, "id", id)
 
 	activityContext := getActivityContext(ctx)
@@ -87,7 +87,7 @@ func (f *federatingDB) Delete(ctx context.Context, id *url.URL) error {
 	return nil
 }
 
-func (f *federatingDB) deleteAccount(
+func (f *DB) deleteAccount(
 	ctx context.Context,
 	requesting *gtsmodel.Account,
 	receiving *gtsmodel.Account,
@@ -126,7 +126,7 @@ func (f *federatingDB) deleteAccount(
 	return false, nil
 }
 
-func (f *federatingDB) deleteStatus(
+func (f *DB) deleteStatus(
 	ctx context.Context,
 	requesting *gtsmodel.Account,
 	receiving *gtsmodel.Account,

@@ -20,7 +20,6 @@ package federatingdb
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
 
 	"code.superseriousbusiness.org/activity/streams"
@@ -65,16 +64,20 @@ func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityS
 	}
 
 	for a1Iter := actor1.Begin(); a1Iter != actor1.End(); a1Iter = a1Iter.Next() {
+		a1IRI := a1Iter.GetIRI()
+		if a1IRI == nil {
+			return false
+		}
+
+		a1IRIStr := a1IRI.String()
 		for a2Iter := actor2.Begin(); a2Iter != actor2.End(); a2Iter = a2Iter.Next() {
-			if a1Iter.GetIRI() == nil {
+			a2IRI := a2Iter.GetIRI()
+			if a2IRI == nil {
 				return false
 			}
 
-			if a2Iter.GetIRI() == nil {
-				return false
-			}
-
-			if a1Iter.GetIRI().String() == a2Iter.GetIRI().String() {
+			a2IRIStr := a2IRI.String()
+			if a1IRIStr == a2IRIStr {
 				return true
 			}
 		}
@@ -89,7 +92,7 @@ func sameActor(actor1 vocab.ActivityStreamsActorProperty, actor2 vocab.ActivityS
 //
 // The go-fed library will handle setting the 'id' property on the
 // activity or object provided with the value returned.
-func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
+func (f *DB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL, err error) {
 	log.DebugKV(ctx, "newID", serialize{t})
 
 	// Most of our types set an ID already
@@ -116,19 +119,18 @@ func (f *federatingDB) NewID(ctx context.Context, t vocab.Type) (idURL *url.URL,
 	}
 
 	// Default fallback behaviour:
-	// {proto}://{host}/{randomID}
-	newID, err := id.NewRandomULID()
-	if err != nil {
-		return nil, err
-	}
-
-	return url.Parse(fmt.Sprintf("%s://%s/%s", config.GetProtocol(), config.GetHost(), newID))
+	// {proto}://{host}/{newULID}
+	return &url.URL{
+		Scheme: config.GetProtocol(),
+		Host:   config.GetHost(),
+		Path:   "/" + id.NewULID(),
+	}, nil
 }
 
 // ActorForOutbox fetches the local actor's IRI for the given outbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
+func (f *DB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	acct, err := f.state.DB.GetOneAccountByOutboxURI(ctx, outboxIRI.String())
 	if err != nil {
 		return nil, err
@@ -139,7 +141,7 @@ func (f *federatingDB) ActorForOutbox(ctx context.Context, outboxIRI *url.URL) (
 // ActorForInbox fetches the local actor's IRI for the given inbox IRI.
 //
 // The library makes this call only after acquiring a lock first.
-func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
+func (f *DB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (actorIRI *url.URL, err error) {
 	acct, err := f.state.DB.GetOneAccountByInboxURI(ctx, inboxIRI.String())
 	if err != nil {
 		return nil, err
@@ -148,7 +150,7 @@ func (f *federatingDB) ActorForInbox(ctx context.Context, inboxIRI *url.URL) (ac
 }
 
 // collectFollows takes a slice of iris and converts them into ActivityStreamsCollection of IRIs.
-func (f *federatingDB) collectIRIs(_ context.Context, iris []*url.URL) (vocab.ActivityStreamsCollection, error) {
+func (f *DB) collectIRIs(_ context.Context, iris []*url.URL) (vocab.ActivityStreamsCollection, error) {
 	collection := streams.NewActivityStreamsCollection()
 	items := streams.NewActivityStreamsItemsProperty()
 	for _, i := range iris {

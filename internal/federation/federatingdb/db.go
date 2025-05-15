@@ -32,9 +32,10 @@ import (
 	"codeberg.org/gruf/go-cache/v3/simple"
 )
 
-// DB wraps the pub.Database interface with
-// a couple of custom functions for GoToSocial.
-type DB interface {
+// Check our type's
+// interface conformity.
+var _ interface {
+
 	// Default
 	// functionality.
 	pub.Database
@@ -55,11 +56,11 @@ type DB interface {
 	*/
 
 	GetAccept(ctx context.Context, acceptIRI *url.URL) (vocab.ActivityStreamsAccept, error)
-}
+} = &DB{}
 
-// FederatingDB uses the given state interface
-// to implement the go-fed pub.Database interface.
-type federatingDB struct {
+// DB uses the given state interface to
+// implement the go-fed pub.Database interface.
+type DB struct {
 	state      *state.State
 	converter  *typeutils.Converter
 	visFilter  *visibility.Filter
@@ -79,8 +80,8 @@ func New(
 	visFilter *visibility.Filter,
 	intFilter *interaction.Filter,
 	spamFilter *spam.Filter,
-) DB {
-	fdb := federatingDB{
+) *DB {
+	fdb := DB{
 		state:      state,
 		converter:  converter,
 		visFilter:  visFilter,
@@ -93,6 +94,6 @@ func New(
 
 // storeActivityID stores an entry in the .activityIDs cache for this
 // type's JSON-LD ID, for later checks in Exist() to mark it as seen.
-func (f *federatingDB) storeActivityID(asType vocab.Type) {
+func (f *DB) storeActivityID(asType vocab.Type) {
 	f.activityIDs.Set(ap.GetJSONLDId(asType).String(), struct{}{})
 }

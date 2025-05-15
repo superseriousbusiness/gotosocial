@@ -35,7 +35,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
-func (f *federatingDB) GetAccept(
+func (f *DB) GetAccept(
 	ctx context.Context,
 	acceptIRI *url.URL,
 ) (vocab.ActivityStreamsAccept, error) {
@@ -46,7 +46,7 @@ func (f *federatingDB) GetAccept(
 	return f.converter.InteractionReqToASAccept(ctx, approval)
 }
 
-func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
+func (f *DB) Accept(ctx context.Context, accept vocab.ActivityStreamsAccept) error {
 	log.DebugKV(ctx, "accept", serialize{accept})
 
 	activityContext := getActivityContext(ctx)
@@ -202,7 +202,7 @@ func (f *federatingDB) Accept(ctx context.Context, accept vocab.ActivityStreamsA
 	return nil
 }
 
-func (f *federatingDB) acceptFollowType(
+func (f *DB) acceptFollowType(
 	ctx context.Context,
 	asType vocab.Type,
 	receivingAcct *gtsmodel.Account,
@@ -217,11 +217,6 @@ func (f *federatingDB) acceptFollowType(
 		err := gtserror.Newf("error converting Follow to *gtsmodel.Follow: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
-
-	// Lock on the Follow URI
-	// as we may be updating it.
-	unlock := f.state.FedLocks.Lock(follow.URI)
-	defer unlock()
 
 	// Make sure the creator of the original follow
 	// is the same as whatever inbox this landed in.
@@ -238,8 +233,7 @@ func (f *federatingDB) acceptFollowType(
 	}
 
 	// Accept and get the populated follow back.
-	follow, err = f.state.DB.AcceptFollowRequest(
-		ctx,
+	follow, err = f.state.DB.AcceptFollowRequest(ctx,
 		follow.AccountID,
 		follow.TargetAccountID,
 	)
@@ -267,17 +261,12 @@ func (f *federatingDB) acceptFollowType(
 	return nil
 }
 
-func (f *federatingDB) acceptFollowIRI(
+func (f *DB) acceptFollowIRI(
 	ctx context.Context,
 	objectIRI string,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
 ) error {
-	// Lock on this potential Follow
-	// URI as we may be updating it.
-	unlock := f.state.FedLocks.Lock(objectIRI)
-	defer unlock()
-
 	// Get the follow req from the db.
 	followReq, err := f.state.DB.GetFollowRequestByURI(ctx, objectIRI)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
@@ -307,8 +296,7 @@ func (f *federatingDB) acceptFollowIRI(
 	}
 
 	// Accept and get the populated follow back.
-	follow, err := f.state.DB.AcceptFollowRequest(
-		ctx,
+	follow, err := f.state.DB.AcceptFollowRequest(ctx,
 		followReq.AccountID,
 		followReq.TargetAccountID,
 	)
@@ -336,7 +324,7 @@ func (f *federatingDB) acceptFollowIRI(
 	return nil
 }
 
-func (f *federatingDB) acceptOtherIRI(
+func (f *DB) acceptOtherIRI(
 	ctx context.Context,
 	acceptID *url.URL,
 	accept vocab.ActivityStreamsAccept,
@@ -419,7 +407,7 @@ func (f *federatingDB) acceptOtherIRI(
 	return nil
 }
 
-func (f *federatingDB) acceptStoredStatus(
+func (f *DB) acceptStoredStatus(
 	ctx context.Context,
 	acceptID *url.URL,
 	accept vocab.ActivityStreamsAccept,
@@ -489,7 +477,7 @@ func (f *federatingDB) acceptStoredStatus(
 	return nil
 }
 
-func (f *federatingDB) acceptLikeIRI(
+func (f *DB) acceptLikeIRI(
 	ctx context.Context,
 	acceptID *url.URL,
 	accept vocab.ActivityStreamsAccept,

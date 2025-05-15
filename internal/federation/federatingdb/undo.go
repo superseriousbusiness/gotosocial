@@ -32,7 +32,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
 )
 
-func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
+func (f *DB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo) error {
 	log.DebugKV(ctx, "undo", serialize{undo})
 
 	activityContext := getActivityContext(ctx)
@@ -111,7 +111,7 @@ func (f *federatingDB) Undo(ctx context.Context, undo vocab.ActivityStreamsUndo)
 	return nil
 }
 
-func (f *federatingDB) undoFollow(
+func (f *DB) undoFollow(
 	ctx context.Context,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
@@ -148,11 +148,6 @@ func (f *federatingDB) undoFollow(
 	if follow == nil {
 		return nil
 	}
-
-	// Lock on the Follow URI
-	// as we may be updating it.
-	unlock := f.state.FedLocks.Lock(follow.URI)
-	defer unlock()
 
 	// Ensure addressee is follow target.
 	if follow.TargetAccountID != receivingAcct.ID {
@@ -193,7 +188,7 @@ func (f *federatingDB) undoFollow(
 	return nil
 }
 
-func (f *federatingDB) undoLike(
+func (f *DB) undoLike(
 	ctx context.Context,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
@@ -293,7 +288,7 @@ func (f *federatingDB) undoLike(
 	return nil
 }
 
-func (f *federatingDB) undoBlock(
+func (f *DB) undoBlock(
 	ctx context.Context,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
@@ -363,7 +358,7 @@ func (f *federatingDB) undoBlock(
 	return nil
 }
 
-func (f *federatingDB) undoAnnounce(
+func (f *DB) undoAnnounce(
 	ctx context.Context,
 	receivingAcct *gtsmodel.Account,
 	requestingAcct *gtsmodel.Account,
