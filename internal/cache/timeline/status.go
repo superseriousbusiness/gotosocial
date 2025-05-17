@@ -196,14 +196,9 @@ func (t *StatusTimeline) Preload(
 	n int,
 	err error,
 ) {
-	t.preloader.CheckPreload(func(ptr *any) {
+	err = t.preloader.CheckPreload(func() error {
 		n, err = t.preload(loadPage, filter)
-		if err != nil {
-			return
-		}
-
-		// Mark as preloaded.
-		t.preloader.Done(ptr)
+		return err
 	})
 	return
 }

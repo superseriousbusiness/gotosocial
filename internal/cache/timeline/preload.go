@@ -60,23 +60,23 @@ func (p *preloader) Check() bool {
 // CheckPreload will safely check the preload state,
 // and if needed call the provided function. if a
 // preload is in progress, it will wait until complete.
-func (p *preloader) CheckPreload(preload func(*any)) {
+func (p *preloader) CheckPreload(preload func() error) error {
 	for {
 		// Get state ptr.
 		ptr := p.p.Load()
 
 		if ptr == nil || *ptr == false {
 			// Needs preloading, start it.
-			ok := p.start(ptr, preload)
-
+			ok, err := p.start(ptr, preload)
 			if !ok {
+
 				// Failed to acquire start,
 				// other thread beat us to it.
 				continue
 			}
 
-			// Success!
-			return
+			// We ran!
+			return err
 		}
 
 		// Check for a preload currently in progress.
@@ -85,52 +85,65 @@ func (p *preloader) CheckPreload(preload func(*any)) {
 			continue
 		}
 
-		// Anything else
-		// means success.
-		return
+		// Anything else means
+		// already preloaded.
+		return nil
 	}
 }
 
-// start attempts to start the given preload function, by performing
-// a compare and swap operation with 'old'. return is success.
-func (p *preloader) start(old *any, preload func(*any)) bool {
+// start will attempt to acquire start state of the preloader, on success calling 'preload'.
+// this returns whether start was acquired, and if called returns 'preload' error. in the
+// case that 'preload' is called, returned error determines the next state that preloader
+// will update itself to. (err == nil) => "preloaded", (err != nil) => "needs preload".
+// NOTE: this is the only function that may unset an in-progress sync.WaitGroup value.
+func (p *preloader) start(old *any, preload func() error) (started bool, err error) {
 
 	// Optimistically setup a
 	// new waitgroup to set as
 	// the preload waiter.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	defer wg.Done()
 
 	// Wrap waitgroup in
 	// 'any' for pointer.
-	new := any(&wg)
-	ptr := &new
+	a := any(&wg)
+	ptr := &a
 
 	// Attempt CAS operation to claim start.
-	started := p.p.CompareAndSwap(old, ptr)
+	started = p.p.CompareAndSwap(old, ptr)
 	if !started {
-		return false
+		return false, nil
 	}
 
-	// Start.
-	preload(ptr)
-	return true
-}
+	defer func() {
+		// Release.
+		wg.Done()
 
-// done marks state as preloaded,
-// i.e. no more preload required.
-func (p *preloader) Done(ptr *any) {
-	if !p.p.CompareAndSwap(ptr, new(any)) {
-		log.Errorf(nil, "BUG: invalid preloader state: %#v", (*p.p.Load()))
-	}
+		var ok bool
+		if err != nil {
+			// Preload failed,
+			// drop waiter ptr.
+			a := any(false)
+			ok = p.p.CompareAndSwap(ptr, &a)
+		} else {
+			// Preload success, set success value.
+			ok = p.p.CompareAndSwap(ptr, new(any))
+		}
+
+		if !ok {
+			log.Errorf(nil, "BUG: invalid preloader state: %#v", (*p.p.Load()))
+		}
+	}()
+
+	// Perform preload.
+	err = preload()
+	return
 }
 
 // clear will clear the state, marking a "preload" as required.
 // i.e. next call to Check() will call provided preload func.
 func (p *preloader) Clear() {
-	b := false
-	a := any(b)
+	a := any(false)
 	for {
 		// Load current ptr.
 		ptr := p.p.Load()

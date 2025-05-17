@@ -19,9 +19,12 @@ package timeline
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
+	"sync/atomic"
 	"testing"
+	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -65,6 +68,87 @@ var testStatusMeta = []*StatusMeta{
 	},
 }
 
+func TestStatusTimelinePreloader(t *testing.T) {
+	ctx, cncl := context.WithCancel(context.Background())
+	defer cncl()
+
+	var tt StatusTimeline
+	tt.Init(1000)
+
+	// Start goroutine to add some
+	// concurrent usage to preloader.
+	var started atomic.Int32
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			tt.preloader.Check()
+			started.Add(1)
+		}
+	}()
+
+	// Wait until goroutine running.
+	for started.Load() == 0 {
+		time.Sleep(time.Millisecond)
+	}
+
+	// Variable to check whether
+	// our hook funcs are called.
+	var called bool
+	reset := func() { called = false }
+
+	// "no error" preloader hook.
+	preloadNoErr := func() error {
+		called = true
+		return nil
+	}
+
+	// "error return" preloader hook.
+	preloadErr := func() error {
+		called = true
+		return errors.New("oh no")
+	}
+
+	// Check that on fail does not mark as preloaded.
+	err := tt.preloader.CheckPreload(preloadErr)
+	assert.Error(t, err)
+	assert.False(t, tt.preloader.Check())
+	assert.True(t, called)
+	reset()
+
+	// Check that on success marks itself as preloaded.
+	err = tt.preloader.CheckPreload(preloadNoErr)
+	assert.NoError(t, err)
+	assert.True(t, tt.preloader.Check())
+	assert.True(t, called)
+	reset()
+
+	// Check that preload func not called again
+	// if it's already in the 'preloaded' state.
+	err = tt.preloader.CheckPreload(preloadErr)
+	assert.NoError(t, err)
+	assert.True(t, tt.preloader.Check())
+	assert.False(t, called)
+	reset()
+
+	// Ensure that a clear operation
+	// successfully unsets preloader.
+	tt.preloader.Clear()
+	assert.False(t, tt.preloader.Check())
+	assert.False(t, called)
+	reset()
+
+	// Ensure that it can be marked as preloaded again.
+	err = tt.preloader.CheckPreload(preloadNoErr)
+	assert.NoError(t, err)
+	assert.True(t, tt.preloader.Check())
+	assert.True(t, called)
+	reset()
+}
+
 func TestStatusTimelineLoadLimit(t *testing.T) {
 	var tt StatusTimeline
 	tt.Init(1000)
@@ -80,7 +164,7 @@ func TestStatusTimelineLoadLimit(t *testing.T) {
 	_ = tt.cache.Insert(data...)
 
 	// Manually mark timeline as 'preloaded'.
-	tt.preloader.CheckPreload(tt.preloader.Done)
+	tt.preloader.CheckPreload(func() error { return nil })
 
 	// Craft a new page for selection,
 	// setting placeholder min / max values
@@ -251,7 +335,7 @@ func TestStatusTimelineInserts(t *testing.T) {
 	assert.Equal(t, maxID, maxStatus(&tt).ID)
 
 	// Manually mark timeline as 'preloaded'.
-	tt.preloader.CheckPreload(tt.preloader.Done)
+	tt.preloader.CheckPreload(func() error { return nil })
 
 	// Specifically craft a boost of latest (i.e. max) status in timeline.
 	boost := &gtsmodel.Status{ID: "06B1A00PQWDZZH9WK9P5VND35C", BoostOfID: maxID}
