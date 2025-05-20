@@ -49,7 +49,10 @@ func fieldtag(field, tag string) string {
 //
 // Please note that if you update this struct's fields or tags, you
 // will need to regenerate the global Getter/Setter helpers by running:
-// `go run ./internal/config/gen/ -out ./internal/config/helpers.gen.go`
+// `go run ./internal/config/gen/ -out ./internal/config/helpers.gen.go`.
+//
+// You will need to have gofumpt installed in order for this to work:
+// https://github.com/mvdan/gofumpt.
 type Configuration struct {
 	LogLevel           string `name:"log-level" usage:"Log level to run at: [trace, debug, info, warn, fatal]"`
 	LogTimestampFormat string `name:"log-timestamp-format" usage:"Format to use for the log timestamp, as supported by Go's time.Layout"`
@@ -88,8 +91,10 @@ type Configuration struct {
 	InstanceFederationMode            string             `name:"instance-federation-mode" usage:"Set instance federation mode."`
 	InstanceFederationSpamFilter      bool               `name:"instance-federation-spam-filter" usage:"Enable basic spam filter heuristics for messages coming from other instances, and drop messages identified as spam"`
 	InstanceExposePeers               bool               `name:"instance-expose-peers" usage:"Allow unauthenticated users to query /api/v1/instance/peers?filter=open"`
-	InstanceExposeSuspended           bool               `name:"instance-expose-suspended" usage:"Expose suspended instances via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=suspended"`
-	InstanceExposeSuspendedWeb        bool               `name:"instance-expose-suspended-web" usage:"Expose list of suspended instances as webpage on /about/suspended"`
+	InstanceExposeBlocklist           bool               `name:"instance-expose-blocklist" usage:"Expose list of blocked domains via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=blocked and /api/v1/instance/domain_blocks"`
+	InstanceExposeBlocklistWeb        bool               `name:"instance-expose-blocklist-web" usage:"Expose list of explicitly blocked domains as webpage on /about/domain_blocks"`
+	InstanceExposeAllowlist           bool               `name:"instance-expose-allowlist" usage:"Expose list of allowed domains via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=allowed and /api/v1/instance/domain_allows"`
+	InstanceExposeAllowlistWeb        bool               `name:"instance-expose-allowlist-web" usage:"Expose list of explicitly allowed domains as webpage on /about/domain_allows"`
 	InstanceExposePublicTimeline      bool               `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
 	InstanceDeliverToSharedInboxes    bool               `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
 	InstanceInjectMastodonVersion     bool               `name:"instance-inject-mastodon-version" usage:"This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection"`

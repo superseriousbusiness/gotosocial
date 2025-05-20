@@ -32,14 +32,17 @@ type Domain struct {
 	// Time at which this domain was silenced. Key will not be present on open domains.
 	// example: 2021-07-30T09:20:25+00:00
 	SilencedAt string `json:"silenced_at,omitempty"`
-	// If the domain is blocked, what's the publicly-stated reason for the block.
+	// If the domain is blocked or allowed, what's the publicly-stated reason (if any).
 	// Alternative to `public_comment` to be used when serializing/deserializing via /api/v1/instance.
 	// example: they smell
 	Comment *string `form:"comment" json:"comment,omitempty"`
-	// If the domain is blocked, what's the publicly-stated reason for the block.
+	// If the domain is blocked or allowed, what's the publicly-stated reason (if any).
 	// Alternative to `comment` to be used when serializing/deserializing NOT via /api/v1/instance.
 	// example: they smell
 	PublicComment *string `form:"public_comment" json:"public_comment,omitempty"`
+	// Severity of this entry.
+	// Only ever set for domain blocks, and if set, always="suspend".
+	Severity string `form:"severity" json:"severity,omitempty"`
 }
 
 // DomainPermission represents a permission applied to one domain (explicit block/allow).

@@ -108,10 +108,12 @@ EXPECT=$(cat << "EOF"
     "http-client-tls-insecure-skip-verify": false,
     "instance-allow-backdating-statuses": true,
     "instance-deliver-to-shared-inboxes": false,
+    "instance-expose-allowlist": true,
+    "instance-expose-allowlist-web": true,
+    "instance-expose-blocklist": true,
+    "instance-expose-blocklist-web": true,
     "instance-expose-peers": true,
     "instance-expose-public-timeline": true,
-    "instance-expose-suspended": true,
-    "instance-expose-suspended-web": true,
     "instance-federation-mode": "allowlist",
     "instance-federation-spam-filter": true,
     "instance-inject-mastodon-version": true,
@@ -237,8 +239,10 @@ GTS_DB_TLS_CA_CERT='' \
 GTS_WEB_TEMPLATE_BASE_DIR='/root' \
 GTS_WEB_ASSET_BASE_DIR='/root' \
 GTS_INSTANCE_EXPOSE_PEERS=true \
-GTS_INSTANCE_EXPOSE_SUSPENDED=true \
-GTS_INSTANCE_EXPOSE_SUSPENDED_WEB=true \
+GTS_INSTANCE_EXPOSE_BLOCKLIST=true \
+GTS_INSTANCE_EXPOSE_BLOCKLIST_WEB=true \
+GTS_INSTANCE_EXPOSE_ALLOWLIST=true \
+GTS_INSTANCE_EXPOSE_ALLOWLIST_WEB=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_FEDERATION_MODE='allowlist' \
 GTS_INSTANCE_FEDERATION_SPAM_FILTER=true \

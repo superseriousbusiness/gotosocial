@@ -57,7 +57,8 @@ func (m *Module) aboutGETHandler(c *gin.Context) {
 		Stylesheets: []string{cssAbout},
 		Extra: map[string]any{
 			"showStrap":        true,
-			"blocklistExposed": config.GetInstanceExposeSuspendedWeb(),
+			"blocklistExposed": config.GetInstanceExposeBlocklistWeb(),
+			"allowlistExposed": config.GetInstanceExposeAllowlistWeb(),
 			"languages":        config.GetInstanceLanguages().DisplayStrs(),
 		},
 	}

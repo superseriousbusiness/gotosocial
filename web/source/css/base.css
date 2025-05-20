@@ -599,7 +599,7 @@ section.oob-token {
 	}
 }
 
-.domain-blocklist {
+.domain-perm-list {
 	box-shadow: $boxshadow;
 
 	.entry {
@@ -632,7 +632,7 @@ section.oob-token {
 }
 
 @media screen and (max-width: 30rem) {
-	.domain-blocklist .entry {
+	.domain-perm-list .entry {
 		grid-template-columns: 1fr;
 		gap: 0;
 	}

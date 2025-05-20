@@ -41,9 +41,9 @@ With this in mind, you should only ever treat domain blocking as *one layer* of 
 
 Unfortunately, the Fediverse has its share of trolls, many of whom see domain blocking as an adversary to be defeated. To achieve this, they often target instances which use domain blocks to protect users.
 
-As such, there are bots on the Fediverse which scrape instance domain blocks and announce any discovered blocks to the followers of the bot, opening the admin of the blocking instance up to harassment. These bots use the `api/v1/instance/peers?filter=suspended` endpoint of GoToSocial instances to gather domain block information.
+As such, there are bots on the Fediverse which scrape instance domain blocks and announce any discovered blocks to the followers of the bot, opening the admin of the blocking instance up to harassment. These bots use the `api/v1/instance/peers?filter=suspended`, `api/v1/instance/peers?filter=blocked`, and/or `api/v1/instance/domain_blocks` endpoints of GoToSocial instances to gather domain block information.
 
-By default, GoToSocial does not expose this endpoint publicly, so your instance will be safe from such scraping. However, if you set `instance-expose-suspended` to `true` in your config.yaml file, you may find that this endpoint gets scraped occasionally, and you may see your blocks being announced by troll bots.
+By default, GoToSocial does not expose these endpoints publicly, so your instance will be safe from such scraping. However, if you set `instance-expose-blocklist` to `true` in your config.yaml file, you may find that these endpoints gets scraped occasionally, and you may see your blocks being announced by troll bots.
 
 ## What are the side effects of creating a domain block
 

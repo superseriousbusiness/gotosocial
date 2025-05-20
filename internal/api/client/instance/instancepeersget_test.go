@@ -136,13 +136,14 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspended() {
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts",
+    "severity": "suspend"
   }
 ]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedUnauthorized() {
-	config.SetInstanceExposeSuspended(false)
+	config.SetInstanceExposeBlocklist(false)
 
 	recorder := httptest.NewRecorder()
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
@@ -159,11 +160,11 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedUnautho
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Unauthorized: peers suspended query requires an authenticated account/user"}`, string(b))
+	suite.Equal(`{"error":"Unauthorized: peers blocked query requires an authenticated account/user"}`, string(b))
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthorized() {
-	config.SetInstanceExposeSuspended(false)
+	config.SetInstanceExposeBlocklist(false)
 
 	recorder := httptest.NewRecorder()
 	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
@@ -186,7 +187,8 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetOnlySuspendedAuthori
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts",
+    "severity": "suspend"
   }
 ]`, dst.String())
 }
@@ -219,9 +221,31 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAll() {
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts",
+    "severity": "suspend"
   }
 ]`, dst.String())
+}
+
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllowed() {
+	recorder := httptest.NewRecorder()
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s?filter=allowed", baseURI, instance.InstancePeersPath)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[]`, dst.String())
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() {
@@ -263,13 +287,52 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
   {
     "domain": "o*g.*u**.t**.*or*t.*r**ev**",
     "suspended_at": "2021-06-09T10:34:55.000Z",
-    "comment": "just absolutely the worst, wowza"
+    "comment": "just absolutely the worst, wowza",
+    "severity": "suspend"
   },
   {
     "domain": "replyguys.com",
     "suspended_at": "2020-05-13T13:29:12.000Z",
-    "comment": "reply-guying to tech posts"
+    "comment": "reply-guying to tech posts",
+    "severity": "suspend"
   }
+]`, dst.String())
+}
+
+func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscatedFlat() {
+	err := suite.db.Put(context.Background(), &gtsmodel.DomainBlock{
+		ID:                 "01G633XTNK51GBADQZFZQDP6WR",
+		CreatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
+		UpdatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
+		Domain:             "omg.just.the.worst.org.ever",
+		CreatedByAccountID: "01F8MH17FWEB39HZJ76B6VXSKF",
+		PublicComment:      "just absolutely the worst, wowza",
+		Obfuscate:          util.Ptr(true),
+	})
+	suite.NoError(err)
+
+	recorder := httptest.NewRecorder()
+	baseURI := fmt.Sprintf("%s://%s", config.GetProtocol(), config.GetHost())
+	requestURI := fmt.Sprintf("%s/%s?filter=suspended,open&flat=true", baseURI, instance.InstancePeersPath)
+	ctx := suite.newContext(recorder, http.MethodGet, requestURI, nil, "", false)
+
+	suite.instanceModule.InstancePeersGETHandler(ctx)
+
+	suite.Equal(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+	dst := new(bytes.Buffer)
+	err = json.Indent(dst, b, "", "  ")
+	suite.NoError(err)
+	suite.Equal(`[
+  "example.org",
+  "fossbros-anonymous.io",
+  "o*g.*u**.t**.*or*t.*r**ev**",
+  "replyguys.com"
 ]`, dst.String())
 }
 
@@ -289,7 +352,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetFunkyParams() {
 	b, err := io.ReadAll(result.Body)
 	suite.NoError(err)
 
-	suite.Equal(`{"error":"Bad Request: filter aaaaaaaaaaaaaaaaa not recognized; accepted values are 'open', 'suspended'"}`, string(b))
+	suite.Equal(`{"error":"Bad Request: filter aaaaaaaaaaaaaaaaa not recognized; accepted values are 'open', 'blocked', 'allowed', and 'suspended' (deprecated)"}`, string(b))
 }
 
 func TestInstancePeersGetTestSuite(t *testing.T) {

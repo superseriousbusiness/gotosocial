@@ -1101,7 +1101,7 @@ definitions:
         properties:
             comment:
                 description: |-
-                    If the domain is blocked, what's the publicly-stated reason for the block.
+                    If the domain is blocked or allowed, what's the publicly-stated reason (if any).
                     Alternative to `public_comment` to be used when serializing/deserializing via /api/v1/instance.
                 example: they smell
                 type: string
@@ -1113,11 +1113,17 @@ definitions:
                 x-go-name: Domain
             public_comment:
                 description: |-
-                    If the domain is blocked, what's the publicly-stated reason for the block.
+                    If the domain is blocked or allowed, what's the publicly-stated reason (if any).
                     Alternative to `comment` to be used when serializing/deserializing NOT via /api/v1/instance.
                 example: they smell
                 type: string
                 x-go-name: PublicComment
+            severity:
+                description: |-
+                    Severity of this entry.
+                    Only ever set for domain blocks, and if set, always="suspend".
+                type: string
+                x-go-name: Severity
             silenced_at:
                 description: Time at which this domain was silenced. Key will not be present on open domains.
                 example: "2021-07-30T09:20:25+00:00"
@@ -1135,7 +1141,7 @@ definitions:
         properties:
             comment:
                 description: |-
-                    If the domain is blocked, what's the publicly-stated reason for the block.
+                    If the domain is blocked or allowed, what's the publicly-stated reason (if any).
                     Alternative to `public_comment` to be used when serializing/deserializing via /api/v1/instance.
                 example: they smell
                 type: string
@@ -1179,11 +1185,17 @@ definitions:
                 x-go-name: PrivateComment
             public_comment:
                 description: |-
-                    If the domain is blocked, what's the publicly-stated reason for the block.
+                    If the domain is blocked or allowed, what's the publicly-stated reason (if any).
                     Alternative to `comment` to be used when serializing/deserializing NOT via /api/v1/instance.
                 example: they smell
                 type: string
                 x-go-name: PublicComment
+            severity:
+                description: |-
+                    Severity of this entry.
+                    Only ever set for domain blocks, and if set, always="suspend".
+                type: string
+                x-go-name: Severity
             silenced_at:
                 description: Time at which this domain was silenced. Key will not be present on open domains.
                 example: "2021-07-30T09:20:25+00:00"
@@ -8928,37 +8940,105 @@ paths:
             summary: Update your instance information and/or upload a new avatar/header for the instance.
             tags:
                 - instance
+    /api/v1/instance/domain_allows:
+        get:
+            description: OAuth token may need to be provided depending on setting `instance-expose-allowlist`.
+            operationId: instanceDomainAllowsGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: List of explicitly allowed domains.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domain'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer: []
+            summary: List explicitly allowed domains.
+            tags:
+                - instance
+    /api/v1/instance/domain_blocks:
+        get:
+            description: OAuth token may need to be provided depending on setting `instance-expose-blocklist`.
+            operationId: instanceDomainBlocksGet
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: List of blocked domains.
+                    schema:
+                        items:
+                            $ref: '#/definitions/domain'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "403":
+                    description: forbidden
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer: []
+            summary: List blocked domains.
+            tags:
+                - instance
     /api/v1/instance/peers:
         get:
             operationId: instancePeersGet
             parameters:
-                - default: open
+                - default: flat
                   description: |-
                     Comma-separated list of filters to apply to results. Recognized filters are:
-                      - `open` -- include peers that are not suspended or silenced
-                      - `suspended` -- include peers that have been suspended.
+                      - `open` -- include known domains that are not in the domain blocklist
+                      - `allowed` -- include domains that are in the domain allowlist
+                      - `blocked` -- include domains that are in the domain blocklist
+                      - `suspended` -- DEPRECATED! Use `blocked` instead. Same as `blocked`: include domains that are in the domain blocklist;
 
-                    If filter is `open`, only instances that haven't been suspended or silenced will be returned.
+                    If filter is `open`, only domains that aren't in the blocklist will be shown.
 
-                    If filter is `suspended`, only suspended instances will be shown.
+                    If filter is `blocked`, only domains that *are* in the blocklist will be shown.
 
-                    If filter is `open,suspended`, then all known instances will be returned.
+                    If filter is `allowed`, only domains that are in the allowlist will be shown.
+
+                    If filter is `open,blocked`, then blocked domains and known domains not on the blocklist will be shown.
+
+                    If filter is `open,allowed`, then allowed domains and known domains not on the blocklist will be shown.
 
                     If filter is an empty string or not set, then `open` will be assumed as the default.
                   in: query
                   name: filter
                   type: string
+                - default: false
+                  description: If true, a "flat" array of strings will be returned corresponding to just domain names.
+                  in: query
+                  name: flat
+                  type: boolean
             produces:
                 - application/json
             responses:
                 "200":
                     description: |-
-                        If no filter parameter is provided, or filter is empty, then a legacy, Mastodon-API compatible response will be returned. This will consist of just a 'flat' array of strings like `["example.com", "example.org"]`, which corresponds to domains this instance peers with.
-
-                        If a filter parameter is provided, then an array of objects with at least a `domain` key set on each object will be returned.
-
+                        If no filter parameter is provided, or filter is empty, then a legacy, Mastodon-API compatible response will be returned. This will consist of just a 'flat' array of strings like `["example.com", "example.org"]`, which corresponds to setting a filter of `open` and flat=true.
+                        If a filter parameter is provided and flat is not true, then an array of objects with at least a `domain` key set on each object will be returned.
                         Domains that are silenced or suspended will also have a key `suspended_at` or `silenced_at` that contains an iso8601 date string. If one of these keys is not present on the domain object, it is open. Suspended instances may in some cases be obfuscated, which means they will have some letters replaced by `*` to make it more difficult for bad actors to target instances with harassment.
-
                         Whether a flat response or a more detailed response is returned, domains will be sorted alphabetically by hostname.
                     schema:
                         items:
@@ -8978,6 +9058,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer: []
+            summary: List peer domains.
             tags:
                 - instance
     /api/v1/instance/rules:

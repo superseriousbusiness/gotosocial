@@ -29,7 +29,10 @@ const (
 	InstanceInformationPathV2 = "/v2/instance"
 	InstancePeersPath         = InstanceInformationPathV1 + "/peers"
 	InstanceRulesPath         = InstanceInformationPathV1 + "/rules"
+	InstanceBlocklistPath     = InstanceInformationPathV1 + "/domain_blocks"
+	InstanceAllowlistPath     = InstanceInformationPathV1 + "/domain_allows"
 	PeersFilterKey            = "filter" // PeersFilterKey is used to provide filters to /api/v1/instance/peers
+	PeersFlatKey              = "flat"   // PeersFlatKey is used to set "flat=true" in /api/v1/instance/peers
 )
 
 type Module struct {
@@ -45,9 +48,9 @@ func New(processor *processing.Processor) *Module {
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, InstanceInformationPathV1, m.InstanceInformationGETHandlerV1)
 	attachHandler(http.MethodGet, InstanceInformationPathV2, m.InstanceInformationGETHandlerV2)
-
 	attachHandler(http.MethodPatch, InstanceInformationPathV1, m.InstanceUpdatePATCHHandler)
 	attachHandler(http.MethodGet, InstancePeersPath, m.InstancePeersGETHandler)
-
 	attachHandler(http.MethodGet, InstanceRulesPath, m.InstanceRulesGETHandler)
+	attachHandler(http.MethodGet, InstanceBlocklistPath, m.InstanceDomainBlocksGETHandler)
+	attachHandler(http.MethodGet, InstanceAllowlistPath, m.InstanceDomainAllowsGETHandler)
 }

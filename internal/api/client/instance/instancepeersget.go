@@ -18,8 +18,10 @@
 package instance
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
@@ -30,6 +32,8 @@ import (
 )
 
 // InstancePeersGETHandler swagger:operation GET /api/v1/instance/peers instancePeersGet
+//
+// List peer domains.
 //
 //	---
 //	tags:
@@ -44,19 +48,32 @@ import (
 //		type: string
 //		description: |-
 //			Comma-separated list of filters to apply to results. Recognized filters are:
-//				- `open` -- include peers that are not suspended or silenced
-//				- `suspended` -- include peers that have been suspended.
+//				- `open` -- include known domains that are not in the domain blocklist
+//				- `allowed` -- include domains that are in the domain allowlist
+//				- `blocked` -- include domains that are in the domain blocklist
+//				- `suspended` -- DEPRECATED! Use `blocked` instead. Same as `blocked`: include domains that are in the domain blocklist;
 //
-//			If filter is `open`, only instances that haven't been suspended or silenced will be returned.
+//			If filter is `open`, only domains that aren't in the blocklist will be shown.
 //
-//			If filter is `suspended`, only suspended instances will be shown.
+//			If filter is `blocked`, only domains that *are* in the blocklist will be shown.
 //
-//			If filter is `open,suspended`, then all known instances will be returned.
+//			If filter is `allowed`, only domains that are in the allowlist will be shown.
+//
+//			If filter is `open,blocked`, then blocked domains and known domains not on the blocklist will be shown.
+//
+//			If filter is `open,allowed`, then allowed domains and known domains not on the blocklist will be shown.
 //
 //			If filter is an empty string or not set, then `open` will be assumed as the default.
 //		in: query
 //		required: false
-//		default: "open"
+//		default: flat
+//	-
+//		name: flat
+//		type: boolean
+//		description: If true, a "flat" array of strings will be returned corresponding to just domain names.
+//		in: query
+//		required: false
+//		default: false
 //
 //	security:
 //	- OAuth2 Bearer: []
@@ -67,12 +84,10 @@ import (
 //				If no filter parameter is provided, or filter is empty, then a legacy,
 //				Mastodon-API compatible response will be returned. This will consist of
 //				just a 'flat' array of strings like `["example.com", "example.org"]`,
-//				which corresponds to domains this instance peers with.
+//				which corresponds to setting a filter of `open` and flat=true.
 //
-//
-//				If a filter parameter is provided, then an array of objects with at least
-//				a `domain` key set on each object will be returned.
-//
+//				If a filter parameter is provided and flat is not true, then an array
+//				of objects with at least a `domain` key set on each object will be returned.
 //
 //				Domains that are silenced or suspended will also have a key
 //				`suspended_at` or `silenced_at` that contains an iso8601 date string.
@@ -80,7 +95,6 @@ import (
 //				Suspended instances may in some cases be obfuscated, which means they
 //				will have some letters replaced by `*` to make it more difficult for
 //				bad actors to target instances with harassment.
-//
 //
 //				Whether a flat response or a more detailed response is returned, domains
 //				will be sorted alphabetically by hostname.
@@ -116,45 +130,85 @@ func (m *Module) InstancePeersGETHandler(c *gin.Context) {
 		return
 	}
 
-	var includeSuspended bool
-	var includeOpen bool
-	var flat bool
+	var (
+		includeBlocked bool
+		includeAllowed bool
+		includeOpen    bool
+		flatten        bool
+	)
+
 	if filterParam := c.Query(PeersFilterKey); filterParam != "" {
 		filters := strings.Split(filterParam, ",")
 		for _, f := range filters {
 			trimmed := strings.TrimSpace(f)
 			switch {
-			case strings.EqualFold(trimmed, "suspended"):
-				includeSuspended = true
+			case strings.EqualFold(trimmed, "blocked") || strings.EqualFold(trimmed, "suspended"):
+				includeBlocked = true
+			case strings.EqualFold(trimmed, "allowed"):
+				includeAllowed = true
 			case strings.EqualFold(trimmed, "open"):
 				includeOpen = true
 			default:
-				err := fmt.Errorf("filter %s not recognized; accepted values are 'open', 'suspended'", trimmed)
+				err := fmt.Errorf("filter %s not recognized; accepted values are 'open', 'blocked', 'allowed', and 'suspended' (deprecated)", trimmed)
 				apiutil.ErrorHandler(c, gtserror.NewErrorBadRequest(err, err.Error()), m.processor.InstanceGetV1)
 				return
 			}
 		}
 	} else {
-		// default is to only include open domains, and present
+		// Default is to only include open domains, and present
 		// them in a 'flat' manner (just an array of strings),
-		// to maintain compatibility with mastodon API
+		// to maintain compatibility with the Mastodon API.
 		includeOpen = true
-		flat = true
+		flatten = true
 	}
 
-	if includeOpen && !config.GetInstanceExposePeers() && isUnauthenticated {
-		err := fmt.Errorf("peers open query requires an authenticated account/user")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	if includeBlocked && isUnauthenticated && !config.GetInstanceExposeBlocklist() {
+		const errText = "peers blocked query requires an authenticated account/user"
+		errWithCode := gtserror.NewErrorUnauthorized(errors.New(errText), errText)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	if includeSuspended && !config.GetInstanceExposeSuspended() && isUnauthenticated {
-		err := fmt.Errorf("peers suspended query requires an authenticated account/user")
-		apiutil.ErrorHandler(c, gtserror.NewErrorUnauthorized(err, err.Error()), m.processor.InstanceGetV1)
+	if includeAllowed && isUnauthenticated && !config.GetInstanceExposeAllowlist() {
+		const errText = "peers allowed query requires an authenticated account/user"
+		errWithCode := gtserror.NewErrorUnauthorized(errors.New(errText), errText)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return
 	}
 
-	data, errWithCode := m.processor.InstancePeersGet(c.Request.Context(), includeSuspended, includeOpen, flat)
+	if includeOpen && isUnauthenticated && !config.GetInstanceExposePeers() {
+		const errText = "peers open query requires an authenticated account/user"
+		errWithCode := gtserror.NewErrorUnauthorized(errors.New(errText), errText)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if includeBlocked && includeAllowed {
+		const errText = "cannot include blocked + allowed filters at the same time"
+		errWithCode := gtserror.NewErrorBadRequest(errors.New(errText), errText)
+		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+		return
+	}
+
+	if flatStr := c.Query(PeersFlatKey); flatStr != "" {
+		var err error
+		flatten, err = strconv.ParseBool(flatStr)
+		if err != nil {
+			err := fmt.Errorf("error parsing 'flat' key as boolean: %w", err)
+			errWithCode := gtserror.NewErrorBadRequest(err, err.Error())
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+			return
+		}
+	}
+
+	data, errWithCode := m.processor.InstancePeersGet(
+		c.Request.Context(),
+		includeBlocked,
+		includeAllowed,
+		includeOpen,
+		flatten,
+		false, // Don't include severity.
+	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
 		return

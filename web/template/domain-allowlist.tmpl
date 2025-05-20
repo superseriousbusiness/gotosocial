@@ -20,22 +20,19 @@
 {{- with . }}
 <main>
     <section>
-        <h1>Instance Blocklist</h1>
+        <h1>Instance Allowlist</h1>
         <p>
-            The following list of domains has been blocked by the administrator(s) of this instance.
+            The following list of domains has been explicitly allowed by the administrator(s) of this instance.
         </p>
         <p>
-            All past, present, and future accounts at blocked domains are forbidden from interacting
-            with this instance or accounts on this instance. No data will be sent to the server at the
-            remote domain, and no data will be received from it. This extends to subdomains, so a
-            blocklist entry for domain 'example.com' includes domain 'social.example.com' etc as well.
+            This extends to subdomains, so an allowlist entry for domain 'example.com' includes domain 'social.example.com' etc as well.
         </p>
         <div class="list domain-perm-list">
             <div class="header entry">
                 <div class="domain">Domain</div>
                 <div class="public_comment">Public comment</div>
             </div>
-            {{- range .blocklist }}
+            {{- range .allowlist }}
             <div class="entry" id="{{- .Domain -}}">
                 <div class="domain">
                     <a class="text-cutoff" href="#{{- .Domain -}}" title="{{- .Domain -}}">{{- .Domain -}}</a>

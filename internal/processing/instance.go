@@ -19,8 +19,10 @@ package processing
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"sort"
+	"slices"
+	"strings"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
@@ -31,6 +33,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/text"
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 	"code.superseriousbusiness.org/gotosocial/internal/validate"
 )
 
@@ -62,70 +65,126 @@ func (p *Processor) InstanceGetV2(ctx context.Context) (*apimodel.InstanceV2, gt
 	return ai, nil
 }
 
-func (p *Processor) InstancePeersGet(ctx context.Context, includeSuspended bool, includeOpen bool, flat bool) (interface{}, gtserror.WithCode) {
-	domains := []*apimodel.Domain{}
+func (p *Processor) InstancePeersGet(
+	ctx context.Context,
+	includeBlocked bool,
+	includeAllowed bool,
+	includeOpen bool,
+	flatten bool,
+	includeSeverity bool,
+) (any, gtserror.WithCode) {
+	var (
+		domainPerms []gtsmodel.DomainPermission
+		apiDomains  []*apimodel.Domain
+	)
+
+	if includeBlocked {
+		blocks, err := p.state.DB.GetDomainBlocks(ctx)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("db error getting domain blocks: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		for _, block := range blocks {
+			domainPerms = append(domainPerms, block)
+		}
+
+	} else if includeAllowed {
+		allows, err := p.state.DB.GetDomainAllows(ctx)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err := gtserror.Newf("db error getting domain allows: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+
+		for _, allow := range allows {
+			domainPerms = append(domainPerms, allow)
+		}
+	}
+
+	for _, domainPerm := range domainPerms {
+		// Domain may be in Punycode,
+		// de-punify it just in case.
+		domain := domainPerm.GetDomain()
+		depunied, err := util.DePunify(domain)
+		if err != nil {
+			log.Errorf(ctx, "couldn't depunify domain %s: %v", domain, err)
+			continue
+		}
+
+		if util.PtrOrZero(domainPerm.GetObfuscate()) {
+			// Obfuscate the de-punified version.
+			depunied = obfuscate(depunied)
+		}
+
+		apiDomain := &apimodel.Domain{
+			Domain:  depunied,
+			Comment: util.Ptr(domainPerm.GetPublicComment()),
+		}
+
+		if domainPerm.GetType() == gtsmodel.DomainPermissionBlock {
+			const severity = "suspend"
+			apiDomain.Severity = severity
+			suspendedAt := domainPerm.GetCreatedAt()
+			apiDomain.SuspendedAt = util.FormatISO8601(suspendedAt)
+		}
+
+		apiDomains = append(apiDomains, apiDomain)
+	}
 
 	if includeOpen {
 		instances, err := p.state.DB.GetInstancePeers(ctx, false)
-		if err != nil && err != db.ErrNoEntries {
-			err = fmt.Errorf("error selecting instance peers: %s", err)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			err = gtserror.Newf("db error getting instance peers: %w", err)
 			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		for _, i := range instances {
+		for _, instance := range instances {
 			// Domain may be in Punycode,
 			// de-punify it just in case.
-			d, err := util.DePunify(i.Domain)
+			domain := instance.Domain
+			depunied, err := util.DePunify(domain)
 			if err != nil {
-				log.Errorf(ctx, "couldn't depunify domain %s: %s", i.Domain, err)
+				log.Errorf(ctx, "couldn't depunify domain %s: %v", domain, err)
 				continue
 			}
 
-			domains = append(domains, &apimodel.Domain{Domain: d})
+			apiDomains = append(
+				apiDomains,
+				&apimodel.Domain{
+					Domain: depunied,
+				},
+			)
 		}
 	}
 
-	if includeSuspended {
-		domainBlocks := []*gtsmodel.DomainBlock{}
-		if err := p.state.DB.GetAll(ctx, &domainBlocks); err != nil && err != db.ErrNoEntries {
-			return nil, gtserror.NewErrorInternalError(err)
-		}
+	// Sort a-z.
+	slices.SortFunc(
+		apiDomains,
+		func(a, b *apimodel.Domain) int {
+			return strings.Compare(a.Domain, b.Domain)
+		},
+	)
 
-		for _, domainBlock := range domainBlocks {
-			// Domain may be in Punycode,
-			// de-punify it just in case.
-			d, err := util.DePunify(domainBlock.Domain)
-			if err != nil {
-				log.Errorf(ctx, "couldn't depunify domain %s: %s", domainBlock.Domain, err)
-				continue
-			}
+	// Deduplicate.
+	apiDomains = xslices.DeduplicateFunc(
+		apiDomains,
+		func(v *apimodel.Domain) string {
+			return v.Domain
+		},
+	)
 
-			if *domainBlock.Obfuscate {
-				// Obfuscate the de-punified version.
-				d = obfuscate(d)
-			}
-
-			domains = append(domains, &apimodel.Domain{
-				Domain:      d,
-				SuspendedAt: util.FormatISO8601(domainBlock.CreatedAt),
-				Comment:     &domainBlock.PublicComment,
-			})
-		}
+	if flatten {
+		// Return just the domains.
+		return xslices.Gather(
+			[]string{},
+			apiDomains,
+			func(v *apimodel.Domain) string {
+				return v.Domain
+			},
+		), nil
 	}
 
-	sort.Slice(domains, func(i, j int) bool {
-		return domains[i].Domain < domains[j].Domain
-	})
-
-	if flat {
-		flattened := []string{}
-		for _, d := range domains {
-			flattened = append(flattened, d.Domain)
-		}
-		return flattened, nil
-	}
-
-	return domains, nil
+	return apiDomains, nil
 }
 
 func (p *Processor) InstanceGetRules(ctx context.Context) ([]apimodel.InstanceRule, gtserror.WithCode) {
