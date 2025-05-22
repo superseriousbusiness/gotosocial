@@ -2,6 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Package libc is a partial reimplementation of C libc in pure Go.
 package libc // import "modernc.org/libc"
 
 import (

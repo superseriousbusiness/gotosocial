@@ -145,7 +145,7 @@ func AppendFloat(b []byte, f float64, prec int) ([]byte, bool) {
 		expLen = 1 + LenInt(int64(exp)) // e + digits
 	} else if mantExp < -3 {
 		exp = mantExp
-		expLen = 2 + LenInt(int64(exp)) // e + minus + digits
+		expLen = 1 + LenInt(int64(exp)) // e + minus + digits
 	} else if mantExp < -1 {
 		mantLen += -mantExp - 1 // extra zero between dot and first digit
 	}

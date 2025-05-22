@@ -544,3 +544,27 @@ func DecodeURL(b []byte) []byte {
 	}
 	return b
 }
+
+func AppendEscape(b, str, chars []byte, escape byte) []byte {
+	i := 0
+	for j := 0; j < len(str); j++ {
+		has := false
+		for _, c := range chars {
+			if c == str[j] {
+				has = true
+				break
+			}
+		}
+		if has || str[j] == escape {
+			if i < j {
+				b = append(b, str[i:j]...)
+			}
+			b = append(b, escape)
+			i = j
+		}
+	}
+	if i < len(str) {
+		b = append(b, str[i:]...)
+	}
+	return b
+}

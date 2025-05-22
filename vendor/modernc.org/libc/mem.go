@@ -24,7 +24,9 @@ func Xmalloc(t *TLS, n types.Size_t) uintptr {
 		trc("t=%v n=%v, (%v:)", t, n, origin(2))
 	}
 	if n == 0 {
-		return 0
+		// malloc(0) should return unique pointers
+		// (often expected and gnulib replaces malloc if malloc(0) returns 0)
+		n = 1
 	}
 
 	allocMu.Lock()
@@ -43,18 +45,18 @@ func Xmalloc(t *TLS, n types.Size_t) uintptr {
 // void *calloc(size_t nmemb, size_t size);
 func Xcalloc(t *TLS, n, size types.Size_t) uintptr {
 	if __ccgo_strace {
-		trc("t=%v size=%v, (%v:)", t, size, origin(2))
+		trc("t=%v n=%v size=%v, (%v:)", t, n, size, origin(2))
 	}
 	rq := int(n * size)
 	if rq == 0 {
-		return 0
+		rq = 1
 	}
 
 	allocMu.Lock()
 
 	defer allocMu.Unlock()
 
-	p, err := allocator.UintptrCalloc(int(n * size))
+	p, err := allocator.UintptrCalloc(rq)
 	if err != nil {
 		t.setErrno(errno.ENOMEM)
 		return 0

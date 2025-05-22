@@ -61,6 +61,9 @@ func AppendNumber(b []byte, num int64, dec int, groupSize int, groupSym rune, de
 
 	// calculate size
 	n := LenInt(num)
+	if sign == -1 {
+		n-- // ignore minux sign, add later
+	}
 	if dec < n && 0 < groupSize && groupSym != 0 {
 		n += utf8.RuneLen(groupSym) * (n - dec - 1) / groupSize
 	}

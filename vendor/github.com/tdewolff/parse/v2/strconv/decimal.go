@@ -69,3 +69,81 @@ func ParseDecimal(b []byte) (float64, int) {
 	}
 	return f * math.Pow10(exp), i
 }
+
+// AppendDecimal appends a float to `b` with `dec` the maximum number of decimals.
+func AppendDecimal(b []byte, f float64, dec int) []byte {
+	if math.IsNaN(float64(f)) || math.IsInf(float64(f), 0) {
+		return b
+	}
+
+	if dec < 0 || 17 < dec {
+		dec = 17
+	}
+	f *= math.Pow10(dec)
+
+	// correct rounding
+	if 0.0 <= f {
+		f += 0.5
+	} else {
+		f -= 0.5
+	}
+
+	// calculate mantissa and exponent
+	num := int64(f)
+	if num == 0 {
+		return append(b, '0')
+	}
+	for 0 < dec && num%10 == 0 {
+		num /= 10
+		dec-- // remove trailing zeros
+	}
+
+	i, n := len(b), LenInt(num)
+	if 0 < dec {
+		if n < dec {
+			n = dec // number has zero after dot
+		}
+		n++ // dot
+		if lim := int64pow10[dec]; 0 < num && num < lim || num < 0 && -lim < num {
+			n++ // zero at beginning
+		}
+	}
+	if cap(b) < i+n {
+		b = append(b, make([]byte, n)...)
+	} else {
+		b = b[:i+n]
+	}
+
+	// print sign
+	if num < 0 {
+		num = -num
+		b[i] = '-'
+	}
+	i += n - 1
+
+	// print number
+	if 0 < dec {
+		b[i] = byte(num%10) + '0'
+		num /= 10
+		dec--
+		i--
+		for 0 < dec {
+			b[i] = byte(num%10) + '0'
+			num /= 10
+			dec--
+			i--
+		}
+		b[i] = '.'
+		i--
+	}
+	if num == 0 {
+		b[i] = '0'
+	} else {
+		for num != 0 {
+			b[i] = byte(num%10) + '0'
+			num /= 10
+			i--
+		}
+	}
+	return b
+}

@@ -60,13 +60,45 @@ func ParseUint(b []byte) (uint64, int) {
 	return n, i
 }
 
+// AppendInt will append an int64.
+func AppendInt(b []byte, num int64) []byte {
+	if num == 0 {
+		return append(b, '0')
+	} else if num == -9223372036854775808 {
+		return append(b, "-9223372036854775808"...)
+	}
+
+	// resize byte slice
+	i, n := len(b), LenInt(num)
+	if cap(b) < i+n {
+		b = append(b, make([]byte, n)...)
+	} else {
+		b = b[:i+n]
+	}
+
+	// print sign
+	if num < 0 {
+		num = -num
+		b[i] = '-'
+	}
+	i += n - 1
+
+	// print number
+	for num != 0 {
+		b[i] = byte(num%10) + '0'
+		num /= 10
+		i--
+	}
+	return b
+}
+
 // LenInt returns the written length of an integer.
 func LenInt(i int64) int {
 	if i < 0 {
 		if i == -9223372036854775808 {
-			return 19
+			return 20
 		}
-		i = -i
+		return 1 + LenUint(uint64(-i))
 	}
 	return LenUint(uint64(i))
 }
@@ -113,4 +145,8 @@ func LenUint(i uint64) int {
 		return 19
 	}
 	return 20
+}
+
+var int64pow10 = []int64{
+	1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000, 100000000000, 1000000000000, 10000000000000, 100000000000000, 1000000000000000, 10000000000000000, 100000000000000000, 1000000000000000000,
 }

@@ -109,6 +109,12 @@ func (a *Allocator) mmap(size int) (uintptr /* *page */, error) {
 		return 0, err
 	}
 
+	//TODO(jnml) The returned size may now be nearly as twice as large as we asked
+	//for. Use that extra capacity. For that we need to move the respective
+	//Allocator.cap item into the page struct so the page cap becomes dynamic.
+	//
+	// Related: This is a consequence of fixing the bigsort.test failures on
+	// linux/s390x, see: https://gitlab.com/cznic/sqlite/-/issues/207
 	if counters {
 		a.Mmaps++
 		a.Bytes += size
