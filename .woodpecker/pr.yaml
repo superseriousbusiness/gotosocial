@@ -92,9 +92,6 @@ steps:
         ./...
       - ./test/envparsing.sh
       - ./test/swagger.sh
-    
-    # https://woodpecker-ci.org/docs/usage/workflow-syntax#depends_on
-    depends_on: [lint]
 
   # Validate the web code only
   # if web source has changed.
