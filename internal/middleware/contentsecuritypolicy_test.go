@@ -32,38 +32,38 @@ func TestBuildContentSecurityPolicy(t *testing.T) {
 	for _, test := range []cspTest{
 		{
 			extraURLs: nil,
-			expected:  "default-src 'self'; object-src 'none'; img-src 'self' blob:; media-src 'self'",
+			expected:  "default-src 'self'; connect-src 'self' https://api.listenbrainz.org/1/user/; object-src 'none'; img-src 'self' blob:; media-src 'self'",
 		},
 		{
 			extraURLs: []string{
 				"https://some-bucket-provider.com",
 			},
-			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com; media-src 'self' https://some-bucket-provider.com",
+			expected: "default-src 'self'; connect-src 'self' https://api.listenbrainz.org/1/user/; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com; media-src 'self' https://some-bucket-provider.com",
 		},
 		{
 			extraURLs: []string{
 				"https://some-bucket-provider.com:6969",
 			},
-			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com:6969; media-src 'self' https://some-bucket-provider.com:6969",
+			expected: "default-src 'self'; connect-src 'self' https://api.listenbrainz.org/1/user/; object-src 'none'; img-src 'self' blob: https://some-bucket-provider.com:6969; media-src 'self' https://some-bucket-provider.com:6969",
 		},
 		{
 			extraURLs: []string{
 				"http://some-bucket-provider.com:6969",
 			},
-			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: http://some-bucket-provider.com:6969; media-src 'self' http://some-bucket-provider.com:6969",
+			expected: "default-src 'self'; connect-src 'self' https://api.listenbrainz.org/1/user/; object-src 'none'; img-src 'self' blob: http://some-bucket-provider.com:6969; media-src 'self' http://some-bucket-provider.com:6969",
 		},
 		{
 			extraURLs: []string{
 				"https://s3.nl-ams.scw.cloud",
 			},
-			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud; media-src 'self' https://s3.nl-ams.scw.cloud",
+			expected: "default-src 'self'; connect-src 'self' https://api.listenbrainz.org/1/user/; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud; media-src 'self' https://s3.nl-ams.scw.cloud",
 		},
 		{
 			extraURLs: []string{
 				"https://s3.nl-ams.scw.cloud",
 				"https://s3.somewhere.else.example.org",
 			},
-			expected: "default-src 'self'; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud https://s3.somewhere.else.example.org; media-src 'self' https://s3.nl-ams.scw.cloud https://s3.somewhere.else.example.org",
+			expected: "default-src 'self'; connect-src 'self' https://api.listenbrainz.org/1/user/; object-src 'none'; img-src 'self' blob: https://s3.nl-ams.scw.cloud https://s3.somewhere.else.example.org; media-src 'self' https://s3.nl-ams.scw.cloud https://s3.somewhere.else.example.org",
 		},
 	} {
 		csp := middleware.BuildContentSecurityPolicy(test.extraURLs...)

@@ -267,3 +267,170 @@ document.body.addEventListener("click", (e) => {
 	// stats elements, close it. 
 	openStats.removeAttribute("open");
 });
+
+// Scan for the first ListenBrainz profile field and replace
+// its value with currently listening track if available.
+//
+// ListenBrainz allows a lot of leeway in usernames so be gentle here:
+//
+// See:
+//
+// - https://github.com/metabrainz/musicbrainz-server/blob/master/lib/MusicBrainz/Server/Form/Utils.pm#L264-L288
+// - https://regex101.com/r/k5ij9F/1
+const listenbrainzRe = new RegExp(/^https:\/\/listenbrainz\.org\/user\/([^/]+)\/$/, "u");
+let calledListenBrainz = false;
+document.querySelectorAll("div#profile-fields dl div.field").forEach((field) => {
+	// If we called ListenBrainz once
+	// already this page load, bail.
+	if (calledListenBrainz) {
+		return;
+	}
+
+	const k = field.querySelector("dt");
+	if (!k) {
+		// No <dt> inside this
+		// field? Weird but OK.
+		return;
+	}
+
+	const kText = k.textContent;
+	if (kText === null) {
+		// Also strange but
+		// let's just bail.
+		return;
+	}
+	
+	// Check if key == "ListenBrainz" (case insensitive).
+	if (kText.localeCompare("ListenBrainz", undefined, { sensitivity: "base" }) !== 0) {
+		// Not interested.
+		return;
+	}
+
+	// Get the value.
+	const v = field.querySelector("dd");
+	if (!v) {
+		// No <dd> inside this
+		// field? Weird but OK.
+		return;
+	}
+
+	// Look for an <a> tag inside the <dd>.
+	const oldAs = v.getElementsByTagName("a");
+	if (oldAs.length !== 1) {
+		// Nothing
+		// in here.
+		return;
+	}
+
+	const oldA = oldAs[0];
+	const profileURL = oldA.textContent;
+	if (!profileURL) {
+		// Also strange but
+		// let's just bail.
+		return;
+	}
+
+	// We're looking for a listenbrainz URL.
+	const match = profileURL.match(listenbrainzRe);
+	if (match.length !== 2) {
+		// Not a match.
+		return;
+	}
+	const lbUsername = match[1];
+	
+	try {
+		// MusicBrainz/ListenBrainz is very permissive
+		// re: usernames so make sure to encode the URI
+		// when doing the fetch, to avoid any shenanigans.
+		const apiURL = encodeURI(`https://api.listenbrainz.org/1/user/${lbUsername}/playing-now`);
+		fetch(apiURL).then(res => {
+			// Mark that we
+			// called LB already.
+			calledListenBrainz = true;
+			
+			// Check result...
+			if (!res.ok) {
+				throw new Error(`Response status: ${res.status}`);
+			}
+			
+			return res.json();
+		}).then(json => {
+			// Parse out the object.
+			const payload = json.payload;
+			if (!payload) {
+				// Can't do anything
+				// with no payload.
+				return;
+			}
+
+			const listens = payload.listens;
+			if (!listens || !Array.isArray(listens) || listens.length !== 1) {
+				// Can't do anything
+				// with no listens.
+				return;
+			}
+
+			const listen = listens[0];
+			const trackMetadata = listen.track_metadata;
+			if (!trackMetadata) {
+				// Can't do anything
+				// with no track metadata.
+				return;
+			}
+
+			const artistName = trackMetadata.artist_name;
+			const trackName = trackMetadata.track_name;
+			if (artistName === undefined || trackName === undefined) {
+				// Can't display
+				// this track.
+				return;
+			}
+
+			// We can work with this.
+			//
+			// Rewrite the existing <dd> with the
+			// current listening song, and keep the
+			// link to the user's ListenBrainz profile.
+			const vNew = document.createElement("dd");
+			
+			// Lil music note icon.
+			const i = document.createElement("i");
+			i.ariaHidden = "true";
+			i.className = "fa fa-fw fa-music";
+			vNew.appendChild(i);
+			
+			vNew.appendChild(document.createTextNode(" Now listening to: "));
+			vNew.appendChild(document.createElement("br"));
+
+			// Build the new link, taking
+			// the href from the old link.
+			const a = document.createElement("a");
+			a.href = oldA.href;
+			a.rel = "nofollow noreferrer noopener";
+			a.target = "_blank";
+
+			// Add track name in bold.
+			const trackNameE = document.createElement("b");
+			trackNameE.textContent = trackName;
+			a.appendChild(trackNameE);
+
+			// Add joiner in normal font.
+			a.appendChild(document.createTextNode(" by "));
+			
+			// Add artist name in bold.
+			const artistNameE = document.createElement("b");
+			artistNameE.textContent = artistName;
+			a.appendChild(artistNameE);
+
+			// Put the link
+			// in the definish.
+			vNew.appendChild(a);
+
+			// Do the replacement.
+			field.replaceChild(vNew, v);
+		});
+	} catch (error) {
+		// eslint-disable-next-line no-console
+		console.error(error.message);
+	}
+});

@@ -37,6 +37,7 @@ func ContentSecurityPolicy(extraURIs ...string) gin.HandlerFunc {
 func BuildContentSecurityPolicy(extraURIs ...string) string {
 	const (
 		defaultSrc = "default-src"
+		connectSrc = "connect-src"
 		objectSrc  = "object-src"
 		imgSrc     = "img-src"
 		mediaSrc   = "media-src"
@@ -48,7 +49,7 @@ func BuildContentSecurityPolicy(extraURIs ...string) string {
 	)
 
 	// CSP values keyed by directive.
-	values := make(map[string][]string, 4)
+	values := make(map[string][]string, 5)
 
 	/*
 		default-src
@@ -68,6 +69,16 @@ func BuildContentSecurityPolicy(extraURIs ...string) string {
 			"ws://localhost:*",
 		}
 	}
+
+	/*
+		connect-src
+		https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/connect-src
+	*/
+
+	// Restrictive default policy, but
+	// include ListenBrainz API for fields.
+	const listenBrains = "https://api.listenbrainz.org/1/user/"
+	values[connectSrc] = append(values[defaultSrc], listenBrains) //nolint
 
 	/*
 		object-src
@@ -118,9 +129,10 @@ func BuildContentSecurityPolicy(extraURIs ...string) string {
 	// Iterate through an ordered slice rather than
 	// iterating through the map, since we want these
 	// policyDirectives in a determinate order.
-	policyDirectives := make([]string, 4)
+	policyDirectives := make([]string, 5)
 	for i, directive := range []string{
 		defaultSrc,
+		connectSrc,
 		objectSrc,
 		imgSrc,
 		mediaSrc,

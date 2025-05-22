@@ -98,6 +98,19 @@ Some examples:
 - Pronouns : she/her
 - My other account : @someone@somewhere.com
 
+!!! Tip "ListenBrainz integration"
+    If you set the key of one of your profile fields to "ListenBrainz" and the value to the URL of your ListenBrainz profile (something like `https://listenbrainz.org/user/your_listenbrainz_username/` -- the slash at the end is important!), then the field will be replaced on the web frontend with whatever you're currently listening to!
+    
+    This only applies to the web view of your GoToSocial profile, for visitors with Javascript enabled; the "currently listening" value doesn't federate to other servers, only your ListenBrainz URL.
+    
+    How to set it:
+    
+    ![Field filled with a ListenBrainz URL.](../public/user-settings-listenbrainz-fields.png)
+    
+    How it looks on the web when you're listening to something:
+    
+    ![The "Now listening to" widget on the web view.](../public/user-settings-listenbrainz.png)
+
 ### Visibility and Privacy
 
 #### Visibility Level of Posts to Show on Your Profile
