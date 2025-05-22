@@ -41,7 +41,7 @@ type InternalToFrontendTestSuite struct {
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontend() {
 	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
-	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(suite.T().Context(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
@@ -88,11 +88,11 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendAliasedAndMoved()
 	testAccount.MovedToURI = movedTo.URI
 	testAccount.AlsoKnownAsURIs = []string{movedTo.URI}
 
-	if err := suite.state.DB.UpdateAccount(context.Background(), testAccount, "moved_to_uri"); err != nil {
+	if err := suite.state.DB.UpdateAccount(suite.T().Context(), testAccount, "moved_to_uri"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	apiAccount, err := suite.typeconverter.AccountToAPIAccountSensitive(context.Background(), testAccount)
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountSensitive(suite.T().Context(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
@@ -195,7 +195,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiStruct()
 	testAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
 	testAccount.EmojiIDs = []string{testEmoji.ID}
 
-	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(suite.T().Context(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
@@ -245,7 +245,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
 
 	testAccount.EmojiIDs = []string{testEmoji.ID}
 
-	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(suite.T().Context(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
@@ -291,7 +291,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendWithEmojiIDs() {
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
 	testAccount := suite.testAccounts["local_account_1"] // take zork for this test
-	apiAccount, err := suite.typeconverter.AccountToAPIAccountSensitive(context.Background(), testAccount)
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountSensitive(suite.T().Context(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
@@ -347,7 +347,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendSensitive() {
 
 func (suite *InternalToFrontendTestSuite) TestAccountToFrontendPublicPunycode() {
 	testAccount := suite.testAccounts["remote_account_4"]
-	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), testAccount)
+	apiAccount, err := suite.typeconverter.AccountToAPIAccountPublic(suite.T().Context(), testAccount)
 	suite.NoError(err)
 	suite.NotNil(apiAccount)
 
@@ -384,7 +384,7 @@ func (suite *InternalToFrontendTestSuite) TestAccountToFrontendPublicPunycode() 
 }
 
 func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendPublic() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount, err := suite.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -424,7 +424,7 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendPubl
 }
 
 func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBlocked() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount, err := suite.db.GetInstanceAccount(ctx, "")
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -466,7 +466,7 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -629,7 +629,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
 	testStatus.ContentWarning = `<p>First paragraph of content warning</p><h4>Here's the title!</h4><p></p><p>Big boobs<br>Tee hee!<br><br>Some more text<br>And a bunch more<br><br>Hasta la victoria siempre!</p>`
 
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -786,7 +786,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
 }
 
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testStatus := suite.testStatuses["admin_account_status_1"]
 
 	// Delete the application this status was created with.
@@ -979,7 +979,7 @@ func (suite *InternalToFrontendTestSuite) filteredStatusToFrontend(action gtsmod
 	requestingAccountFilters := []*gtsmodel.Filter{expectedMatchingFilter}
 
 	return suite.typeconverter.StatusToAPIStatus(
-		context.Background(),
+		suite.T().Context(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextHome,
@@ -1500,7 +1500,7 @@ func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wh
 
 	if boost {
 		boost, err := suite.typeconverter.StatusToBoost(
-			context.Background(),
+			suite.T().Context(),
 			testStatus,
 			suite.testAccounts["admin_account"],
 			"",
@@ -1533,7 +1533,7 @@ func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wh
 	}
 
 	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
-		context.Background(),
+		suite.T().Context(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextHome,
@@ -1577,7 +1577,7 @@ func (suite *InternalToFrontendTestSuite) TestMutedStatusToFrontend() {
 	})
 
 	_, err := suite.typeconverter.StatusToAPIStatus(
-		context.Background(),
+		suite.T().Context(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextHome,
@@ -1604,14 +1604,14 @@ func (suite *InternalToFrontendTestSuite) TestMutedReplyStatusToFrontend() {
 	})
 
 	// Populate status so the converter has the account objects it needs for muting.
-	err := suite.db.PopulateStatus(context.Background(), testStatus)
+	err := suite.db.PopulateStatus(suite.T().Context(), testStatus)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Convert the status to API format, which should fail.
 	_, err = suite.typeconverter.StatusToAPIStatus(
-		context.Background(),
+		suite.T().Context(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextHome,
@@ -1637,14 +1637,14 @@ func (suite *InternalToFrontendTestSuite) TestMutedBoostStatusToFrontend() {
 	})
 
 	// Populate status so the converter has the account objects it needs for muting.
-	err := suite.db.PopulateStatus(context.Background(), testStatus)
+	err := suite.db.PopulateStatus(suite.T().Context(), testStatus)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Convert the status to API format, which should fail.
 	_, err = suite.typeconverter.StatusToAPIStatus(
-		context.Background(),
+		suite.T().Context(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextHome,
@@ -1658,7 +1658,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
 	requestingAccount := suite.testAccounts["admin_account"]
 
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -1797,7 +1797,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
 func (suite *InternalToFrontendTestSuite) TestStatusToWebStatus() {
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
 
-	apiStatus, err := suite.typeconverter.StatusToWebStatus(context.Background(), testStatus)
+	apiStatus, err := suite.typeconverter.StatusToWebStatus(suite.T().Context(), testStatus)
 	suite.NoError(err)
 
 	// MediaAttachments should inherit
@@ -1985,7 +1985,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
 	*testStatus = *suite.testStatuses["admin_account_status_1"]
 	testStatus.Language = ""
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -2146,7 +2146,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
 	*testStatus = *suite.testStatuses["local_account_1_status_3"]
 	testStatus.Language = ""
 	requestingAccount := suite.testAccounts["admin_account"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(context.Background(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -2256,7 +2256,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
 	)
 
 	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
-		context.Background(),
+		suite.T().Context(),
 		testStatus,
 		requestingAccount,
 		statusfilter.FilterContextNone,
@@ -2394,7 +2394,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
 
 func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
 	testAttachment := suite.testAttachments["local_account_1_status_4_attachment_2"]
-	apiAttachment, err := suite.typeconverter.AttachmentToAPIAttachment(context.Background(), testAttachment)
+	apiAttachment, err := suite.typeconverter.AttachmentToAPIAttachment(suite.T().Context(), testAttachment)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiAttachment, "", "  ")
@@ -2435,7 +2435,7 @@ func (suite *InternalToFrontendTestSuite) TestVideoAttachmentToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	i := &gtsmodel.Instance{}
 	if err := suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
@@ -2572,7 +2572,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV1ToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	i := &gtsmodel.Instance{}
 	if err := suite.db.GetWhere(ctx, []db.Where{{Key: "domain", Value: config.GetHost()}}, i); err != nil {
@@ -2726,7 +2726,7 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontend() {
-	emoji, err := suite.typeconverter.EmojiToAPIEmoji(context.Background(), suite.testEmojis["rainbow"])
+	emoji, err := suite.typeconverter.EmojiToAPIEmoji(suite.T().Context(), suite.testEmojis["rainbow"])
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(emoji, "", "  ")
@@ -2742,7 +2742,7 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontend() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin1() {
-	emoji, err := suite.typeconverter.EmojiToAdminAPIEmoji(context.Background(), suite.testEmojis["rainbow"])
+	emoji, err := suite.typeconverter.EmojiToAdminAPIEmoji(suite.T().Context(), suite.testEmojis["rainbow"])
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(emoji, "", "  ")
@@ -2764,7 +2764,7 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin1() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin2() {
-	emoji, err := suite.typeconverter.EmojiToAdminAPIEmoji(context.Background(), suite.testEmojis["yell"])
+	emoji, err := suite.typeconverter.EmojiToAdminAPIEmoji(suite.T().Context(), suite.testEmojis["yell"])
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(emoji, "", "  ")
@@ -2786,7 +2786,7 @@ func (suite *InternalToFrontendTestSuite) TestEmojiToFrontendAdmin2() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
-	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["local_account_2_report_remote_account_1"])
+	report, err := suite.typeconverter.ReportToAPIReport(suite.T().Context(), suite.testReports["local_account_2_report_remote_account_1"])
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(report, "", "  ")
@@ -2836,7 +2836,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend1() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
-	report, err := suite.typeconverter.ReportToAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"])
+	report, err := suite.typeconverter.ReportToAPIReport(suite.T().Context(), suite.testReports["remote_account_1_report_local_account_2"])
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(report, "", "  ")
@@ -2894,7 +2894,7 @@ func (suite *InternalToFrontendTestSuite) TestReportToFrontend2() {
 
 func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
 	requestingAccount := suite.testAccounts["admin_account"]
-	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"], requestingAccount)
+	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(suite.T().Context(), suite.testReports["remote_account_1_report_local_account_2"], requestingAccount)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(adminReport, "", "  ")
@@ -3136,7 +3136,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend1() {
 
 func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
 	requestingAccount := suite.testAccounts["admin_account"]
-	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(context.Background(), suite.testReports["local_account_2_report_remote_account_1"], requestingAccount)
+	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(suite.T().Context(), suite.testReports["local_account_2_report_remote_account_1"], requestingAccount)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(adminReport, "", "  ")
@@ -3398,7 +3398,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontend2() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLocalAccount() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["admin_account"]
 	reportedAccount := &gtsmodel.Account{}
 	*reportedAccount = *suite.testAccounts["local_account_2"]
@@ -3421,7 +3421,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
 		suite.FailNow("timed out waiting for account delete")
 	}
 
-	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(context.Background(), suite.testReports["remote_account_1_report_local_account_2"], requestingAccount)
+	adminReport, err := suite.typeconverter.ReportToAdminAPIReport(suite.T().Context(), suite.testReports["remote_account_1_report_local_account_2"], requestingAccount)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(adminReport, "", "  ")
@@ -3652,7 +3652,7 @@ func (suite *InternalToFrontendTestSuite) TestAdminReportToFrontendSuspendedLoca
 
 func (suite *InternalToFrontendTestSuite) TestRelationshipFollowRequested() {
 	var (
-		ctx      = context.Background()
+		ctx      = suite.T().Context()
 		account1 = suite.testAccounts["admin_account"]
 		account2 = suite.testAccounts["local_account_2"]
 	)
@@ -3741,7 +3741,7 @@ func (suite *InternalToFrontendTestSuite) TestRelationshipFollowRequested() {
 func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
 	requestingAccount := suite.testAccounts["local_account_2"]
 	adminReport, err := suite.typeconverter.InteractionReqToAPIInteractionReq(
-		context.Background(),
+		suite.T().Context(),
 		suite.testInteractionRequests["admin_account_reply_turtle"],
 		requestingAccount,
 	)
@@ -4020,7 +4020,7 @@ func (suite *InternalToFrontendTestSuite) TestIntReqToAPI() {
 
 func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
 	var (
-		ctx                                       = context.Background()
+		ctx                                       = suite.T().Context()
 		requester                                 = suite.testAccounts["local_account_1"]
 		lastStatus                                = suite.testStatuses["local_account_1_status_1"]
 		filters    []*gtsmodel.Filter             = nil
@@ -4195,7 +4195,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPISelfConvo() {
 
 func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
 	var (
-		ctx                                       = context.Background()
+		ctx                                       = suite.T().Context()
 		requester                                 = suite.testAccounts["local_account_1"]
 		lastStatus                                = suite.testStatuses["local_account_1_status_1"]
 		filters    []*gtsmodel.Filter             = nil
@@ -4379,7 +4379,7 @@ func (suite *InternalToFrontendTestSuite) TestConversationToAPI() {
 }
 
 func (suite *InternalToFrontendTestSuite) TestStatusToAPIEdits() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	statusID := suite.testStatuses["local_account_1_status_9"].ID

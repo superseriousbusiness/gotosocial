@@ -18,7 +18,6 @@
 package workers_test
 
 import (
-	"context"
 	"sync"
 	"testing"
 	"time"
@@ -50,7 +49,7 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 	}
 
 	var (
-		ctx              = context.Background()
+		ctx              = suite.T().Context()
 		notificationType = gtsmodel.NotificationFollow
 		targetAccount    = suite.testAccounts["local_account_1"]
 		originAccount    = suite.testAccounts["local_account_2"]

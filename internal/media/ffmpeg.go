@@ -348,11 +348,10 @@ func (res *result) GetFileType() (gtsmodel.FileType, string, string) {
 				// video file aka gifv.
 				return gtsmodel.FileTypeGifv,
 					"video/mp4", "mp4"
-			} else {
-				// Video file (with or without audio).
-				return gtsmodel.FileTypeVideo,
-					"video/mp4", "mp4"
 			}
+			// Video file (with or without audio).
+			return gtsmodel.FileTypeVideo,
+				"video/mp4", "mp4"
 		case len(res.audio) > 0 &&
 			res.audio[0].codec == "aac":
 			// m4a only supports [aac] audio.

@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -74,7 +73,7 @@ func (suite *NotificationTestSuite) spamNotifs() {
 			Read:             util.Ptr(false),
 		}
 
-		if err := suite.db.PutNotification(context.Background(), notif); err != nil {
+		if err := suite.db.PutNotification(suite.T().Context(), notif); err != nil {
 			panic(err)
 		}
 	}
@@ -91,7 +90,7 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithSpam() {
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
 	notifications, err := suite.db.GetAccountNotifications(
-		gtscontext.SetBarebones(context.Background()),
+		gtscontext.SetBarebones(suite.T().Context()),
 		testAccount.ID,
 		&paging.Page{
 			Min:   paging.EitherMinID("", id.Lowest),
@@ -115,7 +114,7 @@ func (suite *NotificationTestSuite) TestGetAccountNotificationsWithoutSpam() {
 	testAccount := suite.testAccounts["local_account_1"]
 	before := time.Now()
 	notifications, err := suite.db.GetAccountNotifications(
-		gtscontext.SetBarebones(context.Background()),
+		gtscontext.SetBarebones(suite.T().Context()),
 		testAccount.ID,
 		&paging.Page{
 			Min:   paging.EitherMinID("", id.Lowest),
@@ -141,7 +140,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 
 	// Test getting notifs first.
 	notifications, err := suite.db.GetAccountNotifications(
-		gtscontext.SetBarebones(context.Background()),
+		gtscontext.SetBarebones(suite.T().Context()),
 		testAccount.ID,
 		&paging.Page{
 			Min:   paging.EitherMinID("", id.Lowest),
@@ -157,13 +156,13 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 	suite.Len(notifications, 20)
 
 	// Now delete.
-	if err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, ""); err != nil {
+	if err := suite.db.DeleteNotifications(suite.T().Context(), nil, testAccount.ID, ""); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	// Now try getting again.
 	notifications, err = suite.db.GetAccountNotifications(
-		gtscontext.SetBarebones(context.Background()),
+		gtscontext.SetBarebones(suite.T().Context()),
 		testAccount.ID,
 		&paging.Page{
 			Min:   paging.EitherMinID("", id.Lowest),
@@ -182,11 +181,11 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithSpam() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	suite.spamNotifs()
 	testAccount := suite.testAccounts["local_account_1"]
-	err := suite.db.DeleteNotifications(context.Background(), nil, testAccount.ID, "")
+	err := suite.db.DeleteNotifications(suite.T().Context(), nil, testAccount.ID, "")
 	suite.NoError(err)
 
 	notifications, err := suite.db.GetAccountNotifications(
-		gtscontext.SetBarebones(context.Background()),
+		gtscontext.SetBarebones(suite.T().Context()),
 		testAccount.ID,
 		&paging.Page{
 			Min:   paging.EitherMinID("", id.Lowest),
@@ -201,7 +200,7 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 	suite.Empty(notifications)
 
 	notif := []*gtsmodel.Notification{}
-	err = suite.db.GetAll(context.Background(), &notif)
+	err = suite.db.GetAll(suite.T().Context(), &notif)
 	suite.NoError(err)
 	suite.NotEmpty(notif)
 }
@@ -209,12 +208,12 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsWithTwoAccounts() {
 func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAccount() {
 	testAccount := suite.testAccounts["local_account_2"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), nil, "", testAccount.ID); err != nil {
+	if err := suite.db.DeleteNotifications(suite.T().Context(), nil, "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	notif := []*gtsmodel.Notification{}
-	if err := suite.db.GetAll(context.Background(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := suite.db.GetAll(suite.T().Context(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		suite.FailNow(err.Error())
 	}
 
@@ -229,12 +228,12 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTar
 	originAccount := suite.testAccounts["local_account_2"]
 	targetAccount := suite.testAccounts["admin_account"]
 
-	if err := suite.db.DeleteNotifications(context.Background(), nil, targetAccount.ID, originAccount.ID); err != nil {
+	if err := suite.db.DeleteNotifications(suite.T().Context(), nil, targetAccount.ID, originAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	notif := []*gtsmodel.Notification{}
-	if err := suite.db.GetAll(context.Background(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := suite.db.GetAll(suite.T().Context(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		suite.FailNow(err.Error())
 	}
 
@@ -253,12 +252,12 @@ func (suite *NotificationTestSuite) TestDeleteNotificationsOriginatingFromAndTar
 func (suite *NotificationTestSuite) TestDeleteNotificationsPertainingToStatusID() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
-	if err := suite.db.DeleteNotificationsForStatus(context.Background(), testStatus.ID); err != nil {
+	if err := suite.db.DeleteNotificationsForStatus(suite.T().Context(), testStatus.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	notif := []*gtsmodel.Notification{}
-	if err := suite.db.GetAll(context.Background(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := suite.db.GetAll(suite.T().Context(), &notif); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		suite.FailNow(err.Error())
 	}
 

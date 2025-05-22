@@ -19,7 +19,6 @@ package users_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -232,7 +231,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 	)
 
 	if !testrig.WaitFor(func() bool {
-		dbBlock, err = suite.db.GetBlock(context.Background(), requestingAccount.ID, targetAccount.ID)
+		dbBlock, err = suite.db.GetBlock(suite.T().Context(), requestingAccount.ID, targetAccount.ID)
 		return err == nil && dbBlock != nil
 	}) {
 		suite.FailNow("timed out waiting for block to be created")
@@ -243,7 +242,7 @@ func (suite *InboxPostTestSuite) TestPostBlock() {
 // one of our instance users should be able to undo that block.
 func (suite *InboxPostTestSuite) TestPostUnblock() {
 	var (
-		ctx               = context.Background()
+		ctx               = suite.T().Context()
 		requestingAccount = suite.testAccounts["remote_account_1"]
 		targetAccount     = suite.testAccounts["local_account_1"]
 		blockID           = "http://fossbros-anonymous.io/blocks/01H1462TPRTVG2RTQCTSQ7N6Q0"
@@ -315,7 +314,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 	requestingAccount.Emojis = []*gtsmodel.Emoji{testEmoji}
 
 	// Create an update from the account.
-	accountable, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	accountable, err := suite.tc.AccountToAS(suite.T().Context(), requestingAccount)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -344,7 +343,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 
 	if !testrig.WaitFor(func() bool {
 		// displayName should be updated
-		dbUpdatedAccount, _ = suite.db.GetAccountByID(context.Background(), requestingAccount.ID)
+		dbUpdatedAccount, _ = suite.db.GetAccountByID(suite.T().Context(), requestingAccount.ID)
 		return dbUpdatedAccount.DisplayName == updatedDisplayName
 	}) {
 		suite.FailNow("timed out waiting for account update")
@@ -399,7 +398,7 @@ func (suite *InboxPostTestSuite) TestPostUpdate() {
 
 func (suite *InboxPostTestSuite) TestPostDelete() {
 	var (
-		ctx               = context.Background()
+		ctx               = suite.T().Context()
 		requestingAccount = suite.testAccounts["remote_account_1"]
 		targetAccount     = suite.testAccounts["local_account_1"]
 		activityID        = requestingAccount.URI + "/some-new-activity/01FG9C441MCTW3R2W117V2PQK3"
@@ -517,7 +516,7 @@ func (suite *InboxPostTestSuite) TestPostFromBlockedAccount() {
 	)
 
 	// Create an update from the account.
-	accountable, err := suite.tc.AccountToAS(context.Background(), requestingAccount)
+	accountable, err := suite.tc.AccountToAS(suite.T().Context(), requestingAccount)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -559,7 +558,7 @@ func (suite *InboxPostTestSuite) TestPostFromBlockedAccountToOtherAccount() {
 		suite.signatureCheck,
 	)
 
-	_, err := suite.state.DB.GetStatusByURI(context.Background(), statusURI)
+	_, err := suite.state.DB.GetStatusByURI(suite.T().Context(), statusURI)
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
 

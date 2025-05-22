@@ -18,7 +18,6 @@
 package interactionrequests_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -36,7 +35,7 @@ func (suite *AcceptTestSuite) TestAccept() {
 	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
-		ctx    = context.Background()
+		ctx    = suite.T().Context()
 		state  = testStructs.State
 		acct   = suite.testAccounts["local_account_2"]
 		intReq = suite.testInteractionRequests["admin_account_reply_turtle"]

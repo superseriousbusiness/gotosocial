@@ -19,6 +19,7 @@ package federatingdb_test
 
 import (
 	"context"
+	"testing"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/admin"
@@ -51,7 +52,7 @@ type FederatingDBTestSuite struct {
 }
 
 func (suite *FederatingDBTestSuite) getFederatorMsg(timeout time.Duration) (*messages.FromFediAPI, bool) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	ctx, cncl := context.WithTimeout(ctx, timeout)
 	defer cncl()
 	return suite.state.Workers.Federator.Queue.PopCtx(ctx)
@@ -91,9 +92,8 @@ func (suite *FederatingDBTestSuite) TearDownTest() {
 	testrig.StopWorkers(&suite.state)
 }
 
-func createTestContext(receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {
-	ctx := context.Background()
-	ctx = gtscontext.SetReceivingAccount(ctx, receivingAccount)
+func createTestContext(t *testing.T, receivingAccount *gtsmodel.Account, requestingAccount *gtsmodel.Account) context.Context {
+	ctx := gtscontext.SetReceivingAccount(t.Context(), receivingAccount)
 	ctx = gtscontext.SetRequestingAccount(ctx, requestingAccount)
 	return ctx
 }

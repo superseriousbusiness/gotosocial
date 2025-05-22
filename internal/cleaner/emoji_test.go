@@ -26,42 +26,42 @@ func copyMap(in map[string]*gtsmodel.Emoji) map[string]*gtsmodel.Emoji {
 
 func (suite *CleanerTestSuite) TestEmojiUncacheRemote() {
 	suite.testEmojiUncacheRemote(
-		context.Background(),
+		suite.T().Context(),
 		mapvals(suite.emojis),
 	)
 }
 
 func (suite *CleanerTestSuite) TestEmojiUncacheRemoteDryRun() {
 	suite.testEmojiUncacheRemote(
-		gtscontext.SetDryRun(context.Background()),
+		gtscontext.SetDryRun(suite.T().Context()),
 		mapvals(suite.emojis),
 	)
 }
 
 func (suite *CleanerTestSuite) TestEmojiFixBroken() {
 	suite.testEmojiFixBroken(
-		context.Background(),
+		suite.T().Context(),
 		mapvals(suite.emojis),
 	)
 }
 
 func (suite *CleanerTestSuite) TestEmojiFixBrokenDryRun() {
 	suite.testEmojiFixBroken(
-		gtscontext.SetDryRun(context.Background()),
+		gtscontext.SetDryRun(suite.T().Context()),
 		mapvals(suite.emojis),
 	)
 }
 
 func (suite *CleanerTestSuite) TestEmojiPruneUnused() {
 	suite.testEmojiPruneUnused(
-		context.Background(),
+		suite.T().Context(),
 		mapvals(suite.emojis),
 	)
 }
 
 func (suite *CleanerTestSuite) TestEmojiPruneUnusedDryRun() {
 	suite.testEmojiPruneUnused(
-		gtscontext.SetDryRun(context.Background()),
+		gtscontext.SetDryRun(suite.T().Context()),
 		mapvals(suite.emojis),
 	)
 }
@@ -74,7 +74,7 @@ func (suite *CleanerTestSuite) TestEmojiFixCacheStates() {
 	emojis["rainbow"].Cached = util.Ptr(false)
 
 	suite.testEmojiFixCacheStates(
-		context.Background(),
+		suite.T().Context(),
 		mapvals(emojis),
 	)
 }
@@ -87,7 +87,7 @@ func (suite *CleanerTestSuite) TestEmojiFixCacheStatesDryRun() {
 	emojis["rainbow"].Cached = util.Ptr(false)
 
 	suite.testEmojiFixCacheStates(
-		gtscontext.SetDryRun(context.Background()),
+		gtscontext.SetDryRun(suite.T().Context()),
 		mapvals(emojis),
 	)
 }

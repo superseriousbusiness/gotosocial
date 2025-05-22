@@ -18,7 +18,6 @@
 package users_test
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -85,14 +84,14 @@ func (suite *StatusGetTestSuite) TestGetStatus() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	note, ok := t.(vocab.ActivityStreamsNote)
 	suite.True(ok)
 
 	// convert note to status
-	a, err := suite.tc.ASStatusToStatus(context.Background(), note)
+	a, err := suite.tc.ASStatusToStatus(suite.T().Context(), note)
 	suite.NoError(err)
 	suite.EqualValues(targetStatus.Content, a.Content)
 }
@@ -144,14 +143,14 @@ func (suite *StatusGetTestSuite) TestGetStatusLowercase() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	note, ok := t.(vocab.ActivityStreamsNote)
 	suite.True(ok)
 
 	// convert note to status
-	a, err := suite.tc.ASStatusToStatus(context.Background(), note)
+	a, err := suite.tc.ASStatusToStatus(suite.T().Context(), note)
 	suite.NoError(err)
 	suite.EqualValues(targetStatus.Content, a.Content)
 }

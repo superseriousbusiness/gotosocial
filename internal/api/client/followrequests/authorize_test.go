@@ -19,7 +19,6 @@ package followrequests_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -52,7 +51,7 @@ func (suite *AuthorizeTestSuite) TestAuthorize() {
 		TargetAccountID: targetAccount.ID,
 	}
 
-	err := suite.db.Put(context.Background(), fr)
+	err := suite.db.Put(suite.T().Context(), fr)
 	suite.NoError(err)
 
 	recorder := httptest.NewRecorder()

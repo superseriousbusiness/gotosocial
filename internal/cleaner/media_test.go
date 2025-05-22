@@ -94,11 +94,11 @@ func (suite *MediaTestSuite) TearDownTest() {
 // 	}
 
 // 	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachment/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
-// 	if _, err := suite.storage.Put(context.Background(), pandaPath, b); err != nil {
+// 	if _, err := suite.storage.Put(suite.T().Context(), pandaPath, b); err != nil {
 // 		suite.FailNow(err.Error())
 // 	}
 
-// 	ctx := context.Background()
+// 	ctx := suite.T().Context()
 
 // 	// dry run should show up 1 orphaned panda
 // 	totalPruned, err := suite.cleaner.Media().PruneOrphaned(gtscontext.SetDryRun(ctx))
@@ -121,11 +121,11 @@ func (suite *MediaTestSuite) TearDownTest() {
 // 	}
 
 // 	pandaPath := "01GJQJ1YD9QCHCE12GG0EYHVNW/attachment/original/01GJQJ2AYM1VKSRW96YVAJ3NK3.gif"
-// 	if _, err := suite.storage.Put(context.Background(), pandaPath, b); err != nil {
+// 	if _, err := suite.storage.Put(suite.T().Context(), pandaPath, b); err != nil {
 // 		suite.FailNow(err.Error())
 // 	}
 
-// 	ctx := context.Background()
+// 	ctx := suite.T().Context()
 
 // 	// should show up 1 orphaned panda
 // 	totalPruned, err := suite.cleaner.Media().PruneOrphaned(ctx)
@@ -142,11 +142,11 @@ func (suite *MediaTestSuite) TearDownTest() {
 // 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
 // 	suite.True(*testAttachment.Cached)
 
-// 	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background(), false)
+// 	totalPruned, err := suite.manager.PruneUnusedLocal(suite.T().Context(), false)
 // 	suite.NoError(err)
 // 	suite.Equal(1, totalPruned)
 
-// 	_, err = suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
+// 	_, err = suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID)
 // 	suite.ErrorIs(err, db.ErrNoEntries)
 // }
 
@@ -154,27 +154,27 @@ func (suite *MediaTestSuite) TearDownTest() {
 // 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
 // 	suite.True(*testAttachment.Cached)
 
-// 	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background(), true)
+// 	totalPruned, err := suite.manager.PruneUnusedLocal(suite.T().Context(), true)
 // 	suite.NoError(err)
 // 	suite.Equal(1, totalPruned)
 
-// 	_, err = suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
+// 	_, err = suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID)
 // 	suite.NoError(err)
 // }
 
 // func (suite *MediaTestSuite) TestPruneRemoteTwice() {
-// 	totalPruned, err := suite.manager.PruneUnusedLocal(context.Background(), false)
+// 	totalPruned, err := suite.manager.PruneUnusedLocal(suite.T().Context(), false)
 // 	suite.NoError(err)
 // 	suite.Equal(1, totalPruned)
 
 // 	// final prune should prune nothing, since the first prune already happened
-// 	totalPrunedAgain, err := suite.manager.PruneUnusedLocal(context.Background(), false)
+// 	totalPrunedAgain, err := suite.manager.PruneUnusedLocal(suite.T().Context(), false)
 // 	suite.NoError(err)
 // 	suite.Equal(0, totalPrunedAgain)
 // }
 
 // func (suite *MediaTestSuite) TestPruneOneNonExistent() {
-// 	ctx := context.Background()
+// 	ctx := suite.T().Context()
 // 	testAttachment := suite.testAttachments["local_account_1_unattached_1"]
 
 // 	// Delete this attachment cached on disk
@@ -191,7 +191,7 @@ func (suite *MediaTestSuite) TearDownTest() {
 // }
 
 // func (suite *MediaTestSuite) TestPruneUnusedRemote() {
-// 	ctx := context.Background()
+// 	ctx := suite.T().Context()
 
 // 	// start by clearing zork's avatar + header
 // 	zorkOldAvatar := suite.testAttachments["local_account_1_avatar"]
@@ -225,7 +225,7 @@ func (suite *MediaTestSuite) TearDownTest() {
 // }
 
 // func (suite *MediaTestSuite) TestPruneUnusedRemoteTwice() {
-// 	ctx := context.Background()
+// 	ctx := suite.T().Context()
 
 // 	// start by clearing zork's avatar + header
 // 	zork := suite.testAccounts["local_account_1"]
@@ -246,7 +246,7 @@ func (suite *MediaTestSuite) TearDownTest() {
 // }
 
 // func (suite *MediaTestSuite) TestPruneUnusedRemoteMultipleAccounts() {
-// 	ctx := context.Background()
+// 	ctx := suite.T().Context()
 
 // 	// start by clearing zork's avatar + header
 // 	zorkOldAvatar := suite.testAttachments["local_account_1_avatar"]
@@ -287,7 +287,7 @@ func (suite *MediaTestSuite) TearDownTest() {
 // }
 
 func (suite *MediaTestSuite) TestUncacheRemote() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(*testStatusAttachment.Cached)
@@ -310,7 +310,7 @@ func (suite *MediaTestSuite) TestUncacheRemote() {
 }
 
 func (suite *MediaTestSuite) TestUncacheRemoteDry() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	suite.True(*testStatusAttachment.Cached)
@@ -333,7 +333,7 @@ func (suite *MediaTestSuite) TestUncacheRemoteDry() {
 }
 
 func (suite *MediaTestSuite) TestUncacheRemoteTwice() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	after := time.Now().Add(-24 * time.Hour)
 
 	totalUncached, err := suite.cleaner.Media().UncacheRemote(ctx, after)
@@ -347,7 +347,7 @@ func (suite *MediaTestSuite) TestUncacheRemoteTwice() {
 }
 
 func (suite *MediaTestSuite) TestUncacheAndRecache() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	testHeader := suite.testAttachments["remote_account_3_header"]
 
@@ -403,7 +403,7 @@ func (suite *MediaTestSuite) TestUncacheAndRecache() {
 }
 
 func (suite *MediaTestSuite) TestUncacheOneNonExistent() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testStatusAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
 	// Delete this attachment cached on disk

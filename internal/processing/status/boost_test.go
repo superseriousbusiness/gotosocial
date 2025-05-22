@@ -18,7 +18,6 @@
 package status_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type StatusBoostTestSuite struct {
 }
 
 func (suite *StatusBoostTestSuite) TestBoostOfBoost() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// first boost a status, no big deal
 	boostingAccount1 := suite.testAccounts["local_account_1"]

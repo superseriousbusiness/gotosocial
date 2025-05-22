@@ -37,7 +37,7 @@ type StatusEditTestSuite struct {
 
 func (suite *StatusEditTestSuite) TestSimpleEdit() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -100,7 +100,7 @@ func (suite *StatusEditTestSuite) TestSimpleEdit() {
 
 func (suite *StatusEditTestSuite) TestEditChangeContentType() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -166,7 +166,7 @@ func (suite *StatusEditTestSuite) TestEditChangeContentType() {
 
 func (suite *StatusEditTestSuite) TestEditOnStatusWithNoContentType() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -235,7 +235,7 @@ func (suite *StatusEditTestSuite) TestEditOnStatusWithNoContentType() {
 
 func (suite *StatusEditTestSuite) TestEditAddPoll() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -313,7 +313,7 @@ func (suite *StatusEditTestSuite) TestEditAddPoll() {
 
 func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -391,7 +391,7 @@ func (suite *StatusEditTestSuite) TestEditAddPollNoExpiry() {
 
 func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -487,7 +487,7 @@ func (suite *StatusEditTestSuite) TestEditMediaDescription() {
 
 func (suite *StatusEditTestSuite) TestEditAddMedia() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -562,7 +562,7 @@ func (suite *StatusEditTestSuite) TestEditAddMedia() {
 
 func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -628,7 +628,7 @@ func (suite *StatusEditTestSuite) TestEditRemoveMedia() {
 
 func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.
@@ -653,7 +653,7 @@ func (suite *StatusEditTestSuite) TestEditOthersStatus1() {
 
 func (suite *StatusEditTestSuite) TestEditOthersStatus2() {
 	// Create cancellable context to use for test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Get a local account to use as test requester.

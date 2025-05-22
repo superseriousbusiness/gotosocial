@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -35,7 +34,7 @@ type ReportTestSuite struct {
 }
 
 func (suite *ReportTestSuite) TestGetReportByID() {
-	report, err := suite.db.GetReportByID(context.Background(), suite.testReports["local_account_2_report_remote_account_1"].ID)
+	report, err := suite.db.GetReportByID(suite.T().Context(), suite.testReports["local_account_2_report_remote_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -49,7 +48,7 @@ func (suite *ReportTestSuite) TestGetReportByID() {
 }
 
 func (suite *ReportTestSuite) TestGetReportByURI() {
-	report, err := suite.db.GetReportByID(context.Background(), suite.testReports["remote_account_1_report_local_account_2"].ID)
+	report, err := suite.db.GetReportByID(suite.T().Context(), suite.testReports["remote_account_1_report_local_account_2"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -64,7 +63,7 @@ func (suite *ReportTestSuite) TestGetReportByURI() {
 
 func (suite *ReportTestSuite) TestGetAllReports() {
 	reports, err := suite.db.GetReports(
-		context.Background(),
+		suite.T().Context(),
 		nil,
 		"",
 		"",
@@ -77,7 +76,7 @@ func (suite *ReportTestSuite) TestGetAllReports() {
 func (suite *ReportTestSuite) TestReportPagingDown() {
 	// Get one from the top.
 	reports1, err := suite.db.GetReports(
-		context.Background(),
+		suite.T().Context(),
 		nil,
 		"",
 		"",
@@ -95,7 +94,7 @@ func (suite *ReportTestSuite) TestReportPagingDown() {
 
 	// Use this one to page down.
 	reports2, err := suite.db.GetReports(
-		context.Background(),
+		suite.T().Context(),
 		nil,
 		"",
 		"",
@@ -118,7 +117,7 @@ func (suite *ReportTestSuite) TestReportPagingDown() {
 func (suite *ReportTestSuite) TestReportPagingUp() {
 	// Get one from the bottom.
 	reports1, err := suite.db.GetReports(
-		context.Background(),
+		suite.T().Context(),
 		nil,
 		"",
 		"",
@@ -137,7 +136,7 @@ func (suite *ReportTestSuite) TestReportPagingUp() {
 
 	// Use this one to page up.
 	reports2, err := suite.db.GetReports(
-		context.Background(),
+		suite.T().Context(),
 		nil,
 		"",
 		"",
@@ -160,7 +159,7 @@ func (suite *ReportTestSuite) TestReportPagingUp() {
 func (suite *ReportTestSuite) TestGetAllReportsByAccountID() {
 	accountID := suite.testAccounts["local_account_2"].ID
 	reports, err := suite.db.GetReports(
-		context.Background(),
+		suite.T().Context(),
 		nil,
 		accountID,
 		"",
@@ -174,7 +173,7 @@ func (suite *ReportTestSuite) TestGetAllReportsByAccountID() {
 }
 
 func (suite *ReportTestSuite) TestPutReport() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	reportID := "01GP3ECY8QJD8DBJSS8B1CR0AX"
 	report := &gtsmodel.Report{
@@ -194,7 +193,7 @@ func (suite *ReportTestSuite) TestPutReport() {
 }
 
 func (suite *ReportTestSuite) TestUpdateReport() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	report := &gtsmodel.Report{}
 	*report = *suite.testReports["local_account_2_report_remote_account_1"]
@@ -220,7 +219,7 @@ func (suite *ReportTestSuite) TestUpdateReport() {
 }
 
 func (suite *ReportTestSuite) TestUpdateReportAllColumns() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	report := &gtsmodel.Report{}
 	*report = *suite.testReports["local_account_2_report_remote_account_1"]
@@ -246,11 +245,11 @@ func (suite *ReportTestSuite) TestUpdateReportAllColumns() {
 }
 
 func (suite *ReportTestSuite) TestDeleteReport() {
-	if err := suite.db.DeleteReportByID(context.Background(), suite.testReports["remote_account_1_report_local_account_2"].ID); err != nil {
+	if err := suite.db.DeleteReportByID(suite.T().Context(), suite.testReports["remote_account_1_report_local_account_2"].ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	report, err := suite.db.GetReportByID(context.Background(), suite.testReports["remote_account_1_report_local_account_2"].ID)
+	report, err := suite.db.GetReportByID(suite.T().Context(), suite.testReports["remote_account_1_report_local_account_2"].ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Nil(report)
 }

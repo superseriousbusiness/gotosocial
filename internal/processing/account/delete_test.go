@@ -18,7 +18,6 @@
 package account_test
 
 import (
-	"context"
 	"net"
 	"testing"
 	"time"
@@ -32,7 +31,7 @@ type AccountDeleteTestSuite struct {
 }
 
 func (suite *AccountDeleteTestSuite) TestAccountDeleteLocal() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Keep a reference around to the original account
 	// and user, before the delete was processed.

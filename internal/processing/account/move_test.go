@@ -18,7 +18,6 @@
 package account_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ type MoveTestSuite struct {
 }
 
 func (suite *MoveTestSuite) TestMoveAccountOK() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Copy zork.
 	requestingAcct := new(gtsmodel.Account)
@@ -106,7 +105,7 @@ func (suite *MoveTestSuite) TestMoveAccountOK() {
 }
 
 func (suite *MoveTestSuite) TestMoveAccountNotAliased() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Copy zork.
 	requestingAcct := new(gtsmodel.Account)
@@ -136,7 +135,7 @@ func (suite *MoveTestSuite) TestMoveAccountNotAliased() {
 }
 
 func (suite *MoveTestSuite) TestMoveAccountBadPassword() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Copy zork.
 	requestingAcct := new(gtsmodel.Account)

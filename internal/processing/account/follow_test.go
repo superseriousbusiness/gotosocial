@@ -18,7 +18,6 @@
 package account_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -33,7 +32,7 @@ type FollowTestSuite struct {
 }
 
 func (suite *FollowTestSuite) TestUpdateExistingFollowChangeBoth() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
 
@@ -54,7 +53,7 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeBoth() {
 }
 
 func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNotifyIgnoreReblogs() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
 
@@ -74,7 +73,7 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNotifyIgnoreReblogs(
 }
 
 func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNotifySetReblogs() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
 
@@ -95,7 +94,7 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNotifySetReblogs() {
 }
 
 func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNothing() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
 
@@ -115,7 +114,7 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowChangeNothing() {
 }
 
 func (suite *FollowTestSuite) TestUpdateExistingFollowSetNothing() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["local_account_1"]
 	targetAccount := suite.testAccounts["admin_account"]
 
@@ -133,7 +132,7 @@ func (suite *FollowTestSuite) TestUpdateExistingFollowSetNothing() {
 }
 
 func (suite *FollowTestSuite) TestFollowRequestLocal() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	requestingAccount := suite.testAccounts["admin_account"]
 	targetAccount := suite.testAccounts["local_account_2"]
 

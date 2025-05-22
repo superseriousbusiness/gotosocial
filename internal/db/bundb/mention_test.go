@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -31,7 +30,7 @@ type MentionTestSuite struct {
 func (suite *MentionTestSuite) TestGetMention() {
 	m := suite.testMentions["local_user_2_mention_zork"]
 
-	dbMention, err := suite.db.GetMention(context.Background(), m.ID)
+	dbMention, err := suite.db.GetMention(suite.T().Context(), m.ID)
 	suite.NoError(err)
 	suite.NotNil(dbMention)
 	suite.Equal(m.ID, dbMention.ID)
@@ -46,7 +45,7 @@ func (suite *MentionTestSuite) TestGetMention() {
 func (suite *MentionTestSuite) TestGetMentions() {
 	m := suite.testMentions["local_user_2_mention_zork"]
 
-	dbMentions, err := suite.db.GetMentions(context.Background(), []string{m.ID})
+	dbMentions, err := suite.db.GetMentions(suite.T().Context(), []string{m.ID})
 	suite.NoError(err)
 	suite.Len(dbMentions, 1)
 	dbMention := dbMentions[0]

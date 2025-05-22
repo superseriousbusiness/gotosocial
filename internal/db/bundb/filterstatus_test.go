@@ -41,7 +41,7 @@ func (suite *FilterTestSuite) TestFilterStatusCRD() {
 	}
 
 	// Create new cancellable test context.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	ctx, cncl := context.WithCancel(ctx)
 	defer cncl()
 

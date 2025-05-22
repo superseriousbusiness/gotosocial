@@ -18,7 +18,6 @@
 package user_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -30,7 +29,7 @@ type EmailConfirmTestSuite struct {
 }
 
 func (suite *EmailConfirmTestSuite) TestConfirmEmail() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	user := suite.testUsers["local_account_1"]
 
@@ -58,7 +57,7 @@ func (suite *EmailConfirmTestSuite) TestConfirmEmail() {
 }
 
 func (suite *EmailConfirmTestSuite) TestConfirmEmailOldToken() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	user := suite.testUsers["local_account_1"]
 

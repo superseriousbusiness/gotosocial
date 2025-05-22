@@ -18,7 +18,6 @@
 package admin_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,7 +48,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanup() {
 
 	// the attachment should be updated in the database
 	if !testrig.WaitFor(func() bool {
-		if prunedAttachment, _ := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID); prunedAttachment != nil {
+		if prunedAttachment, _ := suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID); prunedAttachment != nil {
 			return !*prunedAttachment.Cached
 		}
 		return false
@@ -74,7 +73,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNoArg() {
 	suite.Equal(http.StatusOK, recorder.Code)
 
 	if !testrig.WaitFor(func() bool {
-		if prunedAttachment, _ := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID); prunedAttachment != nil {
+		if prunedAttachment, _ := suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID); prunedAttachment != nil {
 			return !*prunedAttachment.Cached
 		}
 		return false
@@ -101,7 +100,7 @@ func (suite *MediaCleanupTestSuite) TestMediaCleanupNotOldEnough() {
 	time.Sleep(1 * time.Second)
 
 	// Get media we pruned
-	prunedAttachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
+	prunedAttachment, err := suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID)
 	suite.NoError(err)
 
 	// the media should still be cached

@@ -18,7 +18,6 @@
 package accounts_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -102,7 +101,7 @@ func (suite *FollowTestSuite) TestGetFollowersPageOldestToNewestLimit6() {
 }
 
 func (suite *FollowTestSuite) testGetFollowersPage(limit int, direction string) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// The authed local account we are going to use for HTTP requests
 	requestingAccount := suite.testAccounts["local_account_1"]
@@ -304,7 +303,7 @@ func (suite *FollowTestSuite) TestGetFollowingPageOldestToNewestLimit6() {
 }
 
 func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// The authed local account we are going to use for HTTP requests
 	requestingAccount := suite.testAccounts["local_account_1"]
@@ -483,19 +482,19 @@ func (suite *FollowTestSuite) testGetFollowingPage(limit int, direction string) 
 func (suite *FollowTestSuite) clearAccountRelations(id string) {
 	// Esnure no account blocks exist between accounts.
 	_ = suite.db.DeleteAccountBlocks(
-		context.Background(),
+		suite.T().Context(),
 		id,
 	)
 
 	// Ensure no account follows exist between accounts.
 	_ = suite.db.DeleteAccountFollows(
-		context.Background(),
+		suite.T().Context(),
 		id,
 	)
 
 	// Ensure no account follow_requests exist between accounts.
 	_ = suite.db.DeleteAccountFollowRequests(
-		context.Background(),
+		suite.T().Context(),
 		id,
 	)
 }

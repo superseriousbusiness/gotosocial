@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -33,7 +32,7 @@ type StatusBookmarkTestSuite struct {
 
 func (suite *StatusBookmarkTestSuite) TestGetStatusBookmarkOK() {
 	testBookmark := suite.testBookmarks["local_account_1_admin_account_status_1"]
-	bookmark, err := suite.db.GetStatusBookmark(context.Background(), testBookmark.AccountID, testBookmark.StatusID)
+	bookmark, err := suite.db.GetStatusBookmark(suite.T().Context(), testBookmark.AccountID, testBookmark.StatusID)
 	suite.NoError(err)
 	suite.Equal(testBookmark.ID, bookmark.ID)
 	suite.Equal(testBookmark.AccountID, bookmark.AccountID)
@@ -41,7 +40,7 @@ func (suite *StatusBookmarkTestSuite) TestGetStatusBookmarkOK() {
 }
 
 func (suite *StatusBookmarkTestSuite) TestGetStatusBookmarkNonexisting() {
-	bookmark, err := suite.db.GetStatusBookmark(context.Background(), "01GVAVGD06YJ2FSB5GJSMF8M2K", "01GVAVGKGR1MK9ZN7JCJFYSFZV")
+	bookmark, err := suite.db.GetStatusBookmark(suite.T().Context(), "01GVAVGD06YJ2FSB5GJSMF8M2K", "01GVAVGKGR1MK9ZN7JCJFYSFZV")
 	suite.Nil(bookmark)
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
@@ -49,7 +48,7 @@ func (suite *StatusBookmarkTestSuite) TestGetStatusBookmarkNonexisting() {
 func (suite *StatusBookmarkTestSuite) IsStatusBookmarked() {
 	for _, bookmark := range suite.testBookmarks {
 		ok, err := suite.db.IsStatusBookmarked(
-			context.Background(),
+			suite.T().Context(),
 			bookmark.StatusID,
 		)
 		suite.NoError(err)
@@ -60,12 +59,12 @@ func (suite *StatusBookmarkTestSuite) IsStatusBookmarked() {
 func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksOriginatingFromAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	if err := suite.db.DeleteStatusBookmarks(context.Background(), "", testAccount.ID); err != nil {
+	if err := suite.db.DeleteStatusBookmarks(suite.T().Context(), "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	bookmarks := []*gtsmodel.StatusBookmark{}
-	if err := suite.db.GetAll(context.Background(), &bookmarks); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := suite.db.GetAll(suite.T().Context(), &bookmarks); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		suite.FailNow(err.Error())
 	}
 
@@ -79,12 +78,12 @@ func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksOriginatingFromAc
 func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksTargetingAccount() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	if err := suite.db.DeleteStatusBookmarks(context.Background(), testAccount.ID, ""); err != nil {
+	if err := suite.db.DeleteStatusBookmarks(suite.T().Context(), testAccount.ID, ""); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	bookmarks := []*gtsmodel.StatusBookmark{}
-	if err := suite.db.GetAll(context.Background(), &bookmarks); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := suite.db.GetAll(suite.T().Context(), &bookmarks); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		suite.FailNow(err.Error())
 	}
 
@@ -98,12 +97,12 @@ func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksTargetingAccount(
 func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksTargetingStatus() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
-	if err := suite.db.DeleteStatusBookmarksForStatus(context.Background(), testStatus.ID); err != nil {
+	if err := suite.db.DeleteStatusBookmarksForStatus(suite.T().Context(), testStatus.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	bookmarks := []*gtsmodel.StatusBookmark{}
-	if err := suite.db.GetAll(context.Background(), &bookmarks); err != nil && !errors.Is(err, db.ErrNoEntries) {
+	if err := suite.db.GetAll(suite.T().Context(), &bookmarks); err != nil && !errors.Is(err, db.ErrNoEntries) {
 		suite.FailNow(err.Error())
 	}
 
@@ -116,7 +115,7 @@ func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarksTargetingStatus()
 
 func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarkByID() {
 	testBookmark := suite.testBookmarks["local_account_1_admin_account_status_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	if err := suite.db.DeleteStatusBookmarkByID(ctx, testBookmark.ID); err != nil {
 		suite.FailNow(err.Error())
@@ -128,7 +127,7 @@ func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarkByID() {
 }
 
 func (suite *StatusBookmarkTestSuite) TestDeleteStatusBookmarkByIDNonExisting() {
-	err := suite.db.DeleteStatusBookmarkByID(context.Background(), "01GVAV715K6Y2SG9ZKS9ZA8G7G")
+	err := suite.db.DeleteStatusBookmarkByID(suite.T().Context(), "01GVAV715K6Y2SG9ZKS9ZA8G7G")
 	suite.NoError(err)
 }
 

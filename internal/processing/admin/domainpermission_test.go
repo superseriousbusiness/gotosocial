@@ -82,7 +82,7 @@ func (suite *DomainBlockTestSuite) runDomainPermTest(t domainPermTest) {
 	config.SetInstanceFederationMode(t.instanceFederationMode)
 
 	for _, action := range t.actions {
-		ctx, cancel := context.WithCancel(context.Background())
+		ctx, cancel := context.WithCancel(suite.T().Context())
 		defer cancel()
 
 		// Run the desired action.
@@ -102,7 +102,7 @@ func (suite *DomainBlockTestSuite) runDomainPermTest(t domainPermTest) {
 		// Check expected results
 		// against each account.
 		accounts, err := suite.db.GetInstanceAccounts(
-			context.Background(),
+			suite.T().Context(),
 			action.domain,
 			"", 0,
 		)
@@ -123,7 +123,7 @@ func (suite *DomainBlockTestSuite) createDomainPerm(
 	permissionType gtsmodel.DomainPermissionType,
 	domain string,
 ) (*apimodel.DomainPermission, string) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	apiPerm, actionID, errWithCode := suite.adminProcessor.DomainPermissionCreate(
 		ctx,
@@ -148,7 +148,7 @@ func (suite *DomainBlockTestSuite) deleteDomainPerm(
 	domain string,
 ) (*apimodel.DomainPermission, string) {
 	var (
-		ctx              = context.Background()
+		ctx              = suite.T().Context()
 		domainPermission gtsmodel.DomainPermission
 	)
 
@@ -183,7 +183,7 @@ func (suite *DomainBlockTestSuite) deleteDomainPerm(
 
 // waits for given actionID to be completed.
 func (suite *DomainBlockTestSuite) awaitAction(actionID string) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	if !testrig.WaitFor(func() bool {
 		return suite.state.AdminActions.TotalRunning() == 0

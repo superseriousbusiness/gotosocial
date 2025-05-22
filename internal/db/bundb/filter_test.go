@@ -54,7 +54,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 
 	// Create new cancellable test context.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	ctx, cncl := context.WithCancel(ctx)
 	defer cncl()
 
@@ -249,7 +249,7 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 
 func (suite *FilterTestSuite) TestFilterTitleOverlap() {
 	var (
-		ctx      = context.Background()
+		ctx      = suite.T().Context()
 		account1 = "01HNEJXCPRTJVJY9MV0VVHGD47"
 		account2 = "01JAG5BRJPJYA0FSA5HR2MMFJH"
 	)

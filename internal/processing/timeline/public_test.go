@@ -18,7 +18,6 @@
 package timeline_test
 
 import (
-	"context"
 	"testing"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -35,7 +34,7 @@ type PublicTestSuite struct {
 
 func (suite *PublicTestSuite) TestPublicTimelineGet() {
 	var (
-		ctx       = context.Background()
+		ctx       = suite.T().Context()
 		requester = suite.testAccounts["local_account_1"]
 		maxID     = ""
 		sinceID   = ""
@@ -66,7 +65,7 @@ func (suite *PublicTestSuite) TestPublicTimelineGet() {
 
 func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
 	var (
-		ctx       = context.Background()
+		ctx       = suite.T().Context()
 		requester = suite.testAccounts["local_account_1"]
 		// Select 1 *just above* a status we know should
 		// not be in the public timeline -- a public
@@ -101,7 +100,7 @@ func (suite *PublicTestSuite) TestPublicTimelineGetNotEmpty() {
 // A timeline containing a status hidden due to filtering should return other statuses with no error.
 func (suite *PublicTestSuite) TestPublicTimelineGetHideFiltered() {
 	var (
-		ctx                 = context.Background()
+		ctx                 = suite.T().Context()
 		requester           = suite.testAccounts["local_account_1"]
 		maxID               = ""
 		sinceID             = ""

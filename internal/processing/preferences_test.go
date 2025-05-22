@@ -18,7 +18,6 @@
 package processing_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -31,7 +30,7 @@ type PreferencesTestSuite struct {
 }
 
 func (suite *PreferencesTestSuite) TestPreferencesGet() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	tests := []struct {
 		act   *gtsmodel.Account
 		prefs *model.Preferences

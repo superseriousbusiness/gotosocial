@@ -18,7 +18,6 @@
 package admin_test
 
 import (
-	"context"
 	"testing"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -32,7 +31,7 @@ type EmojiTestSuite struct {
 }
 
 func (suite *EmojiTestSuite) TestUpdateEmojiCategory() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testEmoji := new(gtsmodel.Emoji)
 	*testEmoji = *suite.testEmojis["rainbow"]
 

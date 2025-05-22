@@ -18,7 +18,6 @@
 package federatingdb_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -34,7 +33,7 @@ type UpdateTestSuite struct {
 
 func (suite *UpdateTestSuite) TestUpdateNewMention() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		update         = suite.testActivities["remote_account_2_status_1_update"]
 		receivingAcct  = suite.testAccounts["local_account_1"]
 		requestingAcct = suite.testAccounts["remote_account_2"]

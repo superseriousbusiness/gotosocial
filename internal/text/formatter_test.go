@@ -18,8 +18,6 @@
 package text_test
 
 import (
-	"context"
-
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/processing"
@@ -85,7 +83,7 @@ func (suite *TextStandardTestSuite) TearDownTest() {
 
 func (suite *TextStandardTestSuite) FromMarkdown(input string) *text.FormatResult {
 	return suite.formatter.FromMarkdown(
-		context.Background(),
+		suite.T().Context(),
 		suite.parseMention,
 		suite.testAccounts["local_account_1"].ID,
 		"dummy_status_ID",
@@ -95,7 +93,7 @@ func (suite *TextStandardTestSuite) FromMarkdown(input string) *text.FormatResul
 
 func (suite *TextStandardTestSuite) FromMarkdownBasic(input string) *text.FormatResult {
 	return suite.formatter.FromMarkdownBasic(
-		context.Background(),
+		suite.T().Context(),
 		suite.parseMention,
 		suite.testAccounts["local_account_1"].ID,
 		"dummy_status_ID",
@@ -105,7 +103,7 @@ func (suite *TextStandardTestSuite) FromMarkdownBasic(input string) *text.Format
 
 func (suite *TextStandardTestSuite) FromPlain(input string) *text.FormatResult {
 	return suite.formatter.FromPlain(
-		context.Background(),
+		suite.T().Context(),
 		suite.parseMention,
 		suite.testAccounts["local_account_1"].ID,
 		"dummy_status_ID",
@@ -115,7 +113,7 @@ func (suite *TextStandardTestSuite) FromPlain(input string) *text.FormatResult {
 
 func (suite *TextStandardTestSuite) FromPlainNoParagraph(input string) *text.FormatResult {
 	return suite.formatter.FromPlainNoParagraph(
-		context.Background(),
+		suite.T().Context(),
 		suite.parseMention,
 		suite.testAccounts["local_account_1"].ID,
 		"dummmy_status_ID",

@@ -18,7 +18,6 @@
 package timeline_test
 
 import (
-	"context"
 	"testing"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -40,7 +39,7 @@ func (suite *HomeTestSuite) TearDownTest() {
 // A timeline containing a status hidden due to filtering should return other statuses with no error.
 func (suite *HomeTestSuite) TestHomeTimelineGetHideFiltered() {
 	var (
-		ctx                 = context.Background()
+		ctx                 = suite.T().Context()
 		requester           = suite.testAccounts["local_account_1"]
 		maxID               = ""
 		sinceID             = ""

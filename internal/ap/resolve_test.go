@@ -19,7 +19,6 @@ package ap_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"testing"
 
@@ -36,7 +35,7 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsStatusable() {
 	b := []byte(suite.typeToJson(suite.document1))
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(), io.NopCloser(bytes.NewReader(b)),
+		suite.T().Context(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.NoError(err)
 	suite.NotNil(statusable)
@@ -46,7 +45,7 @@ func (suite *ResolveTestSuite) TestResolveDocumentAsAccountable() {
 	b := []byte(suite.typeToJson(suite.document1))
 
 	accountable, err := ap.ResolveAccountable(
-		context.Background(), io.NopCloser(bytes.NewReader(b)),
+		suite.T().Context(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: cannot resolve vocab type *typedocument.ActivityStreamsDocument as accountable")
@@ -58,7 +57,7 @@ func (suite *ResolveTestSuite) TestResolveHTMLAsAccountable() {
 	<title>.</title>`)
 
 	accountable, err := ap.ResolveAccountable(
-		context.Background(), io.NopCloser(bytes.NewReader(b)),
+		suite.T().Context(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: error decoding into json: invalid character '<' looking for beginning of value")
@@ -73,7 +72,7 @@ func (suite *ResolveTestSuite) TestResolveNonAPJSONAsAccountable() {
 }`)
 
 	accountable, err := ap.ResolveAccountable(
-		context.Background(), io.NopCloser(bytes.NewReader(b)),
+		suite.T().Context(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.True(gtserror.IsWrongType(err))
 	suite.EqualError(err, "ResolveAccountable: error resolving json into ap vocab type: activity stream did not match any known types")
@@ -124,7 +123,7 @@ func (suite *ResolveTestSuite) TestResolveBandwagonAlbumAsStatusable() {
 }`)
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(), io.NopCloser(bytes.NewReader(b)),
+		suite.T().Context(), io.NopCloser(bytes.NewReader(b)),
 	)
 	suite.NoError(err)
 	suite.NotNil(statusable)

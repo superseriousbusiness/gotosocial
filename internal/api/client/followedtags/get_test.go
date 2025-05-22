@@ -18,7 +18,6 @@
 package followedtags_test
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -94,7 +93,7 @@ func (suite *FollowedTagsTestSuite) TestGet() {
 	testTag := suite.testTags["welcome"]
 
 	// Follow an existing tag.
-	if err := suite.db.PutFollowedTag(context.Background(), testAccount.ID, testTag.ID); err != nil {
+	if err := suite.db.PutFollowedTag(suite.T().Context(), testAccount.ID, testTag.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 

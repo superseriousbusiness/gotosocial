@@ -18,7 +18,6 @@
 package admin_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -33,7 +32,7 @@ type AdminRejectTestSuite struct {
 
 func (suite *AdminRejectTestSuite) TestReject() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		adminAcct      = suite.testAccounts["admin_account"]
 		targetAcct     = suite.testAccounts["unconfirmed_account"]
 		targetUser     = suite.testUsers["unconfirmed_account"]
@@ -95,7 +94,7 @@ func (suite *AdminRejectTestSuite) TestReject() {
 
 func (suite *AdminRejectTestSuite) TestRejectRemote() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		adminAcct      = suite.testAccounts["admin_account"]
 		targetAcct     = suite.testAccounts["remote_account_1"]
 		privateComment = "It's a no from me chief."
@@ -117,7 +116,7 @@ func (suite *AdminRejectTestSuite) TestRejectRemote() {
 
 func (suite *AdminRejectTestSuite) TestRejectApproved() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		adminAcct      = suite.testAccounts["admin_account"]
 		targetAcct     = suite.testAccounts["local_account_1"]
 		privateComment = "It's a no from me chief."

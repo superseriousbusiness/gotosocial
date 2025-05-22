@@ -18,7 +18,6 @@
 package statuses_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -203,7 +202,7 @@ func (suite *StatusFaveTestSuite) TestPostUnfaveable() {
 // Fave a status that's pending approval by us.
 func (suite *StatusFaveTestSuite) TestPostFaveImplicitAccept() {
 	var (
-		ctx          = context.Background()
+		ctx          = suite.T().Context()
 		targetStatus = suite.testStatuses["admin_account_status_5"]
 		app          = suite.testApplications["application_1"]
 		token        = suite.testTokens["local_account_2"]

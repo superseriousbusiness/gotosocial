@@ -18,8 +18,6 @@
 package federation_test
 
 import (
-	"context"
-
 	"github.com/stretchr/testify/suite"
 
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
@@ -68,7 +66,7 @@ func (suite *FederatorStandardTestSuite) SetupTest() {
 
 	// Ensure it's possible to deref
 	// main key of foss satan.
-	fossSatanAS, err := suite.typeconverter.AccountToAS(context.Background(), suite.testAccounts["remote_account_1"])
+	fossSatanAS, err := suite.typeconverter.AccountToAS(suite.T().Context(), suite.testAccounts["remote_account_1"])
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

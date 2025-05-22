@@ -18,7 +18,6 @@
 package typeutils_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -34,7 +33,7 @@ type WrapTestSuite struct {
 func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
-	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
+	note, err := suite.typeconverter.StatusToAS(suite.T().Context(), testStatus)
 	suite.NoError(err)
 
 	create := typeutils.WrapStatusableInCreate(note, true)
@@ -62,7 +61,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreateIRIOnly() {
 func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 
-	note, err := suite.typeconverter.StatusToAS(context.Background(), testStatus)
+	note, err := suite.typeconverter.StatusToAS(suite.T().Context(), testStatus)
 	suite.NoError(err)
 
 	create := typeutils.WrapStatusableInCreate(note, false)
@@ -154,7 +153,7 @@ func (suite *WrapTestSuite) TestWrapNoteInCreate() {
 func (suite *WrapTestSuite) TestWrapAccountableInUpdate() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	accountable, err := suite.typeconverter.AccountToAS(context.Background(), testAccount)
+	accountable, err := suite.typeconverter.AccountToAS(suite.T().Context(), testAccount)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

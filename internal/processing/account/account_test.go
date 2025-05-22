@@ -67,7 +67,7 @@ type AccountStandardTestSuite struct {
 }
 
 func (suite *AccountStandardTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	ctx, cncl := context.WithTimeout(ctx, timeout)
 	defer cncl()
 	return suite.state.Workers.Client.Queue.PopCtx(ctx)

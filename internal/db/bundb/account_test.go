@@ -43,53 +43,53 @@ type AccountTestSuite struct {
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatuses() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false)
+	statuses, err := suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 9)
 }
 
 func (suite *AccountTestSuite) TestGetAccountWebStatusesMediaOnly() {
-	statuses, err := suite.db.GetAccountWebStatuses(context.Background(), suite.testAccounts["local_account_3"], true, 20, "")
+	statuses, err := suite.db.GetAccountWebStatuses(suite.T().Context(), suite.testAccounts["local_account_3"], true, 20, "")
 	suite.NoError(err)
 	suite.Len(statuses, 2)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesPageDown() {
 	// get the first page
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, "", "", false, false)
+	statuses, err := suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 3, false, false, "", "", false, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.Len(statuses, 3)
 
 	// get the second page
-	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	statuses, err = suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.Len(statuses, 3)
 
 	// get the third page
-	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	statuses, err = suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 	suite.Len(statuses, 3)
 
 	// try to get the last page (should be empty)
-	statuses, err = suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
+	statuses, err = suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 3, false, false, statuses[len(statuses)-1].ID, "", false, false)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Empty(statuses)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogs() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false)
+	statuses, err := suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 8)
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesAndReblogsPublicOnly() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
+	statuses, err := suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 20, true, true, "", "", false, true)
 	suite.NoError(err)
 	suite.Len(statuses, 4)
 }
@@ -169,14 +169,14 @@ func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesExcludesSelfR
 	)
 
 	for _, status := range []*gtsmodel.Status{post, reply, riposte, followup} {
-		if err := suite.db.PutStatus(context.Background(), status); err != nil {
+		if err := suite.db.PutStatus(suite.T().Context(), status); err != nil {
 			suite.FailNowf("", "Error while adding test status with ID %s: %v", status.ID, err)
 			return
 		}
 	}
 
 	testAccount := suite.testAccounts["local_account_1"]
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), testAccount.ID, 20, true, true, "", "", false, false)
+	statuses, err := suite.db.GetAccountStatuses(suite.T().Context(), testAccount.ID, 20, true, true, "", "", false, false)
 	suite.NoError(err)
 	suite.Len(statuses, 9)
 	for _, status := range statuses {
@@ -190,7 +190,7 @@ func (suite *AccountTestSuite) TestGetAccountStatusesExcludeRepliesExcludesSelfR
 }
 
 func (suite *AccountTestSuite) TestGetAccountStatusesMediaOnly() {
-	statuses, err := suite.db.GetAccountStatuses(context.Background(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", true, false)
+	statuses, err := suite.db.GetAccountStatuses(suite.T().Context(), suite.testAccounts["local_account_1"].ID, 20, false, false, "", "", true, false)
 	suite.NoError(err)
 	suite.Len(statuses, 2)
 }
@@ -199,7 +199,7 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Sentinel error to mark avoiding a test case.
@@ -344,7 +344,7 @@ func (suite *AccountTestSuite) TestGetAccountBy() {
 }
 
 func (suite *AccountTestSuite) TestGetAccountsByURLMulti() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Update admin account to have the same url as zork.
 	testAccount1 := suite.testAccounts["local_account_1"]
@@ -391,7 +391,7 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 		PublicKeyURI: "https://example.org/users/test_service#main-key",
 	}
 
-	err = suite.db.Put(context.Background(), newAccount)
+	err = suite.db.Put(suite.T().Context(), newAccount)
 	suite.NoError(err)
 
 	suite.WithinDuration(time.Now(), newAccount.CreatedAt, 30*time.Second)
@@ -403,7 +403,7 @@ func (suite *AccountTestSuite) TestInsertAccountWithDefaults() {
 func (suite *AccountTestSuite) TestGetAccountPinnedStatusesSomeResults() {
 	testAccount := suite.testAccounts["admin_account"]
 
-	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
+	statuses, err := suite.db.GetAccountPinnedStatuses(suite.T().Context(), testAccount.ID)
 	suite.NoError(err)
 	suite.Len(statuses, 2) // This account has 2 statuses pinned.
 }
@@ -411,7 +411,7 @@ func (suite *AccountTestSuite) TestGetAccountPinnedStatusesSomeResults() {
 func (suite *AccountTestSuite) TestGetAccountPinnedStatusesNothingPinned() {
 	testAccount := suite.testAccounts["local_account_1"]
 
-	statuses, err := suite.db.GetAccountPinnedStatuses(context.Background(), testAccount.ID)
+	statuses, err := suite.db.GetAccountPinnedStatuses(suite.T().Context(), testAccount.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 	suite.Empty(statuses) // This account has nothing pinned.
 }
@@ -423,13 +423,13 @@ func (suite *AccountTestSuite) TestPopulateAccountWithUnknownMovedToURI() {
 	// Set test account MovedToURI to something we don't have in the database.
 	// We should not get an error when populating.
 	testAccount.MovedToURI = "https://unknown-instance.example.org/users/someone_we_dont_know"
-	err := suite.db.PopulateAccount(context.Background(), testAccount)
+	err := suite.db.PopulateAccount(suite.T().Context(), testAccount)
 	suite.NoError(err)
 }
 
 func (suite *AccountTestSuite) TestGetAccountsAll() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = ""
 		status      = ""
 		mods        = false
@@ -464,7 +464,7 @@ func (suite *AccountTestSuite) TestGetAccountsAll() {
 
 func (suite *AccountTestSuite) TestGetAccountsMaxID() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = ""
 		status      = ""
 		mods        = false
@@ -501,7 +501,7 @@ func (suite *AccountTestSuite) TestGetAccountsMaxID() {
 
 func (suite *AccountTestSuite) TestGetAccountsMinID() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = ""
 		status      = ""
 		mods        = false
@@ -538,7 +538,7 @@ func (suite *AccountTestSuite) TestGetAccountsMinID() {
 
 func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = ""
 		status      = ""
 		mods        = true
@@ -575,7 +575,7 @@ func (suite *AccountTestSuite) TestGetAccountsModsOnly() {
 
 func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = "local"
 		status      = ""
 		mods        = false
@@ -612,7 +612,7 @@ func (suite *AccountTestSuite) TestGetAccountsLocalWithEmail() {
 
 func (suite *AccountTestSuite) TestGetAccountsWithIP() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = ""
 		status      = ""
 		mods        = false
@@ -649,7 +649,7 @@ func (suite *AccountTestSuite) TestGetAccountsWithIP() {
 
 func (suite *AccountTestSuite) TestGetPendingAccounts() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		origin      = ""
 		status      = "pending"
 		mods        = false
@@ -685,7 +685,7 @@ func (suite *AccountTestSuite) TestGetPendingAccounts() {
 }
 
 func (suite *AccountTestSuite) TestAccountStatsAll() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	for _, account := range suite.testAccounts {
 		// Get stats for the first time. They
 		// should all be generated now since

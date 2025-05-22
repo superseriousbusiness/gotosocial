@@ -16,7 +16,6 @@
 package statuses_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -499,7 +498,7 @@ func (suite *StatusBoostTestSuite) TestPostUnboostable() {
 func (suite *StatusBoostTestSuite) TestPostNotVisible() {
 	// Stop local_account_2 following zork.
 	err := suite.db.DeleteFollowByID(
-		context.Background(),
+		suite.T().Context(),
 		suite.testFollows["local_account_2_local_account_1"].ID,
 	)
 	if err != nil {
@@ -714,7 +713,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
 	// Target status should no
 	// longer be pending approval.
 	dbStatus, err := suite.state.DB.GetStatusByID(
-		context.Background(),
+		suite.T().Context(),
 		targetStatus.ID,
 	)
 	if err != nil {
@@ -725,7 +724,7 @@ func (suite *StatusBoostTestSuite) TestPostBoostImplicitAccept() {
 	// There should be an Accept
 	// stored for the target status.
 	intReq, err := suite.state.DB.GetInteractionRequestByInteractionURI(
-		context.Background(), targetStatus.URI,
+		suite.T().Context(), targetStatus.URI,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())

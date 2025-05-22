@@ -18,7 +18,6 @@
 package processing_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -53,11 +52,11 @@ func (suite *FollowRequestTestSuite) TestFollowRequestAccept() {
 		TargetAccountID: requestingAccount.ID,
 	}
 
-	err := suite.db.Put(context.Background(), fr)
+	err := suite.db.Put(suite.T().Context(), fr)
 	suite.NoError(err)
 
 	relationship, errWithCode := suite.processor.Account().FollowRequestAccept(
-		context.Background(),
+		suite.T().Context(),
 		requestingAccount,
 		targetAccount.ID,
 	)
@@ -139,11 +138,11 @@ func (suite *FollowRequestTestSuite) TestFollowRequestReject() {
 		TargetAccountID: requestingAccount.ID,
 	}
 
-	err := suite.db.Put(context.Background(), fr)
+	err := suite.db.Put(suite.T().Context(), fr)
 	suite.NoError(err)
 
 	relationship, errWithCode := suite.processor.Account().FollowRequestReject(
-		context.Background(),
+		suite.T().Context(),
 		requestingAccount,
 		targetAccount.ID,
 	)

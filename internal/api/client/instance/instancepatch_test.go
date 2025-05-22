@@ -19,7 +19,6 @@ package instance_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -721,7 +720,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 		suite.FailNow(err.Error())
 	}
 
-	instanceAccount, err := suite.db.GetInstanceAccount(context.Background(), "")
+	instanceAccount, err := suite.db.GetInstanceAccount(suite.T().Context(), "")
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -859,7 +858,7 @@ func (suite *InstancePatchTestSuite) TestInstancePatch8() {
 }`, dst.String())
 
 	// extra bonus: check the v2 model thumbnail after the patch
-	instanceV2, err := suite.processor.InstanceGetV2(context.Background())
+	instanceV2, err := suite.processor.InstanceGetV2(suite.T().Context())
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

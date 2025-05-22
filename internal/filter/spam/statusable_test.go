@@ -19,7 +19,6 @@ package spam_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"testing"
 
@@ -621,7 +620,7 @@ const (
 
 func (suite *StatusableTestSuite) TestStatusableOK() {
 	var (
-		ctx       = context.Background()
+		ctx       = suite.T().Context()
 		receiver  = suite.testAccounts["local_account_1"]
 		requester = suite.testAccounts["remote_account_1"]
 	)

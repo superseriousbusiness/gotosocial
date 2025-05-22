@@ -18,7 +18,6 @@
 package trans_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -36,7 +35,7 @@ type ImportMinimalTestSuite struct {
 }
 
 func (suite *ImportMinimalTestSuite) TestImportMinimalOK() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testAccountBefore, err := suite.db.GetAccountByID(ctx, suite.testAccounts["local_account_1"].ID)
 	if err != nil {

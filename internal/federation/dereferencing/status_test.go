@@ -44,7 +44,7 @@ func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE4NTHKWW7THT67EF10EB839")
-	status, _, err := suite.dereferencer.GetStatusByURI(context.Background(), fetchingAccount.Username, statusURL)
+	status, _, err := suite.dereferencer.GetStatusByURI(suite.T().Context(), fetchingAccount.Username, statusURL)
 	suite.NoError(err)
 	suite.NotNil(status)
 
@@ -59,13 +59,13 @@ func (suite *StatusTestSuite) TestDereferenceSimpleStatus() {
 	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
 
 	// status should be in the database
-	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
+	dbStatus, err := suite.db.GetStatusByURI(suite.T().Context(), status.URI)
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
 
 	// account should be in the database now too
-	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
+	account, err := suite.db.GetAccountByURI(suite.T().Context(), status.AccountURI)
 	suite.NoError(err)
 	suite.NotNil(account)
 	suite.True(*account.Discoverable)
@@ -81,7 +81,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01FE5Y30E3W4P7TRE0R98KAYQV")
-	status, _, err := suite.dereferencer.GetStatusByURI(context.Background(), fetchingAccount.Username, statusURL)
+	status, _, err := suite.dereferencer.GetStatusByURI(suite.T().Context(), fetchingAccount.Username, statusURL)
 	suite.NoError(err)
 	suite.NotNil(status)
 
@@ -96,13 +96,13 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
 
 	// status should be in the database
-	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
+	dbStatus, err := suite.db.GetStatusByURI(suite.T().Context(), status.URI)
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
 
 	// account should be in the database now too
-	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
+	account, err := suite.db.GetAccountByURI(suite.T().Context(), status.AccountURI)
 	suite.NoError(err)
 	suite.NotNil(account)
 	suite.True(*account.Discoverable)
@@ -115,7 +115,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithMention() {
 
 	// we should have a mention in the database
 	m := &gtsmodel.Mention{}
-	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "status_id", Value: status.ID}}, m)
+	err = suite.db.GetWhere(suite.T().Context(), []db.Where{{Key: "status_id", Value: status.ID}}, m)
 	suite.NoError(err)
 	suite.NotNil(m)
 	suite.Equal(status.ID, m.StatusID)
@@ -129,7 +129,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://unknown-instance.com/users/brand_new_person/statuses/01H641QSRS3TCXSVC10X4GPKW7")
-	status, _, err := suite.dereferencer.GetStatusByURI(context.Background(), fetchingAccount.Username, statusURL)
+	status, _, err := suite.dereferencer.GetStatusByURI(suite.T().Context(), fetchingAccount.Username, statusURL)
 	suite.NoError(err)
 	suite.NotNil(status)
 
@@ -148,13 +148,13 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
 	suite.Len(status.TagIDs, 1)
 
 	// status should be in the database
-	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
+	dbStatus, err := suite.db.GetStatusByURI(suite.T().Context(), status.URI)
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
 
 	// account should be in the database now too
-	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
+	account, err := suite.db.GetAccountByURI(suite.T().Context(), status.AccountURI)
 	suite.NoError(err)
 	suite.NotNil(account)
 	suite.True(*account.Discoverable)
@@ -167,7 +167,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithTag() {
 
 	// we should have a tag in the database
 	t := &gtsmodel.Tag{}
-	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "name", Value: "piss"}}, t)
+	err = suite.db.GetWhere(suite.T().Context(), []db.Where{{Key: "name", Value: "piss"}}, t)
 	suite.NoError(err)
 	suite.NotNil(t)
 }
@@ -176,7 +176,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 	fetchingAccount := suite.testAccounts["local_account_1"]
 
 	statusURL := testrig.URLMustParse("https://turnip.farm/users/turniplover6969/statuses/70c53e54-3146-42d5-a630-83c8b6c7c042")
-	status, _, err := suite.dereferencer.GetStatusByURI(context.Background(), fetchingAccount.Username, statusURL)
+	status, _, err := suite.dereferencer.GetStatusByURI(suite.T().Context(), fetchingAccount.Username, statusURL)
 	suite.NoError(err)
 	suite.NotNil(status)
 
@@ -191,13 +191,13 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 	suite.Equal(ap.ObjectNote, status.ActivityStreamsType)
 
 	// status should be in the database
-	dbStatus, err := suite.db.GetStatusByURI(context.Background(), status.URI)
+	dbStatus, err := suite.db.GetStatusByURI(suite.T().Context(), status.URI)
 	suite.NoError(err)
 	suite.Equal(status.ID, dbStatus.ID)
 	suite.True(*dbStatus.Federated)
 
 	// account should be in the database now too
-	account, err := suite.db.GetAccountByURI(context.Background(), status.AccountURI)
+	account, err := suite.db.GetAccountByURI(suite.T().Context(), status.AccountURI)
 	suite.NoError(err)
 	suite.NotNil(account)
 	suite.True(*account.Discoverable)
@@ -210,7 +210,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithImageAndNoContent() {
 
 	// we should have an attachment in the database
 	a := &gtsmodel.MediaAttachment{}
-	err = suite.db.GetWhere(context.Background(), []db.Where{{Key: "status_id", Value: status.ID}}, a)
+	err = suite.db.GetWhere(suite.T().Context(), []db.Where{{Key: "status_id", Value: status.ID}}, a)
 	suite.NoError(err)
 }
 
@@ -228,7 +228,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithNonMatchingURI() {
 
 	// Attempt to fetch account at alternative URI, it should fail!
 	fetchedStatus, _, err := suite.dereferencer.GetStatusByURI(
-		context.Background(),
+		suite.T().Context(),
 		fetchingAccount.Username,
 		testrig.URLMustParse(remoteAltURI),
 	)
@@ -238,7 +238,7 @@ func (suite *StatusTestSuite) TestDereferenceStatusWithNonMatchingURI() {
 
 func (suite *StatusTestSuite) TestDereferencerRefreshStatusUpdated() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// The local account we will be fetching statuses as.

@@ -18,7 +18,6 @@
 package media_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type UnattachTestSuite struct {
 }
 
 func (suite *UnattachTestSuite) TestUnattachMedia() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testAttachment := suite.testAttachments["admin_account_status_1_attachment_1"]
 	testAccount := suite.testAccounts["admin_account"]

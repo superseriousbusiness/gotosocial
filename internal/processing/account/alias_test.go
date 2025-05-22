@@ -18,7 +18,6 @@
 package account_test
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -145,7 +144,7 @@ func (suite *AliasTestSuite) TestAliasAccount() {
 		},
 	} {
 		var (
-			ctx      = context.Background()
+			ctx      = suite.T().Context()
 			testAcct = new(gtsmodel.Account)
 		)
 

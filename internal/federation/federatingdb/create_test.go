@@ -18,7 +18,6 @@
 package federatingdb_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -40,7 +39,7 @@ func (suite *CreateTestSuite) TestCreateNote() {
 	receivingAccount := suite.testAccounts["local_account_1"]
 	requestingAccount := suite.testAccounts["remote_account_1"]
 
-	ctx := createTestContext(receivingAccount, requestingAccount)
+	ctx := createTestContext(suite.T(), receivingAccount, requestingAccount)
 
 	create := suite.testActivities["dm_for_zork"].Activity
 	objProp := create.GetActivityStreamsObject()
@@ -60,7 +59,7 @@ func (suite *CreateTestSuite) TestCreateNoteForward() {
 	receivingAccount := suite.testAccounts["local_account_1"]
 	requestingAccount := suite.testAccounts["remote_account_1"]
 
-	ctx := createTestContext(receivingAccount, requestingAccount)
+	ctx := createTestContext(suite.T(), receivingAccount, requestingAccount)
 
 	create := suite.testActivities["forwarded_message"].Activity
 
@@ -111,14 +110,14 @@ func (suite *CreateTestSuite) TestCreateFlag1() {
 		suite.FailNow(err.Error())
 	}
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	flag := t.(vocab.ActivityStreamsFlag)
 
-	ctx := createTestContext(reportedAccount, reportingAccount)
+	ctx := createTestContext(suite.T(), reportedAccount, reportingAccount)
 	if err := suite.federatingDB.Flag(ctx, flag); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -133,7 +132,7 @@ func (suite *CreateTestSuite) TestCreateFlag1() {
 	report := msg.GTSModel.(*gtsmodel.Report)
 
 	// report should be in the database
-	if _, err := suite.db.GetReportByID(context.Background(), report.ID); err != nil {
+	if _, err := suite.db.GetReportByID(suite.T().Context(), report.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 }

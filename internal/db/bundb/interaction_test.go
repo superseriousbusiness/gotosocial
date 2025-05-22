@@ -127,7 +127,7 @@ func (suite *InteractionTestSuite) markInteractionsPending(
 func (suite *InteractionTestSuite) TestGetPending() {
 	var (
 		testStatus = suite.testStatuses["local_account_1_status_1"]
-		ctx        = context.Background()
+		ctx        = suite.T().Context()
 		acctID     = suite.testAccounts["local_account_1"].ID
 		statusID   = ""
 		likes      = true
@@ -175,7 +175,7 @@ func (suite *InteractionTestSuite) TestGetPending() {
 func (suite *InteractionTestSuite) TestGetPendingRepliesOnly() {
 	var (
 		testStatus = suite.testStatuses["local_account_1_status_1"]
-		ctx        = context.Background()
+		ctx        = suite.T().Context()
 		acctID     = suite.testAccounts["local_account_1"].ID
 		statusID   = ""
 		likes      = false
@@ -211,7 +211,7 @@ func (suite *InteractionTestSuite) TestGetPendingRepliesOnly() {
 
 func (suite *InteractionTestSuite) TestInteractionRejected() {
 	var (
-		ctx = context.Background()
+		ctx = suite.T().Context()
 		req = new(gtsmodel.InteractionRequest)
 	)
 

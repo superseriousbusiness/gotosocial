@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -30,25 +29,25 @@ type UserTestSuite struct {
 }
 
 func (suite *UserTestSuite) TestGetAllUsers() {
-	users, err := suite.db.GetAllUsers(context.Background())
+	users, err := suite.db.GetAllUsers(suite.T().Context())
 	suite.NoError(err)
 	suite.Len(users, len(suite.testUsers))
 }
 
 func (suite *UserTestSuite) TestGetUser() {
-	user, err := suite.db.GetUserByID(context.Background(), suite.testUsers["local_account_1"].ID)
+	user, err := suite.db.GetUserByID(suite.T().Context(), suite.testUsers["local_account_1"].ID)
 	suite.NoError(err)
 	suite.NotNil(user)
 }
 
 func (suite *UserTestSuite) TestGetUserByEmailAddress() {
-	user, err := suite.db.GetUserByEmailAddress(context.Background(), suite.testUsers["local_account_1"].Email)
+	user, err := suite.db.GetUserByEmailAddress(suite.T().Context(), suite.testUsers["local_account_1"].Email)
 	suite.NoError(err)
 	suite.NotNil(user)
 }
 
 func (suite *UserTestSuite) TestGetUserByAccountID() {
-	user, err := suite.db.GetUserByAccountID(context.Background(), suite.testAccounts["local_account_1"].ID)
+	user, err := suite.db.GetUserByAccountID(suite.T().Context(), suite.testAccounts["local_account_1"].ID)
 	suite.NoError(err)
 	suite.NotNil(user)
 }
@@ -61,10 +60,10 @@ func (suite *UserTestSuite) TestUpdateUserSelectedColumns() {
 	updateUser.Email = "whatever"
 	updateUser.Locale = "es"
 
-	err := suite.db.UpdateUser(context.Background(), updateUser)
+	err := suite.db.UpdateUser(suite.T().Context(), updateUser)
 	suite.NoError(err)
 
-	dbUser, err := suite.db.GetUserByID(context.Background(), testUser.ID)
+	dbUser, err := suite.db.GetUserByID(suite.T().Context(), testUser.ID)
 	suite.NoError(err)
 	suite.NotNil(dbUser)
 	suite.Equal(updateUser.Email, dbUser.Email)

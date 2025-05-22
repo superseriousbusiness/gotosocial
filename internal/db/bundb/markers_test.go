@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -35,7 +34,7 @@ type MarkersTestSuite struct {
 }
 
 func (suite *MarkersTestSuite) TestGetExisting() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// This account has home and notifications markers set.
 	localAccount1 := suite.testAccounts["local_account_1"]
@@ -49,7 +48,7 @@ func (suite *MarkersTestSuite) TestGetExisting() {
 }
 
 func (suite *MarkersTestSuite) TestGetUnset() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// This account has no markers set.
 	localAccount2 := suite.testAccounts["local_account_2"]
@@ -60,7 +59,7 @@ func (suite *MarkersTestSuite) TestGetUnset() {
 }
 
 func (suite *MarkersTestSuite) TestUpdateExisting() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	now := time.Now()
 	// This account has home and notifications markers set.
@@ -92,7 +91,7 @@ func (suite *MarkersTestSuite) TestUpdateExisting() {
 }
 
 func (suite *MarkersTestSuite) TestUpdateUnset() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	now := time.Now()
 	// This account has no markers set.

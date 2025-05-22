@@ -68,7 +68,7 @@ func (suite *PollTestSuite) TearDownTest() {
 
 func (suite *PollTestSuite) TestPollGet() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Perform test for all requester + poll combos.
@@ -111,7 +111,7 @@ func (suite *PollTestSuite) testPollGet(ctx context.Context, requester *gtsmodel
 
 func (suite *PollTestSuite) TestPollVote() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// randomChoices generates random vote choices in poll.

@@ -19,7 +19,6 @@ package stream_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -35,11 +34,11 @@ type NotificationTestSuite struct {
 func (suite *NotificationTestSuite) TestStreamNotification() {
 	account := suite.testAccounts["local_account_1"]
 
-	openStream, errWithCode := suite.streamProcessor.Open(context.Background(), account, "user")
+	openStream, errWithCode := suite.streamProcessor.Open(suite.T().Context(), account, "user")
 	suite.NoError(errWithCode)
 
 	followAccount := suite.testAccounts["remote_account_1"]
-	followAccountAPIModel, err := typeutils.NewConverter(&suite.state).AccountToAPIAccountPublic(context.Background(), followAccount)
+	followAccountAPIModel, err := typeutils.NewConverter(&suite.state).AccountToAPIAccountPublic(suite.T().Context(), followAccount)
 	suite.NoError(err)
 
 	notification := &apimodel.Notification{
@@ -49,9 +48,9 @@ func (suite *NotificationTestSuite) TestStreamNotification() {
 		Account:   followAccountAPIModel,
 	}
 
-	suite.streamProcessor.Notify(context.Background(), account, notification)
+	suite.streamProcessor.Notify(suite.T().Context(), account, notification)
 
-	msg, ok := openStream.Recv(context.Background())
+	msg, ok := openStream.Recv(suite.T().Context())
 	suite.True(ok)
 
 	dst := new(bytes.Buffer)

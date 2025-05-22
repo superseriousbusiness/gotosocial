@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -30,7 +29,7 @@ type WebPushTestSuite struct {
 
 // Get the text fixture VAPID key pair.
 func (suite *WebPushTestSuite) TestGetVAPIDKeyPair() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	vapidKeyPair, err := suite.db.GetVAPIDKeyPair(ctx)
 	suite.NoError(err)
@@ -51,7 +50,7 @@ func (suite *WebPushTestSuite) TestGetVAPIDKeyPair() {
 
 // Generate a VAPID key pair when there isn't one.
 func (suite *WebPushTestSuite) TestGenerateVAPIDKeyPair() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Delete the text fixture VAPID key pair.
 	if err := suite.db.DeleteVAPIDKeyPair(ctx); !suite.NoError(err) {

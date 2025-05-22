@@ -19,7 +19,6 @@ package instance_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -249,7 +248,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllowed() {
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() {
-	err := suite.db.Put(context.Background(), &gtsmodel.DomainBlock{
+	err := suite.db.Put(suite.T().Context(), &gtsmodel.DomainBlock{
 		ID:                 "01G633XTNK51GBADQZFZQDP6WR",
 		CreatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
 		UpdatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
@@ -300,7 +299,7 @@ func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscated() 
 }
 
 func (suite *InstancePeersGetTestSuite) TestInstancePeersGetAllWithObfuscatedFlat() {
-	err := suite.db.Put(context.Background(), &gtsmodel.DomainBlock{
+	err := suite.db.Put(suite.T().Context(), &gtsmodel.DomainBlock{
 		ID:                 "01G633XTNK51GBADQZFZQDP6WR",
 		CreatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),
 		UpdatedAt:          testrig.TimeMustParse("2021-06-09T12:34:55+02:00"),

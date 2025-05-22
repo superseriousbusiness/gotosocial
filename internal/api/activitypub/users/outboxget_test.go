@@ -19,7 +19,6 @@ package users_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -90,7 +89,7 @@ func (suite *OutboxGetTestSuite) TestGetOutbox() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	_, ok := t.(vocab.ActivityStreamsOrderedCollection)
@@ -177,7 +176,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxFirstPage() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	_, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
@@ -240,7 +239,7 @@ func (suite *OutboxGetTestSuite) TestGetOutboxNextPage() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	_, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)

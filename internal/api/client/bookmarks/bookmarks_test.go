@@ -18,7 +18,6 @@
 package bookmarks_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -198,7 +197,7 @@ func (suite *BookmarkTestSuite) TestGetBookmarksMultiple() {
 	testUser := suite.testUsers["local_account_1"]
 
 	// Add a few extra bookmarks for this account.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	for _, b := range []*gtsmodel.StatusBookmark{
 		{
 			ID:              "01GSZPDQYE9WZ26T501KMM876V", // oldest
@@ -239,7 +238,7 @@ func (suite *BookmarkTestSuite) TestGetBookmarksMultiplePaging() {
 	testUser := suite.testUsers["local_account_1"]
 
 	// Add a few extra bookmarks for this account.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	for _, b := range []*gtsmodel.StatusBookmark{
 		{
 			ID:              "01GSZPDQYE9WZ26T501KMM876V", // oldest
@@ -280,7 +279,7 @@ func (suite *BookmarkTestSuite) TestGetBookmarksNone() {
 	testUser := suite.testUsers["local_account_1"]
 
 	// Remove all bookmarks for this account.
-	if err := suite.db.DeleteStatusBookmarks(context.Background(), "", testAccount.ID); err != nil {
+	if err := suite.db.DeleteStatusBookmarks(suite.T().Context(), "", testAccount.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -299,7 +298,7 @@ func (suite *BookmarkTestSuite) TestGetBookmarksNonexistentStatus() {
 	testUser := suite.testUsers["local_account_1"]
 
 	// Add a few extra bookmarks for this account.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	for _, b := range []*gtsmodel.StatusBookmark{
 		{
 			ID:              "01GSZPDQYE9WZ26T501KMM876V", // oldest

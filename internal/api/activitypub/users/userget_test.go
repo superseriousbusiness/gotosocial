@@ -18,7 +18,6 @@
 package users_test
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -79,14 +78,14 @@ func (suite *UserGetTestSuite) TestGetUser() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	person, ok := t.(vocab.ActivityStreamsPerson)
 	suite.True(ok)
 
 	// convert person to account
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", "")
+	a, err := suite.tc.ASRepresentationToAccount(suite.T().Context(), person, "", "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
 }
@@ -97,11 +96,11 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	userModule := users.New(suite.processor)
 	targetAccount := suite.testAccounts["local_account_1"]
 
-	suite.processor.User().DeleteSelf(context.Background(), suite.testAccounts["local_account_1"])
+	suite.processor.User().DeleteSelf(suite.T().Context(), suite.testAccounts["local_account_1"])
 
 	// wait for the account delete to be processed
 	if !testrig.WaitFor(func() bool {
-		a, _ := suite.db.GetAccountByID(context.Background(), targetAccount.ID)
+		a, _ := suite.db.GetAccountByID(suite.T().Context(), targetAccount.ID)
 		return !a.SuspendedAt.IsZero()
 	}) {
 		suite.FailNow("delete of account timed out")
@@ -147,14 +146,14 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	err = json.Unmarshal(b, &m)
 	suite.NoError(err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	suite.NoError(err)
 
 	person, ok := t.(vocab.ActivityStreamsPerson)
 	suite.True(ok)
 
 	// convert person to account
-	a, err := suite.tc.ASRepresentationToAccount(context.Background(), person, "", "")
+	a, err := suite.tc.ASRepresentationToAccount(suite.T().Context(), person, "", "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
 }

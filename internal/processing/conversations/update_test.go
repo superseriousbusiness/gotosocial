@@ -17,13 +17,9 @@
 
 package conversations_test
 
-import (
-	"context"
-)
-
 // Test that we can create conversations when a new status comes in.
 func (suite *ConversationsTestSuite) TestUpdateConversationsForStatus() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Precondition: the test user shouldn't have any conversations yet.
 	conversations, err := suite.db.GetConversationsByOwnerAccountID(ctx, suite.testAccount.ID, nil)

@@ -75,7 +75,7 @@ type ConversationsTestSuite struct {
 }
 
 func (suite *ConversationsTestSuite) getClientMsg(timeout time.Duration) (*messages.FromClientAPI, bool) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	ctx, cncl := context.WithTimeout(ctx, timeout)
 	defer cncl()
 	return suite.state.Workers.Client.Queue.PopCtx(ctx)
@@ -130,8 +130,8 @@ func (suite *ConversationsTestSuite) TearDownTest() {
 		(*gtsmodel.ConversationToStatus)(nil),
 	}
 	for _, model := range conversationModels {
-		if err := suite.db.DropTable(context.Background(), model); err != nil {
-			log.Error(context.Background(), err)
+		if err := suite.db.DropTable(suite.T().Context(), model); err != nil {
+			log.Error(suite.T().Context(), err)
 		}
 	}
 

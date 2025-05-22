@@ -18,7 +18,6 @@
 package conversations_test
 
 import (
-	"context"
 	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -27,7 +26,7 @@ import (
 func (suite *ConversationsTestSuite) TestGetAll() {
 	conversation := suite.NewTestConversation(suite.testAccount, 0)
 
-	resp, err := suite.conversationsProcessor.GetAll(context.Background(), suite.testAccount, nil)
+	resp, err := suite.conversationsProcessor.GetAll(suite.T().Context(), suite.testAccount, nil)
 	if suite.NoError(err) && suite.Len(resp.Items, 1) && suite.IsType((*apimodel.Conversation)(nil), resp.Items[0]) {
 		apiConversation := resp.Items[0].(*apimodel.Conversation)
 		suite.Equal(conversation.ID, apiConversation.ID)
@@ -46,11 +45,11 @@ func (suite *ConversationsTestSuite) TestGetAllOrder() {
 	// Add an even newer status than that to conversation1.
 	conversation1Status2 := suite.NewTestStatus(suite.testAccount, conversation1.LastStatus.ThreadID, 2*time.Second, conversation1.LastStatus)
 	conversation1.LastStatusID = conversation1Status2.ID
-	if err := suite.db.UpsertConversation(context.Background(), conversation1, "last_status_id"); err != nil {
+	if err := suite.db.UpsertConversation(suite.T().Context(), conversation1, "last_status_id"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	resp, err := suite.conversationsProcessor.GetAll(context.Background(), suite.testAccount, nil)
+	resp, err := suite.conversationsProcessor.GetAll(suite.T().Context(), suite.testAccount, nil)
 	if suite.NoError(err) && suite.Len(resp.Items, 2) {
 		// conversation1 should be the first conversation returned.
 		apiConversation1 := resp.Items[0].(*apimodel.Conversation)

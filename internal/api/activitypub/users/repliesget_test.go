@@ -19,7 +19,6 @@ package users_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -101,7 +100,7 @@ func (suite *RepliesGetTestSuite) TestGetReplies() {
 	err = json.Unmarshal(b, &m)
 	assert.NoError(suite.T(), err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	assert.NoError(suite.T(), err)
 
 	_, ok := t.(vocab.ActivityStreamsOrderedCollection)
@@ -172,7 +171,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesNext() {
 	err = json.Unmarshal(b, &m)
 	assert.NoError(suite.T(), err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	assert.NoError(suite.T(), err)
 
 	page, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)
@@ -243,7 +242,7 @@ func (suite *RepliesGetTestSuite) TestGetRepliesLast() {
 	err = json.Unmarshal(b, &m)
 	assert.NoError(suite.T(), err)
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	assert.NoError(suite.T(), err)
 
 	page, ok := t.(vocab.ActivityStreamsOrderedCollectionPage)

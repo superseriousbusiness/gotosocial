@@ -18,7 +18,6 @@
 package visibility_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -33,7 +32,7 @@ type StatusVisibleTestSuite struct {
 func (suite *StatusVisibleTestSuite) TestOwnStatusVisible() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	visible, err := suite.filter.StatusVisible(ctx, testAccount, testStatus)
 	suite.NoError(err)
@@ -42,7 +41,7 @@ func (suite *StatusVisibleTestSuite) TestOwnStatusVisible() {
 }
 
 func (suite *StatusVisibleTestSuite) TestOwnDMVisible() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testStatusID := suite.testStatuses["local_account_2_status_6"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
@@ -56,7 +55,7 @@ func (suite *StatusVisibleTestSuite) TestOwnDMVisible() {
 }
 
 func (suite *StatusVisibleTestSuite) TestDMVisibleToTarget() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testStatusID := suite.testStatuses["local_account_2_status_6"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
@@ -70,7 +69,7 @@ func (suite *StatusVisibleTestSuite) TestDMVisibleToTarget() {
 }
 
 func (suite *StatusVisibleTestSuite) TestDMNotVisibleIfNotMentioned() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testStatusID := suite.testStatuses["local_account_2_status_6"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
@@ -84,7 +83,7 @@ func (suite *StatusVisibleTestSuite) TestDMNotVisibleIfNotMentioned() {
 }
 
 func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutuals() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	suite.db.DeleteByID(ctx, suite.testFollows["local_account_2_local_account_1"].ID, &gtsmodel.Follow{})
 
@@ -100,7 +99,7 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutuals() {
 }
 
 func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowing() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	suite.db.DeleteByID(ctx, suite.testFollows["admin_account_local_account_1"].ID, &gtsmodel.Follow{})
 
@@ -116,7 +115,7 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowing() {
 }
 
 func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutualsCached() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testStatusID := suite.testStatuses["local_account_1_status_4"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
 	suite.NoError(err)
@@ -137,7 +136,7 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotMutualsCached() {
 }
 
 func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowingCached() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testStatusID := suite.testStatuses["local_account_1_status_5"].ID
 	testStatus, err := suite.db.GetStatusByID(ctx, testStatusID)
 	suite.NoError(err)
@@ -158,7 +157,7 @@ func (suite *StatusVisibleTestSuite) TestStatusNotVisibleIfNotFollowingCached() 
 }
 
 func (suite *StatusVisibleTestSuite) TestVisiblePending() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Copy the test status and mark
 	// the copy as pending approval.
@@ -241,7 +240,7 @@ func (suite *StatusVisibleTestSuite) TestVisiblePending() {
 }
 
 func (suite *StatusVisibleTestSuite) TestVisibleLocalOnly() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Local-only, Public status.
 	testStatus := suite.testStatuses["local_account_2_status_4"]

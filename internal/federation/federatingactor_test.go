@@ -19,7 +19,6 @@ package federation_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/url"
@@ -40,7 +39,7 @@ type FederatingActorTestSuite struct {
 }
 
 func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount := suite.testAccounts["local_account_1"]
 	testNote := testrig.NewAPNote(
 		testrig.URLMustParse("http://localhost:8080/users/the_mighty_zork/statuses/01G1TR6BADACCZWQMNF9X21TV5"),
@@ -82,7 +81,7 @@ func (suite *FederatingActorTestSuite) TestSendNoRemoteFollowers() {
 }
 
 func (suite *FederatingActorTestSuite) TestSendRemoteFollower() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount := suite.testAccounts["local_account_1"]
 	testRemoteAccount := suite.testAccounts["remote_account_1"]
 

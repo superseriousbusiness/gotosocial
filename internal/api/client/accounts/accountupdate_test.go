@@ -18,7 +18,6 @@
 package accounts_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -289,7 +288,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountCache() {
 	// Get the account first to make sure it's in the database
 	// cache. When the account is updated via the PATCH handler,
 	// it should invalidate the cache and return the new version.
-	if _, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID); err != nil {
+	if _, err := suite.db.GetAccountByID(suite.T().Context(), suite.testAccounts["local_account_1"].ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -318,7 +317,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountDiscoverableForm() {
 	suite.False(apimodelAccount.Discoverable)
 
 	// Check the account in the database too.
-	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	dbZork, err := suite.db.GetAccountByID(suite.T().Context(), apimodelAccount.ID)
 	suite.NoError(err)
 	suite.False(*dbZork.Discoverable)
 }
@@ -336,7 +335,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountDiscoverableFormData() {
 	suite.False(apimodelAccount.Discoverable)
 
 	// Check the account in the database too.
-	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	dbZork, err := suite.db.GetAccountByID(suite.T().Context(), apimodelAccount.ID)
 	suite.NoError(err)
 	suite.False(*dbZork.Discoverable)
 }
@@ -355,7 +354,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountDiscoverableJSON() {
 	suite.False(apimodelAccount.Discoverable)
 
 	// Check the account in the database too.
-	dbZork, err := suite.db.GetAccountByID(context.Background(), apimodelAccount.ID)
+	dbZork, err := suite.db.GetAccountByID(suite.T().Context(), apimodelAccount.ID)
 	suite.NoError(err)
 	suite.False(*dbZork.Discoverable)
 }
@@ -477,7 +476,7 @@ func (suite *AccountUpdateTestSuite) TestUpdateAccountSourceBadContentTypeFormDa
 	suite.Equal(data["source[status_content_type]"][0], apimodelAccount.Source.StatusContentType)
 
 	// Check the account in the database too.
-	dbAccount, err := suite.db.GetAccountByID(context.Background(), suite.testAccounts["local_account_1"].ID)
+	dbAccount, err := suite.db.GetAccountByID(suite.T().Context(), suite.testAccounts["local_account_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

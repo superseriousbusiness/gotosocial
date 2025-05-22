@@ -114,7 +114,7 @@ func (suite *FiltersTestSuite) TearDownTest() {
 }
 
 func (suite *FiltersTestSuite) openHomeStream(account *gtsmodel.Account) *stream.Stream {
-	stream, err := suite.processor.Stream().Open(context.Background(), account, stream.TimelineHome)
+	stream, err := suite.processor.Stream().Open(suite.T().Context(), account, stream.TimelineHome)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -128,7 +128,7 @@ func (suite *FiltersTestSuite) checkStreamed(
 	expectEventType string,
 ) {
 	// Set a 5s timeout on context.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	ctx, cncl := context.WithTimeout(ctx, time.Second*5)
 	defer cncl()
 

@@ -18,7 +18,6 @@
 package admin_test
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -77,7 +76,7 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateNewCategory() {
 	suite.True(apiEmoji.VisibleInPicker)
 
 	// emoji should be in the db
-	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(context.Background(), apiEmoji.Shortcode, "")
+	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(suite.T().Context(), apiEmoji.Shortcode, "")
 	suite.NoError(err)
 
 	// check fields on the emoji
@@ -150,7 +149,7 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateExistingCategory() {
 	suite.True(apiEmoji.VisibleInPicker)
 
 	// emoji should be in the db
-	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(context.Background(), apiEmoji.Shortcode, "")
+	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(suite.T().Context(), apiEmoji.Shortcode, "")
 	suite.NoError(err)
 
 	// check fields on the emoji
@@ -223,7 +222,7 @@ func (suite *EmojiCreateTestSuite) TestEmojiCreateNoCategory() {
 	suite.True(apiEmoji.VisibleInPicker)
 
 	// emoji should be in the db
-	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(context.Background(), apiEmoji.Shortcode, "")
+	dbEmoji, err := suite.db.GetEmojiByShortcodeDomain(suite.T().Context(), apiEmoji.Shortcode, "")
 	suite.NoError(err)
 
 	// check fields on the emoji

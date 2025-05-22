@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -35,7 +34,7 @@ type TagTestSuite struct {
 func (suite *TagTestSuite) TestGetTag() {
 	testTag := suite.testTags["welcome"]
 
-	dbTag, err := suite.db.GetTag(context.Background(), testTag.ID)
+	dbTag, err := suite.db.GetTag(suite.T().Context(), testTag.ID)
 	suite.NoError(err)
 	suite.NotNil(dbTag)
 	suite.Equal(testTag.ID, dbTag.ID)
@@ -53,7 +52,7 @@ func (suite *TagTestSuite) TestGetTagByName() {
 		"Welcome",
 		"WELCoME ",
 	} {
-		dbTag, err := suite.db.GetTagByName(context.Background(), name)
+		dbTag, err := suite.db.GetTagByName(suite.T().Context(), name)
 		suite.NoError(err)
 		suite.NotNil(dbTag)
 		suite.Equal(testTag.ID, dbTag.ID)
@@ -70,7 +69,7 @@ func (suite *TagTestSuite) TestPutTag() {
 		"NEWtag",
 		"NEWTAG ",
 	} {
-		err := suite.db.PutTag(context.Background(), &gtsmodel.Tag{
+		err := suite.db.PutTag(suite.T().Context(), &gtsmodel.Tag{
 			ID:   id.NewULID(),
 			Name: name,
 		})

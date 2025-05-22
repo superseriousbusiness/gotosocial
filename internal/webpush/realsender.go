@@ -320,9 +320,8 @@ func formatNotificationTitle(
 	case gtsmodel.NotificationPoll:
 		if subscription.AccountID == notification.TargetAccountID {
 			return "Your poll has ended"
-		} else {
-			return fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
 		}
+		return fmt.Sprintf("%s's poll has ended", displayNameOrAcct)
 	case gtsmodel.NotificationStatus:
 		return fmt.Sprintf("%s posted", displayNameOrAcct)
 	case gtsmodel.NotificationAdminSignup:

@@ -19,7 +19,6 @@ package statuses_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -671,7 +670,7 @@ func (suite *StatusCreateTestSuite) TestMentionUnknownAccount() {
 	// so it gets looked up again when we mention it.
 	remoteAccount := suite.testAccounts["remote_account_1"]
 	if err := suite.db.DeleteAccount(
-		context.Background(),
+		suite.T().Context(),
 		remoteAccount.ID,
 	); err != nil {
 		suite.FailNow(err.Error())

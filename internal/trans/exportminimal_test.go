@@ -18,7 +18,6 @@
 package trans_test
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -38,7 +37,7 @@ func (suite *ExportMinimalTestSuite) TestExportMinimalOK() {
 
 	// export to the tempFilePath
 	exporter := trans.NewExporter(suite.db)
-	err := exporter.ExportMinimal(context.Background(), tempFilePath)
+	err := exporter.ExportMinimal(suite.T().Context(), tempFilePath)
 	suite.NoError(err)
 
 	// we should have some bytes in that file now

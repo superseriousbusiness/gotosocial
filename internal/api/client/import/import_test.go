@@ -19,7 +19,6 @@ package importdata_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -144,7 +143,7 @@ func (suite *ImportTestSuite) TearDownTest() {
 
 func (suite *ImportTestSuite) TestImportFollows() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		testAccount = suite.testAccounts["local_account_1"]
 	)
 
@@ -199,7 +198,7 @@ admin@localhost:8080,true
 
 func (suite *ImportTestSuite) TestImportMutes() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		testAccount = suite.testAccounts["local_account_1"]
 	)
 

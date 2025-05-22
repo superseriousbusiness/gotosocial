@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"slices"
 	"testing"
 
@@ -102,7 +101,7 @@ func (suite *ListTestSuite) checkListEntries(expected []*gtsmodel.ListEntry, act
 func (suite *ListTestSuite) TestGetListByID() {
 	testList, _, _ := suite.testStructs()
 
-	dbList, err := suite.db.GetListByID(context.Background(), testList.ID)
+	dbList, err := suite.db.GetListByID(suite.T().Context(), testList.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -113,7 +112,7 @@ func (suite *ListTestSuite) TestGetListByID() {
 func (suite *ListTestSuite) TestGetListsForAccountID() {
 	testList, _, testAccount := suite.testStructs()
 
-	dbLists, err := suite.db.GetListsByAccountID(context.Background(), testAccount.ID)
+	dbLists, err := suite.db.GetListsByAccountID(suite.T().Context(), testAccount.ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -126,7 +125,7 @@ func (suite *ListTestSuite) TestGetListsForAccountID() {
 }
 
 func (suite *ListTestSuite) TestPutList() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	_, _, testAccount := suite.testStructs()
 
 	testList := &gtsmodel.List{
@@ -150,7 +149,7 @@ func (suite *ListTestSuite) TestPutList() {
 }
 
 func (suite *ListTestSuite) TestUpdateList() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testList, _, _ := suite.testStructs()
 
 	// Get List in the cache first.
@@ -176,7 +175,7 @@ func (suite *ListTestSuite) TestUpdateList() {
 }
 
 func (suite *ListTestSuite) TestDeleteList() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testList, _, _ := suite.testStructs()
 
 	// Get List in the cache first.
@@ -205,7 +204,7 @@ func (suite *ListTestSuite) TestDeleteList() {
 }
 
 func (suite *ListTestSuite) TestPutListEntries() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testList, testEntries, _ := suite.testStructs()
 
 	listEntries := []*gtsmodel.ListEntry{
@@ -241,7 +240,7 @@ func (suite *ListTestSuite) TestPutListEntries() {
 }
 
 func (suite *ListTestSuite) TestDeleteListEntry() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testList, testEntries, _ := suite.testStructs()
 
 	// Delete the first entry.
@@ -261,7 +260,7 @@ func (suite *ListTestSuite) TestDeleteListEntry() {
 }
 
 func (suite *ListTestSuite) TestDeleteAllListEntriesByFollows() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testList, testEntries, _ := suite.testStructs()
 
 	// Delete the first entry.
@@ -280,7 +279,7 @@ func (suite *ListTestSuite) TestDeleteAllListEntriesByFollows() {
 }
 
 func (suite *ListTestSuite) TestListIncludesAccount() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testList, _, _ := suite.testStructs()
 
 	for accountID, expected := range map[string]bool{

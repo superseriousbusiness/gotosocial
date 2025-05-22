@@ -44,7 +44,7 @@ type ManagerTestSuite struct {
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -84,7 +84,7 @@ func (suite *ManagerTestSuite) TestEmojiProcess() {
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// we're going to 'refresh' the remote 'yell' emoji by changing the image url to the pixellated gts logo
 	originalEmoji := suite.testEmojis["yell"]
@@ -157,7 +157,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessRefresh() {
 }
 
 func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Open test image as file for reading.
 	file, err := os.Open("./test/big-panda.gif")
@@ -191,7 +191,7 @@ func (suite *ManagerTestSuite) TestEmojiProcessTooLarge() {
 }
 
 func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -232,7 +232,7 @@ func (suite *ManagerTestSuite) TestEmojiWebpProcess() {
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -288,7 +288,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcess() {
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcessTooLarge() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Open test image as file for reading.
 	file, err := os.Open("./test/test-jpeg.jpg")
@@ -325,7 +325,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessTooLarge() {
 }
 
 func (suite *ManagerTestSuite) TestPDFProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from Frantz
@@ -381,7 +381,7 @@ func (suite *ManagerTestSuite) TestPDFProcess() {
 }
 
 func (suite *ManagerTestSuite) TestSlothVineProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
@@ -441,7 +441,7 @@ func (suite *ManagerTestSuite) TestSlothVineProcess() {
 }
 
 func (suite *ManagerTestSuite) TestAnimatedGifProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -506,7 +506,7 @@ func (suite *ManagerTestSuite) TestAnimatedGifProcess() {
 }
 
 func (suite *ManagerTestSuite) TestLongerMp4Process() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
@@ -566,7 +566,7 @@ func (suite *ManagerTestSuite) TestLongerMp4Process() {
 }
 
 func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test video
@@ -626,7 +626,7 @@ func (suite *ManagerTestSuite) TestBirdnestMp4Process() {
 }
 
 func (suite *ManagerTestSuite) TestOpusProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -678,7 +678,7 @@ func (suite *ManagerTestSuite) TestOpusProcess() {
 }
 
 func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -734,7 +734,7 @@ func (suite *ManagerTestSuite) TestPngNoAlphaChannelProcess() {
 }
 
 func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -790,7 +790,7 @@ func (suite *ManagerTestSuite) TestPngAlphaChannelProcess() {
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -846,7 +846,7 @@ func (suite *ManagerTestSuite) TestSimpleJpegProcessWithCallback() {
 }
 
 func (suite *ManagerTestSuite) TestSimpleJpegProcessWithDiskStorage() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	data := func(_ context.Context) (io.ReadCloser, error) {
 		// load bytes from a test image
@@ -951,7 +951,7 @@ func (suite *ManagerTestSuite) TestSmallSizedMediaTypeDetection_issue2263() {
 		},
 	} {
 		suite.Run(test.name, func() {
-			ctx, cncl := context.WithTimeout(context.Background(), time.Second*60)
+			ctx, cncl := context.WithTimeout(suite.T().Context(), time.Second*60)
 			defer cncl()
 
 			data := func(_ context.Context) (io.ReadCloser, error) {
@@ -1002,7 +1002,7 @@ func TestManagerTestSuite(t *testing.T) {
 
 // equalFiles checks whether
 func equalFiles(t *testing.T, st *storage.Driver, storagePath, testPath string) {
-	b1, err := st.Get(context.Background(), storagePath)
+	b1, err := st.Get(t.Context(), storagePath)
 	if err != nil {
 		t.Fatalf("error reading file %s: %v", storagePath, err)
 	}

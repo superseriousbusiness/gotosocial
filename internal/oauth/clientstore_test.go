@@ -18,7 +18,6 @@
 package oauth_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/admin"
@@ -60,7 +59,7 @@ func (suite *ClientStoreTestSuite) TestClientStoreGet() {
 	cs := oauth.NewClientStore(&suite.state)
 
 	// Fetch clientInfo from the store.
-	clientInfo, err := cs.GetByID(context.Background(), testApp.ClientID)
+	clientInfo, err := cs.GetByID(suite.T().Context(), testApp.ClientID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

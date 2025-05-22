@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -34,7 +33,7 @@ type DomainPermissionDraftTestSuite struct {
 
 func (suite *DomainPermissionDraftTestSuite) TestPermDraftCreateGetDelete() {
 	var (
-		ctx   = context.Background()
+		ctx   = suite.T().Context()
 		draft = &gtsmodel.DomainPermissionDraft{
 			ID:                 "01JCZN614XG85GCGAMSV9ZZAEJ",
 			PermissionType:     gtsmodel.DomainPermissionBlock,

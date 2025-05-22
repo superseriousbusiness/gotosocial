@@ -19,9 +19,9 @@ package ap_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
+	"testing"
 
 	"code.superseriousbusiness.org/activity/streams"
 	"code.superseriousbusiness.org/activity/streams/vocab"
@@ -250,7 +250,7 @@ func (suite *APTestSuite) noteWithHashtags1() ap.Statusable {
 }`)
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(bytes.NewReader(noteJson)),
 	)
 	if err != nil {
@@ -306,7 +306,7 @@ func addressable3() ap.Addressable {
 	return note
 }
 
-func addressable4() vocab.ActivityStreamsAnnounce {
+func addressable4(t *testing.T) vocab.ActivityStreamsAnnounce {
 	// https://codeberg.org/superseriousbusiness/gotosocial/issues/267
 	announceJson := []byte(`
 {
@@ -326,12 +326,12 @@ func addressable4() vocab.ActivityStreamsAnnounce {
 		panic(err)
 	}
 
-	t, err := streams.ToType(context.Background(), jsonAsMap)
+	typ, err := streams.ToType(t.Context(), jsonAsMap)
 	if err != nil {
 		panic(err)
 	}
 
-	return t.(vocab.ActivityStreamsAnnounce)
+	return typ.(vocab.ActivityStreamsAnnounce)
 }
 
 func addressable5() ap.Addressable {
@@ -366,7 +366,7 @@ func (suite *APTestSuite) jsonToType(rawJson string) (vocab.Type, map[string]int
 		panic(err)
 	}
 
-	t, err := streams.ToType(context.Background(), raw)
+	t, err := streams.ToType(suite.T().Context(), raw)
 	if err != nil {
 		panic(err)
 	}
@@ -395,7 +395,7 @@ func (suite *APTestSuite) SetupTest() {
 	suite.addressable1 = addressable1()
 	suite.addressable2 = addressable2()
 	suite.addressable3 = addressable3()
-	suite.addressable4 = addressable4()
+	suite.addressable4 = addressable4(suite.T())
 	suite.addressable5 = addressable5()
 	suite.testAccounts = testrig.NewTestAccounts()
 }

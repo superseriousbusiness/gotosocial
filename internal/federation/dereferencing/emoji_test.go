@@ -18,7 +18,6 @@
 package dereferencing_test
 
 import (
-	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -32,7 +31,7 @@ type EmojiTestSuite struct {
 }
 
 func (suite *EmojiTestSuite) TestDereferenceEmojiBlocking() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	emojiImageRemoteURL := "http://example.org/media/emojis/1781772.gif"
 	emojiImageStaticRemoteURL := "http://example.org/media/emojis/1781772.gif"
 	emojiURI := "http://example.org/emojis/1781772"

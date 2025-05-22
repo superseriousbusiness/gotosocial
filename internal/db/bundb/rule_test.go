@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -37,7 +36,7 @@ func (suite *RuleTestSuite) TestPutRuleWithExisting() {
 		Text: "Pee pee poo poo",
 	}
 
-	if err := suite.state.DB.PutRule(context.Background(), r); err != nil {
+	if err := suite.state.DB.PutRule(suite.T().Context(), r); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -46,7 +45,7 @@ func (suite *RuleTestSuite) TestPutRuleWithExisting() {
 
 func (suite *RuleTestSuite) TestPutRuleNoExisting() {
 	var (
-		ctx      = context.Background()
+		ctx      = suite.T().Context()
 		whereAny = []db.Where{{Key: "id", Value: "", Not: true}}
 	)
 
@@ -74,7 +73,7 @@ func (suite *RuleTestSuite) TestPutRuleNoExisting() {
 
 func (suite *RuleTestSuite) TestGetRuleByID() {
 	rule, err := suite.state.DB.GetRuleByID(
-		context.Background(),
+		suite.T().Context(),
 		suite.testRules["rule1"].ID,
 	)
 	if err != nil {
@@ -91,7 +90,7 @@ func (suite *RuleTestSuite) TestGetRulesByID() {
 	}
 
 	rules, err := suite.state.DB.GetRulesByIDs(
-		context.Background(),
+		suite.T().Context(),
 		ruleIDs,
 	)
 	if err != nil {
@@ -109,7 +108,7 @@ func (suite *RuleTestSuite) TestGetActiveRules() {
 		}
 	}
 
-	rules, err := suite.state.DB.GetActiveRules(context.Background())
+	rules, err := suite.state.DB.GetActiveRules(suite.T().Context())
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

@@ -19,7 +19,6 @@ package followrequests_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -59,7 +58,7 @@ func (suite *GetTestSuite) TestGet() {
 		TargetAccountID: targetAccount.ID,
 	}
 
-	err := suite.db.Put(context.Background(), fr)
+	err := suite.db.Put(suite.T().Context(), fr)
 	suite.NoError(err)
 
 	recorder := httptest.NewRecorder()
@@ -134,7 +133,7 @@ func (suite *GetTestSuite) TestGetPageOldestToNewestLimit6() {
 }
 
 func (suite *GetTestSuite) testGetPage(limit int, direction string) {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// The authed local account we are going to use for HTTP requests
 	requestingAccount := suite.testAccounts["local_account_1"]
@@ -312,19 +311,19 @@ func (suite *GetTestSuite) testGetPage(limit int, direction string) {
 func (suite *GetTestSuite) clearAccountRelations(id string) {
 	// Esnure no account blocks exist between accounts.
 	_ = suite.db.DeleteAccountBlocks(
-		context.Background(),
+		suite.T().Context(),
 		id,
 	)
 
 	// Ensure no account follows exist between accounts.
 	_ = suite.db.DeleteAccountFollows(
-		context.Background(),
+		suite.T().Context(),
 		id,
 	)
 
 	// Ensure no account follow_requests exist between accounts.
 	_ = suite.db.DeleteAccountFollowRequests(
-		context.Background(),
+		suite.T().Context(),
 		id,
 	)
 }

@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -32,7 +31,7 @@ type MoveTestSuite struct {
 }
 
 func (suite *MoveTestSuite) TestMoveIntegration() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	firstMove := &gtsmodel.Move{
 		ID:        "01HPPN38MZYEC6WBTR21J6241N",
 		OriginURI: "https://example.org/users/my_old_account",

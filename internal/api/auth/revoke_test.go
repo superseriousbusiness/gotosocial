@@ -19,7 +19,6 @@ package auth_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -71,7 +70,7 @@ func (suite *RevokeTestSuite) TestRevokeOK() {
 
 	// Ensure token now gone.
 	_, err = suite.state.DB.GetTokenByAccess(
-		context.Background(),
+		suite.T().Context(),
 		token.Access,
 	)
 	suite.ErrorIs(err, db.ErrNoEntries)
@@ -130,7 +129,7 @@ func (suite *RevokeTestSuite) TestRevokeWrongSecret() {
 
 	// Ensure token still there.
 	_, err = suite.state.DB.GetTokenByAccess(
-		context.Background(),
+		suite.T().Context(),
 		token.Access,
 	)
 	suite.NoError(err)
@@ -188,7 +187,7 @@ func (suite *RevokeTestSuite) TestRevokeNoClientID() {
 
 	// Ensure token still there.
 	_, err = suite.state.DB.GetTokenByAccess(
-		context.Background(),
+		suite.T().Context(),
 		token.Access,
 	)
 	suite.NoError(err)

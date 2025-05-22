@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -31,31 +30,31 @@ type AdminTestSuite struct {
 }
 
 func (suite *AdminTestSuite) TestIsUsernameAvailableNo() {
-	available, err := suite.db.IsUsernameAvailable(context.Background(), "the_mighty_zork")
+	available, err := suite.db.IsUsernameAvailable(suite.T().Context(), "the_mighty_zork")
 	suite.NoError(err)
 	suite.False(available)
 }
 
 func (suite *AdminTestSuite) TestIsUsernameAvailableYes() {
-	available, err := suite.db.IsUsernameAvailable(context.Background(), "someone_completely_different")
+	available, err := suite.db.IsUsernameAvailable(suite.T().Context(), "someone_completely_different")
 	suite.NoError(err)
 	suite.True(available)
 }
 
 func (suite *AdminTestSuite) TestIsEmailAvailableNo() {
-	available, err := suite.db.IsEmailAvailable(context.Background(), "zork@example.org")
+	available, err := suite.db.IsEmailAvailable(suite.T().Context(), "zork@example.org")
 	suite.NoError(err)
 	suite.False(available)
 }
 
 func (suite *AdminTestSuite) TestIsEmailAvailableYes() {
-	available, err := suite.db.IsEmailAvailable(context.Background(), "someone@somewhere.com")
+	available, err := suite.db.IsEmailAvailable(suite.T().Context(), "someone@somewhere.com")
 	suite.NoError(err)
 	suite.True(available)
 }
 
 func (suite *AdminTestSuite) TestIsEmailAvailableDomainBlocked() {
-	if err := suite.db.Put(context.Background(), &gtsmodel.EmailDomainBlock{
+	if err := suite.db.Put(suite.T().Context(), &gtsmodel.EmailDomainBlock{
 		ID:                 "01GEEV2R2YC5GRSN96761YJE47",
 		Domain:             "somewhere.com",
 		CreatedByAccountID: suite.testAccounts["admin_account"].ID,
@@ -63,7 +62,7 @@ func (suite *AdminTestSuite) TestIsEmailAvailableDomainBlocked() {
 		suite.FailNow(err.Error())
 	}
 
-	available, err := suite.db.IsEmailAvailable(context.Background(), "someone@somewhere.com")
+	available, err := suite.db.IsEmailAvailable(suite.T().Context(), "someone@somewhere.com")
 	suite.EqualError(err, "email domain somewhere.com is blocked")
 	suite.False(available)
 }
@@ -78,22 +77,22 @@ func (suite *AdminTestSuite) TestCreateInstanceAccount() {
 	testrig.CreateTestTables(suite.db)
 
 	// make sure there's no instance account in the db yet
-	acct, err := suite.db.GetInstanceAccount(context.Background(), "")
+	acct, err := suite.db.GetInstanceAccount(suite.T().Context(), "")
 	suite.Error(err)
 	suite.Nil(acct)
 
 	// create it
-	err = suite.db.CreateInstanceAccount(context.Background())
+	err = suite.db.CreateInstanceAccount(suite.T().Context())
 	suite.NoError(err)
 
 	// and now check it exists
-	acct, err = suite.db.GetInstanceAccount(context.Background(), "")
+	acct, err = suite.db.GetInstanceAccount(suite.T().Context(), "")
 	suite.NoError(err)
 	suite.NotNil(acct)
 }
 
 func (suite *AdminTestSuite) TestNewSignupWithNoInstanceApp() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Delete the instance app.
 	if err := suite.state.DB.DeleteApplicationByID(

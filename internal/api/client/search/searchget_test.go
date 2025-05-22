@@ -18,7 +18,6 @@
 package search_test
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
@@ -160,7 +159,7 @@ func (suite *SearchGetTestSuite) bodgeLocalInstance(domain string) {
 
 	// Set username of instance account to given domain.
 	instanceAccount.Username = domain
-	if err := suite.db.UpdateAccount(context.Background(), instanceAccount, "username"); err != nil {
+	if err := suite.db.UpdateAccount(suite.T().Context(), instanceAccount, "username"); err != nil {
 		suite.FailNow(err.Error())
 	}
 }
@@ -1389,7 +1388,7 @@ func (suite *SearchGetTestSuite) TestSearchRemoteInstanceAccountPartial() {
 		suite.FailNow(err.Error())
 	}
 
-	if err := suite.db.PutAccount(context.Background(), &gtsmodel.Account{
+	if err := suite.db.PutAccount(suite.T().Context(), &gtsmodel.Account{
 		ID:                    "01H6RWPG8T6DNW6VNXPBCJBH5S",
 		Username:              theirDomain,
 		Domain:                theirDomain,
@@ -1724,7 +1723,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountFullNamestring() {
 	// Block the account
 	// we're about to search.
 	if err := suite.db.PutBlock(
-		context.Background(),
+		suite.T().Context(),
 		&gtsmodel.Block{
 			ID:              id.NewULID(),
 			URI:             "https://example.org/nooooooo",
@@ -1788,7 +1787,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountPartialNamestring() {
 	// Block the account
 	// we're about to search.
 	if err := suite.db.PutBlock(
-		context.Background(),
+		suite.T().Context(),
 		&gtsmodel.Block{
 			ID:              id.NewULID(),
 			URI:             "https://example.org/nooooooo",
@@ -1849,7 +1848,7 @@ func (suite *SearchGetTestSuite) TestSearchBlockedAccountURI() {
 	// Block the account
 	// we're about to search.
 	if err := suite.db.PutBlock(
-		context.Background(),
+		suite.T().Context(),
 		&gtsmodel.Block{
 			ID:              id.NewULID(),
 			URI:             "https://example.org/nooooooo",

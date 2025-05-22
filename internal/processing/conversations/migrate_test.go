@@ -18,8 +18,6 @@
 package conversations_test
 
 import (
-	"context"
-
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/db/bundb"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -29,7 +27,7 @@ import (
 // This test assumes that we're using the standard test fixtures, which contain some conversation-eligible DMs.
 func (suite *ConversationsTestSuite) TestMigrateDMsToConversations() {
 	advancedMigrationID := "20240611190733_add_conversations"
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	rawDB := (suite.db).(*bundb.DBService).DB()
 
 	// Precondition: we shouldn't have any conversations yet.

@@ -18,7 +18,6 @@
 package dereferencing_test
 
 import (
-	"context"
 	"net/url"
 	"testing"
 
@@ -77,7 +76,7 @@ func (suite *InstanceTestSuite) TestDerefInstance() {
 		},
 	} {
 		instance, err := suite.dereferencer.GetRemoteInstance(
-			gtscontext.SetFastFail(context.Background()),
+			gtscontext.SetFastFail(suite.T().Context()),
 			suite.testAccounts["admin_account"].Username,
 			tc.instanceIRI,
 		)

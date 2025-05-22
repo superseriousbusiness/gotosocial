@@ -18,7 +18,6 @@
 package statuses_test
 
 import (
-	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -135,7 +134,7 @@ func (suite *StatusPinTestSuite) TestPinStatusTwiceError() {
 	testAccount := new(gtsmodel.Account)
 	*testAccount = *suite.testAccounts["local_account_1"]
 
-	if err := suite.db.UpdateStatus(context.Background(), targetStatus, "pinned_at"); err != nil {
+	if err := suite.db.UpdateStatus(suite.T().Context(), targetStatus, "pinned_at"); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -171,7 +170,7 @@ func (suite *StatusPinTestSuite) TestPinStatusTooManyPins() {
 	*testAccount = *suite.testAccounts["local_account_1"]
 
 	// Spam 10 pinned statuses into the database.
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	for i := range make([]interface{}, 10) {
 		status := &gtsmodel.Status{
 			ID:                  id.NewULID(),

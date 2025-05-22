@@ -18,7 +18,6 @@
 package ap_test
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -33,7 +32,7 @@ type ExtractFocusTestSuite struct {
 }
 
 func (suite *ExtractFocusTestSuite) TestExtractFocus() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	type test struct {
 		data    string

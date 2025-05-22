@@ -18,7 +18,6 @@
 package interactionrequests_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -38,7 +37,7 @@ func (suite *RejectTestSuite) TestReject() {
 	defer testrig.TearDownTestStructs(testStructs)
 
 	var (
-		ctx    = context.Background()
+		ctx    = suite.T().Context()
 		state  = testStructs.State
 		acct   = suite.testAccounts["local_account_2"]
 		intReq = suite.testInteractionRequests["admin_account_reply_turtle"]

@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -57,7 +56,7 @@ func (suite *ConversationTestSuite) SetupTest() {
 
 // deleteStatus deletes a status from conversations and ends the test if that fails.
 func (suite *ConversationTestSuite) deleteStatus(statusID string) {
-	err := suite.db.DeleteStatusFromConversations(context.Background(), statusID)
+	err := suite.db.DeleteStatusFromConversations(suite.T().Context(), statusID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -65,7 +64,7 @@ func (suite *ConversationTestSuite) deleteStatus(statusID string) {
 
 // getConversation fetches a conversation by ID and ends the test if that fails.
 func (suite *ConversationTestSuite) getConversation(conversationID string) *gtsmodel.Conversation {
-	conversation, err := suite.db.GetConversationByID(context.Background(), conversationID)
+	conversation, err := suite.db.GetConversationByID(suite.T().Context(), conversationID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -106,7 +105,7 @@ func (suite *ConversationTestSuite) TestDeleteOnlyStatus() {
 	initial := conversation.LastStatus
 
 	suite.deleteStatus(initial.ID)
-	_, err := suite.db.GetConversationByID(context.Background(), conversation.ID)
+	_, err := suite.db.GetConversationByID(suite.T().Context(), conversation.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
 

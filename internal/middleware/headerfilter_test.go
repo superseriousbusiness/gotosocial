@@ -18,7 +18,6 @@
 package middleware_test
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -210,10 +209,7 @@ func TestHeaderFilter(t *testing.T) {
 func testHeaderFilter(t *testing.T, allow, block []filter, input http.Header, expect bool) {
 	var err error
 
-	// Create test context with cancel.
-	ctx := context.Background()
-	ctx, cncl := context.WithCancel(ctx)
-	defer cncl()
+	ctx := t.Context()
 
 	// Initialize caches.
 	var state state.State

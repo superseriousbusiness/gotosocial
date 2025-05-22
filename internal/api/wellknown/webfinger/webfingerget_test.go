@@ -19,7 +19,6 @@ package webfinger_test
 
 import (
 	"bytes"
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"encoding/json"
@@ -129,11 +128,11 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		PublicKeyURI:          "http://" + host + "/users/new_account_domain_user/main-key",
 	}
 
-	if err := suite.db.PutAccount(context.Background(), targetAccount); err != nil {
+	if err := suite.db.PutAccount(suite.T().Context(), targetAccount); err != nil {
 		suite.FailNow(err.Error())
 	}
 
-	if err := suite.db.PutAccountSettings(context.Background(), &gtsmodel.AccountSettings{AccountID: targetAccount.ID}); err != nil {
+	if err := suite.db.PutAccountSettings(suite.T().Context(), &gtsmodel.AccountSettings{AccountID: targetAccount.ID}); err != nil {
 		suite.FailNow(err.Error())
 	}
 

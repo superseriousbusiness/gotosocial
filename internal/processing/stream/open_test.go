@@ -18,7 +18,6 @@
 package stream_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -31,7 +30,7 @@ type OpenStreamTestSuite struct {
 func (suite *OpenStreamTestSuite) TestOpenStream() {
 	account := suite.testAccounts["local_account_1"]
 
-	_, errWithCode := suite.streamProcessor.Open(context.Background(), account, "user")
+	_, errWithCode := suite.streamProcessor.Open(suite.T().Context(), account, "user")
 	suite.NoError(errWithCode)
 }
 

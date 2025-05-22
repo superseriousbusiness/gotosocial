@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -31,7 +30,7 @@ type DomainPermissionSubscriptionTestSuite struct {
 
 func (suite *DomainPermissionSubscriptionTestSuite) TestCount() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		testAccount = suite.testAccounts["admin_account"]
 		permSub     = &gtsmodel.DomainPermissionSubscription{
 			ID:                 "01JGV3VZ72K58BYW8H5GEVBZGN",

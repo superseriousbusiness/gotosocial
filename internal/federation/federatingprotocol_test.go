@@ -130,7 +130,7 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookDM() {
 	)
 
 	ctx := suite.postInboxRequestBodyHook(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -155,7 +155,7 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookReply() {
 	)
 
 	ctx := suite.postInboxRequestBodyHook(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -180,7 +180,7 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookReplyToRep
 	)
 
 	ctx := suite.postInboxRequestBodyHook(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -205,7 +205,7 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookAnnounceFo
 	)
 
 	ctx := suite.postInboxRequestBodyHook(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -230,7 +230,7 @@ func (suite *FederatingProtocolTestSuite) TestPostInboxRequestBodyHookAnnounceFo
 	)
 
 	ctx := suite.postInboxRequestBodyHook(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -255,7 +255,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 	)
 
 	ctx, authed, resp, code := suite.authenticatePostInbox(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -268,7 +268,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInbox() {
 
 func (suite *FederatingProtocolTestSuite) TestAuthenticatePostInboxKeyExpired() {
 	var (
-		ctx              = context.Background()
+		ctx              = suite.T().Context()
 		activity         = suite.testActivities["dm_for_zork"]
 		receivingAccount = suite.testAccounts["local_account_1"]
 	)
@@ -300,7 +300,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneWithTombstone(
 	)
 
 	ctx, authed, resp, code := suite.authenticatePostInbox(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -320,12 +320,12 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneNoTombstone() 
 	)
 
 	// Delete the tombstone; it'll have to be created again.
-	if err := suite.state.DB.DeleteTombstone(context.Background(), testTombstone.ID); err != nil {
+	if err := suite.state.DB.DeleteTombstone(suite.T().Context(), testTombstone.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	ctx, authed, resp, code := suite.authenticatePostInbox(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		activity,
 	)
@@ -337,7 +337,7 @@ func (suite *FederatingProtocolTestSuite) TestAuthenticatePostGoneNoTombstone() 
 
 	// Tombstone should be back, baby!
 	exists, err := suite.state.DB.TombstoneExistsWithURI(
-		context.Background(),
+		suite.T().Context(),
 		"https://somewhere.mysterious/users/rest_in_piss#main-key",
 	)
 	suite.NoError(err)
@@ -368,7 +368,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedNoProblem() {
 	)
 
 	blocked, err := suite.blocked(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		requestingAccount,
 		otherIRIs,
@@ -390,7 +390,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedReceiverBlocksRequester() {
 	)
 
 	// Insert a block from receivingAccount targeting requestingAccount.
-	if err := suite.state.DB.PutBlock(context.Background(), &gtsmodel.Block{
+	if err := suite.state.DB.PutBlock(suite.T().Context(), &gtsmodel.Block{
 		ID:              "01G3KBEMJD4VQ2D615MPV7KTRD",
 		URI:             "whatever",
 		AccountID:       receivingAccount.ID,
@@ -400,7 +400,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedReceiverBlocksRequester() {
 	}
 
 	blocked, err := suite.blocked(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		requestingAccount,
 		otherIRIs,
@@ -425,7 +425,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedCCd() {
 	)
 
 	// Insert a block from receivingAccount targeting ccedAccount.
-	if err := suite.state.DB.PutBlock(context.Background(), &gtsmodel.Block{
+	if err := suite.state.DB.PutBlock(suite.T().Context(), &gtsmodel.Block{
 		ID:              "01G3KBEMJD4VQ2D615MPV7KTRD",
 		URI:             "whatever",
 		AccountID:       receivingAccount.ID,
@@ -435,7 +435,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedCCd() {
 	}
 
 	blocked, err := suite.blocked(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		requestingAccount,
 		otherIRIs,
@@ -462,7 +462,7 @@ func (suite *FederatingProtocolTestSuite) TestBlockedRepliedStatus() {
 	)
 
 	blocked, err := suite.blocked(
-		context.Background(),
+		suite.T().Context(),
 		receivingAccount,
 		requestingAccount,
 		otherIRIs,

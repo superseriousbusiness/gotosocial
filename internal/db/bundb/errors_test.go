@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -38,7 +37,7 @@ func (suite *ErrorsTestSuite) TestErrorAlreadyExists() {
 	}
 
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		initialFollow = &gtsmodel.Follow{
 			ID:              "01HD11D8JH5V64GJRFDA7VFNDX",
 			URI:             "https://example.org/unique_uri",

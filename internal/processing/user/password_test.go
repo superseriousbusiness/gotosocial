@@ -18,7 +18,6 @@
 package user_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -35,7 +34,7 @@ type ChangePasswordTestSuite struct {
 func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 	user := suite.testUsers["local_account_1"]
 
-	errWithCode := suite.user.PasswordChange(context.Background(), user, "password", "verygoodnewpassword")
+	errWithCode := suite.user.PasswordChange(suite.T().Context(), user, "password", "verygoodnewpassword")
 	suite.NoError(errWithCode)
 
 	err := bcrypt.CompareHashAndPassword(
@@ -46,7 +45,7 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 
 	// get user from the db again
 	dbUser := &gtsmodel.User{}
-	err = suite.db.GetByID(context.Background(), user.ID, dbUser)
+	err = suite.db.GetByID(suite.T().Context(), user.ID, dbUser)
 	suite.NoError(err)
 
 	// check the password has changed
@@ -60,14 +59,14 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordOK() {
 func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 	user := suite.testUsers["local_account_1"]
 
-	errWithCode := suite.user.PasswordChange(context.Background(), user, "ooooopsydoooopsy", "verygoodnewpassword")
+	errWithCode := suite.user.PasswordChange(suite.T().Context(), user, "ooooopsydoooopsy", "verygoodnewpassword")
 	suite.EqualError(errWithCode, "PasswordChange: crypto/bcrypt: hashedPassword is not the hash of the given password")
 	suite.Equal(http.StatusUnauthorized, errWithCode.Code())
 	suite.Equal("Unauthorized: old password was incorrect", errWithCode.Safe())
 
 	// get user from the db again
 	dbUser := &gtsmodel.User{}
-	err := suite.db.GetByID(context.Background(), user.ID, dbUser)
+	err := suite.db.GetByID(suite.T().Context(), user.ID, dbUser)
 	suite.NoError(err)
 
 	// check the password has not changed
@@ -81,14 +80,14 @@ func (suite *ChangePasswordTestSuite) TestChangePasswordIncorrectOld() {
 func (suite *ChangePasswordTestSuite) TestChangePasswordWeakNew() {
 	user := suite.testUsers["local_account_1"]
 
-	errWithCode := suite.user.PasswordChange(context.Background(), user, "password", "1234")
+	errWithCode := suite.user.PasswordChange(suite.T().Context(), user, "password", "1234")
 	suite.EqualError(errWithCode, "password is only 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password")
 	suite.Equal(http.StatusBadRequest, errWithCode.Code())
 	suite.Equal("Bad Request: password is only 11% strength, try including more special characters, using lowercase letters, using uppercase letters or using a longer password", errWithCode.Safe())
 
 	// get user from the db again
 	dbUser := &gtsmodel.User{}
-	err := suite.db.GetByID(context.Background(), user.ID, dbUser)
+	err := suite.db.GetByID(suite.T().Context(), user.ID, dbUser)
 	suite.NoError(err)
 
 	// check the password has not changed

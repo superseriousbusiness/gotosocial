@@ -18,7 +18,6 @@
 package admin_test
 
 import (
-	"context"
 	"testing"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -33,7 +32,7 @@ type AccountTestSuite struct {
 
 func (suite *AccountTestSuite) TestAccountActionSuspend() {
 	var (
-		ctx       = context.Background()
+		ctx       = suite.T().Context()
 		adminAcct = suite.testAccounts["admin_account"]
 		request   = &apimodel.AdminActionRequest{
 			Category: gtsmodel.AdminActionCategoryAccount.String(),
@@ -79,7 +78,7 @@ func (suite *AccountTestSuite) TestAccountActionSuspend() {
 
 func (suite *AccountTestSuite) TestAccountActionUnsupported() {
 	var (
-		ctx       = context.Background()
+		ctx       = suite.T().Context()
 		adminAcct = suite.testAccounts["admin_account"]
 		request   = &apimodel.AdminActionRequest{
 			Category: gtsmodel.AdminActionCategoryAccount.String(),

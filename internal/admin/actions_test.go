@@ -49,7 +49,7 @@ func (suite *ActionsTestSuite) SetupSuite() {
 func (suite *ActionsTestSuite) TestActionOverlap() {
 	var (
 		testStructs = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 	)
 	defer testrig.TearDownTestStructs(testStructs)
 
@@ -130,7 +130,7 @@ func (suite *ActionsTestSuite) TestActionOverlap() {
 func (suite *ActionsTestSuite) TestActionWithErrors() {
 	var (
 		testStructs = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 	)
 	defer testrig.TearDownTestStructs(testStructs)
 

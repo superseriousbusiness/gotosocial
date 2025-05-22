@@ -19,7 +19,6 @@ package stream_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -36,16 +35,16 @@ type StatusUpdateTestSuite struct {
 func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	account := suite.testAccounts["local_account_1"]
 
-	openStream, errWithCode := suite.streamProcessor.Open(context.Background(), account, "user")
+	openStream, errWithCode := suite.streamProcessor.Open(suite.T().Context(), account, "user")
 	suite.NoError(errWithCode)
 
 	editedStatus := suite.testStatuses["remote_account_1_status_1"]
-	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(context.Background(), editedStatus, account, statusfilter.FilterContextNotifications, nil, nil)
+	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(suite.T().Context(), editedStatus, account, statusfilter.FilterContextNotifications, nil, nil)
 	suite.NoError(err)
 
-	suite.streamProcessor.StatusUpdate(context.Background(), account, apiStatus, stream.TimelineHome)
+	suite.streamProcessor.StatusUpdate(suite.T().Context(), account, apiStatus, stream.TimelineHome)
 
-	msg, ok := openStream.Recv(context.Background())
+	msg, ok := openStream.Recv(suite.T().Context())
 	suite.True(ok)
 
 	dst := new(bytes.Buffer)

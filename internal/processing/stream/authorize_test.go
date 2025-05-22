@@ -18,7 +18,6 @@
 package stream_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -30,15 +29,15 @@ type AuthorizeTestSuite struct {
 }
 
 func (suite *AuthorizeTestSuite) TestAuthorize() {
-	account1, err := suite.streamProcessor.Authorize(context.Background(), suite.testTokens["local_account_1"].Access)
+	account1, err := suite.streamProcessor.Authorize(suite.T().Context(), suite.testTokens["local_account_1"].Access)
 	suite.NoError(err)
 	suite.Equal(suite.testAccounts["local_account_1"].ID, account1.ID)
 
-	account2, err := suite.streamProcessor.Authorize(context.Background(), suite.testTokens["local_account_2"].Access)
+	account2, err := suite.streamProcessor.Authorize(suite.T().Context(), suite.testTokens["local_account_2"].Access)
 	suite.NoError(err)
 	suite.Equal(suite.testAccounts["local_account_2"].ID, account2.ID)
 
-	noAccount, err := suite.streamProcessor.Authorize(context.Background(), "aaaaaaaaaaaaaaaaaaaaa!!")
+	noAccount, err := suite.streamProcessor.Authorize(suite.T().Context(), "aaaaaaaaaaaaaaaaaaaaa!!")
 	suite.EqualError(err, "could not load access token: "+db.ErrNoEntries.Error())
 	suite.Nil(noAccount)
 }

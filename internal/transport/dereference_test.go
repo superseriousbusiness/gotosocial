@@ -19,7 +19,6 @@ package transport_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -37,7 +36,7 @@ type DereferenceTestSuite struct {
 func (suite *DereferenceTestSuite) TestDerefLocalUser() {
 	iri := testrig.URLMustParse(suite.testAccounts["local_account_1"].URI)
 
-	resp, err := suite.transport.Dereference(context.Background(), iri)
+	resp, err := suite.transport.Dereference(suite.T().Context(), iri)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -108,7 +107,7 @@ func (suite *DereferenceTestSuite) TestDerefLocalUser() {
 func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
 	iri := testrig.URLMustParse(suite.testStatuses["local_account_1_status_1"].URI)
 
-	resp, err := suite.transport.Dereference(context.Background(), iri)
+	resp, err := suite.transport.Dereference(suite.T().Context(), iri)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -200,7 +199,7 @@ func (suite *DereferenceTestSuite) TestDerefLocalStatus() {
 func (suite *DereferenceTestSuite) TestDerefLocalFollowers() {
 	iri := testrig.URLMustParse(suite.testAccounts["local_account_1"].FollowersURI)
 
-	resp, err := suite.transport.Dereference(context.Background(), iri)
+	resp, err := suite.transport.Dereference(suite.T().Context(), iri)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -234,7 +233,7 @@ func (suite *DereferenceTestSuite) TestDerefLocalFollowers() {
 func (suite *DereferenceTestSuite) TestDerefLocalFollowing() {
 	iri := testrig.URLMustParse(suite.testAccounts["local_account_1"].FollowingURI)
 
-	resp, err := suite.transport.Dereference(context.Background(), iri)
+	resp, err := suite.transport.Dereference(suite.T().Context(), iri)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

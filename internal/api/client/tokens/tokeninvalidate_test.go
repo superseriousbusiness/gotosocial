@@ -18,7 +18,6 @@
 package tokens_test
 
 import (
-	"context"
 	"net/http"
 	"testing"
 
@@ -58,7 +57,7 @@ func (suite *TokenInvalidateTestSuite) TestTokenInvalidate() {
 	// Check database for token we
 	// just invalidated, should be gone.
 	_, err := suite.testStructs.State.DB.GetTokenByID(
-		context.Background(), testToken.ID,
+		suite.T().Context(), testToken.ID,
 	)
 	suite.ErrorIs(err, db.ErrNoEntries)
 }

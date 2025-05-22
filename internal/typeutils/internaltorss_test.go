@@ -18,7 +18,6 @@
 package typeutils_test
 
 import (
-	"context"
 	"encoding/xml"
 	"testing"
 
@@ -34,7 +33,7 @@ type InternalToRSSTestSuite struct {
 
 func (suite *InternalToRSSTestSuite) TestStatusToRSSItem1() {
 	s := suite.testStatuses["local_account_1_status_1"]
-	item, err := suite.typeconverter.StatusToRSSItem(context.Background(), s)
+	item, err := suite.typeconverter.StatusToRSSItem(suite.T().Context(), s)
 	suite.NoError(err)
 
 	suite.Equal("introduction post", item.Title)
@@ -59,7 +58,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem1() {
 
 func (suite *InternalToRSSTestSuite) TestStatusToRSSItem2() {
 	s := suite.testStatuses["admin_account_status_1"]
-	item, err := suite.typeconverter.StatusToRSSItem(context.Background(), s)
+	item, err := suite.typeconverter.StatusToRSSItem(suite.T().Context(), s)
 	suite.NoError(err)
 
 	suite.Equal("hello world! #welcome ! first post on the instance :rainbow: !", item.Title)
@@ -97,7 +96,7 @@ func (suite *InternalToRSSTestSuite) TestStatusToRSSItem3() {
 		ActivityStreamsType: ap.ObjectNote,
 		Federated:           util.Ptr(true),
 	}
-	item, err := suite.typeconverter.StatusToRSSItem(context.Background(), s)
+	item, err := suite.typeconverter.StatusToRSSItem(suite.T().Context(), s)
 	suite.NoError(err)
 
 	data, err := xml.MarshalIndent(item, "", "  ")

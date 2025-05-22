@@ -18,7 +18,6 @@
 package admin_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -32,7 +31,7 @@ type AdminApproveTestSuite struct {
 
 func (suite *AdminApproveTestSuite) TestApprove() {
 	var (
-		ctx        = context.Background()
+		ctx        = suite.T().Context()
 		adminAcct  = suite.testAccounts["admin_account"]
 		targetAcct = suite.testAccounts["unconfirmed_account"]
 		targetUser = new(gtsmodel.User)

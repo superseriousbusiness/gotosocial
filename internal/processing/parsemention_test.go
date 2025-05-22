@@ -18,7 +18,6 @@
 package processing_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -34,7 +33,7 @@ type ParseMentionTestSuite struct {
 
 func (suite *ParseMentionTestSuite) TestParseMentionFunc() {
 	var (
-		ctx          = context.Background()
+		ctx          = suite.T().Context()
 		parseMention = processing.GetParseMentionFunc(&suite.state, suite.federator)
 		originAcctID = suite.testAccounts["local_account_1"].ID
 		statusID     = id.NewULID()

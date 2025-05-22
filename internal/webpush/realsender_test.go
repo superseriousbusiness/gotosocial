@@ -167,7 +167,7 @@ func (suite *RealSenderStandardTestSuite) simulatePushNotification(
 	expectDeletedSubscription bool,
 ) error {
 	// Don't let the test run forever if the push notification was not sent for some reason.
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	ctx, cancel := context.WithTimeout(suite.T().Context(), 3*time.Second)
 	defer cancel()
 
 	notification, err := suite.state.DB.GetNotificationByID(ctx, notificationID)
@@ -263,7 +263,7 @@ func (suite *RealSenderStandardTestSuite) TestSendPolicyMismatch() {
 		StatusOrEditID:   "01F8MHAMCHF6Y650WCRSCP4WMY",
 		Read:             util.Ptr(false),
 	}
-	if err := suite.db.PutNotification(context.Background(), notification); !suite.NoError(err) {
+	if err := suite.db.PutNotification(suite.T().Context(), notification); !suite.NoError(err) {
 		suite.FailNow(err.Error())
 		return
 	}

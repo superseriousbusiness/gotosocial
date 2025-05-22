@@ -18,7 +18,6 @@
 package user_test
 
 import (
-	"context"
 	"io"
 	"net/http"
 	"testing"
@@ -45,7 +44,7 @@ func (suite *PasswordChangeTestSuite) TestPasswordChangePOST() {
 	suite.EqualValues(http.StatusOK, code)
 
 	dbUser := &gtsmodel.User{}
-	err := suite.db.GetByID(context.Background(), suite.testUsers["local_account_1"].ID, dbUser)
+	err := suite.db.GetByID(suite.T().Context(), suite.testUsers["local_account_1"].ID, dbUser)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

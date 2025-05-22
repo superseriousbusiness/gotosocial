@@ -19,7 +19,6 @@ package admin_test
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -41,7 +40,7 @@ type DomainPermissionSubscriptionTestTestSuite struct {
 
 func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubscriptionTestCSV() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		testAccount = suite.testAccounts["admin_account"]
 		permSub     = &gtsmodel.DomainPermissionSubscription{
 			ID:                 "01JGE681TQSBPAV59GZXPKE62H",
@@ -129,7 +128,7 @@ func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubs
 
 func (suite *DomainPermissionSubscriptionTestTestSuite) TestDomainPermissionSubscriptionTestText() {
 	var (
-		ctx         = context.Background()
+		ctx         = suite.T().Context()
 		testAccount = suite.testAccounts["admin_account"]
 		permSub     = &gtsmodel.DomainPermissionSubscription{
 			ID:                 "01JGE681TQSBPAV59GZXPKE62H",

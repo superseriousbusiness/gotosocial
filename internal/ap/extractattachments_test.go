@@ -18,7 +18,6 @@
 package ap_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -59,7 +58,7 @@ func (suite *ExtractAttachmentsTestSuite) TestExtractDescription() {
 		suite.FailNow(err.Error())
 	}
 
-	t, err := streams.ToType(context.Background(), raw)
+	t, err := streams.ToType(suite.T().Context(), raw)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

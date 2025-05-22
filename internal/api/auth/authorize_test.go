@@ -1,7 +1,6 @@
 package auth_test
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -93,9 +92,9 @@ func (suite *AuthAuthorizeTestSuite) TestAccountAuthorizeHandler() {
 
 		testCase.description = fmt.Sprintf("%s, %t, %s", user.Email, *user.Disabled, account.SuspendedAt)
 
-		err := suite.db.UpdateUser(context.Background(), user, columns...)
+		err := suite.db.UpdateUser(suite.T().Context(), user, columns...)
 		suite.NoError(err)
-		err = suite.db.UpdateAccount(context.Background(), account)
+		err = suite.db.UpdateAccount(suite.T().Context(), account)
 		suite.NoError(err)
 
 		// call the handler

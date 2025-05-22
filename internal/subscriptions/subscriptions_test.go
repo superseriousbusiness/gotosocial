@@ -18,7 +18,6 @@
 package subscriptions_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -51,7 +50,7 @@ func (suite *SubscriptionsTestSuite) SetupSuite() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksCSV() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -131,7 +130,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSV() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksJSON() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -211,7 +210,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksJSON() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksPlain() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -291,7 +290,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksPlain() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVCaching() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -367,7 +366,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVCaching() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVFutureLastModified() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -439,7 +438,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVFutureLastModified() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVGarbageLastModified() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -511,7 +510,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksCSVGarbageLastModified() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocks404() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -569,7 +568,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocks404() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypeCSV() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -627,7 +626,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypeCSV() {
 
 func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypePlain() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -685,7 +684,7 @@ func (suite *SubscriptionsTestSuite) TestDomainBlocksWrongContentTypePlain() {
 
 func (suite *SubscriptionsTestSuite) TestAdoption() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(
@@ -817,7 +816,7 @@ func (suite *SubscriptionsTestSuite) TestAdoption() {
 
 func (suite *SubscriptionsTestSuite) TestDomainAllowsAndBlocks() {
 	var (
-		ctx           = context.Background()
+		ctx           = suite.T().Context()
 		testStructs   = testrig.SetupTestStructs(rMediaPath, rTemplatePath)
 		testAccount   = suite.testAccounts["admin_account"]
 		subscriptions = subscriptions.New(

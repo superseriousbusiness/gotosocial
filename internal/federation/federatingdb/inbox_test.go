@@ -18,7 +18,6 @@
 package federatingdb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/testrig"
@@ -30,7 +29,7 @@ type InboxTestSuite struct {
 }
 
 func (suite *InboxTestSuite) TestInboxesForFollowersIRI() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount := suite.testAccounts["local_account_1"]
 
 	inboxIRIs, err := suite.federatingDB.InboxesForIRI(ctx, testrig.URLMustParse(testAccount.FollowersURI))
@@ -47,7 +46,7 @@ func (suite *InboxTestSuite) TestInboxesForFollowersIRI() {
 }
 
 func (suite *InboxTestSuite) TestInboxesForAccountIRI() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount := suite.testAccounts["local_account_1"]
 
 	inboxIRIs, err := suite.federatingDB.InboxesForIRI(ctx, testrig.URLMustParse(testAccount.URI))
@@ -63,7 +62,7 @@ func (suite *InboxTestSuite) TestInboxesForAccountIRI() {
 }
 
 func (suite *InboxTestSuite) TestInboxesForAccountIRIWithSharedInbox() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAccount := suite.testAccounts["local_account_1"]
 	sharedInbox := "http://some-inbox-iri/weeeeeeeeeeeee"
 	testAccount.SharedInboxURI = &sharedInbox

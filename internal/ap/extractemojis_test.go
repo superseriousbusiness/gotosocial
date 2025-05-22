@@ -19,7 +19,6 @@ package ap_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"testing"
 
@@ -61,7 +60,7 @@ func (suite *ExtractEmojisTestSuite) TestExtractEmojis() {
 }`
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(bytes.NewBufferString(noteWithEmojis)),
 	)
 	if err != nil {
@@ -115,7 +114,7 @@ func (suite *ExtractEmojisTestSuite) TestExtractEmojisNoID() {
 }`
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(bytes.NewBufferString(noteWithEmojis)),
 	)
 	if err != nil {
@@ -170,7 +169,7 @@ func (suite *ExtractEmojisTestSuite) TestExtractEmojisNullID() {
 }`
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(bytes.NewBufferString(noteWithEmojis)),
 	)
 	if err != nil {
@@ -225,7 +224,7 @@ func (suite *ExtractEmojisTestSuite) TestExtractEmojisEmptyID() {
 }`
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(bytes.NewBufferString(noteWithEmojis)),
 	)
 	if err != nil {

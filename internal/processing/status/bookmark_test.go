@@ -18,7 +18,6 @@
 package status_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type StatusBookmarkTestSuite struct {
 }
 
 func (suite *StatusBookmarkTestSuite) TestBookmark() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// bookmark a status
 	bookmarkingAccount1 := suite.testAccounts["local_account_1"]
@@ -43,7 +42,7 @@ func (suite *StatusBookmarkTestSuite) TestBookmark() {
 }
 
 func (suite *StatusBookmarkTestSuite) TestUnbookmark() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// bookmark a status
 	bookmarkingAccount1 := suite.testAccounts["local_account_1"]

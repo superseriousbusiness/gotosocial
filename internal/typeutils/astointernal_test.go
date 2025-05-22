@@ -37,7 +37,7 @@ type ASToInternalTestSuite struct {
 }
 
 func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	b := []byte(in)
 
 	if accountable, err := ap.ResolveAccountable(ctx, io.NopCloser(bytes.NewReader(b))); err == nil {
@@ -53,7 +53,7 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 		suite.FailNow(err.Error())
 	}
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -64,7 +64,7 @@ func (suite *ASToInternalTestSuite) jsonToType(in string) vocab.Type {
 func (suite *ASToInternalTestSuite) TestParsePerson() {
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "", "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(suite.T().Context(), testPerson, "", "")
 	suite.NoError(err)
 
 	suite.Equal("https://unknown-instance.com/users/brand_new_person", acct.URI)
@@ -86,7 +86,7 @@ func (suite *ASToInternalTestSuite) TestParsePerson() {
 func (suite *ASToInternalTestSuite) TestParsePersonWithSharedInbox() {
 	testPerson := suite.testPeople["https://turnip.farm/users/turniplover6969"]
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), testPerson, "", "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(suite.T().Context(), testPerson, "", "")
 	suite.NoError(err)
 
 	suite.Equal("https://turnip.farm/users/turniplover6969", acct.URI)
@@ -112,7 +112,7 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatus() {
 		suite.FailNow("type not coercible")
 	}
 
-	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), rep)
+	status, err := suite.typeconverter.ASStatusToStatus(suite.T().Context(), rep)
 	suite.NoError(err)
 
 	suite.Equal("reading: Punishment and Reward in the Corporate University", status.ContentWarning)
@@ -127,7 +127,7 @@ func (suite *ASToInternalTestSuite) TestParsePublicStatusNoURL() {
 		suite.FailNow("type not coercible")
 	}
 
-	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), rep)
+	status, err := suite.typeconverter.ASStatusToStatus(suite.T().Context(), rep)
 	suite.NoError(err)
 
 	suite.Equal("reading: Punishment and Reward in the Corporate University", status.ContentWarning)
@@ -144,7 +144,7 @@ func (suite *ASToInternalTestSuite) TestParseGargron() {
 		suite.FailNow("type not coercible")
 	}
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(suite.T().Context(), rep, "", "")
 	suite.NoError(err)
 	suite.Equal("https://mastodon.social/inbox", *acct.SharedInboxURI)
 	suite.Equal([]string{"https://tooting.ai/users/Gargron"}, acct.AlsoKnownAsURIs)
@@ -162,7 +162,7 @@ func (suite *ASToInternalTestSuite) TestParseReplyWithMention() {
 	var status *gtsmodel.Status
 	for i := object.Begin(); i != nil; i = i.Next() {
 		statusable := i.GetActivityStreamsNote()
-		s, err := suite.typeconverter.ASStatusToStatus(context.Background(), statusable)
+		s, err := suite.typeconverter.ASStatusToStatus(suite.T().Context(), statusable)
 		suite.NoError(err)
 		status = s
 		break
@@ -195,7 +195,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 		suite.FailNow("type not coercible")
 	}
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(suite.T().Context(), rep, "", "")
 	suite.NoError(err)
 
 	suite.Equal("rgh", acct.Username)
@@ -216,7 +216,7 @@ func (suite *ASToInternalTestSuite) TestParseOwncastService() {
 
 	acct.ID = "01G42D57DTCJQE8XT9KD4K88RK"
 
-	apiAcct, err := suite.typeconverter.AccountToAPIAccountPublic(context.Background(), acct)
+	apiAcct, err := suite.typeconverter.AccountToAPIAccountPublic(suite.T().Context(), acct)
 	suite.NoError(err)
 	suite.NotNil(apiAcct)
 
@@ -270,7 +270,7 @@ func (suite *ASToInternalTestSuite) TestParseBookwyrmStatus() {
 		suite.FailNow("type not coercible")
 	}
 
-	status, err := suite.typeconverter.ASStatusToStatus(context.Background(), asArticle)
+	status, err := suite.typeconverter.ASStatusToStatus(suite.T().Context(), asArticle)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -330,7 +330,7 @@ func (suite *ASToInternalTestSuite) TestParseBandwagonAlbum() {
 		suite.FailNow("type not coercible")
 	}
 
-	s, err := suite.typeconverter.ASStatusToStatus(context.Background(), asArticle)
+	s, err := suite.typeconverter.ASStatusToStatus(suite.T().Context(), asArticle)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -358,7 +358,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag1() {
 		suite.FailNow("type not coercible")
 	}
 
-	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	report, err := suite.typeconverter.ASFlagToReport(suite.T().Context(), asFlag)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -392,7 +392,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag2() {
 		suite.FailNow("type not coercible")
 	}
 
-	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	report, err := suite.typeconverter.ASFlagToReport(suite.T().Context(), asFlag)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -426,7 +426,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag3() {
 		suite.FailNow("type not coercible")
 	}
 
-	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	report, err := suite.typeconverter.ASFlagToReport(suite.T().Context(), asFlag)
 	suite.Nil(report)
 	suite.EqualError(err, "ASFlagToReport: error getting target account http://localhost:8080/users/mr_e_man from database: sql: no rows in result set")
 }
@@ -451,7 +451,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag4() {
 		suite.FailNow("type not coercible")
 	}
 
-	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	report, err := suite.typeconverter.ASFlagToReport(suite.T().Context(), asFlag)
 	suite.Nil(report)
 	suite.EqualError(err, "ASFlagToReport: missing target account uri for http://fossbros-anonymous.io/db22128d-884e-4358-9935-6a7c3940535d")
 }
@@ -479,7 +479,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag5() {
 		suite.FailNow("type not coercible")
 	}
 
-	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	report, err := suite.typeconverter.ASFlagToReport(suite.T().Context(), asFlag)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -516,7 +516,7 @@ func (suite *ASToInternalTestSuite) TestParseFlag6() {
 		suite.FailNow("type not coercible")
 	}
 
-	report, err := suite.typeconverter.ASFlagToReport(context.Background(), asFlag)
+	report, err := suite.typeconverter.ASFlagToReport(suite.T().Context(), asFlag)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -549,7 +549,7 @@ func (suite *ASToInternalTestSuite) TestParseAnnounce() {
 		suite.FailNow("type not coercible")
 	}
 
-	boost, isNew, err := suite.typeconverter.ASAnnounceToStatus(context.Background(), asAnnounce)
+	boost, isNew, err := suite.typeconverter.ASAnnounceToStatus(suite.T().Context(), asAnnounce)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -603,7 +603,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 		suite.FailNow("type not coercible")
 	}
 
-	acct, err := suite.typeconverter.ASRepresentationToAccount(context.Background(), rep, "", "")
+	acct, err := suite.typeconverter.ASRepresentationToAccount(suite.T().Context(), rep, "", "")
 	suite.NoError(err)
 	suite.Equal("https://honk.example.org/u/honk_user/followers", acct.FollowersURI)
 	suite.Equal("https://honk.example.org/u/honk_user/following", acct.FollowingURI)
@@ -618,7 +618,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 
 	// Store the account representation.
 	acct.ID = "01HMGRMAVQMYQC3DDQ29TPQKJ3" // <- needs an ID
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	if err := suite.db.PutAccount(ctx, acct); err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -708,7 +708,7 @@ func (suite *ASToInternalTestSuite) TestParseHonkAccount() {
 }
 
 func (suite *ASToInternalTestSuite) TestParseAccountableWithoutPreferredUsername() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
@@ -726,7 +726,7 @@ func (suite *ASToInternalTestSuite) TestParseAccountableWithoutPreferredUsername
 }
 
 func (suite *ASToInternalTestSuite) TestParseAccountableWithoutAnyUsername() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]
@@ -744,7 +744,7 @@ func (suite *ASToInternalTestSuite) TestParseAccountableWithoutAnyUsername() {
 }
 
 func (suite *ASToInternalTestSuite) TestParseAccountableWithPreferredUsername() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	testPerson := suite.testPeople["https://unknown-instance.com/users/brand_new_person"]

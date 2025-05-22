@@ -18,7 +18,6 @@
 package ap_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -62,7 +61,7 @@ func (suite *ExtractPubKeyTestSuite) TestExtractPubKeyFromStub() {
 		suite.FailNow(err.Error())
 	}
 
-	t, err := streams.ToType(context.Background(), m)
+	t, err := streams.ToType(suite.T().Context(), m)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

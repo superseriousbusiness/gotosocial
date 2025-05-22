@@ -18,7 +18,6 @@
 package federatingdb_test
 
 import (
-	"context"
 	"encoding/json"
 	"testing"
 
@@ -34,7 +33,7 @@ type FollowersTestSuite struct {
 func (suite *FollowersTestSuite) TestGetFollowers() {
 	testAccount := suite.testAccounts["local_account_2"]
 
-	f, err := suite.federatingDB.Followers(context.Background(), testrig.URLMustParse(testAccount.URI))
+	f, err := suite.federatingDB.Followers(suite.T().Context(), testrig.URLMustParse(testAccount.URI))
 	suite.NoError(err)
 
 	fi, err := ap.Serialize(f)

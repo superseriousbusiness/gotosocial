@@ -19,7 +19,6 @@ package lists_test
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -106,7 +105,7 @@ func (suite *ListAccountsAddTestSuite) TestPostListAccountOK() {
 
 	// Remove turtle from the list.
 	if err := suite.db.DeleteListEntry(
-		context.Background(),
+		suite.T().Context(),
 		entry.ListID,
 		entry.FollowID,
 	); err != nil {

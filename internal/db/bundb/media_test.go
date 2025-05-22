@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -31,19 +30,19 @@ type MediaTestSuite struct {
 
 func (suite *MediaTestSuite) TestGetAttachmentByID() {
 	testAttachment := suite.testAttachments["admin_account_status_1_attachment_1"]
-	attachment, err := suite.db.GetAttachmentByID(context.Background(), testAttachment.ID)
+	attachment, err := suite.db.GetAttachmentByID(suite.T().Context(), testAttachment.ID)
 	suite.NoError(err)
 	suite.NotNil(attachment)
 }
 
 func (suite *MediaTestSuite) TestGetOlder() {
-	attachments, err := suite.db.GetCachedAttachmentsOlderThan(context.Background(), time.Now(), 20)
+	attachments, err := suite.db.GetCachedAttachmentsOlderThan(suite.T().Context(), time.Now(), 20)
 	suite.NoError(err)
 	suite.Len(attachments, 3)
 }
 
 func (suite *MediaTestSuite) TestGetCachedAttachmentsOlderThan() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	attachments, err := suite.db.GetCachedAttachmentsOlderThan(ctx, time.Now(), 20)
 	suite.NoError(err)

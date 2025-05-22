@@ -39,7 +39,7 @@ func (suite *PollTestSuite) TestGetPollBy() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Sentinel error to mark avoiding a test case.
@@ -103,7 +103,7 @@ func (suite *PollTestSuite) TestGetPollVoteBy() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Sentinel error to mark avoiding a test case.
@@ -175,7 +175,7 @@ func (suite *PollTestSuite) TestGetPollVoteBy() {
 
 func (suite *PollTestSuite) TestUpdatePoll() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	for _, poll := range suite.testPolls {
@@ -200,7 +200,7 @@ func (suite *PollTestSuite) TestUpdatePoll() {
 
 func (suite *PollTestSuite) TestPutPoll() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	for _, poll := range suite.testPolls {
@@ -220,7 +220,7 @@ func (suite *PollTestSuite) TestPutPoll() {
 
 func (suite *PollTestSuite) TestPutPollVote() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// randomChoices generates random vote choices in poll.
@@ -271,7 +271,7 @@ func (suite *PollTestSuite) TestPutPollVote() {
 
 func (suite *PollTestSuite) TestDeletePoll() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	for _, poll := range suite.testPolls {
@@ -286,7 +286,7 @@ func (suite *PollTestSuite) TestDeletePoll() {
 }
 
 func (suite *PollTestSuite) TestDeletePollVotesBy() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	for _, vote := range suite.testPollVotes {
@@ -308,7 +308,7 @@ func (suite *PollTestSuite) TestDeletePollVotesBy() {
 }
 
 func (suite *PollTestSuite) TestDeletePollVotesByNoAccount() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Try to delete a poll by nonexisting account.

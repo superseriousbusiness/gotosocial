@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -32,7 +31,7 @@ type ThreadTestSuite struct {
 func (suite *ThreadTestSuite) TestPutThread() {
 	suite.NoError(
 		suite.db.PutThread(
-			context.Background(),
+			suite.T().Context(),
 			&gtsmodel.Thread{
 				ID: "01HCWK4HVQ4VGSS1G4VQP3AXZF",
 			},
@@ -44,7 +43,7 @@ func (suite *ThreadTestSuite) TestMuteUnmuteThread() {
 	var (
 		threadID   = suite.testThreads["local_account_1_status_1"].ID
 		accountID  = suite.testAccounts["local_account_1"].ID
-		ctx        = context.Background()
+		ctx        = suite.T().Context()
 		threadMute = &gtsmodel.ThreadMute{
 			ID:        "01HD3K14B62YJHH4RR0DSZ1EQ2",
 			ThreadID:  threadID,

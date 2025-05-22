@@ -18,7 +18,6 @@
 package user_test
 
 import (
-	"context"
 	"net"
 	"testing"
 
@@ -32,7 +31,7 @@ type CreateTestSuite struct {
 
 func (suite *CreateTestSuite) TestCreateOK() {
 	var (
-		ctx      = context.Background()
+		ctx      = suite.T().Context()
 		app      = suite.testApps["application_1"]
 		appToken = suite.testTokens["local_account_1_client_application_token"]
 		form     = &apimodel.AccountCreateRequest{

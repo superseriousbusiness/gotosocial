@@ -18,7 +18,6 @@
 package account_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type GetRSSTestSuite struct {
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
-	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "admin")
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(suite.T().Context(), "admin")
 	suite.NoError(err)
 	suite.EqualValues(1634726497, lastModified.Unix())
 
@@ -68,7 +67,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSAdmin() {
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
-	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(context.Background(), "the_mighty_zork")
+	getFeed, lastModified, err := suite.accountProcessor.GetRSSFeedForUsername(suite.T().Context(), "the_mighty_zork")
 	suite.NoError(err)
 	suite.EqualValues(1730451600, lastModified.Unix())
 
@@ -156,7 +155,7 @@ func (suite *GetRSSTestSuite) TestGetAccountRSSZork() {
 }
 
 func (suite *GetRSSTestSuite) TestGetAccountRSSZorkNoPosts() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Get all of zork's posts.
 	statuses, err := suite.db.GetAccountStatuses(ctx, suite.testAccounts["local_account_1"].ID, 0, false, false, "", "", false, false)

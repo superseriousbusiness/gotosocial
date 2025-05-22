@@ -38,7 +38,7 @@ func (suite *MoveTestSuite) move(
 	requestingAcct *gtsmodel.Account,
 	moveStr string,
 ) error {
-	ctx := createTestContext(receivingAcct, requestingAcct)
+	ctx := createTestContext(suite.T(), receivingAcct, requestingAcct)
 
 	rawMove := make(map[string]interface{})
 	if err := json.Unmarshal([]byte(moveStr), &rawMove); err != nil {

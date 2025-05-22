@@ -18,7 +18,6 @@
 package typeutils
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
@@ -59,8 +58,7 @@ func TestContentToContentLanguage(t *testing.T) {
 		expectedLang      string
 	}
 
-	ctx, cncl := context.WithCancel(context.Background())
-	defer cncl()
+	ctx := t.Context()
 
 	for i, testcase := range []testcase{
 		{

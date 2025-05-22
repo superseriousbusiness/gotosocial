@@ -18,7 +18,6 @@
 package media_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type GetEmojiTestSuite struct {
 }
 
 func (suite *GetEmojiTestSuite) TestGetCustomEmojis() {
-	emojis, err := suite.mediaProcessor.GetCustomEmojis(context.Background())
+	emojis, err := suite.mediaProcessor.GetCustomEmojis(suite.T().Context())
 
 	suite.NoError(err)
 	suite.Equal(1, len(emojis))

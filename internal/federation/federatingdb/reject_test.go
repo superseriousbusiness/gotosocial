@@ -39,7 +39,7 @@ func (suite *RejectTestSuite) TestRejectFollowRequest() {
 	// remote_account_2 rejects the follow request
 	followingAccount := suite.testAccounts["local_account_1"]
 	followedAccount := suite.testAccounts["remote_account_2"]
-	ctx := createTestContext(followingAccount, followedAccount)
+	ctx := createTestContext(suite.T(), followingAccount, followedAccount)
 
 	// put the follow request in the database
 	fr := &gtsmodel.FollowRequest{

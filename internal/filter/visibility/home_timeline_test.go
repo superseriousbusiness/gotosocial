@@ -18,7 +18,6 @@
 package visibility_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -36,7 +35,7 @@ type StatusStatusHomeTimelineableTestSuite struct {
 func (suite *StatusStatusHomeTimelineableTestSuite) TestOwnStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["local_account_1_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
@@ -47,7 +46,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestOwnStatusHomeTimelineabl
 func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["local_account_2_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
@@ -56,7 +55,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingStatusHomeTimel
 }
 
 func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingBoostedStatusHomeTimelineable() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testStatus := suite.testStatuses["admin_account_status_4"]
 	testAccount := suite.testAccounts["local_account_1"]
@@ -67,7 +66,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingBoostedStatusHo
 }
 
 func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingBoostedStatusHomeTimelineableNoReblogs() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Update follow to indicate that local_account_1
 	// doesn't want to see reblogs by admin_account.
@@ -90,7 +89,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestFollowingBoostedStatusHo
 func (suite *StatusStatusHomeTimelineableTestSuite) TestNotFollowingStatusHomeTimelineable() {
 	testStatus := suite.testStatuses["remote_account_1_status_1"]
 	testAccount := suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
@@ -105,7 +104,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestStatusTooNewNotTimelinea
 	testStatus.CreatedAt = time.Now().Add(25 * time.Hour)
 
 	testAccount := suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
@@ -120,7 +119,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestStatusNotTooNewTimelinea
 	testStatus.CreatedAt = time.Now().Add(23 * time.Hour)
 
 	testAccount := suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	timelineable, err := suite.filter.StatusHomeTimelineable(ctx, testAccount, testStatus)
 	suite.NoError(err)
@@ -129,7 +128,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestStatusNotTooNewTimelinea
 }
 
 func (suite *StatusStatusHomeTimelineableTestSuite) TestThread() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	threadParentAccount := suite.testAccounts["local_account_1"]
 	timelineOwnerAccount := suite.testAccounts["local_account_2"]
@@ -173,7 +172,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestThread() {
 }
 
 func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// This scenario makes sure that we don't timeline a status which is a followers-only
 	// reply to a followers-only status TO A FOLLOWERS-ONLY STATUS owned by someone the
@@ -282,7 +281,7 @@ func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyFollowersOnly(
 }
 
 func (suite *StatusStatusHomeTimelineableTestSuite) TestChainReplyPublicAndUnlocked() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// This scenario is exactly the same as the above test, but for a mix of unlocked + public posts
 

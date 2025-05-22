@@ -18,7 +18,6 @@
 package notifications_test
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -164,7 +163,7 @@ func (suite *NotificationsTestSuite) addMoreNotifications(testAccount *gtsmodel.
 			OriginAccountID:  suite.testAccounts["remote_account_2"].ID,
 		},
 	} {
-		if err := suite.db.Put(context.Background(), b); err != nil {
+		if err := suite.db.Put(suite.T().Context(), b); err != nil {
 			suite.FailNow(err.Error())
 		}
 	}

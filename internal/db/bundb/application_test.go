@@ -36,7 +36,7 @@ func (suite *ApplicationTestSuite) TestGetApplicationBy() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Sentinel error to mark avoiding a test case.
@@ -86,7 +86,7 @@ func (suite *ApplicationTestSuite) TestDeleteApplicationBy() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	for _, app := range suite.testApplications {
@@ -117,7 +117,7 @@ func (suite *ApplicationTestSuite) TestDeleteApplicationBy() {
 }
 
 func (suite *ApplicationTestSuite) TestGetAllTokens() {
-	tokens, err := suite.db.GetAllTokens(context.Background())
+	tokens, err := suite.db.GetAllTokens(suite.T().Context())
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -125,7 +125,7 @@ func (suite *ApplicationTestSuite) TestGetAllTokens() {
 }
 
 func (suite *ApplicationTestSuite) TestDeleteTokensByClientID() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Delete tokens by each app.
 	for _, app := range suite.testApplications {
@@ -147,7 +147,7 @@ func (suite *ApplicationTestSuite) TestDeleteTokensByUnknownClientID() {
 	// Should not return ErrNoRows even though
 	// the client with given ID doesn't exist.
 	if err := suite.state.DB.DeleteTokensByClientID(
-		context.Background(),
+		suite.T().Context(),
 		"01JPJ4NCGH6GHY7ZVYBHNP55XS",
 	); err != nil {
 		suite.FailNow(err.Error())

@@ -18,7 +18,6 @@
 package mutes_test
 
 import (
-	"context"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -96,7 +95,7 @@ func (suite *MutesTestSuite) TestGetMutedAccounts() {
 		AccountID:       suite.testAccounts["local_account_1"].ID,
 		TargetAccountID: suite.testAccounts["local_account_2"].ID,
 	}
-	err := suite.db.PutMute(context.Background(), mute1)
+	err := suite.db.PutMute(suite.T().Context(), mute1)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -107,7 +106,7 @@ func (suite *MutesTestSuite) TestGetMutedAccounts() {
 		AccountID:       suite.testAccounts["local_account_1"].ID,
 		TargetAccountID: suite.testAccounts["remote_account_1"].ID,
 	}
-	err = suite.db.PutMute(context.Background(), mute2)
+	err = suite.db.PutMute(suite.T().Context(), mute2)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -141,7 +140,7 @@ func (suite *MutesTestSuite) TestIndefinitelyMutedAccountSerializesMuteExpiratio
 		AccountID:       suite.testAccounts["local_account_1"].ID,
 		TargetAccountID: suite.testAccounts["remote_account_1"].ID,
 	}
-	err := suite.db.PutMute(context.Background(), mute)
+	err := suite.db.PutMute(suite.T().Context(), mute)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

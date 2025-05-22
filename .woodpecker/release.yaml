@@ -13,7 +13,7 @@ clone:
 steps:
   release:
     # https://codeberg.org/superseriousbusiness/gotosocial-woodpecker-build
-    image: superseriousbusiness/gotosocial-woodpecker-build:0.11.0
+    image: superseriousbusiness/gotosocial-woodpecker-build:0.12.0
     pull: true
 
     # https://woodpecker-ci.org/docs/usage/volumes

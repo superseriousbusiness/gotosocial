@@ -18,7 +18,6 @@
 package account_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -38,7 +37,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateSimple() {
 	*testAccount = *suite.testAccounts["local_account_1"]
 
 	var (
-		ctx          = context.Background()
+		ctx          = suite.T().Context()
 		locked       = true
 		displayName  = "new display name"
 		note         = "#hello here i am!"
@@ -88,7 +87,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMention() {
 	*testAccount = *suite.testAccounts["local_account_1"]
 
 	var (
-		ctx          = context.Background()
+		ctx          = suite.T().Context()
 		locked       = true
 		displayName  = "new display name"
 		note         = "#hello here i am!\n\ngo check out @1happyturtle, they have a cool account!"
@@ -144,7 +143,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithMarkdownNote() {
 	testAccount.Settings = settings
 
 	var (
-		ctx          = context.Background()
+		ctx          = suite.T().Context()
 		note         = "*hello* ~~here~~ i am!"
 		noteExpected = `<p><em>hello</em> <del>here</del> i am!</p>`
 	)
@@ -193,7 +192,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateWithFields() {
 	*testAccount = *suite.testAccounts["local_account_1"]
 
 	var (
-		ctx          = context.Background()
+		ctx          = suite.T().Context()
 		updateFields = []apimodel.UpdateField{
 			{
 				Name:  func() *string { s := "favourite emoji"; return &s }(),
@@ -287,7 +286,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateNoteNotFields() {
 	*testAccount = *suite.testAccounts["local_account_2"]
 
 	var (
-		ctx             = context.Background()
+		ctx             = suite.T().Context()
 		fieldsRawBefore = len(testAccount.FieldsRaw)
 		fieldsBefore    = len(testAccount.Fields)
 		note            = "#hello here i am!"
@@ -335,7 +334,7 @@ func (suite *AccountUpdateTestSuite) TestAccountUpdateNoteNotFields() {
 func (suite *AccountUpdateTestSuite) TestAccountUpdateBotNotBot() {
 	testAccount := &gtsmodel.Account{}
 	*testAccount = *suite.testAccounts["local_account_1"]
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// Call update function to set bot = true.
 	apiAccount, errWithCode := suite.accountProcessor.Update(

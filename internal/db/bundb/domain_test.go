@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"slices"
 	"testing"
 	"time"
@@ -32,7 +31,7 @@ type DomainTestSuite struct {
 }
 
 func (suite *DomainTestSuite) TestIsDomainBlocked() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	domainBlock := &gtsmodel.DomainBlock{
 		ID:                 "01G204214Y9TNJEBX39C7G88SW",
@@ -57,7 +56,7 @@ func (suite *DomainTestSuite) TestIsDomainBlocked() {
 }
 
 func (suite *DomainTestSuite) TestIsDomainBlockedWithAllow() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	domainBlock := &gtsmodel.DomainBlock{
 		ID:                 "01G204214Y9TNJEBX39C7G88SW",
@@ -110,7 +109,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedWithAllow() {
 }
 
 func (suite *DomainTestSuite) TestIsDomainBlockedWildcard() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	domainBlock := &gtsmodel.DomainBlock{
 		ID:                 "01G204214Y9TNJEBX39C7G88SW",
@@ -142,7 +141,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedWildcard() {
 }
 
 func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	now := time.Now()
 
@@ -178,7 +177,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII() {
 }
 
 func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII2() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	now := time.Now()
 
@@ -214,7 +213,7 @@ func (suite *DomainTestSuite) TestIsDomainBlockedNonASCII2() {
 }
 
 func (suite *DomainTestSuite) TestIsOtherDomainBlockedWildcardAndExplicit() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	blocks := []*gtsmodel.DomainBlock{
 		{

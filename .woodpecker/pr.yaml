@@ -22,7 +22,7 @@ steps:
 
     # We use golangci-lint for linting.
     # See: https://golangci-lint.run/
-    image: golangci/golangci-lint:v1.62.0
+    image: golangci/golangci-lint:v1.64.8
     pull: true
 
     # https://woodpecker-ci.org/docs/administration/configuration/backends/docker#run-user
@@ -61,7 +61,7 @@ steps:
           any(fromJSON(CI_PIPELINE_FILES), { # startsWith "internal/" || # startsWith "cmd/" || # startsWith "testrig/" || # startsWith "vendor/" }) ||
           len(fromJSON(CI_PIPELINE_FILES)) == 0
 
-    image: golang:1.23-alpine
+    image: golang:1.24-alpine
     pull: true
 
     # https://woodpecker-ci.org/docs/administration/configuration/backends/docker#run-user

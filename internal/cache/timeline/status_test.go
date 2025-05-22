@@ -69,7 +69,7 @@ var testStatusMeta = []*StatusMeta{
 }
 
 func TestStatusTimelinePreloader(t *testing.T) {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(t.Context())
 	defer cncl()
 
 	var tt StatusTimeline
@@ -154,7 +154,7 @@ func TestStatusTimelineLoadLimit(t *testing.T) {
 	tt.Init(1000)
 
 	// Prepare new context for the duration of this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(t.Context())
 	defer cncl()
 
 	// Clone the input test status data.

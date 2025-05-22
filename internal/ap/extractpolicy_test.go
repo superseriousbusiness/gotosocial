@@ -19,7 +19,6 @@ package ap_test
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"testing"
 
@@ -86,7 +85,7 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicy() {
 }`
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(
 			bytes.NewBufferString(rawNote),
 		),
@@ -186,7 +185,7 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicyDeprecated() {
 }`
 
 	statusable, err := ap.ResolveStatusable(
-		context.Background(),
+		suite.T().Context(),
 		io.NopCloser(
 			bytes.NewBufferString(rawNote),
 		),

@@ -18,7 +18,6 @@
 package tags_test
 
 import (
-	"context"
 	"net/http"
 
 	"code.superseriousbusiness.org/gotosocial/internal/api/client/tags"
@@ -50,7 +49,7 @@ func (suite *TagsTestSuite) TestGetFollowed() {
 	testTag := suite.testTags["welcome"]
 
 	// Setup: follow an existing tag.
-	if err := suite.db.PutFollowedTag(context.Background(), testAccount.ID, testTag.ID); err != nil {
+	if err := suite.db.PutFollowedTag(suite.T().Context(), testAccount.ID, testTag.ID); err != nil {
 		suite.FailNow(err.Error())
 	}
 

@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
@@ -110,7 +109,7 @@ func (suite *TimelineTestSuite) checkStatuses(statuses []*gtsmodel.Status, maxID
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimeline() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	page := toPage("", "", "", 20)
 
@@ -123,7 +122,7 @@ func (suite *TimelineTestSuite) TestGetPublicTimeline() {
 }
 
 func (suite *TimelineTestSuite) TestGetPublicTimelineLocal() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	page := toPage("", "", "", 20)
 
@@ -137,7 +136,7 @@ func (suite *TimelineTestSuite) TestGetPublicTimelineLocal() {
 
 func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
@@ -153,7 +152,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimeline() {
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
@@ -195,7 +194,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineIgnoreExclusive() {
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
@@ -229,7 +228,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineNoFollowing() {
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
@@ -247,7 +246,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineBackToFront() {
 
 func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 	var (
-		ctx            = context.Background()
+		ctx            = suite.T().Context()
 		viewingAccount = suite.testAccounts["local_account_1"]
 	)
 
@@ -265,7 +264,7 @@ func (suite *TimelineTestSuite) TestGetHomeTimelineFromHighest() {
 
 func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
 	var (
-		ctx  = context.Background()
+		ctx  = suite.T().Context()
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
@@ -281,7 +280,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineNoParams() {
 
 func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
 	var (
-		ctx  = context.Background()
+		ctx  = suite.T().Context()
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
@@ -299,7 +298,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineMaxID() {
 
 func (suite *TimelineTestSuite) TestGetListTimelineMinID() {
 	var (
-		ctx  = context.Background()
+		ctx  = suite.T().Context()
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
@@ -317,7 +316,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineMinID() {
 
 func (suite *TimelineTestSuite) TestGetListTimelineMinIDPagingUp() {
 	var (
-		ctx  = context.Background()
+		ctx  = suite.T().Context()
 		list = suite.testLists["local_account_1_list_1"]
 	)
 
@@ -335,7 +334,7 @@ func (suite *TimelineTestSuite) TestGetListTimelineMinIDPagingUp() {
 
 func (suite *TimelineTestSuite) TestGetTagTimelineNoParams() {
 	var (
-		ctx = context.Background()
+		ctx = suite.T().Context()
 		tag = suite.testTags["welcome"]
 	)
 

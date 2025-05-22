@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
@@ -32,7 +31,7 @@ type BundbNewTestSuite struct {
 
 func (suite *BundbNewTestSuite) TestCreateNewDB() {
 	// create a new db with standard test settings
-	db, err := bundb.NewBunDBService(context.Background(), nil)
+	db, err := bundb.NewBunDBService(suite.T().Context(), nil)
 	suite.NoError(err)
 	suite.NotNil(db)
 }
@@ -41,7 +40,7 @@ func (suite *BundbNewTestSuite) TestCreateNewSqliteDBNoAddress() {
 	// create a new db with no address specified
 	config.SetDbAddress("")
 	config.SetDbType("sqlite")
-	db, err := bundb.NewBunDBService(context.Background(), nil)
+	db, err := bundb.NewBunDBService(suite.T().Context(), nil)
 	suite.EqualError(err, "'db-address' was not set when attempting to start sqlite")
 	suite.Nil(db)
 }

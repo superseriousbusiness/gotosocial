@@ -94,7 +94,7 @@ type WorkerTaskTestSuite struct {
 }
 
 func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	var tasks []*gtsmodel.WorkerTask
@@ -255,7 +255,7 @@ func (suite *WorkerTaskTestSuite) TestFillWorkerQueues() {
 }
 
 func (suite *WorkerTaskTestSuite) TestPersistWorkerQueues() {
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Push all test worker tasks to their respective queues.

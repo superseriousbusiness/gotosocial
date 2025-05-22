@@ -18,7 +18,6 @@
 package media_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type RefetchTestSuite struct {
 }
 
 func (suite *RefetchTestSuite) TestRefetchEmojisNothingToDo() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	adminAccount := suite.testAccounts["admin_account"]
 	transport, err := suite.transportController.NewTransportForUsername(ctx, adminAccount.Username)
@@ -43,7 +42,7 @@ func (suite *RefetchTestSuite) TestRefetchEmojisNothingToDo() {
 }
 
 func (suite *RefetchTestSuite) TestRefetchEmojis() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	if err := suite.storage.Delete(ctx, suite.testEmojis["yell"].ImagePath); err != nil {
 		suite.FailNow(err.Error())
@@ -61,7 +60,7 @@ func (suite *RefetchTestSuite) TestRefetchEmojis() {
 }
 
 func (suite *RefetchTestSuite) TestRefetchEmojisLocal() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// delete the image for a LOCAL emoji
 	if err := suite.storage.Delete(ctx, suite.testEmojis["rainbow"].ImagePath); err != nil {

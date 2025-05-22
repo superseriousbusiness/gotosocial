@@ -18,8 +18,6 @@
 package conversations_test
 
 import (
-	"context"
-
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -27,7 +25,7 @@ func (suite *ConversationsTestSuite) TestRead() {
 	conversation := suite.NewTestConversation(suite.testAccount, 0)
 
 	suite.False(util.PtrOrValue(conversation.Read, false))
-	apiConversation, err := suite.conversationsProcessor.Read(context.Background(), suite.testAccount, conversation.ID)
+	apiConversation, err := suite.conversationsProcessor.Read(suite.T().Context(), suite.testAccount, conversation.ID)
 	if suite.NoError(err) {
 		suite.False(apiConversation.Unread)
 	}

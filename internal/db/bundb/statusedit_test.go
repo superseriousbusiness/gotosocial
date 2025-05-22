@@ -37,7 +37,7 @@ func (suite *StatusEditTestSuite) TestGetStatusEditBy() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// Sentinel error to mark avoiding a test case.
@@ -78,7 +78,7 @@ func (suite *StatusEditTestSuite) TestGetStatusEditsByIDs() {
 	t := suite.T()
 
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	// editsByStatus returns all test edits by the given status with ID.
@@ -115,7 +115,7 @@ func (suite *StatusEditTestSuite) TestGetStatusEditsByIDs() {
 
 func (suite *StatusEditTestSuite) TestDeleteStatusEdits() {
 	// Create a new context for this test.
-	ctx, cncl := context.WithCancel(context.Background())
+	ctx, cncl := context.WithCancel(suite.T().Context())
 	defer cncl()
 
 	for _, status := range suite.testStatuses {

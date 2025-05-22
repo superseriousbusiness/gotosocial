@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"testing"
@@ -37,7 +36,7 @@ func (suite *BasicTestSuite) TestGetAccountByID() {
 	testAccount := suite.testAccounts["local_account_1"]
 
 	a := &gtsmodel.Account{}
-	err := suite.db.GetByID(context.Background(), testAccount.ID, a)
+	err := suite.db.GetByID(suite.T().Context(), testAccount.ID, a)
 	suite.NoError(err)
 }
 
@@ -60,12 +59,12 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 		PublicKey:    &key.PublicKey,
 	}
 
-	if err := suite.db.Put(context.Background(), testAccount); err != nil {
+	if err := suite.db.Put(suite.T().Context(), testAccount); err != nil {
 		suite.FailNow(err.Error())
 	}
 
 	a := &gtsmodel.Account{}
-	if err := suite.db.GetByID(context.Background(), testAccount.ID, a); err != nil {
+	if err := suite.db.GetByID(suite.T().Context(), testAccount.ID, a); err != nil {
 		suite.FailNow(err.Error())
 	}
 
@@ -111,7 +110,7 @@ func (suite *BasicTestSuite) TestPutAccountWithBunDefaultFields() {
 
 func (suite *BasicTestSuite) TestGetAllStatuses() {
 	s := []*gtsmodel.Status{}
-	err := suite.db.GetAll(context.Background(), &s)
+	err := suite.db.GetAll(suite.T().Context(), &s)
 	suite.NoError(err)
 	suite.Len(s, 30)
 }
@@ -125,7 +124,7 @@ func (suite *BasicTestSuite) TestGetAllNotNull() {
 
 	a := []*gtsmodel.Account{}
 
-	err := suite.db.GetWhere(context.Background(), where, &a)
+	err := suite.db.GetWhere(suite.T().Context(), where, &a)
 	suite.NoError(err)
 	suite.NotEmpty(a)
 

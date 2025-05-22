@@ -36,7 +36,7 @@ func (suite *AnnounceTestSuite) TestNewAnnounce() {
 	receivingAccount1 := suite.testAccounts["local_account_1"]
 	announcingAccount := suite.testAccounts["remote_account_1"]
 
-	ctx := createTestContext(receivingAccount1, announcingAccount)
+	ctx := createTestContext(suite.T(), receivingAccount1, announcingAccount)
 	announce1 := suite.testActivities["announce_forwarded_1_zork"]
 
 	err := suite.federatingDB.Announce(ctx, announce1.Activity.(vocab.ActivityStreamsAnnounce))
@@ -63,7 +63,7 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 
 	announcingAccount := suite.testAccounts["remote_account_1"]
 
-	ctx1 := createTestContext(receivingAccount1, announcingAccount)
+	ctx1 := createTestContext(suite.T(), receivingAccount1, announcingAccount)
 	announce1 := suite.testActivities["announce_forwarded_1_zork"]
 
 	err := suite.federatingDB.Announce(ctx1, announce1.Activity.(vocab.ActivityStreamsAnnounce))
@@ -87,7 +87,7 @@ func (suite *AnnounceTestSuite) TestAnnounceTwice() {
 	suite.Nil(boost.BoostOf)
 	suite.Equal("http://example.org/users/Some_User/statuses/afaba698-5740-4e32-a702-af61aa543bc1", boost.BoostOfURI)
 
-	ctx2 := createTestContext(receivingAccount2, announcingAccount)
+	ctx2 := createTestContext(suite.T(), receivingAccount2, announcingAccount)
 	announce2 := suite.testActivities["announce_forwarded_1_turtle"]
 
 	err = suite.federatingDB.Announce(ctx2, announce2.Activity.(vocab.ActivityStreamsAnnounce))

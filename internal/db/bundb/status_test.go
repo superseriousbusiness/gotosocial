@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -32,7 +31,7 @@ type StatusTestSuite struct {
 }
 
 func (suite *StatusTestSuite) TestGetStatusByID() {
-	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["local_account_1_status_1"].ID)
+	status, err := suite.db.GetStatusByID(suite.T().Context(), suite.testStatuses["local_account_1_status_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -52,7 +51,7 @@ func (suite *StatusTestSuite) TestGetStatusesByIDs() {
 		suite.testStatuses["local_account_2_status_3"].ID,
 	}
 
-	statuses, err := suite.db.GetStatusesByIDs(context.Background(), ids)
+	statuses, err := suite.db.GetStatusesByIDs(suite.T().Context(), ids)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -83,7 +82,7 @@ func (suite *StatusTestSuite) TestGetStatusesByIDs() {
 }
 
 func (suite *StatusTestSuite) TestGetStatusByURI() {
-	status, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_2_status_3"].URI)
+	status, err := suite.db.GetStatusByURI(suite.T().Context(), suite.testStatuses["local_account_2_status_3"].URI)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -98,7 +97,7 @@ func (suite *StatusTestSuite) TestGetStatusByURI() {
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithExtras() {
-	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["admin_account_status_1"].ID)
+	status, err := suite.db.GetStatusByID(suite.T().Context(), suite.testStatuses["admin_account_status_1"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -112,7 +111,7 @@ func (suite *StatusTestSuite) TestGetStatusWithExtras() {
 }
 
 func (suite *StatusTestSuite) TestGetStatusWithMention() {
-	status, err := suite.db.GetStatusByID(context.Background(), suite.testStatuses["local_account_2_status_5"].ID)
+	status, err := suite.db.GetStatusByID(suite.T().Context(), suite.testStatuses["local_account_2_status_5"].ID)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -135,14 +134,14 @@ func (suite *StatusTestSuite) TestGetStatusWithMention() {
 /*
 func (suite *StatusTestSuite) TestGetStatusTwice() {
 	before1 := time.Now()
-	_, err := suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
+	_, err := suite.db.GetStatusByURI(suite.T().Context(), suite.testStatuses["local_account_1_status_1"].URI)
 	suite.NoError(err)
 	after1 := time.Now()
 	duration1 := after1.Sub(before1)
 	fmt.Println(duration1.Microseconds())
 
 	before2 := time.Now()
-	_, err = suite.db.GetStatusByURI(context.Background(), suite.testStatuses["local_account_1_status_1"].URI)
+	_, err = suite.db.GetStatusByURI(suite.T().Context(), suite.testStatuses["local_account_1_status_1"].URI)
 	suite.NoError(err)
 	after2 := time.Now()
 	duration2 := after2.Sub(before2)
@@ -155,7 +154,7 @@ func (suite *StatusTestSuite) TestGetStatusTwice() {
 
 func (suite *StatusTestSuite) TestGetStatusReplies() {
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
-	children, err := suite.db.GetStatusReplies(context.Background(), targetStatus.ID)
+	children, err := suite.db.GetStatusReplies(suite.T().Context(), targetStatus.ID)
 	suite.NoError(err)
 	suite.Len(children, 2)
 	for _, c := range children {
@@ -167,7 +166,7 @@ func (suite *StatusTestSuite) TestGetStatusReplies() {
 
 func (suite *StatusTestSuite) TestGetStatusChildren() {
 	targetStatus := suite.testStatuses["local_account_1_status_1"]
-	children, err := suite.db.GetStatusChildren(context.Background(), targetStatus.ID)
+	children, err := suite.db.GetStatusChildren(suite.T().Context(), targetStatus.ID)
 	suite.NoError(err)
 	suite.Len(children, 3)
 }
@@ -177,10 +176,10 @@ func (suite *StatusTestSuite) TestDeleteStatus() {
 	targetStatus := &gtsmodel.Status{}
 	*targetStatus = *suite.testStatuses["admin_account_status_1"]
 
-	err := suite.db.DeleteStatusByID(context.Background(), targetStatus.ID)
+	err := suite.db.DeleteStatusByID(suite.T().Context(), targetStatus.ID)
 	suite.NoError(err)
 
-	_, err = suite.db.GetStatusByID(context.Background(), targetStatus.ID)
+	_, err = suite.db.GetStatusByID(suite.T().Context(), targetStatus.ID)
 	suite.ErrorIs(err, db.ErrNoEntries)
 }
 
@@ -201,16 +200,16 @@ func (suite *StatusTestSuite) TestUpdateStatus() {
 
 	targetStatus.PinnedAt = time.Time{}
 
-	err := suite.db.UpdateStatus(context.Background(), targetStatus, "pinned_at")
+	err := suite.db.UpdateStatus(suite.T().Context(), targetStatus, "pinned_at")
 	suite.NoError(err)
 
-	updated, err := suite.db.GetStatusByID(context.Background(), targetStatus.ID)
+	updated, err := suite.db.GetStatusByID(suite.T().Context(), targetStatus.ID)
 	suite.NoError(err)
 	suite.True(updated.PinnedAt.IsZero())
 }
 
 func (suite *StatusTestSuite) TestPutPopulatedStatus() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	targetStatus := &gtsmodel.Status{}
 	*targetStatus = *suite.testStatuses["admin_account_status_1"]

@@ -18,7 +18,6 @@
 package media_test
 
 import (
-	"context"
 	"io"
 	"path"
 	"testing"
@@ -36,7 +35,7 @@ type GetFileTestSuite struct {
 }
 
 func (suite *GetFileTestSuite) TestGetRemoteFileCached() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 	fileName := path.Base(testAttachment.File.Path)
@@ -64,7 +63,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileCached() {
 }
 
 func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
@@ -116,7 +115,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncached() {
 }
 
 func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 
 	// uncache the file from local
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
@@ -163,7 +162,7 @@ func (suite *GetFileTestSuite) TestGetRemoteFileUncachedInterrupted() {
 }
 
 func (suite *GetFileTestSuite) TestGetRemoteFileThumbnailUncached() {
-	ctx := context.Background()
+	ctx := suite.T().Context()
 	testAttachment := suite.testAttachments["remote_account_1_status_1_attachment_1"]
 
 	// fetch the existing thumbnail bytes from storage first

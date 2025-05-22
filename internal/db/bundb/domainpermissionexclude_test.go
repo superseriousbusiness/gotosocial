@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"errors"
 	"testing"
 
@@ -34,7 +33,7 @@ type DomainPermissionExcludeTestSuite struct {
 
 func (suite *DomainPermissionExcludeTestSuite) TestPermExcludeCreateGetDelete() {
 	var (
-		ctx     = context.Background()
+		ctx     = suite.T().Context()
 		exclude = &gtsmodel.DomainPermissionExclude{
 			ID:                 "01JCZN614XG85GCGAMSV9ZZAEJ",
 			Domain:             "exämple.org",
@@ -103,7 +102,7 @@ func (suite *DomainPermissionExcludeTestSuite) TestPermExcludeCreateGetDelete() 
 
 func (suite *DomainPermissionExcludeTestSuite) TestExcluded() {
 	var (
-		ctx                = context.Background()
+		ctx                = suite.T().Context()
 		createdByAccountID = suite.testAccounts["admin_account"].ID
 	)
 

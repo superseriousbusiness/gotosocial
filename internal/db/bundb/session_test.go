@@ -18,7 +18,6 @@
 package bundb_test
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/suite"
@@ -29,7 +28,7 @@ type SessionTestSuite struct {
 }
 
 func (suite *SessionTestSuite) TestGetSession() {
-	session, err := suite.db.GetSession(context.Background())
+	session, err := suite.db.GetSession(suite.T().Context())
 	suite.NoError(err)
 	suite.NotNil(session)
 	suite.NotEmpty(session.Auth)
@@ -37,7 +36,7 @@ func (suite *SessionTestSuite) TestGetSession() {
 	suite.NotEmpty(session.ID)
 
 	// the same session should be returned with consecutive selects
-	session2, err := suite.db.GetSession(context.Background())
+	session2, err := suite.db.GetSession(suite.T().Context())
 	suite.NoError(err)
 	suite.NotNil(session2)
 	suite.Equal(session.Auth, session2.Auth)
