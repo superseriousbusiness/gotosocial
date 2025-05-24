@@ -526,9 +526,14 @@ func (u *utils) decrementFollowRequestsCount(
 	return nil
 }
 
-// requestFave stores an interaction request
+// faveToPendingFave stores an interaction request
 // for the given fave, and notifies the interactee.
-func (u *utils) requestFave(
+//
+// This is useful when a local account needs to send
+// out a LikeRequest, or when a remote account has
+// sent us a Like instead of a LikeRequest for a
+// status where Liking requires approval.
+func (u *utils) faveToPendingFave(
 	ctx context.Context,
 	fave *gtsmodel.StatusFave,
 ) error {
@@ -561,17 +566,26 @@ func (u *utils) requestFave(
 		return gtserror.Newf("db error storing interaction request: %w", err)
 	}
 
-	// Notify *local* account of pending announce.
-	if err := u.surface.notifyPendingFave(ctx, fave); err != nil {
+	// Notify *local* account of pending fave.
+	if err := u.surface.notifyPendingFave(ctx,
+		fave.Account,
+		fave.TargetAccount,
+		fave.Status,
+	); err != nil {
 		return gtserror.Newf("error notifying pending fave: %w", err)
 	}
 
 	return nil
 }
 
-// requestReply stores an interaction request
+// replyToRequestReply stores an interaction request
 // for the given reply, and notifies the interactee.
-func (u *utils) requestReply(
+//
+// This is useful when a local account needs to send
+// out a ReplyRequest, or when a remote account has
+// sent us a Create instead of a ReplyRequest for a
+// status where replying requires approval.
+func (u *utils) replyToRequestReply(
 	ctx context.Context,
 	reply *gtsmodel.Status,
 ) error {
@@ -612,9 +626,14 @@ func (u *utils) requestReply(
 	return nil
 }
 
-// requestAnnounce stores an interaction request
+// announceToRequestAnnounce stores an interaction request
 // for the given announce, and notifies the interactee.
-func (u *utils) requestAnnounce(
+//
+// This is useful when a local account needs to send
+// out an AnnounceRequest, or when a remote account has
+// sent us an Announce instead of an AnnounceRequest for
+// a status where announcing requires approval.
+func (u *utils) announceToRequestAnnounce(
 	ctx context.Context,
 	boost *gtsmodel.Status,
 ) error {
@@ -648,7 +667,12 @@ func (u *utils) requestAnnounce(
 	}
 
 	// Notify *local* account of pending announce.
-	if err := u.surface.notifyPendingAnnounce(ctx, boost); err != nil {
+	if err := u.surface.notifyPendingAnnounce(
+		ctx,
+		boost.Account,
+		boost.BoostOfAccount,
+		boost.BoostOf,
+	); err != nil {
 		return gtserror.Newf("error notifying pending announce: %w", err)
 	}
 

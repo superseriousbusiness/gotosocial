@@ -19,7 +19,8 @@ package gtsmodel
 
 import "time"
 
-// StatusFave refers to a 'fave' or 'like' in the database, from one account, targeting the status of another account
+// StatusFave refers to a 'fave' or 'like' in the database,
+// from one account, targeting the status of another account
 type StatusFave struct {
 	ID              string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                      // id of this item in the database
 	CreatedAt       time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`   // when was item created

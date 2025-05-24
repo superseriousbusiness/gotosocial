@@ -29,22 +29,47 @@ const (
 	// If you need to add new interaction types,
 	// add them *to the end* of the list.
 
+	/*
+		Types for when a requester straight up
+		sends a Like or a Create or an Announce.
+
+		In this case we will have the Like or the
+		Reply or the Announce stored in the db
+		marked as pending or whatever.
+	*/
+
 	InteractionLike InteractionType = iota
 	InteractionReply
 	InteractionAnnounce
+
+	/*
+		Types for when a requester politely sends
+		an XyzRequest asking for permission first.
+
+		In this case we don't store a Like or an
+		Announce in the db, as they don't exist yet,
+		but we do store a Reply if reply is pending
+		approval (for review) or approved, as the
+		proposed reply should have been sent along
+		as the object of the ReplyRequest.
+	*/
+
+	InteractionLikeRequest
+	InteractionReplyRequest
+	InteractionAnnounceRequest
 )
 
 // Stringifies this InteractionType in a
 // manner suitable for serving via the API.
 func (i InteractionType) String() string {
 	switch i {
-	case InteractionLike:
+	case InteractionLike, InteractionLikeRequest:
 		const text = "favourite"
 		return text
-	case InteractionReply:
+	case InteractionReply, InteractionReplyRequest:
 		const text = "reply"
 		return text
-	case InteractionAnnounce:
+	case InteractionAnnounce, InteractionAnnounceRequest:
 		const text = "reblog"
 		return text
 	default:
@@ -64,10 +89,10 @@ type InteractionRequest struct {
 	TargetAccount        *Account        `bun:"-"`                                                           // Not stored in DB. Account being interacted with.
 	InteractingAccountID string          `bun:"type:CHAR(26),nullzero,notnull"`                              // id of the account requesting the interaction.
 	InteractingAccount   *Account        `bun:"-"`                                                           // Not stored in DB. Account corresponding to targetAccountID
-	InteractionURI       string          `bun:",nullzero,notnull,unique"`                                    // URI of the interacting like, reply, or announce. Unique (only one interaction request allowed per interaction URI).
-	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, Reply, or Announce.
+	InteractionURI       string          `bun:",nullzero,notnull,unique"`                                    // URI of the interacting like (request), reply (request), or announce (request). Unique (only one interaction request allowed per interaction URI).
+	InteractionType      InteractionType `bun:",notnull"`                                                    // One of Like, LikeRequest, Reply, ReplyRequest, or Announce, AnnounceRequest.
 	Like                 *StatusFave     `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionLike.
-	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply.
+	Reply                *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionReply or InteractionType = InteractionReplyRequest.
 	Announce             *Status         `bun:"-"`                                                           // Not stored in DB. Only set if InteractionType = InteractionAnnounce.
 	AcceptedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was accepted, time at which this occurred.
 	RejectedAt           time.Time       `bun:"type:timestamptz,nullzero"`                                   // If interaction request was rejected, time at which this occurred.

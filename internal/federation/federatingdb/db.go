@@ -51,6 +51,11 @@ var _ interface {
 	Move(context.Context, vocab.ActivityStreamsMove) error
 	Flag(context.Context, vocab.ActivityStreamsFlag) error
 
+	// Custom types.
+	LikeRequest(context.Context, vocab.GoToSocialLikeRequest) error
+	ReplyRequest(context.Context, vocab.GoToSocialReplyRequest) error
+	AnnounceRequest(context.Context, vocab.GoToSocialAnnounceRequest) error
+
 	/*
 		Extra/convenience functionality.
 	*/
