@@ -307,14 +307,14 @@ function CreateOrUpdateDomainPerm({
 
 			<TextArea
 				field={form.privateComment}
-				label="Private comment"
+				label="Private comment (shown to admins only)"
 				autoCapitalize="sentences"
 				rows={3}
 			/>
 
 			<TextArea
 				field={form.publicComment}
-				label="Public comment"
+				label="Public comment (shown to members of this instance via the instance info page, and on the web if enabled)"
 				autoCapitalize="sentences"
 				rows={3}
 			/>

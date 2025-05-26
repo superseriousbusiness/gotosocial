@@ -85,6 +85,11 @@ export default function UserMenu() {
 					icon="fa-plus"
 				/>
 			</MenuItem>
+			<MenuItem
+				name="Instance Info"
+				itemUrl="instance-info"
+				icon="fa-info"
+			/>
 		</MenuItem>
 	);
 }

@@ -1549,6 +1549,50 @@ button.tab-button {
 	}
 }
 
+.instance-info-view {
+	.info-list .info-list-entry {
+		/*
+			Some of the labels are quite
+			long so ensure there's enough
+			gap when they're wrapped.
+		*/
+		gap: 1rem;
+	}
+
+	/*
+		Make sure ellipsis works
+		properly for v. long domains.
+	*/
+	.list.domain-perm-list > .entry > .domain {
+		display: inline-block;
+		font-weight: bold;
+	}
+
+	/*
+		Make sure we can break.
+	*/
+	.list.domain-perm-list > .entry > .public_comment {
+		word-wrap: anywhere;
+	}
+
+	/*
+		Disable the hover effects as
+		these entries aren't clickable.
+	*/
+	.list.domain-perm-list > .entry:hover {
+		background: $list-entry-bg;
+	}
+	.list.domain-perm-list > .entry:nth-child(2n):hover {
+		background: $list-entry-alternate-bg;
+	}
+	.list.domain-perm-list > .entry {
+		&:active, &:focus, &:hover, &:target {
+			border-color: $gray1;
+			border-top-color: transparent;
+		}
+	}
+}
+
 .instance-rules {
 	list-style-position: inside;
 	margin: 0;

@@ -33,6 +33,7 @@ export interface DomainPerm {
 	obfuscate?: boolean;
 	private_comment?: string;
 	public_comment?: string;
+	comment?: string;
 	created_at?: string;
 	created_by?: string;
 	subscription_id?: string;
