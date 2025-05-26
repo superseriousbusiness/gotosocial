@@ -149,7 +149,7 @@ var Defaults = Configuration{
 
 		ScraperDeterrence: ScraperDeterrenceConfig{
 			Enabled:    false,
-			Difficulty: 4,
+			Difficulty: 100000,
 		},
 	},
 

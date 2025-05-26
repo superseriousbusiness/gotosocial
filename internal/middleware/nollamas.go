@@ -26,6 +26,7 @@ import (
 	"hash"
 	"io"
 	"net/http"
+	"strconv"
 	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -35,6 +36,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/oauth"
+	"codeberg.org/gruf/go-bitutil"
 	"codeberg.org/gruf/go-byteutil"
 	"github.com/gin-gonic/gin"
 )
@@ -60,49 +62,79 @@ func NoLLaMas(
 		return func(*gin.Context) {}
 	}
 
-	seed := make([]byte, 32)
+	var seed [32]byte
 
 	// Read random data for the token seed.
-	_, err := io.ReadFull(rand.Reader, seed)
+	_, err := io.ReadFull(rand.Reader, seed[:])
 	if err != nil {
 		panic(err)
 	}
 
 	// Configure nollamas.
 	var nollamas nollamas
-	nollamas.seed = seed
+	nollamas.entropy = seed
 	nollamas.ttl = time.Hour
-	nollamas.diff = config.GetAdvancedScraperDeterrenceDifficulty()
+	nollamas.rounds = config.GetAdvancedScraperDeterrenceDifficulty()
 	nollamas.getInstanceV1 = getInstanceV1
 	nollamas.policy = cookiePolicy
 	return nollamas.Serve
 }
+
+// i.e. hash slice length.
+const hashLen = sha256.Size
+
+// i.e. hex.EncodedLen(hashLen).
+const encodedHashLen = 2 * hashLen
 
 // hashWithBufs encompasses a hash along
 // with the necessary buffers to generate
 // a hashsum and then encode that sum.
 type hashWithBufs struct {
 	hash hash.Hash
-	hbuf []byte
-	ebuf []byte
+	hbuf [hashLen]byte
+	ebuf [encodedHashLen]byte
+}
+
+// write is a passthrough to hash.Hash{}.Write().
+func (h *hashWithBufs) write(b []byte) {
+	_, _ = h.hash.Write(b)
+}
+
+// writeString is a passthrough to hash.Hash{}.Write([]byte(s)).
+func (h *hashWithBufs) writeString(s string) {
+	_, _ = h.hash.Write(byteutil.S2B(s))
+}
+
+// EncodedSum returns the hex encoded sum of hash.Sum().
+func (h *hashWithBufs) EncodedSum() string {
+	_ = h.hash.Sum(h.hbuf[:0])
+	hex.Encode(h.ebuf[:], h.hbuf[:])
+	return string(h.ebuf[:])
+}
+
+// Reset will reset hash and buffers.
+func (h *hashWithBufs) Reset() {
+	h.ebuf = [encodedHashLen]byte{}
+	h.hbuf = [hashLen]byte{}
+	h.hash.Reset()
 }
 
 type nollamas struct {
 	// our instance cookie policy.
 	policy apiutil.CookiePolicy
 
-	// unique token seed
+	// unique entropy
 	// to prevent hashes
 	// being guessable
-	seed []byte
+	entropy [32]byte
 
 	// success cookie TTL
 	ttl time.Duration
 
-	// algorithm difficulty knobs.
-	// diff determines the number
-	// of leading zeroes required.
-	diff uint8
+	// rounds determines roughly how
+	// many hash-encode rounds each
+	// client is required to complete.
+	rounds uint32
 
 	// extra fields required for
 	// our template rendering.
@@ -134,18 +166,8 @@ func (m *nollamas) Serve(c *gin.Context) {
 		return
 	}
 
-	// i.e. outputted hash slice length.
-	const hashLen = sha256.Size
-
-	// i.e. hex.EncodedLen(hashLen).
-	const encodedHashLen = 2 * hashLen
-
-	// Prepare hash + buffers.
-	hash := hashWithBufs{
-		hash: sha256.New(),
-		hbuf: make([]byte, 0, hashLen),
-		ebuf: make([]byte, encodedHashLen),
-	}
+	// Prepare new hash with buffers.
+	hash := hashWithBufs{hash: sha256.New()}
 
 	// Extract client fingerprint data.
 	userAgent := c.GetHeader("User-Agent")
@@ -153,15 +175,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 
 	// Generate a unique token for this request,
 	// only valid for a period of now +- m.ttl.
-	token := m.token(&hash, userAgent, clientIP)
-
-	// For unique challenge string just use a
-	// single portion of their 'success' token.
-	// SHA256 is not yet cracked, this is not an
-	// application of a hash requiring serious
-	// cryptographic security and it rotates on
-	// a TTL basis, so it should be fine.
-	challenge := token[:len(token)/4]
+	token := m.getToken(&hash, userAgent, clientIP)
 
 	// Check for a provided success token.
 	cookie, _ := c.Cookie("gts-nollamas")
@@ -169,8 +183,8 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// Check whether passed cookie
 	// is the expected success token.
 	if subtle.ConstantTimeCompare(
-		byteutil.S2B(token),
 		byteutil.S2B(cookie),
+		byteutil.S2B(token),
 	) == 1 {
 
 		// They passed us a valid, expected
@@ -185,10 +199,15 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// handlers from being called.
 	c.Abort()
 
+	// Generate challenge for this unique (yet deterministic) token,
+	// returning seed, wanted 'challenge' result and expected solution.
+	seed, challenge, solution := m.getChallenge(&hash, token)
+
 	// Prepare new log entry.
 	l := log.WithContext(ctx).
 		WithField("userAgent", userAgent).
-		WithField("challenge", challenge)
+		WithField("seed", seed).
+		WithField("rounds", solution)
 
 	// Extract and parse query.
 	query := c.Request.URL.Query()
@@ -196,32 +215,28 @@ func (m *nollamas) Serve(c *gin.Context) {
 	// Check query to see if an in-progress
 	// challenge solution has been provided.
 	nonce := query.Get("nollamas_solution")
-	if nonce == "" || len(nonce) > 20 {
+	if nonce == "" {
 
-		// noting that here, 20 is
-		// max integer string len.
-		//
-		// An invalid solution string, just
-		// present them with new challenge.
+		// No solution given, likely new client!
+		// Simply present them with challenge.
+		m.renderChallenge(c, seed, challenge)
 		l.Info("posing new challenge")
-		m.renderChallenge(c, challenge)
 		return
 	}
 
-	// Reset the hash.
-	hash.hash.Reset()
+	// Check nonce matches expected.
+	if subtle.ConstantTimeCompare(
+		byteutil.S2B(solution),
+		byteutil.S2B(nonce),
+	) != 1 {
 
-	// Check challenge+nonce as possible solution.
-	if !m.checkChallenge(&hash, challenge, nonce) {
-
-		// They failed challenge,
-		// re-present challenge page.
-		l.Info("invalid solution provided")
-		m.renderChallenge(c, challenge)
+		// Their nonce failed, re-challenge them.
+		m.renderChallenge(c, challenge, solution)
+		l.Infof("invalid solution provided: %s", nonce)
 		return
 	}
 
-	l.Infof("challenge passed: %s", nonce)
+	l.Info("challenge passed")
 
 	// Drop solution query and encode.
 	query.Del("nollamas_solution")
@@ -233,7 +248,7 @@ func (m *nollamas) Serve(c *gin.Context) {
 	c.Redirect(http.StatusTemporaryRedirect, c.Request.URL.RequestURI())
 }
 
-func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
+func (m *nollamas) renderChallenge(c *gin.Context, seed, challenge string) {
 	// Fetch current instance information for templating vars.
 	instance, errWithCode := m.getInstanceV1(c.Request.Context())
 	if errWithCode != nil {
@@ -252,8 +267,8 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 			"/assets/Fork-Awesome/css/fork-awesome.min.css",
 		},
 		Extra: map[string]any{
-			"challenge":  challenge,
-			"difficulty": m.diff,
+			"seed":      seed,
+			"challenge": challenge,
 		},
 		Javascript: []apiutil.JavascriptEntry{
 			{
@@ -264,23 +279,25 @@ func (m *nollamas) renderChallenge(c *gin.Context, challenge string) {
 	})
 }
 
-func (m *nollamas) token(hash *hashWithBufs, userAgent, clientIP string) string {
-	// Use our unique seed to seed hash,
+// getToken generates a unique yet deterministic token for given HTTP request
+// details, seeded by runtime generated entropy data and ttl rounded timestamp.
+func (m *nollamas) getToken(hash *hashWithBufs, userAgent, clientIP string) string {
+
+	// Reset before
+	// using hash.
+	hash.Reset()
+
+	// Use our unique entropy to seed hash,
 	// to ensure we have cryptographically
 	// unique, yet deterministic, tokens
 	// generated for a given http client.
-	hash.hash.Write(m.seed)
-
-	// Include difficulty level in
-	// hash input data so if config
-	// changes then token invalidates.
-	hash.hash.Write([]byte{m.diff})
+	hash.write(m.entropy[:])
 
 	// Also seed the generated input with
 	// current time rounded to TTL, so our
 	// single comparison handles expiries.
 	now := time.Now().Round(m.ttl).Unix()
-	hash.hash.Write([]byte{
+	hash.write([]byte{
 		byte(now >> 56),
 		byte(now >> 48),
 		byte(now >> 40),
@@ -291,37 +308,78 @@ func (m *nollamas) token(hash *hashWithBufs, userAgent, clientIP string) string 
 		byte(now),
 	})
 
-	// Finally, append unique client request data.
-	hash.hash.Write(byteutil.S2B(userAgent))
-	hash.hash.Write(byteutil.S2B(clientIP))
+	// Append client request data.
+	hash.writeString(userAgent)
+	hash.writeString(clientIP)
 
-	// Return hex encoded hash output.
-	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
-	hex.Encode(hash.ebuf, hash.hbuf)
-	return string(hash.ebuf)
+	// Return hex encoded hash.
+	return hash.EncodedSum()
 }
 
-func (m *nollamas) checkChallenge(hash *hashWithBufs, challenge, nonce string) bool {
-	// Hash and encode input challenge with
-	// proposed nonce as a possible solution.
-	hash.hash.Write(byteutil.S2B(challenge))
-	hash.hash.Write(byteutil.S2B(nonce))
-	hash.hbuf = hash.hash.Sum(hash.hbuf[:0])
-	hex.Encode(hash.ebuf, hash.hbuf)
-	solution := hash.ebuf
+// getChallenge prepares a new challenge given the deterministic input token for this request.
+// it will return an input seed string, a challenge string which is the end result the client
+// should be looking for, and the solution for this such that challenge = hex(sha256(seed + solution)).
+// the solution will always be a string-encoded 64bit integer calculated from m.rounds + random jitter.
+func (m *nollamas) getChallenge(hash *hashWithBufs, token string) (seed, challenge, solution string) {
 
-	// Compiler bound-check hint.
-	if len(solution) < int(m.diff) {
-		panic(gtserror.New("BCE"))
+	// For their unique seed string just use a
+	// single portion of their 'success' token.
+	// SHA256 is not yet cracked, this is not an
+	// application of a hash requiring serious
+	// cryptographic security and it rotates on
+	// a TTL basis, so it should be fine.
+	seed = token[:len(token)/4]
+
+	// BEFORE resetting the hash, get the last
+	// two bytes of NON-hex-encoded data from
+	// token generation to use for random jitter.
+	// This is taken from the end of the hash as
+	// this is the "unseen" end part of token.
+	//
+	// (if we used hex-encoded data it would
+	// only ever be '0-9' or 'a-z' ASCII chars).
+	//
+	// Security-wise, same applies as-above.
+	jitter := int16(hash.hbuf[len(hash.hbuf)-2]) |
+		int16(hash.hbuf[len(hash.hbuf)-1])<<8
+
+	var rounds int64
+	switch {
+	// For some small percentage of
+	// clients we purposely low-ball
+	// their rounds required, to make
+	// it so gaming it with a starting
+	// nonce value may suddenly fail.
+	case jitter%37 == 0:
+		rounds = int64(m.rounds/10) + int64(jitter/10)
+	case jitter%31 == 0:
+		rounds = int64(m.rounds/5) + int64(jitter/5)
+	case jitter%29 == 0:
+		rounds = int64(m.rounds/3) + int64(jitter/3)
+	case jitter%13 == 0:
+		rounds = int64(m.rounds/2) + int64(jitter/2)
+
+	// Determine an appropriate number of hash rounds
+	// we want the client to perform on input seed. This
+	// is determined as configured m.rounds +- jitter.
+	// This will be the 'solution' to create 'challenge'.
+	default:
+		rounds = int64(m.rounds) + int64(jitter) //nolint:gosec
 	}
 
-	// Check that the first 'diff'
-	// many chars are indeed zeroes.
-	for i := range m.diff {
-		if solution[i] != '0' {
-			return false
-		}
-	}
+	// Encode (positive) determined hash rounds as string.
+	solution = strconv.FormatInt(bitutil.Abs64(rounds), 10)
 
-	return true
+	// Reset before
+	// using hash.
+	hash.Reset()
+
+	// Calculate the expected result
+	// of hex(sha256(seed + solution)),
+	// i.e. the proposed 'challenge'.
+	hash.writeString(seed)
+	hash.writeString(solution)
+	challenge = hash.EncodedSum()
+
+	return
 }

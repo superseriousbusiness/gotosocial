@@ -178,7 +178,7 @@ func testDefaults() config.Configuration {
 
 			ScraperDeterrence: config.ScraperDeterrenceConfig{
 				Enabled:    envBool("GTS_ADVANCED_SCRAPER_DETERRENCE_ENABLED", false),
-				Difficulty: uint8(envInt("GTS_ADVANCED_SCRAPER_DETERRENCE_DIFFICULTY", 4)), //nolint
+				Difficulty: uint32(envInt("GTS_ADVANCED_SCRAPER_DETERRENCE_DIFFICULTY", 100000)), //nolint
 			},
 		},
 
