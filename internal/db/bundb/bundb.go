@@ -336,7 +336,6 @@ func bunDB(sqldb *sql.DB, dialect func() schema.Dialect) *bun.DB {
 		&gtsmodel.ConversationToStatus{},
 		&gtsmodel.StatusToEmoji{},
 		&gtsmodel.StatusToTag{},
-		&gtsmodel.ThreadToStatus{},
 	} {
 		db.RegisterModel(t)
 	}

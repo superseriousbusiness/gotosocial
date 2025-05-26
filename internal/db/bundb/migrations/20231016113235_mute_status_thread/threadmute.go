@@ -17,9 +17,13 @@
 
 package gtsmodel
 
-// Thread represents one thread of statuses.
-// TODO: add more fields here if necessary.
-type Thread struct {
-	ID        string   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	StatusIDs []string `bun:"-"`                                        // ids of statuses belonging to this thread (order not guaranteed)
+import "time"
+
+// ThreadMute represents an account-level mute of a thread of statuses.
+type ThreadMute struct {
+	ID        string    `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                               // id of this item in the database
+	CreatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`            // when was item created
+	UpdatedAt time.Time `bun:"type:timestamptz,nullzero,notnull,default:current_timestamp"`            // when was item last updated
+	ThreadID  string    `bun:"type:CHAR(26),nullzero,notnull,unique:thread_mute_thread_id_account_id"` // ID of the muted thread
+	AccountID string    `bun:"type:CHAR(26),nullzero,notnull,unique:thread_mute_thread_id_account_id"` // Account ID of the creator of this mute
 }

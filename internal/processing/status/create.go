@@ -217,10 +217,6 @@ func (p *Processor) Create(
 		return nil, errWithCode
 	}
 
-	if errWithCode := p.processThreadID(ctx, status); errWithCode != nil {
-		return nil, errWithCode
-	}
-
 	// Process the incoming created status visibility.
 	processVisibility(form, requester.Settings.Privacy, status)
 
@@ -440,46 +436,6 @@ func (p *Processor) processInReplyTo(
 	status.InReplyTo = inReplyTo
 	status.InReplyToURI = inReplyTo.URI
 	status.InReplyToAccountID = inReplyTo.AccountID
-
-	return nil
-}
-
-func (p *Processor) processThreadID(ctx context.Context, status *gtsmodel.Status) gtserror.WithCode {
-	// Status takes the thread ID of
-	// whatever it replies to, if set.
-	//
-	// Might not be set if status is local
-	// and replies to a remote status that
-	// doesn't have a thread ID yet.
-	//
-	// If so, we can just thread from this
-	// status onwards instead, since this
-	// is where the relevant part of the
-	// thread starts, from the perspective
-	// of our instance at least.
-	if status.InReplyTo != nil &&
-		status.InReplyTo.ThreadID != "" {
-		// Just inherit threadID from parent.
-		status.ThreadID = status.InReplyTo.ThreadID
-		return nil
-	}
-
-	// Mark new thread (or threaded
-	// subsection) starting from here.
-	threadID := id.NewULID()
-	if err := p.state.DB.PutThread(
-		ctx,
-		&gtsmodel.Thread{
-			ID: threadID,
-		},
-	); err != nil {
-		err := gtserror.Newf("error inserting new thread in db: %w", err)
-		return gtserror.NewErrorInternalError(err)
-	}
-
-	// Future replies to this status
-	// (if any) will inherit this thread ID.
-	status.ThreadID = threadID
 
 	return nil
 }

@@ -101,7 +101,7 @@ func (d *Dereferencer) EnrichAnnounce(
 	// Generate an ID for the boost wrapper status.
 	boost.ID = id.NewULIDFromTime(boost.CreatedAt)
 
-	// Store the boost wrapper status in database.
+	// Store the remote boost wrapper status in database.
 	switch err = d.state.DB.PutStatus(ctx, boost); {
 	case err == nil:
 		// all groovy.

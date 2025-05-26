@@ -20,6 +20,5 @@ package gtsmodel
 // Thread represents one thread of statuses.
 // TODO: add more fields here if necessary.
 type Thread struct {
-	ID        string   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
-	StatusIDs []string `bun:"-"`                                        // ids of statuses belonging to this thread (order not guaranteed)
+	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
 }
