@@ -55,6 +55,7 @@ func main() {
 	rootCmd.AddCommand(serverCommands())
 	rootCmd.AddCommand(debugCommands())
 	rootCmd.AddCommand(adminCommands())
+	rootCmd.AddCommand(migrationCommands())
 
 	// Testrigcmd will only be set when debug is enabled.
 	if testrigCmd := testrigCommands(); testrigCmd != nil {

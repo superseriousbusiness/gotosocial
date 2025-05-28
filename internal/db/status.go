@@ -47,7 +47,7 @@ type Status interface {
 	// PopulateStatusEdits ensures that status' edits are fully popualted.
 	PopulateStatusEdits(ctx context.Context, status *gtsmodel.Status) error
 
-	// PutStatus stores one status in the database.
+	// PutStatus stores one status in the database, this also handles status threading.
 	PutStatus(ctx context.Context, status *gtsmodel.Status) error
 
 	// UpdateStatus updates one status in the database.

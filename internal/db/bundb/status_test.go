@@ -21,8 +21,12 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -251,6 +255,302 @@ func (suite *StatusTestSuite) TestPutPopulatedStatus() {
 		"new note for this test",
 		dbStatus.Account.Note,
 	)
+}
+
+func (suite *StatusTestSuite) TestPutStatusThreadingBoostOfIDSet() {
+	ctx := suite.T().Context()
+
+	// Fake account details.
+	accountID := id.NewULID()
+	accountURI := "https://example.com/users/" + accountID
+
+	var err error
+
+	// Prepare new status.
+	statusID := id.NewULID()
+	statusURI := accountURI + "/statuses/" + statusID
+	status := &gtsmodel.Status{
+		ID:                  statusID,
+		URI:                 statusURI,
+		AccountID:           accountID,
+		AccountURI:          accountURI,
+		Local:               util.Ptr(false),
+		Federated:           util.Ptr(true),
+		ActivityStreamsType: ap.ObjectNote,
+	}
+
+	// Insert original status into database.
+	err = suite.db.PutStatus(ctx, status)
+	suite.NoError(err)
+	suite.NotEmpty(status.ThreadID)
+
+	// Prepare new boost.
+	boostID := id.NewULID()
+	boostURI := accountURI + "/statuses/" + boostID
+	boost := &gtsmodel.Status{
+		ID:                  boostID,
+		URI:                 boostURI,
+		AccountID:           accountID,
+		AccountURI:          accountURI,
+		BoostOfID:           statusID,
+		BoostOfAccountID:    accountID,
+		Local:               util.Ptr(false),
+		Federated:           util.Ptr(true),
+		ActivityStreamsType: ap.ObjectNote,
+	}
+
+	// Insert boost wrapper into database.
+	err = suite.db.PutStatus(ctx, boost)
+	suite.NoError(err)
+
+	// Boost wrapper should have inherited thread.
+	suite.Equal(status.ThreadID, boost.ThreadID)
+}
+
+func (suite *StatusTestSuite) TestPutStatusThreadingInReplyToIDSet() {
+	ctx := suite.T().Context()
+
+	// Fake account details.
+	accountID := id.NewULID()
+	accountURI := "https://example.com/users/" + accountID
+
+	var err error
+
+	// Prepare new status.
+	statusID := id.NewULID()
+	statusURI := accountURI + "/statuses/" + statusID
+	status := &gtsmodel.Status{
+		ID:                  statusID,
+		URI:                 statusURI,
+		AccountID:           accountID,
+		AccountURI:          accountURI,
+		Local:               util.Ptr(false),
+		Federated:           util.Ptr(true),
+		ActivityStreamsType: ap.ObjectNote,
+	}
+
+	// Insert original status into database.
+	err = suite.db.PutStatus(ctx, status)
+	suite.NoError(err)
+	suite.NotEmpty(status.ThreadID)
+
+	// Prepare new reply.
+	replyID := id.NewULID()
+	replyURI := accountURI + "/statuses/" + replyID
+	reply := &gtsmodel.Status{
+		ID:                  replyID,
+		URI:                 replyURI,
+		AccountID:           accountID,
+		AccountURI:          accountURI,
+		InReplyToID:         statusID,
+		InReplyToURI:        statusURI,
+		InReplyToAccountID:  accountID,
+		Local:               util.Ptr(false),
+		Federated:           util.Ptr(true),
+		ActivityStreamsType: ap.ObjectNote,
+	}
+
+	// Insert status reply into database.
+	err = suite.db.PutStatus(ctx, reply)
+	suite.NoError(err)
+
+	// Status reply should have inherited thread.
+	suite.Equal(status.ThreadID, reply.ThreadID)
+}
+
+func (suite *StatusTestSuite) TestPutStatusThreadingSiblings() {
+	ctx := suite.T().Context()
+
+	// Fake account details.
+	accountID := id.NewULID()
+	accountURI := "https://example.com/users/" + accountID
+
+	// Main parent status ID.
+	statusID := id.NewULID()
+	statusURI := accountURI + "/statuses/" + statusID
+	status := &gtsmodel.Status{
+		ID:                  statusID,
+		URI:                 statusURI,
+		AccountID:           accountID,
+		AccountURI:          accountURI,
+		Local:               util.Ptr(false),
+		Federated:           util.Ptr(true),
+		ActivityStreamsType: ap.ObjectNote,
+	}
+
+	const siblingCount = 10
+	var statuses []*gtsmodel.Status
+	for range siblingCount {
+		id := id.NewULID()
+		uri := accountURI + "/statuses/" + id
+
+		// Note here that inReplyToID not being set,
+		// so as they get inserted it's as if children
+		// are being dereferenced ahead of stored parent.
+		//
+		// Which is where out-of-sync threads can occur.
+		statuses = append(statuses, &gtsmodel.Status{
+			ID:                  id,
+			URI:                 uri,
+			AccountID:           accountID,
+			AccountURI:          accountURI,
+			InReplyToURI:        statusURI,
+			Local:               util.Ptr(false),
+			Federated:           util.Ptr(true),
+			ActivityStreamsType: ap.ObjectNote,
+		})
+	}
+
+	var err error
+	var threadID string
+
+	// Insert all of the sibling children
+	// into the database, they should all
+	// still get correctly threaded together.
+	for _, child := range statuses {
+		err = suite.db.PutStatus(ctx, child)
+		suite.NoError(err)
+		suite.NotEmpty(child.ThreadID)
+		if threadID == "" {
+			threadID = child.ThreadID
+		} else {
+			suite.Equal(threadID, child.ThreadID)
+		}
+	}
+
+	// Finally, insert the parent status.
+	err = suite.db.PutStatus(ctx, status)
+	suite.NoError(err)
+
+	// Parent should have inherited thread.
+	suite.Equal(threadID, status.ThreadID)
+}
+
+func (suite *StatusTestSuite) TestPutStatusThreadingReconcile() {
+	ctx := suite.T().Context()
+
+	// Fake account details.
+	accountID := id.NewULID()
+	accountURI := "https://example.com/users/" + accountID
+
+	const threadLength = 10
+	var statuses []*gtsmodel.Status
+	var lastURI, lastID string
+
+	// Generate front-half of thread.
+	for range threadLength / 2 {
+		id := id.NewULID()
+		uri := accountURI + "/statuses/" + id
+		statuses = append(statuses, &gtsmodel.Status{
+			ID:                  id,
+			URI:                 uri,
+			AccountID:           accountID,
+			AccountURI:          accountURI,
+			InReplyToID:         lastID,
+			InReplyToURI:        lastURI,
+			Local:               util.Ptr(false),
+			Federated:           util.Ptr(true),
+			ActivityStreamsType: ap.ObjectNote,
+		})
+		lastURI = uri
+		lastID = id
+	}
+
+	// Generate back-half of thread.
+	//
+	// Note here that inReplyToID not being set past
+	// the first item, so as they get inserted it's
+	// as if the children are dereferenced ahead of
+	// the stored parent, i.e. an out-of-sync thread.
+	for range threadLength / 2 {
+		id := id.NewULID()
+		uri := accountURI + "/statuses/" + id
+		statuses = append(statuses, &gtsmodel.Status{
+			ID:                  id,
+			URI:                 uri,
+			AccountID:           accountID,
+			AccountURI:          accountURI,
+			InReplyToID:         lastID,
+			InReplyToURI:        lastURI,
+			Local:               util.Ptr(false),
+			Federated:           util.Ptr(true),
+			ActivityStreamsType: ap.ObjectNote,
+		})
+		lastURI = uri
+		lastID = ""
+	}
+
+	var err error
+
+	// Thread IDs we expect to see for
+	// head statuses as we add them, and
+	// for tail statuses as we add them.
+	var thread0, threadN string
+
+	// Insert status thread from head and tail,
+	// specifically stopping before the middle.
+	// These should each get threaded separately.
+	for i := range (threadLength / 2) - 1 {
+		i0, iN := i, len(statuses)-1-i
+
+		// Insert i'th status from the start.
+		err = suite.db.PutStatus(ctx, statuses[i0])
+		suite.NoError(err)
+		suite.NotEmpty(statuses[i0].ThreadID)
+
+		// Check i0 thread.
+		if thread0 == "" {
+			thread0 = statuses[i0].ThreadID
+		} else {
+			suite.Equal(thread0, statuses[i0].ThreadID)
+		}
+
+		// Insert i'th status from the end.
+		err = suite.db.PutStatus(ctx, statuses[iN])
+		suite.NoError(err)
+		suite.NotEmpty(statuses[iN].ThreadID)
+
+		// Check iN thread.
+		if threadN == "" {
+			threadN = statuses[iN].ThreadID
+		} else {
+			suite.Equal(threadN, statuses[iN].ThreadID)
+		}
+	}
+
+	// Finally, insert remaining statuses,
+	// at some point among these it should
+	// trigger a status thread reconcile.
+	for _, status := range statuses {
+
+		if status.ThreadID != "" {
+			// already inserted
+			continue
+		}
+
+		// Insert remaining status into db.
+		err = suite.db.PutStatus(ctx, status)
+		suite.NoError(err)
+	}
+
+	// The reconcile should pick the older,
+	// i.e. smaller of two ULID thread IDs.
+	finalThreadID := min(thread0, threadN)
+	for _, status := range statuses {
+
+		// Get ID of status.
+		id := status.ID
+
+		// Fetch latest status the from database.
+		status, err := suite.db.GetStatusByID(
+			gtscontext.SetBarebones(ctx),
+			id,
+		)
+		suite.NoError(err)
+
+		// Ensure after reconcile uses expected thread.
+		suite.Equal(finalThreadID, status.ThreadID)
+	}
 }
 
 func TestStatusTestSuite(t *testing.T) {

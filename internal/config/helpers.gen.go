@@ -144,7 +144,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Int("advanced-throttling-multiplier", cfg.Advanced.Throttling.Multiplier, "Multiplier to use per cpu for http request throttling. 0 or less turns throttling off.")
 	flags.Duration("advanced-throttling-retry-after", cfg.Advanced.Throttling.RetryAfter, "Retry-After duration response to send for throttled requests.")
 	flags.Bool("advanced-scraper-deterrence-enabled", cfg.Advanced.ScraperDeterrence.Enabled, "Enable proof-of-work based scraper deterrence on profile / status pages")
-	flags.Uint8("advanced-scraper-deterrence-difficulty", cfg.Advanced.ScraperDeterrence.Difficulty, "The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions.")
+	flags.Uint32("advanced-scraper-deterrence-difficulty", cfg.Advanced.ScraperDeterrence.Difficulty, "The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions.")
 	flags.StringSlice("http-client-allow-ips", cfg.HTTPClient.AllowIPs, "")
 	flags.StringSlice("http-client-block-ips", cfg.HTTPClient.BlockIPs, "")
 	flags.Duration("http-client-timeout", cfg.HTTPClient.Timeout, "")
@@ -1356,9 +1356,9 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 
 	if ival, ok := cfgmap["advanced-scraper-deterrence-difficulty"]; ok {
 		var err error
-		cfg.Advanced.ScraperDeterrence.Difficulty, err = cast.ToUint8E(ival)
+		cfg.Advanced.ScraperDeterrence.Difficulty, err = cast.ToUint32E(ival)
 		if err != nil {
-			return fmt.Errorf("error casting %#v -> uint8 for 'advanced-scraper-deterrence-difficulty': %w", ival, err)
+			return fmt.Errorf("error casting %#v -> uint32 for 'advanced-scraper-deterrence-difficulty': %w", ival, err)
 		}
 	}
 
@@ -4799,7 +4799,7 @@ func AdvancedScraperDeterrenceDifficultyFlag() string {
 }
 
 // GetAdvancedScraperDeterrenceDifficulty safely fetches the Configuration value for state's 'Advanced.ScraperDeterrence.Difficulty' field
-func (st *ConfigState) GetAdvancedScraperDeterrenceDifficulty() (v uint8) {
+func (st *ConfigState) GetAdvancedScraperDeterrenceDifficulty() (v uint32) {
 	st.mutex.RLock()
 	v = st.config.Advanced.ScraperDeterrence.Difficulty
 	st.mutex.RUnlock()
@@ -4807,7 +4807,7 @@ func (st *ConfigState) GetAdvancedScraperDeterrenceDifficulty() (v uint8) {
 }
 
 // SetAdvancedScraperDeterrenceDifficulty safely sets the Configuration value for state's 'Advanced.ScraperDeterrence.Difficulty' field
-func (st *ConfigState) SetAdvancedScraperDeterrenceDifficulty(v uint8) {
+func (st *ConfigState) SetAdvancedScraperDeterrenceDifficulty(v uint32) {
 	st.mutex.Lock()
 	defer st.mutex.Unlock()
 	st.config.Advanced.ScraperDeterrence.Difficulty = v
@@ -4815,12 +4815,12 @@ func (st *ConfigState) SetAdvancedScraperDeterrenceDifficulty(v uint8) {
 }
 
 // GetAdvancedScraperDeterrenceDifficulty safely fetches the value for global configuration 'Advanced.ScraperDeterrence.Difficulty' field
-func GetAdvancedScraperDeterrenceDifficulty() uint8 {
+func GetAdvancedScraperDeterrenceDifficulty() uint32 {
 	return global.GetAdvancedScraperDeterrenceDifficulty()
 }
 
 // SetAdvancedScraperDeterrenceDifficulty safely sets the value for global configuration 'Advanced.ScraperDeterrence.Difficulty' field
-func SetAdvancedScraperDeterrenceDifficulty(v uint8) {
+func SetAdvancedScraperDeterrenceDifficulty(v uint32) {
 	global.SetAdvancedScraperDeterrenceDifficulty(v)
 }
 

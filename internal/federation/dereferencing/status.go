@@ -22,7 +22,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"slices"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
@@ -571,15 +570,6 @@ func (d *Dereferencer) enrichStatus(
 		return nil, nil, gtserror.Newf("error populating mentions for status %s: %w", uri, err)
 	}
 
-	// Ensure status in a thread is connected.
-	threadChanged, err := d.threadStatus(ctx,
-		status,
-		latestStatus,
-	)
-	if err != nil {
-		return nil, nil, gtserror.Newf("error handling threading for status %s: %w", uri, err)
-	}
-
 	// Populate tags associated with status, passing
 	// in existing status to reuse old where possible.
 	tagsChanged, err := d.fetchStatusTags(ctx,
@@ -614,7 +604,7 @@ func (d *Dereferencer) enrichStatus(
 	}
 
 	if isNew {
-		// Simplest case, insert this new status into the database.
+		// Simplest case, insert this new remote status into the database.
 		if err := d.state.DB.PutStatus(ctx, latestStatus); err != nil {
 			return nil, nil, gtserror.Newf("error inserting new status %s: %w", uri, err)
 		}
@@ -627,7 +617,6 @@ func (d *Dereferencer) enrichStatus(
 			latestStatus,
 			pollChanged,
 			mentionsChanged,
-			threadChanged,
 			tagsChanged,
 			mediaChanged,
 			emojiChanged,
@@ -734,81 +723,6 @@ func (d *Dereferencer) fetchStatusMentions(
 	}
 
 	return changed, nil
-}
-
-// threadStatus ensures that given status is threaded correctly
-// where necessary. that is it will inherit a thread ID from the
-// existing copy if it is threaded correctly, else it will inherit
-// a thread ID from a parent with existing thread, else it will
-// generate a new thread ID if status mentions a local account.
-func (d *Dereferencer) threadStatus(
-	ctx context.Context,
-	existing *gtsmodel.Status,
-	status *gtsmodel.Status,
-) (
-	changed bool,
-	err error,
-) {
-
-	// Check for existing status
-	// that is already threaded.
-	if existing.ThreadID != "" {
-
-		// Existing is threaded correctly.
-		if existing.InReplyTo == nil ||
-			existing.InReplyTo.ThreadID == existing.ThreadID {
-			status.ThreadID = existing.ThreadID
-			return false, nil
-		}
-
-		// TODO: delete incorrect thread
-	}
-
-	// Check for existing parent to inherit threading from.
-	if inReplyTo := status.InReplyTo; inReplyTo != nil &&
-		inReplyTo.ThreadID != "" {
-		status.ThreadID = inReplyTo.ThreadID
-		return true, nil
-	}
-
-	// Parent wasn't threaded. If this
-	// status mentions a local account,
-	// we should thread it so that local
-	// account can mute it if they want.
-	mentionsLocal := slices.ContainsFunc(
-		status.Mentions,
-		func(m *gtsmodel.Mention) bool {
-			// If TargetAccount couldn't
-			// be deref'd, we know it's not
-			// a local account, so only
-			// check for non-nil accounts.
-			return m.TargetAccount != nil &&
-				m.TargetAccount.IsLocal()
-		},
-	)
-
-	if !mentionsLocal {
-		// Status doesn't mention a
-		// local account, so we don't
-		// need to thread it.
-		return false, nil
-	}
-
-	// Status mentions a local account.
-	// Create a new thread and assign
-	// it to the status.
-	threadID := id.NewULID()
-
-	// Insert new thread model into db.
-	if err := d.state.DB.PutThread(ctx,
-		&gtsmodel.Thread{ID: threadID},
-	); err != nil {
-		return false, gtserror.Newf("error inserting new thread in db: %w", err)
-	}
-
-	// Set thread on latest status.
-	status.ThreadID = threadID
-	return true, nil
 }
 
 // fetchStatusTags populates the tags on 'status', fetching existing
@@ -1135,7 +1049,6 @@ func (d *Dereferencer) handleStatusEdit(
 	status *gtsmodel.Status,
 	pollChanged bool,
 	mentionsChanged bool,
-	threadChanged bool,
 	tagsChanged bool,
 	mediaChanged bool,
 	emojiChanged bool,
@@ -1191,14 +1104,6 @@ func (d *Dereferencer) handleStatusEdit(
 		// Mentions changed doesn't necessarily
 		// indicate an edit, it may just not have
 		// been previously populated properly.
-	}
-
-	if threadChanged {
-		cols = append(cols, "thread_id")
-
-		// Thread changed doesn't necessarily
-		// indicate an edit, it may just now
-		// actually be included in a thread.
 	}
 
 	if tagsChanged {

@@ -19,32 +19,22 @@
 
 import sha256 from "./sha256";
 
-let compute = async function(challengeStr, diffStr) {
+let compute = async function(seedStr, challengeStr) {
 	const textEncoder = new TextEncoder();
-
-	// Get difficulty1 as number and generate
-	// expected zero ASCII prefix to check for.
-	const diff1 = parseInt(diffStr, 10);
-	const zeros = "0".repeat(diff1);
-
-	// Calculate hex encoded prefix required to check solution, where we
-	// need diff1 no. chars in hex, and hex encoding doubles input length.
-	const prefixLen = diff1 / 2 + (diff1 % 2 != 0 ? 2 : 0);
 
 	let nonce = 0;
 	while (true) { // eslint-disable-line no-constant-condition
 
 		// Create possible solution string from challenge string + nonce.
-		const solution = textEncoder.encode(challengeStr + nonce.toString());
+		const solution = textEncoder.encode(seedStr + nonce.toString());
 
-		// Generate SHA256 hashsum of solution string, and hex encode the
-		// necessary prefix length we need to check for a valid solution.
-		const prefixArray = Array.from(sha256(solution).slice(0, prefixLen));
-		const prefixHex = prefixArray.map(b => b.toString(16).padStart(2, "0")).join("");
+		// Generate hex encoded SHA256 hashsum of solution.
+		const hashArray = Array.from(sha256(solution));
+		const hashAsHex = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
-		// Check if the hex encoded hash has
-		// difficulty defined zeroes prefix.
-		if (prefixHex.startsWith(zeros)) {
+		// Check whether hex encoded
+		// solution matches challenge.
+		if (hashAsHex == challengeStr) {
 			return nonce;
 		}
 
@@ -56,11 +46,8 @@ let compute = async function(challengeStr, diffStr) {
 onmessage = async function(e) {
 	console.log('worker started'); // eslint-disable-line no-console
 
-	const challenge = e.data.challenge;
-	const difficulty = e.data.difficulty;
-
-	// Compute the nonce that produces solution with args.
-	let nonce = await compute(challenge, difficulty);
+	// Compute nonce value that produces 'challenge' for seed.
+	let nonce = await compute(e.data.seed, e.data.challenge);
 
 	// Post the solution nonce back to caller.
 	postMessage({ nonce: nonce, done: true });

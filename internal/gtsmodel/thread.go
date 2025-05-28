@@ -23,10 +23,3 @@ type Thread struct {
 	ID        string   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // id of this item in the database
 	StatusIDs []string `bun:"-"`                                        // ids of statuses belonging to this thread (order not guaranteed)
 }
-
-// ThreadToStatus is an intermediate struct to facilitate the
-// many2many relationship between a thread and one or more statuses.
-type ThreadToStatus struct {
-	ThreadID string `bun:"type:CHAR(26),unique:statusthread,nullzero,notnull"`
-	StatusID string `bun:"type:CHAR(26),unique:statusthread,nullzero,notnull"`
-}

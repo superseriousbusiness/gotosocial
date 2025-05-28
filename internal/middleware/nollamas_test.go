@@ -95,41 +95,39 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 		panic(err)
 	}
 
+	var seed string
 	var challenge string
-	var difficulty uint64
 
 	// Parse output body and find the challenge / difficulty.
 	for _, line := range strings.Split(string(b), "\n") {
 		line = strings.TrimSpace(line)
 		switch {
+		case strings.HasPrefix(line, "data-nollamas-seed=\""):
+			line = line[20:]
+			line = line[:len(line)-1]
+			seed = line
 		case strings.HasPrefix(line, "data-nollamas-challenge=\""):
 			line = line[25:]
 			line = line[:len(line)-1]
 			challenge = line
-		case strings.HasPrefix(line, "data-nollamas-difficulty=\""):
-			line = line[26:]
-			line = line[:len(line)-1]
-			var err error
-			difficulty, err = strconv.ParseUint(line, 10, 8)
-			assert.NoError(t, err)
 		}
 	}
 
 	// Ensure valid posed challenge.
-	assert.NotZero(t, difficulty)
 	assert.NotEmpty(t, challenge)
+	assert.NotEmpty(t, seed)
 
 	// Prepare a test request for gin engine.
 	r = httptest.NewRequest("GET", "/", nil)
 	r.Header.Set("User-Agent", userAgent)
 	rw = httptest.NewRecorder()
 
-	// Now compute and set solution query paramater.
-	solution := computeSolution(challenge, difficulty)
-	r.URL.RawQuery = "nollamas_solution=" + solution
-
+	t.Logf("seed=%s", seed)
 	t.Logf("challenge=%s", challenge)
-	t.Logf("difficulty=%d", difficulty)
+
+	// Now compute and set solution query paramater.
+	solution := computeSolution(seed, challenge)
+	r.URL.RawQuery = "nollamas_solution=" + solution
 	t.Logf("solution=%s", solution)
 
 	// Pass req through
@@ -152,17 +150,14 @@ func testNoLLaMasMiddleware(t *testing.T, e *gin.Engine, userAgent string) {
 }
 
 // computeSolution does the functional equivalent of our nollamas workerTask.js.
-func computeSolution(challenge string, diff uint64) string {
-outer:
+func computeSolution(seed, challenge string) string {
 	for i := 0; ; i++ {
 		solution := strconv.Itoa(i)
-		combined := challenge + solution
+		combined := seed + solution
 		hash := sha256.Sum256(byteutil.S2B(combined))
 		encoded := hex.EncodeToString(hash[:])
-		for i := range diff {
-			if encoded[i] != '0' {
-				continue outer
-			}
+		if encoded != challenge {
+			continue
 		}
 		return solution
 	}

@@ -280,6 +280,6 @@ type ThrottlingConfig struct {
 }
 
 type ScraperDeterrenceConfig struct {
-	Enabled    bool  `name:"enabled"    usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
-	Difficulty uint8 `name:"difficulty" usage:"The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions."`
+	Enabled    bool   `name:"enabled"    usage:"Enable proof-of-work based scraper deterrence on profile / status pages"`
+	Difficulty uint32 `name:"difficulty" usage:"The proof-of-work difficulty, which determines roughly how many hash-encode rounds required of each client."`
 }

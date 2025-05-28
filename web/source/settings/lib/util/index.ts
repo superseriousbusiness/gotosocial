@@ -22,6 +22,8 @@ import { useMemo } from "react";
 import { AdminAccount } from "../types/account";
 import { store } from "../../redux/store";
 
+import humanizeDuration from "humanize-duration";
+
 export function yesOrNo(b: boolean): string {
 	return b ? "yes" : "no";
 }
@@ -53,4 +55,44 @@ export function useCapitalize(i?: string): string {
 		
 		return i.charAt(0).toUpperCase() + i.slice(1); 
 	}, [i]);
+}
+
+/**
+ * Return human-readable string representation of given bytes.
+ * 
+ * Adapted from https://stackoverflow.com/a/14919494.
+ */
+export function useHumanReadableBytes(bytes: number): string {
+	return useMemo(() => {
+		const thresh = 1024;
+		const digitPrecision = 2;
+		const r = 10**digitPrecision;
+		const units = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+
+		if (Math.abs(bytes) < thresh) {
+			return bytes + ' B';
+		}
+
+		let u = -1;
+		let threshed = bytes;
+		do { threshed /= thresh; ++u;
+		} while (Math.round(Math.abs(threshed) * r) / r >= thresh && u < units.length - 1);
+
+		return threshed.toFixed(digitPrecision) + ' ' + units[u];
+	}, [bytes]);
+}
+
+/**
+ * Return human-readable string representation of given time in seconds.
+ */
+export function useHumanReadableDuration(seconds: number): string {
+	return useMemo(() => {
+		if (seconds % 2629746 === 0) {
+			const n = seconds / 2629746;
+			return n + " month" + (n !== 1 ? "s" : "");
+		}
+		
+		const ms = seconds*1000;
+		return humanizeDuration(ms);
+	}, [seconds]);
 }

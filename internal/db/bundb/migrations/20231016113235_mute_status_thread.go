@@ -21,7 +21,7 @@ import (
 	"context"
 	"strings"
 
-	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	gtsmodel "code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations/20231016113235_mute_status_thread"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"

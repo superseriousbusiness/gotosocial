@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -36,6 +37,112 @@ import (
 	"github.com/uptrace/bun/dialect/sqltype"
 	"github.com/uptrace/bun/schema"
 )
+
+// doWALCheckpoint attempt to force a WAL file merge on SQLite3,
+// which can be useful given how much can build-up in the WAL.
+//
+// see: https://www.sqlite.org/pragma.html#pragma_wal_checkpoint
+func doWALCheckpoint(ctx context.Context, db *bun.DB) error {
+	if db.Dialect().Name() == dialect.SQLite && strings.EqualFold(config.GetDbSqliteJournalMode(), "WAL") {
+		_, err := db.ExecContext(ctx, "PRAGMA wal_checkpoint(RESTART);")
+		if err != nil {
+			return gtserror.Newf("error performing wal_checkpoint: %w", err)
+		}
+	}
+	return nil
+}
+
+// batchUpdateByID performs the given updateQuery with updateArgs
+// over the entire given table, batching by the ID of batchByCol.
+func batchUpdateByID(
+	ctx context.Context,
+	tx bun.Tx,
+	table string,
+	batchByCol string,
+	updateQuery string,
+	updateArgs []any,
+) error {
+	// Get a count of all in table.
+	total, err := tx.NewSelect().
+		Table(table).
+		Count(ctx)
+	if err != nil {
+		return gtserror.Newf("error selecting total count: %w", err)
+	}
+
+	// Query batch size
+	// in number of rows.
+	const batchsz = 5000
+
+	// Stores highest batch value
+	// used in iterate queries,
+	// starting at highest possible.
+	highest := id.Highest
+
+	// Total updated rows.
+	var updated int
+
+	for {
+		// Limit to batchsz
+		// items at once.
+		batchQ := tx.
+			NewSelect().
+			Table(table).
+			Column(batchByCol).
+			Where("? < ?", bun.Ident(batchByCol), highest).
+			OrderExpr("? DESC", bun.Ident(batchByCol)).
+			Limit(batchsz)
+
+		// Finalize UPDATE to act only on batch.
+		qStr := updateQuery + " WHERE ? IN (?)"
+		args := append(slices.Clone(updateArgs),
+			bun.Ident(batchByCol),
+			batchQ,
+		)
+
+		// Execute the prepared raw query with arguments.
+		res, err := tx.NewRaw(qStr, args...).Exec(ctx)
+		if err != nil {
+			return gtserror.Newf("error updating old column values: %w", err)
+		}
+
+		// Check how many items we updated.
+		thisUpdated, err := res.RowsAffected()
+		if err != nil {
+			return gtserror.Newf("error counting affected rows: %w", err)
+		}
+
+		if thisUpdated == 0 {
+			// Nothing updated
+			// means we're done.
+			break
+		}
+
+		// Update the overall count.
+		updated += int(thisUpdated)
+
+		// Log helpful message to admin.
+		log.Infof(ctx, "migrated %d of %d %s (up to %s)",
+			updated, total, table, highest)
+
+		// Get next highest
+		// id for next batch.
+		if err := tx.
+			NewSelect().
+			With("batch_query", batchQ).
+			ColumnExpr("min(?) FROM ?", bun.Ident(batchByCol), bun.Ident("batch_query")).
+			Scan(ctx, &highest); err != nil {
+			return gtserror.Newf("error selecting next highest: %w", err)
+		}
+	}
+
+	if total != int(updated) {
+		// Return error here in order to rollback the whole transaction.
+		return fmt.Errorf("total=%d does not match updated=%d", total, updated)
+	}
+
+	return nil
+}
 
 // convertEnums performs a transaction that converts
 // a table's column of our old-style enums (strings) to
@@ -310,7 +417,7 @@ func getModelField(db bun.IDB, rtype reflect.Type, fieldName string) (*schema.Fi
 }
 
 // doesColumnExist safely checks whether given column exists on table, handling both SQLite and PostgreSQL appropriately.
-func doesColumnExist(ctx context.Context, tx bun.Tx, table, col string) (bool, error) {
+func doesColumnExist(ctx context.Context, tx bun.IDB, table, col string) (bool, error) {
 	var n int
 	var err error
 	switch tx.Dialect().Name() {

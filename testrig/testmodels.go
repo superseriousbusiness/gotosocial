@@ -2154,6 +2154,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountID:                "01F8MH17FWEB39HZJ76B6VXSKF",
 			BoostOfID:                "01F8MHAMCHF6Y650WCRSCP4WMY",
 			BoostOfAccountID:         "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ThreadID:                 "01JV7NMMYX2Y38ZP3Y9SYJWT36",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
 			CreatedWithApplicationID: "01F8MGXQRHYF5QPMTMXP78QC2F",
@@ -2312,6 +2313,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(true),
 			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ThreadID:                 "01JV7PB3BPGFR13Q9B3XD4DJ5W",
 			Visibility:               gtsmodel.VisibilityFollowersOnly,
 			Sensitive:                util.Ptr(false),
 			Language:                 "en",
@@ -2378,6 +2380,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(true),
 			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH1H7YV1Z7D2C8K2730QBF",
+			ThreadID:                 "01JV7NT07NPSJQC703A4D0FK49",
 			EditIDs:                  []string{"01JDPZCZ2Y9KSGZW0R7ZG8T8Y2", "01JDPZDADMD1T9HKF94RECF7PP"},
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
@@ -2581,6 +2584,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(true),
 			AccountURI:               "http://localhost:8080/users/1happyturtle",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
+			ThreadID:                 "01JV7NVEBG7Q27WM66SPMBN3Q5",
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
 			Language:                 "en",
@@ -2604,6 +2608,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(true),
 			AccountURI:               "http://localhost:8080/users/the_mighty_zork",
 			AccountID:                "01F8MH5NBDF2MV7CTC4Q5128HF",
+			ThreadID:                 "01JV7NW0CD8Q8EWSF1RPC0AZXT",
 			EditIDs:                  []string{"01JDPZPBXAX0M02YSEPB21KX4R", "01JDPZPJHKP7E3M0YQXEXPS1YT", "01JDPZPY3F85Y7B78ETRXEMWD9"},
 			Visibility:               gtsmodel.VisibilityPublic,
 			Sensitive:                util.Ptr(false),
@@ -2629,6 +2634,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(true),
 			AccountURI:               "http://localhost:8080/users/media_mogul",
 			AccountID:                "01JPCMD83Y4WR901094YES3QC5",
+			ThreadID:                 "01JV7NXDB7Z6YAFX8ZDKP9C20Y",
 			Visibility:               gtsmodel.VisibilityUnlocked,
 			Sensitive:                util.Ptr(false),
 			Language:                 "en",
@@ -2653,6 +2659,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(true),
 			AccountURI:               "http://localhost:8080/users/media_mogul",
 			AccountID:                "01JPCMD83Y4WR901094YES3QC5",
+			ThreadID:                 "01JV7NXSGST4TYA3SAPADQ04JR",
 			Visibility:               gtsmodel.VisibilityUnlocked,
 			Sensitive:                util.Ptr(false),
 			Language:                 "en",
@@ -2670,6 +2677,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:               util.Ptr(false),
 			AccountURI:          "http://fossbros-anonymous.io/users/foss_satan",
 			AccountID:           "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			ThreadID:            "01JV7NY908EG95DQPJKTXKHCBW",
 			Visibility:          gtsmodel.VisibilityUnlocked,
 			Sensitive:           util.Ptr(false),
 			Language:            "en",
@@ -2687,6 +2695,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:               util.Ptr(false),
 			AccountURI:          "http://fossbros-anonymous.io/users/foss_satan",
 			AccountID:           "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			ThreadID:            "01JV7NYTCE3384MC1GRVC9V0K0",
 			Visibility:          gtsmodel.VisibilityUnlocked,
 			Sensitive:           util.Ptr(false),
 			Language:            "en",
@@ -2705,6 +2714,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:               util.Ptr(false),
 			AccountURI:          "http://fossbros-anonymous.io/users/foss_satan",
 			AccountID:           "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			ThreadID:            "01JV7NZ58GGQSVVZMK6P7EBADM",
 			Visibility:          gtsmodel.VisibilityUnlocked,
 			Sensitive:           util.Ptr(false),
 			Language:            "en",
@@ -2725,6 +2735,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			Local:                    util.Ptr(false),
 			AccountURI:               "http://fossbros-anonymous.io/users/foss_satan",
 			AccountID:                "01F8MH5ZK5VRH73AKHQM6Y9VNX",
+			ThreadID:                 "01JV7NZWF1J2BVQ7SWMMRBYC58",
 			EditIDs:                  []string{"01JDQ07ZZ4FGP13YN8TF63P5A6", "01JDQ08AYQC0G6413VAHA51CV9"},
 			PollID:                   "01JDQ0EZ5HM9T4WXRQ5WSVD40J",
 			Visibility:               gtsmodel.VisibilityPublic,
@@ -2745,6 +2756,7 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			AccountURI:          "http://example.org/users/Some_User",
 			MentionIDs:          []string{"01HE7XQNMKTVC8MNPCE1JGK4J3"},
 			AccountID:           "01FHMQX3GAABWSM0S2VZEC2SWC",
+			ThreadID:            "01HCWDF2Q4HV5QC161C4TGQ0M3",
 			InReplyToID:         "01F8MH75CBF9JFX4ZAD54N0W0R",
 			InReplyToAccountID:  "01F8MH17FWEB39HZJ76B6VXSKF",
 			InReplyToURI:        "http://localhost:8080/users/admin/statuses/01F8MH75CBF9JFX4ZAD54N0W0R",
@@ -2981,75 +2993,6 @@ func NewTestThreads() map[string]*gtsmodel.Thread {
 		},
 		"local_account_2_status_7": {
 			ID: "01HCWE7ZNC2SS4P05WA5QYED23",
-		},
-	}
-}
-
-func NewTestThreadToStatus() []*gtsmodel.ThreadToStatus {
-	return []*gtsmodel.ThreadToStatus{
-		{
-			ThreadID: "01HCWDF2Q4HV5QC161C4TGQ0M3",
-			StatusID: "01F8MH75CBF9JFX4ZAD54N0W0R",
-		},
-		{
-			ThreadID: "01HCWDQ1C7APSEY34B1HFVHVX7",
-			StatusID: "01F8MHAAY43M6RJ473VQFCVH37",
-		},
-		{
-			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
-			StatusID: "01FF25D5Q0DH7CHD57CTRS6WK0",
-		},
-		{
-			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
-			StatusID: "01F8MHAMCHF6Y650WCRSCP4WMY",
-		},
-		{
-			ThreadID: "01HCWDVTW3HQWSX66VJQ91Z1RH",
-			StatusID: "01F8MHAYFKS4KMXF8K5Y1C0KRN",
-		},
-		{
-			ThreadID: "01HCWDY9PDNHDBDBBFTJKJY8XE",
-			StatusID: "01F8MHBBN8120SYH7D5S050MGK",
-		},
-		{
-			ThreadID: "01HCWE0H2GKH794Q7GDPANH91Q",
-			StatusID: "01F8MH82FYRXD2RC6108DAJ5HB",
-		},
-		{
-			ThreadID: "01HCWE1ERQSMMVWDD0BE491E2P",
-			StatusID: "01FCTA44PW9H1TB328S9AQXKDS",
-		},
-		{
-			ThreadID: "01HCWE2Q24FWCZE41AS77SDFRZ",
-			StatusID: "01F8MHBQCBTDKN6X5VHGMMN4MA",
-		},
-		{
-			ThreadID: "01HCWE3P291Z3NJEJVFPW0K9ZQ",
-			StatusID: "01F8MHC0H0A7XHTVH5F596ZKBM",
-		},
-		{
-			ThreadID: "01HCWE4P0EW9HBA5WHW97D5YV0",
-			StatusID: "01F8MHC8VWDRBQR0N1BATDDEM5",
-		},
-		{
-			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
-			StatusID: "01FCQSQ667XHJ9AV9T27SJJSX5",
-		},
-		{
-			ThreadID: "01HCWDKKBWECZJQ93E262N36VN",
-			StatusID: "01J2M1HPFSS54S60Y0KYV23KJE",
-		},
-		{
-			ThreadID: "01HCWE71MGRRDSHBKXFD5DDSWR",
-			StatusID: "01FN3VJGFH10KR7S2PB0GFJZYG",
-		},
-		{
-			ThreadID: "01HCWE7ZNC2SS4P05WA5QYED23",
-			StatusID: "01G20ZM733MGN8J344T4ZDDFY1",
-		},
-		{
-			ThreadID: "01HCWE4P0EW9HBA5WHW97D5YV0",
-			StatusID: "01J5QVB9VC76NPPRQ207GG4DRZ",
 		},
 	}
 }

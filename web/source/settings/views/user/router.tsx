@@ -33,6 +33,7 @@ import NewApp from "./applications/new";
 import AppDetail from "./applications/detail";
 import { AppTokenCallback } from "./applications/callback";
 import Migration from "./migration";
+import InstanceInfo from "./instance";
 
 /**
  * - /settings/user/profile
@@ -43,6 +44,7 @@ import Migration from "./migration";
  * - /settings/user/tokens
  * - /settings/user/interaction_requests
  * - /settings/user/applications
+ * - /settings/user/instance-info
  */
 export default function UserRouter() {
 	const baseUrl = useBaseUrl();
@@ -59,6 +61,7 @@ export default function UserRouter() {
 					<Route path="/migration" component={Migration} />
 					<Route path="/export-import" component={ExportImport} />
 					<Route path="/tokens" component={Tokens} />
+					<Route path="/instance-info" component={InstanceInfo} />
 				</Switch>
 				<InteractionRequestsRouter />
 				<ApplicationsRouter />

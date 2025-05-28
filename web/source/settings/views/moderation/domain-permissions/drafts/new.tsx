@@ -86,7 +86,7 @@ export default function DomainPermissionDraftNew() {
 
 			<TextArea
 				field={form.private_comment}
-				label={"Private comment"}
+				label={"Private comment (will be shown to admins only)"}
 				placeholder="This domain is like unto a clown car full of clowns, I suggest we block it forthwith."
 				autoCapitalize="sentences"
 				rows={3}
@@ -94,7 +94,7 @@ export default function DomainPermissionDraftNew() {
 
 			<TextArea
 				field={form.public_comment}
-				label={"Public comment"}
+				label={"Public comment (will be shown to members of this instance via the instance info page, and on the web if enabled)"}
 				placeholder="Bad posters"
 				autoCapitalize="sentences"
 				rows={3}

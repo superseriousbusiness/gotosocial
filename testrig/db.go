@@ -25,6 +25,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
+	"codeberg.org/gruf/go-kv"
 )
 
 var testModels = []interface{}{
@@ -58,7 +59,6 @@ var testModels = []interface{}{
 	&gtsmodel.Tag{},
 	&gtsmodel.Thread{},
 	&gtsmodel.ThreadMute{},
-	&gtsmodel.ThreadToStatus{},
 	&gtsmodel.User{},
 	&gtsmodel.UserMute{},
 	&gtsmodel.VAPIDKeyPair{},
@@ -201,7 +201,10 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 
 	for _, v := range NewTestStatuses() {
 		if err := db.Put(ctx, v); err != nil {
-			log.Panic(ctx, err)
+			log.PanicKVs(ctx, kv.Fields{
+				{"error", err},
+				{"status", v},
+			}...)
 		}
 	}
 
@@ -296,12 +299,6 @@ func StandardDBSetup(db db.DB, accounts map[string]*gtsmodel.Account) {
 	}
 
 	for _, v := range NewTestThreads() {
-		if err := db.Put(ctx, v); err != nil {
-			log.Panic(ctx, err)
-		}
-	}
-
-	for _, v := range NewTestThreadToStatus() {
 		if err := db.Put(ctx, v); err != nil {
 			log.Panic(ctx, err)
 		}
