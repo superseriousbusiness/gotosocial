@@ -417,7 +417,7 @@ func getModelField(db bun.IDB, rtype reflect.Type, fieldName string) (*schema.Fi
 }
 
 // doesColumnExist safely checks whether given column exists on table, handling both SQLite and PostgreSQL appropriately.
-func doesColumnExist(ctx context.Context, tx bun.Tx, table, col string) (bool, error) {
+func doesColumnExist(ctx context.Context, tx bun.IDB, table, col string) (bool, error) {
 	var n int
 	var err error
 	switch tx.Dialect().Name() {

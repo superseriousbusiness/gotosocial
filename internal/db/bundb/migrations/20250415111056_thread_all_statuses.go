@@ -49,9 +49,15 @@ func init() {
 			"thread_id", "thread_id_new", 1)
 
 		var sr statusRethreader
-		var total uint64
+		var count int
 		var maxID string
 		var statuses []*oldmodel.Status
+
+		// Get a total count of all statuses before migration.
+		total, err := db.NewSelect().Table("statuses").Count(ctx)
+		if err != nil {
+			return gtserror.Newf("error getting status table count: %w", err)
+		}
 
 		// Start at largest
 		// possible ULID value.
@@ -97,7 +103,7 @@ func init() {
 					if err != nil {
 						return gtserror.Newf("error rethreading status %s: %w", status.URI, err)
 					}
-					total += n
+					count += n
 				}
 
 				return nil
@@ -105,7 +111,12 @@ func init() {
 				return err
 			}
 
-			log.Infof(ctx, "[%d] rethreading statuses (top-level)", total)
+			log.Infof(ctx, "[approx %d of %d] rethreading statuses (top-level)", count, total)
+		}
+
+		// Attempt to merge any sqlite write-ahead-log.
+		if err := doWALCheckpoint(ctx, db); err != nil {
+			return err
 		}
 
 		log.Warn(ctx, "rethreading straggler statuses, this will take a *long* time")
@@ -146,7 +157,7 @@ func init() {
 					if err != nil {
 						return gtserror.Newf("error rethreading status %s: %w", status.URI, err)
 					}
-					total += n
+					count += n
 				}
 
 				return nil
@@ -154,7 +165,7 @@ func init() {
 				return err
 			}
 
-			log.Infof(ctx, "[%d] rethreading statuses (stragglers)", total)
+			log.Infof(ctx, "[approx %d of %d] rethreading statuses (stragglers)", count, total)
 		}
 
 		// Attempt to merge any sqlite write-ahead-log.
@@ -165,59 +176,28 @@ func init() {
 		log.Info(ctx, "dropping old thread_to_statuses table")
 		if _, err := db.NewDropTable().
 			Table("thread_to_statuses").
-			IfExists().
 			Exec(ctx); err != nil {
 			return gtserror.Newf("error dropping old thread_to_statuses table: %w", err)
 		}
 
-		// Run the majority of the thread_id_new -> thread_id migration in a tx.
-		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			log.Info(ctx, "creating new statuses thread_id column")
-			if _, err := tx.NewAddColumn().
-				Table("statuses").
-				ColumnExpr(newColDef).
-				Exec(ctx); err != nil {
-				return gtserror.Newf("error creating new thread_id column: %w", err)
-			}
+		log.Info(ctx, "creating new statuses thread_id column")
+		if _, err := db.NewAddColumn().
+			Table("statuses").
+			ColumnExpr(newColDef).
+			Exec(ctx); err != nil {
+			return gtserror.Newf("error adding new thread_id column: %w", err)
+		}
 
-			log.Info(ctx, "setting thread_id_new = thread_id (this may take a while...)")
-			if err := batchUpdateByID(ctx, tx,
+		log.Info(ctx, "setting thread_id_new = thread_id (this may take a while...)")
+		if err := db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			return batchUpdateByID(ctx, tx,
 				"statuses",           // table
 				"id",                 // batchByCol
 				"UPDATE ? SET ? = ?", // updateQuery
 				[]any{bun.Ident("statuses"),
 					bun.Ident("thread_id_new"),
 					bun.Ident("thread_id")},
-			); err != nil {
-				return err
-			}
-
-			log.Info(ctx, "dropping old statuses thread_id index")
-			if _, err := tx.NewDropIndex().
-				Index("statuses_thread_id_idx").
-				Exec(ctx); err != nil {
-				return gtserror.Newf("error dropping old thread_id index: %w", err)
-			}
-
-			log.Info(ctx, "dropping old statuses thread_id column")
-			if _, err := tx.NewDropColumn().
-				Table("statuses").
-				Column("thread_id").
-				Exec(ctx); err != nil {
-				return gtserror.Newf("error dropping old thread_id column: %w", err)
-			}
-
-			log.Info(ctx, "renaming thread_id_new to thread_id")
-			if _, err := tx.NewRaw(
-				"ALTER TABLE ? RENAME COLUMN ? TO ?",
-				bun.Ident("statuses"),
-				bun.Ident("thread_id_new"),
-				bun.Ident("thread_id"),
-			).Exec(ctx); err != nil {
-				return gtserror.Newf("error renaming new column: %w", err)
-			}
-
-			return nil
+			)
 		}); err != nil {
 			return err
 		}
@@ -227,12 +207,36 @@ func init() {
 			return err
 		}
 
+		log.Info(ctx, "dropping old statuses thread_id index")
+		if _, err := db.NewDropIndex().
+			Index("statuses_thread_id_idx").
+			Exec(ctx); err != nil {
+			return gtserror.Newf("error dropping old thread_id index: %w", err)
+		}
+
+		log.Info(ctx, "dropping old statuses thread_id column")
+		if _, err := db.NewDropColumn().
+			Table("statuses").
+			Column("thread_id").
+			Exec(ctx); err != nil {
+			return gtserror.Newf("error dropping old thread_id column: %w", err)
+		}
+
+		log.Info(ctx, "renaming thread_id_new to thread_id")
+		if _, err := db.NewRaw(
+			"ALTER TABLE ? RENAME COLUMN ? TO ?",
+			bun.Ident("statuses"),
+			bun.Ident("thread_id_new"),
+			bun.Ident("thread_id"),
+		).Exec(ctx); err != nil {
+			return gtserror.Newf("error renaming new column: %w", err)
+		}
+
 		log.Info(ctx, "creating new statuses thread_id index")
 		if _, err := db.NewCreateIndex().
 			Table("statuses").
 			Index("statuses_thread_id_idx").
 			Column("thread_id").
-			IfNotExists().
 			Exec(ctx); err != nil {
 			return gtserror.Newf("error creating new thread_id index: %w", err)
 		}
@@ -286,7 +290,7 @@ type statusRethreader struct {
 
 // rethreadStatus is the main logic handler for statusRethreader{}. this is what gets called from the migration
 // in order to trigger a status rethreading operation for the given status, returning total number rethreaded.
-func (sr *statusRethreader) rethreadStatus(ctx context.Context, tx bun.Tx, status *oldmodel.Status) (uint64, error) {
+func (sr *statusRethreader) rethreadStatus(ctx context.Context, tx bun.Tx, status *oldmodel.Status) (int, error) {
 
 	// Zero slice and
 	// map ptr values.
@@ -435,7 +439,7 @@ func (sr *statusRethreader) rethreadStatus(ctx context.Context, tx bun.Tx, statu
 		}
 	}
 
-	return uint64(total), nil
+	return total, nil
 }
 
 // append will append the given status to the internal tracking of statusRethreader{} for
