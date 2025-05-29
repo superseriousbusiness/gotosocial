@@ -1,0 +1,10 @@
+/*
+  theme-title: Hacker (auto)
+  theme-description: Monospace theme with green highlights (adapts to system light/dark preferences)
+*/
+
+/* Default to dark theme */
+@import url("hacker-dark.css");
+
+@import url("hacker-light.css") screen and (prefers-color-scheme: light);
+@import url("hacker-dark.css") screen and (prefers-color-scheme: dark);

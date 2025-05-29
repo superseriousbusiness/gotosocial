@@ -213,6 +213,26 @@ It's also easy for admins to [add their own custom themes](https://docs.gotosoci
   <figcaption>Sunset</figcaption>
 </figure>
 <hr/>
+<figure>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-hacker-dark.png"/>
+  <figcaption>Hacker dark</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-hacker-light.png"/>
+  <figcaption>Hacker light</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-programmer-socks-dark.png"/>
+  <figcaption>Programmer socks dark</figcaption>
+</figure>
+<hr/>
+<figure>
+  <img src="https://codeberg.org/superseriousbusiness/gotosocial/raw/branch/main/docs/overrides/public/theme-programmer-socks-light.png"/>
+  <figcaption>Programmer socks light</figcaption>
+</figure>
+<hr/>
 </details>
 
 ### Easy to run

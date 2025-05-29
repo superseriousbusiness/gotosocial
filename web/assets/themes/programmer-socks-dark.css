@@ -1,0 +1,136 @@
+/*
+  theme-title: Programmer socks dark
+  theme-description: Dark gray and pink theme
+*/
+
+:root {
+  /* Define our cool hacker color palette, I'm in. */
+  --dark-gray: #1b1b1b;
+  --medium-gray: #282828;
+  --light-gray: #948a94;
+  --whiteish: #f8f8f8;
+  --terminal-darker: #b434ae;
+  --terminal: #cc39cc;
+  --terminal-lighter: #ef46f5;
+
+  /* Overwrite orange trim */
+  --orange2: var(--terminal);
+
+  /* Restyle basic colors to use terminal */
+  --blue1: var(--terminal-darker);
+  --blue2: var(--terminal-lighter);
+  --blue3: var(--terminal-lighter);
+
+  /* Basic page styling (background + foreground) */
+  --bg: var(--dark-gray);
+  --bg-accent: var(--medium-gray);
+  --fg: var(--whiteish);
+  --fg-reduced: var(--light-gray);
+
+  /* Profile page styling */
+  --profile-bg: var(--medium-gray);
+
+  /* Hackerize buttons */
+  --button-bg: var(--terminal-darker);
+  --button-fg: var(--whiteish);
+
+  /* Hackerize statuses */
+  --status-bg: var(--medium-gray);
+  --status-focus-bg: var(--medium-gray);
+  --status-info-bg: var(--dark-gray);
+  --status-focus-info-bg: var(--dark-gray);
+
+  /* Used around statuses + other items */
+  --boxshadow-border: 0.15rem solid var(--terminal-darker);
+
+  /* Straighten borders */
+  --br: 0;
+  --br-inner: 0;
+}
+
+/* Scroll bar + main font */
+html, body {
+  font-family: 'Noto Sans Mono', monospace;
+  scrollbar-color: var(--terminal-lighter) var(--medium-gray);
+}
+
+/* Buttons font */
+button, .button,
+.status .text-spoiler > summary .button {
+  font-family: 'Noto Sans Mono', monospace;
+}
+
+/* Column headers */
+.col-header {
+  border: var(--boxshadow-border);
+}
+.profile .about-user .col-header {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.profile .profile-header {
+  border: var(--boxshadow-border);
+}
+
+/* Fiddle around with borders on about sections */
+.profile .about-user .fields,
+.profile .about-user .bio,
+.profile .about-user .accountstats {
+  border-left: var(--boxshadow-border);
+  border-right: var(--boxshadow-border);
+}
+.profile .about-user .accountstats {
+  border-bottom: var(--boxshadow-border);
+}
+
+.profile .about-user .fields {
+  padding-top: 0;
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: var(--boxshadow-border);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: var(--boxshadow-border);
+}
+
+/* Profile fields */
+.profile .about-user .fields .field {
+  border-bottom: var(--boxshadow-border);
+}
+.profile .about-user .fields .field:first-child {
+  border-top: var(--boxshadow-border);
+}
+
+/* Status media */
+.status .media .media-wrapper {
+  border: var(--boxshadow-border);
+  background: var(--dark-gray);
+}
+.status .media .media-wrapper details .unknown-attachment .placeholder {
+  color: var(--whiteish);
+}
+
+/* Status polls */
+.status .text .poll {
+  background-color: var(--dark-gray);
+  border: var(--boxshadow-border);
+}
+.status .text .poll .poll-info {
+  background-color: var(--medium-gray);
+}
+
+/* Code snippets */
+pre, pre[class*="language-"],
+code, code[class*="language-"] {
+  background: var(--dark-gray);
+  color: var(--whiteish);
+}
+
+/* Block quotes */
+blockquote {
+  background-color: var(--dark-gray);
+  color: var(--whiteish);
+}

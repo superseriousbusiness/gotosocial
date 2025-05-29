@@ -1,0 +1,10 @@
+/*
+  theme-title: Programmer socks (auto)
+  theme-description: Monospace theme with pink highlights (adapts to system light/dark preferences)
+*/
+
+/* Default to dark theme */
+@import url("programmer-socks-dark.css");
+
+@import url("programmer-socks-light.css") screen and (prefers-color-scheme: light);
+@import url("programmer-socks-dark.css") screen and (prefers-color-scheme: dark);
