@@ -3,6 +3,9 @@
   theme-description: Woah
 */
 
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
 /* Theme colors */
 :root {
   --acid-green: rgb(63, 255, 0);

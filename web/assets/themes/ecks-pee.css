@@ -3,6 +3,9 @@
   theme-description: Looks suspiciously like a certain operating system
 */
 
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
 :root {
   /* Define our color palette */
   --ecks-pee-blurple: #3833ac;

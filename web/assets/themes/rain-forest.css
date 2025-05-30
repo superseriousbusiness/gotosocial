@@ -7,6 +7,9 @@
    color names as reference
    v1.0 by xmgz at github */
 
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
 :root {
   /* color definitions */
   --dgreen1: #003333;

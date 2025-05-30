@@ -3,6 +3,9 @@
   theme-description: Ominous dark blue / black with a tinge of blood red. You may think it all a mere bad dream.
 */
 
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
 :root {
   /* Define our palette */
   --bleached-bone: #f3e3d4;
