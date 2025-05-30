@@ -104,6 +104,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Bool("storage-s3-proxy", cfg.StorageS3Proxy, "Proxy S3 contents through GoToSocial instead of redirecting to a presigned URL")
 	flags.String("storage-s3-redirect-url", cfg.StorageS3RedirectURL, "Custom URL to use for redirecting S3 media links. If set, this will be used instead of the S3 bucket URL.")
 	flags.String("storage-s3-bucket-lookup", cfg.StorageS3BucketLookup, "S3 bucket lookup type to use. Can be 'auto', 'dns' or 'path'. Defaults to 'auto'.")
+	flags.String("storage-s3-key-prefix", cfg.StorageS3KeyPrefix, "Prefix to use for S3 keys. This is useful for separating multiple instances sharing the same S3 bucket.")
 	flags.Int("statuses-max-chars", cfg.StatusesMaxChars, "Max permitted characters for posted statuses, including content warning")
 	flags.Int("statuses-poll-max-options", cfg.StatusesPollMaxOptions, "Max amount of options permitted on a poll")
 	flags.Int("statuses-poll-option-max-chars", cfg.StatusesPollOptionMaxChars, "Max amount of characters for a poll option")
@@ -285,6 +286,7 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["storage-s3-proxy"] = cfg.StorageS3Proxy
 	cfgmap["storage-s3-redirect-url"] = cfg.StorageS3RedirectURL
 	cfgmap["storage-s3-bucket-lookup"] = cfg.StorageS3BucketLookup
+	cfgmap["storage-s3-key-prefix"] = cfg.StorageS3KeyPrefix
 	cfgmap["statuses-max-chars"] = cfg.StatusesMaxChars
 	cfgmap["statuses-poll-max-options"] = cfg.StatusesPollMaxOptions
 	cfgmap["statuses-poll-option-max-chars"] = cfg.StatusesPollOptionMaxChars
@@ -1026,6 +1028,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.StorageS3BucketLookup, err = cast.ToStringE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> string for 'storage-s3-bucket-lookup': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["storage-s3-key-prefix"]; ok {
+		var err error
+		cfg.StorageS3KeyPrefix, err = cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'storage-s3-key-prefix': %w", ival, err)
 		}
 	}
 
@@ -3792,6 +3802,31 @@ func GetStorageS3BucketLookup() string { return global.GetStorageS3BucketLookup(
 
 // SetStorageS3BucketLookup safely sets the value for global configuration 'StorageS3BucketLookup' field
 func SetStorageS3BucketLookup(v string) { global.SetStorageS3BucketLookup(v) }
+
+// StorageS3KeyPrefixFlag returns the flag name for the 'StorageS3KeyPrefix' field
+func StorageS3KeyPrefixFlag() string { return "storage-s3-key-prefix" }
+
+// GetStorageS3KeyPrefix safely fetches the Configuration value for state's 'StorageS3KeyPrefix' field
+func (st *ConfigState) GetStorageS3KeyPrefix() (v string) {
+	st.mutex.RLock()
+	v = st.config.StorageS3KeyPrefix
+	st.mutex.RUnlock()
+	return
+}
+
+// SetStorageS3KeyPrefix safely sets the Configuration value for state's 'StorageS3KeyPrefix' field
+func (st *ConfigState) SetStorageS3KeyPrefix(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.StorageS3KeyPrefix = v
+	st.reloadToViper()
+}
+
+// GetStorageS3KeyPrefix safely fetches the value for global configuration 'StorageS3KeyPrefix' field
+func GetStorageS3KeyPrefix() string { return global.GetStorageS3KeyPrefix() }
+
+// SetStorageS3KeyPrefix safely sets the value for global configuration 'StorageS3KeyPrefix' field
+func SetStorageS3KeyPrefix(v string) { global.SetStorageS3KeyPrefix(v) }
 
 // StatusesMaxCharsFlag returns the flag name for the 'StatusesMaxChars' field
 func StatusesMaxCharsFlag() string { return "statuses-max-chars" }

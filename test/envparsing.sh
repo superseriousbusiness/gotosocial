@@ -187,6 +187,7 @@ EXPECT=$(cat << "EOF"
     "storage-s3-bucket": "gts",
     "storage-s3-bucket-lookup": "auto",
     "storage-s3-endpoint": "localhost:9000",
+    "storage-s3-key-prefix": "",
     "storage-s3-proxy": true,
     "storage-s3-redirect-url": "",
     "storage-s3-secret-key": "miniostorage",
@@ -208,7 +209,7 @@ EXPECT=$(cat << "EOF"
 EOF
 )
 
-# Set all the environment variables to 
+# Set all the environment variables to
 # ensure that these are parsed without panic
 OUTPUT=$(GTS_LOG_LEVEL='info' \
 GTS_LOG_TIMESTAMP_FORMAT="banana" \

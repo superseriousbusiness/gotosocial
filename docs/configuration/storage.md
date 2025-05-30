@@ -101,6 +101,20 @@ storage-s3-secret-key: ""
 # Default: ""
 storage-s3-bucket: ""
 
+
+# String. Key prefix to use for the S3 storage.
+# This is optional.
+#
+# Prefix must end with a trailing slash.
+#
+# This is useful if you want to store multiple instances in the same bucket,
+# or if you want to store your data in a subdirectory of the bucket.
+# This has no effect if the storage backend isn't "s3".
+#
+# Examples: ["gts-instance1/", "gts-instance2/"]
+# Default: ""
+storage-s3-key-prefix: ""
+
 # String. Bucket lookup type.
 #
 # If you know what kind of bucket lookup type you need you can specify it here.

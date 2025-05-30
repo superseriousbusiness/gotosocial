@@ -20,6 +20,7 @@ package cleaner
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
@@ -96,6 +97,7 @@ func (m *Media) PruneOrphaned(ctx context.Context) (int, error) {
 	// All media files in storage will have path fitting: {$account}/{$type}/{$size}/{$id}.{$ext}
 	if err := m.state.Storage.WalkKeys(ctx, func(path string) error {
 		// Check for our expected fileserver path format.
+		path = strings.TrimPrefix(path, m.state.Storage.KeyPrefix)
 		if !regexes.FilePath.MatchString(path) {
 			log.Warnf(ctx, "unexpected storage item: %s", path)
 			return nil

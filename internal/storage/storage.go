@@ -78,27 +78,32 @@ type Driver struct {
 	// S3-only parameters
 	Proxy          bool
 	Bucket         string
+	KeyPrefix      string
 	PresignedCache *ttl.Cache[string, PresignedURL]
 	RedirectURL    string
 }
 
 // Get returns the byte value for key in storage.
 func (d *Driver) Get(ctx context.Context, key string) ([]byte, error) {
+	key = d.KeyPrefix + key
 	return d.Storage.ReadBytes(ctx, key)
 }
 
 // GetStream returns an io.ReadCloser for the value bytes at key in the storage.
 func (d *Driver) GetStream(ctx context.Context, key string) (io.ReadCloser, error) {
+	key = d.KeyPrefix + key
 	return d.Storage.ReadStream(ctx, key)
 }
 
 // Put writes the supplied value bytes at key in the storage
 func (d *Driver) Put(ctx context.Context, key string, value []byte) (int, error) {
+	key = d.KeyPrefix + key
 	return d.Storage.WriteBytes(ctx, key, value)
 }
 
 // PutFile moves the contents of file at path, to storage.Driver{} under given key (with content-type if supported).
 func (d *Driver) PutFile(ctx context.Context, key, filepath, contentType string) (int64, error) {
+	key = d.KeyPrefix + key
 	// Open file at path for reading.
 	file, err := os.Open(filepath)
 	if err != nil {
@@ -144,11 +149,13 @@ func (d *Driver) PutFile(ctx context.Context, key, filepath, contentType string)
 
 // Delete attempts to remove the supplied key (and corresponding value) from storage.
 func (d *Driver) Delete(ctx context.Context, key string) error {
+	key = d.KeyPrefix + key
 	return d.Storage.Remove(ctx, key)
 }
 
 // Has checks if the supplied key is in the storage.
 func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
+	key = d.KeyPrefix + key
 	stat, err := d.Storage.Stat(ctx, key)
 	return (stat != nil), err
 }
@@ -156,6 +163,7 @@ func (d *Driver) Has(ctx context.Context, key string) (bool, error) {
 // WalkKeys walks the keys in the storage.
 func (d *Driver) WalkKeys(ctx context.Context, walk func(string) error) error {
 	return d.Storage.WalkKeys(ctx, storage.WalkKeysOpts{
+		Prefix: d.KeyPrefix,
 		Step: func(entry storage.Entry) error {
 			return walk(entry.Key)
 		},
@@ -164,6 +172,7 @@ func (d *Driver) WalkKeys(ctx context.Context, walk func(string) error) error {
 
 // URL will return a presigned GET object URL, but only if running on S3 storage with proxying disabled.
 func (d *Driver) URL(ctx context.Context, key string) *PresignedURL {
+	key = d.KeyPrefix + key
 	// Check whether S3 *without* proxying is enabled
 	s3, ok := d.Storage.(*s3.S3Storage)
 	if !ok || d.Proxy {
@@ -349,6 +358,7 @@ func NewS3Storage() (*Driver, error) {
 	return &Driver{
 		Proxy:          config.GetStorageS3Proxy(),
 		Bucket:         config.GetStorageS3BucketName(),
+		KeyPrefix:      config.GetStorageS3KeyPrefix(),
 		Storage:        s3,
 		PresignedCache: presignedCache,
 		RedirectURL:    redirectURL,
