@@ -3,6 +3,9 @@
   theme-description: Official light orange/yellow theme.
 */
 
+/* Use light code highlights. */
+@import url("../dist/_prism-light.css");
+
 :root {
   /* Define our palette */
   --eggshell: #fff6eb;
@@ -96,8 +99,8 @@ html, body {
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-  background-color: var(--eggplant4);
-  color: var(--white1);
+  background-color: var(--white1);
+  color: var(--eggplant4);
 }
 
 /* Block quotes */

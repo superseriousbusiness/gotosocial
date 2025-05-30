@@ -3,6 +3,9 @@
   theme-description: Light gray and green monospace theme
 */
 
+/* Use light code highlights. */
+@import url("../dist/_prism-light.css");
+
 :root {
   /* Define our cool hacker color palette, I'm in. */
   --dark-gray: #1b1b1b;
@@ -125,8 +128,8 @@ button, .button,
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-  background: var(--dark-gray);
-  color: var(--whiteish);
+  background: var(--whiteish);
+  color: var(--dark-gray);
 }
 
 /* Block quotes */

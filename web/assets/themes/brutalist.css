@@ -3,6 +3,9 @@
   theme-description: (Pseudo-)monochrome brutality
 */
 
+/* Use light code highlights. */
+@import url("../dist/_prism-light.css");
+
 :root {
   /* Define our color palette, two whole colors, wow! */
   --almost-black: #06170e;
@@ -34,6 +37,7 @@
   /* Used around statuses + other items */
   --double-border: 0.5rem double var(--almost-black);
   --dashed-border: 0.1rem dashed var(--almost-black);
+  --thick-dashed-border: 0.2rem dashed var(--almost-black);
   --single-border: 0.2rem solid var(--almost-black);
 
   /* Override some border stuff */
@@ -92,14 +96,13 @@ html, body {
 /* Code snippets */
 .status .text .content pre,
 .status .text .content code {
-  background: var(--almost-black);
-  color: var(--almost-white);
+  background: var(--almost-white);
 }
 
 /* Block quotes */
 .status .text .content blockquote {
-  background-color: var(--almost-black);
-  color: var(--almost-white);
+  background-color: var(--almost-white);
+  color: var(--almost-black);
 }
 
 /* Polls */
@@ -131,14 +134,14 @@ html, body {
 
 /* Make show more/less buttons more legible */
 .button {
-  background-color: var(--almost-black);
-  color: var(--almost-white);
-  border: var(--dashed-border);
+  background-color: var(--almost-white);
+  color: var(--almost-black);
+  border: var(--single-border);
 }
 .button:hover {
   background-color: var(--almost-white);
   color: var(--almost-black);
-  border: var(--dashed-border);
+  border: var(--thick-dashed-border);
 }
 
 /*

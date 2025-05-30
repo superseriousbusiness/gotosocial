@@ -3,6 +3,9 @@
   theme-description: Official light blurple theme
 */
 
+/* Use light code highlights. */
+@import url("../dist/_prism-light.css");
+
 :root {
   /* Define our nice blurple palette */
   --blurple1: #ebe6f8;
@@ -90,8 +93,8 @@ html, body {
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-	background-color: var(--blurple7);
-  color: var(--blurple2);
+	background-color: var(--blurple1);
+  color: var(--blurple7);
 }
 
 /* Block quotes */

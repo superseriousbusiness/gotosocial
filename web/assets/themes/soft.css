@@ -3,6 +3,9 @@
   theme-description: Pastel pink and blue with dark magenta trim
 */
 
+/* Use light code highlights. */
+@import url("../dist/_prism-light.css");
+
 :root {
   /* Define our palette */
   --soft-pink: rgb(255, 199, 234);
@@ -134,8 +137,8 @@ html, body {
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-	background-color: var(--gray1);
-  color: white;
+	background-color: white;
+  color: var(--gray1);
 }
 
 /* Block quotes */

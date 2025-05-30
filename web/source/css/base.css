@@ -22,7 +22,10 @@
 ****************************************/
 
 @import "modern-normalize/modern-normalize.css";
-@import "./_prism.css";
+
+/* Default to dark prism, choose light if prefers-color-scheme light */
+@import url("_prism-dark.css");
+@import url("_prism-light.css") screen and (prefers-color-scheme: light);
 @import "./_fonts.css";
 
 /*************************************

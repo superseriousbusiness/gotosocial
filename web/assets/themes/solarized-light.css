@@ -27,6 +27,9 @@
   THE SOFTWARE.
 */
 
+/* Use light code highlights. */
+@import url("../dist/_prism-light.css");
+
 :root {
   /* Define solarized palette */
   --base3:     #fdf6e3; /* Background. */
@@ -135,8 +138,8 @@ html, body {
 /* Code snippets */
 pre, pre[class*="language-"],
 code, code[class*="language-"] {
-  background-color: black;
-  color: #93a1a1;
+  background-color: #93a1a1;
+  color: black;
 }
 
 /* Block quotes */

@@ -3,6 +3,9 @@
   theme-description: Official dark blurple theme
 */
 
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
 :root {
   /* Define our nice blurple palette */
   --blurple1: #ebe6f8;

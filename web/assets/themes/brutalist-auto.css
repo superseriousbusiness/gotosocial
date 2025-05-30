@@ -4,7 +4,7 @@
 */
 
 /* Default to brutalist theme */
-@import url("brutalist.css");
+@import url("brutalist-dark.css");
 
 @import url("brutalist.css") screen and (prefers-color-scheme: light);
 @import url("brutalist-dark.css") screen and (prefers-color-scheme: dark);

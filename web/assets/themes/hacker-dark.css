@@ -3,6 +3,9 @@
   theme-description: Dark gray and green monospace theme
 */
 
+/* Use dark code highlights. */
+@import url("../dist/_prism-dark.css");
+
 :root {
   /* Define our cool hacker color palette, I'm in. */
   --dark-gray: #1b1b1b;
