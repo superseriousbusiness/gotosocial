@@ -234,6 +234,7 @@ const (
 	_FCNTL_CKSM_FILE             _FcntlOpcode = 41
 	_FCNTL_RESET_CACHE           _FcntlOpcode = 42
 	_FCNTL_NULL_IO               _FcntlOpcode = 43
+	_FCNTL_BLOCK_ON_CONNECT      _FcntlOpcode = 44
 )
 
 // https://sqlite.org/c3ref/c_shm_exclusive.html
@@ -246,6 +247,6 @@ const (
 	_SHM_EXCLUSIVE _ShmFlag = 8
 
 	_SHM_NLOCK = 8
-	_SHM_BASE  = 120
+	_SHM_BASE  = (22 + _SHM_NLOCK) * 4
 	_SHM_DMS   = _SHM_BASE + _SHM_NLOCK
 )

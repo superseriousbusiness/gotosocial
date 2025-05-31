@@ -367,11 +367,9 @@ func (s *Stmt) BindPointer(param int, ptr any) error {
 //
 // https://sqlite.org/c3ref/bind_blob.html
 func (s *Stmt) BindJSON(param int, value any) error {
-	data, err := json.Marshal(value)
-	if err != nil {
-		return err
-	}
-	return s.BindRawText(param, data)
+	return json.NewEncoder(callbackWriter(func(p []byte) (int, error) {
+		return 0, s.BindRawText(param, p[:len(p)-1]) // remove the newline
+	})).Encode(value)
 }
 
 // BindValue binds a copy of value to the prepared statement.
@@ -751,3 +749,7 @@ func (s *Stmt) columns(count int64) ([]byte, ptr_t, error) {
 
 	return util.View(s.c.mod, typePtr, count), dataPtr, nil
 }
+
+type callbackWriter func(p []byte) (int, error)
+
+func (fn callbackWriter) Write(p []byte) (int, error) { return fn(p) }

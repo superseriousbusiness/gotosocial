@@ -13,22 +13,28 @@ import (
 type vfsOS struct{}
 
 func (vfsOS) FullPathname(path string) (string, error) {
-	path, err := filepath.Abs(path)
+	link, err := evalSymlinks(path)
 	if err != nil {
 		return "", err
 	}
-	return path, testSymlinks(filepath.Dir(path))
+	full, err := filepath.Abs(link)
+	if err == nil && link != path {
+		err = _OK_SYMLINK
+	}
+	return full, err
 }
 
-func testSymlinks(path string) error {
-	p, err := filepath.EvalSymlinks(path)
+func evalSymlinks(path string) (string, error) {
+	var file string
+	_, err := os.Lstat(path)
+	if errors.Is(err, fs.ErrNotExist) {
+		path, file = filepath.Split(path)
+	}
+	path, err = filepath.EvalSymlinks(path)
 	if err != nil {
-		return err
+		return "", err
 	}
-	if p != path {
-		return _OK_SYMLINK
-	}
-	return nil
+	return filepath.Join(path, file), nil
 }
 
 func (vfsOS) Delete(path string, syncDir bool) error {

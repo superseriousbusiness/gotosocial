@@ -26,7 +26,6 @@ type vfsShm struct {
 	ptrs     []ptr_t
 	stack    [1]stk_t
 	fileLock bool
-	blocking bool
 	sync.Mutex
 }
 

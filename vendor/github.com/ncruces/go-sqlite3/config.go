@@ -109,7 +109,7 @@ func (c *Conn) FileControl(schema string, op FcntlOpcode, arg ...any) (any, erro
 	default:
 		return nil, MISUSE
 
-	case FCNTL_RESET_CACHE:
+	case FCNTL_RESET_CACHE, FCNTL_NULL_IO:
 		rc = res_t(c.call("sqlite3_file_control",
 			stk_t(c.handle), stk_t(schemaPtr),
 			stk_t(op), 0))

@@ -381,6 +381,10 @@ func vfsFileControlImpl(ctx context.Context, mod api.Module, file File, op _Fcnt
 			file.SetDB(ctx.Value(util.ConnKey{}))
 			return _OK
 		}
+
+	case _FCNTL_NULL_IO:
+		file.Close()
+		return _OK
 	}
 
 	return _NOTFOUND

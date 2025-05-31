@@ -280,6 +280,7 @@ const (
 	FCNTL_DATA_VERSION        FcntlOpcode = 35
 	FCNTL_RESERVE_BYTES       FcntlOpcode = 38
 	FCNTL_RESET_CACHE         FcntlOpcode = 42
+	FCNTL_NULL_IO             FcntlOpcode = 43
 )
 
 // LimitCategory are the available run-time limit categories.

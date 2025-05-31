@@ -30,10 +30,10 @@ db.QueryRow(`SELECT sqlite_version()`).Scan(&version)
 
 - [`github.com/ncruces/go-sqlite3`](https://pkg.go.dev/github.com/ncruces/go-sqlite3)
   wraps the [C SQLite API](https://sqlite.org/cintro.html)
-  ([example usage](https://pkg.go.dev/github.com/ncruces/go-sqlite3#example-package)).
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3#example-package)).
 - [`github.com/ncruces/go-sqlite3/driver`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/driver)
   provides a [`database/sql`](https://pkg.go.dev/database/sql) driver
-  ([example usage](https://pkg.go.dev/github.com/ncruces/go-sqlite3/driver#example-package)).
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3/driver#example-package)).
 - [`github.com/ncruces/go-sqlite3/embed`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/embed)
   embeds a build of SQLite into your application.
 - [`github.com/ncruces/go-sqlite3/vfs`](https://pkg.go.dev/github.com/ncruces/go-sqlite3/vfs)
@@ -44,12 +44,19 @@ db.QueryRow(`SELECT sqlite_version()`).Scan(&version)
 ### Advanced features
 
 - [incremental BLOB I/O](https://sqlite.org/c3ref/blob_open.html)
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/blobio#example-package))
 - [nested transactions](https://sqlite.org/lang_savepoint.html)
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3/driver#example-Savepoint))
 - [custom functions](https://sqlite.org/c3ref/create_function.html)
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3#example-Conn.CreateFunction))
 - [virtual tables](https://sqlite.org/vtab.html)
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3#example-CreateModule))
 - [custom VFSes](https://sqlite.org/vfs.html)
+  ([examples](vfs/README.md#custom-vfses))
 - [online backup](https://sqlite.org/backup.html)
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3/driver#Conn))
 - [JSON support](https://sqlite.org/json1.html)
+  ([example](https://pkg.go.dev/github.com/ncruces/go-sqlite3/driver#example-package-Json))
 - [math functions](https://sqlite.org/lang_mathfunc.html)
 - [full-text search](https://sqlite.org/fts5.html)
 - [geospatial search](https://sqlite.org/geopoly.html)
@@ -57,7 +64,6 @@ db.QueryRow(`SELECT sqlite_version()`).Scan(&version)
 - [statistics functions](https://pkg.go.dev/github.com/ncruces/go-sqlite3/ext/stats)
 - [encryption at rest](vfs/adiantum/README.md)
 - [many extensions](ext/README.md)
-- [custom VFSes](vfs/README.md#custom-vfses)
 - [and more…](embed/README.md)
 
 ### Caveats
@@ -77,10 +83,19 @@ It also benefits greatly from [SQLite's](https://sqlite.org/testing.html) and
 [wazero's](https://tetrate.io/blog/introducing-wazero-from-tetrate/#:~:text=Rock%2Dsolid%20test%20approach)
 thorough testing.
 
-Every commit is [tested](https://github.com/ncruces/go-sqlite3/wiki/Support-matrix) on
-Linux (amd64/arm64/386/riscv64/ppc64le/s390x), macOS (arm64/amd64),
-Windows (amd64), FreeBSD (amd64/arm64), OpenBSD (amd64), NetBSD (amd64/arm64),
-DragonFly BSD (amd64), illumos (amd64), and Solaris (amd64).
+Every commit is tested on:
+* Linux: amd64, arm64, 386, riscv64, ppc64le, s390x
+* macOS: amd64, arm64
+* Windows: amd64
+* BSD:
+  * FreeBSD: amd64, arm64
+  * OpenBSD: amd64
+  * NetBSD: amd64, arm64
+  * DragonFly BSD: amd64
+* illumos: amd64
+* Solaris: amd64
+
+Certain operating system and CPU combinations have some limitations. See the [support matrix](https://github.com/ncruces/go-sqlite3/wiki/Support-matrix) for a complete overview.
 
 The Go VFS is tested by running SQLite's
 [mptest](https://github.com/sqlite/sqlite/blob/master/mptest/mptest.c).

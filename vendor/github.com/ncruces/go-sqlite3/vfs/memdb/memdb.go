@@ -28,9 +28,8 @@ func (memVFS) Open(name string, flags vfs.OpenFlag) (vfs.File, vfs.OpenFlag, err
 	//
 	// We refuse to open all other file types,
 	// but returning OPEN_MEMORY means SQLite won't ask us to.
-	const types = vfs.OPEN_MAIN_DB |
-		vfs.OPEN_TEMP_DB |
-		vfs.OPEN_TEMP_JOURNAL
+	const types = vfs.OPEN_MAIN_DB | vfs.OPEN_TEMP_DB |
+		vfs.OPEN_TRANSIENT_DB | vfs.OPEN_TEMP_JOURNAL
 	if flags&types == 0 {
 		// notest // OPEN_MEMORY
 		return nil, flags, sqlite3.CANTOPEN

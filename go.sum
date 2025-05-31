@@ -328,6 +328,8 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/ncruces/go-sqlite3 v0.25.2 h1:suu3C7y92hPqozqO8+w3K333Q1VhWyN6K3JJKXdtC2U=
 github.com/ncruces/go-sqlite3 v0.25.2/go.mod h1:46HIzeCQQ+aNleAxCli+vpA2tfh7ttSnw24kQahBc1o=
+github.com/ncruces/go-sqlite3 v0.26.0 h1:dY6ASfuhSEbtSge6kJwjyJVC7bXCpgEVOycmdboKJek=
+github.com/ncruces/go-sqlite3 v0.26.0/go.mod h1:46HIzeCQQ+aNleAxCli+vpA2tfh7ttSnw24kQahBc1o=
 github.com/ncruces/go-strftime v0.1.9 h1:bY0MQC28UADQmHmaF5dgpLmImcShSi2kHU9XLdhx/f4=
 github.com/ncruces/go-strftime v0.1.9/go.mod h1:Fwc5htZGVVkseilnfgOVb9mKy6w1naJmn9CehxcKcls=
 github.com/ncruces/julianday v1.0.0 h1:fH0OKwa7NWvniGQtxdJRxAgkBMolni2BjDHaWTxqt7M=
