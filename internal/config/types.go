@@ -48,3 +48,11 @@ func (p *IPPrefixes) Strings() []string {
 	}
 	return strs
 }
+
+func GetHTTPClientOutgoingScheme() (schema string) {
+	if GetHTTPClientInsecureOutgoing() {
+		return "http://"
+	}
+
+	return "https://"
+}

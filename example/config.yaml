@@ -1113,6 +1113,15 @@ http-client:
   # Default: false
   tls-insecure-skip-verify: false
 
+  # Bool. Sets outgoing queries to webfinger, host-meta and nodeinfo to use
+  # HTTP instead of HTTPS.
+  #
+  # THIS SETTING SHOULD BE USED FOR TESTING ONLY! DO NOT CHANGE THIS SETTING
+  # UNLESS YOU KNOW EXACTLY WHAT YOU'RE DOING AND WHY YOU'RE DOING IT.
+  #
+  # Default: false
+  insecure-outgoing: false
+
 #############################
 ##### ADVANCED SETTINGS #####
 #############################

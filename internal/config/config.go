@@ -198,6 +198,7 @@ type HTTPClientConfiguration struct {
 	BlockIPs              []string      `name:"block-ips"`
 	Timeout               time.Duration `name:"timeout"`
 	TLSInsecureSkipVerify bool          `name:"tls-insecure-skip-verify"`
+	InsecureOutgoing      bool          `name:"insecure-outgoing"`
 }
 
 type CacheConfiguration struct {

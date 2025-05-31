@@ -150,6 +150,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.StringSlice("http-client-block-ips", cfg.HTTPClient.BlockIPs, "")
 	flags.Duration("http-client-timeout", cfg.HTTPClient.Timeout, "")
 	flags.Bool("http-client-tls-insecure-skip-verify", cfg.HTTPClient.TLSInsecureSkipVerify, "")
+	flags.Bool("http-client-insecure-outgoing", cfg.HTTPClient.InsecureOutgoing, "")
 	flags.String("cache-memory-target", cfg.Cache.MemoryTarget.String(), "")
 	flags.Float64("cache-account-mem-ratio", cfg.Cache.AccountMemRatio, "")
 	flags.Float64("cache-account-note-mem-ratio", cfg.Cache.AccountNoteMemRatio, "")
@@ -333,6 +334,7 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["http-client-block-ips"] = cfg.HTTPClient.BlockIPs
 	cfgmap["http-client-timeout"] = cfg.HTTPClient.Timeout
 	cfgmap["http-client-tls-insecure-skip-verify"] = cfg.HTTPClient.TLSInsecureSkipVerify
+	cfgmap["http-client-insecure-outgoing"] = cfg.HTTPClient.InsecureOutgoing
 	cfgmap["cache-memory-target"] = cfg.Cache.MemoryTarget.String()
 	cfgmap["cache-account-mem-ratio"] = cfg.Cache.AccountMemRatio
 	cfgmap["cache-account-note-mem-ratio"] = cfg.Cache.AccountNoteMemRatio
@@ -1403,6 +1405,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.HTTPClient.TLSInsecureSkipVerify, err = cast.ToBoolE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> bool for 'http-client-tls-insecure-skip-verify': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["http-client-insecure-outgoing"]; ok {
+		var err error
+		cfg.HTTPClient.InsecureOutgoing, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'http-client-insecure-outgoing': %w", ival, err)
 		}
 	}
 
@@ -4969,6 +4979,31 @@ func GetHTTPClientTLSInsecureSkipVerify() bool { return global.GetHTTPClientTLSI
 // SetHTTPClientTLSInsecureSkipVerify safely sets the value for global configuration 'HTTPClient.TLSInsecureSkipVerify' field
 func SetHTTPClientTLSInsecureSkipVerify(v bool) { global.SetHTTPClientTLSInsecureSkipVerify(v) }
 
+// HTTPClientInsecureOutgoingFlag returns the flag name for the 'HTTPClient.InsecureOutgoing' field
+func HTTPClientInsecureOutgoingFlag() string { return "http-client-insecure-outgoing" }
+
+// GetHTTPClientInsecureOutgoing safely fetches the Configuration value for state's 'HTTPClient.InsecureOutgoing' field
+func (st *ConfigState) GetHTTPClientInsecureOutgoing() (v bool) {
+	st.mutex.RLock()
+	v = st.config.HTTPClient.InsecureOutgoing
+	st.mutex.RUnlock()
+	return
+}
+
+// SetHTTPClientInsecureOutgoing safely sets the Configuration value for state's 'HTTPClient.InsecureOutgoing' field
+func (st *ConfigState) SetHTTPClientInsecureOutgoing(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.HTTPClient.InsecureOutgoing = v
+	st.reloadToViper()
+}
+
+// GetHTTPClientInsecureOutgoing safely fetches the value for global configuration 'HTTPClient.InsecureOutgoing' field
+func GetHTTPClientInsecureOutgoing() bool { return global.GetHTTPClientInsecureOutgoing() }
+
+// SetHTTPClientInsecureOutgoing safely sets the value for global configuration 'HTTPClient.InsecureOutgoing' field
+func SetHTTPClientInsecureOutgoing(v bool) { global.SetHTTPClientInsecureOutgoing(v) }
+
 // CacheMemoryTargetFlag returns the flag name for the 'Cache.MemoryTarget' field
 func CacheMemoryTargetFlag() string { return "cache-memory-target" }
 
@@ -6844,6 +6879,17 @@ func flattenConfigMap(cfgmap map[string]any) {
 		ival, ok := mapGet(cfgmap, key...)
 		if ok {
 			cfgmap["http-client-tls-insecure-skip-verify"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"http-client", "insecure-outgoing"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["http-client-insecure-outgoing"] = ival
 			nestedKeys[key[0]] = struct{}{}
 			break
 		}

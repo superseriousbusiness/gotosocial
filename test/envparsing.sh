@@ -105,6 +105,7 @@ EXPECT=$(cat << "EOF"
     "host": "example.com",
     "http-client-allow-ips": [],
     "http-client-block-ips": [],
+    "http-client-insecure-outgoing": false,
     "http-client-timeout": 30000000000,
     "http-client-tls-insecure-skip-verify": false,
     "instance-allow-backdating-statuses": true,

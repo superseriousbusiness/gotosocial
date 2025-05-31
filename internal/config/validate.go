@@ -181,5 +181,13 @@ func Validate() error {
 		)
 	}
 
+	// http-client.insecure-outgoing
+	if GetHTTPClientInsecureOutgoing() {
+		log.Warn(nil, "http-client.insecure-outgoing was set to TRUE. "+
+			"*****THIS SHOULD BE USED FOR TESTING ONLY, IF YOU TURN THIS ON WHILE "+
+			"IF IN DOUBT, STOP YOUR SERVER *NOW* AND ADJUST YOUR CONFIGURATION!*****",
+		)
+	}
+
 	return errs.Combine()
 }

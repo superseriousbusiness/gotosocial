@@ -27,6 +27,7 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
@@ -35,7 +36,7 @@ import (
 // well as if the URL was retrieved from cache. When the URL is retrieved
 // from cache we don't have to try and do host-meta discovery
 func (t *transport) webfingerURLFor(targetDomain string) (string, bool) {
-	url := "https://" + targetDomain + "/.well-known/webfinger"
+	url := config.GetHTTPClientOutgoingScheme() + targetDomain + "/.well-known/webfinger"
 
 	wc := t.controller.state.Caches.Webfinger
 
@@ -185,7 +186,7 @@ func (t *transport) Finger(ctx context.Context, targetUsername string, targetDom
 
 func (t *transport) webfingerFromHostMeta(ctx context.Context, targetDomain string) (string, error) {
 	// Build the request for the host-meta endpoint
-	hmurl := "https://" + targetDomain + "/.well-known/host-meta"
+	hmurl := config.GetHTTPClientOutgoingScheme() + targetDomain + "/.well-known/host-meta"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, hmurl, nil)
 	if err != nil {
 		return "", err
