@@ -161,15 +161,22 @@ func (f *Filter) isStatusHomeTimelineable(ctx context.Context, owner *gtsmodel.A
 			return false, cache.SentinelError
 		}
 
-		// Fetch next parent in conversation.
-		inReplyToID := next.InReplyToID
-		next, err = f.state.DB.GetStatusByID(
-			gtscontext.SetBarebones(ctx),
-			inReplyToID,
-		)
-		if err != nil {
-			return false, gtserror.Newf("error getting status parent %s: %w", inReplyToID, err)
+		// Check if parent is set.
+		inReplyTo := next.InReplyTo
+		if inReplyTo == nil {
+
+			// Fetch next parent in conversation.
+			inReplyTo, err = f.state.DB.GetStatusByID(
+				gtscontext.SetBarebones(ctx),
+				next.InReplyToID,
+			)
+			if err != nil {
+				return false, gtserror.Newf("error getting status parent %s: %w", next.InReplyToURI, err)
+			}
 		}
+
+		// Set next status.
+		next = inReplyTo
 	}
 
 	if next != status && !oneAuthor && !visible {

@@ -169,7 +169,7 @@ func (m *Module) NotificationsGETHandler(c *gin.Context) {
 	ctx := c.Request.Context()
 	resp, errWithCode := m.processor.Timeline().NotificationsGet(
 		ctx,
-		authed,
+		authed.Account,
 		page,
 		parseNotificationTypes(ctx, c.QueryArray(TypesKey)),        // Include types.
 		parseNotificationTypes(ctx, c.QueryArray(ExcludeTypesKey)), // Exclude types.

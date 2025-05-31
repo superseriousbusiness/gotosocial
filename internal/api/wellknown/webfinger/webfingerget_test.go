@@ -33,6 +33,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/cleaner"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/processing"
@@ -98,6 +99,7 @@ func (suite *WebfingerGetTestSuite) funkifyAccountDomain(host string, accountDom
 		suite.emailSender,
 		testrig.NewNoopWebPushSender(),
 		visibility.NewFilter(&suite.state),
+		mutes.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)
 

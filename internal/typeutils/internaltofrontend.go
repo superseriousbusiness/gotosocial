@@ -32,7 +32,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
@@ -851,7 +850,6 @@ func (c *Converter) StatusToAPIStatus(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Status, error) {
 	return c.statusToAPIStatus(
 		ctx,
@@ -859,7 +857,6 @@ func (c *Converter) StatusToAPIStatus(
 		requestingAccount,
 		filterContext,
 		filters,
-		mutes,
 		true,
 		true,
 	)
@@ -875,7 +872,6 @@ func (c *Converter) statusToAPIStatus(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 	placeholdAttachments bool,
 	addPendingNote bool,
 ) (*apimodel.Status, error) {
@@ -885,7 +881,6 @@ func (c *Converter) statusToAPIStatus(
 		requestingAccount, // Can be nil.
 		filterContext,     // Can be empty.
 		filters,
-		mutes,
 	)
 	if err != nil {
 		return nil, err
@@ -952,76 +947,17 @@ func (c *Converter) statusToAPIFilterResults(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 ) ([]apimodel.FilterResult, error) {
 	// If there are no filters or mutes, we're done.
 	// We never hide statuses authored by the requesting account,
 	// since not being able to see your own posts is confusing.
-	if filterContext == "" || (len(filters) == 0 && mutes.Len() == 0) || s.AccountID == requestingAccount.ID {
+	if filterContext == "" || (len(filters) == 0) || s.AccountID == requestingAccount.ID {
 		return nil, nil
 	}
 
-	// Both mutes and filters can expire.
+	// Both mutes and
+	// filters can expire.
 	now := time.Now()
-
-	// If requesting account mutes the author (taking boosts into account), hide the status.
-	if (s.BoostOfAccountID != "" && mutes.Matches(s.BoostOfAccountID, filterContext, now)) ||
-		mutes.Matches(s.AccountID, filterContext, now) {
-		return nil, statusfilter.ErrHideStatus
-	}
-
-	// If this status is part of a multi-account discussion,
-	// and all of the accounts replied to or mentioned are invisible to the requesting account
-	// (due to blocks, domain blocks, moderation, etc.),
-	// or are muted, hide the status.
-	// First, collect the accounts we have to check.
-	otherAccounts := make([]*gtsmodel.Account, 0, 1+len(s.Mentions))
-	if s.InReplyToAccount != nil {
-		otherAccounts = append(otherAccounts, s.InReplyToAccount)
-	}
-	for _, mention := range s.Mentions {
-		otherAccounts = append(otherAccounts, mention.TargetAccount)
-	}
-
-	// If there are no other accounts, skip this check.
-	if len(otherAccounts) > 0 {
-		// Start by assuming that they're all invisible or muted.
-		allOtherAccountsInvisibleOrMuted := true
-
-		for _, account := range otherAccounts {
-			// Is this account visible?
-			visible, err := c.visFilter.AccountVisible(ctx, requestingAccount, account)
-			if err != nil {
-				return nil, err
-			}
-			if !visible {
-				// It's invisible. Check the next account.
-				continue
-			}
-
-			// If visible, is it muted?
-			if mutes.Matches(account.ID, filterContext, now) {
-				// It's muted. Check the next account.
-				continue
-			}
-
-			// If we get here, the account is visible and not muted.
-			// We should show this status, and don't have to check any more accounts.
-			allOtherAccountsInvisibleOrMuted = false
-			break
-		}
-
-		// If we didn't find any visible non-muted accounts, hide the status.
-		if allOtherAccountsInvisibleOrMuted {
-			return nil, statusfilter.ErrHideStatus
-		}
-	}
-
-	// At this point, the status isn't muted, but might still be filtered.
-	if len(filters) == 0 {
-		// If it can't be filtered because there are no filters, we're done.
-		return nil, nil
-	}
 
 	// Key this status based on ID + last updated time,
 	// to ensure we always filter on latest version.
@@ -1130,7 +1066,6 @@ func (c *Converter) StatusToWebStatus(
 		nil,                            // No authed requester.
 		statusfilter.FilterContextNone, // No filters.
 		nil,                            // No filters.
-		nil,                            // No mutes.
 	)
 	if err != nil {
 		return nil, err
@@ -1301,7 +1236,6 @@ func (c *Converter) statusToFrontend(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 ) (
 	*apimodel.Status,
 	error,
@@ -1311,7 +1245,6 @@ func (c *Converter) statusToFrontend(
 		requestingAccount,
 		filterContext,
 		filters,
-		mutes,
 	)
 	if err != nil {
 		return nil, err
@@ -1323,7 +1256,6 @@ func (c *Converter) statusToFrontend(
 			requestingAccount,
 			filterContext,
 			filters,
-			mutes,
 		)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			// If we'd hide the original status, hide the boost.
@@ -1357,7 +1289,6 @@ func (c *Converter) baseStatusToFrontend(
 	requestingAccount *gtsmodel.Account,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 ) (
 	*apimodel.Status,
 	error,
@@ -1535,7 +1466,7 @@ func (c *Converter) baseStatusToFrontend(
 	}
 
 	// Apply filters.
-	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterContext, filters, mutes)
+	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterContext, filters)
 	if err != nil {
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			return nil, err
@@ -2052,7 +1983,6 @@ func (c *Converter) NotificationToAPINotification(
 	ctx context.Context,
 	n *gtsmodel.Notification,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Notification, error) {
 	// Ensure notif populated.
 	if err := c.state.DB.PopulateNotification(ctx, n); err != nil {
@@ -2072,7 +2002,7 @@ func (c *Converter) NotificationToAPINotification(
 			ctx, n.Status,
 			n.TargetAccount,
 			statusfilter.FilterContextNotifications,
-			filters, mutes,
+			filters,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
 			return nil, gtserror.Newf("error converting status to api: %w", err)
@@ -2108,7 +2038,6 @@ func (c *Converter) ConversationToAPIConversation(
 	conversation *gtsmodel.Conversation,
 	requester *gtsmodel.Account,
 	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
 ) (*apimodel.Conversation, error) {
 	apiConversation := &apimodel.Conversation{
 		ID:     conversation.ID,
@@ -2125,7 +2054,6 @@ func (c *Converter) ConversationToAPIConversation(
 			requester,
 			statusfilter.FilterContextNotifications,
 			filters,
-			mutes,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
 			return nil, gtserror.Newf(
@@ -2394,7 +2322,6 @@ func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 			requestingAccount,
 			statusfilter.FilterContextNone,
 			nil,  // No filters.
-			nil,  // No mutes.
 			true, // Placehold unknown attachments.
 
 			// Don't add note about
@@ -3057,7 +2984,6 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		requestingAcct,
 		statusfilter.FilterContextNone,
 		nil, // No filters.
-		nil, // No mutes.
 	)
 	if err != nil {
 		err := gtserror.Newf("error converting interacted status: %w", err)
@@ -3072,7 +2998,6 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 			requestingAcct,
 			statusfilter.FilterContextNone,
 			nil,  // No filters.
-			nil,  // No mutes.
 			true, // Placehold unknown attachments.
 
 			// Don't add note about pending;

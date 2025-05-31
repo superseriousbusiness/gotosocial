@@ -229,6 +229,7 @@ var Defaults = Configuration{
 		WebPushSubscriptionMemRatio:           1,
 		WebPushSubscriptionIDsMemRatio:        1,
 		VisibilityMemRatio:                    2,
+		MutesMemRatio:                         2,
 	},
 
 	HTTPClient: HTTPClientConfiguration{

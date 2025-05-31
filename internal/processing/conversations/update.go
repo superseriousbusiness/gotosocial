@@ -31,10 +31,14 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
-// ConversationNotification carries the arguments to processing/stream.Processor.Conversation.
+// ConversationNotification carries the arguments
+// to processing/stream.Processor.Conversation.
 type ConversationNotification struct {
-	// AccountID of a local account to deliver the notification to.
+
+	// AccountID of a local account to
+	// deliver the notification to.
 	AccountID string
+
 	// Conversation as the notification payload.
 	Conversation *apimodel.Conversation
 }
@@ -46,11 +50,13 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		// Only DMs are considered part of conversations.
 		return nil, nil
 	}
+
 	if status.BoostOfID != "" {
 		// Boosts can't be part of conversations.
 		// FUTURE: This may change if we ever implement quote posts.
 		return nil, nil
 	}
+
 	if status.ThreadID == "" {
 		// If the status doesn't have a thread ID, it didn't mention a local account,
 		// and thus can't be part of a conversation.
@@ -77,48 +83,12 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		}
 		localAccount := participant
 
-		// If the status is not visible to this account, skip processing it for this account.
-		visible, err := p.filter.StatusVisible(ctx, localAccount, status)
+		// If status not visible to this account, skip further processing.
+		visible, err := p.visFilter.StatusVisible(ctx, localAccount, status)
 		if err != nil {
-			log.Errorf(
-				ctx,
-				"error checking status %s visibility for account %s: %v",
-				status.ID,
-				localAccount.ID,
-				err,
-			)
+			log.Errorf(ctx, "error checking status %s visibility for account %s: %v", status.URI, localAccount.URI, err)
 			continue
 		} else if !visible {
-			continue
-		}
-
-		// Is the status filtered or muted for this user?
-		// Converting the status to an API status runs the filter/mute checks.
-		filters, mutes, errWithCode := p.getFiltersAndMutes(ctx, localAccount)
-		if errWithCode != nil {
-			log.Error(ctx, errWithCode)
-			continue
-		}
-		_, err = p.converter.StatusToAPIStatus(
-			ctx,
-			status,
-			localAccount,
-			statusfilter.FilterContextNotifications,
-			filters,
-			mutes,
-		)
-		if err != nil {
-			// If the status matched a hide filter, skip processing it for this account.
-			// If there was another kind of error, log that and skip it anyway.
-			if !errors.Is(err, statusfilter.ErrHideStatus) {
-				log.Errorf(
-					ctx,
-					"error checking status %s filtering/muting for account %s: %v",
-					status.ID,
-					localAccount.ID,
-					err,
-				)
-			}
 			continue
 		}
 
@@ -133,20 +103,14 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		}
 
 		// Check for a previously existing conversation, if there is one.
-		conversation, err := p.state.DB.GetConversationByThreadAndAccountIDs(
-			ctx,
+		conversation, err := p.state.DB.GetConversationByThreadAndAccountIDs(ctx,
 			status.ThreadID,
 			localAccount.ID,
 			otherAccountIDs,
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			log.Errorf(
-				ctx,
-				"error trying to find a previous conversation for status %s and account %s: %v",
-				status.ID,
-				localAccount.ID,
-				err,
-			)
+			log.Errorf(ctx, "error finding previous conversation for status %s and account %s: %v",
+				status.URI, localAccount.URI, err)
 			continue
 		}
 
@@ -172,6 +136,7 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 			conversation.LastStatusID = status.ID
 			conversation.LastStatus = status
 		}
+
 		// If the conversation is unread, leave it marked as unread.
 		// If the conversation is read but this status might not have been, mark the conversation as unread.
 		if !statusAuthoredByConversationOwner {
@@ -181,43 +146,29 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		// Create or update the conversation.
 		err = p.state.DB.UpsertConversation(ctx, conversation)
 		if err != nil {
-			log.Errorf(
-				ctx,
-				"error creating or updating conversation %s for status %s and account %s: %v",
-				conversation.ID,
-				status.ID,
-				localAccount.ID,
-				err,
-			)
+			log.Errorf(ctx, "error creating or updating conversation %s for status %s and account %s: %v",
+				conversation.ID, status.URI, localAccount.URI, err)
 			continue
 		}
 
 		// Link the conversation to the status.
 		if err := p.state.DB.LinkConversationToStatus(ctx, conversation.ID, status.ID); err != nil {
-			log.Errorf(
-				ctx,
-				"error linking conversation %s to status %s: %v",
-				conversation.ID,
-				status.ID,
-				err,
-			)
+			log.Errorf(ctx, "error linking conversation %s to status %s: %v",
+				conversation.ID, status.URI, err)
 			continue
 		}
 
 		// Convert the conversation to API representation.
-		apiConversation, err := p.converter.ConversationToAPIConversation(
-			ctx,
+		apiConversation, err := p.converter.ConversationToAPIConversation(ctx,
 			conversation,
 			localAccount,
-			filters,
-			mutes,
+			nil,
 		)
 		if err != nil {
 			// If the conversation's last status matched a hide filter, skip it.
 			// If there was another kind of error, log that and skip it anyway.
 			if !errors.Is(err, statusfilter.ErrHideStatus) {
-				log.Errorf(
-					ctx,
+				log.Errorf(ctx,
 					"error converting conversation %s to API representation for account %s: %v",
 					status.ID,
 					localAccount.ID,
@@ -227,15 +178,31 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 			continue
 		}
 
-		// Generate a notification,
-		// unless the status was authored by the user who would be notified,
-		// in which case they already know.
-		if status.AccountID != localAccount.ID {
-			notifications = append(notifications, ConversationNotification{
-				AccountID:    localAccount.ID,
-				Conversation: apiConversation,
-			})
+		// If status was authored by this participant,
+		// don't bother notifying, they already know!
+		if status.AccountID == localAccount.ID {
+			continue
 		}
+
+		// Check whether status is muted to local participant.
+		muted, err := p.muteFilter.StatusNotificationsMuted(ctx,
+			localAccount,
+			status,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error checking status mute: %v", err)
+			continue
+		}
+
+		if muted {
+			continue
+		}
+
+		// Generate a notification,
+		notifications = append(notifications, ConversationNotification{
+			AccountID:    localAccount.ID,
+			Conversation: apiConversation,
+		})
 	}
 
 	return notifications, nil

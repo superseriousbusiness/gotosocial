@@ -23,8 +23,7 @@ import (
 	"strings"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
+	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -59,8 +58,7 @@ func (s *Surface) notifyPendingReply(
 
 	// Ensure thread not muted
 	// by replied-to account.
-	muted, err := s.State.DB.IsThreadMutedByAccount(
-		ctx,
+	muted, err := s.State.DB.IsThreadMutedByAccount(ctx,
 		status.ThreadID,
 		status.InReplyToAccountID,
 	)
@@ -81,7 +79,8 @@ func (s *Surface) notifyPendingReply(
 		gtsmodel.NotificationPendingReply,
 		status.InReplyToAccount,
 		status.Account,
-		status.ID,
+		status,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying replied-to account %s: %w", status.InReplyToAccountID, err)
 	}
@@ -135,8 +134,7 @@ func (s *Surface) notifyMention(
 
 	// Ensure thread not muted
 	// by mentioned account.
-	muted, err := s.State.DB.IsThreadMutedByAccount(
-		ctx,
+	muted, err := s.State.DB.IsThreadMutedByAccount(ctx,
 		mention.Status.ThreadID,
 		mention.TargetAccountID,
 	)
@@ -160,7 +158,8 @@ func (s *Surface) notifyMention(
 		gtsmodel.NotificationMention,
 		mention.TargetAccount,
 		mention.OriginAccount,
-		mention.StatusID,
+		mention.Status,
+		nil,
 	); err != nil {
 		return gtserror.Newf(
 			"error notifying mention target %s: %w",
@@ -193,7 +192,8 @@ func (s *Surface) notifyFollowRequest(
 		gtsmodel.NotificationFollowRequest,
 		followReq.TargetAccount,
 		followReq.Account,
-		"",
+		nil,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying follow target %s: %w", followReq.TargetAccountID, err)
 	}
@@ -245,7 +245,8 @@ func (s *Surface) notifyFollow(
 		gtsmodel.NotificationFollow,
 		follow.TargetAccount,
 		follow.Account,
-		"",
+		nil,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying follow target %s: %w", follow.TargetAccountID, err)
 	}
@@ -275,7 +276,8 @@ func (s *Surface) notifyFave(
 		gtsmodel.NotificationFavourite,
 		fave.TargetAccount,
 		fave.Account,
-		fave.StatusID,
+		fave.Status,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying status author %s: %w", fave.TargetAccountID, err)
 	}
@@ -306,7 +308,8 @@ func (s *Surface) notifyPendingFave(
 		gtsmodel.NotificationPendingFave,
 		fave.TargetAccount,
 		fave.Account,
-		fave.StatusID,
+		fave.Status,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying status author %s: %w", fave.TargetAccountID, err)
 	}
@@ -339,8 +342,7 @@ func (s *Surface) notifyableFave(
 
 	// Ensure favee hasn't
 	// muted the thread.
-	muted, err := s.State.DB.IsThreadMutedByAccount(
-		ctx,
+	muted, err := s.State.DB.IsThreadMutedByAccount(ctx,
 		fave.Status.ThreadID,
 		fave.TargetAccountID,
 	)
@@ -379,7 +381,8 @@ func (s *Surface) notifyAnnounce(
 		gtsmodel.NotificationReblog,
 		boost.BoostOfAccount,
 		boost.Account,
-		boost.ID,
+		boost,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying boost target %s: %w", boost.BoostOfAccountID, err)
 	}
@@ -410,7 +413,8 @@ func (s *Surface) notifyPendingAnnounce(
 		gtsmodel.NotificationPendingReblog,
 		boost.BoostOfAccount,
 		boost.Account,
-		boost.ID,
+		boost,
+		nil,
 	); err != nil {
 		return gtserror.Newf("error notifying boost target %s: %w", boost.BoostOfAccountID, err)
 	}
@@ -448,8 +452,7 @@ func (s *Surface) notifyableAnnounce(
 
 	// Ensure boostee hasn't
 	// muted the thread.
-	muted, err := s.State.DB.IsThreadMutedByAccount(
-		ctx,
+	muted, err := s.State.DB.IsThreadMutedByAccount(ctx,
 		status.BoostOf.ThreadID,
 		status.BoostOfAccountID,
 	)
@@ -488,7 +491,8 @@ func (s *Surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) 
 			gtsmodel.NotificationPoll,
 			status.Account,
 			status.Account,
-			status.ID,
+			status,
+			nil,
 		); err != nil {
 			errs.Appendf("error notifying poll author: %w", err)
 		}
@@ -507,7 +511,8 @@ func (s *Surface) notifyPollClose(ctx context.Context, status *gtsmodel.Status) 
 			gtsmodel.NotificationPoll,
 			vote.Account,
 			status.Account,
-			status.ID,
+			status,
+			nil,
 		); err != nil {
 			errs.Appendf("error notifying poll voter %s: %w", vote.AccountID, err)
 			continue
@@ -546,7 +551,8 @@ func (s *Surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) erro
 			gtsmodel.NotificationAdminSignup,
 			mod,
 			newUser.Account,
-			"",
+			nil,
+			nil,
 		); err != nil {
 			errs.Appendf("error notifying moderator %s: %w", mod.ID, err)
 			continue
@@ -559,7 +565,7 @@ func (s *Surface) notifySignup(ctx context.Context, newUser *gtsmodel.User) erro
 func (s *Surface) notifyStatusEdit(
 	ctx context.Context,
 	status *gtsmodel.Status,
-	editID string,
+	edit *gtsmodel.StatusEdit,
 ) error {
 	// Get local-only interactions (we can't/don't notify remotes).
 	interactions, err := s.State.DB.GetStatusInteractions(ctx, status.ID, true)
@@ -594,7 +600,8 @@ func (s *Surface) notifyStatusEdit(
 			gtsmodel.NotificationUpdate,
 			targetAcct,
 			status.Account,
-			editID,
+			status,
+			edit,
 		); err != nil {
 			errs.Appendf("error notifying status edit: %w", err)
 			continue
@@ -637,22 +644,32 @@ func (s *Surface) Notify(
 	notificationType gtsmodel.NotificationType,
 	targetAccount *gtsmodel.Account,
 	originAccount *gtsmodel.Account,
-	statusOrEditID string,
+	status *gtsmodel.Status,
+	edit *gtsmodel.StatusEdit,
 ) error {
 	if targetAccount.IsRemote() {
 		// nothing to do.
 		return nil
 	}
 
+	// Get status / edit ID
+	// if either was provided.
+	// (prefer edit though!)
+	var statusOrEditID string
+	if edit != nil {
+		statusOrEditID = edit.ID
+	} else if status != nil {
+		statusOrEditID = status.ID
+	}
+
 	// We're doing state-y stuff so get a
 	// lock on this combo of notif params.
-	lockURI := getNotifyLockURI(
+	unlock := s.State.ProcessingLocks.Lock(getNotifyLockURI(
 		notificationType,
 		targetAccount,
 		originAccount,
 		statusOrEditID,
-	)
-	unlock := s.State.ProcessingLocks.Lock(lockURI)
+	))
 
 	// Wrap the unlock so we
 	// can do granular unlocking.
@@ -696,29 +713,57 @@ func (s *Surface) Notify(
 	// with the state-y stuff.
 	unlock()
 
-	// Stream notification to the user.
+	// Check whether origin account is muted by target account.
+	muted, err := s.MuteFilter.AccountNotificationsMuted(ctx,
+		targetAccount,
+		originAccount,
+	)
+	if err != nil {
+		return gtserror.Newf("error checking account mute: %w", err)
+	}
+
+	if muted {
+		// Don't notify.
+		return nil
+	}
+
+	if status != nil {
+		// Check whether status is muted by the target account.
+		muted, err := s.MuteFilter.StatusNotificationsMuted(ctx,
+			targetAccount,
+			status,
+		)
+		if err != nil {
+			return gtserror.Newf("error checking status mute: %w", err)
+		}
+
+		if muted {
+			// Don't notify.
+			return nil
+		}
+	}
+
 	filters, err := s.State.DB.GetFiltersForAccountID(ctx, targetAccount.ID)
 	if err != nil {
 		return gtserror.Newf("couldn't retrieve filters for account %s: %w", targetAccount.ID, err)
 	}
 
-	mutes, err := s.State.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), targetAccount.ID, nil)
-	if err != nil {
-		return gtserror.Newf("couldn't retrieve mutes for account %s: %w", targetAccount.ID, err)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
-
-	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, filters, compiledMutes)
-	if err != nil {
-		if errors.Is(err, status.ErrHideStatus) {
-			return nil
-		}
+	// Convert the notification to frontend API model for streaming / push.
+	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, filters)
+	if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
+
+	if apiNotif == nil {
+		// Filtered.
+		return nil
+	}
+
+	// Stream notification to the user.
 	s.Stream.Notify(ctx, targetAccount, apiNotif)
 
 	// Send Web Push notification to the user.
-	if err = s.WebPushSender.Send(ctx, notif, filters, compiledMutes); err != nil {
+	if err = s.WebPushSender.Send(ctx, notif, apiNotif); err != nil {
 		return gtserror.Newf("error sending Web Push notifications: %w", err)
 	}
 

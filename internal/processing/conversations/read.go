@@ -44,17 +44,15 @@ func (p *Processor) Read(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	filters, mutes, errWithCode := p.getFiltersAndMutes(ctx, requestingAccount)
+	filters, errWithCode := p.getFilters(ctx, requestingAccount)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	apiConversation, err := p.converter.ConversationToAPIConversation(
-		ctx,
+	apiConversation, err := p.converter.ConversationToAPIConversation(ctx,
 		conversation,
 		requestingAccount,
 		filters,
-		mutes,
 	)
 	if err != nil {
 		err = gtserror.Newf("error converting conversation %s to API representation: %w", id, err)

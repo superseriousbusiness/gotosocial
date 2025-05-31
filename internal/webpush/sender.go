@@ -21,7 +21,7 @@ import (
 	"context"
 	"net/http"
 
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/httpclient"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
@@ -31,14 +31,8 @@ import (
 // Sender can send Web Push notifications.
 type Sender interface {
 
-	// Send queues up a notification for delivery to
-	// all of an account's Web Push subscriptions.
-	Send(
-		ctx context.Context,
-		notification *gtsmodel.Notification,
-		filters []*gtsmodel.Filter,
-		mutes *usermute.CompiledUserMuteList,
-	) error
+	// Send queues up a notification for delivery to all of an account's Web Push subscriptions.
+	Send(ctx context.Context, notif *gtsmodel.Notification, apiNotif *apimodel.Notification) error
 }
 
 // NewSender creates a new sender from an HTTP client, DB, and worker pool.

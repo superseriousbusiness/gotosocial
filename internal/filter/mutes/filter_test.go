@@ -15,61 +15,61 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package timeline_test
+package mutes_test
 
 import (
-	"code.superseriousbusiness.org/gotosocial/internal/admin"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/processing/timeline"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/testrig"
 	"github.com/stretchr/testify/suite"
 )
 
-type TimelineStandardTestSuite struct {
+type FilterStandardTestSuite struct {
+	// standard suite interfaces
 	suite.Suite
 	db    db.DB
 	state state.State
 
 	// standard suite models
-	testAccounts map[string]*gtsmodel.Account
-	testStatuses map[string]*gtsmodel.Status
+	testTokens       map[string]*gtsmodel.Token
+	testApplications map[string]*gtsmodel.Application
+	testUsers        map[string]*gtsmodel.User
+	testAccounts     map[string]*gtsmodel.Account
+	testAttachments  map[string]*gtsmodel.MediaAttachment
+	testStatuses     map[string]*gtsmodel.Status
+	testTags         map[string]*gtsmodel.Tag
+	testMentions     map[string]*gtsmodel.Mention
+	testFollows      map[string]*gtsmodel.Follow
 
-	// module being tested
-	timeline timeline.Processor
+	filter *mutes.Filter
 }
 
-func (suite *TimelineStandardTestSuite) SetupSuite() {
+func (suite *FilterStandardTestSuite) SetupSuite() {
+	suite.testTokens = testrig.NewTestTokens()
+	suite.testApplications = testrig.NewTestApplications()
+	suite.testUsers = testrig.NewTestUsers()
 	suite.testAccounts = testrig.NewTestAccounts()
+	suite.testAttachments = testrig.NewTestAttachments()
 	suite.testStatuses = testrig.NewTestStatuses()
+	suite.testTags = testrig.NewTestTags()
+	suite.testMentions = testrig.NewTestMentions()
+	suite.testFollows = testrig.NewTestFollows()
 }
 
-func (suite *TimelineStandardTestSuite) SetupTest() {
+func (suite *FilterStandardTestSuite) SetupTest() {
 	suite.state.Caches.Init()
-	testrig.StartNoopWorkers(&suite.state)
 
 	testrig.InitTestConfig()
 	testrig.InitTestLog()
 
 	suite.db = testrig.NewTestDB(&suite.state)
-	suite.state.DB = suite.db
-	suite.state.AdminActions = admin.New(suite.state.DB, &suite.state.Workers)
+	suite.filter = mutes.NewFilter(&suite.state)
 
-	suite.timeline = timeline.New(
-		&suite.state,
-		typeutils.NewConverter(&suite.state),
-		visibility.NewFilter(&suite.state),
-		mutes.NewFilter(&suite.state),
-	)
-
-	testrig.StandardDBSetup(suite.db, suite.testAccounts)
+	testrig.StandardDBSetup(suite.db, nil)
 }
 
-func (suite *TimelineStandardTestSuite) TearDownTest() {
+func (suite *FilterStandardTestSuite) TearDownTest() {
 	testrig.StandardDBTeardown(suite.db)
-	testrig.StopWorkers(&suite.state)
 }

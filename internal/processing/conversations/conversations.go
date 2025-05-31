@@ -22,9 +22,8 @@ import (
 	"errors"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
@@ -32,20 +31,23 @@ import (
 )
 
 type Processor struct {
-	state     *state.State
-	converter *typeutils.Converter
-	filter    *visibility.Filter
+	state      *state.State
+	converter  *typeutils.Converter
+	visFilter  *visibility.Filter
+	muteFilter *mutes.Filter
 }
 
 func New(
 	state *state.State,
 	converter *typeutils.Converter,
-	filter *visibility.Filter,
+	visFilter *visibility.Filter,
+	muteFilter *mutes.Filter,
 ) Processor {
 	return Processor{
-		state:     state,
-		converter: converter,
-		filter:    filter,
+		state:      state,
+		converter:  converter,
+		visFilter:  visFilter,
+		muteFilter: muteFilter,
 	}
 }
 
@@ -95,13 +97,13 @@ func (p *Processor) getConversationOwnedBy(
 }
 
 // getFiltersAndMutes gets the given account's filters and compiled mute list.
-func (p *Processor) getFiltersAndMutes(
+func (p *Processor) getFilters(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
-) ([]*gtsmodel.Filter, *usermute.CompiledUserMuteList, gtserror.WithCode) {
+) ([]*gtsmodel.Filter, gtserror.WithCode) {
 	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
 	if err != nil {
-		return nil, nil, gtserror.NewErrorInternalError(
+		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf(
 				"DB error getting filters for account %s: %w",
 				requestingAccount.ID,
@@ -109,18 +111,5 @@ func (p *Processor) getFiltersAndMutes(
 			),
 		)
 	}
-
-	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), requestingAccount.ID, nil)
-	if err != nil {
-		return nil, nil, gtserror.NewErrorInternalError(
-			gtserror.Newf(
-				"DB error getting mutes for account %s: %w",
-				requestingAccount.ID,
-				err,
-			),
-		)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
-
-	return filters, compiledMutes, nil
+	return filters, nil
 }

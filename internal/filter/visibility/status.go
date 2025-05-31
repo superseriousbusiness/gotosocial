@@ -316,7 +316,8 @@ func (f *Filter) areStatusAccountsVisible(ctx context.Context, requester *gtsmod
 		// This is a boosted status.
 
 		if status.AccountID == status.BoostOfAccountID {
-			// Some clout-chaser boosted their own status, tch.
+			// Some clout-chaser boosted
+			// their own status, tch.
 			return true, nil
 		}
 

@@ -21,14 +21,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -39,14 +38,13 @@ import (
 // NotificationsGet ...
 func (p *Processor) NotificationsGet(
 	ctx context.Context,
-	authed *apiutil.Auth,
+	requester *gtsmodel.Account,
 	page *paging.Page,
 	types []gtsmodel.NotificationType,
 	excludeTypes []gtsmodel.NotificationType,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	notifs, err := p.state.DB.GetAccountNotifications(
-		ctx,
-		authed.Account.ID,
+	notifs, err := p.state.DB.GetAccountNotifications(ctx,
+		requester.ID,
 		page,
 		types,
 		excludeTypes,
@@ -61,18 +59,11 @@ func (p *Processor) NotificationsGet(
 		return util.EmptyPageableResponse(), nil
 	}
 
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, authed.Account.ID)
+	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requester.ID)
 	if err != nil {
-		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", authed.Account.ID, err)
+		err = gtserror.Newf("error getting account %s filters: %w", requester.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
-
-	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), authed.Account.ID, nil)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", authed.Account.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
 
 	var (
 		items = make([]interface{}, 0, count)
@@ -84,7 +75,7 @@ func (p *Processor) NotificationsGet(
 	)
 
 	for _, n := range notifs {
-		visible, err := p.notifVisible(ctx, n, authed.Account)
+		visible, err := p.notifVisible(ctx, n, requester)
 		if err != nil {
 			log.Debugf(ctx, "skipping notification %s because of an error checking notification visibility: %v", n.ID, err)
 			continue
@@ -94,7 +85,37 @@ func (p *Processor) NotificationsGet(
 			continue
 		}
 
-		item, err := p.converter.NotificationToAPINotification(ctx, n, filters, compiledMutes)
+		// Check whether notification origin account is muted.
+		muted, err := p.muteFilter.AccountNotificationsMuted(ctx,
+			requester,
+			n.OriginAccount,
+		)
+		if err != nil {
+			log.Errorf(ctx, "error checking account mute: %v", err)
+			continue
+		}
+
+		if muted {
+			continue
+		}
+
+		if n.Status != nil {
+			// A status is attached, check whether status muted.
+			muted, err = p.muteFilter.StatusNotificationsMuted(ctx,
+				requester,
+				n.Status,
+			)
+			if err != nil {
+				log.Errorf(ctx, "error checking status mute: %v", err)
+				continue
+			}
+
+			if muted {
+				continue
+			}
+		}
+
+		item, err := p.converter.NotificationToAPINotification(ctx, n, filters)
 		if err != nil {
 			if !errors.Is(err, status.ErrHideStatus) {
 				log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
@@ -125,41 +146,24 @@ func (p *Processor) NotificationsGet(
 
 func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Account, targetNotifID string) (*apimodel.Notification, gtserror.WithCode) {
 	notif, err := p.state.DB.GetNotificationByID(ctx, targetNotifID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-
-		// Real error.
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting from db: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	if notifTargetAccountID := notif.TargetAccountID; notifTargetAccountID != account.ID {
-		err = fmt.Errorf("account %s does not have permission to view notification belong to account %s", account.ID, notifTargetAccountID)
+	if notif.TargetAccountID != account.ID {
+		err := gtserror.New("requester does not match notification target")
 		return nil, gtserror.NewErrorNotFound(err)
 	}
 
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, account.ID)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", account.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	// NOTE: we specifically don't do any filtering
+	// or mute checking for a notification directly
+	// fetched by ID. only from timelines etc.
 
-	mutes, err := p.state.DB.GetAccountMutes(gtscontext.SetBarebones(ctx), account.ID, nil)
+	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, nil)
 	if err != nil {
-		err = gtserror.Newf("couldn't retrieve mutes for account %s: %w", account.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	compiledMutes := usermute.NewCompiledUserMuteList(mutes)
-
-	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, filters, compiledMutes)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-
-		// Real error.
-		return nil, gtserror.NewErrorInternalError(err)
+		err := gtserror.Newf("error converting to api model: %w", err)
+		return nil, gtserror.WrapWithCode(http.StatusInternalServerError, err)
 	}
 
 	return apiNotif, nil

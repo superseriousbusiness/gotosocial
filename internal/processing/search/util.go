@@ -114,7 +114,7 @@ func (p *Processor) packageStatuses(
 			continue
 		}
 
-		apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextNone, nil, nil)
+		apiStatus, err := p.converter.StatusToAPIStatus(ctx, status, requestingAccount, statusfilter.FilterContextNone, nil)
 		if err != nil {
 			log.Debugf(ctx, "skipping status %s because it couldn't be converted to its api representation: %s", status.ID, err)
 			continue

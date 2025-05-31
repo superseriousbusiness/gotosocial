@@ -28,12 +28,18 @@ import (
 // HOOKS TO BE CALLED ON DELETE YOU MUST FIRST POPULATE IT IN THE CACHE.
 
 func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
-	// Invalidate stats for this account.
+	// Invalidate cached stats objects for this account.
 	c.DB.AccountStats.Invalidate("AccountID", account.ID)
 
-	// Invalidate account ID cached visibility.
+	// Invalidate as possible visibility target result.
 	c.Visibility.Invalidate("ItemID", account.ID)
-	c.Visibility.Invalidate("RequesterID", account.ID)
+
+	// If account is local, invalidate as
+	// possible mute / visibility result requester.
+	if account.IsLocal() {
+		c.Visibility.Invalidate("RequesterID", account.ID)
+		c.Mutes.Invalidate("RequesterID", account.ID)
+	}
 
 	// Invalidate this account's
 	// following / follower lists.
@@ -66,13 +72,31 @@ func (c *Caches) OnInvalidateApplication(app *gtsmodel.Application) {
 }
 
 func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
-	// Invalidate block origin account ID cached visibility.
-	c.Visibility.Invalidate("ItemID", block.AccountID)
-	c.Visibility.Invalidate("RequesterID", block.AccountID)
+	// Invalidate both block origin and target as
+	// possible lookup targets for visibility results.
+	c.Visibility.InvalidateIDs("ItemID", []string{
+		block.TargetAccountID,
+		block.AccountID,
+	})
 
-	// Invalidate block target account ID cached visibility.
-	c.Visibility.Invalidate("ItemID", block.TargetAccountID)
-	c.Visibility.Invalidate("RequesterID", block.TargetAccountID)
+	// Track which of block / target are local.
+	localAccountIDs := make([]string, 0, 2)
+
+	// If origin is local (or uncertain), also invalidate
+	// results for them as mute / visibility result requester.
+	if block.Account == nil || block.Account.IsLocal() {
+		localAccountIDs = append(localAccountIDs, block.AccountID)
+	}
+
+	// If target is local (or uncertain), also invalidate
+	// results for them as mute / visibility result requester.
+	if block.TargetAccount == nil || block.TargetAccount.IsLocal() {
+		localAccountIDs = append(localAccountIDs, block.TargetAccountID)
+	}
+
+	// Now perform local mute / visibility result invalidations.
+	c.Visibility.InvalidateIDs("RequesterID", localAccountIDs)
+	c.Mutes.InvalidateIDs("RequesterID", localAccountIDs)
 
 	// Invalidate source account's block lists.
 	c.DB.BlockIDs.Invalidate(block.AccountID)
@@ -92,13 +116,31 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	// Invalidate follow request with this same ID.
 	c.DB.FollowRequest.Invalidate("ID", follow.ID)
 
-	// Invalidate follow origin account ID cached visibility.
-	c.Visibility.Invalidate("ItemID", follow.AccountID)
-	c.Visibility.Invalidate("RequesterID", follow.AccountID)
+	// Invalidate both follow origin and target as
+	// possible lookup targets for visibility results.
+	c.Visibility.InvalidateIDs("ItemID", []string{
+		follow.TargetAccountID,
+		follow.AccountID,
+	})
 
-	// Invalidate follow target account ID cached visibility.
-	c.Visibility.Invalidate("ItemID", follow.TargetAccountID)
-	c.Visibility.Invalidate("RequesterID", follow.TargetAccountID)
+	// Track which of follow / target are local.
+	localAccountIDs := make([]string, 0, 2)
+
+	// If origin is local (or uncertain), also invalidate
+	// results for them as mute / visibility result requester.
+	if follow.Account == nil || follow.Account.IsLocal() {
+		localAccountIDs = append(localAccountIDs, follow.AccountID)
+	}
+
+	// If target is local (or uncertain), also invalidate
+	// results for them as mute / visibility result requester.
+	if follow.TargetAccount == nil || follow.TargetAccount.IsLocal() {
+		localAccountIDs = append(localAccountIDs, follow.TargetAccountID)
+	}
+
+	// Now perform local mute / visibility result invalidations.
+	c.Visibility.InvalidateIDs("RequesterID", localAccountIDs)
+	c.Mutes.InvalidateIDs("RequesterID", localAccountIDs)
 
 	// Invalidate ID slice cache.
 	c.DB.FollowIDs.Invalidate(
@@ -227,11 +269,15 @@ func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {
 }
 
 func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
-	// Invalidate stats for this account.
+	// Invalidate cached stats objects for this account.
 	c.DB.AccountStats.Invalidate("AccountID", status.AccountID)
 
 	// Invalidate status ID cached visibility.
 	c.Visibility.Invalidate("ItemID", status.ID)
+
+	// Invalidate mute results involving status.
+	c.Mutes.Invalidate("StatusID", status.ID)
+	c.Mutes.Invalidate("ThreadID", status.ThreadID)
 
 	// Invalidate each media by the IDs we're aware of.
 	// This must be done as the status table is aware of
@@ -277,6 +323,11 @@ func (c *Caches) OnInvalidateStatusFave(fave *gtsmodel.StatusFave) {
 	c.DB.StatusFaveIDs.Invalidate(fave.StatusID)
 }
 
+func (c *Caches) OnInvalidateThreadMute(mute *gtsmodel.ThreadMute) {
+	// Invalidate cached mute ressults encapsulating this thread and account.
+	c.Mutes.Invalidate("RequesterID,ThreadID", mute.AccountID, mute.ThreadID)
+}
+
 func (c *Caches) OnInvalidateToken(token *gtsmodel.Token) {
 	// Invalidate token's push subscription.
 	c.DB.WebPushSubscription.Invalidate("ID", token.ID)
@@ -294,6 +345,9 @@ func (c *Caches) OnInvalidateUser(user *gtsmodel.User) {
 func (c *Caches) OnInvalidateUserMute(mute *gtsmodel.UserMute) {
 	// Invalidate source account's user mute lists.
 	c.DB.UserMuteIDs.Invalidate(mute.AccountID)
+
+	// Invalidate source account's cached mute results.
+	c.Mutes.Invalidate("RequesterID", mute.AccountID)
 }
 
 func (c *Caches) OnInvalidateWebPushSubscription(subscription *gtsmodel.WebPushSubscription) {

@@ -145,7 +145,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Int("advanced-throttling-multiplier", cfg.Advanced.Throttling.Multiplier, "Multiplier to use per cpu for http request throttling. 0 or less turns throttling off.")
 	flags.Duration("advanced-throttling-retry-after", cfg.Advanced.Throttling.RetryAfter, "Retry-After duration response to send for throttled requests.")
 	flags.Bool("advanced-scraper-deterrence-enabled", cfg.Advanced.ScraperDeterrence.Enabled, "Enable proof-of-work based scraper deterrence on profile / status pages")
-	flags.Uint32("advanced-scraper-deterrence-difficulty", cfg.Advanced.ScraperDeterrence.Difficulty, "The proof-of-work difficulty, which determines how many leading zeros to try solve in hash solutions.")
+	flags.Uint32("advanced-scraper-deterrence-difficulty", cfg.Advanced.ScraperDeterrence.Difficulty, "The proof-of-work difficulty, which determines roughly how many hash-encode rounds required of each client.")
 	flags.StringSlice("http-client-allow-ips", cfg.HTTPClient.AllowIPs, "")
 	flags.StringSlice("http-client-block-ips", cfg.HTTPClient.BlockIPs, "")
 	flags.Duration("http-client-timeout", cfg.HTTPClient.Timeout, "")
@@ -206,11 +206,12 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Float64("cache-webfinger-mem-ratio", cfg.Cache.WebfingerMemRatio, "")
 	flags.Float64("cache-web-push-subscription-mem-ratio", cfg.Cache.WebPushSubscriptionMemRatio, "")
 	flags.Float64("cache-web-push-subscription-ids-mem-ratio", cfg.Cache.WebPushSubscriptionIDsMemRatio, "")
+	flags.Float64("cache-mutes-mem-ratio", cfg.Cache.MutesMemRatio, "")
 	flags.Float64("cache-visibility-mem-ratio", cfg.Cache.VisibilityMemRatio, "")
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 184)
+	cfgmap := make(map[string]any, 186)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -388,6 +389,7 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["cache-webfinger-mem-ratio"] = cfg.Cache.WebfingerMemRatio
 	cfgmap["cache-web-push-subscription-mem-ratio"] = cfg.Cache.WebPushSubscriptionMemRatio
 	cfgmap["cache-web-push-subscription-ids-mem-ratio"] = cfg.Cache.WebPushSubscriptionIDsMemRatio
+	cfgmap["cache-mutes-mem-ratio"] = cfg.Cache.MutesMemRatio
 	cfgmap["cache-visibility-mem-ratio"] = cfg.Cache.VisibilityMemRatio
 	cfgmap["username"] = cfg.AdminAccountUsername
 	cfgmap["email"] = cfg.AdminAccountEmail
@@ -1852,6 +1854,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.Cache.WebPushSubscriptionIDsMemRatio, err = cast.ToFloat64E(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> float64 for 'cache-web-push-subscription-ids-mem-ratio': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["cache-mutes-mem-ratio"]; ok {
+		var err error
+		cfg.Cache.MutesMemRatio, err = cast.ToFloat64E(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> float64 for 'cache-mutes-mem-ratio': %w", ival, err)
 		}
 	}
 
@@ -6385,6 +6395,31 @@ func SetCacheWebPushSubscriptionIDsMemRatio(v float64) {
 	global.SetCacheWebPushSubscriptionIDsMemRatio(v)
 }
 
+// CacheMutesMemRatioFlag returns the flag name for the 'Cache.MutesMemRatio' field
+func CacheMutesMemRatioFlag() string { return "cache-mutes-mem-ratio" }
+
+// GetCacheMutesMemRatio safely fetches the Configuration value for state's 'Cache.MutesMemRatio' field
+func (st *ConfigState) GetCacheMutesMemRatio() (v float64) {
+	st.mutex.RLock()
+	v = st.config.Cache.MutesMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// SetCacheMutesMemRatio safely sets the Configuration value for state's 'Cache.MutesMemRatio' field
+func (st *ConfigState) SetCacheMutesMemRatio(v float64) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Cache.MutesMemRatio = v
+	st.reloadToViper()
+}
+
+// GetCacheMutesMemRatio safely fetches the value for global configuration 'Cache.MutesMemRatio' field
+func GetCacheMutesMemRatio() float64 { return global.GetCacheMutesMemRatio() }
+
+// SetCacheMutesMemRatio safely sets the value for global configuration 'Cache.MutesMemRatio' field
+func SetCacheMutesMemRatio(v float64) { global.SetCacheMutesMemRatio(v) }
+
 // CacheVisibilityMemRatioFlag returns the flag name for the 'Cache.VisibilityMemRatio' field
 func CacheVisibilityMemRatioFlag() string { return "cache-visibility-mem-ratio" }
 
@@ -6584,6 +6619,73 @@ func GetAdminMediaListRemoteOnly() bool { return global.GetAdminMediaListRemoteO
 
 // SetAdminMediaListRemoteOnly safely sets the value for global configuration 'AdminMediaListRemoteOnly' field
 func SetAdminMediaListRemoteOnly(v bool) { global.SetAdminMediaListRemoteOnly(v) }
+
+// GetTotalOfMemRatios safely fetches the combined value for all the state's mem ratio fields
+func (st *ConfigState) GetTotalOfMemRatios() (total float64) {
+	st.mutex.RLock()
+	total += st.config.Cache.AccountMemRatio
+	total += st.config.Cache.AccountNoteMemRatio
+	total += st.config.Cache.AccountSettingsMemRatio
+	total += st.config.Cache.AccountStatsMemRatio
+	total += st.config.Cache.ApplicationMemRatio
+	total += st.config.Cache.BlockMemRatio
+	total += st.config.Cache.BlockIDsMemRatio
+	total += st.config.Cache.BoostOfIDsMemRatio
+	total += st.config.Cache.ClientMemRatio
+	total += st.config.Cache.ConversationMemRatio
+	total += st.config.Cache.ConversationLastStatusIDsMemRatio
+	total += st.config.Cache.DomainPermissionDraftMemRation
+	total += st.config.Cache.DomainPermissionSubscriptionMemRation
+	total += st.config.Cache.EmojiMemRatio
+	total += st.config.Cache.EmojiCategoryMemRatio
+	total += st.config.Cache.FilterMemRatio
+	total += st.config.Cache.FilterKeywordMemRatio
+	total += st.config.Cache.FilterStatusMemRatio
+	total += st.config.Cache.FollowMemRatio
+	total += st.config.Cache.FollowIDsMemRatio
+	total += st.config.Cache.FollowRequestMemRatio
+	total += st.config.Cache.FollowRequestIDsMemRatio
+	total += st.config.Cache.FollowingTagIDsMemRatio
+	total += st.config.Cache.InReplyToIDsMemRatio
+	total += st.config.Cache.InstanceMemRatio
+	total += st.config.Cache.InteractionRequestMemRatio
+	total += st.config.Cache.ListMemRatio
+	total += st.config.Cache.ListIDsMemRatio
+	total += st.config.Cache.ListedIDsMemRatio
+	total += st.config.Cache.MarkerMemRatio
+	total += st.config.Cache.MediaMemRatio
+	total += st.config.Cache.MentionMemRatio
+	total += st.config.Cache.MoveMemRatio
+	total += st.config.Cache.NotificationMemRatio
+	total += st.config.Cache.PollMemRatio
+	total += st.config.Cache.PollVoteMemRatio
+	total += st.config.Cache.PollVoteIDsMemRatio
+	total += st.config.Cache.ReportMemRatio
+	total += st.config.Cache.SinBinStatusMemRatio
+	total += st.config.Cache.StatusMemRatio
+	total += st.config.Cache.StatusBookmarkMemRatio
+	total += st.config.Cache.StatusBookmarkIDsMemRatio
+	total += st.config.Cache.StatusEditMemRatio
+	total += st.config.Cache.StatusFaveMemRatio
+	total += st.config.Cache.StatusFaveIDsMemRatio
+	total += st.config.Cache.TagMemRatio
+	total += st.config.Cache.ThreadMuteMemRatio
+	total += st.config.Cache.TokenMemRatio
+	total += st.config.Cache.TombstoneMemRatio
+	total += st.config.Cache.UserMemRatio
+	total += st.config.Cache.UserMuteMemRatio
+	total += st.config.Cache.UserMuteIDsMemRatio
+	total += st.config.Cache.WebfingerMemRatio
+	total += st.config.Cache.WebPushSubscriptionMemRatio
+	total += st.config.Cache.WebPushSubscriptionIDsMemRatio
+	total += st.config.Cache.MutesMemRatio
+	total += st.config.Cache.VisibilityMemRatio
+	st.mutex.RUnlock()
+	return
+}
+
+// GetTotalOfMemRatios safely fetches the combined value for all the global state's mem ratio fields
+func GetTotalOfMemRatios() (total float64) { return global.GetTotalOfMemRatios() }
 
 func flattenConfigMap(cfgmap map[string]any) {
 	nestedKeys := make(map[string]struct{})
@@ -7358,6 +7460,17 @@ func flattenConfigMap(cfgmap map[string]any) {
 		ival, ok := mapGet(cfgmap, key...)
 		if ok {
 			cfgmap["cache-web-push-subscription-ids-mem-ratio"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"cache", "mutes-mem-ratio"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["cache-mutes-mem-ratio"] = ival
 			nestedKeys[key[0]] = struct{}{}
 			break
 		}

@@ -20,7 +20,7 @@ package testrig
 import (
 	"context"
 
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/webpush"
 )
@@ -39,11 +39,10 @@ func NewWebPushMockSender() *WebPushMockSender {
 
 func (m *WebPushMockSender) Send(
 	ctx context.Context,
-	notification *gtsmodel.Notification,
-	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
+	notif *gtsmodel.Notification,
+	apiNotif *apimodel.Notification,
 ) error {
-	m.Sent[notification.TargetAccountID] = append(m.Sent[notification.TargetAccountID], notification)
+	m.Sent[notif.TargetAccountID] = append(m.Sent[notif.TargetAccountID], notif)
 	return nil
 }
 
@@ -57,9 +56,8 @@ func NewNoopWebPushSender() webpush.Sender {
 
 func (n *noopWebPushSender) Send(
 	ctx context.Context,
-	notification *gtsmodel.Notification,
-	filters []*gtsmodel.Filter,
-	mutes *usermute.CompiledUserMuteList,
+	notif *gtsmodel.Notification,
+	apiNotif *apimodel.Notification,
 ) error {
 	return nil
 }

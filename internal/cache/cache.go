@@ -49,6 +49,10 @@ type Caches struct {
 	// Timelines ...
 	Timelines TimelineCaches
 
+	// Mutes provides access to the item mutes
+	// cache. (used by the item mutes filter).
+	Mutes MutesCache
+
 	// Visibility provides access to the item visibility
 	// cache. (used by the visibility filter).
 	Visibility VisibilityCache
@@ -125,6 +129,7 @@ func (c *Caches) Init() {
 	c.initWebfinger()
 	c.initWebPushSubscription()
 	c.initWebPushSubscriptionIDs()
+	c.initMutes()
 	c.initVisibility()
 }
 

@@ -24,6 +24,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
@@ -485,6 +486,24 @@ func generateGetSetters(out io.Writer, fields []ConfigField) {
 		fprintf(out, "// Set%s safely sets the value for global configuration '%s' field\n", name, field.Path)
 		fprintf(out, "func Set%[1]s(v %[2]s) { global.Set%[1]s(v) }\n\n", name, fieldType)
 	}
+
+	// Separate out the config fields (from a clone!!!) to get only the 'mem-ratio' members.
+	memFields := slices.DeleteFunc(slices.Clone(fields), func(field ConfigField) bool {
+		return !strings.Contains(field.Path, "MemRatio")
+	})
+
+	fprintf(out, "// GetTotalOfMemRatios safely fetches the combined value for all the state's mem ratio fields\n")
+	fprintf(out, "func (st *ConfigState) GetTotalOfMemRatios() (total float64) {\n")
+	fprintf(out, "\tst.mutex.RLock()\n")
+	for _, field := range memFields {
+		fprintf(out, "\ttotal += st.config.%s\n", field.Path)
+	}
+	fprintf(out, "\tst.mutex.RUnlock()\n")
+	fprintf(out, "\treturn\n")
+	fprintf(out, "}\n\n")
+
+	fprintf(out, "// GetTotalOfMemRatios safely fetches the combined value for all the global state's mem ratio fields\n")
+	fprintf(out, "func GetTotalOfMemRatios() (total float64) { return global.GetTotalOfMemRatios() }\n\n")
 }
 
 func generateMapFlattener(out io.Writer, fields []ConfigField) {

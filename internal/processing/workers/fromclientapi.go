@@ -748,10 +748,17 @@ func (p *clientAPI) UpdateStatus(ctx context.Context, cMsg *messages.FromClientA
 		}
 	}
 
-	// Notify of the latest edit.
-	if editsLen := len(status.EditIDs); editsLen != 0 {
-		editID := status.EditIDs[editsLen-1]
-		if err := p.surface.notifyStatusEdit(ctx, status, editID); err != nil {
+	if len(status.EditIDs) > 0 {
+		// Ensure edits are fully populated for this status before anything.
+		if err := p.surface.State.DB.PopulateStatusEdits(ctx, status); err != nil {
+			log.Error(ctx, "error populating updated status edits: %v")
+
+			// Then send notifications of a status edit
+			// to any local interactors of the status.
+		} else if err := p.surface.notifyStatusEdit(ctx,
+			status,
+			status.Edits[len(status.Edits)-1], // latest
+		); err != nil {
 			log.Errorf(ctx, "error notifying status edit: %v", err)
 		}
 	}

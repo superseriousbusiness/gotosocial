@@ -61,6 +61,7 @@ EXPECT=$(cat << "EOF"
     "cache-memory-target": "100MiB",
     "cache-mention-mem-ratio": 2,
     "cache-move-mem-ratio": 0.1,
+    "cache-mutes-mem-ratio": 2,
     "cache-notification-mem-ratio": 2,
     "cache-poll-mem-ratio": 1,
     "cache-poll-vote-ids-mem-ratio": 2,

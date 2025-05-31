@@ -20,6 +20,7 @@ package workers
 import (
 	"code.superseriousbusiness.org/gotosocial/internal/email"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/account"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/common"
@@ -44,6 +45,7 @@ func New(
 	federator *federation.Federator,
 	converter *typeutils.Converter,
 	visFilter *visibility.Filter,
+	muteFilter *mutes.Filter,
 	emailSender email.Sender,
 	webPushSender webpush.Sender,
 	account *account.Processor,
@@ -66,6 +68,7 @@ func New(
 		Converter:     converter,
 		Stream:        stream,
 		VisFilter:     visFilter,
+		MuteFilter:    muteFilter,
 		EmailSender:   emailSender,
 		WebPushSender: webPushSender,
 		Conversations: conversations,

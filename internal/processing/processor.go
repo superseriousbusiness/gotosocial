@@ -22,6 +22,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/email"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	mm "code.superseriousbusiness.org/gotosocial/internal/media"
@@ -203,6 +204,7 @@ func NewProcessor(
 	emailSender email.Sender,
 	webPushSender webpush.Sender,
 	visFilter *visibility.Filter,
+	muteFilter *mutes.Filter,
 	intFilter *interaction.Filter,
 ) *Processor {
 	parseMentionFunc := GetParseMentionFunc(state, federator)
@@ -218,7 +220,7 @@ func NewProcessor(
 	//
 	// Start with sub processors that will
 	// be required by the workers processor.
-	common := common.New(state, mediaManager, converter, federator, visFilter)
+	common := common.New(state, mediaManager, converter, federator, visFilter, muteFilter)
 	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.media = media.New(&common, state, converter, federator, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)
@@ -228,7 +230,7 @@ func NewProcessor(
 	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.admin = admin.New(&common, state, cleaner, subscriptions, federator, converter, mediaManager, federator.TransportController(), emailSender)
 	processor.application = application.New(state, converter)
-	processor.conversations = conversations.New(state, converter, visFilter)
+	processor.conversations = conversations.New(state, converter, visFilter, muteFilter)
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
 	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
 	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)
@@ -239,7 +241,7 @@ func NewProcessor(
 	processor.push = push.New(state, converter)
 	processor.report = report.New(state, converter)
 	processor.tags = tags.New(state, converter)
-	processor.timeline = timeline.New(state, converter, visFilter)
+	processor.timeline = timeline.New(state, converter, visFilter, muteFilter)
 	processor.search = search.New(state, federator, converter, visFilter)
 	processor.status = status.New(state, &common, &processor.polls, &processor.interactionRequests, federator, converter, visFilter, intFilter, parseMentionFunc)
 	processor.user = user.New(state, converter, oauthServer, emailSender)
@@ -256,6 +258,7 @@ func NewProcessor(
 		federator,
 		converter,
 		visFilter,
+		muteFilter,
 		emailSender,
 		webPushSender,
 		&processor.account,

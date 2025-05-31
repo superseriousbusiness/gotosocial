@@ -22,6 +22,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
@@ -92,9 +93,10 @@ func (suite *StatusStandardTestSuite) SetupTest() {
 	suite.federator = testrig.NewTestFederator(&suite.state, suite.tc, suite.mediaManager)
 
 	visFilter := visibility.NewFilter(&suite.state)
+	muteFilter := mutes.NewFilter(&suite.state)
 	intFilter := interaction.NewFilter(&suite.state)
 
-	common := common.New(&suite.state, suite.mediaManager, suite.typeConverter, suite.federator, visFilter)
+	common := common.New(&suite.state, suite.mediaManager, suite.typeConverter, suite.federator, visFilter, muteFilter)
 	polls := polls.New(&common, &suite.state, suite.typeConverter)
 	intReqs := interactionrequests.New(&common, &suite.state, suite.typeConverter)
 

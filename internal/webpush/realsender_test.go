@@ -32,6 +32,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/email"
 	"code.superseriousbusiness.org/gotosocial/internal/federation"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/interaction"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
@@ -123,6 +124,7 @@ func (suite *RealSenderStandardTestSuite) SetupTest() {
 		suite.emailSender,
 		suite.webPushSender,
 		visibility.NewFilter(&suite.state),
+		mutes.NewFilter(&suite.state),
 		interaction.NewFilter(&suite.state),
 	)
 	testrig.StartWorkers(&suite.state, suite.processor.Workers())
@@ -188,8 +190,14 @@ func (suite *RealSenderStandardTestSuite) simulatePushNotification(
 		}, nil
 	}
 
+	apiNotif, err := suite.typeconverter.NotificationToAPINotification(ctx, notification, nil)
+	suite.NoError(err)
+
 	// Send the push notification.
-	sendError := suite.webPushSender.Send(ctx, notification, nil, nil)
+	sendError := suite.webPushSender.Send(ctx,
+		notification,
+		apiNotif,
+	)
 
 	// Wait for it to be sent or for the context to time out.
 	bodyClosed := false

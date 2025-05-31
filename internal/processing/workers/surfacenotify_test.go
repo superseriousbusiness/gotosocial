@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -43,6 +44,7 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 		Converter:     testStructs.TypeConverter,
 		Stream:        testStructs.Processor.Stream(),
 		VisFilter:     visibility.NewFilter(testStructs.State),
+		MuteFilter:    mutes.NewFilter(testStructs.State),
 		EmailSender:   testStructs.EmailSender,
 		WebPushSender: testStructs.WebPushSender,
 		Conversations: testStructs.Processor.Conversations(),
@@ -74,7 +76,8 @@ func (suite *SurfaceNotifyTestSuite) TestSpamNotifs() {
 				notificationType,
 				targetAccount,
 				originAccount,
-				"",
+				nil,
+				nil,
 			); err != nil {
 				suite.FailNow(err.Error())
 			}

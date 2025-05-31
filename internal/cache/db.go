@@ -1531,9 +1531,10 @@ func (c *Caches) initThreadMute() {
 			{Fields: "AccountID", Multiple: true},
 			{Fields: "ThreadID,AccountID"},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateThreadMute,
 	})
 }
 

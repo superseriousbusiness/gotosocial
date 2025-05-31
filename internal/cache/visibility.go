@@ -34,7 +34,7 @@ func (c *Caches) initVisibility() {
 		config.GetCacheVisibilityMemRatio(),
 	)
 
-	log.Infof(nil, "Visibility cache size = %d", cap)
+	log.Infof(nil, "cache size = %d", cap)
 
 	copyF := func(v1 *CachedVisibility) *CachedVisibility {
 		v2 := new(CachedVisibility)
@@ -73,12 +73,16 @@ const (
 	VisibilityTypePublic  = VisibilityType('p')
 )
 
-// CachedVisibility represents a cached visibility lookup value.
+// CachedVisibility represents a
+// cached visibility lookup value.
 type CachedVisibility struct {
-	// ItemID is the ID of the item in question (status / account).
+
+	// ItemID is the ID of the item
+	// in question (status / account).
 	ItemID string
 
-	// RequesterID is the ID of the requesting account for this visibility lookup.
+	// RequesterID is the ID of the requesting
+	// account for this visibility lookup.
 	RequesterID string
 
 	// Type is the visibility lookup type.

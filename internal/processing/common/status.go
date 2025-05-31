@@ -25,7 +25,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/federation/dereferencing"
 	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/usermute"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -216,7 +215,6 @@ func (p *Processor) GetAPIStatus(
 		requester,
 		statusfilter.FilterContextNone,
 		nil,
-		nil,
 	)
 	if err != nil {
 		err := gtserror.Newf("error converting: %w", err)
@@ -238,7 +236,6 @@ func (p *Processor) GetVisibleAPIStatuses(
 	statuses []*gtsmodel.Status,
 	filterContext statusfilter.FilterContext,
 	filters []*gtsmodel.Filter,
-	userMutes []*gtsmodel.UserMute,
 ) []apimodel.Status {
 
 	// Start new log entry with
@@ -246,9 +243,6 @@ func (p *Processor) GetVisibleAPIStatuses(
 	// as a field in each entry.
 	l := log.WithContext(ctx).
 		WithField("caller", log.Caller(3))
-
-	// Compile mutes to useable user mutes for type converter.
-	compUserMutes := usermute.NewCompiledUserMuteList(userMutes)
 
 	// Iterate filtered statuses for conversion to API model.
 	apiStatuses := make([]apimodel.Status, 0, len(statuses))
@@ -268,13 +262,23 @@ func (p *Processor) GetVisibleAPIStatuses(
 			continue
 		}
 
+		// Check whether this status is muted by requesting account.
+		muted, err := p.muteFilter.StatusMuted(ctx, requester, status)
+		if err != nil {
+			log.Errorf(ctx, "error checking mute: %v", err)
+			continue
+		}
+
+		if muted {
+			continue
+		}
+
 		// Convert to API status, taking mute / filter into account.
 		apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 			status,
 			requester,
 			filterContext,
 			filters,
-			compUserMutes,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
 			l.Errorf("error converting: %v", err)

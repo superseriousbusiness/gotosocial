@@ -20,6 +20,7 @@ package media_test
 import (
 	"code.superseriousbusiness.org/gotosocial/internal/admin"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/media"
@@ -82,8 +83,9 @@ func (suite *MediaStandardTestSuite) SetupTest() {
 	suite.transportController = testrig.NewTestTransportController(&suite.state, testrig.NewMockHTTPClient(nil, "../../../testrig/media"))
 
 	federator := testrig.NewTestFederator(&suite.state, suite.transportController, suite.mediaManager)
-	filter := visibility.NewFilter(&suite.state)
-	common := common.New(&suite.state, suite.mediaManager, suite.tc, federator, filter)
+	visFilter := visibility.NewFilter(&suite.state)
+	muteFilter := mutes.NewFilter(&suite.state)
+	common := common.New(&suite.state, suite.mediaManager, suite.tc, federator, visFilter, muteFilter)
 
 	suite.mediaProcessor = mediaprocessing.New(&common, &suite.state, suite.tc, federator, suite.mediaManager, suite.transportController)
 	testrig.StandardDBSetup(suite.db, nil)

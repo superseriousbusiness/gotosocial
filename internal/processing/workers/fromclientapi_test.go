@@ -215,7 +215,6 @@ func (suite *FromClientAPITestSuite) statusJSON(
 		requestingAccount,
 		statusfilter.FilterContextNone,
 		nil,
-		nil,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -239,7 +238,6 @@ func (suite *FromClientAPITestSuite) conversationJSON(
 		ctx,
 		conversation,
 		requestingAccount,
-		nil,
 		nil,
 	)
 	if err != nil {
@@ -348,7 +346,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -2035,7 +2033,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -2220,7 +2218,7 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusInteractedWith() {
 		suite.FailNow("timed out waiting for edited status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
