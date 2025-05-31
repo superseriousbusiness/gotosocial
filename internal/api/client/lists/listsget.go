@@ -27,7 +27,7 @@ import (
 
 // ListsGETHandler swagger:operation GET /api/v1/lists lists
 //
-// Get all lists for owned by authorized user.
+// Get all lists owned by authorized user.
 //
 //	---
 //	tags:

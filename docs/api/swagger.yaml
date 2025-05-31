@@ -9449,7 +9449,7 @@ paths:
             security:
                 - OAuth2 Bearer:
                     - read:lists
-            summary: Get all lists for owned by authorized user.
+            summary: Get all lists owned by authorized user.
             tags:
                 - lists
         post:
