@@ -19,10 +19,10 @@
 
 import sha256 from "./sha256";
 
-let compute = async function(seedStr, challengeStr) {
+let compute = async function(seedStr, challengeStr, start, iter) {
 	const textEncoder = new TextEncoder();
 
-	let nonce = 0;
+	let nonce = start;
 	while (true) { // eslint-disable-line no-constant-condition
 
 		// Create possible solution string from challenge string + nonce.
@@ -38,17 +38,19 @@ let compute = async function(seedStr, challengeStr) {
 			return nonce;
 		}
 
-		// Iter.
-		nonce++;
+		// Iter nonce.
+		nonce += iter;
 	}
 };
 
 onmessage = async function(e) {
-	console.log('worker started'); // eslint-disable-line no-console
+	const thread = e.data.thread;
+	const threads = e.data.threads;
+	console.log("worker started:", thread); // eslint-disable-line no-console
 
-	// Compute nonce value that produces 'challenge' for seed.
-	let nonce = await compute(e.data.seed, e.data.challenge);
+	// Compute nonce value that produces 'challenge', for our allotted thread.
+	let nonce = await compute(e.data.seed, e.data.challenge, thread, threads);
 
-	// Post the solution nonce back to caller.
-	postMessage({ nonce: nonce, done: true });
+	// Post the solution nonce back to caller with thread no.
+	postMessage({ nonce: nonce, done: true, thread: thread });
 };

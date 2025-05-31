@@ -45,51 +45,85 @@ document.addEventListener("DOMContentLoaded", function() {
 	// data attributes on the nollamas section.
 	const seed = nollamas.dataset.nollamasSeed;
 	const challenge = nollamas.dataset.nollamasChallenge;
+	const threads = navigator.hardwareConcurrency;
+	if (typeof(threads) != "number" || threads < 1) { threads = 1; }
 
 	console.log("seed:", seed);           // eslint-disable-line no-console
 	console.log("challenge:", challenge); // eslint-disable-line no-console
+	console.log("threads:", threads);     // eslint-disable-line no-console
 
-	// Prepare the worker with task function.
-	const worker = new Worker("/assets/dist/nollamasworker.js");
+	// Create an array to track
+	// all workers such that we
+	// can terminate them all.
+	const workers = [];
+	const terminateAll = () => { workers.forEach((worker) => worker.terminate() ); };
+
+	// Get time before task completion.
 	const startTime = performance.now();
-	worker.postMessage({
-		challenge: challenge,
-		seed:      seed,
-	});
 
-	// Set the main worker function.
-	worker.onmessage = function (e) {
-		if (e.data.done) {
-			const endTime = performance.now();
-			const duration = endTime - startTime;
+	// Prepare and start each worker,
+	// adding them to the workers array.
+	for (let i = 0; i < threads; i++) {
+		const worker = new Worker("/assets/dist/nollamasworker.js");
+		workers.push(worker);
 
-			// Remove spinner and replace it with a tick
-			// and info about how long it took to solve.
-			nollamas.removeChild(spinner);
-			const solutionWrapper = document.createElement("div");
-			solutionWrapper.className = "nollamas-status";
+		// On any error terminate.
+		worker.onerror = (ev) => {
+			console.error("worker error:", ev); // eslint-disable-line no-console
+			terminateAll();
+		};
 
-			const tick = document.createElement("i");
-			tick.className = "fa fa-check fa-2x fa-fw";
-			tick.setAttribute("title","Solved!");
-			tick.setAttribute("aria-label", "Solved!");
-			solutionWrapper.appendChild(tick);
+		// Post worker message, where each
+		// worker will compute nonces in range:
+		// $threadNumber + $totalThreads * n
+		worker.postMessage({
+			challenge: challenge,
+			threads: threads,
+			thread: i,
+			seed: seed,
+		});
 
-			const took = document.createElement("span");
-			const solvedText = `Solved after ${e.data.nonce} iterations, in ${duration.toString()}ms!`;
-			took.appendChild(document.createTextNode(solvedText));
-			solutionWrapper.appendChild(took);
+		// Set main on-success function.
+		worker.onmessage = function (e) {
+			if (e.data.done) {
+				// Stop workers.
+				terminateAll();
 
-			nollamas.appendChild(solutionWrapper);
+				// Log which thread found the solution.
+				console.log("solution from:", e.data.thread); // eslint-disable-line no-console
 
-			// Wait for 500ms before redirecting, to give
-			// visitors a shot at reading the message, but
-			// not so long that they have to wait unduly.
-			setTimeout(() => {
-				let url = new URL(window.location.href);
-				url.searchParams.set("nollamas_solution", e.data.nonce);
-				window.location.replace(url.toString());
-			}, 500);
-		}
-	};
+				// Get total computation duration.
+				const endTime = performance.now();
+				const duration = endTime - startTime;
+
+				// Remove spinner and replace it with a tick
+				// and info about how long it took to solve.
+				nollamas.removeChild(spinner);
+				const solutionWrapper = document.createElement("div");
+				solutionWrapper.className = "nollamas-status";
+
+				const tick = document.createElement("i");
+				tick.className = "fa fa-check fa-2x fa-fw";
+				tick.setAttribute("title","Solved!");
+				tick.setAttribute("aria-label", "Solved!");
+				solutionWrapper.appendChild(tick);
+
+				const took = document.createElement("span");
+				const solvedText = `Solved after ${e.data.nonce} iterations by worker ${e.data.thread} of ${threads}, in ${duration.toString()}ms!`;
+				took.appendChild(document.createTextNode(solvedText));
+				solutionWrapper.appendChild(took);
+
+				nollamas.appendChild(solutionWrapper);
+
+				// Wait for 500ms before redirecting, to give
+				// visitors a shot at reading the message, but
+				// not so long that they have to wait unduly.
+				setTimeout(() => {
+					let url = new URL(window.location.href);
+					url.searchParams.set("nollamas_solution", e.data.nonce);
+					window.location.replace(url.toString());
+				}, 500);
+			}
+		};
+	}
 });
