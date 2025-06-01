@@ -803,6 +803,27 @@ func (suite *RelationshipTestSuite) TestGetAccountFollowRequests() {
 	suite.Len(followRequests, 1)
 }
 
+func (suite *RelationshipTestSuite) TestGetAccountFollowRequesting() {
+	ctx := suite.T().Context()
+	account := suite.testAccounts["admin_account"]
+	targetAccount := suite.testAccounts["local_account_2"]
+
+	followRequest := &gtsmodel.FollowRequest{
+		ID:              "01GEF753FWHCHRDWR0QEHBXM8W",
+		URI:             "http://localhost:8080/weeeeeeeeeeeeeeeee",
+		AccountID:       account.ID,
+		TargetAccountID: targetAccount.ID,
+	}
+
+	if err := suite.db.Put(ctx, followRequest); err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	followRequests, err := suite.db.GetAccountFollowRequesting(ctx, account.ID, nil)
+	suite.NoError(err)
+	suite.Len(followRequests, 1)
+}
+
 func (suite *RelationshipTestSuite) TestGetAccountFollows() {
 	account := suite.testAccounts["local_account_1"]
 	follows, err := suite.db.GetAccountFollows(suite.T().Context(), account.ID, nil)

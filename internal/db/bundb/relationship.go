@@ -302,7 +302,7 @@ func newSelectFollowRequesting(db *bun.DB, accountID string) *bun.SelectQuery {
 	return db.NewSelect().
 		TableExpr("?", bun.Ident("follow_requests")).
 		ColumnExpr("?", bun.Ident("id")).
-		Where("? = ?", bun.Ident("target_account_id"), accountID).
+		Where("? = ?", bun.Ident("account_id"), accountID).
 		OrderExpr("? DESC", bun.Ident("id"))
 }
 
