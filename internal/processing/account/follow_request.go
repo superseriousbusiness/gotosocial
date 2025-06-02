@@ -117,3 +117,42 @@ func (p *Processor) FollowRequestsGet(ctx context.Context, requestingAccount *gt
 		Prev:  page.Prev(lo, hi),
 	}), nil
 }
+
+// OutgoingFollowRequestsGet fetches a list of the accounts with a pending follow request originating from the given requestingAccount (the currently authorized account).
+func (p *Processor) OutgoingFollowRequestsGet(ctx context.Context, requestingAccount *gtsmodel.Account, page *paging.Page) (*apimodel.PageableResponse, gtserror.WithCode) {
+	// Fetch follow requests originating from the given requesting account model.
+	followRequests, err := p.state.DB.GetAccountFollowRequesting(ctx, requestingAccount.ID, page)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Check for empty response.
+	count := len(followRequests)
+	if count == 0 {
+		return paging.EmptyResponse(), nil
+	}
+
+	// Get the lowest and highest
+	// ID values, used for paging.
+	lo := followRequests[count-1].ID
+	hi := followRequests[0].ID
+
+	// Func to fetch follow source at index.
+	getIdx := func(i int) *gtsmodel.Account {
+		return followRequests[i].TargetAccount
+	}
+
+	// Get a filtered slice of public API account models.
+	items := p.c.GetVisibleAPIAccountsPaged(ctx,
+		requestingAccount,
+		getIdx,
+		count,
+	)
+
+	return paging.PackageResponse(paging.ResponseParams{
+		Items: items,
+		Path:  "/api/v1/follow_requests/outgoing",
+		Next:  page.Next(lo, hi),
+		Prev:  page.Prev(lo, hi),
+	}), nil
+}

@@ -36,6 +36,8 @@ const (
 	AuthorizePath = BasePathWithID + "/authorize"
 	// RejectPath is used for rejecting follow requests
 	RejectPath = BasePathWithID + "/reject"
+	// OutgoingPath is used for fetching the list of accounts you requested to follow.
+	OutgoingPath = BasePath + "/outgoing"
 )
 
 type Module struct {
@@ -50,6 +52,7 @@ func New(processor *processing.Processor) *Module {
 
 func (m *Module) Route(attachHandler func(method string, path string, f ...gin.HandlerFunc) gin.IRoutes) {
 	attachHandler(http.MethodGet, BasePath, m.FollowRequestGETHandler)
+	attachHandler(http.MethodGet, OutgoingPath, m.OutgoingFollowRequestGETHandler)
 	attachHandler(http.MethodPost, AuthorizePath, m.FollowRequestAuthorizePOSTHandler)
 	attachHandler(http.MethodPost, RejectPath, m.FollowRequestRejectPOSTHandler)
 }

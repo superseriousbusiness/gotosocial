@@ -8745,6 +8745,65 @@ paths:
             summary: Reject/deny follow request from the given account ID.
             tags:
                 - follow_requests
+    /api/v1/follow_requests/outgoing:
+        get:
+            description: |-
+                The next and previous queries can be parsed from the returned Link header.
+                Example:
+
+                ```
+                <https://example.org/api/v1/follow_requests/outgoing?limit=80&max_id=01FC0SKA48HNSVR6YKZCQGS2V8>; rel="next", <https://example.org/api/v1/follow_requests/outgoing?limit=80&min_id=01FC0SKW5JK2Q4EVAV2B462YY0>; rel="prev"
+                ````
+            operationId: getOutgoingFollowRequests
+            parameters:
+                - description: 'Return only follow requested accounts *OLDER* than the given max ID. The follow requestee with the specified ID will not be included in the response. NOTE: the ID is of the internal follow request, NOT any of the returned accounts.'
+                  in: query
+                  name: max_id
+                  type: string
+                - description: 'Return only follow requested accounts *NEWER* than the given since ID. The follow requestee with the specified ID will not be included in the response. NOTE: the ID is of the internal follow request, NOT any of the returned accounts.'
+                  in: query
+                  name: since_id
+                  type: string
+                - description: 'Return only follow requested accounts *IMMEDIATELY NEWER* than the given min ID. The follow requestee with the specified ID will not be included in the response. NOTE: the ID is of the internal follow request, NOT any of the returned accounts.'
+                  in: query
+                  name: min_id
+                  type: string
+                - default: 40
+                  description: Number of follow requested accounts to return.
+                  in: query
+                  maximum: 80
+                  minimum: 1
+                  name: limit
+                  type: integer
+            produces:
+                - application/json
+            responses:
+                "200":
+                    description: ""
+                    headers:
+                        Link:
+                            description: Links to the next and previous queries.
+                            type: string
+                    schema:
+                        items:
+                            $ref: '#/definitions/account'
+                        type: array
+                "400":
+                    description: bad request
+                "401":
+                    description: unauthorized
+                "404":
+                    description: not found
+                "406":
+                    description: not acceptable
+                "500":
+                    description: internal server error
+            security:
+                - OAuth2 Bearer:
+                    - read:follows
+            summary: Get an array of accounts that you have requested to follow.
+            tags:
+                - follow_requests
     /api/v1/followed_tags:
         get:
             operationId: getFollowedTags
