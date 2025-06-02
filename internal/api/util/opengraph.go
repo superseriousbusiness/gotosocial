@@ -235,9 +235,10 @@ func (o *OGMeta) WithStatus(status *apimodel.WebStatus) *OGMeta {
 			// Add this to our gathered entries.
 			ogMedias = append(ogMedias, ogMedia)
 
-			if a.Type != "image" {
-				// Add static/thumbnail
-				// for non-images.
+			// Add static/thumb for non-images
+			// (eg., audio files) only if they
+			// have a preview url set.
+			if a.Type != "image" && a.PreviewURL != nil {
 				ogMedias = append(
 					ogMedias,
 					OGMedia{
