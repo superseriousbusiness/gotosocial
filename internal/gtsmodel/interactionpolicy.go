@@ -129,6 +129,19 @@ const (
 	PolicyPermissionAutomaticApproval
 )
 
+func (p PolicyPermission) String() string {
+	switch p {
+	case PolicyPermissionForbidden:
+		return "forbidden"
+	case PolicyPermissionManualApproval:
+		return "manualApproval"
+	case PolicyPermissionAutomaticApproval:
+		return "automaticApproval"
+	default:
+		return "unknown"
+	}
+}
+
 // PolicyCheckResult encapsulates the results
 // of checking a certain Actor URI + type
 // of interaction against an interaction policy.
@@ -186,15 +199,15 @@ type InteractionPolicy struct {
 	// Conditions in which a Like
 	// interaction will be accepted
 	// for an item with this policy.
-	CanLike PolicyRules
+	CanLike *PolicyRules
 	// Conditions in which a Reply
 	// interaction will be accepted
 	// for an item with this policy.
-	CanReply PolicyRules
+	CanReply *PolicyRules
 	// Conditions in which an Announce
 	// interaction will be accepted
 	// for an item with this policy.
-	CanAnnounce PolicyRules
+	CanAnnounce *PolicyRules
 }
 
 // PolicyRules represents the rules according
@@ -236,37 +249,144 @@ func DefaultInteractionPolicyFor(v Visibility) *InteractionPolicy {
 	}
 }
 
-var defaultPolicyPublic = &InteractionPolicy{
-	CanLike: PolicyRules{
-		// Anyone can like.
-		AutomaticApproval: PolicyValues{
-			PolicyValuePublic,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
-	CanReply: PolicyRules{
-		// Anyone can reply.
-		AutomaticApproval: PolicyValues{
-			PolicyValuePublic,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
-	CanAnnounce: PolicyRules{
-		// Anyone can announce.
-		AutomaticApproval: PolicyValues{
-			PolicyValuePublic,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
+// DefaultCanLikeFor returns the default
+// policy rules for the canLike sub-policy.
+func DefaultCanLikeFor(v Visibility) *PolicyRules {
+	switch v {
+
+	// Anyone can like.
+	case VisibilityPublic, VisibilityUnlocked:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValuePublic,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	// Self, followers and
+	// mentioned can like.
+	case VisibilityFollowersOnly, VisibilityMutualsOnly:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValueAuthor,
+				PolicyValueFollowers,
+				PolicyValueMentioned,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	// Mentioned and self
+	// can always like.
+	case VisibilityDirect:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValueAuthor,
+				PolicyValueMentioned,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	default:
+		panic("invalid visibility")
+	}
 }
 
-// Returns the default interaction policy
+// DefaultCanReplyFor returns the default
+// policy rules for the canReply sub-policy.
+func DefaultCanReplyFor(v Visibility) *PolicyRules {
+	switch v {
+
+	// Anyone can reply.
+	case VisibilityPublic, VisibilityUnlocked:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValuePublic,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	// Self, followers and
+	// mentioned can reply.
+	case VisibilityFollowersOnly, VisibilityMutualsOnly:
+		return &PolicyRules{
+
+			AutomaticApproval: PolicyValues{
+				PolicyValueAuthor,
+				PolicyValueFollowers,
+				PolicyValueMentioned,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	// Mentioned and self
+	// can always reply.
+	case VisibilityDirect:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValueAuthor,
+				PolicyValueMentioned,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	default:
+		panic("invalid visibility")
+	}
+}
+
+// DefaultCanAnnounceFor returns the default
+// policy rules for the canAnnounce sub-policy.
+func DefaultCanAnnounceFor(v Visibility) *PolicyRules {
+	switch v {
+
+	// Anyone can announce.
+	case VisibilityPublic, VisibilityUnlocked:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValuePublic,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	// Only self can announce.
+	case VisibilityFollowersOnly, VisibilityMutualsOnly:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValueAuthor,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	// Only self can announce.
+	case VisibilityDirect:
+		return &PolicyRules{
+			AutomaticApproval: PolicyValues{
+				PolicyValueAuthor,
+			},
+			ManualApproval: make(PolicyValues, 0),
+		}
+
+	default:
+		panic("invalid visibility")
+	}
+}
+
+var defaultPolicyPublic = &InteractionPolicy{
+	CanLike:     DefaultCanLikeFor(VisibilityPublic),
+	CanReply:    DefaultCanReplyFor(VisibilityPublic),
+	CanAnnounce: DefaultCanAnnounceFor(VisibilityPublic),
+}
+
+// Returns a default interaction policy
 // for a post with visibility of public.
 func DefaultInteractionPolicyPublic() *InteractionPolicy {
-	return defaultPolicyPublic
+	// Copy global.
+	c := new(InteractionPolicy)
+	*c = *defaultPolicyPublic
+	return c
 }
 
-// Returns the default interaction policy
+// Returns a default interaction policy
 // for a post with visibility of unlocked.
 func DefaultInteractionPolicyUnlocked() *InteractionPolicy {
 	// Same as public (for now).
@@ -274,71 +394,31 @@ func DefaultInteractionPolicyUnlocked() *InteractionPolicy {
 }
 
 var defaultPolicyFollowersOnly = &InteractionPolicy{
-	CanLike: PolicyRules{
-		// Self, followers and
-		// mentioned can like.
-		AutomaticApproval: PolicyValues{
-			PolicyValueAuthor,
-			PolicyValueFollowers,
-			PolicyValueMentioned,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
-	CanReply: PolicyRules{
-		// Self, followers and
-		// mentioned can reply.
-		AutomaticApproval: PolicyValues{
-			PolicyValueAuthor,
-			PolicyValueFollowers,
-			PolicyValueMentioned,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
-	CanAnnounce: PolicyRules{
-		// Only self can announce.
-		AutomaticApproval: PolicyValues{
-			PolicyValueAuthor,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
+	CanLike:     DefaultCanLikeFor(VisibilityFollowersOnly),
+	CanReply:    DefaultCanReplyFor(VisibilityFollowersOnly),
+	CanAnnounce: DefaultCanAnnounceFor(VisibilityFollowersOnly),
 }
 
-// Returns the default interaction policy for
+// Returns a default interaction policy for
 // a post with visibility of followers only.
 func DefaultInteractionPolicyFollowersOnly() *InteractionPolicy {
-	return defaultPolicyFollowersOnly
+	// Copy global.
+	c := new(InteractionPolicy)
+	*c = *defaultPolicyFollowersOnly
+	return c
 }
 
 var defaultPolicyDirect = &InteractionPolicy{
-	CanLike: PolicyRules{
-		// Mentioned and self
-		// can always like.
-		AutomaticApproval: PolicyValues{
-			PolicyValueAuthor,
-			PolicyValueMentioned,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
-	CanReply: PolicyRules{
-		// Mentioned and self
-		// can always reply.
-		AutomaticApproval: PolicyValues{
-			PolicyValueAuthor,
-			PolicyValueMentioned,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
-	CanAnnounce: PolicyRules{
-		// Only self can announce.
-		AutomaticApproval: PolicyValues{
-			PolicyValueAuthor,
-		},
-		ManualApproval: make(PolicyValues, 0),
-	},
+	CanLike:     DefaultCanLikeFor(VisibilityDirect),
+	CanReply:    DefaultCanReplyFor(VisibilityDirect),
+	CanAnnounce: DefaultCanAnnounceFor(VisibilityDirect),
 }
 
-// Returns the default interaction policy
+// Returns a default interaction policy
 // for a post with visibility of direct.
 func DefaultInteractionPolicyDirect() *InteractionPolicy {
-	return defaultPolicyDirect
+	// Copy global.
+	c := new(InteractionPolicy)
+	*c = *defaultPolicyDirect
+	return c
 }

@@ -102,13 +102,13 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicy() {
 	)
 
 	expectedPolicy := &gtsmodel.InteractionPolicy{
-		CanLike: gtsmodel.PolicyRules{
+		CanLike: &gtsmodel.PolicyRules{
 			AutomaticApproval: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValuePublic,
 			},
 			ManualApproval: gtsmodel.PolicyValues{},
 		},
-		CanReply: gtsmodel.PolicyRules{
+		CanReply: &gtsmodel.PolicyRules{
 			AutomaticApproval: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValueAuthor,
 				gtsmodel.PolicyValueFollowers,
@@ -119,7 +119,75 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicy() {
 				gtsmodel.PolicyValuePublic,
 			},
 		},
-		CanAnnounce: gtsmodel.PolicyRules{
+		CanAnnounce: &gtsmodel.PolicyRules{
+			AutomaticApproval: gtsmodel.PolicyValues{
+				gtsmodel.PolicyValueAuthor,
+			},
+			ManualApproval: gtsmodel.PolicyValues{
+				gtsmodel.PolicyValuePublic,
+			},
+		},
+	}
+	suite.EqualValues(expectedPolicy, policy)
+}
+
+func (suite *ExtractPolicyTestSuite) TestExtractPolicyUnsetProps() {
+	rawNote := `{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "content": "hey @f0x and @dumpsterqueer",
+  "contentMap": {
+    "en": "hey @f0x and @dumpsterqueer",
+    "fr": "bonjour @f0x et @dumpsterqueer"
+  },
+  "interactionPolicy": {
+    "canAnnounce": {
+      "automaticApproval": [
+        "http://localhost:8080/users/the_mighty_zork"
+      ],
+      "manualApproval": [
+        "https://www.w3.org/ns/activitystreams#Public"
+      ]
+    }
+  },
+  "tag": [
+    {
+      "href": "https://gts.superseriousbusiness.org/users/dumpsterqueer",
+      "name": "@dumpsterqueer@superseriousbusiness.org",
+      "type": "Mention"
+    },
+    {
+      "href": "https://gts.superseriousbusiness.org/users/f0x",
+      "name": "@f0x@superseriousbusiness.org",
+      "type": "Mention"
+    }
+  ],
+  "type": "Note"
+}`
+
+	statusable, err := ap.ResolveStatusable(
+		suite.T().Context(),
+		io.NopCloser(
+			bytes.NewBufferString(rawNote),
+		),
+	)
+	if err != nil {
+		suite.FailNow(err.Error())
+	}
+
+	policy := ap.ExtractInteractionPolicy(
+		statusable,
+		// Zork didn't actually create
+		// this status but nevermind.
+		suite.testAccounts["local_account_1"],
+	)
+
+	expectedPolicy := &gtsmodel.InteractionPolicy{
+		CanLike:  nil,
+		CanReply: nil,
+		CanAnnounce: &gtsmodel.PolicyRules{
 			AutomaticApproval: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValueAuthor,
 			},
@@ -202,13 +270,13 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicyDeprecated() {
 	)
 
 	expectedPolicy := &gtsmodel.InteractionPolicy{
-		CanLike: gtsmodel.PolicyRules{
+		CanLike: &gtsmodel.PolicyRules{
 			AutomaticApproval: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValuePublic,
 			},
 			ManualApproval: gtsmodel.PolicyValues{},
 		},
-		CanReply: gtsmodel.PolicyRules{
+		CanReply: &gtsmodel.PolicyRules{
 			AutomaticApproval: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValueAuthor,
 				gtsmodel.PolicyValueFollowers,
@@ -219,7 +287,7 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicyDeprecated() {
 				gtsmodel.PolicyValuePublic,
 			},
 		},
-		CanAnnounce: gtsmodel.PolicyRules{
+		CanAnnounce: &gtsmodel.PolicyRules{
 			AutomaticApproval: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValueAuthor,
 			},
