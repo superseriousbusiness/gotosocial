@@ -68,6 +68,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Bool("instance-expose-allowlist", cfg.InstanceExposeAllowlist, "Expose list of allowed domains via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=allowed and /api/v1/instance/domain_allows")
 	flags.Bool("instance-expose-allowlist-web", cfg.InstanceExposeAllowlistWeb, "Expose list of explicitly allowed domains as webpage on /about/domain_allows")
 	flags.Bool("instance-expose-public-timeline", cfg.InstanceExposePublicTimeline, "Allow unauthenticated users to query /api/v1/timelines/public")
+	flags.Bool("instance-expose-custom-emojis", cfg.InstanceExposeCustomEmojis, "Allow unauthenticated access to /api/v1/custom_emojis")
 	flags.Bool("instance-deliver-to-shared-inboxes", cfg.InstanceDeliverToSharedInboxes, "Deliver federated messages to shared inboxes, if they're available.")
 	flags.Bool("instance-inject-mastodon-version", cfg.InstanceInjectMastodonVersion, "This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection")
 	flags.StringSlice("instance-languages", cfg.InstanceLanguages.Strings(), "BCP47 language tags for the instance. Used to indicate the preferred languages of instance residents (in order from most-preferred to least-preferred).")
@@ -212,7 +213,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 186)
+	cfgmap := make(map[string]any, 188)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -252,6 +253,7 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["instance-expose-allowlist"] = cfg.InstanceExposeAllowlist
 	cfgmap["instance-expose-allowlist-web"] = cfg.InstanceExposeAllowlistWeb
 	cfgmap["instance-expose-public-timeline"] = cfg.InstanceExposePublicTimeline
+	cfgmap["instance-expose-custom-emojis"] = cfg.InstanceExposeCustomEmojis
 	cfgmap["instance-deliver-to-shared-inboxes"] = cfg.InstanceDeliverToSharedInboxes
 	cfgmap["instance-inject-mastodon-version"] = cfg.InstanceInjectMastodonVersion
 	cfgmap["instance-languages"] = cfg.InstanceLanguages.Strings()
@@ -721,6 +723,14 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.InstanceExposePublicTimeline, err = cast.ToBoolE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-public-timeline': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["instance-expose-custom-emojis"]; ok {
+		var err error
+		cfg.InstanceExposeCustomEmojis, err = cast.ToBoolE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> bool for 'instance-expose-custom-emojis': %w", ival, err)
 		}
 	}
 
@@ -2916,6 +2926,31 @@ func GetInstanceExposePublicTimeline() bool { return global.GetInstanceExposePub
 
 // SetInstanceExposePublicTimeline safely sets the value for global configuration 'InstanceExposePublicTimeline' field
 func SetInstanceExposePublicTimeline(v bool) { global.SetInstanceExposePublicTimeline(v) }
+
+// InstanceExposeCustomEmojisFlag returns the flag name for the 'InstanceExposeCustomEmojis' field
+func InstanceExposeCustomEmojisFlag() string { return "instance-expose-custom-emojis" }
+
+// GetInstanceExposeCustomEmojis safely fetches the Configuration value for state's 'InstanceExposeCustomEmojis' field
+func (st *ConfigState) GetInstanceExposeCustomEmojis() (v bool) {
+	st.mutex.RLock()
+	v = st.config.InstanceExposeCustomEmojis
+	st.mutex.RUnlock()
+	return
+}
+
+// SetInstanceExposeCustomEmojis safely sets the Configuration value for state's 'InstanceExposeCustomEmojis' field
+func (st *ConfigState) SetInstanceExposeCustomEmojis(v bool) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.InstanceExposeCustomEmojis = v
+	st.reloadToViper()
+}
+
+// GetInstanceExposeCustomEmojis safely fetches the value for global configuration 'InstanceExposeCustomEmojis' field
+func GetInstanceExposeCustomEmojis() bool { return global.GetInstanceExposeCustomEmojis() }
+
+// SetInstanceExposeCustomEmojis safely sets the value for global configuration 'InstanceExposeCustomEmojis' field
+func SetInstanceExposeCustomEmojis(v bool) { global.SetInstanceExposeCustomEmojis(v) }
 
 // InstanceDeliverToSharedInboxesFlag returns the flag name for the 'InstanceDeliverToSharedInboxes' field
 func InstanceDeliverToSharedInboxesFlag() string { return "instance-deliver-to-shared-inboxes" }

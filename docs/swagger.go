@@ -41,6 +41,7 @@
 //   - read:applications: grants read access to user-managed applications
 //   - read:blocks: grants read access to blocks
 //   - read:bookmarks: grants read access to bookmarks
+//   - read:custom_emojis: grants read access to custom emojis
 //   - read:favourites: grants read access to accounts
 //   - read:filters: grants read access to filters
 //   - read:follows: grants read access to follows
@@ -99,6 +100,7 @@
 //	      read:applications: grants read access to user-managed applications
 //	      read:blocks: grants read access to blocks
 //	      read:bookmarks: grants read access to bookmarks
+//	      read:custom_emojis: grants read access to custom emojis
 //	      read:favourites: grants read access to accounts
 //	      read:filters: grants read access to filters
 //	      read:follows: grants read access to follows

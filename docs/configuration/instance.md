@@ -139,6 +139,21 @@ instance-expose-blocklist-web: false
 # Default: false
 instance-expose-public-timeline: false
 
+# Bool. Allow unauthenticated access to /api/v1/custom_emojis, which
+# exposes the list of custom emojis available to users on this server.
+#
+# Setting this to 'true' may alleviate issues with clients that do not
+# provide an access token in their requests to the emojis endpoint, but
+# it also means that anyone can look at what emojis are installed on your
+# instance, which may present privacy / safety issues.
+#
+# Even if set to 'false', authenticated users (ie., instance members)
+# will still be able to query the endpoint using an access token.
+#
+# Options: [true, false]
+# Default: false
+instance-expose-custom-emojis: false
+
 # Bool. This flag tweaks whether GoToSocial will deliver ActivityPub messages
 # to the shared inbox of a recipient, if one is available, instead of delivering
 # each message to each actor who should receive a message individually.

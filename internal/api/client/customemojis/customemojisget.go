@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"github.com/gin-gonic/gin"
 )
@@ -28,6 +29,8 @@ import (
 // CustomEmojisGETHandler swagger:operation GET /api/v1/custom_emojis customEmojisGet
 //
 // Get an array of custom emojis available on the instance.
+//
+// If the instance config setting `instance-expose-custom-emojis` is `true` then authentication is not required.
 //
 //	---
 //	tags:
@@ -37,7 +40,8 @@ import (
 //	- application/json
 //
 //	security:
-//	- OAuth2 Bearer: []
+//	- OAuth2 Bearer:
+//		- read:custom_emojis
 //
 //	responses:
 //		'200':
@@ -53,12 +57,16 @@ import (
 //		'500':
 //			description: internal server error
 func (m *Module) CustomEmojisGETHandler(c *gin.Context) {
-	_, errWithCode := apiutil.TokenAuth(c,
-		true, true, true, true,
-	)
-	if errWithCode != nil {
-		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
-		return
+	// If custom emojis are not exposed to unauthed
+	// callers, fail if a token was not provided.
+	if !config.GetInstanceExposeCustomEmojis() {
+		if _, errWithCode := apiutil.TokenAuth(c,
+			true, true, true, true,
+			apiutil.ScopeReadCustomEmojis,
+		); errWithCode != nil {
+			apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
+			return
+		}
 	}
 
 	if _, err := apiutil.NegotiateAccept(c, apiutil.JSONAcceptHeaders...); err != nil {

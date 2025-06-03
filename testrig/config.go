@@ -92,6 +92,7 @@ func testDefaults() config.Configuration {
 		InstanceExposeBlocklistWeb:     true,
 		InstanceExposeAllowlist:        true,
 		InstanceExposeAllowlistWeb:     true,
+		InstanceExposeCustomEmojis:     true,
 		InstanceDeliverToSharedInboxes: true,
 		InstanceLanguages: language.Languages{
 			{

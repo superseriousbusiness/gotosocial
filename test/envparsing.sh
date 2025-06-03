@@ -114,6 +114,7 @@ EXPECT=$(cat << "EOF"
     "instance-expose-allowlist-web": true,
     "instance-expose-blocklist": true,
     "instance-expose-blocklist-web": true,
+    "instance-expose-custom-emojis": true,
     "instance-expose-peers": true,
     "instance-expose-public-timeline": true,
     "instance-federation-mode": "allowlist",
@@ -246,6 +247,7 @@ GTS_INSTANCE_EXPOSE_BLOCKLIST=true \
 GTS_INSTANCE_EXPOSE_BLOCKLIST_WEB=true \
 GTS_INSTANCE_EXPOSE_ALLOWLIST=true \
 GTS_INSTANCE_EXPOSE_ALLOWLIST_WEB=true \
+GTS_INSTANCE_EXPOSE_CUSTOM_EMOJIS=true \
 GTS_INSTANCE_EXPOSE_PUBLIC_TIMELINE=true \
 GTS_INSTANCE_FEDERATION_MODE='allowlist' \
 GTS_INSTANCE_FEDERATION_SPAM_FILTER=true \

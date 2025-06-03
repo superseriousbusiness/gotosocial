@@ -63,6 +63,7 @@ var Defaults = Configuration{
 	InstanceExposePeers:               false,
 	InstanceExposeBlocklist:           false,
 	InstanceExposeBlocklistWeb:        false,
+	InstanceExposeCustomEmojis:        false,
 	InstanceDeliverToSharedInboxes:    true,
 	InstanceLanguages:                 make(language.Languages, 0),
 	InstanceSubscriptionsProcessFrom:  "23:00",        // 11pm,

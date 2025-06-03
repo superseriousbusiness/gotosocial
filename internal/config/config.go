@@ -96,6 +96,7 @@ type Configuration struct {
 	InstanceExposeAllowlist           bool               `name:"instance-expose-allowlist" usage:"Expose list of allowed domains via web UI, and allow unauthenticated users to query /api/v1/instance/peers?filter=allowed and /api/v1/instance/domain_allows"`
 	InstanceExposeAllowlistWeb        bool               `name:"instance-expose-allowlist-web" usage:"Expose list of explicitly allowed domains as webpage on /about/domain_allows"`
 	InstanceExposePublicTimeline      bool               `name:"instance-expose-public-timeline" usage:"Allow unauthenticated users to query /api/v1/timelines/public"`
+	InstanceExposeCustomEmojis        bool               `name:"instance-expose-custom-emojis" usage:"Allow unauthenticated access to /api/v1/custom_emojis"`
 	InstanceDeliverToSharedInboxes    bool               `name:"instance-deliver-to-shared-inboxes" usage:"Deliver federated messages to shared inboxes, if they're available."`
 	InstanceInjectMastodonVersion     bool               `name:"instance-inject-mastodon-version" usage:"This injects a Mastodon compatible version in /api/v1/instance to help Mastodon clients that use that version for feature detection"`
 	InstanceLanguages                 language.Languages `name:"instance-languages" usage:"BCP47 language tags for the instance. Used to indicate the preferred languages of instance residents (in order from most-preferred to least-preferred)."`
