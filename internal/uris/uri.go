@@ -20,6 +20,7 @@ package uris
 import (
 	"fmt"
 	"net/url"
+	"path"
 	"strings"
 
 	"code.superseriousbusiness.org/gotosocial/internal/config"
@@ -323,6 +324,11 @@ func IsStatusesPath(id *url.URL) bool {
 // IsPublicKeyPath returns true if the given URL path corresponds to eg /users/example_username/main-key
 func IsPublicKeyPath(id *url.URL) bool {
 	return regexes.PublicKeyPath.MatchString(id.Path)
+}
+
+// IsInstanceActorPath returns true if the given URL corresponds to /users/instance_actor
+func IsInstanceActorPath(u *url.URL) bool {
+	return u.Path == path.Join("/", "users", config.InstanceActor())
 }
 
 // IsBlockPath returns true if the given URL path corresponds to eg /users/example_username/blocks/SOME_ULID_OF_A_BLOCK

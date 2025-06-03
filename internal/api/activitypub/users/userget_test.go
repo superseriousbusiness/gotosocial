@@ -19,6 +19,7 @@ package users_test
 
 import (
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -156,6 +157,70 @@ func (suite *UserGetTestSuite) TestGetUserPublicKeyDeleted() {
 	a, err := suite.tc.ASRepresentationToAccount(suite.T().Context(), person, "", "")
 	suite.NoError(err)
 	suite.EqualValues(targetAccount.Username, a.Username)
+}
+
+func (suite *UserGetTestSuite) TestGetUserAuth() {
+	targetAccount := suite.testAccounts["local_account_1"]
+
+	// setup request
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.URI, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/activity+json")
+
+	// we need to pass the context through signature check first to set appropriate values on it
+	suite.signatureCheck(ctx)
+
+	// normally the router would populate these params from the path values,
+	// but because we're calling the function directly, we need to set them manually.
+	ctx.Params = gin.Params{
+		gin.Param{
+			Key:   users.UsernameKey,
+			Value: targetAccount.Username,
+		},
+	}
+
+	// trigger the function being tested
+	suite.userModule.UsersGETHandler(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusUnauthorized, recorder.Code)
+}
+
+func (suite *UserGetTestSuite) TestInstanceActor() {
+	targetAccount := suite.testAccounts["instance_account"]
+
+	// setup request
+	recorder := httptest.NewRecorder()
+	ctx, _ := testrig.CreateGinTestContext(recorder, nil)
+	ctx.Request = httptest.NewRequest(http.MethodGet, targetAccount.URI, nil) // the endpoint we're hitting
+	ctx.Request.Header.Set("accept", "application/activity+json")
+
+	// trigger the function being tested
+	suite.userModule.InstanceActorGETHandler(ctx)
+
+	// check response
+	suite.EqualValues(http.StatusOK, recorder.Code)
+
+	result := recorder.Result()
+	defer result.Body.Close()
+
+	b, err := io.ReadAll(result.Body)
+	suite.NoError(err)
+
+	// should be a Service
+	m := make(map[string]interface{})
+	err = json.Unmarshal(b, &m)
+	suite.NoError(err)
+
+	t, err := streams.ToType(suite.T().Context(), m)
+	suite.NoError(err)
+
+	// ensure it's a Service
+	svc, ok := t.(vocab.ActivityStreamsService)
+	suite.True(ok)
+
+	suite.Equal(targetAccount.Username, svc.GetActivityStreamsPreferredUsername().GetIRI().String())
 }
 
 func TestUserGetTestSuite(t *testing.T) {

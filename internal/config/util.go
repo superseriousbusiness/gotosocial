@@ -72,3 +72,12 @@ func mapGet(m map[string]any, keys ...string) (any, bool) {
 	}
 	return nil, false
 }
+
+func InstanceActor() string {
+	a := GetHost()
+	if a == "" {
+		a = GetAccountDomain()
+	}
+
+	return a
+}

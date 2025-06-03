@@ -24,6 +24,7 @@ import (
 	"net/url"
 
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/uris"
@@ -44,6 +45,15 @@ func (p *Processor) UserGet(ctx context.Context, requestedUsername string, reque
 		// Real db error.
 		err := fmt.Errorf("db error getting account with username %s: %w", requestedUsername, err)
 		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	if requestedUsername == config.InstanceActor() && uris.IsInstanceActorPath(requestURL) {
+		accountable, err := p.converter.AccountToAS(ctx, receiver)
+		if err != nil {
+			err := gtserror.Newf("error converting account: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
+		}
+		return data(accountable)
 	}
 
 	if uris.IsPublicKeyPath(requestURL) {
