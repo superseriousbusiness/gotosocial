@@ -74,6 +74,7 @@ const (
 	AdminActionSuspend
 	AdminActionUnsuspend
 	AdminActionExpireKeys
+	AdminActionUnallow
 )
 
 func (t AdminActionType) String() string {
@@ -92,6 +93,8 @@ func (t AdminActionType) String() string {
 		return "unsuspend"
 	case AdminActionExpireKeys:
 		return "expire-keys"
+	case AdminActionUnallow:
+		return "unallow"
 	default:
 		return "unknown"
 	}
@@ -113,6 +116,8 @@ func ParseAdminActionType(in string) AdminActionType {
 		return AdminActionUnsuspend
 	case "expire-keys":
 		return AdminActionExpireKeys
+	case "unallow":
+		return AdminActionUnallow
 	default:
 		return AdminActionUnknown
 	}

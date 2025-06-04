@@ -97,6 +97,20 @@ func (d *domainDB) GetDomainAllows(ctx context.Context) ([]*gtsmodel.DomainAllow
 	return allows, nil
 }
 
+func (d *domainDB) GetDomainAllowsBySubscriptionID(ctx context.Context, subscriptionID string) ([]*gtsmodel.DomainAllow, error) {
+	allows := []*gtsmodel.DomainAllow{}
+
+	if err := d.db.
+		NewSelect().
+		Model(&allows).
+		Where("? = ?", bun.Ident("subscription_id"), subscriptionID).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return allows, nil
+}
+
 func (d *domainDB) GetDomainAllowByID(ctx context.Context, id string) (*gtsmodel.DomainAllow, error) {
 	var allow gtsmodel.DomainAllow
 
@@ -218,6 +232,20 @@ func (d *domainDB) GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock
 	if err := d.db.
 		NewSelect().
 		Model(&blocks).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return blocks, nil
+}
+
+func (d *domainDB) GetDomainBlocksBySubscriptionID(ctx context.Context, subscriptionID string) ([]*gtsmodel.DomainBlock, error) {
+	blocks := []*gtsmodel.DomainBlock{}
+
+	if err := d.db.
+		NewSelect().
+		Model(&blocks).
+		Where("? = ?", bun.Ident("subscription_id"), subscriptionID).
 		Scan(ctx); err != nil {
 		return nil, err
 	}

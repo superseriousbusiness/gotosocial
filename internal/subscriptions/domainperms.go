@@ -335,6 +335,28 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		createdPerms = append(createdPerms, wantedPerm)
 	}
 
+	if dry {
+		// Don't do any further
+		// processing with a dry run.
+		return createdPerms, nil
+	}
+
+	// Process any retractions since
+	// the last time list was checked.
+	//
+	// Being unable to do retractions
+	// isn't the end of the world as it
+	// can be tried again next time the
+	// list is updated, so if there was
+	// an error just warn it.
+	if err := s.processRetractions(
+		ctx, l,
+		permSub,
+		wantedPerms,
+	); err != nil {
+		l.Warnf("error doing retractions: %+v", err)
+	}
+
 	return createdPerms, nil
 }
 
@@ -894,4 +916,136 @@ func (s *Subscriptions) adoptPerm(
 	}
 
 	return err
+}
+
+func (s *Subscriptions) processRetractions(
+	ctx context.Context,
+	l log.Entry,
+	permSub *gtsmodel.DomainPermissionSubscription,
+	wantedPerms []gtsmodel.DomainPermission,
+) error {
+	var (
+		isBlocks        = permSub.PermissionType == gtsmodel.DomainPermissionBlock
+		removeRetracted = *permSub.RemoveRetracted
+	)
+
+	// Gather existing perms into an interface type.
+	existingPerms := []gtsmodel.DomainPermission{}
+	if isBlocks {
+		existingBlocks, err := s.state.DB.GetDomainBlocksBySubscriptionID(ctx, permSub.ID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Proper db error.
+			return gtserror.Newf("db error getting existing blocks owned by perm sub: %w", err)
+		}
+		for _, existingBlock := range existingBlocks {
+			existingPerms = append(existingPerms, existingBlock)
+		}
+	} else {
+		existingAllows, err := s.state.DB.GetDomainAllowsBySubscriptionID(ctx, permSub.ID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Proper db error.
+			return gtserror.Newf("db error getting existing allows owned by perm sub: %w", err)
+		}
+		for _, existingAllow := range existingAllows {
+			existingPerms = append(existingPerms, existingAllow)
+		}
+	}
+
+	// For each existing permission, check if
+	// it's included in the list of wanted perms
+	// that's just been freshly fetched + created.
+	//
+	// If it's not, we should consider it retracted
+	// and handle retraction effects appropriately.
+	for _, existingPerm := range existingPerms {
+		if slices.ContainsFunc(
+			wantedPerms,
+			func(wantedPerm gtsmodel.DomainPermission) bool {
+				return existingPerm.GetDomain() == wantedPerm.GetDomain()
+			},
+		) {
+			// This permission from the
+			// database exists in wanted
+			// perms, so it's not been
+			// retracted, leave it alone.
+			continue
+		}
+
+		// This perm exists in the database but
+		// not in wanted perms, so it has been
+		// retracted, check what we need to do.
+		domain := existingPerm.GetDomain()
+		l.WithField("domain", domain).Info("handling retraction")
+
+		var (
+			dbF     func() error
+			action  *gtsmodel.AdminAction
+			actionF admin.ActionF
+		)
+
+		switch {
+
+		// Remove this block.
+		case isBlocks && removeRetracted:
+			dbF = func() error { return s.state.DB.DeleteDomainBlock(ctx, domain) }
+			action = &gtsmodel.AdminAction{
+				ID:             id.NewULID(),
+				TargetCategory: gtsmodel.AdminActionCategoryDomain,
+				TargetID:       domain,
+				Type:           gtsmodel.AdminActionUnsuspend,
+				AccountID:      permSub.CreatedByAccountID,
+			}
+			actionF = s.state.AdminActions.DomainUnblockF(
+				action.ID,
+				existingPerm.(*gtsmodel.DomainBlock),
+			)
+
+		// Remove this allow.
+		case !isBlocks && removeRetracted:
+			dbF = func() error { return s.state.DB.DeleteDomainAllow(ctx, domain) }
+			action = &gtsmodel.AdminAction{
+				ID:             id.NewULID(),
+				TargetCategory: gtsmodel.AdminActionCategoryDomain,
+				TargetID:       domain,
+				Type:           gtsmodel.AdminActionUnallow,
+				AccountID:      permSub.CreatedByAccountID,
+			}
+			actionF = s.state.AdminActions.DomainUnallowF(
+				action.ID,
+				existingPerm.(*gtsmodel.DomainAllow),
+			)
+
+		// Orphan this block.
+		case isBlocks:
+			block := existingPerm.(*gtsmodel.DomainBlock)
+			block.SubscriptionID = ""
+			dbF = func() error { return s.state.DB.UpdateDomainBlock(ctx, block, "subscription_id") }
+
+		// Orphan this allow.
+		case !isBlocks:
+			allow := existingPerm.(*gtsmodel.DomainAllow)
+			allow.SubscriptionID = ""
+			dbF = func() error { return s.state.DB.UpdateDomainAllow(ctx, allow, "subscription_id") }
+		}
+
+		// Run the retraction db
+		// func to either delete
+		// or update the perm.
+		if err := dbF(); err != nil {
+			return err
+		}
+
+		if action == nil {
+			// No side effects;
+			// nothing else to do.
+			continue
+		}
+
+		// Run the side effects.
+		if err := s.state.AdminActions.Run(ctx, action, actionF); err != nil {
+			return gtserror.Newf("error running side effects: %w", err)
+		}
+	}
+
+	return nil
 }
