@@ -9,12 +9,27 @@ import (
 
 // Config configuration parameters
 type Config struct {
-	TokenType                   string                // token type
-	AllowGetAccessRequest       bool                  // to allow GET requests for the token
-	AllowedResponseTypes        []oauth2.ResponseType // allow the authorization type
-	AllowedGrantTypes           []oauth2.GrantType    // allow the grant type
+	// token type
+	TokenType string
+
+	// to allow GET requests for the token
+	AllowGetAccessRequest bool
+
+	// allow the authorization type
+	AllowedResponseTypes []oauth2.ResponseType
+
+	// allow the grant type
+	AllowedGrantTypes []oauth2.GrantType
+
+	// Allowed values for "code_challenge_method".
 	AllowedCodeChallengeMethods []oauth2.CodeChallengeMethod
-	ForcePKCE                   bool
+
+	// Default to fall back to
+	// if "code_challenge_method"
+	// was not set in the request.
+	DefaultCodeChallengeMethod oauth2.CodeChallengeMethod
+
+	ForcePKCE bool
 }
 
 // NewConfig create to configuration instance

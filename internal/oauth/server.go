@@ -128,6 +128,7 @@ func New(
 			AllowedCodeChallengeMethods: []oauth2.CodeChallengeMethod{
 				oauth2.CodeChallengeS256,
 			},
+			DefaultCodeChallengeMethod: oauth2.CodeChallengeS256,
 		},
 		manager,
 	)

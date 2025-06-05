@@ -14,7 +14,7 @@ require (
 	code.superseriousbusiness.org/activity v1.15.0
 	code.superseriousbusiness.org/exif-terminator v0.11.0
 	code.superseriousbusiness.org/httpsig v1.4.0
-	code.superseriousbusiness.org/oauth2/v4 v4.8.0
+	code.superseriousbusiness.org/oauth2/v4 v4.9.0
 	codeberg.org/gruf/go-bitutil v1.1.0
 	codeberg.org/gruf/go-bytesize v1.0.3
 	codeberg.org/gruf/go-byteutil v1.3.0

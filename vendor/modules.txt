@@ -207,7 +207,7 @@ code.superseriousbusiness.org/go-png-image-structure/v2
 # code.superseriousbusiness.org/httpsig v1.4.0
 ## explicit; go 1.21
 code.superseriousbusiness.org/httpsig
-# code.superseriousbusiness.org/oauth2/v4 v4.8.0
+# code.superseriousbusiness.org/oauth2/v4 v4.9.0
 ## explicit; go 1.23.0
 code.superseriousbusiness.org/oauth2/v4
 code.superseriousbusiness.org/oauth2/v4/errors

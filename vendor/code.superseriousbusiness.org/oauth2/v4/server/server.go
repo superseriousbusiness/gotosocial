@@ -1,6 +1,7 @@
 package server
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -176,7 +177,10 @@ func (s *Server) ValidationAuthorizeRequest(r *http.Request) (*AuthorizeRequest,
 	ccm := oauth2.CodeChallengeMethod(r.FormValue("code_challenge_method"))
 	// set default
 	if ccm == "" {
-		ccm = oauth2.CodeChallengePlain
+		ccm = cmp.Or(
+			s.Config.DefaultCodeChallengeMethod,
+			oauth2.CodeChallengePlain,
+		)
 	}
 	if ccm.String() != "" && !s.CheckCodeChallengeMethod(ccm) {
 		return nil, errors.ErrUnsupportedCodeChallengeMethod
