@@ -130,7 +130,7 @@ instance-expose-allowlist: false
 # including the public reason for each allow.
 # Options: [true, false]
 # Default: false
-instance-expose-blocklist-web: false
+instance-expose-allowlist-web: false
 
 # Bool. Allow unauthenticated users to make queries to /api/v1/timelines/public in order
 # to see a list of public posts on this server. Even if set to 'false', then authenticated
