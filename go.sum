@@ -50,8 +50,8 @@ codeberg.org/gruf/go-sched v1.2.4 h1:ddBB9o0D/2oU8NbQ0ldN5aWxogpXPRBATWi58+p++Hw
 codeberg.org/gruf/go-sched v1.2.4/go.mod h1:wad6l+OcYGWMA2TzNLMmLObsrbBDxdJfEy5WvTgBjNk=
 codeberg.org/gruf/go-split v1.2.0 h1:PmzL23nVEVHm8VxjsJmv4m4wGQz2bGgQw52dgSSj65c=
 codeberg.org/gruf/go-split v1.2.0/go.mod h1:0rejWJpqvOoFAd7nwm5tIXYKaAqjtFGOXmTqQV+VO38=
-codeberg.org/gruf/go-storage v0.2.1 h1:AHVU+7ZKpaL6fTzcH7GU+JwY3HQVYOZ84U4HV//K1GA=
-codeberg.org/gruf/go-storage v0.2.1/go.mod h1:zJ5Nd2rKv0R5vF1rYbH+IEggUx8cIv72Vj2d8e//IAw=
+codeberg.org/gruf/go-storage v0.3.1 h1:g66UIM/xXnEk9ejT+W0T9s/PODBZhXa/8ajzeY/MELI=
+codeberg.org/gruf/go-storage v0.3.1/go.mod h1:r43n/zi7YGOCl2iSl7AMI27D1zcWS65Bi2+5xDzypeo=
 codeberg.org/gruf/go-structr v0.9.7 h1:yQeIxTjYb6reNdgESk915twyjolydYBqat/mlZrP7bg=
 codeberg.org/gruf/go-structr v0.9.7/go.mod h1:9k5hYztZ4PsBS+m1v5hUTeFiVUBTLF5VA7d9cd1OEMs=
 codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix h1:+JvBZqsQfdT+ROnk2DkvXsKQ9QBorKKKBk5fBqw62I8=

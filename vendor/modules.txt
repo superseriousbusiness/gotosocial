@@ -276,7 +276,7 @@ codeberg.org/gruf/go-sched
 # codeberg.org/gruf/go-split v1.2.0
 ## explicit; go 1.20
 codeberg.org/gruf/go-split
-# codeberg.org/gruf/go-storage v0.2.1
+# codeberg.org/gruf/go-storage v0.3.1
 ## explicit; go 1.23.0
 codeberg.org/gruf/go-storage
 codeberg.org/gruf/go-storage/disk
