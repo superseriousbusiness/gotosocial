@@ -1,46 +1,35 @@
 package models
 
 // Client client model
-type Client interface {
-	GetID() string
-	GetSecret() string
-	GetDomain() string
-	GetUserID() string
-}
-
-func New(id string, secret string, domain string, userID string) Client {
-	return &simpleClient{
-		id:     id,
-		secret: secret,
-		domain: domain,
-		userID: userID,
-	}
-}
-
-// simpleClient is a very simple client model that satisfies the Client interface
-type simpleClient struct {
-	id     string
-	secret string
-	domain string
-	userID string
+type Client struct {
+	ID     string
+	Secret string
+	Domain string
+	Public bool
+	UserID string
 }
 
 // GetID client id
-func (c *simpleClient) GetID() string {
-	return c.id
+func (c *Client) GetID() string {
+	return c.ID
 }
 
 // GetSecret client secret
-func (c *simpleClient) GetSecret() string {
-	return c.secret
+func (c *Client) GetSecret() string {
+	return c.Secret
 }
 
 // GetDomain client domain
-func (c *simpleClient) GetDomain() string {
-	return c.domain
+func (c *Client) GetDomain() string {
+	return c.Domain
+}
+
+// IsPublic public
+func (c *Client) IsPublic() bool {
+	return c.Public
 }
 
 // GetUserID user id
-func (c *simpleClient) GetUserID() string {
-	return c.userID
+func (c *Client) GetUserID() string {
+	return c.UserID
 }

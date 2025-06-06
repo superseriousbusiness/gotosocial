@@ -53,3 +53,11 @@ func (a *Application) GetDomain() string {
 func (a *Application) GetUserID() string {
 	return a.ManagedByUserID
 }
+
+// Implements oauth2.IsPublic.
+func (a *Application) IsPublic() bool {
+
+	// this maintains behaviour with the
+	// previous version of oauth2 lib.
+	return false
+}

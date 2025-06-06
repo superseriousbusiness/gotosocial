@@ -207,7 +207,7 @@ code.superseriousbusiness.org/go-png-image-structure/v2
 # code.superseriousbusiness.org/httpsig v1.4.0
 ## explicit; go 1.21
 code.superseriousbusiness.org/httpsig
-# code.superseriousbusiness.org/oauth2/v4 v4.9.0
+# code.superseriousbusiness.org/oauth2/v4 v4.5.4-0.20250606121655-9d54ef189d42
 ## explicit; go 1.23.0
 code.superseriousbusiness.org/oauth2/v4
 code.superseriousbusiness.org/oauth2/v4/errors
@@ -542,9 +542,6 @@ github.com/goccy/go-json/internal/encoder/vm_color_indent
 github.com/goccy/go-json/internal/encoder/vm_indent
 github.com/goccy/go-json/internal/errors
 github.com/goccy/go-json/internal/runtime
-# github.com/golang-jwt/jwt v3.2.2+incompatible
-## explicit
-github.com/golang-jwt/jwt
 # github.com/golang-jwt/jwt/v5 v5.2.2
 ## explicit; go 1.18
 github.com/golang-jwt/jwt/v5

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"net/url"
 	"time"
 
 	"code.superseriousbusiness.org/oauth2/v4"
@@ -8,7 +9,7 @@ import (
 
 // NewToken create to token model instance
 func NewToken() *Token {
-	return &Token{}
+	return &Token{Extension: make(url.Values)}
 }
 
 // Token token model
@@ -28,6 +29,7 @@ type Token struct {
 	Refresh             string        `bson:"Refresh"`
 	RefreshCreateAt     time.Time     `bson:"RefreshCreateAt"`
 	RefreshExpiresIn    time.Duration `bson:"RefreshExpiresIn"`
+	Extension           url.Values    `bson:"Extension"`
 }
 
 // New create to token model instance
@@ -183,4 +185,14 @@ func (t *Token) GetRefreshExpiresIn() time.Duration {
 // SetRefreshExpiresIn the lifetime in seconds of the refresh token
 func (t *Token) SetRefreshExpiresIn(exp time.Duration) {
 	t.RefreshExpiresIn = exp
+}
+
+// GetExtension extension of token
+func (t *Token) GetExtension() url.Values {
+	return t.Extension
+}
+
+// SetExtension set extension of token
+func (t *Token) SetExtension(e url.Values) {
+	t.Extension = e
 }

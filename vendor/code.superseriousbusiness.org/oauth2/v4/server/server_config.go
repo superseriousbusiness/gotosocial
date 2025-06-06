@@ -69,6 +69,11 @@ func (s *Server) SetInternalErrorHandler(handler InternalErrorHandler) {
 	s.InternalErrorHandler = handler
 }
 
+// SetPreRedirectErrorHandler sets the PreRedirectErrorHandler in current Server instance
+func (s *Server) SetPreRedirectErrorHandler(handler PreRedirectErrorHandler) {
+	s.PreRedirectErrorHandler = handler
+}
+
 // SetExtensionFieldsHandler in response to the access token with the extension of the field
 func (s *Server) SetExtensionFieldsHandler(handler ExtensionFieldsHandler) {
 	s.ExtensionFieldsHandler = handler
@@ -82,4 +87,19 @@ func (s *Server) SetAccessTokenExpHandler(handler AccessTokenExpHandler) {
 // SetAuthorizeScopeHandler set scope for the access token
 func (s *Server) SetAuthorizeScopeHandler(handler AuthorizeScopeHandler) {
 	s.AuthorizeScopeHandler = handler
+}
+
+// SetResponseTokenHandler response token handing
+func (s *Server) SetResponseTokenHandler(handler ResponseTokenHandler) {
+	s.ResponseTokenHandler = handler
+}
+
+// SetRefreshTokenResolveHandler refresh token resolver
+func (s *Server) SetRefreshTokenResolveHandler(handler RefreshTokenResolveHandler) {
+	s.RefreshTokenResolveHandler = handler
+}
+
+// SetAccessTokenResolveHandler access token resolver
+func (s *Server) SetAccessTokenResolveHandler(handler AccessTokenResolveHandler) {
+	s.AccessTokenResolveHandler = handler
 }

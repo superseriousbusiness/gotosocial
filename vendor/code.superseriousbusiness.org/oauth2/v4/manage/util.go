@@ -1,6 +1,7 @@
 package manage
 
 import (
+	"code.superseriousbusiness.org/oauth2/v4"
 	"net/url"
 	"strings"
 
@@ -9,7 +10,8 @@ import (
 
 type (
 	// ValidateURIHandler validates that redirectURI is contained in baseURI
-	ValidateURIHandler func(baseURI, redirectURI string) error
+	ValidateURIHandler      func(baseURI, redirectURI string) error
+	ExtractExtensionHandler func(*oauth2.TokenGenerateRequest, oauth2.ExtendableTokenInfo)
 )
 
 // DefaultValidateURI validates that redirectURI is contained in baseURI
