@@ -23,7 +23,7 @@ POSIX advisory locks,
 which SQLite uses on [Unix](https://github.com/sqlite/sqlite/blob/5d60f4/src/os_unix.c#L13-L14),
 are [broken by design](https://github.com/sqlite/sqlite/blob/5d60f4/src/os_unix.c#L1074-L1162).
 Instead, on Linux and macOS, this package uses
-[OFD locks](https://www.gnu.org/software/libc/manual/html_node/Open-File-Description-Locks.html)
+[OFD locks](https://gnu.org/software/libc/manual/html_node/Open-File-Description-Locks.html)
 to synchronize access to database files.
 
 This package can also use
