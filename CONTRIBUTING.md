@@ -18,11 +18,11 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
     - [Docker](#docker)
       - [With GoReleaser](#with-goreleaser)
       - [Manually](#manually)
-  - [Stylesheet / Web dev](#stylesheet--web-dev)
+  - [Stylesheet / Web dev](#stylesheet-web-dev)
     - [Live Reloading](#live-reloading)
   - [Project Structure](#project-structure)
     - [Finding your way around the code](#finding-your-way-around-the-code)
-  - [Style / Linting / Formatting](#style--linting--formatting)
+  - [Style / Linting / Formatting](#style-linting-formatting)
   - [Testing](#testing)
     - [Standalone Testrig with Pinafore](#standalone-testrig-with-pinafore)
     - [Running automated tests](#running-automated-tests)
@@ -31,7 +31,7 @@ These contribution guidelines were adapted from / inspired by those of Gitea (ht
     - [CLI Tests](#cli-tests)
     - [Federation](#federation)
   - [Updating Swagger docs](#updating-swagger-docs)
-  - [CI/CD configuration](#cicd-configuration)
+  - [CI/CD configuration](#ci-cd-configuration)
 
 ## Introduction
 
@@ -182,7 +182,7 @@ Normally, these processes are handled by Drone (see CI/CD above). However, you c
 
 To do this, first [install GoReleaser](https://goreleaser.com/install/).
 
-Then install Node and Yarn as described in [Stylesheet / Web dev](#stylesheet--web-dev).
+Then install Node and Yarn as described in [Stylesheet / Web dev](#stylesheet-web-dev).
 
 Finally, to create a snapshot build, do:
 

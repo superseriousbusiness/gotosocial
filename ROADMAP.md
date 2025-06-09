@@ -13,10 +13,10 @@ Big thank you to all of our [Open Collective](https://opencollective.com/gotosoc
 - [Beta Aims](#beta-aims)
 - [Timeline](#timeline)
   - [Mid 2023](#mid-2023)
-  - [Mid/late 2023](#midlate-2023)
+  - [Mid/late 2023](#mid-late-2023)
   - [Early 2024](#early-2024)
   - [BETA milestone](#beta-milestone)
-  - [Remainder 2024 - early 2025](#remainder-2024---early-2025)
+  - [Remainder 2024 - early 2025](#remainder-2024-early-2025)
   - [On the way out of BETA to STABLE RELEASE](#on-the-way-out-of-beta-to-stable-release)
 - [Wishlist](#wishlist)
 
