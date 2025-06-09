@@ -61,7 +61,7 @@ const (
 	mdCodeBlockWithNewlines            = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
 	mdCodeBlockWithNewlinesExpected    = "<p>some code coming up</p><pre><code>\n\n\n</code></pre><p>that was some code</p>"
 	mdWithFootnote                     = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
-	mdWithFootnoteExpected             = "<p>fox mulder,fbi.[^1]</p><p>[^1]: federated bureau of investigation</p>"
+	mdWithFootnoteExpected             = "<p>fox mulder,fbi.<sup id=\"fnref:1\"><a class=\"footnote-ref\">1</a></sup></p><div><hr><ol><li id=\"fn:1\"><p>federated bureau of investigation <a class=\"footnote-backref\">↩︎</a></p></li></ol></div>"
 	mdWithBlockQuote                   = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
 	mdWithBlockQuoteExpected           = "<p>get ready, there's a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
 	mdHashtagAndCodeBlock              = "#Hashtag\n\n```\n#Hashtag\n```"

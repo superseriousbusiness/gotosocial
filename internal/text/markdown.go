@@ -141,6 +141,7 @@ func (f *Formatter) fromMarkdown(
 			extension.NewLinkify(
 				extension.WithLinkifyURLRegexp(regexes.URLLike),
 			),
+			extension.Footnote,
 			extension.Strikethrough,
 		),
 	)
