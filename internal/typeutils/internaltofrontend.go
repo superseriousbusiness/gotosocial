@@ -1889,8 +1889,12 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 
 	instance.Thumbnail = thumbnail
 
+	termsOfService := config.GetProtocol() + "://" + i.Domain + "/about#rules"
+
 	// configuration
 	instance.Configuration.URLs.Streaming = "wss://" + i.Domain
+	instance.Configuration.URLs.About = config.GetProtocol() + "://" + i.Domain + "/about"
+	instance.Configuration.URLs.TermsOfService = &termsOfService
 	instance.Configuration.Statuses.MaxCharacters = config.GetStatusesMaxChars()
 	instance.Configuration.Statuses.MaxMediaAttachments = config.GetStatusesMediaMaxFiles()
 	instance.Configuration.Statuses.CharactersReservedPerURL = instanceStatusesCharactersReservedPerURL
@@ -1936,6 +1940,8 @@ func (c *Converter) InstanceToAPIV2Instance(ctx context.Context, i *gtsmodel.Ins
 	instance.Registrations.Enabled = config.GetAccountsRegistrationOpen()
 	instance.Registrations.ApprovalRequired = true // always required
 	instance.Registrations.Message = nil           // todo: not implemented
+	instance.Registrations.MinAge = nil            // not implemented
+	instance.Registrations.ReasonRequired = config.GetAccountsReasonRequired()
 
 	// contact
 	instance.Contact.Email = i.ContactEmail

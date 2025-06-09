@@ -2108,6 +2108,20 @@ definitions:
                 example: <p>Registrations are currently closed on example.org because of spam bots!</p>
                 type: string
                 x-go-name: Message
+            min_age:
+                description: |-
+                    A minimum age required to register, if configured.
+                    Currently not implemented: will always be null.
+                format: int64
+                type: integer
+                x-go-name: MinAge
+            reason_required:
+                description: |-
+                    Whether registrations require the user to provide a reason for joining.
+                    Only applicable when ApprovalRequired is true.
+                example: true
+                type: boolean
+                x-go-name: ReasonRequired
         title: Information about registering for this instance.
         type: object
         x-go-name: InstanceV2Registrations
@@ -2178,11 +2192,26 @@ definitions:
         x-go-package: code.superseriousbusiness.org/gotosocial/internal/api/model
     instanceV2URLs:
         properties:
+            about:
+                description: Address of the server about page.
+                example: https://example.org/about
+                type: string
+                x-go-name: About
+            privacy_policy:
+                description: Address of the server privacy policy, if any.
+                example: https://example.org/about#rules
+                type: string
+                x-go-name: PrivacyPolicy
             streaming:
                 description: Websockets address for status and notification streaming.
                 example: wss://example.org
                 type: string
                 x-go-name: Streaming
+            terms_of_service:
+                description: Address of the server current terms of service, if any.
+                example: https://example.org/about#privacy_policy
+                type: string
+                x-go-name: TermsOfService
         title: InstanceV2URLs models instance-relevant URLs for client application consumption.
         type: object
         x-go-name: InstanceV2URLs

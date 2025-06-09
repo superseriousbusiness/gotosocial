@@ -2521,7 +2521,10 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
   ],
   "configuration": {
     "urls": {
-      "streaming": "wss://localhost:8080"
+      "streaming": "wss://localhost:8080",
+      "about": "http://localhost:8080/about",
+      "privacy_policy": null,
+      "terms_of_service": "http://localhost:8080/about#rules"
     },
     "accounts": {
       "allow_custom_css": true,
@@ -2587,7 +2590,9 @@ func (suite *InternalToFrontendTestSuite) TestInstanceV2ToFrontend() {
   "registrations": {
     "enabled": true,
     "approval_required": true,
-    "message": null
+    "message": null,
+    "min_age": null,
+    "reason_required": true
   },
   "contact": {
     "email": "admin@example.org",

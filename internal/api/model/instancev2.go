@@ -150,6 +150,15 @@ type InstanceV2URLs struct {
 	// Websockets address for status and notification streaming.
 	// example: wss://example.org
 	Streaming string `json:"streaming"`
+	// Address of the server about page.
+	// example: https://example.org/about
+	About string `json:"about"`
+	// Address of the server privacy policy, if any.
+	// example: https://example.org/about#rules
+	PrivacyPolicy *string `json:"privacy_policy"`
+	// Address of the server current terms of service, if any.
+	// example: https://example.org/about#privacy_policy
+	TermsOfService *string `json:"terms_of_service"`
 }
 
 // Hints related to translation.
@@ -199,6 +208,13 @@ type InstanceV2Registrations struct {
 	// Value will be null if no message is set.
 	// example: <p>Registrations are currently closed on example.org because of spam bots!</p>
 	Message *string `json:"message"`
+	// A minimum age required to register, if configured.
+	// Currently not implemented: will always be null.
+	MinAge *int `json:"min_age"`
+	// Whether registrations require the user to provide a reason for joining.
+	// Only applicable when ApprovalRequired is true.
+	// example: true
+	ReasonRequired bool `json:"reason_required"`
 }
 
 // Hints related to contacting a representative of the instance.
