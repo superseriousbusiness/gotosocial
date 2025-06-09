@@ -446,7 +446,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusIntPolicyJSON() {
 func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 	out, recorder := suite.postStatus(nil, `{
   "status": "this is a brand new status! #helloworld",
-  "visibility": "followers_only",
+  "visibility": "private",
   "interaction_policy": {
     "can_reply": {
       "always": [
@@ -463,7 +463,7 @@ func (suite *StatusCreateTestSuite) TestPostNewStatusMessedUpIntPolicy() {
 	// We should have a helpful error
 	// message telling us how we screwed up.
 	suite.Equal(`{
-  "error": "Bad Request: error converting followers_only.can_reply.always: policyURI public is not feasible for visibility followers_only"
+  "error": "Bad Request: error converting private.can_reply.always: policyURI public is not feasible for visibility private"
 }`, out)
 }
 

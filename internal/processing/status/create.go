@@ -218,7 +218,9 @@ func (p *Processor) Create(
 	}
 
 	// Process the incoming created status visibility.
-	processVisibility(form, requester.Settings.Privacy, status)
+	if errWithCode := processVisibility(form, requester.Settings.Privacy, status); errWithCode != nil {
+		return nil, errWithCode
+	}
 
 	// Process policy AFTER visibility as it relies
 	// on status.Visibility and form.Visibility being set.
@@ -444,11 +446,20 @@ func processVisibility(
 	form *apimodel.StatusCreateRequest,
 	accountDefaultVis gtsmodel.Visibility,
 	status *gtsmodel.Status,
-) {
+) gtserror.WithCode {
 	switch {
 	// Visibility set on form, use that.
 	case form.Visibility != "":
-		status.Visibility = typeutils.APIVisToVis(form.Visibility)
+		visibility := typeutils.APIVisToVis(form.Visibility)
+
+		if visibility == 0 {
+			const errText = "invalid visibility"
+			err := gtserror.New(errText)
+			errWithCode := gtserror.NewErrorUnprocessableEntity(err, err.Error())
+			return errWithCode
+		}
+
+		status.Visibility = visibility
 
 	// Fall back to account default, set
 	// this back on the form for later use.
@@ -467,6 +478,8 @@ func processVisibility(
 	// assuming federated (ie., not local-only) by default.
 	localOnly := util.PtrOrValue(form.LocalOnly, false)
 	status.Federated = util.Ptr(!localOnly)
+
+	return nil
 }
 
 func processInteractionPolicy(
