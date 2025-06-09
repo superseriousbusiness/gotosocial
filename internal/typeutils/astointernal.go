@@ -268,10 +268,12 @@ func (c *Converter) ASStatusToStatus(ctx context.Context, statusable ap.Statusab
 	// status.URL
 	//
 	// Web URL of this status (optional).
-	if statusURL, err := ap.ExtractURL(statusable); err == nil {
-		status.URL = statusURL.String()
+	if statusURL := ap.GetURL(statusable); len(statusURL) != 0 {
+		// Take the first hit.
+		status.URL = statusURL[0].String()
 	} else {
-		status.URL = status.URI // Fall back to the URI.
+		// Fall back to the URI.
+		status.URL = status.URI
 	}
 
 	// status.Content

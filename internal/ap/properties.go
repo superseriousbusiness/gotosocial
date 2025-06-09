@@ -135,7 +135,8 @@ func AppendBcc(with WithBcc, bcc ...*url.URL) {
 	}, bcc...)
 }
 
-// GetURL returns the IRIs contained in the URL property of 'with'.
+// GetURL returns IRIs contained
+// in the URL property of 'with'.
 func GetURL(with WithURL) []*url.URL {
 	urlProp := with.GetActivityStreamsUrl()
 	if urlProp == nil || urlProp.Len() == 0 {
@@ -144,9 +145,31 @@ func GetURL(with WithURL) []*url.URL {
 	urls := make([]*url.URL, 0, urlProp.Len())
 	for i := 0; i < urlProp.Len(); i++ {
 		at := urlProp.At(i)
+
+		// See if it's a plain URI.
 		if at.IsXMLSchemaAnyURI() {
 			u := at.GetXMLSchemaAnyURI()
 			urls = append(urls, u)
+			continue
+		}
+
+		// See if it's a Link obj
+		// with an href property.
+		if at.IsActivityStreamsLink() {
+			l := at.GetActivityStreamsLink()
+			hr := l.GetActivityStreamsHref()
+			if hr == nil {
+				// No href.
+				continue
+			}
+
+			if hr.IsXMLSchemaAnyURI() {
+				u := hr.Get()
+				urls = append(urls, u)
+			} else if hr.IsIRI() {
+				u := hr.GetIRI()
+				urls = append(urls, u)
+			}
 		}
 	}
 	return urls

@@ -357,10 +357,14 @@ func ExtractIconURI(i WithIcon) (*url.URL, error) {
 			continue
 		}
 
-		imageURL, err := ExtractURL(image)
-		if err == nil && imageURL != nil {
-			return imageURL, nil
+		imageURL := GetURL(image)
+		if len(imageURL) == 0 {
+			// Nothing here.
+			continue
 		}
+
+		// Got a hit.
+		return imageURL[0], nil
 	}
 
 	return nil, gtserror.New("could not extract valid image URI from icon")
@@ -399,10 +403,14 @@ func ExtractImageURI(i WithImage) (*url.URL, error) {
 			continue
 		}
 
-		imageURL, err := ExtractURL(image)
-		if err == nil && imageURL != nil {
-			return imageURL, nil
+		imageURL := GetURL(image)
+		if len(imageURL) == 0 {
+			// Nothing here.
+			continue
 		}
+
+		// Got a hit.
+		return imageURL[0], nil
 	}
 
 	return nil, gtserror.New("could not extract valid image URI from image")
@@ -486,28 +494,6 @@ func ExtractFields(i WithAttachment) []*gtsmodel.Field {
 	}
 
 	return fields
-}
-
-// ExtractURL extracts the first URI it can find from the
-// given WithURL interface, or an error if no URL was set.
-// The ID of a type will not work, this function wants a URI
-// specifically.
-func ExtractURL(i WithURL) (*url.URL, error) {
-	urlProp := i.GetActivityStreamsUrl()
-	if urlProp == nil {
-		return nil, gtserror.New("url property was nil")
-	}
-
-	for iter := urlProp.Begin(); iter != urlProp.End(); iter = iter.Next() {
-		if !iter.IsIRI() {
-			continue
-		}
-
-		// Found it.
-		return iter.GetIRI(), nil
-	}
-
-	return nil, gtserror.New("no valid URL property found")
 }
 
 // ExtractPubKeyFromActor extracts the public key, public key ID, and public
@@ -676,15 +662,15 @@ func ExtractAttachments(i WithAttachment) ([]*gtsmodel.MediaAttachment, error) {
 // (just remote URL, description, and blurhash) from the given
 // Attachmentable interface, or an error if no remote URL is set.
 func ExtractAttachment(i Attachmentable) (*gtsmodel.MediaAttachment, error) {
-	// Get the URL for the attachment file.
+	// Get the first URL for the attachment file.
 	// If no URL is set, we can't do anything.
-	remoteURL, err := ExtractURL(i)
-	if err != nil {
-		return nil, gtserror.Newf("error extracting attachment URL: %w", err)
+	remoteURL := GetURL(i)
+	if len(remoteURL) == 0 {
+		return nil, gtserror.New("empty attachment URL")
 	}
 
 	return &gtsmodel.MediaAttachment{
-		RemoteURL:   remoteURL.String(),
+		RemoteURL:   remoteURL[0].String(),
 		Description: ExtractDescription(i),
 		Blurhash:    ExtractBlurhash(i),
 		FileMeta: gtsmodel.FileMeta{
