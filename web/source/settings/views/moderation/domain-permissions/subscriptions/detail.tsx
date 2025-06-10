@@ -139,6 +139,7 @@ function UpdateDomainPermSub({ permSub }: { permSub: DomainPermSub }) {
 		}),
 		content_type: useTextInput("content_type", { source: permSub }),
 		title: useTextInput("title", { source: permSub }),
+		remove_retracted: useBoolInput("remove_retracted", { source: permSub }),
 		as_draft: useBoolInput("as_draft", { source: permSub }),
 		adopt_orphans: useBoolInput("adopt_orphans", { source: permSub }),
 		useBasicAuth: useBoolInput("useBasicAuth", {
@@ -309,6 +310,11 @@ function UpdateDomainPermSub({ permSub }: { permSub: DomainPermSub }) {
 			<Checkbox
 				label="Adopt orphan permissions"
 				field={form.adopt_orphans}
+			/>
+
+			<Checkbox
+				label="Remove retracted permissions"
+				field={form.remove_retracted}
 			/>
 
 			<Checkbox

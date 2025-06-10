@@ -39,6 +39,7 @@ export default function DomainPermissionSubscriptionNew() {
 		content_type: useTextInput("content_type", { defaultValue: "text/csv" }),
 		permission_type: useTextInput("permission_type", { defaultValue: "block" }),
 		title: useTextInput("title"),
+		remove_retracted: useBoolInput("remove_retracted", { defaultValue: true }),
 		as_draft: useBoolInput("as_draft", { defaultValue: true }),
 		adopt_orphans: useBoolInput("adopt_orphans", { defaultValue: false }),
 		fetch_username: useTextInput("fetch_username", {
@@ -196,6 +197,11 @@ export default function DomainPermissionSubscriptionNew() {
 			<Checkbox
 				label="Adopt orphan permissions"
 				field={form.adopt_orphans}
+			/>
+
+			<Checkbox
+				label="Remove retracted permissions"
+				field={form.remove_retracted}
 			/>
 
 			<Checkbox

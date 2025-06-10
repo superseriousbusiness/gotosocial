@@ -142,6 +142,8 @@ func (p *Processor) DomainPermissionSubscriptionCreate(
 	contentType gtsmodel.DomainPermSubContentType,
 	permType gtsmodel.DomainPermissionType,
 	asDraft bool,
+	adoptOrphans *bool,
+	removeRetracted *bool,
 	fetchUsername string,
 	fetchPassword string,
 ) (*apimodel.DomainPermissionSubscription, gtserror.WithCode) {
@@ -151,12 +153,14 @@ func (p *Processor) DomainPermissionSubscriptionCreate(
 		Title:              title,
 		PermissionType:     permType,
 		AsDraft:            &asDraft,
+		AdoptOrphans:       adoptOrphans,
 		CreatedByAccountID: acct.ID,
 		CreatedByAccount:   acct,
 		URI:                uri,
 		ContentType:        contentType,
 		FetchUsername:      fetchUsername,
 		FetchPassword:      fetchPassword,
+		RemoveRetracted:    removeRetracted,
 	}
 
 	err := p.state.DB.PutDomainPermissionSubscription(ctx, permSub)
@@ -184,6 +188,7 @@ func (p *Processor) DomainPermissionSubscriptionUpdate(
 	contentType *gtsmodel.DomainPermSubContentType,
 	asDraft *bool,
 	adoptOrphans *bool,
+	removeRetracted *bool,
 	fetchUsername *string,
 	fetchPassword *string,
 ) (*apimodel.DomainPermissionSubscription, gtserror.WithCode) {
@@ -228,6 +233,11 @@ func (p *Processor) DomainPermissionSubscriptionUpdate(
 	if adoptOrphans != nil {
 		permSub.AdoptOrphans = adoptOrphans
 		columns = append(columns, "adopt_orphans")
+	}
+
+	if removeRetracted != nil {
+		permSub.RemoveRetracted = removeRetracted
+		columns = append(columns, "remove_retracted")
 	}
 
 	if fetchPassword != nil {
@@ -342,12 +352,13 @@ func (p *Processor) DomainPermissionSubscriptionTest(
 	// Call the permSub.URI and parse a list of perms from it.
 	// Any error returned here is a "real" one, not an error
 	// from fetching / parsing the list.
-	createdPerms, err := p.subscriptions.ProcessDomainPermissionSubscription(
+	createdPerms, _, err := p.subscriptions.ProcessDomainPermissionSubscription(
 		ctx,
 		permSub,
 		tsport,
 		higherPrios,
 		true, // Dry run.
+		true, // Skip caching.
 	)
 	if err != nil {
 		err := gtserror.Newf("error doing dry-run: %w", err)

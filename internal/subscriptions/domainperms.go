@@ -166,17 +166,19 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 		return
 	}
 
+	var skipCache bool
 	for i, permSub := range permSubs {
 		// Higher priority permission subs = everything
 		// above this permission sub in the slice.
 		higherPrios := permSubs[:i]
 
-		_, err := s.ProcessDomainPermissionSubscription(
+		_, retracted, err := s.ProcessDomainPermissionSubscription(
 			ctx,
 			permSub,
 			tsport,
 			higherPrios,
-			false, // Not dry. Wet, if you will.
+			false,     // Not dry. Wet, if you will.
+			skipCache, // Skip cache if necessary.
 		)
 		if err != nil {
 			// Real db error.
@@ -185,6 +187,16 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 				permSub.URI, err,
 			)
 			return
+		}
+
+		// If any retractions have been done, skip caching
+		// when doing subsequent fetches. This makes it so
+		// that if an entry was present in a higher-priority
+		// list and a lower-priority list, but was retracted
+		// from the higher-priority list, it will be created
+		// and managed by the lower-priority list instead.
+		if retracted && !skipCache {
+			skipCache = true
 		}
 
 		// Update this perm sub.
@@ -203,7 +215,10 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 // entry in the database, or ignoring it if it's excluded or already
 // covered by a higher-priority subscription.
 //
-// On success, the slice of discovered DomainPermissions will be returned.
+// On success, the slice of discovered DomainPermissions will be returned,
+// including a boolean to indicate whether or not any retractions have been
+// performed since the list was last checked (if ever).
+//
 // In case of parsing error, or error on the remote side, permSub.Error
 // will be updated with the calling/parsing error, and `nil, nil` will be
 // returned. In case of an actual db error, `nil, err` will be returned and
@@ -215,6 +230,10 @@ func (s *Subscriptions) ProcessDomainPermissionSubscriptions(
 // If dry == true, then the URI will still be called, and permissions
 // will be parsed, but they will not actually be created.
 //
+// If skipCache == true, then conditional HTTP request headers will not be
+// sent, and so cached values for the domain permission subscription list
+// will not be used (ie., the list will always be fetched "fresh").
+//
 // Note that while this function modifies fields on the given permSub,
 // it's up to the caller to update it in the database (if desired).
 func (s *Subscriptions) ProcessDomainPermissionSubscription(
@@ -223,7 +242,8 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	tsport transport.Transport,
 	higherPrios []*gtsmodel.DomainPermissionSubscription,
 	dry bool,
-) ([]gtsmodel.DomainPermission, error) {
+	skipCache bool,
+) ([]gtsmodel.DomainPermission, bool, error) {
 	l := log.
 		WithContext(ctx).
 		WithFields(kv.Fields{
@@ -235,10 +255,10 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 	// going to attempt this now.
 	permSub.FetchedAt = time.Now()
 
-	// Call the URI, and only skip
-	// cache if we're doing a dry run.
+	// Call the URI, skipping conditional requests
+	// (caching) if we've been told to do so.
 	resp, err := tsport.DereferenceDomainPermissions(
-		ctx, permSub, dry,
+		ctx, permSub, skipCache,
 	)
 	if err != nil {
 		// Couldn't get this one,
@@ -246,7 +266,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		errStr := err.Error()
 		l.Warnf("couldn't dereference permSubURI: %+v", err)
 		permSub.Error = errStr
-		return nil, nil
+		return nil, false, nil
 	}
 
 	// If the permissions at URI weren't modified
@@ -257,7 +277,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		permSub.ETag = resp.ETag
 		permSub.LastModified = resp.LastModified
 		permSub.SuccessfullyFetchedAt = permSub.FetchedAt
-		return nil, nil
+		return nil, false, nil
 	}
 
 	// At this point we know we got a 200 OK
@@ -289,7 +309,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		errStr := err.Error()
 		l.Warnf("couldn't parse results: %+v", err)
 		permSub.Error = errStr
-		return nil, nil
+		return nil, false, nil
 	}
 
 	if len(wantedPerms) == 0 {
@@ -299,7 +319,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		const errStr = "fetch successful but parsed zero usable results"
 		l.Warn(errStr)
 		permSub.Error = errStr
-		return nil, nil
+		return nil, false, nil
 	}
 
 	// This can now be considered a successful fetch.
@@ -325,7 +345,7 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		)
 		if err != nil {
 			// Proper db error.
-			return nil, err
+			return nil, false, err
 		}
 
 		if !created {
@@ -335,7 +355,30 @@ func (s *Subscriptions) ProcessDomainPermissionSubscription(
 		createdPerms = append(createdPerms, wantedPerm)
 	}
 
-	return createdPerms, nil
+	if dry {
+		// Don't do any further
+		// processing with a dry run.
+		return createdPerms, false, nil
+	}
+
+	// Process any retractions since
+	// the last time list was checked.
+	//
+	// Being unable to do retractions
+	// isn't the end of the world as it
+	// can be tried again next time the
+	// list is updated, so if there was
+	// an error just warn it.
+	retracted, err := s.processRetractions(
+		ctx, l,
+		permSub,
+		wantedPerms,
+	)
+	if err != nil {
+		l.Warnf("error doing retractions: %+v", err)
+	}
+
+	return createdPerms, retracted, nil
 }
 
 // processDomainPermission processes one wanted domain
@@ -894,4 +937,151 @@ func (s *Subscriptions) adoptPerm(
 	}
 
 	return err
+}
+
+func (s *Subscriptions) processRetractions(
+	ctx context.Context,
+	l log.Entry,
+	permSub *gtsmodel.DomainPermissionSubscription,
+	wantedPerms []gtsmodel.DomainPermission,
+) (bool, error) {
+	var (
+		isBlocks        = permSub.PermissionType == gtsmodel.DomainPermissionBlock
+		removeRetracted = *permSub.RemoveRetracted
+
+		// True if at least one
+		// retraction has occurred.
+		retracted bool
+	)
+
+	// Gather existing perms into an interface type.
+	existingPerms := []gtsmodel.DomainPermission{}
+	if isBlocks {
+		existingBlocks, err := s.state.DB.GetDomainBlocksBySubscriptionID(ctx, permSub.ID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Proper db error.
+			err := gtserror.Newf("db error getting existing blocks owned by perm sub: %w", err)
+			return retracted, err
+		}
+		for _, existingBlock := range existingBlocks {
+			existingPerms = append(existingPerms, existingBlock)
+		}
+	} else {
+		existingAllows, err := s.state.DB.GetDomainAllowsBySubscriptionID(ctx, permSub.ID)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			// Proper db error.
+			err := gtserror.Newf("db error getting existing allows owned by perm sub: %w", err)
+			return retracted, err
+		}
+		for _, existingAllow := range existingAllows {
+			existingPerms = append(existingPerms, existingAllow)
+		}
+	}
+
+	// For each existing permission, check if
+	// it's included in the list of wanted perms
+	// that's just been freshly fetched + created.
+	//
+	// If it's not, we should consider it retracted
+	// and handle retraction effects appropriately.
+	for _, existingPerm := range existingPerms {
+		if slices.ContainsFunc(
+			wantedPerms,
+			func(wantedPerm gtsmodel.DomainPermission) bool {
+				return existingPerm.GetDomain() == wantedPerm.GetDomain()
+			},
+		) {
+			// This permission from the
+			// database exists in wanted
+			// perms, so it's not been
+			// retracted, leave it alone.
+			continue
+		}
+
+		// This perm exists in the database but
+		// not in wanted perms, so it has been
+		// retracted, check what we need to do.
+		domain := existingPerm.GetDomain()
+		l.WithField("domain", domain).Info("handling retraction")
+
+		var (
+			dbF     func() error
+			action  *gtsmodel.AdminAction
+			actionF admin.ActionF
+		)
+
+		switch {
+
+		// Remove this block.
+		case isBlocks && removeRetracted:
+			dbF = func() error { return s.state.DB.DeleteDomainBlock(ctx, domain) }
+			action = &gtsmodel.AdminAction{
+				ID:             id.NewULID(),
+				TargetCategory: gtsmodel.AdminActionCategoryDomain,
+				TargetID:       domain,
+				Type:           gtsmodel.AdminActionUnsuspend,
+				AccountID:      permSub.CreatedByAccountID,
+			}
+			actionF = s.state.AdminActions.DomainUnblockF(
+				action.ID,
+				existingPerm.(*gtsmodel.DomainBlock),
+			)
+
+		// Remove this allow.
+		case !isBlocks && removeRetracted:
+			dbF = func() error { return s.state.DB.DeleteDomainAllow(ctx, domain) }
+			action = &gtsmodel.AdminAction{
+				ID:             id.NewULID(),
+				TargetCategory: gtsmodel.AdminActionCategoryDomain,
+				TargetID:       domain,
+				Type:           gtsmodel.AdminActionUnallow,
+				AccountID:      permSub.CreatedByAccountID,
+			}
+			actionF = s.state.AdminActions.DomainUnallowF(
+				action.ID,
+				existingPerm.(*gtsmodel.DomainAllow),
+			)
+
+		// Orphan this block.
+		case isBlocks:
+			block := existingPerm.(*gtsmodel.DomainBlock)
+			block.SubscriptionID = ""
+			dbF = func() error { return s.state.DB.UpdateDomainBlock(ctx, block, "subscription_id") }
+
+		// Orphan this allow.
+		case !isBlocks:
+			allow := existingPerm.(*gtsmodel.DomainAllow)
+			allow.SubscriptionID = ""
+			dbF = func() error { return s.state.DB.UpdateDomainAllow(ctx, allow, "subscription_id") }
+		}
+
+		// Run the retraction db
+		// func to either delete
+		// or update the perm.
+		if err := dbF(); err != nil {
+			return retracted, err
+		}
+
+		// Mark that at least one
+		// retraction has been done.
+		if !retracted {
+			retracted = true
+		}
+
+		if action == nil {
+			// No side effects;
+			// nothing else to do.
+			continue
+		}
+
+		// Run the side effects.
+		if err := s.state.AdminActions.Run(ctx, action, actionF); err != nil {
+			err := gtserror.Newf("error running side effects: %w", err)
+			return retracted, err
+		}
+
+		// TODO: Remove draft(s) as well?
+	}
+
+	return retracted, nil
 }
