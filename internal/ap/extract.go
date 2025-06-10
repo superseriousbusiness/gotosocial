@@ -1074,6 +1074,9 @@ func ExtractVisibility(addressable Addressable, actorFollowersURI string) (gtsmo
 // Will be nil (default policy) for Statusables that have no policy
 // set on them, or have a null policy. In such a case, the caller
 // should assume the default policy for the status's visibility level.
+//
+// Sub-policies of the returned policy, eg., CanLike, CanReply, may
+// each be nil if they were not set on the interaction policy.
 func ExtractInteractionPolicy(
 	statusable Statusable,
 	owner *gtsmodel.Account,
@@ -1100,6 +1103,8 @@ func ExtractInteractionPolicy(
 		return nil
 	}
 
+	// There's a policy key/value
+	// set, extract sub-policies.
 	return &gtsmodel.InteractionPolicy{
 		CanLike:     extractCanLike(policy.GetGoToSocialCanLike(), owner),
 		CanReply:    extractCanReply(policy.GetGoToSocialCanReply(), owner),
@@ -1107,73 +1112,82 @@ func ExtractInteractionPolicy(
 	}
 }
 
+// Returns either a parsed CanLike sub-policy, or nil
+// if canLike is not set, ie., if this post is from an
+// instance that doesn't know / care about canLike.
 func extractCanLike(
 	prop vocab.GoToSocialCanLikeProperty,
 	owner *gtsmodel.Account,
-) gtsmodel.PolicyRules {
+) *gtsmodel.PolicyRules {
 	if prop == nil || prop.Len() != 1 {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
 	propIter := prop.At(0)
 	if !propIter.IsGoToSocialCanLike() {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
 	withRules := propIter.Get()
 	if withRules == nil {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
-	return gtsmodel.PolicyRules{
+	return &gtsmodel.PolicyRules{
 		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
 		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}
 }
 
+// Returns either a parsed CanReply sub-policy, or nil
+// if canReply is not set, ie., if this post is from an
+// instance that doesn't know / care about canReply.
 func extractCanReply(
 	prop vocab.GoToSocialCanReplyProperty,
 	owner *gtsmodel.Account,
-) gtsmodel.PolicyRules {
+) *gtsmodel.PolicyRules {
 	if prop == nil || prop.Len() != 1 {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
 	propIter := prop.At(0)
 	if !propIter.IsGoToSocialCanReply() {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
 	withRules := propIter.Get()
 	if withRules == nil {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
-	return gtsmodel.PolicyRules{
+	return &gtsmodel.PolicyRules{
 		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
 		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}
 }
 
+// Returns either a parsed CanAnnounce sub-policy, or nil
+// if canAnnounce is not set, ie., if this post is from an
+// instance that doesn't know / care about canAnnounce.
 func extractCanAnnounce(
 	prop vocab.GoToSocialCanAnnounceProperty,
 	owner *gtsmodel.Account,
-) gtsmodel.PolicyRules {
+) *gtsmodel.PolicyRules {
 	if prop == nil || prop.Len() != 1 {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
 	propIter := prop.At(0)
 	if !propIter.IsGoToSocialCanAnnounce() {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
 	withRules := propIter.Get()
 	if withRules == nil {
-		return gtsmodel.PolicyRules{}
+		return nil
 	}
 
-	return gtsmodel.PolicyRules{
+	return &gtsmodel.PolicyRules{
 		Always:       extractPolicyValues(withRules.GetGoToSocialAlways(), owner),
 		WithApproval: extractPolicyValues(withRules.GetGoToSocialApprovalRequired(), owner),
 	}

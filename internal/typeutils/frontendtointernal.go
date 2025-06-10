@@ -227,15 +227,15 @@ func APIInteractionPolicyToInteractionPolicy(
 	}
 
 	return &gtsmodel.InteractionPolicy{
-		CanLike: gtsmodel.PolicyRules{
+		CanLike: &gtsmodel.PolicyRules{
 			Always:       canLikeAlways,
 			WithApproval: canLikeWithApproval,
 		},
-		CanReply: gtsmodel.PolicyRules{
+		CanReply: &gtsmodel.PolicyRules{
 			Always:       canReplyAlways,
 			WithApproval: canReplyWithApproval,
 		},
-		CanAnnounce: gtsmodel.PolicyRules{
+		CanAnnounce: &gtsmodel.PolicyRules{
 			Always:       canAnnounceAlways,
 			WithApproval: canAnnounceWithApproval,
 		},

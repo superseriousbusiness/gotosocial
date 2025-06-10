@@ -2238,13 +2238,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGY43H3N2C8EWPR2FPYEXG",
 			Federated:                util.Ptr(true),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
-				CanLike: gtsmodel.PolicyRules{
+				CanLike: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
-				CanReply: gtsmodel.PolicyRules{
+				CanReply: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
-				CanAnnounce: gtsmodel.PolicyRules{
+				CanAnnounce: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 			},
@@ -2419,13 +2419,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(true),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
-				CanLike: gtsmodel.PolicyRules{
+				CanLike: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
-				CanReply: gtsmodel.PolicyRules{
+				CanReply: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
-				CanAnnounce: gtsmodel.PolicyRules{
+				CanAnnounce: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 			},
@@ -2451,14 +2451,14 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(true),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
-				CanLike: gtsmodel.PolicyRules{
+				CanLike: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
-				CanReply: gtsmodel.PolicyRules{
+				CanReply: &gtsmodel.PolicyRules{
 					Always:       gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 					WithApproval: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
-				CanAnnounce: gtsmodel.PolicyRules{
+				CanAnnounce: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
 			},
@@ -2483,13 +2483,13 @@ func NewTestStatuses() map[string]*gtsmodel.Status {
 			CreatedWithApplicationID: "01F8MGYG9E893WRHW0TAEXR8GJ",
 			Federated:                util.Ptr(false),
 			InteractionPolicy: &gtsmodel.InteractionPolicy{
-				CanLike: gtsmodel.PolicyRules{
+				CanLike: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
-				CanReply: gtsmodel.PolicyRules{
+				CanReply: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValuePublic},
 				},
-				CanAnnounce: gtsmodel.PolicyRules{
+				CanAnnounce: &gtsmodel.PolicyRules{
 					Always: gtsmodel.PolicyValues{gtsmodel.PolicyValueAuthor},
 				},
 			},

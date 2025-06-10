@@ -49,6 +49,7 @@ type TestStructs struct {
 	EmailSender         email.Sender
 	WebPushSender       *WebPushMockSender
 	TransportController transport.Controller
+	InteractionFilter   *interaction.Filter
 }
 
 func SetupTestStructs(
@@ -122,6 +123,7 @@ func SetupTestStructs(
 		EmailSender:         emailSender,
 		WebPushSender:       webPushSender,
 		TransportController: transportController,
+		InteractionFilter:   intFilter,
 	}
 }
 

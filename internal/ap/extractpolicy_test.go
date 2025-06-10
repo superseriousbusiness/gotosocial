@@ -103,13 +103,13 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicy() {
 	)
 
 	expectedPolicy := &gtsmodel.InteractionPolicy{
-		CanLike: gtsmodel.PolicyRules{
+		CanLike: &gtsmodel.PolicyRules{
 			Always: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValuePublic,
 			},
 			WithApproval: gtsmodel.PolicyValues{},
 		},
-		CanReply: gtsmodel.PolicyRules{
+		CanReply: &gtsmodel.PolicyRules{
 			Always: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValueAuthor,
 				gtsmodel.PolicyValueFollowers,
@@ -120,7 +120,7 @@ func (suite *ExtractPolicyTestSuite) TestExtractPolicy() {
 				gtsmodel.PolicyValuePublic,
 			},
 		},
-		CanAnnounce: gtsmodel.PolicyRules{
+		CanAnnounce: &gtsmodel.PolicyRules{
 			Always: gtsmodel.PolicyValues{
 				gtsmodel.PolicyValueAuthor,
 			},
