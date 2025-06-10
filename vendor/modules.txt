@@ -1368,7 +1368,7 @@ gopkg.in/yaml.v2
 # gopkg.in/yaml.v3 v3.0.1
 ## explicit
 gopkg.in/yaml.v3
-# modernc.org/libc v1.65.7
+# modernc.org/libc v1.65.10
 ## explicit; go 1.23.0
 modernc.org/libc
 modernc.org/libc/errno
@@ -1402,7 +1402,7 @@ modernc.org/mathutil
 # modernc.org/memory v1.11.0
 ## explicit; go 1.23.0
 modernc.org/memory
-# modernc.org/sqlite v1.37.1 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.37.1-concurrency-workaround
+# modernc.org/sqlite v1.37.1 => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.38.0-concurrency-workaround
 ## explicit; go 1.23.0
 modernc.org/sqlite
 modernc.org/sqlite/lib
@@ -1410,4 +1410,4 @@ modernc.org/sqlite/lib
 ## explicit; go 1.22.0
 mvdan.cc/xurls/v2
 # github.com/go-swagger/go-swagger => codeberg.org/superseriousbusiness/go-swagger v0.31.0-gts-go1.23-fix
-# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.37.1-concurrency-workaround
+# modernc.org/sqlite => gitlab.com/NyaaaWhatsUpDoc/sqlite v1.38.0-concurrency-workaround

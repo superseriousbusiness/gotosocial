@@ -603,6 +603,10 @@ func (s *stmt) query(ctx context.Context, args []driver.NamedValue) (r driver.Ro
 	var allocs []uintptr
 
 	defer func() {
+		if r == nil && err == nil {
+			r, err = newRows(s.c, pstmt, allocs, true)
+		}
+
 		if pstmt != 0 {
 			// ensure stmt finalized.
 			e := s.c.finalize(pstmt)
@@ -612,10 +616,6 @@ func (s *stmt) query(ctx context.Context, args []driver.NamedValue) (r driver.Ro
 				// returned error.
 				err = e
 			}
-		}
-
-		if r == nil && err == nil {
-			r, err = newRows(s.c, pstmt, allocs, true)
 		}
 	}()
 
@@ -2154,7 +2154,9 @@ func functionArgs(tls *libc.TLS, argc int32, argv uintptr) []driver.Value {
 			size := sqlite3.Xsqlite3_value_bytes(tls, valPtr)
 			blobPtr := sqlite3.Xsqlite3_value_blob(tls, valPtr)
 			v := make([]byte, size)
-			copy(v, (*libc.RawMem)(unsafe.Pointer(blobPtr))[:size:size])
+			if size != 0 {
+				copy(v, (*libc.RawMem)(unsafe.Pointer(blobPtr))[:size:size])
+			}
 			args[i] = v
 		default:
 			panic(fmt.Sprintf("unexpected argument type %q passed by sqlite", valType))
