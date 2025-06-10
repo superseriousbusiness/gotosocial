@@ -114,15 +114,18 @@ func testDefaults() config.Configuration {
 		AccountsCustomCSSLength:          10000,
 		AccountsMaxProfileFields:         8,
 
-		MediaDescriptionMinChars: 0,
-		MediaDescriptionMaxChars: 500,
-		MediaRemoteCacheDays:     7,
-		MediaLocalMaxSize:        40 * bytesize.MiB,
-		MediaRemoteMaxSize:       40 * bytesize.MiB,
-		MediaEmojiLocalMaxSize:   51200,          // 50KiB
-		MediaEmojiRemoteMaxSize:  102400,         // 100KiB
-		MediaCleanupFrom:         "00:00",        // midnight.
-		MediaCleanupEvery:        24 * time.Hour, // 1/day.
+		Media: config.MediaConfiguration{
+			DescriptionMinChars: 0,
+			DescriptionMaxChars: 500,
+			RemoteCacheDays:     7,
+			LocalMaxSize:        40 * bytesize.MiB,
+			RemoteMaxSize:       40 * bytesize.MiB,
+			EmojiLocalMaxSize:   51200,          // 50KiB
+			EmojiRemoteMaxSize:  102400,         // 100KiB
+			CleanupFrom:         "00:00",        // midnight.
+			CleanupEvery:        24 * time.Hour, // 1/day.
+			ThumbMaxPixels:      512,
+		},
 
 		// the testrig only uses in-memory storage, so we can
 		// safely set this value to 'test' to avoid running storage

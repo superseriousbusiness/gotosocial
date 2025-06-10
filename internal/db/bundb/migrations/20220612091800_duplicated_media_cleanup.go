@@ -65,7 +65,7 @@ func init() {
 
 		storageBasePath := config.GetStorageLocalBasePath()
 		if storageBasePath == "" {
-			return fmt.Errorf("%s must be set to do storage migration", config.StorageLocalBasePathFlag())
+			return fmt.Errorf("%s must be set to do storage migration", config.StorageLocalBasePathFlag)
 		}
 
 		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {

@@ -53,7 +53,7 @@ func LoadTemplates(engine *gin.Engine) error {
 	if templateBaseDir == "" {
 		return gtserror.Newf(
 			"%s cannot be empty and must be a relative or absolute path",
-			config.WebTemplateBaseDirFlag(),
+			config.WebTemplateBaseDirFlag,
 		)
 	}
 

@@ -47,7 +47,7 @@ func NewCookiePolicy() CookiePolicy {
 	case "lax":
 		sameSite = http.SameSiteLaxMode
 	default:
-		log.Warnf(nil, "%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag(), s)
+		log.Warnf(nil, "%s set to %s which is not recognized, defaulting to 'lax'", config.AdvancedCookiesSamesiteFlag, s)
 		sameSite = http.SameSiteLaxMode
 	}
 	return CookiePolicy{

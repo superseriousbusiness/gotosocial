@@ -28,6 +28,198 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const (
+	LogLevelFlag                                   = "log-level"
+	LogTimestampFormatFlag                         = "log-timestamp-format"
+	LogDbQueriesFlag                               = "log-db-queries"
+	LogClientIPFlag                                = "log-client-ip"
+	RequestIDHeaderFlag                            = "request-id-header"
+	ConfigPathFlag                                 = "config-path"
+	ApplicationNameFlag                            = "application-name"
+	LandingPageUserFlag                            = "landing-page-user"
+	HostFlag                                       = "host"
+	AccountDomainFlag                              = "account-domain"
+	ProtocolFlag                                   = "protocol"
+	BindAddressFlag                                = "bind-address"
+	PortFlag                                       = "port"
+	TrustedProxiesFlag                             = "trusted-proxies"
+	SoftwareVersionFlag                            = "software-version"
+	DbTypeFlag                                     = "db-type"
+	DbAddressFlag                                  = "db-address"
+	DbPortFlag                                     = "db-port"
+	DbUserFlag                                     = "db-user"
+	DbPasswordFlag                                 = "db-password"
+	DbDatabaseFlag                                 = "db-database"
+	DbTLSModeFlag                                  = "db-tls-mode"
+	DbTLSCACertFlag                                = "db-tls-ca-cert"
+	DbMaxOpenConnsMultiplierFlag                   = "db-max-open-conns-multiplier"
+	DbSqliteJournalModeFlag                        = "db-sqlite-journal-mode"
+	DbSqliteSynchronousFlag                        = "db-sqlite-synchronous"
+	DbSqliteCacheSizeFlag                          = "db-sqlite-cache-size"
+	DbSqliteBusyTimeoutFlag                        = "db-sqlite-busy-timeout"
+	DbPostgresConnectionStringFlag                 = "db-postgres-connection-string"
+	WebTemplateBaseDirFlag                         = "web-template-base-dir"
+	WebAssetBaseDirFlag                            = "web-asset-base-dir"
+	InstanceFederationModeFlag                     = "instance-federation-mode"
+	InstanceFederationSpamFilterFlag               = "instance-federation-spam-filter"
+	InstanceExposePeersFlag                        = "instance-expose-peers"
+	InstanceExposeBlocklistFlag                    = "instance-expose-blocklist"
+	InstanceExposeBlocklistWebFlag                 = "instance-expose-blocklist-web"
+	InstanceExposeAllowlistFlag                    = "instance-expose-allowlist"
+	InstanceExposeAllowlistWebFlag                 = "instance-expose-allowlist-web"
+	InstanceExposePublicTimelineFlag               = "instance-expose-public-timeline"
+	InstanceExposeCustomEmojisFlag                 = "instance-expose-custom-emojis"
+	InstanceDeliverToSharedInboxesFlag             = "instance-deliver-to-shared-inboxes"
+	InstanceInjectMastodonVersionFlag              = "instance-inject-mastodon-version"
+	InstanceLanguagesFlag                          = "instance-languages"
+	InstanceSubscriptionsProcessFromFlag           = "instance-subscriptions-process-from"
+	InstanceSubscriptionsProcessEveryFlag          = "instance-subscriptions-process-every"
+	InstanceStatsModeFlag                          = "instance-stats-mode"
+	InstanceAllowBackdatingStatusesFlag            = "instance-allow-backdating-statuses"
+	AccountsRegistrationOpenFlag                   = "accounts-registration-open"
+	AccountsReasonRequiredFlag                     = "accounts-reason-required"
+	AccountsRegistrationDailyLimitFlag             = "accounts-registration-daily-limit"
+	AccountsRegistrationBacklogLimitFlag           = "accounts-registration-backlog-limit"
+	AccountsAllowCustomCSSFlag                     = "accounts-allow-custom-css"
+	AccountsCustomCSSLengthFlag                    = "accounts-custom-css-length"
+	AccountsMaxProfileFieldsFlag                   = "accounts-max-profile-fields"
+	StorageBackendFlag                             = "storage-backend"
+	StorageLocalBasePathFlag                       = "storage-local-base-path"
+	StorageS3EndpointFlag                          = "storage-s3-endpoint"
+	StorageS3AccessKeyFlag                         = "storage-s3-access-key"
+	StorageS3SecretKeyFlag                         = "storage-s3-secret-key"
+	StorageS3UseSSLFlag                            = "storage-s3-use-ssl"
+	StorageS3BucketNameFlag                        = "storage-s3-bucket"
+	StorageS3ProxyFlag                             = "storage-s3-proxy"
+	StorageS3RedirectURLFlag                       = "storage-s3-redirect-url"
+	StorageS3BucketLookupFlag                      = "storage-s3-bucket-lookup"
+	StorageS3KeyPrefixFlag                         = "storage-s3-key-prefix"
+	StatusesMaxCharsFlag                           = "statuses-max-chars"
+	StatusesPollMaxOptionsFlag                     = "statuses-poll-max-options"
+	StatusesPollOptionMaxCharsFlag                 = "statuses-poll-option-max-chars"
+	StatusesMediaMaxFilesFlag                      = "statuses-media-max-files"
+	LetsEncryptEnabledFlag                         = "letsencrypt-enabled"
+	LetsEncryptPortFlag                            = "letsencrypt-port"
+	LetsEncryptCertDirFlag                         = "letsencrypt-cert-dir"
+	LetsEncryptEmailAddressFlag                    = "letsencrypt-email-address"
+	TLSCertificateChainFlag                        = "tls-certificate-chain"
+	TLSCertificateKeyFlag                          = "tls-certificate-key"
+	OIDCEnabledFlag                                = "oidc-enabled"
+	OIDCIdpNameFlag                                = "oidc-idp-name"
+	OIDCSkipVerificationFlag                       = "oidc-skip-verification"
+	OIDCIssuerFlag                                 = "oidc-issuer"
+	OIDCClientIDFlag                               = "oidc-client-id"
+	OIDCClientSecretFlag                           = "oidc-client-secret"
+	OIDCScopesFlag                                 = "oidc-scopes"
+	OIDCLinkExistingFlag                           = "oidc-link-existing"
+	OIDCAllowedGroupsFlag                          = "oidc-allowed-groups"
+	OIDCAdminGroupsFlag                            = "oidc-admin-groups"
+	TracingEnabledFlag                             = "tracing-enabled"
+	MetricsEnabledFlag                             = "metrics-enabled"
+	SMTPHostFlag                                   = "smtp-host"
+	SMTPPortFlag                                   = "smtp-port"
+	SMTPUsernameFlag                               = "smtp-username"
+	SMTPPasswordFlag                               = "smtp-password"
+	SMTPFromFlag                                   = "smtp-from"
+	SMTPDiscloseRecipientsFlag                     = "smtp-disclose-recipients"
+	SyslogEnabledFlag                              = "syslog-enabled"
+	SyslogProtocolFlag                             = "syslog-protocol"
+	SyslogAddressFlag                              = "syslog-address"
+	AdvancedCookiesSamesiteFlag                    = "advanced-cookies-samesite"
+	AdvancedSenderMultiplierFlag                   = "advanced-sender-multiplier"
+	AdvancedCSPExtraURIsFlag                       = "advanced-csp-extra-uris"
+	AdvancedHeaderFilterModeFlag                   = "advanced-header-filter-mode"
+	AdvancedRateLimitRequestsFlag                  = "advanced-rate-limit-requests"
+	AdvancedRateLimitExceptionsFlag                = "advanced-rate-limit-exceptions"
+	AdvancedThrottlingMultiplierFlag               = "advanced-throttling-multiplier"
+	AdvancedThrottlingRetryAfterFlag               = "advanced-throttling-retry-after"
+	AdvancedScraperDeterrenceEnabledFlag           = "advanced-scraper-deterrence-enabled"
+	AdvancedScraperDeterrenceDifficultyFlag        = "advanced-scraper-deterrence-difficulty"
+	HTTPClientAllowIPsFlag                         = "http-client-allow-ips"
+	HTTPClientBlockIPsFlag                         = "http-client-block-ips"
+	HTTPClientTimeoutFlag                          = "http-client-timeout"
+	HTTPClientTLSInsecureSkipVerifyFlag            = "http-client-tls-insecure-skip-verify"
+	HTTPClientInsecureOutgoingFlag                 = "http-client-insecure-outgoing"
+	MediaDescriptionMinCharsFlag                   = "media-description-min-chars"
+	MediaDescriptionMaxCharsFlag                   = "media-description-max-chars"
+	MediaRemoteCacheDaysFlag                       = "media-remote-cache-days"
+	MediaEmojiLocalMaxSizeFlag                     = "media-emoji-local-max-size"
+	MediaEmojiRemoteMaxSizeFlag                    = "media-emoji-remote-max-size"
+	MediaImageSizeHintFlag                         = "media-image-size-hint"
+	MediaVideoSizeHintFlag                         = "media-video-size-hint"
+	MediaLocalMaxSizeFlag                          = "media-local-max-size"
+	MediaRemoteMaxSizeFlag                         = "media-remote-max-size"
+	MediaCleanupFromFlag                           = "media-cleanup-from"
+	MediaCleanupEveryFlag                          = "media-cleanup-every"
+	MediaFfmpegPoolSizeFlag                        = "media-ffmpeg-pool-size"
+	MediaThumbMaxPixelsFlag                        = "media-thumb-max-pixels"
+	CacheMemoryTargetFlag                          = "cache-memory-target"
+	CacheAccountMemRatioFlag                       = "cache-account-mem-ratio"
+	CacheAccountNoteMemRatioFlag                   = "cache-account-note-mem-ratio"
+	CacheAccountSettingsMemRatioFlag               = "cache-account-settings-mem-ratio"
+	CacheAccountStatsMemRatioFlag                  = "cache-account-stats-mem-ratio"
+	CacheApplicationMemRatioFlag                   = "cache-application-mem-ratio"
+	CacheBlockMemRatioFlag                         = "cache-block-mem-ratio"
+	CacheBlockIDsMemRatioFlag                      = "cache-block-ids-mem-ratio"
+	CacheBoostOfIDsMemRatioFlag                    = "cache-boost-of-ids-mem-ratio"
+	CacheClientMemRatioFlag                        = "cache-client-mem-ratio"
+	CacheConversationMemRatioFlag                  = "cache-conversation-mem-ratio"
+	CacheConversationLastStatusIDsMemRatioFlag     = "cache-conversation-last-status-ids-mem-ratio"
+	CacheDomainPermissionDraftMemRationFlag        = "cache-domain-permission-draft-mem-ratio"
+	CacheDomainPermissionSubscriptionMemRationFlag = "cache-domain-permission-subscription-mem-ratio"
+	CacheEmojiMemRatioFlag                         = "cache-emoji-mem-ratio"
+	CacheEmojiCategoryMemRatioFlag                 = "cache-emoji-category-mem-ratio"
+	CacheFilterMemRatioFlag                        = "cache-filter-mem-ratio"
+	CacheFilterKeywordMemRatioFlag                 = "cache-filter-keyword-mem-ratio"
+	CacheFilterStatusMemRatioFlag                  = "cache-filter-status-mem-ratio"
+	CacheFollowMemRatioFlag                        = "cache-follow-mem-ratio"
+	CacheFollowIDsMemRatioFlag                     = "cache-follow-ids-mem-ratio"
+	CacheFollowRequestMemRatioFlag                 = "cache-follow-request-mem-ratio"
+	CacheFollowRequestIDsMemRatioFlag              = "cache-follow-request-ids-mem-ratio"
+	CacheFollowingTagIDsMemRatioFlag               = "cache-following-tag-ids-mem-ratio"
+	CacheInReplyToIDsMemRatioFlag                  = "cache-in-reply-to-ids-mem-ratio"
+	CacheInstanceMemRatioFlag                      = "cache-instance-mem-ratio"
+	CacheInteractionRequestMemRatioFlag            = "cache-interaction-request-mem-ratio"
+	CacheListMemRatioFlag                          = "cache-list-mem-ratio"
+	CacheListIDsMemRatioFlag                       = "cache-list-ids-mem-ratio"
+	CacheListedIDsMemRatioFlag                     = "cache-listed-ids-mem-ratio"
+	CacheMarkerMemRatioFlag                        = "cache-marker-mem-ratio"
+	CacheMediaMemRatioFlag                         = "cache-media-mem-ratio"
+	CacheMentionMemRatioFlag                       = "cache-mention-mem-ratio"
+	CacheMoveMemRatioFlag                          = "cache-move-mem-ratio"
+	CacheNotificationMemRatioFlag                  = "cache-notification-mem-ratio"
+	CachePollMemRatioFlag                          = "cache-poll-mem-ratio"
+	CachePollVoteMemRatioFlag                      = "cache-poll-vote-mem-ratio"
+	CachePollVoteIDsMemRatioFlag                   = "cache-poll-vote-ids-mem-ratio"
+	CacheReportMemRatioFlag                        = "cache-report-mem-ratio"
+	CacheSinBinStatusMemRatioFlag                  = "cache-sin-bin-status-mem-ratio"
+	CacheStatusMemRatioFlag                        = "cache-status-mem-ratio"
+	CacheStatusBookmarkMemRatioFlag                = "cache-status-bookmark-mem-ratio"
+	CacheStatusBookmarkIDsMemRatioFlag             = "cache-status-bookmark-ids-mem-ratio"
+	CacheStatusEditMemRatioFlag                    = "cache-status-edit-mem-ratio"
+	CacheStatusFaveMemRatioFlag                    = "cache-status-fave-mem-ratio"
+	CacheStatusFaveIDsMemRatioFlag                 = "cache-status-fave-ids-mem-ratio"
+	CacheTagMemRatioFlag                           = "cache-tag-mem-ratio"
+	CacheThreadMuteMemRatioFlag                    = "cache-thread-mute-mem-ratio"
+	CacheTokenMemRatioFlag                         = "cache-token-mem-ratio"
+	CacheTombstoneMemRatioFlag                     = "cache-tombstone-mem-ratio"
+	CacheUserMemRatioFlag                          = "cache-user-mem-ratio"
+	CacheUserMuteMemRatioFlag                      = "cache-user-mute-mem-ratio"
+	CacheUserMuteIDsMemRatioFlag                   = "cache-user-mute-ids-mem-ratio"
+	CacheWebfingerMemRatioFlag                     = "cache-webfinger-mem-ratio"
+	CacheWebPushSubscriptionMemRatioFlag           = "cache-web-push-subscription-mem-ratio"
+	CacheWebPushSubscriptionIDsMemRatioFlag        = "cache-web-push-subscription-ids-mem-ratio"
+	CacheMutesMemRatioFlag                         = "cache-mutes-mem-ratio"
+	CacheVisibilityMemRatioFlag                    = "cache-visibility-mem-ratio"
+	AdminAccountUsernameFlag                       = "username"
+	AdminAccountEmailFlag                          = "email"
+	AdminAccountPasswordFlag                       = "password"
+	AdminTransPathFlag                             = "path"
+	AdminMediaPruneDryRunFlag                      = "dry-run"
+	AdminMediaListLocalOnlyFlag                    = "local-only"
+	AdminMediaListRemoteOnlyFlag                   = "remote-only"
+)
+
 func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.String("log-level", cfg.LogLevel, "Log level to run at: [trace, debug, info, warn, fatal]")
 	flags.String("log-timestamp-format", cfg.LogTimestampFormat, "Format to use for the log timestamp, as supported by Go's time.Layout")
@@ -83,18 +275,6 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Bool("accounts-allow-custom-css", cfg.AccountsAllowCustomCSS, "Allow accounts to enable custom CSS for their profile pages and statuses.")
 	flags.Int("accounts-custom-css-length", cfg.AccountsCustomCSSLength, "Maximum permitted length (characters) of custom CSS for accounts.")
 	flags.Int("accounts-max-profile-fields", cfg.AccountsMaxProfileFields, "Maximum number of profile fields allowed for each account.")
-	flags.Int("media-description-min-chars", cfg.MediaDescriptionMinChars, "Min required chars for an image description")
-	flags.Int("media-description-max-chars", cfg.MediaDescriptionMaxChars, "Max permitted chars for an image description")
-	flags.Int("media-remote-cache-days", cfg.MediaRemoteCacheDays, "Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely.")
-	flags.String("media-emoji-local-max-size", cfg.MediaEmojiLocalMaxSize.String(), "Max size in bytes of emojis uploaded to this instance via the admin API.")
-	flags.String("media-emoji-remote-max-size", cfg.MediaEmojiRemoteMaxSize.String(), "Max size in bytes of emojis to download from other instances.")
-	flags.String("media-image-size-hint", cfg.MediaImageSizeHint.String(), "Size in bytes of max image size referred to on /api/v_/instance endpoints (else, local max size)")
-	flags.String("media-video-size-hint", cfg.MediaVideoSizeHint.String(), "Size in bytes of max video size referred to on /api/v_/instance endpoints (else, local max size)")
-	flags.String("media-local-max-size", cfg.MediaLocalMaxSize.String(), "Max size in bytes of media uploaded to this instance via API")
-	flags.String("media-remote-max-size", cfg.MediaRemoteMaxSize.String(), "Max size in bytes of media to download from other instances")
-	flags.String("media-cleanup-from", cfg.MediaCleanupFrom, "Time of day from which to start running media cleanup/prune jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'.")
-	flags.Duration("media-cleanup-every", cfg.MediaCleanupEvery, "Period to elapse between cleanups, starting from media-cleanup-at.")
-	flags.Int("media-ffmpeg-pool-size", cfg.MediaFfmpegPoolSize, "Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS.")
 	flags.String("storage-backend", cfg.StorageBackend, "Storage backend to use for media attachments")
 	flags.String("storage-local-base-path", cfg.StorageLocalBasePath, "Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir.")
 	flags.String("storage-s3-endpoint", cfg.StorageS3Endpoint, "S3 Endpoint URL (e.g 'minio.example.org:9000')")
@@ -152,6 +332,19 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.Duration("http-client-timeout", cfg.HTTPClient.Timeout, "")
 	flags.Bool("http-client-tls-insecure-skip-verify", cfg.HTTPClient.TLSInsecureSkipVerify, "")
 	flags.Bool("http-client-insecure-outgoing", cfg.HTTPClient.InsecureOutgoing, "")
+	flags.Int("media-description-min-chars", cfg.Media.DescriptionMinChars, "Min required chars for an image description")
+	flags.Int("media-description-max-chars", cfg.Media.DescriptionMaxChars, "Max permitted chars for an image description")
+	flags.Int("media-remote-cache-days", cfg.Media.RemoteCacheDays, "Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely.")
+	flags.String("media-emoji-local-max-size", cfg.Media.EmojiLocalMaxSize.String(), "Max size in bytes of emojis uploaded to this instance via the admin API.")
+	flags.String("media-emoji-remote-max-size", cfg.Media.EmojiRemoteMaxSize.String(), "Max size in bytes of emojis to download from other instances.")
+	flags.String("media-image-size-hint", cfg.Media.ImageSizeHint.String(), "Size in bytes of max image size referred to on /api/v_/instance endpoints (else, local max size)")
+	flags.String("media-video-size-hint", cfg.Media.VideoSizeHint.String(), "Size in bytes of max video size referred to on /api/v_/instance endpoints (else, local max size)")
+	flags.String("media-local-max-size", cfg.Media.LocalMaxSize.String(), "Max size in bytes of media uploaded to this instance via API")
+	flags.String("media-remote-max-size", cfg.Media.RemoteMaxSize.String(), "Max size in bytes of media to download from other instances")
+	flags.String("media-cleanup-from", cfg.Media.CleanupFrom, "Time of day from which to start running media cleanup/prune jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'.")
+	flags.Duration("media-cleanup-every", cfg.Media.CleanupEvery, "Period to elapse between cleanups, starting from media-cleanup-at.")
+	flags.Int("media-ffmpeg-pool-size", cfg.Media.FfmpegPoolSize, "Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS.")
+	flags.Int("media-thumb-max-pixels", cfg.Media.ThumbMaxPixels, "Max size in pixels of any one dimension of a thumbnail (as input media ratio is preserved).")
 	flags.String("cache-memory-target", cfg.Cache.MemoryTarget.String(), "")
 	flags.Float64("cache-account-mem-ratio", cfg.Cache.AccountMemRatio, "")
 	flags.Float64("cache-account-note-mem-ratio", cfg.Cache.AccountNoteMemRatio, "")
@@ -213,7 +406,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 }
 
 func (cfg *Configuration) MarshalMap() map[string]any {
-	cfgmap := make(map[string]any, 188)
+	cfgmap := make(map[string]any, 189)
 	cfgmap["log-level"] = cfg.LogLevel
 	cfgmap["log-timestamp-format"] = cfg.LogTimestampFormat
 	cfgmap["log-db-queries"] = cfg.LogDbQueries
@@ -268,18 +461,6 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["accounts-allow-custom-css"] = cfg.AccountsAllowCustomCSS
 	cfgmap["accounts-custom-css-length"] = cfg.AccountsCustomCSSLength
 	cfgmap["accounts-max-profile-fields"] = cfg.AccountsMaxProfileFields
-	cfgmap["media-description-min-chars"] = cfg.MediaDescriptionMinChars
-	cfgmap["media-description-max-chars"] = cfg.MediaDescriptionMaxChars
-	cfgmap["media-remote-cache-days"] = cfg.MediaRemoteCacheDays
-	cfgmap["media-emoji-local-max-size"] = cfg.MediaEmojiLocalMaxSize.String()
-	cfgmap["media-emoji-remote-max-size"] = cfg.MediaEmojiRemoteMaxSize.String()
-	cfgmap["media-image-size-hint"] = cfg.MediaImageSizeHint.String()
-	cfgmap["media-video-size-hint"] = cfg.MediaVideoSizeHint.String()
-	cfgmap["media-local-max-size"] = cfg.MediaLocalMaxSize.String()
-	cfgmap["media-remote-max-size"] = cfg.MediaRemoteMaxSize.String()
-	cfgmap["media-cleanup-from"] = cfg.MediaCleanupFrom
-	cfgmap["media-cleanup-every"] = cfg.MediaCleanupEvery
-	cfgmap["media-ffmpeg-pool-size"] = cfg.MediaFfmpegPoolSize
 	cfgmap["storage-backend"] = cfg.StorageBackend
 	cfgmap["storage-local-base-path"] = cfg.StorageLocalBasePath
 	cfgmap["storage-s3-endpoint"] = cfg.StorageS3Endpoint
@@ -337,6 +518,19 @@ func (cfg *Configuration) MarshalMap() map[string]any {
 	cfgmap["http-client-timeout"] = cfg.HTTPClient.Timeout
 	cfgmap["http-client-tls-insecure-skip-verify"] = cfg.HTTPClient.TLSInsecureSkipVerify
 	cfgmap["http-client-insecure-outgoing"] = cfg.HTTPClient.InsecureOutgoing
+	cfgmap["media-description-min-chars"] = cfg.Media.DescriptionMinChars
+	cfgmap["media-description-max-chars"] = cfg.Media.DescriptionMaxChars
+	cfgmap["media-remote-cache-days"] = cfg.Media.RemoteCacheDays
+	cfgmap["media-emoji-local-max-size"] = cfg.Media.EmojiLocalMaxSize.String()
+	cfgmap["media-emoji-remote-max-size"] = cfg.Media.EmojiRemoteMaxSize.String()
+	cfgmap["media-image-size-hint"] = cfg.Media.ImageSizeHint.String()
+	cfgmap["media-video-size-hint"] = cfg.Media.VideoSizeHint.String()
+	cfgmap["media-local-max-size"] = cfg.Media.LocalMaxSize.String()
+	cfgmap["media-remote-max-size"] = cfg.Media.RemoteMaxSize.String()
+	cfgmap["media-cleanup-from"] = cfg.Media.CleanupFrom
+	cfgmap["media-cleanup-every"] = cfg.Media.CleanupEvery
+	cfgmap["media-ffmpeg-pool-size"] = cfg.Media.FfmpegPoolSize
+	cfgmap["media-thumb-max-pixels"] = cfg.Media.ThumbMaxPixels
 	cfgmap["cache-memory-target"] = cfg.Cache.MemoryTarget.String()
 	cfgmap["cache-account-mem-ratio"] = cfg.Cache.AccountMemRatio
 	cfgmap["cache-account-note-mem-ratio"] = cfg.Cache.AccountNoteMemRatio
@@ -851,120 +1045,6 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		}
 	}
 
-	if ival, ok := cfgmap["media-description-min-chars"]; ok {
-		var err error
-		cfg.MediaDescriptionMinChars, err = cast.ToIntE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> int for 'media-description-min-chars': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-description-max-chars"]; ok {
-		var err error
-		cfg.MediaDescriptionMaxChars, err = cast.ToIntE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> int for 'media-description-max-chars': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-remote-cache-days"]; ok {
-		var err error
-		cfg.MediaRemoteCacheDays, err = cast.ToIntE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> int for 'media-remote-cache-days': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-emoji-local-max-size"]; ok {
-		t, err := cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-emoji-local-max-size': %w", ival, err)
-		}
-		cfg.MediaEmojiLocalMaxSize = 0x0
-		if err := cfg.MediaEmojiLocalMaxSize.Set(t); err != nil {
-			return fmt.Errorf("error parsing %#v for 'media-emoji-local-max-size': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-emoji-remote-max-size"]; ok {
-		t, err := cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-emoji-remote-max-size': %w", ival, err)
-		}
-		cfg.MediaEmojiRemoteMaxSize = 0x0
-		if err := cfg.MediaEmojiRemoteMaxSize.Set(t); err != nil {
-			return fmt.Errorf("error parsing %#v for 'media-emoji-remote-max-size': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-image-size-hint"]; ok {
-		t, err := cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-image-size-hint': %w", ival, err)
-		}
-		cfg.MediaImageSizeHint = 0x0
-		if err := cfg.MediaImageSizeHint.Set(t); err != nil {
-			return fmt.Errorf("error parsing %#v for 'media-image-size-hint': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-video-size-hint"]; ok {
-		t, err := cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-video-size-hint': %w", ival, err)
-		}
-		cfg.MediaVideoSizeHint = 0x0
-		if err := cfg.MediaVideoSizeHint.Set(t); err != nil {
-			return fmt.Errorf("error parsing %#v for 'media-video-size-hint': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-local-max-size"]; ok {
-		t, err := cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-local-max-size': %w", ival, err)
-		}
-		cfg.MediaLocalMaxSize = 0x0
-		if err := cfg.MediaLocalMaxSize.Set(t); err != nil {
-			return fmt.Errorf("error parsing %#v for 'media-local-max-size': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-remote-max-size"]; ok {
-		t, err := cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-remote-max-size': %w", ival, err)
-		}
-		cfg.MediaRemoteMaxSize = 0x0
-		if err := cfg.MediaRemoteMaxSize.Set(t); err != nil {
-			return fmt.Errorf("error parsing %#v for 'media-remote-max-size': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-cleanup-from"]; ok {
-		var err error
-		cfg.MediaCleanupFrom, err = cast.ToStringE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> string for 'media-cleanup-from': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-cleanup-every"]; ok {
-		var err error
-		cfg.MediaCleanupEvery, err = cast.ToDurationE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> time.Duration for 'media-cleanup-every': %w", ival, err)
-		}
-	}
-
-	if ival, ok := cfgmap["media-ffmpeg-pool-size"]; ok {
-		var err error
-		cfg.MediaFfmpegPoolSize, err = cast.ToIntE(ival)
-		if err != nil {
-			return fmt.Errorf("error casting %#v -> int for 'media-ffmpeg-pool-size': %w", ival, err)
-		}
-	}
-
 	if ival, ok := cfgmap["storage-backend"]; ok {
 		var err error
 		cfg.StorageBackend, err = cast.ToStringE(ival)
@@ -1423,6 +1503,128 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 		cfg.HTTPClient.InsecureOutgoing, err = cast.ToBoolE(ival)
 		if err != nil {
 			return fmt.Errorf("error casting %#v -> bool for 'http-client-insecure-outgoing': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-description-min-chars"]; ok {
+		var err error
+		cfg.Media.DescriptionMinChars, err = cast.ToIntE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> int for 'media-description-min-chars': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-description-max-chars"]; ok {
+		var err error
+		cfg.Media.DescriptionMaxChars, err = cast.ToIntE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> int for 'media-description-max-chars': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-remote-cache-days"]; ok {
+		var err error
+		cfg.Media.RemoteCacheDays, err = cast.ToIntE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> int for 'media-remote-cache-days': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-emoji-local-max-size"]; ok {
+		t, err := cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-emoji-local-max-size': %w", ival, err)
+		}
+		cfg.Media.EmojiLocalMaxSize = 0x0
+		if err := cfg.Media.EmojiLocalMaxSize.Set(t); err != nil {
+			return fmt.Errorf("error parsing %#v for 'media-emoji-local-max-size': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-emoji-remote-max-size"]; ok {
+		t, err := cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-emoji-remote-max-size': %w", ival, err)
+		}
+		cfg.Media.EmojiRemoteMaxSize = 0x0
+		if err := cfg.Media.EmojiRemoteMaxSize.Set(t); err != nil {
+			return fmt.Errorf("error parsing %#v for 'media-emoji-remote-max-size': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-image-size-hint"]; ok {
+		t, err := cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-image-size-hint': %w", ival, err)
+		}
+		cfg.Media.ImageSizeHint = 0x0
+		if err := cfg.Media.ImageSizeHint.Set(t); err != nil {
+			return fmt.Errorf("error parsing %#v for 'media-image-size-hint': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-video-size-hint"]; ok {
+		t, err := cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-video-size-hint': %w", ival, err)
+		}
+		cfg.Media.VideoSizeHint = 0x0
+		if err := cfg.Media.VideoSizeHint.Set(t); err != nil {
+			return fmt.Errorf("error parsing %#v for 'media-video-size-hint': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-local-max-size"]; ok {
+		t, err := cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-local-max-size': %w", ival, err)
+		}
+		cfg.Media.LocalMaxSize = 0x0
+		if err := cfg.Media.LocalMaxSize.Set(t); err != nil {
+			return fmt.Errorf("error parsing %#v for 'media-local-max-size': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-remote-max-size"]; ok {
+		t, err := cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-remote-max-size': %w", ival, err)
+		}
+		cfg.Media.RemoteMaxSize = 0x0
+		if err := cfg.Media.RemoteMaxSize.Set(t); err != nil {
+			return fmt.Errorf("error parsing %#v for 'media-remote-max-size': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-cleanup-from"]; ok {
+		var err error
+		cfg.Media.CleanupFrom, err = cast.ToStringE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> string for 'media-cleanup-from': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-cleanup-every"]; ok {
+		var err error
+		cfg.Media.CleanupEvery, err = cast.ToDurationE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> time.Duration for 'media-cleanup-every': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-ffmpeg-pool-size"]; ok {
+		var err error
+		cfg.Media.FfmpegPoolSize, err = cast.ToIntE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> int for 'media-ffmpeg-pool-size': %w", ival, err)
+		}
+	}
+
+	if ival, ok := cfgmap["media-thumb-max-pixels"]; ok {
+		var err error
+		cfg.Media.ThumbMaxPixels, err = cast.ToIntE(ival)
+		if err != nil {
+			return fmt.Errorf("error casting %#v -> int for 'media-thumb-max-pixels': %w", ival, err)
 		}
 	}
 
@@ -1952,9 +2154,6 @@ func (cfg *Configuration) UnmarshalMap(cfgmap map[string]any) error {
 	return nil
 }
 
-// LogLevelFlag returns the flag name for the 'LogLevel' field
-func LogLevelFlag() string { return "log-level" }
-
 // GetLogLevel safely fetches the Configuration value for state's 'LogLevel' field
 func (st *ConfigState) GetLogLevel() (v string) {
 	st.mutex.RLock()
@@ -1976,9 +2175,6 @@ func GetLogLevel() string { return global.GetLogLevel() }
 
 // SetLogLevel safely sets the value for global configuration 'LogLevel' field
 func SetLogLevel(v string) { global.SetLogLevel(v) }
-
-// LogTimestampFormatFlag returns the flag name for the 'LogTimestampFormat' field
-func LogTimestampFormatFlag() string { return "log-timestamp-format" }
 
 // GetLogTimestampFormat safely fetches the Configuration value for state's 'LogTimestampFormat' field
 func (st *ConfigState) GetLogTimestampFormat() (v string) {
@@ -2002,9 +2198,6 @@ func GetLogTimestampFormat() string { return global.GetLogTimestampFormat() }
 // SetLogTimestampFormat safely sets the value for global configuration 'LogTimestampFormat' field
 func SetLogTimestampFormat(v string) { global.SetLogTimestampFormat(v) }
 
-// LogDbQueriesFlag returns the flag name for the 'LogDbQueries' field
-func LogDbQueriesFlag() string { return "log-db-queries" }
-
 // GetLogDbQueries safely fetches the Configuration value for state's 'LogDbQueries' field
 func (st *ConfigState) GetLogDbQueries() (v bool) {
 	st.mutex.RLock()
@@ -2026,9 +2219,6 @@ func GetLogDbQueries() bool { return global.GetLogDbQueries() }
 
 // SetLogDbQueries safely sets the value for global configuration 'LogDbQueries' field
 func SetLogDbQueries(v bool) { global.SetLogDbQueries(v) }
-
-// LogClientIPFlag returns the flag name for the 'LogClientIP' field
-func LogClientIPFlag() string { return "log-client-ip" }
 
 // GetLogClientIP safely fetches the Configuration value for state's 'LogClientIP' field
 func (st *ConfigState) GetLogClientIP() (v bool) {
@@ -2052,9 +2242,6 @@ func GetLogClientIP() bool { return global.GetLogClientIP() }
 // SetLogClientIP safely sets the value for global configuration 'LogClientIP' field
 func SetLogClientIP(v bool) { global.SetLogClientIP(v) }
 
-// RequestIDHeaderFlag returns the flag name for the 'RequestIDHeader' field
-func RequestIDHeaderFlag() string { return "request-id-header" }
-
 // GetRequestIDHeader safely fetches the Configuration value for state's 'RequestIDHeader' field
 func (st *ConfigState) GetRequestIDHeader() (v string) {
 	st.mutex.RLock()
@@ -2076,9 +2263,6 @@ func GetRequestIDHeader() string { return global.GetRequestIDHeader() }
 
 // SetRequestIDHeader safely sets the value for global configuration 'RequestIDHeader' field
 func SetRequestIDHeader(v string) { global.SetRequestIDHeader(v) }
-
-// ConfigPathFlag returns the flag name for the 'ConfigPath' field
-func ConfigPathFlag() string { return "config-path" }
 
 // GetConfigPath safely fetches the Configuration value for state's 'ConfigPath' field
 func (st *ConfigState) GetConfigPath() (v string) {
@@ -2102,9 +2286,6 @@ func GetConfigPath() string { return global.GetConfigPath() }
 // SetConfigPath safely sets the value for global configuration 'ConfigPath' field
 func SetConfigPath(v string) { global.SetConfigPath(v) }
 
-// ApplicationNameFlag returns the flag name for the 'ApplicationName' field
-func ApplicationNameFlag() string { return "application-name" }
-
 // GetApplicationName safely fetches the Configuration value for state's 'ApplicationName' field
 func (st *ConfigState) GetApplicationName() (v string) {
 	st.mutex.RLock()
@@ -2126,9 +2307,6 @@ func GetApplicationName() string { return global.GetApplicationName() }
 
 // SetApplicationName safely sets the value for global configuration 'ApplicationName' field
 func SetApplicationName(v string) { global.SetApplicationName(v) }
-
-// LandingPageUserFlag returns the flag name for the 'LandingPageUser' field
-func LandingPageUserFlag() string { return "landing-page-user" }
 
 // GetLandingPageUser safely fetches the Configuration value for state's 'LandingPageUser' field
 func (st *ConfigState) GetLandingPageUser() (v string) {
@@ -2152,9 +2330,6 @@ func GetLandingPageUser() string { return global.GetLandingPageUser() }
 // SetLandingPageUser safely sets the value for global configuration 'LandingPageUser' field
 func SetLandingPageUser(v string) { global.SetLandingPageUser(v) }
 
-// HostFlag returns the flag name for the 'Host' field
-func HostFlag() string { return "host" }
-
 // GetHost safely fetches the Configuration value for state's 'Host' field
 func (st *ConfigState) GetHost() (v string) {
 	st.mutex.RLock()
@@ -2176,9 +2351,6 @@ func GetHost() string { return global.GetHost() }
 
 // SetHost safely sets the value for global configuration 'Host' field
 func SetHost(v string) { global.SetHost(v) }
-
-// AccountDomainFlag returns the flag name for the 'AccountDomain' field
-func AccountDomainFlag() string { return "account-domain" }
 
 // GetAccountDomain safely fetches the Configuration value for state's 'AccountDomain' field
 func (st *ConfigState) GetAccountDomain() (v string) {
@@ -2202,9 +2374,6 @@ func GetAccountDomain() string { return global.GetAccountDomain() }
 // SetAccountDomain safely sets the value for global configuration 'AccountDomain' field
 func SetAccountDomain(v string) { global.SetAccountDomain(v) }
 
-// ProtocolFlag returns the flag name for the 'Protocol' field
-func ProtocolFlag() string { return "protocol" }
-
 // GetProtocol safely fetches the Configuration value for state's 'Protocol' field
 func (st *ConfigState) GetProtocol() (v string) {
 	st.mutex.RLock()
@@ -2226,9 +2395,6 @@ func GetProtocol() string { return global.GetProtocol() }
 
 // SetProtocol safely sets the value for global configuration 'Protocol' field
 func SetProtocol(v string) { global.SetProtocol(v) }
-
-// BindAddressFlag returns the flag name for the 'BindAddress' field
-func BindAddressFlag() string { return "bind-address" }
 
 // GetBindAddress safely fetches the Configuration value for state's 'BindAddress' field
 func (st *ConfigState) GetBindAddress() (v string) {
@@ -2252,9 +2418,6 @@ func GetBindAddress() string { return global.GetBindAddress() }
 // SetBindAddress safely sets the value for global configuration 'BindAddress' field
 func SetBindAddress(v string) { global.SetBindAddress(v) }
 
-// PortFlag returns the flag name for the 'Port' field
-func PortFlag() string { return "port" }
-
 // GetPort safely fetches the Configuration value for state's 'Port' field
 func (st *ConfigState) GetPort() (v int) {
 	st.mutex.RLock()
@@ -2276,9 +2439,6 @@ func GetPort() int { return global.GetPort() }
 
 // SetPort safely sets the value for global configuration 'Port' field
 func SetPort(v int) { global.SetPort(v) }
-
-// TrustedProxiesFlag returns the flag name for the 'TrustedProxies' field
-func TrustedProxiesFlag() string { return "trusted-proxies" }
 
 // GetTrustedProxies safely fetches the Configuration value for state's 'TrustedProxies' field
 func (st *ConfigState) GetTrustedProxies() (v []string) {
@@ -2302,9 +2462,6 @@ func GetTrustedProxies() []string { return global.GetTrustedProxies() }
 // SetTrustedProxies safely sets the value for global configuration 'TrustedProxies' field
 func SetTrustedProxies(v []string) { global.SetTrustedProxies(v) }
 
-// SoftwareVersionFlag returns the flag name for the 'SoftwareVersion' field
-func SoftwareVersionFlag() string { return "software-version" }
-
 // GetSoftwareVersion safely fetches the Configuration value for state's 'SoftwareVersion' field
 func (st *ConfigState) GetSoftwareVersion() (v string) {
 	st.mutex.RLock()
@@ -2326,9 +2483,6 @@ func GetSoftwareVersion() string { return global.GetSoftwareVersion() }
 
 // SetSoftwareVersion safely sets the value for global configuration 'SoftwareVersion' field
 func SetSoftwareVersion(v string) { global.SetSoftwareVersion(v) }
-
-// DbTypeFlag returns the flag name for the 'DbType' field
-func DbTypeFlag() string { return "db-type" }
 
 // GetDbType safely fetches the Configuration value for state's 'DbType' field
 func (st *ConfigState) GetDbType() (v string) {
@@ -2352,9 +2506,6 @@ func GetDbType() string { return global.GetDbType() }
 // SetDbType safely sets the value for global configuration 'DbType' field
 func SetDbType(v string) { global.SetDbType(v) }
 
-// DbAddressFlag returns the flag name for the 'DbAddress' field
-func DbAddressFlag() string { return "db-address" }
-
 // GetDbAddress safely fetches the Configuration value for state's 'DbAddress' field
 func (st *ConfigState) GetDbAddress() (v string) {
 	st.mutex.RLock()
@@ -2376,9 +2527,6 @@ func GetDbAddress() string { return global.GetDbAddress() }
 
 // SetDbAddress safely sets the value for global configuration 'DbAddress' field
 func SetDbAddress(v string) { global.SetDbAddress(v) }
-
-// DbPortFlag returns the flag name for the 'DbPort' field
-func DbPortFlag() string { return "db-port" }
 
 // GetDbPort safely fetches the Configuration value for state's 'DbPort' field
 func (st *ConfigState) GetDbPort() (v int) {
@@ -2402,9 +2550,6 @@ func GetDbPort() int { return global.GetDbPort() }
 // SetDbPort safely sets the value for global configuration 'DbPort' field
 func SetDbPort(v int) { global.SetDbPort(v) }
 
-// DbUserFlag returns the flag name for the 'DbUser' field
-func DbUserFlag() string { return "db-user" }
-
 // GetDbUser safely fetches the Configuration value for state's 'DbUser' field
 func (st *ConfigState) GetDbUser() (v string) {
 	st.mutex.RLock()
@@ -2426,9 +2571,6 @@ func GetDbUser() string { return global.GetDbUser() }
 
 // SetDbUser safely sets the value for global configuration 'DbUser' field
 func SetDbUser(v string) { global.SetDbUser(v) }
-
-// DbPasswordFlag returns the flag name for the 'DbPassword' field
-func DbPasswordFlag() string { return "db-password" }
 
 // GetDbPassword safely fetches the Configuration value for state's 'DbPassword' field
 func (st *ConfigState) GetDbPassword() (v string) {
@@ -2452,9 +2594,6 @@ func GetDbPassword() string { return global.GetDbPassword() }
 // SetDbPassword safely sets the value for global configuration 'DbPassword' field
 func SetDbPassword(v string) { global.SetDbPassword(v) }
 
-// DbDatabaseFlag returns the flag name for the 'DbDatabase' field
-func DbDatabaseFlag() string { return "db-database" }
-
 // GetDbDatabase safely fetches the Configuration value for state's 'DbDatabase' field
 func (st *ConfigState) GetDbDatabase() (v string) {
 	st.mutex.RLock()
@@ -2476,9 +2615,6 @@ func GetDbDatabase() string { return global.GetDbDatabase() }
 
 // SetDbDatabase safely sets the value for global configuration 'DbDatabase' field
 func SetDbDatabase(v string) { global.SetDbDatabase(v) }
-
-// DbTLSModeFlag returns the flag name for the 'DbTLSMode' field
-func DbTLSModeFlag() string { return "db-tls-mode" }
 
 // GetDbTLSMode safely fetches the Configuration value for state's 'DbTLSMode' field
 func (st *ConfigState) GetDbTLSMode() (v string) {
@@ -2502,9 +2638,6 @@ func GetDbTLSMode() string { return global.GetDbTLSMode() }
 // SetDbTLSMode safely sets the value for global configuration 'DbTLSMode' field
 func SetDbTLSMode(v string) { global.SetDbTLSMode(v) }
 
-// DbTLSCACertFlag returns the flag name for the 'DbTLSCACert' field
-func DbTLSCACertFlag() string { return "db-tls-ca-cert" }
-
 // GetDbTLSCACert safely fetches the Configuration value for state's 'DbTLSCACert' field
 func (st *ConfigState) GetDbTLSCACert() (v string) {
 	st.mutex.RLock()
@@ -2526,9 +2659,6 @@ func GetDbTLSCACert() string { return global.GetDbTLSCACert() }
 
 // SetDbTLSCACert safely sets the value for global configuration 'DbTLSCACert' field
 func SetDbTLSCACert(v string) { global.SetDbTLSCACert(v) }
-
-// DbMaxOpenConnsMultiplierFlag returns the flag name for the 'DbMaxOpenConnsMultiplier' field
-func DbMaxOpenConnsMultiplierFlag() string { return "db-max-open-conns-multiplier" }
 
 // GetDbMaxOpenConnsMultiplier safely fetches the Configuration value for state's 'DbMaxOpenConnsMultiplier' field
 func (st *ConfigState) GetDbMaxOpenConnsMultiplier() (v int) {
@@ -2552,9 +2682,6 @@ func GetDbMaxOpenConnsMultiplier() int { return global.GetDbMaxOpenConnsMultipli
 // SetDbMaxOpenConnsMultiplier safely sets the value for global configuration 'DbMaxOpenConnsMultiplier' field
 func SetDbMaxOpenConnsMultiplier(v int) { global.SetDbMaxOpenConnsMultiplier(v) }
 
-// DbSqliteJournalModeFlag returns the flag name for the 'DbSqliteJournalMode' field
-func DbSqliteJournalModeFlag() string { return "db-sqlite-journal-mode" }
-
 // GetDbSqliteJournalMode safely fetches the Configuration value for state's 'DbSqliteJournalMode' field
 func (st *ConfigState) GetDbSqliteJournalMode() (v string) {
 	st.mutex.RLock()
@@ -2576,9 +2703,6 @@ func GetDbSqliteJournalMode() string { return global.GetDbSqliteJournalMode() }
 
 // SetDbSqliteJournalMode safely sets the value for global configuration 'DbSqliteJournalMode' field
 func SetDbSqliteJournalMode(v string) { global.SetDbSqliteJournalMode(v) }
-
-// DbSqliteSynchronousFlag returns the flag name for the 'DbSqliteSynchronous' field
-func DbSqliteSynchronousFlag() string { return "db-sqlite-synchronous" }
 
 // GetDbSqliteSynchronous safely fetches the Configuration value for state's 'DbSqliteSynchronous' field
 func (st *ConfigState) GetDbSqliteSynchronous() (v string) {
@@ -2602,9 +2726,6 @@ func GetDbSqliteSynchronous() string { return global.GetDbSqliteSynchronous() }
 // SetDbSqliteSynchronous safely sets the value for global configuration 'DbSqliteSynchronous' field
 func SetDbSqliteSynchronous(v string) { global.SetDbSqliteSynchronous(v) }
 
-// DbSqliteCacheSizeFlag returns the flag name for the 'DbSqliteCacheSize' field
-func DbSqliteCacheSizeFlag() string { return "db-sqlite-cache-size" }
-
 // GetDbSqliteCacheSize safely fetches the Configuration value for state's 'DbSqliteCacheSize' field
 func (st *ConfigState) GetDbSqliteCacheSize() (v bytesize.Size) {
 	st.mutex.RLock()
@@ -2626,9 +2747,6 @@ func GetDbSqliteCacheSize() bytesize.Size { return global.GetDbSqliteCacheSize()
 
 // SetDbSqliteCacheSize safely sets the value for global configuration 'DbSqliteCacheSize' field
 func SetDbSqliteCacheSize(v bytesize.Size) { global.SetDbSqliteCacheSize(v) }
-
-// DbSqliteBusyTimeoutFlag returns the flag name for the 'DbSqliteBusyTimeout' field
-func DbSqliteBusyTimeoutFlag() string { return "db-sqlite-busy-timeout" }
 
 // GetDbSqliteBusyTimeout safely fetches the Configuration value for state's 'DbSqliteBusyTimeout' field
 func (st *ConfigState) GetDbSqliteBusyTimeout() (v time.Duration) {
@@ -2652,9 +2770,6 @@ func GetDbSqliteBusyTimeout() time.Duration { return global.GetDbSqliteBusyTimeo
 // SetDbSqliteBusyTimeout safely sets the value for global configuration 'DbSqliteBusyTimeout' field
 func SetDbSqliteBusyTimeout(v time.Duration) { global.SetDbSqliteBusyTimeout(v) }
 
-// DbPostgresConnectionStringFlag returns the flag name for the 'DbPostgresConnectionString' field
-func DbPostgresConnectionStringFlag() string { return "db-postgres-connection-string" }
-
 // GetDbPostgresConnectionString safely fetches the Configuration value for state's 'DbPostgresConnectionString' field
 func (st *ConfigState) GetDbPostgresConnectionString() (v string) {
 	st.mutex.RLock()
@@ -2676,9 +2791,6 @@ func GetDbPostgresConnectionString() string { return global.GetDbPostgresConnect
 
 // SetDbPostgresConnectionString safely sets the value for global configuration 'DbPostgresConnectionString' field
 func SetDbPostgresConnectionString(v string) { global.SetDbPostgresConnectionString(v) }
-
-// WebTemplateBaseDirFlag returns the flag name for the 'WebTemplateBaseDir' field
-func WebTemplateBaseDirFlag() string { return "web-template-base-dir" }
 
 // GetWebTemplateBaseDir safely fetches the Configuration value for state's 'WebTemplateBaseDir' field
 func (st *ConfigState) GetWebTemplateBaseDir() (v string) {
@@ -2702,9 +2814,6 @@ func GetWebTemplateBaseDir() string { return global.GetWebTemplateBaseDir() }
 // SetWebTemplateBaseDir safely sets the value for global configuration 'WebTemplateBaseDir' field
 func SetWebTemplateBaseDir(v string) { global.SetWebTemplateBaseDir(v) }
 
-// WebAssetBaseDirFlag returns the flag name for the 'WebAssetBaseDir' field
-func WebAssetBaseDirFlag() string { return "web-asset-base-dir" }
-
 // GetWebAssetBaseDir safely fetches the Configuration value for state's 'WebAssetBaseDir' field
 func (st *ConfigState) GetWebAssetBaseDir() (v string) {
 	st.mutex.RLock()
@@ -2726,9 +2835,6 @@ func GetWebAssetBaseDir() string { return global.GetWebAssetBaseDir() }
 
 // SetWebAssetBaseDir safely sets the value for global configuration 'WebAssetBaseDir' field
 func SetWebAssetBaseDir(v string) { global.SetWebAssetBaseDir(v) }
-
-// InstanceFederationModeFlag returns the flag name for the 'InstanceFederationMode' field
-func InstanceFederationModeFlag() string { return "instance-federation-mode" }
 
 // GetInstanceFederationMode safely fetches the Configuration value for state's 'InstanceFederationMode' field
 func (st *ConfigState) GetInstanceFederationMode() (v string) {
@@ -2752,9 +2858,6 @@ func GetInstanceFederationMode() string { return global.GetInstanceFederationMod
 // SetInstanceFederationMode safely sets the value for global configuration 'InstanceFederationMode' field
 func SetInstanceFederationMode(v string) { global.SetInstanceFederationMode(v) }
 
-// InstanceFederationSpamFilterFlag returns the flag name for the 'InstanceFederationSpamFilter' field
-func InstanceFederationSpamFilterFlag() string { return "instance-federation-spam-filter" }
-
 // GetInstanceFederationSpamFilter safely fetches the Configuration value for state's 'InstanceFederationSpamFilter' field
 func (st *ConfigState) GetInstanceFederationSpamFilter() (v bool) {
 	st.mutex.RLock()
@@ -2776,9 +2879,6 @@ func GetInstanceFederationSpamFilter() bool { return global.GetInstanceFederatio
 
 // SetInstanceFederationSpamFilter safely sets the value for global configuration 'InstanceFederationSpamFilter' field
 func SetInstanceFederationSpamFilter(v bool) { global.SetInstanceFederationSpamFilter(v) }
-
-// InstanceExposePeersFlag returns the flag name for the 'InstanceExposePeers' field
-func InstanceExposePeersFlag() string { return "instance-expose-peers" }
 
 // GetInstanceExposePeers safely fetches the Configuration value for state's 'InstanceExposePeers' field
 func (st *ConfigState) GetInstanceExposePeers() (v bool) {
@@ -2802,9 +2902,6 @@ func GetInstanceExposePeers() bool { return global.GetInstanceExposePeers() }
 // SetInstanceExposePeers safely sets the value for global configuration 'InstanceExposePeers' field
 func SetInstanceExposePeers(v bool) { global.SetInstanceExposePeers(v) }
 
-// InstanceExposeBlocklistFlag returns the flag name for the 'InstanceExposeBlocklist' field
-func InstanceExposeBlocklistFlag() string { return "instance-expose-blocklist" }
-
 // GetInstanceExposeBlocklist safely fetches the Configuration value for state's 'InstanceExposeBlocklist' field
 func (st *ConfigState) GetInstanceExposeBlocklist() (v bool) {
 	st.mutex.RLock()
@@ -2826,9 +2923,6 @@ func GetInstanceExposeBlocklist() bool { return global.GetInstanceExposeBlocklis
 
 // SetInstanceExposeBlocklist safely sets the value for global configuration 'InstanceExposeBlocklist' field
 func SetInstanceExposeBlocklist(v bool) { global.SetInstanceExposeBlocklist(v) }
-
-// InstanceExposeBlocklistWebFlag returns the flag name for the 'InstanceExposeBlocklistWeb' field
-func InstanceExposeBlocklistWebFlag() string { return "instance-expose-blocklist-web" }
 
 // GetInstanceExposeBlocklistWeb safely fetches the Configuration value for state's 'InstanceExposeBlocklistWeb' field
 func (st *ConfigState) GetInstanceExposeBlocklistWeb() (v bool) {
@@ -2852,9 +2946,6 @@ func GetInstanceExposeBlocklistWeb() bool { return global.GetInstanceExposeBlock
 // SetInstanceExposeBlocklistWeb safely sets the value for global configuration 'InstanceExposeBlocklistWeb' field
 func SetInstanceExposeBlocklistWeb(v bool) { global.SetInstanceExposeBlocklistWeb(v) }
 
-// InstanceExposeAllowlistFlag returns the flag name for the 'InstanceExposeAllowlist' field
-func InstanceExposeAllowlistFlag() string { return "instance-expose-allowlist" }
-
 // GetInstanceExposeAllowlist safely fetches the Configuration value for state's 'InstanceExposeAllowlist' field
 func (st *ConfigState) GetInstanceExposeAllowlist() (v bool) {
 	st.mutex.RLock()
@@ -2876,9 +2967,6 @@ func GetInstanceExposeAllowlist() bool { return global.GetInstanceExposeAllowlis
 
 // SetInstanceExposeAllowlist safely sets the value for global configuration 'InstanceExposeAllowlist' field
 func SetInstanceExposeAllowlist(v bool) { global.SetInstanceExposeAllowlist(v) }
-
-// InstanceExposeAllowlistWebFlag returns the flag name for the 'InstanceExposeAllowlistWeb' field
-func InstanceExposeAllowlistWebFlag() string { return "instance-expose-allowlist-web" }
 
 // GetInstanceExposeAllowlistWeb safely fetches the Configuration value for state's 'InstanceExposeAllowlistWeb' field
 func (st *ConfigState) GetInstanceExposeAllowlistWeb() (v bool) {
@@ -2902,9 +2990,6 @@ func GetInstanceExposeAllowlistWeb() bool { return global.GetInstanceExposeAllow
 // SetInstanceExposeAllowlistWeb safely sets the value for global configuration 'InstanceExposeAllowlistWeb' field
 func SetInstanceExposeAllowlistWeb(v bool) { global.SetInstanceExposeAllowlistWeb(v) }
 
-// InstanceExposePublicTimelineFlag returns the flag name for the 'InstanceExposePublicTimeline' field
-func InstanceExposePublicTimelineFlag() string { return "instance-expose-public-timeline" }
-
 // GetInstanceExposePublicTimeline safely fetches the Configuration value for state's 'InstanceExposePublicTimeline' field
 func (st *ConfigState) GetInstanceExposePublicTimeline() (v bool) {
 	st.mutex.RLock()
@@ -2926,9 +3011,6 @@ func GetInstanceExposePublicTimeline() bool { return global.GetInstanceExposePub
 
 // SetInstanceExposePublicTimeline safely sets the value for global configuration 'InstanceExposePublicTimeline' field
 func SetInstanceExposePublicTimeline(v bool) { global.SetInstanceExposePublicTimeline(v) }
-
-// InstanceExposeCustomEmojisFlag returns the flag name for the 'InstanceExposeCustomEmojis' field
-func InstanceExposeCustomEmojisFlag() string { return "instance-expose-custom-emojis" }
 
 // GetInstanceExposeCustomEmojis safely fetches the Configuration value for state's 'InstanceExposeCustomEmojis' field
 func (st *ConfigState) GetInstanceExposeCustomEmojis() (v bool) {
@@ -2952,9 +3034,6 @@ func GetInstanceExposeCustomEmojis() bool { return global.GetInstanceExposeCusto
 // SetInstanceExposeCustomEmojis safely sets the value for global configuration 'InstanceExposeCustomEmojis' field
 func SetInstanceExposeCustomEmojis(v bool) { global.SetInstanceExposeCustomEmojis(v) }
 
-// InstanceDeliverToSharedInboxesFlag returns the flag name for the 'InstanceDeliverToSharedInboxes' field
-func InstanceDeliverToSharedInboxesFlag() string { return "instance-deliver-to-shared-inboxes" }
-
 // GetInstanceDeliverToSharedInboxes safely fetches the Configuration value for state's 'InstanceDeliverToSharedInboxes' field
 func (st *ConfigState) GetInstanceDeliverToSharedInboxes() (v bool) {
 	st.mutex.RLock()
@@ -2976,9 +3055,6 @@ func GetInstanceDeliverToSharedInboxes() bool { return global.GetInstanceDeliver
 
 // SetInstanceDeliverToSharedInboxes safely sets the value for global configuration 'InstanceDeliverToSharedInboxes' field
 func SetInstanceDeliverToSharedInboxes(v bool) { global.SetInstanceDeliverToSharedInboxes(v) }
-
-// InstanceInjectMastodonVersionFlag returns the flag name for the 'InstanceInjectMastodonVersion' field
-func InstanceInjectMastodonVersionFlag() string { return "instance-inject-mastodon-version" }
 
 // GetInstanceInjectMastodonVersion safely fetches the Configuration value for state's 'InstanceInjectMastodonVersion' field
 func (st *ConfigState) GetInstanceInjectMastodonVersion() (v bool) {
@@ -3002,9 +3078,6 @@ func GetInstanceInjectMastodonVersion() bool { return global.GetInstanceInjectMa
 // SetInstanceInjectMastodonVersion safely sets the value for global configuration 'InstanceInjectMastodonVersion' field
 func SetInstanceInjectMastodonVersion(v bool) { global.SetInstanceInjectMastodonVersion(v) }
 
-// InstanceLanguagesFlag returns the flag name for the 'InstanceLanguages' field
-func InstanceLanguagesFlag() string { return "instance-languages" }
-
 // GetInstanceLanguages safely fetches the Configuration value for state's 'InstanceLanguages' field
 func (st *ConfigState) GetInstanceLanguages() (v language.Languages) {
 	st.mutex.RLock()
@@ -3026,9 +3099,6 @@ func GetInstanceLanguages() language.Languages { return global.GetInstanceLangua
 
 // SetInstanceLanguages safely sets the value for global configuration 'InstanceLanguages' field
 func SetInstanceLanguages(v language.Languages) { global.SetInstanceLanguages(v) }
-
-// InstanceSubscriptionsProcessFromFlag returns the flag name for the 'InstanceSubscriptionsProcessFrom' field
-func InstanceSubscriptionsProcessFromFlag() string { return "instance-subscriptions-process-from" }
 
 // GetInstanceSubscriptionsProcessFrom safely fetches the Configuration value for state's 'InstanceSubscriptionsProcessFrom' field
 func (st *ConfigState) GetInstanceSubscriptionsProcessFrom() (v string) {
@@ -3053,9 +3123,6 @@ func GetInstanceSubscriptionsProcessFrom() string {
 
 // SetInstanceSubscriptionsProcessFrom safely sets the value for global configuration 'InstanceSubscriptionsProcessFrom' field
 func SetInstanceSubscriptionsProcessFrom(v string) { global.SetInstanceSubscriptionsProcessFrom(v) }
-
-// InstanceSubscriptionsProcessEveryFlag returns the flag name for the 'InstanceSubscriptionsProcessEvery' field
-func InstanceSubscriptionsProcessEveryFlag() string { return "instance-subscriptions-process-every" }
 
 // GetInstanceSubscriptionsProcessEvery safely fetches the Configuration value for state's 'InstanceSubscriptionsProcessEvery' field
 func (st *ConfigState) GetInstanceSubscriptionsProcessEvery() (v time.Duration) {
@@ -3083,9 +3150,6 @@ func SetInstanceSubscriptionsProcessEvery(v time.Duration) {
 	global.SetInstanceSubscriptionsProcessEvery(v)
 }
 
-// InstanceStatsModeFlag returns the flag name for the 'InstanceStatsMode' field
-func InstanceStatsModeFlag() string { return "instance-stats-mode" }
-
 // GetInstanceStatsMode safely fetches the Configuration value for state's 'InstanceStatsMode' field
 func (st *ConfigState) GetInstanceStatsMode() (v string) {
 	st.mutex.RLock()
@@ -3107,9 +3171,6 @@ func GetInstanceStatsMode() string { return global.GetInstanceStatsMode() }
 
 // SetInstanceStatsMode safely sets the value for global configuration 'InstanceStatsMode' field
 func SetInstanceStatsMode(v string) { global.SetInstanceStatsMode(v) }
-
-// InstanceAllowBackdatingStatusesFlag returns the flag name for the 'InstanceAllowBackdatingStatuses' field
-func InstanceAllowBackdatingStatusesFlag() string { return "instance-allow-backdating-statuses" }
 
 // GetInstanceAllowBackdatingStatuses safely fetches the Configuration value for state's 'InstanceAllowBackdatingStatuses' field
 func (st *ConfigState) GetInstanceAllowBackdatingStatuses() (v bool) {
@@ -3133,9 +3194,6 @@ func GetInstanceAllowBackdatingStatuses() bool { return global.GetInstanceAllowB
 // SetInstanceAllowBackdatingStatuses safely sets the value for global configuration 'InstanceAllowBackdatingStatuses' field
 func SetInstanceAllowBackdatingStatuses(v bool) { global.SetInstanceAllowBackdatingStatuses(v) }
 
-// AccountsRegistrationOpenFlag returns the flag name for the 'AccountsRegistrationOpen' field
-func AccountsRegistrationOpenFlag() string { return "accounts-registration-open" }
-
 // GetAccountsRegistrationOpen safely fetches the Configuration value for state's 'AccountsRegistrationOpen' field
 func (st *ConfigState) GetAccountsRegistrationOpen() (v bool) {
 	st.mutex.RLock()
@@ -3157,9 +3215,6 @@ func GetAccountsRegistrationOpen() bool { return global.GetAccountsRegistrationO
 
 // SetAccountsRegistrationOpen safely sets the value for global configuration 'AccountsRegistrationOpen' field
 func SetAccountsRegistrationOpen(v bool) { global.SetAccountsRegistrationOpen(v) }
-
-// AccountsReasonRequiredFlag returns the flag name for the 'AccountsReasonRequired' field
-func AccountsReasonRequiredFlag() string { return "accounts-reason-required" }
 
 // GetAccountsReasonRequired safely fetches the Configuration value for state's 'AccountsReasonRequired' field
 func (st *ConfigState) GetAccountsReasonRequired() (v bool) {
@@ -3183,9 +3238,6 @@ func GetAccountsReasonRequired() bool { return global.GetAccountsReasonRequired(
 // SetAccountsReasonRequired safely sets the value for global configuration 'AccountsReasonRequired' field
 func SetAccountsReasonRequired(v bool) { global.SetAccountsReasonRequired(v) }
 
-// AccountsRegistrationDailyLimitFlag returns the flag name for the 'AccountsRegistrationDailyLimit' field
-func AccountsRegistrationDailyLimitFlag() string { return "accounts-registration-daily-limit" }
-
 // GetAccountsRegistrationDailyLimit safely fetches the Configuration value for state's 'AccountsRegistrationDailyLimit' field
 func (st *ConfigState) GetAccountsRegistrationDailyLimit() (v int) {
 	st.mutex.RLock()
@@ -3207,9 +3259,6 @@ func GetAccountsRegistrationDailyLimit() int { return global.GetAccountsRegistra
 
 // SetAccountsRegistrationDailyLimit safely sets the value for global configuration 'AccountsRegistrationDailyLimit' field
 func SetAccountsRegistrationDailyLimit(v int) { global.SetAccountsRegistrationDailyLimit(v) }
-
-// AccountsRegistrationBacklogLimitFlag returns the flag name for the 'AccountsRegistrationBacklogLimit' field
-func AccountsRegistrationBacklogLimitFlag() string { return "accounts-registration-backlog-limit" }
 
 // GetAccountsRegistrationBacklogLimit safely fetches the Configuration value for state's 'AccountsRegistrationBacklogLimit' field
 func (st *ConfigState) GetAccountsRegistrationBacklogLimit() (v int) {
@@ -3233,9 +3282,6 @@ func GetAccountsRegistrationBacklogLimit() int { return global.GetAccountsRegist
 // SetAccountsRegistrationBacklogLimit safely sets the value for global configuration 'AccountsRegistrationBacklogLimit' field
 func SetAccountsRegistrationBacklogLimit(v int) { global.SetAccountsRegistrationBacklogLimit(v) }
 
-// AccountsAllowCustomCSSFlag returns the flag name for the 'AccountsAllowCustomCSS' field
-func AccountsAllowCustomCSSFlag() string { return "accounts-allow-custom-css" }
-
 // GetAccountsAllowCustomCSS safely fetches the Configuration value for state's 'AccountsAllowCustomCSS' field
 func (st *ConfigState) GetAccountsAllowCustomCSS() (v bool) {
 	st.mutex.RLock()
@@ -3257,9 +3303,6 @@ func GetAccountsAllowCustomCSS() bool { return global.GetAccountsAllowCustomCSS(
 
 // SetAccountsAllowCustomCSS safely sets the value for global configuration 'AccountsAllowCustomCSS' field
 func SetAccountsAllowCustomCSS(v bool) { global.SetAccountsAllowCustomCSS(v) }
-
-// AccountsCustomCSSLengthFlag returns the flag name for the 'AccountsCustomCSSLength' field
-func AccountsCustomCSSLengthFlag() string { return "accounts-custom-css-length" }
 
 // GetAccountsCustomCSSLength safely fetches the Configuration value for state's 'AccountsCustomCSSLength' field
 func (st *ConfigState) GetAccountsCustomCSSLength() (v int) {
@@ -3283,9 +3326,6 @@ func GetAccountsCustomCSSLength() int { return global.GetAccountsCustomCSSLength
 // SetAccountsCustomCSSLength safely sets the value for global configuration 'AccountsCustomCSSLength' field
 func SetAccountsCustomCSSLength(v int) { global.SetAccountsCustomCSSLength(v) }
 
-// AccountsMaxProfileFieldsFlag returns the flag name for the 'AccountsMaxProfileFields' field
-func AccountsMaxProfileFieldsFlag() string { return "accounts-max-profile-fields" }
-
 // GetAccountsMaxProfileFields safely fetches the Configuration value for state's 'AccountsMaxProfileFields' field
 func (st *ConfigState) GetAccountsMaxProfileFields() (v int) {
 	st.mutex.RLock()
@@ -3307,309 +3347,6 @@ func GetAccountsMaxProfileFields() int { return global.GetAccountsMaxProfileFiel
 
 // SetAccountsMaxProfileFields safely sets the value for global configuration 'AccountsMaxProfileFields' field
 func SetAccountsMaxProfileFields(v int) { global.SetAccountsMaxProfileFields(v) }
-
-// MediaDescriptionMinCharsFlag returns the flag name for the 'MediaDescriptionMinChars' field
-func MediaDescriptionMinCharsFlag() string { return "media-description-min-chars" }
-
-// GetMediaDescriptionMinChars safely fetches the Configuration value for state's 'MediaDescriptionMinChars' field
-func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
-	st.mutex.RLock()
-	v = st.config.MediaDescriptionMinChars
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaDescriptionMinChars safely sets the Configuration value for state's 'MediaDescriptionMinChars' field
-func (st *ConfigState) SetMediaDescriptionMinChars(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaDescriptionMinChars = v
-	st.reloadToViper()
-}
-
-// GetMediaDescriptionMinChars safely fetches the value for global configuration 'MediaDescriptionMinChars' field
-func GetMediaDescriptionMinChars() int { return global.GetMediaDescriptionMinChars() }
-
-// SetMediaDescriptionMinChars safely sets the value for global configuration 'MediaDescriptionMinChars' field
-func SetMediaDescriptionMinChars(v int) { global.SetMediaDescriptionMinChars(v) }
-
-// MediaDescriptionMaxCharsFlag returns the flag name for the 'MediaDescriptionMaxChars' field
-func MediaDescriptionMaxCharsFlag() string { return "media-description-max-chars" }
-
-// GetMediaDescriptionMaxChars safely fetches the Configuration value for state's 'MediaDescriptionMaxChars' field
-func (st *ConfigState) GetMediaDescriptionMaxChars() (v int) {
-	st.mutex.RLock()
-	v = st.config.MediaDescriptionMaxChars
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaDescriptionMaxChars safely sets the Configuration value for state's 'MediaDescriptionMaxChars' field
-func (st *ConfigState) SetMediaDescriptionMaxChars(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaDescriptionMaxChars = v
-	st.reloadToViper()
-}
-
-// GetMediaDescriptionMaxChars safely fetches the value for global configuration 'MediaDescriptionMaxChars' field
-func GetMediaDescriptionMaxChars() int { return global.GetMediaDescriptionMaxChars() }
-
-// SetMediaDescriptionMaxChars safely sets the value for global configuration 'MediaDescriptionMaxChars' field
-func SetMediaDescriptionMaxChars(v int) { global.SetMediaDescriptionMaxChars(v) }
-
-// MediaRemoteCacheDaysFlag returns the flag name for the 'MediaRemoteCacheDays' field
-func MediaRemoteCacheDaysFlag() string { return "media-remote-cache-days" }
-
-// GetMediaRemoteCacheDays safely fetches the Configuration value for state's 'MediaRemoteCacheDays' field
-func (st *ConfigState) GetMediaRemoteCacheDays() (v int) {
-	st.mutex.RLock()
-	v = st.config.MediaRemoteCacheDays
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaRemoteCacheDays safely sets the Configuration value for state's 'MediaRemoteCacheDays' field
-func (st *ConfigState) SetMediaRemoteCacheDays(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaRemoteCacheDays = v
-	st.reloadToViper()
-}
-
-// GetMediaRemoteCacheDays safely fetches the value for global configuration 'MediaRemoteCacheDays' field
-func GetMediaRemoteCacheDays() int { return global.GetMediaRemoteCacheDays() }
-
-// SetMediaRemoteCacheDays safely sets the value for global configuration 'MediaRemoteCacheDays' field
-func SetMediaRemoteCacheDays(v int) { global.SetMediaRemoteCacheDays(v) }
-
-// MediaEmojiLocalMaxSizeFlag returns the flag name for the 'MediaEmojiLocalMaxSize' field
-func MediaEmojiLocalMaxSizeFlag() string { return "media-emoji-local-max-size" }
-
-// GetMediaEmojiLocalMaxSize safely fetches the Configuration value for state's 'MediaEmojiLocalMaxSize' field
-func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaEmojiLocalMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaEmojiLocalMaxSize safely sets the Configuration value for state's 'MediaEmojiLocalMaxSize' field
-func (st *ConfigState) SetMediaEmojiLocalMaxSize(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaEmojiLocalMaxSize = v
-	st.reloadToViper()
-}
-
-// GetMediaEmojiLocalMaxSize safely fetches the value for global configuration 'MediaEmojiLocalMaxSize' field
-func GetMediaEmojiLocalMaxSize() bytesize.Size { return global.GetMediaEmojiLocalMaxSize() }
-
-// SetMediaEmojiLocalMaxSize safely sets the value for global configuration 'MediaEmojiLocalMaxSize' field
-func SetMediaEmojiLocalMaxSize(v bytesize.Size) { global.SetMediaEmojiLocalMaxSize(v) }
-
-// MediaEmojiRemoteMaxSizeFlag returns the flag name for the 'MediaEmojiRemoteMaxSize' field
-func MediaEmojiRemoteMaxSizeFlag() string { return "media-emoji-remote-max-size" }
-
-// GetMediaEmojiRemoteMaxSize safely fetches the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
-func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaEmojiRemoteMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaEmojiRemoteMaxSize safely sets the Configuration value for state's 'MediaEmojiRemoteMaxSize' field
-func (st *ConfigState) SetMediaEmojiRemoteMaxSize(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaEmojiRemoteMaxSize = v
-	st.reloadToViper()
-}
-
-// GetMediaEmojiRemoteMaxSize safely fetches the value for global configuration 'MediaEmojiRemoteMaxSize' field
-func GetMediaEmojiRemoteMaxSize() bytesize.Size { return global.GetMediaEmojiRemoteMaxSize() }
-
-// SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'MediaEmojiRemoteMaxSize' field
-func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMaxSize(v) }
-
-// MediaImageSizeHintFlag returns the flag name for the 'MediaImageSizeHint' field
-func MediaImageSizeHintFlag() string { return "media-image-size-hint" }
-
-// GetMediaImageSizeHint safely fetches the Configuration value for state's 'MediaImageSizeHint' field
-func (st *ConfigState) GetMediaImageSizeHint() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaImageSizeHint
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaImageSizeHint safely sets the Configuration value for state's 'MediaImageSizeHint' field
-func (st *ConfigState) SetMediaImageSizeHint(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaImageSizeHint = v
-	st.reloadToViper()
-}
-
-// GetMediaImageSizeHint safely fetches the value for global configuration 'MediaImageSizeHint' field
-func GetMediaImageSizeHint() bytesize.Size { return global.GetMediaImageSizeHint() }
-
-// SetMediaImageSizeHint safely sets the value for global configuration 'MediaImageSizeHint' field
-func SetMediaImageSizeHint(v bytesize.Size) { global.SetMediaImageSizeHint(v) }
-
-// MediaVideoSizeHintFlag returns the flag name for the 'MediaVideoSizeHint' field
-func MediaVideoSizeHintFlag() string { return "media-video-size-hint" }
-
-// GetMediaVideoSizeHint safely fetches the Configuration value for state's 'MediaVideoSizeHint' field
-func (st *ConfigState) GetMediaVideoSizeHint() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaVideoSizeHint
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaVideoSizeHint safely sets the Configuration value for state's 'MediaVideoSizeHint' field
-func (st *ConfigState) SetMediaVideoSizeHint(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaVideoSizeHint = v
-	st.reloadToViper()
-}
-
-// GetMediaVideoSizeHint safely fetches the value for global configuration 'MediaVideoSizeHint' field
-func GetMediaVideoSizeHint() bytesize.Size { return global.GetMediaVideoSizeHint() }
-
-// SetMediaVideoSizeHint safely sets the value for global configuration 'MediaVideoSizeHint' field
-func SetMediaVideoSizeHint(v bytesize.Size) { global.SetMediaVideoSizeHint(v) }
-
-// MediaLocalMaxSizeFlag returns the flag name for the 'MediaLocalMaxSize' field
-func MediaLocalMaxSizeFlag() string { return "media-local-max-size" }
-
-// GetMediaLocalMaxSize safely fetches the Configuration value for state's 'MediaLocalMaxSize' field
-func (st *ConfigState) GetMediaLocalMaxSize() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaLocalMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaLocalMaxSize safely sets the Configuration value for state's 'MediaLocalMaxSize' field
-func (st *ConfigState) SetMediaLocalMaxSize(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaLocalMaxSize = v
-	st.reloadToViper()
-}
-
-// GetMediaLocalMaxSize safely fetches the value for global configuration 'MediaLocalMaxSize' field
-func GetMediaLocalMaxSize() bytesize.Size { return global.GetMediaLocalMaxSize() }
-
-// SetMediaLocalMaxSize safely sets the value for global configuration 'MediaLocalMaxSize' field
-func SetMediaLocalMaxSize(v bytesize.Size) { global.SetMediaLocalMaxSize(v) }
-
-// MediaRemoteMaxSizeFlag returns the flag name for the 'MediaRemoteMaxSize' field
-func MediaRemoteMaxSizeFlag() string { return "media-remote-max-size" }
-
-// GetMediaRemoteMaxSize safely fetches the Configuration value for state's 'MediaRemoteMaxSize' field
-func (st *ConfigState) GetMediaRemoteMaxSize() (v bytesize.Size) {
-	st.mutex.RLock()
-	v = st.config.MediaRemoteMaxSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaRemoteMaxSize safely sets the Configuration value for state's 'MediaRemoteMaxSize' field
-func (st *ConfigState) SetMediaRemoteMaxSize(v bytesize.Size) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaRemoteMaxSize = v
-	st.reloadToViper()
-}
-
-// GetMediaRemoteMaxSize safely fetches the value for global configuration 'MediaRemoteMaxSize' field
-func GetMediaRemoteMaxSize() bytesize.Size { return global.GetMediaRemoteMaxSize() }
-
-// SetMediaRemoteMaxSize safely sets the value for global configuration 'MediaRemoteMaxSize' field
-func SetMediaRemoteMaxSize(v bytesize.Size) { global.SetMediaRemoteMaxSize(v) }
-
-// MediaCleanupFromFlag returns the flag name for the 'MediaCleanupFrom' field
-func MediaCleanupFromFlag() string { return "media-cleanup-from" }
-
-// GetMediaCleanupFrom safely fetches the Configuration value for state's 'MediaCleanupFrom' field
-func (st *ConfigState) GetMediaCleanupFrom() (v string) {
-	st.mutex.RLock()
-	v = st.config.MediaCleanupFrom
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaCleanupFrom safely sets the Configuration value for state's 'MediaCleanupFrom' field
-func (st *ConfigState) SetMediaCleanupFrom(v string) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaCleanupFrom = v
-	st.reloadToViper()
-}
-
-// GetMediaCleanupFrom safely fetches the value for global configuration 'MediaCleanupFrom' field
-func GetMediaCleanupFrom() string { return global.GetMediaCleanupFrom() }
-
-// SetMediaCleanupFrom safely sets the value for global configuration 'MediaCleanupFrom' field
-func SetMediaCleanupFrom(v string) { global.SetMediaCleanupFrom(v) }
-
-// MediaCleanupEveryFlag returns the flag name for the 'MediaCleanupEvery' field
-func MediaCleanupEveryFlag() string { return "media-cleanup-every" }
-
-// GetMediaCleanupEvery safely fetches the Configuration value for state's 'MediaCleanupEvery' field
-func (st *ConfigState) GetMediaCleanupEvery() (v time.Duration) {
-	st.mutex.RLock()
-	v = st.config.MediaCleanupEvery
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaCleanupEvery safely sets the Configuration value for state's 'MediaCleanupEvery' field
-func (st *ConfigState) SetMediaCleanupEvery(v time.Duration) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaCleanupEvery = v
-	st.reloadToViper()
-}
-
-// GetMediaCleanupEvery safely fetches the value for global configuration 'MediaCleanupEvery' field
-func GetMediaCleanupEvery() time.Duration { return global.GetMediaCleanupEvery() }
-
-// SetMediaCleanupEvery safely sets the value for global configuration 'MediaCleanupEvery' field
-func SetMediaCleanupEvery(v time.Duration) { global.SetMediaCleanupEvery(v) }
-
-// MediaFfmpegPoolSizeFlag returns the flag name for the 'MediaFfmpegPoolSize' field
-func MediaFfmpegPoolSizeFlag() string { return "media-ffmpeg-pool-size" }
-
-// GetMediaFfmpegPoolSize safely fetches the Configuration value for state's 'MediaFfmpegPoolSize' field
-func (st *ConfigState) GetMediaFfmpegPoolSize() (v int) {
-	st.mutex.RLock()
-	v = st.config.MediaFfmpegPoolSize
-	st.mutex.RUnlock()
-	return
-}
-
-// SetMediaFfmpegPoolSize safely sets the Configuration value for state's 'MediaFfmpegPoolSize' field
-func (st *ConfigState) SetMediaFfmpegPoolSize(v int) {
-	st.mutex.Lock()
-	defer st.mutex.Unlock()
-	st.config.MediaFfmpegPoolSize = v
-	st.reloadToViper()
-}
-
-// GetMediaFfmpegPoolSize safely fetches the value for global configuration 'MediaFfmpegPoolSize' field
-func GetMediaFfmpegPoolSize() int { return global.GetMediaFfmpegPoolSize() }
-
-// SetMediaFfmpegPoolSize safely sets the value for global configuration 'MediaFfmpegPoolSize' field
-func SetMediaFfmpegPoolSize(v int) { global.SetMediaFfmpegPoolSize(v) }
-
-// StorageBackendFlag returns the flag name for the 'StorageBackend' field
-func StorageBackendFlag() string { return "storage-backend" }
 
 // GetStorageBackend safely fetches the Configuration value for state's 'StorageBackend' field
 func (st *ConfigState) GetStorageBackend() (v string) {
@@ -3633,9 +3370,6 @@ func GetStorageBackend() string { return global.GetStorageBackend() }
 // SetStorageBackend safely sets the value for global configuration 'StorageBackend' field
 func SetStorageBackend(v string) { global.SetStorageBackend(v) }
 
-// StorageLocalBasePathFlag returns the flag name for the 'StorageLocalBasePath' field
-func StorageLocalBasePathFlag() string { return "storage-local-base-path" }
-
 // GetStorageLocalBasePath safely fetches the Configuration value for state's 'StorageLocalBasePath' field
 func (st *ConfigState) GetStorageLocalBasePath() (v string) {
 	st.mutex.RLock()
@@ -3657,9 +3391,6 @@ func GetStorageLocalBasePath() string { return global.GetStorageLocalBasePath() 
 
 // SetStorageLocalBasePath safely sets the value for global configuration 'StorageLocalBasePath' field
 func SetStorageLocalBasePath(v string) { global.SetStorageLocalBasePath(v) }
-
-// StorageS3EndpointFlag returns the flag name for the 'StorageS3Endpoint' field
-func StorageS3EndpointFlag() string { return "storage-s3-endpoint" }
 
 // GetStorageS3Endpoint safely fetches the Configuration value for state's 'StorageS3Endpoint' field
 func (st *ConfigState) GetStorageS3Endpoint() (v string) {
@@ -3683,9 +3414,6 @@ func GetStorageS3Endpoint() string { return global.GetStorageS3Endpoint() }
 // SetStorageS3Endpoint safely sets the value for global configuration 'StorageS3Endpoint' field
 func SetStorageS3Endpoint(v string) { global.SetStorageS3Endpoint(v) }
 
-// StorageS3AccessKeyFlag returns the flag name for the 'StorageS3AccessKey' field
-func StorageS3AccessKeyFlag() string { return "storage-s3-access-key" }
-
 // GetStorageS3AccessKey safely fetches the Configuration value for state's 'StorageS3AccessKey' field
 func (st *ConfigState) GetStorageS3AccessKey() (v string) {
 	st.mutex.RLock()
@@ -3707,9 +3435,6 @@ func GetStorageS3AccessKey() string { return global.GetStorageS3AccessKey() }
 
 // SetStorageS3AccessKey safely sets the value for global configuration 'StorageS3AccessKey' field
 func SetStorageS3AccessKey(v string) { global.SetStorageS3AccessKey(v) }
-
-// StorageS3SecretKeyFlag returns the flag name for the 'StorageS3SecretKey' field
-func StorageS3SecretKeyFlag() string { return "storage-s3-secret-key" }
 
 // GetStorageS3SecretKey safely fetches the Configuration value for state's 'StorageS3SecretKey' field
 func (st *ConfigState) GetStorageS3SecretKey() (v string) {
@@ -3733,9 +3458,6 @@ func GetStorageS3SecretKey() string { return global.GetStorageS3SecretKey() }
 // SetStorageS3SecretKey safely sets the value for global configuration 'StorageS3SecretKey' field
 func SetStorageS3SecretKey(v string) { global.SetStorageS3SecretKey(v) }
 
-// StorageS3UseSSLFlag returns the flag name for the 'StorageS3UseSSL' field
-func StorageS3UseSSLFlag() string { return "storage-s3-use-ssl" }
-
 // GetStorageS3UseSSL safely fetches the Configuration value for state's 'StorageS3UseSSL' field
 func (st *ConfigState) GetStorageS3UseSSL() (v bool) {
 	st.mutex.RLock()
@@ -3757,9 +3479,6 @@ func GetStorageS3UseSSL() bool { return global.GetStorageS3UseSSL() }
 
 // SetStorageS3UseSSL safely sets the value for global configuration 'StorageS3UseSSL' field
 func SetStorageS3UseSSL(v bool) { global.SetStorageS3UseSSL(v) }
-
-// StorageS3BucketNameFlag returns the flag name for the 'StorageS3BucketName' field
-func StorageS3BucketNameFlag() string { return "storage-s3-bucket" }
 
 // GetStorageS3BucketName safely fetches the Configuration value for state's 'StorageS3BucketName' field
 func (st *ConfigState) GetStorageS3BucketName() (v string) {
@@ -3783,9 +3502,6 @@ func GetStorageS3BucketName() string { return global.GetStorageS3BucketName() }
 // SetStorageS3BucketName safely sets the value for global configuration 'StorageS3BucketName' field
 func SetStorageS3BucketName(v string) { global.SetStorageS3BucketName(v) }
 
-// StorageS3ProxyFlag returns the flag name for the 'StorageS3Proxy' field
-func StorageS3ProxyFlag() string { return "storage-s3-proxy" }
-
 // GetStorageS3Proxy safely fetches the Configuration value for state's 'StorageS3Proxy' field
 func (st *ConfigState) GetStorageS3Proxy() (v bool) {
 	st.mutex.RLock()
@@ -3807,9 +3523,6 @@ func GetStorageS3Proxy() bool { return global.GetStorageS3Proxy() }
 
 // SetStorageS3Proxy safely sets the value for global configuration 'StorageS3Proxy' field
 func SetStorageS3Proxy(v bool) { global.SetStorageS3Proxy(v) }
-
-// StorageS3RedirectURLFlag returns the flag name for the 'StorageS3RedirectURL' field
-func StorageS3RedirectURLFlag() string { return "storage-s3-redirect-url" }
 
 // GetStorageS3RedirectURL safely fetches the Configuration value for state's 'StorageS3RedirectURL' field
 func (st *ConfigState) GetStorageS3RedirectURL() (v string) {
@@ -3833,9 +3546,6 @@ func GetStorageS3RedirectURL() string { return global.GetStorageS3RedirectURL() 
 // SetStorageS3RedirectURL safely sets the value for global configuration 'StorageS3RedirectURL' field
 func SetStorageS3RedirectURL(v string) { global.SetStorageS3RedirectURL(v) }
 
-// StorageS3BucketLookupFlag returns the flag name for the 'StorageS3BucketLookup' field
-func StorageS3BucketLookupFlag() string { return "storage-s3-bucket-lookup" }
-
 // GetStorageS3BucketLookup safely fetches the Configuration value for state's 'StorageS3BucketLookup' field
 func (st *ConfigState) GetStorageS3BucketLookup() (v string) {
 	st.mutex.RLock()
@@ -3857,9 +3567,6 @@ func GetStorageS3BucketLookup() string { return global.GetStorageS3BucketLookup(
 
 // SetStorageS3BucketLookup safely sets the value for global configuration 'StorageS3BucketLookup' field
 func SetStorageS3BucketLookup(v string) { global.SetStorageS3BucketLookup(v) }
-
-// StorageS3KeyPrefixFlag returns the flag name for the 'StorageS3KeyPrefix' field
-func StorageS3KeyPrefixFlag() string { return "storage-s3-key-prefix" }
 
 // GetStorageS3KeyPrefix safely fetches the Configuration value for state's 'StorageS3KeyPrefix' field
 func (st *ConfigState) GetStorageS3KeyPrefix() (v string) {
@@ -3883,9 +3590,6 @@ func GetStorageS3KeyPrefix() string { return global.GetStorageS3KeyPrefix() }
 // SetStorageS3KeyPrefix safely sets the value for global configuration 'StorageS3KeyPrefix' field
 func SetStorageS3KeyPrefix(v string) { global.SetStorageS3KeyPrefix(v) }
 
-// StatusesMaxCharsFlag returns the flag name for the 'StatusesMaxChars' field
-func StatusesMaxCharsFlag() string { return "statuses-max-chars" }
-
 // GetStatusesMaxChars safely fetches the Configuration value for state's 'StatusesMaxChars' field
 func (st *ConfigState) GetStatusesMaxChars() (v int) {
 	st.mutex.RLock()
@@ -3907,9 +3611,6 @@ func GetStatusesMaxChars() int { return global.GetStatusesMaxChars() }
 
 // SetStatusesMaxChars safely sets the value for global configuration 'StatusesMaxChars' field
 func SetStatusesMaxChars(v int) { global.SetStatusesMaxChars(v) }
-
-// StatusesPollMaxOptionsFlag returns the flag name for the 'StatusesPollMaxOptions' field
-func StatusesPollMaxOptionsFlag() string { return "statuses-poll-max-options" }
 
 // GetStatusesPollMaxOptions safely fetches the Configuration value for state's 'StatusesPollMaxOptions' field
 func (st *ConfigState) GetStatusesPollMaxOptions() (v int) {
@@ -3933,9 +3634,6 @@ func GetStatusesPollMaxOptions() int { return global.GetStatusesPollMaxOptions()
 // SetStatusesPollMaxOptions safely sets the value for global configuration 'StatusesPollMaxOptions' field
 func SetStatusesPollMaxOptions(v int) { global.SetStatusesPollMaxOptions(v) }
 
-// StatusesPollOptionMaxCharsFlag returns the flag name for the 'StatusesPollOptionMaxChars' field
-func StatusesPollOptionMaxCharsFlag() string { return "statuses-poll-option-max-chars" }
-
 // GetStatusesPollOptionMaxChars safely fetches the Configuration value for state's 'StatusesPollOptionMaxChars' field
 func (st *ConfigState) GetStatusesPollOptionMaxChars() (v int) {
 	st.mutex.RLock()
@@ -3957,9 +3655,6 @@ func GetStatusesPollOptionMaxChars() int { return global.GetStatusesPollOptionMa
 
 // SetStatusesPollOptionMaxChars safely sets the value for global configuration 'StatusesPollOptionMaxChars' field
 func SetStatusesPollOptionMaxChars(v int) { global.SetStatusesPollOptionMaxChars(v) }
-
-// StatusesMediaMaxFilesFlag returns the flag name for the 'StatusesMediaMaxFiles' field
-func StatusesMediaMaxFilesFlag() string { return "statuses-media-max-files" }
 
 // GetStatusesMediaMaxFiles safely fetches the Configuration value for state's 'StatusesMediaMaxFiles' field
 func (st *ConfigState) GetStatusesMediaMaxFiles() (v int) {
@@ -3983,9 +3678,6 @@ func GetStatusesMediaMaxFiles() int { return global.GetStatusesMediaMaxFiles() }
 // SetStatusesMediaMaxFiles safely sets the value for global configuration 'StatusesMediaMaxFiles' field
 func SetStatusesMediaMaxFiles(v int) { global.SetStatusesMediaMaxFiles(v) }
 
-// LetsEncryptEnabledFlag returns the flag name for the 'LetsEncryptEnabled' field
-func LetsEncryptEnabledFlag() string { return "letsencrypt-enabled" }
-
 // GetLetsEncryptEnabled safely fetches the Configuration value for state's 'LetsEncryptEnabled' field
 func (st *ConfigState) GetLetsEncryptEnabled() (v bool) {
 	st.mutex.RLock()
@@ -4007,9 +3699,6 @@ func GetLetsEncryptEnabled() bool { return global.GetLetsEncryptEnabled() }
 
 // SetLetsEncryptEnabled safely sets the value for global configuration 'LetsEncryptEnabled' field
 func SetLetsEncryptEnabled(v bool) { global.SetLetsEncryptEnabled(v) }
-
-// LetsEncryptPortFlag returns the flag name for the 'LetsEncryptPort' field
-func LetsEncryptPortFlag() string { return "letsencrypt-port" }
 
 // GetLetsEncryptPort safely fetches the Configuration value for state's 'LetsEncryptPort' field
 func (st *ConfigState) GetLetsEncryptPort() (v int) {
@@ -4033,9 +3722,6 @@ func GetLetsEncryptPort() int { return global.GetLetsEncryptPort() }
 // SetLetsEncryptPort safely sets the value for global configuration 'LetsEncryptPort' field
 func SetLetsEncryptPort(v int) { global.SetLetsEncryptPort(v) }
 
-// LetsEncryptCertDirFlag returns the flag name for the 'LetsEncryptCertDir' field
-func LetsEncryptCertDirFlag() string { return "letsencrypt-cert-dir" }
-
 // GetLetsEncryptCertDir safely fetches the Configuration value for state's 'LetsEncryptCertDir' field
 func (st *ConfigState) GetLetsEncryptCertDir() (v string) {
 	st.mutex.RLock()
@@ -4057,9 +3743,6 @@ func GetLetsEncryptCertDir() string { return global.GetLetsEncryptCertDir() }
 
 // SetLetsEncryptCertDir safely sets the value for global configuration 'LetsEncryptCertDir' field
 func SetLetsEncryptCertDir(v string) { global.SetLetsEncryptCertDir(v) }
-
-// LetsEncryptEmailAddressFlag returns the flag name for the 'LetsEncryptEmailAddress' field
-func LetsEncryptEmailAddressFlag() string { return "letsencrypt-email-address" }
 
 // GetLetsEncryptEmailAddress safely fetches the Configuration value for state's 'LetsEncryptEmailAddress' field
 func (st *ConfigState) GetLetsEncryptEmailAddress() (v string) {
@@ -4083,9 +3766,6 @@ func GetLetsEncryptEmailAddress() string { return global.GetLetsEncryptEmailAddr
 // SetLetsEncryptEmailAddress safely sets the value for global configuration 'LetsEncryptEmailAddress' field
 func SetLetsEncryptEmailAddress(v string) { global.SetLetsEncryptEmailAddress(v) }
 
-// TLSCertificateChainFlag returns the flag name for the 'TLSCertificateChain' field
-func TLSCertificateChainFlag() string { return "tls-certificate-chain" }
-
 // GetTLSCertificateChain safely fetches the Configuration value for state's 'TLSCertificateChain' field
 func (st *ConfigState) GetTLSCertificateChain() (v string) {
 	st.mutex.RLock()
@@ -4107,9 +3787,6 @@ func GetTLSCertificateChain() string { return global.GetTLSCertificateChain() }
 
 // SetTLSCertificateChain safely sets the value for global configuration 'TLSCertificateChain' field
 func SetTLSCertificateChain(v string) { global.SetTLSCertificateChain(v) }
-
-// TLSCertificateKeyFlag returns the flag name for the 'TLSCertificateKey' field
-func TLSCertificateKeyFlag() string { return "tls-certificate-key" }
 
 // GetTLSCertificateKey safely fetches the Configuration value for state's 'TLSCertificateKey' field
 func (st *ConfigState) GetTLSCertificateKey() (v string) {
@@ -4133,9 +3810,6 @@ func GetTLSCertificateKey() string { return global.GetTLSCertificateKey() }
 // SetTLSCertificateKey safely sets the value for global configuration 'TLSCertificateKey' field
 func SetTLSCertificateKey(v string) { global.SetTLSCertificateKey(v) }
 
-// OIDCEnabledFlag returns the flag name for the 'OIDCEnabled' field
-func OIDCEnabledFlag() string { return "oidc-enabled" }
-
 // GetOIDCEnabled safely fetches the Configuration value for state's 'OIDCEnabled' field
 func (st *ConfigState) GetOIDCEnabled() (v bool) {
 	st.mutex.RLock()
@@ -4157,9 +3831,6 @@ func GetOIDCEnabled() bool { return global.GetOIDCEnabled() }
 
 // SetOIDCEnabled safely sets the value for global configuration 'OIDCEnabled' field
 func SetOIDCEnabled(v bool) { global.SetOIDCEnabled(v) }
-
-// OIDCIdpNameFlag returns the flag name for the 'OIDCIdpName' field
-func OIDCIdpNameFlag() string { return "oidc-idp-name" }
 
 // GetOIDCIdpName safely fetches the Configuration value for state's 'OIDCIdpName' field
 func (st *ConfigState) GetOIDCIdpName() (v string) {
@@ -4183,9 +3854,6 @@ func GetOIDCIdpName() string { return global.GetOIDCIdpName() }
 // SetOIDCIdpName safely sets the value for global configuration 'OIDCIdpName' field
 func SetOIDCIdpName(v string) { global.SetOIDCIdpName(v) }
 
-// OIDCSkipVerificationFlag returns the flag name for the 'OIDCSkipVerification' field
-func OIDCSkipVerificationFlag() string { return "oidc-skip-verification" }
-
 // GetOIDCSkipVerification safely fetches the Configuration value for state's 'OIDCSkipVerification' field
 func (st *ConfigState) GetOIDCSkipVerification() (v bool) {
 	st.mutex.RLock()
@@ -4207,9 +3875,6 @@ func GetOIDCSkipVerification() bool { return global.GetOIDCSkipVerification() }
 
 // SetOIDCSkipVerification safely sets the value for global configuration 'OIDCSkipVerification' field
 func SetOIDCSkipVerification(v bool) { global.SetOIDCSkipVerification(v) }
-
-// OIDCIssuerFlag returns the flag name for the 'OIDCIssuer' field
-func OIDCIssuerFlag() string { return "oidc-issuer" }
 
 // GetOIDCIssuer safely fetches the Configuration value for state's 'OIDCIssuer' field
 func (st *ConfigState) GetOIDCIssuer() (v string) {
@@ -4233,9 +3898,6 @@ func GetOIDCIssuer() string { return global.GetOIDCIssuer() }
 // SetOIDCIssuer safely sets the value for global configuration 'OIDCIssuer' field
 func SetOIDCIssuer(v string) { global.SetOIDCIssuer(v) }
 
-// OIDCClientIDFlag returns the flag name for the 'OIDCClientID' field
-func OIDCClientIDFlag() string { return "oidc-client-id" }
-
 // GetOIDCClientID safely fetches the Configuration value for state's 'OIDCClientID' field
 func (st *ConfigState) GetOIDCClientID() (v string) {
 	st.mutex.RLock()
@@ -4257,9 +3919,6 @@ func GetOIDCClientID() string { return global.GetOIDCClientID() }
 
 // SetOIDCClientID safely sets the value for global configuration 'OIDCClientID' field
 func SetOIDCClientID(v string) { global.SetOIDCClientID(v) }
-
-// OIDCClientSecretFlag returns the flag name for the 'OIDCClientSecret' field
-func OIDCClientSecretFlag() string { return "oidc-client-secret" }
 
 // GetOIDCClientSecret safely fetches the Configuration value for state's 'OIDCClientSecret' field
 func (st *ConfigState) GetOIDCClientSecret() (v string) {
@@ -4283,9 +3942,6 @@ func GetOIDCClientSecret() string { return global.GetOIDCClientSecret() }
 // SetOIDCClientSecret safely sets the value for global configuration 'OIDCClientSecret' field
 func SetOIDCClientSecret(v string) { global.SetOIDCClientSecret(v) }
 
-// OIDCScopesFlag returns the flag name for the 'OIDCScopes' field
-func OIDCScopesFlag() string { return "oidc-scopes" }
-
 // GetOIDCScopes safely fetches the Configuration value for state's 'OIDCScopes' field
 func (st *ConfigState) GetOIDCScopes() (v []string) {
 	st.mutex.RLock()
@@ -4307,9 +3963,6 @@ func GetOIDCScopes() []string { return global.GetOIDCScopes() }
 
 // SetOIDCScopes safely sets the value for global configuration 'OIDCScopes' field
 func SetOIDCScopes(v []string) { global.SetOIDCScopes(v) }
-
-// OIDCLinkExistingFlag returns the flag name for the 'OIDCLinkExisting' field
-func OIDCLinkExistingFlag() string { return "oidc-link-existing" }
 
 // GetOIDCLinkExisting safely fetches the Configuration value for state's 'OIDCLinkExisting' field
 func (st *ConfigState) GetOIDCLinkExisting() (v bool) {
@@ -4333,9 +3986,6 @@ func GetOIDCLinkExisting() bool { return global.GetOIDCLinkExisting() }
 // SetOIDCLinkExisting safely sets the value for global configuration 'OIDCLinkExisting' field
 func SetOIDCLinkExisting(v bool) { global.SetOIDCLinkExisting(v) }
 
-// OIDCAllowedGroupsFlag returns the flag name for the 'OIDCAllowedGroups' field
-func OIDCAllowedGroupsFlag() string { return "oidc-allowed-groups" }
-
 // GetOIDCAllowedGroups safely fetches the Configuration value for state's 'OIDCAllowedGroups' field
 func (st *ConfigState) GetOIDCAllowedGroups() (v []string) {
 	st.mutex.RLock()
@@ -4357,9 +4007,6 @@ func GetOIDCAllowedGroups() []string { return global.GetOIDCAllowedGroups() }
 
 // SetOIDCAllowedGroups safely sets the value for global configuration 'OIDCAllowedGroups' field
 func SetOIDCAllowedGroups(v []string) { global.SetOIDCAllowedGroups(v) }
-
-// OIDCAdminGroupsFlag returns the flag name for the 'OIDCAdminGroups' field
-func OIDCAdminGroupsFlag() string { return "oidc-admin-groups" }
 
 // GetOIDCAdminGroups safely fetches the Configuration value for state's 'OIDCAdminGroups' field
 func (st *ConfigState) GetOIDCAdminGroups() (v []string) {
@@ -4383,9 +4030,6 @@ func GetOIDCAdminGroups() []string { return global.GetOIDCAdminGroups() }
 // SetOIDCAdminGroups safely sets the value for global configuration 'OIDCAdminGroups' field
 func SetOIDCAdminGroups(v []string) { global.SetOIDCAdminGroups(v) }
 
-// TracingEnabledFlag returns the flag name for the 'TracingEnabled' field
-func TracingEnabledFlag() string { return "tracing-enabled" }
-
 // GetTracingEnabled safely fetches the Configuration value for state's 'TracingEnabled' field
 func (st *ConfigState) GetTracingEnabled() (v bool) {
 	st.mutex.RLock()
@@ -4407,9 +4051,6 @@ func GetTracingEnabled() bool { return global.GetTracingEnabled() }
 
 // SetTracingEnabled safely sets the value for global configuration 'TracingEnabled' field
 func SetTracingEnabled(v bool) { global.SetTracingEnabled(v) }
-
-// MetricsEnabledFlag returns the flag name for the 'MetricsEnabled' field
-func MetricsEnabledFlag() string { return "metrics-enabled" }
 
 // GetMetricsEnabled safely fetches the Configuration value for state's 'MetricsEnabled' field
 func (st *ConfigState) GetMetricsEnabled() (v bool) {
@@ -4433,9 +4074,6 @@ func GetMetricsEnabled() bool { return global.GetMetricsEnabled() }
 // SetMetricsEnabled safely sets the value for global configuration 'MetricsEnabled' field
 func SetMetricsEnabled(v bool) { global.SetMetricsEnabled(v) }
 
-// SMTPHostFlag returns the flag name for the 'SMTPHost' field
-func SMTPHostFlag() string { return "smtp-host" }
-
 // GetSMTPHost safely fetches the Configuration value for state's 'SMTPHost' field
 func (st *ConfigState) GetSMTPHost() (v string) {
 	st.mutex.RLock()
@@ -4457,9 +4095,6 @@ func GetSMTPHost() string { return global.GetSMTPHost() }
 
 // SetSMTPHost safely sets the value for global configuration 'SMTPHost' field
 func SetSMTPHost(v string) { global.SetSMTPHost(v) }
-
-// SMTPPortFlag returns the flag name for the 'SMTPPort' field
-func SMTPPortFlag() string { return "smtp-port" }
 
 // GetSMTPPort safely fetches the Configuration value for state's 'SMTPPort' field
 func (st *ConfigState) GetSMTPPort() (v int) {
@@ -4483,9 +4118,6 @@ func GetSMTPPort() int { return global.GetSMTPPort() }
 // SetSMTPPort safely sets the value for global configuration 'SMTPPort' field
 func SetSMTPPort(v int) { global.SetSMTPPort(v) }
 
-// SMTPUsernameFlag returns the flag name for the 'SMTPUsername' field
-func SMTPUsernameFlag() string { return "smtp-username" }
-
 // GetSMTPUsername safely fetches the Configuration value for state's 'SMTPUsername' field
 func (st *ConfigState) GetSMTPUsername() (v string) {
 	st.mutex.RLock()
@@ -4507,9 +4139,6 @@ func GetSMTPUsername() string { return global.GetSMTPUsername() }
 
 // SetSMTPUsername safely sets the value for global configuration 'SMTPUsername' field
 func SetSMTPUsername(v string) { global.SetSMTPUsername(v) }
-
-// SMTPPasswordFlag returns the flag name for the 'SMTPPassword' field
-func SMTPPasswordFlag() string { return "smtp-password" }
 
 // GetSMTPPassword safely fetches the Configuration value for state's 'SMTPPassword' field
 func (st *ConfigState) GetSMTPPassword() (v string) {
@@ -4533,9 +4162,6 @@ func GetSMTPPassword() string { return global.GetSMTPPassword() }
 // SetSMTPPassword safely sets the value for global configuration 'SMTPPassword' field
 func SetSMTPPassword(v string) { global.SetSMTPPassword(v) }
 
-// SMTPFromFlag returns the flag name for the 'SMTPFrom' field
-func SMTPFromFlag() string { return "smtp-from" }
-
 // GetSMTPFrom safely fetches the Configuration value for state's 'SMTPFrom' field
 func (st *ConfigState) GetSMTPFrom() (v string) {
 	st.mutex.RLock()
@@ -4557,9 +4183,6 @@ func GetSMTPFrom() string { return global.GetSMTPFrom() }
 
 // SetSMTPFrom safely sets the value for global configuration 'SMTPFrom' field
 func SetSMTPFrom(v string) { global.SetSMTPFrom(v) }
-
-// SMTPDiscloseRecipientsFlag returns the flag name for the 'SMTPDiscloseRecipients' field
-func SMTPDiscloseRecipientsFlag() string { return "smtp-disclose-recipients" }
 
 // GetSMTPDiscloseRecipients safely fetches the Configuration value for state's 'SMTPDiscloseRecipients' field
 func (st *ConfigState) GetSMTPDiscloseRecipients() (v bool) {
@@ -4583,9 +4206,6 @@ func GetSMTPDiscloseRecipients() bool { return global.GetSMTPDiscloseRecipients(
 // SetSMTPDiscloseRecipients safely sets the value for global configuration 'SMTPDiscloseRecipients' field
 func SetSMTPDiscloseRecipients(v bool) { global.SetSMTPDiscloseRecipients(v) }
 
-// SyslogEnabledFlag returns the flag name for the 'SyslogEnabled' field
-func SyslogEnabledFlag() string { return "syslog-enabled" }
-
 // GetSyslogEnabled safely fetches the Configuration value for state's 'SyslogEnabled' field
 func (st *ConfigState) GetSyslogEnabled() (v bool) {
 	st.mutex.RLock()
@@ -4607,9 +4227,6 @@ func GetSyslogEnabled() bool { return global.GetSyslogEnabled() }
 
 // SetSyslogEnabled safely sets the value for global configuration 'SyslogEnabled' field
 func SetSyslogEnabled(v bool) { global.SetSyslogEnabled(v) }
-
-// SyslogProtocolFlag returns the flag name for the 'SyslogProtocol' field
-func SyslogProtocolFlag() string { return "syslog-protocol" }
 
 // GetSyslogProtocol safely fetches the Configuration value for state's 'SyslogProtocol' field
 func (st *ConfigState) GetSyslogProtocol() (v string) {
@@ -4633,9 +4250,6 @@ func GetSyslogProtocol() string { return global.GetSyslogProtocol() }
 // SetSyslogProtocol safely sets the value for global configuration 'SyslogProtocol' field
 func SetSyslogProtocol(v string) { global.SetSyslogProtocol(v) }
 
-// SyslogAddressFlag returns the flag name for the 'SyslogAddress' field
-func SyslogAddressFlag() string { return "syslog-address" }
-
 // GetSyslogAddress safely fetches the Configuration value for state's 'SyslogAddress' field
 func (st *ConfigState) GetSyslogAddress() (v string) {
 	st.mutex.RLock()
@@ -4657,9 +4271,6 @@ func GetSyslogAddress() string { return global.GetSyslogAddress() }
 
 // SetSyslogAddress safely sets the value for global configuration 'SyslogAddress' field
 func SetSyslogAddress(v string) { global.SetSyslogAddress(v) }
-
-// AdvancedCookiesSamesiteFlag returns the flag name for the 'Advanced.CookiesSamesite' field
-func AdvancedCookiesSamesiteFlag() string { return "advanced-cookies-samesite" }
 
 // GetAdvancedCookiesSamesite safely fetches the Configuration value for state's 'Advanced.CookiesSamesite' field
 func (st *ConfigState) GetAdvancedCookiesSamesite() (v string) {
@@ -4683,9 +4294,6 @@ func GetAdvancedCookiesSamesite() string { return global.GetAdvancedCookiesSames
 // SetAdvancedCookiesSamesite safely sets the value for global configuration 'Advanced.CookiesSamesite' field
 func SetAdvancedCookiesSamesite(v string) { global.SetAdvancedCookiesSamesite(v) }
 
-// AdvancedSenderMultiplierFlag returns the flag name for the 'Advanced.SenderMultiplier' field
-func AdvancedSenderMultiplierFlag() string { return "advanced-sender-multiplier" }
-
 // GetAdvancedSenderMultiplier safely fetches the Configuration value for state's 'Advanced.SenderMultiplier' field
 func (st *ConfigState) GetAdvancedSenderMultiplier() (v int) {
 	st.mutex.RLock()
@@ -4707,9 +4315,6 @@ func GetAdvancedSenderMultiplier() int { return global.GetAdvancedSenderMultipli
 
 // SetAdvancedSenderMultiplier safely sets the value for global configuration 'Advanced.SenderMultiplier' field
 func SetAdvancedSenderMultiplier(v int) { global.SetAdvancedSenderMultiplier(v) }
-
-// AdvancedCSPExtraURIsFlag returns the flag name for the 'Advanced.CSPExtraURIs' field
-func AdvancedCSPExtraURIsFlag() string { return "advanced-csp-extra-uris" }
 
 // GetAdvancedCSPExtraURIs safely fetches the Configuration value for state's 'Advanced.CSPExtraURIs' field
 func (st *ConfigState) GetAdvancedCSPExtraURIs() (v []string) {
@@ -4733,9 +4338,6 @@ func GetAdvancedCSPExtraURIs() []string { return global.GetAdvancedCSPExtraURIs(
 // SetAdvancedCSPExtraURIs safely sets the value for global configuration 'Advanced.CSPExtraURIs' field
 func SetAdvancedCSPExtraURIs(v []string) { global.SetAdvancedCSPExtraURIs(v) }
 
-// AdvancedHeaderFilterModeFlag returns the flag name for the 'Advanced.HeaderFilterMode' field
-func AdvancedHeaderFilterModeFlag() string { return "advanced-header-filter-mode" }
-
 // GetAdvancedHeaderFilterMode safely fetches the Configuration value for state's 'Advanced.HeaderFilterMode' field
 func (st *ConfigState) GetAdvancedHeaderFilterMode() (v string) {
 	st.mutex.RLock()
@@ -4757,9 +4359,6 @@ func GetAdvancedHeaderFilterMode() string { return global.GetAdvancedHeaderFilte
 
 // SetAdvancedHeaderFilterMode safely sets the value for global configuration 'Advanced.HeaderFilterMode' field
 func SetAdvancedHeaderFilterMode(v string) { global.SetAdvancedHeaderFilterMode(v) }
-
-// AdvancedRateLimitRequestsFlag returns the flag name for the 'Advanced.RateLimit.Requests' field
-func AdvancedRateLimitRequestsFlag() string { return "advanced-rate-limit-requests" }
 
 // GetAdvancedRateLimitRequests safely fetches the Configuration value for state's 'Advanced.RateLimit.Requests' field
 func (st *ConfigState) GetAdvancedRateLimitRequests() (v int) {
@@ -4783,9 +4382,6 @@ func GetAdvancedRateLimitRequests() int { return global.GetAdvancedRateLimitRequ
 // SetAdvancedRateLimitRequests safely sets the value for global configuration 'Advanced.RateLimit.Requests' field
 func SetAdvancedRateLimitRequests(v int) { global.SetAdvancedRateLimitRequests(v) }
 
-// AdvancedRateLimitExceptionsFlag returns the flag name for the 'Advanced.RateLimit.Exceptions' field
-func AdvancedRateLimitExceptionsFlag() string { return "advanced-rate-limit-exceptions" }
-
 // GetAdvancedRateLimitExceptions safely fetches the Configuration value for state's 'Advanced.RateLimit.Exceptions' field
 func (st *ConfigState) GetAdvancedRateLimitExceptions() (v IPPrefixes) {
 	st.mutex.RLock()
@@ -4807,9 +4403,6 @@ func GetAdvancedRateLimitExceptions() IPPrefixes { return global.GetAdvancedRate
 
 // SetAdvancedRateLimitExceptions safely sets the value for global configuration 'Advanced.RateLimit.Exceptions' field
 func SetAdvancedRateLimitExceptions(v IPPrefixes) { global.SetAdvancedRateLimitExceptions(v) }
-
-// AdvancedThrottlingMultiplierFlag returns the flag name for the 'Advanced.Throttling.Multiplier' field
-func AdvancedThrottlingMultiplierFlag() string { return "advanced-throttling-multiplier" }
 
 // GetAdvancedThrottlingMultiplier safely fetches the Configuration value for state's 'Advanced.Throttling.Multiplier' field
 func (st *ConfigState) GetAdvancedThrottlingMultiplier() (v int) {
@@ -4833,9 +4426,6 @@ func GetAdvancedThrottlingMultiplier() int { return global.GetAdvancedThrottling
 // SetAdvancedThrottlingMultiplier safely sets the value for global configuration 'Advanced.Throttling.Multiplier' field
 func SetAdvancedThrottlingMultiplier(v int) { global.SetAdvancedThrottlingMultiplier(v) }
 
-// AdvancedThrottlingRetryAfterFlag returns the flag name for the 'Advanced.Throttling.RetryAfter' field
-func AdvancedThrottlingRetryAfterFlag() string { return "advanced-throttling-retry-after" }
-
 // GetAdvancedThrottlingRetryAfter safely fetches the Configuration value for state's 'Advanced.Throttling.RetryAfter' field
 func (st *ConfigState) GetAdvancedThrottlingRetryAfter() (v time.Duration) {
 	st.mutex.RLock()
@@ -4858,9 +4448,6 @@ func GetAdvancedThrottlingRetryAfter() time.Duration { return global.GetAdvanced
 // SetAdvancedThrottlingRetryAfter safely sets the value for global configuration 'Advanced.Throttling.RetryAfter' field
 func SetAdvancedThrottlingRetryAfter(v time.Duration) { global.SetAdvancedThrottlingRetryAfter(v) }
 
-// AdvancedScraperDeterrenceEnabledFlag returns the flag name for the 'Advanced.ScraperDeterrence.Enabled' field
-func AdvancedScraperDeterrenceEnabledFlag() string { return "advanced-scraper-deterrence-enabled" }
-
 // GetAdvancedScraperDeterrenceEnabled safely fetches the Configuration value for state's 'Advanced.ScraperDeterrence.Enabled' field
 func (st *ConfigState) GetAdvancedScraperDeterrenceEnabled() (v bool) {
 	st.mutex.RLock()
@@ -4882,11 +4469,6 @@ func GetAdvancedScraperDeterrenceEnabled() bool { return global.GetAdvancedScrap
 
 // SetAdvancedScraperDeterrenceEnabled safely sets the value for global configuration 'Advanced.ScraperDeterrence.Enabled' field
 func SetAdvancedScraperDeterrenceEnabled(v bool) { global.SetAdvancedScraperDeterrenceEnabled(v) }
-
-// AdvancedScraperDeterrenceDifficultyFlag returns the flag name for the 'Advanced.ScraperDeterrence.Difficulty' field
-func AdvancedScraperDeterrenceDifficultyFlag() string {
-	return "advanced-scraper-deterrence-difficulty"
-}
 
 // GetAdvancedScraperDeterrenceDifficulty safely fetches the Configuration value for state's 'Advanced.ScraperDeterrence.Difficulty' field
 func (st *ConfigState) GetAdvancedScraperDeterrenceDifficulty() (v uint32) {
@@ -4914,9 +4496,6 @@ func SetAdvancedScraperDeterrenceDifficulty(v uint32) {
 	global.SetAdvancedScraperDeterrenceDifficulty(v)
 }
 
-// HTTPClientAllowIPsFlag returns the flag name for the 'HTTPClient.AllowIPs' field
-func HTTPClientAllowIPsFlag() string { return "http-client-allow-ips" }
-
 // GetHTTPClientAllowIPs safely fetches the Configuration value for state's 'HTTPClient.AllowIPs' field
 func (st *ConfigState) GetHTTPClientAllowIPs() (v []string) {
 	st.mutex.RLock()
@@ -4938,9 +4517,6 @@ func GetHTTPClientAllowIPs() []string { return global.GetHTTPClientAllowIPs() }
 
 // SetHTTPClientAllowIPs safely sets the value for global configuration 'HTTPClient.AllowIPs' field
 func SetHTTPClientAllowIPs(v []string) { global.SetHTTPClientAllowIPs(v) }
-
-// HTTPClientBlockIPsFlag returns the flag name for the 'HTTPClient.BlockIPs' field
-func HTTPClientBlockIPsFlag() string { return "http-client-block-ips" }
 
 // GetHTTPClientBlockIPs safely fetches the Configuration value for state's 'HTTPClient.BlockIPs' field
 func (st *ConfigState) GetHTTPClientBlockIPs() (v []string) {
@@ -4964,9 +4540,6 @@ func GetHTTPClientBlockIPs() []string { return global.GetHTTPClientBlockIPs() }
 // SetHTTPClientBlockIPs safely sets the value for global configuration 'HTTPClient.BlockIPs' field
 func SetHTTPClientBlockIPs(v []string) { global.SetHTTPClientBlockIPs(v) }
 
-// HTTPClientTimeoutFlag returns the flag name for the 'HTTPClient.Timeout' field
-func HTTPClientTimeoutFlag() string { return "http-client-timeout" }
-
 // GetHTTPClientTimeout safely fetches the Configuration value for state's 'HTTPClient.Timeout' field
 func (st *ConfigState) GetHTTPClientTimeout() (v time.Duration) {
 	st.mutex.RLock()
@@ -4988,9 +4561,6 @@ func GetHTTPClientTimeout() time.Duration { return global.GetHTTPClientTimeout()
 
 // SetHTTPClientTimeout safely sets the value for global configuration 'HTTPClient.Timeout' field
 func SetHTTPClientTimeout(v time.Duration) { global.SetHTTPClientTimeout(v) }
-
-// HTTPClientTLSInsecureSkipVerifyFlag returns the flag name for the 'HTTPClient.TLSInsecureSkipVerify' field
-func HTTPClientTLSInsecureSkipVerifyFlag() string { return "http-client-tls-insecure-skip-verify" }
 
 // GetHTTPClientTLSInsecureSkipVerify safely fetches the Configuration value for state's 'HTTPClient.TLSInsecureSkipVerify' field
 func (st *ConfigState) GetHTTPClientTLSInsecureSkipVerify() (v bool) {
@@ -5014,9 +4584,6 @@ func GetHTTPClientTLSInsecureSkipVerify() bool { return global.GetHTTPClientTLSI
 // SetHTTPClientTLSInsecureSkipVerify safely sets the value for global configuration 'HTTPClient.TLSInsecureSkipVerify' field
 func SetHTTPClientTLSInsecureSkipVerify(v bool) { global.SetHTTPClientTLSInsecureSkipVerify(v) }
 
-// HTTPClientInsecureOutgoingFlag returns the flag name for the 'HTTPClient.InsecureOutgoing' field
-func HTTPClientInsecureOutgoingFlag() string { return "http-client-insecure-outgoing" }
-
 // GetHTTPClientInsecureOutgoing safely fetches the Configuration value for state's 'HTTPClient.InsecureOutgoing' field
 func (st *ConfigState) GetHTTPClientInsecureOutgoing() (v bool) {
 	st.mutex.RLock()
@@ -5039,8 +4606,291 @@ func GetHTTPClientInsecureOutgoing() bool { return global.GetHTTPClientInsecureO
 // SetHTTPClientInsecureOutgoing safely sets the value for global configuration 'HTTPClient.InsecureOutgoing' field
 func SetHTTPClientInsecureOutgoing(v bool) { global.SetHTTPClientInsecureOutgoing(v) }
 
-// CacheMemoryTargetFlag returns the flag name for the 'Cache.MemoryTarget' field
-func CacheMemoryTargetFlag() string { return "cache-memory-target" }
+// GetMediaDescriptionMinChars safely fetches the Configuration value for state's 'Media.DescriptionMinChars' field
+func (st *ConfigState) GetMediaDescriptionMinChars() (v int) {
+	st.mutex.RLock()
+	v = st.config.Media.DescriptionMinChars
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaDescriptionMinChars safely sets the Configuration value for state's 'Media.DescriptionMinChars' field
+func (st *ConfigState) SetMediaDescriptionMinChars(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.DescriptionMinChars = v
+	st.reloadToViper()
+}
+
+// GetMediaDescriptionMinChars safely fetches the value for global configuration 'Media.DescriptionMinChars' field
+func GetMediaDescriptionMinChars() int { return global.GetMediaDescriptionMinChars() }
+
+// SetMediaDescriptionMinChars safely sets the value for global configuration 'Media.DescriptionMinChars' field
+func SetMediaDescriptionMinChars(v int) { global.SetMediaDescriptionMinChars(v) }
+
+// GetMediaDescriptionMaxChars safely fetches the Configuration value for state's 'Media.DescriptionMaxChars' field
+func (st *ConfigState) GetMediaDescriptionMaxChars() (v int) {
+	st.mutex.RLock()
+	v = st.config.Media.DescriptionMaxChars
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaDescriptionMaxChars safely sets the Configuration value for state's 'Media.DescriptionMaxChars' field
+func (st *ConfigState) SetMediaDescriptionMaxChars(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.DescriptionMaxChars = v
+	st.reloadToViper()
+}
+
+// GetMediaDescriptionMaxChars safely fetches the value for global configuration 'Media.DescriptionMaxChars' field
+func GetMediaDescriptionMaxChars() int { return global.GetMediaDescriptionMaxChars() }
+
+// SetMediaDescriptionMaxChars safely sets the value for global configuration 'Media.DescriptionMaxChars' field
+func SetMediaDescriptionMaxChars(v int) { global.SetMediaDescriptionMaxChars(v) }
+
+// GetMediaRemoteCacheDays safely fetches the Configuration value for state's 'Media.RemoteCacheDays' field
+func (st *ConfigState) GetMediaRemoteCacheDays() (v int) {
+	st.mutex.RLock()
+	v = st.config.Media.RemoteCacheDays
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaRemoteCacheDays safely sets the Configuration value for state's 'Media.RemoteCacheDays' field
+func (st *ConfigState) SetMediaRemoteCacheDays(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.RemoteCacheDays = v
+	st.reloadToViper()
+}
+
+// GetMediaRemoteCacheDays safely fetches the value for global configuration 'Media.RemoteCacheDays' field
+func GetMediaRemoteCacheDays() int { return global.GetMediaRemoteCacheDays() }
+
+// SetMediaRemoteCacheDays safely sets the value for global configuration 'Media.RemoteCacheDays' field
+func SetMediaRemoteCacheDays(v int) { global.SetMediaRemoteCacheDays(v) }
+
+// GetMediaEmojiLocalMaxSize safely fetches the Configuration value for state's 'Media.EmojiLocalMaxSize' field
+func (st *ConfigState) GetMediaEmojiLocalMaxSize() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Media.EmojiLocalMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaEmojiLocalMaxSize safely sets the Configuration value for state's 'Media.EmojiLocalMaxSize' field
+func (st *ConfigState) SetMediaEmojiLocalMaxSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.EmojiLocalMaxSize = v
+	st.reloadToViper()
+}
+
+// GetMediaEmojiLocalMaxSize safely fetches the value for global configuration 'Media.EmojiLocalMaxSize' field
+func GetMediaEmojiLocalMaxSize() bytesize.Size { return global.GetMediaEmojiLocalMaxSize() }
+
+// SetMediaEmojiLocalMaxSize safely sets the value for global configuration 'Media.EmojiLocalMaxSize' field
+func SetMediaEmojiLocalMaxSize(v bytesize.Size) { global.SetMediaEmojiLocalMaxSize(v) }
+
+// GetMediaEmojiRemoteMaxSize safely fetches the Configuration value for state's 'Media.EmojiRemoteMaxSize' field
+func (st *ConfigState) GetMediaEmojiRemoteMaxSize() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Media.EmojiRemoteMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaEmojiRemoteMaxSize safely sets the Configuration value for state's 'Media.EmojiRemoteMaxSize' field
+func (st *ConfigState) SetMediaEmojiRemoteMaxSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.EmojiRemoteMaxSize = v
+	st.reloadToViper()
+}
+
+// GetMediaEmojiRemoteMaxSize safely fetches the value for global configuration 'Media.EmojiRemoteMaxSize' field
+func GetMediaEmojiRemoteMaxSize() bytesize.Size { return global.GetMediaEmojiRemoteMaxSize() }
+
+// SetMediaEmojiRemoteMaxSize safely sets the value for global configuration 'Media.EmojiRemoteMaxSize' field
+func SetMediaEmojiRemoteMaxSize(v bytesize.Size) { global.SetMediaEmojiRemoteMaxSize(v) }
+
+// GetMediaImageSizeHint safely fetches the Configuration value for state's 'Media.ImageSizeHint' field
+func (st *ConfigState) GetMediaImageSizeHint() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Media.ImageSizeHint
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaImageSizeHint safely sets the Configuration value for state's 'Media.ImageSizeHint' field
+func (st *ConfigState) SetMediaImageSizeHint(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.ImageSizeHint = v
+	st.reloadToViper()
+}
+
+// GetMediaImageSizeHint safely fetches the value for global configuration 'Media.ImageSizeHint' field
+func GetMediaImageSizeHint() bytesize.Size { return global.GetMediaImageSizeHint() }
+
+// SetMediaImageSizeHint safely sets the value for global configuration 'Media.ImageSizeHint' field
+func SetMediaImageSizeHint(v bytesize.Size) { global.SetMediaImageSizeHint(v) }
+
+// GetMediaVideoSizeHint safely fetches the Configuration value for state's 'Media.VideoSizeHint' field
+func (st *ConfigState) GetMediaVideoSizeHint() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Media.VideoSizeHint
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaVideoSizeHint safely sets the Configuration value for state's 'Media.VideoSizeHint' field
+func (st *ConfigState) SetMediaVideoSizeHint(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.VideoSizeHint = v
+	st.reloadToViper()
+}
+
+// GetMediaVideoSizeHint safely fetches the value for global configuration 'Media.VideoSizeHint' field
+func GetMediaVideoSizeHint() bytesize.Size { return global.GetMediaVideoSizeHint() }
+
+// SetMediaVideoSizeHint safely sets the value for global configuration 'Media.VideoSizeHint' field
+func SetMediaVideoSizeHint(v bytesize.Size) { global.SetMediaVideoSizeHint(v) }
+
+// GetMediaLocalMaxSize safely fetches the Configuration value for state's 'Media.LocalMaxSize' field
+func (st *ConfigState) GetMediaLocalMaxSize() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Media.LocalMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaLocalMaxSize safely sets the Configuration value for state's 'Media.LocalMaxSize' field
+func (st *ConfigState) SetMediaLocalMaxSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.LocalMaxSize = v
+	st.reloadToViper()
+}
+
+// GetMediaLocalMaxSize safely fetches the value for global configuration 'Media.LocalMaxSize' field
+func GetMediaLocalMaxSize() bytesize.Size { return global.GetMediaLocalMaxSize() }
+
+// SetMediaLocalMaxSize safely sets the value for global configuration 'Media.LocalMaxSize' field
+func SetMediaLocalMaxSize(v bytesize.Size) { global.SetMediaLocalMaxSize(v) }
+
+// GetMediaRemoteMaxSize safely fetches the Configuration value for state's 'Media.RemoteMaxSize' field
+func (st *ConfigState) GetMediaRemoteMaxSize() (v bytesize.Size) {
+	st.mutex.RLock()
+	v = st.config.Media.RemoteMaxSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaRemoteMaxSize safely sets the Configuration value for state's 'Media.RemoteMaxSize' field
+func (st *ConfigState) SetMediaRemoteMaxSize(v bytesize.Size) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.RemoteMaxSize = v
+	st.reloadToViper()
+}
+
+// GetMediaRemoteMaxSize safely fetches the value for global configuration 'Media.RemoteMaxSize' field
+func GetMediaRemoteMaxSize() bytesize.Size { return global.GetMediaRemoteMaxSize() }
+
+// SetMediaRemoteMaxSize safely sets the value for global configuration 'Media.RemoteMaxSize' field
+func SetMediaRemoteMaxSize(v bytesize.Size) { global.SetMediaRemoteMaxSize(v) }
+
+// GetMediaCleanupFrom safely fetches the Configuration value for state's 'Media.CleanupFrom' field
+func (st *ConfigState) GetMediaCleanupFrom() (v string) {
+	st.mutex.RLock()
+	v = st.config.Media.CleanupFrom
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaCleanupFrom safely sets the Configuration value for state's 'Media.CleanupFrom' field
+func (st *ConfigState) SetMediaCleanupFrom(v string) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.CleanupFrom = v
+	st.reloadToViper()
+}
+
+// GetMediaCleanupFrom safely fetches the value for global configuration 'Media.CleanupFrom' field
+func GetMediaCleanupFrom() string { return global.GetMediaCleanupFrom() }
+
+// SetMediaCleanupFrom safely sets the value for global configuration 'Media.CleanupFrom' field
+func SetMediaCleanupFrom(v string) { global.SetMediaCleanupFrom(v) }
+
+// GetMediaCleanupEvery safely fetches the Configuration value for state's 'Media.CleanupEvery' field
+func (st *ConfigState) GetMediaCleanupEvery() (v time.Duration) {
+	st.mutex.RLock()
+	v = st.config.Media.CleanupEvery
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaCleanupEvery safely sets the Configuration value for state's 'Media.CleanupEvery' field
+func (st *ConfigState) SetMediaCleanupEvery(v time.Duration) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.CleanupEvery = v
+	st.reloadToViper()
+}
+
+// GetMediaCleanupEvery safely fetches the value for global configuration 'Media.CleanupEvery' field
+func GetMediaCleanupEvery() time.Duration { return global.GetMediaCleanupEvery() }
+
+// SetMediaCleanupEvery safely sets the value for global configuration 'Media.CleanupEvery' field
+func SetMediaCleanupEvery(v time.Duration) { global.SetMediaCleanupEvery(v) }
+
+// GetMediaFfmpegPoolSize safely fetches the Configuration value for state's 'Media.FfmpegPoolSize' field
+func (st *ConfigState) GetMediaFfmpegPoolSize() (v int) {
+	st.mutex.RLock()
+	v = st.config.Media.FfmpegPoolSize
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaFfmpegPoolSize safely sets the Configuration value for state's 'Media.FfmpegPoolSize' field
+func (st *ConfigState) SetMediaFfmpegPoolSize(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.FfmpegPoolSize = v
+	st.reloadToViper()
+}
+
+// GetMediaFfmpegPoolSize safely fetches the value for global configuration 'Media.FfmpegPoolSize' field
+func GetMediaFfmpegPoolSize() int { return global.GetMediaFfmpegPoolSize() }
+
+// SetMediaFfmpegPoolSize safely sets the value for global configuration 'Media.FfmpegPoolSize' field
+func SetMediaFfmpegPoolSize(v int) { global.SetMediaFfmpegPoolSize(v) }
+
+// GetMediaThumbMaxPixels safely fetches the Configuration value for state's 'Media.ThumbMaxPixels' field
+func (st *ConfigState) GetMediaThumbMaxPixels() (v int) {
+	st.mutex.RLock()
+	v = st.config.Media.ThumbMaxPixels
+	st.mutex.RUnlock()
+	return
+}
+
+// SetMediaThumbMaxPixels safely sets the Configuration value for state's 'Media.ThumbMaxPixels' field
+func (st *ConfigState) SetMediaThumbMaxPixels(v int) {
+	st.mutex.Lock()
+	defer st.mutex.Unlock()
+	st.config.Media.ThumbMaxPixels = v
+	st.reloadToViper()
+}
+
+// GetMediaThumbMaxPixels safely fetches the value for global configuration 'Media.ThumbMaxPixels' field
+func GetMediaThumbMaxPixels() int { return global.GetMediaThumbMaxPixels() }
+
+// SetMediaThumbMaxPixels safely sets the value for global configuration 'Media.ThumbMaxPixels' field
+func SetMediaThumbMaxPixels(v int) { global.SetMediaThumbMaxPixels(v) }
 
 // GetCacheMemoryTarget safely fetches the Configuration value for state's 'Cache.MemoryTarget' field
 func (st *ConfigState) GetCacheMemoryTarget() (v bytesize.Size) {
@@ -5064,9 +4914,6 @@ func GetCacheMemoryTarget() bytesize.Size { return global.GetCacheMemoryTarget()
 // SetCacheMemoryTarget safely sets the value for global configuration 'Cache.MemoryTarget' field
 func SetCacheMemoryTarget(v bytesize.Size) { global.SetCacheMemoryTarget(v) }
 
-// CacheAccountMemRatioFlag returns the flag name for the 'Cache.AccountMemRatio' field
-func CacheAccountMemRatioFlag() string { return "cache-account-mem-ratio" }
-
 // GetCacheAccountMemRatio safely fetches the Configuration value for state's 'Cache.AccountMemRatio' field
 func (st *ConfigState) GetCacheAccountMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5088,9 +4935,6 @@ func GetCacheAccountMemRatio() float64 { return global.GetCacheAccountMemRatio()
 
 // SetCacheAccountMemRatio safely sets the value for global configuration 'Cache.AccountMemRatio' field
 func SetCacheAccountMemRatio(v float64) { global.SetCacheAccountMemRatio(v) }
-
-// CacheAccountNoteMemRatioFlag returns the flag name for the 'Cache.AccountNoteMemRatio' field
-func CacheAccountNoteMemRatioFlag() string { return "cache-account-note-mem-ratio" }
 
 // GetCacheAccountNoteMemRatio safely fetches the Configuration value for state's 'Cache.AccountNoteMemRatio' field
 func (st *ConfigState) GetCacheAccountNoteMemRatio() (v float64) {
@@ -5114,9 +4958,6 @@ func GetCacheAccountNoteMemRatio() float64 { return global.GetCacheAccountNoteMe
 // SetCacheAccountNoteMemRatio safely sets the value for global configuration 'Cache.AccountNoteMemRatio' field
 func SetCacheAccountNoteMemRatio(v float64) { global.SetCacheAccountNoteMemRatio(v) }
 
-// CacheAccountSettingsMemRatioFlag returns the flag name for the 'Cache.AccountSettingsMemRatio' field
-func CacheAccountSettingsMemRatioFlag() string { return "cache-account-settings-mem-ratio" }
-
 // GetCacheAccountSettingsMemRatio safely fetches the Configuration value for state's 'Cache.AccountSettingsMemRatio' field
 func (st *ConfigState) GetCacheAccountSettingsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5138,9 +4979,6 @@ func GetCacheAccountSettingsMemRatio() float64 { return global.GetCacheAccountSe
 
 // SetCacheAccountSettingsMemRatio safely sets the value for global configuration 'Cache.AccountSettingsMemRatio' field
 func SetCacheAccountSettingsMemRatio(v float64) { global.SetCacheAccountSettingsMemRatio(v) }
-
-// CacheAccountStatsMemRatioFlag returns the flag name for the 'Cache.AccountStatsMemRatio' field
-func CacheAccountStatsMemRatioFlag() string { return "cache-account-stats-mem-ratio" }
 
 // GetCacheAccountStatsMemRatio safely fetches the Configuration value for state's 'Cache.AccountStatsMemRatio' field
 func (st *ConfigState) GetCacheAccountStatsMemRatio() (v float64) {
@@ -5164,9 +5002,6 @@ func GetCacheAccountStatsMemRatio() float64 { return global.GetCacheAccountStats
 // SetCacheAccountStatsMemRatio safely sets the value for global configuration 'Cache.AccountStatsMemRatio' field
 func SetCacheAccountStatsMemRatio(v float64) { global.SetCacheAccountStatsMemRatio(v) }
 
-// CacheApplicationMemRatioFlag returns the flag name for the 'Cache.ApplicationMemRatio' field
-func CacheApplicationMemRatioFlag() string { return "cache-application-mem-ratio" }
-
 // GetCacheApplicationMemRatio safely fetches the Configuration value for state's 'Cache.ApplicationMemRatio' field
 func (st *ConfigState) GetCacheApplicationMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5188,9 +5023,6 @@ func GetCacheApplicationMemRatio() float64 { return global.GetCacheApplicationMe
 
 // SetCacheApplicationMemRatio safely sets the value for global configuration 'Cache.ApplicationMemRatio' field
 func SetCacheApplicationMemRatio(v float64) { global.SetCacheApplicationMemRatio(v) }
-
-// CacheBlockMemRatioFlag returns the flag name for the 'Cache.BlockMemRatio' field
-func CacheBlockMemRatioFlag() string { return "cache-block-mem-ratio" }
 
 // GetCacheBlockMemRatio safely fetches the Configuration value for state's 'Cache.BlockMemRatio' field
 func (st *ConfigState) GetCacheBlockMemRatio() (v float64) {
@@ -5214,9 +5046,6 @@ func GetCacheBlockMemRatio() float64 { return global.GetCacheBlockMemRatio() }
 // SetCacheBlockMemRatio safely sets the value for global configuration 'Cache.BlockMemRatio' field
 func SetCacheBlockMemRatio(v float64) { global.SetCacheBlockMemRatio(v) }
 
-// CacheBlockIDsMemRatioFlag returns the flag name for the 'Cache.BlockIDsMemRatio' field
-func CacheBlockIDsMemRatioFlag() string { return "cache-block-ids-mem-ratio" }
-
 // GetCacheBlockIDsMemRatio safely fetches the Configuration value for state's 'Cache.BlockIDsMemRatio' field
 func (st *ConfigState) GetCacheBlockIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5238,9 +5067,6 @@ func GetCacheBlockIDsMemRatio() float64 { return global.GetCacheBlockIDsMemRatio
 
 // SetCacheBlockIDsMemRatio safely sets the value for global configuration 'Cache.BlockIDsMemRatio' field
 func SetCacheBlockIDsMemRatio(v float64) { global.SetCacheBlockIDsMemRatio(v) }
-
-// CacheBoostOfIDsMemRatioFlag returns the flag name for the 'Cache.BoostOfIDsMemRatio' field
-func CacheBoostOfIDsMemRatioFlag() string { return "cache-boost-of-ids-mem-ratio" }
 
 // GetCacheBoostOfIDsMemRatio safely fetches the Configuration value for state's 'Cache.BoostOfIDsMemRatio' field
 func (st *ConfigState) GetCacheBoostOfIDsMemRatio() (v float64) {
@@ -5264,9 +5090,6 @@ func GetCacheBoostOfIDsMemRatio() float64 { return global.GetCacheBoostOfIDsMemR
 // SetCacheBoostOfIDsMemRatio safely sets the value for global configuration 'Cache.BoostOfIDsMemRatio' field
 func SetCacheBoostOfIDsMemRatio(v float64) { global.SetCacheBoostOfIDsMemRatio(v) }
 
-// CacheClientMemRatioFlag returns the flag name for the 'Cache.ClientMemRatio' field
-func CacheClientMemRatioFlag() string { return "cache-client-mem-ratio" }
-
 // GetCacheClientMemRatio safely fetches the Configuration value for state's 'Cache.ClientMemRatio' field
 func (st *ConfigState) GetCacheClientMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5289,9 +5112,6 @@ func GetCacheClientMemRatio() float64 { return global.GetCacheClientMemRatio() }
 // SetCacheClientMemRatio safely sets the value for global configuration 'Cache.ClientMemRatio' field
 func SetCacheClientMemRatio(v float64) { global.SetCacheClientMemRatio(v) }
 
-// CacheConversationMemRatioFlag returns the flag name for the 'Cache.ConversationMemRatio' field
-func CacheConversationMemRatioFlag() string { return "cache-conversation-mem-ratio" }
-
 // GetCacheConversationMemRatio safely fetches the Configuration value for state's 'Cache.ConversationMemRatio' field
 func (st *ConfigState) GetCacheConversationMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5313,11 +5133,6 @@ func GetCacheConversationMemRatio() float64 { return global.GetCacheConversation
 
 // SetCacheConversationMemRatio safely sets the value for global configuration 'Cache.ConversationMemRatio' field
 func SetCacheConversationMemRatio(v float64) { global.SetCacheConversationMemRatio(v) }
-
-// CacheConversationLastStatusIDsMemRatioFlag returns the flag name for the 'Cache.ConversationLastStatusIDsMemRatio' field
-func CacheConversationLastStatusIDsMemRatioFlag() string {
-	return "cache-conversation-last-status-ids-mem-ratio"
-}
 
 // GetCacheConversationLastStatusIDsMemRatio safely fetches the Configuration value for state's 'Cache.ConversationLastStatusIDsMemRatio' field
 func (st *ConfigState) GetCacheConversationLastStatusIDsMemRatio() (v float64) {
@@ -5343,11 +5158,6 @@ func GetCacheConversationLastStatusIDsMemRatio() float64 {
 // SetCacheConversationLastStatusIDsMemRatio safely sets the value for global configuration 'Cache.ConversationLastStatusIDsMemRatio' field
 func SetCacheConversationLastStatusIDsMemRatio(v float64) {
 	global.SetCacheConversationLastStatusIDsMemRatio(v)
-}
-
-// CacheDomainPermissionDraftMemRationFlag returns the flag name for the 'Cache.DomainPermissionDraftMemRation' field
-func CacheDomainPermissionDraftMemRationFlag() string {
-	return "cache-domain-permission-draft-mem-ratio"
 }
 
 // GetCacheDomainPermissionDraftMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionDraftMemRation' field
@@ -5376,11 +5186,6 @@ func SetCacheDomainPermissionDraftMemRation(v float64) {
 	global.SetCacheDomainPermissionDraftMemRation(v)
 }
 
-// CacheDomainPermissionSubscriptionMemRationFlag returns the flag name for the 'Cache.DomainPermissionSubscriptionMemRation' field
-func CacheDomainPermissionSubscriptionMemRationFlag() string {
-	return "cache-domain-permission-subscription-mem-ratio"
-}
-
 // GetCacheDomainPermissionSubscriptionMemRation safely fetches the Configuration value for state's 'Cache.DomainPermissionSubscriptionMemRation' field
 func (st *ConfigState) GetCacheDomainPermissionSubscriptionMemRation() (v float64) {
 	st.mutex.RLock()
@@ -5407,9 +5212,6 @@ func SetCacheDomainPermissionSubscriptionMemRation(v float64) {
 	global.SetCacheDomainPermissionSubscriptionMemRation(v)
 }
 
-// CacheEmojiMemRatioFlag returns the flag name for the 'Cache.EmojiMemRatio' field
-func CacheEmojiMemRatioFlag() string { return "cache-emoji-mem-ratio" }
-
 // GetCacheEmojiMemRatio safely fetches the Configuration value for state's 'Cache.EmojiMemRatio' field
 func (st *ConfigState) GetCacheEmojiMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5431,9 +5233,6 @@ func GetCacheEmojiMemRatio() float64 { return global.GetCacheEmojiMemRatio() }
 
 // SetCacheEmojiMemRatio safely sets the value for global configuration 'Cache.EmojiMemRatio' field
 func SetCacheEmojiMemRatio(v float64) { global.SetCacheEmojiMemRatio(v) }
-
-// CacheEmojiCategoryMemRatioFlag returns the flag name for the 'Cache.EmojiCategoryMemRatio' field
-func CacheEmojiCategoryMemRatioFlag() string { return "cache-emoji-category-mem-ratio" }
 
 // GetCacheEmojiCategoryMemRatio safely fetches the Configuration value for state's 'Cache.EmojiCategoryMemRatio' field
 func (st *ConfigState) GetCacheEmojiCategoryMemRatio() (v float64) {
@@ -5457,9 +5256,6 @@ func GetCacheEmojiCategoryMemRatio() float64 { return global.GetCacheEmojiCatego
 // SetCacheEmojiCategoryMemRatio safely sets the value for global configuration 'Cache.EmojiCategoryMemRatio' field
 func SetCacheEmojiCategoryMemRatio(v float64) { global.SetCacheEmojiCategoryMemRatio(v) }
 
-// CacheFilterMemRatioFlag returns the flag name for the 'Cache.FilterMemRatio' field
-func CacheFilterMemRatioFlag() string { return "cache-filter-mem-ratio" }
-
 // GetCacheFilterMemRatio safely fetches the Configuration value for state's 'Cache.FilterMemRatio' field
 func (st *ConfigState) GetCacheFilterMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5481,9 +5277,6 @@ func GetCacheFilterMemRatio() float64 { return global.GetCacheFilterMemRatio() }
 
 // SetCacheFilterMemRatio safely sets the value for global configuration 'Cache.FilterMemRatio' field
 func SetCacheFilterMemRatio(v float64) { global.SetCacheFilterMemRatio(v) }
-
-// CacheFilterKeywordMemRatioFlag returns the flag name for the 'Cache.FilterKeywordMemRatio' field
-func CacheFilterKeywordMemRatioFlag() string { return "cache-filter-keyword-mem-ratio" }
 
 // GetCacheFilterKeywordMemRatio safely fetches the Configuration value for state's 'Cache.FilterKeywordMemRatio' field
 func (st *ConfigState) GetCacheFilterKeywordMemRatio() (v float64) {
@@ -5507,9 +5300,6 @@ func GetCacheFilterKeywordMemRatio() float64 { return global.GetCacheFilterKeywo
 // SetCacheFilterKeywordMemRatio safely sets the value for global configuration 'Cache.FilterKeywordMemRatio' field
 func SetCacheFilterKeywordMemRatio(v float64) { global.SetCacheFilterKeywordMemRatio(v) }
 
-// CacheFilterStatusMemRatioFlag returns the flag name for the 'Cache.FilterStatusMemRatio' field
-func CacheFilterStatusMemRatioFlag() string { return "cache-filter-status-mem-ratio" }
-
 // GetCacheFilterStatusMemRatio safely fetches the Configuration value for state's 'Cache.FilterStatusMemRatio' field
 func (st *ConfigState) GetCacheFilterStatusMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5531,9 +5321,6 @@ func GetCacheFilterStatusMemRatio() float64 { return global.GetCacheFilterStatus
 
 // SetCacheFilterStatusMemRatio safely sets the value for global configuration 'Cache.FilterStatusMemRatio' field
 func SetCacheFilterStatusMemRatio(v float64) { global.SetCacheFilterStatusMemRatio(v) }
-
-// CacheFollowMemRatioFlag returns the flag name for the 'Cache.FollowMemRatio' field
-func CacheFollowMemRatioFlag() string { return "cache-follow-mem-ratio" }
 
 // GetCacheFollowMemRatio safely fetches the Configuration value for state's 'Cache.FollowMemRatio' field
 func (st *ConfigState) GetCacheFollowMemRatio() (v float64) {
@@ -5557,9 +5344,6 @@ func GetCacheFollowMemRatio() float64 { return global.GetCacheFollowMemRatio() }
 // SetCacheFollowMemRatio safely sets the value for global configuration 'Cache.FollowMemRatio' field
 func SetCacheFollowMemRatio(v float64) { global.SetCacheFollowMemRatio(v) }
 
-// CacheFollowIDsMemRatioFlag returns the flag name for the 'Cache.FollowIDsMemRatio' field
-func CacheFollowIDsMemRatioFlag() string { return "cache-follow-ids-mem-ratio" }
-
 // GetCacheFollowIDsMemRatio safely fetches the Configuration value for state's 'Cache.FollowIDsMemRatio' field
 func (st *ConfigState) GetCacheFollowIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5581,9 +5365,6 @@ func GetCacheFollowIDsMemRatio() float64 { return global.GetCacheFollowIDsMemRat
 
 // SetCacheFollowIDsMemRatio safely sets the value for global configuration 'Cache.FollowIDsMemRatio' field
 func SetCacheFollowIDsMemRatio(v float64) { global.SetCacheFollowIDsMemRatio(v) }
-
-// CacheFollowRequestMemRatioFlag returns the flag name for the 'Cache.FollowRequestMemRatio' field
-func CacheFollowRequestMemRatioFlag() string { return "cache-follow-request-mem-ratio" }
 
 // GetCacheFollowRequestMemRatio safely fetches the Configuration value for state's 'Cache.FollowRequestMemRatio' field
 func (st *ConfigState) GetCacheFollowRequestMemRatio() (v float64) {
@@ -5607,9 +5388,6 @@ func GetCacheFollowRequestMemRatio() float64 { return global.GetCacheFollowReque
 // SetCacheFollowRequestMemRatio safely sets the value for global configuration 'Cache.FollowRequestMemRatio' field
 func SetCacheFollowRequestMemRatio(v float64) { global.SetCacheFollowRequestMemRatio(v) }
 
-// CacheFollowRequestIDsMemRatioFlag returns the flag name for the 'Cache.FollowRequestIDsMemRatio' field
-func CacheFollowRequestIDsMemRatioFlag() string { return "cache-follow-request-ids-mem-ratio" }
-
 // GetCacheFollowRequestIDsMemRatio safely fetches the Configuration value for state's 'Cache.FollowRequestIDsMemRatio' field
 func (st *ConfigState) GetCacheFollowRequestIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5631,9 +5409,6 @@ func GetCacheFollowRequestIDsMemRatio() float64 { return global.GetCacheFollowRe
 
 // SetCacheFollowRequestIDsMemRatio safely sets the value for global configuration 'Cache.FollowRequestIDsMemRatio' field
 func SetCacheFollowRequestIDsMemRatio(v float64) { global.SetCacheFollowRequestIDsMemRatio(v) }
-
-// CacheFollowingTagIDsMemRatioFlag returns the flag name for the 'Cache.FollowingTagIDsMemRatio' field
-func CacheFollowingTagIDsMemRatioFlag() string { return "cache-following-tag-ids-mem-ratio" }
 
 // GetCacheFollowingTagIDsMemRatio safely fetches the Configuration value for state's 'Cache.FollowingTagIDsMemRatio' field
 func (st *ConfigState) GetCacheFollowingTagIDsMemRatio() (v float64) {
@@ -5657,9 +5432,6 @@ func GetCacheFollowingTagIDsMemRatio() float64 { return global.GetCacheFollowing
 // SetCacheFollowingTagIDsMemRatio safely sets the value for global configuration 'Cache.FollowingTagIDsMemRatio' field
 func SetCacheFollowingTagIDsMemRatio(v float64) { global.SetCacheFollowingTagIDsMemRatio(v) }
 
-// CacheInReplyToIDsMemRatioFlag returns the flag name for the 'Cache.InReplyToIDsMemRatio' field
-func CacheInReplyToIDsMemRatioFlag() string { return "cache-in-reply-to-ids-mem-ratio" }
-
 // GetCacheInReplyToIDsMemRatio safely fetches the Configuration value for state's 'Cache.InReplyToIDsMemRatio' field
 func (st *ConfigState) GetCacheInReplyToIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5681,9 +5453,6 @@ func GetCacheInReplyToIDsMemRatio() float64 { return global.GetCacheInReplyToIDs
 
 // SetCacheInReplyToIDsMemRatio safely sets the value for global configuration 'Cache.InReplyToIDsMemRatio' field
 func SetCacheInReplyToIDsMemRatio(v float64) { global.SetCacheInReplyToIDsMemRatio(v) }
-
-// CacheInstanceMemRatioFlag returns the flag name for the 'Cache.InstanceMemRatio' field
-func CacheInstanceMemRatioFlag() string { return "cache-instance-mem-ratio" }
 
 // GetCacheInstanceMemRatio safely fetches the Configuration value for state's 'Cache.InstanceMemRatio' field
 func (st *ConfigState) GetCacheInstanceMemRatio() (v float64) {
@@ -5707,9 +5476,6 @@ func GetCacheInstanceMemRatio() float64 { return global.GetCacheInstanceMemRatio
 // SetCacheInstanceMemRatio safely sets the value for global configuration 'Cache.InstanceMemRatio' field
 func SetCacheInstanceMemRatio(v float64) { global.SetCacheInstanceMemRatio(v) }
 
-// CacheInteractionRequestMemRatioFlag returns the flag name for the 'Cache.InteractionRequestMemRatio' field
-func CacheInteractionRequestMemRatioFlag() string { return "cache-interaction-request-mem-ratio" }
-
 // GetCacheInteractionRequestMemRatio safely fetches the Configuration value for state's 'Cache.InteractionRequestMemRatio' field
 func (st *ConfigState) GetCacheInteractionRequestMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5731,9 +5497,6 @@ func GetCacheInteractionRequestMemRatio() float64 { return global.GetCacheIntera
 
 // SetCacheInteractionRequestMemRatio safely sets the value for global configuration 'Cache.InteractionRequestMemRatio' field
 func SetCacheInteractionRequestMemRatio(v float64) { global.SetCacheInteractionRequestMemRatio(v) }
-
-// CacheListMemRatioFlag returns the flag name for the 'Cache.ListMemRatio' field
-func CacheListMemRatioFlag() string { return "cache-list-mem-ratio" }
 
 // GetCacheListMemRatio safely fetches the Configuration value for state's 'Cache.ListMemRatio' field
 func (st *ConfigState) GetCacheListMemRatio() (v float64) {
@@ -5757,9 +5520,6 @@ func GetCacheListMemRatio() float64 { return global.GetCacheListMemRatio() }
 // SetCacheListMemRatio safely sets the value for global configuration 'Cache.ListMemRatio' field
 func SetCacheListMemRatio(v float64) { global.SetCacheListMemRatio(v) }
 
-// CacheListIDsMemRatioFlag returns the flag name for the 'Cache.ListIDsMemRatio' field
-func CacheListIDsMemRatioFlag() string { return "cache-list-ids-mem-ratio" }
-
 // GetCacheListIDsMemRatio safely fetches the Configuration value for state's 'Cache.ListIDsMemRatio' field
 func (st *ConfigState) GetCacheListIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5781,9 +5541,6 @@ func GetCacheListIDsMemRatio() float64 { return global.GetCacheListIDsMemRatio()
 
 // SetCacheListIDsMemRatio safely sets the value for global configuration 'Cache.ListIDsMemRatio' field
 func SetCacheListIDsMemRatio(v float64) { global.SetCacheListIDsMemRatio(v) }
-
-// CacheListedIDsMemRatioFlag returns the flag name for the 'Cache.ListedIDsMemRatio' field
-func CacheListedIDsMemRatioFlag() string { return "cache-listed-ids-mem-ratio" }
 
 // GetCacheListedIDsMemRatio safely fetches the Configuration value for state's 'Cache.ListedIDsMemRatio' field
 func (st *ConfigState) GetCacheListedIDsMemRatio() (v float64) {
@@ -5807,9 +5564,6 @@ func GetCacheListedIDsMemRatio() float64 { return global.GetCacheListedIDsMemRat
 // SetCacheListedIDsMemRatio safely sets the value for global configuration 'Cache.ListedIDsMemRatio' field
 func SetCacheListedIDsMemRatio(v float64) { global.SetCacheListedIDsMemRatio(v) }
 
-// CacheMarkerMemRatioFlag returns the flag name for the 'Cache.MarkerMemRatio' field
-func CacheMarkerMemRatioFlag() string { return "cache-marker-mem-ratio" }
-
 // GetCacheMarkerMemRatio safely fetches the Configuration value for state's 'Cache.MarkerMemRatio' field
 func (st *ConfigState) GetCacheMarkerMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5831,9 +5585,6 @@ func GetCacheMarkerMemRatio() float64 { return global.GetCacheMarkerMemRatio() }
 
 // SetCacheMarkerMemRatio safely sets the value for global configuration 'Cache.MarkerMemRatio' field
 func SetCacheMarkerMemRatio(v float64) { global.SetCacheMarkerMemRatio(v) }
-
-// CacheMediaMemRatioFlag returns the flag name for the 'Cache.MediaMemRatio' field
-func CacheMediaMemRatioFlag() string { return "cache-media-mem-ratio" }
 
 // GetCacheMediaMemRatio safely fetches the Configuration value for state's 'Cache.MediaMemRatio' field
 func (st *ConfigState) GetCacheMediaMemRatio() (v float64) {
@@ -5857,9 +5608,6 @@ func GetCacheMediaMemRatio() float64 { return global.GetCacheMediaMemRatio() }
 // SetCacheMediaMemRatio safely sets the value for global configuration 'Cache.MediaMemRatio' field
 func SetCacheMediaMemRatio(v float64) { global.SetCacheMediaMemRatio(v) }
 
-// CacheMentionMemRatioFlag returns the flag name for the 'Cache.MentionMemRatio' field
-func CacheMentionMemRatioFlag() string { return "cache-mention-mem-ratio" }
-
 // GetCacheMentionMemRatio safely fetches the Configuration value for state's 'Cache.MentionMemRatio' field
 func (st *ConfigState) GetCacheMentionMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5881,9 +5629,6 @@ func GetCacheMentionMemRatio() float64 { return global.GetCacheMentionMemRatio()
 
 // SetCacheMentionMemRatio safely sets the value for global configuration 'Cache.MentionMemRatio' field
 func SetCacheMentionMemRatio(v float64) { global.SetCacheMentionMemRatio(v) }
-
-// CacheMoveMemRatioFlag returns the flag name for the 'Cache.MoveMemRatio' field
-func CacheMoveMemRatioFlag() string { return "cache-move-mem-ratio" }
 
 // GetCacheMoveMemRatio safely fetches the Configuration value for state's 'Cache.MoveMemRatio' field
 func (st *ConfigState) GetCacheMoveMemRatio() (v float64) {
@@ -5907,9 +5652,6 @@ func GetCacheMoveMemRatio() float64 { return global.GetCacheMoveMemRatio() }
 // SetCacheMoveMemRatio safely sets the value for global configuration 'Cache.MoveMemRatio' field
 func SetCacheMoveMemRatio(v float64) { global.SetCacheMoveMemRatio(v) }
 
-// CacheNotificationMemRatioFlag returns the flag name for the 'Cache.NotificationMemRatio' field
-func CacheNotificationMemRatioFlag() string { return "cache-notification-mem-ratio" }
-
 // GetCacheNotificationMemRatio safely fetches the Configuration value for state's 'Cache.NotificationMemRatio' field
 func (st *ConfigState) GetCacheNotificationMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5931,9 +5673,6 @@ func GetCacheNotificationMemRatio() float64 { return global.GetCacheNotification
 
 // SetCacheNotificationMemRatio safely sets the value for global configuration 'Cache.NotificationMemRatio' field
 func SetCacheNotificationMemRatio(v float64) { global.SetCacheNotificationMemRatio(v) }
-
-// CachePollMemRatioFlag returns the flag name for the 'Cache.PollMemRatio' field
-func CachePollMemRatioFlag() string { return "cache-poll-mem-ratio" }
 
 // GetCachePollMemRatio safely fetches the Configuration value for state's 'Cache.PollMemRatio' field
 func (st *ConfigState) GetCachePollMemRatio() (v float64) {
@@ -5957,9 +5696,6 @@ func GetCachePollMemRatio() float64 { return global.GetCachePollMemRatio() }
 // SetCachePollMemRatio safely sets the value for global configuration 'Cache.PollMemRatio' field
 func SetCachePollMemRatio(v float64) { global.SetCachePollMemRatio(v) }
 
-// CachePollVoteMemRatioFlag returns the flag name for the 'Cache.PollVoteMemRatio' field
-func CachePollVoteMemRatioFlag() string { return "cache-poll-vote-mem-ratio" }
-
 // GetCachePollVoteMemRatio safely fetches the Configuration value for state's 'Cache.PollVoteMemRatio' field
 func (st *ConfigState) GetCachePollVoteMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -5981,9 +5717,6 @@ func GetCachePollVoteMemRatio() float64 { return global.GetCachePollVoteMemRatio
 
 // SetCachePollVoteMemRatio safely sets the value for global configuration 'Cache.PollVoteMemRatio' field
 func SetCachePollVoteMemRatio(v float64) { global.SetCachePollVoteMemRatio(v) }
-
-// CachePollVoteIDsMemRatioFlag returns the flag name for the 'Cache.PollVoteIDsMemRatio' field
-func CachePollVoteIDsMemRatioFlag() string { return "cache-poll-vote-ids-mem-ratio" }
 
 // GetCachePollVoteIDsMemRatio safely fetches the Configuration value for state's 'Cache.PollVoteIDsMemRatio' field
 func (st *ConfigState) GetCachePollVoteIDsMemRatio() (v float64) {
@@ -6007,9 +5740,6 @@ func GetCachePollVoteIDsMemRatio() float64 { return global.GetCachePollVoteIDsMe
 // SetCachePollVoteIDsMemRatio safely sets the value for global configuration 'Cache.PollVoteIDsMemRatio' field
 func SetCachePollVoteIDsMemRatio(v float64) { global.SetCachePollVoteIDsMemRatio(v) }
 
-// CacheReportMemRatioFlag returns the flag name for the 'Cache.ReportMemRatio' field
-func CacheReportMemRatioFlag() string { return "cache-report-mem-ratio" }
-
 // GetCacheReportMemRatio safely fetches the Configuration value for state's 'Cache.ReportMemRatio' field
 func (st *ConfigState) GetCacheReportMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6031,9 +5761,6 @@ func GetCacheReportMemRatio() float64 { return global.GetCacheReportMemRatio() }
 
 // SetCacheReportMemRatio safely sets the value for global configuration 'Cache.ReportMemRatio' field
 func SetCacheReportMemRatio(v float64) { global.SetCacheReportMemRatio(v) }
-
-// CacheSinBinStatusMemRatioFlag returns the flag name for the 'Cache.SinBinStatusMemRatio' field
-func CacheSinBinStatusMemRatioFlag() string { return "cache-sin-bin-status-mem-ratio" }
 
 // GetCacheSinBinStatusMemRatio safely fetches the Configuration value for state's 'Cache.SinBinStatusMemRatio' field
 func (st *ConfigState) GetCacheSinBinStatusMemRatio() (v float64) {
@@ -6057,9 +5784,6 @@ func GetCacheSinBinStatusMemRatio() float64 { return global.GetCacheSinBinStatus
 // SetCacheSinBinStatusMemRatio safely sets the value for global configuration 'Cache.SinBinStatusMemRatio' field
 func SetCacheSinBinStatusMemRatio(v float64) { global.SetCacheSinBinStatusMemRatio(v) }
 
-// CacheStatusMemRatioFlag returns the flag name for the 'Cache.StatusMemRatio' field
-func CacheStatusMemRatioFlag() string { return "cache-status-mem-ratio" }
-
 // GetCacheStatusMemRatio safely fetches the Configuration value for state's 'Cache.StatusMemRatio' field
 func (st *ConfigState) GetCacheStatusMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6081,9 +5805,6 @@ func GetCacheStatusMemRatio() float64 { return global.GetCacheStatusMemRatio() }
 
 // SetCacheStatusMemRatio safely sets the value for global configuration 'Cache.StatusMemRatio' field
 func SetCacheStatusMemRatio(v float64) { global.SetCacheStatusMemRatio(v) }
-
-// CacheStatusBookmarkMemRatioFlag returns the flag name for the 'Cache.StatusBookmarkMemRatio' field
-func CacheStatusBookmarkMemRatioFlag() string { return "cache-status-bookmark-mem-ratio" }
 
 // GetCacheStatusBookmarkMemRatio safely fetches the Configuration value for state's 'Cache.StatusBookmarkMemRatio' field
 func (st *ConfigState) GetCacheStatusBookmarkMemRatio() (v float64) {
@@ -6107,9 +5828,6 @@ func GetCacheStatusBookmarkMemRatio() float64 { return global.GetCacheStatusBook
 // SetCacheStatusBookmarkMemRatio safely sets the value for global configuration 'Cache.StatusBookmarkMemRatio' field
 func SetCacheStatusBookmarkMemRatio(v float64) { global.SetCacheStatusBookmarkMemRatio(v) }
 
-// CacheStatusBookmarkIDsMemRatioFlag returns the flag name for the 'Cache.StatusBookmarkIDsMemRatio' field
-func CacheStatusBookmarkIDsMemRatioFlag() string { return "cache-status-bookmark-ids-mem-ratio" }
-
 // GetCacheStatusBookmarkIDsMemRatio safely fetches the Configuration value for state's 'Cache.StatusBookmarkIDsMemRatio' field
 func (st *ConfigState) GetCacheStatusBookmarkIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6131,9 +5849,6 @@ func GetCacheStatusBookmarkIDsMemRatio() float64 { return global.GetCacheStatusB
 
 // SetCacheStatusBookmarkIDsMemRatio safely sets the value for global configuration 'Cache.StatusBookmarkIDsMemRatio' field
 func SetCacheStatusBookmarkIDsMemRatio(v float64) { global.SetCacheStatusBookmarkIDsMemRatio(v) }
-
-// CacheStatusEditMemRatioFlag returns the flag name for the 'Cache.StatusEditMemRatio' field
-func CacheStatusEditMemRatioFlag() string { return "cache-status-edit-mem-ratio" }
 
 // GetCacheStatusEditMemRatio safely fetches the Configuration value for state's 'Cache.StatusEditMemRatio' field
 func (st *ConfigState) GetCacheStatusEditMemRatio() (v float64) {
@@ -6157,9 +5872,6 @@ func GetCacheStatusEditMemRatio() float64 { return global.GetCacheStatusEditMemR
 // SetCacheStatusEditMemRatio safely sets the value for global configuration 'Cache.StatusEditMemRatio' field
 func SetCacheStatusEditMemRatio(v float64) { global.SetCacheStatusEditMemRatio(v) }
 
-// CacheStatusFaveMemRatioFlag returns the flag name for the 'Cache.StatusFaveMemRatio' field
-func CacheStatusFaveMemRatioFlag() string { return "cache-status-fave-mem-ratio" }
-
 // GetCacheStatusFaveMemRatio safely fetches the Configuration value for state's 'Cache.StatusFaveMemRatio' field
 func (st *ConfigState) GetCacheStatusFaveMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6181,9 +5893,6 @@ func GetCacheStatusFaveMemRatio() float64 { return global.GetCacheStatusFaveMemR
 
 // SetCacheStatusFaveMemRatio safely sets the value for global configuration 'Cache.StatusFaveMemRatio' field
 func SetCacheStatusFaveMemRatio(v float64) { global.SetCacheStatusFaveMemRatio(v) }
-
-// CacheStatusFaveIDsMemRatioFlag returns the flag name for the 'Cache.StatusFaveIDsMemRatio' field
-func CacheStatusFaveIDsMemRatioFlag() string { return "cache-status-fave-ids-mem-ratio" }
 
 // GetCacheStatusFaveIDsMemRatio safely fetches the Configuration value for state's 'Cache.StatusFaveIDsMemRatio' field
 func (st *ConfigState) GetCacheStatusFaveIDsMemRatio() (v float64) {
@@ -6207,9 +5916,6 @@ func GetCacheStatusFaveIDsMemRatio() float64 { return global.GetCacheStatusFaveI
 // SetCacheStatusFaveIDsMemRatio safely sets the value for global configuration 'Cache.StatusFaveIDsMemRatio' field
 func SetCacheStatusFaveIDsMemRatio(v float64) { global.SetCacheStatusFaveIDsMemRatio(v) }
 
-// CacheTagMemRatioFlag returns the flag name for the 'Cache.TagMemRatio' field
-func CacheTagMemRatioFlag() string { return "cache-tag-mem-ratio" }
-
 // GetCacheTagMemRatio safely fetches the Configuration value for state's 'Cache.TagMemRatio' field
 func (st *ConfigState) GetCacheTagMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6231,9 +5937,6 @@ func GetCacheTagMemRatio() float64 { return global.GetCacheTagMemRatio() }
 
 // SetCacheTagMemRatio safely sets the value for global configuration 'Cache.TagMemRatio' field
 func SetCacheTagMemRatio(v float64) { global.SetCacheTagMemRatio(v) }
-
-// CacheThreadMuteMemRatioFlag returns the flag name for the 'Cache.ThreadMuteMemRatio' field
-func CacheThreadMuteMemRatioFlag() string { return "cache-thread-mute-mem-ratio" }
 
 // GetCacheThreadMuteMemRatio safely fetches the Configuration value for state's 'Cache.ThreadMuteMemRatio' field
 func (st *ConfigState) GetCacheThreadMuteMemRatio() (v float64) {
@@ -6257,9 +5960,6 @@ func GetCacheThreadMuteMemRatio() float64 { return global.GetCacheThreadMuteMemR
 // SetCacheThreadMuteMemRatio safely sets the value for global configuration 'Cache.ThreadMuteMemRatio' field
 func SetCacheThreadMuteMemRatio(v float64) { global.SetCacheThreadMuteMemRatio(v) }
 
-// CacheTokenMemRatioFlag returns the flag name for the 'Cache.TokenMemRatio' field
-func CacheTokenMemRatioFlag() string { return "cache-token-mem-ratio" }
-
 // GetCacheTokenMemRatio safely fetches the Configuration value for state's 'Cache.TokenMemRatio' field
 func (st *ConfigState) GetCacheTokenMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6281,9 +5981,6 @@ func GetCacheTokenMemRatio() float64 { return global.GetCacheTokenMemRatio() }
 
 // SetCacheTokenMemRatio safely sets the value for global configuration 'Cache.TokenMemRatio' field
 func SetCacheTokenMemRatio(v float64) { global.SetCacheTokenMemRatio(v) }
-
-// CacheTombstoneMemRatioFlag returns the flag name for the 'Cache.TombstoneMemRatio' field
-func CacheTombstoneMemRatioFlag() string { return "cache-tombstone-mem-ratio" }
 
 // GetCacheTombstoneMemRatio safely fetches the Configuration value for state's 'Cache.TombstoneMemRatio' field
 func (st *ConfigState) GetCacheTombstoneMemRatio() (v float64) {
@@ -6307,9 +6004,6 @@ func GetCacheTombstoneMemRatio() float64 { return global.GetCacheTombstoneMemRat
 // SetCacheTombstoneMemRatio safely sets the value for global configuration 'Cache.TombstoneMemRatio' field
 func SetCacheTombstoneMemRatio(v float64) { global.SetCacheTombstoneMemRatio(v) }
 
-// CacheUserMemRatioFlag returns the flag name for the 'Cache.UserMemRatio' field
-func CacheUserMemRatioFlag() string { return "cache-user-mem-ratio" }
-
 // GetCacheUserMemRatio safely fetches the Configuration value for state's 'Cache.UserMemRatio' field
 func (st *ConfigState) GetCacheUserMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6331,9 +6025,6 @@ func GetCacheUserMemRatio() float64 { return global.GetCacheUserMemRatio() }
 
 // SetCacheUserMemRatio safely sets the value for global configuration 'Cache.UserMemRatio' field
 func SetCacheUserMemRatio(v float64) { global.SetCacheUserMemRatio(v) }
-
-// CacheUserMuteMemRatioFlag returns the flag name for the 'Cache.UserMuteMemRatio' field
-func CacheUserMuteMemRatioFlag() string { return "cache-user-mute-mem-ratio" }
 
 // GetCacheUserMuteMemRatio safely fetches the Configuration value for state's 'Cache.UserMuteMemRatio' field
 func (st *ConfigState) GetCacheUserMuteMemRatio() (v float64) {
@@ -6357,9 +6048,6 @@ func GetCacheUserMuteMemRatio() float64 { return global.GetCacheUserMuteMemRatio
 // SetCacheUserMuteMemRatio safely sets the value for global configuration 'Cache.UserMuteMemRatio' field
 func SetCacheUserMuteMemRatio(v float64) { global.SetCacheUserMuteMemRatio(v) }
 
-// CacheUserMuteIDsMemRatioFlag returns the flag name for the 'Cache.UserMuteIDsMemRatio' field
-func CacheUserMuteIDsMemRatioFlag() string { return "cache-user-mute-ids-mem-ratio" }
-
 // GetCacheUserMuteIDsMemRatio safely fetches the Configuration value for state's 'Cache.UserMuteIDsMemRatio' field
 func (st *ConfigState) GetCacheUserMuteIDsMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6382,9 +6070,6 @@ func GetCacheUserMuteIDsMemRatio() float64 { return global.GetCacheUserMuteIDsMe
 // SetCacheUserMuteIDsMemRatio safely sets the value for global configuration 'Cache.UserMuteIDsMemRatio' field
 func SetCacheUserMuteIDsMemRatio(v float64) { global.SetCacheUserMuteIDsMemRatio(v) }
 
-// CacheWebfingerMemRatioFlag returns the flag name for the 'Cache.WebfingerMemRatio' field
-func CacheWebfingerMemRatioFlag() string { return "cache-webfinger-mem-ratio" }
-
 // GetCacheWebfingerMemRatio safely fetches the Configuration value for state's 'Cache.WebfingerMemRatio' field
 func (st *ConfigState) GetCacheWebfingerMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6406,9 +6091,6 @@ func GetCacheWebfingerMemRatio() float64 { return global.GetCacheWebfingerMemRat
 
 // SetCacheWebfingerMemRatio safely sets the value for global configuration 'Cache.WebfingerMemRatio' field
 func SetCacheWebfingerMemRatio(v float64) { global.SetCacheWebfingerMemRatio(v) }
-
-// CacheWebPushSubscriptionMemRatioFlag returns the flag name for the 'Cache.WebPushSubscriptionMemRatio' field
-func CacheWebPushSubscriptionMemRatioFlag() string { return "cache-web-push-subscription-mem-ratio" }
 
 // GetCacheWebPushSubscriptionMemRatio safely fetches the Configuration value for state's 'Cache.WebPushSubscriptionMemRatio' field
 func (st *ConfigState) GetCacheWebPushSubscriptionMemRatio() (v float64) {
@@ -6433,11 +6115,6 @@ func GetCacheWebPushSubscriptionMemRatio() float64 {
 
 // SetCacheWebPushSubscriptionMemRatio safely sets the value for global configuration 'Cache.WebPushSubscriptionMemRatio' field
 func SetCacheWebPushSubscriptionMemRatio(v float64) { global.SetCacheWebPushSubscriptionMemRatio(v) }
-
-// CacheWebPushSubscriptionIDsMemRatioFlag returns the flag name for the 'Cache.WebPushSubscriptionIDsMemRatio' field
-func CacheWebPushSubscriptionIDsMemRatioFlag() string {
-	return "cache-web-push-subscription-ids-mem-ratio"
-}
 
 // GetCacheWebPushSubscriptionIDsMemRatio safely fetches the Configuration value for state's 'Cache.WebPushSubscriptionIDsMemRatio' field
 func (st *ConfigState) GetCacheWebPushSubscriptionIDsMemRatio() (v float64) {
@@ -6465,9 +6142,6 @@ func SetCacheWebPushSubscriptionIDsMemRatio(v float64) {
 	global.SetCacheWebPushSubscriptionIDsMemRatio(v)
 }
 
-// CacheMutesMemRatioFlag returns the flag name for the 'Cache.MutesMemRatio' field
-func CacheMutesMemRatioFlag() string { return "cache-mutes-mem-ratio" }
-
 // GetCacheMutesMemRatio safely fetches the Configuration value for state's 'Cache.MutesMemRatio' field
 func (st *ConfigState) GetCacheMutesMemRatio() (v float64) {
 	st.mutex.RLock()
@@ -6489,9 +6163,6 @@ func GetCacheMutesMemRatio() float64 { return global.GetCacheMutesMemRatio() }
 
 // SetCacheMutesMemRatio safely sets the value for global configuration 'Cache.MutesMemRatio' field
 func SetCacheMutesMemRatio(v float64) { global.SetCacheMutesMemRatio(v) }
-
-// CacheVisibilityMemRatioFlag returns the flag name for the 'Cache.VisibilityMemRatio' field
-func CacheVisibilityMemRatioFlag() string { return "cache-visibility-mem-ratio" }
 
 // GetCacheVisibilityMemRatio safely fetches the Configuration value for state's 'Cache.VisibilityMemRatio' field
 func (st *ConfigState) GetCacheVisibilityMemRatio() (v float64) {
@@ -6515,9 +6186,6 @@ func GetCacheVisibilityMemRatio() float64 { return global.GetCacheVisibilityMemR
 // SetCacheVisibilityMemRatio safely sets the value for global configuration 'Cache.VisibilityMemRatio' field
 func SetCacheVisibilityMemRatio(v float64) { global.SetCacheVisibilityMemRatio(v) }
 
-// AdminAccountUsernameFlag returns the flag name for the 'AdminAccountUsername' field
-func AdminAccountUsernameFlag() string { return "username" }
-
 // GetAdminAccountUsername safely fetches the Configuration value for state's 'AdminAccountUsername' field
 func (st *ConfigState) GetAdminAccountUsername() (v string) {
 	st.mutex.RLock()
@@ -6539,9 +6207,6 @@ func GetAdminAccountUsername() string { return global.GetAdminAccountUsername() 
 
 // SetAdminAccountUsername safely sets the value for global configuration 'AdminAccountUsername' field
 func SetAdminAccountUsername(v string) { global.SetAdminAccountUsername(v) }
-
-// AdminAccountEmailFlag returns the flag name for the 'AdminAccountEmail' field
-func AdminAccountEmailFlag() string { return "email" }
 
 // GetAdminAccountEmail safely fetches the Configuration value for state's 'AdminAccountEmail' field
 func (st *ConfigState) GetAdminAccountEmail() (v string) {
@@ -6565,9 +6230,6 @@ func GetAdminAccountEmail() string { return global.GetAdminAccountEmail() }
 // SetAdminAccountEmail safely sets the value for global configuration 'AdminAccountEmail' field
 func SetAdminAccountEmail(v string) { global.SetAdminAccountEmail(v) }
 
-// AdminAccountPasswordFlag returns the flag name for the 'AdminAccountPassword' field
-func AdminAccountPasswordFlag() string { return "password" }
-
 // GetAdminAccountPassword safely fetches the Configuration value for state's 'AdminAccountPassword' field
 func (st *ConfigState) GetAdminAccountPassword() (v string) {
 	st.mutex.RLock()
@@ -6589,9 +6251,6 @@ func GetAdminAccountPassword() string { return global.GetAdminAccountPassword() 
 
 // SetAdminAccountPassword safely sets the value for global configuration 'AdminAccountPassword' field
 func SetAdminAccountPassword(v string) { global.SetAdminAccountPassword(v) }
-
-// AdminTransPathFlag returns the flag name for the 'AdminTransPath' field
-func AdminTransPathFlag() string { return "path" }
 
 // GetAdminTransPath safely fetches the Configuration value for state's 'AdminTransPath' field
 func (st *ConfigState) GetAdminTransPath() (v string) {
@@ -6615,9 +6274,6 @@ func GetAdminTransPath() string { return global.GetAdminTransPath() }
 // SetAdminTransPath safely sets the value for global configuration 'AdminTransPath' field
 func SetAdminTransPath(v string) { global.SetAdminTransPath(v) }
 
-// AdminMediaPruneDryRunFlag returns the flag name for the 'AdminMediaPruneDryRun' field
-func AdminMediaPruneDryRunFlag() string { return "dry-run" }
-
 // GetAdminMediaPruneDryRun safely fetches the Configuration value for state's 'AdminMediaPruneDryRun' field
 func (st *ConfigState) GetAdminMediaPruneDryRun() (v bool) {
 	st.mutex.RLock()
@@ -6640,9 +6296,6 @@ func GetAdminMediaPruneDryRun() bool { return global.GetAdminMediaPruneDryRun() 
 // SetAdminMediaPruneDryRun safely sets the value for global configuration 'AdminMediaPruneDryRun' field
 func SetAdminMediaPruneDryRun(v bool) { global.SetAdminMediaPruneDryRun(v) }
 
-// AdminMediaListLocalOnlyFlag returns the flag name for the 'AdminMediaListLocalOnly' field
-func AdminMediaListLocalOnlyFlag() string { return "local-only" }
-
 // GetAdminMediaListLocalOnly safely fetches the Configuration value for state's 'AdminMediaListLocalOnly' field
 func (st *ConfigState) GetAdminMediaListLocalOnly() (v bool) {
 	st.mutex.RLock()
@@ -6664,9 +6317,6 @@ func GetAdminMediaListLocalOnly() bool { return global.GetAdminMediaListLocalOnl
 
 // SetAdminMediaListLocalOnly safely sets the value for global configuration 'AdminMediaListLocalOnly' field
 func SetAdminMediaListLocalOnly(v bool) { global.SetAdminMediaListLocalOnly(v) }
-
-// AdminMediaListRemoteOnlyFlag returns the flag name for the 'AdminMediaListRemoteOnly' field
-func AdminMediaListRemoteOnlyFlag() string { return "remote-only" }
 
 // GetAdminMediaListRemoteOnly safely fetches the Configuration value for state's 'AdminMediaListRemoteOnly' field
 func (st *ConfigState) GetAdminMediaListRemoteOnly() (v bool) {
@@ -6925,6 +6575,149 @@ func flattenConfigMap(cfgmap map[string]any) {
 		ival, ok := mapGet(cfgmap, key...)
 		if ok {
 			cfgmap["http-client-insecure-outgoing"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "description-min-chars"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-description-min-chars"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "description-max-chars"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-description-max-chars"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "remote-cache-days"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-remote-cache-days"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "emoji-local-max-size"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-emoji-local-max-size"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "emoji-remote-max-size"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-emoji-remote-max-size"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "image-size-hint"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-image-size-hint"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "video-size-hint"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-video-size-hint"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "local-max-size"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-local-max-size"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "remote-max-size"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-remote-max-size"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "cleanup-from"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-cleanup-from"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "cleanup-every"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-cleanup-every"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "ffmpeg-pool-size"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-ffmpeg-pool-size"] = ival
+			nestedKeys[key[0]] = struct{}{}
+			break
+		}
+	}
+
+	for _, key := range [][]string{
+		{"media", "thumb-max-pixels"},
+	} {
+		ival, ok := mapGet(cfgmap, key...)
+		if ok {
+			cfgmap["media-thumb-max-pixels"] = ival
 			nestedKeys[key[0]] = struct{}{}
 			break
 		}

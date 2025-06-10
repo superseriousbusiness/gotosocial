@@ -85,6 +85,7 @@ func main() {
 	fprintf(output, "\t\"github.com/spf13/cast\"\n")
 	fprintf(output, ")\n")
 	fprintf(output, "\n")
+	generateFlagConsts(output, fields)
 	generateFlagRegistering(output, fields)
 	generateMapMarshaler(output, fields)
 	generateMapUnmarshaler(output, fields)
@@ -200,14 +201,14 @@ func loadConfigFields(pathPrefixes, flagPrefixes []string, t reflect.Type) []Con
 	return out
 }
 
-// func generateFlagConsts(out io.Writer, fields []ConfigField) {
-// 	fprintf(out, "const (\n")
-// 	for _, field := range fields {
-// 		name := strings.ReplaceAll(field.Path, ".", "")
-// 		fprintf(out, "\t%sFlag = \"%s\"\n", name, field.Flag())
-// 	}
-// 	fprintf(out, ")\n\n")
-// }
+func generateFlagConsts(out io.Writer, fields []ConfigField) {
+	fprintf(out, "const (\n")
+	for _, field := range fields {
+		name := strings.ReplaceAll(field.Path, ".", "")
+		fprintf(out, "\t%sFlag = \"%s\"\n", name, field.Flag())
+	}
+	fprintf(out, ")\n\n")
+}
 
 func generateFlagRegistering(out io.Writer, fields []ConfigField) {
 	fprintf(out, "func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {\n")
@@ -460,9 +461,6 @@ func generateGetSetters(out io.Writer, fields []ConfigField) {
 			field.Type.String(),
 			"config.", "",
 		)
-
-		fprintf(out, "// %sFlag returns the flag name for the '%s' field\n", name, field.Path)
-		fprintf(out, "func %sFlag() string { return \"%s\" }\n\n", name, field.Flag())
 
 		// ConfigState structure helper methods
 		fprintf(out, "// Get%s safely fetches the Configuration value for state's '%s' field\n", name, field.Path)

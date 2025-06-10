@@ -629,6 +629,13 @@ media-video-size-hint: 40MiB
 # Default: 40MiB (41943040 bytes)
 media-remote-max-size: 40MiB
 
+# Int. Max size in pixels of any one dimension of
+# a thumbnail (as input media ratio is preserved).
+#
+# Examples: [256, 512, 1024]
+# Default: 512
+media-thumb-max-pixels: 512
+
 # Int. Minimum amount of characters required as an image or video description.
 # Examples: [500, 1000, 1500]
 # Default: 0 (not required)

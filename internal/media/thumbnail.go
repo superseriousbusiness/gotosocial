@@ -33,37 +33,33 @@ import (
 	"golang.org/x/image/webp"
 )
 
-const (
-	maxThumbWidth  = 512
-	maxThumbHeight = 512
-)
-
 // thumbSize returns the dimensions to use for an input
 // image of given width / height, for its outgoing thumbnail.
 // This attempts to maintains the original image aspect ratio.
-func thumbSize(width, height int, aspect float32) (int, int) {
+func thumbSize(max, width, height int, aspect float32) (int, int) {
 
 	switch {
 	// Simplest case, within bounds!
-	case width < maxThumbWidth &&
-		height < maxThumbHeight:
+	case width < max && height < max:
 		return width, height
 
 	// Width is larger side.
 	case width > height:
+
 		// i.e. height = newWidth * (height / width)
-		height = int(float32(maxThumbWidth) / aspect)
-		return maxThumbWidth, height
+		height = int(float32(max) / aspect)
+		return max, height
 
 	// Height is larger side.
 	case height > width:
+
 		// i.e. width = newHeight * (width / height)
-		width = int(float32(maxThumbHeight) * aspect)
-		return width, maxThumbHeight
+		width = int(float32(max) * aspect)
+		return width, max
 
 	// Square.
 	default:
-		return maxThumbWidth, maxThumbHeight
+		return max, max
 	}
 }
 

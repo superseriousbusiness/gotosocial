@@ -78,16 +78,19 @@ var Defaults = Configuration{
 	AccountsCustomCSSLength:          10000,
 	AccountsMaxProfileFields:         6,
 
-	MediaDescriptionMinChars: 0,
-	MediaDescriptionMaxChars: 1500,
-	MediaRemoteCacheDays:     7,
-	MediaLocalMaxSize:        40 * bytesize.MiB,
-	MediaRemoteMaxSize:       40 * bytesize.MiB,
-	MediaEmojiLocalMaxSize:   50 * bytesize.KiB,
-	MediaEmojiRemoteMaxSize:  100 * bytesize.KiB,
-	MediaCleanupFrom:         "00:00",        // Midnight.
-	MediaCleanupEvery:        24 * time.Hour, // 1/day.
-	MediaFfmpegPoolSize:      1,
+	Media: MediaConfiguration{
+		DescriptionMinChars: 0,
+		DescriptionMaxChars: 1500,
+		RemoteCacheDays:     7,
+		LocalMaxSize:        40 * bytesize.MiB,
+		RemoteMaxSize:       40 * bytesize.MiB,
+		EmojiLocalMaxSize:   50 * bytesize.KiB,
+		EmojiRemoteMaxSize:  100 * bytesize.KiB,
+		CleanupFrom:         "00:00",        // Midnight.
+		CleanupEvery:        24 * time.Hour, // 1/day.
+		FfmpegPoolSize:      1,
+		ThumbMaxPixels:      512,
+	},
 
 	StorageBackend:        "local",
 	StorageLocalBasePath:  "/gotosocial/storage",

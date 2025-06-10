@@ -376,7 +376,7 @@ func sqliteConn(ctx context.Context) (*sql.DB, func() schema.Dialect, error) {
 	// validate db address has actually been set
 	address := config.GetDbAddress()
 	if address == "" {
-		return nil, nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag())
+		return nil, nil, fmt.Errorf("'%s' was not set when attempting to start sqlite", config.DbAddressFlag)
 	}
 
 	// Build SQLite connection address with prefs.

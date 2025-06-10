@@ -25,7 +25,7 @@ import (
 
 // AddAdminAccount attaches flags pertaining to admin account actions.
 func AddAdminAccount(cmd *cobra.Command) {
-	name := AdminAccountUsernameFlag()
+	name := AdminAccountUsernameFlag
 	usage := fieldtag("AdminAccountUsername", "usage")
 	cmd.Flags().String(name, "", usage) // REQUIRED
 	if err := cmd.MarkFlagRequired(name); err != nil {
@@ -35,7 +35,7 @@ func AddAdminAccount(cmd *cobra.Command) {
 
 // AddAdminAccountPassword attaches flags pertaining to admin account password reset.
 func AddAdminAccountPassword(cmd *cobra.Command) {
-	name := AdminAccountPasswordFlag()
+	name := AdminAccountPasswordFlag
 	usage := fieldtag("AdminAccountPassword", "usage")
 	cmd.Flags().String(name, "", usage) // REQUIRED
 	if err := cmd.MarkFlagRequired(name); err != nil {
@@ -49,7 +49,7 @@ func AddAdminAccountCreate(cmd *cobra.Command) {
 	AddAdminAccount(cmd)
 	AddAdminAccountPassword(cmd)
 
-	name := AdminAccountEmailFlag()
+	name := AdminAccountEmailFlag
 	usage := fieldtag("AdminAccountEmail", "usage")
 	cmd.Flags().String(name, "", usage) // REQUIRED
 	if err := cmd.MarkFlagRequired(name); err != nil {
@@ -59,7 +59,7 @@ func AddAdminAccountCreate(cmd *cobra.Command) {
 
 // AddAdminTrans attaches flags pertaining to import/export commands.
 func AddAdminTrans(cmd *cobra.Command) {
-	name := AdminTransPathFlag()
+	name := AdminTransPathFlag
 	usage := fieldtag("AdminTransPath", "usage")
 	cmd.Flags().String(name, "", usage) // REQUIRED
 	if err := cmd.MarkFlagRequired(name); err != nil {
@@ -69,18 +69,18 @@ func AddAdminTrans(cmd *cobra.Command) {
 
 // AddAdminMediaList attaches flags pertaining to media list commands.
 func AddAdminMediaList(cmd *cobra.Command) {
-	localOnly := AdminMediaListLocalOnlyFlag()
+	localOnly := AdminMediaListLocalOnlyFlag
 	localOnlyUsage := fieldtag("AdminMediaListLocalOnly", "usage")
 	cmd.Flags().Bool(localOnly, false, localOnlyUsage)
 
-	remoteOnly := AdminMediaListRemoteOnlyFlag()
+	remoteOnly := AdminMediaListRemoteOnlyFlag
 	remoteOnlyUsage := fieldtag("AdminMediaListRemoteOnly", "usage")
 	cmd.Flags().Bool(remoteOnly, false, remoteOnlyUsage)
 }
 
 // AddAdminMediaPrune attaches flags pertaining to media storage prune commands.
 func AddAdminMediaPrune(cmd *cobra.Command) {
-	name := AdminMediaPruneDryRunFlag()
+	name := AdminMediaPruneDryRunFlag
 	usage := fieldtag("AdminMediaPruneDryRun", "usage")
 	cmd.Flags().Bool(name, true, usage)
 }

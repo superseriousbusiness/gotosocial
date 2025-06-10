@@ -326,7 +326,7 @@ func NewS3Storage() (*Driver, error) {
 	case "path":
 		bucketLookup = minio.BucketLookupPath
 	default:
-		log.Warnf(nil, "%s set to %s which is not recognized, defaulting to 'auto'", config.StorageS3BucketLookupFlag(), s)
+		log.Warnf(nil, "%s set to %s which is not recognized, defaulting to 'auto'", config.StorageS3BucketLookupFlag, s)
 		bucketLookup = minio.BucketLookupAuto
 	}
 

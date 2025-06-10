@@ -113,19 +113,6 @@ type Configuration struct {
 	AccountsCustomCSSLength          int  `name:"accounts-custom-css-length" usage:"Maximum permitted length (characters) of custom CSS for accounts."`
 	AccountsMaxProfileFields         int  `name:"accounts-max-profile-fields" usage:"Maximum number of profile fields allowed for each account."`
 
-	MediaDescriptionMinChars int           `name:"media-description-min-chars" usage:"Min required chars for an image description"`
-	MediaDescriptionMaxChars int           `name:"media-description-max-chars" usage:"Max permitted chars for an image description"`
-	MediaRemoteCacheDays     int           `name:"media-remote-cache-days" usage:"Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely."`
-	MediaEmojiLocalMaxSize   bytesize.Size `name:"media-emoji-local-max-size" usage:"Max size in bytes of emojis uploaded to this instance via the admin API."`
-	MediaEmojiRemoteMaxSize  bytesize.Size `name:"media-emoji-remote-max-size" usage:"Max size in bytes of emojis to download from other instances."`
-	MediaImageSizeHint       bytesize.Size `name:"media-image-size-hint" usage:"Size in bytes of max image size referred to on /api/v_/instance endpoints (else, local max size)"`
-	MediaVideoSizeHint       bytesize.Size `name:"media-video-size-hint" usage:"Size in bytes of max video size referred to on /api/v_/instance endpoints (else, local max size)"`
-	MediaLocalMaxSize        bytesize.Size `name:"media-local-max-size" usage:"Max size in bytes of media uploaded to this instance via API"`
-	MediaRemoteMaxSize       bytesize.Size `name:"media-remote-max-size" usage:"Max size in bytes of media to download from other instances"`
-	MediaCleanupFrom         string        `name:"media-cleanup-from" usage:"Time of day from which to start running media cleanup/prune jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
-	MediaCleanupEvery        time.Duration `name:"media-cleanup-every" usage:"Period to elapse between cleanups, starting from media-cleanup-at."`
-	MediaFfmpegPoolSize      int           `name:"media-ffmpeg-pool-size" usage:"Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS."`
-
 	StorageBackend        string `name:"storage-backend" usage:"Storage backend to use for media attachments"`
 	StorageLocalBasePath  string `name:"storage-local-base-path" usage:"Full path to an already-created directory where gts should store/retrieve media files. Subfolders will be created within this dir."`
 	StorageS3Endpoint     string `name:"storage-s3-endpoint" usage:"S3 Endpoint URL (e.g 'minio.example.org:9000')"`
@@ -181,6 +168,9 @@ type Configuration struct {
 	// HTTPClient configuration vars.
 	HTTPClient HTTPClientConfiguration `name:"http-client"`
 
+	// Media configuration vars.
+	Media MediaConfiguration `name:"media"`
+
 	// Cache configuration vars.
 	Cache CacheConfiguration `name:"cache"`
 
@@ -200,6 +190,22 @@ type HTTPClientConfiguration struct {
 	Timeout               time.Duration `name:"timeout"`
 	TLSInsecureSkipVerify bool          `name:"tls-insecure-skip-verify"`
 	InsecureOutgoing      bool          `name:"insecure-outgoing"`
+}
+
+type MediaConfiguration struct {
+	DescriptionMinChars int           `name:"description-min-chars" usage:"Min required chars for an image description"`
+	DescriptionMaxChars int           `name:"description-max-chars" usage:"Max permitted chars for an image description"`
+	RemoteCacheDays     int           `name:"remote-cache-days" usage:"Number of days to locally cache media from remote instances. If set to 0, remote media will be kept indefinitely."`
+	EmojiLocalMaxSize   bytesize.Size `name:"emoji-local-max-size" usage:"Max size in bytes of emojis uploaded to this instance via the admin API."`
+	EmojiRemoteMaxSize  bytesize.Size `name:"emoji-remote-max-size" usage:"Max size in bytes of emojis to download from other instances."`
+	ImageSizeHint       bytesize.Size `name:"image-size-hint" usage:"Size in bytes of max image size referred to on /api/v_/instance endpoints (else, local max size)"`
+	VideoSizeHint       bytesize.Size `name:"video-size-hint" usage:"Size in bytes of max video size referred to on /api/v_/instance endpoints (else, local max size)"`
+	LocalMaxSize        bytesize.Size `name:"local-max-size" usage:"Max size in bytes of media uploaded to this instance via API"`
+	RemoteMaxSize       bytesize.Size `name:"remote-max-size" usage:"Max size in bytes of media to download from other instances"`
+	CleanupFrom         string        `name:"cleanup-from" usage:"Time of day from which to start running media cleanup/prune jobs. Should be in the format 'hh:mm:ss', eg., '15:04:05'."`
+	CleanupEvery        time.Duration `name:"cleanup-every" usage:"Period to elapse between cleanups, starting from media-cleanup-at."`
+	FfmpegPoolSize      int           `name:"ffmpeg-pool-size" usage:"Number of instances of the embedded ffmpeg WASM binary to add to the media processing pool. 0 or less uses GOMAXPROCS."`
+	ThumbMaxPixels      int           `name:"thumb-max-pixels" usage:"Max size in pixels of any one dimension of a thumbnail (as input media ratio is preserved)."`
 }
 
 type CacheConfiguration struct {

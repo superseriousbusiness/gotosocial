@@ -620,14 +620,14 @@ func parseClientRanges() (
 
 	allowIPs := config.GetHTTPClientAllowIPs()
 	allowRanges := make([]netip.Prefix, len(allowIPs))
-	allowFlag := config.HTTPClientAllowIPsFlag()
+	allowFlag := config.HTTPClientAllowIPsFlag
 	if err := parseF(allowIPs, allowRanges, allowFlag); err != nil {
 		return nil, err
 	}
 
 	blockIPs := config.GetHTTPClientBlockIPs()
 	blockRanges := make([]netip.Prefix, len(blockIPs))
-	blockFlag := config.HTTPClientBlockIPsFlag()
+	blockFlag := config.HTTPClientBlockIPsFlag
 	if err := parseF(blockIPs, blockRanges, blockFlag); err != nil {
 		return nil, err
 	}

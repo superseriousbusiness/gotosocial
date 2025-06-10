@@ -148,6 +148,7 @@ EXPECT=$(cat << "EOF"
     "media-local-max-size": "420B",
     "media-remote-cache-days": 30,
     "media-remote-max-size": "420B",
+    "media-thumb-max-pixels": 42069,
     "media-video-size-hint": "40.0MiB",
     "metrics-enabled": false,
     "oidc-admin-groups": [
@@ -272,6 +273,7 @@ GTS_MEDIA_EMOJI_LOCAL_MAX_SIZE=420 \
 GTS_MEDIA_EMOJI_REMOTE_MAX_SIZE=420 \
 GTS_MEDIA_FFMPEG_POOL_SIZE=8 \
 GTS_MEDIA_VIDEO_SIZE_HINT='40MiB' \
+GTS_MEDIA_THUMB_MAX_PIXELS=42069 \
 GTS_METRICS_ENABLED=false \
 GTS_STORAGE_BACKEND='local' \
 GTS_STORAGE_LOCAL_BASE_PATH='/root/store' \

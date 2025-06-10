@@ -42,7 +42,7 @@ func Validate() error {
 	// `host`
 	host := GetHost()
 	if host == "" {
-		errf("%s must be set", HostFlag())
+		errf("%s must be set", HostFlag)
 	}
 
 	// If `account-domain` and `host`
@@ -55,10 +55,8 @@ func Validate() error {
 			// back by setting it to `host`.
 			SetAccountDomain(GetHost())
 		} else if !dns.IsSubDomain(ad, host) {
-			errf(
-				"%s %s is not a valid subdomain of %s %s",
-				AccountDomainFlag(), ad, HostFlag(), host,
-			)
+			errf("%s %s is not a valid subdomain of %s %s",
+				AccountDomainFlag, ad, HostFlag, host)
 		}
 	}
 
@@ -68,20 +66,15 @@ func Validate() error {
 		// No problem.
 
 	case "http":
-		log.Warnf(
-			nil,
-			"%s was set to 'http'; this should *only* be used for debugging and tests!",
-			ProtocolFlag(),
-		)
+		log.Warnf(nil, "%s was set to 'http'; this should *only* be used for debugging and tests!",
+			ProtocolFlag)
 
 	case "":
-		errf("%s must be set", ProtocolFlag())
+		errf("%s must be set", ProtocolFlag)
 
 	default:
-		errf(
-			"%s must be set to either http or https, provided value was %s",
-			ProtocolFlag(), proto,
-		)
+		errf("%s must be set to either http or https, provided value was %s",
+			ProtocolFlag, proto)
 	}
 
 	// `federation-mode` should be
@@ -91,22 +84,19 @@ func Validate() error {
 		// No problem.
 
 	case "":
-		errf("%s must be set", InstanceFederationModeFlag())
+		errf("%s must be set", InstanceFederationModeFlag)
 
 	default:
-		errf(
-			"%s must be set to either blocklist or allowlist, provided value was %s",
-			InstanceFederationModeFlag(), fediMode,
-		)
+		errf("%s must be set to either blocklist or allowlist, provided value was %s",
+			InstanceFederationModeFlag, fediMode)
 	}
 
 	// Parse `instance-languages`, and
 	// set enriched version into config.
 	parsedLangs, err := language.InitLangs(GetInstanceLanguages().TagStrs())
 	if err != nil {
-		errf(
-			"%s could not be parsed as an array of valid BCP47 language tags: %v",
-			InstanceLanguagesFlag(), err,
+		errf("%s could not be parsed as an array of valid BCP47 language tags: %v",
+			InstanceLanguagesFlag, err,
 		)
 	} else {
 		// Parsed successfully, put enriched
@@ -121,37 +111,30 @@ func Validate() error {
 		// No problem.
 
 	default:
-		errf(
-			"%s must be set to empty string, zero, serve, or baffle, provided value was %s",
-			InstanceFederationModeFlag(), statsMode,
+		errf("%s must be set to empty string, zero, serve, or baffle, provided value was %s",
+			InstanceFederationModeFlag, statsMode,
 		)
 	}
 
 	// `web-assets-base-dir`.
 	webAssetsBaseDir := GetWebAssetBaseDir()
 	if webAssetsBaseDir == "" {
-		errf("%s must be set", WebAssetBaseDirFlag())
+		errf("%s must be set", WebAssetBaseDirFlag)
 	}
 
 	// `storage-s3-redirect-url`
 	if s3RedirectURL := GetStorageS3RedirectURL(); s3RedirectURL != "" {
 		if strings.HasSuffix(s3RedirectURL, "/") {
-			errf(
-				"%s must not end with a trailing slash",
-				StorageS3RedirectURLFlag(),
-			)
+			errf("%s must not end with a trailing slash",
+				StorageS3RedirectURLFlag)
 		}
 
 		if url, err := url.Parse(s3RedirectURL); err != nil {
-			errf(
-				"%s invalid: %w",
-				StorageS3RedirectURLFlag(), err,
-			)
+			errf("%s invalid: %w",
+				StorageS3RedirectURLFlag, err)
 		} else if url.Scheme != "https" && url.Scheme != "http" {
-			errf(
-				"%s scheme must be https or http",
-				StorageS3RedirectURLFlag(),
-			)
+			errf("%s scheme must be https or http",
+				StorageS3RedirectURLFlag)
 		}
 	}
 
@@ -161,32 +144,42 @@ func Validate() error {
 	// and if using custom certs then all relevant
 	// values must be provided.
 	var (
-		tlsChain     = GetTLSCertificateChain()
-		tlsKey       = GetTLSCertificateKey()
-		tlsChainFlag = TLSCertificateChainFlag()
-		tlsKeyFlag   = TLSCertificateKeyFlag()
+		tlsChain = GetTLSCertificateChain()
+		tlsKey   = GetTLSCertificateKey()
 	)
 
 	if GetLetsEncryptEnabled() && (tlsChain != "" || tlsKey != "") {
-		errf(
-			"%s cannot be true when %s and/or %s are also set",
-			LetsEncryptEnabledFlag(), tlsChainFlag, tlsKeyFlag,
-		)
+		errf("%s cannot be true when %s and/or %s are also set",
+			LetsEncryptEnabledFlag, TLSCertificateChainFlag, TLSCertificateKeyFlag)
 	}
 
 	if (tlsChain != "" && tlsKey == "") || (tlsChain == "" && tlsKey != "") {
-		errf(
-			"%s and %s need to both be set or unset",
-			tlsChainFlag, tlsKeyFlag,
-		)
+		errf("%s and %s need to both be set or unset",
+			TLSCertificateChainFlag, TLSCertificateKeyFlag)
 	}
 
 	// http-client.insecure-outgoing
 	if GetHTTPClientInsecureOutgoing() {
-		log.Warn(nil, "http-client.insecure-outgoing was set to TRUE. "+
+		log.Warnf(nil, "%s was set to TRUE. "+
 			"*****THIS SHOULD BE USED FOR TESTING ONLY, IF YOU TURN THIS ON WHILE "+
 			"IF IN DOUBT, STOP YOUR SERVER *NOW* AND ADJUST YOUR CONFIGURATION!*****",
-		)
+			HTTPClientInsecureOutgoingFlag)
+	}
+
+	// thumb size recommendations,
+	// beyond which we log.Warn().
+	const minThumb = 32
+	const minThumbRecc = 256
+	const maxThumbRecc = 1024
+
+	// Get and check configured max thumb size.
+	switch max := GetMediaThumbMaxPixels(); {
+	case max < minThumb:
+		errf("%s < 32 is not a useable thumbsize", MediaThumbMaxPixelsFlag, max)
+	case max < minThumbRecc:
+		log.Warnf(nil, "%s smaller than min recommended thumbsize %d", MediaThumbMaxPixelsFlag, minThumbRecc)
+	case max > maxThumbRecc:
+		log.Warnf(nil, "%s larger than max recommended thumbsize %d", MediaThumbMaxPixelsFlag, maxThumbRecc)
 	}
 
 	return errs.Combine()

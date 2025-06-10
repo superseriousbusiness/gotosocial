@@ -25,6 +25,7 @@ import (
 	"codeberg.org/gruf/go-kv"
 	"codeberg.org/gruf/go-runners"
 
+	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -225,6 +226,7 @@ func (p *ProcessingMedia) store(ctx context.Context) error {
 	if width > 0 && height > 0 {
 		// Determine thumbnail dimens to use.
 		thumbWidth, thumbHeight := thumbSize(
+			config.GetMediaThumbMaxPixels(),
 			width,
 			height,
 			aspect,
