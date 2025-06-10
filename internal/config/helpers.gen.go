@@ -39,7 +39,7 @@ func (cfg *Configuration) RegisterFlags(flags *pflag.FlagSet) {
 	flags.String("landing-page-user", cfg.LandingPageUser, "the user that should be shown on the instance's landing page")
 	flags.String("host", cfg.Host, "Hostname to use for the server (eg., example.org, gotosocial.whatever.com). DO NOT change this on a server that's already run!")
 	flags.String("account-domain", cfg.AccountDomain, "Domain to use in account names (eg., example.org, whatever.com). If not set, will default to the setting for host. DO NOT change this on a server that's already run!")
-	flags.String("protocol", cfg.Protocol, "Protocol to use for the REST api of the server (only use http if you are debugging or behind a reverse proxy!)")
+	flags.String("protocol", cfg.Protocol, "Protocol to use for the REST api of the server (only use http if you are debugging; https should be used even if running behind a reverse proxy!)")
 	flags.String("bind-address", cfg.BindAddress, "Bind address to use for the GoToSocial server (eg., 0.0.0.0, 172.138.0.9, [::], localhost). For ipv6, enclose the address in square brackets, eg [2001:db8::fed1]. Default binds to all interfaces.")
 	flags.Int("port", cfg.Port, "Port to use for GoToSocial. Change this to 443 if you're running the binary directly on the host machine.")
 	flags.StringSlice("trusted-proxies", cfg.TrustedProxies, "Proxies to trust when parsing x-forwarded headers into real IPs.")
