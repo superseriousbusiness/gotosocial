@@ -2782,7 +2782,10 @@ func (c *Converter) ThemesToAPIThemes(themes []*gtsmodel.Theme) []apimodel.Theme
 // into an apimodel interaction policy.
 //
 // Provided status can be nil to convert a
-// policy without a particular status in mind.
+// policy without a particular status in mind,
+// but ***if status is nil then sub-policies
+// CanLike, CanReply, and CanAnnounce on
+// the given policy must *not* be nil.***
 //
 // RequestingAccount can also be nil for
 // unauthorized requests (web, public api etc).
@@ -2792,19 +2795,54 @@ func (c *Converter) InteractionPolicyToAPIInteractionPolicy(
 	status *gtsmodel.Status,
 	requester *gtsmodel.Account,
 ) (*apimodel.InteractionPolicy, error) {
-	apiPolicy := &apimodel.InteractionPolicy{
-		CanFavourite: apimodel.PolicyRules{
+	apiPolicy := new(apimodel.InteractionPolicy)
+
+	// gtsmodel CanLike -> apimodel CanFavourite
+	if policy.CanLike != nil {
+		// Use the set CanLike value.
+		apiPolicy.CanFavourite = apimodel.PolicyRules{
 			AutomaticApproval: policyValsToAPIPolicyVals(policy.CanLike.AutomaticApproval),
 			ManualApproval:    policyValsToAPIPolicyVals(policy.CanLike.ManualApproval),
-		},
-		CanReply: apimodel.PolicyRules{
+		}
+	} else {
+		// Use default CanLike value for this vis.
+		pCanLike := gtsmodel.DefaultCanLikeFor(status.Visibility)
+		apiPolicy.CanFavourite = apimodel.PolicyRules{
+			AutomaticApproval: policyValsToAPIPolicyVals(pCanLike.AutomaticApproval),
+			ManualApproval:    policyValsToAPIPolicyVals(pCanLike.ManualApproval),
+		}
+	}
+
+	// gtsmodel CanReply -> apimodel CanReply
+	if policy.CanReply != nil {
+		// Use the set CanReply value.
+		apiPolicy.CanReply = apimodel.PolicyRules{
 			AutomaticApproval: policyValsToAPIPolicyVals(policy.CanReply.AutomaticApproval),
 			ManualApproval:    policyValsToAPIPolicyVals(policy.CanReply.ManualApproval),
-		},
-		CanReblog: apimodel.PolicyRules{
+		}
+	} else {
+		// Use default CanReply value for this vis.
+		pCanReply := gtsmodel.DefaultCanReplyFor(status.Visibility)
+		apiPolicy.CanReply = apimodel.PolicyRules{
+			AutomaticApproval: policyValsToAPIPolicyVals(pCanReply.AutomaticApproval),
+			ManualApproval:    policyValsToAPIPolicyVals(pCanReply.ManualApproval),
+		}
+	}
+
+	// gtsmodel CanAnnounce -> apimodel CanReblog
+	if policy.CanAnnounce != nil {
+		// Use the set CanAnnounce value.
+		apiPolicy.CanReblog = apimodel.PolicyRules{
 			AutomaticApproval: policyValsToAPIPolicyVals(policy.CanAnnounce.AutomaticApproval),
 			ManualApproval:    policyValsToAPIPolicyVals(policy.CanAnnounce.ManualApproval),
-		},
+		}
+	} else {
+		// Use default CanAnnounce value for this vis.
+		pCanAnnounce := gtsmodel.DefaultCanAnnounceFor(status.Visibility)
+		apiPolicy.CanReblog = apimodel.PolicyRules{
+			AutomaticApproval: policyValsToAPIPolicyVals(pCanAnnounce.AutomaticApproval),
+			ManualApproval:    policyValsToAPIPolicyVals(pCanAnnounce.ManualApproval),
+		}
 	}
 
 	defer func() {

@@ -84,8 +84,8 @@ func (f *Filter) StatusLikeable(
 	}
 
 	switch {
-	// If status has policy set, check against that.
-	case status.InteractionPolicy != nil:
+	// If status has canLike sub-policy set, check against that.
+	case status.InteractionPolicy != nil && status.InteractionPolicy.CanLike != nil:
 		return f.checkPolicy(
 			ctx,
 			requester,
@@ -95,19 +95,18 @@ func (f *Filter) StatusLikeable(
 
 	// If status is local and has no policy set,
 	// check against the default policy for this
-	// visibility, as we're interaction-policy aware.
+	// visibility, as we're canLike sub-policy aware.
 	case *status.Local:
-		policy := gtsmodel.DefaultInteractionPolicyFor(status.Visibility)
 		return f.checkPolicy(
 			ctx,
 			requester,
 			status,
-			policy.CanLike,
+			gtsmodel.DefaultCanLikeFor(status.Visibility),
 		)
 
 	// Otherwise, assume the status is from an
 	// instance that does not use / does not care
-	// about interaction policies, and just return OK.
+	// about canLike sub-policy, and just return OK.
 	default:
 		return &gtsmodel.PolicyCheckResult{
 			Permission: gtsmodel.PolicyPermissionAutomaticApproval,
@@ -235,8 +234,8 @@ func (f *Filter) StatusReplyable(
 	}
 
 	switch {
-	// If status has policy set, check against that.
-	case status.InteractionPolicy != nil:
+	// If status has canReply sub-policy set, check against that.
+	case status.InteractionPolicy != nil && status.InteractionPolicy.CanReply != nil:
 		return f.checkPolicy(
 			ctx,
 			requester,
@@ -245,20 +244,19 @@ func (f *Filter) StatusReplyable(
 		)
 
 	// If status is local and has no policy set,
-	// check against the default policy for this
-	// visibility, as we're interaction-policy aware.
+	// check against the default canReply for this
+	// visibility, as we're canReply sub-policy aware.
 	case *status.Local:
-		policy := gtsmodel.DefaultInteractionPolicyFor(status.Visibility)
 		return f.checkPolicy(
 			ctx,
 			requester,
 			status,
-			policy.CanReply,
+			gtsmodel.DefaultCanReplyFor(status.Visibility),
 		)
 
 	// Otherwise, assume the status is from an
 	// instance that does not use / does not care
-	// about interaction policies, and just return OK.
+	// about canReply sub-policy, and just return OK.
 	default:
 		return &gtsmodel.PolicyCheckResult{
 			Permission: gtsmodel.PolicyPermissionAutomaticApproval,
@@ -297,8 +295,8 @@ func (f *Filter) StatusBoostable(
 	}
 
 	switch {
-	// If status has policy set, check against that.
-	case status.InteractionPolicy != nil:
+	// If status has canAnnounce sub-policy set, check against that.
+	case status.InteractionPolicy != nil && status.InteractionPolicy.CanAnnounce != nil:
 		return f.checkPolicy(
 			ctx,
 			requester,
@@ -319,7 +317,7 @@ func (f *Filter) StatusBoostable(
 		)
 
 	// Status is from an instance that does not use
-	// or does not care about interaction policies.
+	// or does not care about canAnnounce sub-policy.
 	// We can boost it if it's unlisted or public.
 	case status.Visibility == gtsmodel.VisibilityPublic ||
 		status.Visibility == gtsmodel.VisibilityUnlocked:
@@ -340,7 +338,7 @@ func (f *Filter) checkPolicy(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	status *gtsmodel.Status,
-	rules gtsmodel.PolicyRules,
+	rules *gtsmodel.PolicyRules,
 ) (*gtsmodel.PolicyCheckResult, error) {
 
 	// Wrap context to be able to
@@ -349,8 +347,8 @@ func (f *Filter) checkPolicy(
 	fctx.Context = ctx
 
 	// Check if requester matches a PolicyValue
-	// to be always allowed to do this.
-	matchAlways, matchAlwaysValue, err := f.matchPolicy(fctx,
+	// to be automatically approved for this.
+	matchAutomatic, matchAutomaticValue, err := f.matchPolicy(fctx,
 		requester,
 		status,
 		rules.AutomaticApproval,
@@ -360,40 +358,40 @@ func (f *Filter) checkPolicy(
 	}
 
 	// Check if requester matches a PolicyValue
-	// to be allowed to do this pending approval.
-	matchWithApproval, _, err := f.matchPolicy(fctx,
+	// to be manually approved for this.
+	matchManual, _, err := f.matchPolicy(fctx,
 		requester,
 		status,
 		rules.ManualApproval,
 	)
 	if err != nil {
-		return nil, gtserror.Newf("error checking policy approval match: %w", err)
+		return nil, gtserror.Newf("error checking policy match: %w", err)
 	}
 
 	switch {
 
 	// Prefer explicit match,
-	// prioritizing "always".
-	case matchAlways == explicit:
+	// prioritizing automatic.
+	case matchAutomatic == explicit:
 		return &gtsmodel.PolicyCheckResult{
 			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
-			PermissionMatchedOn: &matchAlwaysValue,
+			PermissionMatchedOn: &matchAutomaticValue,
 		}, nil
 
-	case matchWithApproval == explicit:
+	case matchManual == explicit:
 		return &gtsmodel.PolicyCheckResult{
 			Permission: gtsmodel.PolicyPermissionManualApproval,
 		}, nil
 
 	// Then try implicit match,
-	// prioritizing "always".
-	case matchAlways == implicit:
+	// prioritizing automatic.
+	case matchAutomatic == implicit:
 		return &gtsmodel.PolicyCheckResult{
 			Permission:          gtsmodel.PolicyPermissionAutomaticApproval,
-			PermissionMatchedOn: &matchAlwaysValue,
+			PermissionMatchedOn: &matchAutomaticValue,
 		}, nil
 
-	case matchWithApproval == implicit:
+	case matchManual == implicit:
 		return &gtsmodel.PolicyCheckResult{
 			Permission: gtsmodel.PolicyPermissionManualApproval,
 		}, nil
