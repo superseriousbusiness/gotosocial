@@ -120,7 +120,7 @@ func (p *Processor) ExportBlocks(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 ) ([][]string, gtserror.WithCode) {
-	blocks, err := p.state.DB.GetAccountBlocks(ctx, requester.ID, nil)
+	blocks, err := p.state.DB.GetAccountBlocking(ctx, requester.ID, nil)
 	if err != nil && !errors.Is(err, db.ErrNoEntries) {
 		err = gtserror.Newf("db error getting blocks: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)

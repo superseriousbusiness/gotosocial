@@ -1120,7 +1120,7 @@ func (p *fediAPI) DeleteAccount(ctx context.Context, fMsg *messages.FromFediAPI)
 	// Remove any entries authored by account from timelines.
 	p.surface.removeTimelineEntriesByAccount(account.ID)
 
-	// First perform the actual account deletion.
+	// And finally, perform the actual account deletion synchronously.
 	if err := p.account.Delete(ctx, account, account.ID); err != nil {
 		log.Errorf(ctx, "error deleting account: %v", err)
 	}

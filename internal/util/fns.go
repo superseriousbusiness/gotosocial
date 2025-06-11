@@ -32,23 +32,27 @@ func Must(fn func()) {
 		panic("nil func")
 	}
 	for !func() (done bool) {
-		defer func() {
-			if r := recover(); r != nil {
-				// Gather calling func frames.
-				pcs := make([]uintptr, 10)
-				n := runtime.Callers(3, pcs)
-				i := runtime.CallersFrames(pcs[:n])
-				c := gatherFrames(i, n)
-
-				const msg = "recovered panic: %v\n\n%s\n"
-				fmt.Fprintf(os.Stderr, msg, r, c.String())
-			}
-		}()
+		defer Recover()
 		fn()
 		done = true
 		return
 	}() { //nolint
 	}
+}
+
+// Recover wraps runtime.recover() to dump the current
+// stack to stderr on panic and return the panic value.
+func Recover() any {
+	if r := recover(); r != nil {
+		// Gather calling func frames.
+		pcs := make([]uintptr, 10)
+		n := runtime.Callers(3, pcs)
+		i := runtime.CallersFrames(pcs[:n])
+		c := gatherFrames(i, n)
+		fmt.Fprintf(os.Stderr, "recovered panic: %v\n\n%s\n", r, c.String())
+		return r
+	}
+	return nil
 }
 
 // gatherFrames collates runtime frames from a frame iterator.

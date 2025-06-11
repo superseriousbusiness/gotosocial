@@ -137,7 +137,7 @@ func (p *Processor) BlocksGet(
 	requestingAccount *gtsmodel.Account,
 	page *paging.Page,
 ) (*apimodel.PageableResponse, gtserror.WithCode) {
-	blocks, err := p.state.DB.GetAccountBlocks(ctx,
+	blocks, err := p.state.DB.GetAccountBlocking(ctx,
 		requestingAccount.ID,
 		page,
 	)

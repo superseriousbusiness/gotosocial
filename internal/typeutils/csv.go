@@ -50,7 +50,7 @@ func (c *Converter) AccountToExportStats(
 		)
 	}
 
-	blockingCount, err := c.state.DB.CountAccountBlocks(ctx, a.ID)
+	blockingCount, err := c.state.DB.CountAccountBlocking(ctx, a.ID)
 	if err != nil {
 		return nil, gtserror.Newf(
 			"error counting lists for account %s: %w",

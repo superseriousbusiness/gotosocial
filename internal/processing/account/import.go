@@ -298,7 +298,7 @@ func importBlocksAsyncF(
 				err        error
 			)
 
-			prevBlocks, err = p.state.DB.GetAccountBlocks(ctx, requester.ID, nil)
+			prevBlocks, err = p.state.DB.GetAccountBlocking(ctx, requester.ID, nil)
 			if err != nil {
 				log.Errorf(ctx, "db error getting blocks: %v", err)
 				return

@@ -176,14 +176,20 @@ type Relationship interface {
 	// GetAccountFollowRequestingIDs is like GetAccountFollowRequesting, but returns just IDs.
 	GetAccountFollowRequestingIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
 
-	// GetAccountBlocks returns all blocks originating from the given account, with given optional paging parameters.
-	GetAccountBlocks(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.Block, error)
+	// GetAccountBlocking returns all blocks originating from the given account, with given optional paging parameters.
+	GetAccountBlocking(ctx context.Context, accountID string, paging *paging.Page) ([]*gtsmodel.Block, error)
 
-	// GetAccountBlockIDs is like GetAccountBlocks, but returns just IDs.
-	GetAccountBlockIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
+	// GetAccountBlockingIDs is like GetAccountBlocking, but returns just IDs.
+	GetAccountBlockingIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
 
-	// CountAccountBlocks counts the number of blocks owned by the given account.
-	CountAccountBlocks(ctx context.Context, accountID string) (int, error)
+	// GetAccountBlockedBy returns all blocks targeting the given account, with optional paging parameters.
+	GetAccountBlockedBy(ctx context.Context, accountID string, page *paging.Page) ([]*gtsmodel.Block, error)
+
+	// GetAccountBlockedByIDs is like GetAccountBlockedBy, but returns just IDs.
+	GetAccountBlockedByIDs(ctx context.Context, accountID string, page *paging.Page) ([]string, error)
+
+	// CountAccountBlocking counts the number of blocks owned by the given account.
+	CountAccountBlocking(ctx context.Context, accountID string) (int, error)
 
 	// GetNote gets a private note from a source account on a target account, if it exists.
 	GetNote(ctx context.Context, sourceAccountID string, targetAccountID string) (*gtsmodel.AccountNote, error)

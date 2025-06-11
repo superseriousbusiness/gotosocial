@@ -1093,11 +1093,13 @@ func (p *clientAPI) DeleteAccountOrUser(ctx context.Context, cMsg *messages.From
 		p.state.Caches.Timelines.List.Delete(listID)
 	}
 
+	// Federate out a delete activity targeting account to remote servers.
 	if err := p.federate.DeleteAccount(ctx, cMsg.Target); err != nil {
 		log.Errorf(ctx, "error federating account delete: %v", err)
 	}
 
-	if err := p.account.Delete(ctx, cMsg.Target, originID); err != nil {
+	// And finally, perform the actual account deletion synchronously.
+	if err := p.account.Delete(ctx, account, originID); err != nil {
 		log.Errorf(ctx, "error deleting account: %v", err)
 	}
 

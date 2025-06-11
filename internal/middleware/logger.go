@@ -20,15 +20,14 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	"runtime"
 	"strings"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"codeberg.org/gruf/go-bytesize"
-	"codeberg.org/gruf/go-errors/v2"
 	"codeberg.org/gruf/go-kv"
 	"github.com/gin-gonic/gin"
 )
@@ -49,23 +48,18 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 			// Get request context.
 			ctx := c.Request.Context()
 
-			if r := recover(); r != nil {
+			// Recover from any panics
+			// and dump stack to stderr.
+			if r := util.Recover(); r != nil {
+
 				if code == 0 {
 					// No response was written, send a generic Internal Error
 					c.Writer.WriteHeader(http.StatusInternalServerError)
 				}
 
-				// Append panic information to the request ctx
+				// Append panic information to the request.
 				err := fmt.Errorf("recovered panic: %v", r)
 				_ = c.Error(err)
-
-				// Dump a stacktrace to error log
-				pcs := make([]uintptr, 10)
-				n := runtime.Callers(3, pcs)
-				iter := runtime.CallersFrames(pcs[:n])
-				callers := errors.Callers(gatherFrames(iter, n))
-				log.WithContext(c.Request.Context()).
-					WithField("stacktrace", callers).Error(err)
 			}
 
 			// Initialize the logging fields
@@ -134,7 +128,7 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 				}
 			}
 
-			// Generate a nicer looking bytecount
+			// Generate a nicer looking bytecount.
 			size := bytesize.Size(c.Writer.Size()) // #nosec G115 -- Just logging
 
 			// Write log entry with status text + body size.
@@ -151,20 +145,4 @@ func Logger(logClientIP bool) gin.HandlerFunc {
 // contains sensitive data that shouldn't be logged.
 func sensitiveQuery(query string) bool {
 	return strings.Contains(query, "token")
-}
-
-// gatherFrames gathers runtime frames from a frame iterator.
-func gatherFrames(iter *runtime.Frames, n int) []runtime.Frame {
-	if iter == nil {
-		return nil
-	}
-	frames := make([]runtime.Frame, 0, n)
-	for {
-		f, ok := iter.Next()
-		if !ok {
-			break
-		}
-		frames = append(frames, f)
-	}
-	return frames
 }
