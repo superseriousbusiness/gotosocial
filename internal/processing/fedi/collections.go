@@ -83,8 +83,8 @@ func (p *Processor) OutboxGet(
 
 	switch {
 
-	case *receivingAcct.Settings.HideCollections ||
-		receivingAcct.IsInstance():
+	case receivingAcct.IsInstance() ||
+		*receivingAcct.Settings.HideCollections:
 		// If account that hides collections, or instance
 		// account (ie., can't post / have relationships),
 		// just return barest stub of collection.
