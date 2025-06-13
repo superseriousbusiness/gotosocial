@@ -249,30 +249,14 @@ select {
 }
 
 /*
-	Restyle unordered lists; outdent
-	and replace dot with orange dot.
+	Restyle lists.
 */
 ul {
-	padding-left: 2.5rem;
-	list-style: none;
-
-	li::before {
-		content: "\2022";
+	li::marker {
 		color: $border-accent;
-		font-weight: bold;
-		display: inline-block;
-		width: 1.5rem;
-		margin-left: -1.5rem;
 	}
 }
-
-/*
-	Mirror the same styling a little bit
-	for ordered lists by making marker bold.
-*/ 
 ol {
-	padding-left: 2.5rem;
-
 	li::marker {
 		font-weight: bold;
 	}
