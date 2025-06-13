@@ -379,7 +379,7 @@ func init() {
 					if _, err := tx.ExecContext(
 						ctx,
 						"ALTER TABLE ? DROP CONSTRAINT IF EXISTS ?",
-						bun.Ident("public.accounts"),
+						bun.Ident("accounts"),
 						bun.Safe(spec.old),
 					); err != nil {
 						return err
@@ -388,7 +388,7 @@ func init() {
 					if _, err := tx.ExecContext(
 						ctx,
 						"ALTER TABLE ? ADD CONSTRAINT ? UNIQUE(?)",
-						bun.Ident("public.accounts"),
+						bun.Ident("accounts"),
 						bun.Safe(spec.new),
 						bun.Safe(strings.Join(spec.columns, ",")),
 					); err != nil {

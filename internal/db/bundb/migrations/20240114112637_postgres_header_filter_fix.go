@@ -86,8 +86,8 @@ func init() {
 		// query from running.
 		if db.Dialect().Name() == dialect.PG {
 			for _, table := range []string{
-				"public.header_filter_allows",
-				"public.header_filter_blocks",
+				"header_filter_allows",
+				"header_filter_blocks",
 			} {
 				// Just swallow any errors
 				// here, we're not bothered.

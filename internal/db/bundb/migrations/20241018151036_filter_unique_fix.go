@@ -107,7 +107,7 @@ func init() {
 				if _, err := tx.ExecContext(
 					ctx,
 					"ALTER TABLE ? RENAME CONSTRAINT ? TO ?",
-					bun.Ident("public.filters"),
+					bun.Ident("filters"),
 					bun.Safe("new_filters_pkey"),
 					bun.Safe("filters_pkey"),
 				); err != nil {
