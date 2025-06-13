@@ -4,91 +4,92 @@
 #
 # For GoToSocial we mostly take the default linters, but we add a few to catch style issues as well.
 
+version: "2"
 # options for analysis running
 run:
   # include test files or not, default is true
   tests: false
-  # timeout for analysis, e.g. 30s, 5m, default is 1m
-  timeout: 5m
-
 linters:
   # enable some extra linters, see here for the list: https://golangci-lint.run/usage/linters/
   enable:
     - gocritic
-    - gofmt
     - goheader
     - gosec
     - nilerr
     - revive
+  # https://golangci-lint.run/usage/linters/#linters-configuration
+  settings:
+    # https://golangci-lint.run/usage/linters/#goheader
+    goheader:
+      template: |-
+        GoToSocial
+        Copyright (C) GoToSocial Authors admin@gotosocial.org
+        SPDX-License-Identifier: AGPL-3.0-or-later
 
-# https://golangci-lint.run/usage/linters/#linters-configuration
-linters-settings:
-  # https://golangci-lint.run/usage/linters/#goheader
-  goheader:
-    template: |-
-      GoToSocial
-      Copyright (C) GoToSocial Authors admin@gotosocial.org
-      SPDX-License-Identifier: AGPL-3.0-or-later
-      
-      This program is free software: you can redistribute it and/or modify
-      it under the terms of the GNU Affero General Public License as published by
-      the Free Software Foundation, either version 3 of the License, or
-      (at your option) any later version.
+        This program is free software: you can redistribute it and/or modify
+        it under the terms of the GNU Affero General Public License as published by
+        the Free Software Foundation, either version 3 of the License, or
+        (at your option) any later version.
 
-      This program is distributed in the hope that it will be useful,
-      but WITHOUT ANY WARRANTY; without even the implied warranty of
-      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-      GNU Affero General Public License for more details.
+        This program is distributed in the hope that it will be useful,
+        but WITHOUT ANY WARRANTY; without even the implied warranty of
+        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        GNU Affero General Public License for more details.
 
-      You should have received a copy of the GNU Affero General Public License
-      along with this program.  If not, see <http://www.gnu.org/licenses/>.
-  # https://golangci-lint.run/usage/linters/#govet
-  govet:
-    disable:
-      - composites
-  # https://golangci-lint.run/usage/linters/#revive
-  revive:
-    rules:
-      # Enable most default rules.
-      # See: https://github.com/mgechev/revive/blob/master/defaults.toml
-      - name: blank-imports
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: dot-imports
-      - name: error-naming
-      - name: error-return
-      - name: error-strings
-      - name: exported
-      - name: if-return
-      - name: increment-decrement
-      - name: var-naming
-      - name: var-declaration
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: time-naming
-      - name: unexported-return
-      - name: indent-error-flow
-      - name: errorf
-      - name: empty-block
-      - name: superfluous-else
-      - name: unreachable-code
-      # Disable below rules.
-      - name: redefines-builtin-id 
-        disabled: true # This one is just annoying.
-      - name: unused-parameter     
-        disabled: true # We often pass parameters to fulfil interfaces.
-  # https://golangci-lint.run/usage/linters/#staticcheck
-  staticcheck:
-    # Enable all checks, but disable SA1012: nil context passing.
-    # See: https://staticcheck.io/docs/configuration/options/#checks
-    checks: ["all", "-SA1012"]
-
-issues:
-  exclude-rules:
-    # Exclude VSCode custom folding region comments in files that use them.
-    # Already fixed in go-critic and can be removed next time go-critic is updated.
-    - linters:
-        - gocritic
-      path: internal/db/filter.go
-      text: 'commentFormatting: put a space between `//` and comment text'
+        You should have received a copy of the GNU Affero General Public License
+        along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    # https://golangci-lint.run/usage/linters/#govet
+    govet:
+      disable:
+        - composites
+    # https://golangci-lint.run/usage/linters/#revive
+    revive:
+      rules:
+        # Enable most default rules.
+        # See: https://github.com/mgechev/revive/blob/master/defaults.toml
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: exported
+        - name: if-return
+        - name: increment-decrement
+        - name: var-naming
+        - name: var-declaration
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: time-naming
+        - name: unexported-return
+        - name: indent-error-flow
+        - name: errorf
+        - name: empty-block
+        - name: superfluous-else
+        - name: unreachable-code
+        # Disable below rules.
+        - name: redefines-builtin-id
+          disabled: true
+        - name: unused-parameter
+          disabled: true
+    # https://golangci-lint.run/usage/linters/#staticcheck
+    staticcheck:
+      # Enable all checks, but disable SA1012: nil context passing.
+      # See: https://staticcheck.io/docs/configuration/options/#checks
+      checks:
+        - SA*
+        - -SA1012
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+formatters:
+  enable:
+    - gofmt
+  exclusions:
+    generated: lax
