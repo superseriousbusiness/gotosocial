@@ -141,6 +141,14 @@ type ActivityStreamsGroup interface {
 	// GetActivityStreamsUrl returns the "url" property if it exists, and nil
 	// otherwise.
 	GetActivityStreamsUrl() ActivityStreamsUrlProperty
+	// GetGoToSocialHidesCcPublicFromUnauthedWeb returns the
+	// "hidesCcPublicFromUnauthedWeb" property if it exists, and nil
+	// otherwise.
+	GetGoToSocialHidesCcPublicFromUnauthedWeb() GoToSocialHidesCcPublicFromUnauthedWebProperty
+	// GetGoToSocialHidesToPublicFromUnauthedWeb returns the
+	// "hidesToPublicFromUnauthedWeb" property if it exists, and nil
+	// otherwise.
+	GetGoToSocialHidesToPublicFromUnauthedWeb() GoToSocialHidesToPublicFromUnauthedWebProperty
 	// GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 	GetJSONLDId() JSONLDIdProperty
 	// GetJSONLDType returns the "type" property if it exists, and nil
@@ -268,6 +276,12 @@ type ActivityStreamsGroup interface {
 	SetActivityStreamsUpdated(i ActivityStreamsUpdatedProperty)
 	// SetActivityStreamsUrl sets the "url" property.
 	SetActivityStreamsUrl(i ActivityStreamsUrlProperty)
+	// SetGoToSocialHidesCcPublicFromUnauthedWeb sets the
+	// "hidesCcPublicFromUnauthedWeb" property.
+	SetGoToSocialHidesCcPublicFromUnauthedWeb(i GoToSocialHidesCcPublicFromUnauthedWebProperty)
+	// SetGoToSocialHidesToPublicFromUnauthedWeb sets the
+	// "hidesToPublicFromUnauthedWeb" property.
+	SetGoToSocialHidesToPublicFromUnauthedWeb(i GoToSocialHidesToPublicFromUnauthedWebProperty)
 	// SetJSONLDId sets the "id" property.
 	SetJSONLDId(i JSONLDIdProperty)
 	// SetJSONLDType sets the "type" property.

@@ -272,6 +272,14 @@ type Account struct {
 	//
 	// Local accounts only.
 	Stats *AccountStats `bun:"-"`
+
+	// True if the actor hides to-public statusables
+	// from unauthenticated public access via the web.
+	HidesToPublicFromUnauthedWeb *bool `bun:",nullzero,notnull,default:false"`
+
+	// True if the actor hides cc-public statusables
+	// from unauthenticated public access via the web.
+	HidesCcPublicFromUnauthedWeb *bool `bun:",nullzero,notnull,default:false"`
 }
 
 // UsernameDomain returns account @username@domain (missing domain if local).

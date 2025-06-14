@@ -147,6 +147,8 @@ import (
 	propertycanlike "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canlike"
 	propertycanquote "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canquote"
 	propertycanreply "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canreply"
+	propertyhidesccpublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidesccpublicfromunauthedweb"
+	propertyhidestopublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestopublicfromunauthedweb"
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
@@ -341,6 +343,8 @@ func init() {
 	propertycanlike.SetManager(mgr)
 	propertycanquote.SetManager(mgr)
 	propertycanreply.SetManager(mgr)
+	propertyhidesccpublicfromunauthedweb.SetManager(mgr)
+	propertyhidestopublicfromunauthedweb.SetManager(mgr)
 	propertyinteractingobject.SetManager(mgr)
 	propertyinteractionpolicy.SetManager(mgr)
 	propertyinteractiontarget.SetManager(mgr)

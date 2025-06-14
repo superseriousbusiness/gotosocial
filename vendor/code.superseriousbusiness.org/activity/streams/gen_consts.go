@@ -353,6 +353,12 @@ var ActivityStreamsGeneratorPropertyName string = "generator"
 // ActivityStreamsHeightPropertyName is the string literal of the name for the height property in the ActivityStreams vocabulary.
 var ActivityStreamsHeightPropertyName string = "height"
 
+// GoToSocialHidesCcPublicFromUnauthedWebPropertyName is the string literal of the name for the hidesCcPublicFromUnauthedWeb property in the GoToSocial vocabulary.
+var GoToSocialHidesCcPublicFromUnauthedWebPropertyName string = "hidesCcPublicFromUnauthedWeb"
+
+// GoToSocialHidesToPublicFromUnauthedWebPropertyName is the string literal of the name for the hidesToPublicFromUnauthedWeb property in the GoToSocial vocabulary.
+var GoToSocialHidesToPublicFromUnauthedWebPropertyName string = "hidesToPublicFromUnauthedWeb"
+
 // ActivityStreamsHrefPropertyName is the string literal of the name for the href property in the ActivityStreams vocabulary.
 var ActivityStreamsHrefPropertyName string = "href"
 
