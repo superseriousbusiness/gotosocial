@@ -399,6 +399,10 @@ func (c *Converter) AccountToAS(
 		}
 	}
 
+	// Web visibility for statuses.
+	ap.SetHidesToPublicFromUnauthedWeb(accountable, *a.HidesToPublicFromUnauthedWeb)
+	ap.SetHidesCcPublicFromUnauthedWeb(accountable, *a.HidesCcPublicFromUnauthedWeb)
+
 	return accountable, nil
 }
 

@@ -89,7 +89,8 @@ func init() {
 			allSettings := []*oldmodel.AccountSettings{}
 			if err := tx.
 				NewSelect().
-				Model(allSettings).
+				Model(&allSettings).
+				Column("account_id", "web_visibility").
 				Scan(ctx); err != nil {
 				return fmt.Errorf("error selecting settings: %w", err)
 			}
@@ -99,17 +100,24 @@ func init() {
 				// Derive web visibility.
 				var hideToPublic, hideCcPublic bool
 				switch settings.WebVisibility {
-				case common.VisibilityUnlocked:
-					hideToPublic = false
-					hideCcPublic = false
-				case common.VisibilityPublic:
-					hideToPublic = false
-					hideCcPublic = true
+
+				// Show nothing.
 				case common.VisibilityNone:
 					hideToPublic = true
 					hideCcPublic = true
+
+				// Show public only (gts default).
+				case common.VisibilityPublic:
+					hideToPublic = false
+					hideCcPublic = true
+
+				// Show public + unlisted.
+				case common.VisibilityUnlocked:
+					hideToPublic = false
+					hideCcPublic = false
+
 				default:
-					log.Warn(ctx, "local account had settings.WebVisibility != unlocked|public|none, skipping...")
+					log.Warn(ctx, "local account had settings.WebVisibility != unlocked||public||none, skipping...")
 					continue
 				}
 

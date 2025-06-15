@@ -178,6 +178,7 @@ func (suite *WrapTestSuite) TestWrapAccountableInUpdate() {
 
 	suite.Equal(`{
   "@context": [
+    "https://gotosocial.org/ns",
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
@@ -198,6 +199,8 @@ func (suite *WrapTestSuite) TestWrapAccountableInUpdate() {
     "featured": "http://localhost:8080/users/the_mighty_zork/collections/featured",
     "followers": "http://localhost:8080/users/the_mighty_zork/followers",
     "following": "http://localhost:8080/users/the_mighty_zork/following",
+    "hidesCcPublicFromUnauthedWeb": false,
+    "hidesToPublicFromUnauthedWeb": false,
     "icon": {
       "mediaType": "image/jpeg",
       "name": "a green goblin looking nasty",
