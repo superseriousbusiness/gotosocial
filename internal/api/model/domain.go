@@ -131,6 +131,9 @@ type DomainPermissionSubscription struct {
 	// If true, this domain permission subscription will "adopt" domain permissions which already exist on the instance, and which meet the following conditions: 1) they have no subscription ID (ie., they're "orphaned") and 2) they are present in the subscribed list. Such orphaned domain permissions will be given this subscription's subscription ID value.
 	// example: false
 	AdoptOrphans bool `json:"adopt_orphans"`
+	// If true, then when a list is processed, if the list does *not* contain entries that it *did* contain previously, ie., retracted entries, then domain permissions corresponding to those entries will be removed. If false, they will just be orphaned instead.
+	// example: true
+	RemoveRetracted bool `json:"remove_retracted"`
 	// Time at which the subscription was created (ISO 8601 Datetime).
 	// example: 2021-07-30T09:20:25+00:00
 	CreatedAt string `json:"created_at"`
@@ -198,6 +201,10 @@ type DomainPermissionSubscriptionRequest struct {
 	//	in the subscribed list. Such orphaned domain permissions will be given this
 	//	subscription's subscription ID value and be managed by this subscription.
 	AdoptOrphans *bool `form:"adopt_orphans" json:"adopt_orphans"`
+	// If true, then when a list is processed, if the list does *not* contain entries that
+	// it *did* contain previously, ie., retracted entries, then domain permissions
+	// corresponding to those entries will be removed. If false, they will just be orphaned instead.
+	RemoveRetracted *bool `form:"remove_retracted" json:"remove_retracted"`
 	// (Optional) username to set for basic auth when doing a fetch of URI.
 	// example: admin123
 	FetchUsername *string `form:"fetch_username" json:"fetch_username"`

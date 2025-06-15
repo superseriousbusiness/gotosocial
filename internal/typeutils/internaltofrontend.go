@@ -2212,6 +2212,7 @@ func (c *Converter) DomainPermSubToAPIDomainPermSub(
 		PermissionType:        d.PermissionType.String(),
 		AsDraft:               *d.AsDraft,
 		AdoptOrphans:          *d.AdoptOrphans,
+		RemoveRetracted:       *d.RemoveRetracted,
 		CreatedBy:             d.CreatedByAccountID,
 		CreatedAt:             util.FormatISO8601(createdAt),
 		URI:                   uri,

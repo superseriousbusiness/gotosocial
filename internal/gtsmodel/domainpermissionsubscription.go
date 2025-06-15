@@ -20,23 +20,79 @@ package gtsmodel
 import "time"
 
 type DomainPermissionSubscription struct {
-	ID                    string                   `bun:"type:CHAR(26),pk,nullzero,notnull,unique"` // ID of this item in the database.
-	Priority              uint8                    `bun:""`                                         // Priority of this subscription compared to others of the same permission type. 0-255 (higher = higher priority).
-	Title                 string                   `bun:",nullzero,unique"`                         // Moderator-set title for this list.
-	PermissionType        DomainPermissionType     `bun:",nullzero,notnull"`                        // Permission type of the subscription.
-	AsDraft               *bool                    `bun:",nullzero,notnull,default:true"`           // Create domain permission entries resulting from this subscription as drafts.
-	AdoptOrphans          *bool                    `bun:",nullzero,notnull,default:false"`          // Adopt orphaned domain permissions present in this subscription's entries.
-	CreatedByAccountID    string                   `bun:"type:CHAR(26),nullzero,notnull"`           // Account ID of the creator of this subscription.
-	CreatedByAccount      *Account                 `bun:"-"`                                        // Account corresponding to createdByAccountID.
-	URI                   string                   `bun:",nullzero,notnull,unique"`                 // URI of the domain permission list.
-	ContentType           DomainPermSubContentType `bun:",nullzero,notnull"`                        // Content type to expect from the URI.
-	FetchUsername         string                   `bun:",nullzero"`                                // Username to send when doing a GET of URI using basic auth.
-	FetchPassword         string                   `bun:",nullzero"`                                // Password to send when doing a GET of URI using basic auth.
-	FetchedAt             time.Time                `bun:"type:timestamptz,nullzero"`                // Time when fetch of URI was last attempted.
-	SuccessfullyFetchedAt time.Time                `bun:"type:timestamptz,nullzero"`                // Time when the domain permission list was last *successfuly* fetched, to be transmitted as If-Modified-Since header.
-	LastModified          time.Time                `bun:"type:timestamptz,nullzero"`                // "Last-Modified" time received from the server (if any) on last successful fetch. Used for HTTP request caching.
-	ETag                  string                   `bun:"etag,nullzero"`                            // "ETag" header last received from the server (if any) on last successful fetch. Used for HTTP request caching.
-	Error                 string                   `bun:",nullzero"`                                // If latest fetch attempt errored, this field stores the error message. Cleared on latest successful fetch.
+	// ID of this item in the database.
+	ID string `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`
+
+	// Priority of this subscription compared
+	// to others of the same permission type.
+	// 0-255 (higher = higher priority).
+	Priority uint8 `bun:""`
+
+	// Moderator-set title for this list.
+	Title string `bun:",nullzero,unique"`
+
+	// Permission type of the subscription.
+	PermissionType DomainPermissionType `bun:",nullzero,notnull"`
+
+	// Create domain permission entries
+	// resulting from this subscription as drafts.
+	AsDraft *bool `bun:",nullzero,notnull,default:true"`
+
+	// Adopt orphaned domain permissions
+	// present in this subscription's entries.
+	AdoptOrphans *bool `bun:",nullzero,notnull,default:false"`
+
+	// Account ID of the creator of this subscription.
+	CreatedByAccountID string `bun:"type:CHAR(26),nullzero,notnull"`
+
+	// Account corresponding to createdByAccountID.
+	CreatedByAccount *Account `bun:"-"`
+
+	// URI of the domain permission list.
+	URI string `bun:",nullzero,notnull,unique"`
+
+	// Content type to expect from the URI.
+	ContentType DomainPermSubContentType `bun:",nullzero,notnull"`
+
+	// Username to send when doing
+	// a GET of URI using basic auth.
+	FetchUsername string `bun:",nullzero"`
+
+	// Password to send when doing
+	// a GET of URI using basic auth.
+	FetchPassword string `bun:",nullzero"`
+
+	// Time when fetch of URI was last attempted.
+	FetchedAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// Time when the domain permission list
+	// was last *successfuly* fetched, to be
+	// transmitted as If-Modified-Since header.
+	SuccessfullyFetchedAt time.Time `bun:"type:timestamptz,nullzero"`
+
+	// "Last-Modified" time received from the
+	// server (if any) on last successful fetch.
+	// Used for HTTP request caching.
+	LastModified time.Time `bun:"type:timestamptz,nullzero"`
+
+	// "ETag" header last received from the
+	// server (if any) on last successful fetch.
+	// Used for HTTP request caching.
+	ETag string `bun:"etag,nullzero"`
+
+	// If latest fetch attempt errored,
+	// this field stores the error message.
+	// Cleared on latest successful fetch.
+	Error string `bun:",nullzero"`
+
+	// If true, then when a list is processed, if the
+	// list does *not* contain entries that it *did*
+	// contain previously, ie., retracted entries,
+	// then domain permissions corresponding to those
+	// entries will be removed.
+	//
+	// If false, they will just be orphaned instead.
+	RemoveRetracted *bool `bun:",nullzero,notnull,default:true"`
 }
 
 type DomainPermSubContentType enumType

@@ -97,6 +97,15 @@ import (
 //		type: boolean
 //		default: false
 //	-
+//		name: remove_retracted
+//		in: formData
+//		description: >-
+//			If true, then when a list is processed, if the list does *not* contain entries that
+//			it *did* contain previously, ie., retracted entries, then domain permissions
+//			corresponding to those entries will be removed. If false, they will just be orphaned instead.
+//		type: boolean
+//		default: true
+//	-
 //		name: content_type
 //		in: formData
 //		description: >-
@@ -227,6 +236,7 @@ func (m *Module) DomainPermissionSubscriptionPATCHHandler(c *gin.Context) {
 		contentType == nil &&
 		form.AsDraft == nil &&
 		form.AdoptOrphans == nil &&
+		form.RemoveRetracted == nil &&
 		form.FetchUsername == nil &&
 		form.FetchPassword == nil {
 		const errText = "no updateable fields set on request"
@@ -244,6 +254,7 @@ func (m *Module) DomainPermissionSubscriptionPATCHHandler(c *gin.Context) {
 		contentType,
 		form.AsDraft,
 		form.AdoptOrphans,
+		form.RemoveRetracted,
 		form.FetchUsername,
 		form.FetchPassword,
 	)

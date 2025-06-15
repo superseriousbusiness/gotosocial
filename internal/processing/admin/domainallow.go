@@ -176,7 +176,7 @@ func (p *Processor) deleteDomainAllow(
 		ID:             id.NewULID(),
 		TargetCategory: gtsmodel.AdminActionCategoryDomain,
 		TargetID:       domainAllow.Domain,
-		Type:           gtsmodel.AdminActionUnsuspend,
+		Type:           gtsmodel.AdminActionUnallow,
 		AccountID:      adminAcct.ID,
 	}
 

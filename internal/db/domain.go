@@ -43,6 +43,9 @@ type Domain interface {
 	// GetDomainAllows returns all instance-level domain allows currently enforced by this instance.
 	GetDomainAllows(ctx context.Context) ([]*gtsmodel.DomainAllow, error)
 
+	// GetDomainAllowsBySubscriptionID gets all domain allows that have the given subscription ID.
+	GetDomainAllowsBySubscriptionID(ctx context.Context, subscriptionID string) ([]*gtsmodel.DomainAllow, error)
+
 	// UpdateDomainAllow updates the given domain allow, setting the provided columns (empty for all).
 	UpdateDomainAllow(ctx context.Context, allow *gtsmodel.DomainAllow, columns ...string) error
 
@@ -57,6 +60,9 @@ type Domain interface {
 
 	// GetDomainBlockByID returns one instance-level domain block with the given id, if it exists.
 	GetDomainBlockByID(ctx context.Context, id string) (*gtsmodel.DomainBlock, error)
+
+	// GetDomainBlocksBySubscriptionID gets all domain blocks that have the given subscription ID.
+	GetDomainBlocksBySubscriptionID(ctx context.Context, subscriptionID string) ([]*gtsmodel.DomainBlock, error)
 
 	// GetDomainBlocks returns all instance-level domain blocks currently enforced by this instance.
 	GetDomainBlocks(ctx context.Context) ([]*gtsmodel.DomainBlock, error)

@@ -94,6 +94,15 @@ import (
 //		type: boolean
 //		default: false
 //	-
+//		name: remove_retracted
+//		in: formData
+//		description: >-
+//			If true, then when a list is processed, if the list does *not* contain entries that
+//			it *did* contain previously, ie., retracted entries, then domain permissions
+//			corresponding to those entries will be removed. If false, they will just be orphaned instead.
+//		type: boolean
+//		default: true
+//	-
 //		name: uri
 //		required: true
 //		in: formData
@@ -234,6 +243,8 @@ func (m *Module) DomainPermissionSubscriptionPOSTHandler(c *gin.Context) {
 		contentType,
 		permType,
 		asDraft,
+		form.AdoptOrphans,
+		form.RemoveRetracted,
 		util.PtrOrZero(form.FetchUsername), // Optional.
 		util.PtrOrZero(form.FetchPassword), // Optional.
 	)

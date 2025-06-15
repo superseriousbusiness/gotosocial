@@ -21,9 +21,28 @@ The subscription with the higher priority is the one that now creates and manage
 
 If the subscription with the higher priority is removed, then the next time all the subscriptions are fetched, "Less Important List" will create (or take ownership of) the domain allow instead.
 
+## Retractions
+
+Sometimes, an entry that was present on a subscribed block or allow list will be removed later by the curator(s) of that list. When this happens, the removed domain permission entry can be said to have been "retracted".
+
+For example, say your instance subscribes to one block list, and that block list contains an entry for `baddies.example.org`. A corresponding domain block for `baddies.example.org` has therefore been created in your database, with the subscription ID of your block list. In other words, the domain block is in force, and is managed by your block list subscription.
+
+At some point, your instance fetches the list again, and this time it sees that the entry for `baddies.example.org` is no longer present in the list, because it has been removed by the list curator(s) (perhaps the admins turned their policies around, or the instance was shut down, etc). Thus, according to your instance, the block for `baddies.example.org` is now a "retracted" domain permission entry.
+
+If the domain permission subscription is set to "Remove retracted permissions," then the now-retracted domain block will be removed from the database, and will no longer be enforced. In this example, that means your instance will start federating (again) with `baddies.example.org`.
+
+If the domain permission subscription is *not* set to "Remove retracted permissions," then instead of the retracted block being removed from the database, it will be kept in the database but "orphaned" -- ie., it will still be in force, but it will be marked as no longer being managed by the subscription. In this example, that means your instance will keep blocking `baddies.example.org`.
+
+!!!! Note "Retracted permissions and other subscriptions"
+    When a permission is retracted and removed from the database, but an entry for it exists on the list of *another* subscription of a lower priority than the one it was retracted from, then the permission will be recreated as an entry managed by the lower priority list.
+
+    For example, say you subscribe to List1 at priority 255, and List2 at priority 128, and `baddies.example.org` is present on both lists. That means the domain block entry will be managed by List1. If List1 later *retracts* the entry, it will be removed from your database (assuming you have "Remove retracted permissions" set). However, as soon as List2 is checked (usually seconds after List1), then an entry for `baddies.example.org` will be created again, but managed by List2 this time.
+
+    In other words, it is only when an entry is retracted from *every list you subscribe to* that it will truly be removed.
+
 ## Orphan Permissions
 
-Domain permissions (blocks or allows) that are not currently managed by a domain permission subscription are considered "orphan" permissions. This includes permissions that an admin created in the settings panel by hand, or which were imported manually via the import/export page.
+Domain permissions (blocks or allows) that are not currently managed by a domain permission subscription are considered "orphan" permissions. This includes permissions that an admin created in the settings panel by hand, entries which were imported manually via the import/export page, or entries that belonged to a subscription but have since been retracted but not removed.
 
 If you wish, when creating a domain permission subscription, you can set ["adopt orphans"](./settings.md#adopt-orphan-permissions) to true for that subscription. If a domain permission subscription that is set to adopt orphans encounters an orphan permission which is *also present on the list at the subscription's URI*, then it will "adopt" the orphan by setting the orphan's subscription ID to its own ID.
 

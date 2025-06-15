@@ -123,7 +123,13 @@ If you check this box, then any existing domain permissions will become managed 
 1. They don't already have a subscription ID (ie., they're not managed by any domain permission subscription).
 2. They match a domain permission included in the list at the URL of this subscription.
 
-For more information on orphan permissions, please see the separate [domain permission subscriptions](./domain_permission_subscriptions.md) document.
+For more information on orphan permissions, please see the separate [domain permission subscriptions](./domain_permission_subscriptions.md#orphan-permissions) document.
+
+##### Remove Retracted Permissions
+
+This setting controls how retractions are handled by this domain permission subscription: if "Remove retracted permissions" is checked, retracted entries will be removed from the database; if "Remove retracted permissions" is not checked, retracted entries will just be orphaned instead.
+
+For more detail on how retractions work, with examples, please see the separate [domain permission subscriptions](./domain_permission_subscriptions.md#retractions) document.
 
 ##### Create Permissions as Drafts
 
