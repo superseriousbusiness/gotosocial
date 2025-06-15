@@ -1054,10 +1054,21 @@ func (a *accountDB) GetAccountWebStatuses(
 		return nil, nil
 	}
 
-	// Check for an easy case: account exposes no statuses via the web.
-	webVisibility := account.Settings.WebVisibility
-	if webVisibility == gtsmodel.VisibilityNone {
-		return nil, db.ErrNoEntries
+	// Derive visibility of statuses on the web.
+	//
+	// We don't account for situations where someone
+	// hides public statuses but shows unlocked/unlisted,
+	// since that's only an option for remote accts.
+	var (
+		hideAll    = *account.HidesToPublicFromUnauthedWeb
+		publicOnly = *account.HidesCcPublicFromUnauthedWeb
+	)
+
+	if hideAll {
+		// Account hides all
+		// statuses from web,
+		// nothing to do.
+		return nil, nil
 	}
 
 	// Ensure reasonable
@@ -1075,27 +1086,18 @@ func (a *accountDB) GetAccountWebStatuses(
 		Column("status.id").
 		Where("? = ?", bun.Ident("status.account_id"), account.ID)
 
-	// Select statuses for this account according
-	// to their web visibility preference.
-	switch webVisibility {
-
-	case gtsmodel.VisibilityPublic:
+	// Select statuses according to
+	// account's web visibility prefs.
+	if publicOnly {
 		// Only Public statuses.
 		q = q.Where("? = ?", bun.Ident("status.visibility"), gtsmodel.VisibilityPublic)
-
-	case gtsmodel.VisibilityUnlocked:
+	} else {
 		// Public or Unlocked.
 		visis := []gtsmodel.Visibility{
 			gtsmodel.VisibilityPublic,
 			gtsmodel.VisibilityUnlocked,
 		}
 		q = q.Where("? IN (?)", bun.Ident("status.visibility"), bun.In(visis))
-
-	default:
-		return nil, gtserror.Newf(
-			"unrecognized web visibility for account %s: %s",
-			account.ID, webVisibility,
-		)
 	}
 
 	// Don't show replies, boosts, or

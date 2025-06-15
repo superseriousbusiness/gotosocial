@@ -147,6 +147,8 @@ import (
 	propertycanlike "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canlike"
 	propertycanquote "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canquote"
 	propertycanreply "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canreply"
+	propertyhidesccpublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidesccpublicfromunauthedweb"
+	propertyhidestopublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestopublicfromunauthedweb"
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
@@ -1072,6 +1074,34 @@ func (this Manager) DeserializeHashtagToot() func(map[string]interface{}, map[st
 func (this Manager) DeserializeHeightPropertyActivityStreams() func(map[string]interface{}, map[string]string) (vocab.ActivityStreamsHeightProperty, error) {
 	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.ActivityStreamsHeightProperty, error) {
 		i, err := propertyheight.DeserializeHeightProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial returns the
+// deserialization method for the
+// "GoToSocialHidesCcPublicFromUnauthedWebProperty" non-functional property in
+// the vocabulary "GoToSocial"
+func (this Manager) DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty, error) {
+		i, err := propertyhidesccpublicfromunauthedweb.DeserializeHidesCcPublicFromUnauthedWebProperty(m, aliasMap)
+		if i == nil {
+			return nil, err
+		}
+		return i, err
+	}
+}
+
+// DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial returns the
+// deserialization method for the
+// "GoToSocialHidesToPublicFromUnauthedWebProperty" non-functional property in
+// the vocabulary "GoToSocial"
+func (this Manager) DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial() func(map[string]interface{}, map[string]string) (vocab.GoToSocialHidesToPublicFromUnauthedWebProperty, error) {
+	return func(m map[string]interface{}, aliasMap map[string]string) (vocab.GoToSocialHidesToPublicFromUnauthedWebProperty, error) {
+		i, err := propertyhidestopublicfromunauthedweb.DeserializeHidesToPublicFromUnauthedWebProperty(m, aliasMap)
 		if i == nil {
 			return nil, err
 		}

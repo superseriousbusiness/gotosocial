@@ -1,4 +1,4 @@
-# code.superseriousbusiness.org/activity v1.15.0
+# code.superseriousbusiness.org/activity v1.15.1-0.20250614155200-f6908a981583
 ## explicit; go 1.23
 code.superseriousbusiness.org/activity/pub
 code.superseriousbusiness.org/activity/streams
@@ -146,6 +146,8 @@ code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canannou
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canlike
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canquote
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canreply
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidesccpublicfromunauthedweb
+code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestopublicfromunauthedweb
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy
 code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget

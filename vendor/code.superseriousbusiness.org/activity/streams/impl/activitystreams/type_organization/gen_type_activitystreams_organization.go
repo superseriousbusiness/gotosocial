@@ -35,6 +35,8 @@ type ActivityStreamsOrganization struct {
 	ActivityStreamsFollowers                 vocab.ActivityStreamsFollowersProperty
 	ActivityStreamsFollowing                 vocab.ActivityStreamsFollowingProperty
 	ActivityStreamsGenerator                 vocab.ActivityStreamsGeneratorProperty
+	GoToSocialHidesCcPublicFromUnauthedWeb   vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty
+	GoToSocialHidesToPublicFromUnauthedWeb   vocab.GoToSocialHidesToPublicFromUnauthedWebProperty
 	ActivityStreamsIcon                      vocab.ActivityStreamsIconProperty
 	JSONLDId                                 vocab.JSONLDIdProperty
 	ActivityStreamsImage                     vocab.ActivityStreamsImageProperty
@@ -208,6 +210,16 @@ func DeserializeOrganization(m map[string]interface{}, aliasMap map[string]strin
 		return nil, err
 	} else if p != nil {
 		this.ActivityStreamsGenerator = p
+	}
+	if p, err := mgr.DeserializeHidesCcPublicFromUnauthedWebPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialHidesCcPublicFromUnauthedWeb = p
+	}
+	if p, err := mgr.DeserializeHidesToPublicFromUnauthedWebPropertyGoToSocial()(m, aliasMap); err != nil {
+		return nil, err
+	} else if p != nil {
+		this.GoToSocialHidesToPublicFromUnauthedWeb = p
 	}
 	if p, err := mgr.DeserializeIconPropertyActivityStreams()(m, aliasMap); err != nil {
 		return nil, err
@@ -406,6 +418,10 @@ func DeserializeOrganization(m map[string]interface{}, aliasMap map[string]strin
 		} else if k == "following" {
 			continue
 		} else if k == "generator" {
+			continue
+		} else if k == "hidesCcPublicFromUnauthedWeb" {
+			continue
+		} else if k == "hidesToPublicFromUnauthedWeb" {
 			continue
 		} else if k == "icon" {
 			continue
@@ -780,6 +796,18 @@ func (this ActivityStreamsOrganization) GetActivityStreamsUrl() vocab.ActivitySt
 	return this.ActivityStreamsUrl
 }
 
+// GetGoToSocialHidesCcPublicFromUnauthedWeb returns the
+// "hidesCcPublicFromUnauthedWeb" property if it exists, and nil otherwise.
+func (this ActivityStreamsOrganization) GetGoToSocialHidesCcPublicFromUnauthedWeb() vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty {
+	return this.GoToSocialHidesCcPublicFromUnauthedWeb
+}
+
+// GetGoToSocialHidesToPublicFromUnauthedWeb returns the
+// "hidesToPublicFromUnauthedWeb" property if it exists, and nil otherwise.
+func (this ActivityStreamsOrganization) GetGoToSocialHidesToPublicFromUnauthedWeb() vocab.GoToSocialHidesToPublicFromUnauthedWebProperty {
+	return this.GoToSocialHidesToPublicFromUnauthedWeb
+}
+
 // GetJSONLDId returns the "id" property if it exists, and nil otherwise.
 func (this ActivityStreamsOrganization) GetJSONLDId() vocab.JSONLDIdProperty {
 	return this.JSONLDId
@@ -856,6 +884,8 @@ func (this ActivityStreamsOrganization) JSONLDContext() map[string]string {
 	m = this.helperJSONLDContext(this.ActivityStreamsFollowers, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsFollowing, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsGenerator, m)
+	m = this.helperJSONLDContext(this.GoToSocialHidesCcPublicFromUnauthedWeb, m)
+	m = this.helperJSONLDContext(this.GoToSocialHidesToPublicFromUnauthedWeb, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsIcon, m)
 	m = this.helperJSONLDContext(this.JSONLDId, m)
 	m = this.helperJSONLDContext(this.ActivityStreamsImage, m)
@@ -1135,6 +1165,34 @@ func (this ActivityStreamsOrganization) LessThan(o vocab.ActivityStreamsOrganiza
 	} // Else: Both are nil
 	// Compare property "generator"
 	if lhs, rhs := this.ActivityStreamsGenerator, o.GetActivityStreamsGenerator(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "hidesCcPublicFromUnauthedWeb"
+	if lhs, rhs := this.GoToSocialHidesCcPublicFromUnauthedWeb, o.GetGoToSocialHidesCcPublicFromUnauthedWeb(); lhs != nil && rhs != nil {
+		if lhs.LessThan(rhs) {
+			return true
+		} else if rhs.LessThan(lhs) {
+			return false
+		}
+	} else if lhs == nil && rhs != nil {
+		// Nil is less than anything else
+		return true
+	} else if rhs != nil && rhs == nil {
+		// Anything else is greater than nil
+		return false
+	} // Else: Both are nil
+	// Compare property "hidesToPublicFromUnauthedWeb"
+	if lhs, rhs := this.GoToSocialHidesToPublicFromUnauthedWeb, o.GetGoToSocialHidesToPublicFromUnauthedWeb(); lhs != nil && rhs != nil {
 		if lhs.LessThan(rhs) {
 			return true
 		} else if rhs.LessThan(lhs) {
@@ -1748,6 +1806,22 @@ func (this ActivityStreamsOrganization) Serialize() (map[string]interface{}, err
 			m[this.ActivityStreamsGenerator.Name()] = i
 		}
 	}
+	// Maybe serialize property "hidesCcPublicFromUnauthedWeb"
+	if this.GoToSocialHidesCcPublicFromUnauthedWeb != nil {
+		if i, err := this.GoToSocialHidesCcPublicFromUnauthedWeb.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialHidesCcPublicFromUnauthedWeb.Name()] = i
+		}
+	}
+	// Maybe serialize property "hidesToPublicFromUnauthedWeb"
+	if this.GoToSocialHidesToPublicFromUnauthedWeb != nil {
+		if i, err := this.GoToSocialHidesToPublicFromUnauthedWeb.Serialize(); err != nil {
+			return nil, err
+		} else if i != nil {
+			m[this.GoToSocialHidesToPublicFromUnauthedWeb.Name()] = i
+		}
+	}
 	// Maybe serialize property "icon"
 	if this.ActivityStreamsIcon != nil {
 		if i, err := this.ActivityStreamsIcon.Serialize(); err != nil {
@@ -2224,6 +2298,18 @@ func (this *ActivityStreamsOrganization) SetActivityStreamsUpdated(i vocab.Activ
 // SetActivityStreamsUrl sets the "url" property.
 func (this *ActivityStreamsOrganization) SetActivityStreamsUrl(i vocab.ActivityStreamsUrlProperty) {
 	this.ActivityStreamsUrl = i
+}
+
+// SetGoToSocialHidesCcPublicFromUnauthedWeb sets the
+// "hidesCcPublicFromUnauthedWeb" property.
+func (this *ActivityStreamsOrganization) SetGoToSocialHidesCcPublicFromUnauthedWeb(i vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty) {
+	this.GoToSocialHidesCcPublicFromUnauthedWeb = i
+}
+
+// SetGoToSocialHidesToPublicFromUnauthedWeb sets the
+// "hidesToPublicFromUnauthedWeb" property.
+func (this *ActivityStreamsOrganization) SetGoToSocialHidesToPublicFromUnauthedWeb(i vocab.GoToSocialHidesToPublicFromUnauthedWebProperty) {
+	this.GoToSocialHidesToPublicFromUnauthedWeb = i
 }
 
 // SetJSONLDId sets the "id" property.

@@ -136,9 +136,26 @@ func (c *Converter) AccountToAPIAccountSensitive(ctx context.Context, a *gtsmode
 		statusContentType = a.Settings.StatusContentType
 	}
 
+	// Derive web visibility for
+	// this local account's statuses.
+	var webVisibility apimodel.Visibility
+	switch {
+	case *a.HidesToPublicFromUnauthedWeb:
+		// Hides all.
+		webVisibility = apimodel.VisibilityNone
+
+	case !*a.HidesCcPublicFromUnauthedWeb:
+		// Shows unlisted + public.
+		webVisibility = apimodel.VisibilityUnlisted
+	
+	default:
+		// Shows public only.
+		webVisibility = apimodel.VisibilityPublic
+	}
+
 	apiAccount.Source = &apimodel.Source{
 		Privacy:             VisToAPIVis(a.Settings.Privacy),
-		WebVisibility:       VisToAPIVis(a.Settings.WebVisibility),
+		WebVisibility:       webVisibility,
 		WebLayout:           a.Settings.WebLayout.String(),
 		Sensitive:           *a.Settings.Sensitive,
 		Language:            a.Settings.Language,

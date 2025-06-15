@@ -212,6 +212,33 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 		}
 	}
 
+	if form.WebVisibility != nil {
+		switch apimodel.Visibility(*form.WebVisibility) {
+
+		// Show none.
+		case apimodel.VisibilityNone:
+			account.HidesToPublicFromUnauthedWeb = util.Ptr(true)
+			account.HidesCcPublicFromUnauthedWeb = util.Ptr(true)
+
+		// Show public only.
+		case apimodel.VisibilityPublic:
+			account.HidesToPublicFromUnauthedWeb = util.Ptr(false)
+			account.HidesCcPublicFromUnauthedWeb = util.Ptr(true)
+
+		// Show public and unlisted.
+		case apimodel.VisibilityUnlisted:
+			account.HidesToPublicFromUnauthedWeb = util.Ptr(false)
+			account.HidesCcPublicFromUnauthedWeb = util.Ptr(false)
+
+		default:
+			const text = "web_visibility must be one of public, unlisted, or none"
+			err := errors.New(text)
+			return nil, gtserror.NewErrorBadRequest(err, text)
+		}
+
+		acctColumns = append(acctColumns, "display_name")
+	}
+
 	// Account settings flags.
 
 	if form.Source != nil {
@@ -285,21 +312,6 @@ func (p *Processor) Update(ctx context.Context, account *gtsmodel.Account, form 
 	if form.HideCollections != nil {
 		account.Settings.HideCollections = form.HideCollections
 		settingsColumns = append(settingsColumns, "hide_collections")
-	}
-
-	if form.WebVisibility != nil {
-		apiVis := apimodel.Visibility(*form.WebVisibility)
-		webVisibility := typeutils.APIVisToVis(apiVis)
-		if webVisibility != gtsmodel.VisibilityPublic &&
-			webVisibility != gtsmodel.VisibilityUnlocked &&
-			webVisibility != gtsmodel.VisibilityNone {
-			const text = "web_visibility must be one of public, unlocked, or none"
-			err := errors.New(text)
-			return nil, gtserror.NewErrorBadRequest(err, text)
-		}
-
-		account.Settings.WebVisibility = webVisibility
-		settingsColumns = append(settingsColumns, "web_visibility")
 	}
 
 	if form.WebLayout != nil {

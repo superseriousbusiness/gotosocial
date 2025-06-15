@@ -11,6 +11,8 @@ import (
 	propertycanlike "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canlike"
 	propertycanquote "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canquote"
 	propertycanreply "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_canreply"
+	propertyhidesccpublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidesccpublicfromunauthedweb"
+	propertyhidestopublicfromunauthedweb "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_hidestopublicfromunauthedweb"
 	propertyinteractingobject "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactingobject"
 	propertyinteractionpolicy "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactionpolicy"
 	propertyinteractiontarget "code.superseriousbusiness.org/activity/streams/impl/gotosocial/property_interactiontarget"
@@ -60,6 +62,18 @@ func NewGoToSocialCanQuoteProperty() vocab.GoToSocialCanQuoteProperty {
 // NewGoToSocialGoToSocialCanReplyProperty creates a new GoToSocialCanReplyProperty
 func NewGoToSocialCanReplyProperty() vocab.GoToSocialCanReplyProperty {
 	return propertycanreply.NewGoToSocialCanReplyProperty()
+}
+
+// NewGoToSocialGoToSocialHidesCcPublicFromUnauthedWebProperty creates a new
+// GoToSocialHidesCcPublicFromUnauthedWebProperty
+func NewGoToSocialHidesCcPublicFromUnauthedWebProperty() vocab.GoToSocialHidesCcPublicFromUnauthedWebProperty {
+	return propertyhidesccpublicfromunauthedweb.NewGoToSocialHidesCcPublicFromUnauthedWebProperty()
+}
+
+// NewGoToSocialGoToSocialHidesToPublicFromUnauthedWebProperty creates a new
+// GoToSocialHidesToPublicFromUnauthedWebProperty
+func NewGoToSocialHidesToPublicFromUnauthedWebProperty() vocab.GoToSocialHidesToPublicFromUnauthedWebProperty {
+	return propertyhidestopublicfromunauthedweb.NewGoToSocialHidesToPublicFromUnauthedWebProperty()
 }
 
 // NewGoToSocialGoToSocialInteractingObjectProperty creates a new

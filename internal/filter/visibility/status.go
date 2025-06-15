@@ -115,9 +115,7 @@ func (f *Filter) isStatusVisible(
 	if requester == nil {
 		// Use a different visibility
 		// heuristic for unauthed requests.
-		return f.isStatusVisibleUnauthed(
-			ctx, status,
-		)
+		return f.isStatusVisibleUnauthed(status)
 	}
 
 	/*
@@ -245,58 +243,41 @@ func isPendingStatusVisible(requester *gtsmodel.Account, status *gtsmodel.Status
 	return false
 }
 
-// isStatusVisibleUnauthed returns whether status is visible without any unauthenticated account.
-func (f *Filter) isStatusVisibleUnauthed(ctx context.Context, status *gtsmodel.Status) (bool, error) {
+// isStatusVisibleUnauthed returns whether status is visible without authentication.
+func (f *Filter) isStatusVisibleUnauthed(status *gtsmodel.Status) (bool, error) {
 
-	// For remote accounts, only show
-	// Public statuses via the web.
-	if status.Account.IsRemote() {
-		return status.Visibility == gtsmodel.VisibilityPublic, nil
+	// If status isn't unlisted or
+	// public, never show without auth.
+	if status.Visibility != gtsmodel.VisibilityPublic &&
+		status.Visibility != gtsmodel.VisibilityUnlocked {
+		return false, nil
 	}
 
 	// If status is local only,
-	// never show via the web.
+	// never show without auth.
 	if status.IsLocalOnly() {
 		return false, nil
 	}
 
-	// Check account's settings to see
-	// what they expose. Populate these
-	// from the DB if necessary.
-	if status.Account.Settings == nil {
-		var err error
-		status.Account.Settings, err = f.state.DB.GetAccountSettings(ctx, status.Account.ID)
-		if err != nil {
-			return false, gtserror.Newf(
-				"error getting settings for account %s: %w",
-				status.Account.ID, err,
-			)
-		}
-	}
-
-	switch webvis := status.Account.Settings.WebVisibility; webvis {
-
-	// public_only: status must be Public.
-	case gtsmodel.VisibilityPublic:
+	// For remote accounts, only show
+	// Public statuses via the web.
+	//
+	// TODO: In 0.21.0, remove this check to
+	// instead use HidesToPublicFromUnauthedWeb
+	// and HidesToPublicFromUnauthedWeb.
+	if status.Account.IsRemote() {
 		return status.Visibility == gtsmodel.VisibilityPublic, nil
-
-	// unlisted: status must be Public or Unlocked.
-	case gtsmodel.VisibilityUnlocked:
-		visible := status.Visibility == gtsmodel.VisibilityPublic ||
-			status.Visibility == gtsmodel.VisibilityUnlocked
-		return visible, nil
-
-	// none: never show via the web.
-	case gtsmodel.VisibilityNone:
-		return false, nil
-
-	// Huh?
-	default:
-		return false, gtserror.Newf(
-			"unrecognized web visibility for account %s: %s",
-			status.Account.ID, webvis,
-		)
 	}
+
+	// We know the status is public or unlocked,
+	// so the remaining check is very simple.
+	if status.Visibility == gtsmodel.VisibilityPublic {
+		// Public vis = to public.
+		return !*status.Account.HidesToPublicFromUnauthedWeb, nil
+	}
+
+	// Unlocked vis = cc public.
+	return !*status.Account.HidesCcPublicFromUnauthedWeb, nil
 }
 
 // areStatusAccountsVisible calls Filter{}.AccountVisible() on status author and the status boost-of (if set) author, returning visibility of status (and boost-of) to requester.
