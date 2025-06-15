@@ -200,12 +200,14 @@ func (suite *WrapTestSuite) TestWrapAccountableInUpdate() {
     "following": "http://localhost:8080/users/the_mighty_zork/following",
     "icon": {
       "mediaType": "image/jpeg",
+      "name": "a green goblin looking nasty",
       "type": "Image",
       "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/avatar/original/01F8MH58A357CV5K7R7TJMSH6S.jpg"
     },
     "id": "http://localhost:8080/users/the_mighty_zork",
     "image": {
       "mediaType": "image/jpeg",
+      "name": "A very old-school screenshot of the original team fortress mod for quake",
       "type": "Image",
       "url": "http://localhost:8080/fileserver/01F8MH1H7YV1Z7D2C8K2730QBF/header/original/01PFPMWK2FF0D9WMHEJHR07C3Q.jpg"
     },

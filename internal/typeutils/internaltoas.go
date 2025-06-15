@@ -348,6 +348,12 @@ func (c *Converter) AccountToAS(
 			avatarURLProperty.AppendIRI(avatarURL)
 			iconImage.SetActivityStreamsUrl(avatarURLProperty)
 
+			if a.AvatarMediaAttachment.Description != "" {
+				nameProp := streams.NewActivityStreamsNameProperty()
+				nameProp.AppendXMLSchemaString(a.AvatarMediaAttachment.Description)
+				iconImage.SetActivityStreamsName(nameProp)
+			}
+
 			iconProperty.AppendActivityStreamsImage(iconImage)
 			accountable.SetActivityStreamsIcon(iconProperty)
 		}
@@ -381,6 +387,12 @@ func (c *Converter) AccountToAS(
 			}
 			headerURLProperty.AppendIRI(headerURL)
 			headerImage.SetActivityStreamsUrl(headerURLProperty)
+
+			if a.HeaderMediaAttachment.Description != "" {
+				nameProp := streams.NewActivityStreamsNameProperty()
+				nameProp.AppendXMLSchemaString(a.HeaderMediaAttachment.Description)
+				headerImage.SetActivityStreamsName(nameProp)
+			}
 
 			headerProperty.AppendActivityStreamsImage(headerImage)
 			accountable.SetActivityStreamsImage(headerProperty)
