@@ -232,6 +232,44 @@ func (f *Filter) getStatusRelatedUserMutes(
 		return nil, nil
 	}
 
+	// Preallocate a slice of worst possible case no. user mutes.
+	mutes := make([]*gtsmodel.UserMute, 0, 2+len(status.Mentions))
+
+	// Check if status is boost.
+	if status.BoostOfID != "" {
+		if status.BoostOf == nil {
+			var err error
+
+			// Ensure original status is loaded on boost.
+			status.BoostOf, err = f.state.DB.GetStatusByID(
+				gtscontext.SetBarebones(ctx),
+				status.BoostOfID,
+			)
+			if err != nil {
+				return nil, gtserror.Newf("error getting boosted status of %s: %w", status.URI, err)
+			}
+		}
+
+		// Look for mute against booster.
+		mute, err := f.state.DB.GetMute(
+			gtscontext.SetBarebones(ctx),
+			requester.ID,
+			status.AccountID,
+		)
+		if err != nil && !errors.Is(err, db.ErrNoEntries) {
+			return nil, gtserror.Newf("db error getting status author mute: %w", err)
+		}
+
+		if mute != nil {
+			// Append author mute to total.
+			mutes = append(mutes, mute)
+		}
+
+		// From here look at details
+		// for original boosted status.
+		status = status.BoostOf
+	}
+
 	if !status.MentionsPopulated() {
 		var err error
 
@@ -241,9 +279,6 @@ func (f *Filter) getStatusRelatedUserMutes(
 			return nil, gtserror.Newf("error populating status %s mentions: %w", status.URI, err)
 		}
 	}
-
-	// Preallocate a slice of worst possible case no. user mutes.
-	mutes := make([]*gtsmodel.UserMute, 0, 2+len(status.Mentions))
 
 	// Look for mute against author.
 	mute, err := f.state.DB.GetMute(
@@ -258,23 +293,6 @@ func (f *Filter) getStatusRelatedUserMutes(
 	if mute != nil {
 		// Append author mute to total.
 		mutes = append(mutes, mute)
-	}
-
-	if status.BoostOfAccountID != "" {
-		// Look for mute against boost author.
-		mute, err := f.state.DB.GetMute(
-			gtscontext.SetBarebones(ctx),
-			requester.ID,
-			status.AccountID,
-		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.Newf("db error getting boost author mute: %w", err)
-		}
-
-		if mute != nil {
-			// Append author mute to total.
-			mutes = append(mutes, mute)
-		}
 	}
 
 	for _, mention := range status.Mentions {
