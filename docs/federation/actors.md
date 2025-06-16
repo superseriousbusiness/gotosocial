@@ -248,6 +248,89 @@ Another difference between GoToSocial and other server implementations is that G
 
 Instead, to build a view of a GoToSocial user's pinned posts, it is recommended that remote instances simply poll a GoToSocial Actor's `featured` collection every so often, and add/remove posts in their cached representation as appropriate.
 
+## `hidesToPublicFromUnauthedWeb` and `hidesCcPublicFromUnauthedWeb`
+
+GoToSocial uses the properties `hidesToPublicFromUnauthedWeb` and `hidesCcPublicFromUnauthedWeb` to indicate whether an actor prefers to hide posts addressed `to` or `cc` public from logged-out (aka unauthenticated) visitors to web pages and web apps.
+
+Some background for this: most ActivityPub server softwares allow logged-out/unauthenticated visitors to the profile web page of an actor to see, in HTML format, a list of posts that an actor has created that are addressed either `to` or `cc` public. GoToSocial provides [a settings flag](../user_guide/settings.md#visibility-level-of-posts-to-show-on-your-profile) that allows GtS accounts to hide these posts from the web view of their profile, as one layer of protection to make scraping/stalking/etc. somewhat more difficult. The default setting in GoToSocial is to show posts that are addressed `to` public (aka "public" posts), but to hide posts that are addressed `cc` public (aka "unlisted", "unlocked", or "quiet public" posts).
+
+While this setting works fine for hiding posts of an actor *on their own instance*, prior to GoToSocial v0.20.0, this preference was not federated out to other instances, nor federated in from other instances. This leads to two problems:
+
+1. Many other server softwares permit even logged-out visitors, via a web app, to look up profiles of *remote* accounts, and to see public and unlisted posts created by those accounts. This means that the ability of GtS users to hide their posts from the web is trivial to circumvent. For example, say a GtS user at `@someone@gts.example.org` locks down their profile by setting the visibility of posts on their profile to "none"; this prevents visitors to `gts.example.org` from seeing posts, but one could visit eg. `mastodon.example.org`, look up `@someone@gts.example.org`, and see all the posts there that have been sent to, or dereferenced by, actors on `mastodon.example.org`, without even needing to create an account there. This makes the GtS user's choice significantly less meaningful.
+2. In an effort to support this extra layer of privacy, GoToSocial instances prior to v0.20.0 do not show posts from remote instances unless they are addressed `to` public. For example, if someone from `mastodon.example.org` were to reply to a post by `@someone@gts.example.org`, and the reply was only addressed `cc` public instead of `to` public, the GtS instance `gts.example.org` would *not* show that reply in the web view, as it could not determine the preferences of the user from `mastodon.example.org` with regard to showing the "quiet public" post to logged-out visitors to the web page. This could be frustrating for the GtS user, as they might want to show a more complete picture of the thread that they started, right there on their instance; this could also frustrate the Mastodon user, as are used to their "quiet public" posts being visible on the web even when logged out.
+
+The actor properties `hidesToPublicFromUnauthedWeb` and `hidesCcPublicFromUnauthedWeb` are an attempt towards solving these two issues; first by allowing GtS users to signal to other instances what their preferences are re: unauthed web visibility, in the hope that those preferences will be respected; and secondly by giving GtS instances a way to know what the preferences of actors on other servers are, in order to potentially show a more complete picture of threads in the GtS web view, if permitted.
+
+For example, the following actor representation indicates that the actor is happy to show both "unlisted" and "public" posts via unauthed web view:
+
+```json
+{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "type": "Person",
+  [... other properties here ...]
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": false,
+  [... other properties here ...]
+}
+```
+
+By contrast, the following indicates that the actor hides "unlisted" posts but is happy to show "public" posts unauthed:
+
+```json
+{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "type": "Person",
+  [... other properties here ...]
+  "hidesCcPublicFromUnauthedWeb": true,
+  "hidesToPublicFromUnauthedWeb": false,
+  [... other properties here ...]
+}
+```
+
+And the following shows that the actor wants to show no posts unauthed at all:
+
+```json
+{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "type": "Person",
+  [... other properties here ...]
+  "hidesCcPublicFromUnauthedWeb": true,
+  "hidesToPublicFromUnauthedWeb": true,
+  [... other properties here ...]
+}
+```
+
+While unusual, it's possible for an actor to also specify that they want to show "unlisted" posts but hide "public" ones:
+
+```json
+{
+  "@context": [
+    "https://gotosocial.org/ns",
+    "https://www.w3.org/ns/activitystreams"
+  ],
+  "type": "Person",
+  [... other properties here ...]
+  "hidesCcPublicFromUnauthedWeb": false,
+  "hidesToPublicFromUnauthedWeb": true,
+  [... other properties here ...]
+}
+```
+
+However it may be desirable for implementers to prevent users from being able to set this state.
+
+Both of these properties are defined in [the GoToSocial json-ld `@context` document](https://gotosocial.org/ns).
+
+
+
 ## Actor Migration / Aliasing
 
 GoToSocial supports account migration from one instance/server to another through a combination of the `Move` activity, and the Actor Object properties `alsoKnownAs` and `movedTo`.

@@ -281,7 +281,7 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 			</div>
 			<Select
 				field={form.webVisibility}
-				label="Visibility level of posts to show on your profile, and in your RSS feed (if enabled)."
+				label="Visibility level of posts to show to logged-out visitors to the web page of your profile, and in your RSS feed (if enabled)."
 				options={
 					<>
 						<option value="public">Show Public posts only (the GoToSocial default)</option>
