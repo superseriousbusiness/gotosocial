@@ -23,7 +23,6 @@ const (
 // when vocabs include "https://www.w3.org/ns/activitystreams".
 var asInlines = map[string]any{
 	"Hashtag":                   "as:Hashtag",
-	"alsoKnownAs":               "as:alsoKnownAs",
 	"manuallyApprovesFollowers": "as:manuallyApprovesFollowers",
 	"sensitive":                 "as:sensitive",
 

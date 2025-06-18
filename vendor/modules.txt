@@ -1,4 +1,4 @@
-# code.superseriousbusiness.org/activity v1.15.0
+# code.superseriousbusiness.org/activity v1.15.1
 ## explicit; go 1.23
 code.superseriousbusiness.org/activity/pub
 code.superseriousbusiness.org/activity/streams

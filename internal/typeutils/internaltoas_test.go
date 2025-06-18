@@ -259,7 +259,6 @@ func (suite *InternalToASTestSuite) TestAccountToASAliasedAndMoved() {
     "https://w3id.org/security/v1",
     "https://www.w3.org/ns/activitystreams",
     {
-      "alsoKnownAs": "as:alsoKnownAs",
       "discoverable": "toot:discoverable",
       "featured": {
         "@id": "toot:featured",
