@@ -478,6 +478,12 @@ func (p *Processor) deleteAccountPeripheral(
 	err != nil && !errors.Is(err, db.ErrNoEntries) {
 		log.Errorf("error deleting poll votes by account: %v", err)
 	}
+
+	// Delete all interaction requests from given account, local and remote.
+	if err := p.state.DB.DeleteInteractionRequestsByInteractingAccountID(ctx, account.ID); // nocollapse
+	err != nil && !errors.Is(err, db.ErrNoEntries) {
+		log.Errorf("error deleting interaction requests by account: %v", err)
+	}
 }
 
 // processSideEffect will process the given side effect details,

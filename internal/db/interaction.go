@@ -47,6 +47,10 @@ type Interaction interface {
 	// DeleteInteractionRequestByID deletes one request with the given ID.
 	DeleteInteractionRequestByID(ctx context.Context, id string) error
 
+	// DeleteInteractionRequestsByInteractingAccountID deletes all requests
+	// originating from the given account ID.
+	DeleteInteractionRequestsByInteractingAccountID(ctx context.Context, accountID string) error
+
 	// GetInteractionsRequestsForAcct returns pending interactions targeting
 	// the given (optional) account ID and the given (optional) status ID.
 	//

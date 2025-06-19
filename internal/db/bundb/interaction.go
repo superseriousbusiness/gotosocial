@@ -268,6 +268,28 @@ func (i *interactionDB) DeleteInteractionRequestByID(ctx context.Context, id str
 	return nil
 }
 
+func (i *interactionDB) DeleteInteractionRequestsByInteractingAccountID(ctx context.Context, accountID string) error {
+	// Gather necessary fields from
+	// deleted for cache invaliation.
+	var deleted []*gtsmodel.InteractionRequest
+
+	if _, err := i.db.NewDelete().
+		Model(&deleted).
+		Returning("?", bun.Ident("id")).
+		Where("? = ?", bun.Ident("interacting_account_id"), accountID).
+		Exec(ctx); err != nil &&
+		!errors.Is(err, db.ErrNoEntries) {
+		return err
+	}
+
+	for _, deleted := range deleted {
+		// Invalidate cached interaction requests by ID.
+		i.state.Caches.DB.InteractionRequest.Invalidate("ID", deleted.ID)
+	}
+
+	return nil
+}
+
 func (i *interactionDB) GetInteractionsRequestsForAcct(
 	ctx context.Context,
 	acctID string,
