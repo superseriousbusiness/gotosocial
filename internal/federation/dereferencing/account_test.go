@@ -28,6 +28,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 	"time"
 
@@ -471,6 +472,49 @@ func (suite *AccountTestSuite) TestRefreshFederatedRemoteAccountWithKeyChange() 
 	suite.NoError(err)
 	suite.NotNil(apAcc)
 	suite.True(updatedAcc.PublicKey.Equal(fetchingAcc.PublicKey))
+}
+
+func (suite *AccountTestSuite) TestDereferenceRemoteAccountWithAvatarDescription() {
+	ctx, cncl := context.WithCancel(suite.T().Context())
+	defer cncl()
+
+	fetchingAcc := suite.testAccounts["local_account_1"]
+	remoteURI := "https://shrimpnet.example.org/users/shrimp"
+	description := "me scrolling fedi on a laptop, there's a monster ultra white and another fedi user on my right."
+
+	// Fetch the remote account to load into the database.
+	remoteAcc, _, err := suite.dereferencer.GetAccountByURI(ctx,
+		fetchingAcc.Username,
+		testrig.URLMustParse(remoteURI),
+		false,
+	)
+	suite.NoError(err)
+	suite.NotNil(remoteAcc)
+
+	suite.Equal(remoteAcc.AvatarMediaAttachment.Description, description)
+
+	remotePerson := suite.client.TestRemotePeople[remoteURI]
+
+	description = strings.TrimSuffix(description, ".")
+
+	icon := remotePerson.GetActivityStreamsIcon()
+	image := icon.Begin().GetActivityStreamsImage()
+	nameProp := streams.NewActivityStreamsNameProperty()
+	nameProp.AppendXMLSchemaString(description)
+	image.SetActivityStreamsName(nameProp)
+	icon.SetActivityStreamsImage(0, image)
+	remotePerson.SetActivityStreamsIcon(icon)
+
+	updatedAcc, apAcc, err := suite.dereferencer.RefreshAccount(ctx,
+		fetchingAcc.Username,
+		remoteAcc,
+		remotePerson,
+		nil,
+	)
+
+	suite.NoError(err)
+	suite.NotNil(apAcc)
+	suite.Equal(updatedAcc.AvatarMediaAttachment.Description, description)
 }
 
 func TestAccountTestSuite(t *testing.T) {

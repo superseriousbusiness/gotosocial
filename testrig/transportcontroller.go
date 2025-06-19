@@ -566,6 +566,17 @@ func WebfingerResponse(req *http.Request) (
 				},
 			},
 		}
+	case "https://shrimpnet.example.org/.well-known/webfinger?resource=acct%3Ashrimp%40shrimpnet.example.org":
+		wfr = &apimodel.WellKnownResponse{
+			Subject: "acct:shrimp@shrimpnet.example.org",
+			Links: []apimodel.Link{
+				{
+					Rel:  "self",
+					Type: applicationActivityJSON,
+					Href: "https://shrimpnet.example.org/users/shrimp",
+				},
+			},
+		}
 	case "https://misconfigured-instance.com/.weird-webfinger-location/webfinger?resource=acct%3Asomeone%40misconfigured-instance.com":
 		wfr = &apimodel.WellKnownResponse{
 			Subject: "acct:someone@misconfigured-instance.com",

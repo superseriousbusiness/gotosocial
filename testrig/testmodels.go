@@ -3578,6 +3578,12 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 	}
 	someUserPub := &someUserPriv.PublicKey
 
+	shrimpPriv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+	shrimpPub := &shrimpPriv.PublicKey
+
 	return map[string]vocab.ActivityStreamsPerson{
 		"https://unknown-instance.com/users/brand_new_person": newAPPerson(
 			URLMustParse("https://unknown-instance.com/users/brand_new_person"),
@@ -3599,7 +3605,9 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			nil,
 			"image/jpeg",
 			nil,
+			nil,
 			"image/png",
+			nil,
 			false,
 		),
 		"https://turnip.farm/users/turniplover6969": newAPPerson(
@@ -3622,7 +3630,9 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			nil,
 			"image/jpeg",
 			nil,
+			nil,
 			"image/png",
+			nil,
 			false,
 		),
 		"http://example.org/users/Some_User": newAPPerson(
@@ -3645,7 +3655,34 @@ func NewTestFediPeople() map[string]vocab.ActivityStreamsPerson {
 			nil,
 			"image/jpeg",
 			nil,
+			nil,
 			"image/png",
+			nil,
+			false,
+		),
+		"https://shrimpnet.example.org/users/shrimp": newAPPerson(
+			URLMustParse("https://shrimpnet.example.org/users/shrimp"),
+			URLMustParse("https://shrimpnet.example.org/users/shrimp/following"),
+			URLMustParse("https://shrimpnet.example.org/users/shrimp/followers"),
+			URLMustParse("https://shrimpnet.example.org/users/shrimp/inbox"),
+			URLMustParse("https://shrimpnet.example.org/inbox"),
+			URLMustParse("https://shrimpnet.example.org/users/shrimp/outbox"),
+			URLMustParse("https://shrimpnet.example.org/users/shrimp/collections/featured"),
+			nil,
+			nil,
+			"shrimp",
+			"Shrimp",
+			"",
+			URLMustParse("https://shrimpnet.example.org/@shrimp"),
+			true,
+			URLMustParse("https://shrimpnet.example.org/users/shrimp#main-key"),
+			shrimpPub,
+			URLMustParse("https://shrimpnet.example.org/files/public-1c8468b8-eb2d-485f-9967-f4238ded95e7.webp"),
+			"image/jpeg",
+			util.Ptr("me scrolling fedi on a laptop, there's a monster ultra white and another fedi user on my right."),
+			nil,
+			"image/png",
+			nil,
 			false,
 		),
 	}
@@ -4398,8 +4435,10 @@ func newAPPerson(
 	pkey *rsa.PublicKey,
 	avatarURL *url.URL,
 	avatarContentType string,
+	avatarDescription *string,
 	headerURL *url.URL,
 	headerContentType string,
+	headerDescription *string,
 	manuallyApprovesFollowers bool,
 ) vocab.ActivityStreamsPerson {
 	person := streams.NewActivityStreamsPerson()
@@ -4564,6 +4603,11 @@ func newAPPerson(
 	avatarURLProperty := streams.NewActivityStreamsUrlProperty()
 	avatarURLProperty.AppendIRI(avatarURL)
 	iconImage.SetActivityStreamsUrl(avatarURLProperty)
+	if avatarDescription != nil {
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(*avatarDescription)
+		iconImage.SetActivityStreamsName(nameProp)
+	}
 	iconProperty.AppendActivityStreamsImage(iconImage)
 	person.SetActivityStreamsIcon(iconProperty)
 
@@ -4577,6 +4621,11 @@ func newAPPerson(
 	headerURLProperty := streams.NewActivityStreamsUrlProperty()
 	headerURLProperty.AppendIRI(headerURL)
 	headerImage.SetActivityStreamsUrl(headerURLProperty)
+	if headerDescription != nil {
+		nameProp := streams.NewActivityStreamsNameProperty()
+		nameProp.AppendXMLSchemaString(*headerDescription)
+		headerImage.SetActivityStreamsName(nameProp)
+	}
 	headerProperty.AppendActivityStreamsImage(headerImage)
 	person.SetActivityStreamsImage(headerProperty)
 

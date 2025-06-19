@@ -370,6 +370,54 @@ func ExtractIconURI(i WithIcon) (*url.URL, error) {
 	return nil, gtserror.New("could not extract valid image URI from icon")
 }
 
+// ExtractIconDescription extracts the name property from
+// the given WithIcon which links to a supported image file,
+// or returns an empty string.
+// Input will look something like this:
+//
+//	"icon": {
+//	  "mediaType": "image/jpeg",
+//	  "name": "some description",
+//	  "type": "Image",
+//	    "url": "http://example.org/path/to/some/file.jpeg"
+//	  },
+func ExtractIconDescription(i WithIcon) string {
+	iconProp := i.GetActivityStreamsIcon()
+	if iconProp == nil {
+		return ""
+	}
+
+	// Icon can potentially contain multiple entries,
+	// so we iterate through all of them here in order
+	// to find the first one that meets these criteria:
+	//
+	//   1. Is an image.
+	//   2. Has a URL that we can use to derefereince it.
+	for iter := iconProp.Begin(); iter != iconProp.End(); iter = iter.Next() {
+		if !iter.IsActivityStreamsImage() {
+			continue
+		}
+
+		image := iter.GetActivityStreamsImage()
+		if image == nil {
+			continue
+		}
+
+		imageURL := GetURL(image)
+		if len(imageURL) == 0 {
+			// Nothing here.
+			continue
+		}
+
+		imageDescription := ExtractName(image)
+
+		// Got a hit.
+		return imageDescription
+	}
+
+	return ""
+}
+
 // ExtractImageURI extracts the first URI it can find from
 // the given WithImage which links to a supported image file.
 // Input will look something like this:
@@ -414,6 +462,54 @@ func ExtractImageURI(i WithImage) (*url.URL, error) {
 	}
 
 	return nil, gtserror.New("could not extract valid image URI from image")
+}
+
+// ExtractImageDescription extracts the name property from
+// the given WithImage which links to a supported image file,
+// or returns an empty string.
+// Input will look something like this:
+//
+//	"image": {
+//	  "mediaType": "image/jpeg",
+//	  "name": "some description",
+//	  "type": "Image",
+//	    "url": "http://example.org/path/to/some/file.jpeg"
+//	  },
+func ExtractImageDescription(i WithImage) string {
+	imageProp := i.GetActivityStreamsImage()
+	if imageProp == nil {
+		return ""
+	}
+
+	// Image can potentially contain multiple entries,
+	// so we iterate through all of them here in order
+	// to find the first one that meets these criteria:
+	//
+	//   1. Is an image.
+	//   2. Has a URL that we can use to derefereince it.
+	for iter := imageProp.Begin(); iter != imageProp.End(); iter = iter.Next() {
+		if !iter.IsActivityStreamsImage() {
+			continue
+		}
+
+		image := iter.GetActivityStreamsImage()
+		if image == nil {
+			continue
+		}
+
+		imageURL := GetURL(image)
+		if len(imageURL) == 0 {
+			// Nothing here.
+			continue
+		}
+
+		imageDescription := ExtractName(image)
+
+		// Got a hit.
+		return imageDescription
+	}
+
+	return ""
 }
 
 // ExtractSummary extracts the summary/content warning of

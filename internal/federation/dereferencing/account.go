@@ -807,12 +807,12 @@ func (d *Dereferencer) enrichAccount(
 	latestAcc.UpdatedAt = now
 
 	// Ensure the account's avatar media is populated, passing in existing to check for chages.
-	if err := d.fetchAccountAvatar(ctx, requestUser, account, latestAcc); err != nil {
+	if err := d.fetchAccountAvatar(ctx, requestUser, account, latestAcc, apubAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote avatar for account %s: %v", uri, err)
 	}
 
 	// Ensure the account's avatar media is populated, passing in existing to check for chages.
-	if err := d.fetchAccountHeader(ctx, requestUser, account, latestAcc); err != nil {
+	if err := d.fetchAccountHeader(ctx, requestUser, account, latestAcc, apubAcc); err != nil {
 		log.Errorf(ctx, "error fetching remote header for account %s: %v", uri, err)
 	}
 
@@ -854,12 +854,15 @@ func (d *Dereferencer) fetchAccountAvatar(
 	requestUser string,
 	existingAcc *gtsmodel.Account,
 	latestAcc *gtsmodel.Account,
+	apubAcc ap.Accountable,
 ) error {
 	if latestAcc.AvatarRemoteURL == "" {
 		// No avatar set on newest model, leave
 		// latest avatar attachment ID empty.
 		return nil
 	}
+
+	avatarDescription := ap.ExtractIconDescription(apubAcc)
 
 	// Check for an existing stored media attachment
 	// specifically with unchanged remote URL we can use.
@@ -882,6 +885,18 @@ func (d *Dereferencer) fetchAccountAvatar(
 				existing,
 				nil,
 			)
+
+			if existing.Description != avatarDescription {
+				existing.Description = avatarDescription
+				if err := d.state.DB.UpdateAttachment(
+					ctx,
+					existing,
+					"description",
+				); err != nil {
+					err := gtserror.Newf("db error updating existing avatar description: %w", err)
+					return gtserror.NewErrorInternalError(err)
+				}
+			}
 
 			if err != nil {
 				log.Errorf(ctx, "error updating existing attachment: %v", err)
@@ -906,8 +921,9 @@ func (d *Dereferencer) fetchAccountAvatar(
 		latestAcc.ID,
 		latestAcc.AvatarRemoteURL,
 		media.AdditionalMediaInfo{
-			Avatar:    util.Ptr(true),
-			RemoteURL: &latestAcc.AvatarRemoteURL,
+			Avatar:      util.Ptr(true),
+			RemoteURL:   &latestAcc.AvatarRemoteURL,
+			Description: &avatarDescription,
 		},
 	)
 	if err != nil {
@@ -931,12 +947,15 @@ func (d *Dereferencer) fetchAccountHeader(
 	requestUser string,
 	existingAcc *gtsmodel.Account,
 	latestAcc *gtsmodel.Account,
+	apubAcc ap.Accountable,
 ) error {
 	if latestAcc.HeaderRemoteURL == "" {
 		// No header set on newest model, leave
 		// latest header attachment ID empty.
 		return nil
 	}
+
+	headerDescription := ap.ExtractImageDescription(apubAcc)
 
 	// Check for an existing stored media attachment
 	// specifically with unchanged remote URL we can use.
@@ -949,6 +968,18 @@ func (d *Dereferencer) fetchAccountHeader(
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {
 			return gtserror.Newf("error getting attachment %s: %w", existingAcc.HeaderMediaAttachmentID, err)
+		}
+
+		if existing.Description != headerDescription {
+			existing.Description = headerDescription
+			if err := d.state.DB.UpdateAttachment(
+				ctx,
+				existing,
+				"description",
+			); err != nil {
+				err := gtserror.Newf("db error updating existing header description: %w", err)
+				return gtserror.NewErrorInternalError(err)
+			}
 		}
 
 		if existing != nil {
@@ -983,8 +1014,9 @@ func (d *Dereferencer) fetchAccountHeader(
 		latestAcc.ID,
 		latestAcc.HeaderRemoteURL,
 		media.AdditionalMediaInfo{
-			Header:    util.Ptr(true),
-			RemoteURL: &latestAcc.HeaderRemoteURL,
+			Header:      util.Ptr(true),
+			RemoteURL:   &latestAcc.HeaderRemoteURL,
+			Description: &headerDescription,
 		},
 	)
 	if err != nil {
