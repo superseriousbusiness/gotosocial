@@ -275,21 +275,6 @@ func (p *Processor) Create(
 		}
 	}
 
-	var model any = status
-	if backfill {
-		// We specifically wrap backfilled statuses in
-		// a different type to signal to worker process.
-		model = &gtsmodel.BackfillStatus{Status: status}
-	}
-
-	// Send it to the client API worker for async side-effects.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ObjectNote,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       model,
-		Origin:         requester,
-	})
-
 	// If the new status replies to a status that
 	// replies to us, use our reply as an implicit
 	// accept of any pending interaction.
@@ -306,6 +291,22 @@ func (p *Processor) Create(
 	if implicitlyAccepted {
 		status.InReplyTo.PendingApproval = util.Ptr(false)
 	}
+
+	var model any = status
+	if backfill {
+		// We specifically wrap backfilled statuses in
+		// a different type to signal to worker process.
+		model = &gtsmodel.BackfillStatus{Status: status}
+	}
+
+	// Queue remaining create side effects
+	// (send out status, update timeline, etc).
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		APObjectType:   ap.ObjectNote,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       model,
+		Origin:         requester,
+	})
 
 	return p.c.GetAPIStatus(ctx, requester, status)
 }

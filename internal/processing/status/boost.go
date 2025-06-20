@@ -130,15 +130,6 @@ func (p *Processor) BoostCreate(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Process side effects asynchronously.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActivityAnnounce,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       boost,
-		Origin:         requester,
-		Target:         target.Account,
-	})
-
 	// If the boost target status replies to a status
 	// that we own, and has a pending interaction
 	// request, use the boost as an implicit accept.
@@ -155,6 +146,16 @@ func (p *Processor) BoostCreate(
 	if implicitlyAccepted {
 		target.PendingApproval = util.Ptr(false)
 	}
+
+	// Queue remaining boost side effects
+	// (send out boost, update timeline, etc).
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		APObjectType:   ap.ActivityAnnounce,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       boost,
+		Origin:         requester,
+		Target:         target.Account,
+	})
 
 	return p.c.GetAPIStatus(ctx, requester, boost)
 }

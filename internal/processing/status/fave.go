@@ -160,15 +160,6 @@ func (p *Processor) FaveCreate(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Process new status fave side effects.
-	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
-		APObjectType:   ap.ActivityLike,
-		APActivityType: ap.ActivityCreate,
-		GTSModel:       gtsFave,
-		Origin:         requester,
-		Target:         status.Account,
-	})
-
 	// If the fave target status replies to a status
 	// that we own, and has a pending interaction
 	// request, use the fave as an implicit accept.
@@ -185,6 +176,16 @@ func (p *Processor) FaveCreate(
 	if implicitlyAccepted {
 		status.PendingApproval = util.Ptr(false)
 	}
+
+	// Queue remaining fave side effects
+	// (send out fave, update timeline, etc).
+	p.state.Workers.Client.Queue.Push(&messages.FromClientAPI{
+		APObjectType:   ap.ActivityLike,
+		APActivityType: ap.ActivityCreate,
+		GTSModel:       gtsFave,
+		Origin:         requester,
+		Target:         status.Account,
+	})
 
 	return p.c.GetAPIStatus(ctx, requester, status)
 }
