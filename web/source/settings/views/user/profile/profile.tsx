@@ -139,7 +139,21 @@ function ProfileForm({ data: profile }: ProfileFormProps) {
 
 	return (
 		<form className="user-profile" onSubmit={submitForm}>
-			<h1>Profile</h1>
+			<div className="form-section-docs">
+				<h1>Profile</h1>
+				<p>
+					On this page you can change various settings relating to the appearance and discoverability of your profile and posts.
+					<br/>After changing settings and/or uploading a new avatar or header, be sure to scroll to the bottom of this page and click "Save profile info" to confirm your changes.
+				</p>
+				<a
+					href="https://docs.gotosocial.org/en/latest/user_guide/settings/#profile"
+					target="_blank"
+					className="docslink"
+					rel="noreferrer"
+				>
+					Learn more about this settings page (opens in a new tab)
+				</a>
+			</div>
 			<div className="overview">
 				<FakeProfile
 					avatar={form.avatar.previewValue ?? profile.avatar}
