@@ -141,7 +141,7 @@ trusted-proxies:
 
 # String. Database type.
 # Options: ["postgres","sqlite"]
-# Default: "sqlite"
+# Default: ""
 db-type: "sqlite"
 
 # String. Database address or parameters.

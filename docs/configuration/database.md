@@ -2,7 +2,7 @@
 
 GoToSocial stores statuses, accounts, etc, in a database. This can be either [SQLite](https://sqlite.org/index.html) or [Postgres](https://www.postgresql.org/).
 
-By default, GoToSocial will use SQLite, but this is easy to change.
+GoToSocial has no default configured database type or address. In most situations, we recommend the use of SQLite.
 
 ## SQLite
 
@@ -71,7 +71,7 @@ db-postgres-connection-string: 'postgres://myUser:myPass@localhost/db?search_pat
 
 # String. Database type.
 # Options: ["postgres","sqlite"]
-# Default: "sqlite"
+# Default: ""
 db-type: "sqlite"
 
 # String. Database address or parameters.
