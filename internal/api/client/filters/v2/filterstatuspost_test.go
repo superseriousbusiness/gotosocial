@@ -173,7 +173,7 @@ func (suite *FiltersTestSuite) TestPostFilterStatusStatusIDConflict() {
 func (suite *FiltersTestSuite) TestPostFilterStatusAnotherAccountsFilter() {
 	filterID := suite.testFilters["local_account_2_filter_1"].ID
 	statusID := suite.testStatuses["admin_account_status_1"].ID
-	_, err := suite.postFilterStatus(filterID, &statusID, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.postFilterStatus(filterID, &statusID, nil, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -182,7 +182,7 @@ func (suite *FiltersTestSuite) TestPostFilterStatusAnotherAccountsFilter() {
 func (suite *FiltersTestSuite) TestPostFilterStatusNonexistentFilter() {
 	filterID := "not_even_a_real_ULID"
 	statusID := suite.testStatuses["admin_account_status_1"].ID
-	_, err := suite.postFilterStatus(filterID, &statusID, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.postFilterStatus(filterID, &statusID, nil, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

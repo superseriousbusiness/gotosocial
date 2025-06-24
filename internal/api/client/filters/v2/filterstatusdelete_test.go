@@ -101,7 +101,7 @@ func (suite *FiltersTestSuite) TestDeleteFilterStatus() {
 func (suite *FiltersTestSuite) TestDeleteAnotherAccountsFilterStatus() {
 	id := suite.testFilterStatuses["local_account_2_filter_1_status_1"].ID
 
-	err := suite.deleteFilterStatus(id, http.StatusNotFound, `{"error":"Not Found"}`)
+	err := suite.deleteFilterStatus(id, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -110,7 +110,7 @@ func (suite *FiltersTestSuite) TestDeleteAnotherAccountsFilterStatus() {
 func (suite *FiltersTestSuite) TestDeleteNonexistentFilterStatus() {
 	id := "not_even_a_real_ULID"
 
-	err := suite.deleteFilterStatus(id, http.StatusNotFound, `{"error":"Not Found"}`)
+	err := suite.deleteFilterStatus(id, http.StatusNotFound, `{"error":"Not Found: filter status not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

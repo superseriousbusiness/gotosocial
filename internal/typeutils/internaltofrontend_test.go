@@ -465,7 +465,7 @@ func (suite *InternalToFrontendTestSuite) TestLocalInstanceAccountToFrontendBloc
 func (suite *InternalToFrontendTestSuite) TestStatusToFrontend() {
 	testStatus := suite.testStatuses["admin_account_status_1"]
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, gtsmodel.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -628,7 +628,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendHTMLContentWarning
 	testStatus.ContentWarning = `<p>First paragraph of content warning</p><h4>Here's the title!</h4><p></p><p>Big boobs<br>Tee hee!<br><br>Some more text<br>And a bunch more<br><br>Hasta la victoria siempre!</p>`
 
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, gtsmodel.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -794,7 +794,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendApplicationDeleted
 	}
 
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(ctx, testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(ctx, testStatus, requestingAccount, gtsmodel.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -971,7 +971,6 @@ func (suite *InternalToFrontendTestSuite) filteredStatusToFrontend(action gtsmod
 
 	expectedMatchingFilterKeyword := suite.testFilterKeywords["local_account_1_filter_1_keyword_1"]
 	suite.NoError(expectedMatchingFilterKeyword.Compile())
-	expectedMatchingFilterKeyword.Filter = expectedMatchingFilter
 
 	expectedMatchingFilter.Keywords = []*gtsmodel.FilterKeyword{expectedMatchingFilterKeyword}
 
@@ -981,7 +980,7 @@ func (suite *InternalToFrontendTestSuite) filteredStatusToFrontend(action gtsmod
 		suite.T().Context(),
 		testStatus,
 		requestingAccount,
-		statusfilter.FilterContextHome,
+		gtsmodel.FilterContextHome,
 		requestingAccountFilters,
 	)
 }
@@ -1521,20 +1520,16 @@ func (suite *InternalToFrontendTestSuite) testHashtagFilteredStatusToFrontend(wh
 	}
 
 	filter := &gtsmodel.Filter{
-		Action:               gtsmodel.FilterActionWarn,
-		Keywords:             []*gtsmodel.FilterKeyword{filterKeyword},
-		ContextHome:          util.Ptr(true),
-		ContextNotifications: util.Ptr(false),
-		ContextPublic:        util.Ptr(false),
-		ContextThread:        util.Ptr(false),
-		ContextAccount:       util.Ptr(false),
+		Action:   gtsmodel.FilterActionWarn,
+		Keywords: []*gtsmodel.FilterKeyword{filterKeyword},
+		Contexts: gtsmodel.FilterContexts(gtsmodel.FilterContextHome),
 	}
 
 	apiStatus, err := suite.typeconverter.StatusToAPIStatus(
 		suite.T().Context(),
 		testStatus,
 		requestingAccount,
-		statusfilter.FilterContextHome,
+		gtsmodel.FilterContextHome,
 		[]*gtsmodel.Filter{filter},
 	)
 	if err != nil {
@@ -1564,7 +1559,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownAttachments
 	testStatus := suite.testStatuses["remote_account_2_status_1"]
 	requestingAccount := suite.testAccounts["admin_account"]
 
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, gtsmodel.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -1891,7 +1886,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendUnknownLanguage() 
 	*testStatus = *suite.testStatuses["admin_account_status_1"]
 	testStatus.Language = ""
 	requestingAccount := suite.testAccounts["local_account_1"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, gtsmodel.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -2052,7 +2047,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToFrontendPartialInteraction
 	*testStatus = *suite.testStatuses["local_account_1_status_3"]
 	testStatus.Language = ""
 	requestingAccount := suite.testAccounts["admin_account"]
-	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, statusfilter.FilterContextNone, nil)
+	apiStatus, err := suite.typeconverter.StatusToAPIStatus(suite.T().Context(), testStatus, requestingAccount, gtsmodel.FilterContextNone, nil)
 	suite.NoError(err)
 
 	b, err := json.MarshalIndent(apiStatus, "", "  ")
@@ -2165,7 +2160,7 @@ func (suite *InternalToFrontendTestSuite) TestStatusToAPIStatusPendingApproval()
 		suite.T().Context(),
 		testStatus,
 		requestingAccount,
-		statusfilter.FilterContextNone,
+		gtsmodel.FilterContextNone,
 		nil,
 	)
 	if err != nil {

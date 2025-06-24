@@ -19,6 +19,7 @@ package cache
 
 import (
 	"crypto/rsa"
+	"regexp"
 	"strings"
 	"time"
 	"unsafe"
@@ -348,8 +349,6 @@ func sizeofEmojiCategory() uintptr {
 func sizeofFilter() uintptr {
 	return uintptr(size.Of(&gtsmodel.Filter{
 		ID:        exampleID,
-		CreatedAt: exampleTime,
-		UpdatedAt: exampleTime,
 		ExpiresAt: exampleTime,
 		AccountID: exampleID,
 		Title:     exampleTextSmall,
@@ -359,21 +358,18 @@ func sizeofFilter() uintptr {
 
 func sizeofFilterKeyword() uintptr {
 	return uintptr(size.Of(&gtsmodel.FilterKeyword{
-		ID:        exampleID,
-		CreatedAt: exampleTime,
-		UpdatedAt: exampleTime,
-		FilterID:  exampleID,
-		Keyword:   exampleTextSmall,
+		ID:       exampleID,
+		FilterID: exampleID,
+		Keyword:  exampleTextSmall,
+		Regexp:   regexp.MustCompile("^match (this)? .*"),
 	}))
 }
 
 func sizeofFilterStatus() uintptr {
 	return uintptr(size.Of(&gtsmodel.FilterStatus{
-		ID:        exampleID,
-		CreatedAt: exampleTime,
-		UpdatedAt: exampleTime,
-		FilterID:  exampleID,
-		StatusID:  exampleID,
+		ID:       exampleID,
+		FilterID: exampleID,
+		StatusID: exampleID,
 	}))
 }
 

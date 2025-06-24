@@ -59,7 +59,7 @@ func (p *Processor) NotificationsGet(
 		return util.EmptyPageableResponse(), nil
 	}
 
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requester.ID)
+	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requester.ID)
 	if err != nil {
 		err = gtserror.Newf("error getting account %s filters: %w", requester.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)

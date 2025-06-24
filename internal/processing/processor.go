@@ -34,6 +34,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/processing/common"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/conversations"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/fedi"
+	filterCommon "code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
 	filtersv1 "code.superseriousbusiness.org/gotosocial/internal/processing/filters/v1"
 	filtersv2 "code.superseriousbusiness.org/gotosocial/internal/processing/filters/v2"
 	"code.superseriousbusiness.org/gotosocial/internal/processing/interactionrequests"
@@ -224,6 +225,7 @@ func NewProcessor(
 	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.media = media.New(&common, state, converter, federator, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)
+	filterCommon := filterCommon.New(state)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
@@ -232,8 +234,8 @@ func NewProcessor(
 	processor.application = application.New(state, converter)
 	processor.conversations = conversations.New(state, converter, visFilter, muteFilter)
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
-	processor.filtersv1 = filtersv1.New(state, converter, &processor.stream)
-	processor.filtersv2 = filtersv2.New(state, converter, &processor.stream)
+	processor.filtersv1 = filtersv1.New(state, converter, filterCommon, &processor.stream)
+	processor.filtersv2 = filtersv2.New(state, converter, filterCommon, &processor.stream)
 	processor.interactionRequests = interactionrequests.New(&common, state, converter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)

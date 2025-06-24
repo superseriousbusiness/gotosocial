@@ -42,6 +42,7 @@ EXPECT=$(cat << "EOF"
     "cache-domain-permission-subscription-mem-ratio": 0.5,
     "cache-emoji-category-mem-ratio": 0.1,
     "cache-emoji-mem-ratio": 3,
+    "cache-filter-ids-mem-ratio": 2,
     "cache-filter-keyword-mem-ratio": 0.5,
     "cache-filter-mem-ratio": 0.5,
     "cache-filter-status-mem-ratio": 0.5,

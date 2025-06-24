@@ -20,50 +20,59 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net/http"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // StatusCreate adds a filter status to an existing filter for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
-func (p *Processor) StatusCreate(ctx context.Context, account *gtsmodel.Account, filterID string, form *apimodel.FilterStatusCreateRequest) (*apimodel.FilterStatus, gtserror.WithCode) {
-	// Check that the filter is owned by the given account.
-	filter, err := p.state.DB.GetFilterByID(gtscontext.SetBarebones(ctx), filterID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(
-			fmt.Errorf("filter %s doesn't belong to account %s", filter.ID, account.ID),
-		)
+func (p *Processor) StatusCreate(ctx context.Context, requester *gtsmodel.Account, filterID string, form *apimodel.FilterStatusCreateRequest) (*apimodel.FilterStatus, gtserror.WithCode) {
+
+	// Get the filter with given ID, also checking ownership.
+	filter, errWithCode := p.c.GetFilter(ctx, requester, filterID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
+	// Create new filter status model.
 	filterStatus := &gtsmodel.FilterStatus{
-		ID:        id.NewULID(),
-		AccountID: account.ID,
-		FilterID:  filter.ID,
-		StatusID:  form.StatusID,
+		ID:       id.NewULID(),
+		FilterID: filter.ID,
+		StatusID: form.StatusID,
 	}
 
-	if err := p.state.DB.PutFilterStatus(ctx, filterStatus); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = errors.New("duplicate status")
-			return nil, gtserror.NewErrorConflict(err, err.Error())
-		}
+	// Insert the new filter status model into the database.
+	switch err := p.state.DB.PutFilterStatus(ctx, filterStatus); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate status"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error inserting filter status: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Now update the filter it is attached to with new status.
+	filter.StatusIDs = append(filter.StatusIDs, filterStatus.ID)
+	filter.Statuses = append(filter.Statuses, filterStatus)
 
-	return p.converter.FilterStatusToAPIFilterStatus(ctx, filterStatus), nil
+	// Update the existing filter model in the database (only the needed col).
+	if err := p.state.DB.UpdateFilter(ctx, filter, "statuses"); err != nil {
+		err := gtserror.Newf("error updating filter: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
+
+	return typeutils.FilterStatusToAPIFilterStatus(filterStatus), nil
 }

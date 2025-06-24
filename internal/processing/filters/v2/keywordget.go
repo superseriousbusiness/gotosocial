@@ -20,7 +20,6 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -29,54 +28,47 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // KeywordGet looks up a filter keyword by ID.
-func (p *Processor) KeywordGet(ctx context.Context, account *gtsmodel.Account, filterKeywordID string) (*apimodel.FilterKeyword, gtserror.WithCode) {
-	filterKeyword, err := p.state.DB.GetFilterKeywordByID(ctx, filterKeywordID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
+func (p *Processor) KeywordGet(ctx context.Context, requester *gtsmodel.Account, filterKeywordID string) (*apimodel.FilterKeyword, gtserror.WithCode) {
+	filterKeyword, _, errWithCode := p.c.GetFilterKeyword(ctx, requester, filterKeywordID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
-	if filterKeyword.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(
-			fmt.Errorf("filter keyword %s doesn't belong to account %s", filterKeyword.ID, account.ID),
-		)
-	}
-
-	return p.converter.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword), nil
+	return typeutils.FilterKeywordToAPIFilterKeyword(filterKeyword), nil
 }
 
 // KeywordsGetForFilterID looks up all filter keywords for the given filter.
-func (p *Processor) KeywordsGetForFilterID(ctx context.Context, account *gtsmodel.Account, filterID string) ([]*apimodel.FilterKeyword, gtserror.WithCode) {
-	// Check that the filter is owned by the given account.
-	filter, err := p.state.DB.GetFilterByID(gtscontext.SetBarebones(ctx), filterID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
-	}
+func (p *Processor) KeywordsGetForFilterID(ctx context.Context, requester *gtsmodel.Account, filterID string) ([]*apimodel.FilterKeyword, gtserror.WithCode) {
 
-	filterKeywords, err := p.state.DB.GetFilterKeywordsForFilterID(
-		ctx,
-		filter.ID,
+	// Get the filter with given ID (but
+	// without any sub-models attached).
+	filter, errWithCode := p.c.GetFilter(
+		gtscontext.SetBarebones(ctx),
+		requester,
+		filterID,
 	)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, nil
-		}
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Fetch all associated filter keywords to the determined existent filter.
+	filterKeywords, err := p.state.DB.GetFilterKeywordsByIDs(ctx, filter.KeywordIDs)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting filter keywords: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiFilterKeywords := make([]*apimodel.FilterKeyword, 0, len(filterKeywords))
-	for _, filterKeyword := range filterKeywords {
-		apiFilterKeywords = append(apiFilterKeywords, p.converter.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword))
+	// Convert all of the filter keyword models from internal to frontend form.
+	apiFilterKeywords := make([]*apimodel.FilterKeyword, len(filterKeywords))
+	if len(apiFilterKeywords) != len(filterKeywords) {
+		// bound check eliminiation compiler-hint
+		panic(gtserror.New("BCE"))
+	}
+	for i, filterKeyword := range filterKeywords {
+		apiFilterKeywords[i] = typeutils.FilterKeywordToAPIFilterKeyword(filterKeyword)
 	}
 
 	// Sort them by ID so that they're in a stable order.

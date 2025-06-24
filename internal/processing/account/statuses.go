@@ -24,7 +24,6 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -97,7 +96,7 @@ func (p *Processor) StatusesGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
+	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requestingAccount.ID)
 	if err != nil {
 		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
 		return nil, gtserror.NewErrorInternalError(err)
@@ -105,7 +104,7 @@ func (p *Processor) StatusesGet(
 
 	for _, s := range filtered {
 		// Convert filtered statuses to API statuses.
-		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, statusfilter.FilterContextAccount, filters)
+		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, gtsmodel.FilterContextAccount, filters)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue

@@ -86,6 +86,7 @@ func (c *Caches) Init() {
 	c.initDomainPermissionExclude()
 	c.initEmoji()
 	c.initEmojiCategory()
+	c.initFilterIDs()
 	c.initFilter()
 	c.initFilterKeyword()
 	c.initFilterStatus()

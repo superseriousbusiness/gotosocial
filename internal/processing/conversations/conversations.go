@@ -101,7 +101,7 @@ func (p *Processor) getFilters(
 	ctx context.Context,
 	requestingAccount *gtsmodel.Account,
 ) ([]*gtsmodel.Filter, gtserror.WithCode) {
-	filters, err := p.state.DB.GetFiltersForAccountID(ctx, requestingAccount.ID)
+	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requestingAccount.ID)
 	if err != nil {
 		return nil, gtserror.NewErrorInternalError(
 			gtserror.Newf(

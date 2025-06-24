@@ -35,6 +35,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/db/bundb/migrations"
+	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/observability"
@@ -118,11 +119,17 @@ func doMigration(ctx context.Context, db *bun.DB) error {
 	log.Infof(ctx, "MIGRATED DATABASE TO %s", group)
 
 	if db.Dialect().Name() == dialect.SQLite {
-		log.Info(ctx,
-			"running ANALYZE to update table and index statistics; this will take somewhere between "+
-				"1-10 minutes, or maybe longer depending on your hardware and database size, please be patient",
-		)
-		_, err := db.ExecContext(ctx, "ANALYZE")
+		// Perform a final WAL checkpoint after a migration on SQLite.
+		if strings.EqualFold(config.GetDbSqliteJournalMode(), "WAL") {
+			_, err := db.ExecContext(ctx, "PRAGMA wal_checkpoint(RESTART);")
+			if err != nil {
+				return gtserror.Newf("error performing wal_checkpoint: %w", err)
+			}
+		}
+
+		log.Info(ctx, "running ANALYZE to update table and index statistics; this will take somewhere between "+
+			"1-10 minutes, or maybe longer depending on your hardware and database size, please be patient")
+		_, err := db.ExecContext(ctx, "ANALYZE;")
 		if err != nil {
 			log.Warnf(ctx, "ANALYZE failed, query planner may make poor life choices: %s", err)
 		}

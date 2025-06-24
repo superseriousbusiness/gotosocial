@@ -24,22 +24,3 @@ import (
 
 // ErrHideStatus indicates that a status has been filtered and should not be returned at all.
 var ErrHideStatus = errors.New("hide status")
-
-// FilterContext determines the filters that apply to a given status or list of statuses.
-type FilterContext string
-
-const (
-	// FilterContextNone means no filters should be applied.
-	// There are no filters with this context; it's for internal use only.
-	FilterContextNone FilterContext = ""
-	// FilterContextHome means this status is being filtered as part of a home or list timeline.
-	FilterContextHome FilterContext = "home"
-	// FilterContextNotifications means this status is being filtered as part of the notifications timeline.
-	FilterContextNotifications FilterContext = "notifications"
-	// FilterContextPublic means this status is being filtered as part of a public or tag timeline.
-	FilterContextPublic FilterContext = "public"
-	// FilterContextThread means this status is being filtered as part of a thread's context.
-	FilterContextThread FilterContext = "thread"
-	// FilterContextAccount means this status is being filtered as part of an account's statuses.
-	FilterContextAccount FilterContext = "account"
-)

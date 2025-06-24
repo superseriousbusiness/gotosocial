@@ -23,7 +23,6 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -88,7 +87,7 @@ func (p *Processor) ListTimelineGet(
 		nil,
 
 		// Status filter context.
-		statusfilter.FilterContextHome,
+		gtsmodel.FilterContextHome,
 
 		// Database load function.
 		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {

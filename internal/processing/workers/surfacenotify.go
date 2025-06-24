@@ -743,7 +743,7 @@ func (s *Surface) Notify(
 		}
 	}
 
-	filters, err := s.State.DB.GetFiltersForAccountID(ctx, targetAccount.ID)
+	filters, err := s.State.DB.GetFiltersByAccountID(ctx, targetAccount.ID)
 	if err != nil {
 		return gtserror.Newf("couldn't retrieve filters for account %s: %w", targetAccount.ID, err)
 	}

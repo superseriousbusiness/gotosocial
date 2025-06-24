@@ -213,7 +213,7 @@ func (p *Processor) GetAPIStatus(
 	apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 		target,
 		requester,
-		statusfilter.FilterContextNone,
+		gtsmodel.FilterContextNone,
 		nil,
 	)
 	if err != nil {
@@ -234,7 +234,7 @@ func (p *Processor) GetVisibleAPIStatuses(
 	ctx context.Context,
 	requester *gtsmodel.Account,
 	statuses []*gtsmodel.Status,
-	filterContext statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 ) []apimodel.Status {
 
@@ -277,7 +277,7 @@ func (p *Processor) GetVisibleAPIStatuses(
 		apiStatus, err := p.converter.StatusToAPIStatus(ctx,
 			status,
 			requester,
-			filterContext,
+			filterCtx,
 			filters,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {

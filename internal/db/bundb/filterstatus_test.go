@@ -23,7 +23,6 @@ import (
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // TestFilterStatusCRD tests CRD (no U) and read-all operations on filter statuses.
@@ -32,12 +31,11 @@ func (suite *FilterTestSuite) TestFilterStatusCRD() {
 
 	// Create new filter.
 	filter := &gtsmodel.Filter{
-		ID:            "01HNEJNVZZVXJTRB3FX3K2B1YF",
-		AccountID:     "01HNEJXCPRTJVJY9MV0VVHGD47",
-		Title:         "foss jail",
-		Action:        gtsmodel.FilterActionWarn,
-		ContextHome:   util.Ptr(true),
-		ContextPublic: util.Ptr(true),
+		ID:        "01HNEJNVZZVXJTRB3FX3K2B1YF",
+		AccountID: "01HNEJXCPRTJVJY9MV0VVHGD47",
+		Title:     "foss jail",
+		Action:    gtsmodel.FilterActionWarn,
+		Contexts:  gtsmodel.FilterContexts(gtsmodel.FilterContextHome | gtsmodel.FilterContextPublic),
 	}
 
 	// Create new cancellable test context.
@@ -51,19 +49,11 @@ func (suite *FilterTestSuite) TestFilterStatusCRD() {
 		t.Fatalf("error inserting filter: %v", err)
 	}
 
-	// There should be no filter statuses yet.
-	all, err := suite.db.GetFilterStatusesForAccountID(ctx, filter.AccountID)
-	if err != nil {
-		t.Fatalf("error fetching filter statuses: %v", err)
-	}
-	suite.Empty(all)
-
 	// Add a filter status to it.
 	filterStatus := &gtsmodel.FilterStatus{
-		ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
-		AccountID: filter.AccountID,
-		FilterID:  filter.ID,
-		StatusID:  "01HQXGMQ3QFXRT4GX9WNQ8KC0X",
+		ID:       "01HNEK4RW5QEAMG9Y4ET6ST0J4",
+		FilterID: filter.ID,
+		StatusID: "01HQXGMQ3QFXRT4GX9WNQ8KC0X",
 	}
 
 	// Insert the new filter status into the DB.
@@ -78,30 +68,19 @@ func (suite *FilterTestSuite) TestFilterStatusCRD() {
 		t.Fatalf("error fetching filter status: %v", err)
 	}
 	suite.Equal(filterStatus.ID, check.ID)
-	suite.NotZero(check.CreatedAt)
-	suite.NotZero(check.UpdatedAt)
-	suite.Equal(filterStatus.AccountID, check.AccountID)
 	suite.Equal(filterStatus.FilterID, check.FilterID)
 	suite.Equal(filterStatus.StatusID, check.StatusID)
 
-	// Loading filter statuses by account ID should find the one we inserted.
-	all, err = suite.db.GetFilterStatusesForAccountID(ctx, filter.AccountID)
+	// Check that fetching multiple filter statuses by IDs works.
+	checks, err := suite.db.GetFilterStatusesByIDs(ctx, []string{filterStatus.ID})
 	if err != nil {
 		t.Fatalf("error fetching filter statuses: %v", err)
 	}
-	suite.Len(all, 1)
-	suite.Equal(filterStatus.ID, all[0].ID)
-
-	// Loading filter statuses by filter ID should also find the one we inserted.
-	all, err = suite.db.GetFilterStatusesForFilterID(ctx, filter.ID)
-	if err != nil {
-		t.Fatalf("error fetching filter statuses: %v", err)
-	}
-	suite.Len(all, 1)
-	suite.Equal(filterStatus.ID, all[0].ID)
+	suite.Len(checks, 1)
+	suite.Equal(filterStatus.ID, checks[0].ID)
 
 	// Delete the filter status from the DB.
-	err = suite.db.DeleteFilterStatusByID(ctx, filter.ID)
+	err = suite.db.DeleteFilterStatusesByIDs(ctx, filter.ID)
 	if err != nil {
 		t.Fatalf("error deleting filter status: %v", err)
 	}

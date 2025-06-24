@@ -19,52 +19,52 @@ package v1
 
 import (
 	"context"
-	"errors"
+	"slices"
 
-	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
 
-// Delete an existing filter keyword and (if empty afterwards) filter for the given account.
+// Delete an existing filter keyword and (if empty
+// afterwards) filter for the given account.
 func (p *Processor) Delete(
 	ctx context.Context,
-	account *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	filterKeywordID string,
 ) gtserror.WithCode {
-	// Get enough of the filter keyword that we can look up its filter ID.
-	filterKeyword, err := p.state.DB.GetFilterKeywordByID(gtscontext.SetBarebones(ctx), filterKeywordID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return gtserror.NewErrorNotFound(err)
-		}
-		return gtserror.NewErrorInternalError(err)
-	}
-	if filterKeyword.AccountID != account.ID {
-		return gtserror.NewErrorNotFound(nil)
-	}
-
-	// Get the filter for this keyword.
-	filter, err := p.state.DB.GetFilterByID(ctx, filterKeyword.FilterID)
-	if err != nil {
-		return gtserror.NewErrorNotFound(err)
+	// Get the filter keyword with given ID, and associated filter, also checking ownership.
+	filterKeyword, filter, errWithCode := p.c.GetFilterKeyword(ctx, requester, filterKeywordID)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
 	if len(filter.Keywords) > 1 || len(filter.Statuses) > 0 {
-		// The filter has other keywords or statuses. Delete only the requested filter keyword.
-		if err := p.state.DB.DeleteFilterKeywordByID(ctx, filterKeyword.ID); err != nil {
+		// The filter has other keywords or statuses, just delete the one filter keyword.
+		if err := p.state.DB.DeleteFilterKeywordsByIDs(ctx, filterKeyword.ID); err != nil {
+			err := gtserror.Newf("error deleting filter keyword: %w", err)
+			return gtserror.NewErrorInternalError(err)
+		}
+
+		// Delete this filter keyword from the slice of IDs attached to filter.
+		filter.KeywordIDs = slices.DeleteFunc(filter.KeywordIDs, func(id string) bool {
+			return filterKeyword.ID == id
+		})
+
+		// Update filter in the database now the keyword has been unattached.
+		if err := p.state.DB.UpdateFilter(ctx, filter, "keywords"); err != nil {
+			err := gtserror.Newf("error updating filter: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
 	} else {
-		// Delete the entire filter.
-		if err := p.state.DB.DeleteFilterByID(ctx, filter.ID); err != nil {
+		// Delete the filter and this keyword that is attached to it.
+		if err := p.state.DB.DeleteFilter(ctx, filter); err != nil {
+			err := gtserror.Newf("error deleting filter: %w", err)
 			return gtserror.NewErrorInternalError(err)
 		}
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
 
 	return nil
 }

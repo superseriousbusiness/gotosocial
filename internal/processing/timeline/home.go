@@ -22,7 +22,6 @@ import (
 	"net/url"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -77,7 +76,7 @@ func (p *Processor) HomeTimelineGet(
 		pageQuery,
 
 		// Status filter context.
-		statusfilter.FilterContextHome,
+		gtsmodel.FilterContextHome,
 
 		// Database load function.
 		func(pg *paging.Page) (statuses []*gtsmodel.Status, err error) {

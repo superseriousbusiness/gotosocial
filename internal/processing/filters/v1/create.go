@@ -20,7 +20,7 @@ package v1
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net/http"
 	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -28,68 +28,72 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // Create a new filter and filter keyword for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
-func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.FilterCreateUpdateRequestV1) (*apimodel.FilterV1, gtserror.WithCode) {
+func (p *Processor) Create(ctx context.Context, requester *gtsmodel.Account, form *apimodel.FilterCreateUpdateRequestV1) (*apimodel.FilterV1, gtserror.WithCode) {
+	var errWithCode gtserror.WithCode
+
+	// Create new wrapping filter.
 	filter := &gtsmodel.Filter{
 		ID:        id.NewULID(),
-		AccountID: account.ID,
+		AccountID: requester.ID,
 		Title:     form.Phrase,
-		Action:    gtsmodel.FilterActionWarn,
 	}
+
 	if *form.Irreversible {
+		// Irreversible = action hide.
 		filter.Action = gtsmodel.FilterActionHide
-	}
-	if form.ExpiresIn != nil && *form.ExpiresIn != 0 {
-		filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
-	}
-	for _, context := range form.Context {
-		switch context {
-		case apimodel.FilterContextHome:
-			filter.ContextHome = util.Ptr(true)
-		case apimodel.FilterContextNotifications:
-			filter.ContextNotifications = util.Ptr(true)
-		case apimodel.FilterContextPublic:
-			filter.ContextPublic = util.Ptr(true)
-		case apimodel.FilterContextThread:
-			filter.ContextThread = util.Ptr(true)
-		case apimodel.FilterContextAccount:
-			filter.ContextAccount = util.Ptr(true)
-		default:
-			return nil, gtserror.NewErrorUnprocessableEntity(
-				fmt.Errorf("unsupported filter context '%s'", context),
-			)
-		}
+	} else {
+		// Default action = action warn.
+		filter.Action = gtsmodel.FilterActionWarn
 	}
 
-	filterKeyword := &gtsmodel.FilterKeyword{
-		ID:        id.NewULID(),
-		AccountID: account.ID,
-		FilterID:  filter.ID,
-		Filter:    filter,
-		Keyword:   form.Phrase,
-		WholeWord: util.Ptr(util.PtrOrValue(form.WholeWord, false)),
-	}
-	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
-
-	if err := p.state.DB.PutFilter(ctx, filter); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = errors.New("you already have a filter with this title")
-			return nil, gtserror.NewErrorConflict(err, err.Error())
-		}
-		return nil, gtserror.NewErrorInternalError(err)
+	// Check form for valid expiry and set on filter.
+	if form.ExpiresIn != nil && *form.ExpiresIn > 0 {
+		expiresIn := time.Duration(*form.ExpiresIn) * time.Second
+		filter.ExpiresAt = time.Now().Add(expiresIn)
 	}
 
-	apiFilter, errWithCode := p.apiFilter(ctx, filterKeyword)
+	// Parse contexts filter applies in from incoming request form data.
+	filter.Contexts, errWithCode = common.FromAPIContexts(form.Context)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Create new keyword attached to filter.
+	filterKeyword := &gtsmodel.FilterKeyword{
+		ID:        id.NewULID(),
+		FilterID:  filter.ID,
+		Keyword:   form.Phrase,
+		WholeWord: util.Ptr(util.PtrOrValue(form.WholeWord, false)),
+	}
 
-	return apiFilter, nil
+	// Attach the new keyword to filter before insert.
+	filter.Keywords = append(filter.Keywords, filterKeyword)
+	filter.KeywordIDs = append(filter.KeywordIDs, filterKeyword.ID)
+
+	// Insert newly created filter into the database.
+	switch err := p.state.DB.PutFilter(ctx, filter); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate title"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error inserting filter: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
+
+	// Return as converted frontend filter keyword model.
+	return typeutils.FilterKeywordToAPIFilterV1(filter, filterKeyword), nil
 }

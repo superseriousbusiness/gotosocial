@@ -112,6 +112,29 @@ func (c *Caches) OnInvalidateEmojiCategory(category *gtsmodel.EmojiCategory) {
 	c.DB.Emoji.Invalidate("CategoryID", category.ID)
 }
 
+func (c *Caches) OnInvalidateFilter(filter *gtsmodel.Filter) {
+	// Invalidate list of filters for account.
+	c.DB.FilterIDs.Invalidate(filter.AccountID)
+
+	// Invalidate all associated keywords and statuses.
+	c.DB.FilterKeyword.InvalidateIDs("ID", filter.KeywordIDs)
+	c.DB.FilterStatus.InvalidateIDs("ID", filter.StatusIDs)
+
+	// Invalidate account's timelines (in case local).
+	c.Timelines.Home.Unprepare(filter.AccountID)
+	c.Timelines.List.Unprepare(filter.AccountID)
+}
+
+func (c *Caches) OnInvalidateFilterKeyword(filterKeyword *gtsmodel.FilterKeyword) {
+	// Invalidate filter that keyword associated with.
+	c.DB.Filter.Invalidate("ID", filterKeyword.FilterID)
+}
+
+func (c *Caches) OnInvalidateFilterStatus(filterStatus *gtsmodel.FilterStatus) {
+	// Invalidate filter that status associated with.
+	c.DB.Filter.Invalidate("ID", filterStatus.FilterID)
+}
+
 func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 	// Invalidate follow request with this same ID.
 	c.DB.FollowRequest.Invalidate("ID", follow.ID)

@@ -19,86 +19,38 @@ package bundb
 
 import (
 	"context"
-	"slices"
-	"time"
 
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
-	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 	"github.com/uptrace/bun"
 )
 
 func (f *filterDB) GetFilterStatusByID(ctx context.Context, id string) (*gtsmodel.FilterStatus, error) {
-	filterStatus, err := f.state.Caches.DB.FilterStatus.LoadOne(
+	return f.state.Caches.DB.FilterStatus.LoadOne(
 		"ID",
 		func() (*gtsmodel.FilterStatus, error) {
 			var filterStatus gtsmodel.FilterStatus
-			err := f.db.
+			if err := f.db.
 				NewSelect().
 				Model(&filterStatus).
 				Where("? = ?", bun.Ident("id"), id).
-				Scan(ctx)
-			return &filterStatus, err
+				Scan(ctx); err != nil {
+				return nil, err
+			}
+			return &filterStatus, nil
 		},
 		id,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	if !gtscontext.Barebones(ctx) {
-		err = f.populateFilterStatus(ctx, filterStatus)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return filterStatus, nil
 }
 
-func (f *filterDB) populateFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) error {
-	if filterStatus.Filter == nil {
-		// Filter is not set, fetch from the cache or database.
-		filter, err := f.state.DB.GetFilterByID(
-			// Don't populate the filter with all of its keywords and statuses or we'll just end up back here.
-			gtscontext.SetBarebones(ctx),
-			filterStatus.FilterID,
-		)
-		if err != nil {
-			return err
-		}
-		filterStatus.Filter = filter
-	}
-
-	return nil
-}
-
-func (f *filterDB) GetFilterStatusesForFilterID(ctx context.Context, filterID string) ([]*gtsmodel.FilterStatus, error) {
-	return f.getFilterStatuses(ctx, "filter_id", filterID)
-}
-
-func (f *filterDB) GetFilterStatusesForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.FilterStatus, error) {
-	return f.getFilterStatuses(ctx, "account_id", accountID)
-}
-
-func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id string) ([]*gtsmodel.FilterStatus, error) {
-	var filterStatusIDs []string
-	if err := f.db.
-		NewSelect().
-		Model((*gtsmodel.FilterStatus)(nil)).
-		Column("id").
-		Where("? = ?", bun.Ident(idColumn), id).
-		Scan(ctx, &filterStatusIDs); err != nil {
-		return nil, err
-	}
-	if len(filterStatusIDs) == 0 {
+func (f *filterDB) GetFilterStatusesByIDs(ctx context.Context, ids []string) ([]*gtsmodel.FilterStatus, error) {
+	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	// Get each filter status by ID from the cache or DB.
 	filterStatuses, err := f.state.Caches.DB.FilterStatus.LoadIDs("ID",
-		filterStatusIDs,
+		ids,
 		func(uncached []string) ([]*gtsmodel.FilterStatus, error) {
 			filterStatuses := make([]*gtsmodel.FilterStatus, 0, len(uncached))
 			if err := f.db.
@@ -116,29 +68,11 @@ func (f *filterDB) getFilterStatuses(ctx context.Context, idColumn string, id st
 	}
 
 	// Put the filter status structs in the same order as the filter status IDs.
-	xslices.OrderBy(filterStatuses, filterStatusIDs, func(filterStatus *gtsmodel.FilterStatus) string {
+	xslices.OrderBy(filterStatuses, ids, func(filterStatus *gtsmodel.FilterStatus) string {
 		return filterStatus.ID
 	})
 
-	if gtscontext.Barebones(ctx) {
-		return filterStatuses, nil
-	}
-
-	// Populate the filter statuses. Remove any that we can't populate from the return slice.
-	errs := gtserror.NewMultiError(len(filterStatuses))
-	filterStatuses = slices.DeleteFunc(filterStatuses, func(filterStatus *gtsmodel.FilterStatus) bool {
-		if err := f.populateFilterStatus(ctx, filterStatus); err != nil {
-			errs.Appendf(
-				"error populating filter status %s: %w",
-				filterStatus.ID,
-				err,
-			)
-			return true
-		}
-		return false
-	})
-
-	return filterStatuses, errs.Combine()
+	return filterStatuses, nil
 }
 
 func (f *filterDB) PutFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) error {
@@ -152,11 +86,6 @@ func (f *filterDB) PutFilterStatus(ctx context.Context, filterStatus *gtsmodel.F
 }
 
 func (f *filterDB) UpdateFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus, columns ...string) error {
-	filterStatus.UpdatedAt = time.Now()
-	if len(columns) > 0 {
-		columns = append(columns, "updated_at")
-	}
-
 	return f.state.Caches.DB.FilterStatus.Store(filterStatus, func() error {
 		_, err := f.db.
 			NewUpdate().
@@ -168,16 +97,14 @@ func (f *filterDB) UpdateFilterStatus(ctx context.Context, filterStatus *gtsmode
 	})
 }
 
-func (f *filterDB) DeleteFilterStatusByID(ctx context.Context, id string) error {
+func (f *filterDB) DeleteFilterStatusesByIDs(ctx context.Context, ids ...string) error {
 	if _, err := f.db.
 		NewDelete().
 		Model((*gtsmodel.FilterStatus)(nil)).
-		Where("? = ?", bun.Ident("id"), id).
+		Where("? IN (?)", bun.Ident("id"), bun.In(ids)).
 		Exec(ctx); err != nil {
 		return err
 	}
-
-	f.state.Caches.DB.FilterStatus.Invalidate("ID", id)
-
+	f.state.Caches.DB.FilterStatus.InvalidateIDs("ID", ids)
 	return nil
 }

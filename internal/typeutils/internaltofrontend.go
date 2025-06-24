@@ -848,14 +848,14 @@ func (c *Converter) StatusToAPIStatus(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 ) (*apimodel.Status, error) {
 	return c.statusToAPIStatus(
 		ctx,
 		status,
 		requestingAccount,
-		filterContext,
+		filterCtx,
 		filters,
 		true,
 		true,
@@ -870,7 +870,7 @@ func (c *Converter) statusToAPIStatus(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 	placeholdAttachments bool,
 	addPendingNote bool,
@@ -879,7 +879,7 @@ func (c *Converter) statusToAPIStatus(
 		ctx,
 		status,
 		requestingAccount, // Can be nil.
-		filterContext,     // Can be empty.
+		filterCtx,         // Can be empty.
 		filters,
 	)
 	if err != nil {
@@ -945,13 +945,13 @@ func (c *Converter) statusToAPIFilterResults(
 	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 ) ([]apimodel.FilterResult, error) {
 	// If there are no filters or mutes, we're done.
 	// We never hide statuses authored by the requesting account,
 	// since not being able to see your own posts is confusing.
-	if filterContext == "" || (len(filters) == 0) || s.AccountID == requestingAccount.ID {
+	if filterCtx == 0 || (len(filters) == 0) || s.AccountID == requestingAccount.ID {
 		return nil, nil
 	}
 
@@ -967,6 +967,7 @@ func (c *Converter) statusToAPIFilterResults(
 	cache := c.state.Caches.StatusesFilterableFields
 	fields, stored := cache.Get(statusKey)
 	if !stored {
+
 		// We don't have filterable fields
 		// cached, calculate + cache now.
 		fields = filterableFields(s)
@@ -976,7 +977,7 @@ func (c *Converter) statusToAPIFilterResults(
 	// Record all matching warn filters and the reasons they matched.
 	filterResults := make([]apimodel.FilterResult, 0, len(filters))
 	for _, filter := range filters {
-		if !filterAppliesInContext(filter, filterContext) {
+		if !filter.Contexts.Applies(filterCtx) {
 			// Filter doesn't apply
 			// to this context.
 			continue
@@ -1004,7 +1005,8 @@ func (c *Converter) statusToAPIFilterResults(
 			}
 		}
 
-		// A status has only one ID. Not clear why this is a list in the Mastodon API.
+		// A status has only one ID. Not clear
+		// why this is a list in the Mastodon API.
 		statusMatches := make([]string, 0, 1)
 		for _, filterStatus := range filter.Statuses {
 			if s.ID == filterStatus.StatusID {
@@ -1017,12 +1019,8 @@ func (c *Converter) statusToAPIFilterResults(
 			switch filter.Action {
 			case gtsmodel.FilterActionWarn:
 				// Record what matched.
-				apiFilter, err := c.FilterToAPIFilterV2(ctx, filter)
-				if err != nil {
-					return nil, err
-				}
 				filterResults = append(filterResults, apimodel.FilterResult{
-					Filter:         *apiFilter,
+					Filter:         *FilterToAPIFilterV2(filter),
 					KeywordMatches: keywordMatches,
 					StatusMatches:  statusMatches,
 				})
@@ -1037,23 +1035,6 @@ func (c *Converter) statusToAPIFilterResults(
 	return filterResults, nil
 }
 
-// filterAppliesInContext returns whether a given filter applies in a given context.
-func filterAppliesInContext(filter *gtsmodel.Filter, filterContext statusfilter.FilterContext) bool {
-	switch filterContext {
-	case statusfilter.FilterContextHome:
-		return util.PtrOrValue(filter.ContextHome, false)
-	case statusfilter.FilterContextNotifications:
-		return util.PtrOrValue(filter.ContextNotifications, false)
-	case statusfilter.FilterContextPublic:
-		return util.PtrOrValue(filter.ContextPublic, false)
-	case statusfilter.FilterContextThread:
-		return util.PtrOrValue(filter.ContextThread, false)
-	case statusfilter.FilterContextAccount:
-		return util.PtrOrValue(filter.ContextAccount, false)
-	}
-	return false
-}
-
 // StatusToWebStatus converts a gts model status into an
 // api representation suitable for serving into a web template.
 //
@@ -1063,9 +1044,9 @@ func (c *Converter) StatusToWebStatus(
 	s *gtsmodel.Status,
 ) (*apimodel.WebStatus, error) {
 	apiStatus, err := c.statusToFrontend(ctx, s,
-		nil,                            // No authed requester.
-		statusfilter.FilterContextNone, // No filters.
-		nil,                            // No filters.
+		nil,                        // No authed requester.
+		gtsmodel.FilterContextNone, // No filters.
+		nil,                        // No filters.
 	)
 	if err != nil {
 		return nil, err
@@ -1234,7 +1215,7 @@ func (c *Converter) statusToFrontend(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 ) (
 	*apimodel.Status,
@@ -1243,7 +1224,7 @@ func (c *Converter) statusToFrontend(
 	apiStatus, err := c.baseStatusToFrontend(ctx,
 		status,
 		requestingAccount,
-		filterContext,
+		filterCtx,
 		filters,
 	)
 	if err != nil {
@@ -1254,7 +1235,7 @@ func (c *Converter) statusToFrontend(
 		reblog, err := c.baseStatusToFrontend(ctx,
 			status.BoostOf,
 			requestingAccount,
-			filterContext,
+			filterCtx,
 			filters,
 		)
 		if errors.Is(err, statusfilter.ErrHideStatus) {
@@ -1287,7 +1268,7 @@ func (c *Converter) baseStatusToFrontend(
 	ctx context.Context,
 	s *gtsmodel.Status,
 	requestingAccount *gtsmodel.Account,
-	filterContext statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 ) (
 	*apimodel.Status,
@@ -1466,7 +1447,7 @@ func (c *Converter) baseStatusToFrontend(
 	}
 
 	// Apply filters.
-	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterContext, filters)
+	filterResults, err := c.statusToAPIFilterResults(ctx, s, requestingAccount, filterCtx, filters)
 	if err != nil {
 		if errors.Is(err, statusfilter.ErrHideStatus) {
 			return nil, err
@@ -2007,7 +1988,7 @@ func (c *Converter) NotificationToAPINotification(
 		apiStatus, err = c.StatusToAPIStatus(
 			ctx, n.Status,
 			n.TargetAccount,
-			statusfilter.FilterContextNotifications,
+			gtsmodel.FilterContextNotifications,
 			filters,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
@@ -2058,7 +2039,7 @@ func (c *Converter) ConversationToAPIConversation(
 			ctx,
 			conversation.LastStatus,
 			requester,
-			statusfilter.FilterContextNotifications,
+			gtsmodel.FilterContextNotifications,
 			filters,
 		)
 		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
@@ -2327,7 +2308,7 @@ func (c *Converter) ReportToAdminAPIReport(ctx context.Context, r *gtsmodel.Repo
 			ctx,
 			s,
 			requestingAccount,
-			statusfilter.FilterContextNone,
+			gtsmodel.FilterContextNone,
 			nil,  // No filters.
 			true, // Placehold unknown attachments.
 
@@ -2558,48 +2539,53 @@ func (c *Converter) convertAttachmentsToAPIAttachments(ctx context.Context, atta
 }
 
 // FilterToAPIFiltersV1 converts one GTS model filter into an API v1 filter list
-func (c *Converter) FilterToAPIFiltersV1(ctx context.Context, filter *gtsmodel.Filter) ([]*apimodel.FilterV1, error) {
+func FilterToAPIFiltersV1(filter *gtsmodel.Filter) []*apimodel.FilterV1 {
 	apiFilters := make([]*apimodel.FilterV1, 0, len(filter.Keywords))
 	for _, filterKeyword := range filter.Keywords {
-		apiFilter, err := c.FilterKeywordToAPIFilterV1(ctx, filterKeyword)
-		if err != nil {
-			return nil, err
-		}
+		apiFilter := FilterKeywordToAPIFilterV1(filter, filterKeyword)
 		apiFilters = append(apiFilters, apiFilter)
 	}
-	return apiFilters, nil
+	return apiFilters
 }
 
 // FilterKeywordToAPIFilterV1 converts one GTS model filter and filter keyword into an API v1 filter
-func (c *Converter) FilterKeywordToAPIFilterV1(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) (*apimodel.FilterV1, error) {
-	if filterKeyword.Filter == nil {
-		return nil, gtserror.New("FilterKeyword model's Filter field isn't populated, but needs to be")
-	}
-	filter := filterKeyword.Filter
-
+func FilterKeywordToAPIFilterV1(filter *gtsmodel.Filter, keyword *gtsmodel.FilterKeyword) *apimodel.FilterV1 {
 	return &apimodel.FilterV1{
 		// v1 filters have a single keyword each, so we use the filter keyword ID as the v1 filter ID.
-		ID:           filterKeyword.ID,
-		Phrase:       filterKeyword.Keyword,
+		ID:           keyword.ID,
+		Phrase:       keyword.Keyword,
 		Context:      filterToAPIFilterContexts(filter),
-		WholeWord:    util.PtrOrValue(filterKeyword.WholeWord, false),
+		WholeWord:    util.PtrOrValue(keyword.WholeWord, false),
 		ExpiresAt:    filterExpiresAtToAPIFilterExpiresAt(filter.ExpiresAt),
 		Irreversible: filter.Action == gtsmodel.FilterActionHide,
-	}, nil
+	}
 }
 
 // FilterToAPIFilterV2 converts one GTS model filter into an API v2 filter.
-func (c *Converter) FilterToAPIFilterV2(ctx context.Context, filter *gtsmodel.Filter) (*apimodel.FilterV2, error) {
-	apiFilterKeywords := make([]apimodel.FilterKeyword, 0, len(filter.Keywords))
-	for _, filterKeyword := range filter.Keywords {
-		apiFilterKeywords = append(apiFilterKeywords, *c.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword))
+func FilterToAPIFilterV2(filter *gtsmodel.Filter) *apimodel.FilterV2 {
+	apiFilterKeywords := make([]apimodel.FilterKeyword, len(filter.Keywords))
+	if len(apiFilterKeywords) != len(filter.Keywords) {
+		// bound check eliminiation compiler-hint
+		panic(gtserror.New("BCE"))
 	}
-
-	apiFilterStatuses := make([]apimodel.FilterStatus, 0, len(filter.Keywords))
-	for _, filterStatus := range filter.Statuses {
-		apiFilterStatuses = append(apiFilterStatuses, *c.FilterStatusToAPIFilterStatus(ctx, filterStatus))
+	for i, filterKeyword := range filter.Keywords {
+		apiFilterKeywords[i] = apimodel.FilterKeyword{
+			ID:        filterKeyword.ID,
+			Keyword:   filterKeyword.Keyword,
+			WholeWord: util.PtrOrValue(filterKeyword.WholeWord, false),
+		}
 	}
-
+	apiFilterStatuses := make([]apimodel.FilterStatus, len(filter.Statuses))
+	if len(apiFilterStatuses) != len(filter.Statuses) {
+		// bound check eliminiation compiler-hint
+		panic(gtserror.New("BCE"))
+	}
+	for i, filterStatus := range filter.Statuses {
+		apiFilterStatuses[i] = apimodel.FilterStatus{
+			ID:       filterStatus.ID,
+			StatusID: filterStatus.StatusID,
+		}
+	}
 	return &apimodel.FilterV2{
 		ID:           filter.ID,
 		Title:        filter.Title,
@@ -2608,7 +2594,7 @@ func (c *Converter) FilterToAPIFilterV2(ctx context.Context, filter *gtsmodel.Fi
 		FilterAction: filterActionToAPIFilterAction(filter.Action),
 		Keywords:     apiFilterKeywords,
 		Statuses:     apiFilterStatuses,
-	}, nil
+	}
 }
 
 func filterExpiresAtToAPIFilterExpiresAt(expiresAt time.Time) *string {
@@ -2620,19 +2606,19 @@ func filterExpiresAtToAPIFilterExpiresAt(expiresAt time.Time) *string {
 
 func filterToAPIFilterContexts(filter *gtsmodel.Filter) []apimodel.FilterContext {
 	apiContexts := make([]apimodel.FilterContext, 0, apimodel.FilterContextNumValues)
-	if util.PtrOrValue(filter.ContextHome, false) {
+	if filter.Contexts.Home() {
 		apiContexts = append(apiContexts, apimodel.FilterContextHome)
 	}
-	if util.PtrOrValue(filter.ContextNotifications, false) {
+	if filter.Contexts.Notifications() {
 		apiContexts = append(apiContexts, apimodel.FilterContextNotifications)
 	}
-	if util.PtrOrValue(filter.ContextPublic, false) {
+	if filter.Contexts.Public() {
 		apiContexts = append(apiContexts, apimodel.FilterContextPublic)
 	}
-	if util.PtrOrValue(filter.ContextThread, false) {
+	if filter.Contexts.Thread() {
 		apiContexts = append(apiContexts, apimodel.FilterContextThread)
 	}
-	if util.PtrOrValue(filter.ContextAccount, false) {
+	if filter.Contexts.Account() {
 		apiContexts = append(apiContexts, apimodel.FilterContextAccount)
 	}
 	return apiContexts
@@ -2649,7 +2635,7 @@ func filterActionToAPIFilterAction(m gtsmodel.FilterAction) apimodel.FilterActio
 }
 
 // FilterKeywordToAPIFilterKeyword converts a GTS model filter status into an API filter status.
-func (c *Converter) FilterKeywordToAPIFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) *apimodel.FilterKeyword {
+func FilterKeywordToAPIFilterKeyword(filterKeyword *gtsmodel.FilterKeyword) *apimodel.FilterKeyword {
 	return &apimodel.FilterKeyword{
 		ID:        filterKeyword.ID,
 		Keyword:   filterKeyword.Keyword,
@@ -2658,7 +2644,7 @@ func (c *Converter) FilterKeywordToAPIFilterKeyword(ctx context.Context, filterK
 }
 
 // FilterStatusToAPIFilterStatus converts a GTS model filter status into an API filter status.
-func (c *Converter) FilterStatusToAPIFilterStatus(ctx context.Context, filterStatus *gtsmodel.FilterStatus) *apimodel.FilterStatus {
+func FilterStatusToAPIFilterStatus(filterStatus *gtsmodel.FilterStatus) *apimodel.FilterStatus {
 	return &apimodel.FilterStatus{
 		ID:       filterStatus.ID,
 		StatusID: filterStatus.StatusID,
@@ -3027,7 +3013,7 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 		ctx,
 		req.Status,
 		requestingAcct,
-		statusfilter.FilterContextNone,
+		gtsmodel.FilterContextNone,
 		nil, // No filters.
 	)
 	if err != nil {
@@ -3041,7 +3027,7 @@ func (c *Converter) InteractionReqToAPIInteractionReq(
 			ctx,
 			req.Reply,
 			requestingAcct,
-			statusfilter.FilterContextNone,
+			gtsmodel.FilterContextNone,
 			nil,  // No filters.
 			true, // Placehold unknown attachments.
 

@@ -18,14 +18,26 @@
 package gtsmodel
 
 import (
-	"fmt"
 	"regexp"
-	"strconv"
 	"time"
 
 	"code.superseriousbusiness.org/gotosocial/internal/util"
-	"codeberg.org/gruf/go-byteutil"
 )
+
+// smallint is the largest size supported
+// by a PostgreSQL SMALLINT, since an SQLite
+// SMALLINT is actually variable in size.
+type smallint int16
+
+// enumType is the type we (at least, should) use
+// for database enum types, as smallest int size.
+type enumType smallint
+
+// bitFieldType is the type we use
+// for database int bit fields, at
+// least where the smallest int size
+// will suffice for number of fields.
+type bitFieldType smallint
 
 // FilterContext represents the
 // context in which a Filter applies.
@@ -62,33 +74,26 @@ const (
 	FilterContextAccount FilterContext = 1 << 5
 )
 
-// String returns human-readable form of FilterContext.
-func (ctx FilterContext) String() string {
-	switch ctx {
-	case FilterContextNone:
-		return ""
-	case FilterContextHome:
-		return "home"
-	case FilterContextNotifications:
-		return "notifications"
-	case FilterContextPublic:
-		return "public"
-	case FilterContextThread:
-		return "thread"
-	case FilterContextAccount:
-		return "account"
-	default:
-		panic(fmt.Sprintf("invalid filter context: %d", ctx))
-	}
-}
-
 // FilterContexts stores multiple contexts
 // in which a Filter applies as bits in an int.
 type FilterContexts bitFieldType
 
 // Applies returns whether receiving FilterContexts applies in FilterContexts.
 func (ctxs FilterContexts) Applies(ctx FilterContext) bool {
-	return ctxs&FilterContexts(ctx) != 0
+	switch ctx {
+	case FilterContextHome:
+		return ctxs.Home()
+	case FilterContextNotifications:
+		return ctxs.Notifications()
+	case FilterContextPublic:
+		return ctxs.Public()
+	case FilterContextThread:
+		return ctxs.Thread()
+	case FilterContextAccount:
+		return ctxs.Account()
+	default:
+		return false
+	}
 }
 
 // Home returns whether FilterContextHome is set.
@@ -166,29 +171,6 @@ func (ctxs *FilterContexts) UnsetAccount() {
 	*ctxs &= ^FilterContexts(FilterContextAccount)
 }
 
-// String returns a single human-readable form of FilterContexts.
-func (ctxs FilterContexts) String() string {
-	var buf byteutil.Buffer
-	buf.Guarantee(72) // worst-case estimate
-	buf.B = append(buf.B, '{')
-	buf.B = append(buf.B, "home="...)
-	buf.B = strconv.AppendBool(buf.B, ctxs.Home())
-	buf.B = append(buf.B, ',')
-	buf.B = append(buf.B, "notifications="...)
-	buf.B = strconv.AppendBool(buf.B, ctxs.Notifications())
-	buf.B = append(buf.B, ',')
-	buf.B = append(buf.B, "public="...)
-	buf.B = strconv.AppendBool(buf.B, ctxs.Public())
-	buf.B = append(buf.B, ',')
-	buf.B = append(buf.B, "thread="...)
-	buf.B = strconv.AppendBool(buf.B, ctxs.Thread())
-	buf.B = append(buf.B, ',')
-	buf.B = append(buf.B, "account="...)
-	buf.B = strconv.AppendBool(buf.B, ctxs.Account())
-	buf.B = append(buf.B, '}')
-	return buf.String()
-}
-
 // FilterAction represents the action
 // to take on a filtered status.
 type FilterAction enumType
@@ -207,20 +189,6 @@ const (
 	FilterActionHide FilterAction = 2
 )
 
-// String returns human-readable form of FilterAction.
-func (act FilterAction) String() string {
-	switch act {
-	case FilterActionNone:
-		return ""
-	case FilterActionWarn:
-		return "warn"
-	case FilterActionHide:
-		return "hide"
-	default:
-		panic(fmt.Sprintf("invalid filter action: %d", act))
-	}
-}
-
 // Filter stores a filter created by a local account.
 type Filter struct {
 	ID         string           `bun:"type:CHAR(26),pk,nullzero,notnull,unique"`                            // id of this item in the database
@@ -233,42 +201,6 @@ type Filter struct {
 	Statuses   []*FilterStatus  `bun:"-"`                                                                   // Statuses for this filter.
 	StatusIDs  []string         `bun:"statuses,array"`                                                      //
 	Contexts   FilterContexts   `bun:",nullzero,notnull,default:0"`                                         // Which contexts does this filter apply in?
-}
-
-// KeywordsPopulated returns whether keywords
-// are populated according to current KeywordIDs.
-func (f *Filter) KeywordsPopulated() bool {
-	if len(f.KeywordIDs) != len(f.Keywords) {
-		// this is the quickest indicator.
-		return false
-	}
-	for i, id := range f.KeywordIDs {
-		if f.Keywords[i].ID != id {
-			return false
-		}
-	}
-	return true
-}
-
-// StatusesPopulated returns whether statuses
-// are populated according to current StatusIDs.
-func (f *Filter) StatusesPopulated() bool {
-	if len(f.StatusIDs) != len(f.Statuses) {
-		// this is the quickest indicator.
-		return false
-	}
-	for i, id := range f.StatusIDs {
-		if f.Statuses[i].ID != id {
-			return false
-		}
-	}
-	return true
-}
-
-// Expired returns whether the filter has expired at a given time.
-// Filters without an expiration timestamp never expire.
-func (f *Filter) Expired(now time.Time) bool {
-	return !f.ExpiresAt.IsZero() && !f.ExpiresAt.After(now)
 }
 
 // FilterKeyword stores a single keyword to filter statuses against.

@@ -104,7 +104,7 @@ func (suite *FiltersTestSuite) TestGetFilterStatus() {
 func (suite *FiltersTestSuite) TestGetAnotherAccountsFilterStatus() {
 	id := suite.testFilterStatuses["local_account_2_filter_1_status_1"].ID
 
-	_, err := suite.getFilterStatus(id, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.getFilterStatus(id, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -113,7 +113,7 @@ func (suite *FiltersTestSuite) TestGetAnotherAccountsFilterStatus() {
 func (suite *FiltersTestSuite) TestGetNonexistentFilterStatus() {
 	id := "not_even_a_real_ULID"
 
-	_, err := suite.getFilterStatus(id, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.getFilterStatus(id, http.StatusNotFound, `{"error":"Not Found: filter status not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

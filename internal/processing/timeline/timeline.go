@@ -70,7 +70,7 @@ func (p *Processor) getStatusTimeline(
 	page *paging.Page,
 	pagePath string,
 	pageQuery url.Values,
-	filterCtx statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	loadPage func(*paging.Page) (statuses []*gtsmodel.Status, err error),
 	filter func(*gtsmodel.Status) (delete bool),
 	postFilter func(*gtsmodel.Status) (remove bool),
@@ -83,7 +83,7 @@ func (p *Processor) getStatusTimeline(
 
 	if requester != nil {
 		// Fetch all filters relevant for requesting account.
-		filters, err = p.state.DB.GetFiltersForAccountID(ctx,
+		filters, err = p.state.DB.GetFiltersByAccountID(ctx,
 			requester.ID,
 		)
 		if err != nil && !errors.Is(err, db.ErrNoEntries) {

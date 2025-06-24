@@ -20,7 +20,7 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net/http"
 	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -28,79 +28,85 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // Create a new filter for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
 func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.FilterCreateRequestV2) (*apimodel.FilterV2, gtserror.WithCode) {
+	var errWithCode gtserror.WithCode
+
+	// Create new filter model.
 	filter := &gtsmodel.Filter{
 		ID:        id.NewULID(),
 		AccountID: account.ID,
 		Title:     form.Title,
-		Action:    typeutils.APIFilterActionToFilterAction(*form.FilterAction),
-	}
-	if form.ExpiresIn != nil && *form.ExpiresIn != 0 {
-		filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
-	}
-	for _, context := range form.Context {
-		switch context {
-		case apimodel.FilterContextHome:
-			filter.ContextHome = util.Ptr(true)
-		case apimodel.FilterContextNotifications:
-			filter.ContextNotifications = util.Ptr(true)
-		case apimodel.FilterContextPublic:
-			filter.ContextPublic = util.Ptr(true)
-		case apimodel.FilterContextThread:
-			filter.ContextThread = util.Ptr(true)
-		case apimodel.FilterContextAccount:
-			filter.ContextAccount = util.Ptr(true)
-		default:
-			return nil, gtserror.NewErrorUnprocessableEntity(
-				fmt.Errorf("unsupported filter context '%s'", context),
-			)
-		}
 	}
 
-	for _, formKeyword := range form.Keywords {
-		filterKeyword := &gtsmodel.FilterKeyword{
-			ID:        id.NewULID(),
-			AccountID: account.ID,
-			FilterID:  filter.ID,
-			Filter:    filter,
-			Keyword:   formKeyword.Keyword,
-			WholeWord: formKeyword.WholeWord,
-		}
-		filter.Keywords = append(filter.Keywords, filterKeyword)
+	// Parse filter action from form and set on filter, checking for validity.
+	filter.Action = typeutils.APIFilterActionToFilterAction(*form.FilterAction)
+	if filter.Action == 0 {
+		const text = "invalid filter action"
+		return nil, gtserror.NewWithCode(http.StatusBadRequest, text)
 	}
 
-	for _, formStatus := range form.Statuses {
-		filterStatus := &gtsmodel.FilterStatus{
-			ID:        id.NewULID(),
-			AccountID: account.ID,
-			FilterID:  filter.ID,
-			Filter:    filter,
-			StatusID:  formStatus.StatusID,
-		}
-		filter.Statuses = append(filter.Statuses, filterStatus)
-	}
-
-	if err := p.state.DB.PutFilter(ctx, filter); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = errors.New("duplicate title, keyword, or status")
-			return nil, gtserror.NewErrorConflict(err, err.Error())
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	apiFilter, errWithCode := p.apiFilter(ctx, filter)
+	// Parse contexts filter applies in from incoming request form data.
+	filter.Contexts, errWithCode = common.FromAPIContexts(form.Context)
 	if errWithCode != nil {
 		return nil, errWithCode
+	}
+
+	// Check form for valid expiry and set on filter.
+	if form.ExpiresIn != nil && *form.ExpiresIn > 0 {
+		expiresIn := time.Duration(*form.ExpiresIn) * time.Second
+		filter.ExpiresAt = time.Now().Add(expiresIn)
+	}
+
+	// Create new attached filter keywords.
+	for _, keyword := range form.Keywords {
+		filterKeyword := &gtsmodel.FilterKeyword{
+			ID:        id.NewULID(),
+			FilterID:  filter.ID,
+			Keyword:   keyword.Keyword,
+			WholeWord: keyword.WholeWord,
+		}
+
+		// Append the new filter key word to filter itself.
+		filter.Keywords = append(filter.Keywords, filterKeyword)
+		filter.KeywordIDs = append(filter.KeywordIDs, filterKeyword.ID)
+	}
+
+	// Create new attached filter statuses.
+	for _, status := range form.Statuses {
+		filterStatus := &gtsmodel.FilterStatus{
+			ID:       id.NewULID(),
+			FilterID: filter.ID,
+			StatusID: status.StatusID,
+		}
+
+		// Append the new filter status to filter itself.
+		filter.Statuses = append(filter.Statuses, filterStatus)
+		filter.StatusIDs = append(filter.StatusIDs, filterStatus.ID)
+	}
+
+	// Insert the new filter model into the database.
+	switch err := p.state.DB.PutFilter(ctx, filter); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate title, keyword or status"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error inserting filter: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	// Send a filters changed event.
 	p.stream.FiltersChanged(ctx, account)
 
-	return apiFilter, nil
+	// Return as converted frontend filter model.
+	return typeutils.FilterToAPIFilterV2(filter), nil
 }

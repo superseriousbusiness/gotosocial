@@ -19,7 +19,7 @@ package v2
 
 import (
 	"context"
-	"fmt"
+	"slices"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -28,29 +28,34 @@ import (
 // StatusDelete deletes an existing filter status from a filter.
 func (p *Processor) StatusDelete(
 	ctx context.Context,
-	account *gtsmodel.Account,
-	filterID string,
+	requester *gtsmodel.Account,
+	filterStatusID string,
 ) gtserror.WithCode {
-	// Get the filter status.
-	filterStatus, err := p.state.DB.GetFilterStatusByID(ctx, filterID)
-	if err != nil {
-		return gtserror.NewErrorNotFound(err)
+	// Get filter status with given ID, also checking ownership to requester.
+	_, filter, errWithCode := p.c.GetFilterStatus(ctx, requester, filterStatusID)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
-	// Check that the account owns it.
-	if filterStatus.AccountID != account.ID {
-		return gtserror.NewErrorNotFound(
-			fmt.Errorf("filter status %s doesn't belong to account %s", filterStatus.ID, account.ID),
-		)
-	}
-
-	// Delete the filter status.
-	if err := p.state.DB.DeleteFilterStatusByID(ctx, filterStatus.ID); err != nil {
+	// Delete this one filter status from the database, now ownership is confirmed.
+	if err := p.state.DB.DeleteFilterStatusesByIDs(ctx, filterStatusID); err != nil {
+		err := gtserror.Newf("error deleting filter status: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Delete this filter keyword from the slice of IDs attached to filter.
+	filter.StatusIDs = slices.DeleteFunc(filter.StatusIDs, func(id string) bool {
+		return filterStatusID == id
+	})
+
+	// Update filter in the database now the status has been unattached.
+	if err := p.state.DB.UpdateFilter(ctx, filter, "statuses"); err != nil {
+		err := gtserror.Newf("error updating filter: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
 
 	return nil
 }

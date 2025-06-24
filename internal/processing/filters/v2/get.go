@@ -19,56 +19,43 @@ package v2
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"slices"
 	"strings"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
-	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // Get looks up a filter by ID and returns it with keywords and statuses.
-func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, filterID string) (*apimodel.FilterV2, gtserror.WithCode) {
-	filter, err := p.state.DB.GetFilterByID(ctx, filterID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
+func (p *Processor) Get(ctx context.Context, requester *gtsmodel.Account, filterID string) (*apimodel.FilterV2, gtserror.WithCode) {
+	filter, errWithCode := p.c.GetFilter(ctx, requester, filterID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
-	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(
-			fmt.Errorf("filter %s doesn't belong to account %s", filter.ID, account.ID),
-		)
-	}
-
-	return p.apiFilter(ctx, filter)
+	return typeutils.FilterToAPIFilterV2(filter), nil
 }
 
 // GetAll looks up all filters for the current account and returns them with keywords and statuses.
-func (p *Processor) GetAll(ctx context.Context, account *gtsmodel.Account) ([]*apimodel.FilterV2, gtserror.WithCode) {
-	filters, err := p.state.DB.GetFiltersForAccountID(
-		ctx,
-		account.ID,
-	)
+func (p *Processor) GetAll(ctx context.Context, requester *gtsmodel.Account) ([]*apimodel.FilterV2, gtserror.WithCode) {
+
+	// Get all filters belonging to this requester from the database.
+	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requester.ID)
 	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, nil
-		}
+		err := gtserror.Newf("error getting account filters: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiFilters := make([]*apimodel.FilterV2, 0, len(filters))
-	for _, filter := range filters {
-		apiFilter, errWithCode := p.apiFilter(ctx, filter)
-		if errWithCode != nil {
-			return nil, errWithCode
-		}
-
-		apiFilters = append(apiFilters, apiFilter)
+	// Convert all these filters to frontend API models.
+	apiFilters := make([]*apimodel.FilterV2, len(filters))
+	if len(apiFilters) != len(filters) {
+		// bound check eliminiation compiler-hint
+		panic(gtserror.New("BCE"))
+	}
+	for i, filter := range filters {
+		apiFilter := typeutils.FilterToAPIFilterV2(filter)
+		apiFilters[i] = apiFilter
 	}
 
 	// Sort them by ID so that they're in a stable order.

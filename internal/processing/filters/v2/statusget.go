@@ -20,7 +20,6 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
 	"slices"
 	"strings"
 
@@ -29,54 +28,47 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // StatusGet looks up a filter status by ID.
-func (p *Processor) StatusGet(ctx context.Context, account *gtsmodel.Account, filterStatusID string) (*apimodel.FilterStatus, gtserror.WithCode) {
-	filterStatus, err := p.state.DB.GetFilterStatusByID(ctx, filterStatusID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
+func (p *Processor) StatusGet(ctx context.Context, requester *gtsmodel.Account, filterStatusID string) (*apimodel.FilterStatus, gtserror.WithCode) {
+	filterStatus, _, errWithCode := p.c.GetFilterStatus(ctx, requester, filterStatusID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
-	if filterStatus.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(
-			fmt.Errorf("filter status %s doesn't belong to account %s", filterStatus.ID, account.ID),
-		)
-	}
-
-	return p.converter.FilterStatusToAPIFilterStatus(ctx, filterStatus), nil
+	return typeutils.FilterStatusToAPIFilterStatus(filterStatus), nil
 }
 
 // StatusesGetForFilterID looks up all filter statuses for the given filter.
-func (p *Processor) StatusesGetForFilterID(ctx context.Context, account *gtsmodel.Account, filterID string) ([]*apimodel.FilterStatus, gtserror.WithCode) {
-	// Check that the filter is owned by the given account.
-	filter, err := p.state.DB.GetFilterByID(gtscontext.SetBarebones(ctx), filterID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
-	}
+func (p *Processor) StatusesGetForFilterID(ctx context.Context, requester *gtsmodel.Account, filterID string) ([]*apimodel.FilterStatus, gtserror.WithCode) {
 
-	filterStatuses, err := p.state.DB.GetFilterStatusesForFilterID(
-		ctx,
-		filter.ID,
+	// Get the filter with given ID (but
+	// without any sub-models attached).
+	filter, errWithCode := p.c.GetFilter(
+		gtscontext.SetBarebones(ctx),
+		requester,
+		filterID,
 	)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, nil
-		}
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Fetch all associated filter statuses to the determined existent filter.
+	filterStatuses, err := p.state.DB.GetFilterStatusesByIDs(ctx, filter.StatusIDs)
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting filter statuses: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiFilterStatuses := make([]*apimodel.FilterStatus, 0, len(filterStatuses))
-	for _, filterStatus := range filterStatuses {
-		apiFilterStatuses = append(apiFilterStatuses, p.converter.FilterStatusToAPIFilterStatus(ctx, filterStatus))
+	// Convert all of the filter status models from internal to frontend form.
+	apiFilterStatuses := make([]*apimodel.FilterStatus, len(filterStatuses))
+	if len(apiFilterStatuses) != len(filterStatuses) {
+		// bound check eliminiation compiler-hint
+		panic(gtserror.New("BCE"))
+	}
+	for i, filterStatus := range filterStatuses {
+		apiFilterStatuses[i] = typeutils.FilterStatusToAPIFilterStatus(filterStatus)
 	}
 
 	// Sort them by ID so that they're in a stable order.

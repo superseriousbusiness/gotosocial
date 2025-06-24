@@ -27,7 +27,6 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/messages"
@@ -213,7 +212,7 @@ func (suite *FromClientAPITestSuite) statusJSON(
 		ctx,
 		status,
 		requestingAccount,
-		statusfilter.FilterContextNone,
+		gtsmodel.FilterContextNone,
 		nil,
 	)
 	if err != nil {

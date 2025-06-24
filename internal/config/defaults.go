@@ -193,6 +193,7 @@ var Defaults = Configuration{
 		EmojiMemRatio:                         3,
 		EmojiCategoryMemRatio:                 0.1,
 		FilterMemRatio:                        0.5,
+		FilterIDsMemRatio:                     2,
 		FilterKeywordMemRatio:                 0.5,
 		FilterStatusMemRatio:                  0.5,
 		FollowMemRatio:                        2,

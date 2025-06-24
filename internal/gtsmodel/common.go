@@ -17,8 +17,17 @@
 
 package gtsmodel
 
+// smallint is the largest size supported
+// by a PostgreSQL SMALLINT, since an SQLite
+// SMALLINT is actually variable in size.
+type smallint int16
+
 // enumType is the type we (at least, should) use
-// for database enum types. it is the largest size
-// supported by a PostgreSQL SMALLINT, since an
-// SQLite SMALLINT is actually variable in size.
-type enumType int16
+// for database enum types, as smallest int size.
+type enumType smallint
+
+// bitFieldType is the type we use
+// for database int bit fields, at
+// least where the smallest int size
+// will suffice for number of fields.
+type bitFieldType smallint

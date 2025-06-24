@@ -86,10 +86,8 @@ func (suite *FiltersTestSuite) getFilters(
 }
 
 func (suite *FiltersTestSuite) TestGetFilters() {
-	// Set of filter IDs for the test user.
-	expectedFilterIDs := []string{}
 	// Map of filter IDs to filter keyword and status IDs.
-	expectedFilters := map[string]struct {
+	expectedFilters := map[string]*struct {
 		keywordIDs []string
 		statusIDs  []string
 	}{}
@@ -98,28 +96,26 @@ func (suite *FiltersTestSuite) TestGetFilters() {
 	accountID := suite.testAccounts["local_account_1"].ID
 	for _, filter := range suite.testFilters {
 		if filter.AccountID == accountID {
-			expectedFilterIDs = append(expectedFilterIDs, filter.ID)
-			expectedFilters[filter.ID] = struct {
+			expectedFilters[filter.ID] = &struct {
 				keywordIDs []string
 				statusIDs  []string
 			}{}
 		}
 	}
 	for _, filterKeyword := range suite.testFilterKeywords {
-		if filterKeyword.AccountID == accountID {
-			expectedIDsForFilter := expectedFilters[filterKeyword.FilterID]
-			expectedIDsForFilter.keywordIDs = append(expectedIDsForFilter.keywordIDs, filterKeyword.ID)
-			expectedFilters[filterKeyword.FilterID] = expectedIDsForFilter
+		expected, ok := expectedFilters[filterKeyword.FilterID]
+		if !ok {
+			continue
 		}
+		expected.keywordIDs = append(expected.keywordIDs, filterKeyword.ID)
 	}
 	for _, filterStatus := range suite.testFilterStatuses {
-		if filterStatus.AccountID == accountID {
-			expectedIDsForFilter := expectedFilters[filterStatus.FilterID]
-			expectedIDsForFilter.statusIDs = append(expectedIDsForFilter.statusIDs, filterStatus.ID)
-			expectedFilters[filterStatus.FilterID] = expectedIDsForFilter
+		expected, ok := expectedFilters[filterStatus.FilterID]
+		if !ok {
+			continue
 		}
+		expected.statusIDs = append(expected.statusIDs, filterStatus.ID)
 	}
-	suite.NotEmpty(expectedFilterIDs)
 	suite.NotEmpty(expectedFilters)
 
 	// Fetch all filters for the logged-in account.
@@ -132,23 +128,19 @@ func (suite *FiltersTestSuite) TestGetFilters() {
 	// Check that we got the right ones.
 	suite.Len(filters, len(expectedFilters))
 
-	actualFilterIDs := []string{}
 	for _, filter := range filters {
-		actualFilterIDs = append(actualFilterIDs, filter.ID)
-
 		expectedIDsForFilter := expectedFilters[filter.ID]
 
-		actualFilterKeywordIDs := []string{}
+		var actualFilterKeywordIDs []string
 		for _, filterKeyword := range filter.Keywords {
 			actualFilterKeywordIDs = append(actualFilterKeywordIDs, filterKeyword.ID)
 		}
 		suite.ElementsMatch(actualFilterKeywordIDs, expectedIDsForFilter.keywordIDs)
 
-		actualFilterStatusIDs := []string{}
+		var actualFilterStatusIDs []string
 		for _, filterStatus := range filter.Statuses {
 			actualFilterStatusIDs = append(actualFilterStatusIDs, filterStatus.ID)
 		}
 		suite.ElementsMatch(actualFilterStatusIDs, expectedIDsForFilter.statusIDs)
 	}
-	suite.ElementsMatch(expectedFilterIDs, actualFilterIDs)
 }

@@ -20,9 +20,7 @@ package bundb
 import (
 	"context"
 	"slices"
-	"time"
 
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
@@ -31,7 +29,7 @@ import (
 )
 
 func (f *filterDB) GetFilterKeywordByID(ctx context.Context, id string) (*gtsmodel.FilterKeyword, error) {
-	filterKeyword, err := f.state.Caches.DB.FilterKeyword.LoadOne(
+	return f.state.Caches.DB.FilterKeyword.LoadOne(
 		"ID",
 		func() (*gtsmodel.FilterKeyword, error) {
 			var filterKeyword gtsmodel.FilterKeyword
@@ -54,64 +52,16 @@ func (f *filterDB) GetFilterKeywordByID(ctx context.Context, id string) (*gtsmod
 		},
 		id,
 	)
-	if err != nil {
-		return nil, err
-	}
-
-	if !gtscontext.Barebones(ctx) {
-		err = f.populateFilterKeyword(ctx, filterKeyword)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return filterKeyword, nil
 }
 
-func (f *filterDB) populateFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword) (err error) {
-	if filterKeyword.Filter == nil {
-		// Filter is not set, fetch from the cache or database.
-		filterKeyword.Filter, err = f.state.DB.GetFilterByID(
-
-			// Don't populate the filter with all of its keywords
-			// and statuses or we'll just end up back here.
-			gtscontext.SetBarebones(ctx),
-			filterKeyword.FilterID,
-		)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (f *filterDB) GetFilterKeywordsForFilterID(ctx context.Context, filterID string) ([]*gtsmodel.FilterKeyword, error) {
-	return f.getFilterKeywords(ctx, "filter_id", filterID)
-}
-
-func (f *filterDB) GetFilterKeywordsForAccountID(ctx context.Context, accountID string) ([]*gtsmodel.FilterKeyword, error) {
-	return f.getFilterKeywords(ctx, "account_id", accountID)
-}
-
-func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id string) ([]*gtsmodel.FilterKeyword, error) {
-	var filterKeywordIDs []string
-
-	if err := f.db.
-		NewSelect().
-		Model((*gtsmodel.FilterKeyword)(nil)).
-		Column("id").
-		Where("? = ?", bun.Ident(idColumn), id).
-		Scan(ctx, &filterKeywordIDs); err != nil {
-		return nil, err
-	}
-
-	if len(filterKeywordIDs) == 0 {
+func (f *filterDB) GetFilterKeywordsByIDs(ctx context.Context, ids []string) ([]*gtsmodel.FilterKeyword, error) {
+	if len(ids) == 0 {
 		return nil, nil
 	}
 
 	// Get each filter keyword by ID from the cache or DB.
 	filterKeywords, err := f.state.Caches.DB.FilterKeyword.LoadIDs("ID",
-		filterKeywordIDs,
+		ids,
 		func(uncached []string) ([]*gtsmodel.FilterKeyword, error) {
 			filterKeywords := make([]*gtsmodel.FilterKeyword, 0, len(uncached))
 
@@ -140,21 +90,8 @@ func (f *filterDB) getFilterKeywords(ctx context.Context, idColumn string, id st
 	}
 
 	// Put the filter keyword structs in the same order as the filter keyword IDs.
-	xslices.OrderBy(filterKeywords, filterKeywordIDs, func(filterKeyword *gtsmodel.FilterKeyword) string {
+	xslices.OrderBy(filterKeywords, ids, func(filterKeyword *gtsmodel.FilterKeyword) string {
 		return filterKeyword.ID
-	})
-
-	if gtscontext.Barebones(ctx) {
-		return filterKeywords, nil
-	}
-
-	// Populate the filter keywords. Remove any that we can't populate from the return slice.
-	filterKeywords = slices.DeleteFunc(filterKeywords, func(filterKeyword *gtsmodel.FilterKeyword) bool {
-		if err := f.populateFilterKeyword(ctx, filterKeyword); err != nil {
-			log.Errorf(ctx, "error populating filter keyword: %v", err)
-			return true
-		}
-		return false
 	})
 
 	return filterKeywords, nil
@@ -178,11 +115,7 @@ func (f *filterDB) PutFilterKeyword(ctx context.Context, filterKeyword *gtsmodel
 	})
 }
 
-func (f *filterDB) UpdateFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword, columns ...string) error {
-	filterKeyword.UpdatedAt = time.Now()
-	if len(columns) > 0 {
-		columns = append(columns, "updated_at")
-	}
+func (f *filterDB) UpdateFilterKeyword(ctx context.Context, filterKeyword *gtsmodel.FilterKeyword, cols ...string) error {
 	if filterKeyword.Regexp == nil {
 		// Ensure regexp is compiled
 		// before attempted caching.
@@ -196,22 +129,20 @@ func (f *filterDB) UpdateFilterKeyword(ctx context.Context, filterKeyword *gtsmo
 			NewUpdate().
 			Model(filterKeyword).
 			Where("? = ?", bun.Ident("id"), filterKeyword.ID).
-			Column(columns...).
+			Column(cols...).
 			Exec(ctx)
 		return err
 	})
 }
 
-func (f *filterDB) DeleteFilterKeywordByID(ctx context.Context, id string) error {
+func (f *filterDB) DeleteFilterKeywordsByIDs(ctx context.Context, ids ...string) error {
 	if _, err := f.db.
 		NewDelete().
 		Model((*gtsmodel.FilterKeyword)(nil)).
-		Where("? = ?", bun.Ident("id"), id).
+		Where("? IN (?)", bun.Ident("id"), bun.In(ids)).
 		Exec(ctx); err != nil {
 		return err
 	}
-
-	f.state.Caches.DB.FilterKeyword.Invalidate("ID", id)
-
+	f.state.Caches.DB.FilterKeyword.InvalidateIDs("ID", ids)
 	return nil
 }

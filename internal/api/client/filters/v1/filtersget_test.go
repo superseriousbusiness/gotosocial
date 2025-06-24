@@ -87,10 +87,17 @@ func (suite *FiltersTestSuite) getFilters(
 
 func (suite *FiltersTestSuite) TestGetFilters() {
 	// v1 filters map to individual filter keywords.
+	wrappingFilterIDs := make(map[string]struct{}, len(suite.testFilters))
 	expectedFilterIDs := make([]string, 0, len(suite.testFilterKeywords))
 	expectedFilterKeywords := make([]string, 0, len(suite.testFilterKeywords))
+	testAccountID := suite.testAccounts["local_account_1"].ID
+	for _, filter := range suite.testFilters {
+		if filter.AccountID == testAccountID {
+			wrappingFilterIDs[filter.ID] = struct{}{}
+		}
+	}
 	for _, filterKeyword := range suite.testFilterKeywords {
-		if filterKeyword.AccountID == suite.testAccounts["local_account_1"].ID {
+		if _, ok := wrappingFilterIDs[filterKeyword.FilterID]; ok {
 			expectedFilterIDs = append(expectedFilterIDs, filterKeyword.ID)
 			expectedFilterKeywords = append(expectedFilterKeywords, filterKeyword.Keyword)
 		}

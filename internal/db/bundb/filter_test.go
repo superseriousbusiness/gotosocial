@@ -38,25 +38,29 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 
 	// Create new example filter with attached keyword.
 	filter := &gtsmodel.Filter{
-		ID:            "01HNEJNVZZVXJTRB3FX3K2B1YF",
-		AccountID:     "01HNEJXCPRTJVJY9MV0VVHGD47",
-		Title:         "foss jail",
-		Action:        gtsmodel.FilterActionWarn,
-		ContextHome:   util.Ptr(true),
-		ContextPublic: util.Ptr(true),
+		ID:        "01HNEJNVZZVXJTRB3FX3K2B1YF",
+		AccountID: "01HNEJXCPRTJVJY9MV0VVHGD47",
+		Title:     "foss jail",
+		Action:    gtsmodel.FilterActionWarn,
+		Contexts:  gtsmodel.FilterContexts(gtsmodel.FilterContextHome | gtsmodel.FilterContextPublic),
 	}
 	filterKeyword := &gtsmodel.FilterKeyword{
-		ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
-		AccountID: filter.AccountID,
-		FilterID:  filter.ID,
-		Keyword:   "GNU/Linux",
+		ID:       "01HNEK4RW5QEAMG9Y4ET6ST0J4",
+		FilterID: filter.ID,
+		Keyword:  "GNU/Linux",
 	}
 	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
+	filter.KeywordIDs = []string{filterKeyword.ID}
 
 	// Create new cancellable test context.
 	ctx := suite.T().Context()
 	ctx, cncl := context.WithCancel(ctx)
 	defer cncl()
+
+	// Insert the example filter keyword into db.
+	if err := suite.db.PutFilterKeyword(ctx, filterKeyword); err != nil {
+		t.Fatalf("error inserting filter keyword: %v", err)
+	}
 
 	// Insert the example filter into db.
 	if err := suite.db.PutFilter(ctx, filter); err != nil {
@@ -74,27 +78,18 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	suite.Equal(filter.AccountID, check.AccountID)
 	suite.Equal(filter.Title, check.Title)
 	suite.Equal(filter.Action, check.Action)
-	suite.Equal(filter.ContextHome, check.ContextHome)
-	suite.Equal(filter.ContextNotifications, check.ContextNotifications)
-	suite.Equal(filter.ContextPublic, check.ContextPublic)
-	suite.Equal(filter.ContextThread, check.ContextThread)
-	suite.Equal(filter.ContextAccount, check.ContextAccount)
-	suite.NotZero(check.CreatedAt)
-	suite.NotZero(check.UpdatedAt)
+	suite.Equal(filter.Contexts, check.Contexts)
 
 	suite.Equal(len(filter.Keywords), len(check.Keywords))
 	suite.Equal(filter.Keywords[0].ID, check.Keywords[0].ID)
-	suite.Equal(filter.Keywords[0].AccountID, check.Keywords[0].AccountID)
 	suite.Equal(filter.Keywords[0].FilterID, check.Keywords[0].FilterID)
 	suite.Equal(filter.Keywords[0].Keyword, check.Keywords[0].Keyword)
 	suite.Equal(filter.Keywords[0].FilterID, check.Keywords[0].FilterID)
-	suite.NotZero(check.Keywords[0].CreatedAt)
-	suite.NotZero(check.Keywords[0].UpdatedAt)
 
 	suite.Equal(len(filter.Statuses), len(check.Statuses))
 
 	// Fetch all filters.
-	all, err := suite.db.GetFiltersForAccountID(ctx, filter.AccountID)
+	all, err := suite.db.GetFiltersByAccountID(ctx, filter.AccountID)
 	if err != nil {
 		t.Fatalf("error fetching filters: %v", err)
 	}
@@ -108,28 +103,39 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 
 	suite.Empty(all[0].Statuses)
 
-	// Update the filter context and add another keyword and a status.
-	check.ContextNotifications = util.Ptr(true)
-
+	// Update the filter context and
+	// add another keyword and a status.
+	check.Contexts.SetNotifications()
 	newKeyword := &gtsmodel.FilterKeyword{
-		ID:        "01HNEMY810E5XKWDDMN5ZRE749",
-		FilterID:  filter.ID,
-		AccountID: filter.AccountID,
-		Keyword:   "tux",
+		ID:       "01HNEMY810E5XKWDDMN5ZRE749",
+		FilterID: filter.ID,
+		Keyword:  "tux",
 	}
 	check.Keywords = append(check.Keywords, newKeyword)
-
+	check.KeywordIDs = append(check.KeywordIDs, newKeyword.ID)
 	newStatus := &gtsmodel.FilterStatus{
-		ID:        "01HNEMYD5XE7C8HH8TNCZ76FN2",
-		FilterID:  filter.ID,
-		AccountID: filter.AccountID,
-		StatusID:  "01HNEKZW34SQZ8PSDQ0Z10NZES",
+		ID:       "01HNEMYD5XE7C8HH8TNCZ76FN2",
+		FilterID: filter.ID,
+		StatusID: "01HNEKZW34SQZ8PSDQ0Z10NZES",
 	}
 	check.Statuses = append(check.Statuses, newStatus)
+	check.StatusIDs = append(check.StatusIDs, newStatus.ID)
 
-	if err := suite.db.UpdateFilter(ctx, check, nil, [][]string{nil, nil}, nil, nil); err != nil {
+	// Insert the new filter keyword.
+	if err := suite.db.PutFilterKeyword(ctx, newKeyword); err != nil {
+		t.Fatalf("error inserting filter keyword: %v", err)
+	}
+
+	// Insert the new filter status.
+	if err := suite.db.PutFilterStatus(ctx, newStatus); err != nil {
+		t.Fatalf("error inserting filter status: %v", err)
+	}
+
+	// Now update the filter with new keyword and status.
+	if err := suite.db.UpdateFilter(ctx, check); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
+
 	// Now fetch newly updated filter.
 	check, err = suite.db.GetFilterByID(ctx, filter.ID)
 	if err != nil {
@@ -137,22 +143,11 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	}
 
 	// Ensure expected fields were modified on check filter.
-	suite.True(check.UpdatedAt.After(filter.UpdatedAt))
-	if suite.NotNil(check.ContextHome) {
-		suite.True(*check.ContextHome)
-	}
-	if suite.NotNil(check.ContextNotifications) {
-		suite.True(*check.ContextNotifications)
-	}
-	if suite.NotNil(check.ContextPublic) {
-		suite.True(*check.ContextPublic)
-	}
-	if suite.NotNil(check.ContextThread) {
-		suite.False(*check.ContextThread)
-	}
-	if suite.NotNil(check.ContextAccount) {
-		suite.False(*check.ContextAccount)
-	}
+	suite.True(check.Contexts.Home())
+	suite.True(check.Contexts.Notifications())
+	suite.True(check.Contexts.Public())
+	suite.False(check.Contexts.Thread())
+	suite.False(check.Contexts.Account())
 
 	// Ensure keyword entries were added.
 	suite.Len(check.Keywords, 2)
@@ -175,9 +170,19 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	check.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
 	check.Statuses = nil
 
-	if err := suite.db.UpdateFilter(ctx, check, nil, [][]string{{"whole_word"}}, []string{newKeyword.ID}, nil); err != nil {
+	// Update the original filter keyword.
+	filterKeyword.WholeWord = util.Ptr(true)
+	if err := suite.db.UpdateFilterKeyword(ctx, filterKeyword); err != nil {
+		t.Fatalf("error updating filter keyword: %v", err)
+	}
+
+	// Drop most recently added filter keyword from filter.
+	check.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
+	check.KeywordIDs = []string{filterKeyword.ID}
+	if err := suite.db.UpdateFilter(ctx, check); err != nil {
 		t.Fatalf("error updating filter: %v", err)
 	}
+
 	check, err = suite.db.GetFilterByID(ctx, filter.ID)
 	if err != nil {
 		t.Fatalf("error fetching updated filter: %v", err)
@@ -186,23 +191,14 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	// Ensure expected fields were not modified.
 	suite.Equal(filter.Title, check.Title)
 	suite.Equal(gtsmodel.FilterActionWarn, check.Action)
-	if suite.NotNil(check.ContextHome) {
-		suite.True(*check.ContextHome)
-	}
-	if suite.NotNil(check.ContextNotifications) {
-		suite.True(*check.ContextNotifications)
-	}
-	if suite.NotNil(check.ContextPublic) {
-		suite.True(*check.ContextPublic)
-	}
-	if suite.NotNil(check.ContextThread) {
-		suite.False(*check.ContextThread)
-	}
-	if suite.NotNil(check.ContextAccount) {
-		suite.False(*check.ContextAccount)
-	}
+	suite.True(check.Contexts.Home())
+	suite.True(check.Contexts.Notifications())
+	suite.True(check.Contexts.Public())
+	suite.False(check.Contexts.Thread())
+	suite.False(check.Contexts.Account())
 
-	// Ensure only changed field of keyword was modified, and other keyword was deleted.
+	// Ensure only changed field of keyword was
+	// modified, and other keyword was deleted.
 	suite.Len(check.Keywords, 1)
 	suite.Equal(filterKeyword.ID, check.Keywords[0].ID)
 	suite.Equal("GNU/Linux", check.Keywords[0].Keyword)
@@ -214,29 +210,8 @@ func (suite *FilterTestSuite) TestFilterCRUD() {
 	suite.Len(check.Statuses, 1)
 	suite.Equal(newStatus.ID, check.Statuses[0].ID)
 
-	// Add another status entry for the same status ID. It should be ignored without problems.
-	redundantStatus := &gtsmodel.FilterStatus{
-		ID:        "01HQXJ5Y405XZSQ67C2BSQ6HJ0",
-		FilterID:  filter.ID,
-		AccountID: filter.AccountID,
-		StatusID:  newStatus.StatusID,
-	}
-	check.Statuses = []*gtsmodel.FilterStatus{redundantStatus}
-	if err := suite.db.UpdateFilter(ctx, check, nil, [][]string{nil}, nil, nil); err != nil {
-		t.Fatalf("error updating filter: %v", err)
-	}
-	check, err = suite.db.GetFilterByID(ctx, filter.ID)
-	if err != nil {
-		t.Fatalf("error fetching updated filter: %v", err)
-	}
-
-	// Ensure status entry was not deleted, updated, or duplicated.
-	suite.Len(check.Statuses, 1)
-	suite.Equal(newStatus.ID, check.Statuses[0].ID)
-	suite.Equal(newStatus.StatusID, check.Statuses[0].StatusID)
-
 	// Now delete the filter from the DB.
-	if err := suite.db.DeleteFilterByID(ctx, filter.ID); err != nil {
+	if err := suite.db.DeleteFilter(ctx, filter); err != nil {
 		t.Fatalf("error deleting filter: %v", err)
 	}
 
@@ -256,11 +231,11 @@ func (suite *FilterTestSuite) TestFilterTitleOverlap() {
 
 	// Create an empty filter for account 1.
 	account1filter1 := &gtsmodel.Filter{
-		ID:          "01HNEJNVZZVXJTRB3FX3K2B1YF",
-		AccountID:   account1,
-		Title:       "my filter",
-		Action:      gtsmodel.FilterActionWarn,
-		ContextHome: util.Ptr(true),
+		ID:        "01HNEJNVZZVXJTRB3FX3K2B1YF",
+		AccountID: account1,
+		Title:     "my filter",
+		Action:    gtsmodel.FilterActionWarn,
+		Contexts:  gtsmodel.FilterContexts(gtsmodel.FilterContextHome),
 	}
 	if err := suite.db.PutFilter(ctx, account1filter1); err != nil {
 		suite.FailNow("", "error putting account1filter1: %s", err)
@@ -269,11 +244,11 @@ func (suite *FilterTestSuite) TestFilterTitleOverlap() {
 	// Create a filter for account 2 with
 	// the same title, should be no issue.
 	account2filter1 := &gtsmodel.Filter{
-		ID:          "01JAG5GPXG7H5Y4ZP78GV1F2ET",
-		AccountID:   account2,
-		Title:       "my filter",
-		Action:      gtsmodel.FilterActionWarn,
-		ContextHome: util.Ptr(true),
+		ID:        "01JAG5GPXG7H5Y4ZP78GV1F2ET",
+		AccountID: account2,
+		Title:     "my filter",
+		Action:    gtsmodel.FilterActionWarn,
+		Contexts:  gtsmodel.FilterContexts(gtsmodel.FilterContextHome),
 	}
 	if err := suite.db.PutFilter(ctx, account2filter1); err != nil {
 		suite.FailNow("", "error putting account2filter1: %s", err)
@@ -283,11 +258,11 @@ func (suite *FilterTestSuite) TestFilterTitleOverlap() {
 	// account 1 with the same name as
 	// an existing filter of theirs.
 	account1filter2 := &gtsmodel.Filter{
-		ID:          "01JAG5J8NYKQE2KYCD28Y4P05V",
-		AccountID:   account1,
-		Title:       "my filter",
-		Action:      gtsmodel.FilterActionWarn,
-		ContextHome: util.Ptr(true),
+		ID:        "01JAG5J8NYKQE2KYCD28Y4P05V",
+		AccountID: account1,
+		Title:     "my filter",
+		Action:    gtsmodel.FilterActionWarn,
+		Contexts:  gtsmodel.FilterContexts(gtsmodel.FilterContextHome),
 	}
 	err := suite.db.PutFilter(ctx, account1filter2)
 	if !errors.Is(err, db.ErrAlreadyExists) {

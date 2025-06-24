@@ -180,7 +180,7 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 				follow.Account,
 				status,
 				stream.TimelineHome,
-				statusfilter.FilterContextHome,
+				gtsmodel.FilterContextHome,
 				filters,
 			); homeTimelined {
 
@@ -275,7 +275,7 @@ func (s *Surface) listTimelineStatusForFollow(
 			follow.Account,
 			status,
 			stream.TimelineList+":"+list.ID, // key streamType to this specific list
-			statusfilter.FilterContextHome,
+			gtsmodel.FilterContextHome,
 			filters,
 		)
 
@@ -288,7 +288,7 @@ func (s *Surface) listTimelineStatusForFollow(
 
 // getFiltersAndMutes returns an account's filters and mutes.
 func (s *Surface) getFilters(ctx context.Context, accountID string) ([]*gtsmodel.Filter, error) {
-	filters, err := s.State.DB.GetFiltersForAccountID(ctx, accountID)
+	filters, err := s.State.DB.GetFiltersByAccountID(ctx, accountID)
 	if err != nil {
 		return nil, gtserror.Newf("couldn't retrieve filters for account %s: %w", accountID, err)
 	}
@@ -369,7 +369,7 @@ func (s *Surface) timelineStatus(
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
-	filterCtx statusfilter.FilterContext,
+	filterCtx gtsmodel.FilterContext,
 	filters []*gtsmodel.Filter,
 ) bool {
 
@@ -436,7 +436,7 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 			tagFollowerAccount,
 			status,
 			stream.TimelineHome,
-			statusfilter.FilterContextHome,
+			gtsmodel.FilterContextHome,
 			filters,
 		)
 	}
@@ -731,7 +731,7 @@ func (s *Surface) timelineStreamStatusUpdate(
 	apiStatus, err := s.Converter.StatusToAPIStatus(ctx,
 		status,
 		account,
-		statusfilter.FilterContextHome,
+		gtsmodel.FilterContextHome,
 		filters,
 	)
 

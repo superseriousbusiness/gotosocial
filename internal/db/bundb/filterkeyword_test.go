@@ -32,12 +32,11 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 
 	// Create new filter.
 	filter := &gtsmodel.Filter{
-		ID:            "01HNEJNVZZVXJTRB3FX3K2B1YF",
-		AccountID:     "01HNEJXCPRTJVJY9MV0VVHGD47",
-		Title:         "foss jail",
-		Action:        gtsmodel.FilterActionWarn,
-		ContextHome:   util.Ptr(true),
-		ContextPublic: util.Ptr(true),
+		ID:        "01HNEJNVZZVXJTRB3FX3K2B1YF",
+		AccountID: "01HNEJXCPRTJVJY9MV0VVHGD47",
+		Title:     "foss jail",
+		Action:    gtsmodel.FilterActionWarn,
+		Contexts:  gtsmodel.FilterContexts(gtsmodel.FilterContextHome | gtsmodel.FilterContextPublic),
 	}
 
 	// Create new cancellable test context.
@@ -51,19 +50,11 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 		t.Fatalf("error inserting filter: %v", err)
 	}
 
-	// There should be no filter keywords yet.
-	all, err := suite.db.GetFilterKeywordsForAccountID(ctx, filter.AccountID)
-	if err != nil {
-		t.Fatalf("error fetching filter keywords: %v", err)
-	}
-	suite.Empty(all)
-
 	// Add a filter keyword to it.
 	filterKeyword := &gtsmodel.FilterKeyword{
-		ID:        "01HNEK4RW5QEAMG9Y4ET6ST0J4",
-		AccountID: filter.AccountID,
-		FilterID:  filter.ID,
-		Keyword:   "GNU/Linux",
+		ID:       "01HNEK4RW5QEAMG9Y4ET6ST0J4",
+		FilterID: filter.ID,
+		Keyword:  "GNU/Linux",
 	}
 
 	// Insert the new filter keyword into the DB.
@@ -78,28 +69,17 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 		t.Fatalf("error fetching filter keyword: %v", err)
 	}
 	suite.Equal(filterKeyword.ID, check.ID)
-	suite.NotZero(check.CreatedAt)
-	suite.NotZero(check.UpdatedAt)
-	suite.Equal(filterKeyword.AccountID, check.AccountID)
 	suite.Equal(filterKeyword.FilterID, check.FilterID)
 	suite.Equal(filterKeyword.Keyword, check.Keyword)
 	suite.Equal(filterKeyword.WholeWord, check.WholeWord)
 
-	// Loading filter keywords by account ID should find the one we inserted.
-	all, err = suite.db.GetFilterKeywordsForAccountID(ctx, filter.AccountID)
+	// Check that fetching multiple filter keywords by IDs works.
+	checks, err := suite.db.GetFilterKeywordsByIDs(ctx, []string{filterKeyword.ID})
 	if err != nil {
 		t.Fatalf("error fetching filter keywords: %v", err)
 	}
-	suite.Len(all, 1)
-	suite.Equal(filterKeyword.ID, all[0].ID)
-
-	// Loading filter keywords by filter ID should also find the one we inserted.
-	all, err = suite.db.GetFilterKeywordsForFilterID(ctx, filter.ID)
-	if err != nil {
-		t.Fatalf("error fetching filter keywords: %v", err)
-	}
-	suite.Len(all, 1)
-	suite.Equal(filterKeyword.ID, all[0].ID)
+	suite.Len(checks, 1)
+	suite.Equal(filterKeyword.ID, checks[0].ID)
 
 	// Modify the filter keyword.
 	filterKeyword.WholeWord = util.Ptr(true)
@@ -114,15 +94,12 @@ func (suite *FilterTestSuite) TestFilterKeywordCRUD() {
 		t.Fatalf("error fetching filter keyword: %v", err)
 	}
 	suite.Equal(filterKeyword.ID, check.ID)
-	suite.NotZero(check.CreatedAt)
-	suite.True(check.UpdatedAt.After(check.CreatedAt))
-	suite.Equal(filterKeyword.AccountID, check.AccountID)
 	suite.Equal(filterKeyword.FilterID, check.FilterID)
 	suite.Equal(filterKeyword.Keyword, check.Keyword)
 	suite.Equal(filterKeyword.WholeWord, check.WholeWord)
 
 	// Delete the filter keyword from the DB.
-	err = suite.db.DeleteFilterKeywordByID(ctx, filter.ID)
+	err = suite.db.DeleteFilterKeywordsByIDs(ctx, filter.ID)
 	if err != nil {
 		t.Fatalf("error deleting filter keyword: %v", err)
 	}

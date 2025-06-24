@@ -21,77 +21,59 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // Update an existing filter and filter keyword for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
 func (p *Processor) Update(
 	ctx context.Context,
-	account *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	filterKeywordID string,
 	form *apimodel.FilterCreateUpdateRequestV1,
 ) (*apimodel.FilterV1, gtserror.WithCode) {
-	// Get enough of the filter keyword that we can look up its filter ID.
-	filterKeyword, err := p.state.DB.GetFilterKeywordByID(gtscontext.SetBarebones(ctx), filterKeywordID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if filterKeyword.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
+	// Get the filter keyword with given ID, and associated filter, also checking ownership.
+	filterKeyword, filter, errWithCode := p.c.GetFilterKeyword(ctx, requester, filterKeywordID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
-	// Get the filter for this keyword.
-	filter, err := p.state.DB.GetFilterByID(ctx, filterKeyword.FilterID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
+	var title string
+	var action gtsmodel.FilterAction
+	var contexts gtsmodel.FilterContexts
+	var expiresAt time.Time
+	var wholeword bool
 
-	title := form.Phrase
-	action := gtsmodel.FilterActionWarn
+	// Get filter title.
+	title = form.Phrase
+
 	if *form.Irreversible {
+		// Irreversible = action hide.
 		action = gtsmodel.FilterActionHide
+	} else {
+		// Default action = action warn.
+		action = gtsmodel.FilterActionWarn
 	}
-	expiresAt := time.Time{}
-	if form.ExpiresIn != nil && *form.ExpiresIn != 0 {
-		expiresAt = time.Now().Add(time.Second * time.Duration(*form.ExpiresIn))
+
+	// Check form for valid expiry and set on filter.
+	if form.ExpiresIn != nil && *form.ExpiresIn > 0 {
+		expiresIn := time.Duration(*form.ExpiresIn) * time.Second
+		expiresAt = time.Now().Add(expiresIn)
 	}
-	contextHome := false
-	contextNotifications := false
-	contextPublic := false
-	contextThread := false
-	contextAccount := false
-	for _, context := range form.Context {
-		switch context {
-		case apimodel.FilterContextHome:
-			contextHome = true
-		case apimodel.FilterContextNotifications:
-			contextNotifications = true
-		case apimodel.FilterContextPublic:
-			contextPublic = true
-		case apimodel.FilterContextThread:
-			contextThread = true
-		case apimodel.FilterContextAccount:
-			contextAccount = true
-		default:
-			return nil, gtserror.NewErrorUnprocessableEntity(
-				fmt.Errorf("unsupported filter context '%s'", context),
-			)
-		}
+
+	// Parse contexts filter applies in from incoming form data.
+	contexts, errWithCode = common.FromAPIContexts(form.Context)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
 	// v1 filter APIs can't change certain fields for a filter with multiple keywords or any statuses,
@@ -108,11 +90,7 @@ func (p *Processor) Update(
 		if expiresAt != filter.ExpiresAt {
 			forbiddenFields = append(forbiddenFields, "expires_in")
 		}
-		if contextHome != util.PtrOrValue(filter.ContextHome, false) ||
-			contextNotifications != util.PtrOrValue(filter.ContextNotifications, false) ||
-			contextPublic != util.PtrOrValue(filter.ContextPublic, false) ||
-			contextThread != util.PtrOrValue(filter.ContextThread, false) ||
-			contextAccount != util.PtrOrValue(filter.ContextAccount, false) {
+		if contexts != filter.Contexts {
 			forbiddenFields = append(forbiddenFields, "context")
 		}
 		if len(forbiddenFields) > 0 {
@@ -122,54 +100,75 @@ func (p *Processor) Update(
 		}
 	}
 
-	// Now that we've checked that the changes are legal, apply them to the filter and keyword.
-	filter.Title = title
-	filter.Action = action
-	filter.ExpiresAt = expiresAt
-	filter.ContextHome = &contextHome
-	filter.ContextNotifications = &contextNotifications
-	filter.ContextPublic = &contextPublic
-	filter.ContextThread = &contextThread
-	filter.ContextAccount = &contextAccount
-	filterKeyword.Keyword = form.Phrase
-	filterKeyword.WholeWord = util.Ptr(util.PtrOrValue(form.WholeWord, false))
+	// Filter columns that
+	// we're going to update.
+	var filterCols []string
+	var keywordCols []string
 
-	// We only want to update the relevant filter keyword.
-	filter.Keywords = []*gtsmodel.FilterKeyword{filterKeyword}
-	filter.Statuses = nil
-	filterKeyword.Filter = filter
+	// Check for changed filter title / filter keyword phrase.
+	if title != filter.Title || title != filterKeyword.Keyword {
+		keywordCols = append(keywordCols, "keyword")
+		filterCols = append(filterCols, "title")
+		filterKeyword.Keyword = title
+		filter.Title = title
+	}
 
-	filterColumns := []string{
-		"title",
-		"action",
-		"expires_at",
-		"context_home",
-		"context_notifications",
-		"context_public",
-		"context_thread",
-		"context_account",
+	// Check for changed action.
+	if action != filter.Action {
+		filterCols = append(filterCols, "action")
+		filter.Action = action
 	}
-	filterKeywordColumns := [][]string{
-		{
-			"keyword",
-			"whole_word",
-		},
+
+	// Check for changed filter expiry time.
+	if !expiresAt.Equal(filter.ExpiresAt) {
+		filterCols = append(filterCols, "expires_at")
+		filter.ExpiresAt = expiresAt
 	}
-	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, filterKeywordColumns, nil, nil); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = errors.New("you already have a filter with this title")
-			return nil, gtserror.NewErrorConflict(err, err.Error())
-		}
+
+	// Check for changed filter context.
+	if contexts != filter.Contexts {
+		filterCols = append(filterCols, "contexts")
+		filter.Contexts = contexts
+	}
+
+	// Check for changed wholeword flag.
+	if form.WholeWord != nil &&
+		*form.WholeWord != *filterKeyword.WholeWord {
+		keywordCols = append(keywordCols, "whole_word")
+		filterKeyword.WholeWord = &wholeword
+	}
+
+	// Update filter keyword model in the database with determined changed cols.
+	switch err := p.state.DB.UpdateFilterKeyword(ctx, filterKeyword, keywordCols...); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate keyword"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error updating filter: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiFilter, errWithCode := p.apiFilter(ctx, filterKeyword)
-	if errWithCode != nil {
-		return nil, errWithCode
+	// Update filter model in the database with determined changed cols.
+	switch err := p.state.DB.UpdateFilter(ctx, filter, filterCols...); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate title"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error updating filter: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
 
-	return apiFilter, nil
+	// Return as converted frontend filter keyword model.
+	return typeutils.FilterKeywordToAPIFilterV1(filter, filterKeyword), nil
 }

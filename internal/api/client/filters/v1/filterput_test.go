@@ -261,7 +261,7 @@ func (suite *FiltersTestSuite) TestPutAnotherAccountsFilter() {
 	id := suite.testFilterKeywords["local_account_2_filter_1_keyword_1"].ID
 	phrase := "GNU/Linux"
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -271,7 +271,7 @@ func (suite *FiltersTestSuite) TestPutNonexistentFilter() {
 	id := "not_even_a_real_ULID"
 	phrase := "GNU/Linux"
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found: filter keyword not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

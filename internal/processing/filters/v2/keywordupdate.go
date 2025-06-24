@@ -20,50 +20,51 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net/http"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // KeywordUpdate updates an existing filter keyword for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
 func (p *Processor) KeywordUpdate(
 	ctx context.Context,
-	account *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	filterKeywordID string,
 	form *apimodel.FilterKeywordCreateUpdateRequest,
 ) (*apimodel.FilterKeyword, gtserror.WithCode) {
-	// Get the filter keyword by ID.
-	filterKeyword, err := p.state.DB.GetFilterKeywordByID(gtscontext.SetBarebones(ctx), filterKeywordID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if filterKeyword.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(
-			fmt.Errorf("filter keyword %s doesn't belong to account %s", filterKeyword.ID, account.ID),
-		)
+
+	// Get the filter keyword with given ID, also checking ownership to requester.
+	filterKeyword, _, errWithCode := p.c.GetFilterKeyword(ctx, requester, filterKeywordID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
 
+	// Update the keyword model fields.
 	filterKeyword.Keyword = form.Keyword
 	filterKeyword.WholeWord = form.WholeWord
 
-	if err := p.state.DB.UpdateFilterKeyword(ctx, filterKeyword, "keyword", "whole_word"); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = errors.New("duplicate keyword")
-			return nil, gtserror.NewErrorConflict(err, err.Error())
-		}
+	// Update existing filter keyword model in the database, (only necessary cols).
+	switch err := p.state.DB.UpdateFilterKeyword(ctx, filterKeyword, []string{
+		"keyword", "whole_word"}...); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate keyword"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error inserting filter keyword: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
 
-	return p.converter.FilterKeywordToAPIFilterKeyword(ctx, filterKeyword), nil
+	return typeutils.FilterKeywordToAPIFilterKeyword(filterKeyword), nil
 }

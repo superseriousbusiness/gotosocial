@@ -189,7 +189,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordKeywordConflict() {
 func (suite *FiltersTestSuite) TestPutFilterKeywordAnotherAccountsFilterKeyword() {
 	filterKeywordID := suite.testFilterKeywords["local_account_2_filter_1_keyword_1"].ID
 	keyword := "fnord"
-	_, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -198,7 +198,7 @@ func (suite *FiltersTestSuite) TestPutFilterKeywordAnotherAccountsFilterKeyword(
 func (suite *FiltersTestSuite) TestPutFilterKeywordNonexistentFilterKeyword() {
 	filterKeywordID := "not_even_a_real_ULID"
 	keyword := "fnord"
-	_, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`)
+	_, err := suite.putFilterKeyword(filterKeywordID, &keyword, nil, nil, http.StatusNotFound, `{"error":"Not Found: filter keyword not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

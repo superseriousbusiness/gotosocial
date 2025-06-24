@@ -19,7 +19,7 @@ package v2
 
 import (
 	"context"
-	"fmt"
+	"slices"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -28,29 +28,34 @@ import (
 // KeywordDelete deletes an existing filter keyword from a filter.
 func (p *Processor) KeywordDelete(
 	ctx context.Context,
-	account *gtsmodel.Account,
-	filterID string,
+	requester *gtsmodel.Account,
+	filterKeywordID string,
 ) gtserror.WithCode {
-	// Get the filter keyword.
-	filterKeyword, err := p.state.DB.GetFilterKeywordByID(ctx, filterID)
-	if err != nil {
-		return gtserror.NewErrorNotFound(err)
+	// Get filter keyword with given ID, also checking ownership to requester.
+	_, filter, errWithCode := p.c.GetFilterKeyword(ctx, requester, filterKeywordID)
+	if errWithCode != nil {
+		return errWithCode
 	}
 
-	// Check that the account owns it.
-	if filterKeyword.AccountID != account.ID {
-		return gtserror.NewErrorNotFound(
-			fmt.Errorf("filter keyword %s doesn't belong to account %s", filterKeyword.ID, account.ID),
-		)
-	}
-
-	// Delete the filter keyword.
-	if err := p.state.DB.DeleteFilterKeywordByID(ctx, filterKeyword.ID); err != nil {
+	// Delete this one filter keyword from the database, now ownership is confirmed.
+	if err := p.state.DB.DeleteFilterKeywordsByIDs(ctx, filterKeywordID); err != nil {
+		err := gtserror.Newf("error deleting filter keyword: %w", err)
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Delete this filter keyword from the slice of IDs attached to filter.
+	filter.KeywordIDs = slices.DeleteFunc(filter.KeywordIDs, func(id string) bool {
+		return filterKeywordID == id
+	})
+
+	// Update filter in the database now the keyword has been unattached.
+	if err := p.state.DB.UpdateFilter(ctx, filter, "keywords"); err != nil {
+		err := gtserror.Newf("error updating filter: %w", err)
+		return gtserror.NewErrorInternalError(err)
+	}
+
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
 
 	return nil
 }

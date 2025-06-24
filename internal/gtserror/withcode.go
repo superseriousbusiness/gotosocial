@@ -118,7 +118,7 @@ func WrapWithCode(code int, err error) WithCode {
 // NewErrorBadRequest returns an ErrorWithCode 400 with the given original error and optional help text.
 func NewErrorBadRequest(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusBadRequest)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -131,7 +131,7 @@ func NewErrorBadRequest(original error, helpText ...string) WithCode {
 // NewErrorUnauthorized returns an ErrorWithCode 401 with the given original error and optional help text.
 func NewErrorUnauthorized(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusUnauthorized)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -144,7 +144,7 @@ func NewErrorUnauthorized(original error, helpText ...string) WithCode {
 // NewErrorForbidden returns an ErrorWithCode 403 with the given original error and optional help text.
 func NewErrorForbidden(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusForbidden)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -157,7 +157,7 @@ func NewErrorForbidden(original error, helpText ...string) WithCode {
 // NewErrorNotFound returns an ErrorWithCode 404 with the given original error and optional help text.
 func NewErrorNotFound(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusNotFound)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -170,7 +170,7 @@ func NewErrorNotFound(original error, helpText ...string) WithCode {
 // NewErrorInternalError returns an ErrorWithCode 500 with the given original error and optional help text.
 func NewErrorInternalError(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusInternalServerError)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -183,7 +183,7 @@ func NewErrorInternalError(original error, helpText ...string) WithCode {
 // NewErrorConflict returns an ErrorWithCode 409 with the given original error and optional help text.
 func NewErrorConflict(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusConflict)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -196,7 +196,7 @@ func NewErrorConflict(original error, helpText ...string) WithCode {
 // NewErrorNotAcceptable returns an ErrorWithCode 406 with the given original error and optional help text.
 func NewErrorNotAcceptable(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusNotAcceptable)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -209,7 +209,7 @@ func NewErrorNotAcceptable(original error, helpText ...string) WithCode {
 // NewErrorUnprocessableEntity returns an ErrorWithCode 422 with the given original error and optional help text.
 func NewErrorUnprocessableEntity(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusUnprocessableEntity)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -222,7 +222,7 @@ func NewErrorUnprocessableEntity(original error, helpText ...string) WithCode {
 // NewErrorGone returns an ErrorWithCode 410 with the given original error and optional help text.
 func NewErrorGone(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusGone)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{
@@ -235,7 +235,7 @@ func NewErrorGone(original error, helpText ...string) WithCode {
 // NewErrorNotImplemented returns an ErrorWithCode 501 with the given original error and optional help text.
 func NewErrorNotImplemented(original error, helpText ...string) WithCode {
 	safe := http.StatusText(http.StatusNotImplemented)
-	if helpText != nil {
+	if len(helpText) > 0 {
 		safe = safe + ": " + strings.Join(helpText, ": ")
 	}
 	return &withCode{

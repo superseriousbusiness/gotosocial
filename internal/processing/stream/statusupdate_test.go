@@ -22,7 +22,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
+	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/stream"
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"github.com/stretchr/testify/suite"
@@ -39,7 +39,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	suite.NoError(errWithCode)
 
 	editedStatus := suite.testStatuses["remote_account_1_status_1"]
-	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(suite.T().Context(), editedStatus, account, statusfilter.FilterContextNotifications, nil)
+	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(suite.T().Context(), editedStatus, account, gtsmodel.FilterContextNotifications, nil)
 	suite.NoError(err)
 
 	suite.streamProcessor.StatusUpdate(suite.T().Context(), account, apiStatus, stream.TimelineHome)

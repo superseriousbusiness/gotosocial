@@ -20,7 +20,8 @@ package v2
 import (
 	"context"
 	"errors"
-	"fmt"
+	"net/http"
+	"slices"
 	"time"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
@@ -28,243 +29,356 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
-	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
 // Update an existing filter for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
 func (p *Processor) Update(
 	ctx context.Context,
-	account *gtsmodel.Account,
+	requester *gtsmodel.Account,
 	filterID string,
 	form *apimodel.FilterUpdateRequestV2,
 ) (*apimodel.FilterV2, gtserror.WithCode) {
-	var errWithCode gtserror.WithCode
-
-	// Get the filter by ID, with existing keywords and statuses.
-	filter, err := p.state.DB.GetFilterByID(ctx, filterID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-	if filter.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(
-			fmt.Errorf("filter %s doesn't belong to account %s", filter.ID, account.ID),
-		)
-	}
-
-	// Filter columns that we're going to update.
-	filterColumns := []string{}
-
-	// Apply filter changes.
-	if form.Title != nil {
-		filterColumns = append(filterColumns, "title")
-		filter.Title = *form.Title
-	}
-	if form.FilterAction != nil {
-		filterColumns = append(filterColumns, "action")
-		filter.Action = typeutils.APIFilterActionToFilterAction(*form.FilterAction)
-	}
-	if form.ExpiresIn != nil {
-		expiresIn := *form.ExpiresIn
-		filterColumns = append(filterColumns, "expires_at")
-		if expiresIn == 0 {
-			// Unset the expiration date.
-			filter.ExpiresAt = time.Time{}
-		} else {
-			// Update the expiration date.
-			filter.ExpiresAt = time.Now().Add(time.Second * time.Duration(expiresIn))
-		}
-	}
-	if form.Context != nil {
-		filterColumns = append(filterColumns,
-			"context_home",
-			"context_notifications",
-			"context_public",
-			"context_thread",
-			"context_account",
-		)
-		filter.ContextHome = util.Ptr(false)
-		filter.ContextNotifications = util.Ptr(false)
-		filter.ContextPublic = util.Ptr(false)
-		filter.ContextThread = util.Ptr(false)
-		filter.ContextAccount = util.Ptr(false)
-		for _, context := range *form.Context {
-			switch context {
-			case apimodel.FilterContextHome:
-				filter.ContextHome = util.Ptr(true)
-			case apimodel.FilterContextNotifications:
-				filter.ContextNotifications = util.Ptr(true)
-			case apimodel.FilterContextPublic:
-				filter.ContextPublic = util.Ptr(true)
-			case apimodel.FilterContextThread:
-				filter.ContextThread = util.Ptr(true)
-			case apimodel.FilterContextAccount:
-				filter.ContextAccount = util.Ptr(true)
-			default:
-				return nil, gtserror.NewErrorUnprocessableEntity(
-					fmt.Errorf("unsupported filter context '%s'", context),
-				)
-			}
-		}
-	}
-
-	filterKeywordColumns, deleteFilterKeywordIDs, errWithCode := applyKeywordChanges(filter, form.Keywords)
-	if err != nil {
-		return nil, errWithCode
-	}
-
-	deleteFilterStatusIDs, errWithCode := applyStatusChanges(filter, form.Statuses)
-	if err != nil {
-		return nil, errWithCode
-	}
-
-	if err := p.state.DB.UpdateFilter(ctx, filter, filterColumns, filterKeywordColumns, deleteFilterKeywordIDs, deleteFilterStatusIDs); err != nil {
-		if errors.Is(err, db.ErrAlreadyExists) {
-			err = errors.New("you already have a filter with this title")
-			return nil, gtserror.NewErrorConflict(err, err.Error())
-		}
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
-	apiFilter, errWithCode := p.apiFilter(ctx, filter)
+	// Get the filter with given ID, also checking ownership.
+	filter, errWithCode := p.c.GetFilter(ctx, requester, filterID)
 	if errWithCode != nil {
 		return nil, errWithCode
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Filter columns that
+	// we're going to update.
+	cols := make([]string, 0, 6)
 
-	return apiFilter, nil
+	// Check for title change.
+	if form.Title != nil {
+		cols = append(cols, "title")
+		filter.Title = *form.Title
+	}
+
+	// Check action type change.
+	if form.FilterAction != nil {
+		cols = append(cols, "action")
+
+		// Parse filter action from form and set on filter, checking for validity.
+		filter.Action = typeutils.APIFilterActionToFilterAction(*form.FilterAction)
+		if filter.Action == 0 {
+			const text = "invalid filter action"
+			return nil, gtserror.NewWithCode(http.StatusBadRequest, text)
+		}
+	}
+
+	// Check expiry change.
+	if form.ExpiresIn != nil {
+		cols = append(cols, "expires_at")
+		filter.ExpiresAt = time.Time{}
+
+		// Check form for valid
+		// expiry and set on filter.
+		if *form.ExpiresIn > 0 {
+			expiresIn := time.Duration(*form.ExpiresIn) * time.Second
+			filter.ExpiresAt = time.Now().Add(expiresIn)
+		}
+	}
+
+	// Check context change.
+	if form.Context != nil {
+		cols = append(cols, "contexts")
+
+		// Parse contexts filter applies in from incoming request form data.
+		filter.Contexts, errWithCode = common.FromAPIContexts(*form.Context)
+		if errWithCode != nil {
+			return nil, errWithCode
+		}
+	}
+
+	// Check for any changes to attached keywords on filter.
+	keywordQs, errWithCode := p.updateFilterKeywords(ctx,
+		filter, form.Keywords)
+	if errWithCode != nil {
+		return nil, errWithCode
+	} else if len(keywordQs.create) > 0 || len(keywordQs.delete) > 0 {
+
+		// Attached keywords have changed.
+		cols = append(cols, "keywords")
+	}
+
+	// Check for any changes to attached statuses on filter.
+	statusQs, errWithCode := p.updateFilterStatuses(ctx,
+		filter, form.Statuses)
+	if errWithCode != nil {
+		return nil, errWithCode
+	} else if len(statusQs.create) > 0 || len(statusQs.delete) > 0 {
+
+		// Attached statuses have changed.
+		cols = append(cols, "statuses")
+	}
+
+	// Perform all the deferred database queries.
+	errWithCode = performTxs(keywordQs, statusQs)
+	if errWithCode != nil {
+		return nil, errWithCode
+	}
+
+	// Update the filter model in the database with determined cols.
+	switch err := p.state.DB.UpdateFilter(ctx, filter, cols...); {
+	case err == nil:
+		// no issue
+
+	case errors.Is(err, db.ErrAlreadyExists):
+		const text = "duplicate title"
+		return nil, gtserror.NewWithCode(http.StatusConflict, text)
+
+	default:
+		err := gtserror.Newf("error updating filter: %w", err)
+		return nil, gtserror.NewErrorInternalError(err)
+	}
+
+	// Stream a filters changed event to WS.
+	p.stream.FiltersChanged(ctx, requester)
+
+	// Return as converted frontend filter model.
+	return typeutils.FilterToAPIFilterV2(filter), nil
 }
 
-// applyKeywordChanges applies the provided changes to the filter's keywords in place,
-// and returns a list of lists of filter columns to update, and a list of filter keyword IDs to delete.
-func applyKeywordChanges(filter *gtsmodel.Filter, formKeywords []apimodel.FilterKeywordCreateUpdateDeleteRequest) ([][]string, []string, gtserror.WithCode) {
-	if len(formKeywords) == 0 {
-		// Detach currently existing keywords from the filter so we don't change them.
-		filter.Keywords = nil
-		return nil, nil, nil
+func (p *Processor) updateFilterKeywords(ctx context.Context, filter *gtsmodel.Filter, form []apimodel.FilterKeywordCreateUpdateDeleteRequest) (deferredQs, gtserror.WithCode) {
+	if len(form) == 0 {
+		// No keyword changes.
+		return deferredQs{}, nil
 	}
 
-	deleteFilterKeywordIDs := []string{}
-	filterKeywordsByID := map[string]*gtsmodel.FilterKeyword{}
-	filterKeywordColumnsByID := map[string][]string{}
-	for _, filterKeyword := range filter.Keywords {
-		filterKeywordsByID[filterKeyword.ID] = filterKeyword
-	}
-
-	for _, formKeyword := range formKeywords {
-		if formKeyword.ID != nil {
-			id := *formKeyword.ID
-			filterKeyword, ok := filterKeywordsByID[id]
-			if !ok {
-				return nil, nil, gtserror.NewErrorNotFound(
-					fmt.Errorf("couldn't find filter keyword '%s' to update or delete", id),
-				)
+	var deferred deferredQs
+	for _, request := range form {
+		if request.ID != nil {
+			// Look by ID for keyword attached to filter.
+			idx := slices.IndexFunc(filter.Keywords,
+				func(f *gtsmodel.FilterKeyword) bool {
+					return f.ID == (*request.ID)
+				})
+			if idx == -1 {
+				const text = "filter keyword not found"
+				return deferred, gtserror.NewWithCode(http.StatusNotFound, text)
 			}
 
-			// Process deletes.
-			if *formKeyword.Destroy {
-				delete(filterKeywordsByID, id)
-				deleteFilterKeywordIDs = append(deleteFilterKeywordIDs, id)
+			// If this is a delete, update filter's id list.
+			if request.Destroy != nil && *request.Destroy {
+				filter.Keywords = slices.Delete(filter.Keywords, idx, idx+1)
+				filter.KeywordIDs = slices.Delete(filter.KeywordIDs, idx, idx+1)
+
+				// Append database delete to funcs for later processing by caller.
+				deferred.delete = append(deferred.delete, func() gtserror.WithCode {
+					if err := p.state.DB.DeleteFilterKeywordsByIDs(ctx, *request.ID); //
+					err != nil {
+						err := gtserror.Newf("error deleting filter keyword: %w", err)
+						return gtserror.NewErrorInternalError(err)
+					}
+					return nil
+				})
 				continue
 			}
 
-			// Process updates.
-			columns := make([]string, 0, 2)
-			if formKeyword.Keyword != nil {
-				columns = append(columns, "keyword")
-				filterKeyword.Keyword = *formKeyword.Keyword
+			// Get the filter keyword at index.
+			filterKeyword := filter.Keywords[idx]
+
+			// Filter keywords database
+			// columns we need to update.
+			cols := make([]string, 0, 2)
+
+			// Check for changes to keyword string.
+			if val := request.Keyword; val != nil {
+				cols = append(cols, "keyword")
+				filterKeyword.Keyword = *val
 			}
-			if formKeyword.WholeWord != nil {
-				columns = append(columns, "whole_word")
-				filterKeyword.WholeWord = formKeyword.WholeWord
+
+			// Check for changes to wholeword flag.
+			if val := request.WholeWord; val != nil {
+				cols = append(cols, "whole_word")
+				filterKeyword.WholeWord = val
 			}
-			filterKeywordColumnsByID[id] = columns
+
+			// Verify that this is valid regular expression.
+			if err := filterKeyword.Compile(); err != nil {
+				const text = "invalid regular expression"
+				err := gtserror.Newf("invalid regular expression: %w", err)
+				return deferred, gtserror.NewWithCodeSafe(
+					http.StatusBadRequest,
+					err, text,
+				)
+			}
+
+			if len(cols) > 0 {
+				// Append database update to funcs for later processing by caller.
+				deferred.update = append(deferred.update, func() gtserror.WithCode {
+					if err := p.state.DB.UpdateFilterKeyword(ctx, filterKeyword, cols...); //
+					err != nil {
+						if errors.Is(err, db.ErrAlreadyExists) {
+							const text = "duplicate keyword"
+							return gtserror.NewWithCode(http.StatusConflict, text)
+						}
+						err := gtserror.Newf("error updating filter keyword: %w", err)
+						return gtserror.NewErrorInternalError(err)
+					}
+					return nil
+				})
+			}
+
 			continue
 		}
 
-		// Process creates.
+		// Check for valid request.
+		if request.Keyword == nil {
+			const text = "missing keyword"
+			return deferred, gtserror.NewWithCode(http.StatusBadRequest, text)
+		}
+
+		// Create new filter keyword for insert.
 		filterKeyword := &gtsmodel.FilterKeyword{
 			ID:        id.NewULID(),
-			AccountID: filter.AccountID,
 			FilterID:  filter.ID,
-			Filter:    filter,
-			Keyword:   *formKeyword.Keyword,
-			WholeWord: util.Ptr(util.PtrOrValue(formKeyword.WholeWord, false)),
+			Keyword:   *request.Keyword,
+			WholeWord: request.WholeWord,
 		}
-		filterKeywordsByID[filterKeyword.ID] = filterKeyword
-		// Don't need to set columns, as we're using all of them.
-	}
 
-	// Replace the filter's keywords list with our updated version.
-	filterKeywordColumns := [][]string{}
-	filter.Keywords = nil
-	for id, filterKeyword := range filterKeywordsByID {
+		// Verify that this is valid regular expression.
+		if err := filterKeyword.Compile(); err != nil {
+			const text = "invalid regular expression"
+			err := gtserror.Newf("invalid regular expression: %w", err)
+			return deferred, gtserror.NewWithCodeSafe(
+				http.StatusBadRequest,
+				err, text,
+			)
+		}
+
+		// Append new filter keyword to filter and list of IDs.
 		filter.Keywords = append(filter.Keywords, filterKeyword)
-		// Okay to use the nil slice zero value for entries being created instead of updated.
-		filterKeywordColumns = append(filterKeywordColumns, filterKeywordColumnsByID[id])
+		filter.KeywordIDs = append(filter.KeywordIDs, filterKeyword.ID)
+
+		// Append database insert to funcs for later processing by caller.
+		deferred.create = append(deferred.create, func() gtserror.WithCode {
+			if err := p.state.DB.PutFilterKeyword(ctx, filterKeyword); //
+			err != nil {
+				if errors.Is(err, db.ErrAlreadyExists) {
+					const text = "duplicate keyword"
+					return gtserror.NewWithCode(http.StatusConflict, text)
+				}
+				err := gtserror.Newf("error inserting filter keyword: %w", err)
+				return gtserror.NewErrorInternalError(err)
+			}
+			return nil
+		})
 	}
 
-	return filterKeywordColumns, deleteFilterKeywordIDs, nil
+	return deferred, nil
 }
 
-// applyKeywordChanges applies the provided changes to the filter's keywords in place,
-// and returns a list of filter status IDs to delete.
-func applyStatusChanges(filter *gtsmodel.Filter, formStatuses []apimodel.FilterStatusCreateDeleteRequest) ([]string, gtserror.WithCode) {
-	if len(formStatuses) == 0 {
-		// Detach currently existing statuses from the filter so we don't change them.
-		filter.Statuses = nil
-		return nil, nil
+func (p *Processor) updateFilterStatuses(ctx context.Context, filter *gtsmodel.Filter, form []apimodel.FilterStatusCreateDeleteRequest) (deferredQs, gtserror.WithCode) {
+	if len(form) == 0 {
+		// No keyword changes.
+		return deferredQs{}, nil
 	}
 
-	deleteFilterStatusIDs := []string{}
-	filterStatusesByID := map[string]*gtsmodel.FilterStatus{}
-	for _, filterStatus := range filter.Statuses {
-		filterStatusesByID[filterStatus.ID] = filterStatus
-	}
-
-	for _, formStatus := range formStatuses {
-		if formStatus.ID != nil {
-			id := *formStatus.ID
-			_, ok := filterStatusesByID[id]
-			if !ok {
-				return nil, gtserror.NewErrorNotFound(
-					fmt.Errorf("couldn't find filter status '%s' to delete", id),
-				)
+	var deferred deferredQs
+	for _, request := range form {
+		if request.ID != nil {
+			// Look by ID for status attached to filter.
+			idx := slices.IndexFunc(filter.Statuses,
+				func(f *gtsmodel.FilterStatus) bool {
+					return f.ID == *request.ID
+				})
+			if idx == -1 {
+				const text = "filter status not found"
+				return deferred, gtserror.NewWithCode(http.StatusNotFound, text)
 			}
 
-			// Process deletes.
-			if *formStatus.Destroy {
-				delete(filterStatusesByID, id)
-				deleteFilterStatusIDs = append(deleteFilterStatusIDs, id)
-				continue
-			}
+			// If this is a delete, update filter's id list.
+			if request.Destroy != nil && *request.Destroy {
+				filter.Statuses = slices.Delete(filter.Statuses, idx, idx+1)
+				filter.StatusIDs = slices.Delete(filter.StatusIDs, idx, idx+1)
 
-			// Filter statuses don't have updates.
+				// Append database delete to funcs for later processing by caller.
+				deferred.delete = append(deferred.delete, func() gtserror.WithCode {
+					if err := p.state.DB.DeleteFilterStatusesByIDs(ctx, *request.ID); //
+					err != nil {
+						err := gtserror.Newf("error deleting filter status: %w", err)
+						return gtserror.NewErrorInternalError(err)
+					}
+					return nil
+				})
+			}
 			continue
 		}
 
-		// Process creates.
-		filterStatus := &gtsmodel.FilterStatus{
-			ID:        id.NewULID(),
-			AccountID: filter.AccountID,
-			FilterID:  filter.ID,
-			Filter:    filter,
-			StatusID:  *formStatus.StatusID,
+		// Check for valid request.
+		if request.StatusID == nil {
+			const text = "missing status"
+			return deferred, gtserror.NewWithCode(http.StatusBadRequest, text)
 		}
-		filterStatusesByID[filterStatus.ID] = filterStatus
-	}
 
-	// Replace the filter's keywords list with our updated version.
-	filter.Statuses = nil
-	for _, filterStatus := range filterStatusesByID {
+		// Create new filter status for insert.
+		filterStatus := &gtsmodel.FilterStatus{
+			ID:       id.NewULID(),
+			FilterID: filter.ID,
+			StatusID: *request.StatusID,
+		}
+
+		// Append new filter status to filter and list of IDs.
 		filter.Statuses = append(filter.Statuses, filterStatus)
+		filter.StatusIDs = append(filter.StatusIDs, filterStatus.ID)
+
+		// Append database insert to funcs for later processing by caller.
+		deferred.create = append(deferred.create, func() gtserror.WithCode {
+			if err := p.state.DB.PutFilterStatus(ctx, filterStatus); //
+			err != nil {
+				if errors.Is(err, db.ErrAlreadyExists) {
+					const text = "duplicate status"
+					return gtserror.NewWithCode(http.StatusConflict, text)
+				}
+				err := gtserror.Newf("error inserting filter status: %w", err)
+				return gtserror.NewErrorInternalError(err)
+			}
+			return nil
+		})
 	}
 
-	return deleteFilterStatusIDs, nil
+	return deferred, nil
+}
+
+// deferredQs stores selection of
+// deferred database queries.
+type deferredQs struct {
+	create []func() gtserror.WithCode
+	update []func() gtserror.WithCode
+	delete []func() gtserror.WithCode
+}
+
+// performTx performs the passed deferredQs functions,
+// prioritising create / update operations before deletes.
+func performTxs(queries ...deferredQs) gtserror.WithCode {
+
+	// Perform create / update
+	// operations before anything.
+	for _, q := range queries {
+		for _, create := range q.create {
+			if errWithCode := create(); errWithCode != nil {
+				return errWithCode
+			}
+		}
+		for _, update := range q.update {
+			if errWithCode := update(); errWithCode != nil {
+				return errWithCode
+			}
+		}
+	}
+
+	// Perform deletes last.
+	for _, q := range queries {
+		for _, delete := range q.delete {
+			if errWithCode := delete(); errWithCode != nil {
+				return errWithCode
+			}
+		}
+	}
+
+	return nil
 }

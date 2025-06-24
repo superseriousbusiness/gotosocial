@@ -25,47 +25,58 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
+	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // Get looks up a filter keyword by ID and returns it as a v1 filter.
-func (p *Processor) Get(ctx context.Context, account *gtsmodel.Account, filterKeywordID string) (*apimodel.FilterV1, gtserror.WithCode) {
-	filterKeyword, err := p.state.DB.GetFilterKeywordByID(ctx, filterKeywordID)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, gtserror.NewErrorNotFound(err)
-		}
-		return nil, gtserror.NewErrorInternalError(err)
+func (p *Processor) Get(ctx context.Context, requester *gtsmodel.Account, filterKeywordID string) (*apimodel.FilterV1, gtserror.WithCode) {
+	filterKeyword, filter, errWithCode := p.c.GetFilterKeyword(ctx, requester, filterKeywordID)
+	if errWithCode != nil {
+		return nil, errWithCode
 	}
-	if filterKeyword.AccountID != account.ID {
-		return nil, gtserror.NewErrorNotFound(nil)
-	}
-
-	return p.apiFilter(ctx, filterKeyword)
+	return typeutils.FilterKeywordToAPIFilterV1(filter, filterKeyword), nil
 }
 
 // GetAll looks up all filter keywords for the current account and returns them as v1 filters.
-func (p *Processor) GetAll(ctx context.Context, account *gtsmodel.Account) ([]*apimodel.FilterV1, gtserror.WithCode) {
-	filters, err := p.state.DB.GetFilterKeywordsForAccountID(
-		ctx,
-		account.ID,
+func (p *Processor) GetAll(ctx context.Context, requester *gtsmodel.Account) ([]*apimodel.FilterV1, gtserror.WithCode) {
+	var totalKeywords int
+
+	// Get a list of all filters owned by this account,
+	// (without any sub-models attached, done later).
+	filters, err := p.state.DB.GetFiltersByAccountID(
+		gtscontext.SetBarebones(ctx),
+		requester.ID,
 	)
-	if err != nil {
-		if errors.Is(err, db.ErrNoEntries) {
-			return nil, nil
-		}
+	if err != nil && !errors.Is(err, db.ErrNoEntries) {
+		err := gtserror.Newf("error getting filters: %w", err)
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	apiFilters := make([]*apimodel.FilterV1, 0, len(filters))
+	// Get a total count of all expected
+	// keywords for slice preallocation.
 	for _, filter := range filters {
-		apiFilter, errWithCode := p.apiFilter(ctx, filter)
-		if errWithCode != nil {
-			return nil, errWithCode
+		totalKeywords += len(filter.KeywordIDs)
+	}
+
+	// Create a slice to store converted V1 frontend models.
+	apiFilters := make([]*apimodel.FilterV1, 0, totalKeywords)
+
+	for _, filter := range filters {
+		// For each of the fetched filters, fetch all of their associated keywords.
+		keywords, err := p.state.DB.GetFilterKeywordsByIDs(ctx, filter.KeywordIDs)
+		if err != nil {
+			err := gtserror.Newf("error getting filter keywords: %w", err)
+			return nil, gtserror.NewErrorInternalError(err)
 		}
 
-		apiFilters = append(apiFilters, apiFilter)
+		// Convert each keyword to frontend.
+		for _, keyword := range keywords {
+			apiFilter := typeutils.FilterKeywordToAPIFilterV1(filter, keyword)
+			apiFilters = append(apiFilters, apiFilter)
+		}
 	}
 
 	// Sort them by ID so that they're in a stable order.

@@ -82,6 +82,10 @@ type DBCaches struct {
 	// Filter provides access to the gtsmodel Filter database cache.
 	Filter StructCache[*gtsmodel.Filter]
 
+	// FilterIDs provides access to the filter IDs database cache.
+	// This cache is keyed as: {accountID} -> []{filterIDs}.
+	FilterIDs SliceCache[string]
+
 	// FilterKeyword provides access to the gtsmodel FilterKeyword database cache.
 	FilterKeyword StructCache[*gtsmodel.FilterKeyword]
 
@@ -691,10 +695,21 @@ func (c *Caches) initFilter() {
 			{Fields: "ID"},
 			{Fields: "AccountID", Multiple: true},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateFilter,
 	})
+}
+
+func (c *Caches) initFilterIDs() {
+	cap := calculateSliceCacheMax(
+		config.GetCacheFilterIDsMemRatio(),
+	)
+
+	log.Infof(nil, "cache size = %d", cap)
+
+	c.DB.FilterIDs.Init(0, cap)
 }
 
 func (c *Caches) initFilterKeyword() {
@@ -710,11 +725,6 @@ func (c *Caches) initFilterKeyword() {
 		filterKeyword2 := new(gtsmodel.FilterKeyword)
 		*filterKeyword2 = *filterKeyword1
 
-		// Don't include ptr fields that
-		// will be populated separately.
-		// See internal/db/bundb/filter.go.
-		filterKeyword2.Filter = nil
-
 		// We specifically DO NOT unset
 		// the regexp field here, as any
 		// regexp.Regexp instance is safe
@@ -726,12 +736,12 @@ func (c *Caches) initFilterKeyword() {
 	c.DB.FilterKeyword.Init(structr.CacheConfig[*gtsmodel.FilterKeyword]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
-			{Fields: "AccountID", Multiple: true},
 			{Fields: "FilterID", Multiple: true},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateFilterKeyword,
 	})
 }
 
@@ -747,24 +757,18 @@ func (c *Caches) initFilterStatus() {
 	copyF := func(filterStatus1 *gtsmodel.FilterStatus) *gtsmodel.FilterStatus {
 		filterStatus2 := new(gtsmodel.FilterStatus)
 		*filterStatus2 = *filterStatus1
-
-		// Don't include ptr fields that
-		// will be populated separately.
-		// See internal/db/bundb/filter.go.
-		filterStatus2.Filter = nil
-
 		return filterStatus2
 	}
 
 	c.DB.FilterStatus.Init(structr.CacheConfig[*gtsmodel.FilterStatus]{
 		Indices: []structr.IndexConfig{
 			{Fields: "ID"},
-			{Fields: "AccountID", Multiple: true},
 			{Fields: "FilterID", Multiple: true},
 		},
-		MaxSize:   cap,
-		IgnoreErr: ignoreErrors,
-		Copy:      copyF,
+		MaxSize:    cap,
+		IgnoreErr:  ignoreErrors,
+		Copy:       copyF,
+		Invalidate: c.OnInvalidateFilterStatus,
 	})
 }
 

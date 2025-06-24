@@ -104,7 +104,7 @@ func (suite *FiltersTestSuite) TestDeleteFilterKeyword() {
 func (suite *FiltersTestSuite) TestDeleteAnotherAccountsFilterKeyword() {
 	id := suite.testFilterKeywords["local_account_2_filter_1_keyword_1"].ID
 
-	err := suite.deleteFilterKeyword(id, http.StatusNotFound, `{"error":"Not Found"}`)
+	err := suite.deleteFilterKeyword(id, http.StatusNotFound, `{"error":"Not Found: filter not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -113,7 +113,7 @@ func (suite *FiltersTestSuite) TestDeleteAnotherAccountsFilterKeyword() {
 func (suite *FiltersTestSuite) TestDeleteNonexistentFilterKeyword() {
 	id := "not_even_a_real_ULID"
 
-	err := suite.deleteFilterKeyword(id, http.StatusNotFound, `{"error":"Not Found"}`)
+	err := suite.deleteFilterKeyword(id, http.StatusNotFound, `{"error":"Not Found: filter keyword not found"}`)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

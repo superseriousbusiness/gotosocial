@@ -116,7 +116,7 @@ func (suite *FiltersTestSuite) putFilter(filterID string, title *string, context
 		return nil, err
 	}
 
-	errs := gtserror.NewMultiError(2)
+	var errs gtserror.MultiError
 
 	// check code + body
 	if resultCode := recorder.Code; expectedHTTPStatus != resultCode {
@@ -324,7 +324,7 @@ func (suite *FiltersTestSuite) TestPutFilterEmptyContext() {
 func (suite *FiltersTestSuite) TestPutFilterTitleConflict() {
 	id := suite.testFilters["local_account_1_filter_1"].ID
 	title := suite.testFilters["local_account_1_filter_2"].Title
-	_, err := suite.putFilter(id, &title, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, http.StatusConflict, `{"error":"Conflict: you already have a filter with this title"}`, nil)
+	_, err := suite.putFilter(id, &title, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, http.StatusConflict, `{"error":"Conflict: duplicate title"}`, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -334,7 +334,7 @@ func (suite *FiltersTestSuite) TestPutAnotherAccountsFilter() {
 	id := suite.testFilters["local_account_2_filter_1"].ID
 	title := "GNU/Linux"
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &title, &context, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`, nil)
+	_, err := suite.putFilter(id, &title, &context, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found: filter not found"}`, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -344,7 +344,7 @@ func (suite *FiltersTestSuite) TestPutNonexistentFilter() {
 	id := "not_even_a_real_ULID"
 	phrase := "GNU/Linux"
 	context := []string{"home"}
-	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found"}`, nil)
+	_, err := suite.putFilter(id, &phrase, &context, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, http.StatusNotFound, `{"error":"Not Found: filter not found"}`, nil)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

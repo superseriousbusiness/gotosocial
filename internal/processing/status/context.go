@@ -24,7 +24,6 @@ import (
 	"strings"
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 )
@@ -278,7 +277,7 @@ func (p *Processor) ContextGet(
 ) (*apimodel.ThreadContext, gtserror.WithCode) {
 	// Retrieve filters as they affect
 	// what should be shown to requester.
-	filters, err := p.state.DB.GetFiltersForAccountID(
+	filters, err := p.state.DB.GetFiltersByAccountID(
 		ctx, // Populate filters.
 		requester.ID,
 	)
@@ -305,7 +304,7 @@ func (p *Processor) ContextGet(
 	apiContext.Ancestors = p.c.GetVisibleAPIStatuses(ctx,
 		requester,
 		threadContext.ancestors,
-		statusfilter.FilterContextThread,
+		gtsmodel.FilterContextThread,
 		filters,
 	)
 
@@ -313,7 +312,7 @@ func (p *Processor) ContextGet(
 	apiContext.Descendants = p.c.GetVisibleAPIStatuses(ctx,
 		requester,
 		threadContext.descendants,
-		statusfilter.FilterContextThread,
+		gtsmodel.FilterContextThread,
 		filters,
 	)
 
