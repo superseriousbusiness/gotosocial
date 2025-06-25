@@ -19,8 +19,6 @@ package migrations
 
 import (
 	"context"
-	"database/sql"
-	"errors"
 	"reflect"
 	"strings"
 
@@ -204,91 +202,9 @@ func init() {
 			return err
 		}
 
-		// SQLITE: force WAL checkpoint to merge writes.
-		if err := doWALCheckpoint(ctx, db); err != nil {
-			return err
-		}
-
-		// Create links from 'filters' table to 'filter_{keywords,statuses}' tables.
-		return db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			newFilterType := reflect.TypeOf((*newmodel.Filter)(nil))
-
-			var filterIDs string
-
-			// Select all filter IDs.
-			if err := tx.NewSelect().
-				Model((*newmodel.Filter)(nil)).
-				Column("id").
-				Scan(ctx, &filterIDs); err != nil && !errors.Is(err, sql.ErrNoRows) {
-				return gtserror.Newf("error selecting filter ids: %w", err)
-			}
-
-			for _, data := range []struct {
-				Field string
-				Model any
-			}{
-				{
-					Field: "KeywordIDs",
-					Model: (*newmodel.FilterKeyword)(nil),
-				},
-				{
-					Field: "StatusIDs",
-					Model: (*newmodel.FilterStatus)(nil),
-				},
-			} {
-				// Generate bun definition for new filter table field column.
-				newColDef, err := getBunColumnDef(tx, newFilterType, data.Field)
-				if err != nil {
-					return gtserror.Newf("error getting bun column def: %w", err)
-				}
-
-				// Add new column type to table.
-				if _, err := tx.NewAddColumn().
-					Model((*oldmodel.Filter)(nil)).
-					ColumnExpr(newColDef).
-					Exec(ctx); err != nil {
-					return gtserror.Newf("error adding filter.%s column: %w", data.Field, err)
-				}
-
-				// Get the SQL field information from bun for Filter{}.$Field.
-				field, _, err := getModelField(tx, newFilterType, data.Field)
-				if err != nil {
-					return gtserror.Newf("error getting bun model field: %w", err)
-				}
-
-				// Extract column name.
-				col := field.SQLName
-
-				var relatedIDs []string
-				for _, filterID := range filterIDs {
-					// Reset related IDs.
-					clear(relatedIDs)
-					relatedIDs = relatedIDs[:0]
-
-					// Select $Model IDs that
-					// are attached to filterID.
-					if err := tx.NewSelect().
-						Model(data.Model).
-						Column("id").
-						Where("? = ?", bun.Ident("filter_id"), filterID).
-						Scan(ctx, &relatedIDs); err != nil {
-						return gtserror.Newf("error selecting %T ids: %w", data.Model, err)
-					}
-
-					// Now update the relevant filter
-					// row to contain these related IDs.
-					if _, err := tx.NewUpdate().
-						Model((*newmodel.Filter)(nil)).
-						Where("? = ?", bun.Ident("id"), filterID).
-						Set("? = ?", bun.Ident(col), relatedIDs).
-						Exec(ctx); err != nil {
-						return gtserror.Newf("error updating filters.%s ids: %w", col, err)
-					}
-				}
-			}
-
-			return nil
-		})
+		// SQLITE: force WAL checkpoint
+		// to merge writes before return.
+		return doWALCheckpoint(ctx, db)
 	}
 
 	down := func(ctx context.Context, db *bun.DB) error {
