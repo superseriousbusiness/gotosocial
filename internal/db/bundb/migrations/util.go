@@ -34,9 +34,23 @@ import (
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/dialect/feature"
+	"github.com/uptrace/bun/dialect/pgdialect"
 	"github.com/uptrace/bun/dialect/sqltype"
 	"github.com/uptrace/bun/schema"
 )
+
+// bunArrayType wraps the given type in a pgdialect.Array
+// if needed, which postgres wants for serializing arrays.
+func bunArrayType(db bun.IDB, arr any) any {
+	switch db.Dialect().Name() {
+	case dialect.SQLite:
+		return arr // return as-is
+	case dialect.PG:
+		return pgdialect.Array(arr)
+	default:
+		panic("unreachable")
+	}
+}
 
 // doWALCheckpoint attempt to force a WAL file merge on SQLite3,
 // which can be useful given how much can build-up in the WAL.

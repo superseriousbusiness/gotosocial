@@ -29,6 +29,7 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dialect"
+	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
 // likeEscaper is a thread-safe string replacer which escapes
@@ -58,6 +59,19 @@ func likeOperator(query *bun.SelectQuery) string {
 
 	log.Panicf(nil, "db conn %s was neither pg nor sqlite", d)
 	return ""
+}
+
+// bunArrayType wraps the given type in a pgdialect.Array
+// if needed, which postgres wants for serializing arrays.
+func bunArrayType(db bun.IDB, arr any) any {
+	switch db.Dialect().Name() {
+	case dialect.SQLite:
+		return arr // return as-is
+	case dialect.PG:
+		return pgdialect.Array(arr)
+	default:
+		panic("unreachable")
+	}
 }
 
 // whereLike appends a WHERE clause to the

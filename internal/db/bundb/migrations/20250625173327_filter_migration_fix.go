@@ -110,12 +110,16 @@ func init() {
 						return gtserror.Newf("error selecting %T ids: %w", data.Model, err)
 					}
 
+					// Convert related IDs to bun array
+					// type for serialization in query.
+					arrIDs := bunArrayType(tx, relatedIDs)
+
 					// Now update the relevant filter
 					// row to contain these related IDs.
 					if _, err := tx.NewUpdate().
 						Model((*newmodel.Filter)(nil)).
 						Where("? = ?", bun.Ident("id"), filterID).
-						Set("? = ?", bun.Ident(col), relatedIDs).
+						Set("? = ?", bun.Ident(col), arrIDs).
 						Exec(ctx); err != nil {
 						return gtserror.Newf("error updating filters.%s ids: %w", col, err)
 					}

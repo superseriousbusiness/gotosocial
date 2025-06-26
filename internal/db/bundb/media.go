@@ -196,13 +196,17 @@ func (m *mediaDB) DeleteAttachment(ctx context.Context, id string) error {
 			})
 
 			if len(updatedIDs) != len(status.AttachmentIDs) {
+
+				// Convert to bun array for serialization.
+				arrIDs := bunArrayType(tx, updatedIDs)
+
 				// Note: this handles not found.
 				//
 				// Attachments changed, update the status.
 				if _, err := tx.NewUpdate().
 					Table("statuses").
 					Where("? = ?", bun.Ident("id"), status.ID).
-					Set("? = ?", bun.Ident("attachment_ids"), updatedIDs).
+					Set("? = ?", bun.Ident("attachment_ids"), arrIDs).
 					Exec(ctx); err != nil {
 					return gtserror.Newf("error updating status: %w", err)
 				}
