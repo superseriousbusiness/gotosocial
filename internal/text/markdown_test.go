@@ -61,7 +61,9 @@ const (
 	mdCodeBlockWithNewlines            = "some code coming up\n\n```\n\n\n\n```\nthat was some code"
 	mdCodeBlockWithNewlinesExpected    = "<p>some code coming up</p><pre><code>\n\n\n</code></pre><p>that was some code</p>"
 	mdWithFootnote                     = "fox mulder,fbi.[^1]\n\n[^1]: federated bureau of investigation"
-	mdWithFootnoteExpected             = "<p>fox mulder,fbi.<sup id=\"fnref:1\"><a class=\"footnote-ref\">1</a></sup></p><div><hr><ol><li id=\"fn:1\"><p>federated bureau of investigation <a class=\"footnote-backref\">↩︎</a></p></li></ol></div>"
+	mdWithFootnoteExpected             = "<p>fox mulder,fbi.<sup id=\"dummy_status_ID-fnref:1\"><a href=\"#dummy_status_ID-fn:1\" class=\"footnote-ref\" role=\"doc-noteref\">1</a></sup></p><div><hr><ol><li id=\"dummy_status_ID-fn:1\"><p>federated bureau of investigation <a href=\"#dummy_status_ID-fnref:1\" class=\"footnote-backref\" role=\"doc-backlink\">↩︎</a></p></li></ol></div>"
+	mdWithAttemptedRelative            = "hello this is a cheeky relative link: <a href=\"../sneaky.html\">click it!</a>"
+	mdWithAttemptedRelativeExpected    = "<p>hello this is a cheeky relative link: click it!</p>"
 	mdWithBlockQuote                   = "get ready, there's a block quote coming:\n\n>line1\n>line2\n>\n>line3\n\n"
 	mdWithBlockQuoteExpected           = "<p>get ready, there's a block quote coming:</p><blockquote><p>line1<br>line2</p><p>line3</p></blockquote>"
 	mdHashtagAndCodeBlock              = "#Hashtag\n\n```\n#Hashtag\n```"
@@ -154,6 +156,11 @@ func (suite *MarkdownTestSuite) TestParseCodeBlockWithNewlines() {
 func (suite *MarkdownTestSuite) TestParseWithFootnote() {
 	formatted := suite.FromMarkdown(mdWithFootnote)
 	suite.Equal(mdWithFootnoteExpected, formatted.HTML)
+}
+
+func (suite *MarkdownTestSuite) TestParseWithAttemptedRelative() {
+	formatted := suite.FromMarkdown(mdWithAttemptedRelative)
+	suite.Equal(mdWithAttemptedRelativeExpected, formatted.HTML)
 }
 
 func (suite *MarkdownTestSuite) TestParseWithBlockquote() {

@@ -24,6 +24,7 @@ import (
 	"strings"
 
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/regexes"
 	"codeberg.org/gruf/go-byteutil"
@@ -118,6 +119,18 @@ func (f *Formatter) fromMarkdown(
 		}
 	}
 
+	// Inject a footnote ID prefix to avoid
+	// footnote ID clashes. StatusID isn't
+	// always set (eg., when parsing instance
+	// description markdown), so take a random
+	// ULID if it's not.
+	var footnoteIDPrefix string
+	if statusID != "" {
+		footnoteIDPrefix = statusID + "-"
+	} else {
+		footnoteIDPrefix = id.NewULID() + "-"
+	}
+
 	// Instantiate goldmark parser for
 	// markdown, using custom renderer
 	// to add hashtag/mention links.
@@ -141,7 +154,9 @@ func (f *Formatter) fromMarkdown(
 			extension.NewLinkify(
 				extension.WithLinkifyURLRegexp(regexes.URLLike),
 			),
-			extension.Footnote,
+			extension.NewFootnote(
+				extension.WithFootnoteIDPrefix(footnoteIDPrefix),
+			),
 			extension.Strikethrough,
 		),
 	)
