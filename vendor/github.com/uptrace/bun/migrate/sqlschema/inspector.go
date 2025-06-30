@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/internal/ordered"
 	"github.com/uptrace/bun/schema"
 )
 
@@ -30,12 +29,23 @@ type InspectorDialect interface {
 // InspectorConfig controls the scope of migration by limiting the objects Inspector should return.
 // Inspectors SHOULD use the configuration directly instead of copying it, or MAY choose to embed it,
 // to make sure options are always applied correctly.
+//
+// ExcludeTables and ExcludeForeignKeys are intended for database inspectors,
+// to compensate for the fact that model structs may not wholly reflect the
+// state of the database schema.
+// Database inspectors MUST respect these exclusions to prevent relations
+// from being dropped unintentionally.
 type InspectorConfig struct {
 	// SchemaName limits inspection to tables in a particular schema.
 	SchemaName string
 
-	// ExcludeTables from inspection.
+	// ExcludeTables from inspection. Patterns MAY make use of wildcards
+	// like % and _ and dialects MUST acknowledge that by using them
+	// with the SQL LIKE operator.
 	ExcludeTables []string
+
+	// ExcludeForeignKeys from inspection.
+	ExcludeForeignKeys map[ForeignKey]string
 }
 
 // Inspector reads schema state.
@@ -49,10 +59,23 @@ func WithSchemaName(schemaName string) InspectorOption {
 	}
 }
 
-// WithExcludeTables works in append-only mode, i.e. tables cannot be re-included.
+// WithExcludeTables forces inspector to exclude tables from the reported schema state.
+// It works in append-only mode, i.e. tables cannot be re-included.
+//
+// Patterns MAY make use of % and _ wildcards, as if writing a LIKE clause in SQL.
 func WithExcludeTables(tables ...string) InspectorOption {
 	return func(cfg *InspectorConfig) {
 		cfg.ExcludeTables = append(cfg.ExcludeTables, tables...)
+	}
+}
+
+// WithExcludeForeignKeys forces inspector to exclude foreign keys
+// from the reported schema state.
+func WithExcludeForeignKeys(fks ...ForeignKey) InspectorOption {
+	return func(cfg *InspectorConfig) {
+		for _, fk := range fks {
+			cfg.ExcludeForeignKeys[fk] = ""
+		}
 	}
 }
 
@@ -78,6 +101,9 @@ func NewBunModelInspector(tables *schema.Tables, options ...InspectorOption) *Bu
 type InspectorOption func(*InspectorConfig)
 
 func ApplyInspectorOptions(cfg *InspectorConfig, options ...InspectorOption) {
+	if cfg.ExcludeForeignKeys == nil {
+		cfg.ExcludeForeignKeys = make(map[ForeignKey]string)
+	}
 	for _, opt := range options {
 		opt(cfg)
 	}
@@ -90,6 +116,10 @@ type inspector struct {
 
 // BunModelInspector creates the current project state from the passed bun.Models.
 // Do not recycle BunModelInspector for different sets of models, as older models will not be de-registerred before the next run.
+//
+// BunModelInspector does not know which the database's dialect, so it does not
+// assume any default schema name. Always specify the target schema name via
+// WithSchemaName option to receive meaningful results.
 type BunModelInspector struct {
 	InspectorConfig
 	tables *schema.Tables
@@ -102,21 +132,21 @@ func (bmi *BunModelInspector) Inspect(ctx context.Context) (Database, error) {
 		BaseDatabase: BaseDatabase{
 			ForeignKeys: make(map[ForeignKey]string),
 		},
-		Tables: ordered.NewMap[string, Table](),
 	}
 	for _, t := range bmi.tables.All() {
 		if t.Schema != bmi.SchemaName {
 			continue
 		}
 
-		columns := ordered.NewMap[string, Column]()
+		var columns []Column
 		for _, f := range t.Fields {
 
 			sqlType, length, err := parseLen(f.CreateTableSQLType)
 			if err != nil {
 				return nil, fmt.Errorf("parse length in %q: %w", f.CreateTableSQLType, err)
 			}
-			columns.Store(f.Name, &BaseColumn{
+
+			columns = append(columns, &BaseColumn{
 				Name:            f.Name,
 				SQLType:         strings.ToLower(sqlType), // TODO(dyma): maybe this is not necessary after Column.Eq()
 				VarcharLen:      length,
@@ -162,7 +192,7 @@ func (bmi *BunModelInspector) Inspect(ctx context.Context) (Database, error) {
 		// produces
 		// 	schema.Table{ Schema: "favourite", Name: "favourite.books" }
 		tableName := strings.TrimPrefix(t.Name, t.Schema+".")
-		state.Tables.Store(tableName, &BunTable{
+		state.Tables = append(state.Tables, &BunTable{
 			BaseTable: BaseTable{
 				Schema:            t.Schema,
 				Name:              tableName,
@@ -212,7 +242,7 @@ func parseLen(typ string) (string, int, error) {
 }
 
 // exprOrLiteral converts string to lowercase, if it does not contain a string literal 'lit'
-// and trims the surrounding '' otherwise.
+// and trims the surrounding ” otherwise.
 // Use it to ensure that user-defined default values in the models are always comparable
 // to those returned by the database inspector, regardless of the case convention in individual drivers.
 func exprOrLiteral(s string) string {
@@ -226,10 +256,10 @@ func exprOrLiteral(s string) string {
 type BunModelSchema struct {
 	BaseDatabase
 
-	Tables *ordered.Map[string, Table]
+	Tables []Table
 }
 
-func (ms BunModelSchema) GetTables() *ordered.Map[string, Table] {
+func (ms BunModelSchema) GetTables() []Table {
 	return ms.Tables
 }
 

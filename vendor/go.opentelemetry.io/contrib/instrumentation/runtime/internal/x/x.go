@@ -9,17 +9,17 @@ package x // import "go.opentelemetry.io/contrib/instrumentation/runtime/interna
 
 import (
 	"os"
-	"strings"
+	"strconv"
 )
 
 // DeprecatedRuntimeMetrics is an experimental feature flag that defines if the deprecated
 // runtime metrics should be produced. During development of the new
 // conventions, it is enabled by default.
 //
-// To disable this feature set the OTEL_GO_X_DEPRECATED_RUNTIME_METRICS environment variable
-// to the case-insensitive string value of "false" (i.e. "False" and "FALSE"
+// To enable this feature set the OTEL_GO_X_DEPRECATED_RUNTIME_METRICS environment variable
+// to the case-insensitive string value of "true" (i.e. "True" and "TRUE"
 // will also enable this).
-var DeprecatedRuntimeMetrics = newFeature("DEPRECATED_RUNTIME_METRICS", true)
+var DeprecatedRuntimeMetrics = newFeature("DEPRECATED_RUNTIME_METRICS", false)
 
 // BoolFeature is an experimental feature control flag. It provides a uniform way
 // to interact with these feature flags and parse their values.
@@ -43,11 +43,11 @@ func (f BoolFeature) Key() string { return f.key }
 // Enabled returns if the feature is enabled.
 func (f BoolFeature) Enabled() bool {
 	v := os.Getenv(f.key)
-	if strings.ToLower(v) == "false" {
-		return false
+
+	val, err := strconv.ParseBool(v)
+	if err != nil {
+		return f.defaultVal
 	}
-	if strings.ToLower(v) == "true" {
-		return true
-	}
-	return f.defaultVal
+
+	return val
 }

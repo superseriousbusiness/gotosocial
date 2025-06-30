@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/internal/ordered"
 	"github.com/uptrace/bun/migrate/sqlschema"
 )
 
@@ -34,13 +33,12 @@ func newInspector(db *bun.DB, options ...sqlschema.InspectorOption) *Inspector {
 
 func (in *Inspector) Inspect(ctx context.Context) (sqlschema.Database, error) {
 	dbSchema := Schema{
-		Tables:      ordered.NewMap[string, sqlschema.Table](),
 		ForeignKeys: make(map[sqlschema.ForeignKey]string),
 	}
 
 	exclude := in.ExcludeTables
 	if len(exclude) == 0 {
-		// Avoid getting NOT IN (NULL) if bun.In() is called with an empty slice.
+		// Avoid getting NOT LIKE ALL (ARRAY[NULL]) if bun.In() is called with an empty slice.
 		exclude = []string{""}
 	}
 
@@ -61,7 +59,7 @@ func (in *Inspector) Inspect(ctx context.Context) (sqlschema.Database, error) {
 			return dbSchema, err
 		}
 
-		colDefs := ordered.NewMap[string, sqlschema.Column]()
+		var colDefs []sqlschema.Column
 		uniqueGroups := make(map[string][]string)
 
 		for _, c := range columns {
@@ -72,7 +70,7 @@ func (in *Inspector) Inspect(ctx context.Context) (sqlschema.Database, error) {
 				def = strings.ToLower(def)
 			}
 
-			colDefs.Store(c.Name, &Column{
+			colDefs = append(colDefs, &Column{
 				Name:            c.Name,
 				SQLType:         c.DataType,
 				VarcharLen:      c.VarcharLen,
@@ -103,7 +101,7 @@ func (in *Inspector) Inspect(ctx context.Context) (sqlschema.Database, error) {
 			}
 		}
 
-		dbSchema.Tables.Store(table.Name, &Table{
+		dbSchema.Tables = append(dbSchema.Tables, &Table{
 			Schema:            table.Schema,
 			Name:              table.Name,
 			Columns:           colDefs,
@@ -113,10 +111,14 @@ func (in *Inspector) Inspect(ctx context.Context) (sqlschema.Database, error) {
 	}
 
 	for _, fk := range fks {
-		dbSchema.ForeignKeys[sqlschema.ForeignKey{
+		dbFK := sqlschema.ForeignKey{
 			From: sqlschema.NewColumnReference(fk.SourceTable, fk.SourceColumns...),
 			To:   sqlschema.NewColumnReference(fk.TargetTable, fk.TargetColumns...),
-		}] = fk.ConstraintName
+		}
+		if _, exclude := in.ExcludeForeignKeys[dbFK]; exclude {
+			continue
+		}
+		dbSchema.ForeignKeys[dbFK] = fk.ConstraintName
 	}
 	return dbSchema, nil
 }
@@ -185,7 +187,7 @@ FROM information_schema.tables "t"
 WHERE table_type = 'BASE TABLE'
 	AND "t".table_schema = ?
 	AND "t".table_schema NOT LIKE 'pg_%'
-	AND "table_name" NOT IN (?)
+	AND "table_name" NOT LIKE ALL (ARRAY[?])
 ORDER BY "t".table_schema, "t".table_name
 `
 
@@ -291,7 +293,8 @@ WHERE co.contype = 'f'
 	AND co.conrelid IN (SELECT oid FROM pg_class WHERE relkind = 'r')
 	AND ARRAY_POSITION(co.conkey, sc.attnum) = ARRAY_POSITION(co.confkey, tc.attnum)
 	AND ss.nspname = ?
-	AND s.relname NOT IN (?) AND "t".relname NOT IN (?)
+	AND s.relname NOT LIKE ALL (ARRAY[?])
+	AND "t".relname NOT LIKE ALL (ARRAY[?])
 GROUP BY "constraint_name", "schema_name", "table_name", target_schema, target_table
 `
 )

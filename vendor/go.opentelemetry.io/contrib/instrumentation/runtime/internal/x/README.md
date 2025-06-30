@@ -13,22 +13,13 @@ change in backwards incompatible ways as feedback is applied.
 
 ### Include Deprecated Metrics
 
-Once new experimental runtime metrics are added, they will be produced
-**in addition to** the existing runtime metrics. Users that migrate right away
-can disable the old runtime metrics:
-
-```console
-export OTEL_GO_X_DEPRECATED_RUNTIME_METRICS=false
-```
-
-In a later release, the deprecated runtime metrics will stop being produced by
-default. To temporarily re-enable the deprecated metrics:
+To temporarily re-enable the deprecated metrics:
 
 ```console
 export OTEL_GO_X_DEPRECATED_RUNTIME_METRICS=true
 ```
 
-After two additional releases, the deprecated runtime metrics will be removed,
+Eventually, the deprecated runtime metrics will be removed,
 and setting the environment variable will no longer have any effect.
 
 The value set must be the case-insensitive string of `"true"` to enable the

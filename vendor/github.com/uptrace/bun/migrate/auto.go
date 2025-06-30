@@ -17,16 +17,20 @@ import (
 
 type AutoMigratorOption func(m *AutoMigrator)
 
-// WithModel adds a bun.Model to the scope of migrations.
+// WithModel adds a bun.Model to the migration scope.
 func WithModel(models ...interface{}) AutoMigratorOption {
 	return func(m *AutoMigrator) {
 		m.includeModels = append(m.includeModels, models...)
 	}
 }
 
-// WithExcludeTable tells the AutoMigrator to ignore a table in the database.
+// WithExcludeTable tells AutoMigrator to exclude database tables from the migration scope.
 // This prevents AutoMigrator from dropping tables which may exist in the schema
 // but which are not used by the application.
+//
+// Expressions may make use of the wildcards supported by the SQL LIKE operator:
+//   - % as a wildcard
+//   - _ as a single character
 //
 // Do not exclude tables included via WithModel, as BunModelInspector ignores this setting.
 func WithExcludeTable(tables ...string) AutoMigratorOption {
@@ -35,7 +39,17 @@ func WithExcludeTable(tables ...string) AutoMigratorOption {
 	}
 }
 
-// WithSchemaName changes the default database schema to migrate objects in.
+// WithExcludeForeignKeys tells AutoMigrator to exclude a foreign key constaint
+// from the migration scope. This prevents AutoMigrator from dropping foreign keys
+// that are defined manually via CreateTableQuery.ForeignKey().
+func WithExcludeForeignKeys(fks ...sqlschema.ForeignKey) AutoMigratorOption {
+	return func(m *AutoMigrator) {
+		m.excludeForeignKeys = append(m.excludeForeignKeys, fks...)
+	}
+}
+
+// WithSchemaName sets the database schema to migrate objects in.
+// By default, dialects' default schema is used.
 func WithSchemaName(schemaName string) AutoMigratorOption {
 	return func(m *AutoMigrator) {
 		m.schemaName = schemaName
@@ -82,7 +96,7 @@ func WithMigrationsDirectoryAuto(directory string) AutoMigratorOption {
 // database schema automatically.
 //
 // Usage:
-//  1. Generate migrations and apply them au once with AutoMigrator.Migrate().
+//  1. Generate migrations and apply them at once with AutoMigrator.Migrate().
 //  2. Create up- and down-SQL migration files and apply migrations using Migrator.Migrate().
 //
 // While both methods produce complete, reversible migrations (with entries in the database
@@ -124,8 +138,8 @@ type AutoMigrator struct {
 	// includeModels define the migration scope.
 	includeModels []interface{}
 
-	// excludeTables are excluded from database inspection.
-	excludeTables []string
+	excludeTables      []string               // excludeTables are excluded from database inspection.
+	excludeForeignKeys []sqlschema.ForeignKey // excludeForeignKeys are excluded from database inspection.
 
 	// diffOpts are passed to detector constructor.
 	diffOpts []diffOption
@@ -150,7 +164,11 @@ func NewAutoMigrator(db *bun.DB, opts ...AutoMigratorOption) (*AutoMigrator, err
 	}
 	am.excludeTables = append(am.excludeTables, am.table, am.locksTable)
 
-	dbInspector, err := sqlschema.NewInspector(db, sqlschema.WithSchemaName(am.schemaName), sqlschema.WithExcludeTables(am.excludeTables...))
+	dbInspector, err := sqlschema.NewInspector(db,
+		sqlschema.WithSchemaName(am.schemaName),
+		sqlschema.WithExcludeTables(am.excludeTables...),
+		sqlschema.WithExcludeForeignKeys(am.excludeForeignKeys...),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -252,12 +270,12 @@ func (am *AutoMigrator) createSQLMigrations(ctx context.Context, transactional b
 	migrations := NewMigrations(am.migrationsOpts...)
 	migrations.Add(Migration{
 		Name:    name,
-		Up:      changes.Up(am.dbMigrator),
-		Down:    changes.Down(am.dbMigrator),
+		Up:      wrapMigrationFunc(changes.Up(am.dbMigrator)),
+		Down:    wrapMigrationFunc(changes.Down(am.dbMigrator)),
 		Comment: "Changes detected by bun.AutoMigrator",
 	})
 
-	// Append .tx.up.sql or .up.sql to migration name, dependin if it should be transactional.
+	// Append .tx.up.sql or .up.sql to migration name, depending if it should be transactional.
 	fname := func(direction string) string {
 		return name + map[bool]string{true: ".tx.", false: "."}[transactional] + direction + ".sql"
 	}
@@ -336,7 +354,7 @@ func (c *changeset) apply(ctx context.Context, db *bun.DB, m sqlschema.Migrator)
 	}
 
 	for _, op := range c.operations {
-		if _, isComment := op.(*comment); isComment {
+		if _, skip := op.(*Unimplemented); skip {
 			continue
 		}
 
@@ -359,17 +377,22 @@ func (c *changeset) WriteTo(w io.Writer, m sqlschema.Migrator) error {
 
 	b := internal.MakeQueryBytes()
 	for _, op := range c.operations {
-		if c, isComment := op.(*comment); isComment {
+		if comment, isComment := op.(*Unimplemented); isComment {
 			b = append(b, "/*\n"...)
-			b = append(b, *c...)
+			b = append(b, *comment...)
 			b = append(b, "\n*/"...)
 			continue
 		}
 
-		b, err = m.AppendSQL(b, op)
+		// Append each query separately, merge later.
+		// Dialects assume that the []byte only holds
+		// the contents of a single query and may be misled.
+		queryBytes := internal.MakeQueryBytes()
+		queryBytes, err = m.AppendSQL(queryBytes, op)
 		if err != nil {
 			return fmt.Errorf("write changeset: %w", err)
 		}
+		b = append(b, queryBytes...)
 		b = append(b, ";\n"...)
 	}
 	if _, err := w.Write(b); err != nil {
@@ -409,7 +432,7 @@ func (c *changeset) ResolveDependencies() error {
 	}
 
 	// visit iterates over c.operations until it finds all operations that depend on the current one
-	// or runs into cirtular dependency, in which case it will return an error.
+	// or runs into circular dependency, in which case it will return an error.
 	visit = func(op Operation) error {
 		switch status[op] {
 		case visited:
