@@ -124,17 +124,28 @@ var regular *bluemonday.Policy = func() *bluemonday.Policy {
 	*/
 
 	// Permit hyperlinks.
-	p.AllowAttrs("class", "href", "rel").OnElements("a")
+	p.AllowAttrs("class", "rel").OnElements("a")
+
+	// Permit footnote roles on anchor elements.
+	p.AllowAttrs("role").Matching(regexp.MustCompile("^doc-noteref$")).OnElements("a")
+	p.AllowAttrs("role").Matching(regexp.MustCompile("^doc-backlink$")).OnElements("a")
 
 	// URLs must be parseable by net/url.Parse().
 	p.RequireParseableURLs(true)
 
-	// Most common URL schemes only.
+	// Relative URLs are OK as we
+	// need fragments for footnotes.
+	p.AllowRelativeURLs(true)
+
+	// However *only* allow common schemes, and also
+	// relative URLs beginning with "#", ie., fragments.
+	// We don't want URL's like "../../peepee.html".
 	p.AllowURLSchemes("mailto", "http", "https")
+	p.AllowAttrs("href").Matching(regexp.MustCompile("^(?:#|mailto|https://|http://).+$")).OnElements("a")
 
 	// Force rel="noreferrer".
 	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel/noreferrer
-	p.RequireNoReferrerOnLinks(true)
+	p.RequireNoReferrerOnFullyQualifiedLinks(true)
 
 	// Add rel="nofollow" on all fully qualified (not relative) links.
 	// See: https://developer.mozilla.org/en-US/docs/Web/HTML/Attributes/rel#nofollow
