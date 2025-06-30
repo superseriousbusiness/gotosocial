@@ -54,7 +54,7 @@ require (
 	github.com/miekg/dns v1.1.66
 	github.com/minio/minio-go/v7 v7.0.92
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/ncruces/go-sqlite3 v0.26.1
+	github.com/ncruces/go-sqlite3 v0.26.3
 	github.com/oklog/ulid v1.3.1
 	github.com/pquerna/otp v1.5.0
 	github.com/rivo/uniseg v0.4.7
