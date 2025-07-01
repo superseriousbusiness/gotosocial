@@ -96,15 +96,9 @@ func (p *Processor) StatusesGet(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requestingAccount.ID)
-	if err != nil {
-		err = gtserror.Newf("couldn't retrieve filters for account %s: %w", requestingAccount.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
 	for _, s := range filtered {
 		// Convert filtered statuses to API statuses.
-		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, gtsmodel.FilterContextAccount, filters)
+		item, err := p.converter.StatusToAPIStatus(ctx, s, requestingAccount, gtsmodel.FilterContextAccount)
 		if err != nil {
 			log.Errorf(ctx, "error convering to api status: %v", err)
 			continue

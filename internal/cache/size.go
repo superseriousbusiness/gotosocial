@@ -25,6 +25,7 @@ import (
 	"unsafe"
 
 	"code.superseriousbusiness.org/gotosocial/internal/ap"
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
@@ -650,6 +651,20 @@ func sizeofStatusFave() uintptr {
 		TargetAccountID: exampleID,
 		StatusID:        exampleID,
 		URI:             exampleURI,
+	}))
+}
+
+func sizeofStatusFilterResults() uintptr {
+	return uintptr(size.Of(&CachedStatusFilterResults{
+		StatusID:    exampleID,
+		RequesterID: exampleID,
+		Results: [5][]StatusFilterResult{
+			{{Result: &apimodel.FilterResult{KeywordMatches: []string{"key", "word"}}}, {Result: &apimodel.FilterResult{StatusMatches: []string{exampleID, exampleID}}}, {}},
+			{{Result: &apimodel.FilterResult{KeywordMatches: []string{"key", "word"}}}, {Result: &apimodel.FilterResult{StatusMatches: []string{exampleID, exampleID}}}, {}},
+			{{Result: &apimodel.FilterResult{KeywordMatches: []string{"key", "word"}}}, {Result: &apimodel.FilterResult{StatusMatches: []string{exampleID, exampleID}}}, {}},
+			{{Result: &apimodel.FilterResult{KeywordMatches: []string{"key", "word"}}}, {Result: &apimodel.FilterResult{StatusMatches: []string{exampleID, exampleID}}}, {}},
+			{{Result: &apimodel.FilterResult{KeywordMatches: []string{"key", "word"}}}, {Result: &apimodel.FilterResult{StatusMatches: []string{exampleID, exampleID}}}, {}},
+		},
 	}))
 }
 

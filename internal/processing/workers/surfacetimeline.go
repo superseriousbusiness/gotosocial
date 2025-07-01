@@ -22,12 +22,12 @@ import (
 	"errors"
 
 	"code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/stream"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -147,19 +147,10 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 			continue
 		}
 
-		// Get relevant filters for this follow's account.
-		// (note the origin account of the follow is receiver of status).
-		filters, err := s.getFilters(ctx, follow.AccountID)
-		if err != nil {
-			log.Error(ctx, err)
-			continue
-		}
-
 		// Add status to any relevant lists for this follow, if applicable.
 		listTimelined, exclusive, err := s.listTimelineStatusForFollow(ctx,
 			status,
 			follow,
-			filters,
 		)
 		if err != nil {
 			log.Errorf(ctx, "error list timelining status: %v", err)
@@ -181,7 +172,6 @@ func (s *Surface) timelineAndNotifyStatusForFollowers(
 				status,
 				stream.TimelineHome,
 				gtsmodel.FilterContextHome,
-				filters,
 			); homeTimelined {
 
 				// If hometimelined, add to list of returned account IDs.
@@ -239,7 +229,6 @@ func (s *Surface) listTimelineStatusForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
-	filters []*gtsmodel.Filter,
 ) (timelined bool, exclusive bool, err error) {
 
 	// Get all lists that contain this given follow.
@@ -276,7 +265,6 @@ func (s *Surface) listTimelineStatusForFollow(
 			status,
 			stream.TimelineList+":"+list.ID, // key streamType to this specific list
 			gtsmodel.FilterContextHome,
-			filters,
 		)
 
 		// Update flag based on if timelined.
@@ -284,15 +272,6 @@ func (s *Surface) listTimelineStatusForFollow(
 	}
 
 	return timelined, exclusive, nil
-}
-
-// getFiltersAndMutes returns an account's filters and mutes.
-func (s *Surface) getFilters(ctx context.Context, accountID string) ([]*gtsmodel.Filter, error) {
-	filters, err := s.State.DB.GetFiltersByAccountID(ctx, accountID)
-	if err != nil {
-		return nil, gtserror.Newf("couldn't retrieve filters for account %s: %w", accountID, err)
-	}
-	return filters, err
 }
 
 // listEligible checks if the given status is eligible
@@ -370,7 +349,6 @@ func (s *Surface) timelineStatus(
 	status *gtsmodel.Status,
 	streamType string,
 	filterCtx gtsmodel.FilterContext,
-	filters []*gtsmodel.Filter,
 ) bool {
 
 	// Attempt to convert status to frontend API representation,
@@ -379,9 +357,8 @@ func (s *Surface) timelineStatus(
 		status,
 		account,
 		filterCtx,
-		filters,
 	)
-	if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+	if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
 		log.Error(ctx, "error converting status %s to frontend: %v", status.URI, err)
 	}
 
@@ -425,19 +402,12 @@ func (s *Surface) timelineAndNotifyStatusForTagFollowers(
 	// Insert the status into the home timeline of each tag follower.
 	errs := gtserror.MultiError{}
 	for _, tagFollowerAccount := range tagFollowerAccounts {
-		filters, err := s.getFilters(ctx, tagFollowerAccount.ID)
-		if err != nil {
-			errs.Append(err)
-			continue
-		}
-
 		_ = s.timelineStatus(ctx,
 			s.State.Caches.Timelines.Home.MustGet(tagFollowerAccount.ID),
 			tagFollowerAccount,
 			status,
 			stream.TimelineHome,
 			gtsmodel.FilterContextHome,
-			filters,
 		)
 	}
 
@@ -605,19 +575,10 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			continue
 		}
 
-		// Get relevant filters and mutes for this follow's account.
-		// (note the origin account of the follow is receiver of status).
-		filters, err := s.getFilters(ctx, follow.AccountID)
-		if err != nil {
-			log.Error(ctx, err)
-			continue
-		}
-
 		// Add status to relevant lists for this follow, if applicable.
 		_, exclusive, err := s.listTimelineStatusUpdateForFollow(ctx,
 			status,
 			follow,
-			filters,
 		)
 		if err != nil {
 			log.Errorf(ctx, "error list timelining status: %v", err)
@@ -637,7 +598,6 @@ func (s *Surface) timelineStatusUpdateForFollowers(
 			follow.Account,
 			status,
 			stream.TimelineHome,
-			filters,
 		)
 		if err != nil {
 			log.Errorf(ctx, "error home timelining status: %v", err)
@@ -662,7 +622,6 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 	ctx context.Context,
 	status *gtsmodel.Status,
 	follow *gtsmodel.Follow,
-	filters []*gtsmodel.Filter,
 ) (bool, bool, error) {
 
 	// Get all lists that contain this given follow.
@@ -701,7 +660,6 @@ func (s *Surface) listTimelineStatusUpdateForFollow(
 			follow.Account,
 			status,
 			stream.TimelineList+":"+list.ID, // key streamType to this specific list
-			filters,
 		)
 		if err != nil {
 			log.Errorf(ctx, "error adding status to list timeline: %v", err)
@@ -724,7 +682,6 @@ func (s *Surface) timelineStreamStatusUpdate(
 	account *gtsmodel.Account,
 	status *gtsmodel.Status,
 	streamType string,
-	filters []*gtsmodel.Filter,
 ) (bool, error) {
 
 	// Convert updated database model to frontend model.
@@ -732,14 +689,13 @@ func (s *Surface) timelineStreamStatusUpdate(
 		status,
 		account,
 		gtsmodel.FilterContextHome,
-		filters,
 	)
 
 	switch {
 	case err == nil:
 		// no issue.
 
-	case errors.Is(err, statusfilter.ErrHideStatus):
+	case errors.Is(err, typeutils.ErrHideStatus):
 		// Don't put this status in the stream.
 		return false, nil
 
@@ -774,18 +730,11 @@ func (s *Surface) timelineStatusUpdateForTagFollowers(
 	// Stream the update to the home timeline of each tag follower.
 	errs := gtserror.MultiError{}
 	for _, tagFollowerAccount := range tagFollowerAccounts {
-		filters, err := s.getFilters(ctx, tagFollowerAccount.ID)
-		if err != nil {
-			errs.Append(err)
-			continue
-		}
-
 		if _, err := s.timelineStreamStatusUpdate(
 			ctx,
 			tagFollowerAccount,
 			status,
 			stream.TimelineHome,
-			filters,
 		); err != nil {
 			errs.Appendf(
 				"error updating status %s on home timeline for account %s: %w",

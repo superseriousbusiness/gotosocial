@@ -24,10 +24,10 @@ import (
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/federation/dereferencing"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
 // GetOwnStatus fetches the given status with ID,
@@ -214,7 +214,6 @@ func (p *Processor) GetAPIStatus(
 		target,
 		requester,
 		gtsmodel.FilterContextNone,
-		nil,
 	)
 	if err != nil {
 		err := gtserror.Newf("error converting: %w", err)
@@ -235,7 +234,6 @@ func (p *Processor) GetVisibleAPIStatuses(
 	requester *gtsmodel.Account,
 	statuses []*gtsmodel.Status,
 	filterCtx gtsmodel.FilterContext,
-	filters []*gtsmodel.Filter,
 ) []apimodel.Status {
 
 	// Start new log entry with
@@ -278,9 +276,8 @@ func (p *Processor) GetVisibleAPIStatuses(
 			status,
 			requester,
 			filterCtx,
-			filters,
 		)
-		if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+		if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
 			l.Errorf("error converting: %v", err)
 			continue
 		}

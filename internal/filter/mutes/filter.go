@@ -41,5 +41,5 @@ const noauth = "noauth"
 // given statuses or accounts are muted by a requester (user).
 type Filter struct{ state *state.State }
 
-// NewFilter returns a new Filter interface that will use the provided database.
+// NewFilter returns a new Filter interface that will use the provided state.
 func NewFilter(state *state.State) *Filter { return &Filter{state: state} }

@@ -15,27 +15,19 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package v2
+package status
 
 import (
-	"code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
-	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
 
-type Processor struct {
-	// embedded common logic
-	c *common.Processor
+// noauth is a placeholder ID used in cache lookups
+// when there is no authorized account ID to use.
+const noauth = "noauth"
 
-	state     *state.State
-	converter *typeutils.Converter
-}
+// Filter packages up logic for checking whether
+// given status is muted by a given requester (user).
+type Filter struct{ state *state.State }
 
-func New(state *state.State, converter *typeutils.Converter, common *common.Processor) Processor {
-	return Processor{
-		c: common,
-
-		state:     state,
-		converter: converter,
-	}
-}
+// New returns a new Filter interface that will use the provided state.
+func NewFilter(state *state.State) *Filter { return &Filter{state} }

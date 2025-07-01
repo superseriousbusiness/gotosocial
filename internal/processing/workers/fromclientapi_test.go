@@ -213,7 +213,6 @@ func (suite *FromClientAPITestSuite) statusJSON(
 		status,
 		requestingAccount,
 		gtsmodel.FilterContextNone,
-		nil,
 	)
 	if err != nil {
 		suite.FailNow(err.Error())
@@ -345,7 +344,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithNotification() {
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -2032,7 +2031,7 @@ func (suite *FromClientAPITestSuite) TestProcessCreateStatusWithAuthorOnExclusiv
 		suite.FailNow("timed out waiting for new status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}
@@ -2217,7 +2216,7 @@ func (suite *FromClientAPITestSuite) TestProcessUpdateStatusInteractedWith() {
 		suite.FailNow("timed out waiting for edited status notification")
 	}
 
-	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, nil)
+	apiNotif, err := testStructs.TypeConverter.NotificationToAPINotification(ctx, notif, false)
 	if err != nil {
 		suite.FailNow(err.Error())
 	}

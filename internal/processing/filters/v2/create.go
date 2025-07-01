@@ -34,13 +34,13 @@ import (
 
 // Create a new filter for the given account, using the provided parameters.
 // These params should have already been validated by the time they reach this function.
-func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form *apimodel.FilterCreateRequestV2) (*apimodel.FilterV2, gtserror.WithCode) {
+func (p *Processor) Create(ctx context.Context, requester *gtsmodel.Account, form *apimodel.FilterCreateRequestV2) (*apimodel.FilterV2, gtserror.WithCode) {
 	var errWithCode gtserror.WithCode
 
 	// Create new filter model.
 	filter := &gtsmodel.Filter{
 		ID:        id.NewULID(),
-		AccountID: account.ID,
+		AccountID: requester.ID,
 		Title:     form.Title,
 	}
 
@@ -104,8 +104,8 @@ func (p *Processor) Create(ctx context.Context, account *gtsmodel.Account, form 
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Send a filters changed event.
-	p.stream.FiltersChanged(ctx, account)
+	// Handle filter change side-effects.
+	p.c.OnFilterChanged(ctx, requester)
 
 	// Return as converted frontend filter model.
 	return typeutils.FilterToAPIFilterV2(filter), nil

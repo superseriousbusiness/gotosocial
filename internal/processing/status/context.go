@@ -275,20 +275,6 @@ func (p *Processor) ContextGet(
 	requester *gtsmodel.Account,
 	targetStatusID string,
 ) (*apimodel.ThreadContext, gtserror.WithCode) {
-	// Retrieve filters as they affect
-	// what should be shown to requester.
-	filters, err := p.state.DB.GetFiltersByAccountID(
-		ctx, // Populate filters.
-		requester.ID,
-	)
-	if err != nil {
-		err = gtserror.Newf(
-			"couldn't retrieve filters for account %s: %w",
-			requester.ID, err,
-		)
-		return nil, gtserror.NewErrorInternalError(err)
-	}
-
 	// Retrieve the full thread context.
 	threadContext, errWithCode := p.contextGet(ctx,
 		requester,
@@ -305,7 +291,6 @@ func (p *Processor) ContextGet(
 		requester,
 		threadContext.ancestors,
 		gtsmodel.FilterContextThread,
-		filters,
 	)
 
 	// Convert and filter the thread context descendants
@@ -313,7 +298,6 @@ func (p *Processor) ContextGet(
 		requester,
 		threadContext.descendants,
 		gtsmodel.FilterContextThread,
-		filters,
 	)
 
 	return &apiContext, nil

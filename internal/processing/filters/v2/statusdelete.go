@@ -54,8 +54,8 @@ func (p *Processor) StatusDelete(
 		return gtserror.NewErrorInternalError(err)
 	}
 
-	// Stream a filters changed event to WS.
-	p.stream.FiltersChanged(ctx, requester)
+	// Handle filter change side-effects.
+	p.c.OnFilterChanged(ctx, requester)
 
 	return nil
 }

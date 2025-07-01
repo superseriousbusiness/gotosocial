@@ -190,7 +190,7 @@ func (suite *RealSenderStandardTestSuite) simulatePushNotification(
 		}, nil
 	}
 
-	apiNotif, err := suite.typeconverter.NotificationToAPINotification(ctx, notification, nil)
+	apiNotif, err := suite.typeconverter.NotificationToAPINotification(ctx, notification, false)
 	suite.NoError(err)
 
 	// Send the push notification.

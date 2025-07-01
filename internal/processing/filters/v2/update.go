@@ -135,8 +135,8 @@ func (p *Processor) Update(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Stream a filters changed event to WS.
-	p.stream.FiltersChanged(ctx, requester)
+	// Handle filter change side-effects.
+	p.c.OnFilterChanged(ctx, requester)
 
 	// Return as converted frontend filter model.
 	return typeutils.FilterToAPIFilterV2(filter), nil

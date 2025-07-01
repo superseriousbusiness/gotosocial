@@ -27,11 +27,11 @@ import (
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	apiutil "code.superseriousbusiness.org/gotosocial/internal/api/util"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	"code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"code.superseriousbusiness.org/gotosocial/internal/paging"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -57,12 +57,6 @@ func (p *Processor) NotificationsGet(
 	count := len(notifs)
 	if count == 0 {
 		return util.EmptyPageableResponse(), nil
-	}
-
-	filters, err := p.state.DB.GetFiltersByAccountID(ctx, requester.ID)
-	if err != nil {
-		err = gtserror.Newf("error getting account %s filters: %w", requester.ID, err)
-		return nil, gtserror.NewErrorInternalError(err)
 	}
 
 	var (
@@ -115,9 +109,9 @@ func (p *Processor) NotificationsGet(
 			}
 		}
 
-		item, err := p.converter.NotificationToAPINotification(ctx, n, filters)
+		item, err := p.converter.NotificationToAPINotification(ctx, n, true)
 		if err != nil {
-			if !errors.Is(err, status.ErrHideStatus) {
+			if !errors.Is(err, typeutils.ErrHideStatus) {
 				log.Debugf(ctx, "skipping notification %s because it couldn't be converted to its api representation: %s", n.ID, err)
 			}
 			continue
@@ -160,7 +154,7 @@ func (p *Processor) NotificationGet(ctx context.Context, account *gtsmodel.Accou
 	// or mute checking for a notification directly
 	// fetched by ID. only from timelines etc.
 
-	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, nil)
+	apiNotif, err := p.converter.NotificationToAPINotification(ctx, notif, false)
 	if err != nil {
 		err := gtserror.Newf("error converting to api model: %w", err)
 		return nil, gtserror.WrapWithCode(http.StatusInternalServerError, err)

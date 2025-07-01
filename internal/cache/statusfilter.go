@@ -20,32 +20,31 @@ package cache
 import (
 	"time"
 
+	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/config"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
 	"codeberg.org/gruf/go-structr"
 )
 
-func (c *Caches) initMutes() {
+func (c *Caches) initStatusFilter() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(
-		sizeofMute(), // model in-mem size.
-		config.GetCacheMutesMemRatio(),
+		sizeofStatusFilterResults(), // model in-mem size.
+		config.GetCacheStatusFilterMemRatio(),
 	)
 
 	log.Infof(nil, "cache size = %d", cap)
 
-	copyF := func(m1 *CachedMute) *CachedMute {
-		m2 := new(CachedMute)
-		*m2 = *m1
-		return m2
+	copyF := func(r1 *CachedStatusFilterResults) *CachedStatusFilterResults {
+		r2 := new(CachedStatusFilterResults)
+		*r2 = *r1
+		return r2
 	}
 
-	c.Mutes.Init(structr.CacheConfig[*CachedMute]{
+	c.StatusFilter.Init(structr.CacheConfig[*CachedStatusFilterResults]{
 		Indices: []structr.IndexConfig{
 			{Fields: "RequesterID,StatusID"},
-			{Fields: "RequesterID,ThreadID", Multiple: true},
 			{Fields: "StatusID", Multiple: true},
-			{Fields: "ThreadID", Multiple: true},
 			{Fields: "RequesterID", Multiple: true},
 		},
 		MaxSize: cap,
@@ -60,46 +59,49 @@ func (c *Caches) initMutes() {
 	})
 }
 
-// CachedMute contains the details
-// of a cached mute lookup.
-type CachedMute struct {
+const (
+	KeyContextHome = iota
+	KeyContextPublic
+	KeyContextNotifs
+	KeyContextThread
+	KeyContextAccount
+	keysLen // must always be last in list
+)
+
+// CachedStatusFilterResults contains the
+// results of a cached status filter lookup.
+type CachedStatusFilterResults struct {
 
 	// StatusID is the ID of the
 	// status this is a result for.
 	StatusID string
 
-	// ThreadID is the ID of the
-	// thread status is a part of.
-	ThreadID string
-
 	// RequesterID is the ID of the requesting
-	// account for this user mute lookup.
+	// account for this status filter lookup.
 	RequesterID string
 
-	// Mute indicates whether ItemID
-	// is muted by RequesterID.
-	Mute bool
-
-	// MuteExpiry stores the time at which
-	// (if any) the stored mute value expires.
-	MuteExpiry time.Time
-
-	// Notifications indicates whether
-	// this mute should prevent notifications
-	// being shown for ItemID to RequesterID.
-	Notifications bool
-
-	// NotificationExpiry stores the time at which
-	// (if any) the stored notification value expires.
-	NotificationExpiry time.Time
+	// Results is a map (int-key-array) of status filter
+	// result slices in all possible filtering contexts.
+	Results [keysLen][]StatusFilterResult
 }
 
-// MuteExpired returns whether the mute value has expired.
-func (m *CachedMute) MuteExpired(now time.Time) bool {
-	return !m.MuteExpiry.IsZero() && !m.MuteExpiry.After(now)
+// StatusFilterResult stores a single (positive,
+// i.e. match) filter result for a status by a filter.
+type StatusFilterResult struct {
+
+	// Expiry stores the time at which
+	// (if any) the filter result expires.
+	Expiry time.Time
+
+	// Result stores any generated filter result for
+	// this match intended to be shown at the frontend.
+	// This can be used to determine the filter action:
+	// - value => gtsmodel.FilterActionWarn
+	// - nil => gtsmodel.FilterActionHide
+	Result *apimodel.FilterResult
 }
 
-// NotificationExpired returns whether the notification mute value has expired.
-func (m *CachedMute) NotificationExpired(now time.Time) bool {
-	return !m.NotificationExpiry.IsZero() && !m.NotificationExpiry.After(now)
+// Expired returns whether the filter result has expired.
+func (r *StatusFilterResult) Expired(now time.Time) bool {
+	return !r.Expiry.IsZero() && !r.Expiry.After(now)
 }

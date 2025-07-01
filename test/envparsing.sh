@@ -74,6 +74,7 @@ EXPECT=$(cat << "EOF"
     "cache-status-edit-mem-ratio": 2,
     "cache-status-fave-ids-mem-ratio": 3,
     "cache-status-fave-mem-ratio": 2,
+    "cache-status-filter-mem-ratio": 7,
     "cache-status-mem-ratio": 5,
     "cache-tag-mem-ratio": 2,
     "cache-thread-mute-mem-ratio": 0.2,

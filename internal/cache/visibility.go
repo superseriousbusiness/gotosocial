@@ -23,10 +23,6 @@ import (
 	"codeberg.org/gruf/go-structr"
 )
 
-type VisibilityCache struct {
-	StructCache[*CachedVisibility]
-}
-
 func (c *Caches) initVisibility() {
 	// Calculate maximum cache size.
 	cap := calculateResultCacheMax(

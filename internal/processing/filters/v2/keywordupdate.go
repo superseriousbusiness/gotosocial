@@ -63,8 +63,8 @@ func (p *Processor) KeywordUpdate(
 		return nil, gtserror.NewErrorInternalError(err)
 	}
 
-	// Stream a filters changed event to WS.
-	p.stream.FiltersChanged(ctx, requester)
+	// Handle filter change side-effects.
+	p.c.OnFilterChanged(ctx, requester)
 
 	return typeutils.FilterKeywordToAPIFilterKeyword(filterKeyword), nil
 }

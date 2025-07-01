@@ -23,11 +23,11 @@ import (
 	"strings"
 
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 	"code.superseriousbusiness.org/gotosocial/internal/util/xslices"
 )
@@ -743,14 +743,9 @@ func (s *Surface) Notify(
 		}
 	}
 
-	filters, err := s.State.DB.GetFiltersByAccountID(ctx, targetAccount.ID)
-	if err != nil {
-		return gtserror.Newf("couldn't retrieve filters for account %s: %w", targetAccount.ID, err)
-	}
-
-	// Convert the notification to frontend API model for streaming / push.
-	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, filters)
-	if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+	// Convert the notification to frontend API model for streaming / web push.
+	apiNotif, err := s.Converter.NotificationToAPINotification(ctx, notif, true)
+	if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
 		return gtserror.Newf("error converting notification to api representation: %w", err)
 	}
 

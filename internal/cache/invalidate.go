@@ -26,19 +26,23 @@ import (
 // as an invalidation indicates a database INSERT / UPDATE / DELETE.
 // NOTE THEY ARE ONLY CALLED WHEN THE ITEM IS IN THE CACHE, SO FOR
 // HOOKS TO BE CALLED ON DELETE YOU MUST FIRST POPULATE IT IN THE CACHE.
+//
+// Also note that while Timelines are a part of the Caches{} object,
+// they are generally not modified as part of side-effects here, as
+// they often need specific IDs or more information that can only be
+// fetched from the database. As such, they are generally handled as
+// side-effects in the ./internal/processor/workers/ package.
 
 func (c *Caches) OnInvalidateAccount(account *gtsmodel.Account) {
-	// Invalidate cached stats objects for this account.
-	c.DB.AccountStats.Invalidate("AccountID", account.ID)
-
 	// Invalidate as possible visibility target result.
 	c.Visibility.Invalidate("ItemID", account.ID)
 
 	// If account is local, invalidate as
-	// possible mute / visibility result requester.
+	// possible visibility result requester,
+	// also, invalidate any cached stats.
 	if account.IsLocal() {
+		c.DB.AccountStats.Invalidate("AccountID", account.ID)
 		c.Visibility.Invalidate("RequesterID", account.ID)
-		c.Mutes.Invalidate("RequesterID", account.ID)
 	}
 
 	// Invalidate this account's
@@ -94,9 +98,8 @@ func (c *Caches) OnInvalidateBlock(block *gtsmodel.Block) {
 		localAccountIDs = append(localAccountIDs, block.TargetAccountID)
 	}
 
-	// Now perform local mute / visibility result invalidations.
+	// Now perform local visibility result invalidations.
 	c.Visibility.InvalidateIDs("RequesterID", localAccountIDs)
-	c.Mutes.InvalidateIDs("RequesterID", localAccountIDs)
 
 	// Invalidate source account's block lists.
 	c.DB.BlockIDs.Invalidate(block.AccountID)
@@ -120,9 +123,8 @@ func (c *Caches) OnInvalidateFilter(filter *gtsmodel.Filter) {
 	c.DB.FilterKeyword.InvalidateIDs("ID", filter.KeywordIDs)
 	c.DB.FilterStatus.InvalidateIDs("ID", filter.StatusIDs)
 
-	// Invalidate account's timelines (in case local).
-	c.Timelines.Home.Unprepare(filter.AccountID)
-	c.Timelines.List.Unprepare(filter.AccountID)
+	// Invalidate account's status filter cache.
+	c.StatusFilter.Invalidate("RequesterID", filter.AccountID)
 }
 
 func (c *Caches) OnInvalidateFilterKeyword(filterKeyword *gtsmodel.FilterKeyword) {
@@ -161,9 +163,8 @@ func (c *Caches) OnInvalidateFollow(follow *gtsmodel.Follow) {
 		localAccountIDs = append(localAccountIDs, follow.TargetAccountID)
 	}
 
-	// Now perform local mute / visibility result invalidations.
+	// Now perform local visibility result invalidations.
 	c.Visibility.InvalidateIDs("RequesterID", localAccountIDs)
-	c.Mutes.InvalidateIDs("RequesterID", localAccountIDs)
 
 	// Invalidate ID slice cache.
 	c.DB.FollowIDs.Invalidate(
@@ -294,6 +295,9 @@ func (c *Caches) OnInvalidatePollVote(vote *gtsmodel.PollVote) {
 func (c *Caches) OnInvalidateStatus(status *gtsmodel.Status) {
 	// Invalidate cached stats objects for this account.
 	c.DB.AccountStats.Invalidate("AccountID", status.AccountID)
+
+	// Invalidate filter results targeting status.
+	c.StatusFilter.Invalidate("StatusID", status.ID)
 
 	// Invalidate status ID cached visibility.
 	c.Visibility.Invalidate("ItemID", status.ID)

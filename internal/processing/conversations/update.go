@@ -23,11 +23,11 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	"code.superseriousbusiness.org/gotosocial/internal/db"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
 	"code.superseriousbusiness.org/gotosocial/internal/id"
 	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 	"code.superseriousbusiness.org/gotosocial/internal/util"
 )
 
@@ -167,7 +167,7 @@ func (p *Processor) UpdateConversationsForStatus(ctx context.Context, status *gt
 		if err != nil {
 			// If the conversation's last status matched a hide filter, skip it.
 			// If there was another kind of error, log that and skip it anyway.
-			if !errors.Is(err, statusfilter.ErrHideStatus) {
+			if !errors.Is(err, typeutils.ErrHideStatus) {
 				log.Errorf(ctx,
 					"error converting conversation %s to API representation for account %s: %v",
 					status.ID,

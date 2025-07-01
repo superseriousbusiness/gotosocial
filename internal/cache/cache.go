@@ -41,21 +41,22 @@ type Caches struct {
 	// the block []headerfilter.Filter cache.
 	BlockHeaderFilters headerfilter.Cache
 
-	// TTL cache of statuses -> filterable text fields.
-	// To ensure up-to-date fields, cache is keyed as:
-	// `[status.ID][status.UpdatedAt.Unix()]`
-	StatusesFilterableFields *ttl.Cache[string, []string]
-
-	// Timelines ...
+	// Timelines provides access to the
+	// collection of timeline object caches,
+	// used in timeline lookups and streaming.
 	Timelines TimelineCaches
 
 	// Mutes provides access to the item mutes
 	// cache. (used by the item mutes filter).
-	Mutes MutesCache
+	Mutes StructCache[*CachedMute]
+
+	// StatusFilter provides access to the status filter
+	// cache. (used by the status-filter results filter).
+	StatusFilter StructCache[*CachedStatusFilterResults]
 
 	// Visibility provides access to the item visibility
 	// cache. (used by the visibility filter).
-	Visibility VisibilityCache
+	Visibility StructCache[*CachedVisibility]
 
 	// Webfinger provides access to the webfinger URL cache.
 	Webfinger *ttl.Cache[string, string] // TTL=24hr, sweep=5min
@@ -119,7 +120,6 @@ func (c *Caches) Init() {
 	c.initStatusEdit()
 	c.initStatusFave()
 	c.initStatusFaveIDs()
-	c.initStatusesFilterableFields()
 	c.initTag()
 	c.initThreadMute()
 	c.initToken()
@@ -131,6 +131,7 @@ func (c *Caches) Init() {
 	c.initWebPushSubscription()
 	c.initWebPushSubscriptionIDs()
 	c.initMutes()
+	c.initStatusFilter()
 	c.initVisibility()
 }
 
@@ -143,10 +144,6 @@ func (c *Caches) Start() error {
 		return gtserror.New("could not start webfinger cache")
 	}
 
-	if !c.StatusesFilterableFields.Start(5 * time.Minute) {
-		return gtserror.New("could not start statusesFilterableFields cache")
-	}
-
 	return nil
 }
 
@@ -157,9 +154,6 @@ func (c *Caches) Stop() {
 
 	if c.Webfinger != nil {
 		_ = c.Webfinger.Stop()
-	}
-	if c.StatusesFilterableFields != nil {
-		_ = c.StatusesFilterableFields.Stop()
 	}
 }
 
@@ -183,6 +177,7 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.Emoji.Trim(threshold)
 	c.DB.EmojiCategory.Trim(threshold)
 	c.DB.Filter.Trim(threshold)
+	c.DB.FilterIDs.Trim(threshold)
 	c.DB.FilterKeyword.Trim(threshold)
 	c.DB.FilterStatus.Trim(threshold)
 	c.DB.Follow.Trim(threshold)
@@ -218,18 +213,11 @@ func (c *Caches) Sweep(threshold float64) {
 	c.DB.User.Trim(threshold)
 	c.DB.UserMute.Trim(threshold)
 	c.DB.UserMuteIDs.Trim(threshold)
+	c.Mutes.Trim(threshold)
+	c.StatusFilter.Trim(threshold)
 	c.Timelines.Home.Trim()
 	c.Timelines.List.Trim()
 	c.Visibility.Trim(threshold)
-}
-
-func (c *Caches) initStatusesFilterableFields() {
-	c.StatusesFilterableFields = new(ttl.Cache[string, []string])
-	c.StatusesFilterableFields.Init(
-		0,
-		512,
-		1*time.Hour,
-	)
 }
 
 func (c *Caches) initWebfinger() {

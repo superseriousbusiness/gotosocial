@@ -39,7 +39,7 @@ func (suite *StatusUpdateTestSuite) TestStreamNotification() {
 	suite.NoError(errWithCode)
 
 	editedStatus := suite.testStatuses["remote_account_1_status_1"]
-	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(suite.T().Context(), editedStatus, account, gtsmodel.FilterContextNotifications, nil)
+	apiStatus, err := typeutils.NewConverter(&suite.state).StatusToAPIStatus(suite.T().Context(), editedStatus, account, gtsmodel.FilterContextNotifications)
 	suite.NoError(err)
 
 	suite.streamProcessor.StatusUpdate(suite.T().Context(), account, apiStatus, stream.TimelineHome)

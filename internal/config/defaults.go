@@ -233,8 +233,9 @@ var Defaults = Configuration{
 		WebfingerMemRatio:                     0.1,
 		WebPushSubscriptionMemRatio:           1,
 		WebPushSubscriptionIDsMemRatio:        1,
-		VisibilityMemRatio:                    2,
 		MutesMemRatio:                         2,
+		StatusFilterMemRatio:                  7,
+		VisibilityMemRatio:                    2,
 	},
 
 	HTTPClient: HTTPClientConfiguration{

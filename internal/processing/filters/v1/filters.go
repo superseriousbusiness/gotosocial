@@ -19,7 +19,6 @@ package v1
 
 import (
 	"code.superseriousbusiness.org/gotosocial/internal/processing/filters/common"
-	"code.superseriousbusiness.org/gotosocial/internal/processing/stream"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 	"code.superseriousbusiness.org/gotosocial/internal/typeutils"
 )
@@ -30,15 +29,13 @@ type Processor struct {
 
 	state     *state.State
 	converter *typeutils.Converter
-	stream    *stream.Processor
 }
 
-func New(state *state.State, converter *typeutils.Converter, common *common.Processor, stream *stream.Processor) Processor {
+func New(state *state.State, converter *typeutils.Converter, common *common.Processor) Processor {
 	return Processor{
 		c: common,
 
 		state:     state,
 		converter: converter,
-		stream:    stream,
 	}
 }

@@ -28,12 +28,19 @@ import (
 	"code.superseriousbusiness.org/gotosocial/internal/gtscontext"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
+	"code.superseriousbusiness.org/gotosocial/internal/log"
+	"code.superseriousbusiness.org/gotosocial/internal/processing/stream"
 	"code.superseriousbusiness.org/gotosocial/internal/state"
 )
 
-type Processor struct{ state *state.State }
+type Processor struct {
+	state  *state.State
+	stream *stream.Processor
+}
 
-func New(state *state.State) *Processor { return &Processor{state} }
+func New(state *state.State, stream *stream.Processor) *Processor {
+	return &Processor{state, stream}
+}
 
 // CheckFilterExists calls .GetFilter() with a barebones context to not
 // fetch any sub-models, and not returning the result. this functionally
@@ -158,6 +165,27 @@ func (p *Processor) GetFilterKeyword(
 	}
 
 	return keyword, filter, nil
+}
+
+// OnFilterChanged ...
+func (p *Processor) OnFilterChanged(ctx context.Context, requester *gtsmodel.Account) {
+
+	// Get list of list IDs created by this requesting account.
+	listIDs, err := p.state.DB.GetListIDsByAccountID(ctx, requester.ID)
+	if err != nil {
+		log.Errorf(ctx, "error getting account '%s' lists: %v", requester.Username, err)
+	}
+
+	// Unprepare this requester's home timeline.
+	p.state.Caches.Timelines.Home.Unprepare(requester.ID)
+
+	// Unprepare list timelines.
+	for _, id := range listIDs {
+		p.state.Caches.Timelines.List.Unprepare(id)
+	}
+
+	// Send filter changed event for account.
+	p.stream.FiltersChanged(ctx, requester)
 }
 
 // FromAPIContexts converts a slice of frontend API model FilterContext types to our internal FilterContexts bit field.

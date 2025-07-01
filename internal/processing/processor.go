@@ -225,7 +225,7 @@ func NewProcessor(
 	processor.account = account.New(&common, state, converter, mediaManager, federator, visFilter, parseMentionFunc)
 	processor.media = media.New(&common, state, converter, federator, mediaManager, federator.TransportController())
 	processor.stream = stream.New(state, oauthServer)
-	filterCommon := filterCommon.New(state)
+	filterCommon := filterCommon.New(state, &processor.stream)
 
 	// Instantiate the rest of the sub
 	// processors + pin them to this struct.
@@ -234,8 +234,8 @@ func NewProcessor(
 	processor.application = application.New(state, converter)
 	processor.conversations = conversations.New(state, converter, visFilter, muteFilter)
 	processor.fedi = fedi.New(state, &common, converter, federator, visFilter)
-	processor.filtersv1 = filtersv1.New(state, converter, filterCommon, &processor.stream)
-	processor.filtersv2 = filtersv2.New(state, converter, filterCommon, &processor.stream)
+	processor.filtersv1 = filtersv1.New(state, converter, filterCommon)
+	processor.filtersv2 = filtersv2.New(state, converter, filterCommon)
 	processor.interactionRequests = interactionrequests.New(&common, state, converter)
 	processor.list = list.New(state, converter)
 	processor.markers = markers.New(state, converter)

@@ -25,9 +25,7 @@ import (
 
 	apimodel "code.superseriousbusiness.org/gotosocial/internal/api/model"
 	timelinepkg "code.superseriousbusiness.org/gotosocial/internal/cache/timeline"
-	"code.superseriousbusiness.org/gotosocial/internal/db"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/mutes"
-	statusfilter "code.superseriousbusiness.org/gotosocial/internal/filter/status"
 	"code.superseriousbusiness.org/gotosocial/internal/filter/visibility"
 	"code.superseriousbusiness.org/gotosocial/internal/gtserror"
 	"code.superseriousbusiness.org/gotosocial/internal/gtsmodel"
@@ -79,18 +77,6 @@ func (p *Processor) getStatusTimeline(
 	gtserror.WithCode,
 ) {
 	var err error
-	var filters []*gtsmodel.Filter
-
-	if requester != nil {
-		// Fetch all filters relevant for requesting account.
-		filters, err = p.state.DB.GetFiltersByAccountID(ctx,
-			requester.ID,
-		)
-		if err != nil && !errors.Is(err, db.ErrNoEntries) {
-			err := gtserror.Newf("error getting account filters: %w", err)
-			return nil, gtserror.NewErrorInternalError(err)
-		}
-	}
 
 	// Ensure we have valid
 	// input paging cursor.
@@ -135,9 +121,8 @@ func (p *Processor) getStatusTimeline(
 				status,
 				requester,
 				filterCtx,
-				filters,
 			)
-			if err != nil && !errors.Is(err, statusfilter.ErrHideStatus) {
+			if err != nil && !errors.Is(err, typeutils.ErrHideStatus) {
 				return nil, err
 			}
 			return apiStatus, nil
