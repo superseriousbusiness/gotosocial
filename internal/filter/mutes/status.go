@@ -80,7 +80,7 @@ func (f *Filter) StatusMuteDetails(ctx context.Context, requester *gtsmodel.Acco
 		return &cache.CachedMute{
 			StatusID:           status.ID,
 			ThreadID:           status.ThreadID,
-			RequesterID:        requester.ID,
+			RequesterID:        requesterID,
 			Mute:               details.mute,
 			MuteExpiry:         details.muteExpiry,
 			Notifications:      details.notif,
