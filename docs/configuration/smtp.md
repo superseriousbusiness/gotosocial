@@ -20,6 +20,9 @@ To validate your configuration, you can use the "Administration -> Actions -> Em
 !!! info
     For safety reasons, the smtp library used by GoToSocial will refuse to send authentication credentials over an unencrypted connection, unless the mail provider is running on localhost.
 
+!!! info
+    If your SMTP server offers `STARTTLS` in its EHLO response GoToSocial will try to use it. The SMTP server must hence also have valid SSL certificates. If you're sending mail via localhost and don't want to set up certificates make sure that your SMTP server doesn't announce STARTTLS support. In postfix this can be done via `-o smtpd_tls_security_level=none`.
+
 ## Settings
 
 The configuration options for smtp are as follows:
