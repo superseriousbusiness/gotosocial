@@ -11347,7 +11347,7 @@ paths:
                     description: internal server error
             security:
                 - OAuth2 Bearer:
-                    - write:statuses
+                    - write:favourites
             summary: Star/like/favourite the given status, if permitted.
             tags:
                 - statuses

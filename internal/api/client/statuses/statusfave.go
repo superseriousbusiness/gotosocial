@@ -47,7 +47,7 @@ import (
 //
 //	security:
 //	- OAuth2 Bearer:
-//		- write:statuses
+//		- write:favourites
 //
 //	responses:
 //		'200':
@@ -69,7 +69,7 @@ import (
 func (m *Module) StatusFavePOSTHandler(c *gin.Context) {
 	authed, errWithCode := apiutil.TokenAuth(c,
 		true, true, true, true,
-		apiutil.ScopeWriteStatuses,
+		apiutil.ScopeWriteFavourites,
 	)
 	if errWithCode != nil {
 		apiutil.ErrorHandler(c, errWithCode, m.processor.InstanceGetV1)
